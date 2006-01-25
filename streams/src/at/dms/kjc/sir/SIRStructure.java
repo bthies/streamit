@@ -51,12 +51,12 @@ public class SIRStructure extends SIRStream
     public int getPushForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPushForSchedule for Structure");
-	return -1;
+        return -1;
     }
     public int getPopForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPopForSchedule for Structure");
-	return -1;
+        return -1;
     }
 
     /* Things that we need to implement: */
@@ -67,13 +67,13 @@ public class SIRStructure extends SIRStream
     public boolean needsWork() { return false; }
 
     /*
-    public Object clone() 
-    {
-        SIRStructure s = new SIRStructure(this.parent,
-                                          this.ident,
-                                          this.fields);
-        return s;
-    }
+      public Object clone() 
+      {
+      SIRStructure s = new SIRStructure(this.parent,
+      this.ident,
+      this.fields);
+      return s;
+      }
     */
 
     public Object accept(AttributeStreamVisitor v)
@@ -82,20 +82,20 @@ public class SIRStructure extends SIRStream
                                 fields);
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRStructure other = new at.dms.kjc.sir.SIRStructure();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRStructure other = new at.dms.kjc.sir.SIRStructure();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRStructure other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRStructure other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

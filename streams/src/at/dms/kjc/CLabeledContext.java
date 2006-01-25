@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLabeledContext.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: CLabeledContext.java,v 1.8 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,103 +29,103 @@ import at.dms.compiler.TokenReference;
  */
 public class CLabeledContext extends CBodyContext {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CLabeledContext() {} // for cloner only
 
-  /**
-   * Constructs the context to analyse a labeled statement semantically.
-   * @param	parent		the parent context
-   * @param	stmt		the labeled statement
-   */
-  CLabeledContext(CBodyContext parent, JLabeledStatement stmt) {
-    super(parent);
+    /**
+     * Constructs the context to analyse a labeled statement semantically.
+     * @param   parent      the parent context
+     * @param   stmt        the labeled statement
+     */
+    CLabeledContext(CBodyContext parent, JLabeledStatement stmt) {
+        super(parent);
 
-    this.stmt = stmt;
-  }
-
-  /**
-   * Verify everything is okay at the end of this context
-   */
-  public void close(TokenReference ref) {
-    if (!isUsed) {
-      reportTrouble(new CWarning(stmt.getTokenReference(),
-				 KjcMessages.UNUSED_LABEL,
-				 stmt.getLabel()));
+        this.stmt = stmt;
     }
 
-    if (breakContextSummary != null) {
-      if (isReachable()) {
-	merge(breakContextSummary);
-      } else {
-	adopt(breakContextSummary);
-      }
+    /**
+     * Verify everything is okay at the end of this context
+     */
+    public void close(TokenReference ref) {
+        if (!isUsed) {
+            reportTrouble(new CWarning(stmt.getTokenReference(),
+                                       KjcMessages.UNUSED_LABEL,
+                                       stmt.getLabel()));
+        }
+
+        if (breakContextSummary != null) {
+            if (isReachable()) {
+                merge(breakContextSummary);
+            } else {
+                adopt(breakContextSummary);
+            }
+        }
+
+        super.close(ref);
     }
 
-    super.close(ref);
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the statement with the specified label.
-   */
-  public JStatement getLabeledStatement(String label) {
-    if (label.equals(stmt.getLabel())) {
-      isUsed = true;
-      return stmt.getTargetStatement();
-    } else {
-      return ((CBodyContext)parent).getLabeledStatement(label);
+    /**
+     * Returns the statement with the specified label.
+     */
+    public JStatement getLabeledStatement(String label) {
+        if (label.equals(stmt.getLabel())) {
+            isUsed = true;
+            return stmt.getTargetStatement();
+        } else {
+            return ((CBodyContext)parent).getLabeledStatement(label);
+        }
     }
-  }
 
-  /**
-   *
-   */
-  protected void addBreak(JStatement target,
-			  CBodyContext context)
-  {
-    if (stmt == target) {
-      if (breakContextSummary == null) {
-	breakContextSummary = context.cloneContext();
-      } else {
-	breakContextSummary.merge(context);
-      }
-      breakContextSummary.setReachable(true);
-    } else {
-      ((CBodyContext)getParentContext()).addBreak(target, context);
+    /**
+     *
+     */
+    protected void addBreak(JStatement target,
+                            CBodyContext context)
+    {
+        if (stmt == target) {
+            if (breakContextSummary == null) {
+                breakContextSummary = context.cloneContext();
+            } else {
+                breakContextSummary.merge(context);
+            }
+            breakContextSummary.setReachable(true);
+        } else {
+            ((CBodyContext)getParentContext()).addBreak(target, context);
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /*final*/ JLabeledStatement	stmt; // removed final for cloner
-  private boolean			isUsed;
-  private CBodyContext			breakContextSummary;
+    private /*final*/ JLabeledStatement stmt; // removed final for cloner
+    private boolean         isUsed;
+    private CBodyContext            breakContextSummary;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CLabeledContext other = new at.dms.kjc.CLabeledContext();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CLabeledContext other = new at.dms.kjc.CLabeledContext();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CLabeledContext other) {
-  super.deepCloneInto(other);
-  other.stmt = (at.dms.kjc.JLabeledStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
-  other.isUsed = this.isUsed;
-  other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CLabeledContext other) {
+        super.deepCloneInto(other);
+        other.stmt = (at.dms.kjc.JLabeledStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
+        other.isUsed = this.isUsed;
+        other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -38,98 +38,98 @@ import javax.swing.JSplitPane;
  */
 public class GPSplitPane extends JSplitPane {
 
-	/** Calls the super constructor
-	 *  and adds the instance to the position manager
-	 * 
-	 */
-	public GPSplitPane() {
-		super();
-		PositionManager.addComponent(this);
-	}
+    /** Calls the super constructor
+     *  and adds the instance to the position manager
+     * 
+     */
+    public GPSplitPane() {
+        super();
+        PositionManager.addComponent(this);
+    }
 
-	/** Calls the super constructor
-	 *  and adds the instance to the position manager
-	 * 
-	 * @param newOrientation
-	 */
-	public GPSplitPane(int newOrientation) {
-		super(newOrientation);
-		PositionManager.addComponent(this);
-	}
+    /** Calls the super constructor
+     *  and adds the instance to the position manager
+     * 
+     * @param newOrientation
+     */
+    public GPSplitPane(int newOrientation) {
+        super(newOrientation);
+        PositionManager.addComponent(this);
+    }
 
-	/** Calls the super constructor
-	 *  and adds the instance to the position manager
-	 * 
-	 * @param newOrientation
-	 * @param newContinuousLayout
-	 */
-	public GPSplitPane(int newOrientation, boolean newContinuousLayout) {
-		super(newOrientation, newContinuousLayout);
-		PositionManager.addComponent(this);
-	}
+    /** Calls the super constructor
+     *  and adds the instance to the position manager
+     * 
+     * @param newOrientation
+     * @param newContinuousLayout
+     */
+    public GPSplitPane(int newOrientation, boolean newContinuousLayout) {
+        super(newOrientation, newContinuousLayout);
+        PositionManager.addComponent(this);
+    }
 
-	/** Calls the super constructor
-	 *  and adds the instance to the position manager
-	 * 
-	 * @param newOrientation
-	 * @param newLeftComponent
-	 * @param newRightComponent
-	 */
-	public GPSplitPane(
-		int newOrientation,
-		Component newLeftComponent,
-		Component newRightComponent) {
-		super(newOrientation, newLeftComponent, newRightComponent);
-		PositionManager.addComponent(this);
-	}
+    /** Calls the super constructor
+     *  and adds the instance to the position manager
+     * 
+     * @param newOrientation
+     * @param newLeftComponent
+     * @param newRightComponent
+     */
+    public GPSplitPane(
+                       int newOrientation,
+                       Component newLeftComponent,
+                       Component newRightComponent) {
+        super(newOrientation, newLeftComponent, newRightComponent);
+        PositionManager.addComponent(this);
+    }
 
-	/** Calls the super constructor
-	 *  and adds the instance to the position manager
-	 * 
-	 * @param newOrientation
-	 * @param newContinuousLayout
-	 * @param newLeftComponent
-	 * @param newRightComponent
-	 */
-	public GPSplitPane(
-		int newOrientation,
-		boolean newContinuousLayout,
-		Component newLeftComponent,
-		Component newRightComponent) {
-		super(
-			newOrientation,
-			newContinuousLayout,
-			newLeftComponent,
-			newRightComponent);
-			PositionManager.addComponent(this);
-	}
+    /** Calls the super constructor
+     *  and adds the instance to the position manager
+     * 
+     * @param newOrientation
+     * @param newContinuousLayout
+     * @param newLeftComponent
+     * @param newRightComponent
+     */
+    public GPSplitPane(
+                       int newOrientation,
+                       boolean newContinuousLayout,
+                       Component newLeftComponent,
+                       Component newRightComponent) {
+        super(
+              newOrientation,
+              newContinuousLayout,
+              newLeftComponent,
+              newRightComponent);
+        PositionManager.addComponent(this);
+    }
 
-	/** Removes the Split Pane from the 
-	 *  position manager and calls
-	 *  the super implementation. 
-	 *  
-	 * @see java.lang.Object#finalize()
-	 */
-	protected void finalize() throws Throwable {
-		PositionManager.removeComponent(this);
-		super.finalize();
-	}
+    /** Removes the Split Pane from the 
+     *  position manager and calls
+     *  the super implementation. 
+     *  
+     * @see java.lang.Object#finalize()
+     */
+    protected void finalize() throws Throwable {
+        PositionManager.removeComponent(this);
+        super.finalize();
+    }
 
-	/** Calls the super implementation
-	 *  and makes an update for the
-	 *  component by using the locale
-	 *  change adapter and the 
-	 *  position manager.
-	 *  
-	 *  @param name the new name
-	 *  @see PositionManager#updateComponent(Component)
-	 *  @see LocaleChangeAdapter#updateComponent(Component)
-	 *  @see java.awt.Component#setName(java.lang.String)
-	 * 
-	 */
-	public void setName(String name) {
-		super.setName(name);
-		PositionManager.updateComponent(this);
-		LocaleChangeAdapter.updateComponent(this);
-	}
+    /** Calls the super implementation
+     *  and makes an update for the
+     *  component by using the locale
+     *  change adapter and the 
+     *  position manager.
+     *  
+     *  @param name the new name
+     *  @see PositionManager#updateComponent(Component)
+     *  @see LocaleChangeAdapter#updateComponent(Component)
+     *  @see java.awt.Component#setName(java.lang.String)
+     * 
+     */
+    public void setName(String name) {
+        super.setName(name);
+        PositionManager.updateComponent(this);
+        LocaleChangeAdapter.updateComponent(this);
+    }
 }

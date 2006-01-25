@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CExpressionError.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CExpressionError.java,v 1.2 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,60 +29,60 @@ import at.dms.util.MessageDescription;
  */
 public class CExpressionError extends CLineError {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * An error with a formatted message as argument
-   * @param	where		the position in the source code
-   * @param	message		the formatted message
-   */
-  public CExpressionError(TokenReference where, Message message) {
-    super(where, message);
-  }
+    /**
+     * An error with a formatted message as argument
+     * @param   where       the position in the source code
+     * @param   message     the formatted message
+     */
+    public CExpressionError(TokenReference where, Message message) {
+        super(where, message);
+    }
 
-  /**
-   * An error with an arbitrary number of parameters
-   * @param	where		the position in the source code
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public CExpressionError(TokenReference where, MessageDescription description, Object[] parameters) {
-    super(where, description, parameters);
-  }
+    /**
+     * An error with an arbitrary number of parameters
+     * @param   where       the position in the source code
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public CExpressionError(TokenReference where, MessageDescription description, Object[] parameters) {
+        super(where, description, parameters);
+    }
 
-  /**
-   * An error with two parameters
-   * @param	where		the position in the source code
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public CExpressionError(TokenReference where,
-			  MessageDescription description,
-			  Object parameter1,
-			  Object parameter2)
-  {
-    super(where, description, parameter1, parameter2);
-  }
+    /**
+     * An error with two parameters
+     * @param   where       the position in the source code
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public CExpressionError(TokenReference where,
+                            MessageDescription description,
+                            Object parameter1,
+                            Object parameter2)
+    {
+        super(where, description, parameter1, parameter2);
+    }
 
-  /**
-   * An error with one parameter
-   * @param	where		the position in the source code
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public CExpressionError(TokenReference where, MessageDescription description, Object parameter) {
-    super(where, description, parameter);
-  }
+    /**
+     * An error with one parameter
+     * @param   where       the position in the source code
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public CExpressionError(TokenReference where, MessageDescription description, Object parameter) {
+        super(where, description, parameter);
+    }
 
-  /**
-   * An error without parameters
-   * @param	where		the position in the source code
-   * @param	description	the message description
-   */
-  public CExpressionError(TokenReference where, MessageDescription description) {
-    super(where, description);
-  }
+    /**
+     * An error without parameters
+     * @param   where       the position in the source code
+     * @param   description the message description
+     */
+    public CExpressionError(TokenReference where, MessageDescription description) {
+        super(where, description);
+    }
 }

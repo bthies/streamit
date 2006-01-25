@@ -42,15 +42,15 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits an init statement.
      */
     public Object visitInitStatement(SIRInitStatement self,
-				     SIRStream target) {
-	List args = self.getArgs();
-	for (int i=0; i<args.size(); i++) {
-	    JExpression newExp = (JExpression)((JExpression)args.get(i)).accept(this);
-	    if (newExp!=null && newExp!=args.get(i)) {
-		args.set(i, newExp);
-	    }
-	}
-	return self;
+                                     SIRStream target) {
+        List args = self.getArgs();
+        for (int i=0; i<args.size(); i++) {
+            JExpression newExp = (JExpression)((JExpression)args.get(i)).accept(this);
+            if (newExp!=null && newExp!=args.get(i)) {
+                args.set(i, newExp);
+            }
+        }
+        return self;
     }
 
     /**
@@ -64,102 +64,102 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a latency.
      */
     public Object visitLatency(SIRLatency self) {
-	return self;
+        return self;
     }
 
     /**
      * Visits a max latency.
      */
     public Object visitLatencyMax(SIRLatencyMax self) {
-    	return self;
+        return self;
     }
 
     /**
      * Visits a latency range.
      */
     public Object visitLatencyRange(SIRLatencyRange self) {
-	return self;
+        return self;
     }
 
     /**
      * Visits a latency set.
      */
     public Object visitLatencySet(SIRLatencySet self) {
-    	return self;
+        return self;
     }
 
     public Object visitCreatePortalExpression(SIRCreatePortal self) {
-	return self;
+        return self;
     }
 
     /**
      * Visits a message statement.
      */
     public Object visitMessageStatement(SIRMessageStatement self,
-				      JExpression portal,
-				      String iname,
-				      String ident,
-				      JExpression[] args,
-				      SIRLatency latency) {
-	JExpression newExp = (JExpression)portal.accept(this);
-	if (newExp!=null && newExp!=portal) {
-	    self.setPortal(newExp);
-	}
-	
-	visitArgs(args);
-	latency.accept(this);
-	return self;
+                                        JExpression portal,
+                                        String iname,
+                                        String ident,
+                                        JExpression[] args,
+                                        SIRLatency latency) {
+        JExpression newExp = (JExpression)portal.accept(this);
+        if (newExp!=null && newExp!=portal) {
+            self.setPortal(newExp);
+        }
+    
+        visitArgs(args);
+        latency.accept(this);
+        return self;
     }
 
     /**
      * Visits a range expression.
      */
     public Object visitRangeExpression(SIRRangeExpression self) {
-	JExpression newMin = (JExpression)self.getMin().accept(this);
-	if (newMin!=null && newMin!=self.getMin()) {
-	    self.setMin(newMin);
-	}
+        JExpression newMin = (JExpression)self.getMin().accept(this);
+        if (newMin!=null && newMin!=self.getMin()) {
+            self.setMin(newMin);
+        }
 
-	JExpression newAve = (JExpression)self.getAve().accept(this);
-	if (newAve!=null && newAve!=self.getAve()) {
-	    self.setAve(newAve);
-	}
+        JExpression newAve = (JExpression)self.getAve().accept(this);
+        if (newAve!=null && newAve!=self.getAve()) {
+            self.setAve(newAve);
+        }
 
-	JExpression newMax = (JExpression)self.getMax().accept(this);
-	if (newMax!=null && newMax!=self.getMax()) {
-	    self.setMax(newMax);
-	}
+        JExpression newMax = (JExpression)self.getMax().accept(this);
+        if (newMax!=null && newMax!=self.getMax()) {
+            self.setMax(newMax);
+        }
 
-	return self;
+        return self;
     }
 
     /**
      * Visits a dynamic token.
      */
     public Object visitDynamicToken(SIRDynamicToken self) {
-	return self;
+        return self;
     }
 
     /**
      * Visits a peek expression.
      */
     public Object visitPeekExpression(SIRPeekExpression self,
-				    CType tapeType,
-				    JExpression arg) {
-	JExpression newExp = (JExpression)arg.accept(this);
-	if (newExp!=null && newExp!=arg) {
-	    self.setArg(newExp);
-	}
-	
-	return self;
+                                      CType tapeType,
+                                      JExpression arg) {
+        JExpression newExp = (JExpression)arg.accept(this);
+        if (newExp!=null && newExp!=arg) {
+            self.setArg(newExp);
+        }
+    
+        return self;
     }
 
     /**
      * Visits a pop expression.
      */
     public Object visitPopExpression(SIRPopExpression self,
-				   CType tapeType) {
-	return self;
+                                     CType tapeType) {
+        return self;
     }
 
     /**
@@ -194,59 +194,59 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a print statement.
      */
     public Object visitPrintStatement(SIRPrintStatement self,
-				    JExpression arg) {
-	JExpression newExp = (JExpression)arg.accept(this);
-	if (newExp!=null && newExp!=arg) {
-	    self.setArg(newExp);
-	}
-	
-	return self;
+                                      JExpression arg) {
+        JExpression newExp = (JExpression)arg.accept(this);
+        if (newExp!=null && newExp!=arg) {
+            self.setArg(newExp);
+        }
+    
+        return self;
     }
 
     /**
      * Visits a push expression.
      */
     public Object visitPushExpression(SIRPushExpression self,
-				    CType tapeType,
-				    JExpression arg) {
-	JExpression newExp = (JExpression)arg.accept(this);
-	if (newExp!=null && newExp!=arg) {
-	    self.setArg(newExp);
-	}
-	
-	return self;
+                                      CType tapeType,
+                                      JExpression arg) {
+        JExpression newExp = (JExpression)arg.accept(this);
+        if (newExp!=null && newExp!=arg) {
+            self.setArg(newExp);
+        }
+    
+        return self;
     }
 
     /**
      * Visits a register-receiver statement.
      */
     public Object visitRegReceiverStatement(SIRRegReceiverStatement self,
-					  JExpression portal,
-					  SIRStream receiver,
-					  JMethodDeclaration[] methods) {
-	JExpression newExp = (JExpression)portal.accept(this);
-	if (newExp!=null && newExp!=portal) {
-	    self.setPortal(newExp);
-	}
-	
-	return self;
+                                            JExpression portal,
+                                            SIRStream receiver,
+                                            JMethodDeclaration[] methods) {
+        JExpression newExp = (JExpression)portal.accept(this);
+        if (newExp!=null && newExp!=portal) {
+            self.setPortal(newExp);
+        }
+    
+        return self;
     }
 
     /**
      * Visits a register-sender statement.
      */
     public Object visitRegSenderStatement(SIRRegSenderStatement self,
-					String portal,
-					SIRLatency latency) {
-	latency.accept(this);
-	return self;
+                                          String portal,
+                                          SIRLatency latency) {
+        latency.accept(this);
+        return self;
     }
 
     /**
      * Visit SIRMarker.
      */
     public Object visitMarker(SIRMarker self) {
-	return self;
+        return self;
     }
 
     /**
@@ -257,29 +257,29 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a function pointer.
      */
     public Object visitFunctionPointer(LIRFunctionPointer self,
-				     String name) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	return self;
+                                       String name) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        return self;
     }
     
     /**
      * Visits an LIR node.
      */
     public Object visitNode(LIRNode self) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	return self;
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        return self;
     }
 
     /**
      * Visits a child registration node.
      */
     public Object visitSetChild(LIRSetChild self,
-				JExpression streamContext,
-				String childType,
-				String childName) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                                JExpression streamContext,
+                                String childType,
+                                String childName) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
 
@@ -287,175 +287,175 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a file reader.
      */
     public Object visitFileReader(LIRFileReader self) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	self.getStreamContext().accept(this);
-	return self;
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        self.getStreamContext().accept(this);
+        return self;
     }
 
     /**
      * Visits a file writer.
      */
     public Object visitFileWriter(LIRFileWriter self) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	self.getStreamContext().accept(this);
-	return self;
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        self.getStreamContext().accept(this);
+        return self;
     }
     
     /**
      * Visits a decoder registration node.
      */
     public Object visitSetDecode(LIRSetDecode self,
-			       JExpression streamContext,
-			       LIRFunctionPointer fp) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	fp.accept(this);
-	return self;
+                                 JExpression streamContext,
+                                 LIRFunctionPointer fp) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        fp.accept(this);
+        return self;
     }
 
     /**
      * Visits a feedback loop delay node.
      */
     public Object visitSetDelay(LIRSetDelay self,
-			      JExpression data,
-			      JExpression streamContext,
-			      int delay,
-			      CType type,
-			      LIRFunctionPointer fp) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	data.accept(this);
-	streamContext.accept(this);
-	fp.accept(this);
-	return self;
+                                JExpression data,
+                                JExpression streamContext,
+                                int delay,
+                                CType type,
+                                LIRFunctionPointer fp) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        data.accept(this);
+        streamContext.accept(this);
+        fp.accept(this);
+        return self;
     }
     
     /**
      * Visits an encoder registration node.
      */
     public Object visitSetEncode(LIRSetEncode self,
-			       JExpression streamContext,
-			       LIRFunctionPointer fp) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	fp.accept(this);
-	return self;
+                                 JExpression streamContext,
+                                 LIRFunctionPointer fp) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        fp.accept(this);
+        return self;
     }
 
     /**
      * Visits a joiner-setting node.
      */
     public Object visitSetJoiner(LIRSetJoiner self,
-			       JExpression streamContext,
-			       SIRJoinType type,
-			       int ways,
-			       int[] weights) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                                 JExpression streamContext,
+                                 SIRJoinType type,
+                                 int ways,
+                                 int[] weights) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
     /**
      * Visits a peek-rate-setting node.
      */
     public Object visitSetPeek(LIRSetPeek self,
-			     JExpression streamContext,
-			     int peek) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                               JExpression streamContext,
+                               int peek) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
     /**
      * Visits a pop-rate-setting node.
      */
     public Object visitSetPop(LIRSetPop self,
-			    JExpression streamContext,
-			    int pop) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                              JExpression streamContext,
+                              int pop) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
     /**
      * Visits a push-rate-setting node.
      */
     public Object visitSetPush(LIRSetPush self,
-			     JExpression streamContext,
-			     int push) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                               JExpression streamContext,
+                               int push) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
 
     /**
      * Visits a splitter-setting node.
      */
     public Object visitSetSplitter(LIRSetSplitter self,
-				 JExpression streamContext,
-				 SIRSplitType type,
-				 int ways,
-				 int[] weights) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                                   JExpression streamContext,
+                                   SIRSplitType type,
+                                   int ways,
+                                   int[] weights) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
     /**
      * Visits a stream-type-setting node.
      */
     public Object visitSetStreamType(LIRSetStreamType self,
-				   JExpression streamContext,
-				   LIRStreamType streamType) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	return self;
+                                     JExpression streamContext,
+                                     LIRStreamType streamType) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        return self;
     }
     
     /**
      * Visits a work-function-setting node.
      */
     public Object visitSetWork(LIRSetWork self,
-			     JExpression streamContext,
-			     LIRFunctionPointer fn) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	fn.accept(this);
-	return self;
+                               JExpression streamContext,
+                               LIRFunctionPointer fn) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        fn.accept(this);
+        return self;
     }
 
     /**
      * Visits a tape registerer.
      */
     public Object visitSetTape(LIRSetTape self,
-			     JExpression streamContext,
-			     JExpression srcStruct,
-			     JExpression dstStruct,
-			     CType type,
-			     int size) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	srcStruct.accept(this);
-	dstStruct.accept(this);
-	return self;
+                               JExpression streamContext,
+                               JExpression srcStruct,
+                               JExpression dstStruct,
+                               CType type,
+                               int size) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        srcStruct.accept(this);
+        dstStruct.accept(this);
+        return self;
     }
 
     /**
      * Visits a main function contents.
      */
     public Object visitMainFunction(LIRMainFunction self,
-				  String typeName,
-				  LIRFunctionPointer init,
-				  List initStatements) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	init.accept(this);
-	for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
-	    JStatement old = (JStatement)it.next();
-	    JStatement newSt = (JStatement)old.accept(this);
-	    if (newSt!=null && newSt!=old) {
-		it.set(newSt);
-	    }
-	}
-	return self;
+                                    String typeName,
+                                    LIRFunctionPointer init,
+                                    List initStatements) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        init.accept(this);
+        for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
+            JStatement old = (JStatement)it.next();
+            JStatement newSt = (JStatement)old.accept(this);
+            if (newSt!=null && newSt!=old) {
+                it.set(newSt);
+            }
+        }
+        return self;
     }
 
 
@@ -463,16 +463,16 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a set body of feedback loop.
      */
     public Object visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
-				       JExpression streamContext,
-				       JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	childContext.accept(this);
-	return self;
+                                         JExpression streamContext,
+                                         JExpression childContext,
+                                         CType inputType,
+                                         CType outputType,
+                                         int inputSize,
+                                         int outputSize) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        childContext.accept(this);
+        return self;
     }
 
 
@@ -480,32 +480,32 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
      * Visits a set loop of feedback loop.
      */
     public Object visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
-				       JExpression streamContext,
-				       JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	childContext.accept(this);
-	return self;
+                                         JExpression streamContext,
+                                         JExpression childContext,
+                                         CType inputType,
+                                         CType outputType,
+                                         int inputSize,
+                                         int outputSize) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        childContext.accept(this);
+        return self;
     }
 
     /**
      * Visits a set a parallel stream.
      */
     public Object visitSetParallelStream(LIRSetParallelStream self,
-				       JExpression streamContext,
-				       JExpression childContext,
-				       int position,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
-	streamContext.accept(this);
-	childContext.accept(this);
-	return self;
+                                         JExpression streamContext,
+                                         JExpression childContext,
+                                         int position,
+                                         CType inputType,
+                                         CType outputType,
+                                         int inputSize,
+                                         int outputSize) {
+        Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
+        streamContext.accept(this);
+        childContext.accept(this);
+        return self;
     }
 }

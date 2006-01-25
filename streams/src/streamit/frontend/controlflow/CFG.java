@@ -28,7 +28,7 @@ import java.util.*;
  * can be used to build control-flow graphs from straight-line code.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFG.java,v 1.2 2004-01-20 23:37:34 dmaze Exp $
+ * @version $Id: CFG.java,v 1.3 2006-01-25 17:04:22 thies Exp $
  */
 public class CFG
 {
@@ -110,12 +110,12 @@ public class CFG
         // This implementation is O(n) in the number of nodes.
         List result = new ArrayList();
         for (Iterator iter = edges.keySet().iterator(); iter.hasNext(); )
-        {
-            CFGNode other = (CFGNode)iter.next();
-            List targets = (List)edges.get(other);
-            if (targets.contains(node))
-                result.add(other);
-        }
+            {
+                CFGNode other = (CFGNode)iter.next();
+                List targets = (List)edges.get(other);
+                if (targets.contains(node))
+                    result.add(other);
+            }
         return result;
     }
 
@@ -133,47 +133,47 @@ public class CFG
         int seq = 1;
         Map nodeName = new HashMap();
         for (Iterator iter = nodes.iterator(); iter.hasNext(); )
-        {
-            String name = "node" + seq;
-            CFGNode node = (CFGNode)iter.next();
-            nodeName.put(node, name);
-            // shape is box for statement, circle for placeholder,
-            // diamond for expression.  label is node number and
-            // class.
-            String shape, label;
-            if (node.isEmpty())
             {
-                shape = "ellipse";
-                label = seq + "";
+                String name = "node" + seq;
+                CFGNode node = (CFGNode)iter.next();
+                nodeName.put(node, name);
+                // shape is box for statement, circle for placeholder,
+                // diamond for expression.  label is node number and
+                // class.
+                String shape, label;
+                if (node.isEmpty())
+                    {
+                        shape = "ellipse";
+                        label = seq + "";
+                    }
+                else if (node.getExpr() != null)
+                    {
+                        shape = "diamond";
+                        // label = seq + ": " + node.getExpr().getClass();
+                        label = seq + ": " + node.getExpr();
+                    }
+                else
+                    {
+                        shape = "box";
+                        // label = seq + ": " + node.getStmt().getClass();
+                        label = seq + ": " + node.getStmt();
+                    }
+                result.append(name + " [ label=\"" + label + "\", shape=" +
+                              shape + " ]\n");
+                seq++;
             }
-            else if (node.getExpr() != null)
-            {
-                shape = "diamond";
-                // label = seq + ": " + node.getExpr().getClass();
-                label = seq + ": " + node.getExpr();
-            }
-            else
-            {
-                shape = "box";
-                // label = seq + ": " + node.getStmt().getClass();
-                label = seq + ": " + node.getStmt();
-            }
-            result.append(name + " [ label=\"" + label + "\", shape=" +
-                          shape + " ]\n");
-            seq++;
-        }
         // Next, go through all the edges.
         for (Iterator fiter = edges.keySet().iterator(); fiter.hasNext(); )
-        {
-            CFGNode from = (CFGNode)fiter.next();
-            List targets = (List)edges.get(from);
-            for (Iterator titer = targets.iterator(); titer.hasNext(); )
             {
-                CFGNode to = (CFGNode)titer.next();
-                result.append(nodeName.get(from) + " -> " +
-                              nodeName.get(to) + "\n");
+                CFGNode from = (CFGNode)fiter.next();
+                List targets = (List)edges.get(from);
+                for (Iterator titer = targets.iterator(); titer.hasNext(); )
+                    {
+                        CFGNode to = (CFGNode)titer.next();
+                        result.append(nodeName.get(from) + " -> " +
+                                      nodeName.get(to) + "\n");
+                    }
             }
-        }
         // All done.
         result.append("}\n");
         return result.toString();

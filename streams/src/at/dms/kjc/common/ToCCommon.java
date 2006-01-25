@@ -22,7 +22,7 @@ import at.dms.kjc.common.CommonUtils;
  */
 
 public abstract class ToCCommon extends SLIREmptyVisitor {
-	
+    
     /**
      *  Controls visitPrintStatement. Can override for a backend by writing
      *  to this variable. initialized by a static block.  Can be
@@ -47,25 +47,25 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     static protected Map/*<String><String>*/ printPostfixMap;
 
     static {
-		printPrefixMap = new java.util.HashMap();
-		printPostfixMap = new java.util.HashMap();
-		// Set up standard prefixes for visitPrintStatement.
-		// a subclass may override by:
-		// printPrefixMap.clear(); printPrefixMap.put...
-		printPrefixMap.put("boolean", "printf( \"%s\", ");
-		printPostfixMap.put("boolean", " ? \"true\" : \"false\");");
-		printPrefixMap.put("byte", "printf( \"%d\", ");
-		printPrefixMap.put("char", "printf( \"%c\", ");
-		printPrefixMap.put("double", "printf( \"%f\", ");
-		printPrefixMap.put("float", "printf( \"%f\", ");
-		printPrefixMap.put("int", "printf( \"%d\", ");
-		printPrefixMap.put("long", "printf( \"%d\", ");
-		printPrefixMap.put("short", "printf( \"%d\", ");
-		printPrefixMap.put("java.lang.String", "printf( \"%s\", ");
-		// we don't currently print: bit, or any CCLassType other
-		// than String
+        printPrefixMap = new java.util.HashMap();
+        printPostfixMap = new java.util.HashMap();
+        // Set up standard prefixes for visitPrintStatement.
+        // a subclass may override by:
+        // printPrefixMap.clear(); printPrefixMap.put...
+        printPrefixMap.put("boolean", "printf( \"%s\", ");
+        printPostfixMap.put("boolean", " ? \"true\" : \"false\");");
+        printPrefixMap.put("byte", "printf( \"%d\", ");
+        printPrefixMap.put("char", "printf( \"%c\", ");
+        printPrefixMap.put("double", "printf( \"%f\", ");
+        printPrefixMap.put("float", "printf( \"%f\", ");
+        printPrefixMap.put("int", "printf( \"%d\", ");
+        printPrefixMap.put("long", "printf( \"%d\", ");
+        printPrefixMap.put("short", "printf( \"%d\", ");
+        printPrefixMap.put("java.lang.String", "printf( \"%s\", ");
+        // we don't currently print: bit, or any CCLassType other
+        // than String
 
-	}
+    }
     
     /** Needed to pass info from assignment to visitNewArray * */
     protected JExpression lastLeft;  // LITtoC gave package visibility
@@ -107,25 +107,25 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     protected ToCCommon(CodegenPrintWriter p) {
         this.p = p;
-        p.setIndentation(0);		// Reset indentation to 0.  Why?
+        p.setIndentation(0);        // Reset indentation to 0.  Why?
     }
 
     /**
      * Print a left parenthesis if not in statement context.
      */
     protected void printLParen() {
-	if (! statementContext) {
-	    p.print("(");
-	}
+        if (! statementContext) {
+            p.print("(");
+        }
     }
 
     /**
      * Print a right parenthesis if not in statement context.
      */
     protected void printRParen() {
-	if (! statementContext) {
-	    p.print(")");
-	}
+        if (! statementContext) {
+            p.print(")");
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -144,86 +144,86 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     //                                         CType type,
     //                                         JExpression[] dims,
     //                                         JArrayInitializer init
-    //					 ) {
+    //                   ) {
     //     }
-//     {
-// 	p.print(" /* ToCCommon visitNewArrayExpression "
-//       	      + this.getClass().getName() + "*/ ");
-// 	//the memory allocator to use: 
-// 	String memory_alloc = KjcOptions.malloczeros ? 
-// 	    "malloc" : "calloc";
-// 	//malloc takes one arg, calloc two, so use a different sep between
-// 	//size and elements
-// 	String mem_alloc_sep = KjcOptions.malloczeros ? 
-// 	    " * " : ", ";
+    //     {
+    //  p.print(" /* ToCCommon visitNewArrayExpression "
+    //                + this.getClass().getName() + "*/ ");
+    //  //the memory allocator to use: 
+    //  String memory_alloc = KjcOptions.malloczeros ? 
+    //      "malloc" : "calloc";
+    //  //malloc takes one arg, calloc two, so use a different sep between
+    //  //size and elements
+    //  String mem_alloc_sep = KjcOptions.malloczeros ? 
+    //      " * " : ", ";
 
 
-// 	int derefs = dims.length; // number of *'s after element type
-// 	Vector suffixes = new Vector();
-// 	for (int dim = 0; dim < dims.length; dim++) {
-// 	    p.print("(");		// cast return type of allocator
-// 	    printType(type);
-// 	    for (int i = 0; i < derefs; i++) { p.print("*"); }
-// 	    p.print(")");
-// 	    p.print(memory_alloc + "("); // allocation
-// 	    dims[dim].accept(this);
-// 	    p.print(mem_alloc_sep + "sizeof(");
-// 	    printType(type);
-// 	    for (int i = 0; i < derefs - 1; i++) { p.print("*"); }
-// 	    p.print("));");
-// 	    p.newLine();
-// 	    // now either allocate subarrays if not last dimension
-// 	    // or optionally initialize if last dimension;
-// 	    if (dim == dims.length - 1) {
-// 		// gotten to data in array: 
-// 		// code creating initialization code not yet written
-// 		if (init != null) {
-// 		    p.print("/* initialize with "); 
-// 		    init.accept(this);
-// 		    p.print("*/");
-// 		    p.print(" no initialization code! ");
-// 		    p.newLine();
-// 		}
-// 		break;
-//             }
-// 	    // initialize sub-arrays in for loop so that large arrays
-// 	    // don't result in large amounts of C code
-// 	    String indx = LoweringConstants.getUniqueVarName();
-// 	    p.print("{");
-// 	    p.newLine();
-// 	    p.indent();
-// 	    p.print("int " + indx + ";");
-// 	    p.newLine();
-// 	    p.print("for (" + indx + "= 0; " 
-// 		  + indx + " < ");
-// 	    derefs--;		// drop a level of indirection each time
-//             dims[dim].accept(this);
-//             p.print("; " 
-// 		  + indx + "++) {");
-// 	    p.newLine();
-// 	    p.indent();
-// 	    suffixes.add("[" + indx + "]");
-// 	    lastLeft.accept(this);
-// 	    for (int i = 0; i < suffixes.size(); i++) {
-// 		p.print((String)(suffixes.get(i)));
-// 	    }
-//             p.print(" = ");
-// 	}
-	    
-// 	// close off any for loops created.
-// 	for (int dim = 0; dim < dims.length-1; dim++) {
-// 	    p.outdent();	// end of emitted for loop
-// 	    p.print("}");
-// 	    p.newLine();
-// 	    p.outdent();	// end of emitted block declaring loop variable
-// 	    p.print("}");
-// 	    p.newLine();
-// 	}
-//     }
+    //  int derefs = dims.length; // number of *'s after element type
+    //  Vector suffixes = new Vector();
+    //  for (int dim = 0; dim < dims.length; dim++) {
+    //      p.print("(");       // cast return type of allocator
+    //      printType(type);
+    //      for (int i = 0; i < derefs; i++) { p.print("*"); }
+    //      p.print(")");
+    //      p.print(memory_alloc + "("); // allocation
+    //      dims[dim].accept(this);
+    //      p.print(mem_alloc_sep + "sizeof(");
+    //      printType(type);
+    //      for (int i = 0; i < derefs - 1; i++) { p.print("*"); }
+    //      p.print("));");
+    //      p.newLine();
+    //      // now either allocate subarrays if not last dimension
+    //      // or optionally initialize if last dimension;
+    //      if (dim == dims.length - 1) {
+    //      // gotten to data in array: 
+    //      // code creating initialization code not yet written
+    //      if (init != null) {
+    //          p.print("/* initialize with "); 
+    //          init.accept(this);
+    //          p.print("*/");
+    //          p.print(" no initialization code! ");
+    //          p.newLine();
+    //      }
+    //      break;
+    //             }
+    //      // initialize sub-arrays in for loop so that large arrays
+    //      // don't result in large amounts of C code
+    //      String indx = LoweringConstants.getUniqueVarName();
+    //      p.print("{");
+    //      p.newLine();
+    //      p.indent();
+    //      p.print("int " + indx + ";");
+    //      p.newLine();
+    //      p.print("for (" + indx + "= 0; " 
+    //        + indx + " < ");
+    //      derefs--;       // drop a level of indirection each time
+    //             dims[dim].accept(this);
+    //             p.print("; " 
+    //        + indx + "++) {");
+    //      p.newLine();
+    //      p.indent();
+    //      suffixes.add("[" + indx + "]");
+    //      lastLeft.accept(this);
+    //      for (int i = 0; i < suffixes.size(); i++) {
+    //      p.print((String)(suffixes.get(i)));
+    //      }
+    //             p.print(" = ");
+    //  }
+        
+    //  // close off any for loops created.
+    //  for (int dim = 0; dim < dims.length-1; dim++) {
+    //      p.outdent();    // end of emitted for loop
+    //      p.print("}");
+    //      p.newLine();
+    //      p.outdent();    // end of emitted block declaring loop variable
+    //      p.print("}");
+    //      p.newLine();
+    //  }
+    //     }
 
-// ----------------------------------------------------------------------------
-// Statements common to ToC, LIRToC up to white space
-// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
+    // Statements common to ToC, LIRToC up to white space
+    // ----------------------------------------------------------------------------
 
     /**
      * prints a while statement
@@ -231,15 +231,15 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitWhileStatement(JWhileStatement self,
                                     JExpression cond,
                                     JStatement body) {
-	boolean oldStatementContext = statementContext;
-	p.newLine();
+        boolean oldStatementContext = statementContext;
+        p.newLine();
         p.print("while (");
-	statementContext = false;
+        statementContext = false;
         cond.accept(this);
         p.print(") ");
-	statementContext = true;
+        statementContext = true;
         body.accept(this);
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -247,12 +247,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                   JVariableDefinition[] vars) {
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         for (int i = 0; i < vars.length; i++) {
             vars[i].accept(this);
         }
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -261,18 +261,18 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitSwitchStatement(JSwitchStatement self,
                                      JExpression expr,
                                      JSwitchGroup[] body) {
-	boolean oldStatementContext = statementContext;
+        boolean oldStatementContext = statementContext;
         p.print("switch (");
-	statementContext = false;
+        statementContext = false;
         expr.accept(this);
         p.print(") {");
-	statementContext = true;
+        statementContext = true;
         for (int i = 0; i < body.length; i++) {
             body[i].accept(this);
         }
         p.newLine();
         p.print("}");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -280,15 +280,15 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
-	boolean oldStatementContext = statementContext;
+        boolean oldStatementContext = statementContext;
         p.print("return");
         if (expr != null) {
             p.print(" ");
-	    statementContext = false;
+            statementContext = false;
             expr.accept(this);
         }
         p.print(";");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -306,10 +306,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitCompoundStatement(JCompoundStatement self,
                                        JStatement[] body) {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
+        boolean oldStatementContext = statementContext;
+        statementContext = true;
         visitCompoundStatement(body);
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -317,11 +317,11 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitExpressionStatement(JExpressionStatement self,
                                          JExpression expr) {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
+        boolean oldStatementContext = statementContext;
+        statementContext = true;
         expr.accept(this);
-	p.print(";");
-	statementContext = oldStatementContext;
+        p.print(";");
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -329,18 +329,18 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitExpressionListStatement(JExpressionListStatement self,
                                              JExpression[] expr) {
-	boolean oldStatementContext = statementContext;
-	// Want expressions parenthesized here to not have problems with
-	// relative precedence with ","
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        // Want expressions parenthesized here to not have problems with
+        // relative precedence with ","
+        statementContext = false;
         for (int i = 0; i < expr.length; i++) {
             if (i != 0) {
                 p.print(", ");
             }
             expr[i].accept(this);
         }
-	statementContext = oldStatementContext;
-	p.print(";");
+        statementContext = oldStatementContext;
+        p.print(";");
     }
 
     /**
@@ -349,17 +349,17 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitDoStatement(JDoStatement self,
                                  JExpression cond,
                                  JStatement body) {
-	boolean oldStatementContext = statementContext;
+        boolean oldStatementContext = statementContext;
         p.newLine();
         p.print("do ");
-	statementContext = true;
+        statementContext = true;
         body.accept(this);
         p.print("");
         p.print("while (");
-	statementContext = false;
+        statementContext = false;
         cond.accept(this);
         p.print(");");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -393,14 +393,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * prints a compound statement
      */
     public void visitCompoundStatement(JStatement[] body) {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
+        boolean oldStatementContext = statementContext;
+        statementContext = true;
         for (int i = 0; i < body.length; i++) {
             if (!(body[i] instanceof JEmptyStatement))
-		p.newLine();
+                p.newLine();
             body[i].accept(this);
         }
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -408,15 +408,15 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitBlockStatement(JBlock self,
                                     JavaStyleComment[] comments) {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
+        boolean oldStatementContext = statementContext;
+        statementContext = true;
         p.print("{");
         p.indent();
         visitCompoundStatement(self.getStatementArray());
         p.outdent();
         p.newLine();
         p.print("}");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -424,11 +424,11 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitTypeDeclarationStatement(JTypeDeclarationStatement self,
                                               JTypeDeclaration decl) {
-	
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+    
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         decl.accept(this);
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     // ----------------------------------------------------------------------
@@ -441,10 +441,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitUnaryPlusExpression(JUnaryExpression self,
                                          JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("+");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -453,34 +453,34 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitUnaryMinusExpression(JUnaryExpression self,
                                           JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("-");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
      * prints a bitwise complement expression
      */
     public void visitBitwiseComplementExpression(JUnaryExpression self,
-						 JExpression expr)
+                                                 JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("~");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
      * prints a logical complement expression
      */
     public void visitLogicalComplementExpression(JUnaryExpression self,
-						 JExpression expr)
+                                                 JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("!");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -488,9 +488,9 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
-	p.print("(");
-    printType(type);
-	p.print(")");
+        p.print("(");
+        printType(type);
+        p.print(")");
     }
 
 
@@ -501,7 +501,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                      int oper,
                                      JExpression left,
                                      JExpression right) {
-	p.print("(");
+        p.print("(");
         left.accept(this);
         if (oper == OPE_SL) {
             p.print(" << ");
@@ -511,7 +511,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
             p.print(" >>> ");
         }
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -520,17 +520,17 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitPrefixExpression(JPrefixExpression self,
                                       int oper,
                                       JExpression expr) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         if (oper == OPE_PREINC) {
             p.print("++");
         } else {
             p.print("--");
         }
         expr.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -539,17 +539,17 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitPostfixExpression(JPostfixExpression self,
                                        int oper,
                                        JExpression expr) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         expr.accept(this);
         if (oper == OPE_POSTINC) {
             p.print("++");
         } else {
             p.print("--");
         }
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -557,12 +557,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitParenthesedExpression(JParenthesedExpression self,
                                            JExpression expr) {
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         p.print("(");
         expr.accept(this);
         p.print(")");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
 
@@ -580,14 +580,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                         boolean equal,
                                         JExpression left,
                                         JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         left.accept(this);
         p.print(equal ? " == " : " != ");
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -597,16 +597,16 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                            JExpression cond,
                                            JExpression left,
                                            JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         cond.accept(this);
         p.print(" ? ");
         left.accept(this);
         p.print(" : ");
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -616,10 +616,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                                   int oper,
                                                   JExpression left,
                                                   JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
+        printLParen();
+        boolean oldStatementContext = statementContext;
         left.accept(this);
-	statementContext = false;
+        statementContext = false;
         switch (oper) {
         case OPE_STAR:
             p.print(" *= ");
@@ -656,34 +656,34 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
             break;
         }
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
      * prints a cast expression
      */
     public void visitCastExpression(JCastExpression self,
-				    JExpression expr,
-				    CType type)
+                                    JExpression expr,
+                                    CType type)
     {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
-	//suppress generation of casts for multidimensional arrays
-	//when generating C code because they are meaningless
-	//and if we try to access a multi-dim array after it has been cast to 
-	//(type **) they dimensions are unknown...
-	if (!(type.isArrayType() 
-	      && ((CArrayType)type).getElementType().isArrayType())) {
-	    p.print("(");
-	    printType(type);
-	    p.print(")");
-	}
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
+        //suppress generation of casts for multidimensional arrays
+        //when generating C code because they are meaningless
+        //and if we try to access a multi-dim array after it has been cast to 
+        //(type **) they dimensions are unknown...
+        if (!(type.isArrayType() 
+              && ((CArrayType)type).getElementType().isArrayType())) {
+            p.print("(");
+            printType(type);
+            p.print(")");
+        }
         p.print("(");
-	expr.accept(this);
-	p.print(")");
-	statementContext = oldStatementContext;
+        expr.accept(this);
+        p.print(")");
+        statementContext = oldStatementContext;
         printRParen();
     }
     
@@ -694,16 +694,16 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                             JExpression expr,
                                             CType type)
     {
-	boolean oldStatementContext = statementContext;
+        boolean oldStatementContext = statementContext;
         printLParen();
-	statementContext = false;
+        statementContext = false;
         p.print("(");
         printType(type);
         p.print(")");
         p.print("(");
         expr.accept(this);
         p.print(")");
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -729,68 +729,68 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * @return
      */
     protected List /*<JExpression>*/ splitForPrint(JExpression exp) {
-    	List exprs = new ArrayList(1);
-    	if (exp instanceof JAddExpression) {
-    		JExpression l, r;
-    		CType lt = null; 
-    		CType rt = null;
-    		
-    		l = ((JAddExpression)exp).getLeft();
-    		r = ((JAddExpression)exp).getRight();
-    		try {
-    			lt = l.getType();
-    		} catch (Exception e) { /* leave Null if type not recorded */ }
-    		try {
-    			rt = r.getType();
-    		} catch (Exception e) { /* leave Null if type not recorded */ }
+        List exprs = new ArrayList(1);
+        if (exp instanceof JAddExpression) {
+            JExpression l, r;
+            CType lt = null; 
+            CType rt = null;
+            
+            l = ((JAddExpression)exp).getLeft();
+            r = ((JAddExpression)exp).getRight();
+            try {
+                lt = l.getType();
+            } catch (Exception e) { /* leave Null if type not recorded */ }
+            try {
+                rt = r.getType();
+            } catch (Exception e) { /* leave Null if type not recorded */ }
 
-    		if ((lt != null && lt.equals(CStdType.String))
-    			 || (rt != null && rt.equals(CStdType.String) )) {
-    			exprs.addAll(splitForPrint(l));
-    			exprs.addAll(splitForPrint(r));
-    		} else {
-    			exprs.add(exp);
-    		}
-    	} else {
-    		exprs.add(exp);
-    	}
-    	return exprs;
+            if ((lt != null && lt.equals(CStdType.String))
+                || (rt != null && rt.equals(CStdType.String) )) {
+                exprs.addAll(splitForPrint(l));
+                exprs.addAll(splitForPrint(r));
+            } else {
+                exprs.add(exp);
+            }
+        } else {
+            exprs.add(exp);
+        }
+        return exprs;
     }
 
     protected boolean printExp(JExpression expr) {
-	boolean oldStatementContext = statementContext;
-	statementContext = true;
+        boolean oldStatementContext = statementContext;
+        statementContext = true;
 
-    	List exps = splitForPrint(expr);
-    	boolean printedOK = true;
-    	for (Iterator i = exps.iterator(); i.hasNext();) {
-    		JExpression exp = ((JExpression)i.next());
-    		CType t = null;
-    		try {
-    			t = exp.getType();
-    		} catch (Exception e) {
-    			System.err.println("Cannot get type for print statement");
-    			printedOK = false;
-    		}
-    		String typeString = t.toString();
-    		String printPrefix = (String)(printPrefixMap.get(typeString));
-    		if (printPrefix == null) {
-    			System.err.println("Print statement does not support type "
-    					+ t);
-    			printedOK = false;
-    		} else {
-    			p.print(printPrefix);
-    			exp.accept(this);
-			String printPostfix = 
-			    (String)(printPostfixMap.get(typeString));
-			if (printPostfix == null) {
-			    printPostfix = ");";
-			}
-    			p.print(printPostfix);
-    		}
-    	}
-	statementContext = oldStatementContext;
-	return printedOK;
+        List exps = splitForPrint(expr);
+        boolean printedOK = true;
+        for (Iterator i = exps.iterator(); i.hasNext();) {
+            JExpression exp = ((JExpression)i.next());
+            CType t = null;
+            try {
+                t = exp.getType();
+            } catch (Exception e) {
+                System.err.println("Cannot get type for print statement");
+                printedOK = false;
+            }
+            String typeString = t.toString();
+            String printPrefix = (String)(printPrefixMap.get(typeString));
+            if (printPrefix == null) {
+                System.err.println("Print statement does not support type "
+                                   + t);
+                printedOK = false;
+            } else {
+                p.print(printPrefix);
+                exp.accept(this);
+                String printPostfix = 
+                    (String)(printPostfixMap.get(typeString));
+                if (printPostfix == null) {
+                    printPostfix = ");";
+                }
+                p.print(printPostfix);
+            }
+        }
+        statementContext = oldStatementContext;
+        return printedOK;
     }
     
     /**
@@ -799,12 +799,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * to our output languages C or C++
      */
     
-   public void visitPrintStatement(SIRPrintStatement self,
-            JExpression exp) { 
-    	printExp(exp);
-    	if (self.getNewline()) {
-    		p.print("printf(\"\\n\");\n");
-    	}
+    public void visitPrintStatement(SIRPrintStatement self,
+                                    JExpression exp) { 
+        printExp(exp);
+        if (self.getNewline()) {
+            p.print("printf(\"\\n\");\n");
+        }
     }
 
 
@@ -812,12 +812,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * Print marker as a comment.
      */
     public void visitMarker(SIRMarker self) {
-	if (self instanceof SIRBeginMarker) {
-	    p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
-	}
-	if (self instanceof SIREndMarker) {
-	    p.println("// mark end: " + ((SIREndMarker)self).getName());
-	}
+        if (self instanceof SIRBeginMarker) {
+            p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
+        }
+        if (self instanceof SIREndMarker) {
+            p.println("// mark end: " + ((SIREndMarker)self).getName());
+        }
     }
 
     /**
@@ -828,7 +828,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * @param ident  the identifier to declare
      */
     protected void printDecl(CType s, String ident) {
-	p.print(CommonUtils.declToString(s, ident, hasBoolType));
+        p.print(CommonUtils.declToString(s, ident, hasBoolType));
     }
 
     /**
@@ -838,6 +838,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      *
      */
     protected void printType(CType s) {
-    	p.print(CommonUtils.CTypeToString(s, hasBoolType));
+        p.print(CommonUtils.CTypeToString(s, hasBoolType));
     }
 }

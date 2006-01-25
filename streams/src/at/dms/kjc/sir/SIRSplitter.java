@@ -16,15 +16,15 @@ public class SIRSplitter extends SIROperator {
      * function.
      */
     public static final JMethodDeclaration WORK_FUNCTION = 
-	new JMethodDeclaration(/* tokref     */ null,
-			       /* modifiers  */ at.dms.kjc.Constants.ACC_PUBLIC,
-			       /* returntype */ CStdType.Void,
-			       /* identifier -- important for uniprocessor */ LoweringConstants.SPLITTER_WORK_NAME,
-			       /* parameters */ JFormalParameter.EMPTY,
-			       /* exceptions */ CClassType.EMPTY,
-			       /* body       */ new JBlock(),
-			       /* javadoc    */ null,
-			       /* comments   */ null);
+        new JMethodDeclaration(/* tokref     */ null,
+                               /* modifiers  */ at.dms.kjc.Constants.ACC_PUBLIC,
+                               /* returntype */ CStdType.Void,
+                               /* identifier -- important for uniprocessor */ LoweringConstants.SPLITTER_WORK_NAME,
+                               /* parameters */ JFormalParameter.EMPTY,
+                               /* exceptions */ CClassType.EMPTY,
+                               /* body       */ new JBlock(),
+                               /* javadoc    */ null,
+                               /* comments   */ null);
     /** 
      * The type of this joiner.
      */
@@ -50,32 +50,32 @@ public class SIRSplitter extends SIROperator {
     }
 
     private SIRSplitter(SIRContainer parent, 
-			SIRSplitType type, 
-			JExpression[] weights,
-			boolean uniform) {
-      super(parent);
-      this.weights = weights;
-      this.type = type;
-      this.uniform = uniform;
+                        SIRSplitType type, 
+                        JExpression[] weights,
+                        boolean uniform) {
+        super(parent);
+        this.weights = weights;
+        this.type = type;
+        this.uniform = uniform;
     }
     
     public static SIRSplitter create(SIRContainer parent, 
-				     SIRSplitType type, 
-				     JExpression[] weights) {
-	if (type==SIRSplitType.DUPLICATE) {
-	    return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 1), true);
+                                     SIRSplitType type, 
+                                     JExpression[] weights) {
+        if (type==SIRSplitType.DUPLICATE) {
+            return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 1), true);
         } else if (type==SIRSplitType.NULL) {
-	    return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 0), true);
-	} else if (type==SIRSplitType.WEIGHTED_RR) {
-	    return createWeightedRR(parent,weights);
-	} else if (type==SIRSplitType.ROUND_ROBIN) {
-	    JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
-	    createUniformRR(parent, weight);
-	} else {
-	    Utils.fail("Unreckognized splitter type.");
-	}
-	// stupid compiler
-	return null;
+            return new SIRSplitter(parent, type, Utils.initLiteralArray(weights.length, 0), true);
+        } else if (type==SIRSplitType.WEIGHTED_RR) {
+            return createWeightedRR(parent,weights);
+        } else if (type==SIRSplitType.ROUND_ROBIN) {
+            JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
+            createUniformRR(parent, weight);
+        } else {
+            Utils.fail("Unreckognized splitter type.");
+        }
+        // stupid compiler
+        return null;
     }
 
 
@@ -83,25 +83,25 @@ public class SIRSplitter extends SIROperator {
      * Constructs a splitter with given parent, type and n number of inputs.
      */
     public static SIRSplitter create(SIRContainer parent, 
-				     SIRSplitType type, 
-				     int n) {
-	if (type==SIRSplitType.DUPLICATE) {
-	    // fill weights with 1
-	    return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 1), true);
+                                     SIRSplitType type, 
+                                     int n) {
+        if (type==SIRSplitType.DUPLICATE) {
+            // fill weights with 1
+            return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 1), true);
         } else if (type==SIRSplitType.NULL) {
-	    // for null type, fill with zero weights
-	    return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 0), true);
-	} else if (type==SIRSplitType.WEIGHTED_RR) {
-	    // if making a weighted round robin, should use other constructor
-	    Utils.fail("Need to specify weights for weighted round robin");
-	} else if (type==SIRSplitType.ROUND_ROBIN) {
-	    // if making a round robin, should use other constructor
-	    Utils.fail("Need to specify weight for uniform round robin");
-	} else {
-	    Utils.fail("Unreckognized splitter type.");
-	}
-	// stupid compiler
-	return null;
+            // for null type, fill with zero weights
+            return new SIRSplitter(parent, type, Utils.initLiteralArray(n, 0), true);
+        } else if (type==SIRSplitType.WEIGHTED_RR) {
+            // if making a weighted round robin, should use other constructor
+            Utils.fail("Need to specify weights for weighted round robin");
+        } else if (type==SIRSplitType.ROUND_ROBIN) {
+            // if making a round robin, should use other constructor
+            Utils.fail("Need to specify weight for uniform round robin");
+        } else {
+            Utils.fail("Unreckognized splitter type.");
+        }
+        // stupid compiler
+        return null;
     }
 
     /**
@@ -109,9 +109,9 @@ public class SIRSplitter extends SIROperator {
      * parent and weights.  
      */
     public static SIRSplitter createWeightedRR(SIRContainer parent, 
-					       JExpression[] weights) {
-	return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights, 
-			       false);
+                                               JExpression[] weights) {
+        return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights, 
+                               false);
     }
 
     /**
@@ -119,11 +119,11 @@ public class SIRSplitter extends SIROperator {
      * the stream.
      */
     public static SIRSplitter createUniformRR(SIRContainer parent, 
-					      JExpression weight) {
-	return new SIRSplitter(parent, 
-			       SIRSplitType.WEIGHTED_RR,
-			       Utils.initArray(Math.max(parent.size(), 1), weight),
-			       true);
+                                              JExpression weight) {
+        return new SIRSplitter(parent, 
+                               SIRSplitType.WEIGHTED_RR,
+                               Utils.initArray(Math.max(parent.size(), 1), weight),
+                               true);
     }
 
     /**
@@ -133,12 +133,12 @@ public class SIRSplitter extends SIROperator {
      * round robin.
      */
     public boolean equals(SIRSplitter obj) {
-	if (obj.type!=SIRSplitType.WEIGHTED_RR || 
-	        type!=SIRSplitType.WEIGHTED_RR) {
-	    return type==obj.type;
-	} else {
-	    return Utils.equalArrays(getWeights(), obj.getWeights());
-	}
+        if (obj.type!=SIRSplitType.WEIGHTED_RR || 
+            type!=SIRSplitType.WEIGHTED_RR) {
+            return type==obj.type;
+        } else {
+            return Utils.equalArrays(getWeights(), obj.getWeights());
+        }
     }
 
     /**
@@ -146,106 +146,106 @@ public class SIRSplitter extends SIROperator {
      * rescale the weights to be of the given <extent>
      */
     public void rescale(int extent) {
-	if (uniform) {
-	    this.weights = Utils.initArray(extent, weights[0]);
-	}
+        if (uniform) {
+            this.weights = Utils.initArray(extent, weights[0]);
+        }
     }
     
     /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
-	return v.visitSplitter(this,
-			       type,
-			       weights);
+        return v.visitSplitter(this,
+                               type,
+                               weights);
     }
 
     /**
      * Return type of this.
      */
     public SIRSplitType getType() {
-	return type;
+        return type;
     }
 
     /**
      * Return the number of outputs of this.
      */
     public int getWays() {
-	return weights.length;
+        return weights.length;
     }
 
     /**
      * See doc in SIROperator.
      */
     public String getIdent() {
-	return type.toString() + "_Splitter";
+        return type.toString() + "_Splitter";
     }
 
     public String toString() {
-	return "SIRSplitter:"+getName();
+        return "SIRSplitter:"+getName();
     }
 
     /**
      * Returns JExpression weights of this.
      */
     public JExpression[] getInternalWeights() {
-	return weights;
+        return weights;
     }
 
     /**
      * Returns the sum of all weights in this.
      */
     public int getSumOfWeights() {
-	int[] weights = getWeights();
-	int sum = 0;
-	for (int i=0; i<weights.length; i++) {
-	    sum += weights[i];
-	}
-	return sum;
+        int[] weights = getWeights();
+        int sum = 0;
+        for (int i=0; i<weights.length; i++) {
+            sum += weights[i];
+        }
+        return sum;
     }
 
     /**
      * Return int weights array of this.
      */
     public int[] getWeights() {
-	int[] result = new int[weights.length];
-	for (int i=0; i<weights.length; i++) {
-	    result[i] = getWeight(i);
-	}
-	return result;
+        int[] result = new int[weights.length];
+        for (int i=0; i<weights.length; i++) {
+            result[i] = getWeight(i);
+        }
+        return result;
     }
 
     /**
      * Return int weight at position i.
      */
     public int getWeight(int i) {
-	assert weights[i] instanceof JIntLiteral:
+        assert weights[i] instanceof JIntLiteral:
             "Expecting JIntLiteral as weight to round-robin--" +
             "could have problems with constant prop (maybe " +
             "it hasn't been run yet) or orig program";
-	return ((JIntLiteral)weights[i]).intValue();
+        return ((JIntLiteral)weights[i]).intValue();
     }
  
     public JExpression getWeightNoChecking(int i) {
         return weights[i];
     }
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRSplitter other = new at.dms.kjc.sir.SIRSplitter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRSplitter other = new at.dms.kjc.sir.SIRSplitter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRSplitter other) {
-  super.deepCloneInto(other);
-  other.type = (at.dms.kjc.sir.SIRSplitType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
-  other.uniform = this.uniform;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRSplitter other) {
+        super.deepCloneInto(other);
+        other.type = (at.dms.kjc.sir.SIRSplitType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+        other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
+        other.uniform = this.uniform;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

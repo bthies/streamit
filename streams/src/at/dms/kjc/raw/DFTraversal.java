@@ -10,19 +10,19 @@ public class DFTraversal implements FlatVisitor
     
     public static LinkedList getDFTraversal(FlatNode top) 
     {
-	DFTraversal df = new DFTraversal();
-	top.accept(df, null, true);
-	return df.traversal;
+        DFTraversal df = new DFTraversal();
+        top.accept(df, null, true);
+        return df.traversal;
     }
     
     protected DFTraversal() 
     {
-	traversal = new LinkedList();
+        traversal = new LinkedList();
     }
     
     
     public void visitNode(FlatNode node) 
     {
-	traversal.add(node);
+        traversal.add(node);
     }
 }

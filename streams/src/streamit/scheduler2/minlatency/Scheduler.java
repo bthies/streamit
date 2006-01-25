@@ -33,7 +33,7 @@ public class Scheduler extends streamit.scheduler2.Scheduler
 
     // static constructor for consistency with constrained.Scheduler
     public static Scheduler create(Iterator _root) {
-	return new Scheduler(_root);
+        return new Scheduler(_root);
     }
     
     public void computeSchedule()

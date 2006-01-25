@@ -41,24 +41,24 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * pass will have to create the init function
      */
     protected SIRStream(SIRContainer parent,
-			String ident,
-			JFieldDeclaration[] fields,
-			JMethodDeclaration[] methods) {
-      super(parent);
-      this.ident = ident;
-      this.fields = fields;
-      this.methods = methods;
+                        String ident,
+                        JFieldDeclaration[] fields,
+                        JMethodDeclaration[] methods) {
+        super(parent);
+        this.ident = ident;
+        this.fields = fields;
+        this.methods = methods;
     }
 
     protected SIRStream() {
-	this(null, null, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+        this(null, null, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
     }
 
     /*
      * Set the fields member variable 
      */
     public void setFields (JFieldDeclaration[] f) {
-	this.fields = f;
+        this.fields = f;
     }
 
     /**
@@ -70,15 +70,15 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * Adds to end of fields.
      */
     public void addFields (JFieldDeclaration[] f) {
-	JFieldDeclaration[] newFields = 
-	    new JFieldDeclaration[fields.length + f.length];
-	for (int i=0; i<fields.length; i++) {
-	    newFields[i] = fields[i];
-	}
-	for (int i=0; i<f.length; i++) {
-	    newFields[fields.length+i] = f[i];
-	}
-	this.fields = newFields;
+        JFieldDeclaration[] newFields = 
+            new JFieldDeclaration[fields.length + f.length];
+        for (int i=0; i<fields.length; i++) {
+            newFields[i] = fields[i];
+        }
+        for (int i=0; i<f.length; i++) {
+            newFields[fields.length+i] = f[i];
+        }
+        this.fields = newFields;
     }
 
     /**
@@ -123,53 +123,53 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * duplicates. 
      */
     public void addMethods (JMethodDeclaration[] m) {
-	JMethodDeclaration[] newMethods = 
-	    new JMethodDeclaration[methods.length + m.length];
-	for (int i=0; i<methods.length; i++) {
-	    newMethods[i] = methods[i];
-	}
-	for (int i=0; i<m.length; i++) {
-	    newMethods[methods.length+i] = m[i];
-	}
-	this.methods = newMethods;
+        JMethodDeclaration[] newMethods = 
+            new JMethodDeclaration[methods.length + m.length];
+        for (int i=0; i<methods.length; i++) {
+            newMethods[i] = methods[i];
+        }
+        for (int i=0; i<m.length; i++) {
+            newMethods[methods.length+i] = m[i];
+        }
+        this.methods = newMethods;
     }
 
     /**
      * Gets the field decl's of this stream.
      */
     public JFieldDeclaration[] getFields() {
-	return fields;
+        return fields;
     }
 
     /**
      * Gets the method decl's of this stream.
      */
     public JMethodDeclaration[] getMethods() {
-	checkRep();
-	return methods;
+        checkRep();
+        return methods;
     }
 
     /**
      * Sets the identifier of this.
      */
     public void setIdent(String ident) {
-	this.ident = ident;
+        this.ident = ident;
     }
 
     public String getIdent() {
-	return ident;
+        return ident;
     }
 
     public String toString() {
-	return (this.getClass()) + " " + getIdent();
+        return (this.getClass()) + " " + getIdent();
     }
 
     /**
      * Sets the work function.
      */
     public void setWork (JMethodDeclaration newWork) {
-	addReplacementMethod(newWork, this.work);
-	this.work = newWork;
+        addReplacementMethod(newWork, this.work);
+        this.work = newWork;
     }
 
     /**
@@ -178,18 +178,18 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * the parameters haven't been resolved yet.
      */
     public List getParams() {
-	if (parent==null) {
-	    return null;
-	} else {
-	    return parent.getParams(parent.indexOf(this));
-	} 
+        if (parent==null) {
+            return null;
+        } else {
+            return parent.getParams(parent.indexOf(this));
+        } 
     }
 
     /**
      * Gets the work function.
      */
     public JMethodDeclaration getWork () {
-	return this.work;
+        return this.work;
     }
 
     /*
@@ -197,12 +197,12 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * in <m> are non-null.
      */
     public void setMethods (JMethodDeclaration[] m) {
-	if(m!=null)
-	    for (int i=0; i<m.length; i++) {
-		assert m[i]!=null:
+        if(m!=null)
+            for (int i=0; i<m.length; i++) {
+                assert m[i]!=null:
                     "Detected a null method in SIRStream.setMethods";
-	    }
-	this.methods = m;
+            }
+        this.methods = m;
     }
 
     /**
@@ -225,16 +225,16 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * if no deep-child of this has number <num>.
      */
     public SIRStream getStreamWithNumber(final int num) {
-	final SIRStream[] result = new SIRStream[1];
-	IterFactory.createFactory().createIter(this).accept(new EmptyStreamVisitor() {
-		public void preVisitStream(SIRStream self,
-					   SIRIterator iter) {
-		    if (self.getNumber()==num) {
-			result[0] = self;
-		    }
-		}
-	    });
-	return result[0];
+        final SIRStream[] result = new SIRStream[1];
+        IterFactory.createFactory().createIter(this).accept(new EmptyStreamVisitor() {
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    if (self.getNumber()==num) {
+                        result[0] = self;
+                    }
+                }
+            });
+        return result[0];
     }
 
     /**
@@ -263,7 +263,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * FileReader's and FileWriter's do not need an init call.
      */
     public boolean needsInit() {
-	return true;
+        return true;
     }
 
     /**
@@ -273,17 +273,17 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * level of the Kopi IR (it is generated in C).
      */
     public boolean needsWork() {
-	return true;
+        return true;
     }
 
     /**
      * sets the init function
      */
     public void setInit(JMethodDeclaration newInit) {
-	if (newInit!=null) {
-	    addReplacementMethod(newInit, this.init);
-	}
-	this.init = newInit;
+        if (newInit!=null) {
+            addReplacementMethod(newInit, this.init);
+        }
+        this.init = newInit;
     }
 
     /**
@@ -292,7 +292,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * unless you're fusing.
      */
     public void setInitWithoutReplacement(JMethodDeclaration newInit) {
-	this.init = newInit;
+        this.init = newInit;
     }
 
     /**
@@ -305,25 +305,25 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * all methods.)
      */
     protected void addReplacementMethod(JMethodDeclaration newMethod,
-					JMethodDeclaration origMethod) {
-	// check if <origMethod> is null
-	if (origMethod==null) {
-	    // if yes, then just add <newMethod>
-	    addMethod(newMethod);
-	} else {
-	    //otherwise, try swappping the old init function with new
-	    int i;
-	    for (i=0; i<methods.length; i++) {
-		if (methods[i]==origMethod) { 
-		    methods[i]=newMethod;
-		    break;
-		}
-	    }
-	    // if we didn't find it, then just add <newMethod>
-	    if (i==methods.length) {
-		addMethod(newMethod);
-	    }
-	}
+                                        JMethodDeclaration origMethod) {
+        // check if <origMethod> is null
+        if (origMethod==null) {
+            // if yes, then just add <newMethod>
+            addMethod(newMethod);
+        } else {
+            //otherwise, try swappping the old init function with new
+            int i;
+            for (i=0; i<methods.length; i++) {
+                if (methods[i]==origMethod) { 
+                    methods[i]=newMethod;
+                    break;
+                }
+            }
+            // if we didn't find it, then just add <newMethod>
+            if (i==methods.length) {
+                addMethod(newMethod);
+            }
+        }
     }
 
     /**
@@ -331,24 +331,24 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * as a method of this.  Requires that <method> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
-	assert method!=null;
-	// see if we already have <method> in this
-	for (int i=0; i<methods.length; i++) {
-	    if (methods[i]==method) {
-		return;
-	    }
-	}
-	// otherwise, create new methods array
-	JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length
-								+ 1];
-	// copy in new method
-	newMethods[0] = method;
-	// copy in old methods
-	for (int i=0; i<methods.length; i++) {
-	    newMethods[i+1] = methods[i];
-	}
-	// reset old to new
-	this.methods = newMethods;
+        assert method!=null;
+        // see if we already have <method> in this
+        for (int i=0; i<methods.length; i++) {
+            if (methods[i]==method) {
+                return;
+            }
+        }
+        // otherwise, create new methods array
+        JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length
+                                                                 + 1];
+        // copy in new method
+        newMethods[0] = method;
+        // copy in old methods
+        for (int i=0; i<methods.length; i++) {
+            newMethods[i+1] = methods[i];
+        }
+        // reset old to new
+        this.methods = newMethods;
     }
 
     
@@ -357,23 +357,23 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * as a field of this.  
      */
     public void addField(JFieldDeclaration field) {
-	// see if we already have <field> in this
-	for (int i=0; i<fields.length; i++) {
-	    if (fields[i]==field) {
-		return;
-	    }
-	}
-	// otherwise, create new fields array
-	JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
-								+ 1];
-	// copy in old fields
-	for (int i=0; i<fields.length; i++) {
-	    newFields[i] = fields[i];
-	}
-	// copy in new field
-	newFields[fields.length] = field;	
-	// reset old to new
-	this.fields = newFields;
+        // see if we already have <field> in this
+        for (int i=0; i<fields.length; i++) {
+            if (fields[i]==field) {
+                return;
+            }
+        }
+        // otherwise, create new fields array
+        JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
+                                                              + 1];
+        // copy in old fields
+        for (int i=0; i<fields.length; i++) {
+            newFields[i] = fields[i];
+        }
+        // copy in new field
+        newFields[fields.length] = field;   
+        // reset old to new
+        this.fields = newFields;
     }
 
 
@@ -381,12 +381,12 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * Returns whether or not a function named <name> is defined in this.
      */
     public boolean hasMethod(String name) {
-	for (int i=0; i<methods.length; i++) {
-	    if (methods[i].getName().equals(name)) {
-		return true;
-	    }
-	}
-	return false;
+        for (int i=0; i<methods.length; i++) {
+            if (methods[i].getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -396,7 +396,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * is SPECIFIC TO THE UNIPROCESSOR BACKEND.
      */
     public String getTypeNameInC() {
-	return getName();
+        return getName();
     }
     
 
@@ -404,89 +404,89 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * gets the init function
      */
     public JMethodDeclaration getInit() {
-	return init;
+        return init;
     }
 
     public boolean insideFeedbackLoop() {
-	SIRContainer currentParent = this.getParent();
-	
-	while (currentParent != null) {
-	    if (currentParent instanceof SIRFeedbackLoop)
-		return true;
-	    currentParent = currentParent.getParent();
-	}
-	//did not hit a feedback loop 
-	return false;
+        SIRContainer currentParent = this.getParent();
+    
+        while (currentParent != null) {
+            if (currentParent instanceof SIRFeedbackLoop)
+                return true;
+            currentParent = currentParent.getParent();
+        }
+        //did not hit a feedback loop 
+        return false;
     }
 
     /**
      * Checks representation of this.
      */
     private void checkRep() {
-	// check that <methods> containts init and work if we need it
-	// (and that it contains it just once.)
-	boolean foundInit = false;
-	boolean foundWork = false;
-	for (int i=0; i<methods.length; i++) {
-	    if (methods[i]==getInit()) {
-		assert !foundInit;
-		foundInit = true;
-	    }
-	    if (methods[i]==getWork()) {
-		assert !foundWork;
-		foundWork = true;
-	    }
-	}
-	assert foundInit || !needsInit() || getInit()==null;
-	assert foundWork || !needsWork() || getWork()==null;
+        // check that <methods> containts init and work if we need it
+        // (and that it contains it just once.)
+        boolean foundInit = false;
+        boolean foundWork = false;
+        for (int i=0; i<methods.length; i++) {
+            if (methods[i]==getInit()) {
+                assert !foundInit;
+                foundInit = true;
+            }
+            if (methods[i]==getWork()) {
+                assert !foundWork;
+                foundWork = true;
+            }
+        }
+        assert foundInit || !needsInit() || getInit()==null;
+        assert foundWork || !needsWork() || getWork()==null;
     }
 
     /**
      * Returns an empty void method with given name.
      */
     private static JMethodDeclaration makeEmptyVoidMethod(String name) {
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void, name,
-				      JFormalParameter.EMPTY, CClassType.EMPTY,
-				      new JBlock(), null, null);
+        return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+                                      CStdType.Void, name,
+                                      JFormalParameter.EMPTY, CClassType.EMPTY,
+                                      new JBlock(), null, null);
     }
 
     /**
      * Returns an empty work function.
      */
     public static JMethodDeclaration makeEmptyWork() {
-	return makeEmptyVoidMethod("work");
+        return makeEmptyVoidMethod("work");
     }
 
     /**
      * Returns an empty prework function.
      */
     public static JMethodDeclaration makeEmptyInitWork() {
-	return makeEmptyVoidMethod("initWork");
+        return makeEmptyVoidMethod("initWork");
     }
 
     /**
      * Returns an empty init function.
      */
     public static JMethodDeclaration makeEmptyInit() {
-	return makeEmptyVoidMethod("init");
+        return makeEmptyVoidMethod("init");
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRStream other) {
-  super.deepCloneInto(other);
-  other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
-  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
-  other.init = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.init);
-  other.work = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.work);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRStream other) {
+        super.deepCloneInto(other);
+        other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+        other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+        other.init = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.init);
+        other.work = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.work);
+        other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

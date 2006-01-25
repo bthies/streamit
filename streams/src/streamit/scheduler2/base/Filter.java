@@ -41,10 +41,10 @@ abstract public class Filter extends Stream
         if (debugrates) {
             if (librarydebug) {
                 System.err.println("FILTER "+ filterIter.getObject().getClass()
-                        .getName());
+                                   .getName());
             } else {
                 System.err.println("FILTER "+ ((SIRStream) filterIter.getObject())
-                        .getIdent());
+                                   .getIdent());
             }
         }
         // End Debugging
@@ -60,19 +60,19 @@ abstract public class Filter extends Stream
         // go through all the work functions
         int phase;
         for (phase = 0; phase < filterIter.getNumWorkPhases(); phase++)
-        {
-            int workPeek = filterIter.getPeekPhase(phase);
-            int workPop = filterIter.getPopPhase(phase);
-            int workPush = filterIter.getPushPhase(phase);
+            {
+                int workPeek = filterIter.getPeekPhase(phase);
+                int workPop = filterIter.getPopPhase(phase);
+                int workPush = filterIter.getPushPhase(phase);
 
-            // peek will be the maximum of previous peek and current
-            // peek - it is possible that previous work function had
-            // a peek value that ended up being larger than my peek!
-            maxPeek = MAX(maxPeek, pop + workPeek);
+                // peek will be the maximum of previous peek and current
+                // peek - it is possible that previous work function had
+                // a peek value that ended up being larger than my peek!
+                maxPeek = MAX(maxPeek, pop + workPeek);
 
-            pop += workPop;
-            push += workPush;
-        }
+                pop += workPop;
+                push += workPush;
+            }
 
         setSteadyPeek(maxPeek);
         setSteadyPop(pop);
@@ -82,10 +82,10 @@ abstract public class Filter extends Stream
         if (debugrates) {
             if (librarydebug) {
                 System.err.print(filterIter.getObject().
-                getClass().getName());
+                                 getClass().getName());
             } else {
                 System.err.print(((SIRStream)filterIter.getObject())
-                        .getIdent()); 
+                                 .getIdent()); 
             }   
             System.err.println(" steady state: push " + push + " pop " + pop + " maxPeek " + maxPeek);
         }            

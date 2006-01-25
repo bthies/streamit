@@ -1,5 +1,5 @@
 /*
- * @(#)ToolBoxSelect.java	1.2 05.02.2003
+ * @(#)ToolBoxSelect.java   1.2 05.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,38 +36,38 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public class ToolBoxSelect extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ToolBoxSelect.
-	 * @param graphpad
-	 */
-	public ToolBoxSelect(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolBoxSelect.
+     * @param graphpad
+     */
+    public ToolBoxSelect(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JToggleButton button = graphpad.getMarqueeHandler().getButtonSelect();
-		GPBarFactory.fillToolbarButton(
-					button,
-					getName(),
-					actionCommand);
-		return button;
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JToggleButton button = graphpad.getMarqueeHandler().getButtonSelect();
+        GPBarFactory.fillToolbarButton(
+                                       button,
+                                       getName(),
+                                       actionCommand);
+        return button;
+    }
 
-	/** 
-	 * 
-	 */
-	public void update() {
-		super.update();
-		graphpad.getMarqueeHandler().getButtonSelect().setEnabled(isEnabled());
-	}
+    /** 
+     * 
+     */
+    public void update() {
+        super.update();
+        graphpad.getMarqueeHandler().getButtonSelect().setEnabled(isEnabled());
+    }
 
 }

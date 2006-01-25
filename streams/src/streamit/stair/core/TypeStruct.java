@@ -10,7 +10,7 @@ package streamit.stair.core;
  * or a C union type is represented by a {@link TypeLaidOut} instead.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStruct.java,v 1.1 2003-02-24 21:45:11 dmaze Exp $
+ * @version $Id: TypeStruct.java,v 1.2 2006-01-25 17:05:05 thies Exp $
  */
 public class TypeStruct extends Type
 {
@@ -95,13 +95,13 @@ public class TypeStruct extends Type
     {
         int size = 0;
         for (Iterator iter = types.iterator(); iter.hasNext(); )
-        {
-            Type type = (Type)iter.next();
-            int width = type.getBitWidth();
-            if (width == 0)
-                return 0;
-            size += width;
-        }
+            {
+                Type type = (Type)iter.next();
+                int width = type.getBitWidth();
+                if (width == 0)
+                    return 0;
+                size += width;
+            }
         return size;
     }
 
@@ -119,21 +119,21 @@ public class TypeStruct extends Type
         // a TypeStruct that is a superset of this, or (2) that is a
         // TypeLaidOut that is a valid layout of this.
         if (that instanceof TypeStruct)
-        {
-            TypeStruct ts = (TypeStruct)that;
-            // that must have at least as many fields as this.
-            if (that.getNumFields() < this.getNumFields())
-                return false;
-            // loop through:
-            for (int i = 0; i < getNumFields(); i++)
             {
-                if (!(getName(i).equals(ts.getName(i))))
+                TypeStruct ts = (TypeStruct)that;
+                // that must have at least as many fields as this.
+                if (that.getNumFields() < this.getNumFields())
                     return false;
-                if (!(getType(i).isConvertibleTo(ts.getType(i))))
-                    return false;
+                // loop through:
+                for (int i = 0; i < getNumFields(); i++)
+                    {
+                        if (!(getName(i).equals(ts.getName(i))))
+                            return false;
+                        if (!(getType(i).isConvertibleTo(ts.getType(i))))
+                            return false;
+                    }
+                return true;
             }
-            return true;
-        }
         else
             return false;
     }
@@ -155,12 +155,12 @@ public class TypeStruct extends Type
             return false;
         // loop through:
         for (int i = 0; i < getNumFields(); i++)
-        {
-            if (!(getName(i).equals(ts.getName(i))))
-                return false;
-            if (!(getType(i).equals(ts.getType(i))))
-                return false;
-        }
+            {
+                if (!(getName(i).equals(ts.getName(i))))
+                    return false;
+                if (!(getType(i).equals(ts.getType(i))))
+                    return false;
+            }
         return true;
     }
 
@@ -177,12 +177,12 @@ public class TypeStruct extends Type
         // be "small".
         int code = 0;
         for (int i = 0; i < getNumFields(); i++)
-        {
-            code <<= 1;
-            code ^= getName(i).hashCode();
-            code <<= 1;
-            code ^= getType(i).hashCode();
-        }
+            {
+                code <<= 1;
+                code ^= getName(i).hashCode();
+                code <<= 1;
+                code ^= getType(i).hashCode();
+            }
         return code;
     }
 }

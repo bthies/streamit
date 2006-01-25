@@ -25,26 +25,26 @@ public class CheckForMethodCalls extends SLIREmptyVisitor
      *
      *
      * @return True if there is a method call discovered while visiting 
-       *entry*, false otherwise
+     *entry*, false otherwise
      *
      */
     public static boolean check(JPhylum entry) 
     {
-	CheckForMethodCalls cm = new CheckForMethodCalls();
-	entry.accept(cm);
-	return cm.methodCall;
+        CheckForMethodCalls cm = new CheckForMethodCalls();
+        entry.accept(cm);
+        return cm.methodCall;
     }
     
     private CheckForMethodCalls() 
     {
-	methodCall = false;
+        methodCall = false;
     }
     
     public void visitMethodCallExpression(JMethodCallExpression self,
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
-	methodCall = true;
+        methodCall = true;
     }
     
 }

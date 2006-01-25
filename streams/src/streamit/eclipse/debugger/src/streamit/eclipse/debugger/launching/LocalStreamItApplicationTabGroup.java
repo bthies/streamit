@@ -13,19 +13,19 @@ import org.eclipse.jdt.debug.ui.launchConfigurations.JavaSourceLookupTab;
  */
 public class LocalStreamItApplicationTabGroup extends AbstractLaunchConfigurationTabGroup {
 
-	/**
-	 * @see ILaunchConfigurationTabGroup#createTabs(ILaunchConfigurationDialog, String)
-	 */
-	public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
-		ILaunchConfigurationTab[] tabs = new ILaunchConfigurationTab[] {
-			//new JavaMainTab(),
-			new StreamItMainTab(),
-			new StreamItArgumentsTab(),
-			new JavaJRETab(),
-			new JavaClasspathTab(),
-			new JavaSourceLookupTab(),
-			new CommonTab()
-		};
-		setTabs(tabs);
-	}
+    /**
+     * @see ILaunchConfigurationTabGroup#createTabs(ILaunchConfigurationDialog, String)
+     */
+    public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
+        ILaunchConfigurationTab[] tabs = new ILaunchConfigurationTab[] {
+            //new JavaMainTab(),
+            new StreamItMainTab(),
+            new StreamItArgumentsTab(),
+            new JavaJRETab(),
+            new JavaClasspathTab(),
+            new JavaSourceLookupTab(),
+            new CommonTab()
+        };
+        setTabs(tabs);
+    }
 }

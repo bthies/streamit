@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.27 2006-01-24 18:02:27 thies Exp $
+ * $Id: Utils.java,v 1.28 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -36,44 +36,44 @@ import java.math.BigInteger;
  */
 public abstract class Utils implements Serializable, DeepCloneable {
 
-  // ----------------------------------------------------------------------
-  // UTILITIES
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // UTILITIES
+    // ----------------------------------------------------------------------
 
-  /**
-   * Check if an assertion is valid
-   *
-   * @exception	RuntimeException	the entire token reference
-   */
-  public static final void kopi_assert(boolean b) {
-      assert b;
-  }
+    /**
+     * Check if an assertion is valid
+     *
+     * @exception   RuntimeException    the entire token reference
+     */
+    public static final void kopi_assert(boolean b) {
+        assert b;
+    }
 
-  /**
-   * Check if an assertion is valid with a given error message
-   *
-   * @exception	RuntimeException	the entire token reference
-   */
-  public static final void kopi_assert(boolean b, String str) {
-      assert b : str;
-  }
+    /**
+     * Check if an assertion is valid with a given error message
+     *
+     * @exception   RuntimeException    the entire token reference
+     */
+    public static final void kopi_assert(boolean b, String str) {
+        assert b : str;
+    }
 
-  /**
-   * Signal a failure with given error message
-   *
-   * @exception	RuntimeException	the entire token reference
-   */
-  public static final void fail(String str) {
-      new RuntimeException("Failure: " + str).printStackTrace();
-      System.exit(1);
-  }
+    /**
+     * Signal a failure with given error message
+     *
+     * @exception   RuntimeException    the entire token reference
+     */
+    public static final void fail(String str) {
+        new RuntimeException("Failure: " + str).printStackTrace();
+        System.exit(1);
+    }
 
     
     /**
-    * Returns the contents of <fileName> as a string buffer.
-    */
+     * Returns the contents of <fileName> as a string buffer.
+     */
     public static StringBuffer readFile(String fileName)
-    throws IOException
+        throws IOException
     {
         StringBuffer result = new StringBuffer();
         BufferedReader in = new BufferedReader(new FileReader(fileName));
@@ -94,231 +94,231 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * there.
      */
     public static void writeFile(String filename, String str) throws IOException {
-	FileWriter out = new FileWriter(filename);
-	out.write(str, 0, str.length());
-	out.close();
+        FileWriter out = new FileWriter(filename);
+        out.write(str, 0, str.length());
+        out.close();
     }
 
     /**
-    /** replaces in all occurances
-    *@modifies: nothing.
-    *@effects: constructs a new String from orig, replacing all occurances of oldSubStr with newSubStr.
-    *@returns: a copy of orig with all occurances of oldSubStr replaced with newSubStr.
-    *
-    * if any of arguments are null, returns orig.
-    */
+       /** replaces in all occurances
+       *@modifies: nothing.
+       *@effects: constructs a new String from orig, replacing all occurances of oldSubStr with newSubStr.
+       *@returns: a copy of orig with all occurances of oldSubStr replaced with newSubStr.
+       *
+       * if any of arguments are null, returns orig.
+       */
     public static synchronized String replaceAll( String orig, String oldSubStr, String newSubStr )
     {
-	if (orig==null || oldSubStr==null || newSubStr==null) {
-	    return orig;
-	}
-	// create a string buffer to do replacement
-	StringBuffer sb = new StringBuffer(orig);
-	// keep track of difference in length between orig and new
-	int offset = 0;
-	// keep track of last index where we saw the substring appearing
-	int index = -1;
-	
-	while (true) {
+        if (orig==null || oldSubStr==null || newSubStr==null) {
+            return orig;
+        }
+        // create a string buffer to do replacement
+        StringBuffer sb = new StringBuffer(orig);
+        // keep track of difference in length between orig and new
+        int offset = 0;
+        // keep track of last index where we saw the substring appearing
+        int index = -1;
+    
+        while (true) {
 
-	    // look for occurrence of old string
-	    index = orig.indexOf(oldSubStr, index+1);
-	    if (index==-1) {
-		// quit when we run out of things to replace
-		break;
-	    }
-	    
-	    // otherwise, do replacement
-	    sb.replace(index - offset, 
-		       index - offset + oldSubStr.length(), 
-		       newSubStr);
+            // look for occurrence of old string
+            index = orig.indexOf(oldSubStr, index+1);
+            if (index==-1) {
+                // quit when we run out of things to replace
+                break;
+            }
+        
+            // otherwise, do replacement
+            sb.replace(index - offset, 
+                       index - offset + oldSubStr.length(), 
+                       newSubStr);
 
-	    // increment our offset
-	    offset += oldSubStr.length() - newSubStr.length();
-	}
+            // increment our offset
+            offset += oldSubStr.length() - newSubStr.length();
+        }
 
-	// return new string
-	return sb.toString();
+        // return new string
+        return sb.toString();
     }
 
     public static boolean isMathMethod(JExpression prefix, String ident) 
     {
-	if (prefix instanceof JTypeNameExpression &&
-	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
-	   
-	    (ident.equals("acos") ||
-	     ident.equals("asin") ||
-	     ident.equals("atan") ||
-	     ident.equals("atan2") ||
-	     ident.equals("ceil") ||
-	     ident.equals("cos") ||
-	     ident.equals("sin") ||
-	     ident.equals("cosh") ||
-	     ident.equals("sinh") ||
-	     ident.equals("exp") ||
-	     ident.equals("fabs") ||
-	     ident.equals("modf") ||
-	     ident.equals("fmod") ||
-	     ident.equals("frexp") ||
-	     ident.equals("floor") ||	     
-	     ident.equals("log") ||
-	     ident.equals("log10") ||
-	     ident.equals("pow") ||
-	     ident.equals("round") ||
-	     ident.equals("rint") ||
-	     ident.equals("sqrt") ||
-	     ident.equals("tanh") ||
-	     ident.equals("tan")))
-	    return true;
-	return false;
+        if (prefix instanceof JTypeNameExpression &&
+            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+       
+            (ident.equals("acos") ||
+             ident.equals("asin") ||
+             ident.equals("atan") ||
+             ident.equals("atan2") ||
+             ident.equals("ceil") ||
+             ident.equals("cos") ||
+             ident.equals("sin") ||
+             ident.equals("cosh") ||
+             ident.equals("sinh") ||
+             ident.equals("exp") ||
+             ident.equals("fabs") ||
+             ident.equals("modf") ||
+             ident.equals("fmod") ||
+             ident.equals("frexp") ||
+             ident.equals("floor") ||        
+             ident.equals("log") ||
+             ident.equals("log10") ||
+             ident.equals("pow") ||
+             ident.equals("round") ||
+             ident.equals("rint") ||
+             ident.equals("sqrt") ||
+             ident.equals("tanh") ||
+             ident.equals("tan")))
+            return true;
+        return false;
     }
     
     /**
      * Returns <val> as a percentage with maximum of 4 digits
      */
     public static String asPercent(double val) {
-	String result = "" + (100*val);
-	return result.substring(0, Math.min(5, result.length())) + "%";
+        String result = "" + (100*val);
+        return result.substring(0, Math.min(5, result.length())) + "%";
     }
 
     /**
      * Returns a power of 2 that is greater than or equal to <val>.
      */
     public static int nextPow2(int val) {
-	if (val==0) { return val; }
-	BigInteger bigVal = BigInteger.valueOf(val);
-	int shiftAmount = bigVal.subtract (BigInteger.valueOf (1)).bitLength ();
-	return BigInteger.ONE.shiftLeft (shiftAmount).intValue ();
+        if (val==0) { return val; }
+        BigInteger bigVal = BigInteger.valueOf(val);
+        int shiftAmount = bigVal.subtract (BigInteger.valueOf (1)).bitLength ();
+        return BigInteger.ONE.shiftLeft (shiftAmount).intValue ();
     }
 
     /**
      * Returns a list of Integers containing same elements as <arr>
      */
     public static List intArrayToList(int[] arr) {
-	LinkedList result = new LinkedList();
-	for (int i=0; i<arr.length; i++) {
-	    result.add(new Integer(arr[i]));
-	}
-	return result;
+        LinkedList result = new LinkedList();
+        for (int i=0; i<arr.length; i++) {
+            result.add(new Integer(arr[i]));
+        }
+        return result;
     }
 
-  /**
-   * Creates a vector and fills it with the elements of the specified array.
-   *
-   * @param	array		the array of elements
-   */
-  public static Vector toVector(Object[] array) {
-    if (array == null) {
-      return new Vector();
-    } else {
-      Vector	vector = new Vector(array.length);
+    /**
+     * Creates a vector and fills it with the elements of the specified array.
+     *
+     * @param   array       the array of elements
+     */
+    public static Vector toVector(Object[] array) {
+        if (array == null) {
+            return new Vector();
+        } else {
+            Vector  vector = new Vector(array.length);
 
-      for (int i = 0; i < array.length; i++) {
-	vector.addElement(array[i]);
-      }
-      return vector;
+            for (int i = 0; i < array.length; i++) {
+                vector.addElement(array[i]);
+            }
+            return vector;
+        }
     }
-  }
 
-  /**
-   * Creates a typed array from a vector.
-   *
-   * @param	vect		the vector containing the elements
-   * @param	type		the type of the elements
-   */
-  public static Object[] toArray(Vector vect, Class type) {
-    if (vect != null && vect.size() > 0) {
-      Object[]	array = (Object[])Array.newInstance(type, vect.size());
+    /**
+     * Creates a typed array from a vector.
+     *
+     * @param   vect        the vector containing the elements
+     * @param   type        the type of the elements
+     */
+    public static Object[] toArray(Vector vect, Class type) {
+        if (vect != null && vect.size() > 0) {
+            Object[]    array = (Object[])Array.newInstance(type, vect.size());
 
-      try {
-	vect.copyInto(array);
-      } catch (ArrayStoreException e) {
-	System.err.println("Array was:" + vect.elementAt(0));
-	System.err.println("New type :" + array.getClass());
-	throw e;
-      }
-      return array;
-    } else {
-      return (Object[])Array.newInstance(type, 0);
+            try {
+                vect.copyInto(array);
+            } catch (ArrayStoreException e) {
+                System.err.println("Array was:" + vect.elementAt(0));
+                System.err.println("New type :" + array.getClass());
+                throw e;
+            }
+            return array;
+        } else {
+            return (Object[])Array.newInstance(type, 0);
+        }
     }
-  }
 
-  /**
-   * Creates a int array from a vector.
-   *
-   * @param	vect		the vector containing the elements
-   * @param	type		the type of the elements
-   */
-  public static int[] toIntArray(Vector vect) {
-    if (vect != null && vect.size() > 0) {
-      int[]	array = new int[vect.size()];
+    /**
+     * Creates a int array from a vector.
+     *
+     * @param   vect        the vector containing the elements
+     * @param   type        the type of the elements
+     */
+    public static int[] toIntArray(Vector vect) {
+        if (vect != null && vect.size() > 0) {
+            int[]   array = new int[vect.size()];
 
-      for (int i = array.length - 1; i >= 0; i--) {
-	array[i] = ((Integer)vect.elementAt(i)).intValue();
-      }
+            for (int i = array.length - 1; i >= 0; i--) {
+                array[i] = ((Integer)vect.elementAt(i)).intValue();
+            }
 
-      return array;
-    } else {
-      return new int[0]; // $$$ static ?
+            return array;
+        } else {
+            return new int[0]; // $$$ static ?
+        }
     }
-  }
 
-  /**
-   * Returns a new array of length n with all values set to val
-   *
-   * @param	n		the desired number of elements in the array
-   * @param	val		the value of each element
-   */
-  public static int[] initArray(int n, int val) {
-      int[] result = new int[n];
-      for (int i=0; i<n; i++) {
-	  result[i] = val;
-      }
-      return result;
-  }
+    /**
+     * Returns a new array of length n with all values set to val
+     *
+     * @param   n       the desired number of elements in the array
+     * @param   val     the value of each element
+     */
+    public static int[] initArray(int n, int val) {
+        int[] result = new int[n];
+        for (int i=0; i<n; i++) {
+            result[i] = val;
+        }
+        return result;
+    }
 
-  /**
-   * Returns a new array of length n with all values set to val
-   *
-   * @param	n		the desired number of elements in the array
-   * @param	val		the value of each element
-   */
-  public static JExpression[] initArray(int n, JExpression exp) {
-      JExpression[] result = new JExpression[n];
-      for (int i=0; i<n; i++) {
-	  result[i] = exp;
-      }
-      return result;
-  }
+    /**
+     * Returns a new array of length n with all values set to val
+     *
+     * @param   n       the desired number of elements in the array
+     * @param   val     the value of each element
+     */
+    public static JExpression[] initArray(int n, JExpression exp) {
+        JExpression[] result = new JExpression[n];
+        for (int i=0; i<n; i++) {
+            result[i] = exp;
+        }
+        return result;
+    }
 
-  /**
-   * Returns a new array of length n with all values as JIntLiterals set to val
-   *
-   * @param	n		the desired number of elements in the array
-   * @param	val		the value of each element
-   */
-  public static JExpression[] initLiteralArray(int n, int val) {
-      JExpression[] result = new JExpression[n];
-      for (int i=0; i<n; i++) {
-	  result[i] = new JIntLiteral(val);
-      }
-      return result;
-  }
+    /**
+     * Returns a new array of length n with all values as JIntLiterals set to val
+     *
+     * @param   n       the desired number of elements in the array
+     * @param   val     the value of each element
+     */
+    public static JExpression[] initLiteralArray(int n, int val) {
+        JExpression[] result = new JExpression[n];
+        for (int i=0; i<n; i++) {
+            result[i] = new JIntLiteral(val);
+        }
+        return result;
+    }
 
-  /**
-   * Returns whether or not two integer arrays have the same length
-   * and entries
-   */
+    /**
+     * Returns whether or not two integer arrays have the same length
+     * and entries
+     */
     public static boolean equalArrays(int[] a1, int[] a2) {
-	if (a1.length!=a2.length) {
-	    return false;
-	} else {
-	    boolean ok = true;
-	    for (int i=0; i<a1.length; i++) {
-		ok = ok && a1[i]==a2[i];
-	    }
-	    return ok;
-	}
+        if (a1.length!=a2.length) {
+            return false;
+        } else {
+            boolean ok = true;
+            for (int i=0; i<a1.length; i++) {
+                ok = ok && a1[i]==a2[i];
+            }
+            return ok;
+        }
     }
 
     
@@ -336,18 +336,18 @@ public abstract class Utils implements Serializable, DeepCloneable {
      */
     public static JExpression getExpression(JStatement orig)
     {
-	if (orig instanceof JExpressionListStatement) {
-	    JExpressionListStatement els = (JExpressionListStatement)orig;
-	    if (els.getExpressions().length == 1)
-		return passThruParens(els.getExpression(0));
-	    else
-		return null;
-	}
-	else if (orig instanceof JExpressionStatement) {
-	    return passThruParens(((JExpressionStatement)orig).getExpression());
-	}
-	else 
-	    return null;
+        if (orig instanceof JExpressionListStatement) {
+            JExpressionListStatement els = (JExpressionListStatement)orig;
+            if (els.getExpressions().length == 1)
+                return passThruParens(els.getExpression(0));
+            else
+                return null;
+        }
+        else if (orig instanceof JExpressionStatement) {
+            return passThruParens(((JExpressionStatement)orig).getExpression());
+        }
+        else 
+            return null;
     }
 
     /**
@@ -355,46 +355,46 @@ public abstract class Utils implements Serializable, DeepCloneable {
      **/
     public static JExpression passThruParens(JExpression orig) 
     {
-	if (orig instanceof JParenthesedExpression) {
-	    return passThruParens(((JParenthesedExpression)orig).getExpr());
-	}
-	return orig;
+        if (orig instanceof JParenthesedExpression) {
+            return passThruParens(((JParenthesedExpression)orig).getExpr());
+        }
+        return orig;
     }
     
-  /**
-   * Splits a string like:
-   *   "java/lang/System/out"
-   * into two strings:
-   *    "java/lang/System" and "out"
-   */
-  public static String[] splitQualifiedName(String name, char separator) {
-    String[]	result = new String[2];
-    int		pos;
+    /**
+     * Splits a string like:
+     *   "java/lang/System/out"
+     * into two strings:
+     *    "java/lang/System" and "out"
+     */
+    public static String[] splitQualifiedName(String name, char separator) {
+        String[]    result = new String[2];
+        int     pos;
 
-    pos = name.lastIndexOf(separator);
+        pos = name.lastIndexOf(separator);
 
-    if (pos == -1) {
-      // no '/' in string
-      result[0] = "";
-      result[1] = name;
-    } else {
-      result[0] = name.substring(0, pos);
-      result[1] = name.substring(pos + 1);
+        if (pos == -1) {
+            // no '/' in string
+            result[0] = "";
+            result[1] = name;
+        } else {
+            result[0] = name.substring(0, pos);
+            result[1] = name.substring(pos + 1);
+        }
+
+        return result;
     }
-
-    return result;
-  }
   
 
-  /**
-   * Splits a string like:
-   *   "java/lang/System/out"
-   * into two strings:
-   *    "java/lang/System" and "out"
-   */
-  public static String[] splitQualifiedName(String name) {
-    return splitQualifiedName(name, '/');
-  }
+    /**
+     * Splits a string like:
+     *   "java/lang/System/out"
+     * into two strings:
+     *    "java/lang/System" and "out"
+     */
+    public static String[] splitQualifiedName(String name) {
+        return splitQualifiedName(name, '/');
+    }
 
 
     /**
@@ -404,48 +404,48 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * lift markers of filter boundaries out of loops.
      */
     public static JStatement peelMarkers(JStatement stmt) {
-	final SIRBeginMarker[] first = { null };
-	final SIREndMarker[] last = { null };
-	// find first and last marker
-	stmt.accept(new SLIREmptyVisitor() {
-		public void visitMarker(SIRMarker self) {
-		    // record first and last
-		    if (self instanceof SIRBeginMarker && first[0] == null) {
-			first[0] = (SIRBeginMarker)self;
-		    }
-		    if (self instanceof SIREndMarker) {
-			last[0] = (SIREndMarker)self;
-		    }
-		}
-	    });
+        final SIRBeginMarker[] first = { null };
+        final SIREndMarker[] last = { null };
+        // find first and last marker
+        stmt.accept(new SLIREmptyVisitor() {
+                public void visitMarker(SIRMarker self) {
+                    // record first and last
+                    if (self instanceof SIRBeginMarker && first[0] == null) {
+                        first[0] = (SIRBeginMarker)self;
+                    }
+                    if (self instanceof SIREndMarker) {
+                        last[0] = (SIREndMarker)self;
+                    }
+                }
+            });
 
-	// if we didn't find two markers, or if first and last marker
-	// have different names, then there is nothing to peel, so
-	// return
-	if (first[0] == null || last[0] == null) return stmt;
-	if (!first[0].getName().equals(last[0].getName())) return stmt;
+        // if we didn't find two markers, or if first and last marker
+        // have different names, then there is nothing to peel, so
+        // return
+        if (first[0] == null || last[0] == null) return stmt;
+        if (!first[0].getName().equals(last[0].getName())) return stmt;
 
-	// otherwise, we are going to move the markers to the outside
-	// of the statement.  replace the markers with empty
-	// statements in the IR
-	stmt.accept(new SLIRReplacingVisitor() {
-		public Object visitMarker(SIRMarker self) {
-		    if (self==first[0] || self==last[0]) {
-			return new JEmptyStatement();
-		    } else {
-			return self;
-		    }
-		}
-	    });
+        // otherwise, we are going to move the markers to the outside
+        // of the statement.  replace the markers with empty
+        // statements in the IR
+        stmt.accept(new SLIRReplacingVisitor() {
+                public Object visitMarker(SIRMarker self) {
+                    if (self==first[0] || self==last[0]) {
+                        return new JEmptyStatement();
+                    } else {
+                        return self;
+                    }
+                }
+            });
 
-	// finally, create a new block that begins with the first
-	// marker, then has the statement, then has the last marker
-	JBlock result = new JBlock();
-	result.addStatement(first[0]);
-	result.addStatement(stmt);
-	result.addStatement(last[0]);
+        // finally, create a new block that begins with the first
+        // marker, then has the statement, then has the last marker
+        JBlock result = new JBlock();
+        result.addStatement(first[0]);
+        result.addStatement(stmt);
+        result.addStatement(last[0]);
 
-	return result;
+        return result;
     }
 
     /**
@@ -454,7 +454,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * count is just one, then return the body instead of a loop.
      */
     public static JStatement makeForLoop(JStatement body, int count) {
-	return makeForLoop(body, new JIntLiteral(count));
+        return makeForLoop(body, new JIntLiteral(count));
     }
 
     /**
@@ -462,24 +462,24 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * that executes <body> for <count> number of times.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count) {
-	if (count instanceof JIntLiteral) {
-	    int intCount = ((JIntLiteral)count).intValue();
-	    if (intCount<=0) {
-		// if the count isn't positive, return an empty statement
-		return new JEmptyStatement(null, null); 
-	    } else if (intCount==1) {
-		// if the count is one, then just return the body
-		return body;
-	    }
-	}
-	return makeForLoop(body, count, 	    
-			   new JVariableDefinition(/* where */ null,
-						   /* modifiers */ 0,
-						   /* type */ CStdType.Integer,
-						   /* ident */ 
-						   LoweringConstants.getUniqueVarName(),
-						   /* initializer */
-						   new JIntLiteral(0)));
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // if the count isn't positive, return an empty statement
+                return new JEmptyStatement(null, null); 
+            } else if (intCount==1) {
+                // if the count is one, then just return the body
+                return body;
+            }
+        }
+        return makeForLoop(body, count,         
+                           new JVariableDefinition(/* where */ null,
+                                                   /* modifiers */ 0,
+                                                   /* type */ CStdType.Integer,
+                                                   /* ident */ 
+                                                   LoweringConstants.getUniqueVarName(),
+                                                   /* initializer */
+                                                   new JIntLiteral(0)));
     }
 
     /**
@@ -492,59 +492,59 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * decl; it will get one in this routine.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
-	// make sure we start counting from 0
-	loopIndex.setInitializer(new JIntLiteral(0));
-	// make a declaration statement for our new variable
-	JVariableDeclarationStatement varDecl =
-	    new JVariableDeclarationStatement(null, loopIndex, null);
+        // make sure we start counting from 0
+        loopIndex.setInitializer(new JIntLiteral(0));
+        // make a declaration statement for our new variable
+        JVariableDeclarationStatement varDecl =
+            new JVariableDeclarationStatement(null, loopIndex, null);
 
-	// avoid loops for certain loop bounds
-	if (count instanceof JIntLiteral) {
-	    int intCount = ((JIntLiteral)count).intValue();
-	    if (intCount<=0) {
-		// if the count isn't positive, return the variable
-		// decl.  Return this rather than an empty statement
-		// in case some later code depends on the value of
-		// this variable on loop exit.  However, rstream seems
-		// not to need the VarDecl, so return only an empty
-		// statement there.
-		return (KjcOptions.rstream ? (JStatement)(new JEmptyStatement()) : (JStatement)varDecl);
-	    } else if (intCount==1) {
-		// if the count is one, then return the decl and the
-		// body (but rstream doesn't need the decl).
-		return (KjcOptions.rstream ? body :
-			new JBlock(null, new JStatement[] { varDecl, body }, null));
-	    }
-	}
+        // avoid loops for certain loop bounds
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // if the count isn't positive, return the variable
+                // decl.  Return this rather than an empty statement
+                // in case some later code depends on the value of
+                // this variable on loop exit.  However, rstream seems
+                // not to need the VarDecl, so return only an empty
+                // statement there.
+                return (KjcOptions.rstream ? (JStatement)(new JEmptyStatement()) : (JStatement)varDecl);
+            } else if (intCount==1) {
+                // if the count is one, then return the decl and the
+                // body (but rstream doesn't need the decl).
+                return (KjcOptions.rstream ? body :
+                        new JBlock(null, new JStatement[] { varDecl, body }, null));
+            }
+        }
 
-	// make a test if our variable is less than <count>
-	JExpression cond = 
-	    new JRelationalExpression(null,
-				      Constants.OPE_LT,
-				      new JLocalVariableExpression(null, loopIndex),
-				      count);
-	// make an increment for <var>
-	JStatement incr = 
-	    new JExpressionStatement(null,
-				     new JPostfixExpression(null,
-							    Constants.
-							    OPE_POSTINC,
-			       new JLocalVariableExpression(null, loopIndex)),
-				     null);
-	// make the for statement
-	JStatement forStatement = 
-	    new JForStatement(/* tokref */ null,
-			      //for rstream put the vardecl in the init of the for loop
-			      /* init */ (KjcOptions.rstream ? (JStatement) varDecl : 
-			       (JStatement) new JEmptyStatement(null, null)),
-			      cond,
-			      incr,
-			      body,
-			      /* comments */ null);
-	// return the block
-	JStatement[] statements = {varDecl, forStatement};
-	//return just the for statement for rstream
-	return (KjcOptions.rstream ? forStatement : new JBlock(null, statements, null));
+        // make a test if our variable is less than <count>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_LT,
+                                      new JLocalVariableExpression(null, loopIndex),
+                                      count);
+        // make an increment for <var>
+        JStatement incr = 
+            new JExpressionStatement(null,
+                                     new JPostfixExpression(null,
+                                                            Constants.
+                                                            OPE_POSTINC,
+                                                            new JLocalVariableExpression(null, loopIndex)),
+                                     null);
+        // make the for statement
+        JStatement forStatement = 
+            new JForStatement(/* tokref */ null,
+                              //for rstream put the vardecl in the init of the for loop
+                              /* init */ (KjcOptions.rstream ? (JStatement) varDecl : 
+                                          (JStatement) new JEmptyStatement(null, null)),
+                              cond,
+                              incr,
+                              body,
+                              /* comments */ null);
+        // return the block
+        JStatement[] statements = {varDecl, forStatement};
+        //return just the for statement for rstream
+        return (KjcOptions.rstream ? forStatement : new JBlock(null, statements, null));
     }
 
     /**
@@ -557,56 +557,56 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * decl; it will get one in this routine.
      */
     public static JStatement makeCountdownForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
-	// make sure we start at count-1
-	loopIndex.setInitializer(new JMinusExpression(null, count, new JIntLiteral(1)));
-	// make a declaration statement for our new variable
-	JVariableDeclarationStatement varDecl =
-	    new JVariableDeclarationStatement(null, loopIndex, null);
+        // make sure we start at count-1
+        loopIndex.setInitializer(new JMinusExpression(null, count, new JIntLiteral(1)));
+        // make a declaration statement for our new variable
+        JVariableDeclarationStatement varDecl =
+            new JVariableDeclarationStatement(null, loopIndex, null);
 
-	// avoid loops for certain loop bounds
-	if (count instanceof JIntLiteral) {
-	    int intCount = ((JIntLiteral)count).intValue();
-	    if (intCount<=0) {
-		// if the count isn't positive, return the variable
-		// decl.  Return this rather than an empty statement
-		// in case some later code depends on the value of
-		// this variable on loop exit.  However, rstream seems
-		// not to need the VarDecl, so return only an empty
-		// statement there.
-		return (KjcOptions.rstream ? (JStatement)new JEmptyStatement() : (JStatement)varDecl);
-	    } else if (intCount==1) {
-		// if the count is one, then return the decl and the
-		// body (but rstream doesn't need the decl).
-		return (KjcOptions.rstream ? body :
-			new JBlock(null, new JStatement[] { varDecl, body }, null));
-	    }
-	}
+        // avoid loops for certain loop bounds
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // if the count isn't positive, return the variable
+                // decl.  Return this rather than an empty statement
+                // in case some later code depends on the value of
+                // this variable on loop exit.  However, rstream seems
+                // not to need the VarDecl, so return only an empty
+                // statement there.
+                return (KjcOptions.rstream ? (JStatement)new JEmptyStatement() : (JStatement)varDecl);
+            } else if (intCount==1) {
+                // if the count is one, then return the decl and the
+                // body (but rstream doesn't need the decl).
+                return (KjcOptions.rstream ? body :
+                        new JBlock(null, new JStatement[] { varDecl, body }, null));
+            }
+        }
 
-	// make a test if our variable is less than <count>
-	JExpression cond = 
-	    new JRelationalExpression(null,
-				      Constants.OPE_GE,
-				      new JLocalVariableExpression(null, loopIndex),
-				      new JIntLiteral(0));
-	// make a decrement for <var>
-	JStatement incr = 
-	    new JExpressionStatement(null,
-				     new JPostfixExpression(null,
-							    Constants.
-							    OPE_POSTDEC,
-							    new JLocalVariableExpression(null, loopIndex)),
-				     null);
-	// make the for statement
-	JStatement forStatement = 
-	    new JForStatement(/* tokref */ null,
-			      /* init */ new JEmptyStatement(null, null),
-			      cond,
-			      incr,
-			      body,
-			      /* comments */ null);
-	// return the block
-	JStatement[] statements = {varDecl, forStatement};
-	return new JBlock(null, statements, null);
+        // make a test if our variable is less than <count>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_GE,
+                                      new JLocalVariableExpression(null, loopIndex),
+                                      new JIntLiteral(0));
+        // make a decrement for <var>
+        JStatement incr = 
+            new JExpressionStatement(null,
+                                     new JPostfixExpression(null,
+                                                            Constants.
+                                                            OPE_POSTDEC,
+                                                            new JLocalVariableExpression(null, loopIndex)),
+                                     null);
+        // make the for statement
+        JStatement forStatement = 
+            new JForStatement(/* tokref */ null,
+                              /* init */ new JEmptyStatement(null, null),
+                              cond,
+                              incr,
+                              body,
+                              /* comments */ null);
+        // return the block
+        JStatement[] statements = {varDecl, forStatement};
+        return new JBlock(null, statements, null);
     }
 
     /**
@@ -615,7 +615,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * arrays in C--should fix this better post-asplos.
      */
     public static CType voidToInt(CType type) {
-	return type==CStdType.Void ? CStdType.Integer : type;
+        return type==CStdType.Void ? CStdType.Integer : type;
     }
 
     /**
@@ -623,43 +623,43 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * the variable is undefined.
      */
     public static String getEnvironmentVariable(String var) {
-	String result = null;
-	try {
-	    String OS = System.getProperty("os.name").toLowerCase();
-	    String command = (OS.indexOf("windows") > -1 ? "set" : "env");
-	    Process p = Runtime.getRuntime().exec(command);
-	    BufferedReader br = new BufferedReader ( new InputStreamReader( p.getInputStream() ) );
-	    String line;
-	    while((line = br.readLine()) != null) {
-		int pos = line.indexOf('=');
-		String key = line.substring(0, pos);
-		if (key.equals(var)) {
-		    return line.substring(pos+1);
-		}
-	    }
-	    return null;
-	} catch (IOException e) {
-	    e.printStackTrace();
-	    Utils.fail("I/O exception trying to retrieve environment variable \"" + var + "\"");
-	    return null;
-	}
+        String result = null;
+        try {
+            String OS = System.getProperty("os.name").toLowerCase();
+            String command = (OS.indexOf("windows") > -1 ? "set" : "env");
+            Process p = Runtime.getRuntime().exec(command);
+            BufferedReader br = new BufferedReader ( new InputStreamReader( p.getInputStream() ) );
+            String line;
+            while((line = br.readLine()) != null) {
+                int pos = line.indexOf('=');
+                String key = line.substring(0, pos);
+                if (key.equals(var)) {
+                    return line.substring(pos+1);
+                }
+            }
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            Utils.fail("I/O exception trying to retrieve environment variable \"" + var + "\"");
+            return null;
+        }
     }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
     public static final LinkedList EMPTY_LIST = new LinkedList();
 
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.util.Utils other) {
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.util.Utils other) {
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

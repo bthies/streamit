@@ -30,46 +30,46 @@ public class ExprRange extends Expression
     /** Create a new ExprDynamicToken. */
     public ExprRange(FEContext context, Expression min, Expression ave, Expression max)
     {
-	super(context);
-	this.min = min;
-	// a null average turns into a dynamic average
-	if (ave==null) {
-	    this.ave = new ExprDynamicToken(context);
-	} else {
-	    this.ave = ave;
-	}
-	this.max = max;
+        super(context);
+        this.min = min;
+        // a null average turns into a dynamic average
+        if (ave==null) {
+            this.ave = new ExprDynamicToken(context);
+        } else {
+            this.ave = ave;
+        }
+        this.max = max;
     }
     
     public ExprRange(FEContext context, Expression min, Expression max)
     {
-	this(context, min, null, max);
+        this(context, min, null, max);
     }
 
     /** Create a new ExprRange with no context. */
     public ExprRange(Expression min, Expression ave, Expression max)
     {
-	this(null, min, ave, max);
+        this(null, min, ave, max);
     }
 
     /** Create a new ExprRange with no context. */
     public ExprRange(Expression min, Expression max) {
-	this((FEContext)null, min, max);
+        this((FEContext)null, min, max);
     }
     
     /** Return minimum of range. */
     public Expression getMin() {
-	return min;
+        return min;
     }
 
     /** Return average of range. */
     public Expression getAve() {
-	return ave;
+        return ave;
     }
 
     /** Return maximum of range. */
     public Expression getMax() {
-	return max;
+        return max;
     }
 
     /** Accept a front-end visitor. */
@@ -82,21 +82,21 @@ public class ExprRange extends Expression
     {
         if (!(other instanceof ExprRange))
             return false;
-	ExprRange range = (ExprRange)other;
-	if (!(min.equals(range.min)))
-	    return false;
-	if (!(ave.equals(range.ave)))
-	    return false;
-	if (!(max.equals(range.max)))
-	    return false;
+        ExprRange range = (ExprRange)other;
+        if (!(min.equals(range.min)))
+            return false;
+        if (!(ave.equals(range.ave)))
+            return false;
+        if (!(max.equals(range.max)))
+            return false;
         return true;
     }
     
     public int hashCode()
     {
-	// following the pattern in the integer constants -- constants
-	// of the same value have the same hashcode
-	return min.hashCode() * ave.hashCode() * max.hashCode();
+        // following the pattern in the integer constants -- constants
+        // of the same value have the same hashcode
+        return min.hashCode() * ave.hashCode() * max.hashCode();
     }
     
     public String toString()

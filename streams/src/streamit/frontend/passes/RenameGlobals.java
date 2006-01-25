@@ -63,17 +63,17 @@ public class RenameGlobals extends SymbolTableVisitor
     public RenameGlobals(boolean libraryFormat)
     {
         super(null);
-	this.libraryFormat = libraryFormat;
-	global = false;
+        this.libraryFormat = libraryFormat;
+        global = false;
     }
 
     public Object visitStreamSpec(StreamSpec ss) {
-	if (ss.getType() == StreamSpec.STREAM_GLOBAL) {
-	    global = true;
-	}
-	Object result = super.visitStreamSpec(ss);
-	global = false;
-	return result;
+        if (ss.getType() == StreamSpec.STREAM_GLOBAL) {
+            global = true;
+        }
+        Object result = super.visitStreamSpec(ss);
+        global = false;
+        return result;
     }
     
     public Object visitExprVar(ExprVar var) {
@@ -84,7 +84,7 @@ public class RenameGlobals extends SymbolTableVisitor
             Expression global = new ExprVar(context, "TheGlobal");
             if (libraryFormat) {
                 Expression exp = new ExprField(context, global,
-                        "__get_instance()");
+                                               "__get_instance()");
                 return new ExprField(context, exp, var.getName());
             } else {
                 return new ExprField(context, global, var.getName());

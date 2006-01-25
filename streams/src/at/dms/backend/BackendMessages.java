@@ -4,5 +4,5 @@ package at.dms.backend;
 import at.dms.util.MessageDescription;
 
 public interface BackendMessages extends at.dms.compiler.CompilerMessages {
-  MessageDescription	SEMANTIC_ERROR = new MessageDescription("Semantic error found on file \"{0}\": {1}", "OPTIMIZE", 0);
+    MessageDescription  SEMANTIC_ERROR = new MessageDescription("Semantic error found on file \"{0}\": {1}", "OPTIMIZE", 0);
 }

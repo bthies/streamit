@@ -18,32 +18,32 @@ import java.util.Iterator;
 public class FileReaderVisitor implements FlatVisitor {
     public static boolean foundReader;
     public static HashSet fileReaders;
-	
+    
     public static void init(FlatNode top) {
-	FileReaderVisitor frv = new FileReaderVisitor();
-	top.accept(frv, new HashSet(), false);
+        FileReaderVisitor frv = new FileReaderVisitor();
+        top.accept(frv, new HashSet(), false);
     }
-	
+    
     public FileReaderVisitor() 
     {
-	foundReader = false;
-	fileReaders = new HashSet();
+        foundReader = false;
+        fileReaders = new HashSet();
     }
-	
+    
     public void visitNode (FlatNode node) 
     {
-	if (node.contents instanceof SIRFileReader) {
-	    fileReaders.add(node);
-	    foundReader = true;
-	}
+        if (node.contents instanceof SIRFileReader) {
+            fileReaders.add(node);
+            foundReader = true;
+        }
     }
 
     public static boolean connectedToFR(Coordinate tile) {
-	Iterator frs = fileReaders.iterator();
-	while (frs.hasNext()) {
-	    if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
-		return true;
-	}
-	return false;
+        Iterator frs = fileReaders.iterator();
+        while (frs.hasNext()) {
+            if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
+                return true;
+        }
+        return false;
     }
 }

@@ -32,9 +32,9 @@ public class Rate extends streamit.misc.DestroyedClass {
     public final int max;
 
     public Rate(int min, int ave, int max) {
-	this.min = min;
-	this.ave = ave;
-	this.max = max;
+        this.min = min;
+        this.ave = ave;
+        this.max = max;
     }
 
     /**
@@ -42,6 +42,6 @@ public class Rate extends streamit.misc.DestroyedClass {
      * over-ridden by a fixed-rate subclass.
      */
     public boolean isStatic() {
-	return false;
+        return false;
     }
 }

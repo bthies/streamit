@@ -1,5 +1,5 @@
 /*
- * @(#)FilePageFormat.java	1.2 30.01.2003
+ * @(#)FilePageFormat.java  1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,28 +35,28 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class FilePageFormat extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FilePageFormat.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FilePageFormat(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FilePageFormat.
+     * @param graphpad
+     * @param name
+     */
+    public FilePageFormat(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			try {
-				PageFormat f =
-					PrinterJob.getPrinterJob().pageDialog(
-						getCurrentGraph().getPageFormat());
-				getCurrentGraph().setPageFormat(f);
-				graphpad.getCurrentDocument().updatePageFormat();
-			} catch (Exception ex) {
-				graphpad.error(ex.getMessage());
-			}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        try {
+            PageFormat f =
+                PrinterJob.getPrinterJob().pageDialog(
+                                                      getCurrentGraph().getPageFormat());
+            getCurrentGraph().setPageFormat(f);
+            graphpad.getCurrentDocument().updatePageFormat();
+        } catch (Exception ex) {
+            graphpad.error(ex.getMessage());
+        }
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)GraphCell.java	1.0 1/1/02
+ * @(#)GraphCell.java   1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -33,19 +33,19 @@ import java.util.Map;
 
 public interface GraphCell {
 
-	/**
-	 * Returns the <code>attributes</code> of the cell.
-	 */
-	Map getAttributes();
+    /**
+     * Returns the <code>attributes</code> of the cell.
+     */
+    Map getAttributes();
 
-	/**
-	 * Changes the <code>attributes</code> of the cell.
-	 */
-	Map changeAttributes(Map properties);
+    /**
+     * Changes the <code>attributes</code> of the cell.
+     */
+    Map changeAttributes(Map properties);
 
-	/**
-	 * Sets the attributes
-	 */
-	public void setAttributes(Map map);
+    /**
+     * Sets the attributes
+     */
+    public void setAttributes(Map map);
 
 }

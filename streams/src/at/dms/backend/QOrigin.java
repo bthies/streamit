@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QOrigin.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QOrigin.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -25,51 +25,51 @@ package at.dms.backend;
  */
 interface QOrigin {
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * The type of this instruction
-   */
-  int getType();
+    /**
+     * The type of this instruction
+     */
+    int getType();
 
-  /**
-   * Returns the primitive instruction
-   */
-  InstructionHandle getInstruction();
+    /**
+     * Returns the primitive instruction
+     */
+    InstructionHandle getInstruction();
 
-  /**
-   * Duplicate this node
-   */
-  QOrigin duplicate();
+    /**
+     * Duplicate this node
+     */
+    QOrigin duplicate();
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the used temporaries.
-   */
-  QTemporary[] getUses();
+    /**
+     * Returns the used temporaries.
+     */
+    QTemporary[] getUses();
 
-  /**
-   * returns the parameters of this instruction
-   */
-  QOrigin[] getOrigins();
+    /**
+     * returns the parameters of this instruction
+     */
+    QOrigin[] getOrigins();
 
-  /**
-   * Sets the parameters of this instruction
-   */
-  void setOrigin(QOrigin origin, int i);
+    /**
+     * Sets the parameters of this instruction
+     */
+    void setOrigin(QOrigin origin, int i);
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  void generate(CodeSequence seq);
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    void generate(CodeSequence seq);
 }

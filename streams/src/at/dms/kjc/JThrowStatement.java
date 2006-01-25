@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThrowStatement.java,v 1.8 2003-11-13 10:46:11 thies Exp $
+ * $Id: JThrowStatement.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,100 +31,100 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JThrowStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JThrowStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	expr		the expression to throw.
-   */
-  public JThrowStatement(TokenReference where,
-			 JExpression expr,
-			 JavaStyleComment[] comments)
-  {
-    super(where, comments);
-    this.expr = expr;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    expr = expr.analyse(new CExpressionContext(context));
-    check(context,
-	  expr.getType().isReference()
-	  && expr.isAssignableTo(CStdType.Throwable),
-	  KjcMessages.THROW_BADTYPE, expr.getType());
-
-    if (expr.getType().isCheckedException()) {
-      context.addThrowable(new CThrowableInfo((CClassType)expr.getType(), this));
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   expr        the expression to throw.
+     */
+    public JThrowStatement(TokenReference where,
+                           JExpression expr,
+                           JavaStyleComment[] comments)
+    {
+        super(where, comments);
+        this.expr = expr;
     }
-    context.setReachable(false);
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitThrowStatement(this, expr);
-  }
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        expr = expr.analyse(new CExpressionContext(context));
+        check(context,
+              expr.getType().isReference()
+              && expr.isAssignableTo(CStdType.Throwable),
+              KjcMessages.THROW_BADTYPE, expr.getType());
 
-   /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
+        if (expr.getType().isCheckedException()) {
+            context.addThrowable(new CThrowableInfo((CClassType)expr.getType(), this));
+        }
+        context.setReachable(false);
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitThrowStatement(this, expr);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
     public Object accept(AttributeVisitor p) {
-	return p.visitThrowStatement(this, expr);
+        return p.visitThrowStatement(this, expr);
     }
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    expr.genCode(code, false);
-    code.plantNoArgInstruction(opc_athrow);
-  }
+        expr.genCode(code, false);
+        code.plantNoArgInstruction(opc_athrow);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression		expr;
+    private JExpression     expr;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JThrowStatement other = new at.dms.kjc.JThrowStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JThrowStatement other = new at.dms.kjc.JThrowStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JThrowStatement other) {
-  super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JThrowStatement other) {
+        super.deepCloneInto(other);
+        other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

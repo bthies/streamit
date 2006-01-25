@@ -9,15 +9,15 @@ package streamit.eclipse.grapheditor.editor.pad.resources;
  */
 
 public class Version {
-	
-	private static String versionNumber = "1.0";
+    
+    private static String versionNumber = "1.0";
 
-	/** 
-	 * Returns the current version number
-	 */
-	public static String getVersion() 
-	{
-		return versionNumber;
-	}
+    /** 
+     * Returns the current version number
+     */
+    public static String getVersion() 
+    {
+        return versionNumber;
+    }
 
 }

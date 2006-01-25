@@ -79,7 +79,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             // and initDataProduction for the entire loop
             {
                 int feedbackDataNeeded = (feedback.getPeekConsumption () - feedback.getConsumption ())
-                                       + feedback.getInitDataConsumption ();
+                    + feedback.getInitDataConsumption ();
 
                 int splitProduction = getLoopSplit ().getOutputWeight (1);
                 nInitRunSplit = (feedbackDataNeeded + splitProduction - 1) / splitProduction;
@@ -94,7 +94,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                 int bodyProduction = body.getProduction ();
                 nInitRunBody = (splitDataNeeded + (bodyProduction - 1) - body.getInitDataProduction ()) / bodyProduction;
                 splitBuffer = BigInteger.valueOf (nInitRunBody * bodyProduction + body.getInitDataProduction ()
-                                                - nInitRunSplit * getLoopSplit ().getRoundConsumption ());
+                                                  - nInitRunSplit * getLoopSplit ().getRoundConsumption ());
                 maxSplitBuffer = BigInteger.valueOf (nInitRunBody * bodyProduction + body.getInitDataProduction ());
             }
 
@@ -102,13 +102,13 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             // and initDataConsumption for the entire loop
             {
                 int bodyDataNeeded = (body.getPeekConsumption () - body.getConsumption ())
-                                   + body.getInitDataConsumption ()
-                                   + nInitRunBody * body.getProduction ();
+                    + body.getInitDataConsumption ()
+                    + nInitRunBody * body.getProduction ();
                 int joinProduction = getLoopJoin ().getRoundProduction ();
                 nInitRunJoin = (bodyDataNeeded + joinProduction - 1) / joinProduction;
                 bodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction
-                                               - body.getInitDataConsumption ()
-                                               - nInitRunBody * body.getConsumption ());
+                                                 - body.getInitDataConsumption ()
+                                                 - nInitRunBody * body.getConsumption ());
                 maxBodyBuffer = BigInteger.valueOf (nInitRunJoin * joinProduction);
                 initDataConsumption = nInitRunJoin * getLoopJoin ().getInputWeight (0);
             }
@@ -122,37 +122,37 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
                 // check if this is a legal schedule in the first place
                 if (getLoopDelay () - nInitRunJoin * joinConsumption < 0)
-                {
-                    schedulingDifficulty ();
-                }
+                    {
+                        schedulingDifficulty ();
+                    }
             }
 
             // finally, actually create the init schedule
             {
                 if (nInitRunJoin > 0)
-                {
-                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunJoin), getLoopJoin ().getJoinObject ()));
-                }
+                    {
+                        initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunJoin), getLoopJoin ().getJoinObject ()));
+                    }
 
                 if (body.getInitSchedule () != null)
-                {
-                    initSchedule.add (body.getInitSchedule ());
-                }
+                    {
+                        initSchedule.add (body.getInitSchedule ());
+                    }
 
                 if (nInitRunBody > 0)
-                {
-                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunBody), body.getSteadySchedule ()));
-                }
+                    {
+                        initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunBody), body.getSteadySchedule ()));
+                    }
 
                 if (nInitRunSplit > 0)
-                {
-                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunSplit), getLoopSplit ().getSplitObject ()));
-                }
+                    {
+                        initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (nInitRunSplit), getLoopSplit ().getSplitObject ()));
+                    }
 
                 if (feedback.getInitSchedule () != null)
-                {
-                    initSchedule.add (feedback.getInitSchedule ());
-                }
+                    {
+                        initSchedule.add (feedback.getInitSchedule ());
+                    }
             }
         }
 
@@ -176,135 +176,135 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         int done = 0;
 
         while (done != 4)
-        {
-            // keep track if I've moved forward, or if I'm completely stuck
-            // and should exit with an error msg.
-            boolean movedForward = false;
-
-            // attempt to push some data through the feedback loop:
             {
-                int nJoinExecutions = 0;
-                while (joinBuffer.compareTo (BigInteger.valueOf (getLoopJoin ().getInputWeight (1))) >= 0
-                       && !joinExecutions.equals (BigInteger.ZERO))
-                {
-                    // move the data forward
-                    movedForward = true;
-                    nJoinExecutions ++;
-                    joinBuffer = joinBuffer.subtract (BigInteger.valueOf (getLoopJoin ().getInputWeight (1)));
-                    bodyBuffer = bodyBuffer.add (BigInteger.valueOf (getLoopJoin ().getRoundProduction ()));
+                // keep track if I've moved forward, or if I'm completely stuck
+                // and should exit with an error msg.
+                boolean movedForward = false;
 
-                    // check if done, and indicate if so
-                    joinExecutions = joinExecutions.subtract (BigInteger.ONE);
-                    if (joinExecutions.equals (BigInteger.ZERO))
+                // attempt to push some data through the feedback loop:
+                {
+                    int nJoinExecutions = 0;
+                    while (joinBuffer.compareTo (BigInteger.valueOf (getLoopJoin ().getInputWeight (1))) >= 0
+                           && !joinExecutions.equals (BigInteger.ZERO))
+                        {
+                            // move the data forward
+                            movedForward = true;
+                            nJoinExecutions ++;
+                            joinBuffer = joinBuffer.subtract (BigInteger.valueOf (getLoopJoin ().getInputWeight (1)));
+                            bodyBuffer = bodyBuffer.add (BigInteger.valueOf (getLoopJoin ().getRoundProduction ()));
+
+                            // check if done, and indicate if so
+                            joinExecutions = joinExecutions.subtract (BigInteger.ONE);
+                            if (joinExecutions.equals (BigInteger.ZERO))
+                                {
+                                    done ++;
+                                }
+                        }
+
+                    // actually add the executions to the schedule
+                    if (nJoinExecutions > 0)
+                        {
+                            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nJoinExecutions), getLoopJoin ().getJoinObject ()));
+                        }
+
+                    // figure out the max size for a body buffer
+                    maxBodyBuffer = maxBodyBuffer.max (bodyBuffer);
+                }
+
+                // attempt to push some data through the body of the loop:
+                {
+                    int nBodyExecutions = 0;
+                    while (bodyBuffer.compareTo (BigInteger.valueOf (getLoopBody ().getPeekConsumption ())) >= 0
+                           && !bodyExecutions.equals (BigInteger.ZERO))
+                        {
+                            movedForward = true;
+                            nBodyExecutions ++;
+                            bodyBuffer = bodyBuffer.subtract (BigInteger.valueOf (getLoopBody ().getConsumption ()));
+                            splitBuffer = splitBuffer.add (BigInteger.valueOf (getLoopBody ().getProduction ()));
+
+                            // check if done, and indicate if so
+                            bodyExecutions = bodyExecutions.subtract (BigInteger.ONE);
+                            if (bodyExecutions.equals (BigInteger.ZERO))
+                                {
+                                    done ++;
+                                }
+                        }
+
+                    // actually add the executions to the schedule
+                    if (nBodyExecutions > 0)
+                        {
+                            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nBodyExecutions), ((SimpleSchedStream)getLoopBody ()).getSteadySchedule ()));
+                        }
+
+                    // figure out the max size for a split buffer
+                    maxSplitBuffer = maxSplitBuffer.max (splitBuffer);
+                }
+
+                // attempt to push some data through the split of the loop:
+                {
+                    int nSplitExecutions = 0;
+                    while (splitBuffer.compareTo (BigInteger.valueOf (getLoopSplit ().getRoundConsumption ())) >= 0
+                           && !splitExecutions.equals (BigInteger.ZERO))
+                        {
+                            movedForward = true;
+                            nSplitExecutions ++;
+                            splitBuffer = splitBuffer.subtract (BigInteger.valueOf (getLoopSplit ().getRoundConsumption ()));
+                            loopBuffer = loopBuffer.add (BigInteger.valueOf (getLoopSplit ().getOutputWeight (1)));
+
+                            // check if done, and indicate if so
+                            splitExecutions = splitExecutions.subtract (BigInteger.ONE);
+                            if (splitExecutions.equals (BigInteger.ZERO))
+                                {
+                                    done ++;
+                                }
+                        }
+
+                    // actually add the executions to the schedule
+                    if (nSplitExecutions > 0)
+                        {
+                            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nSplitExecutions), getLoopSplit ().getSplitObject ()));
+                        }
+
+                    // figure out the max size for a loop buffer
+                    maxLoopBuffer = maxLoopBuffer.max (loopBuffer);
+                }
+
+                // attempt to push some data through the feedback path of the loop:
+                {
+                    int nFeedbackPathExecutions = 0;
+                    while (loopBuffer.compareTo (BigInteger.valueOf (getLoopFeedbackPath ().getPeekConsumption ())) >= 0
+                           && !loopExecutions.equals (BigInteger.ZERO))
+                        {
+                            movedForward = true;
+                            nFeedbackPathExecutions ++;
+                            loopBuffer = loopBuffer.subtract (BigInteger.valueOf (getLoopFeedbackPath ().getConsumption ()));
+                            joinBuffer = joinBuffer.add (BigInteger.valueOf (getLoopFeedbackPath ().getProduction ()));
+
+                            // check if done, and indicate if so
+                            loopExecutions = loopExecutions.subtract (BigInteger.ONE);
+                            if (loopExecutions.equals (BigInteger.ZERO))
+                                {
+                                    done ++;
+                                }
+                        }
+
+                    // actually add the executions to the schedule
+                    if (nFeedbackPathExecutions > 0)
+                        {
+                            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nFeedbackPathExecutions), ((SimpleSchedStream)getLoopFeedbackPath ()).getSteadySchedule ()));
+                        }
+
+                    // figure out the max size for a body buffer
+                    maxJoinBuffer = maxJoinBuffer.max (joinBuffer);
+                }
+
+                if (!movedForward)
                     {
-                        done ++;
+                        schedulingDifficulty ();
+                        // BUGBUG remove this return - it's pretty useless and confusing!
+                        return;
                     }
-                }
-
-                // actually add the executions to the schedule
-                if (nJoinExecutions > 0)
-                {
-                    steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nJoinExecutions), getLoopJoin ().getJoinObject ()));
-                }
-
-                // figure out the max size for a body buffer
-                maxBodyBuffer = maxBodyBuffer.max (bodyBuffer);
             }
-
-            // attempt to push some data through the body of the loop:
-            {
-                int nBodyExecutions = 0;
-                while (bodyBuffer.compareTo (BigInteger.valueOf (getLoopBody ().getPeekConsumption ())) >= 0
-                       && !bodyExecutions.equals (BigInteger.ZERO))
-                {
-                    movedForward = true;
-                    nBodyExecutions ++;
-                    bodyBuffer = bodyBuffer.subtract (BigInteger.valueOf (getLoopBody ().getConsumption ()));
-                    splitBuffer = splitBuffer.add (BigInteger.valueOf (getLoopBody ().getProduction ()));
-
-                    // check if done, and indicate if so
-                    bodyExecutions = bodyExecutions.subtract (BigInteger.ONE);
-                    if (bodyExecutions.equals (BigInteger.ZERO))
-                    {
-                        done ++;
-                    }
-                }
-
-                // actually add the executions to the schedule
-                if (nBodyExecutions > 0)
-                {
-                    steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nBodyExecutions), ((SimpleSchedStream)getLoopBody ()).getSteadySchedule ()));
-                }
-
-                // figure out the max size for a split buffer
-                maxSplitBuffer = maxSplitBuffer.max (splitBuffer);
-            }
-
-            // attempt to push some data through the split of the loop:
-            {
-                int nSplitExecutions = 0;
-                while (splitBuffer.compareTo (BigInteger.valueOf (getLoopSplit ().getRoundConsumption ())) >= 0
-                       && !splitExecutions.equals (BigInteger.ZERO))
-                {
-                    movedForward = true;
-                    nSplitExecutions ++;
-                    splitBuffer = splitBuffer.subtract (BigInteger.valueOf (getLoopSplit ().getRoundConsumption ()));
-                    loopBuffer = loopBuffer.add (BigInteger.valueOf (getLoopSplit ().getOutputWeight (1)));
-
-                    // check if done, and indicate if so
-                    splitExecutions = splitExecutions.subtract (BigInteger.ONE);
-                    if (splitExecutions.equals (BigInteger.ZERO))
-                    {
-                        done ++;
-                    }
-                }
-
-                // actually add the executions to the schedule
-                if (nSplitExecutions > 0)
-                {
-                    steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nSplitExecutions), getLoopSplit ().getSplitObject ()));
-                }
-
-                // figure out the max size for a loop buffer
-                maxLoopBuffer = maxLoopBuffer.max (loopBuffer);
-            }
-
-            // attempt to push some data through the feedback path of the loop:
-            {
-                int nFeedbackPathExecutions = 0;
-                while (loopBuffer.compareTo (BigInteger.valueOf (getLoopFeedbackPath ().getPeekConsumption ())) >= 0
-                       && !loopExecutions.equals (BigInteger.ZERO))
-                {
-                    movedForward = true;
-                    nFeedbackPathExecutions ++;
-                    loopBuffer = loopBuffer.subtract (BigInteger.valueOf (getLoopFeedbackPath ().getConsumption ()));
-                    joinBuffer = joinBuffer.add (BigInteger.valueOf (getLoopFeedbackPath ().getProduction ()));
-
-                    // check if done, and indicate if so
-                    loopExecutions = loopExecutions.subtract (BigInteger.ONE);
-                    if (loopExecutions.equals (BigInteger.ZERO))
-                    {
-                        done ++;
-                    }
-                }
-
-                // actually add the executions to the schedule
-                if (nFeedbackPathExecutions > 0)
-                {
-                    steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (nFeedbackPathExecutions), ((SimpleSchedStream)getLoopFeedbackPath ()).getSteadySchedule ()));
-                }
-
-                // figure out the max size for a body buffer
-                maxJoinBuffer = maxJoinBuffer.max (joinBuffer);
-            }
-
-            if (!movedForward)
-            {
-                schedulingDifficulty ();
-                // BUGBUG remove this return - it's pretty useless and confusing!
-                return;
-            }
-        }
 
         // make sure that after execution of this schedule, the size of buffers
         // left over is SAME as when we started!
@@ -358,7 +358,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                 name = (String) getStreamObject ().getClass ().getMethod ("getName", null).invoke (getStreamObject (), null);
             }
         } catch (Throwable e)
-        { }
+            { }
         if (name.startsWith ("DecoderFeedback")) {
             fakeDecoderFeedback ();
             return;
@@ -385,15 +385,15 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
         int x;
         for (x = 0; x < 4; x++)
-        {
-            steadySchedule.add (myJoiner.getStreamObject ());
-            steadySchedule.add (myBody.getSteadySchedule ());
-            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), mySplitter.getStreamObject ()));
-            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getSplitType ().getStreamObject ()));
-            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), ((SimpleSchedStream)LTPSplitJoin.getChild (1)).getSteadySchedule ()));
-            steadySchedule.add (LTPSplitJoin.getJoinType ().getStreamObject ());
-            steadySchedule.add (((SimpleSchedStream)LTPFilter).getSteadySchedule ());
-        }
+            {
+                steadySchedule.add (myJoiner.getStreamObject ());
+                steadySchedule.add (myBody.getSteadySchedule ());
+                steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), mySplitter.getStreamObject ()));
+                steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getSplitType ().getStreamObject ()));
+                steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), ((SimpleSchedStream)LTPSplitJoin.getChild (1)).getSteadySchedule ()));
+                steadySchedule.add (LTPSplitJoin.getJoinType ().getStreamObject ());
+                steadySchedule.add (((SimpleSchedStream)LTPFilter).getSteadySchedule ());
+            }
 
         scheduler.schedule.setBufferSize (myJoiner.getStreamObject (), myBody.getStreamObject (), BigInteger.valueOf (41));
         scheduler.schedule.setBufferSize (myBody.getStreamObject (), mySplitter.getStreamObject (), BigInteger.valueOf (160));

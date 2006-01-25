@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QNop.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QNop.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -27,74 +27,74 @@ import at.dms.util.InconsistencyException;
  */
 class QNop extends QNode {
 
-  public QNop() {
-  }
+    public QNop() {
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Human readable form
-   */
-  public String toString() {
-    return "...";
-  }
+    /**
+     * Human readable form
+     */
+    public String toString() {
+        return "...";
+    }
 
-  /**
-   * The type of this instruction
-   */
-  public int getType() {
-    return at.dms.classfile.Constants.TYP_VOID;
-  }
+    /**
+     * The type of this instruction
+     */
+    public int getType() {
+        return at.dms.classfile.Constants.TYP_VOID;
+    }
 
-  /**
-   * Returns the primitive instruction
-   */
-  public InstructionHandle getInstruction() {
-    return null;
-  }
+    /**
+     * Returns the primitive instruction
+     */
+    public InstructionHandle getInstruction() {
+        return null;
+    }
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the defined temporary.
-   */
-  public QTemporary getDef() {
-    return null;
-  }
+    /**
+     * Returns the defined temporary.
+     */
+    public QTemporary getDef() {
+        return null;
+    }
 
-  /**
-   * Returns the used temporaries.
-   */
-  public QTemporary[] getUses() {
-    return QTemporary.EMPTY;
-  }
+    /**
+     * Returns the used temporaries.
+     */
+    public QTemporary[] getUses() {
+        return QTemporary.EMPTY;
+    }
 
-  /**
-   * returns the parameters of this instruction
-   */
-  public QOrigin[] getOrigins() {
-    return new QOrigin[0]; // !!! share
-  }
+    /**
+     * returns the parameters of this instruction
+     */
+    public QOrigin[] getOrigins() {
+        return new QOrigin[0]; // !!! share
+    }
 
-  /**
-   * Sets the parameters of this instruction
-   */
-  public void setOrigin(QOrigin origin, int i) {
-    throw new InconsistencyException();
-  }
+    /**
+     * Sets the parameters of this instruction
+     */
+    public void setOrigin(QOrigin origin, int i) {
+        throw new InconsistencyException();
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  public void generate(CodeSequence seq) {
-  }
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    public void generate(CodeSequence seq) {
+    }
 }

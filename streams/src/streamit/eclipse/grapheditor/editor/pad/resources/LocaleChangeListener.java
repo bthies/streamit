@@ -1,5 +1,5 @@
 /*
- * @(#)LocaleChangeListener.java	1.0 23/01/02
+ * @(#)LocaleChangeListener.java    1.0 23/01/02
  *
  * Copyright (C) 2003 Sven Luzar
  *
@@ -29,7 +29,7 @@ package streamit.eclipse.grapheditor.editor.pad.resources;
  */
 
 public interface LocaleChangeListener {
-  /** Method was called if the locale changes
-   */
-  public void localeChanged(LocaleChangeEvent e);
+    /** Method was called if the locale changes
+     */
+    public void localeChanged(LocaleChangeEvent e);
 }

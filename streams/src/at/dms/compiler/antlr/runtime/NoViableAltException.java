@@ -15,34 +15,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: NoViableAltException.java,v 1.2 2002-12-11 23:56:11 karczma Exp $
+ * $Id: NoViableAltException.java,v 1.3 2006-01-25 17:00:46 thies Exp $
  */
 
 package at.dms.compiler.antlr.runtime;
 
 public class NoViableAltException extends RecognitionException {
 
-  public Token token;
+    public Token token;
 
-  public NoViableAltException(Token t, String fileName) {
-    super("NoViableAlt");
-    token = t;
-    line = t.getLine();
-    column = t.getColumn();
-    this.fileName = fileName;
-  }
+    public NoViableAltException(Token t, String fileName) {
+        super("NoViableAlt");
+        token = t;
+        line = t.getLine();
+        column = t.getColumn();
+        this.fileName = fileName;
+    }
 
-  /**
-   * Returns a clean error message (no line number/column information)
-   */
-  public String getMessage() {
-    return "unexpected token: "+token.getText();
-  }
+    /**
+     * Returns a clean error message (no line number/column information)
+     */
+    public String getMessage() {
+        return "unexpected token: "+token.getText();
+    }
 
-  /**
-   * Returns a string representation of this exception.
-   */
-  public String toString() {
-    return FileLineFormatter.getFormatter().getFormatString(fileName,line)+getMessage();
-  }
+    /**
+     * Returns a string representation of this exception.
+     */
+    public String toString() {
+        return FileLineFormatter.getFormatter().getFormatString(fileName,line)+getMessage();
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)FormatRoutingNo.java	1.2 30.01.2003
+ * @(#)FormatRoutingNo.java 1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,24 +35,24 @@ import org.jgraph.graph.GraphConstants;
  */
 public class FormatRoutingNo extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatRoutingNo.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FormatRoutingNo(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatRoutingNo.
+     * @param graphpad
+     * @param name
+     */
+    public FormatRoutingNo(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Map map = GraphConstants.createMap();
-		GraphConstants.setRemoveAttributes(
-			map,
-			new Object[] { GraphConstants.ROUTING, GraphConstants.POINTS });
-		setSelectionAttributes(map);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Map map = GraphConstants.createMap();
+        GraphConstants.setRemoveAttributes(
+                                           map,
+                                           new Object[] { GraphConstants.ROUTING, GraphConstants.POINTS });
+        setSelectionAttributes(map);
+    }
 
 }

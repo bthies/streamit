@@ -14,7 +14,7 @@ public class EmptyStreamVisitor implements StreamVisitor {
      * Pipeline, SplitJoin, FeedbackLoop)
      */
     public void preVisitStream(SIRStream self,
-			       SIRIterator iter) {
+                               SIRIterator iter) {
     }
 
 
@@ -23,18 +23,18 @@ public class EmptyStreamVisitor implements StreamVisitor {
      * Pipeline, SplitJoin, FeedbackLoop)
      */
     public void postVisitStream(SIRStream self,
-				SIRIterator iter) {
+                                SIRIterator iter) {
     }
 
     /**
      * PLAIN-VISITS 
      */
-	    
+        
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-	preVisitStream(self, iter);
-	postVisitStream(self, iter);
+                            SIRFilterIter iter) {
+        preVisitStream(self, iter);
+        postVisitStream(self, iter);
     }
 
     /* visit a phased filter */
@@ -47,45 +47,45 @@ public class EmptyStreamVisitor implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
-	preVisitStream(self, iter);
+                                 SIRPipelineIter iter) {
+        preVisitStream(self, iter);
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
-	preVisitStream(self, iter);
+                                  SIRSplitJoinIter iter) {
+        preVisitStream(self, iter);
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	preVisitStream(self, iter);
+                                     SIRFeedbackLoopIter iter) {
+        preVisitStream(self, iter);
     }
 
     /**
      * POST-VISITS 
      */
-	    
+        
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
-	postVisitStream(self, iter);
+                                  SIRPipelineIter iter) {
+        postVisitStream(self, iter);
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
-	postVisitStream(self, iter);
+                                   SIRSplitJoinIter iter) {
+        postVisitStream(self, iter);
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
-	postVisitStream(self, iter);
+                                      SIRFeedbackLoopIter iter) {
+        postVisitStream(self, iter);
     }
 
 }

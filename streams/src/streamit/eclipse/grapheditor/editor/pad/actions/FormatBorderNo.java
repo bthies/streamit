@@ -1,5 +1,5 @@
 /*
- * @(#)FormatBorderNo.java	1.2 31.01.2003
+ * @(#)FormatBorderNo.java  1.2 31.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,26 +34,26 @@ import org.jgraph.graph.GraphConstants;
  */
 public class FormatBorderNo extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatBorderNo.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FormatBorderNo(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatBorderNo.
+     * @param graphpad
+     * @param name
+     */
+    public FormatBorderNo(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Map map = GraphConstants.createMap();
-			Object[] keys =
-				new Object[] {
-					GraphConstants.BORDER,
-					GraphConstants.BORDERCOLOR };
-			GraphConstants.setRemoveAttributes(map, keys);
-			setSelectionAttributes(map);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Map map = GraphConstants.createMap();
+        Object[] keys =
+            new Object[] {
+                GraphConstants.BORDER,
+                GraphConstants.BORDERCOLOR };
+        GraphConstants.setRemoveAttributes(map, keys);
+        setSelectionAttributes(map);
+    }
 
 }

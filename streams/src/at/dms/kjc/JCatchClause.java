@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCatchClause.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: JCatchClause.java,v 1.8 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,131 +29,131 @@ import at.dms.compiler.TokenReference;
  */
 public class JCatchClause extends JPhylum {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JCatchClause() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	exception	the exception caught
-   * @param	body		the body of the exception handler
-   */
-  public JCatchClause(TokenReference where,
-		      JFormalParameter exception,
-		      JBlock body)
-  {
-    super(where);
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   exception   the exception caught
+     * @param   body        the body of the exception handler
+     */
+    public JCatchClause(TokenReference where,
+                        JFormalParameter exception,
+                        JBlock body)
+    {
+        super(where);
 
-    this.exception = exception;
-    this.body = body;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * getType
-   * @return	the type of exception catched by this clause
-   */
-  public CClassType getType() {
-    return (CClassType)exception.getType();
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the node (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    CBlockContext	block = new CBlockContext(context, 1);
-
-    block.setReachable(true);
-    exception.analyse(block);
-    //!!! Throwable !!!
-    body.analyse(block);
-
-    block.close(getTokenReference());
-
-    if (body.isEmpty()) {
-      context.reportTrouble(new CWarning(getTokenReference(),
-					 KjcMessages.EMPTY_CATCH_BLOCK));
+        this.exception = exception;
+        this.body = body;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitCatchClause(this, exception, body);
-  }
+    /**
+     * getType
+     * @return  the type of exception catched by this clause
+     */
+    public CClassType getType() {
+        return (CClassType)exception.getType();
+    }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitCatchClause(this, exception, body);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates bytecode for the exception handler.
-   *
-   * @param	code		the code sequence
-   * @param	start		the beginning of the checked area (inclusive)
-   * @param	end		the end of the checked area (exclusive !)
-   */
-  public void genCode(CodeSequence code, int start, int end) {
-    setLineNumber(code);
+    /**
+     * Analyses the node (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        CBlockContext   block = new CBlockContext(context, 1);
 
-    int		catchPC;
+        block.setReachable(true);
+        exception.analyse(block);
+        //!!! Throwable !!!
+        body.analyse(block);
 
-    catchPC = code.getPC();
-    exception.genStore(code);
-    body.genCode(code);
+        block.close(getTokenReference());
 
-    code.addExceptionHandler(start,
-			     end,
-			     catchPC,
-			     exception.getType().getCClass().getQualifiedName());
-  }
+        if (body.isEmpty()) {
+            context.reportTrouble(new CWarning(getTokenReference(),
+                                               KjcMessages.EMPTY_CATCH_BLOCK));
+        }
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  private JFormalParameter	exception;
-  private JBlock		body;
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitCatchClause(this, exception, body);
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitCatchClause(this, exception, body);
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JCatchClause other = new at.dms.kjc.JCatchClause();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Generates bytecode for the exception handler.
+     *
+     * @param   code        the code sequence
+     * @param   start       the beginning of the checked area (inclusive)
+     * @param   end     the end of the checked area (exclusive !)
+     */
+    public void genCode(CodeSequence code, int start, int end) {
+        setLineNumber(code);
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JCatchClause other) {
-  super.deepCloneInto(other);
-  other.exception = (at.dms.kjc.JFormalParameter)at.dms.kjc.AutoCloner.cloneToplevel(this.exception);
-  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-}
+        int     catchPC;
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        catchPC = code.getPC();
+        exception.genStore(code);
+        body.genCode(code);
+
+        code.addExceptionHandler(start,
+                                 end,
+                                 catchPC,
+                                 exception.getType().getCClass().getQualifiedName());
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private JFormalParameter    exception;
+    private JBlock      body;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JCatchClause other = new at.dms.kjc.JCatchClause();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JCatchClause other) {
+        super.deepCloneInto(other);
+        other.exception = (at.dms.kjc.JFormalParameter)at.dms.kjc.AutoCloner.cloneToplevel(this.exception);
+        other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

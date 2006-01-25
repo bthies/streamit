@@ -32,19 +32,19 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.10 2006-01-05 22:28:31 thies Exp $
+ * @version $Id: ToKopi.java,v 1.11 2006-01-25 17:04:21 thies Exp $
  */
 public class ToKopi
 {
     public void printUsage()
     {
         System.err.println(
-"streamit.frontend.ToKopi: StreamIt compiler\n" +
-"Usage: java streamit.frontend.ToKopi in.str ...\n" +
-"\n" +
-"Options:\n" +
-"  --help         Print this message\n" +
-"\n");
+                           "streamit.frontend.ToKopi: StreamIt compiler\n" +
+                           "Usage: java streamit.frontend.ToKopi in.str ...\n" +
+                           "\n" +
+                           "Options:\n" +
+                           "  --help         Print this message\n" +
+                           "\n");
     }
 
     private boolean printHelp = false;
@@ -54,21 +54,21 @@ public class ToKopi
     public void doOptions(String[] args)
     {
         for (int i = 0; i < args.length; i++)
-        {
-            if (args[i].equals("--help"))
-                printHelp = true;
-            else if (args[i].equals("--"))
             {
-                // Add all of the remaining args as input files.
-                for (i++; i < args.length; i++)
+                if (args[i].equals("--help"))
+                    printHelp = true;
+                else if (args[i].equals("--"))
+                    {
+                        // Add all of the remaining args as input files.
+                        for (i++; i < args.length; i++)
+                            inputFiles.add(args[i]);
+                    }
+                else if (args[i].equals("--output"))
+                    outputFile = args[++i];
+                else
+                    // Maybe check for unrecognized options.
                     inputFiles.add(args[i]);
             }
-            else if (args[i].equals("--output"))
-                outputFile = args[++i];
-            else
-                // Maybe check for unrecognized options.
-                inputFiles.add(args[i]);
-        }
     }
 
     public static Program lowerIRToJava(Program prog)
@@ -101,43 +101,43 @@ public class ToKopi
         return prog;
     }
 
-//    public void run(String[] args)
-//   {
-//        doOptions(args);
-//        if (printHelp)
-//        {
-//            printUsage();
-//            return;
-//        }
-//        
-//        Program prog = null;
-////        Writer outWriter;
-//
-//        try
-//        {
-//            prog = ToJava.parseFiles(inputFiles);
-//        }
-//        catch (java.io.IOException e) {e.printStackTrace(System.err);}
-//        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
-//        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
-//
-//        if (prog == null)
-//        {
-//            System.err.println("Compilation didn't generate a parse tree.");
-//            return;
-//        }
-//
-//        prog = lowerIRToJava(prog);
-//
-//        System.out.println("/*");
-//        SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
-//        Flattener.flatten(s, new JInterfaceDeclaration[0],
-//                          new SIRInterfaceTable[0], new SIRStructure[0], null);
-//    }
+    //    public void run(String[] args)
+    //   {
+    //        doOptions(args);
+    //        if (printHelp)
+    //        {
+    //            printUsage();
+    //            return;
+    //        }
+    //        
+    //        Program prog = null;
+    ////        Writer outWriter;
+    //
+    //        try
+    //        {
+    //            prog = ToJava.parseFiles(inputFiles);
+    //        }
+    //        catch (java.io.IOException e) {e.printStackTrace(System.err);}
+    //        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
+    //        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
+    //
+    //        if (prog == null)
+    //        {
+    //            System.err.println("Compilation didn't generate a parse tree.");
+    //            return;
+    //        }
+    //
+    //        prog = lowerIRToJava(prog);
+    //
+    //        System.out.println("/*");
+    //        SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
+    //        Flattener.flatten(s, new JInterfaceDeclaration[0],
+    //                          new SIRInterfaceTable[0], new SIRStructure[0], null);
+    //    }
     
-//    public static void main(String[] args)
-//    {
-//        new ToKopi().run(args);
-//    }
+    //    public static void main(String[] args)
+    //    {
+    //        new ToKopi().run(args);
+    //    }
 
 }

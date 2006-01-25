@@ -56,15 +56,15 @@ public class FileReader extends Filter
 
     private void openFile() {
         try
-        {
-            inputFile = new File(fileName);
-            fileInputStream = new java.io.FileInputStream (inputFile);
-            inputStream = new DataInputStream (fileInputStream);
-        }
+            {
+                inputFile = new File(fileName);
+                fileInputStream = new java.io.FileInputStream (inputFile);
+                inputStream = new DataInputStream (fileInputStream);
+            }
         catch(Throwable e)
-        {
-            ERROR (e);
-        }
+            {
+                ERROR (e);
+            }
     }
 
     public void init ()
@@ -72,10 +72,10 @@ public class FileReader extends Filter
         // Hacked to make FileReader/Writer<bit> work
         if (fileType == null) {
             output = new Channel (Integer.TYPE, 1);
-	    bits_to_go = 0;
-	} else {
+            bits_to_go = 0;
+        } else {
             output = new Channel (fileType, 1);
-	}
+        }
     }
 
     int endianFlip (int x)
@@ -109,14 +109,14 @@ public class FileReader extends Filter
             try {
                 // Hacked to make FileReader/Writer<bit> work
                 if (fileType == null) { // fileType is a bit
-		    if (bits_to_go == 0) {
-			the_bits = (byte)(inputStream.readUnsignedByte());
-			bits_to_go = 8;
-		    }
-		    output.pushInt((the_bits >> 7) & 1);
-		    the_bits <<= 1;
-		    bits_to_go--;
-		} else if (fileType == Integer.TYPE) {
+                    if (bits_to_go == 0) {
+                        the_bits = (byte)(inputStream.readUnsignedByte());
+                        bits_to_go = 8;
+                    }
+                    output.pushInt((the_bits >> 7) & 1);
+                    the_bits <<= 1;
+                    bits_to_go--;
+                } else if (fileType == Integer.TYPE) {
                     output.pushInt (endianFlip (inputStream.readInt ()));
                 } else if (fileType == Short.TYPE) {
                     output.pushShort (endianFlip (inputStream.readShort ()));
@@ -130,23 +130,23 @@ public class FileReader extends Filter
                 done = true;
             }
             catch (EOFException e) {
-		if (!Stream.scheduledRun) {
-		    // If in -nosched mode, return from work without
-		    // having done anything.  This will result in a
-		    // NoPushPopException and a switch to the next
-		    // sink.
-		    break;
-		} 
-		// otherwise hang, for now...
+                if (!Stream.scheduledRun) {
+                    // If in -nosched mode, return from work without
+                    // having done anything.  This will result in a
+                    // NoPushPopException and a switch to the next
+                    // sink.
+                    break;
+                } 
+                // otherwise hang, for now...
 
                 // try closing and opening file, to try again
                 // closeFile();
                 // openFile();
             }
             catch (Throwable e)
-            {
-                ERROR (e);
-            }
+                {
+                    ERROR (e);
+                }
         }
     }
 

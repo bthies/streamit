@@ -22,29 +22,29 @@ public class ManualPartition {
      * KjcOptions.manual.  To be called only by the compiler.
      */
     public static SIRStream doit(SIRStream str) {
-	// invoke manual optimization via reflection
-	try {
-	    Class c = Class.forName(KjcOptions.manual);
-	    Method manualPartition = c.getMethod("manualPartition", new Class[] { Class.forName("at.dms.kjc.sir.SIRStream") });
-	    Object result = manualPartition.invoke(null, new Object[] { str });
-	    if (!(result instanceof SIRStream)) {
-		Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " did not return an SIRStream.");
-		return null;
-	    } else {
-		return (SIRStream)result;
-	    }
-	} catch (ClassNotFoundException e) {
-	    Utils.fail("Manual partitioning failed:  can't find class " + KjcOptions.manual);
-	} catch (NoSuchMethodException e) {
-	    Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " does not contain appropriate manualPartition method.");
-	} catch (InvocationTargetException e) {
-	    e.printStackTrace();
-	    Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " threw exception.");
-	} catch (IllegalAccessException e) {
-	    e.printStackTrace();
-	    Utils.fail("Manual partitioning failed:  illegal to access class " + KjcOptions.manual);
-	}
-	return null;
+        // invoke manual optimization via reflection
+        try {
+            Class c = Class.forName(KjcOptions.manual);
+            Method manualPartition = c.getMethod("manualPartition", new Class[] { Class.forName("at.dms.kjc.sir.SIRStream") });
+            Object result = manualPartition.invoke(null, new Object[] { str });
+            if (!(result instanceof SIRStream)) {
+                Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " did not return an SIRStream.");
+                return null;
+            } else {
+                return (SIRStream)result;
+            }
+        } catch (ClassNotFoundException e) {
+            Utils.fail("Manual partitioning failed:  can't find class " + KjcOptions.manual);
+        } catch (NoSuchMethodException e) {
+            Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " does not contain appropriate manualPartition method.");
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+            Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " threw exception.");
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            Utils.fail("Manual partitioning failed:  illegal to access class " + KjcOptions.manual);
+        }
+        return null;
     }
 
     /**
@@ -52,7 +52,7 @@ public class ManualPartition {
      * <filename>.dot.
      */
     public static void printGraph(SIRStream str, String filename) {
-	NumberDot.printGraph(str, filename);
+        NumberDot.printGraph(str, filename);
     }
 
     /**
@@ -60,7 +60,7 @@ public class ManualPartition {
      * <num>.  This is the ID number that appears in numbered graphs.
      */
     public static SIRStream getStream(SIRStream str, int num) {
-	return str.getStreamWithNumber(num);
+        return str.getStreamWithNumber(num);
     }
 
     /**
@@ -68,16 +68,16 @@ public class ManualPartition {
      * possibly) that have a name beginning with a given prefix.
      */
     public static SIRStream[] getStreams(SIRStream str, final String prefix) {
-	final ArrayList result = new ArrayList();
+        final ArrayList result = new ArrayList();
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		public void preVisitStream(SIRStream self,
-					   SIRIterator iter) {
-		    if (self.getName().startsWith(prefix)) {
-			result.add(self);
-		    }
-		}
-	    });
-	return (SIRStream[])result.toArray(new SIRStream[0]);
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    if (self.getName().startsWith(prefix)) {
+                        result.add(self);
+                    }
+                }
+            });
+        return (SIRStream[])result.toArray(new SIRStream[0]);
     }
 
     /**
@@ -85,21 +85,21 @@ public class ManualPartition {
      * Returns null if no such stream exists.
      */
     public static SIRStream getStream(SIRStream str, final String name) {
-	final ArrayList result = new ArrayList();
+        final ArrayList result = new ArrayList();
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		public void preVisitStream(SIRStream self,
-					   SIRIterator iter) {
-		    if (self.getName().equals(name)) {
-			result.add(self);
-		    }
-		}
-	    });
-	assert result.size()<=1;
-	if (result.size()>0) {
-	    return (SIRStream)result.get(0);
-	} else {
-	    return null;
-	}
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    if (self.getName().equals(name)) {
+                        result.add(self);
+                    }
+                }
+            });
+        assert result.size()<=1;
+        if (result.size()>0) {
+            return (SIRStream)result.get(0);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -107,7 +107,7 @@ public class ManualPartition {
      * the number of tiles needed to <targetTiles>.
      */
     public static SIRStream partition(SIRStream str, int targetTiles) {
-	return internalPartition(str, targetTiles, true);
+        return internalPartition(str, targetTiles, true);
     }
 
     /**
@@ -115,7 +115,7 @@ public class ManualPartition {
      * of tiles needed to <targetTiles>.
      */
     public static SIRStream partitionGreedy(SIRStream str, int targetTiles) {
-	return internalPartition(str, targetTiles, false);
+        return internalPartition(str, targetTiles, false);
     }
 
     /**
@@ -123,54 +123,54 @@ public class ManualPartition {
      * programming partitioner; otherwise runs greedy partitioner.
      */
     private static SIRStream internalPartition(SIRStream str, int targetTiles, boolean dp) {
-	checkNull(str);
+        checkNull(str);
 
-	// need to make a wrapper, since DP partitioning does best
-	// with pipelines
-	str = SIRContainer.makeWrapper(str);
+        // need to make a wrapper, since DP partitioning does best
+        // with pipelines
+        str = SIRContainer.makeWrapper(str);
 
-	// Lift filters out of pipelines if they're the only thing in
-	// the pipe
-	Lifter.lift(str);
+        // Lift filters out of pipelines if they're the only thing in
+        // the pipe
+        Lifter.lift(str);
 
-	// make work estimate
-	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-	int curCount = new GraphFlattener(str).getNumTiles();
+        // make work estimate
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        int curCount = new GraphFlattener(str).getNumTiles();
 
-	// since we're on Raw, the joiners need tiles
-	boolean joinersNeedTiles = true;
-	// icode is for cluster
-	boolean limitICode = false;
+        // since we're on Raw, the joiners need tiles
+        boolean joinersNeedTiles = true;
+        // icode is for cluster
+        boolean limitICode = false;
 
-	if (dp) {
-	    str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles, limitICode).toplevel();
-	} else {
-	    if (curCount < targetTiles) {
-		// need fission
-		new GreedyPartitioner(str, work, targetTiles, joinersNeedTiles).toplevelFission(curCount);
-	    } else {
-		// need fusion
-		new GreedyPartitioner(str, work, targetTiles, joinersNeedTiles).toplevelFusion();
-	    }
-	} 
+        if (dp) {
+            str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles, limitICode).toplevel();
+        } else {
+            if (curCount < targetTiles) {
+                // need fission
+                new GreedyPartitioner(str, work, targetTiles, joinersNeedTiles).toplevelFission(curCount);
+            } else {
+                // need fusion
+                new GreedyPartitioner(str, work, targetTiles, joinersNeedTiles).toplevelFusion();
+            }
+        } 
 
-	// lift the result
-	Lifter.lift(str);
+        // lift the result
+        Lifter.lift(str);
 
-	// remove wrapper if possible
-	if (str instanceof SIRPipeline && ((SIRPipeline)str).size()==1) {
-	    str = ((SIRPipeline)str).get(0);
-	}
+        // remove wrapper if possible
+        if (str instanceof SIRPipeline && ((SIRPipeline)str).size()==1) {
+            str = ((SIRPipeline)str).get(0);
+        }
 
-	return str;
+        return str;
     }
 
     /**
      * Fuses all of <str> into a single filter.
      */
     public static SIRStream fuse(SIRStream str) {
-	checkNull(str);
-	return internalPartition(str, 1, true);
+        checkNull(str);
+        return internalPartition(str, 1, true);
     }
 
     /**
@@ -178,8 +178,8 @@ public class ManualPartition {
      * are specified according to a PartitionGroup, <partitions>.
      */
     public static SIRStream fuse(SIRPipeline pipeline, PartitionGroup partitions) {
-	checkNull(pipeline);
-	return FusePipe.fuse(pipeline, partitions);
+        checkNull(pipeline);
+        return FusePipe.fuse(pipeline, partitions);
     }
 
     /**
@@ -187,8 +187,8 @@ public class ManualPartition {
      * are specified according to a PartitionGroup, <partitions>.
      */
     public static SIRStream fuse(SIRSplitJoin splitjoin, PartitionGroup partitions) {
-	checkNull(splitjoin);
-	return FuseSplit.fuse(splitjoin, partitions);
+        checkNull(splitjoin);
+        return FuseSplit.fuse(splitjoin, partitions);
     }
 
     /**
@@ -197,8 +197,8 @@ public class ManualPartition {
      * have no internal fields.
      */
     public static boolean isFissable(SIRFilter filter) {
-	checkNull(filter);
-	return StatelessDuplicate.isFissable(filter);
+        checkNull(filter);
+        return StatelessDuplicate.isFissable(filter);
     }
 
     /**
@@ -207,8 +207,8 @@ public class ManualPartition {
      * form.  Requires that isFissable(<filter>) is true.
      */
     public static SIRSplitJoin fission(SIRFilter filter, int reps) {
-	checkNull(filter);
-	return StatelessDuplicate.doit(filter, reps);
+        checkNull(filter);
+        return StatelessDuplicate.doit(filter, reps);
     }
     
     /**
@@ -217,8 +217,8 @@ public class ManualPartition {
      * those children.
      */
     public static SIRPipeline addHierarchicalChild(SIRPipeline pipe, int first, int last) {
-	checkNull(pipe);
-	return RefactorPipeline.addHierarchicalChild(pipe, first, last);
+        checkNull(pipe);
+        return RefactorPipeline.addHierarchicalChild(pipe, first, last);
     }
 
     /**
@@ -227,8 +227,8 @@ public class ManualPartition {
      * each partition factored into their own pipelines.
      */
     public static SIRPipeline addHierarchicalChildren(SIRPipeline pipe, PartitionGroup partitions) {
-	checkNull(pipe);
-	return RefactorPipeline.addHierarchicalChildren(pipe, partitions);
+        checkNull(pipe);
+        return RefactorPipeline.addHierarchicalChildren(pipe, partitions);
     }
 
     /**
@@ -237,13 +237,13 @@ public class ManualPartition {
      * into its own child splitjoin.
      */
     public static SIRSplitJoin addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
-	checkNull(sj);
-	SIRSplitJoin result = RefactorSplitJoin.addHierarchicalChildren(sj, partition);
-	// need to replace in parent, since method is immutable
-	if (sj.getParent()!=null) {
-	    sj.getParent().replace(sj, result);
-	}
-	return result;
+        checkNull(sj);
+        SIRSplitJoin result = RefactorSplitJoin.addHierarchicalChildren(sj, partition);
+        // need to replace in parent, since method is immutable
+        if (sj.getParent()!=null) {
+            sj.getParent().replace(sj, result);
+        }
+        return result;
     }
 
     /**
@@ -264,13 +264,13 @@ public class ManualPartition {
      *      |                          .
      */
     public static SIRPipeline addSyncPoints(SIRSplitJoin sj, PartitionGroup partitions) {
-	checkNull(sj);
-	SIRPipeline result = RefactorSplitJoin.addSyncPoints(sj, partitions);
-	// need to replace in parent, since method is immutable
-	if (sj.getParent()!=null) {
-	    sj.getParent().replace(sj, result);
-	}
-	return result;
+        checkNull(sj);
+        SIRPipeline result = RefactorSplitJoin.addSyncPoints(sj, partitions);
+        // need to replace in parent, since method is immutable
+        if (sj.getParent()!=null) {
+            sj.getParent().replace(sj, result);
+        }
+        return result;
     }
 
     /**
@@ -282,8 +282,8 @@ public class ManualPartition {
      * Note that this method MUTATES its argument.
      */
     public static boolean removeSyncPoints(SIRPipeline pipe) {
-	checkNull(pipe);
-	return RefactorSplitJoin.removeSyncPoints(pipe);
+        checkNull(pipe);
+        return RefactorSplitJoin.removeSyncPoints(pipe);
     }
 
     /**
@@ -307,8 +307,8 @@ public class ManualPartition {
      * Note that this method MUTATES its argument.
      */
     public static boolean removeMatchingSyncPoints(SIRPipeline pipe) {
-	checkNull(pipe);
-	return RefactorSplitJoin.removeMatchingSyncPoints(pipe);
+        checkNull(pipe);
+        return RefactorSplitJoin.removeMatchingSyncPoints(pipe);
     }
 
     /**
@@ -321,19 +321,19 @@ public class ManualPartition {
      * Note that this method MUTATES its argument.
      */
     public static boolean raiseSJChildren(SIRSplitJoin sj) {
-	checkNull(sj);
-	return RefactorSplitJoin.raiseSJChildren(sj);
+        checkNull(sj);
+        return RefactorSplitJoin.raiseSJChildren(sj);
     }
 
     /**
      * Exits with nice error if <str> is null.
      */
     private static void checkNull(SIRStream str) {
-	if (str==null) {
-	    new RuntimeException("Null stream passed to ManualPartition.  You probably tried to \n" + 
-				 "retrieve a numbered stream that is not in the graph.").printStackTrace();
-	    System.exit(1);
-	}
+        if (str==null) {
+            new RuntimeException("Null stream passed to ManualPartition.  You probably tried to \n" + 
+                                 "retrieve a numbered stream that is not in the graph.").printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
@@ -341,48 +341,48 @@ public class ManualPartition {
      * deep children within <str>.
      */
     public static void unroll(SIRStream str, int limit) {
-	// switch unroll limit
-	int oldUnroll = KjcOptions.unroll;
-	KjcOptions.unroll = limit;
+        // switch unroll limit
+        int oldUnroll = KjcOptions.unroll;
+        KjcOptions.unroll = limit;
 
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		public void preVisitStream(SIRStream self,
-					   SIRIterator iter) {
-		    // unroll in all methods
-		    JMethodDeclaration[] methods = self.getMethods();
-		    for (int i=0; i<methods.length; i++) {
-			doUnroll(methods[i]);		    }
-		}
-	    });
-	
-	// restore unroll limit
-	KjcOptions.unroll = oldUnroll;
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    // unroll in all methods
+                    JMethodDeclaration[] methods = self.getMethods();
+                    for (int i=0; i<methods.length; i++) {
+                        doUnroll(methods[i]);           }
+                }
+            });
+    
+        // restore unroll limit
+        KjcOptions.unroll = oldUnroll;
     }
 
     /**
      * Private method to actually do unrolling on a method.
      */
     private static void doUnroll(JMethodDeclaration method) {
-	Unroller unroller;
-	do {
-	    do {
-		//System.out.println("Unrolling..");
-		unroller = new Unroller(new Hashtable());
-		method.accept(unroller);
-	    } while(unroller.hasUnrolled());
-	    //System.out.println("Constant Propagating..");
-	    method.accept(new Propagator(new Hashtable()));
-	    //System.out.println("Unrolling..");
-	    unroller = new Unroller(new Hashtable());
-	    method.accept(unroller);
-	} while(unroller.hasUnrolled());
-	//System.out.println("Flattening..");
-	method.accept(new BlockFlattener());
-	//System.out.println("Analyzing Branches..");
-	//method.accept(new BranchAnalyzer());
-	//System.out.println("Constant Propagating..");
-	method.accept(new Propagator(new Hashtable()));
-	method.accept(new VarDeclRaiser());
+        Unroller unroller;
+        do {
+            do {
+                //System.out.println("Unrolling..");
+                unroller = new Unroller(new Hashtable());
+                method.accept(unroller);
+            } while(unroller.hasUnrolled());
+            //System.out.println("Constant Propagating..");
+            method.accept(new Propagator(new Hashtable()));
+            //System.out.println("Unrolling..");
+            unroller = new Unroller(new Hashtable());
+            method.accept(unroller);
+        } while(unroller.hasUnrolled());
+        //System.out.println("Flattening..");
+        method.accept(new BlockFlattener());
+        //System.out.println("Analyzing Branches..");
+        //method.accept(new BranchAnalyzer());
+        //System.out.println("Constant Propagating..");
+        method.accept(new Propagator(new Hashtable()));
+        method.accept(new VarDeclRaiser());
     }
 
     /**
@@ -391,22 +391,22 @@ public class ManualPartition {
      * unneeded.
      */
     public static void destroyArrays(SIRStream str) {
-	// set option
-	boolean oldOpt = KjcOptions.destroyfieldarray;
-	KjcOptions.destroyfieldarray = true;
+        // set option
+        boolean oldOpt = KjcOptions.destroyfieldarray;
+        KjcOptions.destroyfieldarray = true;
 
-	// try destroying arrays
+        // try destroying arrays
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		public void visitFilter(SIRFilter self,
-					SIRIterator iter) {
-		    new ArrayDestroyer().destroyFieldArrays(self);
-		    // try to eliminate dead code
-		    DeadCodeElimination.doit(self);
-		}
-	    });
-		
-	// restore option
-	KjcOptions.destroyfieldarray = true;
+                public void visitFilter(SIRFilter self,
+                                        SIRIterator iter) {
+                    new ArrayDestroyer().destroyFieldArrays(self);
+                    // try to eliminate dead code
+                    DeadCodeElimination.doit(self);
+                }
+            });
+        
+        // restore option
+        KjcOptions.destroyfieldarray = true;
     }
 
 }

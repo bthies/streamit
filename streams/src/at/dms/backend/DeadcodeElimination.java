@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DeadcodeElimination.java,v 1.1 2001-08-30 16:32:24 thies Exp $
+ * $Id: DeadcodeElimination.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -26,46 +26,46 @@ package at.dms.backend;
  */
 public class DeadcodeElimination extends TreeWalker {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates a new instruction handle.
-   *
-   * @param	insn		the instruction
-   * @param	prev		the handle of the next instruction
-   *				in textual order
-   */
-  public DeadcodeElimination(BasicBlock[] bblocks, BasicBlock[] eblocks) {
-    super(bblocks, eblocks);
-  }
+    /**
+     * Creates a new instruction handle.
+     *
+     * @param   insn        the instruction
+     * @param   prev        the handle of the next instruction
+     *              in textual order
+     */
+    public DeadcodeElimination(BasicBlock[] bblocks, BasicBlock[] eblocks) {
+        super(bblocks, eblocks);
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Runs the deadcode algorithm
-   */
-  public void run() {
-    traverse();
-  }
+    /**
+     * Runs the deadcode algorithm
+     */
+    public void run() {
+        traverse();
+    }
 
-  // --------------------------------------------------------------------
-  // PRIVATE METHODS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // PRIVATE METHODS
+    // --------------------------------------------------------------------
 
-  protected void processNode(QNode node) {
-  }
+    protected void processNode(QNode node) {
+    }
 
-  protected void kill() {
-    last = null;
-  }
+    protected void kill() {
+        last = null;
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private QNode		last;
+    private QNode       last;
 }

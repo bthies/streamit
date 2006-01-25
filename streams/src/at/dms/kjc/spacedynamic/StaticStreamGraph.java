@@ -116,7 +116,7 @@ public class StaticStreamGraph {
         // a static stream graph always starts with a splitter, we
         // remove it later if ways == 1
         this.topLevel = new FlatNode(SIRSplitter.create(null,
-                SIRSplitType.NULL, 0));
+                                                        SIRSplitType.NULL, 0));
 
         addTopLevelFlatNode(realTop);
     }
@@ -138,14 +138,14 @@ public class StaticStreamGraph {
         flatNodes.remove(oldTopLevel);
 
         topLevel = new FlatNode(SIRSplitter.create(null, SIRSplitType.NULL,
-                oldTopLevel.ways + 1));
+                                                   oldTopLevel.ways + 1));
 
         addFlatNode(topLevel);
 
         // add edges from old top level
         assert oldTopLevel.ways == oldTopLevel.edges.length
-                && oldTopLevel.ways == ((SIRSplitter) oldTopLevel.contents)
-                        .getWays();
+            && oldTopLevel.ways == ((SIRSplitter) oldTopLevel.contents)
+            .getWays();
         for (int i = 0; i < oldTopLevel.ways; i++) {
             FlatNode current = oldTopLevel.edges[i];
             // first remove the back edge to the old top level
@@ -177,82 +177,82 @@ public class StaticStreamGraph {
         // check that we have cuts in the correct places
         // remove edges that connect to flatnodes not in this ssg
         topLevel.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                if (!flatNodes.contains(node))
-                    return;
+                public void visitNode(FlatNode node) {
+                    if (!flatNodes.contains(node))
+                        return;
 
-                if (node.inputs > 0) {
-                    for (int i = 0; i < node.incoming.length; i++) {
-                        assert node.incoming[i] != null;
-                        if (!flatNodes.contains(node.incoming[i])) {
-                            node.removeBackEdge(node.incoming[i]);
+                    if (node.inputs > 0) {
+                        for (int i = 0; i < node.incoming.length; i++) {
+                            assert node.incoming[i] != null;
+                            if (!flatNodes.contains(node.incoming[i])) {
+                                node.removeBackEdge(node.incoming[i]);
+                            }
+                        }
+                    }
+                    if (node.ways > 0) {
+                        for (int i = 0; i < node.edges.length; i++) {
+                            assert node.edges[i] != null;
+
+                            if (!(flatNodes.contains(node.edges[i]))) {
+                                node.removeForwardEdge(node.edges[i]);
+                            }
                         }
                     }
                 }
-                if (node.ways > 0) {
-                    for (int i = 0; i < node.edges.length; i++) {
-                        assert node.edges[i] != null;
-
-                        if (!(flatNodes.contains(node.edges[i]))) {
-                            node.removeForwardEdge(node.edges[i]);
-                        }
-                    }
-                }
-            }
-        }, null, true);
+            }, null, true);
 
         // make sure all nodes have correct number of connections...
         topLevel.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                if (node.isFilter()) {
-                    SIRFilter filter = (SIRFilter) node.contents;
-                    if (filter.getPopInt() > 0)
-                        assert node.inputs == 1;
-                    else // doesn't pop
-                    if (node.inputs == 1)
-                        assert node.incoming[0].getWeight(node) == 0;
+                public void visitNode(FlatNode node) {
+                    if (node.isFilter()) {
+                        SIRFilter filter = (SIRFilter) node.contents;
+                        if (filter.getPopInt() > 0)
+                            assert node.inputs == 1;
+                        else // doesn't pop
+                            if (node.inputs == 1)
+                                assert node.incoming[0].getWeight(node) == 0;
 
-                    if (filter.getPushInt() > 0)
-                        assert node.ways == 1;
-                    else // doesn't push
-                    if (node.ways == 1)
-                        assert node.edges[0].getIncomingWeight(node) == 0;
-                } else if (node.isJoiner()) {
-                    SIRJoiner joiner = (SIRJoiner) node.contents;
-                    if (joiner.getWays() != node.inputs) {
-                        // System.out.println(joiner.getWays() + " != " +
-                        // node.inputs);
-                        assert joiner.getSumOfWeights() == 0;
-                        // create a new null joiner
-                        SIRJoiner newJoiner = SIRJoiner.create(null,
-                                SIRJoinType.NULL, node.inputs);
-                        node.contents = newJoiner;
-                    }
-                } else {
-                    SIRSplitter splitter = (SIRSplitter) node.contents;
-                    assert splitter.getWays() == node.ways : "Invalid Splitter: "
+                        if (filter.getPushInt() > 0)
+                            assert node.ways == 1;
+                        else // doesn't push
+                            if (node.ways == 1)
+                                assert node.edges[0].getIncomingWeight(node) == 0;
+                    } else if (node.isJoiner()) {
+                        SIRJoiner joiner = (SIRJoiner) node.contents;
+                        if (joiner.getWays() != node.inputs) {
+                            // System.out.println(joiner.getWays() + " != " +
+                            // node.inputs);
+                            assert joiner.getSumOfWeights() == 0;
+                            // create a new null joiner
+                            SIRJoiner newJoiner = SIRJoiner.create(null,
+                                                                   SIRJoinType.NULL, node.inputs);
+                            node.contents = newJoiner;
+                        }
+                    } else {
+                        SIRSplitter splitter = (SIRSplitter) node.contents;
+                        assert splitter.getWays() == node.ways : "Invalid Splitter: "
                             + node
                             + " "
                             + splitter.getWays()
                             + " != "
                             + node.ways;
 
+                    }
                 }
-            }
-        }, null, true);
+            }, null, true);
 
         // check if the number of splitters and joiners is balanced (==)
         splitterBalance = 0;
 
         topLevel.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                if (node.isJoiner()) {
-                    splitterBalance--;
-                } else if (node.isSplitter()) {
-                    splitterBalance++;
+                public void visitNode(FlatNode node) {
+                    if (node.isJoiner()) {
+                        splitterBalance--;
+                    } else if (node.isSplitter()) {
+                        splitterBalance++;
+                    }
                 }
-            }
-        }, null, true);
+            }, null, true);
 
         // splitters and joiners are balanced so return...
         if (splitterBalance == 0)
@@ -262,7 +262,7 @@ public class StaticStreamGraph {
         if (((SIRSplitter) topLevel.contents).getWays() == 1) {
             FlatNode oldTopLevel = topLevel;
             assert topLevel.ways == 1 && topLevel.edges.length == 1
-                    && topLevel.edges[0] != null;
+                && topLevel.edges[0] != null;
             topLevel = topLevel.edges[0];
             topLevel.removeBackEdge(oldTopLevel);
             flatNodes.remove(oldTopLevel);
@@ -282,7 +282,7 @@ public class StaticStreamGraph {
         nextsIt = nexts.values().iterator();
         while (nextsIt.hasNext()) {
             StaticStreamGraph ssg = streamGraph
-                    .getParentSSG(((FlatNode) nextsIt.next()));
+                .getParentSSG(((FlatNode) nextsIt.next()));
             if (!nextSSGs.contains(ssg))
                 nextSSGs.add(ssg);
         }
@@ -290,7 +290,7 @@ public class StaticStreamGraph {
         Iterator prevsIt = prevs.values().iterator();
         while (prevsIt.hasNext()) {
             StaticStreamGraph ssg = streamGraph
-                    .getParentSSG(((FlatNode) prevsIt.next()));
+                .getParentSSG(((FlatNode) prevsIt.next()));
             if (!prevSSGs.contains(ssg))
                 prevSSGs.add(ssg);
         }
@@ -317,7 +317,7 @@ public class StaticStreamGraph {
             FlatNode dest = (FlatNode) nexts.get(outputs[i]);
             StaticStreamGraph input = streamGraph.getParentSSG(dest);
             outputSSGEdges[i] = new SSGEdge(this, input, i, input
-                    .getInputNum(dest));
+                                            .getInputNum(dest));
             outputSSGEdges[i].outputNode = outputs[i];
             outputSSGEdges[i].inputNode = dest;
         }
@@ -334,7 +334,7 @@ public class StaticStreamGraph {
 
         for (int i = 0; i < outputs.length; i++)
             assert outputs[i] != null : this.toString() + " has null output "
-                    + i;
+                + i;
 
         for (int i = 0; i < inputs.length; i++)
             assert inputs[i] != null : this.toString() + " has null input " + i;
@@ -427,9 +427,9 @@ public class StaticStreamGraph {
                 // if a splitter, then set the input[] to the direct downstream
                 // node of the splitter...
                 assert prevs.size() == topLevel.edges.length
-                        && topLevel.edges.length == ((SIRSplitter) topLevel.contents)
-                                .getWays() && inputs.length == prevs.size() : "Partitioning problem: The partition changed the number of inputs of SSG "
-                        + this.toString();
+                    && topLevel.edges.length == ((SIRSplitter) topLevel.contents)
+                    .getWays() && inputs.length == prevs.size() : "Partitioning problem: The partition changed the number of inputs of SSG "
+                    + this.toString();
                 for (int i = 0; i < inputs.length; i++) {
                     inputs[i] = topLevel.edges[i];
                 }
@@ -447,9 +447,9 @@ public class StaticStreamGraph {
                 // if a joiner set outputs[] to be the upstream nodes of the
                 // joiner
                 assert nexts.size() == bottomLevel.incoming.length
-                        && bottomLevel.incoming.length == ((SIRJoiner) bottomLevel.contents)
-                                .getWays() && outputs.length == nexts.size() : "Partitioning problem: The partition changed the number of outputs of SSG "
-                        + this.toString();
+                    && bottomLevel.incoming.length == ((SIRJoiner) bottomLevel.contents)
+                    .getWays() && outputs.length == nexts.size() : "Partitioning problem: The partition changed the number of outputs of SSG "
+                    + this.toString();
                 for (int i = 0; i < outputs.length; i++)
                     outputs[i] = bottomLevel.incoming[i];
             } else
@@ -486,7 +486,7 @@ public class StaticStreamGraph {
         topLevelSIR = newTop;
         // dump the graph
         StreamItDot.printGraph(topLevelSIR, SpaceDynamicBackend
-                .makeDotFileName("setTLSIR", topLevelSIR));
+                               .makeDotFileName("setTLSIR", topLevelSIR));
 
         // remove the old nodes from the global parent map
         Iterator fns = flatNodes.iterator();
@@ -505,10 +505,10 @@ public class StaticStreamGraph {
         flatNodes = new LinkedList();
         // update the flatnodes of this SSG list
         topLevel.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                flatNodes.add(node);
-            }
-        }, null, true);
+                public void visitNode(FlatNode node) {
+                    flatNodes.add(node);
+                }
+            }, null, true);
 
         // update the global parent map
         fns = flatNodes.iterator();
@@ -536,8 +536,8 @@ public class StaticStreamGraph {
      */
     public void createSIRGraph() {
         (new DumpGraph()).dumpGraph(topLevel, SpaceDynamicBackend
-                .makeDotFileName("beforeFGtoSIR", topLevelSIR),
-                initExecutionCounts, steadyExecutionCounts);
+                                    .makeDotFileName("beforeFGtoSIR", topLevelSIR),
+                                    initExecutionCounts, steadyExecutionCounts);
         // do we want this here?!!
         setTopLevelSIR((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
         // topLevelSIR = (new FlatGraphToSIR(topLevel)).getTopLevelSIR();
@@ -573,7 +573,7 @@ public class StaticStreamGraph {
         // get the multiplicities from the scheduler
         executionCounts = SIRScheduler.getExecutionCounts(topLevelSIR);
         PartitionDot.printScheduleGraph(topLevelSIR, SpaceDynamicBackend
-                .makeDotFileName("schedule", topLevelSIR), executionCounts);
+                                        .makeDotFileName("schedule", topLevelSIR), executionCounts);
 
         // create the multiplicity maps
         createExecutionCounts();
@@ -586,14 +586,14 @@ public class StaticStreamGraph {
         bottomLevel = null;
 
         topLevel.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                // if the node has no edges, it is a bottom level...
-                if (node.edges.length == 0) {
-                    assert bottomLevel == null : node;
-                    bottomLevel = node;
+                public void visitNode(FlatNode node) {
+                    // if the node has no edges, it is a bottom level...
+                    if (node.edges.length == 0) {
+                        assert bottomLevel == null : node;
+                        bottomLevel = node;
+                    }
                 }
-            }
-        }, null, true);
+            }, null, true);
     }
 
     /** dump a dot rep of the flat graph * */
@@ -601,8 +601,8 @@ public class StaticStreamGraph {
         // dump the flatgraph of the application, must be called after
         // createExecutionCounts
         (new DumpGraph()).dumpGraph(graphFlattener.top, SpaceDynamicBackend
-                .makeDotFileName("flatgraph", topLevelSIR),
-                initExecutionCounts, steadyExecutionCounts);
+                                    .makeDotFileName("flatgraph", topLevelSIR),
+                                    initExecutionCounts, steadyExecutionCounts);
     }
 
     /** set the number of tiles that this SSG should occupy on the raw chip * */
@@ -699,7 +699,7 @@ public class StaticStreamGraph {
         }
 
         assert false : "Error: calling getNext() on non-dynamic sink of: "
-                + this + " " + flatNode;
+            + this + " " + flatNode;
         return null;
     }
 
@@ -716,7 +716,7 @@ public class StaticStreamGraph {
         }
 
         assert false : "Error: calling getPrev() on non-dynamic source of: "
-                + this + " " + flatNode;
+            + this + " " + flatNode;
         return null;
     }
 
@@ -754,13 +754,13 @@ public class StaticStreamGraph {
 
         // make fresh hashmaps for results
         HashMap[] result = { initExecutionCounts = new HashMap(),
-                steadyExecutionCounts = new HashMap() };
+                             steadyExecutionCounts = new HashMap() };
 
         // then filter the results to wrap every filter in a flatnode,
         // and ignore splitters
         for (int i = 0; i < 2; i++) {
             for (Iterator it = executionCounts[i].keySet().iterator(); it
-                    .hasNext();) {
+                     .hasNext();) {
                 SIROperator obj = (SIROperator) it.next();
                 int val = ((int[]) executionCounts[i].get(obj))[0];
                 // System.err.println("execution count for " + obj + ": " +
@@ -778,7 +778,7 @@ public class StaticStreamGraph {
                  */
                 if (graphFlattener.getFlatNode(obj) != null)
                     result[i].put(graphFlattener.getFlatNode(obj), new Integer(
-                            val));
+                                                                               val));
             }
         }
 
@@ -790,21 +790,21 @@ public class StaticStreamGraph {
             if (node.incoming.length > 0) {
                 if (initExecutionCounts.get(node.incoming[0]) != null)
                     initCount = ((Integer) initExecutionCounts
-                            .get(node.incoming[0])).intValue();
+                                 .get(node.incoming[0])).intValue();
                 if ((initCount == -1)
-                        && (executionCounts[0].get(node.incoming[0].contents) != null))
+                    && (executionCounts[0].get(node.incoming[0].contents) != null))
                     initCount = ((int[]) executionCounts[0]
-                            .get(node.incoming[0].contents))[0];
+                                 .get(node.incoming[0].contents))[0];
             }
             int steadyCount = -1;
             if (node.incoming.length > 0) {
                 if (steadyExecutionCounts.get(node.incoming[0]) != null)
                     steadyCount = ((Integer) steadyExecutionCounts
-                            .get(node.incoming[0])).intValue();
+                                   .get(node.incoming[0])).intValue();
                 if ((steadyCount == -1)
-                        && (executionCounts[1].get(node.incoming[0].contents) != null))
+                    && (executionCounts[1].get(node.incoming[0].contents) != null))
                     steadyCount = ((int[]) executionCounts[1]
-                            .get(node.incoming[0].contents))[0];
+                                   .get(node.incoming[0].contents))[0];
             }
             if (node.contents instanceof SIRIdentity) {
                 if (initCount >= 0)
@@ -821,10 +821,10 @@ public class StaticStreamGraph {
                 for (int j = 0; j < edges.length; j++) {
                     if (initCount >= 0)
                         initExecutionCounts.put(edges[j], new Integer(
-                                (initCount * weights[j]) / sum));
+                                                                      (initCount * weights[j]) / sum));
                     if (steadyCount >= 0)
                         steadyExecutionCounts.put(edges[j], new Integer(
-                                (steadyCount * weights[j]) / sum));
+                                                                        (steadyCount * weights[j]) / sum));
                 }
                 if (initCount >= 0)
                     result[0].put(node, new Integer(initCount));
@@ -834,10 +834,10 @@ public class StaticStreamGraph {
                 FlatNode oldNode = graphFlattener.getFlatNode(node.contents);
                 if (executionCounts[0].get(node.oldContents) != null)
                     result[0].put(node, new Integer(((int[]) executionCounts[0]
-                            .get(node.oldContents))[0]));
+                                                     .get(node.oldContents))[0]));
                 if (executionCounts[1].get(node.oldContents) != null)
                     result[1].put(node, new Integer(((int[]) executionCounts[1]
-                            .get(node.oldContents))[0]));
+                                                     .get(node.oldContents))[0]));
             }
         }
 
@@ -852,7 +852,7 @@ public class StaticStreamGraph {
                 if (node.contents instanceof SIRJoiner) {
                     int oldVal = ((Integer) result[i].get(node)).intValue();
                     int cycles = oldVal
-                            * ((SIRJoiner) node.contents).oldSumWeights;
+                        * ((SIRJoiner) node.contents).oldSumWeights;
                     if ((node.schedMult != 0) && (node.schedDivider != 0))
                         cycles = (cycles * node.schedMult) / node.schedDivider;
                     result[i].put(node, new Integer(cycles));
@@ -899,7 +899,7 @@ public class StaticStreamGraph {
             FlatNode node = (FlatNode) it.next();
             // if (Layout.joiners.contains(node))
             System.out.println(node.contents.getName() + " "
-                    + ((Integer) counts.get(node)).intValue());
+                               + ((Integer) counts.get(node)).intValue());
         }
     }
 
@@ -914,10 +914,10 @@ public class StaticStreamGraph {
      */
     public int getMult(FlatNode node, boolean init) {
         assert !(!init && !steadyExecutionCounts.containsKey(node)) : "Asking for steady mult for a filter that is not in the steady schedule "
-                + node;
+            + node;
 
         Integer val = ((Integer) (init ? initExecutionCounts.get(node)
-                : steadyExecutionCounts.get(node)));
+                                  : steadyExecutionCounts.get(node)));
         if (val == null)
             return 0;
         else
@@ -1024,15 +1024,15 @@ public class StaticStreamGraph {
         final int[] filters = { 0 };
 
         IterFactory.createFactory().createIter(getTopLevelSIR()).accept(
-                new EmptyStreamVisitor() {
-                    public void visitFilter(SIRFilter self, SIRFilterIter iter) {
-                        if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
-                            filters[0]++;
-                        }
+                                                                        new EmptyStreamVisitor() {
+                                                                            public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+                                                                                if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
+                                                                                    filters[0]++;
+                                                                                }
 
-                    }
+                                                                            }
 
-                });
+                                                                        });
         return filters[0];
     }
 }

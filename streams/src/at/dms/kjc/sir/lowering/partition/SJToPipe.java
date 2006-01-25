@@ -24,17 +24,17 @@ public class SJToPipe implements StreamVisitor {
      * Lift everything we can in <str> and its children
      */
     public static void doit(SIRStream str) {
-	IterFactory.createFactory().createIter(str).accept(new SJToPipe());
-	Lifter.lift(str);
+        IterFactory.createFactory().createIter(str).accept(new SJToPipe());
+        Lifter.lift(str);
     }
 
     /**
      * PLAIN-VISITS 
      */
-	    
+        
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
+                            SIRFilterIter iter) {
     }
 
     /* visit a phased filter */
@@ -45,50 +45,50 @@ public class SJToPipe implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
+                                 SIRPipelineIter iter) {
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
+                                  SIRSplitJoinIter iter) {
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
+                                     SIRFeedbackLoopIter iter) {
     }
 
     /**
      * POST-VISITS
      */
-	    
+        
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
-	convertChildren(self);
+                                  SIRPipelineIter iter) {
+        convertChildren(self);
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
-	convertChildren(self);
+                                   SIRSplitJoinIter iter) {
+        convertChildren(self);
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
-	convertChildren(self);
+                                      SIRFeedbackLoopIter iter) {
+        convertChildren(self);
     }
 
     private void convertChildren(SIRContainer cont) {
-	for (int i=0; i<cont.size(); i++) {
-	    SIRStream child = cont.get(i);
-	    if (child instanceof SIRSplitJoin) {
-		cont.replace(child, RefactorSplitJoin.convertToPipeline((SIRSplitJoin)child));
-	    }
-	}
+        for (int i=0; i<cont.size(); i++) {
+            SIRStream child = cont.get(i);
+            if (child instanceof SIRSplitJoin) {
+                cont.replace(child, RefactorSplitJoin.convertToPipeline((SIRSplitJoin)child));
+            }
+        }
     }
 }

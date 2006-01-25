@@ -31,21 +31,21 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.1 2004-01-14 21:03:31 jcarlos Exp $
+ * @version $Id: ToJava.java,v 1.2 2006-01-25 17:03:34 thies Exp $
  */
 public class ToJava
 {
     public void printUsage()
     {
         System.err.println(
-"streamit.frontend.ToJava: StreamIt syntax translator\n" +
-"Usage: java streamit.frontend.ToJava [--output out.java] in.str ...\n" +
-"\n" +
-"Options:\n" +
-"  --library      Output code suitable for the Java library\n" +
-"  --help         Print this message\n" +
-"  --output file  Write output to file, not stdout\n" +
-"\n");
+                           "streamit.frontend.ToJava: StreamIt syntax translator\n" +
+                           "Usage: java streamit.frontend.ToJava [--output out.java] in.str ...\n" +
+                           "\n" +
+                           "Options:\n" +
+                           "  --library      Output code suitable for the Java library\n" +
+                           "  --help         Print this message\n" +
+                           "  --output file  Write output to file, not stdout\n" +
+                           "\n");
     }
 
     private boolean printHelp = false;
@@ -56,31 +56,31 @@ public class ToJava
     public void doOptions(String[] args)
     {
         for (int i = 0; i < args.length; i++)
-        {
-            if (args[i].equals("--full"))
-                ; // Accept but ignore for compatibility
-            else if (args[i].equals("--help"))
-                printHelp = true;
-            else if (args[i].equals("--"))
             {
-                // Add all of the remaining args as input files.
-                for (i++; i < args.length; i++)
+                if (args[i].equals("--full"))
+                    ; // Accept but ignore for compatibility
+                else if (args[i].equals("--help"))
+                    printHelp = true;
+                else if (args[i].equals("--"))
+                    {
+                        // Add all of the remaining args as input files.
+                        for (i++; i < args.length; i++)
+                            inputFiles.add(args[i]);
+                    }
+                else if (args[i].equals("--output"))
+                    outputFile = args[++i];
+                else if (args[i].equals("--library"))
+                    libraryFormat = true;
+                else
+                    // Maybe check for unrecognized options.
                     inputFiles.add(args[i]);
             }
-            else if (args[i].equals("--output"))
-                outputFile = args[++i];
-            else if (args[i].equals("--library"))
-                libraryFormat = true;
-            else
-                // Maybe check for unrecognized options.
-                inputFiles.add(args[i]);
-        }
     }
 
-	public static void dummy()
-	{
-		
-	}
+    public static void dummy()
+    {
+        
+    }
 
     /**
      * Generate a Program object that includes built-in structures
@@ -136,28 +136,28 @@ public class ToJava
     {
         Program prog = emptyProgram();
         /*
-        for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
-        {
-            String fileName = (String)iter.next();
-            InputStream inStream = new FileInputStream(fileName);
-            DataInputStream dis = new DataInputStream(inStream);
-            StreamItLex lexer = new StreamItLex(dis);
-           StreamItParserFE parser = new StreamItParserFE(lexer);
-            parser.setFilename(fileName);
-            Program pprog = parser.program();
-            if (pprog != null)
-            {
-                List newStreams, newStructs;
-                newStreams = new java.util.ArrayList();
-                newStreams.addAll(prog.getStreams());
-                newStreams.addAll(pprog.getStreams());
-                newStructs = new java.util.ArrayList();
-                newStructs.addAll(prog.getStructs());
-                newStructs.addAll(pprog.getStructs());
-                prog = new Program(null, newStreams, newStructs);
-            }
+          for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
+          {
+          String fileName = (String)iter.next();
+          InputStream inStream = new FileInputStream(fileName);
+          DataInputStream dis = new DataInputStream(inStream);
+          StreamItLex lexer = new StreamItLex(dis);
+          StreamItParserFE parser = new StreamItParserFE(lexer);
+          parser.setFilename(fileName);
+          Program pprog = parser.program();
+          if (pprog != null)
+          {
+          List newStreams, newStructs;
+          newStreams = new java.util.ArrayList();
+          newStreams.addAll(prog.getStreams());
+          newStreams.addAll(pprog.getStreams());
+          newStructs = new java.util.ArrayList();
+          newStructs.addAll(prog.getStructs());
+          newStructs.addAll(pprog.getStructs());
+          prog = new Program(null, newStreams, newStructs);
+          }
             
-        }
+          }
         */
         return prog;
     }
@@ -212,27 +212,27 @@ public class ToJava
     {
         doOptions(args);
         if (printHelp)
-        {
-            printUsage();
-            return;
-        }
+            {
+                printUsage();
+                return;
+            }
         
         Program prog = null;
         Writer outWriter;
 
         try
-        {
-            prog = parseFiles(inputFiles);
-        }
+            {
+                prog = parseFiles(inputFiles);
+            }
         catch (java.io.IOException e) {e.printStackTrace(System.err);}
         catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
         catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
 
         if (prog == null)
-        {
-            System.err.println("Compilation didn't generate a parse tree.");
-            return;
-        }
+            {
+                System.err.println("Compilation didn't generate a parse tree.");
+                return;
+            }
 
         prog = (Program)prog.accept(new RenameBitVars());
         if (!SemanticChecker.check(prog))
@@ -245,19 +245,19 @@ public class ToJava
         prog = lowerIRToJava(prog, libraryFormat, varGen);
 
         try
-        {
-            if (outputFile != null)
-                outWriter = new FileWriter(outputFile);
-            else
-                outWriter = new OutputStreamWriter(System.out);
-            outWriter.write("import streamit.library.*;\n");
-            outWriter.write("import streamit.library.io.*;\n");
+            {
+                if (outputFile != null)
+                    outWriter = new FileWriter(outputFile);
+                else
+                    outWriter = new OutputStreamWriter(System.out);
+                outWriter.write("import streamit.library.*;\n");
+                outWriter.write("import streamit.library.io.*;\n");
 
-            String javaOut =
-                (String)prog.accept(new NodesToJava(null, varGen));
-            outWriter.write(javaOut);
-            outWriter.flush();
-        }
+                String javaOut =
+                    (String)prog.accept(new NodesToJava(null, varGen));
+                outWriter.write(javaOut);
+                outWriter.flush();
+            }
         catch (java.io.IOException e) {e.printStackTrace(System.err);}
     }
     

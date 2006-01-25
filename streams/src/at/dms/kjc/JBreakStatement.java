@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBreakStatement.java,v 1.9 2003-11-13 10:46:10 thies Exp $
+ * $Id: JBreakStatement.java,v 1.10 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,104 +31,104 @@ import at.dms.compiler.TokenReference;
  */
 public class JBreakStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JBreakStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	label		the label of the enclosing labeled statement
-   * @param	comments	comments in the source text
-   */
-  public JBreakStatement(TokenReference where,
-			 String label,
-			 JavaStyleComment[] comments)
-  {
-    super(where, comments);
-    this.label = label;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    if (label != null) {
-      target = context.getLabeledStatement(label);
-      check(context, target != null, KjcMessages.LABEL_UNKNOWN, label);
-    } else {
-      target = context.getNearestBreakableStatement();
-      check(context, target != null, KjcMessages.CANNOT_BREAK);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   label       the label of the enclosing labeled statement
+     * @param   comments    comments in the source text
+     */
+    public JBreakStatement(TokenReference where,
+                           String label,
+                           JavaStyleComment[] comments)
+    {
+        super(where, comments);
+        this.label = label;
     }
 
-    context.addBreak(target);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        if (label != null) {
+            target = context.getLabeledStatement(label);
+            check(context, target != null, KjcMessages.LABEL_UNKNOWN, label);
+        } else {
+            target = context.getNearestBreakableStatement();
+            check(context, target != null, KjcMessages.CANNOT_BREAK);
+        }
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitBreakStatement(this, label);
-  }
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return p.visitBreakStatement(this, label);
-  }
+        context.addBreak(target);
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitBreakStatement(this, label);
+    }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitBreakStatement(this, label);
+    }
 
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    code.plantBreak(target);
-    code.plantJumpInstruction(opc_goto, target.getBreakLabel());
+        code.plantBreak(target);
+        code.plantJumpInstruction(opc_goto, target.getBreakLabel());
 
-    target = null;
-  }
+        target = null;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final */ String		label; // removed final for cloner
-  private JStatement		target;
+    private /* final */ String      label; // removed final for cloner
+    private JStatement      target;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JBreakStatement other = new at.dms.kjc.JBreakStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JBreakStatement other = new at.dms.kjc.JBreakStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JBreakStatement other) {
-  super.deepCloneInto(other);
-  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
-  other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JBreakStatement other) {
+        super.deepCloneInto(other);
+        other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
+        other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

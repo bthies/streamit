@@ -39,10 +39,10 @@ public abstract class SIRIterator implements Iterator {
      * Make an iterator with no parent
      */
     protected SIRIterator(IterFactory _factory) {
-	this.factory = _factory;
-	this.root = new Root();
-	this.parent = null;
-	this.pos = -1;
+        this.factory = _factory;
+        this.root = new Root();
+        this.parent = null;
+        this.pos = -1;
     }
 
     /**
@@ -50,26 +50,26 @@ public abstract class SIRIterator implements Iterator {
      * position <pos>
      */
     protected SIRIterator(IterFactory _factory, SIRIterator parent, int pos) {
-	this.factory = _factory;
-	this.root = parent.root;
-	this.parent = parent;
-	this.pos = pos;
+        this.factory = _factory;
+        this.root = parent.root;
+        this.parent = parent;
+        this.pos = pos;
     }
 
     public FilterIter isFilter() {
-	return null;
+        return null;
     }
 
     public PipelineIter isPipeline() {
-	return null;
+        return null;
     }
 
     public SplitJoinIter isSplitJoin() {
-	return null;
+        return null;
     }
 
     public FeedbackLoopIter isFeedbackLoop() {
-	return null;
+        return null;
     }
     
     /**
@@ -78,14 +78,14 @@ public abstract class SIRIterator implements Iterator {
      * element is the final non-null ancestor of this.
      */
     public SIRContainer[] getParents() {
-	LinkedList result = new LinkedList();
-	SIRIterator parent = this.parent;
-	// make list of parents
-	while (parent!=null) {
-	    result.add(parent.getStream());
-	    parent = parent.getParent();
-	}
-	return (SIRContainer[])result.toArray(new SIRContainer[0]);
+        LinkedList result = new LinkedList();
+        SIRIterator parent = this.parent;
+        // make list of parents
+        while (parent!=null) {
+            result.add(parent.getStream());
+            parent = parent.getParent();
+        }
+        return (SIRContainer[])result.toArray(new SIRContainer[0]);
     }
 
     /**
@@ -94,19 +94,19 @@ public abstract class SIRIterator implements Iterator {
      * loop, body, etc.
      */
     public String getRelativeName() {
-	if (parent==null) {
-	    return null;
-	} else {
-	    if (parent.isFeedbackLoop()==null) {
-		return "child_" + pos;
-	    } else {
-		if (pos==SIRFeedbackLoop.LOOP) {
-		    return "loop";
-		} else {
-		    return "body";
-		}
-	    }
-	}
+        if (parent==null) {
+            return null;
+        } else {
+            if (parent.isFeedbackLoop()==null) {
+                return "child_" + pos;
+            } else {
+                if (pos==SIRFeedbackLoop.LOOP) {
+                    return "loop";
+                } else {
+                    return "body";
+                }
+            }
+        }
     }
 
     /**
@@ -114,7 +114,7 @@ public abstract class SIRIterator implements Iterator {
      * getStream(), but required for Iterator interface.)
      */
     public Object getObject() {
-	return getStream();
+        return getStream();
     }
 
     /**
@@ -126,16 +126,16 @@ public abstract class SIRIterator implements Iterator {
      * Get the parent of this.
      */
     public SIRIterator getParent() {
-	checkValidity();
-	return this.parent;
+        checkValidity();
+        return this.parent;
     }
 
     /**
      * Returns position of this in parent.
      */
     public int getPos() {
-	checkValidity();
-	return pos;
+        checkValidity();
+        return pos;
     }
 
     /**
@@ -143,7 +143,7 @@ public abstract class SIRIterator implements Iterator {
      * tree above it.
      */
     public void invalidateNode() {
-	this.validNode = false;
+        this.validNode = false;
     }
 
     /**
@@ -151,7 +151,7 @@ public abstract class SIRIterator implements Iterator {
      * that is, everyone that shares the same root as this.
      */
     public void invalidateTree() {
-	this.root.invalidate();
+        this.root.invalidate();
     }
 
     /**
@@ -159,9 +159,9 @@ public abstract class SIRIterator implements Iterator {
      * with a stack trace if not valid.
      */
     protected void checkValidity() {
-	if (!(root.isValid() && validNode)) {
-	    new InvalidIteratorException().printStackTrace();
-	}
+        if (!(root.isValid() && validNode)) {
+            new InvalidIteratorException().printStackTrace();
+        }
     }
 
     public abstract void accept(StreamVisitor v);
@@ -172,7 +172,7 @@ public abstract class SIRIterator implements Iterator {
      * the scheduler interface.
      */
     public int hashCode() {
-	return getStream().hashCode();
+        return getStream().hashCode();
     } 
 
     /**
@@ -181,7 +181,7 @@ public abstract class SIRIterator implements Iterator {
      * the scheduler interface.
      */
     public boolean equals(Object o) {
-	return o instanceof SIRIterator && ((SIRIterator)o).getStream()==this.getStream();
+        return o instanceof SIRIterator && ((SIRIterator)o).getStream()==this.getStream();
     } 
 
     /**
@@ -189,24 +189,24 @@ public abstract class SIRIterator implements Iterator {
      * be invalidated once an iterator tree is obsolete.
      */
     static class Root {
-	private boolean valid;
+        private boolean valid;
 
-	public Root() {
-	    this.valid = true;
-	}
+        public Root() {
+            this.valid = true;
+        }
 
-	/**
-	 * Invalidates this root, since it's been replaced by something.
-	 */
-	public void invalidate() {
-	    this.valid = false;
-	}
+        /**
+         * Invalidates this root, since it's been replaced by something.
+         */
+        public void invalidate() {
+            this.valid = false;
+        }
 
-	/**
-	 * Return whether or not this is valid.
-	 */
-	public boolean isValid() {
-	    return this.valid;
-	}
+        /**
+         * Return whether or not this is valid.
+         */
+        public boolean isValid() {
+            return this.valid;
+        }
     }
 }

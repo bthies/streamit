@@ -9,7 +9,7 @@ import at.dms.kjc.sir.statespace.*;
  * is unschedulable, we can't perform a combination so a Null
  * transform is returned.<br>
  *
- * $Id: LinearTransformNull.java,v 1.1 2004-02-09 17:55:22 thies Exp $
+ * $Id: LinearTransformNull.java,v 1.2 2006-01-25 17:02:33 thies Exp $
  **/
 public class LinearTransformNull extends LinearTransform {
     /** The reason that no transformation could be applied. **/
@@ -20,10 +20,10 @@ public class LinearTransformNull extends LinearTransform {
      * transform was possible specified in the string r.
      **/
     public LinearTransformNull(String r) {
-	this.reason = r;
+        this.reason = r;
     }
     
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
-	throw new NoTransformPossibleException(reason);
+        throw new NoTransformPossibleException(reason);
     }
 }

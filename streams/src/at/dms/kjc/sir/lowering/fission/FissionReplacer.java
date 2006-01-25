@@ -18,7 +18,7 @@ public class FissionReplacer extends LinearReplacer {
      * Only create these internally.
      */
     private FissionReplacer(int maxFissAmount) {
-	this.maxFissAmount = maxFissAmount;
+        this.maxFissAmount = maxFissAmount;
     }
 
     /**
@@ -26,31 +26,31 @@ public class FissionReplacer extends LinearReplacer {
      * each fission expansion not exceeding <maxFissAmount>.
      */
     public static void doit(SIRStream str, int maxFissAmount) {
-	IterFactory.createFactory().createIter(str).accept(new FissionReplacer(maxFissAmount));
+        IterFactory.createFactory().createIter(str).accept(new FissionReplacer(maxFissAmount));
     }
 
     /**
      * Overrides replacement method in LinearReplacer.
      */
     public boolean makeReplacement(SIRStream self) {
-	// only deal with filters
-	if (!(self instanceof SIRFilter)) {
-	    return false;
-	}
-	SIRFilter filter = (SIRFilter)self;
-	
-	int filterMax = VerticalFission.getMaxFiss(filter);
+        // only deal with filters
+        if (!(self instanceof SIRFilter)) {
+            return false;
+        }
+        SIRFilter filter = (SIRFilter)self;
+    
+        int filterMax = VerticalFission.getMaxFiss(filter);
 
-	// don't do anything if can't split
-	if (filterMax<2) {
-	    return false;
-	}
+        // don't do anything if can't split
+        if (filterMax<2) {
+            return false;
+        }
 
-	// otherwise, fiss by min of <filterMax> and <maxFissAmount>
-	SIRPipeline fissed = VerticalFission.fiss(filter, Math.min(filterMax, maxFissAmount));
+        // otherwise, fiss by min of <filterMax> and <maxFissAmount>
+        SIRPipeline fissed = VerticalFission.fiss(filter, Math.min(filterMax, maxFissAmount));
 
-	// replace in parent
-	filter.getParent().replace(filter, fissed);
-	return true;
+        // replace in parent
+        filter.getParent().replace(filter, fissed);
+        return true;
     }
 }

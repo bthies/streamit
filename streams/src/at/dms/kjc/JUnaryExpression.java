@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryExpression.java,v 1.7 2003-11-13 10:46:11 thies Exp $
+ * $Id: JUnaryExpression.java,v 1.8 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -27,56 +27,56 @@ import at.dms.compiler.TokenReference;
  */
 public abstract class JUnaryExpression extends JExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JUnaryExpression() {} // for cloning only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	expr		the operand
-   */
-  public JUnaryExpression(TokenReference where, JExpression expr) {
-    super(where);
-    this.expr = expr;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Compute the type of this expression (called after parsing)
-   * @return the type of this expression
-   */
-  public CType getType() {
-    return type;
-  }
-
-    public void setExpr(JExpression e) {
-	this.expr = e;
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   expr        the operand
+     */
+    public JUnaryExpression(TokenReference where, JExpression expr) {
+        super(where);
+        this.expr = expr;
     }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  protected JExpression		expr;
-  protected CType		type;
+    /**
+     * Compute the type of this expression (called after parsing)
+     * @return the type of this expression
+     */
+    public CType getType() {
+        return type;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    public void setExpr(JExpression e) {
+        this.expr = e;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JUnaryExpression other) {
-  super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-}
+    protected JExpression       expr;
+    protected CType     type;
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JUnaryExpression other) {
+        super.deepCloneInto(other);
+        other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+        other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

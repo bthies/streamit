@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceField.java,v 1.4 2006-01-06 18:35:15 thies Exp $
+ * $Id: CSourceField.java,v 1.5 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,115 +25,115 @@ package at.dms.kjc;
  */
 public class CSourceField extends CField {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CSourceField() {} // for cloner only
 
-  /**
-   * Constructs a field export
-   * @param	owner		the owner of this field
-   * @param	modifiers	the modifiers on this field
-   * @param	variable	variable for this field
-   * @param	deprecated	is this field deprecated
-   */
-  public CSourceField(CClass owner,
-		      int modifiers,
-		      JVariableDefinition variable,
-		      boolean deprecated)
-  {
-    super(owner, modifiers, variable, deprecated);
-  }
+    /**
+     * Constructs a field export
+     * @param   owner       the owner of this field
+     * @param   modifiers   the modifiers on this field
+     * @param   variable    variable for this field
+     * @param   deprecated  is this field deprecated
+     */
+    public CSourceField(CClass owner,
+                        int modifiers,
+                        JVariableDefinition variable,
+                        boolean deprecated)
+    {
+        super(owner, modifiers, variable, deprecated);
+    }
 
-  /**
-   * Constructs a field export
-   * @param	owner		the owner of this field
-   * @param	modifiers	the modifiers on this field
-   * @param     ident           the name of this field
-   * @param     type            the type of this field
-   * @param	deprecated	is this field deprecated ?
-   */
-  public CSourceField(CClass owner,
-		      int modifiers,
-		      String ident,
-		      CType type,
-		      boolean deprecated)
-  {
-    super(owner, modifiers, ident, type, deprecated);
-  }
+    /**
+     * Constructs a field export
+     * @param   owner       the owner of this field
+     * @param   modifiers   the modifiers on this field
+     * @param     ident           the name of this field
+     * @param     type            the type of this field
+     * @param   deprecated  is this field deprecated ?
+     */
+    public CSourceField(CClass owner,
+                        int modifiers,
+                        String ident,
+                        CType type,
+                        boolean deprecated)
+    {
+        super(owner, modifiers, ident, type, deprecated);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns true iff this field is used.
-   */
-  public boolean isUsed() {
-    return used || !isPrivate() || getIdent().indexOf("$") >= 0; // $$$
-  }
+    /**
+     * Returns true iff this field is used.
+     */
+    public boolean isUsed() {
+        return used || !isPrivate() || getIdent().indexOf("$") >= 0; // $$$
+    }
 
-  /**
-   * Declares this field to be used.
-   */
-  public void setUsed() {
-    used = true;
-  }
+    /**
+     * Declares this field to be used.
+     */
+    public void setUsed() {
+        used = true;
+    }
 
-  /**
-   * declare
-   */
-  public void setFullyDeclared(boolean fullyDeclared) {
-    this.fullyDeclared = fullyDeclared && !isFinal();
-  }
+    /**
+     * declare
+     */
+    public void setFullyDeclared(boolean fullyDeclared) {
+        this.fullyDeclared = fullyDeclared && !isFinal();
+    }
 
-  /**
-   *
-   */
-  public boolean isFullyDeclared() {
-    return fullyDeclared;
-  }
+    /**
+     *
+     */
+    public boolean isFullyDeclared() {
+        return fullyDeclared;
+    }
 
-  /**
-   *
-   */
-  public int getPosition() {
-    return pos;
-  }
+    /**
+     *
+     */
+    public int getPosition() {
+        return pos;
+    }
 
-  /**
-   *
-   */
-  public void setPosition(int pos) {
-    this.pos = pos;
-  }
+    /**
+     *
+     */
+    public void setPosition(int pos) {
+        this.pos = pos;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private int			pos;
-  private boolean		used;
-  private boolean		fullyDeclared;
+    private int         pos;
+    private boolean     used;
+    private boolean     fullyDeclared;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CSourceField other = new at.dms.kjc.CSourceField();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CSourceField other = new at.dms.kjc.CSourceField();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CSourceField other) {
-  super.deepCloneInto(other);
-  other.pos = this.pos;
-  other.used = this.used;
-  other.fullyDeclared = this.fullyDeclared;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CSourceField other) {
+        super.deepCloneInto(other);
+        other.pos = this.pos;
+        other.used = this.used;
+        other.fullyDeclared = this.fullyDeclared;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

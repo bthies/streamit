@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCatchContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CCatchContext.java,v 1.4 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,48 +31,48 @@ import at.dms.compiler.TokenReference;
  */
 public class CCatchContext extends CBodyContext {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CCatchContext() {} // for cloner only
 
-  /**
-   * Construct a context for the semantic analysis of a catch clause.
-   *
-   * @param	parent		...
-   */
-  CCatchContext(CBodyContext parent) {
-    super(parent);
-    setReachable(true);
-    clearThrowables();
-  }
+    /**
+     * Construct a context for the semantic analysis of a catch clause.
+     *
+     * @param   parent      ...
+     */
+    CCatchContext(CBodyContext parent) {
+        super(parent);
+        setReachable(true);
+        clearThrowables();
+    }
 
-  public void close(TokenReference ref) {
-  }
+    public void close(TokenReference ref) {
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CCatchContext other = new at.dms.kjc.CCatchContext();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CCatchContext other = new at.dms.kjc.CCatchContext();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CCatchContext other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CCatchContext other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -49,17 +49,17 @@ public class WeightedRoundRobinSplitter extends Splitter
     
     public void work ()
     {
-        assert destWeight.size () == dest.size ();
+    assert destWeight.size () == dest.size ();
 
-        int outputIndex;
-        for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
-        {
-            int outputCount;
-            for (outputCount = ((Integer)destWeight.get (outputIndex)).intValue (); outputCount > 0 ; outputCount--)
-            {
-                passOneData (input, output [outputIndex]);
-            }
-        }
+    int outputIndex;
+    for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
+    {
+    int outputCount;
+    for (outputCount = ((Integer)destWeight.get (outputIndex)).intValue (); outputCount > 0 ; outputCount--)
+    {
+    passOneData (input, output [outputIndex]);
+    }
+    }
     }
     */
 
@@ -70,12 +70,12 @@ public class WeightedRoundRobinSplitter extends Splitter
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
             {
-                weights [i] = ((Integer)destWeight.get (i)).intValue ();
+                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                    {
+                        weights [i] = ((Integer)destWeight.get (i)).intValue ();
+                    }
             }
-        }
         
         return weights;
     }
@@ -87,27 +87,27 @@ public class WeightedRoundRobinSplitter extends Splitter
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
             {
-                inputTotal += ((Integer)destWeight.get (i)).intValue ();
+                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                    {
+                        inputTotal += ((Integer)destWeight.get (i)).intValue ();
+                    }
             }
-        }
         
         return inputTotal;
     }
 
     public String toString() {
-	int[] weights = getWeights();
-	StringBuffer result = new StringBuffer("roundrobin(");
-	for (int i=0; i<weights.length; i++) {
-	    result.append(weights[i]);
-	    if (i!=weights.length-1) {
-		result.append(", ");
-	    } else {
-		result.append(")");
-	    }
-	}
-	return result.toString();
+        int[] weights = getWeights();
+        StringBuffer result = new StringBuffer("roundrobin(");
+        for (int i=0; i<weights.length; i++) {
+            result.append(weights[i]);
+            if (i!=weights.length-1) {
+                result.append(", ");
+            } else {
+                result.append(")");
+            }
+        }
+        return result.toString();
     }
 }

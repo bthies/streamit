@@ -23,12 +23,12 @@ public class SIRGlobal extends SIRStream
     public int getPushForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPushForSchedule for Global");
-	return -1;
+        return -1;
     }
     public int getPopForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPopForSchedule for Global");
-	return -1;
+        return -1;
     }
 
     /* Things that we need to implement: */
@@ -42,7 +42,7 @@ public class SIRGlobal extends SIRStream
     {
         at.dms.util.Utils.fail(ident + ": SIRGlobal does not accept AttributeStreamVisitor");
         return null;
-	//return v.visitGlobal(this, methods);
+        //return v.visitGlobal(this, methods);
     }
 }
 

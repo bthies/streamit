@@ -5,14 +5,14 @@ public class InitPeekRestriction extends Restriction
     public InitPeekRestriction(LatencyEdge edge, StreamInterface parent)
     {
         super(
-            edge.getSrc(),
-            new P2PPortal(
-                true,
-                edge.getSrc(),
-                edge.getDst(),
-                edge.getNumSrcInitPhases(),
-                edge.getNumSrcInitPhases(),
-                parent));
+              edge.getSrc(),
+              new P2PPortal(
+                            true,
+                            edge.getSrc(),
+                            edge.getDst(),
+                            edge.getNumSrcInitPhases(),
+                            edge.getNumSrcInitPhases(),
+                            parent));
     }
     
     

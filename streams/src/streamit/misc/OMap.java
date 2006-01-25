@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: OMap.java,v 1.6 2004-01-28 21:17:13 dmaze Exp $ */
+/* $Id: OMap.java,v 1.7 2006-01-25 17:04:38 thies Exp $ */
 
 public class OMap
 {
@@ -83,8 +83,8 @@ public class OMap
     {
         Pair result = set.insert(new Pair(key, data));
         return new Pair(
-            new OMapIterator((OSetIterator)result.first),
-            result.second);
+                        new OMapIterator((OSetIterator)result.first),
+                        result.second);
     }
 
     public void erase(OMapIterator iter)

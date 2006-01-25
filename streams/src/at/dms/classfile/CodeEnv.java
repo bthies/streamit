@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeEnv.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: CodeEnv.java,v 1.2 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -30,189 +30,189 @@ import at.dms.util.InconsistencyException;
  */
 final class CodeEnv {
 
-  // --------------------------------------------------------------------
-  // ENTRY POINT
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ENTRY POINT
+    // --------------------------------------------------------------------
 
-  /**
-   * Checks the specified CodeInfo structure and computes maxStack and
-   * maxLocals.
-   */
-  public static void check(CodeInfo codeInfo) throws ClassFileFormatException {
-    CodeEnv	env;
+    /**
+     * Checks the specified CodeInfo structure and computes maxStack and
+     * maxLocals.
+     */
+    public static void check(CodeInfo codeInfo) throws ClassFileFormatException {
+        CodeEnv env;
 
-    env = new CodeEnv(codeInfo);
-    env.installInstructionHandles();
+        env = new CodeEnv(codeInfo);
+        env.installInstructionHandles();
 
-    env.checkExecutionPaths();
-    env.computeCodeLength();
-    env.computeStackAndLocals();
+        env.checkExecutionPaths();
+        env.computeCodeLength();
+        env.computeStackAndLocals();
 
-    env.removeInstructionHandles();
-  }
-
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Constructs a new CodeEnv structure.
-   */
-  private CodeEnv(CodeInfo codeInfo) {
-    this.codeInfo = codeInfo;
-  }
-
-  // --------------------------------------------------------------------
-  // CHECK EXECUTION PATHS, COMPUTE CODE SIZE
-  // --------------------------------------------------------------------
-
-  /**
-   * Verifies all possible execution path(s).
-   */
-  private final void checkExecutionPaths() throws ClassFileFormatException {
-    checkExecutionPath(methodStart, 0);
-
-    HandlerInfo[]	handlers = codeInfo.getHandlers();
-    for (int i = 0; i < handlers.length; i++) {
-      // the exception parameter is on top of stack
-      checkExecutionPath((InstructionHandle)handlers[i].getHandler(), 1);
-    }
-  }
-
-  /**
-   * Verifies execution path(s) starting at specified instruction.
-   *
-   * @param	handle			the handle of the first instruction
-   * @param	curStack		the stack height at the beginning
-   *					of the execution of the instruction
-   * @exception	ClassFileFormatException	a problem was detected
-   */
-  /*package*/ final void checkExecutionPath(InstructionHandle handle,
-					    int curStack)
-    throws ClassFileFormatException
-  {
-    try {
-      while (handle != null && handle.checkInstruction(this, curStack)) {
-	curStack = handle.getStackHeight();
-	handle = handle.getNext();
-      }
-    } catch (ClassFileFormatException e) {
-      dumpCode();
-      throw e;
-    }
-  }
-
-  /**
-   * Computes size and sets address of each instruction in the code array.
-   */
-  private final void computeCodeLength() {
-    boolean		fixPoint = false;
-    CodePosition	position;
-
-    // compute size for each instruction
-    do {
-      fixPoint = true;
-      position = new CodePosition(0, 0);
-
-      for (InstructionHandle handle = methodStart;
-	   handle != null;
-	   handle = handle.getNext()) {
-	fixPoint &= handle.setAddressAndAdvancePC(position);
-      }
-    } while (!fixPoint);
-
-    // sets address of each instruction
-    for (InstructionHandle handle = methodStart;
-	 handle != null;
-	 handle = handle.getNext()) {
-      handle.setAddress();
+        env.removeInstructionHandles();
     }
 
-    codeInfo.setCodeLength(position.min);
-  }
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Computes max stack and max locals.
-   */
-  private final void computeStackAndLocals() {
-    int		maxStack = 0;
-    int		maxLocals = 0;
-
-    for (InstructionHandle handle = methodStart;
-	 handle != null;
-	 handle = handle.getNext()) {
-      maxStack = Math.max(maxStack, handle.getStackHeight());
-      maxLocals = Math.max(maxLocals, handle.getLocalVar());
+    /**
+     * Constructs a new CodeEnv structure.
+     */
+    private CodeEnv(CodeInfo codeInfo) {
+        this.codeInfo = codeInfo;
     }
 
-    codeInfo.setMaxStack(maxStack);
-    codeInfo.setMaxLocals(maxLocals + 1);
-  }
+    // --------------------------------------------------------------------
+    // CHECK EXECUTION PATHS, COMPUTE CODE SIZE
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // INSTALLING AND REMOVING INSTRUCTION HANDLES
-  // --------------------------------------------------------------------
+    /**
+     * Verifies all possible execution path(s).
+     */
+    private final void checkExecutionPaths() throws ClassFileFormatException {
+        checkExecutionPath(methodStart, 0);
 
-  /**
-   * Install handles around instructions.
-   */
-  private void installInstructionHandles() {
-    Instruction[]		insns = codeInfo.getInstructions();
-
-    InstructionHandle[]		handles = new InstructionHandle[insns.length];
-    for (int i = 0; i < handles.length; i++) {
-      // this also sets the field next in handles
-      handles[i] = new InstructionHandle(insns[i], i == 0 ? null : handles[i-1]);
+        HandlerInfo[]   handlers = codeInfo.getHandlers();
+        for (int i = 0; i < handlers.length; i++) {
+            // the exception parameter is on top of stack
+            checkExecutionPath((InstructionHandle)handlers[i].getHandler(), 1);
+        }
     }
 
-    try {
-      codeInfo.transformAccessors(new HandleCreator(insns, handles));
-    } catch (BadAccessorException e) {
-      throw new InconsistencyException(e.getMessage());
+    /**
+     * Verifies execution path(s) starting at specified instruction.
+     *
+     * @param   handle          the handle of the first instruction
+     * @param   curStack        the stack height at the beginning
+     *                  of the execution of the instruction
+     * @exception   ClassFileFormatException    a problem was detected
+     */
+    /*package*/ final void checkExecutionPath(InstructionHandle handle,
+                                              int curStack)
+        throws ClassFileFormatException
+    {
+        try {
+            while (handle != null && handle.checkInstruction(this, curStack)) {
+                curStack = handle.getStackHeight();
+                handle = handle.getNext();
+            }
+        } catch (ClassFileFormatException e) {
+            dumpCode();
+            throw e;
+        }
     }
 
-    this.methodStart = handles[0];
-  }
+    /**
+     * Computes size and sets address of each instruction in the code array.
+     */
+    private final void computeCodeLength() {
+        boolean     fixPoint = false;
+        CodePosition    position;
 
-  /**
-   * Replaces handles by associated instructions.
-   */
-  private void removeInstructionHandles() {
-    // replace instruction handles by actual instructions
-    try {
-      AccessorTransformer	transformer = new AccessorTransformer() {
-	  public InstructionAccessor transform(InstructionAccessor accessor,
-					       AccessorContainer container)
-	  {
-	    // the only accessors to resolve are instruction handles
-	    return ((InstructionHandle)accessor).getInstruction();
-	  }
-	};
+        // compute size for each instruction
+        do {
+            fixPoint = true;
+            position = new CodePosition(0, 0);
 
-      codeInfo.transformAccessors(transformer);
-    } catch (BadAccessorException e) {
-      throw new InconsistencyException(e.getMessage());
+            for (InstructionHandle handle = methodStart;
+                 handle != null;
+                 handle = handle.getNext()) {
+                fixPoint &= handle.setAddressAndAdvancePC(position);
+            }
+        } while (!fixPoint);
+
+        // sets address of each instruction
+        for (InstructionHandle handle = methodStart;
+             handle != null;
+             handle = handle.getNext()) {
+            handle.setAddress();
+        }
+
+        codeInfo.setCodeLength(position.min);
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DEBUG
-  // --------------------------------------------------------------------
+    /**
+     * Computes max stack and max locals.
+     */
+    private final void computeStackAndLocals() {
+        int     maxStack = 0;
+        int     maxLocals = 0;
 
-  /*package*/ void dumpCode() {
-    for (InstructionHandle handle = methodStart;
-	 handle != null;
-	 handle = handle.getNext()) {
-      handle.dump();
+        for (InstructionHandle handle = methodStart;
+             handle != null;
+             handle = handle.getNext()) {
+            maxStack = Math.max(maxStack, handle.getStackHeight());
+            maxLocals = Math.max(maxLocals, handle.getLocalVar());
+        }
+
+        codeInfo.setMaxStack(maxStack);
+        codeInfo.setMaxLocals(maxLocals + 1);
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // INSTALLING AND REMOVING INSTRUCTION HANDLES
+    // --------------------------------------------------------------------
 
-  private final CodeInfo	codeInfo;
+    /**
+     * Install handles around instructions.
+     */
+    private void installInstructionHandles() {
+        Instruction[]       insns = codeInfo.getInstructions();
 
-  // the first instruction in textual order
-  private InstructionHandle	methodStart;
+        InstructionHandle[]     handles = new InstructionHandle[insns.length];
+        for (int i = 0; i < handles.length; i++) {
+            // this also sets the field next in handles
+            handles[i] = new InstructionHandle(insns[i], i == 0 ? null : handles[i-1]);
+        }
+
+        try {
+            codeInfo.transformAccessors(new HandleCreator(insns, handles));
+        } catch (BadAccessorException e) {
+            throw new InconsistencyException(e.getMessage());
+        }
+
+        this.methodStart = handles[0];
+    }
+
+    /**
+     * Replaces handles by associated instructions.
+     */
+    private void removeInstructionHandles() {
+        // replace instruction handles by actual instructions
+        try {
+            AccessorTransformer transformer = new AccessorTransformer() {
+                    public InstructionAccessor transform(InstructionAccessor accessor,
+                                                         AccessorContainer container)
+                    {
+                        // the only accessors to resolve are instruction handles
+                        return ((InstructionHandle)accessor).getInstruction();
+                    }
+                };
+
+            codeInfo.transformAccessors(transformer);
+        } catch (BadAccessorException e) {
+            throw new InconsistencyException(e.getMessage());
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DEBUG
+    // --------------------------------------------------------------------
+
+    /*package*/ void dumpCode() {
+        for (InstructionHandle handle = methodStart;
+             handle != null;
+             handle = handle.getNext()) {
+            handle.dump();
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private final CodeInfo  codeInfo;
+
+    // the first instruction in textual order
+    private InstructionHandle   methodStart;
 }

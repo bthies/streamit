@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MultiarrayInstruction.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: MultiarrayInstruction.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -30,122 +30,122 @@ import java.io.IOException;
  */
 public class MultiarrayInstruction extends Instruction {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new multiarray instruction
-   *
-   * @param	name		the qualified name of the base class
-   * @param	dims		number of dimensions for the array
-   */
-  public MultiarrayInstruction(String name, int dims) {
-    super(opc_multianewarray);
+    /**
+     * Constructs a new multiarray instruction
+     *
+     * @param   name        the qualified name of the base class
+     * @param   dims        number of dimensions for the array
+     */
+    public MultiarrayInstruction(String name, int dims) {
+        super(opc_multianewarray);
 
-    this.type = new ClassConstant(name);
-    this.dims = dims;
-  }
+        this.type = new ClassConstant(name);
+        this.dims = dims;
+    }
 
-  /**
-   * Constructs a new multiarray instruction from a class file
-   *
-   * @param	type		the base class as a pooled constant
-   * @param	dims		number of dimensions for the array
-   */
-  public MultiarrayInstruction(ClassConstant type, int dims) {
-    super(opc_multianewarray);
+    /**
+     * Constructs a new multiarray instruction from a class file
+     *
+     * @param   type        the base class as a pooled constant
+     * @param   dims        number of dimensions for the array
+     */
+    public MultiarrayInstruction(ClassConstant type, int dims) {
+        super(opc_multianewarray);
 
-    this.type = type;
-    this.dims = dims;
-  }
+        this.type = type;
+        this.dims = dims;
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns true iff control flow can reach the next instruction
-   * in textual order.
-   */
-  public boolean canComplete() {
-    return true;
-  }
+    /**
+     * Returns true iff control flow can reach the next instruction
+     * in textual order.
+     */
+    public boolean canComplete() {
+        return true;
+    }
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(type);
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(type);
+    }
 
-  /**
-   * Returns the number of bytes used by the the instruction in the code array.
-   */
-  /*package*/ int getSize() {
-    return 1 + 3;
-  }
+    /**
+     * Returns the number of bytes used by the the instruction in the code array.
+     */
+    /*package*/ int getSize() {
+        return 1 + 3;
+    }
 
-  /**
-   * Return the type of the array
-   */
-  public String getType() {
-    return type.getName();
-  }
+    /**
+     * Return the type of the array
+     */
+    public String getType() {
+        return type.getName();
+    }
 
-  /**
-   * Return the number of dimension of this array
-   */
-  public int getDimension() {
-    return dims;
-  }
+    /**
+     * Return the number of dimension of this array
+     */
+    public int getDimension() {
+        return dims;
+    }
 
-  /**
-   * Returns the size of data pushed on the stack by this instruction
-   */
-  public int getPushedOnStack() {
-    return 1;
-  }
+    /**
+     * Returns the size of data pushed on the stack by this instruction
+     */
+    public int getPushedOnStack() {
+        return 1;
+    }
 
-  /**
-   * Return the amount of stack (positive or negative) used by this instruction
-   */
-  public int getStack() {
-    return 1 - dims;
-  }
+    /**
+     * Return the amount of stack (positive or negative) used by this instruction
+     */
+    public int getStack() {
+        return 1 - dims;
+    }
 
-  /**
-   * Returns the type pushed on the stack
-   */
-  public byte getReturnType() {
-    return TYP_REFERENCE;
-  }
+    /**
+     * Returns the type pushed on the stack
+     */
+    public byte getReturnType() {
+        return TYP_REFERENCE;
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Write this instruction into a file
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeByte((byte)getOpcode());
+    /**
+     * Write this instruction into a file
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeByte((byte)getOpcode());
 
-    out.writeShort(type.getIndex());
-    out.writeByte((byte)(dims & 0xFF));
-  }
+        out.writeShort(type.getIndex());
+        out.writeByte((byte)(dims & 0xFF));
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private ClassConstant			type;
-  private int				dims;
+    private ClassConstant           type;
+    private int             dims;
 }

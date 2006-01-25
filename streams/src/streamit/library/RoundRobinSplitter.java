@@ -33,15 +33,15 @@ public class RoundRobinSplitter extends Splitter
     
     public void work ()
     {
-        int outputIndex;
-        for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
-        {
-            int w;
-            for (w = 0; w < weight; w++)
-            {
-                passOneData (input, output [outputIndex]);
-            }
-        }
+    int outputIndex;
+    for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
+    {
+    int w;
+    for (w = 0; w < weight; w++)
+    {
+    passOneData (input, output [outputIndex]);
+    }
+    }
     }
     */
 
@@ -52,12 +52,12 @@ public class RoundRobinSplitter extends Splitter
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
             {
-                weights [i] = weight;
+                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                    {
+                        weights [i] = weight;
+                    }
             }
-        }
         
         return weights;
     }
@@ -69,17 +69,17 @@ public class RoundRobinSplitter extends Splitter
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
             {
-                inputTotal += weight;
+                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                    {
+                        inputTotal += weight;
+                    }
             }
-        }
         
         return inputTotal;
     }
 
     public String toString() {
-	return "roundrobin";
+        return "roundrobin";
     }
 }

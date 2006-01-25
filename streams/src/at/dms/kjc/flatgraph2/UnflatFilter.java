@@ -22,51 +22,51 @@ public class UnflatFilter {
     
     //Do not call unless not using this anymore
     public void clear() {
-	filter=null;
-	inWeights=null;
-	outWeights=null;
-	if(in!=null) {
-	    for(int i=0;i<in.length;i++)
-		in[i]=null;
-	    in=null;
-	}
-	if(out!=null) {
-	    for(int i=0;i<out.length;i++) {
-		UnflatEdge[] inner=out[i];
-		if(inner!=null) {
-		    for(int j=0;j<inner.length;j++)
-			inner[j]=null;
-		    out[i]=null;
-		}
-	    }
-	    out=null;
-	}
-	name=null;
+        filter=null;
+        inWeights=null;
+        outWeights=null;
+        if(in!=null) {
+            for(int i=0;i<in.length;i++)
+                in[i]=null;
+            in=null;
+        }
+        if(out!=null) {
+            for(int i=0;i<out.length;i++) {
+                UnflatEdge[] inner=out[i];
+                if(inner!=null) {
+                    for(int j=0;j<inner.length;j++)
+                        inner[j]=null;
+                    out[i]=null;
+                }
+            }
+            out=null;
+        }
+        name=null;
     }
 
     UnflatFilter(SIRStream filter,int[] inWeights,int[] outWeights,UnflatEdge[] in,UnflatEdge[][] out) {
-	this.filter=(SIRFilter)filter;
-	this.inWeights=inWeights;
-	this.outWeights=outWeights;
-	this.in=in;
-	this.out=out;
-	if(filter!=null) {
-	    name=filter.getName();
-	    if(names.containsKey(name)) {
-		name+="_rename_"+String.valueOf(nullNum++);
-	    } else
-		names.put(name,null);
-	} else
-	    name=String.valueOf(nullNum++);
-	for(int i=0;i<in.length;i++) {
-	    in[i].dest=this;
-	    //in[i].destIndex=i;
-	}
-	for(int i=0;i<out.length;i++) {
-	    UnflatEdge[] innerOut=out[i];
-	    for(int j=0;j<innerOut.length;j++)
-		innerOut[j].src=this;
-	}
+        this.filter=(SIRFilter)filter;
+        this.inWeights=inWeights;
+        this.outWeights=outWeights;
+        this.in=in;
+        this.out=out;
+        if(filter!=null) {
+            name=filter.getName();
+            if(names.containsKey(name)) {
+                name+="_rename_"+String.valueOf(nullNum++);
+            } else
+                names.put(name,null);
+        } else
+            name=String.valueOf(nullNum++);
+        for(int i=0;i<in.length;i++) {
+            in[i].dest=this;
+            //in[i].destIndex=i;
+        }
+        for(int i=0;i<out.length;i++) {
+            UnflatEdge[] innerOut=out[i];
+            for(int j=0;j<innerOut.length;j++)
+                innerOut[j].src=this;
+        }
     }
 
     /*UnflatFilter(SIRStream filter,int[] inWeights,IntList outWeights,UnflatEdge[] in,UnflatEdge[][] out) {
@@ -83,20 +83,20 @@ public class UnflatFilter {
       }*/
 
     UnflatFilter(SIRStream filter) {
-	this(filter,null,null,new UnflatEdge[0],new UnflatEdge[0][0]);
+        this(filter,null,null,new UnflatEdge[0],new UnflatEdge[0][0]);
     }
 
     UnflatFilter(SIRStream filter,UnflatEdge in,UnflatEdge out) {
-	this(filter,new int[]{1},new int[]{1},new UnflatEdge[]{in},new UnflatEdge[][]{new UnflatEdge[]{out}});
+        this(filter,new int[]{1},new int[]{1},new UnflatEdge[]{in},new UnflatEdge[][]{new UnflatEdge[]{out}});
     }
 
     public boolean isLinear() 
     {
-	return array != null;
+        return array != null;
     }
 
     public String toString() {
-	return name;
+        return name;
     }
 }
 

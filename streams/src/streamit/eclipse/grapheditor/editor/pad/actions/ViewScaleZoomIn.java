@@ -1,5 +1,5 @@
 /*
- * @(#)ViewScaleZoomIn.java	1.2 30.01.2003
+ * @(#)ViewScaleZoomIn.java 1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -33,29 +33,29 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ViewScaleZoomIn extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ViewScaleZoomIn.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ViewScaleZoomIn(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ViewScaleZoomIn.
+     * @param graphpad
+     * @param name
+     */
+    public ViewScaleZoomIn(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
 
-		public void actionPerformed(ActionEvent e) {
-			graphpad.getCurrentDocument() .setResizeAction(null);
-			if (graphpad.getCurrentGraph() .getScale() < 8) {
-				// "Zero Length String passed to TextLayout constructor"
-				graphpad.getCurrentDocument() .
-				setScale(graphpad.getCurrentGraph() .getScale() * 2);
-				if (graphpad.getCurrentGraph() .getSelectionCell() != null)
-					graphpad.getCurrentGraph() .scrollCellToVisible(graphpad.getCurrentGraph().getSelectionCell());
-			}
-		}
+    public void actionPerformed(ActionEvent e) {
+        graphpad.getCurrentDocument() .setResizeAction(null);
+        if (graphpad.getCurrentGraph() .getScale() < 8) {
+            // "Zero Length String passed to TextLayout constructor"
+            graphpad.getCurrentDocument() .
+                setScale(graphpad.getCurrentGraph() .getScale() * 2);
+            if (graphpad.getCurrentGraph() .getSelectionCell() != null)
+                graphpad.getCurrentGraph() .scrollCellToVisible(graphpad.getCurrentGraph().getSelectionCell());
+        }
+    }
 
 
 }

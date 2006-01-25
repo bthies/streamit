@@ -40,24 +40,24 @@ public class LIRSetTape extends LIRNode {
      * Construct a node.
      */
     public LIRSetTape(JExpression streamContext,
-		      JExpression srcStruct,
-		      JExpression dstStruct,
-		      CType type,
-		      int size) {
-	super(streamContext);
-	this.srcStruct = srcStruct;
-	this.dstStruct = dstStruct;
-	this.type = type;
-	this.size = size;
+                      JExpression srcStruct,
+                      JExpression dstStruct,
+                      CType type,
+                      int size) {
+        super(streamContext);
+        this.srcStruct = srcStruct;
+        this.dstStruct = dstStruct;
+        this.type = type;
+        this.size = size;
     }
 
     public void accept(SLIRVisitor v)
     {
         v.visitSetTape(this, 
-		       this.getStreamContext(), 
-		       srcStruct,
-		       dstStruct,
-		       type,
-		       size);
+                       this.getStreamContext(), 
+                       srcStruct,
+                       dstStruct,
+                       type,
+                       size);
     }
 }

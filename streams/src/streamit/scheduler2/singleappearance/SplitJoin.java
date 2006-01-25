@@ -17,7 +17,7 @@
 package streamit.scheduler2.singleappearance;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitJoinIter;
+    SplitJoinIter;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.hierarchical.StreamInterface;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
@@ -43,9 +43,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             splitSched = new PhasingSchedule(this);
             int nPhase;
             for (nPhase = 0; nPhase < super.getNumSplitPhases(); nPhase++)
-            {
-                splitSched.appendPhase(super.getSplitPhase(nPhase));
-            }
+                {
+                    splitSched.appendPhase(super.getSplitPhase(nPhase));
+                }
         }
 
         // compute the joiner schedule
@@ -53,9 +53,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             joinSched = new PhasingSchedule(this);
             int nPhase;
             for (nPhase = 0; nPhase < super.getNumJoinPhases(); nPhase++)
-            {
-                joinSched.appendPhase(super.getJoinPhase(nPhase));
-            }
+                {
+                    joinSched.appendPhase(super.getJoinPhase(nPhase));
+                }
         }
     }
 
@@ -115,53 +115,53 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             // go through all the children and check how much
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                // get the child
-                StreamInterface child = getHierarchicalChild(nChild);
-                assert child != null;
-
-                // compute child's schedule
-                child.computeSchedule();
-
-                // get the amount of data needed to initilize this child
-                int childInitDataConsumption = child.getInitPeek();
-
-                // this child may need more data in order to safely enter
-                // the steady state computation model (as per notes 02/07/02)
-                childInitDataConsumption
-                    += MAX(
-                        (child.getSteadyPeek() - child.getSteadyPop())
-                            - (child.getInitPeek() - child.getInitPop()),
-                        0);
-
-                // now figure out how many times the split needs to be run in
-                // initialization to accomodate this child
-                int splitRunCount;
-                if (childInitDataConsumption != 0)
                 {
-                    // just divide the amount of data needed by data received
-                    // per iteration of the split
-                    int splitDataSent =
-                        getSteadySplitFlow().getPushWeight(nChild);
-                    assert splitDataSent > 0;
+                    // get the child
+                    StreamInterface child = getHierarchicalChild(nChild);
+                    assert child != null;
 
-                    splitRunCount =
-                        (childInitDataConsumption + splitDataSent - 1)
-                            / splitDataSent;
-                }
-                else
-                {
-                    // the child doesn't need any data to intitialize, so I
-                    // don't need to run the split for it at all
-                    splitRunCount = 0;
-                }
+                    // compute child's schedule
+                    child.computeSchedule();
 
-                // pick the max
-                if (splitRunCount > initSplitRunCount)
-                {
-                    initSplitRunCount = splitRunCount;
+                    // get the amount of data needed to initilize this child
+                    int childInitDataConsumption = child.getInitPeek();
+
+                    // this child may need more data in order to safely enter
+                    // the steady state computation model (as per notes 02/07/02)
+                    childInitDataConsumption
+                        += MAX(
+                               (child.getSteadyPeek() - child.getSteadyPop())
+                               - (child.getInitPeek() - child.getInitPop()),
+                               0);
+
+                    // now figure out how many times the split needs to be run in
+                    // initialization to accomodate this child
+                    int splitRunCount;
+                    if (childInitDataConsumption != 0)
+                        {
+                            // just divide the amount of data needed by data received
+                            // per iteration of the split
+                            int splitDataSent =
+                                getSteadySplitFlow().getPushWeight(nChild);
+                            assert splitDataSent > 0;
+
+                            splitRunCount =
+                                (childInitDataConsumption + splitDataSent - 1)
+                                / splitDataSent;
+                        }
+                    else
+                        {
+                            // the child doesn't need any data to intitialize, so I
+                            // don't need to run the split for it at all
+                            splitRunCount = 0;
+                        }
+
+                    // pick the max
+                    if (splitRunCount > initSplitRunCount)
+                        {
+                            initSplitRunCount = splitRunCount;
+                        }
                 }
-            }
         }
 
         // compute the init schedule
@@ -175,25 +175,25 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
 
                 int nRun;
                 for (nRun = 0; nRun < initSplitRunCount; nRun++)
-                {
-                    initSched.appendPhase(splitSched);
-                }
+                    {
+                        initSched.appendPhase(splitSched);
+                    }
             }
 
             // now add the initialization schedules for all the children
             {
                 int nChild;
                 for (nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = getHierarchicalChild(nChild);
-
-                    int nStage = 0;
-                    for (; nStage < child.getNumInitStages(); nStage++)
                     {
-                        initSched.appendPhase(
-                            child.getInitScheduleStage(nStage));
+                        StreamInterface child = getHierarchicalChild(nChild);
+
+                        int nStage = 0;
+                        for (; nStage < child.getNumInitStages(); nStage++)
+                            {
+                                initSched.appendPhase(
+                                                      child.getInitScheduleStage(nStage));
+                            }
                     }
-                }
             }
 
             if (initSched.getNumPhases() != 0)
@@ -208,9 +208,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             {
                 int nReps;
                 for (nReps = 0; nReps < getSplitNumRounds(); nReps++)
-                {
-                    steadySched.appendPhase(getSplitPhase());
-                }
+                    {
+                        steadySched.appendPhase(getSplitPhase());
+                    }
             }
 
             // add the schedule for execution of all the children
@@ -218,31 +218,31 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             {
                 int nChild;
                 for (nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = getHierarchicalChild(nChild);
-
-                    int nRun;
-                    for (nRun = 0; nRun < getChildNumExecs(nChild); nRun++)
                     {
-                        int nPhase;
-                        for (nPhase = 0;
-                            nPhase < child.getNumSteadyPhases();
-                            nPhase++)
-                        {
-                            steadySched.appendPhase(
-                                child.getSteadySchedulePhase(nPhase));
-                        }
+                        StreamInterface child = getHierarchicalChild(nChild);
+
+                        int nRun;
+                        for (nRun = 0; nRun < getChildNumExecs(nChild); nRun++)
+                            {
+                                int nPhase;
+                                for (nPhase = 0;
+                                     nPhase < child.getNumSteadyPhases();
+                                     nPhase++)
+                                    {
+                                        steadySched.appendPhase(
+                                                                child.getSteadySchedulePhase(nPhase));
+                                    }
+                            }
                     }
-                }
             }
 
             // finally add the join schedule the right # of times
             {
                 int nReps;
                 for (nReps = 0; nReps < getJoinNumRounds(); nReps++)
-                {
-                    steadySched.appendPhase(getJoinPhase());
-                }
+                    {
+                        steadySched.appendPhase(getJoinPhase());
+                    }
             }
 
             addSteadySchedulePhase(steadySched);

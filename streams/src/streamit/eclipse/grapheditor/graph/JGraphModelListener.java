@@ -15,9 +15,9 @@ import org.jgraph.event.GraphModelListener;
  */
 public class JGraphModelListener implements GraphModelListener {
 
-	public void graphChanged(GraphModelEvent e) 
-	{
-		System.out.println("Change : " + e.getChange());	
-	}
+    public void graphChanged(GraphModelEvent e) 
+    {
+        System.out.println("Change : " + e.getChange());    
+    }
 
 }

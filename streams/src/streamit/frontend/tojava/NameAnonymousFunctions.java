@@ -24,7 +24,7 @@ import streamit.frontend.nodes.*;
  * work and init functions.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousFunctions.java,v 1.6 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: NameAnonymousFunctions.java,v 1.7 2006-01-25 17:04:30 thies Exp $
  */
 public class NameAnonymousFunctions extends FEReplacer
 {
@@ -34,14 +34,14 @@ public class NameAnonymousFunctions extends FEReplacer
         if (func.getName() != null) return func;
         String name = null;
         switch(func.getCls())
-        {
-        case Function.FUNC_INIT: name = "init"; break;
-        case Function.FUNC_WORK: name = "work"; break;
-        case Function.FUNC_PREWORK: name = "prework"; break;
-        case Function.FUNC_HANDLER: return func;
-        case Function.FUNC_HELPER: return func;
-        default: return func;
-        }
+            {
+            case Function.FUNC_INIT: name = "init"; break;
+            case Function.FUNC_WORK: name = "work"; break;
+            case Function.FUNC_PREWORK: name = "prework"; break;
+            case Function.FUNC_HANDLER: return func;
+            case Function.FUNC_HELPER: return func;
+            default: return func;
+            }
         return new Function(func.getContext(), func.getCls(),
                             name, func.getReturnType(),
                             func.getParams(), func.getBody());
@@ -51,13 +51,13 @@ public class NameAnonymousFunctions extends FEReplacer
     {
         func = (FuncWork)super.visitFuncWork(func);
         if (func.getName() != null) return func;
-	String name = null;
+        String name = null;
         switch(func.getCls())
-        {
-        case Function.FUNC_WORK: name = "work"; break;
-        case Function.FUNC_PREWORK: name = "prework"; break;
-        default: return func;
-        }
+            {
+            case Function.FUNC_WORK: name = "work"; break;
+            case Function.FUNC_PREWORK: name = "prework"; break;
+            default: return func;
+            }
         return new FuncWork(func.getContext(), func.getCls(), name,
                             func.getBody(), func.getPeekRate(),
                             func.getPopRate(), func.getPushRate());

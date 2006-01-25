@@ -22,14 +22,14 @@ public class LIRFunctionPointer {
      * Construct a node in the parsing tree
      */
     public LIRFunctionPointer(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     /**
      * Construct a node in the parsing tree
      */
     public LIRFunctionPointer(JMethodDeclaration meth) {
-	this(meth.getName());
+        this(meth.getName());
     }
 
     /**
@@ -44,11 +44,11 @@ public class LIRFunctionPointer {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).visitFunctionPointer(this, name);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitFunctionPointer(this, name);
+        } else {
+            return this;
+        }
     }
 
     public void accept(SLIRVisitor v)

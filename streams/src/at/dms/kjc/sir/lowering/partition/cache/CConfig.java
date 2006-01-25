@@ -19,7 +19,7 @@ abstract class CConfig implements Cloneable {
     protected CachePartitioner partitioner;
 
     protected CConfig(CachePartitioner partitioner) {
-	this.partitioner = partitioner;
+        this.partitioner = partitioner;
     }
 
     abstract public boolean getPeek();

@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractActionToggle.java	1.2 01.02.2003
+ * @(#)AbstractActionToggle.java    1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,59 +36,59 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public abstract class AbstractActionToggle extends AbstractActionDefault {
 
-	/** Container with abstract buttons of this type
-	 */
-	protected Vector abstractButtons = new Vector();
+    /** Container with abstract buttons of this type
+     */
+    protected Vector abstractButtons = new Vector();
 
-	/**
-	 * Constructor for AbstractActionToggle.
-	 * @param graphpad
-	 */
-	public AbstractActionToggle(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for AbstractActionToggle.
+     * @param graphpad
+     */
+    public AbstractActionToggle(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for AbstractActionToggle.
-	 * @param graphpad
-	 * @param name
-	 */
-	public AbstractActionToggle(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for AbstractActionToggle.
+     * @param graphpad
+     * @param name
+     */
+    public AbstractActionToggle(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for AbstractActionToggle.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public AbstractActionToggle(GPGraphpad graphpad, String name, Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for AbstractActionToggle.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public AbstractActionToggle(GPGraphpad graphpad, String name, Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	/** updates all Abstract Buttons from this action
-	 */
-	public void update() {
-		super.update();
+    /** updates all Abstract Buttons from this action
+     */
+    public void update() {
+        super.update();
 
-		Enumeration enum = abstractButtons.elements();
-		while (enum.hasMoreElements()) {
-			AbstractButton button = (AbstractButton) enum.nextElement();
-			button.setSelected(isSelected(button.getActionCommand()));
-		}
-	}
+        Enumeration enum = abstractButtons.elements();
+        while (enum.hasMoreElements()) {
+            AbstractButton button = (AbstractButton) enum.nextElement();
+            button.setSelected(isSelected(button.getActionCommand()));
+        }
+    }
 
-	/** removes the abstract action from the
-	 *  action control
-	 */
-	public void removeAbstractButton(AbstractButton button){
-		abstractButtons.remove(button);
-	}
+    /** removes the abstract action from the
+     *  action control
+     */
+    public void removeAbstractButton(AbstractButton button){
+        abstractButtons.remove(button);
+    }
 
-	/** Should return true if the action value is true
-	 */
-	public abstract boolean isSelected(String actionCommand);
+    /** Should return true if the action value is true
+     */
+    public abstract boolean isSelected(String actionCommand);
 
 
 }

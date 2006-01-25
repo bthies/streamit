@@ -65,27 +65,27 @@ import streamit.eclipse.grapheditor.editor.pad.resources.TranslatorConstants;
  *  <pre>
  *  public class MyFrame extend JFrame {
  * 
- * 		public MyFrame(){
- * 			setName("MyFrame");
- * 			JButton b = new JButton();
- * 			b.setName("OK");
- * 			getContentPane().add(b);
+ *      public MyFrame(){
+ *          setName("MyFrame");
+ *          JButton b = new JButton();
+ *          b.setName("OK");
+ *          getContentPane().add(b);
  * 
- * 			// after con catting the whole GUI tree
- * 			// register the frame for locale
- * 			// events
- * 			// The LocalChangeAdapter will update
- * 			// all labels and co automatically
- * 			LocaleChangeAdapter.addContainer(this);
- * 			pack();
- * 			setVisible(true);
- * 		}
+ *          // after con catting the whole GUI tree
+ *          // register the frame for locale
+ *          // events
+ *          // The LocalChangeAdapter will update
+ *          // all labels and co automatically
+ *          LocaleChangeAdapter.addContainer(this);
+ *          pack();
+ *          setVisible(true);
+ *      }
  * 
- * 		public void dispose(){
- * 			super.dispose();
- * 			// unregister the locale change adapter
- * 			LocaleChangeAdapter.removeContainer(this);
- * 		}
+ *      public void dispose(){
+ *          super.dispose();
+ *          // unregister the locale change adapter
+ *          LocaleChangeAdapter.removeContainer(this);
+ *      }
  *  }
  *  </pre> 
  *  
@@ -101,447 +101,447 @@ import streamit.eclipse.grapheditor.editor.pad.resources.TranslatorConstants;
  */
 
 public class LocaleChangeAdapter
-	implements LocaleChangeListener, ProperNameProvider, TranslatorConstants {
+    implements LocaleChangeListener, ProperNameProvider, TranslatorConstants {
 
-	/** Key for the special jcomponent client property.
-	 *  If the JComponent contains a client property with this key
-	 *  and a true Boolean object, then the local change adapter
-	 *  will display the Text
-	 *  only if an icon is not available
-	 * 
-	 */
-	public static final String SET_TEXT_IF_ICON_NOT_AVAILABLE =
-		"SetTextIfIconNotAvailable";
+    /** Key for the special jcomponent client property.
+     *  If the JComponent contains a client property with this key
+     *  and a true Boolean object, then the local change adapter
+     *  will display the Text
+     *  only if an icon is not available
+     * 
+     */
+    public static final String SET_TEXT_IF_ICON_NOT_AVAILABLE =
+        "SetTextIfIconNotAvailable";
 
-	/** Key for the special jcomponent client property.
-	 *  If the JComponent contains a client property with this key
-	 *  and a true Boolean object, then the local change adapter
-	 *  will not set the ToolTipText
-	 * 
-	 */
-	public static final String DONT_SET_TOOL_TIP_TEXT =
-		"DontSetToolTipText";
+    /** Key for the special jcomponent client property.
+     *  If the JComponent contains a client property with this key
+     *  and a true Boolean object, then the local change adapter
+     *  will not set the ToolTipText
+     * 
+     */
+    public static final String DONT_SET_TOOL_TIP_TEXT =
+        "DontSetToolTipText";
 
-	/** Key for the special jcomponent client property.
-	 *  If the JComponent contains a client property with this key
-	 *  and a true Boolean object, then the local change adapter
-	 *  will not set the mnemonic
-	 * 
-	 */
-	public static final String DONT_SET_MNEMONIC = 
-		"DontSetMnemonic";
+    /** Key for the special jcomponent client property.
+     *  If the JComponent contains a client property with this key
+     *  and a true Boolean object, then the local change adapter
+     *  will not set the mnemonic
+     * 
+     */
+    public static final String DONT_SET_MNEMONIC = 
+        "DontSetMnemonic";
 
-	/** contains the proper names for the swing GUI
-	 * 
-	 */
-	Hashtable properNames = new Hashtable();
+    /** contains the proper names for the swing GUI
+     * 
+     */
+    Hashtable properNames = new Hashtable();
 
-	/** For example if we have got 
-	 *  a TabbedPane with multiple titles we
-	 *  need to number the titles.
-	 *  This number is formated with 
-	 *  the pattern "000".
-	 *  
-	 */
-	static final NumberFormat numberFormat = new DecimalFormat("000");
+    /** For example if we have got 
+     *  a TabbedPane with multiple titles we
+     *  need to number the titles.
+     *  This number is formated with 
+     *  the pattern "000".
+     *  
+     */
+    static final NumberFormat numberFormat = new DecimalFormat("000");
 
-	/**
-	 *  Creates a new local change adapter and
-	 *  registers itself at the translator
-	 *  for a locale change listener and for a
-	 *  proper name provider. 
-	 *
-	 */
-	public LocaleChangeAdapter() {
-		Translator.addLocaleChangeListener(this);
+    /**
+     *  Creates a new local change adapter and
+     *  registers itself at the translator
+     *  for a locale change listener and for a
+     *  proper name provider. 
+     *
+     */
+    public LocaleChangeAdapter() {
+        Translator.addLocaleChangeListener(this);
 
-		// fill properNames
-		UIManager.LookAndFeelInfo[] lafi = UIManager.getInstalledLookAndFeels();
-		for (int i = 0; i < lafi.length; i++) {
-			if (lafi[i].getName() != null) {
-				properNames.put(
-					PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_TEXT,
-					lafi[i].getName());
-				properNames.put(
-					PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_TOOL_TIP_TEXT,
-					lafi[i].getName());
-				properNames.put(
-					PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_MNEMONIC,
-					lafi[i].getName());
+        // fill properNames
+        UIManager.LookAndFeelInfo[] lafi = UIManager.getInstalledLookAndFeels();
+        for (int i = 0; i < lafi.length; i++) {
+            if (lafi[i].getName() != null) {
+                properNames.put(
+                                PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_TEXT,
+                                lafi[i].getName());
+                properNames.put(
+                                PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_TOOL_TIP_TEXT,
+                                lafi[i].getName());
+                properNames.put(
+                                PREFIX_COMPONENT + lafi[i].getName() + SUFFIX_MNEMONIC,
+                                lafi[i].getName());
 
-				if (lafi[i].getClassName() != null) {
-					properNames.put(
-						PREFIX_COMPONENT + lafi[i].getClassName() + SUFFIX_TEXT,
-						lafi[i].getName());
-					properNames.put(
-						PREFIX_COMPONENT
-							+ lafi[i].getClassName()
-							+ SUFFIX_TOOL_TIP_TEXT,
-						lafi[i].getName());
-					properNames.put(
-						PREFIX_COMPONENT
-							+ lafi[i].getClassName()
-							+ SUFFIX_MNEMONIC,
-						lafi[i].getName());
-				}
-			}
-		}
-		Translator.getDefaultResourceBundle().addProperNameProvider(this);
+                if (lafi[i].getClassName() != null) {
+                    properNames.put(
+                                    PREFIX_COMPONENT + lafi[i].getClassName() + SUFFIX_TEXT,
+                                    lafi[i].getName());
+                    properNames.put(
+                                    PREFIX_COMPONENT
+                                    + lafi[i].getClassName()
+                                    + SUFFIX_TOOL_TIP_TEXT,
+                                    lafi[i].getName());
+                    properNames.put(
+                                    PREFIX_COMPONENT
+                                    + lafi[i].getClassName()
+                                    + SUFFIX_MNEMONIC,
+                                    lafi[i].getName());
+                }
+            }
+        }
+        Translator.getDefaultResourceBundle().addProperNameProvider(this);
 
-	}
+    }
 
-	/** A reference to the default locale change adapter
-	 * 
-	 */
-	protected static LocaleChangeAdapter localeChangeAdapter =
-		new LocaleChangeAdapter();
+    /** A reference to the default locale change adapter
+     * 
+     */
+    protected static LocaleChangeAdapter localeChangeAdapter =
+        new LocaleChangeAdapter();
 
-	/** returns the default local change adapter
-	 * 
-	 * @return the default adapter
-	 */
-	protected static LocaleChangeAdapter getLocaleChangeAdapter() {
-		return localeChangeAdapter;
-	}
+    /** returns the default local change adapter
+     * 
+     * @return the default adapter
+     */
+    protected static LocaleChangeAdapter getLocaleChangeAdapter() {
+        return localeChangeAdapter;
+    }
 
-	/** vector with all registered containers
-	 * 
-	 */
-	protected static Vector containers = new Vector();
+    /** vector with all registered containers
+     * 
+     */
+    protected static Vector containers = new Vector();
 
-	/** Adds a container to the control of the local change adapter
-	 * 
-	 * @param comp the specified container
-	 */
-	public static void addContainer(Container comp) {
-		containers.add(comp);
-		updateContainer(comp);
-	}
-	/** Removes a container from the control of the local change adapter
-	 * 
-	 * @param comp the specified container
-	 */
-	public static void removeContainer(Container comp) {
-		containers.remove(comp);
-	}
+    /** Adds a container to the control of the local change adapter
+     * 
+     * @param comp the specified container
+     */
+    public static void addContainer(Container comp) {
+        containers.add(comp);
+        updateContainer(comp);
+    }
+    /** Removes a container from the control of the local change adapter
+     * 
+     * @param comp the specified container
+     */
+    public static void removeContainer(Container comp) {
+        containers.remove(comp);
+    }
 
-	/** Will be called from the translator 
-	 *  if a locale was changed
-	 *  
-	 */
-	public void localeChanged(LocaleChangeEvent e) {
-		Vector copy;
-		synchronized (containers) {
-			copy = (Vector) containers.clone();
-		}
-		Enumeration oEnum = copy.elements();
-		while (oEnum.hasMoreElements()) {
-			updateContainer((Container) oEnum.nextElement());
-		}
-	}
+    /** Will be called from the translator 
+     *  if a locale was changed
+     *  
+     */
+    public void localeChanged(LocaleChangeEvent e) {
+        Vector copy;
+        synchronized (containers) {
+            copy = (Vector) containers.clone();
+        }
+        Enumeration oEnum = copy.elements();
+        while (oEnum.hasMoreElements()) {
+            updateContainer((Container) oEnum.nextElement());
+        }
+    }
 
-	/** This method will be called from the localeChanged
-	 *  method or it will be called recursively.
-	 *  The method will update the container and
-	 *  all children with the new locale values. 
-	 * 
-	 * @param oComp the concerning container
-	 * @see #localeChanged(LocaleChangeEvent)
-	 */
-	public static void updateContainer(Container oComp) {
-		if (oComp == null)
-			return;
+    /** This method will be called from the localeChanged
+     *  method or it will be called recursively.
+     *  The method will update the container and
+     *  all children with the new locale values. 
+     * 
+     * @param oComp the concerning container
+     * @see #localeChanged(LocaleChangeEvent)
+     */
+    public static void updateContainer(Container oComp) {
+        if (oComp == null)
+            return;
 
-		updateComponent(oComp);
+        updateComponent(oComp);
 
-		if (oComp instanceof JFrame) {
-			updateContainer((Container) (((JFrame) oComp).getJMenuBar()));
-			updateContainer((Container) (((JFrame) oComp).getContentPane()));
-		}
-		// procedure for the childs
-		for (int i = 0; i < oComp.getComponentCount(); i++) {
-			Component oChild = oComp.getComponent(i);
+        if (oComp instanceof JFrame) {
+            updateContainer((Container) (((JFrame) oComp).getJMenuBar()));
+            updateContainer((Container) (((JFrame) oComp).getContentPane()));
+        }
+        // procedure for the childs
+        for (int i = 0; i < oComp.getComponentCount(); i++) {
+            Component oChild = oComp.getComponent(i);
 
-			if (oChild instanceof Container) {
-				updateContainer((Container) oChild);
-			} else {
-				updateComponent(oChild);
-			}
-		}
-		// procedure for the menu items
-		if (oComp instanceof JMenu) {
-			JMenu menu = (JMenu) oComp;
-			for (int i = 0; i < menu.getItemCount(); i++) {
-				Component oChild = menu.getItem(i);
-				if (oChild instanceof Container) {
-					updateContainer((Container) oChild);
-				} else {
-					updateComponent(oChild);
-				}
-			}
-		}
-	}
+            if (oChild instanceof Container) {
+                updateContainer((Container) oChild);
+            } else {
+                updateComponent(oChild);
+            }
+        }
+        // procedure for the menu items
+        if (oComp instanceof JMenu) {
+            JMenu menu = (JMenu) oComp;
+            for (int i = 0; i < menu.getItemCount(); i++) {
+                Component oChild = menu.getItem(i);
+                if (oChild instanceof Container) {
+                    updateContainer((Container) oChild);
+                } else {
+                    updateComponent(oChild);
+                }
+            }
+        }
+    }
 
-	/** This method will be called from the updateContainer
-	 *  method.
-	 *  The method will update the component 
-	 *  with the new locale values. 
-	 * 
-	 * @param oComp the concerning component
-	 * @see #updateContainer(Container)
-	 */
-	public static void updateComponent(Component comp) {
-		if (comp == null || comp.getName() == null)
-			return;
+    /** This method will be called from the updateContainer
+     *  method.
+     *  The method will update the component 
+     *  with the new locale values. 
+     * 
+     * @param oComp the concerning component
+     * @see #updateContainer(Container)
+     */
+    public static void updateComponent(Component comp) {
+        if (comp == null || comp.getName() == null)
+            return;
 
-		// single titles
-		try {
-			if (comp instanceof Frame
-				|| comp instanceof Dialog
-				|| comp instanceof JInternalFrame) {
-				String title =
-					Translator.getString(
-						PREFIX_COMPONENT + comp.getName() + SUFFIX_TITLE);
-				if (title != null) {
-					if (comp instanceof Frame) {
-						((Frame) comp).setTitle(title);
-					}
-					if (comp instanceof Dialog) {
-						((Dialog) comp).setTitle(title);
-					}
-					if (comp instanceof JInternalFrame) {
-						((JInternalFrame) comp).setTitle(title);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+        // single titles
+        try {
+            if (comp instanceof Frame
+                || comp instanceof Dialog
+                || comp instanceof JInternalFrame) {
+                String title =
+                    Translator.getString(
+                                         PREFIX_COMPONENT + comp.getName() + SUFFIX_TITLE);
+                if (title != null) {
+                    if (comp instanceof Frame) {
+                        ((Frame) comp).setTitle(title);
+                    }
+                    if (comp instanceof Dialog) {
+                        ((Dialog) comp).setTitle(title);
+                    }
+                    if (comp instanceof JInternalFrame) {
+                        ((JInternalFrame) comp).setTitle(title);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// single tool tip text
-		// don't show the tool tip at the menu
-		// it's not really nice :-)
-		try {
+        // single tool tip text
+        // don't show the tool tip at the menu
+        // it's not really nice :-)
+        try {
 
-			if (comp instanceof JComponent) {
+            if (comp instanceof JComponent) {
 
-				String toolTipText =
-					Translator.getString(
-						PREFIX_COMPONENT
-							+ comp.getName()
-							+ SUFFIX_TOOL_TIP_TEXT);
+                String toolTipText =
+                    Translator.getString(
+                                         PREFIX_COMPONENT
+                                         + comp.getName()
+                                         + SUFFIX_TOOL_TIP_TEXT);
 
-				if (toolTipText == null)
-					toolTipText =
-						Translator.getString(
-							PREFIX_COMPONENT + comp.getName() + SUFFIX_TEXT);
+                if (toolTipText == null)
+                    toolTipText =
+                        Translator.getString(
+                                             PREFIX_COMPONENT + comp.getName() + SUFFIX_TEXT);
 
-				Boolean dontDisplayToolTipText =
-					(Boolean) ((JComponent) comp).getClientProperty(
-						LocaleChangeAdapter.DONT_SET_TOOL_TIP_TEXT);
+                Boolean dontDisplayToolTipText =
+                    (Boolean) ((JComponent) comp).getClientProperty(
+                                                                    LocaleChangeAdapter.DONT_SET_TOOL_TIP_TEXT);
 
-				if (dontDisplayToolTipText != null
-					&& dontDisplayToolTipText.booleanValue()) {
-					toolTipText = null;
-				}
+                if (dontDisplayToolTipText != null
+                    && dontDisplayToolTipText.booleanValue()) {
+                    toolTipText = null;
+                }
 
-				if (toolTipText != null) {
-					((JComponent) comp).setToolTipText(toolTipText);
-				}
+                if (toolTipText != null) {
+                    ((JComponent) comp).setToolTipText(toolTipText);
+                }
 
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// set mnemonic
-		try {
+        // set mnemonic
+        try {
 
-			if (comp instanceof AbstractButton) {
-				String mnemonic =
-					Translator.getString(
-						PREFIX_COMPONENT + comp.getName() + SUFFIX_MNEMONIC);
-						
-				Boolean noMnemonic =
-					(Boolean) ((JComponent) comp).getClientProperty(
-						LocaleChangeAdapter.DONT_SET_MNEMONIC);
+            if (comp instanceof AbstractButton) {
+                String mnemonic =
+                    Translator.getString(
+                                         PREFIX_COMPONENT + comp.getName() + SUFFIX_MNEMONIC);
+                        
+                Boolean noMnemonic =
+                    (Boolean) ((JComponent) comp).getClientProperty(
+                                                                    LocaleChangeAdapter.DONT_SET_MNEMONIC);
 
-				if (noMnemonic != null
-					&& noMnemonic.booleanValue()) {
-					mnemonic = null;
-				}
-										
-				if (mnemonic != null && mnemonic.length() > 0) {
-					((AbstractButton) comp).setMnemonic(
-						mnemonic.toCharArray()[0]);
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+                if (noMnemonic != null
+                    && noMnemonic.booleanValue()) {
+                    mnemonic = null;
+                }
+                                        
+                if (mnemonic != null && mnemonic.length() > 0) {
+                    ((AbstractButton) comp).setMnemonic(
+                                                        mnemonic.toCharArray()[0]);
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// set Accelerator
-		try {
+        // set Accelerator
+        try {
 
-			if (comp instanceof JMenuItem) {
-				String accelerator =
-					Translator.getString(
-						PREFIX_COMPONENT + comp.getName() + SUFFIX_ACCELERATOR);
-				if (accelerator != null) {
-					if (accelerator != null && accelerator.length() > 0) {
-						KeyStroke keyStroke =
-							KeyStroke.getKeyStroke(accelerator);
-						((JMenuItem) comp).setAccelerator(keyStroke);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+            if (comp instanceof JMenuItem) {
+                String accelerator =
+                    Translator.getString(
+                                         PREFIX_COMPONENT + comp.getName() + SUFFIX_ACCELERATOR);
+                if (accelerator != null) {
+                    if (accelerator != null && accelerator.length() > 0) {
+                        KeyStroke keyStroke =
+                            KeyStroke.getKeyStroke(accelerator);
+                        ((JMenuItem) comp).setAccelerator(keyStroke);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// set the icon
-		boolean iconAvailable = false;
-		try {
+        // set the icon
+        boolean iconAvailable = false;
+        try {
 
-			if (comp instanceof JOptionPane
-				|| comp instanceof AbstractButton
-				|| comp instanceof JLabel) {
+            if (comp instanceof JOptionPane
+                || comp instanceof AbstractButton
+                || comp instanceof JLabel) {
 
-				// test: is an old text available?				
-				//boolean update = false;
-				Icon icon =
-					ImageLoader.getImageIcon(
-						Translator.getString(
-							PREFIX_COMPONENT + comp.getName() + SUFFIX_ICON));
-				if (icon != null) {
-					iconAvailable = true;
-					if (comp instanceof JOptionPane) {
-						((JOptionPane) comp).setIcon(icon);
-					}
-					if (comp instanceof AbstractButton) {
-						((AbstractButton) comp).setIcon(icon);
-					}
-					if (comp instanceof JLabel) {
-						((JLabel) comp).setIcon(icon);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+                // test: is an old text available?              
+                //boolean update = false;
+                Icon icon =
+                    ImageLoader.getImageIcon(
+                                             Translator.getString(
+                                                                  PREFIX_COMPONENT + comp.getName() + SUFFIX_ICON));
+                if (icon != null) {
+                    iconAvailable = true;
+                    if (comp instanceof JOptionPane) {
+                        ((JOptionPane) comp).setIcon(icon);
+                    }
+                    if (comp instanceof AbstractButton) {
+                        ((AbstractButton) comp).setIcon(icon);
+                    }
+                    if (comp instanceof JLabel) {
+                        ((JLabel) comp).setIcon(icon);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// set the text for 
-		// non text field components
-		try {
+        // set the text for 
+        // non text field components
+        try {
 
-			if (comp instanceof Label
-				|| comp instanceof AbstractButton
-				|| comp instanceof JLabel) {
+            if (comp instanceof Label
+                || comp instanceof AbstractButton
+                || comp instanceof JLabel) {
 
-				// update the text only if 
-				// the text was set before
-				String text =
-					Translator.getString(
-						PREFIX_COMPONENT + comp.getName() + SUFFIX_TEXT);
-				if (text != null) {
-					Boolean displayTextIfIconNotAvailable = null;
+                // update the text only if 
+                // the text was set before
+                String text =
+                    Translator.getString(
+                                         PREFIX_COMPONENT + comp.getName() + SUFFIX_TEXT);
+                if (text != null) {
+                    Boolean displayTextIfIconNotAvailable = null;
 
-					if (comp instanceof JComponent) {
-						displayTextIfIconNotAvailable =
-							(Boolean) ((JComponent) comp).getClientProperty(
-								LocaleChangeAdapter
-									.SET_TEXT_IF_ICON_NOT_AVAILABLE);
-					}
+                    if (comp instanceof JComponent) {
+                        displayTextIfIconNotAvailable =
+                            (Boolean) ((JComponent) comp).getClientProperty(
+                                                                            LocaleChangeAdapter
+                                                                            .SET_TEXT_IF_ICON_NOT_AVAILABLE);
+                    }
 
-					if (displayTextIfIconNotAvailable != null
-						&& displayTextIfIconNotAvailable.booleanValue()
-						&& iconAvailable == true) {
-						text = null;
-					}
+                    if (displayTextIfIconNotAvailable != null
+                        && displayTextIfIconNotAvailable.booleanValue()
+                        && iconAvailable == true) {
+                        text = null;
+                    }
 
-					if (comp instanceof Label) {
-						((Label) comp).setText(text);
-					}
-					if (comp instanceof AbstractButton) {
-						((AbstractButton) comp).setText(text);
-					}
-					if (comp instanceof JLabel) {
-						((JLabel) comp).setText(text);
-					}
+                    if (comp instanceof Label) {
+                        ((Label) comp).setText(text);
+                    }
+                    if (comp instanceof AbstractButton) {
+                        ((AbstractButton) comp).setText(text);
+                    }
+                    if (comp instanceof JLabel) {
+                        ((JLabel) comp).setText(text);
+                    }
 
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-		// multiple titles && tool tip texts
-		try {
+        // multiple titles && tool tip texts
+        try {
 
-			if (comp instanceof JTabbedPane) {
-				JTabbedPane jtp = (JTabbedPane) comp;
-				for (int i = 0; i < jtp.getTabCount(); i++) {
-					String title =
-						Translator.getString(
-							PREFIX_COMPONENT
-								+ comp.getName()
-								+ SUFFIX_TITLE
-								+ numberFormat.format(i));
-					if (title != null)
-						jtp.setTitleAt(i, title);
-					String toolTipText =
-						Translator.getString(
-							PREFIX_COMPONENT
-								+ comp.getName()
-								+ SUFFIX_TOOL_TIP_TEXT
-								+ numberFormat.format(i));
-					if (toolTipText != null)
-						jtp.setToolTipTextAt(i, toolTipText);
+            if (comp instanceof JTabbedPane) {
+                JTabbedPane jtp = (JTabbedPane) comp;
+                for (int i = 0; i < jtp.getTabCount(); i++) {
+                    String title =
+                        Translator.getString(
+                                             PREFIX_COMPONENT
+                                             + comp.getName()
+                                             + SUFFIX_TITLE
+                                             + numberFormat.format(i));
+                    if (title != null)
+                        jtp.setTitleAt(i, title);
+                    String toolTipText =
+                        Translator.getString(
+                                             PREFIX_COMPONENT
+                                             + comp.getName()
+                                             + SUFFIX_TOOL_TIP_TEXT
+                                             + numberFormat.format(i));
+                    if (toolTipText != null)
+                        jtp.setToolTipTextAt(i, toolTipText);
 
-					String mnemonic =
-						Translator.getString(
-							PREFIX_COMPONENT
-								+ comp.getName()
-								+ SUFFIX_MNEMONIC
-								+ numberFormat.format(i));
-					if (mnemonic != null && mnemonic.length() > 0) {
-						((JTabbedPane) comp).setMnemonicAt(
-							i,
-							mnemonic.toCharArray()[0]);
-					}
-				}
-			}
-		} catch (Exception ex) {
-			// print each exception
-			// and do nothing more
-			System.err.println(ex);
-		}
+                    String mnemonic =
+                        Translator.getString(
+                                             PREFIX_COMPONENT
+                                             + comp.getName()
+                                             + SUFFIX_MNEMONIC
+                                             + numberFormat.format(i));
+                    if (mnemonic != null && mnemonic.length() > 0) {
+                        ((JTabbedPane) comp).setMnemonicAt(
+                                                           i,
+                                                           mnemonic.toCharArray()[0]);
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            // print each exception
+            // and do nothing more
+            System.err.println(ex);
+        }
 
-	}
+    }
 
-	/** returns the keys for the proper names
-	 * 
-	 */
-	public Enumeration getKeys() {
-		return properNames.keys();
-	}
+    /** returns the keys for the proper names
+     * 
+     */
+    public Enumeration getKeys() {
+        return properNames.keys();
+    }
 
-	/** returns the value for a proper name key
-	 * 
-	 */
-	public String getString(String key) {
-		return (String) properNames.get(key);
-	}
+    /** returns the value for a proper name key
+     * 
+     */
+    public String getString(String key) {
+        return (String) properNames.get(key);
+    }
 }

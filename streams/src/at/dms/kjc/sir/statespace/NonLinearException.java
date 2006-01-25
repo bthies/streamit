@@ -7,7 +7,7 @@ package at.dms.kjc.sir.statespace;
  **/
 public class NonLinearException extends RuntimeException {
     public NonLinearException(String m) {
-	super(m);
+        super(m);
     }
 }
 

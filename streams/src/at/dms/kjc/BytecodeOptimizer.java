@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BytecodeOptimizer.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: BytecodeOptimizer.java,v 1.2 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,36 +32,36 @@ import at.dms.classfile.CodeInfo;
  */
 public class BytecodeOptimizer {
 
-  /**
-   * Creates an optimizer.
-   *
-   * @param	level		the requested optimization level
-   */
-  public BytecodeOptimizer(int level) {
-    this.level = level;
-  }
-
-  /**
-   * Runs the optimizer on the given code info.
-   *
-   * @param	info		the code to optimize.
-   */
-  public CodeInfo run(CodeInfo info) {
-    if (level >= 10) {
-      return at.dms.backend.Optimizer.optimize(info);
-    } else if (level >= 1) {
-      return at.dms.optimize.Optimizer.optimize(info, level);
-    } else {
-      return info;
+    /**
+     * Creates an optimizer.
+     *
+     * @param   level       the requested optimization level
+     */
+    public BytecodeOptimizer(int level) {
+        this.level = level;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Runs the optimizer on the given code info.
+     *
+     * @param   info        the code to optimize.
+     */
+    public CodeInfo run(CodeInfo info) {
+        if (level >= 10) {
+            return at.dms.backend.Optimizer.optimize(info);
+        } else if (level >= 1) {
+            return at.dms.optimize.Optimizer.optimize(info, level);
+        } else {
+            return info;
+        }
+    }
 
-  /**
-   * The requested optimization level.
-   */
-  private int			level;
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    /**
+     * The requested optimization level.
+     */
+    private int         level;
 }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodePosition.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: CodePosition.java,v 1.2 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -28,59 +28,59 @@ package at.dms.classfile;
  */
 public final class CodePosition {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new position
-   *
-   * @param	min		the minimum position
-   * @param	max		the maximum position
-   */
-  public CodePosition(int min, int max) {
-    this.min = min;
-    this.max = max;
-  }
+    /**
+     * Constructs a new position
+     *
+     * @param   min     the minimum position
+     * @param   max     the maximum position
+     */
+    public CodePosition(int min, int max) {
+        this.min = min;
+        this.max = max;
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Sets the value of this object from an other one
-   */
-  public final void setPosition(CodePosition pos) {
-    min = pos.min;
-    max = pos.max;
-  }
+    /**
+     * Sets the value of this object from an other one
+     */
+    public final void setPosition(CodePosition pos) {
+        min = pos.min;
+        max = pos.max;
+    }
 
-  /**
-   * Add a value to min and max fields
-   */
-  public final void addOffset(int size) {
-    min += size;
-    max += size;
-  }
+    /**
+     * Add a value to min and max fields
+     */
+    public final void addOffset(int size) {
+        min += size;
+        max += size;
+    }
 
-  /**
-   * Returns true if min equals max
-   */
-  public final boolean isFix() {
-    return min == max;
-  }
+    /**
+     * Returns true if min equals max
+     */
+    public final boolean isFix() {
+        return min == max;
+    }
 
-  /**
-   * Returns a string representation.
-   */
-  public String toString() {
-    return "[min: " + min + ", max: " + max + "]";
-  }
+    /**
+     * Returns a string representation.
+     */
+    public String toString() {
+        return "[min: " + min + ", max: " + max + "]";
+    }
 
-  // --------------------------------------------------------------------
-  // PUBLIC MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // PUBLIC MEMBERS
+    // --------------------------------------------------------------------
 
-  public int		min;
-  public int		max;
+    public int      min;
+    public int      max;
 }

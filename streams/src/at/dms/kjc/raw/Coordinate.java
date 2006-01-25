@@ -6,22 +6,22 @@ public class Coordinate {
 
     public Coordinate(int r, int c) 
     {
-	row = r;
-	column = c;
+        row = r;
+        column = c;
     }
     
     public int getColumn() 
     {
-	return column;
+        return column;
     }
     
     public int getRow() 
     {
-	return row;
+        return row;
     }
 
     public String toString() {
-	return "(" + row + ", " + column + ")";
+        return "(" + row + ", " + column + ")";
     }
 }
 

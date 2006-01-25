@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JOuterLocalVariableExpression.java,v 1.6 2003-11-13 10:46:10 thies Exp $
+ * $Id: JOuterLocalVariableExpression.java,v 1.7 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,82 +28,82 @@ import at.dms.compiler.TokenReference;
  */
 public class JOuterLocalVariableExpression extends JLocalVariableExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JOuterLocalVariableExpression() {} // for cloner only
 
- /**
-   * Construct a node in the parsing tree
-   * @param where the line of this node in the source code
-   */
-  public JOuterLocalVariableExpression(TokenReference where,
-				       JLocalVariable var,
-				       CClass outer) {
-    super(where, var);
+    /**
+     * Construct a node in the parsing tree
+     * @param where the line of this node in the source code
+     */
+    public JOuterLocalVariableExpression(TokenReference where,
+                                         JLocalVariable var,
+                                         CClass outer) {
+        super(where, var);
 
-    this.outer = outer;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    // First we have to find the right context
-    CContext	body = context.getBodyContext();
-    while (body.getClassContext().getCClass() != outer) {
-      body = body.getClassContext().getParentContext();
+        this.outer = outer;
     }
 
-    CContext		parent = body.getClassContext().getParentContext();
-    CExpressionContext  ctxt = parent instanceof CExpressionContext ? (CExpressionContext)parent : new CExpressionContext((CBodyContext)parent);
-    JExpression		expr = super.analyse(ctxt);
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-    if (! (expr instanceof JLiteral)) {
-      check(context,
-	    expr == this && getVariable().isFinal(),
-	    KjcMessages.BAD_LOCAL_NOT_FINAL,
-	    getVariable().getIdent());
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        // First we have to find the right context
+        CContext    body = context.getBodyContext();
+        while (body.getClassContext().getCClass() != outer) {
+            body = body.getClassContext().getParentContext();
+        }
 
-      expr = ((CSourceClass)outer).getOuterLocalAccess(getTokenReference(),
-						       getVariable(),
-						       context.getMethodContext() instanceof CConstructorContext ?
-						       ((CConstructorContext)context.getMethodContext()).getCMethod() :
-						       null).analyse(context);
+        CContext        parent = body.getClassContext().getParentContext();
+        CExpressionContext  ctxt = parent instanceof CExpressionContext ? (CExpressionContext)parent : new CExpressionContext((CBodyContext)parent);
+        JExpression     expr = super.analyse(ctxt);
+
+        if (! (expr instanceof JLiteral)) {
+            check(context,
+                  expr == this && getVariable().isFinal(),
+                  KjcMessages.BAD_LOCAL_NOT_FINAL,
+                  getVariable().getIdent());
+
+            expr = ((CSourceClass)outer).getOuterLocalAccess(getTokenReference(),
+                                                             getVariable(),
+                                                             context.getMethodContext() instanceof CConstructorContext ?
+                                                             ((CConstructorContext)context.getMethodContext()).getCMethod() :
+                                                             null).analyse(context);
+        }
+
+        return expr;
     }
 
-    return expr;
-  }
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    public CClass       outer;
 
-  public CClass		outer;
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JOuterLocalVariableExpression other = new at.dms.kjc.JOuterLocalVariableExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JOuterLocalVariableExpression other = new at.dms.kjc.JOuterLocalVariableExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JOuterLocalVariableExpression other) {
+        super.deepCloneInto(other);
+        other.outer = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.outer);
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JOuterLocalVariableExpression other) {
-  super.deepCloneInto(other);
-  other.outer = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.outer);
-}
-
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

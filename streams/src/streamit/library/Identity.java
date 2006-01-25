@@ -25,6 +25,6 @@ public class Identity extends ChannelConnectFilter
 
     public Identity(int i, Class type) 
     {
-	super(type);
+        super(type);
     }
 }

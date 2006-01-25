@@ -37,11 +37,11 @@ public class LinearCost {
      * in the original matrix.
      */
     public LinearCost(int muls, int adds, int rows, int cols) {
-	this.multiplyCount = muls;
-	this.addCount = adds;
-	this.rows = rows;
-	this.cols = cols;
-	checkRep();
+        this.multiplyCount = muls;
+        this.addCount = adds;
+        this.rows = rows;
+        this.cols = cols;
+        checkRep();
     }
 
     /* Get the number of multiplications for this LinearCost. **/
@@ -51,31 +51,31 @@ public class LinearCost {
 
     /** Returns true if this represents less computation than other. **/
     public boolean lessThan(LinearCost other) {
-	this.checkRep();
-	other.checkRep();
-	
-	// use a simple sum of the number of operations for now
-	int thisSum  = this.getMultiplies()  + this.getAdds();
-	int otherSum = other.getMultiplies() + other.getAdds();	
+        this.checkRep();
+        other.checkRep();
+    
+        // use a simple sum of the number of operations for now
+        int thisSum  = this.getMultiplies()  + this.getAdds();
+        int otherSum = other.getMultiplies() + other.getAdds(); 
 
-	// if they have the same sum, choose based on multiplies
-	if(thisSum == otherSum)
-	    return (this.getMultiplies() < other.getMultiplies());
+        // if they have the same sum, choose based on multiplies
+        if(thisSum == otherSum)
+            return (this.getMultiplies() < other.getMultiplies());
 
-	return (thisSum < otherSum);
+        return (thisSum < otherSum);
     }
 
     /** returns a new LinearCost that represents the sum (element wise) of this and other. **/
     public LinearCost plus(LinearCost other) {
-	return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
-			      this.getAdds() + other.getAdds(),
-			      this.rows,
-			      this.cols);
+        return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
+                              this.getAdds() + other.getAdds(),
+                              this.rows,
+                              this.cols);
     }
     
     private void checkRep() {
-	if (this.multiplyCount < 0) {throw new RuntimeException("negative multiply count!");}
-	if (this.addCount < 0) {throw new RuntimeException("negative add count!");}
+        if (this.multiplyCount < 0) {throw new RuntimeException("negative multiply count!");}
+        if (this.addCount < 0) {throw new RuntimeException("negative add count!");}
     }
 
     /**
@@ -91,9 +91,9 @@ public class LinearCost {
      * getFrequencyCost so that eveverything stays integral.
      */
     public long getDirectCost() {
-	// add the push count now to estimate copying overhead, even
-	// if you're not adding/multiplying.
-	return SCALE_FACTOR * (185l + 2l*cols + (3l*(long)multiplyCount) + ((long)addCount));
+        // add the push count now to estimate copying overhead, even
+        // if you're not adding/multiplying.
+        return SCALE_FACTOR * (185l + 2l*cols + (3l*(long)multiplyCount) + ((long)addCount));
     }
 
 }

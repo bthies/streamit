@@ -1,5 +1,5 @@
 /*
- * @(#)FormatLineOrthogonal.java	1.2 01.02.2003
+ * @(#)FormatLineOrthogonal.java    1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,22 +34,22 @@ import org.jgraph.graph.GraphConstants;
  */
 public class FormatLineOrthogonal extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatLineOrthogonal.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FormatLineOrthogonal(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatLineOrthogonal.
+     * @param graphpad
+     * @param name
+     */
+    public FormatLineOrthogonal(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Map map = GraphConstants.createMap();
-			GraphConstants.setLineStyle(map, GraphConstants.STYLE_ORTHOGONAL);
-			setSelectionAttributes(map);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Map map = GraphConstants.createMap();
+        GraphConstants.setLineStyle(map, GraphConstants.STYLE_ORTHOGONAL);
+        setSelectionAttributes(map);
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)ViewFit.java	1.2 02.02.2003
+ * @(#)ViewFit.java 1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,70 +37,70 @@ import streamit.eclipse.grapheditor.graph.Constants;
  */
 public class ViewFit extends AbstractActionRadioButton {
 
-	public static final String NONE = "None";
-	public static final String WINDOW = "Window";
-	
+    public static final String NONE = "None";
+    public static final String WINDOW = "Window";
+    
 
 
-	/**
-	 * Constructor for ViewFit.
-	 * @param graphpad
-	 */
-	public ViewFit(GPGraphpad graphpad) {
-		super(graphpad);
-		lastActionCommand = NONE;
-	}
+    /**
+     * Constructor for ViewFit.
+     * @param graphpad
+     */
+    public ViewFit(GPGraphpad graphpad) {
+        super(graphpad);
+        lastActionCommand = NONE;
+    }
 
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		GPDocument doc = graphpad.getCurrentDocument();
-		if (e != null)
-		{
-			lastActionCommand = e.getActionCommand() ;
-			
-			if (NONE.equals(e.getActionCommand())) {
-				getCurrentDocument().setResizeAction(null);
-				getCurrentGraph().setScale(1);
-			} else if (WINDOW.equals(e.getActionCommand())) {
-				Rectangle p = null;
-				if (doc.areContainersInvisible())
-				{
-					p = new Rectangle (new Point(Constants.TOPLEVEL_LOC_X, Constants.TOPLEVEL_LOC_Y),
-																 doc.getGraphStructure().getTopLevel().getDimension());
-															
-				}
-				else
-				{
-					p = getCurrentGraph().getCellBounds(getCurrentGraph().getRoots());
-				}
-				if (p != null) {
-					Dimension s =
-						getCurrentDocument().getScrollPane().getViewport().getExtentSize();
-					double scale = 1;
-					if (Math.abs(s.getWidth() - (p.x + p.getWidth()))
-						> Math.abs(s.getHeight() - (p.x + p.getHeight())))
-						scale = (double) s.getWidth() / (p.x + p.getWidth());
-					else
-						scale = (double) s.getHeight() / (p.y + p.getHeight());
-					scale = Math.max(Math.min(scale, 16), .01);
-					getCurrentGraph().setScale(scale);
-					getCurrentDocument().setResizeAction(this);
-				}
-			} 
-		}	
-		
-		update();
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        GPDocument doc = graphpad.getCurrentDocument();
+        if (e != null)
+            {
+                lastActionCommand = e.getActionCommand() ;
+            
+                if (NONE.equals(e.getActionCommand())) {
+                    getCurrentDocument().setResizeAction(null);
+                    getCurrentGraph().setScale(1);
+                } else if (WINDOW.equals(e.getActionCommand())) {
+                    Rectangle p = null;
+                    if (doc.areContainersInvisible())
+                        {
+                            p = new Rectangle (new Point(Constants.TOPLEVEL_LOC_X, Constants.TOPLEVEL_LOC_Y),
+                                               doc.getGraphStructure().getTopLevel().getDimension());
+                                                            
+                        }
+                    else
+                        {
+                            p = getCurrentGraph().getCellBounds(getCurrentGraph().getRoots());
+                        }
+                    if (p != null) {
+                        Dimension s =
+                            getCurrentDocument().getScrollPane().getViewport().getExtentSize();
+                        double scale = 1;
+                        if (Math.abs(s.getWidth() - (p.x + p.getWidth()))
+                            > Math.abs(s.getHeight() - (p.x + p.getHeight())))
+                            scale = (double) s.getWidth() / (p.x + p.getWidth());
+                        else
+                            scale = (double) s.getHeight() / (p.y + p.getHeight());
+                        scale = Math.max(Math.min(scale, 16), .01);
+                        getCurrentGraph().setScale(scale);
+                        getCurrentDocument().setResizeAction(this);
+                    }
+                } 
+            }   
+        
+        update();
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionRadioButton#getPossibleActionCommands()
-	 */
-	public String[] getPossibleActionCommands() {
-		return new String[] { NONE, WINDOW};
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionRadioButton#getPossibleActionCommands()
+     */
+    public String[] getPossibleActionCommands() {
+        return new String[] { NONE, WINDOW};
+    }
 
 
 }

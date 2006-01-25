@@ -25,29 +25,29 @@ public class SchedJoinType extends SchedObject
         this.joinWeights = joinWeights;
 
         switch (this.type)
-        {
+            {
             case WEIGHTED_ROUND_ROBIN:
                 {
                     roundProduction = 0;
                     Iterator weightIter = joinWeights.listIterator ();
 
                     while (weightIter.hasNext ())
-                    {
-                        Integer weight = (Integer) weightIter.next ();
-                        ASSERT (weight);
+                        {
+                            Integer weight = (Integer) weightIter.next ();
+                            ASSERT (weight);
 
-                        roundProduction += weight.intValue ();
-                    }
+                            roundProduction += weight.intValue ();
+                        }
                     break;
                 }
             case NULL:
-            	{
-            	    roundProduction = 0;
-            	    break;
-            	}
+                {
+                    roundProduction = 0;
+                    break;
+                }
             default:
                 ASSERT (false);
-        }
+            }
     }
 
     public int getInputWeight (int index)
@@ -88,21 +88,21 @@ public class SchedJoinType extends SchedObject
     public String getStreamName ()
     {
         if (streamName == null)
-        {
-            streamName = "(";
-
-            int i;
-            for (i = 0; i < joinWeights.size (); i++)
             {
-                if (i != 0) streamName = streamName + ", ";
-                streamName = streamName + getInputWeight (i);
+                streamName = "(";
+
+                int i;
+                for (i = 0; i < joinWeights.size (); i++)
+                    {
+                        if (i != 0) streamName = streamName + ", ";
+                        streamName = streamName + getInputWeight (i);
+                    }
+
+                streamName =  streamName + ") " +
+                    super.getStreamName () +
+                    " (" + getRoundProduction () + ") ";
+
             }
-
-            streamName =  streamName + ") " +
-                          super.getStreamName () +
-                          " (" + getRoundProduction () + ") ";
-
-        }
 
         return streamName;
     }

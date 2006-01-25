@@ -8,16 +8,16 @@ import org.eclipse.ui.IPageLayout;
  */
 public class StreamItPerspectiveFactory extends JavaPerspectiveFactory {
 
-	/**
-	 * 
-	 */
-	public StreamItPerspectiveFactory() {
-		super();
-	}
+    /**
+     * 
+     */
+    public StreamItPerspectiveFactory() {
+        super();
+    }
 
-	public void createInitialLayout(IPageLayout layout) {
-		super.createInitialLayout(layout);
-		//layout.addView()
-		layout.addActionSet(IStreamItUIConstants.ID_STREAMIT_ACTION_SET);
-	}
+    public void createInitialLayout(IPageLayout layout) {
+        super.createInitialLayout(layout);
+        //layout.addView()
+        layout.addActionSet(IStreamItUIConstants.ID_STREAMIT_ACTION_SET);
+    }
 }

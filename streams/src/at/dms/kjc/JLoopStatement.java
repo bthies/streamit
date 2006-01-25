@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLoopStatement.java,v 1.6 2003-11-13 10:46:10 thies Exp $
+ * $Id: JLoopStatement.java,v 1.7 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,58 +30,58 @@ import at.dms.compiler.JavaStyleComment;
  */
 public abstract class JLoopStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JLoopStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	cond		the expression to evaluate.
-   * @param	body		the loop body.
-   */
-  public JLoopStatement(TokenReference where, JavaStyleComment[] comments) {
-    super(where, comments);
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   cond        the expression to evaluate.
+     * @param   body        the loop body.
+     */
+    public JLoopStatement(TokenReference where, JavaStyleComment[] comments) {
+        super(where, comments);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Return the end of this block (for break statement)
-   */
-  public CodeLabel getBreakLabel() {
-    return endLabel;
-  }
+    /**
+     * Return the end of this block (for break statement)
+     */
+    public CodeLabel getBreakLabel() {
+        return endLabel;
+    }
 
-  /**
-   * Return the beginning of this block (for continue statement)
-   */
-  public CodeLabel getContinueLabel() {
-    return contLabel;
-  }
+    /**
+     * Return the beginning of this block (for continue statement)
+     */
+    public CodeLabel getContinueLabel() {
+        return contLabel;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private CodeLabel		contLabel = new CodeLabel();
-  private CodeLabel		endLabel = new CodeLabel();
+    private CodeLabel       contLabel = new CodeLabel();
+    private CodeLabel       endLabel = new CodeLabel();
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JLoopStatement other) {
-  super.deepCloneInto(other);
-  other.contLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.contLabel);
-  other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JLoopStatement other) {
+        super.deepCloneInto(other);
+        other.contLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.contLabel);
+        other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

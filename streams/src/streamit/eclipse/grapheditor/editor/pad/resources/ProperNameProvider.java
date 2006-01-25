@@ -17,14 +17,14 @@ import java.util.Enumeration;
 
 public interface ProperNameProvider {
 
-  /** Returns the Keys of this proper name container
-   *
-   */
-  public abstract  Enumeration getKeys()  ;
+    /** Returns the Keys of this proper name container
+     *
+     */
+    public abstract  Enumeration getKeys()  ;
 
-  /** Returns the proper name for the locale key.
-   *
-   */
-  public String getString(String key) ;
+    /** Returns the proper name for the locale key.
+     *
+     */
+    public String getString(String key) ;
 
 }

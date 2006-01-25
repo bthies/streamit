@@ -8,11 +8,11 @@ class CCost {
     private final int cost;
 
     public CCost(int cost) {
-	this.cost = cost;
+        this.cost = cost;
     }
 
     public int getCost() {
-	return cost;
+        return cost;
     }
 
     /**
@@ -20,14 +20,14 @@ class CCost {
      * everything.
      */
     public static CCost MAX_VALUE() {
-	return new CCost(Integer.MAX_VALUE/2-1);
+        return new CCost(Integer.MAX_VALUE/2-1);
     }
 
     /**
      * Returns whether or not this is greather than <other>.
      */
     public boolean greaterThan(CCost other) {
-	return this.cost > other.cost;
+        return this.cost > other.cost;
     }
 
     /**
@@ -36,14 +36,14 @@ class CCost {
      * partitions, either in a splitjoin or pipeline).
      */
     public static CCost combine(CCost cost1, CCost cost2) {
-	int cost = cost1.getCost() + cost2.getCost();
+        int cost = cost1.getCost() + cost2.getCost();
 
-	// keep within range so that we can add again
-	if (cost > Integer.MAX_VALUE/2-1) {
-	    cost = Integer.MAX_VALUE/2-1;
-	}
+        // keep within range so that we can add again
+        if (cost > Integer.MAX_VALUE/2-1) {
+            cost = Integer.MAX_VALUE/2-1;
+        }
 
-	return new CCost(cost);
+        return new CCost(cost);
     }
 
     /**
@@ -53,30 +53,30 @@ class CCost {
      */
 
     /*
-    public static CCost add(CCost cost1, CCost cost2) {
-	// first just take sums
-	int cost = cost1.getCost() + cost2.getCost();
-	int iCode = cost1.getICodeSize() + cost2.getICodeSize();
-	
-	// if iCode threshold is exceeded, then bump up the other
-	// costs.
-	if (iCode > CachePartitioner.ICODE_THRESHOLD) {
-	    cost = Integer.MAX_VALUE/2-1;
-	}
+      public static CCost add(CCost cost1, CCost cost2) {
+      // first just take sums
+      int cost = cost1.getCost() + cost2.getCost();
+      int iCode = cost1.getICodeSize() + cost2.getICodeSize();
+    
+      // if iCode threshold is exceeded, then bump up the other
+      // costs.
+      if (iCode > CachePartitioner.ICODE_THRESHOLD) {
+      cost = Integer.MAX_VALUE/2-1;
+      }
 
-	return new CCost(cost, iCode);
-    }
+      return new CCost(cost, iCode);
+      }
     */
 
     public boolean equals(Object o) {
-	if (!(o instanceof CCost)) {
-	    return false;
-	}
-	CCost other = (CCost)o;
-	return other.cost==this.cost;
+        if (!(o instanceof CCost)) {
+            return false;
+        }
+        CCost other = (CCost)o;
+        return other.cost==this.cost;
     }
 
     public String toString() {
-	return "[cost=" + cost + "]";
+        return "[cost=" + cost + "]";
     }
 }

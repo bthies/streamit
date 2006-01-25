@@ -48,52 +48,52 @@ public class ExecutionCode extends at.dms.util.Utils
 
     public static void doit(FlatNode top, HashMap[] executionCounts) 
     {
-	assert top.contents instanceof SIRFilter :
-	    "Error top of graph is not filter";
-	
-	assert top.inputs == 0 && top.ways == 0 :
-	    "Error: Fused filter contains neighbors";
-	
-	SIRFilter filter = (SIRFilter)top.contents;
-	
-	assert filter.getPushInt() == 0 &&
-	    filter.getPopInt() == 0 &&
-	    filter.getPeekInt() == 0 : 
-	    "Error: fused filter declares non-zero I/O rate(s)";
+        assert top.contents instanceof SIRFilter :
+            "Error top of graph is not filter";
+    
+        assert top.inputs == 0 && top.ways == 0 :
+            "Error: Fused filter contains neighbors";
+    
+        SIRFilter filter = (SIRFilter)top.contents;
+    
+        assert filter.getPushInt() == 0 &&
+            filter.getPopInt() == 0 &&
+            filter.getPeekInt() == 0 : 
+            "Error: fused filter declares non-zero I/O rate(s)";
 
-	//make sure there are no push, pops or peeks...
-	assert CheckForCommunication.check(filter) == false : 
-	    "Error: Communication expression found in filter";
+        //make sure there are no push, pops or peeks...
+        assert CheckForCommunication.check(filter) == false : 
+            "Error: Communication expression found in filter";
 
-	//	assert !(filter instanceof SIRTwoStageFilter) :
-	//    "Error: Fused filter is a two stage";
+        //  assert !(filter instanceof SIRTwoStageFilter) :
+        //    "Error: Fused filter is a two stage";
 
-	ExecutionCode exeCode = new ExecutionCode();
-	
-	//check to see if the schedule is valid and
-	//set the number of times the filter fires in the init
-	//stage (weird)
-	exeCode.checkSchedule(executionCounts, filter);
-	
+        ExecutionCode exeCode = new ExecutionCode();
+    
+        //check to see if the schedule is valid and
+        //set the number of times the filter fires in the init
+        //stage (weird)
+        exeCode.checkSchedule(executionCounts, filter);
+    
 
-	
-	//create the main function of the C code that will call
-	// the filter
-	JBlock block = exeCode.mainFunction(filter);
-	
-	//create the method and add it to the filter
-	JMethodDeclaration mainFunct = 
-	    new JMethodDeclaration(null, 
-				   at.dms.kjc.Constants.ACC_PUBLIC,
-				   CStdType.Void,
-				   Names.main,
-				   JFormalParameter.EMPTY,
-				   CClassType.EMPTY,
-				   block,
-				   null,
-				   null);
-	//make the main the new work function
-	filter.setWork(mainFunct);
+    
+        //create the main function of the C code that will call
+        // the filter
+        JBlock block = exeCode.mainFunction(filter);
+    
+        //create the method and add it to the filter
+        JMethodDeclaration mainFunct = 
+            new JMethodDeclaration(null, 
+                                   at.dms.kjc.Constants.ACC_PUBLIC,
+                                   CStdType.Void,
+                                   Names.main,
+                                   JFormalParameter.EMPTY,
+                                   CClassType.EMPTY,
+                                   block,
+                                   null,
+                                   null);
+        //make the main the new work function
+        filter.setWork(mainFunct);
     }
 
     /**
@@ -108,47 +108,47 @@ public class ExecutionCode extends at.dms.util.Utils
     private JBlock mainFunction(SIRFilter filter)
     {
 
-	JBlock statements = new JBlock(null, new JStatement[0], null);
+        JBlock statements = new JBlock(null, new JStatement[0], null);
 
-	//create the params list, for some reason 
-	//calling toArray() on the list breaks a later pass
-	List paramList = filter.getParams();
-	JExpression[] paramArray;
-	if (paramList == null || paramList.size() == 0)
-	    paramArray = new JExpression[0];
-	else
-	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
-	
-	//add the call to the init function
-	statements.addStatement
-	    (new 
-	     JExpressionStatement(null,
-				  new JMethodCallExpression
-				  (null,
-				   new JThisExpression(null),
-				   filter.getInit().getName(),
-				   paramArray),
-				  null));
+        //create the params list, for some reason 
+        //calling toArray() on the list breaks a later pass
+        List paramList = filter.getParams();
+        JExpression[] paramArray;
+        if (paramList == null || paramList.size() == 0)
+            paramArray = new JExpression[0];
+        else
+            paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
+    
+        //add the call to the init function
+        statements.addStatement
+            (new 
+             JExpressionStatement(null,
+                                  new JMethodCallExpression
+                                  (null,
+                                   new JThisExpression(null),
+                                   filter.getInit().getName(),
+                                   paramArray),
+                                  null));
 
-	//add the call to the pre(init)work function if this filter
-	//is a two stage..
-	if (filter instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    statements.addStatement
-		(new JExpressionStatement(null,
-					  new JMethodCallExpression
-					  (null,
-					   new JThisExpression(null),
-					   two.getInitWork().getName(),
-					   new JExpression[0]),
-					  null));
-	}
+        //add the call to the pre(init)work function if this filter
+        //is a two stage..
+        if (filter instanceof SIRTwoStageFilter) {
+            SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+            statements.addStatement
+                (new JExpressionStatement(null,
+                                          new JMethodCallExpression
+                                          (null,
+                                           new JThisExpression(null),
+                                           two.getInitWork().getName(),
+                                           new JExpression[0]),
+                                          null));
+        }
 
-	
-	//add the call to the work function
-	statements.addStatement(generateSteadyStateLoop(filter));
-	
-	return statements;
+    
+        //add the call to the work function
+        statements.addStatement(generateSteadyStateLoop(filter));
+    
+        return statements;
     }
 
     
@@ -166,22 +166,22 @@ public class ExecutionCode extends at.dms.util.Utils
      */
     JStatement generateSteadyStateLoop(SIRFilter filter)
     {
-	
-	JBlock block = new JBlock(null, new JStatement[0], null);
+    
+        JBlock block = new JBlock(null, new JStatement[0], null);
 
 
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.
-	    deepCopy(filter.getWork().getBody());
+        JBlock workBlock = 
+            (JBlock)ObjectDeepCloner.
+            deepCopy(filter.getWork().getBody());
 
-	//add the cloned work function to the block
-	block.addStatement(workBlock);
-	
-	//return the infinite loop
-	return new JWhileStatement(null, 
-				   new JBooleanLiteral(null, true),
-				   block, 
-				   null);
+        //add the cloned work function to the block
+        block.addStatement(workBlock);
+    
+        //return the infinite loop
+        return new JWhileStatement(null, 
+                                   new JBooleanLiteral(null, true),
+                                   block, 
+                                   null);
     }
 
     /**
@@ -191,7 +191,7 @@ public class ExecutionCode extends at.dms.util.Utils
      * scheduled.
      *
      * @param executionCounts The execution counts hashmaps created
-                              by the scheduler
+     by the scheduler
      * @param filter The single fused filter representing the application
      *
      * @return Returns true if the constructed schedule fits the 
@@ -199,34 +199,34 @@ public class ExecutionCode extends at.dms.util.Utils
      *
      */    
     private void checkSchedule(HashMap[] executionCounts,
-			       SIRFilter filter) 
+                               SIRFilter filter) 
     {
-	//executionCounts[0] = init
-	//executionCounts[1] = steady
-	
-	//first check the initialization schedule 
-	//it should be null or the only thing in there should
-	//be the filter with a zero execution count
-	assert executionCounts[0].keySet().size() == 0 || 
-	    executionCounts[0].keySet().size() == 1;
-	
-	if (executionCounts[0].keySet().size() == 1) {
-	    assert executionCounts[0].keySet().contains(filter);
-	    //implication, if a filter is a two stage, then
-	    //its prework is always scheduled in the init stage, 
-	    //so make sure the prework is the only thing scheduled.
-	    if (filter instanceof SIRTwoStageFilter)
-		assert ((int[])executionCounts[0].get(filter))[0] == 1;
-	    else  //not twostage, shouldn't be schedule in init
-		assert ((int[])executionCounts[0].get(filter))[0] == 0;
-	}
+        //executionCounts[0] = init
+        //executionCounts[1] = steady
+    
+        //first check the initialization schedule 
+        //it should be null or the only thing in there should
+        //be the filter with a zero execution count
+        assert executionCounts[0].keySet().size() == 0 || 
+            executionCounts[0].keySet().size() == 1;
+    
+        if (executionCounts[0].keySet().size() == 1) {
+            assert executionCounts[0].keySet().contains(filter);
+            //implication, if a filter is a two stage, then
+            //its prework is always scheduled in the init stage, 
+            //so make sure the prework is the only thing scheduled.
+            if (filter instanceof SIRTwoStageFilter)
+                assert ((int[])executionCounts[0].get(filter))[0] == 1;
+            else  //not twostage, shouldn't be schedule in init
+                assert ((int[])executionCounts[0].get(filter))[0] == 0;
+        }
 
-	//now check the steady-state schedule and make sure
-	//that the filter is the only thing in there and that
-	//it executes
-	assert executionCounts[1].keySet().size() == 1;
-	assert executionCounts[1].keySet().contains(filter);
-	assert ((int[])executionCounts[1].get(filter))[0] > 0;
+        //now check the steady-state schedule and make sure
+        //that the filter is the only thing in there and that
+        //it executes
+        assert executionCounts[1].keySet().size() == 1;
+        assert executionCounts[1].keySet().contains(filter);
+        assert ((int[])executionCounts[1].get(filter))[0] > 0;
     }
  
 }

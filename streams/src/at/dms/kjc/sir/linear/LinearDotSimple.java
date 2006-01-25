@@ -16,40 +16,40 @@ public class LinearDotSimple extends LinearDot {
      * Also include redundancy information.
      **/
     public LinearDotSimple(PrintStream outputstream,
-		     LinearAnalyzer anal, LinearRedundancyAnalyzer lra) {
-	super(outputstream, anal, lra);
+                           LinearAnalyzer anal, LinearRedundancyAnalyzer lra) {
+        super(outputstream, anal, lra);
     }
 
     /**
      * Override visitFilter to color filters that compute linear functions.
      **/
-     public Object visitFilter(SIRFilter self,
+    public Object visitFilter(SIRFilter self,
                               JFieldDeclaration[] fields,
                               JMethodDeclaration[] methods,
                               JMethodDeclaration init,
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
-	// code from StreamItDot
-	String label = self.getIdent();
-	
-	// if this filter has a linear representation (which we
-	// check with the linear analyzer that we have, return a
-	// grey node. Otherwise, return a normal node.
-	if (this.linearData.hasLinearRepresentation(self)) {
-	    LinearFilterRepresentation lfr;
-	    lfr = this.linearData.getLinearRepresentation(self);
-	    // Make a dark grey node if the linear representation has a constant
-	    // component, make a light grey node if the linear rep has a constant
-	    // component.
-	    if (lfr.hasConstantComponent()) {
-		return new NamePair(makeConstantLabelledNode(label));
-	    } else {
-		return new NamePair(makeNoConstantLabelledNode(label));
-	    }
-	} else {
-	    return new NamePair(makeLabelledNode(label));
-	}
+        // code from StreamItDot
+        String label = self.getIdent();
+    
+        // if this filter has a linear representation (which we
+        // check with the linear analyzer that we have, return a
+        // grey node. Otherwise, return a normal node.
+        if (this.linearData.hasLinearRepresentation(self)) {
+            LinearFilterRepresentation lfr;
+            lfr = this.linearData.getLinearRepresentation(self);
+            // Make a dark grey node if the linear representation has a constant
+            // component, make a light grey node if the linear rep has a constant
+            // component.
+            if (lfr.hasConstantComponent()) {
+                return new NamePair(makeConstantLabelledNode(label));
+            } else {
+                return new NamePair(makeNoConstantLabelledNode(label));
+            }
+        } else {
+            return new NamePair(makeLabelledNode(label));
+        }
     }
 
 
@@ -58,18 +58,18 @@ public class LinearDotSimple extends LinearDot {
      * linear rep for it.
      **/
     public String getClusterString(SIRStream self) {
-	// if we have a linear rep of this object, color the resulting dot graph rose.
-	if (linearData.hasLinearRepresentation(self)) {
-	    return ("subgraph cluster_" +
-		    getName() +
-		    " {\n color=pink2;\n style=filled;\n label=\"" +
-		    self.getIdent() +
-		    "\\n" + this.makeRedundancyString(self) + 
-		    "\";\n");
-	} else {
-	    // otherwise, return boring white
-	    return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
-	}
+        // if we have a linear rep of this object, color the resulting dot graph rose.
+        if (linearData.hasLinearRepresentation(self)) {
+            return ("subgraph cluster_" +
+                    getName() +
+                    " {\n color=pink2;\n style=filled;\n label=\"" +
+                    self.getIdent() +
+                    "\\n" + this.makeRedundancyString(self) + 
+                    "\";\n");
+        } else {
+            // otherwise, return boring white
+            return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
+        }
     }
 
     /**
@@ -77,19 +77,19 @@ public class LinearDotSimple extends LinearDot {
      * and LinearRedundancyAnalyzer lra.
      */
     public static void printGraph(SIRStream str, String filename,
-				  LinearAnalyzer lfa,
-				  LinearRedundancyAnalyzer lra) {	
-	try {
-	    FileOutputStream out = new FileOutputStream(filename);
-	    StreamItDot dot = new LinearDotSimple(new PrintStream(out), lfa, lra);
-	    dot.print("digraph streamit {\n");
-	    str.accept(dot);
-	    dot.print("}\n");
-	    out.flush();
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+                                  LinearAnalyzer lfa,
+                                  LinearRedundancyAnalyzer lra) {   
+        try {
+            FileOutputStream out = new FileOutputStream(filename);
+            StreamItDot dot = new LinearDotSimple(new PrintStream(out), lfa, lra);
+            dot.print("digraph streamit {\n");
+            str.accept(dot);
+            dot.print("}\n");
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
 

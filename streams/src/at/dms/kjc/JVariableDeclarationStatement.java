@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDeclarationStatement.java,v 1.10 2005-01-23 00:33:01 thies Exp $
+ * $Id: JVariableDeclarationStatement.java,v 1.11 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,155 +32,155 @@ import at.dms.compiler.UnpositionedError;
  */
 public class JVariableDeclarationStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JVariableDeclarationStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	vars		the variables declared by this statement
-   */
-  public JVariableDeclarationStatement(TokenReference where, JVariableDefinition[] vars, JavaStyleComment[] comments) {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   vars        the variables declared by this statement
+     */
+    public JVariableDeclarationStatement(TokenReference where, JVariableDefinition[] vars, JavaStyleComment[] comments) {
+        super(where, comments);
 
-    this.vars = vars;
-  }
+        this.vars = vars;
+    }
 
-  public JVariableDeclarationStatement(JVariableDefinition[] vars) {
-      this(null, vars, null);
-  }
+    public JVariableDeclarationStatement(JVariableDefinition[] vars) {
+        this(null, vars, null);
+    }
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	var		the variable declared by this statement
-   */
-  public JVariableDeclarationStatement(TokenReference where, JVariableDefinition var, JavaStyleComment[] comments) {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   var     the variable declared by this statement
+     */
+    public JVariableDeclarationStatement(TokenReference where, JVariableDefinition var, JavaStyleComment[] comments) {
+        super(where, comments);
 
-    this.vars = new JVariableDefinition[] {var};
-  }
+        this.vars = new JVariableDefinition[] {var};
+    }
 
-  public JVariableDeclarationStatement(JVariableDefinition var) {
-      this(null, var, null);
-  }
+    public JVariableDeclarationStatement(JVariableDefinition var) {
+        this(null, var, null);
+    }
 
-  /**
-   * Returns an array of variable definition declared by this statement
-   */
-  public JVariableDefinition[] getVars() {
-    return vars;
-  }
+    /**
+     * Returns an array of variable definition declared by this statement
+     */
+    public JVariableDefinition[] getVars() {
+        return vars;
+    }
 
     /**
      * Sets vars
      */
     public void setVars(JVariableDefinition[] vars) {
-	this.vars=vars;
+        this.vars=vars;
     }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Sets the variables to be for variables
-   */
-  public void setIsInFor() {
-    for (int i = 0; i < this.vars.length; i++) {
-      vars[i].setIsLoopVariable();
+    /**
+     * Sets the variables to be for variables
+     */
+    public void setIsInFor() {
+        for (int i = 0; i < this.vars.length; i++) {
+            vars[i].setIsLoopVariable();
+        }
     }
-  }
 
-  /**
-   * Unsets the variables to be for variables
-   */
-  public void unsetIsInFor() {
-    for (int i = 0; i < this.vars.length; i++) {
-      vars[i].unsetIsLoopVariable();
+    /**
+     * Unsets the variables to be for variables
+     */
+    public void unsetIsInFor() {
+        for (int i = 0; i < this.vars.length; i++) {
+            vars[i].unsetIsLoopVariable();
+        }
     }
-  }
 
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    for (int i = 0; i < this.vars.length; i++) {
-      try {
-	context.getBlockContext().addVariable(vars[i]);
-	vars[i].analyse(context);
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        for (int i = 0; i < this.vars.length; i++) {
+            try {
+                context.getBlockContext().addVariable(vars[i]);
+                vars[i].analyse(context);
 
-	if (vars[i].hasInitializer()) {
-	  context.setVariableInfo(vars[i].getIndex(), CVariableInfo.INITIALIZED);
-	}
-      } catch (UnpositionedError e) {
-	throw new CLineError(getTokenReference(), e.getFormattedMessage());
-      }
+                if (vars[i].hasInitializer()) {
+                    context.setVariableInfo(vars[i].getIndex(), CVariableInfo.INITIALIZED);
+                }
+            } catch (UnpositionedError e) {
+                throw new CLineError(getTokenReference(), e.getFormattedMessage());
+            }
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitVariableDeclarationStatement(this, vars);
-  }
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return p.visitVariableDeclarationStatement(this, vars);
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitVariableDeclarationStatement(this, vars);
+    }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitVariableDeclarationStatement(this, vars);
+    }
       
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    for (int i = 0; i < this.vars.length; i++) {
-      if (vars[i].getValue() != null) {
-	vars[i].getValue().genCode(code, false);
-	vars[i].genStore(code);
-      }
+        for (int i = 0; i < this.vars.length; i++) {
+            if (vars[i].getValue() != null) {
+                vars[i].getValue().genCode(code, false);
+                vars[i].genStore(code);
+            }
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JVariableDefinition[]		vars;
+    private JVariableDefinition[]       vars;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JVariableDeclarationStatement other = new at.dms.kjc.JVariableDeclarationStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JVariableDeclarationStatement other = new at.dms.kjc.JVariableDeclarationStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JVariableDeclarationStatement other) {
-  super.deepCloneInto(other);
-  other.vars = (at.dms.kjc.JVariableDefinition[])at.dms.kjc.AutoCloner.cloneToplevel(this.vars);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JVariableDeclarationStatement other) {
+        super.deepCloneInto(other);
+        other.vars = (at.dms.kjc.JVariableDefinition[])at.dms.kjc.AutoCloner.cloneToplevel(this.vars);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

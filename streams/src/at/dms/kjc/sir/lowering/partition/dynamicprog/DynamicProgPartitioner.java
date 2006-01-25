@@ -106,18 +106,18 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * function.
      */
     public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode, HashSet noHorizFuse) {
-	super(str, work, numTiles);
-	this.joinersNeedTiles = joinersNeedTiles;
-	this.limitICode = limitICode;
-	this.configMap = new HashMap();
-	this.uniformSJ = new HashSet();
-	this.noHorizFuse = noHorizFuse;
+        super(str, work, numTiles);
+        this.joinersNeedTiles = joinersNeedTiles;
+        this.limitICode = limitICode;
+        this.configMap = new HashMap();
+        this.uniformSJ = new HashSet();
+        this.noHorizFuse = noHorizFuse;
     }
     /**
      * As above, without <noHorizFuse>.
      */
     public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode) {
-	this(str, work, numTiles, joinersNeedTiles, limitICode, new HashSet());
+        this(str, work, numTiles, joinersNeedTiles, limitICode, new HashSet());
     }
     
 
@@ -126,13 +126,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * assuming joiners need tiles.
      */
     public static void saveScalingStatistics(SIRStream str, WorkEstimate work, int maxTiles) {
-	PartitionUtil.setupScalingStatistics();
-	for (int i=1; i<maxTiles; i++) {
-	    LinkedList partitions = new LinkedList();
-	    new DynamicProgPartitioner(str, work, i, true, false).calcPartitions(partitions, false);
-	    PartitionUtil.doScalingStatistics(partitions, i);
-	}
-	PartitionUtil.stopScalingStatistics();
+        PartitionUtil.setupScalingStatistics();
+        for (int i=1; i<maxTiles; i++) {
+            LinkedList partitions = new LinkedList();
+            new DynamicProgPartitioner(str, work, i, true, false).calcPartitions(partitions, false);
+            PartitionUtil.doScalingStatistics(partitions, i);
+        }
+        PartitionUtil.stopScalingStatistics();
     }
     
     /**
@@ -140,8 +140,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * partitioned stream.
      */
     public SIRStream toplevel() {
-	LinkedList partitions = new LinkedList();
-	return calcPartitions(partitions, true);
+        LinkedList partitions = new LinkedList();
+        return calcPartitions(partitions, true);
     }
 
     /**
@@ -154,13 +154,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * partition numbers that a given SIROperator is assigned to.
      */
     public SIRStream calcPartitions(HashMap partitionMap) {
-	LinkedList partitions = new LinkedList();
-	SIRStream result = calcPartitions(partitions, false);
+        LinkedList partitions = new LinkedList();
+        SIRStream result = calcPartitions(partitions, false);
 
-	partitionMap.clear();
-	partitionMap.putAll(PartitionRecord.asIntegerMap(partitions));
+        partitionMap.clear();
+        partitionMap.putAll(PartitionRecord.asIntegerMap(partitions));
 
-	return result;
+        return result;
     }
 
     /**
@@ -172,151 +172,151 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * left alone and only <partitions> are filled up.
      */
     private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
-	if (COLLAPSE_IDENTITIES) {
-	    // to deal with cases like matmul, fuse all identity's in the
-	    // stream
-	    str = fuseIdentities(str);
-	    // rebuild work estimate since we introduced new nodes
-	    work = WorkEstimate.getWorkEstimate(str);
-	}
+        if (COLLAPSE_IDENTITIES) {
+            // to deal with cases like matmul, fuse all identity's in the
+            // stream
+            str = fuseIdentities(str);
+            // rebuild work estimate since we introduced new nodes
+            work = WorkEstimate.getWorkEstimate(str);
+        }
 
-	// build stream config
-	System.out.println("  Building stream config... ");
-	DPConfig topConfig = buildStreamConfig();
-	if (DPConfigContainer.aliases>0) {
-	    System.out.println("  Aliasing " + DPConfigContainer.aliases + " entries of memo table.");
-	}
-	// rebuild our work estimate, since we might have introduced
-	// identity nodes to make things rectangular
-	work = WorkEstimate.getWorkEstimate(str);
-	
-	// if we're limiting icode, start with 1 filter and work our
-	// way up to as many filters are needed.
-	if (limitICode) { numTiles = 0; }
-	DPCost cost;
-	do {
-	    if (limitICode) { numTiles++; }
-	    System.err.println("Trying " + numTiles + " tiles.");
+        // build stream config
+        System.out.println("  Building stream config... ");
+        DPConfig topConfig = buildStreamConfig();
+        if (DPConfigContainer.aliases>0) {
+            System.out.println("  Aliasing " + DPConfigContainer.aliases + " entries of memo table.");
+        }
+        // rebuild our work estimate, since we might have introduced
+        // identity nodes to make things rectangular
+        work = WorkEstimate.getWorkEstimate(str);
+    
+        // if we're limiting icode, start with 1 filter and work our
+        // way up to as many filters are needed.
+        if (limitICode) { numTiles = 0; }
+        DPCost cost;
+        do {
+            if (limitICode) { numTiles++; }
+            System.err.println("Trying " + numTiles + " tiles.");
 
-	    // build up tables.
-	    System.out.println("  Calculating partition info...");
-	    cost = topConfig.get(numTiles, 0);
-	    System.err.println("  Partitioner thinks bottleneck is " + cost.getMaxCost());
-	    if (limitICode) {
-		System.err.println("  Max iCode size: " + cost.getICodeSize());
-	    }
- 	} while (limitICode && cost.getICodeSize()>ICODE_THRESHOLD);
-	
-	int tilesUsed = numTiles;
-	// decrease the number of tiles to the fewest that we need for
-	// a given bottleneck.  This is in an attempt to decrease
-	// synchronization and improve utilization.
-	/*
-	while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
-	    tilesUsed--;
-	}
-	if (tilesUsed<numTiles) {
-	    System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
-	}
-	*/
-	
-	if (KjcOptions.debug && topConfig instanceof DPConfigContainer) {
-	    ((DPConfigContainer)topConfig).printArray();
-	}
+            // build up tables.
+            System.out.println("  Calculating partition info...");
+            cost = topConfig.get(numTiles, 0);
+            System.err.println("  Partitioner thinks bottleneck is " + cost.getMaxCost());
+            if (limitICode) {
+                System.err.println("  Max iCode size: " + cost.getICodeSize());
+            }
+        } while (limitICode && cost.getICodeSize()>ICODE_THRESHOLD);
+    
+        int tilesUsed = numTiles;
+        // decrease the number of tiles to the fewest that we need for
+        // a given bottleneck.  This is in an attempt to decrease
+        // synchronization and improve utilization.
+        /*
+          while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
+          tilesUsed--;
+          }
+          if (tilesUsed<numTiles) {
+          System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+          }
+        */
+    
+        if (KjcOptions.debug && topConfig instanceof DPConfigContainer) {
+            ((DPConfigContainer)topConfig).printArray();
+        }
 
-	// expand config stubs that were shared for symmetry optimizations
-	if (SHARING_CONFIGS) {
-	    expandSharedConfigs();
-	}
-	
-	System.out.println("  Tracing back...");
+        // expand config stubs that were shared for symmetry optimizations
+        if (SHARING_CONFIGS) {
+            expandSharedConfigs();
+        }
+    
+        System.out.println("  Tracing back...");
 
-	// build up list of partitions 
-	partitions.clear();
-	PartitionRecord curPartition = new PartitionRecord();
-	partitions.add(curPartition);
+        // build up list of partitions 
+        partitions.clear();
+        PartitionRecord curPartition = new PartitionRecord();
+        partitions.add(curPartition);
 
-	transformOnTraceback = doTransform;
-	SIRStream result = topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
+        transformOnTraceback = doTransform;
+        SIRStream result = topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
 
-	// remove unnecessary identities
-	Lifter.eliminateIdentities(result);
+        // remove unnecessary identities
+        Lifter.eliminateIdentities(result);
 
-	// reclaim children here, since they might've been shuffled
-	// around in the config process
-	if (result instanceof SIRContainer) {
-	    ((SIRContainer)result).reclaimChildren();
-	}
-	// also set parent to null, since this should be toplevel stream
-	result.setParent(null);
+        // reclaim children here, since they might've been shuffled
+        // around in the config process
+        if (result instanceof SIRContainer) {
+            ((SIRContainer)result).reclaimChildren();
+        }
+        // also set parent to null, since this should be toplevel stream
+        result.setParent(null);
 
-	// can only print if we didn't transform
-	if (!doTransform) {
-	    Lifter.lift(result);
-	    PartitionDot.printPartitionGraph(result, "partitions.dot", PartitionRecord.asStringMap(partitions));
-	}
-	
-    	return result;
+        // can only print if we didn't transform
+        if (!doTransform) {
+            Lifter.lift(result);
+            PartitionDot.printPartitionGraph(result, "partitions.dot", PartitionRecord.asStringMap(partitions));
+        }
+    
+        return result;
     }
 
     private SIRStream fuseIdentities(SIRStream str) {
-	final HashSet allIdentities = new HashSet();
-	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		public void postVisitStream(SIRStream self,
-					    SIRIterator iter) {
-		    if (self instanceof SIRFilter) {
-			// for filters, add if an identity
-			if (self instanceof SIRIdentity) {
-			    allIdentities.add(self);
-			}
-		    } else if (self instanceof SIRContainer) {
-			// for containers, add if children are all identities
-			boolean all = true;
-			SIRContainer cont = (SIRContainer)self;
-			for (int i=0; i<cont.size(); i++) {
-			    if (!allIdentities.contains(cont.get(i))) {
-				all = false;
-				break;
-			    }
-			}
-			if (all) {
-			    allIdentities.add(self);
-			}
-		    }
-		}
-	    });
-	// now fuse top-most nodes that are in all-identities
-	return fuseIdentitiesHelper(str, allIdentities);
+        final HashSet allIdentities = new HashSet();
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void postVisitStream(SIRStream self,
+                                            SIRIterator iter) {
+                    if (self instanceof SIRFilter) {
+                        // for filters, add if an identity
+                        if (self instanceof SIRIdentity) {
+                            allIdentities.add(self);
+                        }
+                    } else if (self instanceof SIRContainer) {
+                        // for containers, add if children are all identities
+                        boolean all = true;
+                        SIRContainer cont = (SIRContainer)self;
+                        for (int i=0; i<cont.size(); i++) {
+                            if (!allIdentities.contains(cont.get(i))) {
+                                all = false;
+                                break;
+                            }
+                        }
+                        if (all) {
+                            allIdentities.add(self);
+                        }
+                    }
+                }
+            });
+        // now fuse top-most nodes that are in all-identities
+        return fuseIdentitiesHelper(str, allIdentities);
     }
 
     private SIRStream fuseIdentitiesHelper(SIRStream str, HashSet allIdentities) {
-	if (str instanceof SIRContainer) {
-	    // fuse it if it is all identities
-	    if (allIdentities.contains(str)) {
-		//  This wrapper business is a mess.  Could probably be
-		//  simplified -- just moving legacy code out of end of
-		//  FuseAll, being sure to preserve functionality.
-		SIRPipeline wrapper = SIRContainer.makeWrapper(str);
-		wrapper.reclaimChildren();
-		SIRPipeline wrapper2 = FuseAll.fuse(str);
-		Lifter.eliminatePipe(wrapper2);
-		Lifter.lift(wrapper);
-		// return child
-		Lifter.eliminatePipe(wrapper);
-		SIRStream result = wrapper.get(0);
-		return result;	
-	    } else {
-		// otherwise recurse
-		SIRContainer cont = (SIRContainer)str;
-		for (int i=0; i<cont.size(); i++) {
-		    cont.set(i, fuseIdentitiesHelper(cont.get(i), allIdentities));
-		}
-		return cont;
-	    }
-	} else {
-	    // if not a container, just return the node
-	    return str;
-	}
+        if (str instanceof SIRContainer) {
+            // fuse it if it is all identities
+            if (allIdentities.contains(str)) {
+                //  This wrapper business is a mess.  Could probably be
+                //  simplified -- just moving legacy code out of end of
+                //  FuseAll, being sure to preserve functionality.
+                SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+                wrapper.reclaimChildren();
+                SIRPipeline wrapper2 = FuseAll.fuse(str);
+                Lifter.eliminatePipe(wrapper2);
+                Lifter.lift(wrapper);
+                // return child
+                Lifter.eliminatePipe(wrapper);
+                SIRStream result = wrapper.get(0);
+                return result;  
+            } else {
+                // otherwise recurse
+                SIRContainer cont = (SIRContainer)str;
+                for (int i=0; i<cont.size(); i++) {
+                    cont.set(i, fuseIdentitiesHelper(cont.get(i), allIdentities));
+                }
+                return cont;
+            }
+        } else {
+            // if not a container, just return the node
+            return str;
+        }
     }
 
     /**
@@ -325,11 +325,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * toplevel stream.
      */
     private DPConfig buildStreamConfig() {
-	// make canonical representation
-	str = RefactorSplitJoin.addDeepRectangularSyncPoints(str);
-	// dump to graph
-	StreamItDot.printGraph(str, "dp-partition-input.dot");
-	return (DPConfig)str.accept(new ConfigBuilder());
+        // make canonical representation
+        str = RefactorSplitJoin.addDeepRectangularSyncPoints(str);
+        // dump to graph
+        StreamItDot.printGraph(str, "dp-partition-input.dot");
+        return (DPConfig)str.accept(new ConfigBuilder());
     }
 
     /**
@@ -337,141 +337,141 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * traceback can give a full schedule.
      */
     private void expandSharedConfigs() {
-	// these are config mappings that were once shared, but we
-	// have expanded to be unshared
-	HashMap unshared = new HashMap();
-	// this is the working set under consideration -- contains
-	// some shared and some non-shared items
-	HashMap potentialShares = configMap;
-	do {
-	    // less shared is our first-level fix of shares we find in
-	    // potential shares.  They might still have some sharing.
-	    HashMap lessShared = new HashMap();
-	    for (Iterator it = potentialShares.keySet().iterator(); it.hasNext(); ) {
-		SIRStream str = (SIRStream)it.next();
-		DPConfig config = (DPConfig)potentialShares.get(str);
-		SIRStream configStr = config.getStream();
-		// if <config> represents something other than <str>, then
-		// replace it with an identical config that wraps <str>
-		if (str!=configStr) {
-		    unshared.put(str, config.copyWithStream(str));
-		    // also need to take care of children of <str>.  Do
-		    // this by associating them with the children of
-		    // <configStr> and putting them back in the mix; will
-		    // iterate 'til nothing is left.
-		    if (str instanceof SIRContainer) {
-			SIRContainer cont = (SIRContainer)str;
-			for (int i=0; i<cont.size(); i++) {
-			    lessShared.put(cont.get(i), configMap.get(((SIRContainer)configStr).get(i)));
-			}
-		    }
-		}
-	    }
-	    potentialShares = lessShared;
-	} while (!(potentialShares.isEmpty()));
-	// add all from <unshared> to <configMap> (don't do above to
-	// avoid modifying what we're iterating over)
-	configMap.putAll(unshared);
+        // these are config mappings that were once shared, but we
+        // have expanded to be unshared
+        HashMap unshared = new HashMap();
+        // this is the working set under consideration -- contains
+        // some shared and some non-shared items
+        HashMap potentialShares = configMap;
+        do {
+            // less shared is our first-level fix of shares we find in
+            // potential shares.  They might still have some sharing.
+            HashMap lessShared = new HashMap();
+            for (Iterator it = potentialShares.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = (SIRStream)it.next();
+                DPConfig config = (DPConfig)potentialShares.get(str);
+                SIRStream configStr = config.getStream();
+                // if <config> represents something other than <str>, then
+                // replace it with an identical config that wraps <str>
+                if (str!=configStr) {
+                    unshared.put(str, config.copyWithStream(str));
+                    // also need to take care of children of <str>.  Do
+                    // this by associating them with the children of
+                    // <configStr> and putting them back in the mix; will
+                    // iterate 'til nothing is left.
+                    if (str instanceof SIRContainer) {
+                        SIRContainer cont = (SIRContainer)str;
+                        for (int i=0; i<cont.size(); i++) {
+                            lessShared.put(cont.get(i), configMap.get(((SIRContainer)configStr).get(i)));
+                        }
+                    }
+                }
+            }
+            potentialShares = lessShared;
+        } while (!(potentialShares.isEmpty()));
+        // add all from <unshared> to <configMap> (don't do above to
+        // avoid modifying what we're iterating over)
+        configMap.putAll(unshared);
     }
 
     /**
      * Whether or not joiners in this need a tile.
      */
     public boolean joinersNeedTiles() {
-	return this.joinersNeedTiles;
+        return this.joinersNeedTiles;
     }
 
     /**
      * Whether or not to limit icode of fused parts.
      */
     public boolean limitICode() {
-	return this.limitICode;
+        return this.limitICode;
     }
 
     /**
      * Set of filters that should not be fused horizontally.
      */
     public HashSet getNoHorizFuse() {
-	return this.noHorizFuse;
+        return this.noHorizFuse;
     }
     
     public int getBottleneck() {
-	return this.bottleneck;
+        return this.bottleneck;
     }
 
     public DPConfig getConfig(SIRStream str) {
-	return (DPConfig) configMap.get(str);
+        return (DPConfig) configMap.get(str);
     }
 
     /**
      * Returns a DPConfig for <str>
      */
     private DPConfig createConfig(SIRStream str) {
-	if (str instanceof SIRFilter) {
-	    return new DPConfigFilter((SIRFilter)str, this);
-	} else if (str instanceof SIRPipeline) {
-	    return new DPConfigPipeline((SIRPipeline)str, this);
-	} else if (str instanceof SIRSplitJoin) {
-	    return new DPConfigSplitJoin((SIRSplitJoin)str, this);
-	} else {
-	    assert str instanceof SIRFeedbackLoop:
+        if (str instanceof SIRFilter) {
+            return new DPConfigFilter((SIRFilter)str, this);
+        } else if (str instanceof SIRPipeline) {
+            return new DPConfigPipeline((SIRPipeline)str, this);
+        } else if (str instanceof SIRSplitJoin) {
+            return new DPConfigSplitJoin((SIRSplitJoin)str, this);
+        } else {
+            assert str instanceof SIRFeedbackLoop:
                 "Unexpected stream type: " + str;
-	    return new DPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
-	}
+            return new DPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
+        }
     }
 
     class ConfigBuilder extends EmptyAttributeStreamVisitor {
 
-	public Object visitSplitJoin(SIRSplitJoin self,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     SIRSplitter splitter,
-				     SIRJoiner joiner) {
-	    // shouldn't have 0-sized SJ's
-	    assert self.size()!=0: "Didn't expect SJ with no children.";
-	    super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
-	    // if parent is a pipeline, don't need a config for this splitjoin
-	    if (self.getParent() instanceof SIRPipeline) {
-		return self;
-	    } else {
-		return makeConfig(self);
-	    }
-	}
+        public Object visitSplitJoin(SIRSplitJoin self,
+                                     JFieldDeclaration[] fields,
+                                     JMethodDeclaration[] methods,
+                                     JMethodDeclaration init,
+                                     SIRSplitter splitter,
+                                     SIRJoiner joiner) {
+            // shouldn't have 0-sized SJ's
+            assert self.size()!=0: "Didn't expect SJ with no children.";
+            super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
+            // if parent is a pipeline, don't need a config for this splitjoin
+            if (self.getParent() instanceof SIRPipeline) {
+                return self;
+            } else {
+                return makeConfig(self);
+            }
+        }
 
-	public Object visitPipeline(SIRPipeline self,
-				    JFieldDeclaration[] fields,
-				    JMethodDeclaration[] methods,
-				    JMethodDeclaration init) {
-	    super.visitPipeline(self, fields, methods, init);
-	    return makeConfig(self);
-	}
+        public Object visitPipeline(SIRPipeline self,
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init) {
+            super.visitPipeline(self, fields, methods, init);
+            return makeConfig(self);
+        }
 
-	/* pre-visit a feedbackloop */
-	public Object visitFeedbackLoop(SIRFeedbackLoop self,
-					JFieldDeclaration[] fields,
-					JMethodDeclaration[] methods,
-					JMethodDeclaration init,
-					JMethodDeclaration initPath) {
-	    super.visitFeedbackLoop(self, fields, methods, init, initPath);
-	    return makeConfig(self);
-	}
+        /* pre-visit a feedbackloop */
+        public Object visitFeedbackLoop(SIRFeedbackLoop self,
+                                        JFieldDeclaration[] fields,
+                                        JMethodDeclaration[] methods,
+                                        JMethodDeclaration init,
+                                        JMethodDeclaration initPath) {
+            super.visitFeedbackLoop(self, fields, methods, init, initPath);
+            return makeConfig(self);
+        }
 
-	public Object visitFilter(SIRFilter self,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  JMethodDeclaration work,
-				  CType inputType, CType outputType) {
-	    super.visitFilter(self, fields, methods, init, work, inputType, outputType);
-	    return makeConfig(self);
-	}
+        public Object visitFilter(SIRFilter self,
+                                  JFieldDeclaration[] fields,
+                                  JMethodDeclaration[] methods,
+                                  JMethodDeclaration init,
+                                  JMethodDeclaration work,
+                                  CType inputType, CType outputType) {
+            super.visitFilter(self, fields, methods, init, work, inputType, outputType);
+            return makeConfig(self);
+        }
 
-	private DPConfig makeConfig(SIRStream self) {
-	    DPConfig config = createConfig(self);
-	    configMap.put(self, config);
-	    return config;
-	}
+        private DPConfig makeConfig(SIRStream self) {
+            DPConfig config = createConfig(self);
+            configMap.put(self, config);
+            return config;
+        }
     }
 }
 

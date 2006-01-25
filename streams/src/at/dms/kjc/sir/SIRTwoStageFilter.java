@@ -20,7 +20,7 @@ import at.dms.kjc.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.16 2006-01-08 21:16:23 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.17 2006-01-25 17:01:54 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -36,64 +36,64 @@ public class SIRTwoStageFilter extends SIRFilter {
     {
         super(ident);
         setInitPhases(new JMethodDeclaration[1]);
-	// placeholder for I/O rates
-	getInitPhases()[0] = new JMethodDeclaration("SIRTwoStageFilter placeholder");
+        // placeholder for I/O rates
+        getInitPhases()[0] = new JMethodDeclaration("SIRTwoStageFilter placeholder");
     }
 
     public SIRTwoStageFilter(SIRContainer parent,
-			     String ident,
-			     JFieldDeclaration[] fields, 
-			     JMethodDeclaration[] methods, 
-			     JExpression peek,
-			     JExpression pop, 
-			     JExpression push, 
-			     JMethodDeclaration work, 
-			     JExpression initPeek,
-			     JExpression initPop,
-			     JExpression initPush,
-			     JMethodDeclaration initWork, 
-			     CType inputType, 
-			     CType outputType) {
+                             String ident,
+                             JFieldDeclaration[] fields, 
+                             JMethodDeclaration[] methods, 
+                             JExpression peek,
+                             JExpression pop, 
+                             JExpression push, 
+                             JMethodDeclaration work, 
+                             JExpression initPeek,
+                             JExpression initPop,
+                             JExpression initPush,
+                             JMethodDeclaration initWork, 
+                             CType inputType, 
+                             CType outputType) {
         super(parent, ident, fields, methods, peek, pop, push, work,
               inputType, outputType);
         // Create a single phase for each stage.
         setInitPhases(new JMethodDeclaration[1]);
 
-	// if initWork function is null, make a dummy one just to hold I/O rates
-	if (initWork == null) {
-	    initWork = new JMethodDeclaration("SirTwoStageFilter: null initWork");
-	}
+        // if initWork function is null, make a dummy one just to hold I/O rates
+        if (initWork == null) {
+            initWork = new JMethodDeclaration("SirTwoStageFilter: null initWork");
+        }
 
         getInitPhases()[0] = initWork;
-	initWork.setPeek(initPeek);
-	initWork.setPush(initPush);
-	initWork.setPop(initPop);
-	if ((peek instanceof JIntLiteral) && (pop instanceof JIntLiteral)
-	    && (initPeek instanceof JIntLiteral) 
-	    && (initPop instanceof JIntLiteral)) {
-	    checkRep();
-	}
+        initWork.setPeek(initPeek);
+        initWork.setPush(initPush);
+        initWork.setPop(initPop);
+        if ((peek instanceof JIntLiteral) && (pop instanceof JIntLiteral)
+            && (initPeek instanceof JIntLiteral) 
+            && (initPop instanceof JIntLiteral)) {
+            checkRep();
+        }
         // Confirm that the initWork function is in the methods array.
         if (initWork != null)
             addReplacementMethod(initWork, initWork);
 
-    	assert (   (!(peek instanceof JIntLiteral) 
-                || ((JIntLiteral)peek).intValue()>0) 
-                || (!(initPeek instanceof JIntLiteral) 
-                || ((JIntLiteral)initPeek).intValue()>0) 
-                || inputType==CStdType.Void):
-                "TwoStageFilter " + this +
-                " declares peek and initPeek rate of 0 but has input type of " +
-                inputType + " which should be Void instead.";
+        assert (   (!(peek instanceof JIntLiteral) 
+                    || ((JIntLiteral)peek).intValue()>0) 
+                   || (!(initPeek instanceof JIntLiteral) 
+                       || ((JIntLiteral)initPeek).intValue()>0) 
+                   || inputType==CStdType.Void):
+            "TwoStageFilter " + this +
+            " declares peek and initPeek rate of 0 but has input type of " +
+            inputType + " which should be Void instead.";
 
-    	assert (   (!(push instanceof JIntLiteral) 
-                || ((JIntLiteral)push).intValue()>0) 
-                || (!(initPush instanceof JIntLiteral) 
-                || ((JIntLiteral)initPush).intValue()>0) 
-                || outputType==CStdType.Void):
-                "TwoStageFilter " + this +
-                " declares push and initPush rate of 0 but has output type of " +
-                outputType + " which should be Void instead.";
+        assert (   (!(push instanceof JIntLiteral) 
+                    || ((JIntLiteral)push).intValue()>0) 
+                   || (!(initPush instanceof JIntLiteral) 
+                       || ((JIntLiteral)initPush).intValue()>0) 
+                   || outputType==CStdType.Void):
+            "TwoStageFilter " + this +
+            " declares push and initPush rate of 0 but has output type of " +
+            outputType + " which should be Void instead.";
     }
 
     /**
@@ -109,10 +109,10 @@ public class SIRTwoStageFilter extends SIRFilter {
      * </li></ol>
      */
     private void checkRep() {
-	// we think the peek-pop difference should be the same in the
-	// initial and steady states (our simulation routine with the
-	// scheduler makes this assumption).
-	assert getInitPeekInt()-getInitPopInt()==getPeekInt()-getPopInt():
+        // we think the peek-pop difference should be the same in the
+        // initial and steady states (our simulation routine with the
+        // scheduler makes this assumption).
+        assert getInitPeekInt()-getInitPopInt()==getPeekInt()-getPopInt():
             "For Two Stage Filters, initPeek-initPop must equal peek-pop" +
             "\ninitPeek=" + getInitPeekInt() + 
             "\ninitPop=" + getInitPopInt() + 
@@ -124,38 +124,38 @@ public class SIRTwoStageFilter extends SIRFilter {
      * Overloads super.copyState
      */
     public void copyState(SIRFilter other) {
-	super.copyState(other);
-	if (!(other instanceof SIRTwoStageFilter)) {
-	    // this is a little tricky -- if we're copying from an
-	    // SIRFilter into a TwoStageFilter, then we don't want the
-	    // single-stage filter's "non-existant" init stage to
-	    // clobber the "empty" init stage of the two-stage filter.
-	    // So just restore the empty init stage here if we have a
-	    // two-stage filter.
-	    setInitPhases(new JMethodDeclaration[1]);
-	    // placeholder for holding I/O rates
-	    getInitPhases()[0] = new JMethodDeclaration("Placeholder method for SIRTwoStageFilter");
-	}
+        super.copyState(other);
+        if (!(other instanceof SIRTwoStageFilter)) {
+            // this is a little tricky -- if we're copying from an
+            // SIRFilter into a TwoStageFilter, then we don't want the
+            // single-stage filter's "non-existant" init stage to
+            // clobber the "empty" init stage of the two-stage filter.
+            // So just restore the empty init stage here if we have a
+            // two-stage filter.
+            setInitPhases(new JMethodDeclaration[1]);
+            // placeholder for holding I/O rates
+            getInitPhases()[0] = new JMethodDeclaration("Placeholder method for SIRTwoStageFilter");
+        }
     }
 
     /**
      * Sets the work function for the initialization stage.
      */
     public void setInitWork (JMethodDeclaration newWork) {
-	// if new work function has no I/O rates and old one does,
-	// then transfer rates to new one.  This is an ugly remnant of
-	// the old mode of operation, where I/O rates were stored
-	// outside the function.
-	if (!newWork.doesIO()) {
-	    newWork.setPeek(getInitWork().getPeek());
-	    newWork.setPop(getInitWork().getPop());
-	    newWork.setPush(getInitWork().getPush());
-	}
+        // if new work function has no I/O rates and old one does,
+        // then transfer rates to new one.  This is an ugly remnant of
+        // the old mode of operation, where I/O rates were stored
+        // outside the function.
+        if (!newWork.doesIO()) {
+            newWork.setPeek(getInitWork().getPeek());
+            newWork.setPop(getInitWork().getPop());
+            newWork.setPush(getInitWork().getPush());
+        }
 
 
-	addReplacementMethod(newWork, getInitWork());
+        addReplacementMethod(newWork, getInitWork());
         getInitPhases()[0] = newWork;
-	checkRep();
+        checkRep();
     }
 
     public JExpression getInitPush() {
@@ -207,20 +207,20 @@ public class SIRTwoStageFilter extends SIRFilter {
         super.setInitPhases(initPhases);
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRTwoStageFilter other = new at.dms.kjc.sir.SIRTwoStageFilter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRTwoStageFilter other = new at.dms.kjc.sir.SIRTwoStageFilter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRTwoStageFilter other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRTwoStageFilter other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

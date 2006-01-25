@@ -11,13 +11,13 @@ import org.eclipse.ui.IEditorLauncher;
  */
 public class GraphEditorLauncher implements IEditorLauncher {
 
-	/**
-	 * Opens the GraphEditor on *.str files in the Eclipse workspace.
-	 * @param IFile streamit file that will be opened in the graph editor.
-	 */
-	public void open(IFile file) {
-		System.out.println("Launch Successful : file Location = " + file.getLocation().toString());
-		SwingEditorPlugin.getDefault().launchGraph(file);
-	}
+    /**
+     * Opens the GraphEditor on *.str files in the Eclipse workspace.
+     * @param IFile streamit file that will be opened in the graph editor.
+     */
+    public void open(IFile file) {
+        System.out.println("Launch Successful : file Location = " + file.getLocation().toString());
+        SwingEditorPlugin.getDefault().launchGraph(file);
+    }
 
 }

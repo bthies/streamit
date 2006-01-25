@@ -22,10 +22,10 @@ import java.lang.*;
 public class NoPathException extends Exception {
 
     NoPathException() {
-	super();
+        super();
     }
 
     NoPathException(String s) {
-	super(s);
+        super(s);
     }
 }

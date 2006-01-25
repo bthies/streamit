@@ -47,26 +47,26 @@ public class LIRSetLoopOfFeedback extends LIRNode {
      */
     public LIRSetLoopOfFeedback(JExpression streamContext,
                                 JExpression childContext,
-				CType inputType,
-				CType outputType,
-				int inputSize,
-				int outputSize) {
-	super(streamContext);
+                                CType inputType,
+                                CType outputType,
+                                int inputSize,
+                                int outputSize) {
+        super(streamContext);
         this.childContext = childContext;
-	this.inputType = inputType;
-	this.outputType = outputType;
-	this.inputSize = inputSize;
-	this.outputSize = outputSize;
+        this.inputType = inputType;
+        this.outputType = outputType;
+        this.inputSize = inputSize;
+        this.outputSize = outputSize;
     }
 
     public void accept(SLIRVisitor v)
     {
         v.visitSetLoopOfFeedback(this,
-				 this.getStreamContext(), 
+                                 this.getStreamContext(), 
                                  this.childContext,
-				 this.inputType,
-				 this.outputType,
-				 this.inputSize,
-				 this.outputSize);
+                                 this.inputType,
+                                 this.outputType,
+                                 this.inputSize,
+                                 this.outputSize);
     }
 }

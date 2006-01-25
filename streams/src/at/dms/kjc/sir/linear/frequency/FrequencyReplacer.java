@@ -15,19 +15,19 @@ import at.dms.compiler.*;
  * However, now there is one very slick frequency replacer (LEETFrequencyReplacer)
  * that is always used.<br>
  *
- * $Id: FrequencyReplacer.java,v 1.10 2003-10-24 22:04:03 thies Exp $
+ * $Id: FrequencyReplacer.java,v 1.11 2006-01-25 17:01:59 thies Exp $
  **/
 public abstract class FrequencyReplacer extends LinearReplacer implements Constants{
     /**
      * Start the process of replacement on str using the Linearity information in lfa.
      **/
     public static void doReplace(LinearAnalyzer lfa, SIRStream str) {
-	LinearPrinter.println("Beginning frequency replacement)...");
+        LinearPrinter.println("Beginning frequency replacement)...");
 
-	FrequencyReplacer replacer = new LEETFrequencyReplacer(lfa);
-		
-	// pump the replacer through the stream graph.
-	IterFactory.createFactory().createIter(str).accept(replacer);
+        FrequencyReplacer replacer = new LEETFrequencyReplacer(lfa);
+        
+        // pump the replacer through the stream graph.
+        IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
 }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Member.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: Member.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -28,57 +28,57 @@ package at.dms.classfile;
  */
 public abstract class Member implements Constants {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a member object.
-   *
-   * @param	modifiers	access permission to and properties of this member
-   */
-  public Member(short modifiers) {
-    this.modifiers = modifiers;
-  }
+    /**
+     * Constructs a member object.
+     *
+     * @param   modifiers   access permission to and properties of this member
+     */
+    public Member(short modifiers) {
+        this.modifiers = modifiers;
+    }
 
-  /**
-   * Constructs a member object.
-   */
-  Member() {
-    this((short)0);
-  }
+    /**
+     * Constructs a member object.
+     */
+    Member() {
+        this((short)0);
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the modifiers of this member
-   */
-  public short getModifiers() {
-    return modifiers;
-  }
+    /**
+     * Returns the modifiers of this member
+     */
+    public short getModifiers() {
+        return modifiers;
+    }
 
-  /**
-   * Returns the modifiers of this member
-   */
-  public void setModifiers(short modifiers) {
-    this.modifiers = modifiers;
-  }
+    /**
+     * Returns the modifiers of this member
+     */
+    public void setModifiers(short modifiers) {
+        this.modifiers = modifiers;
+    }
 
-  /**
-   * Returns the name of the this member
-   */
-  public abstract String getName();
+    /**
+     * Returns the name of the this member
+     */
+    public abstract String getName();
 
-  /**
-   * Returns the type of the this member
-   */
-  public abstract String getSignature();
+    /**
+     * Returns the type of the this member
+     */
+    public abstract String getSignature();
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private short			modifiers;
+    private short           modifiers;
 }

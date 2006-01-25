@@ -22,7 +22,7 @@ import at.dms.kjc.flatgraph.FlatVisitor;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.3 2003-10-24 22:04:06 thies Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.4 2006-01-25 17:02:07 thies Exp $
  */
 public class EnqueueToInitPath
 {
@@ -59,31 +59,31 @@ public class EnqueueToInitPath
         // and walk its code looking for enqueue statements.
         final List values = new java.util.ArrayList();
         final String[] enqTypeWrapper = new String[1];
-	init.getBody().accept(new SLIREmptyVisitor() {
-		public void visitBlockStatement(JBlock self,
-						JavaStyleComment[] comments) {
-		    super.visitBlockStatement(self, comments);
-		    for (Iterator iter = self.getStatementIterator(); iter.hasNext(); )
-			{
-			    JStatement stmt = (JStatement)iter.next();
-			    // What we're looking for is function calls that
-			    // begin with enqueue.  So:
-			    if (!(stmt instanceof JExpressionStatement))
-				continue;
-			    JExpression expr = ((JExpressionStatement)stmt).getExpression();
-			    if (!(expr instanceof JMethodCallExpression))
-				continue;
-			    JMethodCallExpression mce = (JMethodCallExpression)expr;
-			    if (!(mce.getIdent().startsWith("enqueue")))
-				continue;
-			    // Okay, we win.  We want to remove this statement
-			    iter.remove();
-			    // and save the value and type.
-			    values.add(mce.getArgs()[0]);
-			    enqTypeWrapper[0] = mce.getIdent().substring(7); // len("enqueue")
-			}
-		}});
-	String enqType = enqTypeWrapper[0];
+        init.getBody().accept(new SLIREmptyVisitor() {
+                public void visitBlockStatement(JBlock self,
+                                                JavaStyleComment[] comments) {
+                    super.visitBlockStatement(self, comments);
+                    for (Iterator iter = self.getStatementIterator(); iter.hasNext(); )
+                        {
+                            JStatement stmt = (JStatement)iter.next();
+                            // What we're looking for is function calls that
+                            // begin with enqueue.  So:
+                            if (!(stmt instanceof JExpressionStatement))
+                                continue;
+                            JExpression expr = ((JExpressionStatement)stmt).getExpression();
+                            if (!(expr instanceof JMethodCallExpression))
+                                continue;
+                            JMethodCallExpression mce = (JMethodCallExpression)expr;
+                            if (!(mce.getIdent().startsWith("enqueue")))
+                                continue;
+                            // Okay, we win.  We want to remove this statement
+                            iter.remove();
+                            // and save the value and type.
+                            values.add(mce.getArgs()[0]);
+                            enqTypeWrapper[0] = mce.getIdent().substring(7); // len("enqueue")
+                        }
+                }});
+        String enqType = enqTypeWrapper[0];
 
         // Now build the new function.
         List stmts = new java.util.ArrayList();
@@ -94,43 +94,43 @@ public class EnqueueToInitPath
                                          "i", // name
                                          true); // final
         for (int i = 0; i < values.size(); i++)
-        {
-            // Assemble statement:
-            // "if (i == [i]) return [values[i]];"
-            JExpression value = (JExpression)values.get(i);
-            TokenReference where = value.getTokenReference();
-            JStatement rtn = new JReturnStatement(where, value, null);
-            JExpression cond =
-                new JEqualityExpression(where,
-                                        true, // ==
-                                        new JLocalVariableExpression(where, params[0]),
-                                        new JIntLiteral(where, i));
-            JStatement stmt = new JIfStatement(where, cond, rtn, null, null);
-            stmts.add(stmt);
-        }
+            {
+                // Assemble statement:
+                // "if (i == [i]) return [values[i]];"
+                JExpression value = (JExpression)values.get(i);
+                TokenReference where = value.getTokenReference();
+                JStatement rtn = new JReturnStatement(where, value, null);
+                JExpression cond =
+                    new JEqualityExpression(where,
+                                            true, // ==
+                                            new JLocalVariableExpression(where, params[0]),
+                                            new JIntLiteral(where, i));
+                JStatement stmt = new JIfStatement(where, cond, rtn, null, null);
+                stmts.add(stmt);
+            }
         // Figure out both the type and default case from the
         // name of the enqueue function.
         CType rtnType;
         if (enqType.equals("Int"))
-        {
-            rtnType = CStdType.Integer;
-            stmts.add(new JReturnStatement(null, new JIntLiteral(0), null));
-        }
+            {
+                rtnType = CStdType.Integer;
+                stmts.add(new JReturnStatement(null, new JIntLiteral(0), null));
+            }
         else if (enqType.equals("Float"))
-        {
-            rtnType = CStdType.Float;
-            stmts.add(new JReturnStatement(null, new JFloatLiteral(0.0f), null));
-        }
+            {
+                rtnType = CStdType.Float;
+                stmts.add(new JReturnStatement(null, new JFloatLiteral(0.0f), null));
+            }
         else if (enqType.equals("Double"))
-        {
-            rtnType = CStdType.Double;
-            stmts.add(new JReturnStatement(null, new JDoubleLiteral(null, 0.0), null));
-        }
+            {
+                rtnType = CStdType.Double;
+                stmts.add(new JReturnStatement(null, new JDoubleLiteral(null, 0.0), null));
+            }
         else
-        {
-            rtnType = CStdType.Object;
-            stmts.add(new JReturnStatement(null, new JNullLiteral(null), null));
-        }
+            {
+                rtnType = CStdType.Object;
+                stmts.add(new JReturnStatement(null, new JNullLiteral(null), null));
+            }
         
         JBlock body = new JBlock(null, stmts, null);
         JMethodDeclaration decl =

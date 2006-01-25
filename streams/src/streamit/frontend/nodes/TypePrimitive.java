@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.13 2005-06-27 21:08:51 janiss Exp $
+ * @version $Id: TypePrimitive.java,v 1.14 2006-01-25 17:04:25 thies Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -101,36 +101,36 @@ public class TypePrimitive extends Type
     }
 
     public boolean isComposite() {
-	return type == TYPE_FLOAT2 ||
-	    type == TYPE_FLOAT3 ||
-	    type == TYPE_FLOAT4;
+        return type == TYPE_FLOAT2 ||
+            type == TYPE_FLOAT3 ||
+            type == TYPE_FLOAT4;
     }
 
     public String toString()
     {
         switch (type)
-        {
-        case TYPE_BIT:
-            return "bit";
-        case TYPE_INT:
-            return "int";
-        case TYPE_FLOAT:
-            return "float";
-        case TYPE_DOUBLE:
-            return "double";
-        case TYPE_COMPLEX:
-            return "complex";
-        case TYPE_VOID:
-            return "void";
-        case TYPE_BOOLEAN:
-            return "boolean";
-        case TYPE_CHAR:
-            return "char";
-        case TYPE_STRING:
-            return "string";
-        default:
-            return "<primitive type " + type + ">";
-        }
+            {
+            case TYPE_BIT:
+                return "bit";
+            case TYPE_INT:
+                return "int";
+            case TYPE_FLOAT:
+                return "float";
+            case TYPE_DOUBLE:
+                return "double";
+            case TYPE_COMPLEX:
+                return "complex";
+            case TYPE_VOID:
+                return "void";
+            case TYPE_BOOLEAN:
+                return "boolean";
+            case TYPE_CHAR:
+                return "char";
+            case TYPE_STRING:
+                return "string";
+            default:
+                return "<primitive type " + type + ">";
+            }
     }
     
     /**
@@ -154,47 +154,47 @@ public class TypePrimitive extends Type
         
         // want: "t1 < t2", more or less
         switch(t1)
-        {
-        case TYPE_BOOLEAN:
-            return t2 == TYPE_BOOLEAN || t2 == TYPE_BIT ||
-                t2 == TYPE_INT || t2 == TYPE_FLOAT ||
-                t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
-        case TYPE_BIT:
-            return t2 == TYPE_BIT || t2 == TYPE_INT ||
-                t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
-		t2 == TYPE_STRING;
-        case TYPE_INT:
-            return t2 == TYPE_INT || t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
-		t2 == TYPE_STRING;
-        case TYPE_FLOAT:
-            return t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
-		t2 == TYPE_STRING || t2 == TYPE_FLOAT2 ||
-		t2 == TYPE_FLOAT3 || t2 == TYPE_FLOAT4;		
-        case TYPE_FLOAT2:
-        case TYPE_FLOAT3:
-        case TYPE_FLOAT4:
-	    return t2 == t1; 
-        case TYPE_COMPLEX:
-            return t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
-        case TYPE_CHAR:
-            return t2 == TYPE_CHAR || t2 == TYPE_STRING;
-        case TYPE_STRING:
-            return t2 == TYPE_STRING;
-        default:
-            assert false : t1;
-            return false;
-        }
+            {
+            case TYPE_BOOLEAN:
+                return t2 == TYPE_BOOLEAN || t2 == TYPE_BIT ||
+                    t2 == TYPE_INT || t2 == TYPE_FLOAT ||
+                    t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
+            case TYPE_BIT:
+                return t2 == TYPE_BIT || t2 == TYPE_INT ||
+                    t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+                    t2 == TYPE_STRING;
+            case TYPE_INT:
+                return t2 == TYPE_INT || t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+                    t2 == TYPE_STRING;
+            case TYPE_FLOAT:
+                return t2 == TYPE_FLOAT || t2 == TYPE_COMPLEX ||
+                    t2 == TYPE_STRING || t2 == TYPE_FLOAT2 ||
+                    t2 == TYPE_FLOAT3 || t2 == TYPE_FLOAT4;     
+            case TYPE_FLOAT2:
+            case TYPE_FLOAT3:
+            case TYPE_FLOAT4:
+                return t2 == t1; 
+            case TYPE_COMPLEX:
+                return t2 == TYPE_COMPLEX || t2 == TYPE_STRING;
+            case TYPE_CHAR:
+                return t2 == TYPE_CHAR || t2 == TYPE_STRING;
+            case TYPE_STRING:
+                return t2 == TYPE_STRING;
+            default:
+                assert false : t1;
+                return false;
+            }
     }
 
     public boolean equals(Object other)
     {
         // Two cases.  One, this is complex, and so is that:
         if (other instanceof Type)
-        {
-            Type that = (Type)other;
-            if (this.isComplex() && that.isComplex())
-                return true;
-        }
+            {
+                Type that = (Type)other;
+                if (this.isComplex() && that.isComplex())
+                    return true;
+            }
         // Two, these are both primitive types with the same type code.
         if (!(other instanceof TypePrimitive))
             return false;

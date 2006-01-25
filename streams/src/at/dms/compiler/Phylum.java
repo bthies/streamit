@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Phylum.java,v 1.7 2003-11-13 10:46:06 thies Exp $
+ * $Id: Phylum.java,v 1.8 2006-01-25 17:00:41 thies Exp $
  */
 
 package at.dms.compiler;
@@ -27,47 +27,47 @@ import at.dms.util.Utils;
  */
 public abstract class Phylum extends Utils {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected Phylum() {} // for cloner only
-  /**
-   * construct an element of the parsing tree
-   * @param where the token reference of this node
-   */
-  public Phylum(TokenReference where) {
-    this.where = where;
-  }
+    /**
+     * construct an element of the parsing tree
+     * @param where the token reference of this node
+     */
+    public Phylum(TokenReference where) {
+        this.where = where;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the token reference of this node in the source text.
-   * @return the entire token reference
-   */
-  public TokenReference getTokenReference() {
-    return where;
-  }
+    /**
+     * Returns the token reference of this node in the source text.
+     * @return the entire token reference
+     */
+    public TokenReference getTokenReference() {
+        return where;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final */ TokenReference	where;		// position in the source text.  removed "final" for cloner.
+    private /* final */ TokenReference  where;      // position in the source text.  removed "final" for cloner.
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.compiler.Phylum other) {
-  super.deepCloneInto(other);
-  other.where = (at.dms.compiler.TokenReference)at.dms.kjc.AutoCloner.cloneToplevel(this.where);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.compiler.Phylum other) {
+        super.deepCloneInto(other);
+        other.where = (at.dms.compiler.TokenReference)at.dms.kjc.AutoCloner.cloneToplevel(this.where);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

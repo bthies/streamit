@@ -43,52 +43,52 @@ public abstract class PhasedFilter extends Filter implements Runnable
     private RuntimeException pendingException = null;
 
     public void doWork() {
-	synchronized (this) {
-	    try {
-		if (firstWork) {
-		    firstWork = false;
-		    Thread t = new Thread(this);
-		    t.start();
-		    wait();
-		} else {
-		    notify();
-		    wait();
-		}
-	    } catch (InterruptedException e) {
-		e.printStackTrace();
-	    }
-	    // if a pending exception was found, raise it in this thread
-	    if (pendingException != null) {
-		// clear the exception
-		RuntimeException e = pendingException;
-		pendingException = null;
-		// throw the exception
-		throw e;
-	    }
-	}
+        synchronized (this) {
+            try {
+                if (firstWork) {
+                    firstWork = false;
+                    Thread t = new Thread(this);
+                    t.start();
+                    wait();
+                } else {
+                    notify();
+                    wait();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            // if a pending exception was found, raise it in this thread
+            if (pendingException != null) {
+                // clear the exception
+                RuntimeException e = pendingException;
+                pendingException = null;
+                // throw the exception
+                throw e;
+            }
+        }
     }
 
     public void run() {
-	while (true) {
-	    try {
-		prepareToWork();
-		work();
-		cleanupWork();
-	    } catch (NoPushPopException e) {
-		// the exception is caught by the other thread, so
-		// move it through a local variable so the other
-		// thread will see it.
-		pendingException = e;
-		try {
-		    synchronized(this) {
-			notify();
-			wait();
-		    }
-		} catch (InterruptedException ie) {
-		    ie.printStackTrace();
-		}
-	    }
-	}
+        while (true) {
+            try {
+                prepareToWork();
+                work();
+                cleanupWork();
+            } catch (NoPushPopException e) {
+                // the exception is caught by the other thread, so
+                // move it through a local variable so the other
+                // thread will see it.
+                pendingException = e;
+                try {
+                    synchronized(this) {
+                        notify();
+                        wait();
+                    }
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+            }
+        }
     }
 
     /**
@@ -98,7 +98,7 @@ public abstract class PhasedFilter extends Filter implements Runnable
     protected void contextSwitch() {
         synchronized (this) {
             try {
-		numExecutions++;
+                numExecutions++;
                 notify();
                 wait();
             } catch (InterruptedException e) {

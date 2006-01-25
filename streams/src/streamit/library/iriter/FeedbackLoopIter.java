@@ -63,11 +63,11 @@ public class FeedbackLoopIter
     public int getSplitterNumWork ()
     {
         if (feedback.getSplitter() instanceof NullSplitter)
-        {
-            return 0;
-        } else {
-            return 1;
-        }
+            {
+                return 0;
+            } else {
+                return 1;
+            }
     }
     
     public Object getSplitterWork(int nWork)
@@ -79,11 +79,11 @@ public class FeedbackLoopIter
     public int getJoinerNumWork ()
     {
         if (feedback.getJoiner() instanceof NullJoiner)
-        {
-            return 0;
-        } else {
-            return 1;
-        }
+            {
+                return 0;
+            } else {
+                return 1;
+            }
     }
     
     public Object getJoinerWork(int nWork)

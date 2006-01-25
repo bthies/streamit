@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TreeWalker.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: TreeWalker.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -25,129 +25,129 @@ package at.dms.backend;
  */
 public abstract class TreeWalker {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates a new instruction handle.
-   *
-   * @param	insn		the instruction
-   * @param	prev		the handle of the next instruction
-   *				in textual order
-   */
-  public TreeWalker(BasicBlock[] bblocks, BasicBlock[] eblocks) {
-    this.bblocks = bblocks;
-    this.eblocks = eblocks;
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Runs the deadcode algorithm
-   */
-  protected void traverse() {
-    // TRAVERSE NODES
-    ControlFlow.setMarked(bblocks, false);
-    traverseInstructions(bblocks[0]);
-
-    for (int i = 0; i < eblocks.length; i++) {
-      traverseInstructions(eblocks[i]);
-    }
-  }
-
-  protected BasicBlock getBasicBlock(int which) {
-    return bblocks[which];
-  }
-
-  // --------------------------------------------------------------------
-  // ABSTRACT METHODS
-  // --------------------------------------------------------------------
-
-  /**
-   * Processes the node
-   *
-   * @param	node		the node to be processed
-   */
-  protected abstract void processNode(QNode node);
-
-  /**
-   * Called when a branch is reached
-   */
-  protected void kill() {
-    // Default: does nothing
-  }
-
-  /**
-   * Removes the specified node
-   */
-  protected void removeNode(QNode node) {
-    BasicBlock	block = currentBlock;
-    QNode[]	quads = block.getQuadruples();
-
-    for (int i = 0 ; i < quads.length; i++) {
-      if (quads[i] == node) {
-	quads[i] = new QNop(); // !!! share
-	return;
-      }
+    /**
+     * Creates a new instruction handle.
+     *
+     * @param   insn        the instruction
+     * @param   prev        the handle of the next instruction
+     *              in textual order
+     */
+    public TreeWalker(BasicBlock[] bblocks, BasicBlock[] eblocks) {
+        this.bblocks = bblocks;
+        this.eblocks = eblocks;
     }
 
-    BasicBlock[]	successors = block.getSuccessors();
-    QNode[][]		successorAccess = block.getSuccessorAccess();
-    int			count = quads.length;
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-    for (int i = 0; i < successors.length; i++) {
-      for (int j = 0; successorAccess[i] != null && j < successorAccess[i].length; j++) {
-	if (successorAccess[i][j] == node) {
-	  successorAccess[i][j] = new QNop(); // !!! share
-	  return;
-	}
-      }
-    }
-  }
+    /**
+     * Runs the deadcode algorithm
+     */
+    protected void traverse() {
+        // TRAVERSE NODES
+        ControlFlow.setMarked(bblocks, false);
+        traverseInstructions(bblocks[0]);
 
-  // --------------------------------------------------------------------
-  // PRIVATE METHODS
-  // --------------------------------------------------------------------
-
-  private void traverseInstructions(BasicBlock block) {
-    if (block.isMarked()) {
-      return;
-    }
-    block.setMarked(true);
-    currentBlock = block;
-
-    kill();
-
-    boolean	changed = false;
-    QNode[]	quads = block.getQuadruples();
-    for (int i = 0 ; i < quads.length; i++) {
-      processNode(quads[i]);
+        for (int i = 0; i < eblocks.length; i++) {
+            traverseInstructions(eblocks[i]);
+        }
     }
 
-    BasicBlock[]	successors = block.getSuccessors();
-    QNode[][]		successorAccess = block.getSuccessorAccess();
-    int			count = quads.length;
-
-    if (successors.length > 1) {
-      kill();
+    protected BasicBlock getBasicBlock(int which) {
+        return bblocks[which];
     }
 
-    for (int i = 0; i < successors.length; i++) {
-      for (int j = 0; successorAccess[i] != null && j < successorAccess[i].length; j++) {
-	processNode(successorAccess[i][j]);
-      }
-      traverseInstructions(successors[i]);
+    // --------------------------------------------------------------------
+    // ABSTRACT METHODS
+    // --------------------------------------------------------------------
+
+    /**
+     * Processes the node
+     *
+     * @param   node        the node to be processed
+     */
+    protected abstract void processNode(QNode node);
+
+    /**
+     * Called when a branch is reached
+     */
+    protected void kill() {
+        // Default: does nothing
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Removes the specified node
+     */
+    protected void removeNode(QNode node) {
+        BasicBlock  block = currentBlock;
+        QNode[] quads = block.getQuadruples();
 
-  private BasicBlock		currentBlock;
-  private BasicBlock[]		bblocks; // List of basic blocks
-  private BasicBlock[]		eblocks; // List of exception handler
+        for (int i = 0 ; i < quads.length; i++) {
+            if (quads[i] == node) {
+                quads[i] = new QNop(); // !!! share
+                return;
+            }
+        }
+
+        BasicBlock[]    successors = block.getSuccessors();
+        QNode[][]       successorAccess = block.getSuccessorAccess();
+        int         count = quads.length;
+
+        for (int i = 0; i < successors.length; i++) {
+            for (int j = 0; successorAccess[i] != null && j < successorAccess[i].length; j++) {
+                if (successorAccess[i][j] == node) {
+                    successorAccess[i][j] = new QNop(); // !!! share
+                    return;
+                }
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // PRIVATE METHODS
+    // --------------------------------------------------------------------
+
+    private void traverseInstructions(BasicBlock block) {
+        if (block.isMarked()) {
+            return;
+        }
+        block.setMarked(true);
+        currentBlock = block;
+
+        kill();
+
+        boolean changed = false;
+        QNode[] quads = block.getQuadruples();
+        for (int i = 0 ; i < quads.length; i++) {
+            processNode(quads[i]);
+        }
+
+        BasicBlock[]    successors = block.getSuccessors();
+        QNode[][]       successorAccess = block.getSuccessorAccess();
+        int         count = quads.length;
+
+        if (successors.length > 1) {
+            kill();
+        }
+
+        for (int i = 0; i < successors.length; i++) {
+            for (int j = 0; successorAccess[i] != null && j < successorAccess[i].length; j++) {
+                processNode(successorAccess[i][j]);
+            }
+            traverseInstructions(successors[i]);
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private BasicBlock      currentBlock;
+    private BasicBlock[]        bblocks; // List of basic blocks
+    private BasicBlock[]        eblocks; // List of exception handler
 }

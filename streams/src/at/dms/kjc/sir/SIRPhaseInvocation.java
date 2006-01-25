@@ -49,26 +49,26 @@ public class SIRPhaseInvocation extends JStatement {
         this.push = null;
     }
 
-	public JMethodCallExpression getCall()
-	{
-		return call;
-	}
-	
-	public JExpression getPeek()
-	{
-		return peek;
-	}
-	
-	public JExpression getPop()
-	{
-		return pop;
-	}
-	
-	public JExpression getPush()
-	{
-		return push;
-	}
-	
+    public JMethodCallExpression getCall()
+    {
+        return call;
+    }
+    
+    public JExpression getPeek()
+    {
+        return peek;
+    }
+    
+    public JExpression getPop()
+    {
+        return pop;
+    }
+    
+    public JExpression getPush()
+    {
+        return push;
+    }
+    
     public void setCall(JMethodCallExpression call)
     {
         this.call = call;
@@ -126,33 +126,33 @@ public class SIRPhaseInvocation extends JStatement {
             sp.visitPhaseInvocation(this, call, peek, pop, push);
         }
         else
-        {
-            call.accept(p);
-            peek.accept(p);
-            pop.accept(p);
-            push.accept(p);
-        }
+            {
+                call.accept(p);
+                peek.accept(p);
+                pop.accept(p);
+                push.accept(p);
+            }
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRPhaseInvocation other = new at.dms.kjc.sir.SIRPhaseInvocation();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRPhaseInvocation other = new at.dms.kjc.sir.SIRPhaseInvocation();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRPhaseInvocation other) {
-  super.deepCloneInto(other);
-  other.call = (at.dms.kjc.JMethodCallExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.call);
-  other.peek = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.peek);
-  other.pop = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.pop);
-  other.push = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.push);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRPhaseInvocation other) {
+        super.deepCloneInto(other);
+        other.call = (at.dms.kjc.JMethodCallExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.call);
+        other.peek = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.peek);
+        other.pop = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.pop);
+        other.push = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.push);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

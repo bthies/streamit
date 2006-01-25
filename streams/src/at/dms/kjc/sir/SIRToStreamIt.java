@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.26 2006-01-24 16:25:49 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.27 2006-01-25 17:01:54 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -24,7 +24,7 @@ public class SIRToStreamIt
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    //protected boolean			forInit;	// is on a for init
+    //protected boolean         forInit;    // is on a for init
     protected String  className;
     protected boolean isStruct;
     protected boolean toplevel;
@@ -59,9 +59,9 @@ public class SIRToStreamIt
      * you may get error messages about non-constant parameters etc.
      */
     public static void runBeforeCompiler(SIRStream str,
-                           JInterfaceDeclaration[] interfaces,
-                           SIRInterfaceTable[] interfaceTables,
-                           SIRStructure[] structs)
+                                         JInterfaceDeclaration[] interfaces,
+                                         SIRInterfaceTable[] interfaceTables,
+                                         SIRStructure[] structs)
     {
         // Rename top-level object.
         str.setIdent(str.getIdent() + "_c");
@@ -71,9 +71,9 @@ public class SIRToStreamIt
         ConstructSIRTree.doit(str);
         FieldProp.doPropagate(str);
         new BlockFlattener().flattenBlocks(str);
-	run(str, interfaces, interfaceTables, structs);
+        run(str, interfaces, interfaceTables, structs);
     }
-	
+    
     /**
      * Top-level entry point.  
      *
@@ -85,15 +85,15 @@ public class SIRToStreamIt
                            SIRInterfaceTable[] interfaceTables,
                            SIRStructure[] structs) {
         System.out.println("*/");
-	
-	SIRToStreamIt s2s = new SIRToStreamIt();
+    
+        SIRToStreamIt s2s = new SIRToStreamIt();
 
         for (int i = 0; i < structs.length; i++)
-        {
-            assert structs[i] != null;
-            if (!(structs[i].getIdent().equals("Complex")))
-                structs[i].accept(s2s);
-        }
+            {
+                assert structs[i] != null;
+                if (!(structs[i].getIdent().equals("Complex")))
+                    structs[i].accept(s2s);
+            }
         for (int i = 0; i < interfaces.length; i++)
             interfaces[i].accept(s2s);
         s2s.visitAnyStream(str);
@@ -113,10 +113,10 @@ public class SIRToStreamIt
 
     // Version using globals
     public static void run(SIRStream str,
-        JInterfaceDeclaration[] interfaces,
-        SIRInterfaceTable[] interfaceTables,
-        SIRStructure[] structs,
-        SIRGlobal[] globals) {
+                           JInterfaceDeclaration[] interfaces,
+                           SIRInterfaceTable[] interfaceTables,
+                           SIRStructure[] structs,
+                           SIRGlobal[] globals) {
 
         run(str, interfaces, interfaceTables, structs);
         for (int i = 0; i < globals.length; i++) {
@@ -153,7 +153,7 @@ public class SIRToStreamIt
      * Generates code for <flatClass> and sends to System.err.
      */
     public static void generateCode(JClassDeclaration flat) {
-	System.out.println("*/");	
+        System.out.println("*/");   
         SIRToStreamIt s2s = new SIRToStreamIt(new CodegenPrintWriter(new PrintWriter(System.out)));
 
         // Print all of the portals.
@@ -165,13 +165,13 @@ public class SIRToStreamIt
             s2s.getPrinter().newLine();
         }
 
-	flat.accept(s2s);
-	s2s.close();
+        flat.accept(s2s);
+        s2s.close();
     }
 
     /**
      * construct a pretty printer object for java code
-     * @param	fileName		the file into the code is generated
+     * @param   fileName        the file into the code is generated
      */
     private SIRToStreamIt(CodegenPrintWriter p) {
         this.p = p;
@@ -190,7 +190,7 @@ public class SIRToStreamIt
     }
 
     public String getString() {
-	return p.getString();
+        return p.getString();
     }
 
     // ----------------------------------------------------------------------
@@ -204,22 +204,22 @@ public class SIRToStreamIt
     {
         streamQueue.add(op);
         while (!streamQueue.isEmpty())
-        {
-            SIROperator o = (SIROperator)streamQueue.get(0);
-            streamQueue.remove(0);
-            // Do nothing if we've seen it; print it otherwise
-            if (!seenStreams.contains(o))
             {
-                seenStreams.add(o);
-                // Avoid builtins.
-                if (!(o instanceof SIRPredefinedFilter))
-                {
-                    theStream = o;
-                    o.accept(this);
-                    p.newLine();
-                }
+                SIROperator o = (SIROperator)streamQueue.get(0);
+                streamQueue.remove(0);
+                // Do nothing if we've seen it; print it otherwise
+                if (!seenStreams.contains(o))
+                    {
+                        seenStreams.add(o);
+                        // Avoid builtins.
+                        if (!(o instanceof SIRPredefinedFilter))
+                            {
+                                theStream = o;
+                                o.accept(this);
+                                p.newLine();
+                            }
+                    }
             }
-        }
     }
 
     private void printHeader(SIRStream self, String type)
@@ -228,58 +228,58 @@ public class SIRToStreamIt
         CType outType = self.getOutputType();
         // Consider special-case inputs and outputs for feedback loops.
         if (self instanceof SIRFeedbackLoop)
-        {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop)self;
+            {
+                SIRFeedbackLoop fl = (SIRFeedbackLoop)self;
 
-            SIRJoiner joiner = fl.getJoiner();
-            if (joiner.getType() == SIRJoinType.NULL ||
-                (joiner.getType() == SIRJoinType.WEIGHTED_RR &&
-                 joiner.getWeight(0) == 0))
-                inType = CStdType.Void;
+                SIRJoiner joiner = fl.getJoiner();
+                if (joiner.getType() == SIRJoinType.NULL ||
+                    (joiner.getType() == SIRJoinType.WEIGHTED_RR &&
+                     joiner.getWeight(0) == 0))
+                    inType = CStdType.Void;
 
-            SIRSplitter splitter = fl.getSplitter();
-            if (splitter.getType() == SIRSplitType.NULL ||
-                (splitter.getType() == SIRSplitType.WEIGHTED_RR &&
-                 splitter.getWeight(0) == 0))
-                outType = CStdType.Void;
-        }
+                SIRSplitter splitter = fl.getSplitter();
+                if (splitter.getType() == SIRSplitType.NULL ||
+                    (splitter.getType() == SIRSplitType.WEIGHTED_RR &&
+                     splitter.getWeight(0) == 0))
+                    outType = CStdType.Void;
+            }
         if (inType != null && outType != null)
-        {
-            printType(inType);
-            p.print("->");
-            printType(outType);
-            p.print(" ");
-        }
+            {
+                printType(inType);
+                p.print("->");
+                printType(outType);
+                p.print(" ");
+            }
         p.print(type);
         if (self.getIdent() != null)
-        {
-            // if the parent is null, this is the top-level stream;
-            // there is only one of it, so print its [non-unique]
-            // ident rather than its [unique] name so the class name
-            // matches the filename
-            if (self.getParent() == null)
-                p.print(" " + self.getIdent());
-            else
-                p.print(" " + self.getName());
-        }
+            {
+                // if the parent is null, this is the top-level stream;
+                // there is only one of it, so print its [non-unique]
+                // ident rather than its [unique] name so the class name
+                // matches the filename
+                if (self.getParent() == null)
+                    p.print(" " + self.getIdent());
+                else
+                    p.print(" " + self.getName());
+            }
 
         // In SIR, streams don't have parameter lists, but their
         // init functions do.  Print a parameter list.
         JMethodDeclaration init = self.getInit();
         JFormalParameter[] parameters = init.getParameters();
         if (parameters.length > 0)
-        {
-            p.print("(");
-            boolean first = true;
+            {
+                p.print("(");
+                boolean first = true;
             
-            for (int i = 0; i < parameters.length; i++) {
-                if (!first)
-                    p.print(", ");
-                first = false;
-                parameters[i].accept(this);
+                for (int i = 0; i < parameters.length; i++) {
+                    if (!first)
+                        p.print(", ");
+                    first = false;
+                    parameters[i].accept(this);
+                }
+                p.print(")");
             }
-            p.print(")");
-        }
         
         p.newLine();
     }
@@ -335,8 +335,8 @@ public class SIRToStreamIt
         p.indent();
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
-	for (int i=0; i < methods.length; i++)
-	    methods[i].accept(this);
+        for (int i=0; i < methods.length; i++)
+            methods[i].accept(this);
         p.outdent();
         p.newLine();
         p.print("}");
@@ -368,43 +368,43 @@ public class SIRToStreamIt
         else if (type.isNull())
             p.print("split roundrobin(0);");
         else if (type.isRoundRobin())
-        {
-            p.print("split roundrobin(");
-
-            // Check (the hard way) for a uniform round-robin.
-            boolean uniform = false;
-            if (weights.length > 0) {
-                uniform = true;
-                JExpression e = self.getWeightNoChecking(0);
-                if (e instanceof JIntLiteral) {
-                    int w = self.getWeight(0);
-                    for (int i = 1; i < weights.length; i++) {
-                        e = self.getWeightNoChecking(i);
-                        if (e instanceof JIntLiteral) {
-                            if (self.getWeight(i) != w) {
-                                uniform = false;
-                            }
-                        } else {uniform = false;}
-                    }
-                } else {uniform = false;}
-            }
-            if (uniform)
-                p.print(self.getWeight(0));
-            else
             {
-                boolean first = true;
-                for (int i = 0; i < weights.length; i++)
-                {
-                    assert weights[i] != null;
-                    if (!first)
-                        p.print(", ");
-                    first = false;
-                    weights[i].accept(this);
+                p.print("split roundrobin(");
+
+                // Check (the hard way) for a uniform round-robin.
+                boolean uniform = false;
+                if (weights.length > 0) {
+                    uniform = true;
+                    JExpression e = self.getWeightNoChecking(0);
+                    if (e instanceof JIntLiteral) {
+                        int w = self.getWeight(0);
+                        for (int i = 1; i < weights.length; i++) {
+                            e = self.getWeightNoChecking(i);
+                            if (e instanceof JIntLiteral) {
+                                if (self.getWeight(i) != w) {
+                                    uniform = false;
+                                }
+                            } else {uniform = false;}
+                        }
+                    } else {uniform = false;}
                 }
-            }
+                if (uniform)
+                    p.print(self.getWeight(0));
+                else
+                    {
+                        boolean first = true;
+                        for (int i = 0; i < weights.length; i++)
+                            {
+                                assert weights[i] != null;
+                                if (!first)
+                                    p.print(", ");
+                                first = false;
+                                weights[i].accept(this);
+                            }
+                    }
             
-            p.print(");");
-        }
+                p.print(");");
+            }
         else
             assert false : self;
         return null;
@@ -418,48 +418,48 @@ public class SIRToStreamIt
         if (type.isNull())
             p.print("join roundrobin(0);");
         else if (type.isRoundRobin())
-        {
-            p.print("join roundrobin(");
+            {
+                p.print("join roundrobin(");
 
-            // Check (the hard way) for a uniform round-robin.
-            boolean uniform = false;            
+                // Check (the hard way) for a uniform round-robin.
+                boolean uniform = false;            
 
-            if (weights.length > 0) {
-                uniform = true;
-                JExpression e = self.getWeightNoChecking(0);
-                if (e instanceof JIntLiteral) {
-                    int w = self.getWeight(0);
-                    for (int i = 1; i < weights.length; i++) {
-                        e = self.getWeightNoChecking(i);
-                        if (e instanceof JIntLiteral) {
-                            if (self.getWeight(i) != w) {
+                if (weights.length > 0) {
+                    uniform = true;
+                    JExpression e = self.getWeightNoChecking(0);
+                    if (e instanceof JIntLiteral) {
+                        int w = self.getWeight(0);
+                        for (int i = 1; i < weights.length; i++) {
+                            e = self.getWeightNoChecking(i);
+                            if (e instanceof JIntLiteral) {
+                                if (self.getWeight(i) != w) {
+                                    uniform = false;
+                                }
+                            } else {
                                 uniform = false;
                             }
-                        } else {
-                            uniform = false;
                         }
+                    } else {
+                        uniform = false;
                     }
-                } else {
-                    uniform = false;
                 }
-            }
-            if (uniform)
-                p.print(self.getWeight(0));
-            else
-            {
-                boolean first = true;
-                for (int i = 0; i < weights.length; i++)
-                {
-                    assert weights[i] != null;
-                    if (!first)
-                        p.print(", ");
-                    first = false;
-                    weights[i].accept(this);
-                }
-            }
+                if (uniform)
+                    p.print(self.getWeight(0));
+                else
+                    {
+                        boolean first = true;
+                        for (int i = 0; i < weights.length; i++)
+                            {
+                                assert weights[i] != null;
+                                if (!first)
+                                    p.print(", ");
+                                first = false;
+                                weights[i].accept(this);
+                            }
+                    }
             
-            p.print(");");
-        }
+                p.print(");");
+            }
         else
             assert false : self;
         return null;
@@ -606,7 +606,7 @@ public class SIRToStreamIt
         for (int i = 0; i < decls.length ; i++) {
             if (!(decls[i] instanceof JClassDeclaration &&
                   (decls[i].getModifiers() & ACC_STATIC) == ACC_STATIC))
-            decls[i].accept(this);
+                decls[i].accept(this);
         }
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
@@ -774,51 +774,51 @@ public class SIRToStreamIt
 
         // Treat init and work functions specially.
         if (ident.equals("init") || ident.equals("work"))
-        {
-            p.print(ident);
-        }
-	else if (ident.equals("initWork")) 
-	{
-	    // initWork is the compiler's name for "prework"
-	    p.print("prework");
-	}
-        else
-        {
-            // p.print(CModifier.toString(modifiers));
-            printType(returnType);
-            p.print(" ");
-            p.print(ident);
-            p.print("(");
-            int count = 0;
-            
-            for (int i = 0; i < parameters.length; i++) {
-                if (count != 0) {
-                    p.print(", ");
-                }
-                
-                // if (!parameters[i].isGenerated()) {
-                parameters[i].accept(this);
-                count++;
-                // }
+            {
+                p.print(ident);
             }
-            p.print(")");
-        }
+        else if (ident.equals("initWork")) 
+            {
+                // initWork is the compiler's name for "prework"
+                p.print("prework");
+            }
+        else
+            {
+                // p.print(CModifier.toString(modifiers));
+                printType(returnType);
+                p.print(" ");
+                p.print(ident);
+                p.print("(");
+                int count = 0;
+            
+                for (int i = 0; i < parameters.length; i++) {
+                    if (count != 0) {
+                        p.print(", ");
+                    }
+                
+                    // if (!parameters[i].isGenerated()) {
+                    parameters[i].accept(this);
+                    count++;
+                    // }
+                }
+                p.print(")");
+            }
 
         // Print I/O rates if they're available
-	if (self.doesIO()) {
-	    p.print(" pop ");
-	    self.getPop().accept(this);
-	    p.print(" peek ");
-	    self.getPeek().accept(this);
-	    p.print(" push ");
-	    self.getPush().accept(this);
-	}
+        if (self.doesIO()) {
+            p.print(" pop ");
+            self.getPop().accept(this);
+            p.print(" peek ");
+            self.getPeek().accept(this);
+            p.print(" push ");
+            self.getPush().accept(this);
+        }
 
         if (declOnly)
-        {
-            p.print(";");
-            return;
-        }
+            {
+                p.print(";");
+                return;
+            }
 
         p.newLine();
         if (body != null) {
@@ -900,13 +900,13 @@ public class SIRToStreamIt
 
     private void printLocalArrayDecl(JNewArrayExpression expr) 
     {
-	JExpression[] dims = expr.getDims();
-	for (int i = 0 ; i < dims.length; i++) {
-	    p.print("[");
-	    SIRToStreamIt toC = new SIRToStreamIt(this.p);
-	    dims[i].accept(toC);
-	    p.print("]");
-	}
+        JExpression[] dims = expr.getDims();
+        for (int i = 0 ; i < dims.length; i++) {
+            p.print("[");
+            SIRToStreamIt toC = new SIRToStreamIt(this.p);
+            dims[i].accept(toC);
+            p.print("]");
+        }
     }
 
     /**
@@ -922,11 +922,11 @@ public class SIRToStreamIt
         // SIR.  But in this case we know the type a little better
         // than we do just from Java.
         if (expr != null && expr instanceof JNewArrayExpression)
-        {
-            assert type instanceof CArrayType;
-            printType(((CArrayType)type).getElementType());
-            printLocalArrayDecl((JNewArrayExpression)expr);
-        }
+            {
+                assert type instanceof CArrayType;
+                printType(((CArrayType)type).getElementType());
+                printLocalArrayDecl((JNewArrayExpression)expr);
+            }
         else
             printType(type);
         p.print(" ");
@@ -934,7 +934,7 @@ public class SIRToStreamIt
         if (expr != null && !(expr instanceof JNewArrayExpression)) {
             p.print(" = ");
             expr.accept(this);
-	}
+        }
         p.print(";");
     }
 
@@ -1058,7 +1058,7 @@ public class SIRToStreamIt
                   || elseClause instanceof JIfStatement)) p.indent();
             elseClause.accept(this);
             if (!(elseClause instanceof JBlock 
-                || elseClause instanceof JIfStatement)) p.outdent();
+                  || elseClause instanceof JIfStatement)) p.outdent();
         }
     }
 
@@ -1070,15 +1070,15 @@ public class SIRToStreamIt
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
-	forLoopHeader++;
+        forLoopHeader++;
         p.print("for (");
         //forInit = true;
         if (init != null) {
             init.accept(this);
-	} else {
-	    p.print(";");
-	}
-	//forInit = false;
+        } else {
+            p.print(";");
+        }
+        //forInit = false;
 
         p.print(" ");
         if (cond != null) {
@@ -1087,18 +1087,18 @@ public class SIRToStreamIt
         p.print("; ");
 
         if (incr != null) {
-	    SIRToStreamIt l2c = new SIRToStreamIt();
+            SIRToStreamIt l2c = new SIRToStreamIt();
             incr.accept(l2c);
-	    // get String
-	    String str = l2c.getString();
-	    // leave off the trailing semicolon if there is one
-	    if (str.endsWith(";")) {
-		p.print(str.substring(0, str.length()-1));
-	    } else { 
-		p.print(str);
-	    }
+            // get String
+            String str = l2c.getString();
+            // leave off the trailing semicolon if there is one
+            if (str.endsWith(";")) {
+                p.print(str.substring(0, str.length()-1));
+            } else { 
+                p.print(str);
+            }
         }
-	forLoopHeader--;
+        forLoopHeader--;
         p.print(")");
         p.newLine();
         p.indent();
@@ -1149,28 +1149,28 @@ public class SIRToStreamIt
             
         // Some special cases if the expression is an assignment:
         if (expr instanceof JAssignmentExpression)
-        {
-            JAssignmentExpression assign = (JAssignmentExpression)expr;
-            JExpression rhs = assign.getRight();
-
-            // Discard if the right-hand side is "new type[length]".
-            if (rhs instanceof JNewArrayExpression)
-                return;
-            
-            // Discard if the right-hand side is "new Complex".
-            if (rhs instanceof JUnqualifiedInstanceCreation)
             {
-                JUnqualifiedInstanceCreation uic =
-                    (JUnqualifiedInstanceCreation)rhs;
-                if (uic.getType().getCClass().getType().getIdent().equals("Complex"))
+                JAssignmentExpression assign = (JAssignmentExpression)expr;
+                JExpression rhs = assign.getRight();
+
+                // Discard if the right-hand side is "new type[length]".
+                if (rhs instanceof JNewArrayExpression)
                     return;
+            
+                // Discard if the right-hand side is "new Complex".
+                if (rhs instanceof JUnqualifiedInstanceCreation)
+                    {
+                        JUnqualifiedInstanceCreation uic =
+                            (JUnqualifiedInstanceCreation)rhs;
+                        if (uic.getType().getCClass().getType().getIdent().equals("Complex"))
+                            return;
+                    }
             }
-        }
         
         expr.accept(this);
         //if (!forInit) {
-            p.print(";");
-	    //}
+        p.print(";");
+        //}
     }
 
     /**
@@ -1184,19 +1184,19 @@ public class SIRToStreamIt
             }
             expr[i].accept(this);
         }
-	p.print(";");
+        p.print(";");
     }
 
     /**
      * prints a empty statement
      */
     public void visitEmptyStatement(JEmptyStatement self) {
-	//if we are inside a for loop header, we need to print 
-	//the ; of an empty statement
-	if (forLoopHeader > 0) {
-	    p.newLine();
-	    p.print(";");
-	}
+        //if we are inside a for loop header, we need to print 
+        //the ; of an empty statement
+        if (forLoopHeader > 0) {
+            p.newLine();
+            p.print(";");
+        }
 
     }
 
@@ -1256,43 +1256,43 @@ public class SIRToStreamIt
             visitComments(comments);
         }
         if (wasToplevel)
-        {
-            // Print some interesting characteristics of the object,
-            // if it's a top-level composite object with said
-            // characteristics.
-            // (But print them *after* the rest of the code in
-            // case they depend on things like variable declarations.)
-            if (theStream instanceof SIRSplitJoin)
             {
-                SIRSplitJoin sj = (SIRSplitJoin)theStream;
-                p.newLine();
-                sj.getSplitter().accept(this);
-                p.newLine();
-                sj.getJoiner().accept(this);
+                // Print some interesting characteristics of the object,
+                // if it's a top-level composite object with said
+                // characteristics.
+                // (But print them *after* the rest of the code in
+                // case they depend on things like variable declarations.)
+                if (theStream instanceof SIRSplitJoin)
+                    {
+                        SIRSplitJoin sj = (SIRSplitJoin)theStream;
+                        p.newLine();
+                        sj.getSplitter().accept(this);
+                        p.newLine();
+                        sj.getJoiner().accept(this);
+                    }
+                if (theStream instanceof SIRFeedbackLoop)
+                    {
+                        SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
+                        p.newLine();
+                        fl.getJoiner().accept(this);
+                        p.newLine();
+                        fl.getSplitter().accept(this);
+                    }
+                if (theStream instanceof SIRContainer)
+                    {
+                        SIRContainer cont = (SIRContainer)theStream;
+                        for (int i = 0; i < cont.size(); i++)
+                            {
+                                SIRStream child = cont.get(i);
+                                List params = cont.getParams(i);
+                                // synthesize an SIRInitStatement, then visit
+                                // it to print an add/body/loop statement and
+                                // enqueue the stream's code to be printed.
+                                p.newLine();
+                                new SIRInitStatement(params, child).accept(this);
+                            }
+                    }
             }
-            if (theStream instanceof SIRFeedbackLoop)
-            {
-                SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
-                p.newLine();
-                fl.getJoiner().accept(this);
-                p.newLine();
-                fl.getSplitter().accept(this);
-            }
-            if (theStream instanceof SIRContainer)
-            {
-                SIRContainer cont = (SIRContainer)theStream;
-                for (int i = 0; i < cont.size(); i++)
-                {
-                    SIRStream child = cont.get(i);
-                    List params = cont.getParams(i);
-                    // synthesize an SIRInitStatement, then visit
-                    // it to print an add/body/loop statement and
-                    // enqueue the stream's code to be printed.
-                    p.newLine();
-                    new SIRInitStatement(params, child).accept(this);
-                }
-            }
-        }
         p.outdent();
         p.newLine();
         p.print("}");
@@ -1316,10 +1316,10 @@ public class SIRToStreamIt
     public void visitUnaryPlusExpression(JUnaryExpression self,
                                          JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("+");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1328,34 +1328,34 @@ public class SIRToStreamIt
     public void visitUnaryMinusExpression(JUnaryExpression self,
                                           JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("-");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
      * prints a bitwise complement expression
      */
     public void visitBitwiseComplementExpression(JUnaryExpression self,
-						 JExpression expr)
+                                                 JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("~");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
      * prints a logical complement expression
      */
     public void visitLogicalComplementExpression(JUnaryExpression self,
-						 JExpression expr)
+                                                 JExpression expr)
     {
-	p.print("(");
+        p.print("(");
         p.print("!");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1363,9 +1363,9 @@ public class SIRToStreamIt
      */
     public void visitTypeNameExpression(JTypeNameExpression self,
                                         CType type) {
-	p.print("(");
-    printType(type);
-	p.print(")");
+        p.print("(");
+        printType(type);
+        p.print(")");
     }
 
     /**
@@ -1393,7 +1393,7 @@ public class SIRToStreamIt
                                      int oper,
                                      JExpression left,
                                      JExpression right) {
-	p.print("(");
+        p.print("(");
         left.accept(this);
         if (oper == OPE_SL) {
             p.print(" << ");
@@ -1403,7 +1403,7 @@ public class SIRToStreamIt
             p.print(" >>> ");
         }
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1413,7 +1413,7 @@ public class SIRToStreamIt
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-	p.print("(");
+        p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
@@ -1432,7 +1432,7 @@ public class SIRToStreamIt
             assert false : self;
         }
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1499,15 +1499,15 @@ public class SIRToStreamIt
                                                String ident,
                                                JExpression[] params)
     {
-	/* It appears this only occurs in dead cody ("new Complex()",
-	 * FFT6) and it doesn't make sense in C, so just removing
-	 * this.
+        /* It appears this only occurs in dead cody ("new Complex()",
+         * FFT6) and it doesn't make sense in C, so just removing
+         * this.
 
-        prefix.accept(this);
-        p.print(".new " + ident + "(");
-        visitArgs(params, 0);
-        p.print(")");
-	*/
+         prefix.accept(this);
+         p.print(".new " + ident + "(");
+         visitArgs(params, 0);
+         p.print(")");
+        */
     }
 
     /**
@@ -1518,15 +1518,15 @@ public class SIRToStreamIt
                                                   JExpression[] params,
                                                   JClassDeclaration decl)
     {
-	/* It appears this only occurs in dead cody ("new Complex()",
-	 * FFT6) and it doesn't make sense in C, so just removing
-	 * this.
+        /* It appears this only occurs in dead cody ("new Complex()",
+         * FFT6) and it doesn't make sense in C, so just removing
+         * this.
 
-        p.print("new " + type + "(");
-        visitArgs(params, 0);
-        p.print(")");
-        // decl.genInnerJavaCode(this);
-	*/
+         p.print("new " + type + "(");
+         visitArgs(params, 0);
+         p.print(")");
+         // decl.genInnerJavaCode(this);
+         */
     }
 
     /**
@@ -1585,13 +1585,13 @@ public class SIRToStreamIt
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	p.print("(");
+        p.print("(");
         left.accept(this);
         p.print(" ");
         p.print(oper);
         p.print(" ");
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1643,11 +1643,11 @@ public class SIRToStreamIt
                                         boolean equal,
                                         JExpression left,
                                         JExpression right) {
-	p.print("(");
+        p.print("(");
         left.accept(this);
         p.print(equal ? " == " : " != ");
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1657,13 +1657,13 @@ public class SIRToStreamIt
                                            JExpression cond,
                                            JExpression left,
                                            JExpression right) {
-	p.print("(");
+        p.print("(");
         cond.accept(this);
         p.print(" ? ");
         left.accept(this);
         p.print(" : ");
         right.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1720,13 +1720,13 @@ public class SIRToStreamIt
                                      JExpression left,
                                      String ident)
     {
-	/*
-	System.err.println("!!! self=" + self);
-	System.err.println(" left=" + left);
-	System.err.println(" ident=" + ident);
-	System.err.println(" left.getType()==" + left.getType());
-	System.err.println(" getCClass()=" +left.getType().getCClass());
-	*/
+        /*
+          System.err.println("!!! self=" + self);
+          System.err.println(" left=" + left);
+          System.err.println(" ident=" + ident);
+          System.err.println(" left.getType()==" + left.getType());
+          System.err.println(" getCClass()=" +left.getType().getCClass());
+        */
         if (ident.equals(JAV_OUTER_THIS)) {
             // This identifier is used for the enclosing instance of
             // inner classes; see JLS 8.1.2.
@@ -1736,15 +1736,15 @@ public class SIRToStreamIt
             // I think that means we print nothing.
             return;
         }
-        int		index = ident.indexOf("_$");
+        int     index = ident.indexOf("_$");
         if (index != -1) {
             p.print(ident.substring(0, index));      // local var
         } else {
             if (!(left instanceof JThisExpression))
-            {
-                left.accept(this);
-                p.print(".");
-            }
+                {
+                    left.accept(this);
+                    p.print(".");
+                }
             p.print(ident);
         }
     }
@@ -1764,12 +1764,12 @@ public class SIRToStreamIt
                                     JExpression expr,
                                     CType type)
     {
-	p.print("(");
+        p.print("(");
         p.print("(");
         printType(type);
         p.print(")");
         expr.accept(this);
-	p.print(")");
+        p.print(")");
     }
 
     /**
@@ -1779,7 +1779,7 @@ public class SIRToStreamIt
                                             JExpression expr,
                                             CType type)
     {
-	p.print("(");
+        p.print("(");
         p.print("(");
         printType(type);
         p.print(")");
@@ -1869,52 +1869,52 @@ public class SIRToStreamIt
     public void visitComment(JavaStyleComment comment) {
         // We don't care terribly.
         /*
-        StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
+          StringTokenizer   tok = new StringTokenizer(comment.getText(), "\n");
 
-        if (comment.hadSpaceBefore()) {
-            p.newLine();
-        }
+          if (comment.hadSpaceBefore()) {
+          p.newLine();
+          }
 
-        if (comment.isLineComment()) {
-            p.print("//");
-	    if (tok.hasMoreTokens())
-	      p.print(tok.nextToken().trim());
-            p.println();
-        } else {
-            if (p.getLine() > 0) {
-                if (!nl) {
-                    p.newLine();
-                }
-                p.newLine();
-            }
-            p.print("/*");
-            while (tok.hasMoreTokens()){
-                String comm = tok.nextToken().trim();
-                if (comm.startsWith("*")) {
-                    comm = comm.substring(1).trim();
-                }
-                if (tok.hasMoreTokens() || comm.length() > 0) {
-                    p.newLine();
-                    p.print(" * " + comm);
-                }
-            }
-            p.newLine();
-            p.print(" * /");
-            p.newLine();
-        }
+          if (comment.isLineComment()) {
+          p.print("//");
+          if (tok.hasMoreTokens())
+          p.print(tok.nextToken().trim());
+          p.println();
+          } else {
+          if (p.getLine() > 0) {
+          if (!nl) {
+          p.newLine();
+          }
+          p.newLine();
+          }
+          p.print("/*");
+          while (tok.hasMoreTokens()){
+          String comm = tok.nextToken().trim();
+          if (comm.startsWith("*")) {
+          comm = comm.substring(1).trim();
+          }
+          if (tok.hasMoreTokens() || comm.length() > 0) {
+          p.newLine();
+          p.print(" * " + comm);
+          }
+          }
+          p.newLine();
+          p.print(" * /");
+          p.newLine();
+          }
 
-        if (comment.hadSpaceAfter()) {
-            p.newLine();
-        }
-       */
+          if (comment.hadSpaceAfter()) {
+          p.newLine();
+          }
+        */
     }
 
     /**
      * prints an array length expression
      */
     public void visitJavadoc(JavadocComment comment) {
-        StringTokenizer	tok = new StringTokenizer(comment.getText(), "\n");
-        boolean		isFirst = true;
+        StringTokenizer tok = new StringTokenizer(comment.getText(), "\n");
+        boolean     isFirst = true;
 
         if (!nl) {
             p.newLine();
@@ -1922,10 +1922,10 @@ public class SIRToStreamIt
         p.newLine();
         p.print("/**");
         while (tok.hasMoreTokens()) {
-            String	text = tok.nextToken().trim();
-            String	type = null;
-            boolean	param = false;
-            int	idx = text.indexOf("@param");
+            String  text = tok.nextToken().trim();
+            String  type = null;
+            boolean param = false;
+            int idx = text.indexOf("@param");
             if (idx >= 0) {
                 type = "@param";
                 param = true;
@@ -1984,7 +1984,7 @@ public class SIRToStreamIt
                     if (idx == Integer.MAX_VALUE) {
                         idx = 0;
                     }
-                    String	before = text.substring(0, idx);
+                    String  before = text.substring(0, idx);
                     p.print(" * " + type);
                     p.setIndentation(p.getIndentation() + 12);
                     p.print(before);
@@ -2028,18 +2028,18 @@ public class SIRToStreamIt
         // What keyword do we print?  Always "add", unless we're
         // looking at a feedback loop...
         if (theStream instanceof SIRFeedbackLoop)
-        {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
-            if (stream == fl.getBody())
-                p.print("body ");
-            else if (stream == fl.getLoop())
-                p.print("loop ");
-            else
             {
-                assert false : stream;
-                p.print("add ");
+                SIRFeedbackLoop fl = (SIRFeedbackLoop)theStream;
+                if (stream == fl.getBody())
+                    p.print("body ");
+                else if (stream == fl.getLoop())
+                    p.print("loop ");
+                else
+                    {
+                        assert false : stream;
+                        p.print("add ");
+                    }
             }
-        }
         else
             p.print("add ");
 
@@ -2047,25 +2047,25 @@ public class SIRToStreamIt
         if (stream.getName() == null)
             stream.accept(this);
         else
-        {
-            // Certain types of builtins have types and fixed names:
-            if (stream instanceof SIRIdentity)
-                p.print("Identity<" + stream.getInputType() + ">");
-            else
-                p.print(stream.getName());
-            // Dump the parameter list, if any.
-            List params = self.getArgs();
-            if (!(params.isEmpty()))
             {
-                p.print("(");
-                JExpression[] args =
-                    (JExpression[])params.toArray(new JExpression[0]);
-                visitArgs(args, 0);
-                p.print(")");
+                // Certain types of builtins have types and fixed names:
+                if (stream instanceof SIRIdentity)
+                    p.print("Identity<" + stream.getInputType() + ">");
+                else
+                    p.print(stream.getName());
+                // Dump the parameter list, if any.
+                List params = self.getArgs();
+                if (!(params.isEmpty()))
+                    {
+                        p.print("(");
+                        JExpression[] args =
+                            (JExpression[])params.toArray(new JExpression[0]);
+                        visitArgs(args, 0);
+                        p.print(")");
+                    }
+                p.print(";");
+                streamQueue.add(stream);
             }
-            p.print(";");
-            streamQueue.add(stream);
-        }
     }
 
     public void visitInterfaceTable(SIRInterfaceTable self)
@@ -2076,11 +2076,11 @@ public class SIRToStreamIt
         
         p.print("{ ");
         for (int i = 0; i < methods.length; i++)
-        {
-            if (!first) p.print(", ");
-            first = false;
-            p.print(iname + "_" + methods[i].getName());
-        }
+            {
+                if (!first) p.print(", ");
+                first = false;
+                p.print(iname + "_" + methods[i].getName());
+            }
         p.print("}");
     }
     
@@ -2111,32 +2111,32 @@ public class SIRToStreamIt
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	p.print("send_" + iname + "_" + ident + "(");
+        p.print("send_" + iname + "_" + ident + "(");
         portal.accept(this);
         p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
-                {
-                    p.print(", ");
-                    params[i].accept(this);
-                }
+                    {
+                        p.print(", ");
+                        params[i].accept(this);
+                    }
         p.print(");");
     }
 
     public void visitRangeExpression(SIRRangeExpression self) {
-	p.print("[");
-	self.getMin().accept(this);
-	p.print(",");
-	self.getAve().accept(this);
-	p.print(",");
-	self.getMax().accept(this);
-	p.print("]");
+        p.print("[");
+        self.getMin().accept(this);
+        p.print(",");
+        self.getAve().accept(this);
+        p.print(",");
+        self.getMax().accept(this);
+        p.print("]");
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {
-	p.print("*");
+        p.print("*");
     }
 
     public void visitPeekExpression(SIRPeekExpression self,
@@ -2151,22 +2151,22 @@ public class SIRToStreamIt
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-	if (self.getNumPop()>1) {
-	    p.print("pop(/*"+self.getNumPop()+" times */)");
+        if (self.getNumPop()>1) {
+            p.print("pop(/*"+self.getNumPop()+" times */)");
         } else {
-	    p.print("pop()");
-	}
+            p.print("pop()");
+        }
     }
     
     public void visitPortal(SIRPortal self)
     {
         // Have we seen this portal before?
         if (!(portalNames.containsKey(self)))
-        {
-            portalCount++;
-            String theName = "__portal_" + portalCount;
-            portalNames.put(self, theName);
-        }
+            {
+                portalCount++;
+                String theName = "__portal_" + portalCount;
+                portalNames.put(self, theName);
+            }
         p.print(portalNames.get(self).toString());
     }
 
@@ -2200,28 +2200,28 @@ public class SIRToStreamIt
 
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
                                           JExpression portal,
-					  SIRStream receiver, 
-					  JMethodDeclaration[] methods)
+                                          SIRStream receiver, 
+                                          JMethodDeclaration[] methods)
     {
-    	p.print("visitRegReceiverStatement");
-//        assert false : "TODO: implement SIR messaging";
+        p.print("visitRegReceiverStatement");
+        //        assert false : "TODO: implement SIR messaging";
     }
     
     public void visitRegSenderStatement(SIRRegSenderStatement self,
                                         String fn,
                                         SIRLatency latency)
     {
-    	p.print("visitRegSenderStatement");
-//        assert false : "TODO: implement SIR messaging";
+        p.print("visitRegSenderStatement");
+        //        assert false : "TODO: implement SIR messaging";
     }
 
     public void visitMarker(SIRMarker self) {
-	if (self instanceof SIRBeginMarker) {
-	    p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
-	}
-	if (self instanceof SIREndMarker) {
-	    p.println("// mark end: " + ((SIRBeginMarker)self).getName());
-	}
+        if (self instanceof SIRBeginMarker) {
+            p.println("// mark begin: " + ((SIRBeginMarker)self).getName());
+        }
+        if (self instanceof SIREndMarker) {
+            p.println("// mark end: " + ((SIRBeginMarker)self).getName());
+        }
     }
 
     /**
@@ -2341,8 +2341,8 @@ public class SIRToStreamIt
      * Visits an encoder registration node.
      */
     public void visitSetEncode(LIRSetEncode self,
-                        JExpression streamContext,
-                        LIRFunctionPointer fp)
+                               JExpression streamContext,
+                               LIRFunctionPointer fp)
     {
         p.print("set_encode(");
         streamContext.accept(this);
@@ -2366,10 +2366,10 @@ public class SIRToStreamIt
         p.print(type.toString());
         p.print(", " + String.valueOf(ways));
         if (weights != null)
-        {
-            for (int i = 0; i < weights.length; i++)
-                p.print(", " + String.valueOf(weights[i]));
-        }
+            {
+                for (int i = 0; i < weights.length; i++)
+                    p.print(", " + String.valueOf(weights[i]));
+            }
         p.print(");");
     }
 
@@ -2377,8 +2377,8 @@ public class SIRToStreamIt
      * Visits a peek-rate-setting node.
      */
     public void visitSetPeek(LIRSetPeek self,
-                      JExpression streamContext,
-                      int peek)
+                             JExpression streamContext,
+                             int peek)
     {
         p.print("set_peek(");
         streamContext.accept(this);
@@ -2389,8 +2389,8 @@ public class SIRToStreamIt
      * Visits a pop-rate-setting node.
      */
     public void visitSetPop(LIRSetPop self,
-                     JExpression streamContext,
-                     int pop)
+                            JExpression streamContext,
+                            int pop)
     {
         p.print("set_pop(");
         streamContext.accept(this);
@@ -2401,8 +2401,8 @@ public class SIRToStreamIt
      * Visits a push-rate-setting node.
      */
     public void visitSetPush(LIRSetPush self,
-                      JExpression streamContext,
-                      int push)
+                             JExpression streamContext,
+                             int push)
     {
         p.print("set_push(");
         streamContext.accept(this);
@@ -2422,10 +2422,10 @@ public class SIRToStreamIt
         streamContext.accept(this);
         p.print(", " + type + ", " + String.valueOf(ways));
         if (weights != null)
-        {
-            for (int i = 0; i < weights.length; i++)
-                p.print(", " + String.valueOf(weights[i]));
-        }
+            {
+                for (int i = 0; i < weights.length; i++)
+                    p.print(", " + String.valueOf(weights[i]));
+            }
         p.print(");");
     }
 
@@ -2433,8 +2433,8 @@ public class SIRToStreamIt
      * Visits a stream-type-setting node.
      */
     public void visitSetStreamType(LIRSetStreamType self,
-                            JExpression streamContext,
-                            LIRStreamType streamType)
+                                   JExpression streamContext,
+                                   LIRStreamType streamType)
     {
         p.print("set_stream_type(");
         streamContext.accept(this);
@@ -2445,8 +2445,8 @@ public class SIRToStreamIt
      * Visits a work-function-setting node.
      */
     public void visitSetWork(LIRSetWork self,
-                      JExpression streamContext,
-                      LIRFunctionPointer fn)
+                             JExpression streamContext,
+                             LIRFunctionPointer fn)
     {
         assert false;
     }
@@ -2454,7 +2454,7 @@ public class SIRToStreamIt
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-				  List initStatements)
+                                  List initStatements)
     {
         assert false;
     }
@@ -2463,12 +2463,12 @@ public class SIRToStreamIt
      * Visits a set body of feedback loop.
      */
     public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         assert false;
     }
 
@@ -2476,12 +2476,12 @@ public class SIRToStreamIt
      * Visits a set loop of feedback loop.
      */
     public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         assert false;
     }
 
@@ -2489,36 +2489,36 @@ public class SIRToStreamIt
      * Visits a set a parallel stream.
      */
     public void visitSetParallelStream(LIRSetParallelStream self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       int position,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
+                                       int position,
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
         /* For  split/joins now.  Again, assume registration has
          * already happened; we just need to connect tapes.
          * Use the position'th slot on the splitter output and
          * joiner input. */
-	if (inputSize!=0) {
-	    p.print("create_splitjoin_tape(");
-	    streamContext.accept(this);
-	    p.print(", SPLITTER, OUTPUT, " + position + ", ");
-	    childContext.accept(this);
-	    p.print(", sizeof(");
+        if (inputSize!=0) {
+            p.print("create_splitjoin_tape(");
+            streamContext.accept(this);
+            p.print(", SPLITTER, OUTPUT, " + position + ", ");
+            childContext.accept(this);
+            p.print(", sizeof(");
             printType(inputType);
             p.print("), " + inputSize + ");");
-	    p.newLine();
-	}
-	if (outputSize!=0) {
-	    p.print("create_splitjoin_tape(");
-	    streamContext.accept(this);
-	    p.print(", JOINER, INPUT, " + position + ", ");
-	    childContext.accept(this);
-	    p.print(", sizeof(");
+            p.newLine();
+        }
+        if (outputSize!=0) {
+            p.print("create_splitjoin_tape(");
+            streamContext.accept(this);
+            p.print(", JOINER, INPUT, " + position + ", ");
+            childContext.accept(this);
+            p.print(", sizeof(");
             printType(outputType);
             p.print("), " + outputSize + ");");
-	}
+        }
     }
 
     /**
@@ -2645,8 +2645,8 @@ public class SIRToStreamIt
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-	System.err.println("Warning: converting double to float when printing StreamIt version of IR.\n" +
-			   "         (StreamIt does not yet have syntax for doubles.)");
+        System.err.println("Warning: converting double to float when printing StreamIt version of IR.\n" +
+                           "         (StreamIt does not yet have syntax for doubles.)");
         p.print((float)value);
     }
 
@@ -2786,37 +2786,37 @@ public class SIRToStreamIt
     protected void printType(CType s)
     {
         if (s instanceof CArrayType)
-        {
-            printType(((CArrayType)s).getBaseType());
-            JExpression[] dims = ((CArrayType)s).getDims();
-	    if (dims != null)
-		for (int i = 0; i < dims.length; i++)
-                {
-                    p.print("[");
-                    dims[i].accept(this);
-                    p.print("]");
-                }
-/*	    else
             {
-                p.print("[");
-                // I suspect this isn't entirely what we want.
-                // In fact, it looks like it prints the number
-                // of array bounds, which is frequently "1".
-                // Eit.
-                p.print(((CArrayType)s).getArrayBound());
-                p.print("]");
+                printType(((CArrayType)s).getBaseType());
+                JExpression[] dims = ((CArrayType)s).getDims();
+                if (dims != null)
+                    for (int i = 0; i < dims.length; i++)
+                        {
+                            p.print("[");
+                            dims[i].accept(this);
+                            p.print("]");
+                        }
+                /*      else
+                        {
+                        p.print("[");
+                        // I suspect this isn't entirely what we want.
+                        // In fact, it looks like it prints the number
+                        // of array bounds, which is frequently "1".
+                        // Eit.
+                        p.print(((CArrayType)s).getArrayBound());
+                        p.print("]");
+                        }
+                */
             }
-*/
-        }
         else if (s.toString().equals("Complex"))
             p.print("complex"); // revert to primitive type
         else if (s.toString().endsWith("Portal"))
-        {
-            // Rewrite this to be a Portal<foo> type.
-            String name = s.toString();
-            p.print("Portal<" + name.substring(0, name.length() - 6) + ">");
-        }
-	else
+            {
+                // Rewrite this to be a Portal<foo> type.
+                String name = s.toString();
+                p.print("Portal<" + name.substring(0, name.length() - 6) + ">");
+            }
+        else
             p.print(s.toString());
     }
 

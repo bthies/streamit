@@ -95,16 +95,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
             }
         }
         if(KjcOptions.destroyfieldarray)
-           arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-           /*   
-          try {
-            SIRPrinter printer1 = new SIRPrinter();
-            IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-            printer1.close();
-        }
-        catch (Exception e) 
-            {
-            }
+            arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+        /*   
+             try {
+             SIRPrinter printer1 = new SIRPrinter();
+             IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
+             printer1.close();
+             }
+             catch (Exception e) 
+             {
+             }
         */
         //      RemoveUnusedVars.doit(node);
         DeadCodeElimination.doit((SIRFilter)node.contents);
@@ -131,15 +131,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
     
 
     /*  
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields)
-    {
+        public void visitStructure(SIRStructure self,
+        SIRStream parent,
+        JFieldDeclaration[] fields)
+        {
         p.print("struct " + self.getIdent() + " {\n");
         for (int i = 0; i < fields.length; i++)
-            fields[i].accept(this);
+        fields[i].accept(this);
         p.print("};\n");
-    }
+        }
     */
     
     public void visitFilter(SIRFilter self,
@@ -213,7 +213,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //Visit fields declared in the filter class
         JFieldDeclaration[] fields = self.getFields();
         for (int i = 0; i < fields.length; i++)
-           fields[i].accept(this);
+            fields[i].accept(this);
         
         //add function for --standalone that will get the iteration
         //count from the command-line
@@ -463,24 +463,24 @@ public class FlatIRToC extends ToC implements StreamVisitor
         method = null;
     }
 
-/* //appears not to be used
-     private void dummyWork(int push) {
-        p.print("{\n");
-        p.print("  int i;\n");
-        p.print("  for(i = 0; i < " + push + "; i++)\n");
-        p.print("    static_send(i);\n");
-        p.print("}\n");
-    }
-*/
-/* //appears not to be used
-    private int nextPow2(int i) {
-        String str = Integer.toBinaryString(i);
-        if  (str.indexOf('1') == -1)
-            return 0;
-        int bit = str.length() - str.indexOf('1');
-        return (int)Math.pow(2, bit);
-    }
-*/    
+    /* //appears not to be used
+       private void dummyWork(int push) {
+       p.print("{\n");
+       p.print("  int i;\n");
+       p.print("  for(i = 0; i < " + push + "; i++)\n");
+       p.print("    static_send(i);\n");
+       p.print("}\n");
+       }
+    */
+    /* //appears not to be used
+       private int nextPow2(int i) {
+       String str = Integer.toBinaryString(i);
+       if  (str.indexOf('1') == -1)
+       return 0;
+       int bit = str.length() - str.indexOf('1');
+       return (int)Math.pow(2, bit);
+       }
+    */    
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
@@ -496,33 +496,33 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                         JExpression expr) {
 
         if (expr instanceof JArrayInitializer) {
-	    declareInitializedArray(type, ident, expr);
+            declareInitializedArray(type, ident, expr);
         } else {
 
-	    printDecl (type, ident);
-	    
+            printDecl (type, ident);
+        
             if (expr != null && !(expr instanceof JNewArrayExpression)) {
-		p.print ("\t= ");
-		expr.accept (this);
-	    } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
-		// this is to prevent partial evaluation of inputs to
-		// filter by C compiler if we are trying to simulate work
-		// in a node
-		if (type.isOrdinal())
-		    p.print(" = " + ((int)Math.random()));
-		else if (type.isFloatingPoint()) {
-		    p.print(" = " + ((float)Math.random()) + "f");
-		}
-	    } 
-	    else if (type.isOrdinal())
-		p.print(" = 0");
-	    else if (type.isFloatingPoint())
-		p.print(" = 0.0f");
-	    else if (type.isArrayType()) 
-		p.print(" = {0}");
+                p.print ("\t= ");
+                expr.accept (this);
+            } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
+                // this is to prevent partial evaluation of inputs to
+                // filter by C compiler if we are trying to simulate work
+                // in a node
+                if (type.isOrdinal())
+                    p.print(" = " + ((int)Math.random()));
+                else if (type.isFloatingPoint()) {
+                    p.print(" = " + ((float)Math.random()) + "f");
+                }
+            } 
+            else if (type.isOrdinal())
+                p.print(" = 0");
+            else if (type.isFloatingPoint())
+                p.print(" = 0.0f");
+            else if (type.isArrayType()) 
+                p.print(" = {0}");
 
-	    p.print(";/* " + type + " */");
-	}
+            p.print(";/* " + type + " */");
+        }
     }
 
     /**
@@ -530,33 +530,33 @@ public class FlatIRToC extends ToC implements StreamVisitor
      * Generates code to receive an array type into the buffer
      **/
     /*
-    public void popArray(JExpression arg) 
-    {
-        String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
+      public void popArray(JExpression arg) 
+      {
+      String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
         
-        //print the array indices
-        for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
-        }
+      //print the array indices
+      for (int i = 0; i < dims.length; i++) {
+      p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
+      RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+      RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+      }
         
-        p.print("{");
-        //print out the receive assembly
-        p.print(Util.staticNetworkReceivePrefix());
-        //print out the buffer variable and the index
-        arg.accept(this);
-        //now append the remaining dimensions
-        for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-        //finish up the receive assembly
-        p.print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
-        p.print("}");
-    }
+      p.print("{");
+      //print out the receive assembly
+      p.print(Util.staticNetworkReceivePrefix());
+      //print out the buffer variable and the index
+      arg.accept(this);
+      //now append the remaining dimensions
+      for (int i = 0; i < dims.length; i++) {
+      p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+      }
+      //finish up the receive assembly
+      p.print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
+      p.print("}");
+      }
     */
     
- /**
+    /**
      * prints an assignment expression
      */
     public void visitAssignmentExpression(JAssignmentExpression self,
@@ -585,32 +585,32 @@ public class FlatIRToC extends ToC implements StreamVisitor
             return;
         }
 
-	// copy arrays element-wise
-	boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
-			     (right.getType()!=null && right.getType().isArrayType()));
-	if (arrayType && !(right instanceof JNewArrayExpression)) {
+        // copy arrays element-wise
+        boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
+                             (right.getType()!=null && right.getType().isArrayType()));
+        if (arrayType && !(right instanceof JNewArrayExpression)) {
                     
             CArrayType type = (CArrayType)right.getType();
-	    String dims[] = Util.makeString(type.getDims());
+            String dims[] = Util.makeString(type.getDims());
 
-	    // dims should never be null now that we have static array
-	    // bounds
-	    assert dims != null;
-	    /*
+            // dims should never be null now that we have static array
+            // bounds
+            assert dims != null;
+            /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-                boolean oldStatementContext = statementContext;
-                lastLeft=left;
-                printLParen();
-                statementContext = false;
-                left.accept(this);
-                p.print(" = ");
-                right.accept(this);
-                statementContext = oldStatementContext;
-                printRParen();
-                return;
+            boolean oldStatementContext = statementContext;
+            lastLeft=left;
+            printLParen();
+            statementContext = false;
+            left.accept(this);
+            p.print(" = ");
+            right.accept(this);
+            statementContext = oldStatementContext;
+            printRParen();
+            return;
             }
-	    */
+            */
 
 
             p.print("{\n");
@@ -622,7 +622,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
                 p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
-                      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                        " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
@@ -669,7 +669,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print(Util.staticNetworkReceivePrefix());
             visitArgs(args,0);
             p.print(Util.staticNetworkReceiveSuffix
-                  (Util.getBaseType(filter.getInputType())));
+                    (Util.getBaseType(filter.getInputType())));
             statementContext = oldStatementContext;
             return;  
         }
@@ -677,17 +677,17 @@ public class FlatIRToC extends ToC implements StreamVisitor
         /*      
         //we are receiving an array type, call the popArray method
         if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
-            popArray(args[0]);
-            statementContext = oldStatementContext;
-            return;
+        popArray(args[0]);
+        statementContext = oldStatementContext;
+        return;
         }
         */
         /*
-        if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
-            rateMatchPush(args);
-            statementContext = oldStatementContext;
-            return;
-        }
+          if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
+          rateMatchPush(args);
+          statementContext = oldStatementContext;
+          return;
+          }
         */
         p.print(ident);
         
@@ -705,10 +705,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
-        if (prefix != null) {
-            prefix.accept(this);
-            i++;
-        }
+           if (prefix != null) {
+           prefix.accept(this);
+           i++;
+           }
         */
         visitArgs(args, i);
         p.print(")");
@@ -864,9 +864,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(Util.staticNetworkSendSuffix());
         //useful if debugging...!
         /*print(";\n");
-        p.print("raw_test_pass_reg(");
-        val.accept(this);
-        p.print(")");*/
+          p.print("raw_test_pass_reg(");
+          val.accept(this);
+          p.print(")");*/
     }
 
     
@@ -900,8 +900,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(";\n");
         for (int i = 0; i < dims.length; i++) {
             p.print("  for (" + ARRAY_INDEX + i + " = 0; " +
-                  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  ARRAY_INDEX + i + "++)\n");
+                    ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+                    ARRAY_INDEX + i + "++)\n");
         }
 
         if(KjcOptions.altcodegen || KjcOptions.decoupled) {
@@ -962,7 +962,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     }
 
 
-     // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
     // UNUSED STREAM VISITORS
     // ----------------------------------------------------------------------
 

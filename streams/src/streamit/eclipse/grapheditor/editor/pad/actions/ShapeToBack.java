@@ -1,5 +1,5 @@
 /*
- * @(#)ShapeToBack.java	1.2 01.02.2003
+ * @(#)ShapeToBack.java 1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -33,20 +33,20 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ShapeToBack extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ShapeToBack.
-	 * @param graphpad
-	 */
-	public ShapeToBack(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ShapeToBack.
+     * @param graphpad
+     */
+    public ShapeToBack(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Object[] cells = getCurrentGraph().getSelectionCells();
-			getCurrentGraph().getGraphLayoutCache().toBack(cells);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getSelectionCells();
+        getCurrentGraph().getGraphLayoutCache().toBack(cells);
+    }
 
 }

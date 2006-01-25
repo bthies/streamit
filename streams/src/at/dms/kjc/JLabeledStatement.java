@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLabeledStatement.java,v 1.9 2003-11-13 10:46:10 thies Exp $
+ * $Id: JLabeledStatement.java,v 1.10 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,165 +32,165 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JLabeledStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JLabeledStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	label		the label of the enclosing labeled statement
-   * @param	body		the contained statement
-   * @param	comments	comments in the source text
-   */
-  public JLabeledStatement(TokenReference where,
-			   String label,
-			   JStatement body,
-			   JavaStyleComment[] comments)
-  {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   label       the label of the enclosing labeled statement
+     * @param   body        the contained statement
+     * @param   comments    comments in the source text
+     */
+    public JLabeledStatement(TokenReference where,
+                             String label,
+                             JStatement body,
+                             JavaStyleComment[] comments)
+    {
+        super(where, comments);
 
-    this.label = label;
-    this.body = body;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the label of this statement.
-   */
-  /*package*/ String getLabel() {
-    return label;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    check(context,
-	  context.getLabeledStatement(label) == null,
-	  KjcMessages.LABEL_ALREADY_EXISTS, label);
-
-    CLabeledContext	labeledContext;
-
-    labeledContext = new CLabeledContext(context, this);
-    body.analyse(labeledContext);
-    labeledContext.close(getTokenReference());
-  }
-
-  // ----------------------------------------------------------------------
-  // BREAK/CONTINUE HANDLING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the actual target statement of a break or continue whose
-   * label is the label of this statement.
-   *
-   * If the statement referencing this labeled statement is either a break
-   * or a continue statement :
-   * - if it is a continue statement, the target is the contained statement
-   *   which must be a loop statement.
-   * - if it is a break statement, the target is the labeled statement
-   *   itself ; however, if the contained statement is a loop statement,
-   *   the target address for a break of the contained statement is the same
-   *   as the target address of this labeled statement.
-   * Thus, if the contained statement is a loop statement, the target
-   * for a break or continue to this labeled statement is the same as the
-   * target address of this labeled statement.
-   */
-  public JStatement getTargetStatement() {
-    if (body instanceof JLoopStatement) {
-      // JLS 14.15: do, while or for statement
-      return body;
-    } else {
-      return this;
+        this.label = label;
+        this.body = body;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitLabeledStatement(this, label, body);
-  }
+    /**
+     * Returns the label of this statement.
+     */
+    /*package*/ String getLabel() {
+        return label;
+    }
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-    return p.visitLabeledStatement(this, label, body);
-  } 
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        check(context,
+              context.getLabeledStatement(label) == null,
+              KjcMessages.LABEL_ALREADY_EXISTS, label);
+
+        CLabeledContext labeledContext;
+
+        labeledContext = new CLabeledContext(context, this);
+        body.analyse(labeledContext);
+        labeledContext.close(getTokenReference());
+    }
+
+    // ----------------------------------------------------------------------
+    // BREAK/CONTINUE HANDLING
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the actual target statement of a break or continue whose
+     * label is the label of this statement.
+     *
+     * If the statement referencing this labeled statement is either a break
+     * or a continue statement :
+     * - if it is a continue statement, the target is the contained statement
+     *   which must be a loop statement.
+     * - if it is a break statement, the target is the labeled statement
+     *   itself ; however, if the contained statement is a loop statement,
+     *   the target address for a break of the contained statement is the same
+     *   as the target address of this labeled statement.
+     * Thus, if the contained statement is a loop statement, the target
+     * for a break or continue to this labeled statement is the same as the
+     * target address of this labeled statement.
+     */
+    public JStatement getTargetStatement() {
+        if (body instanceof JLoopStatement) {
+            // JLS 14.15: do, while or for statement
+            return body;
+        } else {
+            return this;
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitLabeledStatement(this, label, body);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitLabeledStatement(this, label, body);
+    } 
       
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    endLabel = new CodeLabel();
-    body.genCode(code);
-    code.plantLabel(endLabel);
-    endLabel = null;
-  }
+        endLabel = new CodeLabel();
+        body.genCode(code);
+        code.plantLabel(endLabel);
+        endLabel = null;
+    }
 
-  /**
-   * Returns the end of this block (for break statement).
-   */
-  public CodeLabel getBreakLabel() {
-    return endLabel;
-  }
+    /**
+     * Returns the end of this block (for break statement).
+     */
+    public CodeLabel getBreakLabel() {
+        return endLabel;
+    }
 
     /**
      * Set the body of this.
      */
     public void setBody(JStatement body) {
-	this.body = body;
+        this.body = body;
     }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private String		label;
-  private JStatement		body;
-  private CodeLabel		endLabel;
+    private String      label;
+    private JStatement      body;
+    private CodeLabel       endLabel;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JLabeledStatement other = new at.dms.kjc.JLabeledStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JLabeledStatement other = new at.dms.kjc.JLabeledStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JLabeledStatement other) {
-  super.deepCloneInto(other);
-  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
-  other.body = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-  other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JLabeledStatement other) {
+        super.deepCloneInto(other);
+        other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
+        other.body = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+        other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

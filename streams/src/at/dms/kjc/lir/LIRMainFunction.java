@@ -45,19 +45,19 @@ public class LIRMainFunction extends LIRNode {
      * Construct a node.  Keeps a clone of <initStatements>.
      */
     public LIRMainFunction(String typeName,
-			   LIRFunctionPointer init,
-			   LinkedList initStatements) {
-	// stream context is null since we're at the toplevel
-	super(null);
-	this.init = init;
-	this.initStatements = (LinkedList)initStatements.clone();
-	this.typeName = typeName;
+                           LIRFunctionPointer init,
+                           LinkedList initStatements) {
+        // stream context is null since we're at the toplevel
+        super(null);
+        this.init = init;
+        this.initStatements = (LinkedList)initStatements.clone();
+        this.typeName = typeName;
     }
 
     public void accept(SLIRVisitor v) {
         v.visitMainFunction(this, 
-			    this.typeName, 
-			    this.init,
-			    this.initStatements);
+                            this.typeName, 
+                            this.init,
+                            this.initStatements);
     }
 }

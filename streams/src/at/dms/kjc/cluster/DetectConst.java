@@ -31,60 +31,60 @@ public class DetectConst extends SLIREmptyVisitor {
 
     public static void detect(FlatNode node) 
     {
-	DetectConst dc = new DetectConst((SIRFilter)node.contents);
-	dc.visitFilter((SIRFilter)node.contents);
+        DetectConst dc = new DetectConst((SIRFilter)node.contents);
+        dc.visitFilter((SIRFilter)node.contents);
     }
 
     public static DetectConst getInstance(SIRFilter filter) {
-	if (!instances.containsKey(filter)) return null;
-	return (DetectConst)instances.get(filter);
+        if (!instances.containsKey(filter)) return null;
+        return (DetectConst)instances.get(filter);
     }
     
 
 
     public DetectConst(SIRFilter filter) 
     {
-	instances.put(filter, this);
+        instances.put(filter, this);
     }
        
     public boolean isConst(String field) {
-	if (fieldIsModified.contains(field)) return false;
-	return true;
+        if (fieldIsModified.contains(field)) return false;
+        return true;
     }
 
     public void visitFilter(SIRFilter self) {
 
-	//System.out.println();
-	//System.out.println("DetectConst: visiting filter "+self.getIdent());
+        //System.out.println();
+        //System.out.println("DetectConst: visiting filter "+self.getIdent());
 
-	JMethodDeclaration work = self.getWork();
-	JMethodDeclaration init = self.getInit();
+        JMethodDeclaration work = self.getWork();
+        JMethodDeclaration init = self.getInit();
 
-	//visit methods of filter, print the declaration first
+        //visit methods of filter, print the declaration first
 
-	JMethodDeclaration[] methods = self.getMethods();
+        JMethodDeclaration[] methods = self.getMethods();
 
-	methodsToVisit = new HashMap();
-	fieldIsModified = new HashSet();
-	int old_size = 0;
+        methodsToVisit = new HashMap();
+        fieldIsModified = new HashSet();
+        int old_size = 0;
 
-	//methodsToVisit.put("__CLUSTERMAIN__", new Boolean(false));
+        //methodsToVisit.put("__CLUSTERMAIN__", new Boolean(false));
 
-	methodsToVisit.put(work.getName(), new Boolean(false));
+        methodsToVisit.put(work.getName(), new Boolean(false));
 
-	while (methodsToVisit.size() != old_size) {
-	    old_size = methodsToVisit.size();
-	    for (int i = 0; i < methods.length; i++) {
-		String currMethod = methods[i].getName();
-		if (methodsToVisit.containsKey(currMethod)) {
-		    Boolean done = (Boolean)methodsToVisit.get(currMethod);
-		    if (!done.booleanValue()) {
-			methods[i].accept(this);
-			methodsToVisit.put(currMethod, new Boolean(true));
-		    }
-		}
-	    }
-	}
+        while (methodsToVisit.size() != old_size) {
+            old_size = methodsToVisit.size();
+            for (int i = 0; i < methods.length; i++) {
+                String currMethod = methods[i].getName();
+                if (methodsToVisit.containsKey(currMethod)) {
+                    Boolean done = (Boolean)methodsToVisit.get(currMethod);
+                    if (!done.booleanValue()) {
+                        methods[i].accept(this);
+                        methodsToVisit.put(currMethod, new Boolean(true));
+                    }
+                }
+            }
+        }
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -102,8 +102,8 @@ public class DetectConst extends SLIREmptyVisitor {
                                        CClassType[] exceptions,
                                        JBlock body) {
 
-	//System.out.println("DetectConst: visiting method "+ident);
-	this.visitBlockStatement(body, null);
+        //System.out.println("DetectConst: visiting method "+ident);
+        this.visitBlockStatement(body, null);
     }
 
     public void visitMethodCallExpression(JMethodCallExpression self,
@@ -111,11 +111,11 @@ public class DetectConst extends SLIREmptyVisitor {
                                           String ident,
                                           JExpression[] args) {
     
-	if (!methodsToVisit.containsKey(ident)) {
-	    methodsToVisit.put(ident, new Boolean(false));
-	}
+        if (!methodsToVisit.containsKey(ident)) {
+            methodsToVisit.put(ident, new Boolean(false));
+        }
 
-	//System.out.println("Method call expression: "+ident);
+        //System.out.println("Method call expression: "+ident);
     }
 
 
@@ -124,22 +124,22 @@ public class DetectConst extends SLIREmptyVisitor {
                                       int oper,
                                       JExpression expr) {
 
-	if (expr instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a prefix expression");
-	    fieldIsModified.add(f_expr.getIdent());
-	}
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
+            //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a prefix expression");
+            fieldIsModified.add(f_expr.getIdent());
+        }
     }
 
     public void visitPostfixExpression(JPostfixExpression self,
                                        int oper,
                                        JExpression expr) {
 
-	if (expr instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a postfix expression");
-	    fieldIsModified.add(f_expr.getIdent());	    
-	}
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
+            //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a postfix expression");
+            fieldIsModified.add(f_expr.getIdent());     
+        }
     }
 
 
@@ -147,21 +147,21 @@ public class DetectConst extends SLIREmptyVisitor {
                                           JExpression left,
                                           JExpression right) {
 
-	if (left instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
-	    fieldIsModified.add(f_expr.getIdent());
-	}
+        if (left instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
+            //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
+            fieldIsModified.add(f_expr.getIdent());
+        }
 
-	if (left instanceof JArrayAccessExpression) {
-	    JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
+        if (left instanceof JArrayAccessExpression) {
+            JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
 
-	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
-		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		//System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
-		fieldIsModified.add(f_expr.getIdent());
-	    }
-	}
+            if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
+                JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
+                //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
+                fieldIsModified.add(f_expr.getIdent());
+            }
+        }
     }
 
 
@@ -171,21 +171,21 @@ public class DetectConst extends SLIREmptyVisitor {
                                                   JExpression left,
                                                   JExpression right) {
 
-	if (left instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
-	    fieldIsModified.add(f_expr.getIdent());
-	}
+        if (left instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
+            //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
+            fieldIsModified.add(f_expr.getIdent());
+        }
 
-	if (left instanceof JArrayAccessExpression) {
-	    JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
+        if (left instanceof JArrayAccessExpression) {
+            JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
 
-	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
-		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		//System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
-		fieldIsModified.add(f_expr.getIdent());
-	    }
-	}
+            if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
+                JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
+                //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
+                fieldIsModified.add(f_expr.getIdent());
+            }
+        }
     }
 
 }

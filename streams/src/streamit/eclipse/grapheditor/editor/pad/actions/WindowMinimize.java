@@ -1,5 +1,5 @@
 /*
- * @(#)WindowMinimize.java	1.2 09.02.2003
+ * @(#)WindowMinimize.java  1.2 09.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,31 +36,31 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class WindowMinimize extends AbstractActionDefault {
 
-	/**
-	 * Constructor for WindowMinimize.
-	 * @param graphpad
-	 */
-	public WindowMinimize(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for WindowMinimize.
+     * @param graphpad
+     */
+    public WindowMinimize(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Calls the method setIcon(true) for each
-	 * JInternalFrame.
-	 * 
-	 * 
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		JInternalFrame[] ajif = graphpad.getAllFrames();
+    /**
+     * Calls the method setIcon(true) for each
+     * JInternalFrame.
+     * 
+     * 
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        JInternalFrame[] ajif = graphpad.getAllFrames();
 
-		for (int i = 0; i < ajif.length; i++) {
-			try {
-				ajif[i].setIcon(true);
-			} catch (java.beans.PropertyVetoException pvex) {
-				// do nothing
-			}
-		}
-	}
+        for (int i = 0; i < ajif.length; i++) {
+            try {
+                ajif[i].setIcon(true);
+            } catch (java.beans.PropertyVetoException pvex) {
+                // do nothing
+            }
+        }
+    }
 
 }

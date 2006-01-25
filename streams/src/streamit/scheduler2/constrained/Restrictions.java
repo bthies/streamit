@@ -23,7 +23,7 @@ public class Restrictions extends streamit.misc.Misc
         {
             assert leftObj != null && rightObj != null;
             assert leftObj instanceof Restriction
-                   && rightObj instanceof Restriction;
+                && rightObj instanceof Restriction;
 
             Restriction left = (Restriction)leftObj;
             Restriction right = (Restriction)rightObj;
@@ -34,7 +34,7 @@ public class Restrictions extends streamit.misc.Misc
             return (leftExecutions < rightExecutions)
                 || (leftExecutions == rightExecutions
                     && left.getPortal().hashCode()
-                        < right.getPortal().hashCode());
+                    < right.getPortal().hashCode());
         }
     }
 
@@ -44,7 +44,7 @@ public class Restrictions extends streamit.misc.Misc
         {
             assert leftObj != null && rightObj != null;
             assert leftObj instanceof Restriction
-                    && rightObj instanceof Restriction;
+                && rightObj instanceof Restriction;
 
             Restriction left = (Restriction)leftObj;
             Restriction right = (Restriction)rightObj;
@@ -103,89 +103,89 @@ public class Restrictions extends streamit.misc.Misc
         int allowedExecs;
 
         if (strongestRestr == null)
-        {
-            allowedExecs = nTimes;
-        }
+            {
+                allowedExecs = nTimes;
+            }
         else
-        {
-            allowedExecs =
-                MIN(nTimes, strongestRestr.getNumAllowedExecutions());
-        }
+            {
+                allowedExecs =
+                    MIN(nTimes, strongestRestr.getNumAllowedExecutions());
+            }
 
         if (allowedExecs > 0)
-        {
-            // increase the # of times the node has been executed
             {
-                OMapIterator nodeIter = nodeExecutions.find(node);
-                if (nodeIter.equals(lastNodeExecutionIter))
+                // increase the # of times the node has been executed
                 {
-                    // node has not been executed yet!
-                    nodeExecutions.insert(node, new Integer(allowedExecs));
+                    OMapIterator nodeIter = nodeExecutions.find(node);
+                    if (nodeIter.equals(lastNodeExecutionIter))
+                        {
+                            // node has not been executed yet!
+                            nodeExecutions.insert(node, new Integer(allowedExecs));
+                        }
+                    else
+                        {
+                            // node has been executed before - have to retrieve the
+                            // current num execs and add allowedExecs
+                            int execsSoFar =
+                                ((Integer)nodeIter.getData()).intValue();
+                            nodeIter.setData(
+                                             new Integer(execsSoFar + allowedExecs));
+                        }
                 }
-                else
+
+                // and notify restrictions that they're now blocking
+                // execution
                 {
-                    // node has been executed before - have to retrieve the
-                    // current num execs and add allowedExecs
-                    int execsSoFar =
-                        ((Integer)nodeIter.getData()).intValue();
-                    nodeIter.setData(
-                        new Integer(execsSoFar + allowedExecs));
+                    DLList toBeRemoved = new DLList();
+                    OMapIterator nodeRestrictionsIter = restrictions.find(node);
+
+                    // only have to do this if there some restrictions!
+                    if (!nodeRestrictionsIter.equals(lastRestrictionsIter))
+                        {
+                            OSet nodeRestrictions =
+                                (OSet)nodeRestrictionsIter.getData();
+                            OSetIterator lastNodeRestrictionIter =
+                                nodeRestrictions.end();
+                            for (OSetIterator nodeRestrictionIter =
+                                     nodeRestrictions.begin();
+                                 !nodeRestrictionIter.equals(
+                                                             lastNodeRestrictionIter);
+                                 nodeRestrictionIter.next())
+                                {
+                                    Restriction nodeRestriction =
+                                        (Restriction)nodeRestrictionIter.get();
+                                    if (nodeRestriction.getNumAllowedExecutions() == 0)
+                                        {
+                                            // notify the restriction
+                                            boolean removeRestriction =
+                                                nodeRestriction.notifyExpired();
+                                            if (removeRestriction)
+                                                {
+                                                    // store the restriction to be
+                                                    // removed below!
+                                                    toBeRemoved.pushBack(nodeRestriction);
+                                                }
+                                        }
+                                    else
+                                        {
+                                            // this restriction isn't blocking, so
+                                            // all remaining restrictions are not blocking
+                                            // either
+                                            break;
+                                        }
+                                }
+                        }
+
+                    // remove any restrictions which need removing
+                    while (!toBeRemoved.empty())
+                        {
+                            Restriction gonner =
+                                (Restriction)toBeRemoved.front().get();
+                            remove(gonner);
+                            toBeRemoved.popFront();
+                        }
                 }
             }
-
-            // and notify restrictions that they're now blocking
-            // execution
-            {
-                DLList toBeRemoved = new DLList();
-                OMapIterator nodeRestrictionsIter = restrictions.find(node);
-
-                // only have to do this if there some restrictions!
-                if (!nodeRestrictionsIter.equals(lastRestrictionsIter))
-                {
-                    OSet nodeRestrictions =
-                        (OSet)nodeRestrictionsIter.getData();
-                    OSetIterator lastNodeRestrictionIter =
-                        nodeRestrictions.end();
-                    for (OSetIterator nodeRestrictionIter =
-                        nodeRestrictions.begin();
-                        !nodeRestrictionIter.equals(
-                            lastNodeRestrictionIter);
-                        nodeRestrictionIter.next())
-                    {
-                        Restriction nodeRestriction =
-                            (Restriction)nodeRestrictionIter.get();
-                        if (nodeRestriction.getNumAllowedExecutions() == 0)
-                        {
-                            // notify the restriction
-                            boolean removeRestriction =
-                                nodeRestriction.notifyExpired();
-                            if (removeRestriction)
-                            {
-                                // store the restriction to be
-                                // removed below!
-                                toBeRemoved.pushBack(nodeRestriction);
-                            }
-                        }
-                        else
-                        {
-                            // this restriction isn't blocking, so
-                            // all remaining restrictions are not blocking
-                            // either
-                            break;
-                        }
-                    }
-                }
-
-                // remove any restrictions which need removing
-                while (!toBeRemoved.empty())
-                {
-                    Restriction gonner =
-                        (Restriction)toBeRemoved.front().get();
-                    remove(gonner);
-                    toBeRemoved.popFront();
-                }
-            }
-        }
 
         return allowedExecs;
     }
@@ -232,9 +232,9 @@ public class Restrictions extends streamit.misc.Misc
     {
         OMapIterator restrictionsIter = restrictions.find(node);
         if (restrictionsIter.equals(lastRestrictionsIter))
-        {
-            return null;
-        }
+            {
+                return null;
+            }
 
         OSet nodeRestrictions = (OSet)restrictionsIter.getData();
         OSetIterator restrictionIter = nodeRestrictions.begin();
@@ -256,9 +256,9 @@ public class Restrictions extends streamit.misc.Misc
     {
         OMapIterator restrictionsIter = restrictions.find(node);
         if (restrictionsIter.equals(lastRestrictionsIter))
-        {
-            return null;
-        }
+            {
+                return null;
+            }
 
         OSet nodeRestrictions = (OSet)restrictionsIter.getData();
         if (nodeRestrictions.size() == 0) return null;
@@ -284,19 +284,19 @@ public class Restrictions extends streamit.misc.Misc
         {
             // has this node had its restrictions initialized yet?
             if (nodeRestrictionsIter.equals(restrictions.end()))
-            {
-                // nope - make sure that the node has restrictions
-                // initialized before adding :)
-                Pair result =
-                    restrictions.insert(
-                        restrictedNode,
-                        new OSet(new RestrictionExecutionsComperator()));
+                {
+                    // nope - make sure that the node has restrictions
+                    // initialized before adding :)
+                    Pair result =
+                        restrictions.insert(
+                                            restrictedNode,
+                                            new OSet(new RestrictionExecutionsComperator()));
 
-                // better not have anything in there - that would be 
-                // a bug in the container or something
-                assert ((Boolean)result.getSecond()).booleanValue();
-                nodeRestrictionsIter = (OMapIterator)result.getFirst();
-            }
+                    // better not have anything in there - that would be 
+                    // a bug in the container or something
+                    assert ((Boolean)result.getSecond()).booleanValue();
+                    nodeRestrictionsIter = (OMapIterator)result.getFirst();
+                }
 
             OSet nodeRestrictions = (OSet)nodeRestrictionsIter.getData();
             nodeRestrictions.insert(restriction);
@@ -308,32 +308,32 @@ public class Restrictions extends streamit.misc.Misc
             Pair result = allRestrictions.insert(restriction);
 
             if (((Boolean)result.getSecond()).booleanValue() == false)
-            {
-                // there already is a restriction for this portal/node pair!
-                // remove it from allRestrictions first
-                OSetIterator oldRestrictionIter =
-                    (OSetIterator)result.getFirst();
-                oldRestriction = (Restriction)oldRestrictionIter.get();
-                allRestrictions.erase(oldRestrictionIter);
+                {
+                    // there already is a restriction for this portal/node pair!
+                    // remove it from allRestrictions first
+                    OSetIterator oldRestrictionIter =
+                        (OSetIterator)result.getFirst();
+                    oldRestriction = (Restriction)oldRestrictionIter.get();
+                    allRestrictions.erase(oldRestrictionIter);
 
-                // insert the restriction into the allRestrictions set
-                allRestrictions.insert(restriction);
+                    // insert the restriction into the allRestrictions set
+                    allRestrictions.insert(restriction);
 
-                // and now remove it from from restrictions
-                OSet nodeRestrictions =
-                    (OSet)nodeRestrictionsIter.getData();
-                nodeRestrictions.erase(oldRestriction);
-            }
+                    // and now remove it from from restrictions
+                    OSet nodeRestrictions =
+                        (OSet)nodeRestrictionsIter.getData();
+                    nodeRestrictions.erase(oldRestriction);
+                }
         }
 
         // finally, if the restriction is now blocking, notify it
         // of its status
         if (restriction.getNumAllowedExecutions() == 0)
-        {
-            boolean removeRestriction = restriction.notifyExpired();
-            if (removeRestriction)
-                remove(restriction);
-        }
+            {
+                boolean removeRestriction = restriction.notifyExpired();
+                if (removeRestriction)
+                    remove(restriction);
+            }
 
         return oldRestriction;
     }
@@ -349,14 +349,14 @@ public class Restrictions extends streamit.misc.Misc
         OSetIterator restrictionIter = allRestrictions.find(restriction);
         if (!restrictionIter.equals(allRestrictions.end())
             && restrictionIter.get() == restriction)
-        {
-            // yep, it's still there; remove it!
-            allRestrictions.erase(restriction);
-            OMapIterator nodeRestrictionsIter =
-                restrictions.find(restriction.getNode());
-            assert !nodeRestrictionsIter.equals(restrictions.end());
-            OSet nodeRestrictions = (OSet)nodeRestrictionsIter.getData();
-            nodeRestrictions.erase(restriction);
-        }
+            {
+                // yep, it's still there; remove it!
+                allRestrictions.erase(restriction);
+                OMapIterator nodeRestrictionsIter =
+                    restrictions.find(restriction.getNode());
+                assert !nodeRestrictionsIter.equals(restrictions.end());
+                OSet nodeRestrictions = (OSet)nodeRestrictionsIter.getData();
+                nodeRestrictions.erase(restriction);
+            }
     }
 }

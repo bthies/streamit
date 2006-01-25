@@ -30,7 +30,7 @@ abstract class LDPConfig implements Cloneable {
     public static HashMap partitions;
 
     protected LDPConfig(LinearPartitioner partitioner) {
-	this.partitioner = partitioner;
+        this.partitioner = partitioner;
     }
 
     /**
@@ -54,16 +54,16 @@ abstract class LDPConfig implements Cloneable {
      * stream.
      */
     public LDPConfig copyWithStream(SIRStream str) {
-	// use cloning instead of a new constructor so that we
-	// don't reconstruct a fresh A array.
-	LDPConfig result = null;
-	try {
-	    result = (LDPConfig)this.clone();
-	} catch (CloneNotSupportedException e) {
-	    e.printStackTrace();
-	}
-	result.setStream(str);
-	return result;
+        // use cloning instead of a new constructor so that we
+        // don't reconstruct a fresh A array.
+        LDPConfig result = null;
+        try {
+            result = (LDPConfig)this.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        result.setStream(str);
+        return result;
     }
 
     /**
@@ -78,28 +78,28 @@ abstract class LDPConfig implements Cloneable {
      * of <str>.
      */
     protected int getScalingFactor(LinearFilterRepresentation l, SIRStream str) {
-	int strPush = str.getPushForSchedule(partitioner.getExecutionCounts());
-	int strPop = str.getPopForSchedule(partitioner.getExecutionCounts());
-	int linPush = l.getPushCount();
-	int linPop = l.getPopCount();
-	
-	int pushRatio = strPush / linPush;
-	int popRatio = strPop / linPop;
-	// see if we can get away with this being an integer
-	assert strPush % linPush == 0:
+        int strPush = str.getPushForSchedule(partitioner.getExecutionCounts());
+        int strPop = str.getPopForSchedule(partitioner.getExecutionCounts());
+        int linPush = l.getPushCount();
+        int linPop = l.getPopCount();
+    
+        int pushRatio = strPush / linPush;
+        int popRatio = strPop / linPop;
+        // see if we can get away with this being an integer
+        assert strPush % linPush == 0:
             "Have non-integral scaling factor of " +
             strPush + " / " + linPush + " for stream " + str.getName();
-	// make sure ratios are same
-	assert pushRatio==popRatio:
+        // make sure ratios are same
+        assert pushRatio==popRatio:
             "Found unequal push and pop ratios when computing scaling factor" +
             "\n  str=" + str +
             "\n  strPush=" + strPush +
             "\n  strPop=" + strPush +
             "\n  linPush=" + linPush +
             "\n  linPop=" + linPop;
-	assert pushRatio>0:
+        assert pushRatio>0:
             "Found non-positive scaling factor:" + pushRatio;
-	return pushRatio;
+        return pushRatio;
     }
 }
 

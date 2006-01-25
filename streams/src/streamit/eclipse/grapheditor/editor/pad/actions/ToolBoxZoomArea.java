@@ -1,5 +1,5 @@
 /*
- * @(#)ToolBoxZoomArea.java	1.2 05.02.2003
+ * @(#)ToolBoxZoomArea.java 1.2 05.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,38 +36,38 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public class ToolBoxZoomArea extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ToolBoxZoomArea.
-	 * @param graphpad
-	 */
-	public ToolBoxZoomArea(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolBoxZoomArea.
+     * @param graphpad
+     */
+    public ToolBoxZoomArea(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JToggleButton button = graphpad.getMarqueeHandler().getButtonZoomArea();
-		GPBarFactory.fillToolbarButton(
-					button,
-					getName(),
-					actionCommand);
-		return button;
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JToggleButton button = graphpad.getMarqueeHandler().getButtonZoomArea();
+        GPBarFactory.fillToolbarButton(
+                                       button,
+                                       getName(),
+                                       actionCommand);
+        return button;
+    }
 
-	/**
-	 *
-	 */
-	public void update() {
-		super.update();
-		graphpad.getMarqueeHandler().getButtonZoomArea().setEnabled(isEnabled());
-	}
+    /**
+     *
+     */
+    public void update() {
+        super.update();
+        graphpad.getMarqueeHandler().getButtonZoomArea().setEnabled(isEnabled());
+    }
 
 }

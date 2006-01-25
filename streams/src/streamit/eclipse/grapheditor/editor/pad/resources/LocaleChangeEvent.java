@@ -1,5 +1,5 @@
 /*
- * @(#)LocaleChangeEvent.java	1.0 23/01/02
+ * @(#)LocaleChangeEvent.java   1.0 23/01/02
  *
  * Copyright (C) 2003 Sven Luzar
  *
@@ -31,37 +31,37 @@ import java.util.Locale;
 
 public class LocaleChangeEvent {
 
-  /**
-   * Represents the old Locale or null
-   */
-  protected Locale oldLocale;
+    /**
+     * Represents the old Locale or null
+     */
+    protected Locale oldLocale;
 
-  /**
-   * Represents the new Locale
-   */
-  protected Locale newLocale;
+    /**
+     * Represents the new Locale
+     */
+    protected Locale newLocale;
 
-  /**
-   * Creates a new Locale Change Event with the old and the
-   * new Locale.
-   */
-  public LocaleChangeEvent(Locale oldLocale, Locale newLocale) {
-    this.oldLocale = oldLocale;
-    this.newLocale = newLocale;
-  }
+    /**
+     * Creates a new Locale Change Event with the old and the
+     * new Locale.
+     */
+    public LocaleChangeEvent(Locale oldLocale, Locale newLocale) {
+        this.oldLocale = oldLocale;
+        this.newLocale = newLocale;
+    }
 
-  /**
-   * Returns the old Locale
-   */
-  public Locale getOldLocale(){
-    return this.oldLocale;
-  }
+    /**
+     * Returns the old Locale
+     */
+    public Locale getOldLocale(){
+        return this.oldLocale;
+    }
 
-  /**
-   * Returns the new Locale
-   */
-  public Locale getNewLocale(){
-    return this.newLocale;
-  }
+    /**
+     * Returns the new Locale
+     */
+    public Locale getNewLocale(){
+        return this.newLocale;
+    }
 
 }

@@ -27,7 +27,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.20 2006-01-05 22:28:39 thies Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.21 2006-01-25 17:04:30 thies Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -57,19 +57,19 @@ public class InsertInitConstructors extends InitMunger
      */
     private boolean needsConstructor(Type type)
     {
-	return needsConstructor(type, null);
+        return needsConstructor(type, null);
     }
     private boolean needsConstructor(Type type, Expression initializer) {
-	return (type.isComplex() || 
-		type.isComposite() || 
-		(!(type instanceof TypePrimitive) && 
-		 // compiler doesn't need constructors for any arrays,
-		 // because we now declare them with static bounds
-		 // (e.g., int x[10][10]).
-		 ((!libraryFormat && !(type instanceof TypeArray)) ||
-		  // library still needs constructors for all arrays
-		  // except for those that have initializers
-		  (libraryFormat && !(type instanceof TypeArray && initializer!=null)))));
+        return (type.isComplex() || 
+                type.isComposite() || 
+                (!(type instanceof TypePrimitive) && 
+                 // compiler doesn't need constructors for any arrays,
+                 // because we now declare them with static bounds
+                 // (e.g., int x[10][10]).
+                 ((!libraryFormat && !(type instanceof TypeArray)) ||
+                  // library still needs constructors for all arrays
+                  // except for those that have initializers
+                  (libraryFormat && !(type instanceof TypeArray && initializer!=null)))));
     }
 
     /**
@@ -103,57 +103,57 @@ public class InsertInitConstructors extends InitMunger
         // recursively generate constructors for the structure
         // members.
         if (type instanceof TypeStruct)
-        {
-            TypeStruct ts = (TypeStruct)type;
-            for (int i = 0; i < ts.getNumFields(); i++)
             {
-                String fname = ts.getField(i);
-                Type ftype = ts.getType(fname);
-                if (needsConstructor(ftype))
-                {
-                    // Construct the new left-hand side:
-                    Expression lhs = new ExprField(ctx, name, fname);
-                    // Get child constructors and add them:
-                    result.addAll(stmtsForConstructor(ctx, lhs, ftype, null, true));
-                }
+                TypeStruct ts = (TypeStruct)type;
+                for (int i = 0; i < ts.getNumFields(); i++)
+                    {
+                        String fname = ts.getField(i);
+                        Type ftype = ts.getType(fname);
+                        if (needsConstructor(ftype))
+                            {
+                                // Construct the new left-hand side:
+                                Expression lhs = new ExprField(ctx, name, fname);
+                                // Get child constructors and add them:
+                                result.addAll(stmtsForConstructor(ctx, lhs, ftype, null, true));
+                            }
+                    }
             }
-        }
         // Or, if this is an array of structures, we might need to
         // recursively generate constructors.
         if (libraryFormat && (type instanceof TypeArray))
-        {
-            TypeArray ta = (TypeArray)type;
-            Type base = ta.getBase();
-            if (needsConstructor(base))
             {
-                // The length might be non-constant.  This means that
-                // we need to do this by looping through the array.
-                String tempVar = varGen.nextVar();
-                Expression varExp = new ExprVar(ctx, tempVar);
-                Statement decl =
-                    new StmtVarDecl(ctx,
-                                    new TypePrimitive(TypePrimitive.TYPE_INT),
-                                    tempVar,
-                                    new ExprConstInt(ctx, 0));
-                Expression cond =
-                    new ExprBinary(ctx,
-                                   ExprBinary.BINOP_LT,
-                                   varExp,
-                                   ta.getLength());
-                Statement incr =
-                    new StmtExpr(ctx,
-                                 new ExprUnary(ctx,
-                                               ExprUnary.UNOP_POSTINC,
-                                               varExp));
-                Expression lhs = new ExprArray(ctx, name, varExp);
-                Statement body =
-                    new StmtBlock(ctx,
-                                  stmtsForConstructor(ctx, lhs, base, null, false));
-                Statement loop =
-                    new StmtFor(ctx, decl, cond, incr, body);
-                result.add(loop);
+                TypeArray ta = (TypeArray)type;
+                Type base = ta.getBase();
+                if (needsConstructor(base))
+                    {
+                        // The length might be non-constant.  This means that
+                        // we need to do this by looping through the array.
+                        String tempVar = varGen.nextVar();
+                        Expression varExp = new ExprVar(ctx, tempVar);
+                        Statement decl =
+                            new StmtVarDecl(ctx,
+                                            new TypePrimitive(TypePrimitive.TYPE_INT),
+                                            tempVar,
+                                            new ExprConstInt(ctx, 0));
+                        Expression cond =
+                            new ExprBinary(ctx,
+                                           ExprBinary.BINOP_LT,
+                                           varExp,
+                                           ta.getLength());
+                        Statement incr =
+                            new StmtExpr(ctx,
+                                         new ExprUnary(ctx,
+                                                       ExprUnary.UNOP_POSTINC,
+                                                       varExp));
+                        Expression lhs = new ExprArray(ctx, name, varExp);
+                        Statement body =
+                            new StmtBlock(ctx,
+                                          stmtsForConstructor(ctx, lhs, base, null, false));
+                        Statement loop =
+                            new StmtFor(ctx, decl, cond, incr, body);
+                        result.add(loop);
+                    }
             }
-        }
         
         return result;
     }
@@ -171,20 +171,20 @@ public class InsertInitConstructors extends InitMunger
         // Walk through the variables.  If any of them are for
         // complex or non-primitive types, generate a constructor.
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
-        {
-            FieldDecl field = (FieldDecl)iter.next();
-            for (int i = 0; i < field.getNumFields(); i++)
             {
-                Type type = field.getType(i);
-                Expression init = field.getInit(i);
-                if (needsConstructor(type, init))
-                {
-                    FEContext ctx = field.getContext();
-                    Expression lhs = new ExprVar(ctx, field.getName(i));
-                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type, init, true));
-                }
+                FieldDecl field = (FieldDecl)iter.next();
+                for (int i = 0; i < field.getNumFields(); i++)
+                    {
+                        Type type = field.getType(i);
+                        Expression init = field.getInit(i);
+                        if (needsConstructor(type, init))
+                            {
+                                FEContext ctx = field.getContext();
+                                Expression lhs = new ExprVar(ctx, field.getName(i));
+                                newStmts.addAll(stmtsForConstructor(ctx, lhs, type, init, true));
+                            }
+                    }
             }
-        }
 
         // Stop if there are no constructors to generate.
         if (newStmts.isEmpty())
@@ -225,16 +225,16 @@ public class InsertInitConstructors extends InitMunger
         // So, now go through the list of all the variables and add
         // constructors as needed:
         for (int i = 0; i < decl.getNumVars(); i++)
-        {
-            Type type = decl.getType(i);
-            Expression init = decl.getInit(i);
-            if (needsConstructor(type, init))
             {
-                FEContext ctx = decl.getContext();
-                Expression lhs = new ExprVar(ctx, decl.getName(i));
-                addStatements(stmtsForConstructor(ctx, lhs, type, init, true));
+                Type type = decl.getType(i);
+                Expression init = decl.getInit(i);
+                if (needsConstructor(type, init))
+                    {
+                        FEContext ctx = decl.getContext();
+                        Expression lhs = new ExprVar(ctx, decl.getName(i));
+                        addStatements(stmtsForConstructor(ctx, lhs, type, init, true));
+                    }
             }
-        }
 
         // We already added the statement, return null so there aren't
         // duplicate declarations.

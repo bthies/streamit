@@ -13,13 +13,13 @@ public class LoweringConstants {
      * The name of the method in the runtime system that runs a filereader.
      */
     public static final String 
-	FILE_READER_WORK_NAME = "streamit_filereader_work";
+        FILE_READER_WORK_NAME = "streamit_filereader_work";
 
     /**
      * The name of the method in the runtime system that runs a filewriter.
      */
     public static final String 
-	FILE_WRITER_WORK_NAME = "streamit_filewriter_work";
+        FILE_WRITER_WORK_NAME = "streamit_filewriter_work";
 
     /**
      * The name of the method in the runtime system that runs identity.
@@ -97,7 +97,7 @@ public class LoweringConstants {
      * the program.
      */
     public static String getUniqueVarName() {
-	return "streamItVar" + varCounter++;
+        return "streamItVar" + varCounter++;
     }
     
     /**
@@ -105,18 +105,18 @@ public class LoweringConstants {
      * interface table, returns a variable definition for that field.
      */
     public static JVariableDefinition 
-	getInterfaceTableVariable(JExpression initializer) {
-	return new JVariableDefinition(/* tokref */ null,
-				       /* modifiers - emulate a constant */
-				       at.dms.kjc.Constants.ACC_PUBLIC |
-				       at.dms.kjc.Constants.ACC_STATIC | 
-				       at.dms.kjc.Constants.ACC_FINAL,
-				       /* type--doesn't matter, so try void */ 
-				       CStdType.Void,
-				       /* ident - number them */
-				       "interfaceTable" + 
-				       interfaceTableCounter++, 
-				       /* init exp */ initializer);
+        getInterfaceTableVariable(JExpression initializer) {
+        return new JVariableDefinition(/* tokref */ null,
+                                       /* modifiers - emulate a constant */
+                                       at.dms.kjc.Constants.ACC_PUBLIC |
+                                       at.dms.kjc.Constants.ACC_STATIC | 
+                                       at.dms.kjc.Constants.ACC_FINAL,
+                                       /* type--doesn't matter, so try void */ 
+                                       CStdType.Void,
+                                       /* ident - number them */
+                                       "interfaceTable" + 
+                                       interfaceTableCounter++, 
+                                       /* init exp */ initializer);
     }
 
     /**
@@ -124,28 +124,28 @@ public class LoweringConstants {
      * from the toplevel stream.
      */
     public static JExpression getParentStructureAccess(SIRIterator iter) {
-	// get parents of <str>
-	SIRStream parents[] = iter.getParents();
+        // get parents of <str>
+        SIRStream parents[] = iter.getParents();
 
-	// construct result expression
-	JExpression result = getDataField();
+        // construct result expression
+        JExpression result = getDataField();
 
-	// go through parents from top to bottom, building up the
-	// field access expression.
-	for (int i=parents.length-2; i>=0; i--) {
-	    // get field name for child context
-	    String childName = parents[i].getRelativeName();
-	    // build up cascaded field reference
-	    result = new JFieldAccessExpression(/* tokref */
-						null,
-						/* prefix is previous ref*/
-						result,
-						/* ident */
-						childName);
-	}
+        // go through parents from top to bottom, building up the
+        // field access expression.
+        for (int i=parents.length-2; i>=0; i--) {
+            // get field name for child context
+            String childName = parents[i].getRelativeName();
+            // build up cascaded field reference
+            result = new JFieldAccessExpression(/* tokref */
+                                                null,
+                                                /* prefix is previous ref*/
+                                                result,
+                                                /* ident */
+                                                childName);
+        }
 
-	// return result
-	return result;
+        // return result
+        return result;
     }
 
     /**
@@ -153,75 +153,75 @@ public class LoweringConstants {
      * function referencing a child.  
      */
     public static JFieldAccessExpression getChildStruct(SIROperator child) {
-	return new JFieldAccessExpression(
-					  null,
-					  /* prefix */
-					  getDataField(),
-					  /* ident */
-					  child.getRelativeName());
+        return new JFieldAccessExpression(
+                                          null,
+                                          /* prefix */
+                                          getDataField(),
+                                          /* ident */
+                                          child.getRelativeName());
     }
 
     /**
      * Returns a field access to the current stream structure.
      */
     public static JExpression getDataField() {
-	return new JNameExpression(null, 
-				   null, 
-				   STATE_PARAM_NAME);
+        return new JNameExpression(null, 
+                                   null, 
+                                   STATE_PARAM_NAME);
     }
 
     /**
      * Returns the field declaration declaring a stream context.
      */
     public static JFieldDeclaration getContextField() {
-	// define a variable
-	JVariableDefinition var = 
-	    new JVariableDefinition(/* tokenref */ null, 
-				    /* modifiers */ at.dms.kjc.
-				    Constants.ACC_PUBLIC,
-				    /* type */ CClassType.lookup(
-								 CONTEXT_TYPE_NAME),
-				    /* identifier  */ CONTEXT_VAR_NAME,
-				    /* initializer */ null);
-	// return the field
-	return new JFieldDeclaration(/* tokenref */ null, 
-				     /* variable */ var, 
-				     /* javadoc  */ null, 
-				     /* comments */ null);
+        // define a variable
+        JVariableDefinition var = 
+            new JVariableDefinition(/* tokenref */ null, 
+                                    /* modifiers */ at.dms.kjc.
+                                    Constants.ACC_PUBLIC,
+                                    /* type */ CClassType.lookup(
+                                                                 CONTEXT_TYPE_NAME),
+                                    /* identifier  */ CONTEXT_VAR_NAME,
+                                    /* initializer */ null);
+        // return the field
+        return new JFieldDeclaration(/* tokenref */ null, 
+                                     /* variable */ var, 
+                                     /* javadoc  */ null, 
+                                     /* comments */ null);
     }
 
     /**
      * Returns a field declaration for the input tape of structures.  
      */
     public static JFieldDeclaration getInTapeField() {
-	return getTapeField(INPUT_TAPE_NAME);
+        return getTapeField(INPUT_TAPE_NAME);
     }
 
     /**
      * Returns a field declaration for the output tape of structures.  
      */
     public static JFieldDeclaration getOutTapeField() {
-	return getTapeField(OUTPUT_TAPE_NAME);
+        return getTapeField(OUTPUT_TAPE_NAME);
     }
 
     /**
      * Returns a field declaration for the tape fields of structures.  
      */
     private static JFieldDeclaration getTapeField(String name) {
-	// define a variable
-	JVariableDefinition var = 
-	    new JVariableDefinition(/* tokenref */ null, 
-				    /* modifiers */ at.dms.kjc.
-				    Constants.ACC_PUBLIC,
-				    /* type */ CClassType.lookup(
-								 TAPE_TYPE_NAME),
-				    /* identifier  */ name,
-				    /* initializer */ null);
-	// return the field
-	return new JFieldDeclaration(/* tokenref */ null, 
-				     /* variable */ var, 
-				     /* javadoc  */ null, 
-				     /* comments */ null);
+        // define a variable
+        JVariableDefinition var = 
+            new JVariableDefinition(/* tokenref */ null, 
+                                    /* modifiers */ at.dms.kjc.
+                                    Constants.ACC_PUBLIC,
+                                    /* type */ CClassType.lookup(
+                                                                 TAPE_TYPE_NAME),
+                                    /* identifier  */ name,
+                                    /* initializer */ null);
+        // return the field
+        return new JFieldDeclaration(/* tokenref */ null, 
+                                     /* variable */ var, 
+                                     /* javadoc  */ null, 
+                                     /* comments */ null);
     }
 
 
@@ -231,14 +231,14 @@ public class LoweringConstants {
      * the name for that methd in the flattened class.
      * */
     public static String getMethodName(String streamName, String methodName) {
-	return streamName + "_" + methodName;
+        return streamName + "_" + methodName;
     }
 
     /**
      * Returns the name of the flattened work function for <str>.
      */
     public static String getWorkName(SIRFilter str) {
-	return getMethodName(str.getName(), "work");
+        return getMethodName(str.getName(), "work");
     }
 
     /**
@@ -246,14 +246,14 @@ public class LoweringConstants {
      * no analogue in the stream structure (is "anonymous")
      */
     public static String getAnonWorkName() {
-	return "hierarchical_work_" + workFunctionCounter++;
+        return "hierarchical_work_" + workFunctionCounter++;
     }
 
     /**
      * Returns the name of the flattened init function for <str>.
      */
     public static String getInitName(SIRStream str) {
-	return getMethodName(str.getName(), "init");
+        return getMethodName(str.getName(), "init");
     }
 
     /**
@@ -261,19 +261,19 @@ public class LoweringConstants {
      * function.  
      */
     public static JExpression getStreamContext() {
-	return getStreamContext(getDataField());
+        return getStreamContext(getDataField());
     }
 
     /**
      * Returns access to stream context given parent structure <par>
      */
     public static JExpression getStreamContext(JExpression parentStructure) {
-	return new JFieldAccessExpression(/* tokref */
-					  null,
-					  /* prefix */
-					  parentStructure,
-					  /* ident */
-					  CONTEXT_VAR_NAME);
+        return new JFieldAccessExpression(/* tokref */
+                                          null,
+                                          /* prefix */
+                                          parentStructure,
+                                          /* ident */
+                                          CONTEXT_VAR_NAME);
     }
 }
 

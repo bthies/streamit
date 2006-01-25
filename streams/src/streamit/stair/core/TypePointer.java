@@ -8,7 +8,7 @@ package streamit.stair.core;
  * <code>void *</code>).
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu &gt;
- * @version $Id: TypePointer.java,v 1.1 2003-02-24 21:45:11 dmaze Exp $
+ * @version $Id: TypePointer.java,v 1.2 2006-01-25 17:05:05 thies Exp $
  */
 public class TypePointer extends Type
 {
@@ -72,12 +72,12 @@ public class TypePointer extends Type
         if (getBitWidth() != 0 && getBitWidth() != tp.getBitWidth())
             return false;
         if (getTarget() != null)
-        {
-            if (tp.getTarget() == null)
-                return false;
-            if (!(getTarget().isConvertibleTo(tp.getTarget())))
-                return false;
-        }
+            {
+                if (tp.getTarget() == null)
+                    return false;
+                if (!(getTarget().isConvertibleTo(tp.getTarget())))
+                    return false;
+            }
         return true;
     }
     

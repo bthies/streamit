@@ -16,24 +16,24 @@
 
 package streamit.misc;
 
-/* $Id: HashComperator.java,v 1.8 2005-02-28 21:57:28 janiss Exp $ */
+/* $Id: HashComperator.java,v 1.9 2006-01-25 17:04:38 thies Exp $ */
 
 public class HashComperator implements Comperator
 {
-	public boolean isLess(Object left, Object right)
-	{
-		int leftHash = left.hashCode ();
-		int rightHash = right.hashCode ();
+    public boolean isLess(Object left, Object right)
+    {
+        int leftHash = left.hashCode ();
+        int rightHash = right.hashCode ();
 
-		/*
-		 * this assertion causes SDEP calculation to fail
-		 *
-		 *assert left == right || leftHash != rightHash : 
-		 *  "Hash error on Objects " + left + " and " + right + " of types + " + 
-		 *  (left==null ? "null" : ""+left.getClass()) + " (hash=" + leftHash + ") and " + 
-		 *  (right==null ? "null" : ""+right.getClass()) + " (hash=" + rightHash + ")";
-		 */
+        /*
+         * this assertion causes SDEP calculation to fail
+         *
+         *assert left == right || leftHash != rightHash : 
+         *  "Hash error on Objects " + left + " and " + right + " of types + " + 
+         *  (left==null ? "null" : ""+left.getClass()) + " (hash=" + leftHash + ") and " + 
+         *  (right==null ? "null" : ""+right.getClass()) + " (hash=" + rightHash + ")";
+         */
 
-		return left.hashCode () < right.hashCode ();
-	}
+        return left.hashCode () < right.hashCode ();
+    }
 }

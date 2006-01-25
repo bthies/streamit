@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ByteBuffer.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: ByteBuffer.java,v 1.2 2006-01-25 17:00:54 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -40,29 +40,29 @@ import java.io.IOException;
 
 public class ByteBuffer extends InputBuffer {
 
-  /**
-   * Create a character buffer
-   */
-  public ByteBuffer(InputStream input) {
-    super();
-    this.input = input;
-  }
-
-  /**
-   * Ensure that the character buffer is sufficiently full
-   */
-  public void fill(int amount) throws CharStreamException {
-    try {
-      syncConsume();
-      // Fill the buffer sufficiently to hold needed characters
-      while (queue.nbrEntries < amount + markerOffset) {
-	queue.append((char)input.read());
-      }
-    } catch (IOException io) {
-      throw new CharStreamIOException(io);
+    /**
+     * Create a character buffer
+     */
+    public ByteBuffer(InputStream input) {
+        super();
+        this.input = input;
     }
-  }
 
-  // char source
-  transient InputStream input;
+    /**
+     * Ensure that the character buffer is sufficiently full
+     */
+    public void fill(int amount) throws CharStreamException {
+        try {
+            syncConsume();
+            // Fill the buffer sufficiently to hold needed characters
+            while (queue.nbrEntries < amount + markerOffset) {
+                queue.append((char)input.read());
+            }
+        } catch (IOException io) {
+            throw new CharStreamIOException(io);
+        }
+    }
+
+    // char source
+    transient InputStream input;
 }

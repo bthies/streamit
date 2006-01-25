@@ -27,52 +27,52 @@ public class RateMatch extends at.dms.util.Utils
 
     public static boolean doit(FlatNode top) 
     {
-	//assume there are no overlapping routes
-	fail = false;
+        //assume there are no overlapping routes
+        fail = false;
 
-	top.accept(new RateMatch(), null, true);
-	
-	return !fail;
+        top.accept(new RateMatch(), null, true);
+    
+        return !fail;
     }
 
     public RateMatch() 
     {
-	routerTiles = new HashSet();
+        routerTiles = new HashSet();
     }
 
     public void visitNode(FlatNode node) 
     {
-	if (Layout.isAssigned(node)) {
-	    if (node.isFilter() &&
-		(((SIRFilter)node.contents).getInputType().isArrayType() ||
-		 ((SIRFilter)node.contents).getOutputType().isArrayType() ||
-		 ((SIRFilter)node.contents).getInputType().isClassType() ||
-		 ((SIRFilter)node.contents).getOutputType().isClassType()))
-		fail = true;
-		
-	    Iterator it = Util.getAssignedEdges(node).iterator();
-	    
-	    while (it.hasNext()) {
-		FlatNode dest = (FlatNode)it.next();
-		Iterator route = Router.getRoute(node, dest).listIterator();
-		//remove the source
-		Coordinate current = (Coordinate)route.next();
-		while (route.hasNext()) {
-		    current = (Coordinate)route.next();
-		    //now check to see if this tile has been routed thru
-		    //before
-		    if (current != Layout.getTile(dest)) {
-			//now check if we have routed thru here before
-			//or if the intermediate hop is a tile assigned 
-			//to a filter or joiner
-			if (routerTiles.contains(current) ||
-			    (Layout.getNode(current) != null))
-			    fail = true;
-			routerTiles.add(current);
-		    }
-		    
-		}
-	    }
-	}
+        if (Layout.isAssigned(node)) {
+            if (node.isFilter() &&
+                (((SIRFilter)node.contents).getInputType().isArrayType() ||
+                 ((SIRFilter)node.contents).getOutputType().isArrayType() ||
+                 ((SIRFilter)node.contents).getInputType().isClassType() ||
+                 ((SIRFilter)node.contents).getOutputType().isClassType()))
+                fail = true;
+        
+            Iterator it = Util.getAssignedEdges(node).iterator();
+        
+            while (it.hasNext()) {
+                FlatNode dest = (FlatNode)it.next();
+                Iterator route = Router.getRoute(node, dest).listIterator();
+                //remove the source
+                Coordinate current = (Coordinate)route.next();
+                while (route.hasNext()) {
+                    current = (Coordinate)route.next();
+                    //now check to see if this tile has been routed thru
+                    //before
+                    if (current != Layout.getTile(dest)) {
+                        //now check if we have routed thru here before
+                        //or if the intermediate hop is a tile assigned 
+                        //to a filter or joiner
+                        if (routerTiles.contains(current) ||
+                            (Layout.getNode(current) != null))
+                            fail = true;
+                        routerTiles.add(current);
+                    }
+            
+                }
+            }
+        }
     }
 }

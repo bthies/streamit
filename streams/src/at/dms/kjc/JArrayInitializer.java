@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.10 2005-04-06 12:01:52 thies Exp $
+ * $Id: JArrayInitializer.java,v 1.11 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,160 +32,160 @@ public class JArrayInitializer extends JExpression {
 
     protected JArrayInitializer() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	elems		the elements of the initializer
-   */
-  public JArrayInitializer(TokenReference where, JExpression[] elems) {
-    super(where);
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   elems       the elements of the initializer
+     */
+    public JArrayInitializer(TokenReference where, JExpression[] elems) {
+        super(where);
 
-    this.elems = elems;
-  }
+        this.elems = elems;
+    }
 
-  public JArrayInitializer(JExpression[] elems) {
-      this(null, elems);
-  }
+    public JArrayInitializer(JExpression[] elems) {
+        this(null, elems);
+    }
 
     public JExpression[] getElems() 
     {
-	return elems;
+        return elems;
     }
     
 
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Compute the type of this expression (called after parsing)
-   * @return the type of this expression
-   */
-  public CType getType() {
-    return type;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Sets the type of this expression. Assume type is already checked.
-   * @param	type		the type of this array
-   */
-  public void setType(CArrayType type) {
-    assert type.checked();
-    this.type = type;
-  }
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    assert type != null;
-
-    CType	elementType = type.getElementType();
-
-    if (elementType.isArrayType()) {
-      for (int i = 0; i < elems.length; i++) {
-	if (elems[i] instanceof JArrayInitializer) {
-	  ((JArrayInitializer)elems[i]).setType((CArrayType)elementType);
-	}
-	elems[i] = elems[i].analyse(context);
-	check(context, elems[i].isAssignableTo(elementType),
-	      KjcMessages.ARRAY_INIT_BADTYPE, elementType, elems[i].getType());
-      }
-    } else {
-      for (int i = 0; i < elems.length; i++) {
-	check(context,
-	      !(elems[i] instanceof JArrayInitializer),
-	      KjcMessages.ARRAY_INIT_NOARRAY, elementType);
-	elems[i] = elems[i].analyse(context);
-	check(context, elems[i].isAssignableTo(elementType),
-	      KjcMessages.ARRAY_INIT_BADTYPE, elementType, elems[i].getType());
-	elems[i] = elems[i].convertType(elementType, context);
-      }
+    /**
+     * Compute the type of this expression (called after parsing)
+     * @return the type of this expression
+     */
+    public CType getType() {
+        return type;
     }
 
-    return this;
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitArrayInitializer(this, elems);
-  }
-
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return p.visitArrayInitializer(this, elems);
-  }
-
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    setLineNumber(code);
-
-    // create array instance
-    code.plantInstruction(new PushLiteralInstruction(elems.length));
-    code.plantNewArrayInstruction(type.getElementType());
-
-    // initialize array
-    int		opcode = type.getElementType().getArrayStoreOpcode();
-
-    for (int i = 0; i < elems.length; i++) {
-      code.plantNoArgInstruction(opc_dup);
-      code.plantInstruction(new PushLiteralInstruction(i));
-      elems[i].genCode(code, false);
-      code.plantNoArgInstruction(opcode);
+    /**
+     * Sets the type of this expression. Assume type is already checked.
+     * @param   type        the type of this array
+     */
+    public void setType(CArrayType type) {
+        assert type.checked();
+        this.type = type;
     }
 
-    if (discardValue) {
-      code.plantPopInstruction(getType());
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        assert type != null;
+
+        CType   elementType = type.getElementType();
+
+        if (elementType.isArrayType()) {
+            for (int i = 0; i < elems.length; i++) {
+                if (elems[i] instanceof JArrayInitializer) {
+                    ((JArrayInitializer)elems[i]).setType((CArrayType)elementType);
+                }
+                elems[i] = elems[i].analyse(context);
+                check(context, elems[i].isAssignableTo(elementType),
+                      KjcMessages.ARRAY_INIT_BADTYPE, elementType, elems[i].getType());
+            }
+        } else {
+            for (int i = 0; i < elems.length; i++) {
+                check(context,
+                      !(elems[i] instanceof JArrayInitializer),
+                      KjcMessages.ARRAY_INIT_NOARRAY, elementType);
+                elems[i] = elems[i].analyse(context);
+                check(context, elems[i].isAssignableTo(elementType),
+                      KjcMessages.ARRAY_INIT_BADTYPE, elementType, elems[i].getType());
+                elems[i] = elems[i].convertType(elementType, context);
+            }
+        }
+
+        return this;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  private CArrayType		type;
-  private JExpression[]		elems;
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitArrayInitializer(this, elems);
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitArrayInitializer(this, elems);
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JArrayInitializer other = new at.dms.kjc.JArrayInitializer();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        setLineNumber(code);
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JArrayInitializer other) {
-  super.deepCloneInto(other);
-  other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.elems = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.elems);
-}
+        // create array instance
+        code.plantInstruction(new PushLiteralInstruction(elems.length));
+        code.plantNewArrayInstruction(type.getElementType());
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        // initialize array
+        int     opcode = type.getElementType().getArrayStoreOpcode();
+
+        for (int i = 0; i < elems.length; i++) {
+            code.plantNoArgInstruction(opc_dup);
+            code.plantInstruction(new PushLiteralInstruction(i));
+            elems[i].genCode(code, false);
+            code.plantNoArgInstruction(opcode);
+        }
+
+        if (discardValue) {
+            code.plantPopInstruction(getType());
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private CArrayType      type;
+    private JExpression[]       elems;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JArrayInitializer other = new at.dms.kjc.JArrayInitializer();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JArrayInitializer other) {
+        super.deepCloneInto(other);
+        other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+        other.elems = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.elems);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -17,10 +17,10 @@ import at.dms.compiler.TokenReference;
 public class Jrstream_pr extends JBlock
 {
     public Jrstream_pr(TokenReference where,
-		       JStatement[] body,
-		       JavaStyleComment[] comments)
+                       JStatement[] body,
+                       JavaStyleComment[] comments)
     {
-	super(where, body, comments);
+        super(where, body, comments);
     }
     
 

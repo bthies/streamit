@@ -20,7 +20,7 @@ public class DuplicateSplitter extends Splitter
 {
     public void init()
     {
-	  duplicateSplitter = true;
+        duplicateSplitter = true;
     }
     
     /* this work function remains here (instead of using work function
@@ -38,12 +38,12 @@ public class DuplicateSplitter extends Splitter
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
             {
-                weights [i] = 1;
+                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                    {
+                        weights [i] = 1;
+                    }
             }
-        }
         
         return weights;
     }
@@ -54,6 +54,6 @@ public class DuplicateSplitter extends Splitter
     }
 
     public String toString() {
-	return "duplicate";
+        return "duplicate";
     }
 }

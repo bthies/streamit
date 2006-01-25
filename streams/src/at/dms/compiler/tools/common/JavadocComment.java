@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavadocComment.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: JavadocComment.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -25,33 +25,33 @@ package at.dms.compiler.tools.common;
  */
 public class JavadocComment extends JavaStyleComment {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	text		the string representation of this comment
-   */
-  public JavadocComment(String text, boolean spaceBefore, boolean spaceAfter) {
-    super(text, false, spaceBefore, spaceAfter);
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   text        the string representation of this comment
+     */
+    public JavadocComment(String text, boolean spaceBefore, boolean spaceAfter) {
+        super(text, false, spaceBefore, spaceAfter);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Return if this javadoc comment contains a deprecated clause
-   */
-  public boolean isDeprecated() {
-    return text.indexOf("@deprecated") >= 0;
-  }
+    /**
+     * Return if this javadoc comment contains a deprecated clause
+     */
+    public boolean isDeprecated() {
+        return text.indexOf("@deprecated") >= 0;
+    }
 
-  /**
-   *
-   */
-  public String getParams() {
-    return text;
-  }
+    /**
+     *
+     */
+    public String getParams() {
+        return text;
+    }
 }

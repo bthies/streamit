@@ -20,92 +20,92 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
      * Returns new iterator for <obj> with no parent.
      */
     SIRFilterIter(IterFactory _factory, SIRFilter obj) {
-	super(_factory);
-	this.obj = obj;
+        super(_factory);
+        this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
     SIRFilterIter(IterFactory _factory, SIRFilter obj, SIRIterator parent, int pos) {
-	super(_factory, parent, pos);
-	this.obj = obj;
+        super(_factory, parent, pos);
+        this.obj = obj;
     }
 
     public FilterIter isFilter() {
-	return this;
+        return this;
     }
 
     /**
      * Return the stream pointed to by this.
      */
     public SIRStream getStream() {
-	checkValidity();
-	return obj;
+        checkValidity();
+        return obj;
     }
 
     public int getNumInitStages () {
-	if (obj instanceof SIRTwoStageFilter) {
-	    return 1;
-	} else {
-	    return 0;
-	}
+        if (obj instanceof SIRTwoStageFilter) {
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
     public int getInitPeekStage (int phase) {
-	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPeekInt();
-	} else {
-	    return -1;
-	}
+        if (obj instanceof SIRTwoStageFilter) {
+            return ((SIRTwoStageFilter)obj).getInitPeekInt();
+        } else {
+            return -1;
+        }
     }
 
     public int getInitPopStage (int phase) {
-	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPopInt();
-	} else {
-	    return -1;
-	}
+        if (obj instanceof SIRTwoStageFilter) {
+            return ((SIRTwoStageFilter)obj).getInitPopInt();
+        } else {
+            return -1;
+        }
     }
 
     public int getInitPushStage (int phase) {
-	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitPushInt();
-	} else {
-	    return -1;
-	}
+        if (obj instanceof SIRTwoStageFilter) {
+            return ((SIRTwoStageFilter)obj).getInitPushInt();
+        } else {
+            return -1;
+        }
     }
 
     public Object getInitFunctionStage (int phase) {
-	if (obj instanceof SIRTwoStageFilter) {
-	    return ((SIRTwoStageFilter)obj).getInitWork();
-	} else {
-	    return null;
-	}
+        if (obj instanceof SIRTwoStageFilter) {
+            return ((SIRTwoStageFilter)obj).getInitWork();
+        } else {
+            return null;
+        }
     }
     
     public int getNumWorkPhases () {
-	return 1;
+        return 1;
     }
 
     public int getPeekPhase (int phase) {
-	return obj.getPeekInt();
+        return obj.getPeekInt();
     }
 
     public int getPopPhase (int phase) {
-	return obj.getPopInt();
+        return obj.getPopInt();
     }
 
     public int getPushPhase (int phase) {
-	return obj.getPushInt();
+        return obj.getPushInt();
     }
 
     public Object getWorkFunctionPhase (int phase) {
-	return obj.getWork();
+        return obj.getWork();
     }
 
     public void accept(StreamVisitor v) {
-	v.visitFilter(obj, this);
+        v.visitFilter(obj, this);
     }
 
     /**
@@ -113,6 +113,6 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
      * the compiler.
      */
     public Iterator getUnspecializedIter() {
-	return this;
+        return this;
     }
- }
+}

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Parser.java,v 1.2 2002-12-11 23:56:07 karczma Exp $
+ * $Id: Parser.java,v 1.3 2006-01-25 17:00:43 thies Exp $
  */
 
 package at.dms.compiler.antlr.extra;
@@ -36,100 +36,100 @@ import at.dms.compiler.antlr.runtime.ParserException;
  */
 public abstract class Parser extends LLkParser {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new parser instance.
-   * @param	compiler	the invoking compiler.
-   * @param	scanner		the token stream generator
-   * @param	lookahead	lookahead
-   */
-  protected Parser(Compiler compiler, Scanner scanner, int lookahead) {
-    super(scanner, lookahead);
-    this.compiler = compiler;
-    this.scanner = scanner;
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the compiler driver which invoked the parser.
-   */
-  public Compiler getCompiler() {
-    return compiler;
-  }
-
-  /**
-   * Returns the input buffer.
-   */
-  public final InputBuffer getBuffer() {
-    return scanner.getBuffer();
-  }
-
-  /**
-   * Returns a reference to the current position in the source file.
-   */
-  protected final TokenReference buildTokenReference() {
-    return scanner.getTokenReference();
-  }
-
-  /**
-   *
-   */
-  protected final JavaStyleComment[] getStatementComment() {
-    return scanner.getStatementComment();
-  }
-
-  /**
-   *
-   */
-  protected final JavadocComment getJavadocComment() {
-    return scanner.getJavadocComment();
-  }
-
-  /**
-   *
-   */
-  protected Vector getComment() {
-    return null; // scanner.getComment();
-  }
-
-  /**
-   * Reports that an error has been detected in the lexical analyser.
-   * The handling is delegated to the compiler driver.
-   * @param	error		the error to report
-   */
-  protected final void reportTrouble(PositionedError trouble) {
-    compiler.reportTrouble(trouble);
-  }
-
-  /**
-   * Generate an human readable error message
-   */
-  public PositionedError beautifyParseError(ParserException e) {
-    String	message = e.toString(); // can do better
-
-    if (message == null) {
-      message = "unknown";
-    } else {
-      int	idx = message.indexOf(",");
-
-      if (idx >= 0) {
-	message = message.substring(idx + 1);
-      }
+    /**
+     * Constructs a new parser instance.
+     * @param   compiler    the invoking compiler.
+     * @param   scanner     the token stream generator
+     * @param   lookahead   lookahead
+     */
+    protected Parser(Compiler compiler, Scanner scanner, int lookahead) {
+        super(scanner, lookahead);
+        this.compiler = compiler;
+        this.scanner = scanner;
     }
 
-    return new PositionedError(scanner.getTokenReference(), CompilerMessages.SYNTAX_ERROR, message);
-  }
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Returns the compiler driver which invoked the parser.
+     */
+    public Compiler getCompiler() {
+        return compiler;
+    }
 
-  private final Compiler	compiler;
-  private final Scanner		scanner;
+    /**
+     * Returns the input buffer.
+     */
+    public final InputBuffer getBuffer() {
+        return scanner.getBuffer();
+    }
+
+    /**
+     * Returns a reference to the current position in the source file.
+     */
+    protected final TokenReference buildTokenReference() {
+        return scanner.getTokenReference();
+    }
+
+    /**
+     *
+     */
+    protected final JavaStyleComment[] getStatementComment() {
+        return scanner.getStatementComment();
+    }
+
+    /**
+     *
+     */
+    protected final JavadocComment getJavadocComment() {
+        return scanner.getJavadocComment();
+    }
+
+    /**
+     *
+     */
+    protected Vector getComment() {
+        return null; // scanner.getComment();
+    }
+
+    /**
+     * Reports that an error has been detected in the lexical analyser.
+     * The handling is delegated to the compiler driver.
+     * @param   error       the error to report
+     */
+    protected final void reportTrouble(PositionedError trouble) {
+        compiler.reportTrouble(trouble);
+    }
+
+    /**
+     * Generate an human readable error message
+     */
+    public PositionedError beautifyParseError(ParserException e) {
+        String  message = e.toString(); // can do better
+
+        if (message == null) {
+            message = "unknown";
+        } else {
+            int idx = message.indexOf(",");
+
+            if (idx >= 0) {
+                message = message.substring(idx + 1);
+            }
+        }
+
+        return new PositionedError(scanner.getTokenReference(), CompilerMessages.SYNTAX_ERROR, message);
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private final Compiler  compiler;
+    private final Scanner       scanner;
 }

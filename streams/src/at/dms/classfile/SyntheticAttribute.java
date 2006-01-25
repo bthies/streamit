@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SyntheticAttribute.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: SyntheticAttribute.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -34,81 +34,81 @@ import java.io.DataOutput;
  */
 public class SyntheticAttribute extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create a synthetic attribute.
-   */
-  public SyntheticAttribute() {}
+    /**
+     * Create a synthetic attribute.
+     */
+    public SyntheticAttribute() {}
 
-  /**
-   * Constructs a synthetic attribute from a class file stream.
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   * @exception	ClassFileFormatException	attempt to
-   *					write a bad classfile info
-   */
-  public SyntheticAttribute(DataInput in, ConstantPool cp)
-    throws IOException, ClassFileFormatException
-  {
-    if (in.readInt() != 0) {
-      throw new ClassFileFormatException("bad attribute length");
+    /**
+     * Constructs a synthetic attribute from a class file stream.
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     * @exception   ClassFileFormatException    attempt to
+     *                  write a bad classfile info
+     */
+    public SyntheticAttribute(DataInput in, ConstantPool cp)
+        throws IOException, ClassFileFormatException
+    {
+        if (in.readInt() != 0) {
+            throw new ClassFileFormatException("bad attribute length");
+        }
     }
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_SYNTHETIC;
-  }
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_SYNTHETIC;
+    }
 
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4;
-  }
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4;
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(attr);
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(attr);
+    }
 
-   /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(attr.getIndex());
-    out.writeInt(0);
-  }
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(attr.getIndex());
+        out.writeInt(0);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private static AsciiConstant		attr = new AsciiConstant("Synthetic");
+    private static AsciiConstant        attr = new AsciiConstant("Synthetic");
 }

@@ -53,11 +53,11 @@ public class PhasingSchedule extends DestroyedClass
      * Setup a PhasingSchedule with a real Schedule.
      */
     public PhasingSchedule(
-        StreamInterface _stream,
-        Schedule _schedule,
-        int peekAmount,
-        int popAmount,
-        int pushAmount)
+                           StreamInterface _stream,
+                           Schedule _schedule,
+                           int peekAmount,
+                           int popAmount,
+                           int pushAmount)
     {
         stream = _stream;
         schedule = _schedule;
@@ -172,19 +172,19 @@ public class PhasingSchedule extends DestroyedClass
         // or if it is the top of my stream, I need to account for this
         // phase's peek & pop in my peek & pop
         if (phaseStream == stream || phaseStream == stream.getTop())
-        {
-            peek = phase.getOverallPeek();
-            pop = phase.getOverallPop();
-        }
+            {
+                peek = phase.getOverallPeek();
+                pop = phase.getOverallPop();
+            }
 
         // if the stream corresponding to this phase is my stream
         // (somebody constructed a phase for my stream specifically)
         // or if it is the top of my stream, I need to account for this
         // phase's push in my push
         if (phaseStream == stream || phaseStream == stream.getBottom())
-        {
-            push = phase.getOverallPush();
-        }
+            {
+                push = phase.getOverallPush();
+            }
 
         // update this stream's communication
         overallPeek = MAX(overallPeek, overallPop + peek);
@@ -233,29 +233,29 @@ public class PhasingSchedule extends DestroyedClass
     {
         // is this phasing schedule just a wrapper for a real schedule?
         if (schedule != null)
-        {
-            // yes: return the schedule and be happy
-            return schedule;
-        }
-        else
-        {
-            // do I have a pre-computed version?
-            // if I do, just return it!
-            if (phasingPreComputedSchedule != null)
-                return phasingPreComputedSchedule;
-
-            // now: create a schedule out of my phasing schedule...
-            Schedule sched = new Schedule(getStream().getStreamIter());
-            int phase;
-            for (phase = 0; phase < getNumPhases(); phase++)
             {
-                sched.addSubSchedule(getPhase(phase).getSchedule());
+                // yes: return the schedule and be happy
+                return schedule;
             }
+        else
+            {
+                // do I have a pre-computed version?
+                // if I do, just return it!
+                if (phasingPreComputedSchedule != null)
+                    return phasingPreComputedSchedule;
 
-            phasingPreComputedSchedule = sched;
+                // now: create a schedule out of my phasing schedule...
+                Schedule sched = new Schedule(getStream().getStreamIter());
+                int phase;
+                for (phase = 0; phase < getNumPhases(); phase++)
+                    {
+                        sched.addSubSchedule(getPhase(phase).getSchedule());
+                    }
+
+                phasingPreComputedSchedule = sched;
 
 
-            return sched;
-        }
+                return sched;
+            }
     }
 }

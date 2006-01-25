@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodEnv.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: MethodEnv.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -31,118 +31,118 @@ import at.dms.util.InconsistencyException;
  */
 class MethodEnv {
 
-  MethodEnv(MethodInfo info) {
-    this.info = info;
-  }
-
-  /**
-   * getLocalVar
-   */
-  public QTemporary getLocalVar(int pos) {
-    return (QTemporary)locals.elementAt(pos);
-  }
-
-  /**
-   * getLocalVar
-   */
-  public QTemporary getLocalVar(InstructionHandle insn) {
-    int		slot = ((LocalVarInstruction)insn.getInstruction()).getIndex();
-
-    if (slot >= locals.size()) {
-      locals.setSize(slot + 1);
+    MethodEnv(MethodInfo info) {
+        this.info = info;
     }
 
-    QTemporary	temp = (QTemporary)locals.elementAt(slot);
-
-    if (temp == null) {
-      insn.getInstruction().dump();
-      locals.setElementAt(temp = new QTemporary(insn.getInstruction().getReturnType(), slot), slot);
+    /**
+     * getLocalVar
+     */
+    public QTemporary getLocalVar(int pos) {
+        return (QTemporary)locals.elementAt(pos);
     }
 
-    return temp;
-  }
+    /**
+     * getLocalVar
+     */
+    public QTemporary getLocalVar(InstructionHandle insn) {
+        int     slot = ((LocalVarInstruction)insn.getInstruction()).getIndex();
 
-  public void setParameters(int[] sizes) {
-    getParameters(info, info.getSignature(), sizes);
-  }
+        if (slot >= locals.size()) {
+            locals.setSize(slot + 1);
+        }
 
-  /**
-   * Computes the number of parameters. (MOVE FROM HERE !!!)
-   */
-  private static void getParameters(MethodInfo info, String signature, int[] sizes) {
-    int		paramCnt = 0;
+        QTemporary  temp = (QTemporary)locals.elementAt(slot);
 
-    if (paramCnt == sizes.length) {
-      return;
+        if (temp == null) {
+            insn.getInstruction().dump();
+            locals.setElementAt(temp = new QTemporary(insn.getInstruction().getReturnType(), slot), slot);
+        }
+
+        return temp;
     }
 
-    if ((info.getModifiers() & at.dms.classfile.Constants.ACC_STATIC) == 0) {
-      // an instance method always passes "this" as first, hidden parameter
-      sizes[paramCnt++] = 1;
+    public void setParameters(int[] sizes) {
+        getParameters(info, info.getSignature(), sizes);
     }
 
-    if (signature.charAt(0) != '(') {
-      throw new InconsistencyException("invalid signature " + signature);
+    /**
+     * Computes the number of parameters. (MOVE FROM HERE !!!)
+     */
+    private static void getParameters(MethodInfo info, String signature, int[] sizes) {
+        int     paramCnt = 0;
+
+        if (paramCnt == sizes.length) {
+            return;
+        }
+
+        if ((info.getModifiers() & at.dms.classfile.Constants.ACC_STATIC) == 0) {
+            // an instance method always passes "this" as first, hidden parameter
+            sizes[paramCnt++] = 1;
+        }
+
+        if (signature.charAt(0) != '(') {
+            throw new InconsistencyException("invalid signature " + signature);
+        }
+
+        int     pos = 1;
+
+        _method_parameters_:
+        for (;;) {
+            if (paramCnt == sizes.length) {
+                return;
+            }
+            switch (signature.charAt(pos++)) {
+            case ')':
+                break _method_parameters_;
+
+            case '[':
+                while (signature.charAt(pos) == '[') {
+                    pos += 1;
+                }
+                if (signature.charAt(pos) == 'L') {
+                    while (signature.charAt(pos) != ';') {
+                        pos += 1;
+                    }
+                }
+                pos += 1;
+
+                sizes[paramCnt++] = 1;
+                break;
+
+            case 'L':
+                while (signature.charAt(pos) != ';') {
+                    pos += 1;
+                }
+                pos += 1;
+
+                sizes[paramCnt++] = 1;
+                break;
+
+            case 'Z':
+            case 'B':
+            case 'C':
+            case 'S':
+            case 'F':
+            case 'I':
+                sizes[paramCnt++] = 1;
+                break;
+
+            case 'D':
+            case 'J':
+                sizes[paramCnt++] = 2;
+                break;
+
+            default:
+                throw new InconsistencyException("invalid signature " + signature);
+            }
+        }
     }
 
-    int		pos = 1;
+    // ----------------------------------------------------------------------
+    // PRIVATE DATA TYPE
+    // ----------------------------------------------------------------------
 
-  _method_parameters_:
-    for (;;) {
-       if (paramCnt == sizes.length) {
-	return;
-      }
-      switch (signature.charAt(pos++)) {
-      case ')':
-	break _method_parameters_;
-
-      case '[':
-	while (signature.charAt(pos) == '[') {
-	  pos += 1;
-	}
-	if (signature.charAt(pos) == 'L') {
-	  while (signature.charAt(pos) != ';') {
-	    pos += 1;
-	  }
-	}
-	pos += 1;
-
-	sizes[paramCnt++] = 1;
-	break;
-
-      case 'L':
-	while (signature.charAt(pos) != ';') {
-	  pos += 1;
-	}
-	pos += 1;
-
-	sizes[paramCnt++] = 1;
-	break;
-
-      case 'Z':
-      case 'B':
-      case 'C':
-      case 'S':
-      case 'F':
-      case 'I':
-	sizes[paramCnt++] = 1;
-	break;
-
-      case 'D':
-      case 'J':
-	sizes[paramCnt++] = 2;
-	break;
-
-      default:
-	throw new InconsistencyException("invalid signature " + signature);
-      }
-    }
-  }
-
-  // ----------------------------------------------------------------------
-  // PRIVATE DATA TYPE
-  // ----------------------------------------------------------------------
-
-  private Vector	locals = new Vector();
-  private MethodInfo	info;
+    private Vector  locals = new Vector();
+    private MethodInfo  info;
 }

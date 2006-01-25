@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefinitionFile.java,v 1.2 2002-12-18 06:28:55 karczma Exp $
+ * $Id: DefinitionFile.java,v 1.3 2006-01-25 17:01:12 thies Exp $
  */
 
 package at.dms.compiler.tools.lexgen;
@@ -37,177 +37,177 @@ import at.dms.compiler.tools.common.Utils;
 
 class DefinitionFile {
 
-  /**
-   * Constructs a token definition file
-   */
-  public DefinitionFile(String sourceFile,
-			String packageName,
-			String vocabulary,
-			String prefix,
-			Vector definitions)
-  {
-    this.sourceFile	= sourceFile;
-    this.packageName	= packageName;
-    this.vocabulary	= vocabulary;
-    this.prefix		= prefix == null ? DEFAULT_LITERAL_PREFIX : prefix;
-    this.definitions	=
-      (TokenDefinition[])Utils.toArray(definitions, TokenDefinition.class);
-  }
-
-  /**
-   * Reads and parses an token definition file
-   *
-   * @param	sourceFile		the name of the source file
-   * @return	a class info structure holding the information from the source
-   *
-   */
-  public static DefinitionFile read(String sourceFile) throws LexgenError {
-    try {
-      InputStream	input = new BufferedInputStream(new FileInputStream(sourceFile));
-      LexgenLexer	scanner = new LexgenLexer(input);
-      LexgenParser	parser = new LexgenParser(scanner);
-      DefinitionFile	defs = parser.aCompilationUnit(sourceFile);
-
-      input.close();
-
-      return defs;
-    } catch (FileNotFoundException e) {
-      throw new LexgenError(LexgenMessages.FILE_NOT_FOUND, sourceFile);
-    } catch (IOException e) {
-      throw new LexgenError(LexgenMessages.IO_EXCEPTION, sourceFile, e.getMessage());
-    } catch (ParserException e) {
-      throw new LexgenError(LexgenMessages.FORMATTED_ERROR,
-			    new PositionedError(new TokenReference(sourceFile, e.getLine()),
-						LexgenMessages.SYNTAX_ERROR,
-						e.getMessage()));
-    }
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Check for duplicate identifiers
-   * @param	identifiers	a table of all token identifiers
-   * @param	prefix		the literal prefix
-   * @param	id		the id of the first token
-   * @return	the id of the last token + 1
-   */
-  public int checkIdentifiers(Hashtable identifiers, String prefix, int id)
-    throws LexgenError
-  {
-    for (int i = 0; i < definitions.length; i++) {
-      definitions[i].checkIdentifiers(identifiers, prefix, id++, sourceFile);
+    /**
+     * Constructs a token definition file
+     */
+    public DefinitionFile(String sourceFile,
+                          String packageName,
+                          String vocabulary,
+                          String prefix,
+                          Vector definitions)
+    {
+        this.sourceFile = sourceFile;
+        this.packageName    = packageName;
+        this.vocabulary = vocabulary;
+        this.prefix     = prefix == null ? DEFAULT_LITERAL_PREFIX : prefix;
+        this.definitions    =
+            (TokenDefinition[])Utils.toArray(definitions, TokenDefinition.class);
     }
 
-    return id;
-  }
+    /**
+     * Reads and parses an token definition file
+     *
+     * @param   sourceFile      the name of the source file
+     * @return  a class info structure holding the information from the source
+     *
+     */
+    public static DefinitionFile read(String sourceFile) throws LexgenError {
+        try {
+            InputStream input = new BufferedInputStream(new FileInputStream(sourceFile));
+            LexgenLexer scanner = new LexgenLexer(input);
+            LexgenParser    parser = new LexgenParser(scanner);
+            DefinitionFile  defs = parser.aCompilationUnit(sourceFile);
 
-  /**
-   * Prints token definitions to definition file (txt)
-   * @param	out		the output stream
-   * @param	prefix		the literal prefix
-   */
-  public void printDefinition(PrintWriter out, String prefix) {
-    out.println();
-    out.println("// Definitions from " + sourceFile);
-    for (int i = 0; i < definitions.length; i++) {
-      definitions[i].printDefinition(out, prefix);
-    }
-  }
+            input.close();
 
-  /**
-   * Prints the token definition to interface file (java)
-   * @param	out		the output stream
-   * @param	parent		the super interface
-   * @param	createTokens	create standard tokens
-   */
-  public void printInterface(PrintWriter out, String parent, boolean createTokens) {
-    out.print("// Generated from " + sourceFile);
-    out.println();
-    out.println("package " + packageName + ";");
-    out.println();
-    out.print("public interface " + vocabulary + "TokenTypes");
-    if (parent != null) {
-      out.print(" extends " + parent);
-    }
-    out.println(" {");
-
-    if (parent == null) {
-      out.println("  int\tEOF = 1;");
-      out.println("  int\tNULL_TREE_LOOKAHEAD = 3;");
+            return defs;
+        } catch (FileNotFoundException e) {
+            throw new LexgenError(LexgenMessages.FILE_NOT_FOUND, sourceFile);
+        } catch (IOException e) {
+            throw new LexgenError(LexgenMessages.IO_EXCEPTION, sourceFile, e.getMessage());
+        } catch (ParserException e) {
+            throw new LexgenError(LexgenMessages.FORMATTED_ERROR,
+                                  new PositionedError(new TokenReference(sourceFile, e.getLine()),
+                                                      LexgenMessages.SYNTAX_ERROR,
+                                                      e.getMessage()));
+        }
     }
 
-    for (int i = 0; i < definitions.length; i++) {
-      definitions[i].printInterface(out, this.prefix);
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
+
+    /**
+     * Check for duplicate identifiers
+     * @param   identifiers a table of all token identifiers
+     * @param   prefix      the literal prefix
+     * @param   id      the id of the first token
+     * @return  the id of the last token + 1
+     */
+    public int checkIdentifiers(Hashtable identifiers, String prefix, int id)
+        throws LexgenError
+    {
+        for (int i = 0; i < definitions.length; i++) {
+            definitions[i].checkIdentifiers(identifiers, prefix, id++, sourceFile);
+        }
+
+        return id;
     }
 
-    if (createTokens) {
-      for (int i = 0; i < definitions.length; i++) {
-	definitions[i].printToken(out, this.prefix);
-      }
+    /**
+     * Prints token definitions to definition file (txt)
+     * @param   out     the output stream
+     * @param   prefix      the literal prefix
+     */
+    public void printDefinition(PrintWriter out, String prefix) {
+        out.println();
+        out.println("// Definitions from " + sourceFile);
+        for (int i = 0; i < definitions.length; i++) {
+            definitions[i].printDefinition(out, prefix);
+        }
     }
 
-    out.println("}");
-  }
+    /**
+     * Prints the token definition to interface file (java)
+     * @param   out     the output stream
+     * @param   parent      the super interface
+     * @param   createTokens    create standard tokens
+     */
+    public void printInterface(PrintWriter out, String parent, boolean createTokens) {
+        out.print("// Generated from " + sourceFile);
+        out.println();
+        out.println("package " + packageName + ";");
+        out.println();
+        out.print("public interface " + vocabulary + "TokenTypes");
+        if (parent != null) {
+            out.print(" extends " + parent);
+        }
+        out.println(" {");
 
-  /**
-   * Prints flex rules for literals, keywords and operators
-   * @param	out		the output stream
-   */
-  public void printFlexRules(PrintWriter out) {
-     for (int i = 0; i < definitions.length; i++) {
-       definitions[i].printFlexRule(out, this.prefix);
-     }
-   }
+        if (parent == null) {
+            out.println("  int\tEOF = 1;");
+            out.println("  int\tNULL_TREE_LOOKAHEAD = 3;");
+        }
 
-  /**
-   * Adds keywords to vector
-   */
-  public void putKeywords(Vector keywords, Vector types, String prefix) {
-    for (int i = 0; i < definitions.length; i++) {
-      definitions[i].putKeyword(keywords, types, prefix);
+        for (int i = 0; i < definitions.length; i++) {
+            definitions[i].printInterface(out, this.prefix);
+        }
+
+        if (createTokens) {
+            for (int i = 0; i < definitions.length; i++) {
+                definitions[i].printToken(out, this.prefix);
+            }
+        }
+
+        out.println("}");
     }
-  }
 
-  /**
-   * Returns the package name
-   */
-  public String getClassName() {
-    return packageName + "." + vocabulary + "TokenTypes";
-  }
+    /**
+     * Prints flex rules for literals, keywords and operators
+     * @param   out     the output stream
+     */
+    public void printFlexRules(PrintWriter out) {
+        for (int i = 0; i < definitions.length; i++) {
+            definitions[i].printFlexRule(out, this.prefix);
+        }
+    }
 
-  /**
-   * Returns the package name
-   */
-  public String getPackageName() {
-    return packageName;
-  }
+    /**
+     * Adds keywords to vector
+     */
+    public void putKeywords(Vector keywords, Vector types, String prefix) {
+        for (int i = 0; i < definitions.length; i++) {
+            definitions[i].putKeyword(keywords, types, prefix);
+        }
+    }
 
-  /**
-   * Returns the vocabulary name
-   */
-  public String getVocabulary() {
-    return vocabulary;
-  }
+    /**
+     * Returns the package name
+     */
+    public String getClassName() {
+        return packageName + "." + vocabulary + "TokenTypes";
+    }
 
-  /**
-   * Returns the literal prefix
-   */
-  public String getPrefix() {
-    return prefix;
-  }
+    /**
+     * Returns the package name
+     */
+    public String getPackageName() {
+        return packageName;
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Returns the vocabulary name
+     */
+    public String getVocabulary() {
+        return vocabulary;
+    }
 
-  private static final String		DEFAULT_LITERAL_PREFIX = "LITERAL_";
+    /**
+     * Returns the literal prefix
+     */
+    public String getPrefix() {
+        return prefix;
+    }
 
-  private final String			sourceFile;
-  private final String			packageName;
-  private final String			vocabulary;
-  private final String			prefix;
-  private final TokenDefinition[]	definitions;
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private static final String     DEFAULT_LITERAL_PREFIX = "LITERAL_";
+
+    private final String            sourceFile;
+    private final String            packageName;
+    private final String            vocabulary;
+    private final String            prefix;
+    private final TokenDefinition[] definitions;
 }

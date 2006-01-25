@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JContinueStatement.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JContinueStatement.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,108 +33,108 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JContinueStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JContinueStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	label		the label of the enclosing labeled statement
-   * @param	comments	comments in the source text
-   */
-  public JContinueStatement(TokenReference where,
-			    String label,
-			    JavaStyleComment[] comments)
-  {
-    super(where, comments);
-    this.label = label;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    if (label != null) {
-      target = context.getLabeledStatement(label);
-      check(context, target != null, KjcMessages.LABEL_UNKNOWN, label);
-      // JLS 14.15 :
-      // The continue target must be a while, do, or for statement.
-      check(context,
-	    target instanceof JLoopStatement,
-	    KjcMessages.CONTINUE_NOTLOOP);
-    } else {
-      target = context.getNearestContinuableStatement();
-      check(context, target != null, KjcMessages.CANNOT_CONTINUE);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   label       the label of the enclosing labeled statement
+     * @param   comments    comments in the source text
+     */
+    public JContinueStatement(TokenReference where,
+                              String label,
+                              JavaStyleComment[] comments)
+    {
+        super(where, comments);
+        this.label = label;
     }
 
-    context.addContinue(target);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        if (label != null) {
+            target = context.getLabeledStatement(label);
+            check(context, target != null, KjcMessages.LABEL_UNKNOWN, label);
+            // JLS 14.15 :
+            // The continue target must be a while, do, or for statement.
+            check(context,
+                  target instanceof JLoopStatement,
+                  KjcMessages.CONTINUE_NOTLOOP);
+        } else {
+            target = context.getNearestContinuableStatement();
+            check(context, target != null, KjcMessages.CANNOT_CONTINUE);
+        }
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitContinueStatement(this, label);
-  }
+        context.addContinue(target);
+    }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitContinueStatement(this, label);
-  }
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitContinueStatement(this, label);
+    }
 
-    code.plantBreak(target);
-    code.plantJumpInstruction(opc_goto, target.getContinueLabel());
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitContinueStatement(this, label);
+    }
 
-    target = null;
-  }
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+        code.plantBreak(target);
+        code.plantJumpInstruction(opc_goto, target.getContinueLabel());
 
-    private /* final */ String		label; // removed final for cloner
-  private JStatement		target;
+        target = null;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JContinueStatement other = new at.dms.kjc.JContinueStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    private /* final */ String      label; // removed final for cloner
+    private JStatement      target;
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JContinueStatement other) {
-  super.deepCloneInto(other);
-  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
-  other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
-}
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JContinueStatement other = new at.dms.kjc.JContinueStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JContinueStatement other) {
+        super.deepCloneInto(other);
+        other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
+        other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -255,36 +255,36 @@ public class FeedbackLoop extends Stream
 
     public FeedbackLoop(int a, int b, int c, int d, int e, int f, int g) 
     {
-	super (a, b, c, d, e, f, g);
+        super (a, b, c, d, e, f, g);
     }
 
     public FeedbackLoop(int n1, int n2, int n3,
-		  int n4, float f1) {
-      super(n1, n2, n3, n4, f1);
+                        int n4, float f1) {
+        super(n1, n2, n3, n4, f1);
     }
 
     public FeedbackLoop(int x, int y, int z,
-		   int a, int b, int c)
+                        int a, int b, int c)
     {
         super (x, y, z, a, b, c);
     }
 
     public FeedbackLoop(int x, int y, int z,
-		   int a, int b, int c, int d, float f)
+                        int a, int b, int c, int d, float f)
     {
         super (x, y, z, a, b, c, d, f);
     }
 
     public FeedbackLoop(int n1, int n2, int n3,
-		   int n4, int n5, int n6, int n7, int n8, 
-		   int n9, int n10, float f)
+                        int n4, int n5, int n6, int n7, int n8, 
+                        int n9, int n10, float f)
     {
         super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
     }
 
     public FeedbackLoop(int n1, int n2, int n3,
-		   int n4, int n5, int n6, int n7, int n8, 
-		   int n9)
+                        int n4, int n5, int n6, int n7, int n8, 
+                        int n9)
     {
         super (n1, n2, n3, n4, n5, n6, n7, n8, n9);
     }
@@ -305,26 +305,26 @@ public class FeedbackLoop extends Stream
     }
 
     public FeedbackLoop( int i1, 
-		   int i2, 
-		   int i3, 
-		   int i4, 
-		   int i5, 
-		   int i6, 
-		   int i7, 
-		   int i8, 
-		   int i9, 
-		   float f) {
-	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+                         int i2, 
+                         int i3, 
+                         int i4, 
+                         int i5, 
+                         int i6, 
+                         int i7, 
+                         int i8, 
+                         int i9, 
+                         float f) {
+        super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
     }
 
     public FeedbackLoop( int i1, 
-		   int i2, 
-		   int i3, 
-		   int i4, 
-		   int i5, 
-		   int i6, 
-		   float f) {
-	super(i1, i2, i3, i4, i5, i6, f);
+                         int i2, 
+                         int i3, 
+                         int i4, 
+                         int i5, 
+                         int i6, 
+                         float f) {
+        super(i1, i2, i3, i4, i5, i6, f);
     }
 
     public FeedbackLoop(int n1, int n2, float f1[], float f2[])
@@ -333,7 +333,7 @@ public class FeedbackLoop extends Stream
     }
 
     public FeedbackLoop(short s1, short s2, short s3) {
-	super(s1, s2, s3);
+        super(s1, s2, s3);
     }
 
     public FeedbackLoop(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
@@ -361,7 +361,7 @@ public class FeedbackLoop extends Stream
     {
         assert joiner == null && type != null;
         joiner = type.getJoiner ();
-	joinType = type;
+        joinType = type;
     }
 
     // specifies the body of the feedback loop
@@ -376,7 +376,7 @@ public class FeedbackLoop extends Stream
     {
         assert splitter == null && type != null;
         splitter = type.getSplitter ();
-	splitType = type;
+        splitType = type;
     }
 
     // specifies the feedback path stream
@@ -511,14 +511,14 @@ public class FeedbackLoop extends Stream
             // the joiner:
             Channel channelIn = null;
             if (joiner.isInputUsed (0))
-            {
-                Filter joinerIn = new Identity (bodyInput.getType ());
-                joinerIn.setupOperator ();
-                joiner.add (joinerIn);
-                channelIn = joinerIn.getIOField ("input");
-            } else {
-                joiner.add (null);
-            }
+                {
+                    Filter joinerIn = new Identity (bodyInput.getType ());
+                    joinerIn.setupOperator ();
+                    joiner.add (joinerIn);
+                    channelIn = joinerIn.getIOField ("input");
+                } else {
+                    joiner.add (null);
+                }
 
             joiner.add (loop);
             joiner.setupOperator ();
@@ -528,20 +528,20 @@ public class FeedbackLoop extends Stream
                 Channel in = joiner.getIOField ("output", 0);
                 Channel out = body.getInputChannel ();
                 connect.useChannels (in, out);
-		connect.setupOperator();
+                connect.setupOperator();
             }
 
             // the splitter:
             Channel channelOut = null;
             if (splitter.isOutputUsed (0))
-            {
-                Filter splitterOut = new Identity (bodyOutput.getType ());
-                splitterOut.setupOperator ();
-                splitter.add (splitterOut);
-                channelOut = splitterOut.getIOField ("output");
-            } else {
-                splitter.add (null);
-            }
+                {
+                    Filter splitterOut = new Identity (bodyOutput.getType ());
+                    splitterOut.setupOperator ();
+                    splitter.add (splitterOut);
+                    channelOut = splitterOut.getIOField ("output");
+                } else {
+                    splitter.add (null);
+                }
             splitter.add (loop);
             splitter.setupOperator ();
 
@@ -550,7 +550,7 @@ public class FeedbackLoop extends Stream
                 Channel in = body.getOutputChannel ();
                 Channel out = splitter.getIOField ("input", 0);
                 connect.useChannels (in, out);
-		connect.setupOperator();
+                connect.setupOperator();
             }
 
             // copy the input/output from the identities to the input/output
@@ -562,73 +562,73 @@ public class FeedbackLoop extends Stream
         // now fill up the feedback path with precomputed data:
         assert delay == 0 || enqueued.isEmpty();
         if (delay != 0)
-        {
-            Channel feedbackChannel = loop.getOutputChannel ();
-            for (int index = 0; index < delay; index++)
             {
-                Class type = feedbackChannel.getType ();
-                if (type == Integer.TYPE)
-                {
-                    feedbackChannel.pushInt (initPathInt (index));
-                } else
-                if (type == Short.TYPE)
-                {
-                    feedbackChannel.pushShort (initPathShort (index));
-                } else
-                if (type == Character.TYPE)
-                {
-                    feedbackChannel.pushChar (initPathChar (index));
-                } else
-                if (type == Float.TYPE)
-                {
-                    feedbackChannel.pushFloat (initPathFloat (index));
-                } else
-                {
-                    // this is essentially a default
-                    // if this isn't what you want, you should implement
-                    // another if-else clause!
-                    feedbackChannel.push (initPathObject (index));
-                }
+                Channel feedbackChannel = loop.getOutputChannel ();
+                for (int index = 0; index < delay; index++)
+                    {
+                        Class type = feedbackChannel.getType ();
+                        if (type == Integer.TYPE)
+                            {
+                                feedbackChannel.pushInt (initPathInt (index));
+                            } else
+                                if (type == Short.TYPE)
+                                    {
+                                        feedbackChannel.pushShort (initPathShort (index));
+                                    } else
+                                        if (type == Character.TYPE)
+                                            {
+                                                feedbackChannel.pushChar (initPathChar (index));
+                                            } else
+                                                if (type == Float.TYPE)
+                                                    {
+                                                        feedbackChannel.pushFloat (initPathFloat (index));
+                                                    } else
+                                                        {
+                                                            // this is essentially a default
+                                                            // if this isn't what you want, you should implement
+                                                            // another if-else clause!
+                                                            feedbackChannel.push (initPathObject (index));
+                                                        }
+                    }
             }
-        }
         else
-        {
-            Channel feedbackChannel = loop.getOutputChannel ();
-            for (java.util.Iterator iter = enqueued.iterator();
-                 iter.hasNext(); )
             {
-                Class type = feedbackChannel.getType ();
-                if (type == Integer.TYPE)
-                {
-                    Integer value = (Integer)iter.next();
-                    feedbackChannel.pushInt (value.intValue());
-                } else
-                if (type == Short.TYPE)
-                {
-                    Short value = (Short)iter.next();
-                    feedbackChannel.pushShort (value.shortValue());
-                } else
-                if (type == Character.TYPE)
-                {
-                    Character value = (Character)iter.next();
-                    feedbackChannel.pushChar (value.charValue());
-                } else
-                if (type == Float.TYPE)
-                {
-                    Float value = (Float)iter.next();
-                    feedbackChannel.pushFloat (value.floatValue());
-                } else
-                {
-                    // this is essentially a default
-                    // if this isn't what you want, you should implement
-                    // another if-else clause!
-                    feedbackChannel.push (iter.next());
-                }
-                delay++;
+                Channel feedbackChannel = loop.getOutputChannel ();
+                for (java.util.Iterator iter = enqueued.iterator();
+                     iter.hasNext(); )
+                    {
+                        Class type = feedbackChannel.getType ();
+                        if (type == Integer.TYPE)
+                            {
+                                Integer value = (Integer)iter.next();
+                                feedbackChannel.pushInt (value.intValue());
+                            } else
+                                if (type == Short.TYPE)
+                                    {
+                                        Short value = (Short)iter.next();
+                                        feedbackChannel.pushShort (value.shortValue());
+                                    } else
+                                        if (type == Character.TYPE)
+                                            {
+                                                Character value = (Character)iter.next();
+                                                feedbackChannel.pushChar (value.charValue());
+                                            } else
+                                                if (type == Float.TYPE)
+                                                    {
+                                                        Float value = (Float)iter.next();
+                                                        feedbackChannel.pushFloat (value.floatValue());
+                                                    } else
+                                                        {
+                                                            // this is essentially a default
+                                                            // if this isn't what you want, you should implement
+                                                            // another if-else clause!
+                                                            feedbackChannel.push (iter.next());
+                                                        }
+                        delay++;
+                    }
+                // Throw out the enqueued list now.
+                enqueued = null;
             }
-            // Throw out the enqueued list now.
-            enqueued = null;
-        }
     }
 
 
@@ -650,10 +650,10 @@ public class FeedbackLoop extends Stream
     }
 
     public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
-        int w1,
-        int w2,
-        int w3,
-        int w4)
+                                                               int w1,
+                                                               int w2,
+                                                               int w3,
+                                                               int w4)
     {
         return new SplitJoin.SplitJoinType(2)
             .addWeight(w1)
@@ -663,11 +663,11 @@ public class FeedbackLoop extends Stream
     }
 
     public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
-        int w1,
-        int w2,
-        int w3,
-        int w4,
-	int w5)
+                                                               int w1,
+                                                               int w2,
+                                                               int w3,
+                                                               int w4,
+                                                               int w5)
     {
         return new SplitJoin.SplitJoinType(2)
             .addWeight(w1)
@@ -678,13 +678,13 @@ public class FeedbackLoop extends Stream
     }
 
     public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
-        int w1,
-        int w2,
-        int w3,
-        int w4,
-        int w5,
-        int w6,
-        int w7)
+                                                               int w1,
+                                                               int w2,
+                                                               int w3,
+                                                               int w4,
+                                                               int w5,
+                                                               int w6,
+                                                               int w7)
     {
         return new SplitJoin.SplitJoinType(2)
             .addWeight(w1)
@@ -697,18 +697,18 @@ public class FeedbackLoop extends Stream
     }
 
     public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
-        int w1,
-        int w2,
-        int w3,
-        int w4,
-        int w5,
-        int w6,
-        int w7,
-        int w8,
-        int w9,
-        int w10,
-        int w11,
-        int w12)
+                                                               int w1,
+                                                               int w2,
+                                                               int w3,
+                                                               int w4,
+                                                               int w5,
+                                                               int w6,
+                                                               int w7,
+                                                               int w8,
+                                                               int w9,
+                                                               int w10,
+                                                               int w11,
+                                                               int w12)
     {
         return new SplitJoin.SplitJoinType(2)
             .addWeight(w1)
@@ -726,24 +726,24 @@ public class FeedbackLoop extends Stream
     }
 
     public static SplitJoin.SplitJoinType WEIGHTED_ROUND_ROBIN(
-        int w1,
-        int w2,
-        int w3,
-        int w4,
-        int w5,
-        int w6,
-        int w7,
-        int w8,
-        int w9,
-        int w10,
-        int w11,
-        int w12,
-        int w13,
-        int w14,
-        int w15,
-        int w16,
-        int w17,
-        int w18)
+                                                               int w1,
+                                                               int w2,
+                                                               int w3,
+                                                               int w4,
+                                                               int w5,
+                                                               int w6,
+                                                               int w7,
+                                                               int w8,
+                                                               int w9,
+                                                               int w10,
+                                                               int w11,
+                                                               int w12,
+                                                               int w13,
+                                                               int w14,
+                                                               int w15,
+                                                               int w16,
+                                                               int w17,
+                                                               int w18)
     {
         return new SplitJoin.SplitJoinType(2)
             .addWeight(w1)

@@ -16,7 +16,7 @@ class BuiltinsCodeGen {
      * @param p       A printer to output the generated code
      */
     static void predefinedFilterWork(SIRPredefinedFilter filter, int selfID,
-            CodegenPrintWriter p) {
+                                     CodegenPrintWriter p) {
         // Caller has printed function name and an iteration parameter ____n
         // Generate loop to execute body of this function ____n times,
         // In loop generate specialized code for function.
@@ -25,7 +25,7 @@ class BuiltinsCodeGen {
         p.indent();
         p.newLine();
         p.indent();
-//        p.println("// predefinedFilterWork " + filter.getName());
+        //        p.println("// predefinedFilterWork " + filter.getName());
         p.println("for (; 0 < ____n; ____n--) {");
         p.indent();
 
@@ -35,10 +35,10 @@ class BuiltinsCodeGen {
             // SIRFileWriter
         } else if (filter instanceof SIRFileWriter) {
             genFileWriterWork((SIRFileWriter)filter,selfID,p);
-           // SIRIdentity
+            // SIRIdentity
         } else if (filter instanceof SIRIdentity) {
             p.println("  return " + ClusterUtils.pushName(selfID) + "("
-                    + ClusterUtils.popName(selfID) + "());");
+                      + ClusterUtils.popName(selfID) + "());");
 
         } else if (filter instanceof SIRDummySink
                    || filter instanceof SIRDummySource) {
@@ -46,7 +46,7 @@ class BuiltinsCodeGen {
             // application code.  Are they part of the language?
             // TODO: get right exception for unimplemented.
             throw new Error("Unsupported predefined filter "
-                    + filter.getName());
+                            + filter.getName());
         } else {
             // TODO: get right unchecked exception for unextended code...
             throw new Error("Unknown predefined filter " + filter.getName());
@@ -66,7 +66,7 @@ class BuiltinsCodeGen {
     // for now)
 
     private static void startParameterlessFunction(String return_type,
-            String function_name, CodegenPrintWriter p) {
+                                                   String function_name, CodegenPrintWriter p) {
         p.print(return_type);
         p.println(" " + function_name + "() {");
         p.indent();
@@ -117,38 +117,38 @@ class BuiltinsCodeGen {
      *            The printer for outputting code for the function
      */
     static void predefinedFilterInit(SIRPredefinedFilter filter,
-            CType return_type, String function_name, int selfID,
-            List/*String*/ cleanupCode,CodegenPrintWriter p) {
+                                     CType return_type, String function_name, int selfID,
+                                     List/*String*/ cleanupCode,CodegenPrintWriter p) {
 
         // No wrapper code around init since may need to create defns at file
         // level. We assume that the code generator will continue to
         // generate code for init before code for work, so scope of
         // any file-level code will include the work function.
 
-//        p.println("// predefinedFilterInit " + filter.getName()
-//		+ " " + filter.getInputType().toString() + " -> " 
-//		+ filter.getOutputType().toString());
+        //        p.println("// predefinedFilterInit " + filter.getName()
+        //      + " " + filter.getInputType().toString() + " -> " 
+        //      + filter.getOutputType().toString());
 
         if (filter instanceof SIRFileReader) {
             genFileReaderInit((SIRFileReader)filter, return_type, 
-                    function_name, selfID, cleanupCode, p);
+                              function_name, selfID, cleanupCode, p);
         } else if (filter instanceof SIRFileWriter) {
             genFileWriterInit((SIRFileWriter)filter, return_type, 
-                    function_name, selfID, cleanupCode, p);
+                              function_name, selfID, cleanupCode, p);
         } else if (filter instanceof SIRIdentity 
                    || filter instanceof SIRDummySink
                    || filter instanceof SIRDummySource) {
             // all of these have filters produce empty init functions.
             startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
-                    function_name, p);
+                                       function_name, p);
             endFunction(p);
         } else if (filter instanceof SIRDummySink) {
             // TODO:  get right exception for unimplemented.
             throw new Error("Unsupported predefined filter "
-                    + filter.getName()); 
+                            + filter.getName()); 
         } else if (filter instanceof SIRDummySource) {
             throw new Error("Unsupported predefined filter "
-                    + filter.getName());
+                            + filter.getName());
         } else {
             // TODO:  get right unchecked exception for unextended code...
             throw new Error("Unknown predefined filter " + filter.getName());
@@ -191,8 +191,8 @@ class BuiltinsCodeGen {
      * 
      */
     private static void genFileReaderWork(SIRFileReader filter, 
-            int selfID,
-            CodegenPrintWriter p) {
+                                          int selfID,
+                                          CodegenPrintWriter p) {
         String theType = "" + filter.getOutputType();
         if (theType.equals("bit")) {
             // the bit type is special since you can not just read or
@@ -207,35 +207,35 @@ class BuiltinsCodeGen {
             p.println("if (" + bits_to_go + " == 0) {");
             p.indent();
             p.println("if (fread(" + "&"+ the_bits + ", " 
-                        + "sizeof(" + the_bits + "),"
-                        + " " + "1, " 
-                        + fpName(filter) + ")) {");
+                      + "sizeof(" + the_bits + "),"
+                      + " " + "1, " 
+                      + fpName(filter) + ")) {");
             p.indent();
             p.println(bits_to_go + " = 8 * sizeof("+ the_bits + ");");
-// identical to code fragment below ///////////////////////
+            // identical to code fragment below ///////////////////////
             p.println(ClusterUtils.pushName(selfID) 
-                    + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+                      + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
             p.println(the_bits + " <<= 1;");
             p.println(bits_to_go + "--;");
-// end identical to code fragment below ////////////////////
+            // end identical to code fragment below ////////////////////
             p.outdent();
             p.println("}");
             p.outdent();
             p.println("} else {");
             p.indent();
-// identical to code fragment above /////////////////////////
+            // identical to code fragment above /////////////////////////
             p.println(ClusterUtils.pushName(selfID) 
-                    + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+                      + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
             p.println(the_bits + " <<= 1;");
             p.println(bits_to_go + "--;");
-// end identical to code fragment above /////////////////////
+            // end identical to code fragment above /////////////////////
             p.outdent();
             p.println("}");
-       } else {
+        } else {
             // push into a location.
             p.println(theType + " v;");
             p.println("if (fread(" + "&v, " + "sizeof(v), " + "1, " 
-                    + fpName(filter) + ")) {");
+                      + fpName(filter) + ")) {");
             p.indent();
             p.println(ClusterUtils.pushName(selfID) + "(v);");
             p.outdent();
@@ -248,13 +248,13 @@ class BuiltinsCodeGen {
      * and close() for file.
      */
     private static void genFileReaderInit(SIRFileReader fr,
-            CType return_type, String function_name, int selfID,
-            List/*String*/ cleanupCode,CodegenPrintWriter p) {
+                                          CType return_type, String function_name, int selfID,
+                                          List/*String*/ cleanupCode,CodegenPrintWriter p) {
         p.print("FILE* " + fpName(fr) + ";");
         p.newLine();
         p.newLine();
         startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
-                function_name, p);
+                                   function_name, p);
         p.print(fpName(fr) + " = fopen(\"" + fr.getFileName()
                 + "\", \"r\");");
         p.newLine();
@@ -263,7 +263,7 @@ class BuiltinsCodeGen {
         endFunction(p);
 
         String closeName = ClusterUtils.getWorkName(fr, selfID)
-                           + "__close"; 
+            + "__close"; 
                                   
         startParameterlessFunction("void", closeName, p);
         p.print("fclose(" + fpName(fr) + ");");
@@ -288,7 +288,7 @@ class BuiltinsCodeGen {
      */
     
     private static void genFileWriterWork(SIRFileWriter fw, int selfID,
-            CodegenPrintWriter p) {
+                                          CodegenPrintWriter p) {
         String theType = "" + fw.getInputType();
         if (theType.equals("bit")) {
             // the bit type is special since you can not just read or
@@ -298,14 +298,14 @@ class BuiltinsCodeGen {
             String the_bits = theBitsName(fw);
             
             p.println(the_bits + " = (" + bits_type + ") ((" + the_bits 
-                    + " << 1) | (" + ClusterUtils.popName(selfID) 
-                    + "() & 1));");
+                      + " << 1) | (" + ClusterUtils.popName(selfID) 
+                      + "() & 1));");
             p.println(bits_to_go + "--;");
             p.println("if (" + bits_to_go + " == 0) {");
             p.indent();
             p.println("fwrite(" + "&" + the_bits + ", " 
-                    + "sizeof(" + the_bits +"), " + "1, " + fpName(fw)
-                    + ");");
+                      + "sizeof(" + the_bits +"), " + "1, " + fpName(fw)
+                      + ");");
             p.println(the_bits + " = 0;");
             p.println(bits_to_go + " = 8 * sizeof(" + the_bits + ");");
             p.outdent();
@@ -313,9 +313,9 @@ class BuiltinsCodeGen {
         } else {
             // pop into a location.
             p.println(theType + " v = (" + theType + ")("
-                    + ClusterUtils.popName(selfID) + "());");
+                      + ClusterUtils.popName(selfID) + "());");
             p.println("fwrite(" + "&v, " + "sizeof(v), " + "1, " + fpName(fw)
-                    + ");");
+                      + ");");
         }
     }
     
@@ -324,8 +324,8 @@ class BuiltinsCodeGen {
      * and close() for file.
      */
     private static void genFileWriterInit(SIRFileWriter fw,
-            CType return_type, String function_name, int selfID,
-            List/*String*/ cleanupCode,CodegenPrintWriter p) {
+                                          CType return_type, String function_name, int selfID,
+                                          List/*String*/ cleanupCode,CodegenPrintWriter p) {
 
         p.println("FILE* " + fpName(fw) + ";");
         String theType = "" + fw.getInputType();
@@ -343,24 +343,24 @@ class BuiltinsCodeGen {
         p.newLine();
 
         startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
-                function_name, p);
+                                   function_name, p);
         p.println(fpName(fw) + " = fopen(\"" + fw.getFileName()
-                + "\", \"w\");");
+                  + "\", \"w\");");
         p.println("assert (" + fpName(fw) + ");");
         endFunction(p);
 
         String closeName = ClusterUtils.getWorkName(fw, selfID)
-        + "__close"; 
+            + "__close"; 
                
         startParameterlessFunction("void", closeName, p);
         if (theType.equals("bit")) {
             p.println("if (" + bits_to_go + " != 8 * sizeof(" 
-                    + the_bits + ")) {");
+                      + the_bits + ")) {");
             p.indent();
             p.println(the_bits + " = " + the_bits + " << " + bits_to_go + ";");
             p.println("fwrite(" + "&" + the_bits + ", " 
-                    + "sizeof(" + the_bits +"), " + "1, " + fpName(fw)
-                    + ");");
+                      + "sizeof(" + the_bits +"), " + "1, " + fpName(fw)
+                      + ");");
             p.outdent();
             p.println("}");
         } 

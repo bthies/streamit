@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPackageImport.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JPackageImport.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,147 +31,147 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JPackageImport extends JPhylum {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JPackageImport() {} // for cloner only
 
-  /**
-   * construct a package name
-   *
-   * @param	where		the token reference of this node
-   * @param	name		the package name
-   */
-  public JPackageImport(TokenReference where, String name, JavaStyleComment[] comments) {
-    super(where);
+    /**
+     * construct a package name
+     *
+     * @param   where       the token reference of this node
+     * @param   name        the package name
+     */
+    public JPackageImport(TokenReference where, String name, JavaStyleComment[] comments) {
+        super(where);
 
-    this.name = name;
-    this.comments = comments;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS & MUTATORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the package name defined by this declaration.
-   *
-   * @return	the package name defined by this declaration
-   */
-  public String getName() {
-    return name;
-  }
-
-  /**
-   * States that specified class in imported package is used.
-   * @param	clazz		the class that is used.
-   */
-  public void setClassUsed(String clazz) {
-    if (classesUsed == null) {
-      classesUsed = new Vector();
+        this.name = name;
+        this.comments = comments;
     }
-    classesUsed.addElement(clazz);
-  }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS & MUTATORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the node (semantically).
-   * @param	context		the analysis context
-   * @param	thisPackage	the package name of the compilation unit
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(Compiler compiler, JPackageName thisPackage) {
-    if (getTokenReference() != TokenReference.NO_REF) {
-      if (classesUsed == null) {
-	compiler.reportTrouble(new CWarning(getTokenReference(),
-					    KjcMessages.UNUSED_PACKAGE_IMPORT,
-					    name.replace('/', '.'),
-					    null));
-      } else if (classesUsed.size() < 5) {
-	StringBuffer	buffer = new StringBuffer();
-
-	for (int i = 0; i < classesUsed.size(); i++) {
-	  if (i != 0) {
-	    buffer.append(", ");
-	  }
-	  buffer.append((name + "/" + (String)classesUsed.elementAt(i)).replace('/', '.'));
-	}
-	compiler.reportTrouble(new CWarning(getTokenReference(),
-					    KjcMessages.REPLACE_PACKAGE_IMPORT,
-					    name.replace('/', '.'),
-					    buffer.toString()));
-      }
-
-      if (name.equals("java/lang")) {
-	compiler.reportTrouble(new CWarning(getTokenReference(),
-					    KjcMessages.IMPORT_JAVA_LANG,
-					    name));
-      }
-
-      if (name.equals(thisPackage.getName())) {
-	compiler.reportTrouble(new CWarning(getTokenReference(),
-					    KjcMessages.IMPORT_CURRENT_PACKAGE,
-					    name));
-      }
+    /**
+     * Returns the package name defined by this declaration.
+     *
+     * @return  the package name defined by this declaration
+     */
+    public String getName() {
+        return name;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    if (comments != null) {
-      p.visitComments(comments);
+    /**
+     * States that specified class in imported package is used.
+     * @param   clazz       the class that is used.
+     */
+    public void setClassUsed(String clazz) {
+        if (classesUsed == null) {
+            classesUsed = new Vector();
+        }
+        classesUsed.addElement(clazz);
     }
-    p.visitPackageImport(name);
-  }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      if (comments != null) {
-	  return p.visitComments(comments);
-      }
-      return p.visitPackageImport(name);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Analyses the node (semantically).
+     * @param   context     the analysis context
+     * @param   thisPackage the package name of the compilation unit
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(Compiler compiler, JPackageName thisPackage) {
+        if (getTokenReference() != TokenReference.NO_REF) {
+            if (classesUsed == null) {
+                compiler.reportTrouble(new CWarning(getTokenReference(),
+                                                    KjcMessages.UNUSED_PACKAGE_IMPORT,
+                                                    name.replace('/', '.'),
+                                                    null));
+            } else if (classesUsed.size() < 5) {
+                StringBuffer    buffer = new StringBuffer();
+
+                for (int i = 0; i < classesUsed.size(); i++) {
+                    if (i != 0) {
+                        buffer.append(", ");
+                    }
+                    buffer.append((name + "/" + (String)classesUsed.elementAt(i)).replace('/', '.'));
+                }
+                compiler.reportTrouble(new CWarning(getTokenReference(),
+                                                    KjcMessages.REPLACE_PACKAGE_IMPORT,
+                                                    name.replace('/', '.'),
+                                                    buffer.toString()));
+            }
+
+            if (name.equals("java/lang")) {
+                compiler.reportTrouble(new CWarning(getTokenReference(),
+                                                    KjcMessages.IMPORT_JAVA_LANG,
+                                                    name));
+            }
+
+            if (name.equals(thisPackage.getName())) {
+                compiler.reportTrouble(new CWarning(getTokenReference(),
+                                                    KjcMessages.IMPORT_CURRENT_PACKAGE,
+                                                    name));
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        if (comments != null) {
+            p.visitComments(comments);
+        }
+        p.visitPackageImport(name);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        if (comments != null) {
+            return p.visitComments(comments);
+        }
+        return p.visitPackageImport(name);
+    }
       
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final */ String			name;  // removed final for cloner
-    private /* final */ JavaStyleComment[]	comments;  // removed final for cloner
-  private Vector			classesUsed;
+    private /* final */ String          name;  // removed final for cloner
+    private /* final */ JavaStyleComment[]  comments;  // removed final for cloner
+    private Vector          classesUsed;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JPackageImport other = new at.dms.kjc.JPackageImport();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JPackageImport other = new at.dms.kjc.JPackageImport();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JPackageImport other) {
-  super.deepCloneInto(other);
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
-  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
-  other.classesUsed = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JPackageImport other) {
+        super.deepCloneInto(other);
+        other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+        other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
+        other.classesUsed = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -32,7 +32,7 @@ public class StructureIncludeFile
      */
     public static void doit(SIRStructure[] structs) 
     {
-	doit(structs, ".");
+        doit(structs, ".");
     }
 
     /**
@@ -42,18 +42,18 @@ public class StructureIncludeFile
      */
     public static void doit(SIRStructure[] structs, String dir) 
     {
-	if (structs.length == 0) 
-	    return;
-	
-	try {
-	    FileWriter fw = new FileWriter(dir + "/structs.h");
-	    createStructureDefs(structs, fw);
-	    fw.close();
-	}
-	catch (Exception e) {
-	    e.printStackTrace();
-	    System.err.println("Error creating structure include file");
-	}
+        if (structs.length == 0) 
+            return;
+    
+        try {
+            FileWriter fw = new FileWriter(dir + "/structs.h");
+            createStructureDefs(structs, fw);
+            fw.close();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("Error creating structure include file");
+        }
     }
     
     /** 
@@ -61,17 +61,17 @@ public class StructureIncludeFile
      * as typedef'ed structs.
      **/
     private static void createStructureDefs(SIRStructure[] structs, 
-					    FileWriter fw) throws Exception
+                                            FileWriter fw) throws Exception
     {
-	for (int i = 0; i < structs.length; i++) {
-	    SIRStructure current = structs[i];
-	    fw.write("typedef struct __" + current.getIdent() + " {\n");
-	    for (int j = 0; j < current.getFields().length; j++) {
-		fw.write("\t" + current.getFields()[j].getType() + " " +
-			 current.getFields()[j].getVariable().getIdent() +
-			 ";\n");
-	    }
-	    fw.write("} " + current.getIdent() + ";\n"); 
-	}
+        for (int i = 0; i < structs.length; i++) {
+            SIRStructure current = structs[i];
+            fw.write("typedef struct __" + current.getIdent() + " {\n");
+            for (int j = 0; j < current.getFields().length; j++) {
+                fw.write("\t" + current.getFields()[j].getType() + " " +
+                         current.getFields()[j].getVariable().getIdent() +
+                         ";\n");
+            }
+            fw.write("} " + current.getIdent() + ";\n"); 
+        }
     }
 }

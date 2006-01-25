@@ -1,5 +1,5 @@
 /*
- * @(#)SelectInverse.java	1.2 01.02.2003
+ * @(#)SelectInverse.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,30 +35,30 @@ import org.jgraph.graph.DefaultGraphModel;
  */
 public class SelectInverse extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectInverse.
-	 * @param graphpad
-	 */
-	public SelectInverse(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectInverse.
+     * @param graphpad
+     */
+    public SelectInverse(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Set set =
-			DefaultGraphModel.getDescendants(
-				getCurrentGraph().getModel(),
-				getCurrentGraph().getSelectionCells());
-		ArrayList select = new ArrayList();
-		Object[] all = getCurrentGraph().getAll();
-		for (int i = 0; i < all.length; i++)
-			if (!getCurrentGraph().isGroup(all[i])
-				&& !set.contains(all[i])
-				&& !getCurrentGraph().isCellSelected(all[i]))
-				select.add(all[i]);
-		getCurrentGraph().setSelectionCells(select.toArray());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Set set =
+            DefaultGraphModel.getDescendants(
+                                             getCurrentGraph().getModel(),
+                                             getCurrentGraph().getSelectionCells());
+        ArrayList select = new ArrayList();
+        Object[] all = getCurrentGraph().getAll();
+        for (int i = 0; i < all.length; i++)
+            if (!getCurrentGraph().isGroup(all[i])
+                && !set.contains(all[i])
+                && !getCurrentGraph().isCellSelected(all[i]))
+                select.add(all[i]);
+        getCurrentGraph().setSelectionCells(select.toArray());
+    }
 
 }

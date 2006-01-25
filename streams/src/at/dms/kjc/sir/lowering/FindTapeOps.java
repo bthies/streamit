@@ -7,10 +7,10 @@ import at.dms.kjc.sir.*;
 public class FindTapeOps extends SLIREmptyVisitor {
 
     public static boolean findTapeOps(JStatement body) {
-    	FindTapeOps test = new FindTapeOps();
-	body.accept(test);
-	//System.out.println("FindTapeOps.findTapeOps result = "+test.tape_op);
-	return test.tape_op;
+        FindTapeOps test = new FindTapeOps();
+        body.accept(test);
+        //System.out.println("FindTapeOps.findTapeOps result = "+test.tape_op);
+        return test.tape_op;
     }
 
 
@@ -24,19 +24,19 @@ public class FindTapeOps extends SLIREmptyVisitor {
                                     CType tapeType,
                                     JExpression val)
     {
-	tape_op = true;
+        tape_op = true;
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-	tape_op = true;
+        tape_op = true;
     }    
 
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
                                     JExpression num)
     {
-	tape_op = true;
+        tape_op = true;
     }
 }

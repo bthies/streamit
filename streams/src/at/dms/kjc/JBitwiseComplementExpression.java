@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBitwiseComplementExpression.java,v 1.4 2003-05-28 05:58:43 thies Exp $
+ * $Id: JBitwiseComplementExpression.java,v 1.5 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,112 +30,112 @@ import at.dms.util.InconsistencyException;
  */
 public class JBitwiseComplementExpression extends JUnaryExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JBitwiseComplementExpression() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	expr		the operand
-   */
-  public JBitwiseComplementExpression(TokenReference where, JExpression expr) {
-    super(where, expr);
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    expr = expr.analyse(context);
-    check(context, expr.getType().isOrdinal(), KjcMessages.UNARY_BADTYPE_BNOT, expr.getType());
-    type = CNumericType.unaryPromote(expr.getType());
-    expr = expr.convertType(type, context);
-
-    if (expr.isConstant()) {
-      if (type == CStdType.Long) {
-	expr = new JLongLiteral(getTokenReference(), ~expr.longValue());
-      } else if (type == CStdType.Integer) {
-	expr = new JIntLiteral(getTokenReference(), ~expr.intValue());
-      } else {
-	throw new InconsistencyException();
-      }
-      return expr;
-    } else {
-      return this;
-    }
-  }
-
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitBitwiseComplementExpression(this, expr);
-  }
-
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitBitwiseComplementExpression(this, expr);
-  }
-
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    setLineNumber(code);
-
-    expr.genCode(code, false);
-    if (type == CStdType.Long) {
-      code.plantInstruction(new PushLiteralInstruction((long)-1));
-      code.plantNoArgInstruction(opc_lxor);
-    } else {
-      code.plantInstruction(new PushLiteralInstruction((int)-1));
-      code.plantNoArgInstruction(opc_ixor);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   expr        the operand
+     */
+    public JBitwiseComplementExpression(TokenReference where, JExpression expr) {
+        super(where, expr);
     }
 
-    if (discardValue) {
-      code.plantPopInstruction(getType());
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        expr = expr.analyse(context);
+        check(context, expr.getType().isOrdinal(), KjcMessages.UNARY_BADTYPE_BNOT, expr.getType());
+        type = CNumericType.unaryPromote(expr.getType());
+        expr = expr.convertType(type, context);
+
+        if (expr.isConstant()) {
+            if (type == CStdType.Long) {
+                expr = new JLongLiteral(getTokenReference(), ~expr.longValue());
+            } else if (type == CStdType.Integer) {
+                expr = new JIntLiteral(getTokenReference(), ~expr.intValue());
+            } else {
+                throw new InconsistencyException();
+            }
+            return expr;
+        } else {
+            return this;
+        }
     }
-  }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JBitwiseComplementExpression other = new at.dms.kjc.JBitwiseComplementExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitBitwiseComplementExpression(this, expr);
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JBitwiseComplementExpression other) {
-  super.deepCloneInto(other);
-}
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitBitwiseComplementExpression(this, expr);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        setLineNumber(code);
+
+        expr.genCode(code, false);
+        if (type == CStdType.Long) {
+            code.plantInstruction(new PushLiteralInstruction((long)-1));
+            code.plantNoArgInstruction(opc_lxor);
+        } else {
+            code.plantInstruction(new PushLiteralInstruction((int)-1));
+            code.plantNoArgInstruction(opc_ixor);
+        }
+
+        if (discardValue) {
+            code.plantPopInstruction(getType());
+        }
+    }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JBitwiseComplementExpression other = new at.dms.kjc.JBitwiseComplementExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JBitwiseComplementExpression other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

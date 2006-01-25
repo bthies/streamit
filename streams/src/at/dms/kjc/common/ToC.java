@@ -44,33 +44,33 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      * do the recursive call.
      */
     protected void declareInitializedArray(CType type, String ident, JExpression expr) {
-	// note this calls print(CType), not print(String)
-	printType(((CArrayType)type).getBaseType());  
-	
-	p.print(" " + ident);
-	JArrayInitializer init = (JArrayInitializer)expr;
-	while (true) {
-	    int length = init.getElems().length;
-	    p.print("[" + length + "]");
-	    if (length==0) { 
-		// hope that we have a 1-dimensional array in
-		// this case.  Otherwise we won't currently
-		// get the type declarations right for the
-		// lower pieces.
-		break;
-	    }
-	    // assume rectangular arrays
-	    JExpression next = (JExpression)init.getElems()[0];
-	    if (next instanceof JArrayInitializer) {
-		init = (JArrayInitializer)next;
-	    } else {
-		break;
-	    }
-	}
-	p.print(" = ");
-	expr.accept(this);
-	p.print(";");
-	return;
+        // note this calls print(CType), not print(String)
+        printType(((CArrayType)type).getBaseType());  
+    
+        p.print(" " + ident);
+        JArrayInitializer init = (JArrayInitializer)expr;
+        while (true) {
+            int length = init.getElems().length;
+            p.print("[" + length + "]");
+            if (length==0) { 
+                // hope that we have a 1-dimensional array in
+                // this case.  Otherwise we won't currently
+                // get the type declarations right for the
+                // lower pieces.
+                break;
+            }
+            // assume rectangular arrays
+            JExpression next = (JExpression)init.getElems()[0];
+            if (next instanceof JArrayInitializer) {
+                init = (JArrayInitializer)next;
+            } else {
+                break;
+            }
+        }
+        p.print(" = ");
+        expr.accept(this);
+        p.print(";");
+        return;
     }
 
     /**
@@ -90,40 +90,40 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         p.newLine();
         // p.print(CModifier.toString(modifiers));
 
-	//only stack allocate singe dimension arrays
-	if (expr instanceof JNewArrayExpression) {
-	    /* Do not expect to have any JNewArrayExpressions any more */
-	    Utils.fail("Unexpected new array expression in codegen, for field: " + self);
-	    /*
-	    //print the basetype
-	    printType(((CArrayType)type).getBaseType());
-	    p.print(" ");
-	    //print the field identifier
-	    p.print(ident);
-	    //print the dims
-	    stackAllocateArray(ident);
-	    p.print(";");
-	    return;
-	    */
-	} else if (expr instanceof JArrayInitializer) {
-	    declareInitializedArray(type, ident, expr);
-	    return;
-	}
+        //only stack allocate singe dimension arrays
+        if (expr instanceof JNewArrayExpression) {
+            /* Do not expect to have any JNewArrayExpressions any more */
+            Utils.fail("Unexpected new array expression in codegen, for field: " + self);
+            /*
+            //print the basetype
+            printType(((CArrayType)type).getBaseType());
+            p.print(" ");
+            //print the field identifier
+            p.print(ident);
+            //print the dims
+            stackAllocateArray(ident);
+            p.print(";");
+            return;
+            */
+        } else if (expr instanceof JArrayInitializer) {
+            declareInitializedArray(type, ident, expr);
+            return;
+        }
 
-	printDecl (type, ident);
+        printDecl (type, ident);
 
         if (expr != null) {
             p.print("\t= ");
-	    expr.accept(this);
+            expr.accept(this);
         }   //initialize all fields to 0
-	else if (type.isOrdinal())
-	    p.print (" = 0");
-	else if (type.isFloatingPoint())
-	    p.print(" = 0.0f");
-	else if (type.isArrayType()) {
-	    p.print(" = {0}");
-	}
-	
+        else if (type.isOrdinal())
+            p.print (" = 0");
+        else if (type.isFloatingPoint())
+            p.print(" = 0.0f");
+        else if (type.isArrayType()) {
+            p.print(" = {0}");
+        }
+    
 
         p.print(";");
     }
@@ -167,13 +167,13 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                  JStatement thenClause,
                                  JStatement elseClause) {
 
-	boolean oldStatementContext = statementContext;
+        boolean oldStatementContext = statementContext;
         p.print("if (");
-	statementContext = false;
+        statementContext = false;
         cond.accept(this);
         p.print(") {");
-	statementContext = true;
-    if (!(thenClause instanceof JBlock)) {p.indent(); }
+        statementContext = true;
+        if (!(thenClause instanceof JBlock)) {p.indent(); }
         thenClause.accept(this);
         if (!(thenClause instanceof JBlock)) {p.outdent(); }
         if (elseClause != null) {
@@ -184,13 +184,13 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             }
             p.print("} else {");
             if (!(elseClause instanceof JBlock 
-            	|| elseClause instanceof JIfStatement)) { p.indent(); }
+                  || elseClause instanceof JIfStatement)) { p.indent(); }
             elseClause.accept(this);
             if (!(elseClause instanceof JBlock 
-                || elseClause instanceof JIfStatement)) { p.outdent(); }
+                  || elseClause instanceof JIfStatement)) { p.outdent(); }
         }
-	p.print("}");
-	statementContext = oldStatementContext;
+        p.print("}");
+        statementContext = oldStatementContext;
     }
 
     /*
@@ -246,7 +246,7 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     public void visitThisExpression(JThisExpression self,
                                     JExpression prefix) {
-	//Utils.fail("This Expression encountered");
+        //Utils.fail("This Expression encountered");
     }
 
     /**
@@ -267,9 +267,9 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
-	p.print("(");
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
+        p.print("(");
         left.accept(this);
         switch (oper) {
         case OPE_LT:
@@ -286,10 +286,10 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             break;
         default:
             Utils.fail("Unknown relational expression"); // only difference from LIRToC
-	}
+        }
         right.accept(this);
-	p.print(")");
-	statementContext = oldStatementContext;
+        p.print(")");
+        statementContext = oldStatementContext;
     }
 
 
@@ -307,18 +307,18 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitNameExpression(JNameExpression self,
                                     JExpression prefix,
                                     String ident) {
-	Utils.fail("Name Expression:" + self);
-	
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
-	p.print("(");
+        Utils.fail("Name Expression:" + self);
+    
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
+        p.print("(");
         if (prefix != null) {
             prefix.accept(this);
             p.print("->");
         }
         p.print(ident);
-	p.print(")");
-	statementContext = oldStatementContext;
+        p.print(")");
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -328,16 +328,16 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       String oper,
                                       JExpression left,
                                       JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         left.accept(this);
         p.print(" ");
         p.print(oper);
         p.print(" ");
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
 
@@ -348,25 +348,25 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                      JExpression left,
                                      String ident)
     {
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
             p.print(left.getType().getCClass().getOwner().getType() + "->this");
-	    statementContext = oldStatementContext;
+            statementContext = oldStatementContext;
             return;
         }
-        int		index = ident.indexOf("_$");
+        int     index = ident.indexOf("_$");
         if (index != -1) {
             p.print(ident.substring(0, index));      // local var
         } else {
-	    p.print("(");
+            p.print("(");
             left.accept(this);
-	    if (!(left instanceof JThisExpression))
-		p.print(".");
+            if (!(left instanceof JThisExpression))
+                p.print(".");
             p.print(ident);
-	    p.print(")");
+            p.print(")");
         }
-	statementContext = oldStatementContext;
+        statementContext = oldStatementContext;
     }
 
     /**
@@ -376,8 +376,8 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                        int oper,
                                        JExpression left,
                                        JExpression right) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
+        printLParen();
+        boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -390,11 +390,11 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             p.print(" ^ ");
             break;
         default:
-	    Utils.fail("Unknown relational expression"); // only difference with LIRToC
+            Utils.fail("Unknown relational expression"); // only difference with LIRToC
         }
         right.accept(this);
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
 
     /**
@@ -402,8 +402,8 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      */
     public void visitArrayLengthExpression(JArrayLengthExpression self,
                                            JExpression prefix) {
-	Utils.fail("Array length expression not supported in streamit");
-	
+        Utils.fail("Array length expression not supported in streamit");
+    
         prefix.accept(this);
         p.print(".length");
     }
@@ -414,15 +414,15 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-	printLParen();
-	boolean oldStatementContext = statementContext;
-	statementContext = false;
+        printLParen();
+        boolean oldStatementContext = statementContext;
+        statementContext = false;
         prefix.accept(this);
-        p.print("[(int)");	// cast to int is only difference with LIRToC
+        p.print("[(int)");  // cast to int is only difference with LIRToC
         accessor.accept(this);
         p.print("]");
-	statementContext = oldStatementContext;
-	printRParen();
+        statementContext = oldStatementContext;
+        printRParen();
     }
     
     // ----------------------------------------------------------------------
@@ -447,11 +447,11 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         
         p.print("{ ");
         for (int i = 0; i < methods.length; i++)
-	    {
-		if (!first) p.print(", ");
-		first = false;
-		p.print(iname + "_" + methods[i].getName());
-	    }
+            {
+                if (!first) p.print(", ");
+                first = false;
+                p.print(iname + "_" + methods[i].getName());
+            }
         p.print("}");
     }
     
@@ -482,26 +482,26 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	p.print("send_" + iname + "_" + ident + "(");
+        p.print("send_" + iname + "_" + ident + "(");
         portal.accept(this);
         p.print(", ");
         latency.accept(this);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
-		    {
-			p.print(", ");
-			params[i].accept(this);
-		    }
+                    {
+                        p.print(", ");
+                        params[i].accept(this);
+                    }
         p.print(");");
     }
     
     public JExpression passParentheses(JExpression exp) 
     {
-	while (exp instanceof JParenthesedExpression)
-	    exp = ((JParenthesedExpression)exp).getExpr();
-	
-	return exp;
+        while (exp instanceof JParenthesedExpression)
+            exp = ((JParenthesedExpression)exp).getExpr();
+    
+        return exp;
     }
     
 
@@ -645,12 +645,12 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       CType type,
                                       String ident) {
         if (ident.indexOf("$") == -1) {
-	    printDecl(type, ident);
-	} else {
-	    // does this case actually happen?  just preseving
-	    // semantics of previous version, but this doesn't make
-	    // sense to me.  --bft
-	    printType(type);
+            printDecl(type, ident);
+        } else {
+            // does this case actually happen?  just preseving
+            // semantics of previous version, but this doesn't make
+            // sense to me.  --bft
+            printType(type);
         }
     }
 

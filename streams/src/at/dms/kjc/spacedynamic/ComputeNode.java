@@ -14,28 +14,28 @@ public abstract class ComputeNode
 
     public ComputeNode(RawChip chip) 
     {
-	this.rawChip = chip;
+        this.rawChip = chip;
     }
     
     public RawChip getRawChip() {
-	return rawChip;
+        return rawChip;
     }
     
     public int getX() {
-	return X;
+        return X;
     }
 
     public int getY() {
-	return Y;
+        return Y;
     }
     
     public boolean isPort() 
     {
-	return this instanceof IOPort;
+        return this instanceof IOPort;
     }
 
     public boolean isTile() 
     {
-	return this instanceof RawTile;
+        return this instanceof RawTile;
     }
 }

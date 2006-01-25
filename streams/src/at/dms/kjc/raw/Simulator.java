@@ -14,5 +14,5 @@ public abstract class Simulator {
 
     public abstract void simulate(FlatNode top);
     public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
-				    SimulationCounter counters);
+                                    SimulationCounter counters);
 }

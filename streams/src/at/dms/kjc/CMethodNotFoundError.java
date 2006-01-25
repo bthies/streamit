@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethodNotFoundError.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CMethodNotFoundError.java,v 1.2 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,58 +28,58 @@ import at.dms.compiler.TokenReference;
  */
 public class CMethodNotFoundError extends PositionedError {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * An error with two parameters
-   * @param	where		the reference to token where error happen
-   * @param	caller		the location of method invocation
-   * @param	name		the method name
-   * @param	types		the parameter types
-   */
-  public CMethodNotFoundError(TokenReference where,
-			      JMethodCallExpression caller,
-			      String name,
-			      CType[] types)
-  {
-    super(where, KjcMessages.METHOD_NOT_FOUND, buildSignature(name, types));
-    this.caller = caller;
-  }
-
-  private static String buildSignature(String name, CType[] types) {
-    StringBuffer	buffer = new StringBuffer();
-
-    buffer.append(name);
-    buffer.append("(");
-    if (types != null) {
-      for (int i = 0; i < types.length; i++) {
-	if (i != 0) {
-	  buffer.append(", ");
-	}
-	buffer.append(types[i].toString());
-      }
+    /**
+     * An error with two parameters
+     * @param   where       the reference to token where error happen
+     * @param   caller      the location of method invocation
+     * @param   name        the method name
+     * @param   types       the parameter types
+     */
+    public CMethodNotFoundError(TokenReference where,
+                                JMethodCallExpression caller,
+                                String name,
+                                CType[] types)
+    {
+        super(where, KjcMessages.METHOD_NOT_FOUND, buildSignature(name, types));
+        this.caller = caller;
     }
-    buffer.append(")");
 
-    return buffer.toString();
-  }
+    private static String buildSignature(String name, CType[] types) {
+        StringBuffer    buffer = new StringBuffer();
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+        buffer.append(name);
+        buffer.append("(");
+        if (types != null) {
+            for (int i = 0; i < types.length; i++) {
+                if (i != 0) {
+                    buffer.append(", ");
+                }
+                buffer.append(types[i].toString());
+            }
+        }
+        buffer.append(")");
 
-  /**
-   * Returns the caller of the method that was not found.
-   */
-  public JMethodCallExpression getCaller() {
-    return caller;
-  }
+        return buffer.toString();
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  private final JMethodCallExpression		caller;
+    /**
+     * Returns the caller of the method that was not found.
+     */
+    public JMethodCallExpression getCaller() {
+        return caller;
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private final JMethodCallExpression     caller;
 }

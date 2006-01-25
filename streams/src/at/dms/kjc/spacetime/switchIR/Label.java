@@ -9,22 +9,22 @@ public class Label implements SwitchIns {
     private static int uniqueID = 1;
 
     public Label(String label) {
-	//super("");
-	this.label = label;
+        //super("");
+        this.label = label;
     }
 
     //generate label 
     public Label() 
     {
-	this.label = "__label" + uniqueID++ + "__";
+        this.label = "__label" + uniqueID++ + "__";
     }
     
 
     public String toString() {
-	return label + ":";
+        return label + ":";
     }
 
     public String getLabel() {
-	return label;
+        return label;
     }
 }

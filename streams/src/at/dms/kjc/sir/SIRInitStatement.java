@@ -31,44 +31,44 @@ public class SIRInitStatement extends JStatement {
      * Construct a node in the parsing tree
      */
     public SIRInitStatement(List args, 
-			    SIRStream str) {
-	super(null, null);
+                            SIRStream str) {
+        super(null, null);
         if (args != null)
             this.args = new LinkedList(args);
         else
             this.args = new LinkedList();
         assert str != null: "SIRInitStatement created with null target";
-	this.target = str;
+        this.target = str;
     }
     
     public SIRInitStatement(SIRStream str) {
-	this(null, str);
+        this(null, str);
     }
     
     /**
      * Construct a node in the parsing tree
      */
     public SIRInitStatement() {
-	super(null, null);
+        super(null, null);
 
-	this.args = null;
-	this.target = null;
+        this.args = null;
+        this.target = null;
     }
     
     public void setArgs(List args) {
-	this.args = args;
+        this.args = args;
     }
 
     public List getArgs() {
-	return this.args;
+        return this.args;
     }
 
     public void setTarget(SIRStream s) {
-	this.target = s;
+        this.target = s;
     }
 
     public SIRStream getTarget() {
-	return this.target;
+        return this.target;
     }
 
     // ----------------------------------------------------------------------
@@ -79,7 +79,7 @@ public class SIRInitStatement extends JStatement {
      * Analyses the statement (semantically) - NOT SUPPORTED YET.
      */
     public void analyse(CBodyContext context) throws PositionedError {
-	at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
     }
 
     // ----------------------------------------------------------------------
@@ -90,14 +90,14 @@ public class SIRInitStatement extends JStatement {
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitInitStatement(this, target);
-	} else {
-	    // otherwise, visit children
-	    for (int i=0; i<args.size(); i++) {
-		((JExpression)args.get(i)).accept(p);
-	    }
-	}
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitInitStatement(this, target);
+        } else {
+            // otherwise, visit children
+            for (int i=0; i<args.size(); i++) {
+                ((JExpression)args.get(i)).accept(p);
+            }
+        }
     }
 
 
@@ -106,39 +106,39 @@ public class SIRInitStatement extends JStatement {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).visitInitStatement(this, 
-								target);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitInitStatement(this, 
+                                                                target);
+        } else {
+            return this;
+        }
     }
 
     /**
      * Generates a sequence of bytescodes - NOT SUPPORTED YET.
      */
     public void genCode(CodeSequence code) {
-	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRInitStatement other = new at.dms.kjc.sir.SIRInitStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRInitStatement other = new at.dms.kjc.sir.SIRInitStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRInitStatement other) {
-  super.deepCloneInto(other);
-  other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args);
-  other.target = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRInitStatement other) {
+        super.deepCloneInto(other);
+        other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args);
+        other.target = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

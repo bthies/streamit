@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BlockEndElement.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: BlockEndElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -25,19 +25,19 @@ package at.dms.compiler.tools.antlr.compiler;
  * they are rule blocks (in which case they use RuleEndElement).
  */
 class BlockEndElement extends AlternativeElement {
-  protected boolean[] lock;	// for analysis; used to avoid infinite loops
-  protected AlternativeBlock block;// ending blocks know what block they terminate
+    protected boolean[] lock;   // for analysis; used to avoid infinite loops
+    protected AlternativeBlock block;// ending blocks know what block they terminate
 
 
-  public BlockEndElement(Grammar g) {
-    super(g);
-    lock = new boolean[g.maxk+1];
-  }
-  public Lookahead look(int k) {
-    return grammar.theLLkAnalyzer.look(k, this);
-  }
-  public String toString() {
-    //return " [BlkEnd]";
-    return "";
-  }
+    public BlockEndElement(Grammar g) {
+        super(g);
+        lock = new boolean[g.maxk+1];
+    }
+    public Lookahead look(int k) {
+        return grammar.theLLkAnalyzer.look(k, this);
+    }
+    public String toString() {
+        //return " [BlkEnd]";
+        return "";
+    }
 }

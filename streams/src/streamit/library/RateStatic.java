@@ -28,17 +28,17 @@ public class RateStatic extends Rate {
     public static final int DYNAMIC_RATE = -1;
 
     public RateStatic(int rate) {
-	super(rate, rate, rate);
+        super(rate, rate, rate);
     }
 
     /**
      * Returns whether or not this is a statically known rate.
      */
     public boolean isStatic() {
-	return true;
+        return true;
     }
 
     public int getRate() {
-	return super.min; // == super.ave == super.max
+        return super.min; // == super.ave == super.max
     }
 }

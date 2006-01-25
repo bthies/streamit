@@ -21,9 +21,9 @@ public class LIRSetPop extends LIRNode {
      * Construct a node.
      */
     public LIRSetPop(JExpression streamContext,
-		      int pop) {
-	super(streamContext);
-	this.pop = pop;
+                     int pop) {
+        super(streamContext);
+        this.pop = pop;
     }
 
     public void accept(SLIRVisitor v)

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LLCell.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: LLCell.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -29,9 +29,9 @@ package at.dms.compiler.tools.antlr.compiler;
  * <a href=http://www.MageLang.com>MageLang Institute</a>
  */
 class LLCell {
-  Object data;
-  LLCell next;
+    Object data;
+    LLCell next;
 
 
-  public LLCell(Object o) { data=o; }
+    public LLCell(Object o) { data=o; }
 }

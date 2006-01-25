@@ -25,32 +25,32 @@ public class Cloner extends streamit.misc.DestroyedClass {
      */ 
     public static Object doCopy(Object oldObj)
     {
-	ObjectOutputStream oos = null;
-	ObjectInputStream ois = null;
-	try
-	    {
-		// get an output stream ready
-		ByteArrayOutputStream bos = 
-		    new ByteArrayOutputStream();
-		oos = new ObjectOutputStream(bos);
-		// serialize and pass the object
-		oos.writeObject(oldObj);  
-		oos.flush();              
-		ByteArrayInputStream bin = 
-		    new ByteArrayInputStream(bos.toByteArray()); 
-		ois = new ObjectInputStream(bin);                  
-		// return the new object
-		oos.close();
-		ois.close();
-		return ois.readObject(); 
-	    }
-	catch(Exception e)
-	    {
-		System.err.println("Exception in library Cloner = " + e);
-		e.printStackTrace();
-		System.exit(-1);
-	 
-	    }
-	return null;
+        ObjectOutputStream oos = null;
+        ObjectInputStream ois = null;
+        try
+            {
+                // get an output stream ready
+                ByteArrayOutputStream bos = 
+                    new ByteArrayOutputStream();
+                oos = new ObjectOutputStream(bos);
+                // serialize and pass the object
+                oos.writeObject(oldObj);  
+                oos.flush();              
+                ByteArrayInputStream bin = 
+                    new ByteArrayInputStream(bos.toByteArray()); 
+                ois = new ObjectInputStream(bin);                  
+                // return the new object
+                oos.close();
+                ois.close();
+                return ois.readObject(); 
+            }
+        catch(Exception e)
+            {
+                System.err.println("Exception in library Cloner = " + e);
+                e.printStackTrace();
+                System.exit(-1);
+     
+            }
+        return null;
     }
 }

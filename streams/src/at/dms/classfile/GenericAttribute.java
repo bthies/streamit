@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: GenericAttribute.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: GenericAttribute.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -32,96 +32,96 @@ import java.io.DataOutput;
  */
 public class GenericAttribute extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Make up a new attribute
-   *
-   * @param	name		Name to be associated with the attribute
-   * @param	data		stream of bytes to be placed with the attribute
-   */
-  public GenericAttribute(String name, byte[] data) {
-    this.name = new AsciiConstant(name);
-    this.data = data;
-  }
+    /**
+     * Make up a new attribute
+     *
+     * @param   name        Name to be associated with the attribute
+     * @param   data        stream of bytes to be placed with the attribute
+     */
+    public GenericAttribute(String name, byte[] data) {
+        this.name = new AsciiConstant(name);
+        this.data = data;
+    }
 
-  /**
-   * Make up a new attribute
-   *
-   * @param	name		the attribute's name
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  public GenericAttribute(AsciiConstant name, DataInput in, ConstantPool cp)
-    throws IOException
-  {
-    this.name = name;
+    /**
+     * Make up a new attribute
+     *
+     * @param   name        the attribute's name
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    public GenericAttribute(AsciiConstant name, DataInput in, ConstantPool cp)
+        throws IOException
+    {
+        this.name = name;
 
-    this.data = new byte[in.readInt()];
-    in.readFully(this.data);
-  }
+        this.data = new byte[in.readInt()];
+        in.readFully(this.data);
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_GENERIC;
-  }
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_GENERIC;
+    }
 
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4 + data.length;
-  }
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4 + data.length;
+    }
 
-  /**
-   * Returns the attribute's name
-   */
-  /*package*/ String getName() {
-    return name.getValue();
-  }
+    /**
+     * Returns the attribute's name
+     */
+    /*package*/ String getName() {
+        return name.getValue();
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(name);
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(name);
+    }
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(name.getIndex());
-    out.writeInt(data.length);
-    out.write(data);
-  }
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(name.getIndex());
+        out.writeInt(data.length);
+        out.write(data);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private AsciiConstant		name;
-  private byte[]		data;
+    private AsciiConstant       name;
+    private byte[]      data;
 }

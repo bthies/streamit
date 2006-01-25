@@ -15,18 +15,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StringLiteralSymbol.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: StringLiteralSymbol.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
 
 class StringLiteralSymbol extends TokenSymbol {
-  protected String label;	// was this string literal labeled?
+    protected String label; // was this string literal labeled?
 
 
-  public StringLiteralSymbol(String r) {
-    super(r);
-  }
-  public String getLabel() { return label; }
-  public void setLabel(String label) {this.label = label;}
+    public StringLiteralSymbol(String r) {
+        super(r);
+    }
+    public String getLabel() { return label; }
+    public void setLabel(String label) {this.label = label;}
 }

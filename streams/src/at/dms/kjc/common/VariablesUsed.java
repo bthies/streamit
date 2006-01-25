@@ -41,11 +41,11 @@ public class VariablesUsed extends SLIREmptyVisitor
 
     public static HashSet getVars(JPhylum entry, boolean countComplexAssignments) 
     {
-	VariablesUsed used = new VariablesUsed(countComplexAssignments);
-	
-	entry.accept(used);
-	
-	return used.vars;
+        VariablesUsed used = new VariablesUsed(countComplexAssignments);
+    
+        entry.accept(used);
+    
+        return used.vars;
     }
     
     /**
@@ -62,72 +62,72 @@ public class VariablesUsed extends SLIREmptyVisitor
      */
     public static HashSet getVars(FlatNode node, boolean countComplexAssignments)  
     {
-	if (node.isFilter()) {
-	    return getVars((SIRFilter)node.contents, countComplexAssignments);
-	}
-	
-	return new HashSet();
+        if (node.isFilter()) {
+            return getVars((SIRFilter)node.contents, countComplexAssignments);
+        }
+    
+        return new HashSet();
     }
     
     public static HashSet getVars(SIRFilter filter, boolean countComplexAssignments)  
     {
-	VariablesUsed used = new VariablesUsed(countComplexAssignments);
-	
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    filter.getMethods()[i].accept(used);
-	}
-	for (int i = 0; i < filter.getFields().length; i++) {
-	    filter.getFields()[i].accept(used);
-	}
-	
-	return used.vars;
+        VariablesUsed used = new VariablesUsed(countComplexAssignments);
+    
+        for (int i = 0; i < filter.getMethods().length; i++) {
+            filter.getMethods()[i].accept(used);
+        }
+        for (int i = 0; i < filter.getFields().length; i++) {
+            filter.getFields()[i].accept(used);
+        }
+    
+        return used.vars;
     }
     
     private VariablesUsed(boolean complexAss) 
     {
-	vars = new HashSet();
-	countComplexAss = complexAss;
+        vars = new HashSet();
+        countComplexAss = complexAss;
     }
     
 
 
     public void visitFieldExpression(JFieldAccessExpression self,
                                      JExpression left,
-				     String ident) 
+                                     String ident) 
     {
-	if (!(left instanceof JThisExpression)) {
-	    left.accept(this);
-	    return;
-	}
-	vars.add(ident);
+        if (!(left instanceof JThisExpression)) {
+            left.accept(this);
+            return;
+        }
+        vars.add(ident);
     }
 
     public void visitLocalVariableExpression(JLocalVariableExpression self,
-					     String ident) 
+                                             String ident) 
     {
-	vars.add(self.getVariable());
+        vars.add(self.getVariable());
     }
     
     /**
      * prints an assignment expression
      */
     public void visitAssignmentExpression(JAssignmentExpression self,
-					  JExpression left,
-					  JExpression right) {
-	//count a complex right expression as a use for the left
-	if (countComplexAss) {
-	    //there are no side effects, so never
-	    //count it as a use for the left
-	    if (!HasSideEffects.hasSideEffects(right) &&
-		!HasSideEffects.hasSideEffects(left))
-		visitLValue(left);
-	    else  //otherwise a use for the left
-		left.accept(this);
-	}
-	else //don't count a complex right expression as a use for the left
-	    visitLValue(left);
+                                          JExpression left,
+                                          JExpression right) {
+        //count a complex right expression as a use for the left
+        if (countComplexAss) {
+            //there are no side effects, so never
+            //count it as a use for the left
+            if (!HasSideEffects.hasSideEffects(right) &&
+                !HasSideEffects.hasSideEffects(left))
+                visitLValue(left);
+            else  //otherwise a use for the left
+                left.accept(this);
+        }
+        else //don't count a complex right expression as a use for the left
+            visitLValue(left);
 
-	right.accept(this);
+        right.accept(this);
     }
     
 
@@ -135,33 +135,33 @@ public class VariablesUsed extends SLIREmptyVisitor
      * prints a compound expression
      */
     public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-						  int oper,
-						  JExpression left,
-						  JExpression right) {
-	
-	//count a complex right expression as a use for the left
-	if (countComplexAss) {
-	    //there are no side effects, so never
-	    //count it as a use for the left
-	    if (!HasSideEffects.hasSideEffects(right) && 
-		!HasSideEffects.hasSideEffects(left))
-		visitLValue(left);
-	    else  //otherwise a use for the left
-		left.accept(this);
-	}
-	else //don't count a complex right expression as a use for the left
-	    visitLValue(left);
+                                                  int oper,
+                                                  JExpression left,
+                                                  JExpression right) {
+    
+        //count a complex right expression as a use for the left
+        if (countComplexAss) {
+            //there are no side effects, so never
+            //count it as a use for the left
+            if (!HasSideEffects.hasSideEffects(right) && 
+                !HasSideEffects.hasSideEffects(left))
+                visitLValue(left);
+            else  //otherwise a use for the left
+                left.accept(this);
+        }
+        else //don't count a complex right expression as a use for the left
+            visitLValue(left);
 
-	right.accept(this);
+        right.accept(this);
     }
 
     private void visitLValue(JExpression expr) 
     {
-	//for an array access expression only record the 
-	//accessors as being referenced...
-	if (Utils.passThruParens(expr) instanceof JArrayAccessExpression) {
-	    ((JArrayAccessExpression)expr).getAccessor().accept(this);
-	    visitLValue(((JArrayAccessExpression)expr).getPrefix());
-	}
+        //for an array access expression only record the 
+        //accessors as being referenced...
+        if (Utils.passThruParens(expr) instanceof JArrayAccessExpression) {
+            ((JArrayAccessExpression)expr).getAccessor().accept(this);
+            visitLValue(((JArrayAccessExpression)expr).getPrefix());
+        }
     }    
 }

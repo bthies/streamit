@@ -15,18 +15,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CharFormatter.java,v 1.2 2002-12-11 23:56:11 karczma Exp $
+ * $Id: CharFormatter.java,v 1.3 2006-01-25 17:00:46 thies Exp $
  */
 
 package at.dms.compiler.antlr.runtime;
 
 /**
  * Interface used by BitSet to format elements of the set when
-  * converting to string
-  */
+ * converting to string
+ */
 public interface CharFormatter {
-  String escapeChar(int c, boolean forCharLiteral);
-  String escapeString(String s);
-  String literalChar(int c);
-  String literalString(String s);
+    String escapeChar(int c, boolean forCharLiteral);
+    String escapeString(String s);
+    String literalChar(int c);
+    String literalString(String s);
 }

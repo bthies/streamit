@@ -1,5 +1,5 @@
 /*
- * @(#)GPSelectProvider.java	1.0 17.02.2003
+ * @(#)GPSelectProvider.java    1.0 17.02.2003
  *
  * Copyright (C) 2003 luzar
  *
@@ -57,153 +57,153 @@ import streamit.eclipse.grapheditor.editor.utils.Utilities;
  */
 public class GPSelectProvider extends JDialog {
 
-	/** main panel for the list and the ok button
-	 */
-	JPanel pnlMain = new JPanel(new BorderLayout());
+    /** main panel for the list and the ok button
+     */
+    JPanel pnlMain = new JPanel(new BorderLayout());
 
-	/** List for the graph model providers
-	 */
-	JList lstGraphModelProviders = new JList();
+    /** List for the graph model providers
+     */
+    JList lstGraphModelProviders = new JList();
 
-	/** Scroll pane for the graph model providers
-	 */
-	JScrollPane paneScroll = new JScrollPane(lstGraphModelProviders);
+    /** Scroll pane for the graph model providers
+     */
+    JScrollPane paneScroll = new JScrollPane(lstGraphModelProviders);
 
-	/** ok button
-	 */
-	JButton cmdOk = new JButton(Translator.getString("OK"));
+    /** ok button
+     */
+    JButton cmdOk = new JButton(Translator.getString("OK"));
 
-	/** const to specify the ok answer
-	 */
-	public static final int OPTION_OK = 0;
+    /** const to specify the ok answer
+     */
+    public static final int OPTION_OK = 0;
 
-	/** const to specify the cancel answer
-	 */
-	public static final int OPTION_CANCEL = 1;
+    /** const to specify the cancel answer
+     */
+    public static final int OPTION_CANCEL = 1;
 
-	/** The answer. One of the option const values
-	 */
-	int answer = OPTION_OK;
+    /** The answer. One of the option const values
+     */
+    int answer = OPTION_OK;
 
-	/** init  method to initialize the
-	 *  gui.
-	 */
-	protected void init() {
-		this.setTitle(Translator.getString("GPSelectProvider.Title"));
+    /** init  method to initialize the
+     *  gui.
+     */
+    protected void init() {
+        this.setTitle(Translator.getString("GPSelectProvider.Title"));
 
-		this.addWindowListener( new WindowAdapter(){
-			public void windowClosing(WindowEvent e){
-				answer = OPTION_CANCEL;
-			}
+        this.addWindowListener( new WindowAdapter(){
+                public void windowClosing(WindowEvent e){
+                    answer = OPTION_CANCEL;
+                }
 
-		});
+            });
 
-		lstGraphModelProviders.setCellRenderer(new GraphModelProviderRenderer());
-		lstGraphModelProviders.setPreferredSize(new Dimension(300,200));
-		GraphModelProvider[] providers = GraphModelProviderRegistry .getGraphModelProviders();
-		if (providers.length == 0)
-			JOptionPane.showMessageDialog(this, Translator.getString("Error.No_GraphModelProvider_available"), Translator.getString("Error"), JOptionPane.ERROR_MESSAGE );
-		lstGraphModelProviders.setListData( providers );
-		lstGraphModelProviders.setSelectedIndex(0);
-		pnlMain.add(paneScroll, BorderLayout.CENTER);
-		paneScroll.setAutoscrolls(true);
-		pnlMain.add(cmdOk, BorderLayout.SOUTH);
-		cmdOk.addActionListener(new ActionListener() {
-			/**
-			 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-			 */
-			public void actionPerformed(ActionEvent e) {
-				setVisible(false);
-			}
-		});
-		getContentPane().add(pnlMain);
-		pack();
-		Utilities.center(this);
+        lstGraphModelProviders.setCellRenderer(new GraphModelProviderRenderer());
+        lstGraphModelProviders.setPreferredSize(new Dimension(300,200));
+        GraphModelProvider[] providers = GraphModelProviderRegistry .getGraphModelProviders();
+        if (providers.length == 0)
+            JOptionPane.showMessageDialog(this, Translator.getString("Error.No_GraphModelProvider_available"), Translator.getString("Error"), JOptionPane.ERROR_MESSAGE );
+        lstGraphModelProviders.setListData( providers );
+        lstGraphModelProviders.setSelectedIndex(0);
+        pnlMain.add(paneScroll, BorderLayout.CENTER);
+        paneScroll.setAutoscrolls(true);
+        pnlMain.add(cmdOk, BorderLayout.SOUTH);
+        cmdOk.addActionListener(new ActionListener() {
+                /**
+                 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+                 */
+                public void actionPerformed(ActionEvent e) {
+                    setVisible(false);
+                }
+            });
+        getContentPane().add(pnlMain);
+        pack();
+        Utilities.center(this);
 
-	}
+    }
 
-	/**
-	 * Constructor for GPSelectProvider.
-	 *
-	 * @param owner
-	 * @throws HeadlessException
-	 */
-	public GPSelectProvider(Frame owner) throws HeadlessException {
-		super(owner, true);
-		init();
-	}
+    /**
+     * Constructor for GPSelectProvider.
+     *
+     * @param owner
+     * @throws HeadlessException
+     */
+    public GPSelectProvider(Frame owner) throws HeadlessException {
+        super(owner, true);
+        init();
+    }
 
-	/**Returns the selected graph model provider
-	 *
-	 */
-	public GraphModelProvider getSelectedGraphModelProvider(){
-		if (lstGraphModelProviders.getModel() .getSize() == 0)
-			return null;
-		return (GraphModelProvider)lstGraphModelProviders.getSelectedValue() ;
-	}
+    /**Returns the selected graph model provider
+     *
+     */
+    public GraphModelProvider getSelectedGraphModelProvider(){
+        if (lstGraphModelProviders.getModel() .getSize() == 0)
+            return null;
+        return (GraphModelProvider)lstGraphModelProviders.getSelectedValue() ;
+    }
 
-	/**
-	 * Constructor for GPSelectProvider.
-	 * @param owner
-	 * @throws HeadlessException
-	 */
-	public GPSelectProvider(Dialog owner) throws HeadlessException {
-		super(owner, true);
-		init();
-	}
+    /**
+     * Constructor for GPSelectProvider.
+     * @param owner
+     * @throws HeadlessException
+     */
+    public GPSelectProvider(Dialog owner) throws HeadlessException {
+        super(owner, true);
+        init();
+    }
 
-	/** Renderer class for the graph model provider objects.
-	 *  The renderer uses the method
-	 *  <tt>getPresentationName</tt> from the
-	 *  graph model provider for the
-	 *  visible text.
-	 *
-	 *  @see GraphModelProvider
-	 */
-	class GraphModelProviderRenderer extends JLabel implements ListCellRenderer {
-		/** Default constructor
-		 */
-		public GraphModelProviderRenderer() {
-		}
+    /** Renderer class for the graph model provider objects.
+     *  The renderer uses the method
+     *  <tt>getPresentationName</tt> from the
+     *  graph model provider for the
+     *  visible text.
+     *
+     *  @see GraphModelProvider
+     */
+    class GraphModelProviderRenderer extends JLabel implements ListCellRenderer {
+        /** Default constructor
+         */
+        public GraphModelProviderRenderer() {
+        }
 
-		/** Returns a JLabel with the presentation name
-		 *  of the graph model provider.
-		 */
-		public Component getListCellRendererComponent(
-			JList list,
-			Object value,
-			int index,
-			boolean isSelected,
-			boolean cellHasFocus) {
-			GraphModelProvider gmp = (GraphModelProvider) value;
-			setText(gmp.getPresentationName());
-			setOpaque(true);
+        /** Returns a JLabel with the presentation name
+         *  of the graph model provider.
+         */
+        public Component getListCellRendererComponent(
+                                                      JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+            GraphModelProvider gmp = (GraphModelProvider) value;
+            setText(gmp.getPresentationName());
+            setOpaque(true);
 
-			setForeground(isSelected ? list.getSelectionForeground(): list.getForeground() );
-			setBackground(isSelected ? list.getSelectionBackground(): list.getBackground() );
-			return this;
-		}
-	}
+            setForeground(isSelected ? list.getSelectionForeground(): list.getForeground() );
+            setBackground(isSelected ? list.getSelectionBackground(): list.getBackground() );
+            return this;
+        }
+    }
 
 
-	/**
-	 * Returns the answer.
-	 * @return int
-	 */
-	public int getAnswer() {
-		return answer;
-	}
+    /**
+     * Returns the answer.
+     * @return int
+     */
+    public int getAnswer() {
+        return answer;
+    }
 
-	/** shows the select dialog. If only one
-	 *  graph model provider is available the
-	 *  method returns directly.
-	 */
-	public void show(){
+    /** shows the select dialog. If only one
+     *  graph model provider is available the
+     *  method returns directly.
+     */
+    public void show(){
 
-		if (lstGraphModelProviders .getModel() .getSize() <= 1)
-			return;
-		else
-			super.show();
-	}
+        if (lstGraphModelProviders .getModel() .getSize() <= 1)
+            return;
+        else
+            super.show();
+    }
 
 }

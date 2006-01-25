@@ -23,9 +23,9 @@ public class LIRSetDecode extends LIRNode {
      * Construct a node.
      */
     public LIRSetDecode(JExpression streamContext,
-			LIRFunctionPointer decode) {
-	super(streamContext);
-	this.decode = decode;
+                        LIRFunctionPointer decode) {
+        super(streamContext);
+        this.decode = decode;
     }
 
     public void accept(SLIRVisitor v) {

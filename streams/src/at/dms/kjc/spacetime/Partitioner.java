@@ -27,42 +27,42 @@ public abstract class Partitioner
 
     
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
-		       WorkEstimate work, RawChip rawChip) 
+                       WorkEstimate work, RawChip rawChip) 
     {
-	this.rawChip = rawChip;
-	this.topFilters = topFilters;
-	this.exeCounts = exeCounts;
-	this.lfa = lfa;
-	this.work = work;
-	topTraces = new Trace[topFilters.length];
-	traceBNWork = new HashMap();
+        this.rawChip = rawChip;
+        this.topFilters = topFilters;
+        this.exeCounts = exeCounts;
+        this.lfa = lfa;
+        this.work = work;
+        topTraces = new Trace[topFilters.length];
+        traceBNWork = new HashMap();
     }
     
     public abstract Trace[] partition();
 
     public boolean isIO(Trace trace) 
     {
-	for (int i = 0; i < io.length; i++) {
-	    if (trace == io[i])
-		return true;
-	}
-	return false;
+        for (int i = 0; i < io.length; i++) {
+            if (trace == io[i])
+                return true;
+        }
+        return false;
     }
 
     public Trace[] getTraceGraph()
     {
-	assert traceGraph != null;
-	return traceGraph;
+        assert traceGraph != null;
+        return traceGraph;
     }
 
     public int getFilterWork(FilterTraceNode node) 
     {
-	return ((Integer)workEstimation.get(node.getFilter())).intValue();
+        return ((Integer)workEstimation.get(node.getFilter())).intValue();
     }
 
     public int getTraceBNWork(Trace trace) 
     {
-	assert traceBNWork.containsKey(trace);
-	return ((Integer)traceBNWork.get(trace)).intValue();
+        assert traceBNWork.containsKey(trace);
+        return ((Integer)traceBNWork.get(trace)).intValue();
     }
 }

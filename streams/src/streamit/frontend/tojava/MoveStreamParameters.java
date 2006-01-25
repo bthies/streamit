@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.15 2005-07-13 22:19:20 janiss Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.16 2006-01-25 17:04:30 thies Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -56,24 +56,24 @@ public class MoveStreamParameters extends InitMunger
         List body = new ArrayList();
         List newParams = new ArrayList();
         for (Iterator iter = params.iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            String pName = "_param_" + param.getName();
-            Expression lhs = new ExprVar(context, param.getName());
-            Expression rhs = new ExprVar(context, pName);
-            Type type = param.getType();
-            param = new Parameter(type, pName);
-            while (type instanceof TypeArray)
-                type = ((TypeArray)type).getBase();
-            if (type instanceof TypeStruct)
             {
-                rhs = new ExprTypeCast(context, param.getType(), rhs);
-                param = new Parameter(objectType, pName);
+                Parameter param = (Parameter)iter.next();
+                String pName = "_param_" + param.getName();
+                Expression lhs = new ExprVar(context, param.getName());
+                Expression rhs = new ExprVar(context, pName);
+                Type type = param.getType();
+                param = new Parameter(type, pName);
+                while (type instanceof TypeArray)
+                    type = ((TypeArray)type).getBase();
+                if (type instanceof TypeStruct)
+                    {
+                        rhs = new ExprTypeCast(context, param.getType(), rhs);
+                        param = new Parameter(objectType, pName);
+                    }
+                Statement stmt = new StmtAssign(context, lhs, rhs);
+                body.add(stmt);
+                newParams.add(param);
             }
-            Statement stmt = new StmtAssign(context, lhs, rhs);
-            body.add(stmt);
-            newParams.add(param);
-        }
         StmtBlock oldBody = (StmtBlock)init.getBody();
         body.addAll(oldBody.getStmts());
         Statement newBody = new StmtBlock(oldBody.getContext(), body);
@@ -97,23 +97,23 @@ public class MoveStreamParameters extends InitMunger
         List body = new ArrayList();
         List newParams = new ArrayList();
         for (Iterator iter = params.iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            Type type = param.getType();
-            while (type instanceof TypeArray)
-                type = ((TypeArray)type).getBase();
-            if (type instanceof TypeStruct)
             {
-                String newName = "_obj_" + param.getName();
-                Expression rhs = new ExprVar(context, newName);
-                Expression cast =
-                    new ExprTypeCast(context, param.getType(), rhs);
-                body.add(new StmtVarDecl(context, param.getType(),
-                                         param.getName(), cast));
-                param = new Parameter(objectType, newName);
+                Parameter param = (Parameter)iter.next();
+                Type type = param.getType();
+                while (type instanceof TypeArray)
+                    type = ((TypeArray)type).getBase();
+                if (type instanceof TypeStruct)
+                    {
+                        String newName = "_obj_" + param.getName();
+                        Expression rhs = new ExprVar(context, newName);
+                        Expression cast =
+                            new ExprTypeCast(context, param.getType(), rhs);
+                        body.add(new StmtVarDecl(context, param.getType(),
+                                                 param.getName(), cast));
+                        param = new Parameter(objectType, newName);
+                    }
+                newParams.add(param);
             }
-            newParams.add(param);
-        }
         StmtBlock oldBody = (StmtBlock)init.getBody();
         body.addAll(oldBody.getStmts());
         Statement newBody = new StmtBlock(oldBody.getContext(), body);
@@ -127,52 +127,52 @@ public class MoveStreamParameters extends InitMunger
         spec = (StreamSpec)super.visitStreamSpec(spec);
         
         if (spec.getParams().size() > 0)
-        {
-            List newFuncs = new ArrayList(spec.getFuncs());
-            List newVars = new ArrayList(spec.getVars());
-
-	    if (spec.getType() == StreamSpec.STREAM_GLOBAL) assert false: "Global should have no params";
-
-            if (spec.getType() == StreamSpec.STREAM_FILTER)
             {
-                // Okay, we have some parameters.  We need to add this
-                // to the list of variables and add the parameters to
-                // the init function.
-                // The parameters are Parameter objects, but the variables
-                // are Statements (StmtVarDecls).  Convert.
-                for (Iterator iter = spec.getParams().iterator();
-                     iter.hasNext(); )
-                {
-                    Parameter param = (Parameter)iter.next();
-                    FieldDecl field = new FieldDecl(spec.getContext(),
-                                                    param.getType(),
-                                                    param.getName(),
-                                                    null);
-                    newVars.add(field);
-                }
+                List newFuncs = new ArrayList(spec.getFuncs());
+                List newVars = new ArrayList(spec.getVars());
+
+                if (spec.getType() == StreamSpec.STREAM_GLOBAL) assert false: "Global should have no params";
+
+                if (spec.getType() == StreamSpec.STREAM_FILTER)
+                    {
+                        // Okay, we have some parameters.  We need to add this
+                        // to the list of variables and add the parameters to
+                        // the init function.
+                        // The parameters are Parameter objects, but the variables
+                        // are Statements (StmtVarDecls).  Convert.
+                        for (Iterator iter = spec.getParams().iterator();
+                             iter.hasNext(); )
+                            {
+                                Parameter param = (Parameter)iter.next();
+                                FieldDecl field = new FieldDecl(spec.getContext(),
+                                                                param.getType(),
+                                                                param.getName(),
+                                                                null);
+                                newVars.add(field);
+                            }
             
-                // Rewrite the init function:
-                Function init = findInit(spec.getContext(), spec.getFuncs());
-                newFuncs.remove(init);
-                init = addInitParams(init, spec.getParams());
-                newFuncs.add(init);
-            }
-            else
-            {
-                // Composite stream; the stream parameters only exist
-                // within the context of the init function, no need to
-                // create fields.  (In fact, this actively hurts.)
-                Function init = findInit(spec.getContext(), spec.getFuncs());
-                newFuncs.remove(init);
-                init = addInitParamsOnly(init, spec.getParams());
-                newFuncs.add(init);
-            }
+                        // Rewrite the init function:
+                        Function init = findInit(spec.getContext(), spec.getFuncs());
+                        newFuncs.remove(init);
+                        init = addInitParams(init, spec.getParams());
+                        newFuncs.add(init);
+                    }
+                else
+                    {
+                        // Composite stream; the stream parameters only exist
+                        // within the context of the init function, no need to
+                        // create fields.  (In fact, this actively hurts.)
+                        Function init = findInit(spec.getContext(), spec.getFuncs());
+                        newFuncs.remove(init);
+                        init = addInitParamsOnly(init, spec.getParams());
+                        newFuncs.add(init);
+                    }
 
-            // And create the new stream spec.
-            spec = new StreamSpec(spec.getContext(), spec.getType(),
-                                  spec.getStreamType(), spec.getName(),
-                                  Collections.EMPTY_LIST, newVars, newFuncs);
-        }
+                // And create the new stream spec.
+                spec = new StreamSpec(spec.getContext(), spec.getType(),
+                                      spec.getStreamType(), spec.getName(),
+                                      Collections.EMPTY_LIST, newVars, newFuncs);
+            }
         return spec;
     }
 }

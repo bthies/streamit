@@ -117,11 +117,11 @@ public abstract class SchedStream extends SchedObject
     public String getStreamName ()
     {
         if (streamName == null)
-        {
-            streamName =  "(" + getConsumption () + ", " + getPeekConsumption () + ") " +
-                          super.getStreamName () + "*" + getNumExecutions ().toString () +
-                          " (" + getProduction () + ")";
-        }
+            {
+                streamName =  "(" + getConsumption () + ", " + getPeekConsumption () + ") " +
+                    super.getStreamName () + "*" + getNumExecutions ().toString () +
+                    " (" + getProduction () + ")";
+            }
 
         return streamName;
     }

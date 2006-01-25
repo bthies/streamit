@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsLookAndFeel.java	1.2 02.02.2003
+ * @(#)ToolsLookAndFeel.java    1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,69 +37,69 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ToolsLookAndFeel extends AbstractActionRadioButton {
 
-	protected UIManager.LookAndFeelInfo[] lookAndFeels = null;
-	/**
-	 * Constructor for ToolsLookAndFeel.
-	 * @param graphpad
-	 */
-	public ToolsLookAndFeel(GPGraphpad graphpad) {
-		super(graphpad);
-		lastActionCommand = UIManager.getLookAndFeel().getClass().getName();
-	}
+    protected UIManager.LookAndFeelInfo[] lookAndFeels = null;
+    /**
+     * Constructor for ToolsLookAndFeel.
+     * @param graphpad
+     */
+    public ToolsLookAndFeel(GPGraphpad graphpad) {
+        super(graphpad);
+        lastActionCommand = UIManager.getLookAndFeel().getClass().getName();
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionRadioButton#getPossibleActionCommands()
-	 */
-	public String[] getPossibleActionCommands() {
-		if (lookAndFeels == null)
-			lookAndFeels = UIManager.getInstalledLookAndFeels();
-		String[] values = new String[lookAndFeels.length];
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionRadioButton#getPossibleActionCommands()
+     */
+    public String[] getPossibleActionCommands() {
+        if (lookAndFeels == null)
+            lookAndFeels = UIManager.getInstalledLookAndFeels();
+        String[] values = new String[lookAndFeels.length];
 
-		for (int i = 0; i < lookAndFeels.length; i++) {
-			UIManager.LookAndFeelInfo laf = lookAndFeels[i];
-			values[i] = laf.getClassName();
-		}
-		return values;
-	}
+        for (int i = 0; i < lookAndFeels.length; i++) {
+            UIManager.LookAndFeelInfo laf = lookAndFeels[i];
+            values[i] = laf.getClassName();
+        }
+        return values;
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		this.lastActionCommand = e.getActionCommand();
-		try {
-			UIManager.setLookAndFeel(e.getActionCommand());
-			SwingUtilities.updateComponentTreeUI(graphpad.getFrame());
-		} catch (Exception ex) {
-		};
-		update();
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        this.lastActionCommand = e.getActionCommand();
+        try {
+            UIManager.setLookAndFeel(e.getActionCommand());
+            SwingUtilities.updateComponentTreeUI(graphpad.getFrame());
+        } catch (Exception ex) {
+        };
+        update();
+    }
 
-	/** updates all Abstract Buttons from this action
-	 */
-	public void update() {
-		Enumeration enum = abstractButtons.elements();
-		while (enum.hasMoreElements()) {
-			AbstractButton button = (AbstractButton) enum.nextElement();
-			button.setSelected(isSelected(button.getActionCommand()));
-		}
-	};
+    /** updates all Abstract Buttons from this action
+     */
+    public void update() {
+        Enumeration enum = abstractButtons.elements();
+        while (enum.hasMoreElements()) {
+            AbstractButton button = (AbstractButton) enum.nextElement();
+            button.setSelected(isSelected(button.getActionCommand()));
+        }
+    };
 
-	/** Should return presentation Text for the 
-	 *  action command or null 
-	 *  for the default
-	 */
-	public String getPresentationText(String actionCommand) {
-		if (actionCommand == null)
-			return null;
-			
-		for (int i = 0; i < lookAndFeels.length ; i++){
-			if (lookAndFeels[i].getClassName().equals(actionCommand)){
-				return lookAndFeels[i].getName() ;
-			}
-		}
-		
-		return actionCommand;
-	}
+    /** Should return presentation Text for the 
+     *  action command or null 
+     *  for the default
+     */
+    public String getPresentationText(String actionCommand) {
+        if (actionCommand == null)
+            return null;
+            
+        for (int i = 0; i < lookAndFeels.length ; i++){
+            if (lookAndFeels[i].getClassName().equals(actionCommand)){
+                return lookAndFeels[i].getName() ;
+            }
+        }
+        
+        return actionCommand;
+    }
 
 }

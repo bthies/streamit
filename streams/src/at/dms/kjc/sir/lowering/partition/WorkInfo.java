@@ -32,60 +32,60 @@ class WorkInfo {
     private SIRStream str;
     
     private WorkInfo(SIRStream str, int reps, int workEstimate) {
-	this.str = str;
-	this.reps = reps;
-	this.workEstimate = workEstimate;
+        this.str = str;
+        this.reps = reps;
+        this.workEstimate = workEstimate;
     }
 
     public static WorkInfo create(SIRFilter filter, int reps, int workEstimate) {
-	// make fresh node
-	WorkInfo result = new WorkInfo(filter, reps, workEstimate);
-	// get measured execution time
-	Object exact  = measured.get(result);
-	if (exact!=null) {
-	    // if we calculated it before, reuse it 
-	    result.workExact = ((Integer)exact).intValue();
-	} else {
-	    // otherwise, calculate exact work
-	    if (KjcOptions.simulatework) {
-		// if simulation is enabled, then call raw simluator
-		result.workExact = RawWorkEstimator.estimateWork(filter); 
-	    } else {
-		// otherwise, just take workEstimate to be exact
-		result.workExact = workEstimate;
-	    }
-	    measured.put(result, new Integer(result.workExact));
-	}
-	return result;
+        // make fresh node
+        WorkInfo result = new WorkInfo(filter, reps, workEstimate);
+        // get measured execution time
+        Object exact  = measured.get(result);
+        if (exact!=null) {
+            // if we calculated it before, reuse it 
+            result.workExact = ((Integer)exact).intValue();
+        } else {
+            // otherwise, calculate exact work
+            if (KjcOptions.simulatework) {
+                // if simulation is enabled, then call raw simluator
+                result.workExact = RawWorkEstimator.estimateWork(filter); 
+            } else {
+                // otherwise, just take workEstimate to be exact
+                result.workExact = workEstimate;
+            }
+            measured.put(result, new Integer(result.workExact));
+        }
+        return result;
     }
 
     public static WorkInfo create(SIRContainer cont, int workEstimate) {
-	// we don't measure work for container, so just make a node
-	// with the estimate
-	WorkInfo result = new WorkInfo(cont, 1, workEstimate);
-	result.workExact = workEstimate;
-	return result;
+        // we don't measure work for container, so just make a node
+        // with the estimate
+        WorkInfo result = new WorkInfo(cont, 1, workEstimate);
+        result.workExact = workEstimate;
+        return result;
     }
 
     /**
      * Returns the amount of work.
      */
     public String toString() {
-	return "" + (reps*workExact);
+        return "" + (reps*workExact);
     }
 
     /**
      * Work per steady-state execution of graph.
      */
     public int getTotalWork() {
-	return reps*workExact;
+        return reps*workExact;
     }
 
     /**
      * Returns exact work for one execution.
      */
     public int getUnitWork() {
-	return workExact;
+        return workExact;
     }
 
     /**
@@ -93,19 +93,19 @@ class WorkInfo {
      * statistics gathering on how bad the original estimate was.
      */
     public int getInexactUnitWork() {
-	return workEstimate;
+        return workEstimate;
     }
     
     public int getReps() {
-	return reps;
+        return reps;
     }
 
     /**
      * Only intended for incrementing container work.
      */
     public void incrementWork(int work) {
-	assert str instanceof SIRContainer;
-	this.workExact += work;
+        assert str instanceof SIRContainer;
+        this.workExact += work;
     }
 
     /**
@@ -113,7 +113,7 @@ class WorkInfo {
      * filter and have the same work *estimate*
      */
     public int hashCode() {
-	return workEstimate;
+        return workEstimate;
     }
 
     /**
@@ -121,8 +121,8 @@ class WorkInfo {
      * estimate.
      */
     public boolean equals(Object o) {
-	return (o instanceof WorkInfo &&
-		((WorkInfo)o).workEstimate==this.workEstimate);
+        return (o instanceof WorkInfo &&
+                ((WorkInfo)o).workEstimate==this.workEstimate);
     }
 
 }

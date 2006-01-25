@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: TokenReference.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -30,78 +30,78 @@ import at.dms.compiler.tools.common.Utils;
  */
 public class TokenReference {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Construct a file and line reference
-   * @param	file		the file name
-   * @param	line		the line number
-   */
-  public TokenReference(String file, int line) {
-    this.file = file;
-    this.line = line;
+    /**
+     * Construct a file and line reference
+     * @param   file        the file name
+     * @param   line        the line number
+     */
+    public TokenReference(String file, int line) {
+        this.file = file;
+        this.line = line;
 
-    last = this;
-  }
-
-  /**
-   * Construct a line and file reference
-   * @param	file		the file name
-   * @param	line		the line number
-   * WARNING: DOES NOT LIKE MULTITHREADING
-   */
-  public static TokenReference build(String file, int line) {
-    if (line != last.line || file != last.file) {
-      return new TokenReference(file, line);
-    } else {
-      return last;
+        last = this;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    /**
+     * Construct a line and file reference
+     * @param   file        the file name
+     * @param   line        the line number
+     * WARNING: DOES NOT LIKE MULTITHREADING
+     */
+    public static TokenReference build(String file, int line) {
+        if (line != last.line || file != last.file) {
+            return new TokenReference(file, line);
+        } else {
+            return last;
+        }
+    }
 
-  /**
-   * Returns the file name of reference
-   */
-  public final String getFile() {
-    return file;
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the name of reference (getFile().baseName())
-   */
-  public final String getName() {
-    String[]	splitted = Utils.splitQualifiedName(file, File.separatorChar);
+    /**
+     * Returns the file name of reference
+     */
+    public final String getFile() {
+        return file;
+    }
 
-    return splitted[1];
-  }
+    /**
+     * Returns the name of reference (getFile().baseName())
+     */
+    public final String getName() {
+        String[]    splitted = Utils.splitQualifiedName(file, File.separatorChar);
 
-  /**
-   * Returns the line number of reference
-   */
-  public final int getLine() {
-    return line;
-  }
+        return splitted[1];
+    }
 
-  /*
-   *
-   */
-  public String toString() {
-    return "[" + file + ":" + line + "]";
-  }
+    /**
+     * Returns the line number of reference
+     */
+    public final int getLine() {
+        return line;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /*
+     *
+     */
+    public String toString() {
+        return "[" + file + ":" + line + "]";
+    }
 
-  public static TokenReference	NO_REF = new TokenReference("<GENERATED-BY-KOPI>", 0);
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private static TokenReference	last = NO_REF;
+    public static TokenReference    NO_REF = new TokenReference("<GENERATED-BY-KOPI>", 0);
 
-  private final String		file;
-  private final int		line;
+    private static TokenReference   last = NO_REF;
+
+    private final String        file;
+    private final int       line;
 }

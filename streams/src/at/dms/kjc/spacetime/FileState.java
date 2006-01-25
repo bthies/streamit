@@ -15,55 +15,55 @@ public class FileState
 
     public FileState(PredefinedContent file, StreamingDram parent)
     {
-	this.parent = parent;
-	this.file = file;
+        this.parent = parent;
+        this.file = file;
     }
     
     public PredefinedContent getContent() 
     {
-	return file;
+        return file;
     }
     
     public boolean isFP() 
     {
-	if (isReader())
-	    return ((FileInputContent)file).isFP();
-	else
-	    return ((FileOutputContent)file).isFP();
+        if (isReader())
+            return ((FileInputContent)file).isFP();
+        else
+            return ((FileOutputContent)file).isFP();
     }
     
 
     public void setVisited(boolean init, boolean primepump) 
     {
-	if (init)
-	    visitedInit = true;
-	else if (primepump)
-	    visitedPP = true;
-	else
-	    visitedSteady = true;
+        if (init)
+            visitedInit = true;
+        else if (primepump)
+            visitedPP = true;
+        else
+            visitedSteady = true;
     }
     
     public boolean isVisited(boolean init, boolean primepump) 
     {
-	if (init)
-	    return visitedInit;
-	else if (primepump)
-	    return visitedPP;
-	else 
-	    return visitedSteady;
+        if (init)
+            return visitedInit;
+        else if (primepump)
+            return visitedPP;
+        else 
+            return visitedSteady;
     }
     
     public boolean isReader() 
     {
-	return (file instanceof FileInputContent);
+        return (file instanceof FileInputContent);
     }
 
     public String getFileName() 
     {
-	if (isReader())
-	    return ((FileInputContent)file).getFileName();
-	else
-	    return ((FileOutputContent)file).getFileName();
+        if (isReader())
+            return ((FileInputContent)file).getFileName();
+        else
+            return ((FileOutputContent)file).getFileName();
     }
     
 }

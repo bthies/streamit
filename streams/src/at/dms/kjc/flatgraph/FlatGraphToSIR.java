@@ -23,110 +23,110 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 
     public FlatGraphToSIR(FlatNode top) 
     {
-	toplevel = top;
-	id = 0;
-	toplevelSIR = new SIRPipeline("TopLevel" + globalID++);
-	reSIR(toplevelSIR, toplevel, new HashSet());
+        toplevel = top;
+        id = 0;
+        toplevelSIR = new SIRPipeline("TopLevel" + globalID++);
+        reSIR(toplevelSIR, toplevel, new HashSet());
     }
 
     public SIRPipeline getTopLevelSIR() 
     {
-	assert toplevelSIR != null;
-	return toplevelSIR;
+        assert toplevelSIR != null;
+        return toplevelSIR;
     }
     //this does not work for feedbackloops!!!
     private void reSIR(SIRContainer parent, FlatNode current, HashSet visited) 
     {
-	if (current.isFilter()) {
-	    SIRPipeline pipeline;
+        if (current.isFilter()) {
+            SIRPipeline pipeline;
 
-	    if (!(parent instanceof SIRPipeline)) {
-		pipeline = new SIRPipeline(parent, "Pipeline" + id++);
-		pipeline.setInit(SIRStream.makeEmptyInit());
-		parent.add(pipeline);
-	    }
-	    else 
-		pipeline = (SIRPipeline)parent;
-	    
-	    //keep adding filters to this pipeline
-	    while (current.isFilter()) {
-		//make sure we have not added this filter before
-		assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
-		//record that we have added this filter
-		visited.add(current);
-		List params;
-		//if its parent does not contain it, just pass null params...
-		if (parent.indexOf(current.getFilter()) == -1)
-		    params = new LinkedList(); 
-		else
-		    params = ((SIRFilter)current.contents).getParams();
-		
-		
-		pipeline.add((SIRFilter)current.contents, params);
-		((SIRFilter)current.contents).setParent(parent);
-		//nothing more to do here so just return
-		if (current.ways == 0)
-		    return;
-		//assert that there is exactly one outgoing edge per filter if there is none
-		assert current.ways == 1 && current.edges.length == 1;
-		current = current.edges[0];
-	    }
+            if (!(parent instanceof SIRPipeline)) {
+                pipeline = new SIRPipeline(parent, "Pipeline" + id++);
+                pipeline.setInit(SIRStream.makeEmptyInit());
+                parent.add(pipeline);
+            }
+            else 
+                pipeline = (SIRPipeline)parent;
+        
+            //keep adding filters to this pipeline
+            while (current.isFilter()) {
+                //make sure we have not added this filter before
+                assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
+                //record that we have added this filter
+                visited.add(current);
+                List params;
+                //if its parent does not contain it, just pass null params...
+                if (parent.indexOf(current.getFilter()) == -1)
+                    params = new LinkedList(); 
+                else
+                    params = ((SIRFilter)current.contents).getParams();
+        
+        
+                pipeline.add((SIRFilter)current.contents, params);
+                ((SIRFilter)current.contents).setParent(parent);
+                //nothing more to do here so just return
+                if (current.ways == 0)
+                    return;
+                //assert that there is exactly one outgoing edge per filter if there is none
+                assert current.ways == 1 && current.edges.length == 1;
+                current = current.edges[0];
+            }
 
-	}
-	
-	if (current.isSplitter()) {
-	    SIRSplitJoin splitJoin = new SIRSplitJoin(parent, "SplitJoin" + id++);
-	    splitJoin.setInit(SIRStream.makeEmptyInit());
-	    //add this splitjoin to the parent!
-	    parent.add(splitJoin);
-	    //make sure we have not seen this splitter
-	    assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
-	    //record that we have added this splitter
-	    visited.add(current);
-	    splitJoin.setSplitter((SIRSplitter)current.contents);
-	    //create a dummy joiner for this split join just in case it does not have one
-	    SIRJoiner joiner = SIRJoiner.create(splitJoin, SIRJoinType.NULL, 
-						((SIRSplitter)current.contents).getWays());
-	    splitJoin.setJoiner(joiner);
+        }
+    
+        if (current.isSplitter()) {
+            SIRSplitJoin splitJoin = new SIRSplitJoin(parent, "SplitJoin" + id++);
+            splitJoin.setInit(SIRStream.makeEmptyInit());
+            //add this splitjoin to the parent!
+            parent.add(splitJoin);
+            //make sure we have not seen this splitter
+            assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
+            //record that we have added this splitter
+            visited.add(current);
+            splitJoin.setSplitter((SIRSplitter)current.contents);
+            //create a dummy joiner for this split join just in case it does not have one
+            SIRJoiner joiner = SIRJoiner.create(splitJoin, SIRJoinType.NULL, 
+                                                ((SIRSplitter)current.contents).getWays());
+            splitJoin.setJoiner(joiner);
 
-	    for (int i = 0; i < current.edges.length; i++) {
-		if (current.edges[i] != null) {
-		    //wrap all parallel splitter edges in a pipeline
-		    SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++);
-		    pipeline.setInit(SIRStream.makeEmptyInit());
-		    splitJoin.add(pipeline);
-		    reSIR(pipeline, current.edges[i], visited);
-		}
-		
-	    }
-	    return;
-	}
-	
-	if (current.isJoiner()){
-	    
-	    SIRContainer splitJoin = parent;
-	    while (!(splitJoin instanceof SIRSplitJoin)) {
-		splitJoin = splitJoin.getParent();
-	    }
-	    
-	    assert splitJoin != null;
-	    
-	    
+            for (int i = 0; i < current.edges.length; i++) {
+                if (current.edges[i] != null) {
+                    //wrap all parallel splitter edges in a pipeline
+                    SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++);
+                    pipeline.setInit(SIRStream.makeEmptyInit());
+                    splitJoin.add(pipeline);
+                    reSIR(pipeline, current.edges[i], visited);
+                }
+        
+            }
+            return;
+        }
+    
+        if (current.isJoiner()){
+        
+            SIRContainer splitJoin = parent;
+            while (!(splitJoin instanceof SIRSplitJoin)) {
+                splitJoin = splitJoin.getParent();
+            }
+        
+            assert splitJoin != null;
+        
+        
 
-	    if (!visited.contains(current)) {
-		//make sure we have not seen this Joiner
-		assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
-		//record that we have added this Joiner
-		visited.add(current);
-		//first time we are seeing this joiner so set it as the joiner
-		//and visit the remainder of the graph
-		((SIRSplitJoin)splitJoin).setJoiner((SIRJoiner)current.contents);
-		if (current.ways > 0) {
-		    assert current.edges.length == 1 && current.ways == 1 && current.edges[0] != null;
-		    reSIR(((SIRSplitJoin)splitJoin).getParent(), current.edges[0], visited);
-		}
-	    }
-	}    
+            if (!visited.contains(current)) {
+                //make sure we have not seen this Joiner
+                assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";
+                //record that we have added this Joiner
+                visited.add(current);
+                //first time we are seeing this joiner so set it as the joiner
+                //and visit the remainder of the graph
+                ((SIRSplitJoin)splitJoin).setJoiner((SIRJoiner)current.contents);
+                if (current.ways > 0) {
+                    assert current.edges.length == 1 && current.ways == 1 && current.edges[0] != null;
+                    reSIR(((SIRSplitJoin)splitJoin).getParent(), current.edges[0], visited);
+                }
+            }
+        }    
     }
 }
 

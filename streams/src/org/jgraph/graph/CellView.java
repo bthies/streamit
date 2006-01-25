@@ -1,5 +1,5 @@
 /*
- * @(#)CellView.java	1.0 1/1/02
+ * @(#)CellView.java    1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -38,101 +38,101 @@ import org.jgraph.JGraph;
 
 public interface CellView {
 
-	//
-	// Data Source
-	//
+    //
+    // Data Source
+    //
 
-	/**
-	 * Returns the model object that this view represents.
-	 */
-	Object getCell();
+    /**
+     * Returns the model object that this view represents.
+     */
+    Object getCell();
 
-	/**
-	 * Refresh this view based on the model cell. This is
-	 * messaged when the model cell has changed.
-	 */
-	void refresh(boolean createDependentViews);
+    /**
+     * Refresh this view based on the model cell. This is
+     * messaged when the model cell has changed.
+     */
+    void refresh(boolean createDependentViews);
 
-	/**
-	 * Update this view's attributes. This is messaged whenever refresh is
-	 * messaged, and additionally when the context of the cell has changed,
-	 * and during live-preview changes to the view.
-	 */
-	void update();
+    /**
+     * Update this view's attributes. This is messaged whenever refresh is
+     * messaged, and additionally when the context of the cell has changed,
+     * and during live-preview changes to the view.
+     */
+    void update();
 
-	void childUpdated();
+    void childUpdated();
 
-	//
-	// Group Structure
-	//
+    //
+    // Group Structure
+    //
 
-	/**
-	 * Returns the parent of view of this view.
-	 */
-	CellView getParentView();
+    /**
+     * Returns the parent of view of this view.
+     */
+    CellView getParentView();
 
-	/**
-	 * Returns the child views of this view.
-	 */
-	CellView[] getChildViews();
+    /**
+     * Returns the child views of this view.
+     */
+    CellView[] getChildViews();
 
-	/**
-	 * Removes this view from the list of childs of the parent.
-	 */
-	void removeFromParent();
+    /**
+     * Removes this view from the list of childs of the parent.
+     */
+    void removeFromParent();
 
-	/**
-	 * Returns true if the view is a leaf.
-	 */
-	boolean isLeaf();
+    /**
+     * Returns true if the view is a leaf.
+     */
+    boolean isLeaf();
 
-	//
-	// View Methods
-	//
+    //
+    // View Methods
+    //
 
-	/**
-	 * Returns the bounds for the view.
-	 */
-	Rectangle getBounds();
+    /**
+     * Returns the bounds for the view.
+     */
+    Rectangle getBounds();
 
-	/**
-	 * Returns true if the view intersects the given rectangle.
-	 */
-	boolean intersects(Graphics g, Rectangle rect);
+    /**
+     * Returns true if the view intersects the given rectangle.
+     */
+    boolean intersects(Graphics g, Rectangle rect);
 
-	/**
-	 * Apply the specified map of attributes on the view.
-	 */
-	Map setAttributes(Map map);
+    /**
+     * Apply the specified map of attributes on the view.
+     */
+    Map setAttributes(Map map);
 
-	/**
-	 * Returns all attributes of the view as a map.
-	 */
-	Map getAttributes();
+    /**
+     * Returns all attributes of the view as a map.
+     */
+    Map getAttributes();
 
-	Map getAllAttributes();
+    Map getAllAttributes();
 
-	//
-	// Renderer, Editor and Handle
-	//
+    //
+    // Renderer, Editor and Handle
+    //
 
-	/**
-	 * Returns a renderer component, configured for the view.
-	 */
-	Component getRendererComponent(
-		JGraph graph,
-		boolean selected,
-		boolean focus,
-		boolean preview);
+    /**
+     * Returns a renderer component, configured for the view.
+     */
+    Component getRendererComponent(
+                                   JGraph graph,
+                                   boolean selected,
+                                   boolean focus,
+                                   boolean preview);
 
-	/**
-	 * Returns a cell handle for the view.
-	 */
-	CellHandle getHandle(GraphContext context);
+    /**
+     * Returns a cell handle for the view.
+     */
+    CellHandle getHandle(GraphContext context);
 
-	/**
-	 * Returns a cell editor for the view.
-	 */
-	GraphCellEditor getEditor();
+    /**
+     * Returns a cell editor for the view.
+     */
+    GraphCellEditor getEditor();
 
 }

@@ -18,7 +18,7 @@ import java.util.*;
  * whatever information is necessary, and then you call transform()
  * on the returned LinearTransform object.<br>
  *
- * $Id: LinearTransform.java,v 1.1 2004-02-09 17:55:22 thies Exp $
+ * $Id: LinearTransform.java,v 1.2 2006-01-25 17:02:32 thies Exp $
  **/
 public abstract class LinearTransform {
     /**
@@ -37,23 +37,23 @@ public abstract class LinearTransform {
     
     /** Calculates the least common multiple of two integers. **/
     public static int lcm(int a, int b) {
-	return (a*b)/gcd(a,b);
+        return (a*b)/gcd(a,b);
     }
 
 
     /** Calculates the least common multiple of all the integers contained in the array. **/
     public static int lcm(int[] numbers) {
-	// if we don't have any numbers, complain.
-	if (!(numbers.length > 0)) {
-	    throw new IllegalArgumentException("no integers were found in the array in lcm(int[])");
-	}
-	int currentLcm = numbers[0];
-	for (int i=1; i<numbers.length; i++) {
-	    currentLcm = lcm(currentLcm, numbers[i]);
-	}
-	return currentLcm;
+        // if we don't have any numbers, complain.
+        if (!(numbers.length > 0)) {
+            throw new IllegalArgumentException("no integers were found in the array in lcm(int[])");
+        }
+        int currentLcm = numbers[0];
+        for (int i=1; i<numbers.length; i++) {
+            currentLcm = lcm(currentLcm, numbers[i]);
+        }
+        return currentLcm;
     }
-							 
+                             
 
     /**
      * Return the greatest factor that evenly divids both m and n (ie the
@@ -64,36 +64,36 @@ public abstract class LinearTransform {
      * http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.</a>
      **/
     public static int gcd(int a, int b) {
-	if ((a <= 0) || (b <= 0)) {
-	    throw new IllegalArgumentException("Bad arguments to lcm: " +
-					       "(" + a + "," + b + ")");
-	}
-	int m, n;
-	if (a < b) {
-	    n = a; m = b;
-	} else {
-	    n = b; m = a;
-	}
-	int d = m;
-	int r = n;
-	
-	while( r != 0 ){ 
-	    d = r;
-	    r = m % r;
-	}
-	return d;
+        if ((a <= 0) || (b <= 0)) {
+            throw new IllegalArgumentException("Bad arguments to lcm: " +
+                                               "(" + a + "," + b + ")");
+        }
+        int m, n;
+        if (a < b) {
+            n = a; m = b;
+        } else {
+            n = b; m = a;
+        }
+        int d = m;
+        int r = n;
+    
+        while( r != 0 ){ 
+            d = r;
+            r = m % r;
+        }
+        return d;
     }
 
     /** Gets the gcd of an array of numbers. **/
     public static int gcd(int[] arr) {
-	if (arr.length < 1) {
-	    throw new IllegalArgumentException("No numbers passed to gcd");
-	}
-	int currentGcd = arr[0];
-	for (int i=1; i<arr.length; i++) {
-	    currentGcd = gcd(currentGcd, arr[i]);
-	}
-	return currentGcd;
+        if (arr.length < 1) {
+            throw new IllegalArgumentException("No numbers passed to gcd");
+        }
+        int currentGcd = arr[0];
+        for (int i=1; i<arr.length; i++) {
+            currentGcd = gcd(currentGcd, arr[i]);
+        }
+        return currentGcd;
     }
 
     /**
@@ -101,12 +101,12 @@ public abstract class LinearTransform {
      * divCeil(5,3) = ceil(5/3) = 2
      **/
     public static int divCeiling(int a, int b) {
-	int dividend = a/b;
-	int remainder = a%b;
-	if (remainder != 0) {
-	    dividend++;
-	}
-	return dividend;
+        int dividend = a/b;
+        int remainder = a%b;
+        if (remainder != 0) {
+            dividend++;
+        }
+        return dividend;
     }
 }
 

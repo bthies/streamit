@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: IncludeError.java,v 1.2 2002-12-18 06:28:50 karczma Exp $
+ * $Id: IncludeError.java,v 1.3 2006-01-25 17:01:02 thies Exp $
  */
 
 package at.dms.compiler.tools.include;
@@ -29,51 +29,51 @@ import at.dms.compiler.tools.common.MessageDescription;
  */
 public class IncludeError extends FormattedException {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * An exception with a formatted message as argument
-   * @param	message		the formatted message
-   */
-  public IncludeError(Message message) {
-    super(message);
-  }
+    /**
+     * An exception with a formatted message as argument
+     * @param   message     the formatted message
+     */
+    public IncludeError(Message message) {
+        super(message);
+    }
 
-  /**
-   * An exception with an arbitrary number of parameters
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public IncludeError(MessageDescription description, Object[] parameters) {
-    super(description, parameters);
-  }
+    /**
+     * An exception with an arbitrary number of parameters
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public IncludeError(MessageDescription description, Object[] parameters) {
+        super(description, parameters);
+    }
 
-  /**
-   * An exception with two parameters
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public IncludeError(MessageDescription description, Object parameter1, Object parameter2) {
-    super(description, parameter1, parameter2);
-  }
+    /**
+     * An exception with two parameters
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public IncludeError(MessageDescription description, Object parameter1, Object parameter2) {
+        super(description, parameter1, parameter2);
+    }
 
-  /**
-   * An exception with one parameter
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public IncludeError(MessageDescription description, Object parameter) {
-    super(description, parameter);
-  }
+    /**
+     * An exception with one parameter
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public IncludeError(MessageDescription description, Object parameter) {
+        super(description, parameter);
+    }
 
-  /**
-   * An exception without parameters
-   * @param	description	the message description
-   */
-  public IncludeError(MessageDescription description) {
-    super(description);
-  }
+    /**
+     * An exception without parameters
+     * @param   description the message description
+     */
+    public IncludeError(MessageDescription description) {
+        super(description);
+    }
 }

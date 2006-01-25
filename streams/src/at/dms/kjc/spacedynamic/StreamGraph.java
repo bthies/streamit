@@ -106,7 +106,7 @@ public class StreamGraph {
 
         // set up the array of sub graphs
         staticSubGraphs = (StaticStreamGraph[]) ssgs
-                .toArray(new StaticStreamGraph[0]);
+            .toArray(new StaticStreamGraph[0]);
 
         // clean up the flat graph so that is can be converted to an SIR
         for (int i = 0; i < staticSubGraphs.length; i++)
@@ -131,7 +131,7 @@ public class StreamGraph {
      * <dynamicBoundary>
      */
     private void searchDownstream(FlatNode current, StaticStreamGraph ssg,
-            HashSet visited, List dynamicBoundary) {
+                                  HashSet visited, List dynamicBoundary) {
         assert current.ways == current.edges.length;
 
         // we may have already seen this node before, if so just exit
@@ -154,7 +154,7 @@ public class StreamGraph {
             // we way have visited it in an upstream walk
             if (filter.getPush().isDynamic()) {
                 assert current.ways == 1 && current.edges.length == 1
-                        && current.edges[0] != null;
+                    && current.edges[0] != null;
                 if (!visited.contains(current.edges[0])) {
                     dynamicBoundary.add(current.edges[0]);
                     // set the next field of the ssg for the current flatnode
@@ -174,7 +174,7 @@ public class StreamGraph {
                 assert current.ways == 1 && current.edges.length == 1;
                 SIRFilter downstream = (SIRFilter) current.edges[0].contents;
                 if ((downstream.getPeek().isDynamic() || downstream.getPop()
-                        .isDynamic())) {
+                     .isDynamic())) {
                     if (!visited.contains(current.edges[0])) {
                         dynamicBoundary.add(current.edges[0]);
                         // set the next field of the ssg for the current
@@ -189,14 +189,14 @@ public class StreamGraph {
             if (current.edges.length > 0) {
                 assert current.edges[0] != null;
                 searchDownstream(current.edges[0], ssg, visited,
-                        dynamicBoundary);
+                                 dynamicBoundary);
             }
         } else if (current.isSplitter()) {
             // if a aplitter continue downstream search for each way...
             for (int i = 0; i < current.ways; i++) {
                 assert current.edges[i] != null;
                 searchDownstream(current.edges[i], ssg, visited,
-                        dynamicBoundary);
+                                 dynamicBoundary);
             }
         } else {
             assert current.isJoiner();
@@ -204,18 +204,18 @@ public class StreamGraph {
             // first search backwards if we haven't seen this joiner and it is
             // not a null joiner
             if (!(((SIRJoiner) current.contents).getType().isNull() || ((SIRJoiner) current.contents)
-                    .getSumOfWeights() == 0)) {
+                  .getSumOfWeights() == 0)) {
                 for (int i = 0; i < current.inputs; i++) {
                     assert current.incoming[i] != null;
                     searchUpstream(current.incoming[i], ssg, visited,
-                            dynamicBoundary);
+                                   dynamicBoundary);
                 }
             }
             // now resume the downstream search
             if (current.edges.length > 0) {
                 assert current.edges[0] != null;
                 searchDownstream(current.edges[0], ssg, visited,
-                        dynamicBoundary);
+                                 dynamicBoundary);
             }
         }
     }
@@ -233,8 +233,8 @@ public class StreamGraph {
         SIRFilter downFilter = (SIRFilter) downstream.contents;
 
         assert upFilter.getPush().isDynamic()
-                || downFilter.getPeek().isDynamic()
-                || downFilter.getPop().isDynamic();
+            || downFilter.getPeek().isDynamic()
+            || downFilter.getPop().isDynamic();
 
         // reset upstream
         upFilter.setPush(new JIntLiteral(0));
@@ -256,7 +256,7 @@ public class StreamGraph {
      * It is necessary in order to ensure a cut across a splitjoin contruct
      */
     private void searchUpstream(FlatNode current, StaticStreamGraph ssg,
-            HashSet visited, List dynamicBoundary) {
+                                HashSet visited, List dynamicBoundary) {
         assert current.incoming.length == current.inputs;
 
         // we have already added this flatnode to an ssg so just make sure and
@@ -305,14 +305,14 @@ public class StreamGraph {
                 }
                 // if not, continue upstream walk
                 searchUpstream(current.incoming[0], ssg, visited,
-                        dynamicBoundary);
+                               dynamicBoundary);
             }
         } else if (current.isSplitter()) {
             // continue upstream search...
             if (current.inputs > 0) {
                 assert current.incoming[0] != null && current.inputs == 1;
                 searchUpstream(current.incoming[0], ssg, visited,
-                        dynamicBoundary);
+                               dynamicBoundary);
             }
         } else {
             assert current.isJoiner();
@@ -320,7 +320,7 @@ public class StreamGraph {
             for (int i = 0; i < current.inputs; i++) {
                 assert current.incoming[i] != null;
                 searchUpstream(current.incoming[i], ssg, visited,
-                        dynamicBoundary);
+                               dynamicBoundary);
             }
         }
     }
@@ -331,7 +331,7 @@ public class StreamGraph {
     public boolean dynamicEntry(SIRStream stream) {
         if (stream instanceof SIRFilter) {
             return ((SIRFilter) stream).getPop().isDynamic()
-                    || ((SIRFilter) stream).getPeek().isDynamic();
+                || ((SIRFilter) stream).getPeek().isDynamic();
         } else if (stream instanceof SIRPipeline) {
             // call dynamicExit on the last element of the pipeline
             return dynamicEntry(((SIRPipeline) stream).get(0));
@@ -350,7 +350,7 @@ public class StreamGraph {
         } else if (stream instanceof SIRPipeline) {
             // call dynamicExit on the last element of the pipeline
             return dynamicExit(((SIRPipeline) stream)
-                    .get(((SIRPipeline) stream).size() - 1));
+                               .get(((SIRPipeline) stream).size() - 1));
         } else
             // right now we can never have a dynamic exit unless in the above
             // cases
@@ -380,7 +380,7 @@ public class StreamGraph {
          */
 
         BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(
-                System.in));
+                                                                              System.in));
         int numTilesToAssign = rawChip.getTotalTiles(), num;
         StaticStreamGraph current;
 
@@ -394,8 +394,8 @@ public class StreamGraph {
             
             while (true) {
                 System.out.print("Number of tiles for " + current + " ("
-                        + numTilesToAssign + " tiles left, " + assignedNodes
-                        + " nodes in subgraph): ");
+                                 + numTilesToAssign + " tiles left, " + assignedNodes
+                                 + " nodes in subgraph): ");
                 try {
                     num = Integer.valueOf(inputBuffer.readLine()).intValue();
                 } catch (Exception e) {
@@ -469,11 +469,11 @@ public class StreamGraph {
     public void layoutGraph() {
         // set up the parent map for other passes
         topLevel.accept(new StreamGraphVisitor() {
-            public void visitStaticStreamGraph(StaticStreamGraph ssg) {
-                parentMap.putAll(ssg.getParentMap());
-            }
+                public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+                    parentMap.putAll(ssg.getParentMap());
+                }
 
-        }, null, true);
+            }, null, true);
 
         // gather the information on file readers and writers in the graph
         fileState = new FileState(this);
@@ -511,18 +511,18 @@ public class StreamGraph {
             current = staticSubGraphs[i];
             System.out.println("******* StaticStreamGraph ********");
             System.out.println("Dynamic rate input = "
-                    + dynamicEntry(current.getTopLevelSIR()));
+                               + dynamicEntry(current.getTopLevelSIR()));
             System.out.println("InputType = "
-                    + current.getTopLevelSIR().getInputType());
+                               + current.getTopLevelSIR().getInputType());
             System.out.println(current.toString());
             System.out.println("Tiles Assigned = " + current.getNumTiles());
             System.out.println("OutputType = "
-                    + current.getTopLevelSIR().getOutputType());
+                               + current.getTopLevelSIR().getOutputType());
             System.out.println("Dynamic rate output = "
-                    + dynamicExit(current.getTopLevelSIR()));
+                               + dynamicExit(current.getTopLevelSIR()));
             StreamItDot.printGraph(current.getTopLevelSIR(), current
-                    .getTopLevelSIR().getIdent()
-                    + ".dot");
+                                   .getTopLevelSIR().getIdent()
+                                   + ".dot");
             System.out.println("**********************************");
         }
     }

@@ -43,15 +43,15 @@ public class DestroyedClass extends Misc
     // to the appropriate value
     static {
         try
-        {
-            DestroyedClass = Class.forName ("streamit.misc.DestroyedClass");
-        }
+            {
+                DestroyedClass = Class.forName ("streamit.misc.DestroyedClass");
+            }
         catch (ClassNotFoundException error)
-        {
-            // This REALLY should not happen
-            // just assert
-            assert false;
-        }
+            {
+                // This REALLY should not happen
+                // just assert
+                assert false;
+            }
     }
 
     // The finalizer checks that the class has already been Destroyed,
@@ -76,29 +76,29 @@ public class DestroyedClass extends Misc
         assert objectClass != null;
 
         for ( ; objectClass != DestroyedClass ; objectClass = objectClass.getSuperclass ())
-        {
-            Method deleteMethod = null;
-
-            try
             {
-                deleteMethod = objectClass.getDeclaredMethod ("DELETE", null);
-                assert deleteMethod != null;
+                Method deleteMethod = null;
 
-                deleteMethod.invoke (this, null);
-            }
-            catch (NoSuchMethodException error)
-            {
-                // do nothing, this isn't really an error
-                // just an annoying Java-ism
-            }
+                try
+                    {
+                        deleteMethod = objectClass.getDeclaredMethod ("DELETE", null);
+                        assert deleteMethod != null;
 
-            // I hope I can just catch the rest of the exceptions here...
-            catch (Throwable error)
-            {
-                // This REALLY shouldn't happen
-                // just assert
-                assert false;
+                        deleteMethod.invoke (this, null);
+                    }
+                catch (NoSuchMethodException error)
+                    {
+                        // do nothing, this isn't really an error
+                        // just an annoying Java-ism
+                    }
+
+                // I hope I can just catch the rest of the exceptions here...
+                catch (Throwable error)
+                    {
+                        // This REALLY shouldn't happen
+                        // just assert
+                        assert false;
+                    }
             }
-        }
     }
 }

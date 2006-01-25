@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ParserSharedInputState.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: ParserSharedInputState.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -27,18 +27,18 @@ package at.dms.compiler.tools.antlr.runtime;
  *  the same stream of tokens.
  */
 public class ParserSharedInputState {
-  /**
-   * Where to get token objects
-   */
-  protected TokenBuffer input;
+    /**
+     * Where to get token objects
+     */
+    protected TokenBuffer input;
 
-  /**
-   * Are we guessing (guessing>0)?
-   */
-  public int guessing = 0;
+    /**
+     * Are we guessing (guessing>0)?
+     */
+    public int guessing = 0;
 
-  /**
-   * What file (if known) caused the problem?
-   */
-  public String filename;
+    /**
+     * What file (if known) caused the problem?
+     */
+    public String filename;
 }

@@ -16,12 +16,12 @@ class LDPConfigFeedbackLoop extends LDPConfigContainer {
     private static final int[] WIDTH = { 1, 1 };
 
     public LDPConfigFeedbackLoop(SIRFeedbackLoop cont, LinearPartitioner partitioner) {
-	super(cont, partitioner, WIDTH, 2);
+        super(cont, partitioner, WIDTH, 2);
     }
 
     protected LDPConfig childConfig(int x, int y) {
-	assert x==0;
-	return partitioner.getConfig(cont.get(y));
+        assert x==0;
+        return partitioner.getConfig(cont.get(y));
     }
 
 }

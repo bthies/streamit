@@ -1,5 +1,5 @@
 /*
- * @(#)SelectAllClear.java	1.2 01.02.2003
+ * @(#)SelectAllClear.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,19 +32,19 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class SelectAllClear extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectAllClear.
-	 * @param graphpad
-	 */
-	public SelectAllClear(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectAllClear.
+     * @param graphpad
+     */
+    public SelectAllClear(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			getCurrentGraph().clearSelection();
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentGraph().clearSelection();
+    }
 
 }

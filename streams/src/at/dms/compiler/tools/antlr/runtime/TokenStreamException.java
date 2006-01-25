@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenStreamException.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: TokenStreamException.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -25,10 +25,10 @@ package at.dms.compiler.tools.antlr.runtime;
  */
 public class TokenStreamException extends ParserException {
 
-  public TokenStreamException() {
-  }
+    public TokenStreamException() {
+    }
 
-  public TokenStreamException(String s) {
-    super(s);
-  }
+    public TokenStreamException(String s) {
+        super(s);
+    }
 }

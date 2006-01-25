@@ -6,80 +6,80 @@ import at.dms.compiler.getopt.LongOpt;
 
 public class BackendOptions extends at.dms.util.Options {
 
-  public BackendOptions(String name) {
-    super(name);
-  }
-
-  public BackendOptions() {
-    this("Backend");
-  }
-  public boolean verbose = false;
-  public int optimize = 2;
-  public String destination = null;
-
-  public boolean processOption(int code, Getopt g) {
-    switch (code) {
-    case 'v':
-      verbose = !false; return true;
-    case 'O':
-      optimize = getInt(g, 0); return true;
-    case 'd':
-      destination = getString(g, ""); return true;
-    default:
-      return super.processOption(code, g);
+    public BackendOptions(String name) {
+        super(name);
     }
-  }
 
-  public String[] getOptions() {
-    String[]	parent = super.getOptions();
-    String[]	total = new String[parent.length + 3];
-    System.arraycopy(parent, 0, total, 0, parent.length);
-    total[parent.length + 0] = "  --verbose, -v:        Displays information while processing files [false]";
-    total[parent.length + 1] = "  --optimize, -O<int>:  Level of optimization [2]";
-    total[parent.length + 2] = "  --destination, -d<String>: Destination directory";
+    public BackendOptions() {
+        this("Backend");
+    }
+    public boolean verbose = false;
+    public int optimize = 2;
+    public String destination = null;
+
+    public boolean processOption(int code, Getopt g) {
+        switch (code) {
+        case 'v':
+            verbose = !false; return true;
+        case 'O':
+            optimize = getInt(g, 0); return true;
+        case 'd':
+            destination = getString(g, ""); return true;
+        default:
+            return super.processOption(code, g);
+        }
+    }
+
+    public String[] getOptions() {
+        String[]    parent = super.getOptions();
+        String[]    total = new String[parent.length + 3];
+        System.arraycopy(parent, 0, total, 0, parent.length);
+        total[parent.length + 0] = "  --verbose, -v:        Displays information while processing files [false]";
+        total[parent.length + 1] = "  --optimize, -O<int>:  Level of optimization [2]";
+        total[parent.length + 2] = "  --destination, -d<String>: Destination directory";
     
-    return total;
-  }
+        return total;
+    }
 
 
-  public String getShortOptions() {
-    return "vO:d:" + super.getShortOptions();
-  }
+    public String getShortOptions() {
+        return "vO:d:" + super.getShortOptions();
+    }
 
 
-  public void version() {
-    System.out.println("Version 1.5B released 9 August 2001");
-  }
+    public void version() {
+        System.out.println("Version 1.5B released 9 August 2001");
+    }
 
 
-  public void usage() {
-    System.err.println("usage: at.dms.optimize.Main [option]* [--help] <class-files>");
-  }
+    public void usage() {
+        System.err.println("usage: at.dms.optimize.Main [option]* [--help] <class-files>");
+    }
 
 
-  public void help() {
-    System.err.println("usage: at.dms.optimize.Main [option]* [--help] <class-files>");
-    printOptions();
-    System.err.println();
-    version();
-    System.err.println();
-    System.err.println("This program is part of the Kopi Suite.");
-    System.err.println("For more info, please see: http://www.dms.at/kopi");
-  }
+    public void help() {
+        System.err.println("usage: at.dms.optimize.Main [option]* [--help] <class-files>");
+        printOptions();
+        System.err.println();
+        version();
+        System.err.println();
+        System.err.println("This program is part of the Kopi Suite.");
+        System.err.println("For more info, please see: http://www.dms.at/kopi");
+    }
 
-  public LongOpt[] getLongOptions() {
-    LongOpt[]	parent = super.getLongOptions();
-    LongOpt[]	total = new LongOpt[parent.length + LONGOPTS.length];
+    public LongOpt[] getLongOptions() {
+        LongOpt[]   parent = super.getLongOptions();
+        LongOpt[]   total = new LongOpt[parent.length + LONGOPTS.length];
     
-    System.arraycopy(parent, 0, total, 0, parent.length);
-    System.arraycopy(LONGOPTS, 0, total, parent.length, LONGOPTS.length);
+        System.arraycopy(parent, 0, total, 0, parent.length);
+        System.arraycopy(LONGOPTS, 0, total, parent.length, LONGOPTS.length);
     
-    return total;
-  }
+        return total;
+    }
 
-  private static final LongOpt[] LONGOPTS = {
-    new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),
-    new LongOpt("optimize", LongOpt.REQUIRED_ARGUMENT, null, 'O'),
-    new LongOpt("destination", LongOpt.REQUIRED_ARGUMENT, null, 'd')
-  };
+    private static final LongOpt[] LONGOPTS = {
+        new LongOpt("verbose", LongOpt.NO_ARGUMENT, null, 'v'),
+        new LongOpt("optimize", LongOpt.REQUIRED_ARGUMENT, null, 'O'),
+        new LongOpt("destination", LongOpt.REQUIRED_ARGUMENT, null, 'd')
+    };
 }

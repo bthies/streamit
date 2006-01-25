@@ -20,45 +20,45 @@ class Optimizer implements StreamVisitor {
     public Optimizer() {}
 
     public static void optimize(SIRStream str) {
-	Optimizer est = new Optimizer();
-	System.out.print("Optimizing filters...");
-	IterFactory.createFactory().createIter(str).accept(est);
-	System.out.println("done.");
+        Optimizer est = new Optimizer();
+        System.out.print("Optimizing filters...");
+        IterFactory.createFactory().createIter(str).accept(est);
+        System.out.println("done.");
     }
 
     public void visitFilter(SIRFilter filter,
-		     SIRFilterIter iter) { 
+                            SIRFilterIter iter) { 
 
-	//unroll all methods
-	//System.out.println("Optimizing "+filter+"...");
+        //unroll all methods
+        //System.out.println("Optimizing "+filter+"...");
 
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    JMethodDeclaration method=filter.getMethods()[i];
-	    if (!KjcOptions.nofieldprop) {
-		Unroller unroller;
-		do {
-		    do {
-			unroller = new Unroller(new Hashtable());
-			method.accept(unroller);
-		    } while(unroller.hasUnrolled());
-		    
-		    method.accept(new Propagator(new Hashtable()));
-		    unroller = new Unroller(new Hashtable());
+        for (int i = 0; i < filter.getMethods().length; i++) {
+            JMethodDeclaration method=filter.getMethods()[i];
+            if (!KjcOptions.nofieldprop) {
+                Unroller unroller;
+                do {
+                    do {
+                        unroller = new Unroller(new Hashtable());
+                        method.accept(unroller);
+                    } while(unroller.hasUnrolled());
+            
+                    method.accept(new Propagator(new Hashtable()));
+                    unroller = new Unroller(new Hashtable());
                     method.accept(unroller);
 
-		} while(unroller.hasUnrolled());
+                } while(unroller.hasUnrolled());
 
-		method.accept(new BlockFlattener());
-		method.accept(new Propagator(new Hashtable()));
+                method.accept(new BlockFlattener());
+                method.accept(new Propagator(new Hashtable()));
                
-	    } else {
-		filter.getMethods()[i].accept(new BlockFlattener());
-	    }
-	    
-	    filter.getMethods()[i].accept(new VarDeclRaiser());
-	}
+            } else {
+                filter.getMethods()[i].accept(new BlockFlattener());
+            }
+        
+            filter.getMethods()[i].accept(new VarDeclRaiser());
+        }
            
-	DeadCodeElimination.doit(filter);
+        DeadCodeElimination.doit(filter);
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -70,7 +70,7 @@ class Optimizer implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     
@@ -83,7 +83,7 @@ class Optimizer implements StreamVisitor {
     /**
      * POST-VISITS 
      */
-	    
+        
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
    

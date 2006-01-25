@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BlockContext.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: BlockContext.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -27,18 +27,18 @@ package at.dms.compiler.tools.antlr.compiler;
  * requires state such as "tail of current alternative."
  */
 class BlockContext {
-  AlternativeBlock block; // current block of alternatives
-  int altNum;				// which alt are we accepting 0..n-1
-  BlockEndElement blockEnd; // used if nested
+    AlternativeBlock block; // current block of alternatives
+    int altNum;             // which alt are we accepting 0..n-1
+    BlockEndElement blockEnd; // used if nested
 
 
-  public void addAlternativeElement(AlternativeElement e) {
-    currentAlt().addElement(e);
-  }
-  public Alternative currentAlt() {
-    return (Alternative)block.alternatives.elementAt(altNum);
-  }
-  public AlternativeElement currentElement() {
-    return currentAlt().tail;
-  }
+    public void addAlternativeElement(AlternativeElement e) {
+        currentAlt().addElement(e);
+    }
+    public Alternative currentAlt() {
+        return (Alternative)block.alternatives.elementAt(altNum);
+    }
+    public AlternativeElement currentElement() {
+        return currentAlt().tail;
+    }
 }

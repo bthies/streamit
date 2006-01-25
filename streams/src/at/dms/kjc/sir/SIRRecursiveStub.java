@@ -36,16 +36,16 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */
     protected SIRRecursiveStub() {
-	super();
+        super();
     }
     
     public SIRRecursiveStub(String className, Kopi2SIR kopi2SIR) {
-	super(null, "RecursiveStub_for_" + className, 
-	      JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
-	this.className = className;
-	this.kopi2SIR = kopi2SIR;
+        super(null, "RecursiveStub_for_" + className, 
+              JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+        this.className = className;
+        this.kopi2SIR = kopi2SIR;
         this.feir2sir = null;
-	this.expanded = null;
+        this.expanded = null;
     }
 
     public SIRRecursiveStub(String className, FEIRToSIR feir2sir) 
@@ -63,29 +63,29 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      * parsing the original class definition one level deeper.
      */
     public SIRStream expand() {
-	if (expanded==null) {
+        if (expanded==null) {
             if (kopi2SIR != null)
                 expanded = (SIRStream)kopi2SIR.searchForOp(className);
             else
                 expanded = feir2sir.findStream(className);
-	}
-	return expanded;
+        }
+        return expanded;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public CType getOutputType() {
-	Utils.fail("Can't get output type of recursive stub.");
-	return null;
+        Utils.fail("Can't get output type of recursive stub.");
+        return null;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public CType getInputType() {
-	Utils.fail("Can't get input type of recursive stub.");
-	return null;
+        Utils.fail("Can't get input type of recursive stub.");
+        return null;
     }
 
     /**
@@ -94,7 +94,7 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
     public int getPushForSchedule(HashMap[] counts)
     {
         Utils.fail("Can't get push for schedule of recursive stub.");
-	return -1;
+        return -1;
     }
 
     /**
@@ -103,43 +103,43 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
     public int getPopForSchedule(HashMap[] counts)
     {
         Utils.fail("Can't get pop for schedule of recursive stub.");
-	return -1;
+        return -1;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public LIRStreamType getStreamType() {
-	Utils.fail("Can't get stream type of recursive stub.");
-	return null;
+        Utils.fail("Can't get stream type of recursive stub.");
+        return null;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public Object accept(AttributeStreamVisitor v) {
-	Utils.fail("Can't visit RecursiveStub.");
-	return null;
+        Utils.fail("Can't visit RecursiveStub.");
+        return null;
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRRecursiveStub other = new at.dms.kjc.sir.SIRRecursiveStub();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRRecursiveStub other = new at.dms.kjc.sir.SIRRecursiveStub();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
-  super.deepCloneInto(other);
-  other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);
-  other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR);
-  other.feir2sir = (streamit.frontend.FEIRToSIR)at.dms.kjc.AutoCloner.cloneToplevel(this.feir2sir);
-  other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
+        super.deepCloneInto(other);
+        other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);
+        other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR);
+        other.feir2sir = (streamit.frontend.FEIRToSIR)at.dms.kjc.AutoCloner.cloneToplevel(this.feir2sir);
+        other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

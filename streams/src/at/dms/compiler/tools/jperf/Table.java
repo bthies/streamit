@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Table.java,v 1.1 2001-08-30 16:32:42 thies Exp $
+ * $Id: Table.java,v 1.2 2006-01-25 17:01:10 thies Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -33,153 +33,153 @@ import java.util.Random;
 
 public class Table {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates an instance of table representing one of T1 and T2.
-   *
-   * @param	tableName		the name of the table
-   * @param	maxWordLength		the maximum length of a keyword
-   * @param	minCharValue		the smallest ASCII value in all keys
-   * @param	maxCharValue		the largest ASCII value in all keys?
-   */
-  public Table(String tableName,
-	       int maxWordLength,
-	       char minCharValue,
-	       char maxCharValue)
-  {
-    this.tableName = tableName;
-    this.maxWordLength = maxWordLength;
-    this.minCharValue = minCharValue;
-    this.maxCharValue = maxCharValue;
-  }
-
-  /**
-   * Initialises the internal structures
-   */
-  public void init() {
-    heads = new Hashtable[maxWordLength];
-    for (int i = 0; i < maxWordLength; i++) {
-      heads[i] = new Hashtable();
-    }
-  }
-
-  /**
-   * Inserts the key into the table.
-   *
-   * A randomly generated value is assigned to be
-   * the table value correspondent to each character.
-   *
-   * @param	key		the key to insert
-   * @param	max		the maximum value
-   * @returns	the sum of the values assigned to each character
-   */
-  public long insertKey(String key, long max) {
-    long	sum = 0;
-
-    for (int i = 0; i < key.length(); i++) {
-      Character		c = new Character(key.charAt(i));
-      Long		assigned = (Long)heads[i].get(c);
-
-      if (assigned != null) {
-	// if it is already there, just use the old value
-	sum += assigned.longValue();
-      } else {
-	// otherwise, call the random generator
-	long	value = Math.abs(random.nextLong()) % max;
-
-	heads[i].put(c, new Long(value));
-	sum += value;
-      }
+    /**
+     * Creates an instance of table representing one of T1 and T2.
+     *
+     * @param   tableName       the name of the table
+     * @param   maxWordLength       the maximum length of a keyword
+     * @param   minCharValue        the smallest ASCII value in all keys
+     * @param   maxCharValue        the largest ASCII value in all keys?
+     */
+    public Table(String tableName,
+                 int maxWordLength,
+                 char minCharValue,
+                 char maxCharValue)
+    {
+        this.tableName = tableName;
+        this.maxWordLength = maxWordLength;
+        this.minCharValue = minCharValue;
+        this.maxCharValue = maxCharValue;
     }
 
-    return sum % max;
-  }
-
-  /**
-   * Returns the value previously assigned to the key
-   *
-   * @param	key		the key
-   */
-  public long getKeyValue(String key) {
-    long	sum = 0;
-
-    for (int i = 0; i < key.length(); i++) {
-      Character		c = new Character(key.charAt(i));
-      Long		assigned = (Long)heads[i].get(c);
-
-      // it should be there
-      if (assigned == null) {
-	System.err.println("Internal fatal error: can't find table items for " + key);
-	System.exit(-1);
-      }
-      sum += assigned.longValue();
+    /**
+     * Initialises the internal structures
+     */
+    public void init() {
+        heads = new Hashtable[maxWordLength];
+        for (int i = 0; i < maxWordLength; i++) {
+            heads[i] = new Hashtable();
+        }
     }
 
-    return sum;
-  }
+    /**
+     * Inserts the key into the table.
+     *
+     * A randomly generated value is assigned to be
+     * the table value correspondent to each character.
+     *
+     * @param   key     the key to insert
+     * @param   max     the maximum value
+     * @returns the sum of the values assigned to each character
+     */
+    public long insertKey(String key, long max) {
+        long    sum = 0;
 
-  // --------------------------------------------------------------------
-  // CODE GENERATION
-  // --------------------------------------------------------------------
+        for (int i = 0; i < key.length(); i++) {
+            Character       c = new Character(key.charAt(i));
+            Long        assigned = (Long)heads[i].get(c);
 
-  /**
-   * Outputs the contents of the table as a data structure,
-   * normally an array.
-   * @param	out		the output stream.
-   */
-  public void genCode(PrintWriter out) {
-    out.println("    private static final int[][] " + tableName + " = {");
+            if (assigned != null) {
+                // if it is already there, just use the old value
+                sum += assigned.longValue();
+            } else {
+                // otherwise, call the random generator
+                long    value = Math.abs(random.nextLong()) % max;
 
-    for (int i = 0; i < heads.length; i++) {
-      Hashtable		items = heads[i];
+                heads[i].put(c, new Long(value));
+                sum += value;
+            }
+        }
 
-      out.print("    {");
-      for (char c = minCharValue; c <= maxCharValue; c++) {
-	Character	ch = new Character(c);
-
-	if (c != minCharValue) {
-	  out.print(",");
-	}
-
-	if (items.containsKey(ch)) {
-	  out.print(((Long)items.get(ch)).longValue());
-	} else {
-	  out.print("-1");
-	}
-      }
-
-      if (i < heads.length - 1) {
-	out.println("},");
-      } else {
-	out.println("}");
-      }
+        return sum % max;
     }
 
-    out.println("    };");
-  }
+    /**
+     * Returns the value previously assigned to the key
+     *
+     * @param   key     the key
+     */
+    public long getKeyValue(String key) {
+        long    sum = 0;
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+        for (int i = 0; i < key.length(); i++) {
+            Character       c = new Character(key.charAt(i));
+            Long        assigned = (Long)heads[i].get(c);
 
-  /**
-   * The random number generator for generating values of T1 and T2.
-   * It is shared by all tables, thus this variable is a class variable.
-   */
-  private static Random		random = new Random(new Date().getTime());
+            // it should be there
+            if (assigned == null) {
+                System.err.println("Internal fatal error: can't find table items for " + key);
+                System.exit(-1);
+            }
+            sum += assigned.longValue();
+        }
 
-  private final String		tableName;
-  private final int		maxWordLength;
-  private final char		minCharValue;
-  private final char		maxCharValue;
+        return sum;
+    }
 
-  /**
-   * Variable holding all table heads for T1 and T2, respectively.
-   * Thus this variable is an instance variable.  A table head is a
-   * Vector holding character-value pairs for a whole row.
-   */
-  private Hashtable[]		heads;
+    // --------------------------------------------------------------------
+    // CODE GENERATION
+    // --------------------------------------------------------------------
+
+    /**
+     * Outputs the contents of the table as a data structure,
+     * normally an array.
+     * @param   out     the output stream.
+     */
+    public void genCode(PrintWriter out) {
+        out.println("    private static final int[][] " + tableName + " = {");
+
+        for (int i = 0; i < heads.length; i++) {
+            Hashtable       items = heads[i];
+
+            out.print("    {");
+            for (char c = minCharValue; c <= maxCharValue; c++) {
+                Character   ch = new Character(c);
+
+                if (c != minCharValue) {
+                    out.print(",");
+                }
+
+                if (items.containsKey(ch)) {
+                    out.print(((Long)items.get(ch)).longValue());
+                } else {
+                    out.print("-1");
+                }
+            }
+
+            if (i < heads.length - 1) {
+                out.println("},");
+            } else {
+                out.println("}");
+            }
+        }
+
+        out.println("    };");
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    /**
+     * The random number generator for generating values of T1 and T2.
+     * It is shared by all tables, thus this variable is a class variable.
+     */
+    private static Random       random = new Random(new Date().getTime());
+
+    private final String        tableName;
+    private final int       maxWordLength;
+    private final char      minCharValue;
+    private final char      maxCharValue;
+
+    /**
+     * Variable holding all table heads for T1 and T2, respectively.
+     * Thus this variable is an instance variable.  A table head is a
+     * Vector holding character-value pairs for a whole row.
+     */
+    private Hashtable[]     heads;
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)ShapeToFront.java	1.2 01.02.2003
+ * @(#)ShapeToFront.java    1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -33,20 +33,20 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ShapeToFront extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ShapeToFront.
-	 * @param graphpad
-	 */
-	public ShapeToFront(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ShapeToFront.
+     * @param graphpad
+     */
+    public ShapeToFront(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Object[] cells = getCurrentGraph().getSelectionCells();
-			getCurrentGraph().getGraphLayoutCache().toFront(cells);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getSelectionCells();
+        getCurrentGraph().getGraphLayoutCache().toFront(cells);
+    }
 
 }

@@ -17,7 +17,7 @@
 package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitterNJoinerIter;
+    SplitterNJoinerIter;
 import streamit.scheduler2.iriter.JoinerIter;
 import streamit.scheduler2.iriter.SplitterIter;
 
@@ -76,42 +76,42 @@ abstract public class StreamWithSplitNJoin
     {
         int nSplitExec;
         for (nSplitExec = 0;
-            nSplitExec < splitter.getSplitterNumWork();
-            nSplitExec++)
-        {
-            int splitPushWeights[] = splitter.getSplitPushWeights(nSplitExec);
-
-            // setup the steady flow
+             nSplitExec < splitter.getSplitterNumWork();
+             nSplitExec++)
             {
-                int nChild;
-                for (nChild = 0; nChild < splitter.getFanOut(); nChild++)
+                int splitPushWeights[] = splitter.getSplitPushWeights(nSplitExec);
+
+                // setup the steady flow
                 {
-                    steadySplitFlow.setPushWeight(
-                        nChild,
-                        steadySplitFlow.getPushWeight(nChild)
-                            + splitPushWeights[nChild]);
+                    int nChild;
+                    for (nChild = 0; nChild < splitter.getFanOut(); nChild++)
+                        {
+                            steadySplitFlow.setPushWeight(
+                                                          nChild,
+                                                          steadySplitFlow.getPushWeight(nChild)
+                                                          + splitPushWeights[nChild]);
+                        }
+
+                    steadySplitFlow.setPopWeight(
+                                                 steadySplitFlow.getPopWeight()
+                                                 + splitter.getSplitPop(nSplitExec));
                 }
 
-                steadySplitFlow.setPopWeight(
-                    steadySplitFlow.getPopWeight()
-                        + splitter.getSplitPop(nSplitExec));
-            }
-
-            // setup the single phase flow
-            {
-                splitFlow[nSplitExec] = new SplitFlow(splitter.getFanOut());
-                splitFlow[nSplitExec].setPopWeight(
-                    splitter.getSplitPop(nSplitExec));
-
-                int nChild;
-                for (nChild = 0; nChild < splitter.getFanOut(); nChild++)
+                // setup the single phase flow
                 {
-                    splitFlow[nSplitExec].setPushWeight(
-                        nChild,
-                        splitPushWeights[nChild]);
+                    splitFlow[nSplitExec] = new SplitFlow(splitter.getFanOut());
+                    splitFlow[nSplitExec].setPopWeight(
+                                                       splitter.getSplitPop(nSplitExec));
+
+                    int nChild;
+                    for (nChild = 0; nChild < splitter.getFanOut(); nChild++)
+                        {
+                            splitFlow[nSplitExec].setPushWeight(
+                                                                nChild,
+                                                                splitPushWeights[nChild]);
+                        }
                 }
             }
-        }
     }
 
     /**
@@ -123,42 +123,42 @@ abstract public class StreamWithSplitNJoin
     {
         int nJoinExec;
         for (nJoinExec = 0;
-            nJoinExec < joiner.getJoinerNumWork();
-            nJoinExec++)
-        {
-            int joinPopWeights[] = joiner.getJoinPopWeights(nJoinExec);
-
-            // setup the steady flow 
+             nJoinExec < joiner.getJoinerNumWork();
+             nJoinExec++)
             {
-                int nChild;
-                for (nChild = 0; nChild < joiner.getFanIn(); nChild++)
+                int joinPopWeights[] = joiner.getJoinPopWeights(nJoinExec);
+
+                // setup the steady flow 
                 {
-                    steadyJoinFlow.setPopWeight(
-                        nChild,
-                        steadyJoinFlow.getPopWeight(nChild)
-                            + joinPopWeights[nChild]);
+                    int nChild;
+                    for (nChild = 0; nChild < joiner.getFanIn(); nChild++)
+                        {
+                            steadyJoinFlow.setPopWeight(
+                                                        nChild,
+                                                        steadyJoinFlow.getPopWeight(nChild)
+                                                        + joinPopWeights[nChild]);
+                        }
+
+                    steadyJoinFlow.setPushWeight(
+                                                 steadyJoinFlow.getPushWeight()
+                                                 + joiner.getJoinPush(nJoinExec));
                 }
 
-                steadyJoinFlow.setPushWeight(
-                    steadyJoinFlow.getPushWeight()
-                        + joiner.getJoinPush(nJoinExec));
-            }
-
-            // setup the single phase flow
-            {
-                joinFlow[nJoinExec] = new JoinFlow(joiner.getFanIn());
-                joinFlow[nJoinExec].setPushWeight(
-                    joiner.getJoinPush(nJoinExec));
-
-                int nChild;
-                for (nChild = 0; nChild < joiner.getFanIn(); nChild++)
+                // setup the single phase flow
                 {
-                    joinFlow[nJoinExec].setPopWeight(
-                        nChild,
-                        joinPopWeights[nChild]);
+                    joinFlow[nJoinExec] = new JoinFlow(joiner.getFanIn());
+                    joinFlow[nJoinExec].setPushWeight(
+                                                      joiner.getJoinPush(nJoinExec));
+
+                    int nChild;
+                    for (nChild = 0; nChild < joiner.getFanIn(); nChild++)
+                        {
+                            joinFlow[nJoinExec].setPopWeight(
+                                                             nChild,
+                                                             joinPopWeights[nChild]);
+                        }
                 }
             }
-        }
     }
 
     public SplitFlow getSteadySplitFlow()

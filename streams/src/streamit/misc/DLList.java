@@ -40,11 +40,11 @@ public class DLList implements DLList_const
         DLList other = new DLList();
 
         for (DLListElement elem = theList.nextElem;
-            elem != theList;
-            elem = elem.nextElem)
-        {
-            other.pushBack(elem.get());
-        }
+             elem != theList;
+             elem = elem.nextElem)
+            {
+                other.pushBack(elem.get());
+            }
 
         return other;
     }

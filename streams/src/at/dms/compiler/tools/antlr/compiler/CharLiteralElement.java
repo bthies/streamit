@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CharLiteralElement.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: CharLiteralElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -25,17 +25,17 @@ import at.dms.compiler.tools.antlr.runtime.*;
 class CharLiteralElement extends GrammarAtom {
 
 
-  public CharLiteralElement(LexerGrammar g, Token t, boolean inverted) {
-    super(g, t);
-    tokenType = ANTLRLexer.tokenTypeForCharLiteral(t.getText());
-    g.charVocabulary.add(tokenType);
-    line = t.getLine();
-    not = inverted;
-  }
-  public void generate(JavaCodeGenerator generator) {
-    generator.gen(this);
-  }
-  public Lookahead look(int k) {
-    return grammar.theLLkAnalyzer.look(k, this);
-  }
+    public CharLiteralElement(LexerGrammar g, Token t, boolean inverted) {
+        super(g, t);
+        tokenType = ANTLRLexer.tokenTypeForCharLiteral(t.getText());
+        g.charVocabulary.add(tokenType);
+        line = t.getLine();
+        not = inverted;
+    }
+    public void generate(JavaCodeGenerator generator) {
+        generator.gen(this);
+    }
+    public Lookahead look(int k) {
+        return grammar.theLLkAnalyzer.look(k, this);
+    }
 }

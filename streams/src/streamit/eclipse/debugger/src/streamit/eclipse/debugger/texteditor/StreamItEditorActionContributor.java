@@ -8,22 +8,22 @@ import org.eclipse.ui.texteditor.BasicTextEditorActionContributor;
  */
 public class StreamItEditorActionContributor extends BasicTextEditorActionContributor {
 
-	/**
-	 * 
-	 */
-	public StreamItEditorActionContributor() {
-		super();
-	}
+    /**
+     * 
+     */
+    public StreamItEditorActionContributor() {
+        super();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.part.EditorActionBarContributor#contributeToMenu(org.eclipse.jface.action.IMenuManager)
-	 */
-	public void contributeToMenu(IMenuManager menu) {
-		super.contributeToMenu(menu);
-		IMenuManager streamItMenu = menu.findMenuUsingPath(IStreamItEditorConstants.STREAMIT_RUN_MENU);
-		if (streamItMenu == null) return;
-		streamItMenu.addMenuListener(StreamItMenuListener.getInstance());
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.part.EditorActionBarContributor#contributeToMenu(org.eclipse.jface.action.IMenuManager)
+     */
+    public void contributeToMenu(IMenuManager menu) {
+        super.contributeToMenu(menu);
+        IMenuManager streamItMenu = menu.findMenuUsingPath(IStreamItEditorConstants.STREAMIT_RUN_MENU);
+        if (streamItMenu == null) return;
+        streamItMenu.addMenuListener(StreamItMenuListener.getInstance());
+    }
 
 }
 

@@ -35,14 +35,14 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      */
     public static void doit(FlatNode top)
     {
-	IDDoLoops doLoops = new IDDoLoops();
-	top.accept(doLoops, null, true);
+        IDDoLoops doLoops = new IDDoLoops();
+        top.accept(doLoops, null, true);
     }    
 
     public static void doit(SIRFilter filter) 
     {
-	IDDoLoops doLoops = new IDDoLoops();
-	doLoops.visitFilter(filter);
+        IDDoLoops doLoops = new IDDoLoops();
+        doLoops.visitFilter(filter);
     }
 
     /**
@@ -55,53 +55,53 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      */
     public void visitNode(FlatNode node) 
     {
-	if (node.isFilter()) {
-	    visitFilter((SIRFilter)node.contents);
-	}
+        if (node.isFilter()) {
+            visitFilter((SIRFilter)node.contents);
+        }
     }
     
     private void visitFilter(SIRFilter filter) 
     {
-	JMethodDeclaration[] methods = filter.getMethods();
-	for (int i = 0; i < methods.length; i++) {
-	    varUses = UseDefInfo.getUsesMap(methods[i]);
-	    //iterate over the statements
-	    JBlock block = methods[i].getBody();
-	    for (int j = 0; j < block.getStatementArray().length; j++) {
-		block.setStatement(j,
-				   (JStatement)block.getStatementArray()[j].accept(this));
-		assert this.forLevel == 0;
-	    }
-	    
-	    //now go back thru the statements and delete the var defs
-	    //for the induction variables, but only if we are generating do loops
-	    if (KjcOptions.doloops) {
-		JStatement[] statements = methods[i].getBody().getStatementArray();
-		for (int k = 0; k < statements.length; k++) {
-		    if (!(statements[k] instanceof JEmptyStatement || 
-			  statements[k] instanceof JVariableDeclarationStatement))
-			break;
-		    
-		    if (statements[k] instanceof JVariableDeclarationStatement) {
-			JVariableDeclarationStatement varDecl = 
-			    (JVariableDeclarationStatement) statements[k];
-			Vector newVars = new Vector();
-			for (int j = 0; j < varDecl.getVars().length; j++) {
-			    if (!inductionVars.contains(varDecl.getVars()[j]))
-				newVars.add(varDecl.getVars()[j]);
-			}
-			varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
-		    }
-		}
-	    }
-	}
+        JMethodDeclaration[] methods = filter.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            varUses = UseDefInfo.getUsesMap(methods[i]);
+            //iterate over the statements
+            JBlock block = methods[i].getBody();
+            for (int j = 0; j < block.getStatementArray().length; j++) {
+                block.setStatement(j,
+                                   (JStatement)block.getStatementArray()[j].accept(this));
+                assert this.forLevel == 0;
+            }
+        
+            //now go back thru the statements and delete the var defs
+            //for the induction variables, but only if we are generating do loops
+            if (KjcOptions.doloops) {
+                JStatement[] statements = methods[i].getBody().getStatementArray();
+                for (int k = 0; k < statements.length; k++) {
+                    if (!(statements[k] instanceof JEmptyStatement || 
+                          statements[k] instanceof JVariableDeclarationStatement))
+                        break;
+            
+                    if (statements[k] instanceof JVariableDeclarationStatement) {
+                        JVariableDeclarationStatement varDecl = 
+                            (JVariableDeclarationStatement) statements[k];
+                        Vector newVars = new Vector();
+                        for (int j = 0; j < varDecl.getVars().length; j++) {
+                            if (!inductionVars.contains(varDecl.getVars()[j]))
+                                newVars.add(varDecl.getVars()[j]);
+                        }
+                        varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+                    }
+                }
+            }
+        }
     }
     
     private IDDoLoops() 
     {
-	forLevel = 0;
-	loops = new HashMap();
-	inductionVars = new HashSet();
+        forLevel = 0;
+        loops = new HashMap();
+        inductionVars = new HashSet();
     }
     
     
@@ -109,104 +109,104 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      * See comments in method.
      */
     public Object visitForStatement(JForStatement self,
-				  JStatement init,
-				  JExpression cond,
-				  JStatement incr,
-				  JStatement body) {
-	boolean passed = false;
-	JLocalVariable induction = null;
-	//put the do loop information in this class...
-	DoLoopInformation info = new DoLoopInformation();
-	//we are inside a for loop
-	forLevel++;
-	
-	//	System.out.println("----------------");
-	if (init != null) {
-	    JExpression initExp = getExpression(init);
-	    //JAssignment Expression 
-	    
-	    //get the induction variable, simple calculation
-	    getInductionVariable(initExp, info);
-	    //check for method calls
-	    if (info.init != null && CheckForMethodCalls.check(info.init))
-		info.init = null;
-	    //System.out.println("Induction Var: " + info.induction);
-	    //System.out.println("init exp: " + info.init);
-	    if (info.init == null)
-		System.out.println("Couldn't resolve init in for loop");
-	}
-	if (cond != null && info.induction != null && info.init != null) {
-	    //get the condition statement and put it in the correct format
-	    getDLCondExpression(Util.passThruParens(cond), info);
-	    //check for method calls in condition
-	    if (info.cond != null && CheckForMethodCalls.check(info.cond))
-		info.cond = null;
-	    //	    System.out.println("cond exp: " + info.cond);
-	    //cond.accept(this);
-	    if (info.cond == null)
-		System.out.println("Couldn't resolve cond in for loop");	    
-	}
-	//check the increment, only if there is one and we have passed 
-	//everything above
-	if (incr != null && info.induction != null && info.init != null &&
-	    info.cond != null) {
-	    //get the increment expression, and put it in the right format
-	    getDLIncrExpression(getExpression(incr), info);
-	    //check for method call in increment
-	    if (info.incr != null && CheckForMethodCalls.check(info.incr))
-		info.incr = null;
-	    //	    System.out.println("incr exp: " + info.incr);
-	    //incr.accept(this);
-	    if (info.incr == null)
-		System.out.println("Couldn't resolve incr in for loop");
-	}
+                                    JStatement init,
+                                    JExpression cond,
+                                    JStatement incr,
+                                    JStatement body) {
+        boolean passed = false;
+        JLocalVariable induction = null;
+        //put the do loop information in this class...
+        DoLoopInformation info = new DoLoopInformation();
+        //we are inside a for loop
+        forLevel++;
+    
+        //  System.out.println("----------------");
+        if (init != null) {
+            JExpression initExp = getExpression(init);
+            //JAssignment Expression 
+        
+            //get the induction variable, simple calculation
+            getInductionVariable(initExp, info);
+            //check for method calls
+            if (info.init != null && CheckForMethodCalls.check(info.init))
+                info.init = null;
+            //System.out.println("Induction Var: " + info.induction);
+            //System.out.println("init exp: " + info.init);
+            if (info.init == null)
+                System.out.println("Couldn't resolve init in for loop");
+        }
+        if (cond != null && info.induction != null && info.init != null) {
+            //get the condition statement and put it in the correct format
+            getDLCondExpression(Util.passThruParens(cond), info);
+            //check for method calls in condition
+            if (info.cond != null && CheckForMethodCalls.check(info.cond))
+                info.cond = null;
+            //      System.out.println("cond exp: " + info.cond);
+            //cond.accept(this);
+            if (info.cond == null)
+                System.out.println("Couldn't resolve cond in for loop");        
+        }
+        //check the increment, only if there is one and we have passed 
+        //everything above
+        if (incr != null && info.induction != null && info.init != null &&
+            info.cond != null) {
+            //get the increment expression, and put it in the right format
+            getDLIncrExpression(getExpression(incr), info);
+            //check for method call in increment
+            if (info.incr != null && CheckForMethodCalls.check(info.incr))
+                info.incr = null;
+            //      System.out.println("incr exp: " + info.incr);
+            //incr.accept(this);
+            if (info.incr == null)
+                System.out.println("Couldn't resolve incr in for loop");
+        }
 
-	//check that we found everything as expected...
-	if (info.init != null && info.induction != null && info.cond != null &&
-	    info.incr != null) {
-	    //the induction variable or any variables accessed in the cond or
-	    //increment are accessed in the body, and check for function calls
-	    //if their are fields or structures that included in this list of
-	    //variables
-	    if (IDDoLoopsCheckBody.check(info, body)) {
-		//check that the induction variable is only used in the body of
-		//the loop and no where outside the loop
-		if (scopeOfInduction(self, info)) {
-		    //everything passed add it to the hashmap
-		    //System.out.println("Identified Do loop...");
-		    loops.put(self, info);
-		    inductionVars.add(info.induction);
-		    passed = true;
-		} else {
-		    System.out.println("Induction used outside for loop");
-		}
-		
-	    } else {
-		System.out.println("Induction variable assigned in for loop (or other weirdness in body)");
-	    }
-	}
-	
-	//check for nested for loops that can be converted...
-	JStatement newBody = (JStatement)body.accept(this);
-	if (newBody!=null && newBody!=body) {
-	    self.setBody(newBody);
-	}
-	
-	//leaving for loop
-	forLevel--;
-	assert forLevel >= 0;
-	
-	if (passed) {
-	    return new JDoLoopStatement(info.induction,
-					info.init,
-					info.cond,
-					info.incr, newBody, true);
-	}
-	else {
-	    System.out.println("For Loop could not be converted to do loop");
-	    self.setBody(newBody);
-	    return self;
-	}
+        //check that we found everything as expected...
+        if (info.init != null && info.induction != null && info.cond != null &&
+            info.incr != null) {
+            //the induction variable or any variables accessed in the cond or
+            //increment are accessed in the body, and check for function calls
+            //if their are fields or structures that included in this list of
+            //variables
+            if (IDDoLoopsCheckBody.check(info, body)) {
+                //check that the induction variable is only used in the body of
+                //the loop and no where outside the loop
+                if (scopeOfInduction(self, info)) {
+                    //everything passed add it to the hashmap
+                    //System.out.println("Identified Do loop...");
+                    loops.put(self, info);
+                    inductionVars.add(info.induction);
+                    passed = true;
+                } else {
+                    System.out.println("Induction used outside for loop");
+                }
+        
+            } else {
+                System.out.println("Induction variable assigned in for loop (or other weirdness in body)");
+            }
+        }
+    
+        //check for nested for loops that can be converted...
+        JStatement newBody = (JStatement)body.accept(this);
+        if (newBody!=null && newBody!=body) {
+            self.setBody(newBody);
+        }
+    
+        //leaving for loop
+        forLevel--;
+        assert forLevel >= 0;
+    
+        if (passed) {
+            return new JDoLoopStatement(info.induction,
+                                        info.init,
+                                        info.cond,
+                                        info.incr, newBody, true);
+        }
+        else {
+            System.out.println("For Loop could not be converted to do loop");
+            self.setBody(newBody);
+            return self;
+        }
     }
     
     /**
@@ -222,24 +222,24 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      */
 
     public boolean scopeOfInduction(JForStatement jfor, 
-				    DoLoopInformation doInfo) 
+                                    DoLoopInformation doInfo) 
     {
-	//check the scope of the induction variable...
-	Iterator allInductionUses =
-	    ((HashSet)varUses.get(doInfo.induction)).iterator();
-	
-	//add all the uses in the for loop
-	HashSet usesInForLoop = UseDefInfo.getForUses(jfor);
-	
-	while (allInductionUses.hasNext()) {
-	    Object use = allInductionUses.next();
-	    if (!usesInForLoop.contains(use)) {
-		//System.out.println("Couldn't find " + use + " in loop.");
-		return false;
-	    }
-	    
-	}
-	return true;
+        //check the scope of the induction variable...
+        Iterator allInductionUses =
+            ((HashSet)varUses.get(doInfo.induction)).iterator();
+    
+        //add all the uses in the for loop
+        HashSet usesInForLoop = UseDefInfo.getForUses(jfor);
+    
+        while (allInductionUses.hasNext()) {
+            Object use = allInductionUses.next();
+            if (!usesInForLoop.contains(use)) {
+                //System.out.println("Couldn't find " + use + " in loop.");
+                return false;
+            }
+        
+        }
+        return true;
     }
 
     /**
@@ -254,92 +254,92 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      */
 
     private void getDLIncrExpression(JExpression incrExp, 
-				     DoLoopInformation info)
+                                     DoLoopInformation info)
     {
-	if (Util.passThruParens(incrExp) instanceof JBinaryExpression) {
-	    if (Util.passThruParens(incrExp) instanceof JCompoundAssignmentExpression) {
-		//compound assignment expression of the form left (op=) right 
-		JCompoundAssignmentExpression comp = 
-		    (JCompoundAssignmentExpression)Util.passThruParens(incrExp);
-		//make sure left is the induction variable
-		if (Util.passThruParens(comp.getLeft()) instanceof JLocalVariableExpression &&
-		    ((JLocalVariableExpression)Util.passThruParens(comp.getLeft())).
-		    getVariable().equals(info.induction)) {
-		    //return right if plus
-		    if (comp.getOperation() == OPE_PLUS) {
-			info.incr = Util.passThruParens(comp.getRight());
-		    } /*else if (comp.getOperation() == OPE_MINUS) {
-			info.incr = new JExpressionStatement(null, 
-							     new JUnaryMinusExpression(null, comp.getRight()),
-							     null);
-							     }*/
-		}
-	    } //if an assignment expression of the form i = i + x or i = x + i, i is induction
-	    else if (Util.passThruParens(incrExp) instanceof JAssignmentExpression &&
-		     (Util.passThruParens(((JAssignmentExpression)Util.passThruParens(incrExp)).getLeft()) 
-		      instanceof JLocalVariableExpression &&
-		    ((JLocalVariableExpression)Util.passThruParens(((JAssignmentExpression)Util.
-								    passThruParens(incrExp)).getLeft())).
-		      getVariable().equals(info.induction))) {
-		//normal assignment expression left = right
-		JAssignmentExpression ass = (JAssignmentExpression)Util.passThruParens(incrExp);
-		//only handle plus and minus 
-		if (Util.passThruParens(ass.getRight()) instanceof JAddExpression) {
-		    //Util.passThruParens(ass.getRight()) instanceof JMinusExpression) {
-		    JBinaryExpression bin = (JBinaryExpression)Util.passThruParens(ass.getRight());
-		    //if left of binary is an access to the induction variable
-		    if (Util.passThruParens(bin.getLeft()) instanceof JLocalVariableExpression &&
-			((JLocalVariableExpression)Util.passThruParens(bin.getLeft())).
-			getVariable().equals(info.induction)) {
-			//if plus return the right,
-			if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
-			    info.incr = Util.passThruParens(bin.getRight());
-			/*if (ass.getRight() instanceof JMinusExpression)
-			    info.incr = new JExpressionStatement(null,
-								 new JUnaryMinusExpression(null, bin.getRight()),
-								 null);*/
-		    }
-		    //analogue of above...
-		    if (Util.passThruParens(bin.getRight()) instanceof JLocalVariableExpression &&
-			((JLocalVariableExpression)Util.passThruParens(bin.getRight())).
-			getVariable().equals(info.induction)) {
-			if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
-			    info.incr = Util.passThruParens(bin.getLeft());
-			/*if (Util.passThruParens(ass.getRight()) instanceof JMinusExpression)
-			    info.incr = new JExpressionStatement(null, 
-								 new JUnaryMinusExpression
-								 (null, Util.passThruParens(bin.getLeft())),
-								 null);*/
-		    }
-		}
-	    }
-	}
-	else if (Util.passThruParens(incrExp) instanceof JPrefixExpression) {  //prefix op expr 
-	    JPrefixExpression pre = (JPrefixExpression)Util.passThruParens(incrExp);
-	    //check that we assigning the induction variable
-	    if (Util.passThruParens(pre.getExpr()) instanceof JLocalVariableExpression &&
-		((JLocalVariableExpression)Util.passThruParens(pre.getExpr())).
-		getVariable().equals(info.induction)) {
-		if (pre.getOper() == OPE_PREINC) {
-		    info.incr = new JIntLiteral(1);
-		} /*else {
-		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
-		    }	*/	
-	    }
-	}
-	else if (Util.passThruParens(incrExp) instanceof JPostfixExpression) { //postfix expr op
-	    JPostfixExpression post = (JPostfixExpression)Util.passThruParens(incrExp);
-	    //check that we assigning the induction variable
-	    if (Util.passThruParens(post.getExpr()) instanceof JLocalVariableExpression &&
-		((JLocalVariableExpression)Util.passThruParens(post.getExpr())).
-		getVariable().equals(info.induction)) {
-		if (post.getOper() == OPE_POSTINC) {
-		    info.incr = new JIntLiteral(1);
-		} /*else {
-		    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
-		    }	*/	
-	    }
-	}
+        if (Util.passThruParens(incrExp) instanceof JBinaryExpression) {
+            if (Util.passThruParens(incrExp) instanceof JCompoundAssignmentExpression) {
+                //compound assignment expression of the form left (op=) right 
+                JCompoundAssignmentExpression comp = 
+                    (JCompoundAssignmentExpression)Util.passThruParens(incrExp);
+                //make sure left is the induction variable
+                if (Util.passThruParens(comp.getLeft()) instanceof JLocalVariableExpression &&
+                    ((JLocalVariableExpression)Util.passThruParens(comp.getLeft())).
+                    getVariable().equals(info.induction)) {
+                    //return right if plus
+                    if (comp.getOperation() == OPE_PLUS) {
+                        info.incr = Util.passThruParens(comp.getRight());
+                    } /*else if (comp.getOperation() == OPE_MINUS) {
+                        info.incr = new JExpressionStatement(null, 
+                        new JUnaryMinusExpression(null, comp.getRight()),
+                        null);
+                        }*/
+                }
+            } //if an assignment expression of the form i = i + x or i = x + i, i is induction
+            else if (Util.passThruParens(incrExp) instanceof JAssignmentExpression &&
+                     (Util.passThruParens(((JAssignmentExpression)Util.passThruParens(incrExp)).getLeft()) 
+                      instanceof JLocalVariableExpression &&
+                      ((JLocalVariableExpression)Util.passThruParens(((JAssignmentExpression)Util.
+                                                                      passThruParens(incrExp)).getLeft())).
+                      getVariable().equals(info.induction))) {
+                //normal assignment expression left = right
+                JAssignmentExpression ass = (JAssignmentExpression)Util.passThruParens(incrExp);
+                //only handle plus and minus 
+                if (Util.passThruParens(ass.getRight()) instanceof JAddExpression) {
+                    //Util.passThruParens(ass.getRight()) instanceof JMinusExpression) {
+                    JBinaryExpression bin = (JBinaryExpression)Util.passThruParens(ass.getRight());
+                    //if left of binary is an access to the induction variable
+                    if (Util.passThruParens(bin.getLeft()) instanceof JLocalVariableExpression &&
+                        ((JLocalVariableExpression)Util.passThruParens(bin.getLeft())).
+                        getVariable().equals(info.induction)) {
+                        //if plus return the right,
+                        if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
+                            info.incr = Util.passThruParens(bin.getRight());
+                        /*if (ass.getRight() instanceof JMinusExpression)
+                          info.incr = new JExpressionStatement(null,
+                          new JUnaryMinusExpression(null, bin.getRight()),
+                          null);*/
+                    }
+                    //analogue of above...
+                    if (Util.passThruParens(bin.getRight()) instanceof JLocalVariableExpression &&
+                        ((JLocalVariableExpression)Util.passThruParens(bin.getRight())).
+                        getVariable().equals(info.induction)) {
+                        if (Util.passThruParens(ass.getRight()) instanceof JAddExpression)
+                            info.incr = Util.passThruParens(bin.getLeft());
+                        /*if (Util.passThruParens(ass.getRight()) instanceof JMinusExpression)
+                          info.incr = new JExpressionStatement(null, 
+                          new JUnaryMinusExpression
+                          (null, Util.passThruParens(bin.getLeft())),
+                          null);*/
+                    }
+                }
+            }
+        }
+        else if (Util.passThruParens(incrExp) instanceof JPrefixExpression) {  //prefix op expr 
+            JPrefixExpression pre = (JPrefixExpression)Util.passThruParens(incrExp);
+            //check that we assigning the induction variable
+            if (Util.passThruParens(pre.getExpr()) instanceof JLocalVariableExpression &&
+                ((JLocalVariableExpression)Util.passThruParens(pre.getExpr())).
+                getVariable().equals(info.induction)) {
+                if (pre.getOper() == OPE_PREINC) {
+                    info.incr = new JIntLiteral(1);
+                } /*else {
+                    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
+                    }   */  
+            }
+        }
+        else if (Util.passThruParens(incrExp) instanceof JPostfixExpression) { //postfix expr op
+            JPostfixExpression post = (JPostfixExpression)Util.passThruParens(incrExp);
+            //check that we assigning the induction variable
+            if (Util.passThruParens(post.getExpr()) instanceof JLocalVariableExpression &&
+                ((JLocalVariableExpression)Util.passThruParens(post.getExpr())).
+                getVariable().equals(info.induction)) {
+                if (post.getOper() == OPE_POSTINC) {
+                    info.incr = new JIntLiteral(1);
+                } /*else {
+                    info.incr = new JExpressionStatement(null, new JIntLiteral(-1), null);
+                    }   */  
+            }
+        }
     }
     
     /**
@@ -351,46 +351,46 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      * @param info The do loop information as calculated so far
      */
     private void getDLCondExpression(JExpression condExp,
-				    DoLoopInformation info) 
+                                     DoLoopInformation info) 
     {
-	//only handle binary relational expressions
-	if (Util.passThruParens(condExp) instanceof JRelationalExpression) {
-	    JRelationalExpression cond = (JRelationalExpression)Util.passThruParens(condExp);
-	    
-	    //make sure that lhs is an access to the induction variable 
-	    if (Util.passThruParens(cond.getLeft()) instanceof JLocalVariableExpression &&
-		((JLocalVariableExpression)Util.passThruParens(cond.getLeft())).
-		getVariable().equals(info.induction)) {
-		
-		//rhs is of type int
-		switch (cond.getOper()) {
-		case OPE_LT:
-		    info.cond = cond.getRight();
-		    break;
-		case OPE_LE:
-		    if (Util.passThruParens(cond.getRight()) instanceof JIntLiteral) {
-			JIntLiteral right = (JIntLiteral)Util.passThruParens(cond.getRight());
-			info.cond = new JIntLiteral(right.intValue() + 1);
-		    }
-		    else
-			info.cond = new JAddExpression(null, cond.getRight(),
-						       new JIntLiteral(1));
-		    
-		    break;
-		    //don't handle > or >=, it is not supported yet
-		    /*case OPE_GT:
-		      info.cond = cond.getRight();
-		      break;
-		      case OPE_GE:
-		      info.cond = new JAddExpression(null, cond.getRight(),
-		      new JIntLiteral(1));
-		    break;
-		    */
-		default:
-		    return;
-		}
-	    }
-	}
+        //only handle binary relational expressions
+        if (Util.passThruParens(condExp) instanceof JRelationalExpression) {
+            JRelationalExpression cond = (JRelationalExpression)Util.passThruParens(condExp);
+        
+            //make sure that lhs is an access to the induction variable 
+            if (Util.passThruParens(cond.getLeft()) instanceof JLocalVariableExpression &&
+                ((JLocalVariableExpression)Util.passThruParens(cond.getLeft())).
+                getVariable().equals(info.induction)) {
+        
+                //rhs is of type int
+                switch (cond.getOper()) {
+                case OPE_LT:
+                    info.cond = cond.getRight();
+                    break;
+                case OPE_LE:
+                    if (Util.passThruParens(cond.getRight()) instanceof JIntLiteral) {
+                        JIntLiteral right = (JIntLiteral)Util.passThruParens(cond.getRight());
+                        info.cond = new JIntLiteral(right.intValue() + 1);
+                    }
+                    else
+                        info.cond = new JAddExpression(null, cond.getRight(),
+                                                       new JIntLiteral(1));
+            
+                    break;
+                    //don't handle > or >=, it is not supported yet
+                    /*case OPE_GT:
+                      info.cond = cond.getRight();
+                      break;
+                      case OPE_GE:
+                      info.cond = new JAddExpression(null, cond.getRight(),
+                      new JIntLiteral(1));
+                      break;
+                    */
+                default:
+                    return;
+                }
+            }
+        }
     }
     
     /**
@@ -403,30 +403,30 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      *
      */
     private void getInductionVariable(JExpression initExp, 
-				      DoLoopInformation info) 
+                                      DoLoopInformation info) 
     {
-	//make sure it is an assignment expression 
-	//remember that all var defs have been lifted...
-	if (Util.passThruParens(initExp) instanceof JAssignmentExpression) {
-	    JAssignmentExpression ass = (JAssignmentExpression)Util.passThruParens(initExp);
-	    
-	    //check that we are dealing with integers 
-	    if (!(ass.getLeft().getType().isOrdinal() && 
-		  ass.getRight().getType().isOrdinal()))
-		return;
-	    
-	    //check that the left is a variable expression
-	    if (Util.passThruParens(ass.getLeft()) instanceof JLocalVariableExpression) {
-		//set the induction variable
-		info.induction = 
-		    ((JLocalVariableExpression)Util.passThruParens(ass.getLeft())).getVariable();
-	    }
-	    else 
-		return;
-	    
-	    //set the initialization statement of the for loop...
-	    info.init = ass.getRight();
-	}
+        //make sure it is an assignment expression 
+        //remember that all var defs have been lifted...
+        if (Util.passThruParens(initExp) instanceof JAssignmentExpression) {
+            JAssignmentExpression ass = (JAssignmentExpression)Util.passThruParens(initExp);
+        
+            //check that we are dealing with integers 
+            if (!(ass.getLeft().getType().isOrdinal() && 
+                  ass.getRight().getType().isOrdinal()))
+                return;
+        
+            //check that the left is a variable expression
+            if (Util.passThruParens(ass.getLeft()) instanceof JLocalVariableExpression) {
+                //set the induction variable
+                info.induction = 
+                    ((JLocalVariableExpression)Util.passThruParens(ass.getLeft())).getVariable();
+            }
+            else 
+                return;
+        
+            //set the initialization statement of the for loop...
+            info.init = ass.getRight();
+        }
     }
     
 
@@ -443,17 +443,17 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      */
     public static JExpression getExpression(JStatement orig)
     {
-	if (orig instanceof JExpressionListStatement) {
-	    JExpressionListStatement els = (JExpressionListStatement)orig;
-	    if (els.getExpressions().length == 1)
-		return Util.passThruParens(els.getExpression(0));
-	    else
-		return null;
-	}
-	else if (orig instanceof JExpressionStatement) {
-	    return Util.passThruParens(((JExpressionStatement)orig).getExpression());
-	}
-	else 
-	    return null;
+        if (orig instanceof JExpressionListStatement) {
+            JExpressionListStatement els = (JExpressionListStatement)orig;
+            if (els.getExpressions().length == 1)
+                return Util.passThruParens(els.getExpression(0));
+            else
+                return null;
+        }
+        else if (orig instanceof JExpressionStatement) {
+            return Util.passThruParens(((JExpressionStatement)orig).getExpression());
+        }
+        else 
+            return null;
     }
 }

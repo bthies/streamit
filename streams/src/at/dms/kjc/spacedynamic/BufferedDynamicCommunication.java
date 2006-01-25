@@ -99,9 +99,9 @@ public class BufferedDynamicCommunication {
 
         // create the method and add it to the filter
         JMethodDeclaration rawMainFunct = new JMethodDeclaration(null,
-                at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
-                RawExecutionCode.rawMain, JFormalParameter.EMPTY,
-                CClassType.EMPTY, block, null, null);
+                                                                 at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
+                                                                 RawExecutionCode.rawMain, JFormalParameter.EMPTY,
+                                                                 CClassType.EMPTY, block, null, null);
         filter.addMethod(rawMainFunct);
     }
 
@@ -123,33 +123,33 @@ public class BufferedDynamicCommunication {
         
         // add the call to the init function
         block.addStatement(new JExpressionStatement(null,
-                new JMethodCallExpression(null, new JThisExpression(null),
-                        filter.getInit().getName(), paramArray), null));
+                                                    new JMethodCallExpression(null, new JThisExpression(null),
+                                                                              filter.getInit().getName(), paramArray), null));
 
         // add the call to initWork
         if (filter instanceof SIRTwoStageFilter) {
             SIRTwoStageFilter two = (SIRTwoStageFilter) filter;
             JBlock body = (JBlock) ObjectDeepCloner.deepCopy(two.getInitWork()
-                    .getBody());
+                                                             .getBody());
             // now inline the init work body
             block.addStatement(body);
         }
         
         
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                .getBody());
+                                                              .getBody());
 
         // if we are in debug mode, print out that the filter is firing
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             block.addStatement(new SIRPrintStatement(null, new JStringLiteral(
-                    null, filter.getName() + " firing.\\n"), null));
+                                                                              null, filter.getName() + " firing.\\n"), null));
         }
 
         // add the cloned work function to the block
         block.addStatement(new JWhileStatement(null, 
-                new JBooleanLiteral(null, true),
-                workBlock,
-                null));
+                                               new JBooleanLiteral(null, true),
+                                               workBlock,
+                                               null));
     }
 
     /***************************************************************************
@@ -158,14 +158,14 @@ public class BufferedDynamicCommunication {
      **************************************************************************/
     private void convertCommExpsDynamic(LocalVariables localVars) {
         SLIRReplacingVisitor convert = new ConvertCommunicationDynamic(
-                localVars);
+                                                                       localVars);
 
         JMethodDeclaration[] methods = node.getFilter().getMethods();
         for (int i = 0; i < methods.length; i++) {
             // iterate over the statements and call the ConvertCommunication
             // class to convert peek, pop
             for (ListIterator it = methods[i].getStatementIterator(); it
-                    .hasNext();) {
+                     .hasNext();) {
                 ((JStatement) it.next()).accept(convert);
             }
         }
@@ -193,14 +193,14 @@ public class BufferedDynamicCommunication {
          * var = dynamic_receive(); }
          */
         public Object visitPopExpression(SIRPopExpression oldSelf,
-                CType oldTapeType) {
+                                         CType oldTapeType) {
             // do the super
             SIRPopExpression self = (SIRPopExpression) super
-                    .visitPopExpression(oldSelf, oldTapeType);
+                .visitPopExpression(oldSelf, oldTapeType);
 
             JMethodCallExpression receive = new JMethodCallExpression(null,
-                    new JThisExpression(null), RawExecutionCode.popDynamic,
-                    new JExpression[0]);
+                                                                      new JThisExpression(null), RawExecutionCode.popDynamic,
+                                                                      new JExpression[0]);
             receive.setTapeType(self.getType());
             return receive;
 
@@ -210,18 +210,18 @@ public class BufferedDynamicCommunication {
         // (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize]) ??
         // WHAT IS IT NOW????
         public Object visitPeekExpression(SIRPeekExpression oldSelf,
-                CType oldTapeType, JExpression oldArg) {
+                                          CType oldTapeType, JExpression oldArg) {
             // do the super
             SIRPeekExpression self = (SIRPeekExpression) super
-                    .visitPeekExpression(oldSelf, oldTapeType, oldArg);
+                .visitPeekExpression(oldSelf, oldTapeType, oldArg);
             
             JExpression[] arg = new JExpression[1];
             //visit the argument
             arg[0] = (JExpression)oldArg.accept(this);
             
             JMethodCallExpression receive = new JMethodCallExpression(null,
-                    new JThisExpression(null), RawExecutionCode.peekDynamic,
-                    arg);
+                                                                      new JThisExpression(null), RawExecutionCode.peekDynamic,
+                                                                      arg);
             receive.setTapeType(self.getType());
             return receive;
         }

@@ -17,7 +17,7 @@
 package streamit.scheduler2.singleappearance;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FeedbackLoopIter;
+    FeedbackLoopIter;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.hierarchical.StreamInterface;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
@@ -44,9 +44,9 @@ public class FeedbackLoop
             splitSched = new PhasingSchedule(this);
             int nPhase;
             for (nPhase = 0; nPhase < super.getNumSplitPhases(); nPhase++)
-            {
-                splitSched.appendPhase(super.getSplitPhase(nPhase));
-            }
+                {
+                    splitSched.appendPhase(super.getSplitPhase(nPhase));
+                }
         }
 
         // compute the joiner schedule
@@ -54,9 +54,9 @@ public class FeedbackLoop
             joinSched = new PhasingSchedule(this);
             int nPhase;
             for (nPhase = 0; nPhase < super.getNumJoinPhases(); nPhase++)
-            {
-                joinSched.appendPhase(super.getJoinPhase(nPhase));
-            }
+                {
+                    joinSched.appendPhase(super.getJoinPhase(nPhase));
+                }
         }
     }
 
@@ -133,12 +133,12 @@ public class FeedbackLoop
 
                 int nPhase;
                 for (nPhase = 0;
-                    nPhase < body.getNumSteadyPhases();
-                    nPhase++)
-                {
-                    steadyBodySched.appendPhase(
-                        body.getSteadySchedulePhase(nPhase));
-                }
+                     nPhase < body.getNumSteadyPhases();
+                     nPhase++)
+                    {
+                        steadyBodySched.appendPhase(
+                                                    body.getSteadySchedulePhase(nPhase));
+                    }
             }
 
             // the loop
@@ -147,12 +147,12 @@ public class FeedbackLoop
 
                 int nPhase;
                 for (nPhase = 0;
-                    nPhase < feedback.getNumSteadyPhases();
-                    nPhase++)
-                {
-                    steadyLoopSched.appendPhase(
-                        feedback.getSteadySchedulePhase(nPhase));
-                }
+                     nPhase < feedback.getNumSteadyPhases();
+                     nPhase++)
+                    {
+                        steadyLoopSched.appendPhase(
+                                                    feedback.getSteadySchedulePhase(nPhase));
+                    }
             }
         }
 
@@ -168,12 +168,12 @@ public class FeedbackLoop
 
                     int nStage;
                     for (nStage = 0;
-                        nStage < body.getNumInitStages();
-                        nStage++)
-                    {
-                        initBodySched.appendPhase(
-                            body.getInitScheduleStage(nStage));
-                    }
+                         nStage < body.getNumInitStages();
+                         nStage++)
+                        {
+                            initBodySched.appendPhase(
+                                                      body.getInitScheduleStage(nStage));
+                        }
                 }
 
                 // the loop
@@ -182,12 +182,12 @@ public class FeedbackLoop
 
                     int nStage;
                     for (nStage = 0;
-                        nStage < feedback.getNumInitStages();
-                        nStage++)
-                    {
-                        initLoopSched.appendPhase(
-                            feedback.getInitScheduleStage(nStage));
-                    }
+                         nStage < feedback.getNumInitStages();
+                         nStage++)
+                        {
+                            initLoopSched.appendPhase(
+                                                      feedback.getInitScheduleStage(nStage));
+                        }
                 }
             }
 
@@ -204,18 +204,18 @@ public class FeedbackLoop
                 int feedbackDataNeeded = initLoopSched.getOverallPop();
                 feedbackDataNeeded
                     += MAX(
-                        (steadyLoopSched.getOverallPeek()
+                           (steadyLoopSched.getOverallPeek()
                             - steadyLoopSched.getOverallPop()),
-                        (initLoopSched.getOverallPeek()
+                           (initLoopSched.getOverallPeek()
                             - initLoopSched.getOverallPop()));
 
                 int splitProduction = getSteadySplitFlow().getPushWeight(1);
                 nInitRunSplit =
                     (feedbackDataNeeded + splitProduction - 1)
-                        / splitProduction;
+                    / splitProduction;
                 loopBuffer =
                     nInitRunSplit * splitProduction
-                        - initLoopSched.getOverallPop();
+                    - initLoopSched.getOverallPop();
             }
 
             // figure out how many times the body needs to be run:
@@ -225,13 +225,13 @@ public class FeedbackLoop
                 int bodyProduction = steadyBodySched.getOverallPush();
                 nInitRunBody =
                     (splitDataNeeded
-                        - initBodySched.getOverallPush()
-                        + (bodyProduction - 1))
-                        / bodyProduction;
+                     - initBodySched.getOverallPush()
+                     + (bodyProduction - 1))
+                    / bodyProduction;
                 splitBuffer =
                     nInitRunBody * bodyProduction
-                        + initBodySched.getOverallPush()
-                        - nInitRunSplit * getSteadySplitFlow().getPopWeight();
+                    + initBodySched.getOverallPush()
+                    - nInitRunSplit * getSteadySplitFlow().getPopWeight();
             }
 
             // figure out how many times the join needs to be run
@@ -239,12 +239,12 @@ public class FeedbackLoop
             {
                 int bodyDataNeeded =
                     initBodySched.getOverallPop()
-                        + nInitRunBody * steadyBodySched.getOverallPop();
+                    + nInitRunBody * steadyBodySched.getOverallPop();
                 bodyDataNeeded
                     += MAX(
-                        (steadyBodySched.getOverallPeek()
+                           (steadyBodySched.getOverallPeek()
                             - steadyBodySched.getOverallPop()),
-                        (initBodySched.getOverallPeek()
+                           (initBodySched.getOverallPeek()
                             - initBodySched.getOverallPop()));
 
                 int joinProduction = getSteadyJoinFlow().getPushWeight();
@@ -252,8 +252,8 @@ public class FeedbackLoop
                     (bodyDataNeeded + (joinProduction - 1)) / joinProduction;
                 bodyBuffer =
                     nInitRunJoin * joinProduction
-                        - initBodySched.getOverallPop()
-                        - nInitRunBody * steadyBodySched.getOverallPop();
+                    - initBodySched.getOverallPop()
+                    - nInitRunBody * steadyBodySched.getOverallPop();
             }
 
             // now setup buffer sizes for the join
@@ -261,18 +261,18 @@ public class FeedbackLoop
                 int loopInitProduction = initLoopSched.getOverallPush();
                 joinBuffer =
                     feedbackLoop.getDelaySize()
-                        + loopInitProduction
-                        - (nInitRunJoin * getSteadyJoinFlow().getPopWeight(1));
+                    + loopInitProduction
+                    - (nInitRunJoin * getSteadyJoinFlow().getPopWeight(1));
 
                 // check if this is a legal schedule in the first place
                 if (feedbackLoop.getDelaySize()
                     < nInitRunJoin * getSteadyJoinFlow().getPopWeight(1))
-                {
-                    ERROR(
-                        "Could not schedule this feedback loop.\n"
-                            + "This could because it's impossible to schedule it, \n"
-                            + "or because single appearance schedule can't do it");
-                }
+                    {
+                        ERROR(
+                              "Could not schedule this feedback loop.\n"
+                              + "This could because it's impossible to schedule it, \n"
+                              + "or because single appearance schedule can't do it");
+                    }
             }
 
             // a place-holder schedule necessary to create a 
@@ -283,24 +283,24 @@ public class FeedbackLoop
             {
                 // add the join schedule
                 while (nInitRunJoin > 0)
-                {
-                    initSchedule.appendPhase(joinSched);
-                    nInitRunJoin--;
-                }
+                    {
+                        initSchedule.appendPhase(joinSched);
+                        nInitRunJoin--;
+                    }
 
                 // add the body schedule
                 initSchedule.appendPhase(initBodySched);
                 while (nInitRunBody > 0)
-                {
-                    initSchedule.appendPhase(steadyBodySched);
-                    nInitRunBody--;
-                }
+                    {
+                        initSchedule.appendPhase(steadyBodySched);
+                        nInitRunBody--;
+                    }
 
                 // add the split schedule
                 while (nInitRunSplit > 0)
-                {
-                    initSchedule.appendPhase(splitSched);
-                }
+                    {
+                        initSchedule.appendPhase(splitSched);
+                    }
 
                 // add the feedback schedule
                 initSchedule.appendPhase(initLoopSched);
@@ -335,107 +335,107 @@ public class FeedbackLoop
         int done = 0;
 
         while (done != 4)
-        {
-            // keep track if I've moved forward, or if I'm completely stuck
-            // and should exit with an error msg.
-            boolean movedForward = false;
-
-            // attempt to push some data through the feedback loop:
             {
-                while (joinBuffer >= getSteadyJoinFlow().getPopWeight(1)
-                    && joinExecutions > 0)
+                // keep track if I've moved forward, or if I'm completely stuck
+                // and should exit with an error msg.
+                boolean movedForward = false;
+
+                // attempt to push some data through the feedback loop:
                 {
-                    // add the execution to the schedule
-                    steadySchedule.appendPhase(joinSched);
+                    while (joinBuffer >= getSteadyJoinFlow().getPopWeight(1)
+                           && joinExecutions > 0)
+                        {
+                            // add the execution to the schedule
+                            steadySchedule.appendPhase(joinSched);
 
-                    // move the data forward
-                    movedForward = true;
-                    joinBuffer -= getSteadyJoinFlow().getPopWeight(1);
-                    bodyBuffer += getSteadyJoinFlow().getPushWeight();
+                            // move the data forward
+                            movedForward = true;
+                            joinBuffer -= getSteadyJoinFlow().getPopWeight(1);
+                            bodyBuffer += getSteadyJoinFlow().getPushWeight();
 
-                    // check if done, and indicate if so
-                    joinExecutions--;
-                    if (joinExecutions == 0)
-                    {
-                        done++;
-                    }
+                            // check if done, and indicate if so
+                            joinExecutions--;
+                            if (joinExecutions == 0)
+                                {
+                                    done++;
+                                }
+                        }
                 }
-            }
 
-            // attempt to push some data through the body of the loop:
-            {
-                while (bodyBuffer >= steadyBodySched.getOverallPeek()
-                    && bodyExecutions > 0)
+                // attempt to push some data through the body of the loop:
                 {
-                    // add the execution to the schedule
-                    steadySchedule.appendPhase(steadyBodySched);
+                    while (bodyBuffer >= steadyBodySched.getOverallPeek()
+                           && bodyExecutions > 0)
+                        {
+                            // add the execution to the schedule
+                            steadySchedule.appendPhase(steadyBodySched);
 
-                    // move the data forward
-                    movedForward = true;
-                    bodyBuffer -= steadyBodySched.getOverallPop();
-                    splitBuffer += steadyBodySched.getOverallPush();
+                            // move the data forward
+                            movedForward = true;
+                            bodyBuffer -= steadyBodySched.getOverallPop();
+                            splitBuffer += steadyBodySched.getOverallPush();
 
-                    // check if done, and indicate if so
-                    bodyExecutions--;
-                    if (bodyExecutions == 0)
-                    {
-                        done++;
-                    }
+                            // check if done, and indicate if so
+                            bodyExecutions--;
+                            if (bodyExecutions == 0)
+                                {
+                                    done++;
+                                }
+                        }
                 }
-            }
-            // attempt to push some data through the split of the loop:
-            {
-                while (splitBuffer >= getSteadySplitFlow().getPopWeight()
-                    && splitExecutions > 0)
+                // attempt to push some data through the split of the loop:
                 {
-                    // add the execution to the schedule
-                    steadySchedule.appendPhase(splitSched);
+                    while (splitBuffer >= getSteadySplitFlow().getPopWeight()
+                           && splitExecutions > 0)
+                        {
+                            // add the execution to the schedule
+                            steadySchedule.appendPhase(splitSched);
 
-                    // move the data forward
-                    movedForward = true;
-                    splitBuffer -= getSteadySplitFlow().getPopWeight();
-                    loopBuffer += getSteadySplitFlow().getPushWeight(1);
+                            // move the data forward
+                            movedForward = true;
+                            splitBuffer -= getSteadySplitFlow().getPopWeight();
+                            loopBuffer += getSteadySplitFlow().getPushWeight(1);
 
-                    // check if done, and indicate if so
-                    splitExecutions--;
-                    if (splitExecutions == 0)
-                    {
-                        done++;
-                    }
+                            // check if done, and indicate if so
+                            splitExecutions--;
+                            if (splitExecutions == 0)
+                                {
+                                    done++;
+                                }
+                        }
                 }
-            }
 
-            // attempt to push some data through the feedback path of the loop:
-            {
-                while (loopBuffer >= steadyLoopSched.getOverallPeek()
-                    && loopExecutions > 0)
+                // attempt to push some data through the feedback path of the loop:
                 {
-                    // add the execution to the schedule
-                    steadySchedule.appendPhase(steadyLoopSched);
+                    while (loopBuffer >= steadyLoopSched.getOverallPeek()
+                           && loopExecutions > 0)
+                        {
+                            // add the execution to the schedule
+                            steadySchedule.appendPhase(steadyLoopSched);
 
-                    // move the data forward
-                    movedForward = true;
-                    loopBuffer -= steadyLoopSched.getOverallPop();
-                    joinBuffer += steadyLoopSched.getOverallPush();
+                            // move the data forward
+                            movedForward = true;
+                            loopBuffer -= steadyLoopSched.getOverallPop();
+                            joinBuffer += steadyLoopSched.getOverallPush();
 
-                    // check if done, and indicate if so
-                    loopExecutions--;
-                    if (loopExecutions == 0)
-                    {
-                        done++;
-                    }
+                            // check if done, and indicate if so
+                            loopExecutions--;
+                            if (loopExecutions == 0)
+                                {
+                                    done++;
+                                }
+                        }
                 }
-            }
 
-            if (!movedForward)
-            {
-                ERROR(
-                    "Couldn't schedule a feedback loop (if need to find out name\n"
-                        + ", ask karczma, and I'll try to add the capability to display it.\n"
-                        + "This loop is not necessarily impossible to schedule, "
-                        + "but this scheduler isn't intelligent enough to do it");
+                if (!movedForward)
+                    {
+                        ERROR(
+                              "Couldn't schedule a feedback loop (if need to find out name\n"
+                              + ", ask karczma, and I'll try to add the capability to display it.\n"
+                              + "This loop is not necessarily impossible to schedule, "
+                              + "but this scheduler isn't intelligent enough to do it");
+                    }
             }
-        }
 
         // add the steady schedule to the feedback loop's steady schedule
         addSteadySchedulePhase(steadySchedule);

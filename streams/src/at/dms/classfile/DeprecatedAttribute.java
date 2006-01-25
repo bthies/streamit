@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DeprecatedAttribute.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: DeprecatedAttribute.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -31,86 +31,86 @@ import java.io.DataOutput;
  */
 public class DeprecatedAttribute extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create a deprecated attribute.
-   */
-  public DeprecatedAttribute() {
-    this.data = null;
-  }
-
-  /**
-   * Constructs a deprecated attribute from a class file stream.
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  public DeprecatedAttribute(DataInput in, ConstantPool cp)
-    throws IOException
-  {
-    this.data = new byte[in.readInt()];
-    in.readFully(this.data);
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_DEPRECATED;
-  }
-
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4 + (data == null ? 0 : data.length);
-  }
-
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
-
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(attr);
-  }
-
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(attr.getIndex());
-    if (data != null) {
-      out.writeInt(data.length);
-      out.write(data);
-    } else {
-      out.writeInt(0);
+    /**
+     * Create a deprecated attribute.
+     */
+    public DeprecatedAttribute() {
+        this.data = null;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Constructs a deprecated attribute from a class file stream.
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    public DeprecatedAttribute(DataInput in, ConstantPool cp)
+        throws IOException
+    {
+        this.data = new byte[in.readInt()];
+        in.readFully(this.data);
+    }
 
-  private static AsciiConstant		attr = new AsciiConstant("Deprecated");
-  private byte[]			data;
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_DEPRECATED;
+    }
+
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4 + (data == null ? 0 : data.length);
+    }
+
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
+
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(attr);
+    }
+
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(attr.getIndex());
+        if (data != null) {
+            out.writeInt(data.length);
+            out.write(data);
+        } else {
+            out.writeInt(0);
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private static AsciiConstant        attr = new AsciiConstant("Deprecated");
+    private byte[]          data;
 }

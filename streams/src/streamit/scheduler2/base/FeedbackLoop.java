@@ -35,8 +35,8 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
     StreamInterface loop;
 
     protected FeedbackLoop(
-        FeedbackLoopIter _feedbackLoop,
-        StreamFactory factory)
+                           FeedbackLoopIter _feedbackLoop,
+                           StreamFactory factory)
     {
         super(_feedbackLoop);
 
@@ -47,17 +47,17 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         if (debugrates) {
             if (librarydebug) {
                 System.err.print("FEEDBACKLOOP "+ feedbackLoop.getObject().getClass()
-                        .getName());
+                                 .getName());
                 System.err.println(feedbackLoop.getObject().getClass().getName() 
-                        + "[body] = " 
-                        + feedbackLoop.getBodyChild().getObject().getClass().getName());
+                                   + "[body] = " 
+                                   + feedbackLoop.getBodyChild().getObject().getClass().getName());
             } else {
                 System.err.println("FEEDBACKLOOP "+ ((SIRStream)feedbackLoop.getObject())
-                         .getIdent());
+                                   .getIdent());
                 System.err.println(((SIRStream)feedbackLoop.getObject())
-                        .getIdent()
-                        + "[body] = " 
-                        + ((SIRStream)(feedbackLoop.getBodyChild().getObject())).getIdent());
+                                   .getIdent()
+                                   + "[body] = " 
+                                   + ((SIRStream)(feedbackLoop.getBodyChild().getObject())).getIdent());
             }
         }
         // End Debugging
@@ -71,13 +71,13 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         if (debugrates) {
             if (librarydebug) {
                 System.err.println(feedbackLoop.getObject().getClass().getName() 
-                        + "[loop] = " 
-                        + feedbackLoop.getLoopChild().getObject().getClass().getName());
+                                   + "[loop] = " 
+                                   + feedbackLoop.getLoopChild().getObject().getClass().getName());
             } else {
                 System.err.println(((SIRStream)feedbackLoop.getObject())
-                        .getIdent()
-                        + "[loop] = " 
-                        + ((SIRStream)(feedbackLoop.getLoopChild().getObject())).getIdent());
+                                   .getIdent()
+                                   + "[loop] = " 
+                                   + ((SIRStream)(feedbackLoop.getLoopChild().getObject())).getIdent());
             }
         }
         // End Debugging
@@ -87,9 +87,9 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         // compute my steady schedule
         // my children already have computed their steady schedules,
         // so I just have to do mine
-	if (factory.needsSchedule()) {
-	    computeSteadyState();
-	}
+        if (factory.needsSchedule()) {
+            computeSteadyState();
+        }
     }
 
     /**
@@ -174,9 +174,9 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
     {
         // amount of data distributed to and collected by the split
         // and join
-//        int splitPushWeights[];
-//        int joinPopWeights[];
-//        int splitPopWeight, joinPushWeight;
+        //        int splitPushWeights[];
+        //        int joinPopWeights[];
+        //        int splitPopWeight, joinPushWeight;
 
         // now, assuming the body executes once, compute fractions
         // of how many times everything else executes
@@ -216,9 +216,9 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
                 .multiply(joinPush)
                 .divide(bodyPop)
                 .equals(bodyFrac))
-            {
-                ERROR("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
-            }
+                {
+                    ERROR("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
+                }
 
             // compute a minimal multiplier for all the fractions
             // s.t. multiplying the fractions by the multiplier will yield
@@ -226,16 +226,16 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             BigInteger multiplier = bodyFrac.getDenominator();
             multiplier =
                 multiplier.multiply(
-                    splitFrac.getDenominator().divide(
-                        multiplier.gcd(splitFrac.getDenominator())));
+                                    splitFrac.getDenominator().divide(
+                                                                      multiplier.gcd(splitFrac.getDenominator())));
             multiplier =
                 multiplier.multiply(
-                    loopFrac.getDenominator().divide(
-                        multiplier.gcd(loopFrac.getDenominator())));
+                                    loopFrac.getDenominator().divide(
+                                                                     multiplier.gcd(loopFrac.getDenominator())));
             multiplier =
                 multiplier.multiply(
-                    joinFrac.getDenominator().divide(
-                        multiplier.gcd(joinFrac.getDenominator())));
+                                    joinFrac.getDenominator().divide(
+                                                                     multiplier.gcd(joinFrac.getDenominator())));
 
             // multiply all the fractions by the multiplier
             bodyFrac = bodyFrac.multiply(multiplier);
@@ -278,10 +278,10 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             if (debugrates) {
                 if (librarydebug) {
                     System.err.print(feedbackLoop.getObject().
-                            getClass().getName());
+                                     getClass().getName());
                 } else {
                     System.err.print(((SIRStream)feedbackLoop.getObject())
-                            .getIdent()); 
+                                     .getIdent()); 
                 }
                 System.err.println(" steady state: push " + push + " pop " + pop);
             }                       

@@ -13,8 +13,8 @@ class Constraint implements Serializable {
     public final double rhs;
 
     public Constraint(ConstraintType type, double[] lhs, double rhs) {
-	this.type = type;
-	this.rhs = rhs;
-	this.lhs = lhs;
+        this.type = type;
+        this.rhs = rhs;
+        this.lhs = lhs;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)FormatRoutingSimple.java	1.2 30.01.2003
+ * @(#)FormatRoutingSimple.java 1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,23 +35,23 @@ import org.jgraph.graph.GraphConstants;
  */
 public class FormatRoutingSimple extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatRoutingSimple.
-	 */
-	public FormatRoutingSimple(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatRoutingSimple.
+     */
+    public FormatRoutingSimple(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Map map = GraphConstants.createMap();
-		GraphConstants.setRouting(map, GraphConstants.ROUTING_SIMPLE);
-		GraphConstants.setRemoveAttributes(
-			map,
-			new Object[] { GraphConstants.POINTS });
-		graphpad.getCurrentDocument().setSelectionAttributes(map);
-	}
-	
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Map map = GraphConstants.createMap();
+        GraphConstants.setRouting(map, GraphConstants.ROUTING_SIMPLE);
+        GraphConstants.setRemoveAttributes(
+                                           map,
+                                           new Object[] { GraphConstants.POINTS });
+        graphpad.getCurrentDocument().setSelectionAttributes(map);
+    }
+    
 }

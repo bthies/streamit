@@ -31,35 +31,35 @@ public class FindVarDecls extends SLIREmptyVisitor {
     private HashMap floats; // Integer -> JVariableDefinition
     
     public FindVarDecls() { 
-	max_int_count = 0;
-	max_float_count = 0;
-	ints = new HashMap();
-	floats = new HashMap();
+        max_int_count = 0;
+        max_float_count = 0;
+        ints = new HashMap();
+        floats = new HashMap();
     }
 
     public void newOperator() {
-	int_count = 0;
-	float_count = 0;
-	var_names = new HashMap();
+        int_count = 0;
+        float_count = 0;
+        var_names = new HashMap();
     }
     
     // reset tells if this operator should be assigned new variables
 
     public JStatement findAndReplace(JStatement body) {
-	
-	//if (reset)
-	    newOperator();
+    
+        //if (reset)
+        newOperator();
 
-	//int_count = 0;
-	//float_count = 0;
-	//var_names = new HashMap();
-	body.accept(this);
-	//System.out.println("Found ints:"+int_count+" floats:"+float_count);
-	if (int_count > max_int_count) { max_int_count = int_count; }
-	if (float_count > max_float_count) { max_float_count = float_count; }
-	ReplaceVarDecls replace = new ReplaceVarDecls(var_names, this);
-	JBlock new_body = (JBlock)body.accept(replace);
-	return new_body;
+        //int_count = 0;
+        //float_count = 0;
+        //var_names = new HashMap();
+        body.accept(this);
+        //System.out.println("Found ints:"+int_count+" floats:"+float_count);
+        if (int_count > max_int_count) { max_int_count = int_count; }
+        if (float_count > max_float_count) { max_float_count = float_count; }
+        ReplaceVarDecls replace = new ReplaceVarDecls(var_names, this);
+        JBlock new_body = (JBlock)body.accept(replace);
+        return new_body;
     }
 
     public int getMaxIntCount() { return max_int_count; }
@@ -67,56 +67,56 @@ public class FindVarDecls extends SLIREmptyVisitor {
     public int getMaxFloatCount() { return max_float_count; }
     
     public JVariableDefinition getIntVar(Integer index) { 
-	if (!ints.containsKey(index)) {
-	    JVariableDefinition var = new JVariableDefinition(null, 
-		   0, CStdType.Integer, "__int_"+index.toString(), null);
-	    ints.put(index, var);
-	    return var;
-	}
-	return (JVariableDefinition)ints.get(index);
+        if (!ints.containsKey(index)) {
+            JVariableDefinition var = new JVariableDefinition(null, 
+                                                              0, CStdType.Integer, "__int_"+index.toString(), null);
+            ints.put(index, var);
+            return var;
+        }
+        return (JVariableDefinition)ints.get(index);
     }
 
     public JVariableDefinition getFloatVar(Integer index) { 
-	if (!floats.containsKey(index)) {
-	    JVariableDefinition var = new JVariableDefinition(null, 
-		   0, CStdType.Float, "__float_"+index.toString(), null);
-	    floats.put(index, var);
-	    return var;
-	}
-	return (JVariableDefinition)floats.get(index);
+        if (!floats.containsKey(index)) {
+            JVariableDefinition var = new JVariableDefinition(null, 
+                                                              0, CStdType.Float, "__float_"+index.toString(), null);
+            floats.put(index, var);
+            return var;
+        }
+        return (JVariableDefinition)floats.get(index);
     }
 
     public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                   JVariableDefinition[] vars) {
         for (int i = 0; i < vars.length; i++) {
-	    CType type = vars[i].getType();
+            CType type = vars[i].getType();
 
-	    if (type.isArrayType()) continue;
+            if (type.isArrayType()) continue;
 
-	    if (type.getTypeID() == CType.TID_INT) {
-		var_names.put(vars[i],new Integer(int_count));
-		int_count++;
-	    }
-	    if (type.getTypeID() == CType.TID_FLOAT) {
-		var_names.put(vars[i],new Integer(float_count));
-		float_count++;
-	    }
+            if (type.getTypeID() == CType.TID_INT) {
+                var_names.put(vars[i],new Integer(int_count));
+                int_count++;
+            }
+            if (type.getTypeID() == CType.TID_FLOAT) {
+                var_names.put(vars[i],new Integer(float_count));
+                float_count++;
+            }
         }
     }
 
     public void addVariableDeclarations(JBlock block) {
 
-	for (int i = 0; i < getMaxIntCount(); i++) {
-	    JVariableDefinition var = getIntVar(new Integer(i));
-	    block.addStatementFirst(
-                   new JVariableDeclarationStatement(null, var, null));
-	}
+        for (int i = 0; i < getMaxIntCount(); i++) {
+            JVariableDefinition var = getIntVar(new Integer(i));
+            block.addStatementFirst(
+                                    new JVariableDeclarationStatement(null, var, null));
+        }
 
-	for (int i = 0; i < getMaxFloatCount(); i++) {
-	    JVariableDefinition var = getFloatVar(new Integer(i));
-	    block.addStatementFirst(
-                   new JVariableDeclarationStatement(null, var, null));
-	}
+        for (int i = 0; i < getMaxFloatCount(); i++) {
+            JVariableDefinition var = getFloatVar(new Integer(i));
+            block.addStatementFirst(
+                                    new JVariableDeclarationStatement(null, var, null));
+        }
     }
 
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.20 2005-01-23 00:33:01 thies Exp $
+ * $Id: JBlock.java,v 1.21 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -36,252 +36,252 @@ import java.util.List;
  */
 public class JBlock extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	body		the statements contained in the block
-   * @param	comment		other comments in the source code
-   */
-  public JBlock(TokenReference where,
-		JStatement[] body,
-		JavaStyleComment[] comments)
-  {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   body        the statements contained in the block
+     * @param   comment     other comments in the source code
+     */
+    public JBlock(TokenReference where,
+                  JStatement[] body,
+                  JavaStyleComment[] comments)
+    {
+        super(where, comments);
 
-    // fill list with elements of <body>
-    this.body = new LinkedList();
-    for (int i=0; i<body.length; i++) {
-	this.body.add(body[i]);
+        // fill list with elements of <body>
+        this.body = new LinkedList();
+        for (int i=0; i<body.length; i++) {
+            this.body.add(body[i]);
+        }
     }
-  }
 
     public JBlock(JStatement[] body) {
-	this(null, body, null);
+        this(null, body, null);
     }
 
     /**
      * Construct a node in the parsing tree
-     * @param	where		the line of this node in the source code
-     * @param	body		a list of statements contained in the block
-     * @param	comment		other comments in the source code
+     * @param   where       the line of this node in the source code
+     * @param   body        a list of statements contained in the block
+     * @param   comment     other comments in the source code
      */
     public JBlock(TokenReference where,
-		  List body,
-		  JavaStyleComment[] comments)
-  {
-    super(where, comments);
-    // make a copy of <body>
-    this.body = new LinkedList(body);
-  }
+                  List body,
+                  JavaStyleComment[] comments)
+    {
+        super(where, comments);
+        // make a copy of <body>
+        this.body = new LinkedList(body);
+    }
 
     public JBlock(List body) {
-	this(null, body, null);
+        this(null, body, null);
     }
 
     /**
      * Construct a new JBlock with no statements inside.
      */
     public JBlock() {
-	this(null, new LinkedList(), null);
-  }
+        this(null, new LinkedList(), null);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
     /**
      * Return a shallow copy of this block (don't copy any contained
      * statements; just copy list of statements.)
      */
     public JBlock copy() {
-	return new JBlock(null, new LinkedList(body), getComments());
+        return new JBlock(null, new LinkedList(body), getComments());
     }
 
-  /**
-   * Tests whether the block is empty.
-   *
-   * @return	true iff the block is empty.
-   */
-  public boolean isEmpty() {
-    return body.size() == 0;
-  }
+    /**
+     * Tests whether the block is empty.
+     *
+     * @return  true iff the block is empty.
+     */
+    public boolean isEmpty() {
+        return body.size() == 0;
+    }
 
     /**
      * Adds <statement> to this.
      */
     public void addStatement(JStatement statement) {
-	body.add(statement);
+        body.add(statement);
     }
 
     /**
      * Adds <statement> to front of this.
      */
     public void addStatementFirst(JStatement statement) {
-	body.addFirst(statement);
+        body.addFirst(statement);
     }
 
     /**
      * Adds <statement> to front of this.
      */
     public void addAllStatementsFirst(List lst) {
-	for (int i=0; i<lst.size(); i++) {
-	    addStatementFirst((JStatement)lst.get(lst.size()-i-1));
-	}
+        for (int i=0; i<lst.size(); i++) {
+            addStatementFirst((JStatement)lst.get(lst.size()-i-1));
+        }
     }
 
     /**
      * Adds statement to this, at the specified position.
      */
     public void addStatement(int pos, JStatement statement) {
-	body.add(pos, statement);
+        body.add(pos, statement);
     }
 
     /**
      * Adds all statements in <lst> to this, at the specified position.
      */
     public void addAllStatements(int pos, List lst) {
-	body.addAll(pos, lst);
+        body.addAll(pos, lst);
     }
 
     /**
      * Adds all statements in <lst> to end of this.
      */
     public void addAllStatements(List lst) {
-	body.addAll(lst);
+        body.addAll(lst);
     }
 
     /**
      * Adds all statements in <blk> to end of this.
      */
     public void addAllStatements(JBlock b) {
-	body.addAll(b.getStatements());
+        body.addAll(b.getStatements());
     }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    CBlockContext	self = new CBlockContext(context);
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        CBlockContext   self = new CBlockContext(context);
 
-    for (int i = 0; i < body.size(); i++) {
-      if (! self.isReachable()) {
-	throw new CLineError(((JStatement)body.get(i)).getTokenReference(), KjcMessages.STATEMENT_UNREACHABLE);
-      }
-      try {
-	((JStatement)body.get(i)).analyse(self);
-      } catch (CLineError e) {
-	self.reportTrouble(e);
-      }
+        for (int i = 0; i < body.size(); i++) {
+            if (! self.isReachable()) {
+                throw new CLineError(((JStatement)body.get(i)).getTokenReference(), KjcMessages.STATEMENT_UNREACHABLE);
+            }
+            try {
+                ((JStatement)body.get(i)).analyse(self);
+            } catch (CLineError e) {
+                self.reportTrouble(e);
+            }
+        }
+
+        self.close(getTokenReference());
     }
 
-    self.close(getTokenReference());
-  }
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitBlockStatement(this, getComments());
-  }
-
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitBlockStatement(this, getComments());
-  }
-
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
-
-    for (int i = 0; i < body.size(); i++) {
-      ((JStatement)body.get(i)).genCode(code);
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitBlockStatement(this, getComments());
     }
-  }
 
- // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitBlockStatement(this, getComments());
+    }
+
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
+
+        for (int i = 0; i < body.size(); i++) {
+            ((JStatement)body.get(i)).genCode(code);
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
     /**
      * Returns INTERNAL list of statements in this.  
      */
     public List getStatements() {
-	return body;
+        return body;
     }
 
     /**
      * Returns i'th statement.
      */
     public JStatement getStatement(int i) {
-	return (JStatement)body.get(i);
+        return (JStatement)body.get(i);
     }
 
     /**
      * Returns array of statements in this.  
      */
     public JStatement[] getStatementArray() {
-	return (JStatement[])body.toArray(new JStatement[0]);
+        return (JStatement[])body.toArray(new JStatement[0]);
     }
 
     /**
      * Returns iterator of statements in this.  
      */
     public ListIterator getStatementIterator() {
-	return body.listIterator();
+        return body.listIterator();
     }
 
     public void removeStatement(int i) {
-	body.remove(i);
+        body.remove(i);
     }
 
     public int size() {
-	return body.size();
+        return body.size();
     }
 
     public void setStatement(int i, JStatement statement) {
-	body.set(i, statement);
+        body.set(i, statement);
     }
 
     // <body> containts JStatements
-  protected LinkedList 	body;
+    protected LinkedList    body;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JBlock other = new at.dms.kjc.JBlock();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JBlock other = new at.dms.kjc.JBlock();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JBlock other) {
-  super.deepCloneInto(other);
-  other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JBlock other) {
+        super.deepCloneInto(other);
+        other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

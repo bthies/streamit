@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMinusExpression.java,v 1.5 2003-05-28 05:58:44 thies Exp $
+ * $Id: JMinusExpression.java,v 1.6 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,185 +30,185 @@ import at.dms.compiler.UnpositionedError;
  */
 public class JMinusExpression extends JBinaryArithmeticExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JMinusExpression() {} // for cloner only
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	left		the left operand
-   * @param	right		the right operand
-   */
-  public JMinusExpression(TokenReference where,
-			  JExpression left,
-			  JExpression right) {
-    super(where, left, right);
-  }
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   left        the left operand
+     * @param   right       the right operand
+     */
+    public JMinusExpression(TokenReference where,
+                            JExpression left,
+                            JExpression right) {
+        super(where, left, right);
+    }
 
     public String toString() {
-	return "JMinusExpression["+left+","+right+"]";
+        return "JMinusExpression["+left+","+right+"]";
     }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    left = left.analyse(context);
-    right = right.analyse(context);
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        left = left.analyse(context);
+        right = right.analyse(context);
 
-    try {
-      type = computeType(left.getType(), right.getType());
-    } catch (UnpositionedError e) {
-      throw e.addPosition(getTokenReference());
+        try {
+            type = computeType(left.getType(), right.getType());
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
+
+        left = left.convertType(type, context);
+        right = right.convertType(type, context);
+
+        if (left.isConstant() && right.isConstant()) {
+            return constantFolding();
+        } else {
+            return this;
+        }
     }
 
-    left = left.convertType(type, context);
-    right = right.convertType(type, context);
-
-    if (left.isConstant() && right.isConstant()) {
-      return constantFolding();
-    } else {
-      return this;
+    /**
+     * compute the type of this expression according to operands
+     * @param   leftType        the type of left operand
+     * @param   rightType       the type of right operand
+     * @return  the type computed for this binary operation
+     * @exception   UnpositionedError   this error will be positioned soon
+     */
+    public static CType computeType(CType   leftType, CType rightType) throws UnpositionedError {
+        if (leftType.isNumeric() && rightType.isNumeric()) {
+            return CNumericType.binaryPromote(leftType, rightType);
+        }
+        throw new UnpositionedError(KjcMessages.MINUS_BADTYPE, leftType, rightType);
     }
-  }
 
-  /**
-   * compute the type of this expression according to operands
-   * @param	leftType		the type of left operand
-   * @param	rightType		the type of right operand
-   * @return	the type computed for this binary operation
-   * @exception	UnpositionedError	this error will be positioned soon
-   */
-  public static CType computeType(CType	leftType, CType rightType) throws UnpositionedError {
-    if (leftType.isNumeric() && rightType.isNumeric()) {
-      return CNumericType.binaryPromote(leftType, rightType);
+    // ----------------------------------------------------------------------
+    // CONSTANT FOLDING
+    // ----------------------------------------------------------------------
+
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param   left        the first operand
+     * @param   right       the seconds operand
+     * @return  the result of the operation
+     */
+    public int compute(int left, int right) {
+        return left - right;
     }
-    throw new UnpositionedError(KjcMessages.MINUS_BADTYPE, leftType, rightType);
-  }
 
-  // ----------------------------------------------------------------------
-  // CONSTANT FOLDING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public int compute(int left, int right) {
-    return left - right;
-  }
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public long compute(long left, long right) {
-    return left - right;
-  }
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public float compute(float left, float right) {
-    return left - right;
-  }
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public double compute(double left, double right) {
-    return left - right;
-  }
-
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitBinaryExpression(this, "-", left, right);
-  }
-
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitBinaryExpression(this, "-", left, right);
-  }
-
-  /**
-   * @param	type		the type of result
-   * @return	the type of opcode for this operation
-   */
-  public static int getOpcode(CType type) {
-    switch (type.getTypeID()) {
-    case TID_FLOAT:
-      return opc_fsub;
-    case TID_LONG:
-      return opc_lsub;
-    case TID_DOUBLE:
-      return opc_dsub;
-    default:
-      return opc_isub;
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param   left        the first operand
+     * @param   right       the seconds operand
+     * @return  the result of the operation
+     */
+    public long compute(long left, long right) {
+        return left - right;
     }
-  }
 
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    setLineNumber(code);
-
-    left.genCode(code, false);
-    right.genCode(code, false);
-    code.plantNoArgInstruction(getOpcode(getType()));
-
-    if (discardValue) {
-      code.plantPopInstruction(getType());
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param   left        the first operand
+     * @param   right       the seconds operand
+     * @return  the result of the operation
+     */
+    public float compute(float left, float right) {
+        return left - right;
     }
-  }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param   left        the first operand
+     * @param   right       the seconds operand
+     * @return  the result of the operation
+     */
+    public double compute(double left, double right) {
+        return left - right;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JMinusExpression other = new at.dms.kjc.JMinusExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JMinusExpression other) {
-  super.deepCloneInto(other);
-}
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitBinaryExpression(this, "-", left, right);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitBinaryExpression(this, "-", left, right);
+    }
+
+    /**
+     * @param   type        the type of result
+     * @return  the type of opcode for this operation
+     */
+    public static int getOpcode(CType type) {
+        switch (type.getTypeID()) {
+        case TID_FLOAT:
+            return opc_fsub;
+        case TID_LONG:
+            return opc_lsub;
+        case TID_DOUBLE:
+            return opc_dsub;
+        default:
+            return opc_isub;
+        }
+    }
+
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        setLineNumber(code);
+
+        left.genCode(code, false);
+        right.genCode(code, false);
+        code.plantNoArgInstruction(getOpcode(getType()));
+
+        if (discardValue) {
+            code.plantPopInstruction(getType());
+        }
+    }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JMinusExpression other = new at.dms.kjc.JMinusExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JMinusExpression other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

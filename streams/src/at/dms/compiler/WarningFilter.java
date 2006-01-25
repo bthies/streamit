@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: WarningFilter.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: WarningFilter.java,v 1.2 2006-01-25 17:00:42 thies Exp $
  */
 
 package at.dms.compiler;
@@ -25,28 +25,28 @@ package at.dms.compiler;
  */
 public interface WarningFilter {
 
-  /**
-   * Rejects the warning, it will not be displayed
-   */
-  int	FLT_REJECT	= 0;
-  /**
-   * Forces the warning to be displayed
-   */
-  int	FLT_FORCE	= 1;
-  /**
-   * Does not decide, the warning will be displayed depending on the user
-   * options (warning level, langage specification)
-   */
-  int	FLT_ACCEPT	= 2;
+    /**
+     * Rejects the warning, it will not be displayed
+     */
+    int FLT_REJECT  = 0;
+    /**
+     * Forces the warning to be displayed
+     */
+    int FLT_FORCE   = 1;
+    /**
+     * Does not decide, the warning will be displayed depending on the user
+     * options (warning level, langage specification)
+     */
+    int FLT_ACCEPT  = 2;
 
-  // ----------------------------------------------------------------------
-  // FILTER
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // FILTER
+    // ----------------------------------------------------------------------
 
-  /**
-   * Filters a warning
-   * @param	warning		a warning to be filtred
-   * @return	FLT_REJECT, FLT_FORCE, FLT_ACCEPT
-   */
-  int filter(CWarning warning);
+    /**
+     * Filters a warning
+     * @param   warning     a warning to be filtred
+     * @return  FLT_REJECT, FLT_FORCE, FLT_ACCEPT
+     */
+    int filter(CWarning warning);
 }

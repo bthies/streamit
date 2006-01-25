@@ -29,7 +29,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.18 2005-12-23 15:08:42 dimock Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.19 2006-01-25 17:04:28 thies Exp $
  */
 
 public class SymbolTableVisitor extends FEReplacer
@@ -140,11 +140,11 @@ public class SymbolTableVisitor extends FEReplacer
     protected Type actualType(Type type)
     {
         if (type instanceof TypeStructRef)
-        {
-            String name = ((TypeStructRef)type).getName();
-            if (structsByName.containsKey(name))
-                type = (Type)structsByName.get(name);
-        }
+            {
+                String name = ((TypeStructRef)type).getName();
+                if (structsByName.containsKey(name))
+                    type = (Type)structsByName.get(name);
+            }
         return type;
     }
 
@@ -163,13 +163,13 @@ public class SymbolTableVisitor extends FEReplacer
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(symtab);
         for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            symtab.registerVar(param.getName(),
-                               actualType(param.getType()),
-                               param,
-                               SymbolTable.KIND_FUNC_PARAM);
-        }
+            {
+                Parameter param = (Parameter)iter.next();
+                symtab.registerVar(param.getName(),
+                                   actualType(param.getType()),
+                                   param,
+                                   SymbolTable.KIND_FUNC_PARAM);
+            }
         Object result = super.visitFunction(func);
         symtab = oldSymTab;
         return result;
@@ -184,13 +184,13 @@ public class SymbolTableVisitor extends FEReplacer
         return result;
     }
 
- /**
-  * Top level visitor, sets up some useful info.
-  * 
-  * structsByName will map struct names to TypeStruct's
-  * helpersByName will map helper function names to TypeHelper's
-  * symtab will be initialized for all fields for static's
-  */
+    /**
+     * Top level visitor, sets up some useful info.
+     * 
+     * structsByName will map struct names to TypeStruct's
+     * helpersByName will map helper function names to TypeHelper's
+     * symtab will be initialized for all fields for static's
+     */
     public Object visitProgram(Program prog) {
         // Examine and register structure members, then recurse normally.
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
@@ -206,12 +206,12 @@ public class SymbolTableVisitor extends FEReplacer
             StreamSpec spec = (StreamSpec) iter.next();
             if (spec.getType() == StreamSpec.STREAM_GLOBAL) {
                 for (Iterator _iter = spec.getVars().iterator(); _iter
-                        .hasNext();) {
+                         .hasNext();) {
                     FieldDecl var = (FieldDecl) _iter.next();
                     int num = var.getNumFields();
                     for (int y = 0; y < num; y++) {
                         symtab.registerVar(var.getName(y), actualType(var
-                                .getType(y)), var, SymbolTable.KIND_GLOBAL);
+                                                                      .getType(y)), var, SymbolTable.KIND_GLOBAL);
                     }
                 }
             }
@@ -244,21 +244,21 @@ public class SymbolTableVisitor extends FEReplacer
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(symtab);
         streamType = spec.getStreamType();
-	// register parameters
+        // register parameters
         for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            symtab.registerVar(param.getName(),
-                               actualType(param.getType()),
-                               param,
-                               SymbolTable.KIND_STREAM_PARAM);
-        }
-	// register functions
+            {
+                Parameter param = (Parameter)iter.next();
+                symtab.registerVar(param.getName(),
+                                   actualType(param.getType()),
+                                   param,
+                                   SymbolTable.KIND_STREAM_PARAM);
+            }
+        // register functions
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
-        {
-	    Function func = (Function)iter.next();
-	    symtab.registerFn(func);
-	}
+            {
+                Function func = (Function)iter.next();
+                symtab.registerFn(func);
+            }
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
         streamType = oldStreamType;

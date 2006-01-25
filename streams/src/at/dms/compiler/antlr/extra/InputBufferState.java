@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InputBufferState.java,v 1.2 2002-12-11 23:56:07 karczma Exp $
+ * $Id: InputBufferState.java,v 1.3 2006-01-25 17:00:43 thies Exp $
  */
 
 package at.dms.compiler.antlr.extra;
@@ -25,47 +25,47 @@ package at.dms.compiler.antlr.extra;
  */
 public class InputBufferState {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new input buffer state object.
-   *
-   * @param	buffer		contains the current text to be matched
-   * @param	startRead	the beginning of the yytext() string
-   * @param	endRead		the last character in the buffer
-   * @param	currentPos	the the current text position in the buffer
-   * @param	markedPos	the position at the last accepting state
-   * @param	pushbackPos	the position at the last state to be included in yytext
-   * @param	atEOF		is the scanner at the EOF ?
-   */
-  public InputBufferState(char[] buffer,
-			  int startRead,
-			  int endRead,
-			  int currentPos,
-			  int markedPos,
-			  int pushbackPos,
-			  boolean atEOF)
-  {
-    this.buffer = buffer;
-    this.startRead = startRead;
-    this.endRead = endRead;
-    this.currentPos = currentPos;
-    this.markedPos = markedPos;
-    this.pushbackPos = pushbackPos;
-    this.atEOF = atEOF;
-  }
+    /**
+     * Constructs a new input buffer state object.
+     *
+     * @param   buffer      contains the current text to be matched
+     * @param   startRead   the beginning of the yytext() string
+     * @param   endRead     the last character in the buffer
+     * @param   currentPos  the the current text position in the buffer
+     * @param   markedPos   the position at the last accepting state
+     * @param   pushbackPos the position at the last state to be included in yytext
+     * @param   atEOF       is the scanner at the EOF ?
+     */
+    public InputBufferState(char[] buffer,
+                            int startRead,
+                            int endRead,
+                            int currentPos,
+                            int markedPos,
+                            int pushbackPos,
+                            boolean atEOF)
+    {
+        this.buffer = buffer;
+        this.startRead = startRead;
+        this.endRead = endRead;
+        this.currentPos = currentPos;
+        this.markedPos = markedPos;
+        this.pushbackPos = pushbackPos;
+        this.atEOF = atEOF;
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  public char[]		buffer;
-  public int		startRead;
-  public int		endRead;
-  public int		currentPos;
-  public int		markedPos;
-  public int		pushbackPos;
-  public boolean	atEOF;
+    public char[]       buffer;
+    public int      startRead;
+    public int      endRead;
+    public int      currentPos;
+    public int      markedPos;
+    public int      pushbackPos;
+    public boolean  atEOF;
 }

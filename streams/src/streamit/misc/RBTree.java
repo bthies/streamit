@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.9 2004-01-28 21:17:13 dmaze Exp $ */
+/* $Id: RBTree.java,v 1.10 2006-01-25 17:04:38 thies Exp $ */
 
 public class RBTree
 {
@@ -67,9 +67,9 @@ public class RBTree
             return min;
 
         while (min.left != NULL)
-        {
-            min = min.left;
-        }
+            {
+                min = min.left;
+            }
 
         return min;
     }
@@ -82,9 +82,9 @@ public class RBTree
             return max;
 
         while (max.right != NULL)
-        {
-            max = max.right;
-        }
+            {
+                max = max.right;
+            }
 
         return max;
     }
@@ -96,20 +96,20 @@ public class RBTree
         RBNode node = root;
 
         while (node != NULL)
-        {
-            if (myComperator.isLess(data, node.nodeData))
             {
-                node = node.left;
+                if (myComperator.isLess(data, node.nodeData))
+                    {
+                        node = node.left;
+                    }
+                else if (myComperator.isLess(node.nodeData, data))
+                    {
+                        node = node.right;
+                    }
+                else
+                    {
+                        break;
+                    }
             }
-            else if (myComperator.isLess(node.nodeData, data))
-            {
-                node = node.right;
-            }
-            else
-            {
-                break;
-            }
-        }
 
         return node;
     }
@@ -120,17 +120,17 @@ public class RBTree
         RBNode node = root;
 
         while (node != NULL)
-        {
-            if (myComperator.isLess(data, node.nodeData))
             {
-                upperBound = node;
-                node = node.left;
+                if (myComperator.isLess(data, node.nodeData))
+                    {
+                        upperBound = node;
+                        node = node.left;
+                    }
+                else
+                    {
+                        node = node.right;
+                    }
             }
-            else
-            {
-                node = node.right;
-            }
-        }
 
         return upperBound;
     }
@@ -141,21 +141,21 @@ public class RBTree
         RBNode node = root;
 
         while (node != NULL)
-        {
-            if (myComperator.isLess(data, node.nodeData))
             {
-                lowerBound = node;
-                node = node.left;
+                if (myComperator.isLess(data, node.nodeData))
+                    {
+                        lowerBound = node;
+                        node = node.left;
+                    }
+                if (myComperator.isLess(node.nodeData, data))
+                    {
+                        node = node.right;
+                    }
+                else
+                    {
+                        return node;
+                    }
             }
-            if (myComperator.isLess(node.nodeData, data))
-            {
-                node = node.right;
-            }
-            else
-            {
-                return node;
-            }
-        }
 
         return lowerBound;
     }
@@ -166,89 +166,89 @@ public class RBTree
 
         // handle the case of empy tree
         if (root == NULL)
-        {
-            root = new RBNode(insertData);
-            root.black = true;
+            {
+                root = new RBNode(insertData);
+                root.black = true;
 
-            // setup the sentinell NULL
-            root.left = NULL;
-            root.right = NULL;
+                // setup the sentinell NULL
+                root.left = NULL;
+                root.right = NULL;
 
-            size = size + 1;
-            return new Pair(root, Boolean.TRUE);
-        }
+                size = size + 1;
+                return new Pair(root, Boolean.TRUE);
+            }
 
         // not an empty tree
         // find my insertion point
         RBNode insertionPoint = root;
         while (true)
-        {
-            Object parentData = insertionPoint.nodeData;
-            if (myComperator.isLess(insertData, parentData))
             {
-                // insertData < parentData => go left
-                if (insertionPoint.left != NULL)
-                {
-                    // have a left sub-tree - continue to search
-                    insertionPoint = insertionPoint.left;
-                }
+                Object parentData = insertionPoint.nodeData;
+                if (myComperator.isLess(insertData, parentData))
+                    {
+                        // insertData < parentData => go left
+                        if (insertionPoint.left != NULL)
+                            {
+                                // have a left sub-tree - continue to search
+                                insertionPoint = insertionPoint.left;
+                            }
+                        else
+                            {
+                                // reached a leaf - insert the data and get out
+                                insertionPoint.left = new RBNode(insertData);
+                                insertionPoint.left.parent = insertionPoint;
+                                insertionPoint = insertionPoint.left;
+
+                                // setup the sentinell NULL
+                                insertionPoint.left = NULL;
+                                insertionPoint.right = NULL;
+
+                                size = size + 1;
+                                break;
+                            }
+                    }
                 else
-                {
-                    // reached a leaf - insert the data and get out
-                    insertionPoint.left = new RBNode(insertData);
-                    insertionPoint.left.parent = insertionPoint;
-                    insertionPoint = insertionPoint.left;
+                    {
+                        // insertData >= parentData
+                        if (myComperator.isLess(parentData, insertData))
+                            {
+                                // insertData > parentData => go right
+                                if (insertionPoint.right != NULL)
+                                    {
+                                        // have a right sub-tree - continue to search
+                                        insertionPoint = insertionPoint.right;
+                                    }
+                                else
+                                    {
+                                        // reached a leaf - insert the data and get out
+                                        insertionPoint.right = new RBNode(insertData);
+                                        insertionPoint.right.parent = insertionPoint;
+                                        insertionPoint = insertionPoint.right;
 
-                    // setup the sentinell NULL
-                    insertionPoint.left = NULL;
-                    insertionPoint.right = NULL;
+                                        // setup the sentinell NULL
+                                        insertionPoint.left = NULL;
+                                        insertionPoint.right = NULL;
 
-                    size = size + 1;
-                    break;
-                }
+                                        size = size + 1;
+                                        break;
+                                    }
+                            }
+                        else
+                            {
+                                // insertData == parentData =>
+                                // there already exists a node with the key equal
+                                // to the key in insertData
+                                // if the user so requests, replace the old data with
+                                // insertData.
+                                if (replace)
+                                    {
+                                        insertionPoint.nodeData = insertData;
+                                    }
+
+                                return new Pair(insertionPoint, Boolean.FALSE);
+                            }
+                    }
             }
-            else
-            {
-                // insertData >= parentData
-                if (myComperator.isLess(parentData, insertData))
-                {
-                    // insertData > parentData => go right
-                    if (insertionPoint.right != NULL)
-                    {
-                        // have a right sub-tree - continue to search
-                        insertionPoint = insertionPoint.right;
-                    }
-                    else
-                    {
-                        // reached a leaf - insert the data and get out
-                        insertionPoint.right = new RBNode(insertData);
-                        insertionPoint.right.parent = insertionPoint;
-                        insertionPoint = insertionPoint.right;
-
-                        // setup the sentinell NULL
-                        insertionPoint.left = NULL;
-                        insertionPoint.right = NULL;
-
-                        size = size + 1;
-                        break;
-                    }
-                }
-                else
-                {
-                    // insertData == parentData =>
-                    // there already exists a node with the key equal
-                    // to the key in insertData
-                    // if the user so requests, replace the old data with
-                    // insertData.
-                    if (replace)
-                    {
-                        insertionPoint.nodeData = insertData;
-                    }
-
-                    return new Pair(insertionPoint, Boolean.FALSE);
-                }
-            }
-        }
 
         // the node has been inserted. it is red (by design of RBNode).
         // now I am going to rebalance the tree.
@@ -256,67 +256,67 @@ public class RBTree
         // Introduction to Algorithms. hope they don't mind :)
         RBNode currNode = insertionPoint;
         while (currNode != root && currNode.parent.isRed())
-        {
-            // currNode is not the root.
-            // the parent is RED. i know (by design) that the root
-            // is always BLACK, so the parent cannot be the root either.
-            RBNode parent = currNode.parent;
-            RBNode grandparent = parent.parent;
-            if (parent == grandparent.left)
             {
-                RBNode uncle = grandparent.right;
-                if (uncle != NULL && uncle.isRed())
-                {
-                    parent.black = true;
-                    uncle.black = true;
-                    grandparent.black = false;
-                    currNode = grandparent;
-                }
-                else
-                {
-                    if (currNode == parent.right)
+                // currNode is not the root.
+                // the parent is RED. i know (by design) that the root
+                // is always BLACK, so the parent cannot be the root either.
+                RBNode parent = currNode.parent;
+                RBNode grandparent = parent.parent;
+                if (parent == grandparent.left)
                     {
-                        leftRotate(parent);
+                        RBNode uncle = grandparent.right;
+                        if (uncle != NULL && uncle.isRed())
+                            {
+                                parent.black = true;
+                                uncle.black = true;
+                                grandparent.black = false;
+                                currNode = grandparent;
+                            }
+                        else
+                            {
+                                if (currNode == parent.right)
+                                    {
+                                        leftRotate(parent);
 
-                        // swap parent and currNode after the rotation
-                        RBNode temp = currNode;
-                        currNode = parent;
-                        parent = temp;
+                                        // swap parent and currNode after the rotation
+                                        RBNode temp = currNode;
+                                        currNode = parent;
+                                        parent = temp;
+                                    }
+
+                                parent.black = true;
+                                grandparent.black = false;
+                                rightRotate(grandparent);
+                            }
                     }
-
-                    parent.black = true;
-                    grandparent.black = false;
-                    rightRotate(grandparent);
-                }
-            }
-            else
-            {
-                RBNode uncle = grandparent.left;
-                if (uncle != NULL && uncle.isRed())
-                {
-                    parent.black = true;
-                    uncle.black = true;
-                    grandparent.black = false;
-                    currNode = grandparent;
-                }
                 else
-                {
-                    if (currNode == parent.left)
                     {
-                        rightRotate(parent);
+                        RBNode uncle = grandparent.left;
+                        if (uncle != NULL && uncle.isRed())
+                            {
+                                parent.black = true;
+                                uncle.black = true;
+                                grandparent.black = false;
+                                currNode = grandparent;
+                            }
+                        else
+                            {
+                                if (currNode == parent.left)
+                                    {
+                                        rightRotate(parent);
 
-                        // swap parent and currNode after the rotation
-                        RBNode temp = currNode;
-                        currNode = parent;
-                        parent = temp;
+                                        // swap parent and currNode after the rotation
+                                        RBNode temp = currNode;
+                                        currNode = parent;
+                                        parent = temp;
+                                    }
+
+                                parent.black = true;
+                                grandparent.black = false;
+                                leftRotate(grandparent);
+                            }
                     }
-
-                    parent.black = true;
-                    grandparent.black = false;
-                    leftRotate(grandparent);
-                }
             }
-        }
 
         root.black = true;
         return new Pair(insertionPoint, Boolean.TRUE);
@@ -329,10 +329,10 @@ public class RBTree
         if (node.left == NULL || node.right == NULL)
             splicedNode = node;
         else
-        {
-            // know there is successor 'cause right != NULL
-            splicedNode = successor(node);
-        }
+            {
+                // know there is successor 'cause right != NULL
+                splicedNode = successor(node);
+            }
 
         if (splicedNode.left != NULL)
             splicedChild = splicedNode.left;
@@ -342,67 +342,67 @@ public class RBTree
         splicedChild.parent = splicedNode.parent;
 
         if (splicedNode.parent == null)
-        {
-            root = splicedChild;
-        }
+            {
+                root = splicedChild;
+            }
         else
-        {
-            if (splicedNode == splicedNode.parent.left)
             {
-                splicedNode.parent.left = splicedChild;
+                if (splicedNode == splicedNode.parent.left)
+                    {
+                        splicedNode.parent.left = splicedChild;
+                    }
+                else
+                    {
+                        splicedNode.parent.right = splicedChild;
+                    }
             }
-            else
-            {
-                splicedNode.parent.right = splicedChild;
-            }
-        }
 
         boolean splicedBlack = splicedNode.isBlack();
 
         if (node != splicedNode)
-        {
-            // now swap the splicedNode into the place of node
-            // I can't just exchange their data, because
-            // then iterators might get messed up!
-            splicedNode.parent = node.parent;
-            splicedNode.black = node.black;
-            splicedNode.left = node.left;
-            splicedNode.right = node.right;
-
-            // fix node's children:
-            splicedNode.left.parent = splicedNode;
-            splicedNode.right.parent = splicedNode;
-
-            // and node's parent:
-            if (splicedNode.parent == null)
             {
-                root = splicedNode;
-            }
-            else
-            {
-                if (splicedNode.parent.left == node)
-                {
-                    splicedNode.parent.left = splicedNode;
-                }
+                // now swap the splicedNode into the place of node
+                // I can't just exchange their data, because
+                // then iterators might get messed up!
+                splicedNode.parent = node.parent;
+                splicedNode.black = node.black;
+                splicedNode.left = node.left;
+                splicedNode.right = node.right;
+
+                // fix node's children:
+                splicedNode.left.parent = splicedNode;
+                splicedNode.right.parent = splicedNode;
+
+                // and node's parent:
+                if (splicedNode.parent == null)
+                    {
+                        root = splicedNode;
+                    }
                 else
-                {
-                    splicedNode.parent.right = splicedNode;
-                }
-            }
+                    {
+                        if (splicedNode.parent.left == node)
+                            {
+                                splicedNode.parent.left = splicedNode;
+                            }
+                        else
+                            {
+                                splicedNode.parent.right = splicedNode;
+                            }
+                    }
 
-            // set node's left, right, parent AND nodeData
-            // to be null (not even NULL)
-            node.left = null;
-            node.right = null;
-            node.parent = null;
-            node.nodeData = null;
-        }
+                // set node's left, right, parent AND nodeData
+                // to be null (not even NULL)
+                node.left = null;
+                node.right = null;
+                node.parent = null;
+                node.nodeData = null;
+            }
 
         if (splicedBlack)
-        {
-            // perform the fixup from CLR
-            RBDeleteFixup(splicedChild);
-        }
+            {
+                // perform the fixup from CLR
+                RBDeleteFixup(splicedChild);
+            }
 
         size = size - 1;
     }
@@ -460,20 +460,20 @@ public class RBTree
         assert node != NULL;
 
         if (node.right != NULL)
-        {
-            node = node.right;
-            while (node.left != NULL)
-                node = node.left;
-            return node;
-        }
+            {
+                node = node.right;
+                while (node.left != NULL)
+                    node = node.left;
+                return node;
+            }
 
         RBNode parent = node.parent;
 
         while (parent != null && node == parent.right)
-        {
-            node = parent;
-            parent = node.parent;
-        }
+            {
+                node = parent;
+                parent = node.parent;
+            }
 
         return parent;
     }
@@ -483,20 +483,20 @@ public class RBTree
         assert node != null;
 
         if (node.left != NULL)
-        {
-            node = node.left;
-            while (node.right != NULL)
-                node = node.right;
-            return node;
-        }
+            {
+                node = node.left;
+                while (node.right != NULL)
+                    node = node.right;
+                return node;
+            }
 
         RBNode parent = node.parent;
 
         while (parent != null && node == parent.left)
-        {
-            node = parent;
-            parent = node.parent;
-        }
+            {
+                node = parent;
+                parent = node.parent;
+            }
 
         return parent;
     }
@@ -504,136 +504,136 @@ public class RBTree
     private void RBDeleteFixup(RBNode node)
     {
         while (node != root && node.isBlack())
-        {
-            // since the node is BLACK, I must have a sibling!
-            RBNode parent = node.parent;
-            if (node == parent.left)
             {
-                RBNode sibling = parent.right;
-                if (sibling.isRed())
-                {
-                    // sibling is RED, so parent has to be BLACK!
-                    // I'll switch some colors around and rotate left
-                    // this way my parent will become RED.
-                    // Later, I'll change the parent to be BLACK
-                    // and be done :)
-                    sibling.black = true;
-                    parent.black = false;
-                    leftRotate(parent);
-
-                    // since node is BLACK and sibling was RED, sibling
-                    // must have both children to balance out my BLACK
-                    // since sibling's left child just became my parent's
-                    // right child (thus my new sibling), update sibling,
-                    // but don't worry about it being non-null :)
-                    // sibling is now BLACK
-                    sibling = parent.right;
-                }
-
-                // my sibling is BLACK now (as assured by the "if" above)
-                if (sibling.left.isBlack() && sibling.right.isBlack())
-                {
-                    // both children of my sibling are BLACK (or null)
-                    // so I can make my sibling RED and move up the tree.
-                    sibling.black = false;
-                    node = node.parent;
-                }
-                else
-                {
-                    // at least one of my sibling's children exists 
-                    // and it must be RED (or I would have fallen into 
-                    // the "if" above)                     
-                    if (sibling.right.isBlack())
+                // since the node is BLACK, I must have a sibling!
+                RBNode parent = node.parent;
+                if (node == parent.left)
                     {
-                        // since my sibling's right either doesn't exist 
-                        // or is BLACK, my sibling's left must exist and 
-                        // be RED. change my sibling's left to be BLACK, 
-                        // my sibling to be RED, and rotate right around
-                        // my sibling
-                        sibling.left.black = true;
-                        sibling.black = false;
-                        rightRotate(sibling);
-                        sibling = parent.right;
-                        // now my sibling is BLACK and its right is RED
+                        RBNode sibling = parent.right;
+                        if (sibling.isRed())
+                            {
+                                // sibling is RED, so parent has to be BLACK!
+                                // I'll switch some colors around and rotate left
+                                // this way my parent will become RED.
+                                // Later, I'll change the parent to be BLACK
+                                // and be done :)
+                                sibling.black = true;
+                                parent.black = false;
+                                leftRotate(parent);
+
+                                // since node is BLACK and sibling was RED, sibling
+                                // must have both children to balance out my BLACK
+                                // since sibling's left child just became my parent's
+                                // right child (thus my new sibling), update sibling,
+                                // but don't worry about it being non-null :)
+                                // sibling is now BLACK
+                                sibling = parent.right;
+                            }
+
+                        // my sibling is BLACK now (as assured by the "if" above)
+                        if (sibling.left.isBlack() && sibling.right.isBlack())
+                            {
+                                // both children of my sibling are BLACK (or null)
+                                // so I can make my sibling RED and move up the tree.
+                                sibling.black = false;
+                                node = node.parent;
+                            }
+                        else
+                            {
+                                // at least one of my sibling's children exists 
+                                // and it must be RED (or I would have fallen into 
+                                // the "if" above)                     
+                                if (sibling.right.isBlack())
+                                    {
+                                        // since my sibling's right either doesn't exist 
+                                        // or is BLACK, my sibling's left must exist and 
+                                        // be RED. change my sibling's left to be BLACK, 
+                                        // my sibling to be RED, and rotate right around
+                                        // my sibling
+                                        sibling.left.black = true;
+                                        sibling.black = false;
+                                        rightRotate(sibling);
+                                        sibling = parent.right;
+                                        // now my sibling is BLACK and its right is RED
+                                    }
+
+                                // now my sibling is BLACK and its right is RED
+                                // beacuse I either entered the IF above me which
+                                // ensured this, or it was the case before, so I
+                                // didn't have to change anything
+                                // I can change some of the colors, rotate left and
+                                // be DONE!
+                                sibling.black = parent.black;
+                                parent.black = true;
+                                sibling.right.black = true;
+                                leftRotate(parent);
+                                node = root;
+                            }
                     }
-
-                    // now my sibling is BLACK and its right is RED
-                    // beacuse I either entered the IF above me which
-                    // ensured this, or it was the case before, so I
-                    // didn't have to change anything
-                    // I can change some of the colors, rotate left and
-                    // be DONE!
-                    sibling.black = parent.black;
-                    parent.black = true;
-                    sibling.right.black = true;
-                    leftRotate(parent);
-                    node = root;
-                }
-            }
-            else
-            {
-                RBNode sibling = parent.left;
-                if (sibling.isRed())
-                {
-                    // sibling is RED, so parent has to be BLACK!
-                    // I'll switch some colors around and rotate right
-                    // this way my parent will become RED.
-                    // Later, I'll change the parent to be BLACK
-                    // and be done :)
-                    sibling.black = true;
-                    parent.black = false;
-                    rightRotate(parent);
-
-                    // since node is BLACK and sibling was RED, sibling
-                    // must have both children to balance out my BLACK
-                    // since sibling's right child just became my parent's
-                    // left child (thus my new sibling), update sibling,
-                    // but don't worry about it being non-null :)
-                    // sibling is now BLACK
-                    sibling = parent.left;
-                }
-
-                // my sibling is BLACK now (as assured by the "if" above)
-                if (sibling.right.isBlack() && sibling.left.isBlack())
-                {
-                    // both children of my sibling are BLACK (or null)
-                    // so I can make my sibling RED and move up the tree.
-                    sibling.black = false;
-                    node = node.parent;
-                }
                 else
-                {
-                    // at least one of my sibling's children exists 
-                    // and it must be RED (or I would have fallen into 
-                    // the "if" above)                     
-                    if (sibling.left.isBlack())
                     {
-                        // since my sibling's left either doesn't exist 
-                        // or is BLACK, my sibling's right must exist and 
-                        // be RED. change my sibling's right to be BLACK, 
-                        // my sibling to be RED, and rotate left around
-                        // my sibling
-                        sibling.right.black = true;
-                        sibling.black = false;
-                        leftRotate(sibling);
-                        sibling = parent.left;
-                        // now my sibling is BLACK and its left is RED
-                    }
+                        RBNode sibling = parent.left;
+                        if (sibling.isRed())
+                            {
+                                // sibling is RED, so parent has to be BLACK!
+                                // I'll switch some colors around and rotate right
+                                // this way my parent will become RED.
+                                // Later, I'll change the parent to be BLACK
+                                // and be done :)
+                                sibling.black = true;
+                                parent.black = false;
+                                rightRotate(parent);
 
-                    // now my sibling is BLACK and its left is RED
-                    // beacuse I either entered the IF above me which
-                    // ensured this, or it was the case before, so I
-                    // didn't have to change anything
-                    // I can change some of the colors, rotate right and
-                    // be DONE!
-                    sibling.black = parent.black;
-                    parent.black = true;
-                    sibling.left.black = true;
-                    rightRotate(parent);
-                    node = root;
-                }
+                                // since node is BLACK and sibling was RED, sibling
+                                // must have both children to balance out my BLACK
+                                // since sibling's right child just became my parent's
+                                // left child (thus my new sibling), update sibling,
+                                // but don't worry about it being non-null :)
+                                // sibling is now BLACK
+                                sibling = parent.left;
+                            }
+
+                        // my sibling is BLACK now (as assured by the "if" above)
+                        if (sibling.right.isBlack() && sibling.left.isBlack())
+                            {
+                                // both children of my sibling are BLACK (or null)
+                                // so I can make my sibling RED and move up the tree.
+                                sibling.black = false;
+                                node = node.parent;
+                            }
+                        else
+                            {
+                                // at least one of my sibling's children exists 
+                                // and it must be RED (or I would have fallen into 
+                                // the "if" above)                     
+                                if (sibling.left.isBlack())
+                                    {
+                                        // since my sibling's left either doesn't exist 
+                                        // or is BLACK, my sibling's right must exist and 
+                                        // be RED. change my sibling's right to be BLACK, 
+                                        // my sibling to be RED, and rotate left around
+                                        // my sibling
+                                        sibling.right.black = true;
+                                        sibling.black = false;
+                                        leftRotate(sibling);
+                                        sibling = parent.left;
+                                        // now my sibling is BLACK and its left is RED
+                                    }
+
+                                // now my sibling is BLACK and its left is RED
+                                // beacuse I either entered the IF above me which
+                                // ensured this, or it was the case before, so I
+                                // didn't have to change anything
+                                // I can change some of the colors, rotate right and
+                                // be DONE!
+                                sibling.black = parent.black;
+                                parent.black = true;
+                                sibling.left.black = true;
+                                rightRotate(parent);
+                                node = root;
+                            }
+                    }
             }
-        }
 
         node.black = true;
     }

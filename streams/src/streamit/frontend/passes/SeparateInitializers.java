@@ -37,7 +37,7 @@ import java.util.ArrayList;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SeparateInitializers.java,v 1.5 2005-04-10 07:34:47 thies Exp $
+ * @version $Id: SeparateInitializers.java,v 1.6 2006-01-25 17:04:28 thies Exp $
  */
 public class SeparateInitializers extends FEReplacer
 {
@@ -46,14 +46,14 @@ public class SeparateInitializers extends FEReplacer
         // Make sure the variable declaration stays first.  This will
         // have no initializers, except for where there is an array
         // initializer.
-	ArrayList newInits = new ArrayList(stmt.getNumVars());
-	for (int i=0; i<stmt.getNumVars(); i++) {
-	    if (stmt.getInit(i) instanceof ExprArrayInit) {
-		newInits.add(stmt.getInit(i));
-	    } else {
-		newInits.add(null);
-	    }
-	}
+        ArrayList newInits = new ArrayList(stmt.getNumVars());
+        for (int i=0; i<stmt.getNumVars(); i++) {
+            if (stmt.getInit(i) instanceof ExprArrayInit) {
+                newInits.add(stmt.getInit(i));
+            } else {
+                newInits.add(null);
+            }
+        }
         Statement newDecl = new StmtVarDecl(stmt.getContext(),
                                             stmt.getTypes(),
                                             stmt.getNames(),
@@ -63,20 +63,20 @@ public class SeparateInitializers extends FEReplacer
         // Now go through the original statement; if there are
         // any initializers, create a new assignment statement.
         for (int i = 0; i < stmt.getNumVars(); i++)
-        {
-            String name = stmt.getName(i);
-            Expression init = stmt.getInit(i);
-	    // don't separate array initializations, because it become
-	    // illegal syntax
-            if (init != null && !(init instanceof ExprArrayInit))
             {
-                Statement assign =
-                    new StmtAssign(stmt.getContext(),
-                                   new ExprVar(stmt.getContext(), name),
-                                   init);
-                addStatement(assign);
+                String name = stmt.getName(i);
+                Expression init = stmt.getInit(i);
+                // don't separate array initializations, because it become
+                // illegal syntax
+                if (init != null && !(init instanceof ExprArrayInit))
+                    {
+                        Statement assign =
+                            new StmtAssign(stmt.getContext(),
+                                           new ExprVar(stmt.getContext(), name),
+                                           init);
+                        addStatement(assign);
+                    }
             }
-        }
 
         // Already added the base statement.
         return null;

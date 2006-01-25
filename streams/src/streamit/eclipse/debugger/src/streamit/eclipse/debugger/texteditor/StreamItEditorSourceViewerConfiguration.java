@@ -34,266 +34,266 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * @author kkuo
  */
 public class StreamItEditorSourceViewerConfiguration extends SourceViewerConfiguration {
-	
-	private JavaTextTools fJavaTextTools;	
-	private ITextEditor fTextEditor;
-	//	CHANGED by kkuo
-	private JavaSourceViewerConfiguration fJavaSVC;
-	
-	/**
-	 * Creates a new StreamIt source viewer configuration for viewers in the given editor.
-	 *
-	 * @param editor the editor in which the configured viewer(s) will reside
-	 */
-	public StreamItEditorSourceViewerConfiguration(ITextEditor editor) {
-		// CHANGED by kkuo
-		fJavaTextTools = new JavaTextTools(PreferenceConstants.getPreferenceStore());
-		fTextEditor = editor;
-		fJavaSVC = new JavaSourceViewerConfiguration(fJavaTextTools, editor);
-	}
-	
-	/**
-	 * Returns the Java source code scanner for this configuration.
-	 *
-	 * @return the Java source code scanner
-	 */
-	protected RuleBasedScanner getCodeScanner() {
-		// CHANGED by kkuo
-		return new StreamItEditorCodeScanner(getColorManager(), getPreferenceStore());
-	}
-	
-	/**
-	 * Returns the Java multiline comment scanner for this configuration.
-	 *
-	 * @return the Java multiline comment scanner
-	 * @since 2.0
-	 */
-	protected RuleBasedScanner getMultilineCommentScanner() {
-		return fJavaTextTools.getMultilineCommentScanner();
-	}
-	
-	/**
-	 * Returns the Java singleline comment scanner for this configuration.
-	 *
-	 * @return the Java singleline comment scanner
-	 * @since 2.0
-	 */
-	protected RuleBasedScanner getSinglelineCommentScanner() {
-		return fJavaTextTools.getSinglelineCommentScanner();
-	}
-	
-	/**
-	 * Returns the Java string scanner for this configuration.
-	 *
-	 * @return the Java string scanner
-	 * @since 2.0
-	 */
-	protected RuleBasedScanner getStringScanner() {
-		return fJavaTextTools.getStringScanner();
-	}
-	
-	/**
-	 * Returns the JavaDoc scanner for this configuration.
-	 *
-	 * @return the JavaDoc scanner
-	 */
-	protected RuleBasedScanner getJavaDocScanner() {
-		return fJavaTextTools.getJavaDocScanner();
-	}
-	
-	/**
-	 * Returns the color manager for this configuration.
-	 *
-	 * @return the color manager
-	 */
-	protected IColorManager getColorManager() {
-		return fJavaTextTools.getColorManager();
-	}
+    
+    private JavaTextTools fJavaTextTools;   
+    private ITextEditor fTextEditor;
+    //  CHANGED by kkuo
+    private JavaSourceViewerConfiguration fJavaSVC;
+    
+    /**
+     * Creates a new StreamIt source viewer configuration for viewers in the given editor.
+     *
+     * @param editor the editor in which the configured viewer(s) will reside
+     */
+    public StreamItEditorSourceViewerConfiguration(ITextEditor editor) {
+        // CHANGED by kkuo
+        fJavaTextTools = new JavaTextTools(PreferenceConstants.getPreferenceStore());
+        fTextEditor = editor;
+        fJavaSVC = new JavaSourceViewerConfiguration(fJavaTextTools, editor);
+    }
+    
+    /**
+     * Returns the Java source code scanner for this configuration.
+     *
+     * @return the Java source code scanner
+     */
+    protected RuleBasedScanner getCodeScanner() {
+        // CHANGED by kkuo
+        return new StreamItEditorCodeScanner(getColorManager(), getPreferenceStore());
+    }
+    
+    /**
+     * Returns the Java multiline comment scanner for this configuration.
+     *
+     * @return the Java multiline comment scanner
+     * @since 2.0
+     */
+    protected RuleBasedScanner getMultilineCommentScanner() {
+        return fJavaTextTools.getMultilineCommentScanner();
+    }
+    
+    /**
+     * Returns the Java singleline comment scanner for this configuration.
+     *
+     * @return the Java singleline comment scanner
+     * @since 2.0
+     */
+    protected RuleBasedScanner getSinglelineCommentScanner() {
+        return fJavaTextTools.getSinglelineCommentScanner();
+    }
+    
+    /**
+     * Returns the Java string scanner for this configuration.
+     *
+     * @return the Java string scanner
+     * @since 2.0
+     */
+    protected RuleBasedScanner getStringScanner() {
+        return fJavaTextTools.getStringScanner();
+    }
+    
+    /**
+     * Returns the JavaDoc scanner for this configuration.
+     *
+     * @return the JavaDoc scanner
+     */
+    protected RuleBasedScanner getJavaDocScanner() {
+        return fJavaTextTools.getJavaDocScanner();
+    }
+    
+    /**
+     * Returns the color manager for this configuration.
+     *
+     * @return the color manager
+     */
+    protected IColorManager getColorManager() {
+        return fJavaTextTools.getColorManager();
+    }
 
-	/**
-	 * Returns the preference store used by this configuration to initialize
-	 * the individual bits and pieces.
-	 * 
-	 * @return the preference store used to initialize this configuration
-	 * 
-	 * @since 2.0
-	 */
-	protected IPreferenceStore getPreferenceStore() {
-		return JavaPlugin.getDefault().getPreferenceStore();
-	}
+    /**
+     * Returns the preference store used by this configuration to initialize
+     * the individual bits and pieces.
+     * 
+     * @return the preference store used to initialize this configuration
+     * 
+     * @since 2.0
+     */
+    protected IPreferenceStore getPreferenceStore() {
+        return JavaPlugin.getDefault().getPreferenceStore();
+    }
 
-	// CHANGED by kkuo
-	// some unused functions deleted ...
-	
-	/*
-	 * @see SourceViewerConfiguration#getPresentationReconciler(ISourceViewer)
-	 */
-	public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
-		PresentationReconciler reconciler= new PresentationReconciler();
+    // CHANGED by kkuo
+    // some unused functions deleted ...
+    
+    /*
+     * @see SourceViewerConfiguration#getPresentationReconciler(ISourceViewer)
+     */
+    public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
+        PresentationReconciler reconciler= new PresentationReconciler();
 
-		DefaultDamagerRepairer dr= new DefaultDamagerRepairer(getCodeScanner());
-		reconciler.setDamager(dr, IDocument.DEFAULT_CONTENT_TYPE);
-		reconciler.setRepairer(dr, IDocument.DEFAULT_CONTENT_TYPE);
+        DefaultDamagerRepairer dr= new DefaultDamagerRepairer(getCodeScanner());
+        reconciler.setDamager(dr, IDocument.DEFAULT_CONTENT_TYPE);
+        reconciler.setRepairer(dr, IDocument.DEFAULT_CONTENT_TYPE);
 
-		dr= new DefaultDamagerRepairer(getJavaDocScanner());
-		reconciler.setDamager(dr, IJavaPartitions.JAVA_DOC);
-		reconciler.setRepairer(dr, IJavaPartitions.JAVA_DOC);
+        dr= new DefaultDamagerRepairer(getJavaDocScanner());
+        reconciler.setDamager(dr, IJavaPartitions.JAVA_DOC);
+        reconciler.setRepairer(dr, IJavaPartitions.JAVA_DOC);
 
-		dr= new DefaultDamagerRepairer(getMultilineCommentScanner());		
-		reconciler.setDamager(dr, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
-		reconciler.setRepairer(dr, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
+        dr= new DefaultDamagerRepairer(getMultilineCommentScanner());       
+        reconciler.setDamager(dr, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
+        reconciler.setRepairer(dr, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
 
-		dr= new DefaultDamagerRepairer(getSinglelineCommentScanner());		
-		reconciler.setDamager(dr, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
-		reconciler.setRepairer(dr, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
-		
-		dr= new DefaultDamagerRepairer(getStringScanner());
-		reconciler.setDamager(dr, IJavaPartitions.JAVA_STRING);
-		reconciler.setRepairer(dr, IJavaPartitions.JAVA_STRING);
-		
-		dr= new DefaultDamagerRepairer(getStringScanner());
-		reconciler.setDamager(dr, IJavaPartitions.JAVA_CHARACTER);
-		reconciler.setRepairer(dr, IJavaPartitions.JAVA_CHARACTER);
-		
-		return reconciler;
-	}
+        dr= new DefaultDamagerRepairer(getSinglelineCommentScanner());      
+        reconciler.setDamager(dr, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
+        reconciler.setRepairer(dr, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
+        
+        dr= new DefaultDamagerRepairer(getStringScanner());
+        reconciler.setDamager(dr, IJavaPartitions.JAVA_STRING);
+        reconciler.setRepairer(dr, IJavaPartitions.JAVA_STRING);
+        
+        dr= new DefaultDamagerRepairer(getStringScanner());
+        reconciler.setDamager(dr, IJavaPartitions.JAVA_CHARACTER);
+        reconciler.setRepairer(dr, IJavaPartitions.JAVA_CHARACTER);
+        
+        return reconciler;
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getContentAssistant(ISourceViewer)
-	 */
-	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getContentAssistant(sourceViewer);
-	}
+    /*
+     * @see SourceViewerConfiguration#getContentAssistant(ISourceViewer)
+     */
+    public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getContentAssistant(sourceViewer);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getReconciler(ISourceViewer)
-	 */
-	public IReconciler getReconciler(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getReconciler(sourceViewer);
-	}
+    /*
+     * @see SourceViewerConfiguration#getReconciler(ISourceViewer)
+     */
+    public IReconciler getReconciler(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getReconciler(sourceViewer);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getAutoIndentStrategy(ISourceViewer, String)
-	 */
-	public IAutoIndentStrategy getAutoIndentStrategy(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getAutoIndentStrategy(sourceViewer, contentType);
-	}
+    /*
+     * @see SourceViewerConfiguration#getAutoIndentStrategy(ISourceViewer, String)
+     */
+    public IAutoIndentStrategy getAutoIndentStrategy(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getAutoIndentStrategy(sourceViewer, contentType);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getDoubleClickStrategy(ISourceViewer, String)
-	 */
-	public ITextDoubleClickStrategy getDoubleClickStrategy(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getDoubleClickStrategy(sourceViewer, contentType);
-	}
+    /*
+     * @see SourceViewerConfiguration#getDoubleClickStrategy(ISourceViewer, String)
+     */
+    public ITextDoubleClickStrategy getDoubleClickStrategy(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getDoubleClickStrategy(sourceViewer, contentType);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getDefaultPrefixes(ISourceViewer, String)
-	 * @since 2.0
-	 */
-	public String[] getDefaultPrefixes(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getDefaultPrefixes(sourceViewer, contentType);
-	}
+    /*
+     * @see SourceViewerConfiguration#getDefaultPrefixes(ISourceViewer, String)
+     * @since 2.0
+     */
+    public String[] getDefaultPrefixes(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getDefaultPrefixes(sourceViewer, contentType);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getIndentPrefixes(ISourceViewer, String)
-	 */
-	public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getIndentPrefixes(sourceViewer, contentType);
-	}
+    /*
+     * @see SourceViewerConfiguration#getIndentPrefixes(ISourceViewer, String)
+     */
+    public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getIndentPrefixes(sourceViewer, contentType);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getTabWidth(ISourceViewer)
-	 */
-	public int getTabWidth(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getTabWidth(sourceViewer);
-	}
+    /*
+     * @see SourceViewerConfiguration#getTabWidth(ISourceViewer)
+     */
+    public int getTabWidth(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getTabWidth(sourceViewer);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getAnnotationHover(ISourceViewer)
-	 */
-	public IAnnotationHover getAnnotationHover(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getAnnotationHover(sourceViewer);
-	}
+    /*
+     * @see SourceViewerConfiguration#getAnnotationHover(ISourceViewer)
+     */
+    public IAnnotationHover getAnnotationHover(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getAnnotationHover(sourceViewer);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getConfiguredTextHoverStateMasks(ISourceViewer, String)
-	 * @since 2.1
-	 */
-	public int[] getConfiguredTextHoverStateMasks(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getConfiguredTextHoverStateMasks(sourceViewer, contentType);
-	}
-	
-	/*
-	 * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String, int)
-	 * @since 2.1
-	 */
-	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType, int stateMask) {
-		// CHANGED by kkuo
-		return fJavaSVC.getTextHover(sourceViewer, contentType, stateMask);
-	}
+    /*
+     * @see SourceViewerConfiguration#getConfiguredTextHoverStateMasks(ISourceViewer, String)
+     * @since 2.1
+     */
+    public int[] getConfiguredTextHoverStateMasks(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getConfiguredTextHoverStateMasks(sourceViewer, contentType);
+    }
+    
+    /*
+     * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String, int)
+     * @since 2.1
+     */
+    public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType, int stateMask) {
+        // CHANGED by kkuo
+        return fJavaSVC.getTextHover(sourceViewer, contentType, stateMask);
+    }
 
-	/*
-	 * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String)
-	 */
-	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
-		// CHANGED by kkuo
-		return fJavaSVC.getTextHover(sourceViewer, contentType);
-	}
-	
-	/*
-	 * @see SourceViewerConfiguration#getConfiguredContentTypes(ISourceViewer)
-	 */
-	public String[] getConfiguredContentTypes(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getConfiguredContentTypes(sourceViewer);
-	}
-	
-	/*
-	 * @see SourceViewerConfiguration#getContentFormatter(ISourceViewer)
-	 */
-	public IContentFormatter getContentFormatter(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getContentFormatter(sourceViewer);
-	}
-	
-	/*
-	 * @see SourceViewerConfiguration#getInformationControlCreator(ISourceViewer)
-	 * @since 2.0
-	 */
-	public IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getInformationControlCreator(sourceViewer);
-	}
-	
-	/*
-	 * @see SourceViewerConfiguration#getInformationPresenter(ISourceViewer)
-	 * @since 2.0
-	 */
-	public IInformationPresenter getInformationPresenter(ISourceViewer sourceViewer) {
-		// CHANGED by kkuo
-		return fJavaSVC.getInformationPresenter(sourceViewer);
-	}
+    /*
+     * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String)
+     */
+    public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
+        // CHANGED by kkuo
+        return fJavaSVC.getTextHover(sourceViewer, contentType);
+    }
+    
+    /*
+     * @see SourceViewerConfiguration#getConfiguredContentTypes(ISourceViewer)
+     */
+    public String[] getConfiguredContentTypes(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getConfiguredContentTypes(sourceViewer);
+    }
+    
+    /*
+     * @see SourceViewerConfiguration#getContentFormatter(ISourceViewer)
+     */
+    public IContentFormatter getContentFormatter(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getContentFormatter(sourceViewer);
+    }
+    
+    /*
+     * @see SourceViewerConfiguration#getInformationControlCreator(ISourceViewer)
+     * @since 2.0
+     */
+    public IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getInformationControlCreator(sourceViewer);
+    }
+    
+    /*
+     * @see SourceViewerConfiguration#getInformationPresenter(ISourceViewer)
+     * @since 2.0
+     */
+    public IInformationPresenter getInformationPresenter(ISourceViewer sourceViewer) {
+        // CHANGED by kkuo
+        return fJavaSVC.getInformationPresenter(sourceViewer);
+    }
 
-	/**
-	 * Returns the outline presenter which will determine and shown
-	 * information requested for the current cursor position.
-	 *
-	 * @param sourceViewer the source viewer to be configured by this configuration
-	 * @param doCodeResolve a boolean which specifies whether code resolve should be used to compute the Java element 
-	 * @return an information presenter
-	 * @since 2.1
-	 */
-	public IInformationPresenter getOutlinePresenter(ISourceViewer sourceViewer, boolean doCodeResolve) {
-		// CHANGED by kkuo
-		return fJavaSVC.getOutlinePresenter(sourceViewer, doCodeResolve);
-	}
+    /**
+     * Returns the outline presenter which will determine and shown
+     * information requested for the current cursor position.
+     *
+     * @param sourceViewer the source viewer to be configured by this configuration
+     * @param doCodeResolve a boolean which specifies whether code resolve should be used to compute the Java element 
+     * @return an information presenter
+     * @since 2.1
+     */
+    public IInformationPresenter getOutlinePresenter(ISourceViewer sourceViewer, boolean doCodeResolve) {
+        // CHANGED by kkuo
+        return fJavaSVC.getOutlinePresenter(sourceViewer, doCodeResolve);
+    }
 }

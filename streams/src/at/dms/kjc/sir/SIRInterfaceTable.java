@@ -30,7 +30,7 @@ public class SIRInterfaceTable extends JExpression
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */
     protected SIRInterfaceTable() {
-	super();
+        super();
     }
     
     /**
@@ -106,13 +106,13 @@ public class SIRInterfaceTable extends JExpression
     public void accept(KjcVisitor p) 
     {
         if (p instanceof SLIRVisitor)
-        {
-            ((SLIRVisitor)p).visitInterfaceTable(this);
-        }
+            {
+                ((SLIRVisitor)p).visitInterfaceTable(this);
+            }
         else
-        {
-            // Would accept any sub-objects, but there aren't any.
-        }
+            {
+                // Would accept any sub-objects, but there aren't any.
+            }
     }
     
     public Object accept(AttributeVisitor p) 
@@ -124,24 +124,24 @@ public class SIRInterfaceTable extends JExpression
     }
             
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRInterfaceTable other = new at.dms.kjc.sir.SIRInterfaceTable();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRInterfaceTable other = new at.dms.kjc.sir.SIRInterfaceTable();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRInterfaceTable other) {
-  super.deepCloneInto(other);
-  other.iface = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.iface);
-  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
-  other.vardecl = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.vardecl);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRInterfaceTable other) {
+        super.deepCloneInto(other);
+        other.iface = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.iface);
+        other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+        other.vardecl = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.vardecl);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

@@ -22,12 +22,12 @@ public class PartitionRecord {
     private int work;
 
     public PartitionRecord() {
-	this.contents = new LinkedList();
-	this.work = 0;
+        this.contents = new LinkedList();
+        this.work = 0;
     }
 
     public int getWork() {
-	return work;
+        return work;
     }
 
     /**
@@ -35,9 +35,9 @@ public class PartitionRecord {
      * Requires that this does not already contain <op>.
      */
     public void add(SIROperator op, int k) {
-	assert !this.contains(op);
-	contents.add(op);
-	work += k;
+        assert !this.contains(op);
+        contents.add(op);
+        work += k;
     }
 
     /**
@@ -45,29 +45,29 @@ public class PartitionRecord {
      * already contain <cont>.
      */
     public void add(SIRContainer cont) {
-	assert !this.contains(cont);
-	add(cont, 0);
+        assert !this.contains(cont);
+        add(cont, 0);
     }
 
     /**
      * Returns the i'th contents of this
      */
     public SIROperator get(int i) {
-	return (SIROperator)contents.get(i);
+        return (SIROperator)contents.get(i);
     }
 
     /**
      * Returns number of operators in this.
      */
     public int size() {
-	return contents.size();
+        return contents.size();
     }
 
     /**
      * Returns whether or not this partition contains <op>.
      */
     public boolean contains(SIROperator op) {
-	return contents.contains(op);
+        return contents.contains(op);
     }
 
     /**
@@ -77,18 +77,18 @@ public class PartitionRecord {
      * partitions it's assigned to.
      */
     public static HashMap asStringMap(LinkedList partitions) {
-	HashMap result = new HashMap();
-	for (int i=0; i<partitions.size(); i++) {
-	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
-	    for (int j=0; j<pr.size(); j++) {
-		if (result.containsKey(pr.get(j))) {
-		    result.put(pr.get(j), result.get(pr.get(j))+","+i);
-		} else {
-		    result.put(pr.get(j), ""+i);
-		}
-	    }
-	}
-	return result;
+        HashMap result = new HashMap();
+        for (int i=0; i<partitions.size(); i++) {
+            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            for (int j=0; j<pr.size(); j++) {
+                if (result.containsKey(pr.get(j))) {
+                    result.put(pr.get(j), result.get(pr.get(j))+","+i);
+                } else {
+                    result.put(pr.get(j), ""+i);
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -101,18 +101,18 @@ public class PartitionRecord {
      * only one partition.
      */
     public static HashMap asIntegerMap(LinkedList partitions) {
-	HashMap result = new HashMap();
-	for (int i=0; i<partitions.size(); i++) {
-	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
-	    for (int j=0; j<pr.size(); j++) {
-		if (result.containsKey(pr.get(j))) {
-		    Utils.fail("This operator is mapped to two partitions in asIntegerMap: " + pr.get(j));
-		} else {
-		    result.put(pr.get(j), new Integer(i));
-		}
-	    }
-	}
-	return result;
+        HashMap result = new HashMap();
+        for (int i=0; i<partitions.size(); i++) {
+            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            for (int j=0; j<pr.size(); j++) {
+                if (result.containsKey(pr.get(j))) {
+                    Utils.fail("This operator is mapped to two partitions in asIntegerMap: " + pr.get(j));
+                } else {
+                    result.put(pr.get(j), new Integer(i));
+                }
+            }
+        }
+        return result;
     }
 }
 

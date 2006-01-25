@@ -21,7 +21,7 @@ public class RenameAll extends SLIRReplacingVisitor
     static private int counter = 0;
     
     /** This renamer is used by the renameOverAllFilters, to rename
-	across filters, keep names distinct over all the filter */
+        across filters, keep names distinct over all the filter */
     static public RenameAll globalRenamer;
     
     private String newName(String oldName)
@@ -86,14 +86,14 @@ public class RenameAll extends SLIRReplacingVisitor
      * of the filter itself.
      */
     public static void renameFilterContents(SIRFilter f1) {
-	RenameAll ra = new RenameAll();
-	SIRFilter f2 = ra.renameFilter(f1);
-	f1.copyState(f2);
+        RenameAll ra = new RenameAll();
+        SIRFilter f2 = ra.renameFilter(f1);
+        f1.copyState(f2);
     }
 
     public static void renamePhylum(JPhylum phylum) {
-	RenameAll ra = new RenameAll();
-	phylum.accept(ra);
+        RenameAll ra = new RenameAll();
+        phylum.accept(ra);
     }
 
     /**
@@ -102,23 +102,23 @@ public class RenameAll extends SLIRReplacingVisitor
      * So the names in each filter will be globally distinct
      */
     public static void renameOverAllFilters(SIRStream str) {
-	//reset the global renamer
-	globalRenamer = new RenameAll();
-	
-	SIRStream toplevel = str;
-	while (toplevel.getParent()!=null) {
-	    toplevel = toplevel.getParent();
-	}
-	// name the stream structure
-	IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
-		/* visit a filter */
-		public void visitFilter(SIRFilter self,
-					SIRFilterIter iter) {
-		    //RenameAll.renameFilterContents(self);
-		    SIRFilter f2 = RenameAll.globalRenamer.renameFilter(self);
-		    self.copyState(f2);
-		}
-	    });
+        //reset the global renamer
+        globalRenamer = new RenameAll();
+    
+        SIRStream toplevel = str;
+        while (toplevel.getParent()!=null) {
+            toplevel = toplevel.getParent();
+        }
+        // name the stream structure
+        IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
+                /* visit a filter */
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    //RenameAll.renameFilterContents(self);
+                    SIRFilter f2 = RenameAll.globalRenamer.renameFilter(self);
+                    self.copyState(f2);
+                }
+            });
     }
 
     /**
@@ -126,18 +126,18 @@ public class RenameAll extends SLIRReplacingVisitor
      * <str> or a parent of <str>.
      */
     public static void renameAllFilters(SIRStream str) {
-	SIRStream toplevel = str;
-	while (toplevel.getParent()!=null) {
-	    toplevel = toplevel.getParent();
-	}
-	// name the stream structure
-	IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
-		/* visit a filter */
-		public void visitFilter(SIRFilter self,
-					SIRFilterIter iter) {
-		    RenameAll.renameFilterContents(self);
-		}
-	    });
+        SIRStream toplevel = str;
+        while (toplevel.getParent()!=null) {
+            toplevel = toplevel.getParent();
+        }
+        // name the stream structure
+        IterFactory.createFactory().createIter(toplevel).accept(new EmptyStreamVisitor() {
+                /* visit a filter */
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    RenameAll.renameFilterContents(self);
+                }
+            });
     }
 
     /**
@@ -160,50 +160,50 @@ public class RenameAll extends SLIRReplacingVisitor
         JMethodDeclaration oldInit = str.getInit();
         JMethodDeclaration oldWork = str.getWork();
 
-	// also for twostagefilters... this is messy and should be
-	// made more general somehow (just wait for general phased filters.)
-	JMethodDeclaration oldInitWork = null;
-	if (str instanceof SIRTwoStageFilter) {
-	    oldInitWork = ((SIRTwoStageFilter)str).getInitWork();
-	}
+        // also for twostagefilters... this is messy and should be
+        // made more general somehow (just wait for general phased filters.)
+        JMethodDeclaration oldInitWork = null;
+        if (str instanceof SIRTwoStageFilter) {
+            oldInitWork = ((SIRTwoStageFilter)str).getInitWork();
+        }
 
         JMethodDeclaration newInit = new JMethodDeclaration("RenameAll newInit"),
-        	newWork = new JMethodDeclaration("RenameAll newWork"), 
-        	newInitWork = new JMethodDeclaration("RenameAll newInitWork");
+            newWork = new JMethodDeclaration("RenameAll newWork"), 
+            newInitWork = new JMethodDeclaration("RenameAll newInitWork");
         JMethodDeclaration[] newMethods =
             new JMethodDeclaration[str.getMethods().length];
         for (int i = 0; i < str.getMethods().length; i++)
-        {
-            JMethodDeclaration oldMeth = str.getMethods()[i];
-            JMethodDeclaration newMeth =
-                (JMethodDeclaration)oldMeth.accept(this);
-            if (oldInit == oldMeth) newInit = newMeth;
-            if (oldWork == oldMeth) newWork = newMeth;
-            if (oldInitWork == oldMeth) newInitWork = newMeth;
-            newMethods[i] = newMeth;
-        }
+            {
+                JMethodDeclaration oldMeth = str.getMethods()[i];
+                JMethodDeclaration newMeth =
+                    (JMethodDeclaration)oldMeth.accept(this);
+                if (oldInit == oldMeth) newInit = newMeth;
+                if (oldWork == oldMeth) newWork = newMeth;
+                if (oldInitWork == oldMeth) newInitWork = newMeth;
+                newMethods[i] = newMeth;
+            }
 
-	SIRFilter nf;
-	if (str instanceof SIRTwoStageFilter) {
-	    assert oldInitWork!=null;
-	    assert newInitWork!=null;
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)str;
-	    nf = new SIRTwoStageFilter(two.getParent(),
-				       newName(two.getIdent()),
-				       newFields,
-				       newMethods,
-				       (JExpression)two.getPeek().accept(this),
-				       (JExpression)two.getPop().accept(this),
-				       (JExpression)two.getPush().accept(this),
-				       newWork,
-				       (JExpression)two.getInitPeek().accept(this),
-				       (JExpression)two.getInitPop().accept(this),
-				       (JExpression)two.getInitPush().accept(this),
-				       newInitWork,
-				       two.getInputType(),
-				       two.getOutputType());
-	} else {
-	    nf = new SIRFilter(str.getParent(),
+        SIRFilter nf;
+        if (str instanceof SIRTwoStageFilter) {
+            assert oldInitWork!=null;
+            assert newInitWork!=null;
+            SIRTwoStageFilter two = (SIRTwoStageFilter)str;
+            nf = new SIRTwoStageFilter(two.getParent(),
+                                       newName(two.getIdent()),
+                                       newFields,
+                                       newMethods,
+                                       (JExpression)two.getPeek().accept(this),
+                                       (JExpression)two.getPop().accept(this),
+                                       (JExpression)two.getPush().accept(this),
+                                       newWork,
+                                       (JExpression)two.getInitPeek().accept(this),
+                                       (JExpression)two.getInitPop().accept(this),
+                                       (JExpression)two.getInitPush().accept(this),
+                                       newInitWork,
+                                       two.getInputType(),
+                                       two.getOutputType());
+        } else {
+            nf = new SIRFilter(str.getParent(),
                                newName(str.getIdent()),
                                newFields,
                                newMethods,
@@ -213,13 +213,13 @@ public class RenameAll extends SLIRReplacingVisitor
                                newWork,
                                str.getInputType(),
                                str.getOutputType());
-	}
-	    
-	// replace any init call to <str> in the parent with an init
-	// call to <nf> -- DON'T DO THIS since it messes up mutation case.
-	// replaceParentInit(str, nf);
+        }
+        
+        // replace any init call to <str> in the parent with an init
+        // call to <nf> -- DON'T DO THIS since it messes up mutation case.
+        // replaceParentInit(str, nf);
 
-	nf.setInit(newInit);
+        nf.setInit(newInit);
         symtab = ost;
         return nf;
     }
@@ -227,31 +227,31 @@ public class RenameAll extends SLIRReplacingVisitor
     private void findDecls(JPhylum[] stmts)
     {
         for (int i = 0; i < stmts.length; i++)
-        {
-            if (stmts[i] instanceof JFieldDeclaration)
             {
-                JFieldDeclaration fd = (JFieldDeclaration)stmts[i];
-                symtab.addName(fd.getVariable().getIdent());
+                if (stmts[i] instanceof JFieldDeclaration)
+                    {
+                        JFieldDeclaration fd = (JFieldDeclaration)stmts[i];
+                        symtab.addName(fd.getVariable().getIdent());
+                    }
+                if (stmts[i] instanceof JMethodDeclaration)
+                    {
+                        JMethodDeclaration md = (JMethodDeclaration)stmts[i];
+                        symtab.addName(md.getName());
+                    }
+                if (stmts[i] instanceof JLocalVariable)
+                    {
+                        JLocalVariable lv = (JLocalVariable)stmts[i];
+                        symtab.addName(lv.getIdent());
+                    }
+                if (stmts[i] instanceof JVariableDeclarationStatement)
+                    {
+                        JVariableDeclarationStatement vds =
+                            (JVariableDeclarationStatement)stmts[i];
+                        JVariableDefinition[] defs = vds.getVars();
+                        for (int j = 0; j < defs.length; j++)
+                            symtab.addName(defs[j].getIdent());
+                    }
             }
-            if (stmts[i] instanceof JMethodDeclaration)
-            {
-                JMethodDeclaration md = (JMethodDeclaration)stmts[i];
-                symtab.addName(md.getName());
-            }
-            if (stmts[i] instanceof JLocalVariable)
-            {
-                JLocalVariable lv = (JLocalVariable)stmts[i];
-                symtab.addName(lv.getIdent());
-            }
-            if (stmts[i] instanceof JVariableDeclarationStatement)
-            {
-                JVariableDeclarationStatement vds =
-                    (JVariableDeclarationStatement)stmts[i];
-                JVariableDefinition[] defs = vds.getVars();
-                for (int j = 0; j < defs.length; j++)
-                    symtab.addName(defs[j].getIdent());
-            }
-        }
     }
 
     public Object visitBlockStatement(JBlock self, JavaStyleComment[] comments)
@@ -262,8 +262,8 @@ public class RenameAll extends SLIRReplacingVisitor
         JStatement[] newstmts = new JStatement[stmts.length];
         findDecls(stmts);
         for (int i = 0; i < stmts.length; i++) {
-	    newstmts[i] = (JStatement)stmts[i].accept(this);
-	}
+            newstmts[i] = (JStatement)stmts[i].accept(this);
+        }
         symtab = ost;
         return new JBlock(self.getTokenReference(), newstmts, comments);
     }
@@ -287,19 +287,19 @@ public class RenameAll extends SLIRReplacingVisitor
                                         CType type,
                                         String ident)
     {
-	// have to mutate this instead of replacing it, since some
-	// local vars refer to the object.
-	self.setIdent(symtab.nameFor(ident));
+        // have to mutate this instead of replacing it, since some
+        // local vars refer to the object.
+        self.setIdent(symtab.nameFor(ident));
 
-	// visit dimensions inside array fields
-	if (type.isArrayType()) {
-	    JExpression[] dims = ((CArrayType)type).getDims();
-	    for (int i=0; i<dims.length; i++) {
-		dims[i] = (JExpression)dims[i].accept(this);
-	    }
-	}
+        // visit dimensions inside array fields
+        if (type.isArrayType()) {
+            JExpression[] dims = ((CArrayType)type).getDims();
+            for (int i=0; i<dims.length; i++) {
+                dims[i] = (JExpression)dims[i].accept(this);
+            }
+        }
 
-	return self;
+        return self;
     }
 
     /**
@@ -317,40 +317,40 @@ public class RenameAll extends SLIRReplacingVisitor
                                           java.lang.String ident,
                                           JExpression expr)
     {
-	// need to mutate this instead of returning a new one, since
-	// there are local variable expressions lingering around which
-	// reference it.
-	self.setIdent(symtab.nameFor(ident));
-	if (expr!=null) {
-	    self.setExpression((JExpression)expr.accept(this));
-	}
-	// visit static array dimensions
-	if (type.isArrayType()) {
-	    JExpression[] dims = ((CArrayType)type).getDims();
-	    for (int i=0; i<dims.length; i++) {
-		JExpression newExp = (JExpression)dims[i].accept(this);
-		if (newExp !=null && newExp!=dims[i]) {
-		    dims[i] = newExp;
-		}
-	    }
-	}
-	return self;
+        // need to mutate this instead of returning a new one, since
+        // there are local variable expressions lingering around which
+        // reference it.
+        self.setIdent(symtab.nameFor(ident));
+        if (expr!=null) {
+            self.setExpression((JExpression)expr.accept(this));
+        }
+        // visit static array dimensions
+        if (type.isArrayType()) {
+            JExpression[] dims = ((CArrayType)type).getDims();
+            for (int i=0; i<dims.length; i++) {
+                JExpression newExp = (JExpression)dims[i].accept(this);
+                if (newExp !=null && newExp!=dims[i]) {
+                    dims[i] = newExp;
+                }
+            }
+        }
+        return self;
     }
 
     public Object visitForStatement(JForStatement self,
-				    JStatement init,
-				    JExpression cond,
-				    JStatement incr,
-				    JStatement body) {
-	
+                                    JStatement init,
+                                    JExpression cond,
+                                    JStatement incr,
+                                    JStatement body) {
+    
         RASymbolTable ost = symtab;
         symtab = new RASymbolTable(ost);
-	JStatement[] temp = { init };
-	findDecls(temp);
-	Object result = super.visitForStatement(self, init, cond, incr, body);
-	//System.err.println("switching symtab from " + symtab + " back to " + ost);
-	symtab = ost;
-	return result;
+        JStatement[] temp = { init };
+        findDecls(temp);
+        Object result = super.visitForStatement(self, init, cond, incr, body);
+        //System.err.println("switching symtab from " + symtab + " back to " + ost);
+        symtab = ost;
+        return result;
     }
 
     // Hmm.  Are there anonymous creations at this point?  Ignore for now.
@@ -403,10 +403,10 @@ public class RenameAll extends SLIRReplacingVisitor
                                    exceptions,
                                    (JBlock)body.accept(this),
                                    null, null);
-	// visit I/O rates
-	newdecl.setPush((JExpression)self.getPush().accept(this));
-	newdecl.setPeek((JExpression)self.getPeek().accept(this));
-	newdecl.setPop((JExpression)self.getPop().accept(this));
+        // visit I/O rates
+        newdecl.setPush((JExpression)self.getPush().accept(this));
+        newdecl.setPeek((JExpression)self.getPeek().accept(this));
+        newdecl.setPop((JExpression)self.getPop().accept(this));
         // Return to previous symtab.
         symtab = ost;
         return newdecl;
@@ -417,27 +417,27 @@ public class RenameAll extends SLIRReplacingVisitor
                                        JExpression left,
                                        String ident)
     {
-	//visit the left expression
-	JExpression newLeft = (JExpression)left.accept(this);
-	//the identifier for this field
-	//if this field access is embedded in another field
-	//access, don't rename the variable because it is accessing
-	//a member of a class and this is not renamed
-	String newIdent = ident;
-	
-	//only rename the field access if it is not embedded in a field
-	//access
-	if (!(newLeft instanceof JFieldAccessExpression) &&
-	    !(newLeft instanceof JLocalVariableExpression))
-	    newIdent = classsymtab.nameFor(ident);
-	
+        //visit the left expression
+        JExpression newLeft = (JExpression)left.accept(this);
+        //the identifier for this field
+        //if this field access is embedded in another field
+        //access, don't rename the variable because it is accessing
+        //a member of a class and this is not renamed
+        String newIdent = ident;
+    
+        //only rename the field access if it is not embedded in a field
+        //access
+        if (!(newLeft instanceof JFieldAccessExpression) &&
+            !(newLeft instanceof JLocalVariableExpression))
+            newIdent = classsymtab.nameFor(ident);
+    
 
-	JFieldAccessExpression fieldAccess =
-	    new JFieldAccessExpression(self.getTokenReference(),
-				       newLeft,
-				       newIdent,
-				       self.getField());
+        JFieldAccessExpression fieldAccess =
+            new JFieldAccessExpression(self.getTokenReference(),
+                                       newLeft,
+                                       newIdent,
+                                       self.getField());
 
-	return fieldAccess;
+        return fieldAccess;
     }
 }

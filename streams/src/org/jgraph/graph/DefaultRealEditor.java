@@ -1,5 +1,5 @@
 /*
- * @(#)DefaultCellEditor.java	1.0 1/1/02
+ * @(#)DefaultCellEditor.java   1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -38,55 +38,55 @@ import org.jgraph.JGraph;
  */
 
 public class DefaultRealEditor
-	extends DefaultCellEditor
-	implements GraphCellEditor {
+    extends DefaultCellEditor
+    implements GraphCellEditor {
 
-	//
-	//  Constructors
-	//
+    //
+    //  Constructors
+    //
 
-	/**
-	 * Constructs a DefaultCellEditor that uses a text field.
-	 *
-	 * @param x  a JTextField object ...
-	 */
-	public DefaultRealEditor(final JTextField textField) {
-		super(textField);
-		setClickCountToStart(1);
-	}
+    /**
+     * Constructs a DefaultCellEditor that uses a text field.
+     *
+     * @param x  a JTextField object ...
+     */
+    public DefaultRealEditor(final JTextField textField) {
+        super(textField);
+        setClickCountToStart(1);
+    }
 
-	/**
-	 * Constructs a DefaultCellEditor object that uses a check box.
-	 *
-	 * @param x  a JCheckBox object ...
-	 */
-	public DefaultRealEditor(final JCheckBox checkBox) {
-		super(checkBox);
-	}
+    /**
+     * Constructs a DefaultCellEditor object that uses a check box.
+     *
+     * @param x  a JCheckBox object ...
+     */
+    public DefaultRealEditor(final JCheckBox checkBox) {
+        super(checkBox);
+    }
 
-	/**
-	 * Constructs a DefaultCellEditor object that uses a combo box.
-	 *
-	 * @param x  a JComboBox object ...
-	 */
-	public DefaultRealEditor(final JComboBox comboBox) {
-		super(comboBox);
-	}
+    /**
+     * Constructs a DefaultCellEditor object that uses a combo box.
+     *
+     * @param x  a JComboBox object ...
+     */
+    public DefaultRealEditor(final JComboBox comboBox) {
+        super(comboBox);
+    }
 
-	//
-	//  GraphCellEditor Interface
-	//
+    //
+    //  GraphCellEditor Interface
+    //
 
-	public Component getGraphCellEditorComponent(
-		JGraph graph,
-		Object value,
-		boolean isSelected) {
-		String stringValue = graph.convertValueToString(value);
+    public Component getGraphCellEditorComponent(
+                                                 JGraph graph,
+                                                 Object value,
+                                                 boolean isSelected) {
+        String stringValue = graph.convertValueToString(value);
 
-		delegate.setValue(stringValue);
-		if (editorComponent instanceof JTextField)
-			 ((JTextField) editorComponent).selectAll();
-		return editorComponent;
-	}
+        delegate.setValue(stringValue);
+        if (editorComponent instanceof JTextField)
+            ((JTextField) editorComponent).selectAll();
+        return editorComponent;
+    }
 
 } // End of class JCellEditor

@@ -5,22 +5,22 @@ public class EdgeArrayList {
     EdgeArrayList next;
 
     EdgeArrayList(UnflatEdge[] val,EdgeArrayList next) {
-	this.val=val;
-	this.next=next;
+        this.val=val;
+        this.next=next;
     }
 
     EdgeArrayList(UnflatEdge[] val) {
-	this.val=val;
-	this.next=null;
+        this.val=val;
+        this.next=null;
     }
 
     int size() {
-	int size=1;
-	EdgeArrayList cur=this;
-	while(cur.next!=null) {
-	    size++;
-	    cur=cur.next;
-	}
-	return size;
+        int size=1;
+        EdgeArrayList cur=this;
+        while(cur.next!=null) {
+            size++;
+            cur=cur.next;
+        }
+        return size;
     }
 }

@@ -4,5 +4,5 @@ package at.dms.compiler.tools.lexgen;
 import at.dms.compiler.tools.common.MessageDescription;
 
 public interface LexgenMessages extends at.dms.compiler.tools.common.CompilerMessages {
-  MessageDescription	DUPLICATE_DEFINITION = new MessageDescription("Token \"{0}\" redefined in \"{1}\": previous definition in \"{2}\"", "LEXGEN", 0);
+    MessageDescription  DUPLICATE_DEFINITION = new MessageDescription("Token \"{0}\" redefined in \"{1}\": previous definition in \"{2}\"", "LEXGEN", 0);
 }

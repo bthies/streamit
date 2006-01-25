@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenRefElement.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: TokenRefElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -24,24 +24,24 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
 class TokenRefElement extends GrammarAtom {
 
-  public TokenRefElement(Grammar g, Token t, boolean inverted) {
-    super(g, t);
-    not = inverted;
-    TokenSymbol ts = grammar.tokenManager.getTokenSymbol(atomText);
-    if (ts == null) {
-      g.tool.error("Undefined token symbol: " +
-		   atomText, grammar.getFilename(), t.getLine());
-    } else {
-      tokenType = ts.getTokenType();
+    public TokenRefElement(Grammar g, Token t, boolean inverted) {
+        super(g, t);
+        not = inverted;
+        TokenSymbol ts = grammar.tokenManager.getTokenSymbol(atomText);
+        if (ts == null) {
+            g.tool.error("Undefined token symbol: " +
+                         atomText, grammar.getFilename(), t.getLine());
+        } else {
+            tokenType = ts.getTokenType();
+        }
+        line = t.getLine();
     }
-    line = t.getLine();
-  }
 
-  public void generate(JavaCodeGenerator generator) {
-    generator.gen(this);
-  }
+    public void generate(JavaCodeGenerator generator) {
+        generator.gen(this);
+    }
 
-  public Lookahead look(int k) {
-    return grammar.theLLkAnalyzer.look(k, this);
-  }
+    public Lookahead look(int k) {
+        return grammar.theLLkAnalyzer.look(k, this);
+    }
 }

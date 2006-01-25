@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.9 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.10 2006-01-25 17:04:30 thies Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -63,14 +63,14 @@ public class TranslateEnqueue extends FEReplacer
         Expression n = new ExprVar(context, "n");
         int i = 0;
         for (Iterator iter = vals.iterator(); iter.hasNext(); )
-        {
-            Expression val = (Expression)iter.next();
-            Expression cond = new ExprBinary(context, ExprBinary.BINOP_EQ,
-                                             n, new ExprConstInt(context, i));
-            stmts.add(new StmtIfThen(context, cond,
-                                     new StmtReturn(context, val), null));
-            i++;
-        }
+            {
+                Expression val = (Expression)iter.next();
+                Expression cond = new ExprBinary(context, ExprBinary.BINOP_EQ,
+                                                 n, new ExprConstInt(context, i));
+                stmts.add(new StmtIfThen(context, cond,
+                                         new StmtReturn(context, val), null));
+                i++;
+            }
         StmtBlock body = new StmtBlock(context, stmts);
         // Figure out the return type and name; use the loop type, which
         // should be assigned by the AssignLoopTypes pass.
@@ -79,30 +79,30 @@ public class TranslateEnqueue extends FEReplacer
         TypePrimitive tp = (TypePrimitive)returnType;
         String name = null;
         if (tp.getType() == TypePrimitive.TYPE_FLOAT)
-        {
-            name = "initPathFloat";
-            stmts.add(new StmtReturn(context,
-                                     new ExprConstFloat(context, 0.0)));
-        }
+            {
+                name = "initPathFloat";
+                stmts.add(new StmtReturn(context,
+                                         new ExprConstFloat(context, 0.0)));
+            }
         else if (tp.getType() == TypePrimitive.TYPE_INT)
-        {
-            returnType = new TypePrimitive(TypePrimitive.TYPE_INT);
-            name = "initPathInt";
-            stmts.add(new StmtReturn(context,
-                                     new ExprConstInt(context, 0)));
-        }
+            {
+                returnType = new TypePrimitive(TypePrimitive.TYPE_INT);
+                name = "initPathInt";
+                stmts.add(new StmtReturn(context,
+                                         new ExprConstInt(context, 0)));
+            }
         else if (tp.getType() == TypePrimitive.TYPE_COMPLEX)
-        {
-            name = "initPath";
-            stmts.add(new StmtReturn(context,
-                                     new ExprConstFloat(context, 0.0)));
-        }
+            {
+                name = "initPath";
+                stmts.add(new StmtReturn(context,
+                                         new ExprConstFloat(context, 0.0)));
+            }
         else
-        {
-            // char, string don't have Types.  Yay corner cases.
-            throw new IllegalStateException("can't translate enqueue: " +
-                                            "stream's input type is " + tp);
-        }
+            {
+                // char, string don't have Types.  Yay corner cases.
+                throw new IllegalStateException("can't translate enqueue: " +
+                                                "stream's input type is " + tp);
+            }
         Parameter param =
             new Parameter(new TypePrimitive(TypePrimitive.TYPE_INT), "n");
         return Function.newHelper(context, name, returnType,
@@ -116,13 +116,13 @@ public class TranslateEnqueue extends FEReplacer
         StreamSpec ssNew = (StreamSpec) super.visitStreamSpec(ss);
         // If we have extra values, then generate an initPath function.
         if (!vals.isEmpty())
-        {
-            List fns = new ArrayList(ssNew.getFuncs());
-            fns.add(makeInitPath(ss));
-            ssNew = new StreamSpec(ssNew.getContext(), ssNew.getType(),
-                                   ssNew.getStreamType(), ssNew.getName(),
-                                   ssNew.getParams(), ssNew.getVars(), fns);
-        }
+            {
+                List fns = new ArrayList(ssNew.getFuncs());
+                fns.add(makeInitPath(ss));
+                ssNew = new StreamSpec(ssNew.getContext(), ssNew.getType(),
+                                       ssNew.getStreamType(), ssNew.getName(),
+                                       ssNew.getParams(), ssNew.getVars(), fns);
+            }
         vals = lastVals;
         return ssNew;
     }
@@ -138,20 +138,20 @@ public class TranslateEnqueue extends FEReplacer
         // only happen in one function, which should generally be the
         // case anyways.
         if (!vals.isEmpty())
-        {
-            Expression count = new ExprConstInt(fn.getContext(), vals.size());
-            Expression delay =
-                new ExprFunCall(fn.getContext(), "setDelay", count);
-            Statement call = new StmtExpr(delay);
-            // Now add the statement to the function.
-            StmtBlock body = (StmtBlock)fnNew.getBody();
-            List stmts = new ArrayList(body.getStmts());
-            stmts.add(call);
-            body = new StmtBlock(body.getContext(), stmts);
-            fnNew = new Function(fnNew.getContext(), fnNew.getCls(),
-                                 fnNew.getName(), fnNew.getReturnType(),
-                                 fnNew.getParams(), body);
-        }
+            {
+                Expression count = new ExprConstInt(fn.getContext(), vals.size());
+                Expression delay =
+                    new ExprFunCall(fn.getContext(), "setDelay", count);
+                Statement call = new StmtExpr(delay);
+                // Now add the statement to the function.
+                StmtBlock body = (StmtBlock)fnNew.getBody();
+                List stmts = new ArrayList(body.getStmts());
+                stmts.add(call);
+                body = new StmtBlock(body.getContext(), stmts);
+                fnNew = new Function(fnNew.getContext(), fnNew.getCls(),
+                                     fnNew.getName(), fnNew.getReturnType(),
+                                     fnNew.getParams(), body);
+            }
         return fnNew;
     }
 

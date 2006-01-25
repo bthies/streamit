@@ -15,38 +15,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ParserException.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: ParserException.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 public class ParserException extends ANTLRException {
 
-  public ParserException() {
-    super("parsing error");
-  }
+    public ParserException() {
+        super("parsing error");
+    }
 
-  public ParserException(String message) {
-    super(message);
-  }
+    public ParserException(String message) {
+        super(message);
+    }
 
-  public String getFilename() {
-    return null;
-  }
+    public String getFilename() {
+        return null;
+    }
 
-  /**
-   * @return the line number that this exception happened on.
-   * @author Shawn P. Vincent (svincent@svincent.com)
-   */
-  public int getLine() {
-    return -1;
-  }
+    /**
+     * @return the line number that this exception happened on.
+     * @author Shawn P. Vincent (svincent@svincent.com)
+     */
+    public int getLine() {
+        return -1;
+    }
 
-  /**
-   * @return the column number that this exception happened on.
-   * @author Shawn P. Vincent (svincent@svincent.com)
-   */
-  public int getColumn() {
-    return -1;
-  }
+    /**
+     * @return the column number that this exception happened on.
+     * @author Shawn P. Vincent (svincent@svincent.com)
+     */
+    public int getColumn() {
+        return -1;
+    }
 }

@@ -73,7 +73,7 @@ public class Channel extends streamit.misc.DestroyedClass
         } else if (type == Bit.TYPE) {
             wgqueue_bit = new WrappableGrowableQueue_int();
         } else {
-          queue = new LinkedList ();
+            queue = new LinkedList ();
         }
     }
     
@@ -181,43 +181,43 @@ public class Channel extends streamit.misc.DestroyedClass
             tempval = (queue.size() < amount);
         }
         while (tempval)
-        {
-            assert source != null;
+            {
+                assert source != null;
 
-            if (maxSize!=-1) {
-                // give a better error message
-                ERROR("ERROR:\n" + 
-                      "Trying to pop or peek beyond the declared rate in stream " + sink + "\n" +
-                      "Make sure that your pop/peek statements match the declared rates.\n" +
-                      "\n" +
-                      "Internal message:\n" +
-                      "maxSize should equal -1 " +
-                      "(representing not a scheduled buffer)\n" +
-                      "Queue: " + queue +
-                      ".size: " + queue.size() +
-                      " amount is: " + amount +
-                      " and maxSize is: " + maxSize);
-            }
+                if (maxSize!=-1) {
+                    // give a better error message
+                    ERROR("ERROR:\n" + 
+                          "Trying to pop or peek beyond the declared rate in stream " + sink + "\n" +
+                          "Make sure that your pop/peek statements match the declared rates.\n" +
+                          "\n" +
+                          "Internal message:\n" +
+                          "maxSize should equal -1 " +
+                          "(representing not a scheduled buffer)\n" +
+                          "Queue: " + queue +
+                          ".size: " + queue.size() +
+                          " amount is: " + amount +
+                          " and maxSize is: " + maxSize);
+                }
 
-            source.doWork();
-            if (type == Float.TYPE) {
-                tempval = (wgqueue_float.size() < amount);
-            } else if (type == Integer.TYPE) {
-                tempval = (wgqueue_int.size() < amount);
-            } else if (type == Double.TYPE) {
-                tempval = (wgqueue_double.size() < amount);
-            } else if (type == Boolean.TYPE) {
-                tempval = (wgqueue_boolean.size() < amount);
-            } else if (type == Short.TYPE) {
-                tempval = (wgqueue_short.size() < amount);
-            } else if (type == Character.TYPE) {
-                tempval = (wgqueue_char.size() < amount);
-            } else if (type == Bit.TYPE) {
-                tempval = (wgqueue_bit.size() < amount);
-            } else {
-                tempval = (queue.size() < amount);
+                source.doWork();
+                if (type == Float.TYPE) {
+                    tempval = (wgqueue_float.size() < amount);
+                } else if (type == Integer.TYPE) {
+                    tempval = (wgqueue_int.size() < amount);
+                } else if (type == Double.TYPE) {
+                    tempval = (wgqueue_double.size() < amount);
+                } else if (type == Boolean.TYPE) {
+                    tempval = (wgqueue_boolean.size() < amount);
+                } else if (type == Short.TYPE) {
+                    tempval = (wgqueue_short.size() < amount);
+                } else if (type == Character.TYPE) {
+                    tempval = (wgqueue_char.size() < amount);
+                } else if (type == Bit.TYPE) {
+                    tempval = (wgqueue_bit.size() < amount);
+                } else {
+                    tempval = (queue.size() < amount);
+                }
             }
-        }
     }
 
     void ensureData ()
@@ -297,10 +297,10 @@ public class Channel extends streamit.misc.DestroyedClass
 
         // overflow at 50 chars in the queue
         if (queue.size () > 100 && !declaredFull)
-        {
-            source.addFullChannel (this);
-            declaredFull = true;
-        }
+            {
+                source.addFullChannel (this);
+                declaredFull = true;
+            }
 
         // make sure that the channel isn't overflowing
         //if (queue.size () == maxSize) System.out.print ("*");
@@ -308,7 +308,7 @@ public class Channel extends streamit.misc.DestroyedClass
             "Expecting queue.size () <= maxSize || maxSize == -1,\n" +
             "   but queue.size()==" + queue.size() + " and maxSize==" + 
             maxSize;
-		
+        
         if (passThrough) {
             sink.doWork();
         }
@@ -359,10 +359,10 @@ public class Channel extends streamit.misc.DestroyedClass
     private Object dequeue ()
     {
         if (queue.size () < 50 && declaredFull)
-        {
-            source.removeFullChannel (this);
-            declaredFull = false;
-        }
+            {
+                source.removeFullChannel (this);
+                declaredFull = false;
+            }
 
         totalItemsPopped++;
         sink.registerPop();
@@ -441,7 +441,7 @@ public class Channel extends streamit.misc.DestroyedClass
     public void push2DFloat(float[][] d)
     {
         assert type == new float[0][0].getClass();
-	
+    
         // copy the array to maintain copy-semantics
         float[][] copy = new float[d.length][d[0].length];
         for (int i=0; i<d.length; i++) {
@@ -657,9 +657,9 @@ public class Channel extends streamit.misc.DestroyedClass
     }
 
     /**
-    * Get the number amount of data popped from this channel
-    * on every iteration
-    */
+     * Get the number amount of data popped from this channel
+     * on every iteration
+     */
 
     public int getPopCount ()
     {
@@ -669,30 +669,30 @@ public class Channel extends streamit.misc.DestroyedClass
     }
 
     /**
-    * Get the number amount of data peeked from this channel
-    * on every iteration.
-    * If the peek amount hasn't been set, make it the pop count
-    * If the pop count is smaller than the peek amount, assert
-    */
+     * Get the number amount of data peeked from this channel
+     * on every iteration.
+     * If the peek amount hasn't been set, make it the pop count
+     * If the pop count is smaller than the peek amount, assert
+     */
 
     public int getPeekCount ()
     {
         if (peekCount != null)
-        {
-            assert peekCount.intValue () >= popPushCount.intValue ():
-                "The peek count of " + peekCount.intValue() +
-                " is less than the pop count of " + popPushCount.intValue() +
-                " in channel connecting " + source + " and " + sink;
-            return peekCount.intValue ();
-        } else {
-            return getPopCount ();
-        }
+            {
+                assert peekCount.intValue () >= popPushCount.intValue ():
+                    "The peek count of " + peekCount.intValue() +
+                    " is less than the pop count of " + popPushCount.intValue() +
+                    " in channel connecting " + source + " and " + sink;
+                return peekCount.intValue ();
+            } else {
+                return getPopCount ();
+            }
     }
 
     /**
-    * Get the number amount of data pushed from this channel
-    * on every iteration
-    */
+     * Get the number amount of data pushed from this channel
+     * on every iteration
+     */
 
     public int getPushCount ()
     {

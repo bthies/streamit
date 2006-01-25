@@ -30,41 +30,41 @@ public class SinkUnroller extends at.dms.util.Utils
     implements FlatVisitor, Constants 
 {
     public static void doit(FlatNode top) {
-	top.accept((new SinkUnroller()), null, true);
+        top.accept((new SinkUnroller()), null, true);
     }
 
     public void visitNode(FlatNode node) 
     {
-	if (node.isFilter()){
-	    //do not unroll file writers...
-	    if (node.contents instanceof SIRFileWriter)
-		return; 
-	    //if this is a sink, unroll its work funtion
-	    if (((SIRFilter)node.contents).getPushInt() == 0) {
-		System.out.println("Propagating and Unrolling Sink " + 
-				   ((SIRFilter)node.contents).getName()+"...");
-		// unroll maximally
-		int oldUnroll = KjcOptions.unroll;
-		KjcOptions.unroll = 100000;
-		FieldProp.doPropagate((SIRStream)node.contents, true);
-		KjcOptions.unroll = KjcOptions.unroll;
-		/*
-		Unroller unroller;
-		do {
-		    do {
-			//unroll
-			unroller = new Unroller(new Hashtable());
-			((SIRFilter)node.contents).getWork().accept(unroller);
-		    } while(unroller.hasUnrolled());
-		    //propagate constants 
-		    ((SIRFilter)node.contents).getWork().
-			accept(new Propagator(new Hashtable()));
-		    //unroll again
-		    unroller = new Unroller(new Hashtable());
-		    ((SIRFilter)node.contents).getWork().accept(unroller);
-		} while(unroller.hasUnrolled());
-		*/
-	    }
-	}
+        if (node.isFilter()){
+            //do not unroll file writers...
+            if (node.contents instanceof SIRFileWriter)
+                return; 
+            //if this is a sink, unroll its work funtion
+            if (((SIRFilter)node.contents).getPushInt() == 0) {
+                System.out.println("Propagating and Unrolling Sink " + 
+                                   ((SIRFilter)node.contents).getName()+"...");
+                // unroll maximally
+                int oldUnroll = KjcOptions.unroll;
+                KjcOptions.unroll = 100000;
+                FieldProp.doPropagate((SIRStream)node.contents, true);
+                KjcOptions.unroll = KjcOptions.unroll;
+                /*
+                  Unroller unroller;
+                  do {
+                  do {
+                  //unroll
+                  unroller = new Unroller(new Hashtable());
+                  ((SIRFilter)node.contents).getWork().accept(unroller);
+                  } while(unroller.hasUnrolled());
+                  //propagate constants 
+                  ((SIRFilter)node.contents).getWork().
+                  accept(new Propagator(new Hashtable()));
+                  //unroll again
+                  unroller = new Unroller(new Hashtable());
+                  ((SIRFilter)node.contents).getWork().accept(unroller);
+                  } while(unroller.hasUnrolled());
+                */
+            }
+        }
     }
 }

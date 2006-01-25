@@ -4,5 +4,5 @@ package at.dms.optimize;
 import at.dms.util.MessageDescription;
 
 public interface OptimizeMessages extends at.dms.compiler.CompilerMessages {
-  MessageDescription	SEMANTIC_ERROR = new MessageDescription("Semantic error found on file \"{0}\": {1}", "OPTIMIZE", 0);
+    MessageDescription  SEMANTIC_ERROR = new MessageDescription("Semantic error found on file \"{0}\": {1}", "OPTIMIZE", 0);
 }

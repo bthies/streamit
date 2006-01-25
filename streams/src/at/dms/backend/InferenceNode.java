@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InferenceNode.java,v 1.1 2001-08-30 16:32:24 thies Exp $
+ * $Id: InferenceNode.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -29,179 +29,179 @@ import at.dms.util.InconsistencyException;
  */
 class InferenceNode {
 
-  InferenceNode(QTemporary temp) {
-    temps.addElement(temp);
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Gets the position of this node
-   */
-  public int getPosition() {
-    return ((QTemporary)temps.elementAt(0)).getPosition();
-  }
-
-  /**
-   * Returns the number of inference.
-   */
-  public int countInference() {
-    int		count = 0;
-
-    for (int i = 0; i < links.size(); i++) {
-      count += ((InferenceNode)links.elementAt(i)).isRemoved() ? 0 : 1;
+    InferenceNode(QTemporary temp) {
+        temps.addElement(temp);
     }
 
-    return count;
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Adds a link to an other node
-   */
-  public void linkTo(InferenceNode other) {
-    if (!links.contains(other)) {
-      links.addElement(other);
+    /**
+     * Gets the position of this node
+     */
+    public int getPosition() {
+        return ((QTemporary)temps.elementAt(0)).getPosition();
     }
-  }
 
-  /**
-   * Returns the weight.
-   */
-  public int getWeight() {
-    return 0;
-  }
+    /**
+     * Returns the number of inference.
+     */
+    public int countInference() {
+        int     count = 0;
 
-  /**
-   * Returns the linked nodes.
-   */
-  public Vector getInferences() {
-    return links;
-  }
+        for (int i = 0; i < links.size(); i++) {
+            count += ((InferenceNode)links.elementAt(i)).isRemoved() ? 0 : 1;
+        }
 
-  /**
-   * Returns the temporaries represented by this block.
-   */
-  public QTemporary[] getTemporaries() {
-    return (QTemporary[])at.dms.util.Utils.toArray(temps, QTemporary.class);
-  }
-
-  // ----------------------------------------------------------------------
-  // COALESCING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Coalesce two nodes together.
-   */
-  public void coalesceTo(InferenceNode other) {
-    throw new InconsistencyException();
-  }
-
-  // ----------------------------------------------------------------------
-  // SIMPLIFY
-  // ----------------------------------------------------------------------
-
-  /**
-   * Removes this node.
-   */
-  public void remove() {
-    this.removed = true;
-  }
-
-  /**
-   * Returns true if this node has been removed from the graph
-   */
-  public boolean isRemoved() {
-    return removed;
-  }
-
-  // ----------------------------------------------------------------------
-  // COLORIFY
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the precolor
-   */
-  public int getSize() {
-    return ((QTemporary)temps.elementAt(0)).getSize();
-  }
-
-  /**
-   * Returns the precolor
-   */
-  public int getPrecolor() {
-    return ((QTemporary)temps.elementAt(0)).getPrecolor();
-  }
-
-  /**
-   * Returns if this node is precolored
-   */
-  public boolean isPrecolored() {
-    return ((QTemporary)temps.elementAt(0)).getPrecolor() != QTemporary.UNINITIALIZED;
-  }
-
-  /**
-   * Assigns the color to temporaries
-   */
-  public void setTempsColor() {
-    for (int j = 0; j < temps.size(); j++) {
-      QTemporary	temp = (QTemporary)temps.elementAt(j);
-
-      temp.setRegister(getColor());
+        return count;
     }
-  }
 
-  /**
-   * Sets the color of the node.
-   */
-  public void colorize() {
-    if (isPrecolored()) {
-      color = getPrecolor();
-    } else {
-      int	i = -1;
-
-      if (links.size() == 0) {
-	removed = false;
-	color = 0;
-	return;
-      }
-    loop:
-      while (true) {
-	i += 1;
-
-	for (int j = 0; j < links.size(); j++) {
-	  InferenceNode	inf = (InferenceNode)links.elementAt(j);
-
-	  if (!inf.isRemoved()) {
-	    if (inf.getColor() == i || inf.getColor() + inf.getSize() -1 == i) {
-	      continue loop;
-	    }
-	    if (getSize() == 2 && i + 1 == inf.getColor()) {
-	      continue loop;
-	    }
-	  }
-	}
-	color = i;
-	removed = false;
-	return;
-      }
+    /**
+     * Adds a link to an other node
+     */
+    public void linkTo(InferenceNode other) {
+        if (!links.contains(other)) {
+            links.addElement(other);
+        }
     }
-  }
 
-  /**
-   * Returns the color of the node
-   */
-  public int getColor() {
-    return color;
-  }
+    /**
+     * Returns the weight.
+     */
+    public int getWeight() {
+        return 0;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Returns the linked nodes.
+     */
+    public Vector getInferences() {
+        return links;
+    }
 
-  private Vector	temps = new Vector();
-  private Vector	links = new Vector();
-  private boolean	removed;
-  private int		color;
+    /**
+     * Returns the temporaries represented by this block.
+     */
+    public QTemporary[] getTemporaries() {
+        return (QTemporary[])at.dms.util.Utils.toArray(temps, QTemporary.class);
+    }
+
+    // ----------------------------------------------------------------------
+    // COALESCING
+    // ----------------------------------------------------------------------
+
+    /**
+     * Coalesce two nodes together.
+     */
+    public void coalesceTo(InferenceNode other) {
+        throw new InconsistencyException();
+    }
+
+    // ----------------------------------------------------------------------
+    // SIMPLIFY
+    // ----------------------------------------------------------------------
+
+    /**
+     * Removes this node.
+     */
+    public void remove() {
+        this.removed = true;
+    }
+
+    /**
+     * Returns true if this node has been removed from the graph
+     */
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    // ----------------------------------------------------------------------
+    // COLORIFY
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the precolor
+     */
+    public int getSize() {
+        return ((QTemporary)temps.elementAt(0)).getSize();
+    }
+
+    /**
+     * Returns the precolor
+     */
+    public int getPrecolor() {
+        return ((QTemporary)temps.elementAt(0)).getPrecolor();
+    }
+
+    /**
+     * Returns if this node is precolored
+     */
+    public boolean isPrecolored() {
+        return ((QTemporary)temps.elementAt(0)).getPrecolor() != QTemporary.UNINITIALIZED;
+    }
+
+    /**
+     * Assigns the color to temporaries
+     */
+    public void setTempsColor() {
+        for (int j = 0; j < temps.size(); j++) {
+            QTemporary  temp = (QTemporary)temps.elementAt(j);
+
+            temp.setRegister(getColor());
+        }
+    }
+
+    /**
+     * Sets the color of the node.
+     */
+    public void colorize() {
+        if (isPrecolored()) {
+            color = getPrecolor();
+        } else {
+            int i = -1;
+
+            if (links.size() == 0) {
+                removed = false;
+                color = 0;
+                return;
+            }
+            loop:
+            while (true) {
+                i += 1;
+
+                for (int j = 0; j < links.size(); j++) {
+                    InferenceNode   inf = (InferenceNode)links.elementAt(j);
+
+                    if (!inf.isRemoved()) {
+                        if (inf.getColor() == i || inf.getColor() + inf.getSize() -1 == i) {
+                            continue loop;
+                        }
+                        if (getSize() == 2 && i + 1 == inf.getColor()) {
+                            continue loop;
+                        }
+                    }
+                }
+                color = i;
+                removed = false;
+                return;
+            }
+        }
+    }
+
+    /**
+     * Returns the color of the node
+     */
+    public int getColor() {
+        return color;
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private Vector  temps = new Vector();
+    private Vector  links = new Vector();
+    private boolean removed;
+    private int     color;
 }

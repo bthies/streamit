@@ -47,14 +47,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
     {
         indent = 0;
         try
-        {
-            p = new BufferedWriter(new FileWriter(filename));
-        }
+            {
+                p = new BufferedWriter(new FileWriter(filename));
+            }
         catch (IOException e)
-        {
-            System.err.println(e);
-            System.exit(1);
-        }
+            {
+                System.err.println(e);
+                System.exit(1);
+            }
     }
 
     /**
@@ -63,15 +63,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
     public void close()
     {
         try
-        {
-            p.newLine();
-            p.flush();
-        }
+            {
+                p.newLine();
+                p.flush();
+            }
         catch (IOException e)
-        {
-            System.err.println(e);
-            System.exit(1);
-        }
+            {
+                System.err.println(e);
+                System.exit(1);
+            }
     }
 
     /**
@@ -81,18 +81,18 @@ public class IRPrinter extends Utils implements SLIRVisitor
     {
         int i;
         try
-        {
-            p.newLine();
-            for (i = 0; i < indent; i++) {
-                p.write(' ');
-	    }
-	    p.flush();
-        }
+            {
+                p.newLine();
+                for (i = 0; i < indent; i++) {
+                    p.write(' ');
+                }
+                p.flush();
+            }
         catch (IOException e)
-        {
-            System.err.println(e);
-            System.exit(1);
-        }
+            {
+                System.err.println(e);
+                System.exit(1);
+            }
     }
     
     /**
@@ -114,15 +114,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
     protected void printData(String data)
     {
         try
-        {
-            p.write(data);
-	    p.flush();
-        }
+            {
+                p.write(data);
+                p.flush();
+            }
         catch (IOException e)
-        {
-            System.err.println(e);
-            System.exit(1);
-        }
+            {
+                System.err.println(e);
+                System.exit(1);
+            }
     }
 
     /**
@@ -133,15 +133,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
     protected void printData(char data)
     {
         try
-        {
-            p.write(data);
-	    p.flush();
-        }
+            {
+                p.write(data);
+                p.flush();
+            }
         catch (IOException e)
-        {
-            System.err.println(e);
-            System.exit(1);
-        }
+            {
+                System.err.println(e);
+                System.exit(1);
+            }
     }
     
     /**
@@ -193,10 +193,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrStart(name);
         printData(" ");
         if (body == null) {
-	    printData("NULL");
-	} else {
-	    printData(body);
-	}
+            printData("NULL");
+        } else {
+            printData(body);
+        }
         attrEnd();
     }
 
@@ -224,10 +224,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
         
         attrStart(name);
         for (int i = 0; i < body.length; i++)
-        {
-            printNewline();
-            printData(body[i].toString());
-        }
+            {
+                printNewline();
+                printData(body[i].toString());
+            }
         attrEnd();
     }
 
@@ -274,7 +274,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
                                       String superName,
                                       CClassType[] interfaces,
                                       JPhylum[] body,
-				      JFieldDeclaration[] fields,
+                                      JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls)
     {
@@ -294,29 +294,29 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * visits a class body
      */
     public void visitClassBody(JTypeDeclaration[] decls,
-			       JFieldDeclaration[] fields,
+                               JFieldDeclaration[] fields,
                                JMethodDeclaration[] methods,
                                JPhylum[] body)
     {
         blockStart("ClassBody");
 
-	for (int i = 0; i < decls.length ; i++)
-	    decls[i].accept(this);
+        for (int i = 0; i < decls.length ; i++)
+            decls[i].accept(this);
         for (int i = 0; i < methods.length ; i++)
-	    methods[i].accept(this);
+            methods[i].accept(this);
         for (int i = 0; i < fields.length ; i++)
             fields[i].accept(this);
-	if (body!=null) {
-	    for (int i = 0; i < body.length ; i++)
-		body[i].accept(this);
-	}
+        if (body!=null) {
+            for (int i = 0; i < body.length ; i++)
+                body[i].accept(this);
+        }
 
         blockEnd();
     }
 
     /**
-   * visits a class declaration
-   */
+     * visits a class declaration
+     */
     public void visitInnerClassDeclaration(JClassDeclaration self,
                                            int modifiers,
                                            String ident,
@@ -355,8 +355,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("name", ident);
         attrList("implements", interfaces);
         visitClassBody(new JTypeDeclaration[0], 
-		       JFieldDeclaration.EMPTY(),
-		       methods, body);
+                       JFieldDeclaration.EMPTY(),
+                       methods, body);
         blockEnd();
     }
 
@@ -446,8 +446,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a variable declaration statement
-   */
+     * visits a variable declaration statement
+     */
     public void visitVariableDeclarationStatement
         (JVariableDeclarationStatement self,
          JVariableDefinition[] vars)
@@ -580,8 +580,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a for statement
-   */
+     * visits a for statement
+     */
     public void visitForStatement(JForStatement self,
                                   JStatement init,
                                   JExpression cond,
@@ -597,8 +597,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a compound statement
-   */
+     * visits a compound statement
+     */
     public void visitCompoundStatement(JCompoundStatement self,
                                        JStatement[] body)
     {
@@ -632,8 +632,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a empty statement
-   */
+     * visits a empty statement
+     */
     public void visitEmptyStatement(JEmptyStatement self)
     {
         blockStart("EmptyStatement");
@@ -641,8 +641,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a do statement
-   */
+     * visits a do statement
+     */
     public void visitDoStatement(JDoStatement self,
                                  JExpression cond,
                                  JStatement body)
@@ -682,9 +682,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
                                     JavaStyleComment[] comments)
     {
         blockStart("BlockStatement");
-	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+        for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
             ((JStatement)it.next()).accept(this);
-	}
+        }
         // comments
         blockEnd();
     }
@@ -935,11 +935,11 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("type", type.toString());
         attrStart("dims");
         for (int i = 0; i < dims.length; i++) {
-	    // could be null if you're doing something like "new int[10][]"
-	    if (dims[i]!=null) {
-		dims[i].accept(this);
-	    }
-	}
+            // could be null if you're doing something like "new int[10][]"
+            if (dims[i]!=null) {
+                dims[i].accept(this);
+            }
+        }
         attrEnd();
         attrPrint("init", init);
         blockEnd();
@@ -993,8 +993,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
     
     /**
-   * visits a local variable expression
-   */
+     * visits a local variable expression
+     */
     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                              String ident)
     {
@@ -1005,8 +1005,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits an instanceof expression
-   */
+     * visits an instanceof expression
+     */
     public void visitInstanceofExpression(JInstanceofExpression self,
                                           JExpression expr,
                                           CType dest)
@@ -1077,8 +1077,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
     /**
-   * visits a class expression
-   */
+     * visits a class expression
+     */
     public void visitClassExpression(JClassExpression self,
                                      CType type)
     {
@@ -1424,16 +1424,16 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits an init statement.
      */
     public void visitInitStatement(SIRInitStatement self,
-				   SIRStream target) {
-	blockStart("SIRInitStatement");
-	attrPrint("target ", target.toString());
-	attrStart("args");
-	List args = self.getArgs();
-	for (int i=0; i<args.size(); i++) {
-	    ((JExpression)args.get(i)).accept(this);
-	}
-	attrEnd();
-	blockEnd();
+                                   SIRStream target) {
+        blockStart("SIRInitStatement");
+        attrPrint("target ", target.toString());
+        attrStart("args");
+        List args = self.getArgs();
+        for (int i=0; i<args.size(); i++) {
+            ((JExpression)args.get(i)).accept(this);
+        }
+        attrEnd();
+        blockEnd();
     }
 
     /**
@@ -1454,11 +1454,11 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a latency.
      */
     public void visitLatency(SIRLatency self) {
-	blockStart("SIRLatency");
-	if (self==SIRLatency.BEST_EFFORT) {
-	    printData("BEST EFFORT");
-	}
-	blockEnd();
+        blockStart("SIRLatency");
+        if (self==SIRLatency.BEST_EFFORT) {
+            printData("BEST EFFORT");
+        }
+        blockEnd();
     }
 
 
@@ -1466,9 +1466,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a max latency.
      */
     public void visitLatencyMax(SIRLatencyMax self) {
-	blockStart("SIRLatencyMax");
-	attrPrint("max", String.valueOf(self.getMax()));
-	blockEnd();
+        blockStart("SIRLatencyMax");
+        attrPrint("max", String.valueOf(self.getMax()));
+        blockEnd();
     }
 
 
@@ -1476,10 +1476,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a latency range.
      */
     public void visitLatencyRange(SIRLatencyRange self) {
-	blockStart("SIRLatencyRange");
-	attrPrint("max", String.valueOf(self.getMax()));
-	attrPrint("min", String.valueOf(self.getMin()));
-	blockEnd();
+        blockStart("SIRLatencyRange");
+        attrPrint("max", String.valueOf(self.getMax()));
+        attrPrint("min", String.valueOf(self.getMin()));
+        blockEnd();
     }
 
 
@@ -1487,9 +1487,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a latency set.
      */
     public void visitLatencySet(SIRLatencySet self) {
-	blockStart("SIRLatencySet");
-	Utils.fail("Printing list of latencies not implemented yet.");
-	blockEnd();
+        blockStart("SIRLatencySet");
+        Utils.fail("Printing list of latencies not implemented yet.");
+        blockEnd();
     }
 
 
@@ -1497,45 +1497,45 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a message statement.
      */
     public void visitMessageStatement(SIRMessageStatement self,
-				      JExpression portal,
+                                      JExpression portal,
                                       String iname,
                                       String ident,
-				      JExpression[] args,
-				      SIRLatency latency) {
-	blockStart("SIRMessageStatement");
-	attrStart("portal");
-	portal.accept(this);
-	attrEnd();
+                                      JExpression[] args,
+                                      SIRLatency latency) {
+        blockStart("SIRMessageStatement");
+        attrStart("portal");
+        portal.accept(this);
+        attrEnd();
         attrPrint("iname", iname);
         attrPrint("ident", ident);
-	attrStart("args");
-	for (int i = 0; i < args.length; i++)
-	    args[i].accept(this);
-	attrEnd();
-	attrStart("latency");
-	latency.accept(this);
-	attrEnd();
-	blockEnd();
+        attrStart("args");
+        for (int i = 0; i < args.length; i++)
+            args[i].accept(this);
+        attrEnd();
+        attrStart("latency");
+        latency.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
 
     public void visitRangeExpression(SIRRangeExpression self) {
-	blockStart("SIRRangeExpression");
+        blockStart("SIRRangeExpression");
 
-	// min
-	attrStart("min");
-	self.getMin().accept(this);
-	attrEnd();
-	// ave
-	attrStart("ave");
-	self.getAve().accept(this);
-	attrEnd();
-	// max
-	attrStart("max");
-	self.getMax().accept(this);
-	attrEnd();
+        // min
+        attrStart("min");
+        self.getMin().accept(this);
+        attrEnd();
+        // ave
+        attrStart("ave");
+        self.getAve().accept(this);
+        attrEnd();
+        // max
+        attrStart("max");
+        self.getMax().accept(this);
+        attrEnd();
 
-	blockEnd();
+        blockEnd();
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {
@@ -1548,12 +1548,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
-				    JExpression arg) {
-	blockStart("SIRPeekExpression");
-	attrStart("arg");
-	arg.accept(this);
-	attrEnd();
-	blockEnd();
+                                    JExpression arg) {
+        blockStart("SIRPeekExpression");
+        attrStart("arg");
+        arg.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
 
@@ -1562,8 +1562,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType) {
-	blockStart("SIRPopExpression");
-	blockEnd();
+        blockStart("SIRPopExpression");
+        blockEnd();
     }
 
     /**
@@ -1579,17 +1579,17 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a print statement.
      */
     public void visitPrintStatement(SIRPrintStatement self,
-			     JExpression arg) {
-	blockStart("SIRPrintStatement");
-	attrStart("arg");
-	arg.accept(this);
-	attrEnd();
-	blockEnd();
+                                    JExpression arg) {
+        blockStart("SIRPrintStatement");
+        attrStart("arg");
+        arg.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
     public void visitCreatePortalExpression(SIRCreatePortal self) {
-	blockStart("SIRCreatePortalExpression");
-	blockEnd();
+        blockStart("SIRCreatePortalExpression");
+        blockEnd();
     }
     
 
@@ -1598,12 +1598,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,
-			     JExpression arg) {
-	blockStart("SIRPushExpression");
-	attrStart("arg");
-	arg.accept(this);
-	attrEnd();
-	blockEnd();
+                                    JExpression arg) {
+        blockStart("SIRPushExpression");
+        attrStart("arg");
+        arg.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
     /**
@@ -1627,18 +1627,18 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a register-receiver statement.
      */
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
-					  JExpression portal,
-					  SIRStream receiver,
-					  JMethodDeclaration[] methods) {
-	blockStart("SIRRegReceiveStatement");
-	attrStart("portal");
-	portal.accept(this);
-	attrEnd();
-	attrStart("methods");
-	for (int i = 0; i < methods.length; i++)
-	    methods[i].accept(this);
-	attrEnd();
-	blockEnd();
+                                          JExpression portal,
+                                          SIRStream receiver,
+                                          JMethodDeclaration[] methods) {
+        blockStart("SIRRegReceiveStatement");
+        attrStart("portal");
+        portal.accept(this);
+        attrEnd();
+        attrStart("methods");
+        for (int i = 0; i < methods.length; i++)
+            methods[i].accept(this);
+        attrEnd();
+        blockEnd();
     }
 
 
@@ -1646,17 +1646,17 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a register-sender statement.
      */
     public void visitRegSenderStatement(SIRRegSenderStatement self,
-				 String portal,
-				 SIRLatency latency) {
-	Utils.fail("Printing reg. sender statements unimplemented");
+                                        String portal,
+                                        SIRLatency latency) {
+        Utils.fail("Printing reg. sender statements unimplemented");
     }
 
     /**
      * Visits a marker statement.
      */
     public void visitMarker(SIRMarker self) {
-	blockStart("SIRMarker");
-	blockEnd();
+        blockStart("SIRMarker");
+        blockEnd();
     }
 
     /**
@@ -1667,10 +1667,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a function pointer.
      */
     public void visitFunctionPointer(LIRFunctionPointer self,
-				     String name) {
-	blockStart("LIRFunctionPointer");
-	attrPrint("name", name);
-	blockEnd();
+                                     String name) {
+        blockStart("LIRFunctionPointer");
+        attrPrint("name", name);
+        blockEnd();
     }
 
     
@@ -1678,8 +1678,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits an LIR node.
      */
     public void visitNode(LIRNode self) {
-	blockStart("LIRNode");
-	blockEnd();
+        blockStart("LIRNode");
+        blockEnd();
     }
 
     /**
@@ -1708,16 +1708,16 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a child registration node.
      */
     public void visitSetChild(LIRSetChild self,
-			      JExpression streamContext,
-			      String childType,
-			      String childName) {
-	blockStart("LIRSetChild");
-	attrStart("parentContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrPrint("childType", childType);
-	attrPrint("childName", childName);
-	blockEnd();
+                              JExpression streamContext,
+                              String childType,
+                              String childName) {
+        blockStart("LIRSetChild");
+        attrStart("parentContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("childType", childType);
+        attrPrint("childName", childName);
+        blockEnd();
     }
 
     
@@ -1725,16 +1725,16 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a decoder registration node.
      */
     public void visitSetDecode(LIRSetDecode self,
-                        JExpression streamContext,
-                        LIRFunctionPointer fp) {
-	blockStart("LIRSetDecode");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrStart("decode_function");
-	fp.accept(this);
-	attrEnd();
-	blockEnd();
+                               JExpression streamContext,
+                               LIRFunctionPointer fp) {
+        blockStart("LIRSetDecode");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrStart("decode_function");
+        fp.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
 
@@ -1764,26 +1764,26 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits an encoder registration node.
      */
     public void visitSetEncode(LIRSetEncode self,
-			       JExpression streamContext,
-			       LIRFunctionPointer fp) {
-	blockStart("LIRSetEncode");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrStart("encode_function");
-	fp.accept(this);
-	attrEnd();
-	blockEnd();
+                               JExpression streamContext,
+                               LIRFunctionPointer fp) {
+        blockStart("LIRSetEncode");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrStart("encode_function");
+        fp.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
     /**
      * Visits a joiner-setting node.
      */
     public void visitSetJoiner(LIRSetJoiner self,
-                            JExpression streamContext,
-                            SIRJoinType type,
-                            int ways,
-                            int[] weights) {
+                               JExpression streamContext,
+                               SIRJoinType type,
+                               int ways,
+                               int[] weights) {
         blockStart("LIRSetJoiner");
         attrStart("streamContext");
         streamContext.accept(this);
@@ -1791,12 +1791,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("type", type.toString());
         attrPrint("ways", String.valueOf(ways));
         if (weights != null)
-        {
-            attrStart("weights");
-            for (int i = 0; i < ways; i++)
-                printData(String.valueOf(weights[i]));
-            attrEnd();
-        }
+            {
+                attrStart("weights");
+                for (int i = 0; i < ways; i++)
+                    printData(String.valueOf(weights[i]));
+                attrEnd();
+            }
         blockEnd();
     }
     
@@ -1804,14 +1804,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a peek-rate-setting node.
      */
     public void visitSetPeek(LIRSetPeek self,
-			     JExpression streamContext,
-			     int peek) {
-	blockStart("LIRSetPeek");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrPrint("peek_count", String.valueOf(peek));
-	blockEnd();
+                             JExpression streamContext,
+                             int peek) {
+        blockStart("LIRSetPeek");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("peek_count", String.valueOf(peek));
+        blockEnd();
     }
 
     
@@ -1819,14 +1819,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a pop-rate-setting node.
      */
     public void visitSetPop(LIRSetPop self,
-                     JExpression streamContext,
-                     int pop) {
-	blockStart("LIRSetPop");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrPrint("pop_count", String.valueOf(pop));
-	blockEnd();
+                            JExpression streamContext,
+                            int pop) {
+        blockStart("LIRSetPop");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("pop_count", String.valueOf(pop));
+        blockEnd();
     }
 
     
@@ -1834,14 +1834,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a push-rate-setting node.
      */
     public void visitSetPush(LIRSetPush self,
-                      JExpression streamContext,
-                      int push) {
-	blockStart("LIRSetPush");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrPrint("push_count", String.valueOf(push));
-	blockEnd();
+                             JExpression streamContext,
+                             int push) {
+        blockStart("LIRSetPush");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("push_count", String.valueOf(push));
+        blockEnd();
     }
 
     /**
@@ -1859,12 +1859,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("type", type.toString());
         attrPrint("ways", String.valueOf(ways));
         if (weights != null)
-        {
-            attrStart("weights");
-            for (int i = 0; i < ways; i++)
-                printData(String.valueOf(weights[i]));
-            attrEnd();
-        }
+            {
+                attrStart("weights");
+                for (int i = 0; i < ways; i++)
+                    printData(String.valueOf(weights[i]));
+                attrEnd();
+            }
         blockEnd();
     }
     
@@ -1873,14 +1873,14 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a stream-type-setting node.
      */
     public void visitSetStreamType(LIRSetStreamType self,
-                            JExpression streamContext,
-                            LIRStreamType streamType) {
-	blockStart("LIRSetStreamType");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrPrint("stream_type", streamType.toString());
-	blockEnd();
+                                   JExpression streamContext,
+                                   LIRStreamType streamType) {
+        blockStart("LIRSetStreamType");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrPrint("stream_type", streamType.toString());
+        blockEnd();
     }
 
     
@@ -1888,107 +1888,107 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a work-function-setting node.
      */
     public void visitSetWork(LIRSetWork self,
-                      JExpression streamContext,
-                      LIRFunctionPointer fn) {
-	blockStart("LIRSetWork");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrStart("work_function");
-	fn.accept(this);
-	attrEnd();
-	blockEnd();
+                             JExpression streamContext,
+                             LIRFunctionPointer fn) {
+        blockStart("LIRSetWork");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrStart("work_function");
+        fn.accept(this);
+        attrEnd();
+        blockEnd();
     }
 
     /**
      * Visits a tape-setter.
      */
     public void visitSetTape(LIRSetTape self,
-			     JExpression streamContext,
-			     JExpression srcStruct,
-			     JExpression dstStruct,
-			     CType type,
-			     int size) {
-	blockStart("LIRSetTape");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
-	attrStart("srcStruct");
-	srcStruct.accept(this);
-	attrEnd();
-	attrStart("dstStruct");
-	dstStruct.accept(this);
-	attrEnd();
-	attrPrint("type", type.toString());
-	attrPrint("size", String.valueOf(size));
-	blockEnd();
+                             JExpression streamContext,
+                             JExpression srcStruct,
+                             JExpression dstStruct,
+                             CType type,
+                             int size) {
+        blockStart("LIRSetTape");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrStart("srcStruct");
+        srcStruct.accept(this);
+        attrEnd();
+        attrStart("dstStruct");
+        dstStruct.accept(this);
+        attrEnd();
+        attrPrint("type", type.toString());
+        attrPrint("size", String.valueOf(size));
+        blockEnd();
     }
 
     /**
      * Visits a main function contents.
      */
     public void visitMainFunction(LIRMainFunction self,
-				  String typeName,
-				  LIRFunctionPointer init,
-				  List initStatements) {
-	blockStart("LIRMainFunction");
-	attrPrint("typeName", typeName);
-	attrStart("init");
-	init.accept(this);
-	attrEnd();
-	printData("init statements:");
-	for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
-	    ((JStatement)it.next()).accept(this);
-	}
-	blockEnd();
+                                  String typeName,
+                                  LIRFunctionPointer init,
+                                  List initStatements) {
+        blockStart("LIRMainFunction");
+        attrPrint("typeName", typeName);
+        attrStart("init");
+        init.accept(this);
+        attrEnd();
+        printData("init statements:");
+        for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
+            ((JStatement)it.next()).accept(this);
+        }
+        blockEnd();
     }
 
     /**
      * Visits a set body of feedback loop.
      */
     public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	blockStart("LIRSetBodyOfFeedback");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
+        blockStart("LIRSetBodyOfFeedback");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
         attrStart("childContext");
         childContext.accept(this);
         attrEnd();
-	attrPrint("input type", inputType.toString());
-	attrPrint("output type", outputType.toString());
-	attrPrint("input size", String.valueOf(inputSize));
-	attrPrint("output size", String.valueOf(outputSize));
-	blockEnd();
+        attrPrint("input type", inputType.toString());
+        attrPrint("output type", outputType.toString());
+        attrPrint("input size", String.valueOf(inputSize));
+        attrPrint("output size", String.valueOf(outputSize));
+        blockEnd();
     }
 
     /**
      * Visits a set loop of feedback loop.
      */
     public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	blockStart("LIRSetLoopOfFeedback");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
+        blockStart("LIRSetLoopOfFeedback");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
         attrStart("childContext");
         childContext.accept(this);
         attrEnd();
-	attrPrint("input type", inputType.toString());
-	attrPrint("output type", outputType.toString());
-	attrPrint("input size", String.valueOf(inputSize));
-	attrPrint("output size", String.valueOf(outputSize));
-	blockEnd();
+        attrPrint("input type", inputType.toString());
+        attrPrint("output type", outputType.toString());
+        attrPrint("input size", String.valueOf(inputSize));
+        attrPrint("output size", String.valueOf(outputSize));
+        blockEnd();
     }
 
 
@@ -1996,24 +1996,24 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a file reader.
      */
     public void visitFileReader(LIRFileReader self) {
-	blockStart("LIRFileReader");
-	attrStart("streamContext");
-	self.getStreamContext().accept(this);
-	attrEnd();
-	attrPrint("file name", self.getFileName());
-	blockEnd();
+        blockStart("LIRFileReader");
+        attrStart("streamContext");
+        self.getStreamContext().accept(this);
+        attrEnd();
+        attrPrint("file name", self.getFileName());
+        blockEnd();
     }
     
     /**
      * Visits a file writer.
      */
     public void visitFileWriter(LIRFileWriter self) {
-	blockStart("LIRFileWriter");
-	attrStart("streamContext");
-	self.getStreamContext().accept(this);
-	attrEnd();
-	attrPrint("file name", self.getFileName());
-	blockEnd();
+        blockStart("LIRFileWriter");
+        attrStart("streamContext");
+        self.getStreamContext().accept(this);
+        attrEnd();
+        attrPrint("file name", self.getFileName());
+        blockEnd();
     }
     
     /**
@@ -2031,26 +2031,26 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a set a parallel stream.
      */
     public void visitSetParallelStream(LIRSetParallelStream self,
-				       JExpression streamContext,
+                                       JExpression streamContext,
                                        JExpression childContext,
-				       int position,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	blockStart("LIRSetParallelStream");
-	attrStart("streamContext");
-	streamContext.accept(this);
-	attrEnd();
+                                       int position,
+                                       CType inputType,
+                                       CType outputType,
+                                       int inputSize,
+                                       int outputSize) {
+        blockStart("LIRSetParallelStream");
+        attrStart("streamContext");
+        streamContext.accept(this);
+        attrEnd();
         attrStart("childContext");
         childContext.accept(this);
         attrEnd();
-	attrPrint("position", String.valueOf(position));
-	attrPrint("input type", inputType.toString());
-	attrPrint("output type", outputType.toString());
-	attrPrint("input size", String.valueOf(inputSize));
-	attrPrint("output size", String.valueOf(outputSize));
-	blockEnd();
+        attrPrint("position", String.valueOf(position));
+        attrPrint("input type", inputType.toString());
+        attrPrint("output type", outputType.toString());
+        attrPrint("input size", String.valueOf(inputSize));
+        attrPrint("output size", String.valueOf(outputSize));
+        blockEnd();
     }
 
     /**

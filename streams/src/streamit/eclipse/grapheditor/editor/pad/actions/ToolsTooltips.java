@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsTooltips.java	1.2 02.02.2003
+ * @(#)ToolsTooltips.java   1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,28 +32,28 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ToolsTooltips extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for ToolsTooltips.
-	 * @param graphpad
-	 */
-	public ToolsTooltips(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolsTooltips.
+     * @param graphpad
+     */
+    public ToolsTooltips(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		if (getCurrentDocument() == null) return false;
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        if (getCurrentDocument() == null) return false;
 
-		return getCurrentDocument().isEnableTooltips();
-	}
+        return getCurrentDocument().isEnableTooltips();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		getCurrentDocument().setEnableTooltips(!getCurrentDocument().isEnableTooltips() );
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentDocument().setEnableTooltips(!getCurrentDocument().isEnableTooltips() );
+    }
 
 }

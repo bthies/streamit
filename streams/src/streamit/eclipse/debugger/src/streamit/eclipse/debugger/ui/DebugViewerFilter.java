@@ -24,55 +24,55 @@ import streamit.eclipse.debugger.launching.StreamItLocalApplicationLaunchConfigu
  */
 public class DebugViewerFilter extends ViewerFilter {
 
-	private ILaunch fParent = null;
+    private ILaunch fParent = null;
 
-	public Object[] filter(Viewer viewer, Object parent, Object[] elements) {
-		
-		// only handle if StreamIt Launch
-		if (parent instanceof IJavaThread) {
-			fParent = ((IJavaThread) parent).getLaunch();
-			if (!StreamItLocalApplicationLaunchConfigurationDelegate.isStreamItLaunch(fParent))
-				return elements;
-		} else if (!(parent instanceof LaunchManager)) {
-			return elements;
-		}
-		
-		// only filter IJavaThread and LaunchManager parents
-		Vector filteredElements = new Vector();
-		for (int i = 0; i < elements.length; i++) {
-			if (select(viewer, parent, elements[i])) {
-				filteredElements.add(elements[i]);
-			}
-		}
-		return filteredElements.toArray();
-	}
+    public Object[] filter(Viewer viewer, Object parent, Object[] elements) {
+        
+        // only handle if StreamIt Launch
+        if (parent instanceof IJavaThread) {
+            fParent = ((IJavaThread) parent).getLaunch();
+            if (!StreamItLocalApplicationLaunchConfigurationDelegate.isStreamItLaunch(fParent))
+                return elements;
+        } else if (!(parent instanceof LaunchManager)) {
+            return elements;
+        }
+        
+        // only filter IJavaThread and LaunchManager parents
+        Vector filteredElements = new Vector();
+        for (int i = 0; i < elements.length; i++) {
+            if (select(viewer, parent, elements[i])) {
+                filteredElements.add(elements[i]);
+            }
+        }
+        return filteredElements.toArray();
+    }
 
-	public boolean select(Viewer viewer, Object parentElement, Object element) {
-		// parentElement is usually LaunchManager, Launch, JDIDebugTarget, JDIThread
-		// child element is usually Launch, RuntimeProcess, JDIDebugTarget, JDIThread, JDIStackFrame
-		
-		if (element instanceof IJavaStackFrame) {
+    public boolean select(Viewer viewer, Object parentElement, Object element) {
+        // parentElement is usually LaunchManager, Launch, JDIDebugTarget, JDIThread
+        // child element is usually Launch, RuntimeProcess, JDIDebugTarget, JDIThread, JDIStackFrame
+        
+        if (element instanceof IJavaStackFrame) {
 
-			// get cause of launch
-			ISourceLocator locator = fParent.getSourceLocator();
-			Object o = locator.getSourceElement((IStackFrame) element);
+            // get cause of launch
+            ISourceLocator locator = fParent.getSourceLocator();
+            Object o = locator.getSourceElement((IStackFrame) element);
 
-			// only handle if from .java
-			if (!(o instanceof ICompilationUnit)) return false;
-			return true;
+            // only handle if from .java
+            if (!(o instanceof ICompilationUnit)) return false;
+            return true;
 
-		} else if (element instanceof ILaunch) {
-			// filter out HelloWorld6 [StreamIt Application]
-			ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-			ILaunch launch = (ILaunch) element;
-			ILaunchConfiguration config = launch.getLaunchConfiguration(); 
-			try {
-				if (config.getType().equals(manager.getLaunchConfigurationType(IStreamItLaunchingConstants.ID_STR_APPLICATION))) return false;
-			} catch (CoreException e) {
-			}
-			return true;			
-		}
-			
-		return false;
-	}
+        } else if (element instanceof ILaunch) {
+            // filter out HelloWorld6 [StreamIt Application]
+            ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+            ILaunch launch = (ILaunch) element;
+            ILaunchConfiguration config = launch.getLaunchConfiguration(); 
+            try {
+                if (config.getType().equals(manager.getLaunchConfigurationType(IStreamItLaunchingConstants.ID_STR_APPLICATION))) return false;
+            } catch (CoreException e) {
+            }
+            return true;            
+        }
+            
+        return false;
+    }
 }

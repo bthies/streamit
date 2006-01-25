@@ -1,5 +1,5 @@
 /*
- * @(#)SelectEdgesClear.java	1.2 01.02.2003
+ * @(#)SelectEdgesClear.java    1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,20 +32,20 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class SelectEdgesClear extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectEdgesClear.
-	 * @param graphpad
-	 */
-	public SelectEdgesClear(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectEdgesClear.
+     * @param graphpad
+     */
+    public SelectEdgesClear(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Object[] cells = getCurrentGraph().getEdges(getCurrentGraph().getAll());
-		getCurrentGraph().getSelectionModel().removeSelectionCells(cells);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getEdges(getCurrentGraph().getAll());
+        getCurrentGraph().getSelectionModel().removeSelectionCells(cells);
+    }
 
 }

@@ -23,9 +23,9 @@ public class LIRSetEncode extends LIRNode {
      * Construct a node.
      */
     public LIRSetEncode(JExpression streamContext,
-			LIRFunctionPointer encode) {
-	super(streamContext);
-	this.encode = encode;
+                        LIRFunctionPointer encode) {
+        super(streamContext);
+        this.encode = encode;
     }
 
     public void accept(SLIRVisitor v) {

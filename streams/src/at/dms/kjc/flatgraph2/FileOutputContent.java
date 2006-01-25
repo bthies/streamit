@@ -1,4 +1,4 @@
- package at.dms.kjc.flatgraph2;
+package at.dms.kjc.flatgraph2;
 
 import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;
@@ -11,39 +11,39 @@ public class FileOutputContent extends OutputContent {
     private int outputs;
 
     public FileOutputContent(FileOutputContent content) {
-	super(content);
-	outputs = -1;
-	filename=content.filename;
+        super(content);
+        outputs = -1;
+        filename=content.filename;
     }
 
     public FileOutputContent(SIRFileWriter filter) {
-	super(filter);
-	outputs = -1;
-	filename=filter.getFileName();
+        super(filter);
+        outputs = -1;
+        filename=filter.getFileName();
     }
 
     public FileOutputContent(UnflatFilter unflat) {
-	super(unflat);
-	outputs = -1;
-	filename=((SIRFileWriter)unflat.filter).getFileName();
+        super(unflat);
+        outputs = -1;
+        filename=((SIRFileWriter)unflat.filter).getFileName();
     }
 
     public int getOutputs() 
     {
-	return outputs;
+        return outputs;
     }
     
     public void setOutputs(int i) 
     {
-	outputs = i;
+        outputs = i;
     }
 
     public String getFileName() {
-	return filename;
+        return filename;
     }
 
     public boolean isFP() 
     {
-	return getInputType().isFloatingPoint();
+        return getInputType().isFloatingPoint();
     }
 }

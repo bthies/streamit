@@ -1,5 +1,5 @@
 /*
- * @(#)GPBarEntry.java	1.0 18.02.2003
+ * @(#)GPBarEntry.java  1.0 18.02.2003
  *
  * Copyright (C) 2003 luzar
  *
@@ -28,92 +28,92 @@ package streamit.eclipse.grapheditor.editor.pad;
  */
 public class GPBarEntry {
 
-	/** The name of the bar key where to insert this 
-	 *  bar entry.
-	 */
-	String barKey;
-	
-	/** The position where to insert this 
-	 *  bar entry.
-	 */
-	int pos;
-	
-	
-	/** The name of this bar value. Must be equal with
-	 *  the Action name. 
-	 */
-	String barValue;
+    /** The name of the bar key where to insert this 
+     *  bar entry.
+     */
+    String barKey;
+    
+    /** The position where to insert this 
+     *  bar entry.
+     */
+    int pos;
+    
+    
+    /** The name of this bar value. Must be equal with
+     *  the Action name. 
+     */
+    String barValue;
 
-	/**
-	 * Constructor for GPBarEntry.
-	 */
-	public GPBarEntry(String barKey, int pos, String barValue) {
-		this.barKey = barKey;
-		this.pos = pos;
-		this.barValue = barValue;
-	}
+    /**
+     * Constructor for GPBarEntry.
+     */
+    public GPBarEntry(String barKey, int pos, String barValue) {
+        this.barKey = barKey;
+        this.pos = pos;
+        this.barValue = barValue;
+    }
 
 
-	/**
-	 * Returns the barKey.
-	 * @return String
-	 */
-	public String getBarKey() {
-		return barKey;
-	}
+    /**
+     * Returns the barKey.
+     * @return String
+     */
+    public String getBarKey() {
+        return barKey;
+    }
 
-	/**
-	 * Returns the barValue.
-	 * @return String
-	 */
-	public String getBarValue() {
-		return barValue;
-	}
+    /**
+     * Returns the barValue.
+     * @return String
+     */
+    public String getBarValue() {
+        return barValue;
+    }
 
-	/**
-	 * Returns the pos.
-	 * @return int
-	 */
-	public int getPos() {
-		return pos;
-	}
+    /**
+     * Returns the pos.
+     * @return int
+     */
+    public int getPos() {
+        return pos;
+    }
 
-	/**
-	 * Sets the barKey.
-	 * @param barKey The barKey to set
-	 */
-	public void setBarKey(String barKey) {
-		this.barKey = barKey;
-	}
+    /**
+     * Sets the barKey.
+     * @param barKey The barKey to set
+     */
+    public void setBarKey(String barKey) {
+        this.barKey = barKey;
+    }
 
-	/**
-	 * Sets the barValue.
-	 * @param barValue The barValue to set
-	 */
-	public void setBarValue(String barValue) {
-		this.barValue = barValue;
-	}
+    /**
+     * Sets the barValue.
+     * @param barValue The barValue to set
+     */
+    public void setBarValue(String barValue) {
+        this.barValue = barValue;
+    }
 
-	/**
-	 * Sets the pos.
-	 * @param pos The pos to set
-	 */
-	public void setPos(int pos) {
-		this.pos = pos;
-	}
+    /**
+     * Sets the pos.
+     * @param pos The pos to set
+     */
+    public void setPos(int pos) {
+        this.pos = pos;
+    }
 
-	/** Prints the Entry with all properties.
-	 * 
-	 */	
-	public String toString(){
-		StringBuffer b = new StringBuffer();
-		b.append("GPBarEntry: barKey=");
-		b.append(barKey);
-		b.append("; pos=");
-		b.append(pos);
-		b.append("; barValue=");
-		b.append(barValue);
-		return b.toString() ;
-	}
+    /** Prints the Entry with all properties.
+     * 
+     */ 
+    public String toString(){
+        StringBuffer b = new StringBuffer();
+        b.append("GPBarEntry: barKey=");
+        b.append(barKey);
+        b.append("; pos=");
+        b.append(pos);
+        b.append("; barValue=");
+        b.append(barValue);
+        return b.toString() ;
+    }
 
 }

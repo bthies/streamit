@@ -1,5 +1,5 @@
 /*
- * @(#)WindowMaximize.java	1.2 09.02.2003
+ * @(#)WindowMaximize.java  1.2 09.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,31 +36,31 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class WindowMaximize extends AbstractActionDefault {
 
-	/**
-	 * Constructor for WindowMaximize.
-	 * @param graphpad
-	 */
-	public WindowMaximize(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for WindowMaximize.
+     * @param graphpad
+     */
+    public WindowMaximize(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
 
-	/**
-	 * Calls the method setMaximum(true) for each
-	 * JInternalFrame.
-	 *
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		JInternalFrame[] ajif = graphpad.getAllFrames();
+    /**
+     * Calls the method setMaximum(true) for each
+     * JInternalFrame.
+     *
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        JInternalFrame[] ajif = graphpad.getAllFrames();
 
-		for (int i = 0; i < ajif.length; i++) {
-			try {
-				ajif[i].setMaximum(true);
-			} catch (java.beans.PropertyVetoException pvex) {
+        for (int i = 0; i < ajif.length; i++) {
+            try {
+                ajif[i].setMaximum(true);
+            } catch (java.beans.PropertyVetoException pvex) {
 
-			}
-		}
-	}
+            }
+        }
+    }
 
 }

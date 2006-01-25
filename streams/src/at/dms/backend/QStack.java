@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QStack.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QStack.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -25,61 +25,61 @@ package at.dms.backend;
  */
 class QStack extends QTemporary {
 
-  QStack(int type) {
-    super(type);
-  }
+    QStack(int type) {
+        super(type);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Human readable form
-   */
-  public String toString() {
-    return "S";
-  }
+    /**
+     * Human readable form
+     */
+    public String toString() {
+        return "S";
+    }
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the defined temporary.
-   */
-  public QTemporary getDef() {
-    return null;
-  }
+    /**
+     * Returns the defined temporary.
+     */
+    public QTemporary getDef() {
+        return null;
+    }
 
-  /**
-   * Returns the used temporaries.
-   */
-  public QTemporary[] getUses() {
-    return QTemporary.EMPTY;
-  }
+    /**
+     * Returns the used temporaries.
+     */
+    public QTemporary[] getUses() {
+        return QTemporary.EMPTY;
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  public void generate(CodeSequence seq) {
-  }
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    public void generate(CodeSequence seq) {
+    }
 
-  /**
-   * Generates instructions for destination
-   * @param	seq		The code sequence of instruction
-   */
-  public void store(CodeSequence seq, boolean isLive) {
-  System.err.println("<<<<<<<<<<<<<<<<<<<<" + this);
-  }
+    /**
+     * Generates instructions for destination
+     * @param   seq     The code sequence of instruction
+     */
+    public void store(CodeSequence seq, boolean isLive) {
+        System.err.println("<<<<<<<<<<<<<<<<<<<<" + this);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private int	type;
+    private int type;
 }

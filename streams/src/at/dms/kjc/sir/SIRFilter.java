@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.38 2006-01-08 21:16:23 thies Exp $
+ * @version $Id: SIRFilter.java,v 1.39 2006-01-25 17:01:54 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -21,49 +21,49 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
      * we wouldn't otherwise. */
 
     public SIRFilter() {
-	this(null);
+        this(null);
     }
 
     public SIRFilter(String ident) {
         super(ident);
         setPhases(new JMethodDeclaration[1]);
-	// placeholder for I/O rates
+        // placeholder for I/O rates
         getPhases()[0] = new JMethodDeclaration("SIRFilter placeholder");
     }
     
     public SIRFilter(SIRContainer parent,
-		     String ident,
-		     JFieldDeclaration[] fields, 
-		     JMethodDeclaration[] methods, 
-		     JExpression peek, JExpression pop, JExpression push, 
-		     JMethodDeclaration work, 
-		     CType inputType, 
-		     CType outputType) {
+                     String ident,
+                     JFieldDeclaration[] fields, 
+                     JMethodDeclaration[] methods, 
+                     JExpression peek, JExpression pop, JExpression push, 
+                     JMethodDeclaration work, 
+                     CType inputType, 
+                     CType outputType) {
         super(parent, ident, fields, methods,
               new JMethodDeclaration[0], // initPhases
               new JMethodDeclaration[1], // phases
               inputType, outputType);
         // Create a single phase corresponding to the work function.
-	// if work function is null, make a dummy one just to hold I/O rates
-	if (work == null) {
-	    work = new JMethodDeclaration("Placeholder method for SIRFilter");
-	}
+        // if work function is null, make a dummy one just to hold I/O rates
+        if (work == null) {
+            work = new JMethodDeclaration("Placeholder method for SIRFilter");
+        }
         getPhases()[0] = work;
-	work.setPeek(peek);
-	work.setPop(pop);
-	work.setPush(push);
+        work.setPeek(peek);
+        work.setPop(pop);
+        work.setPush(push);
         // Confirm that the work function is in the methods array.
         if (work != null)
             addReplacementMethod(work, work);
-	// check for void type if we have 0 inputs or outputs
-	assert this instanceof SIRTwoStageFilter || 
+        // check for void type if we have 0 inputs or outputs
+        assert this instanceof SIRTwoStageFilter || 
             ((!(peek instanceof JIntLiteral) ||
               ((JIntLiteral)peek).intValue()>0) ||
              inputType==CStdType.Void):
             "Filter " + this +
             " declares peek rate of 0 but has input type of " +
             inputType + " which should be Void instead.";
-	assert this instanceof SIRTwoStageFilter || 
+        assert this instanceof SIRTwoStageFilter || 
             ((!(push instanceof JIntLiteral) ||
               ((JIntLiteral)push).intValue()>0) ||
              outputType==CStdType.Void):
@@ -75,12 +75,12 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
-	return v.visitFilter(this,
-			     fields,
-			     methods,
-			     init,
-			     getPhases()[0],
-			     getInputType(), getOutputType());
+        return v.visitFilter(this,
+                             fields,
+                             methods,
+                             init,
+                             getPhases()[0],
+                             getInputType(), getOutputType());
     }
 
     public void setPeek(JExpression p) {
@@ -119,17 +119,17 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     }
 
     public int getPushForSchedule(HashMap[] counts) {
-	assert counts[1].containsKey(this):
+        assert counts[1].containsKey(this):
             "Execution count doesn't contain " + this;
-	int steadyCount = ((int[])counts[1].get(this))[0];
-	return steadyCount * getPushInt();
+        int steadyCount = ((int[])counts[1].get(this))[0];
+        return steadyCount * getPushInt();
     }
 
     public int getPopForSchedule(HashMap[] counts) {
-	assert counts[1].containsKey(this):
+        assert counts[1].containsKey(this):
             "Execution count doesn't contain " + this;
-	int steadyCount = ((int[])counts[1].get(this))[0];
-	return steadyCount * getPopInt();
+        int steadyCount = ((int[])counts[1].get(this))[0];
+        return steadyCount * getPopInt();
     }
 
     /**
@@ -194,15 +194,15 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     
     /* Overridden from SIRStream: */
     public void setWork(JMethodDeclaration work) {
-	// if new work function has no I/O rates and old one does,
-	// then transfer rates to new one.  This is an ugly remnant of
-	// the old mode of operation, where I/O rates were stored
-	// outside the function.
-	if (!work.doesIO()) {
-	    work.setPeek(getWork().getPeek());
-	    work.setPop(getWork().getPop());
-	    work.setPush(getWork().getPush());
-	}
+        // if new work function has no I/O rates and old one does,
+        // then transfer rates to new one.  This is an ugly remnant of
+        // the old mode of operation, where I/O rates were stored
+        // outside the function.
+        if (!work.doesIO()) {
+            work.setPeek(getWork().getPeek());
+            work.setPop(getWork().getPop());
+            work.setPush(getWork().getPush());
+        }
 
         addReplacementMethod(work, getWork());
         getPhases()[0] = work;
@@ -213,11 +213,11 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
      * being derived from SIRFilter.  Changing that is a Big Change,
      * since it involves making the entire world phase-aware.  Not
      * that this is actually a bad thing, but...
-    public void setInitPhases(JMethodDeclaration[] initPhases) 
-    {
-        throw new UnsupportedOperationException
-            ("SIRFilters can't have init phases");
-    }
+     public void setInitPhases(JMethodDeclaration[] initPhases) 
+     {
+     throw new UnsupportedOperationException
+     ("SIRFilters can't have init phases");
+     }
     */
 
     /* Overridden from SIRPhasedFilter: */
@@ -230,25 +230,25 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     }
 
     public String toString() {
-	return "SIRFilter name=" + getName();
+        return "SIRFilter name=" + getName();
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRFilter other = new at.dms.kjc.sir.SIRFilter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRFilter other = new at.dms.kjc.sir.SIRFilter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRFilter other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRFilter other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

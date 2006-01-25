@@ -1,5 +1,5 @@
 /*
- * @(#)FileExit.java	1.2 30.01.2003
+ * @(#)FileExit.java    1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -39,41 +39,41 @@ import streamit.eclipse.grapheditor.editor.utils.UserProperties;
  */
 public class FileExit extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FileExit.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FileExit(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FileExit.
+     * @param graphpad
+     * @param name
+     */
+    public FileExit(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
 
-		JInternalFrame[] frames = graphpad.getAllFrames();
+        JInternalFrame[] frames = graphpad.getAllFrames();
 
-		for (int i = 0; i < frames.length; i++) {
-			if (frames[i] instanceof GPInternalFrame) {
-				GPInternalFrame frame = (GPInternalFrame) frames[i];
+        for (int i = 0; i < frames.length; i++) {
+            if (frames[i] instanceof GPInternalFrame) {
+                GPInternalFrame frame = (GPInternalFrame) frames[i];
 
-				if (frame.getDocument().close(true)) {
-					graphpad.removeGPInternalFrame(frame);
-				} else
-					return;
-			}
-		}
+                if (frame.getDocument().close(true)) {
+                    graphpad.removeGPInternalFrame(frame);
+                } else
+                    return;
+            }
+        }
 
-		UserProperties.saveAll();
-		graphpad.exit();
-	}
+        UserProperties.saveAll();
+        graphpad.exit();
+    }
 
-	/** Empty implementation.
-	 *  This Action should be available
-	 *  each time.
-	 */
-	public void update() {
-	};
+    /** Empty implementation.
+     *  This Action should be available
+     *  each time.
+     */
+    public void update() {
+    };
 }

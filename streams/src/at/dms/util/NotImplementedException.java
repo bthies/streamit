@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: NotImplementedException.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: NotImplementedException.java,v 1.2 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -26,19 +26,19 @@ package at.dms.util;
  */
 public class NotImplementedException extends RuntimeException {
 
-  /**
-   * Constructs am NotImplementedException with no specified detail message.
-   */
-  public NotImplementedException() {
-    super();
-  }
+    /**
+     * Constructs am NotImplementedException with no specified detail message.
+     */
+    public NotImplementedException() {
+        super();
+    }
 
-  /**
-   * Constructs am NotImplementedException with the specified detail message.
-   *
-   * @param	message		the detail message
-   */
-  public NotImplementedException(String message) {
-    super(message);
-  }
+    /**
+     * Constructs am NotImplementedException with the specified detail message.
+     *
+     * @param   message     the detail message
+     */
+    public NotImplementedException(String message) {
+        super(message);
+    }
 }

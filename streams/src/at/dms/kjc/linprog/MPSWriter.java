@@ -14,100 +14,100 @@ public class MPSWriter extends SimpleLinearProgram {
      * Create one of these with <numVars> variables.
      */
     public MPSWriter(int numVars) {
-	super(numVars);
+        super(numVars);
     }
 
     /**
      * Dumps a representation of this to <filename> in MPS format.
      */
     protected void printMPSToFile(String filename) {
-	try {
-	    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
-	    printMPS(out);
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+            printMPS(out);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     } 
 
     /**
      * Prints a representation of this to <out> in MPS format.
      */
     private void printMPS(PrintWriter out) {
-	// add objective function as first element of list
-	LinkedList copy = new LinkedList(constraints);
-	copy.add(0, new Constraint(ConstraintType.OBJ, obj, 0));
+        // add objective function as first element of list
+        LinkedList copy = new LinkedList(constraints);
+        copy.add(0, new Constraint(ConstraintType.OBJ, obj, 0));
 
-	Constraint[] con = (Constraint[])copy.toArray(new Constraint[0]);
-	
-	// print title
-	out.println("NAME          STREAMIT");
-	// print constraints
-	out.println("ROWS");
-	for (int i=0; i<con.length; i++) {
-	    out.print(" ");
-	    if (con[i].type==ConstraintType.OBJ) {
-		out.print("N");
-	    } else if (con[i].type==ConstraintType.GE) {
-		out.print("G");
-	    } else if (con[i].type==ConstraintType.EQ) {
-		out.print("E");
-	    }
-	    out.println("  C" + i);
-	}
-	// print variables
-	out.println("COLUMNS");
-	for (int i=0; i<numVars; i++) {
-	    if (boolVar[i]) {
-		out.println("    IORG      'MARKER'                 'INTORG'");
-	    }
-	    for (int j=0; j<con.length; j++) {
-		if (con[j].lhs[i] != 0) {
-		    String varName = "X" + i;
-		    out.print("    " + varName);
-		    for (int k=varName.length(); k<10; k++) {
-			out.print(" ");
-		    }
-		    String conName = "C" + j;
-		    out.print(conName);
-		    for (int k=conName.length(); k<10; k++) {
-			out.print(" ");
-		    }
-		    out.println(con[j].lhs[i]);
-		}
-	    }
-	    if (boolVar[i]) {
-		out.println("    IEND      'MARKER'                 'INTEND'");
-	    }
-	}
-	// print rhs
-	out.println("RHS");
-	// start at 1 because con[0] is objective function with no rhs
-	for (int i=1; i<con.length; i++) {
-	    if (con[i].rhs!=0) {
-		out.print("    RHSVAR    ");
-		String name = "C" + i;
-		out.print(name);
-		for (int k=name.length(); k<10; k++) {
-		    out.print(" ");
-		}    
-		out.println(con[i].rhs);
-	    }
-	}
-	// print bounds for boolean vars
-	out.println("BOUNDS");
-	for (int i=0; i<numVars; i++) {
-	    if (boolVar[i]) {
-		out.print(" BV ");
-		String boundName = "BNDSET";
-		out.print(boundName);
-		for (int k=boundName.length(); k<10; k++) {
-		    out.print(" ");
-		}
-		out.println("X" + i);
-	    }
-	}
-	out.println("ENDATA");
+        Constraint[] con = (Constraint[])copy.toArray(new Constraint[0]);
+    
+        // print title
+        out.println("NAME          STREAMIT");
+        // print constraints
+        out.println("ROWS");
+        for (int i=0; i<con.length; i++) {
+            out.print(" ");
+            if (con[i].type==ConstraintType.OBJ) {
+                out.print("N");
+            } else if (con[i].type==ConstraintType.GE) {
+                out.print("G");
+            } else if (con[i].type==ConstraintType.EQ) {
+                out.print("E");
+            }
+            out.println("  C" + i);
+        }
+        // print variables
+        out.println("COLUMNS");
+        for (int i=0; i<numVars; i++) {
+            if (boolVar[i]) {
+                out.println("    IORG      'MARKER'                 'INTORG'");
+            }
+            for (int j=0; j<con.length; j++) {
+                if (con[j].lhs[i] != 0) {
+                    String varName = "X" + i;
+                    out.print("    " + varName);
+                    for (int k=varName.length(); k<10; k++) {
+                        out.print(" ");
+                    }
+                    String conName = "C" + j;
+                    out.print(conName);
+                    for (int k=conName.length(); k<10; k++) {
+                        out.print(" ");
+                    }
+                    out.println(con[j].lhs[i]);
+                }
+            }
+            if (boolVar[i]) {
+                out.println("    IEND      'MARKER'                 'INTEND'");
+            }
+        }
+        // print rhs
+        out.println("RHS");
+        // start at 1 because con[0] is objective function with no rhs
+        for (int i=1; i<con.length; i++) {
+            if (con[i].rhs!=0) {
+                out.print("    RHSVAR    ");
+                String name = "C" + i;
+                out.print(name);
+                for (int k=name.length(); k<10; k++) {
+                    out.print(" ");
+                }    
+                out.println(con[i].rhs);
+            }
+        }
+        // print bounds for boolean vars
+        out.println("BOUNDS");
+        for (int i=0; i<numVars; i++) {
+            if (boolVar[i]) {
+                out.print(" BV ");
+                String boundName = "BNDSET";
+                out.print(boundName);
+                for (int k=boundName.length(); k<10; k++) {
+                    out.print(" ");
+                }
+                out.println("X" + i);
+            }
+        }
+        out.println("ENDATA");
     }
 }
 
@@ -142,24 +142,24 @@ detail below):
 
 NAME          TESTPROB
 ROWS
- N  COST
- L  LIM1
- G  LIM2
- E  MYEQN
+N  COST
+L  LIM1
+G  LIM2
+E  MYEQN
 COLUMNS
-    XONE      COST                 1   LIM1                 1
-    XONE      LIM2                 1
-    YTWO      COST                 4   LIM1                 1
-    YTWO      MYEQN               -1
-    ZTHREE    COST                 9   LIM2                 1
-    ZTHREE    MYEQN                1
+XONE      COST                 1   LIM1                 1
+XONE      LIM2                 1
+YTWO      COST                 4   LIM1                 1
+YTWO      MYEQN               -1
+ZTHREE    COST                 9   LIM2                 1
+ZTHREE    MYEQN                1
 RHS
-    RHS1      LIM1                 5   LIM2                10
-    RHS1      MYEQN                7
+RHS1      LIM1                 5   LIM2                10
+RHS1      MYEQN                7
 BOUNDS
- UP BND1      XONE                 4
- LO BND1      YTWO                -1
- UP BND1      YTWO                 1
+UP BND1      XONE                 4
+LO BND1      YTWO                -1
+UP BND1      YTWO                 1
 ENDATA
 
 For comparison, here is the same model written out in an equation-
@@ -172,7 +172,7 @@ LIM1:    XONE + YTWO <= 5
 LIM2:    XONE + ZTHREE >= 10
 MYEQN:   - YTWO + ZTHREE  = 7
 Bounds
- 0 <= XONE <= 4
+0 <= XONE <= 4
 -1 <= YTWO <= 1
 End
 
@@ -232,8 +232,8 @@ The following is not intended as a complete description of MPS format,
 but only as a brief introduction.  For more information, the reader is 
 directed to:
 
-  "Advanced Linear Programming," by Bruce A. Murtagh
-  "Computer Solutions of Linear Programs," by J.L. Nazareth
+"Advanced Linear Programming," by Bruce A. Murtagh
+"Computer Solutions of Linear Programs," by J.L. Nazareth
 
 
 It may be useful to look at an example MPS file while reading this
@@ -246,97 +246,97 @@ The following template is a guide for the use of MPS format:
 Field:    1           2          3         4         5         6
 Columns:  2-3        5-12      15-22     25-36     40-47     50-61
 
-          NAME   problem name
+NAME   problem name
 
-          ROWS
+ROWS
 
-           type     name
+type     name
 
-          COLUMNS
-                   column       row       value     row      value
-                    name        name                name
-          RHS
-                    rhs         row       value     row      value
-                    name        name                name
-          RANGES
-                    range       row       value     row      value
-                    name        name                name
-          BOUNDS
+COLUMNS
+column       row       value     row      value
+name        name                name
+RHS
+rhs         row       value     row      value
+name        name                name
+RANGES
+range       row       value     row      value
+name        name                name
+BOUNDS
 
-           type     bound       column     value
-                    name        name
-          ENDATA
+type     bound       column     value
+name        name
+ENDATA
 ---------------------------------------------------------------------
 
 NOTES:
 
 A. In the ROWS section, each row of the constraint matrix must have a
-   row type and a row name specified.  The code for indicating row type
-   is as follows:
+row type and a row name specified.  The code for indicating row type
+is as follows:
 
-                     type      meaning
-                     ---------------------------
-                      E    equality
-                      L    less than or equal
-                      G    greater than or equal
-                      N    objective
-                      N    no restriction
+type      meaning
+---------------------------
+E    equality
+L    less than or equal
+G    greater than or equal
+N    objective
+N    no restriction
 
 B. In the COLUMNS section, the names of the variables are defined along
-   with the coefficients of the objective and all the nonzero constraint
-   matrix elements.  It is not necessary to specify columns for slack or
-   surplus variables as this is taken care of automatically.
+with the coefficients of the objective and all the nonzero constraint
+matrix elements.  It is not necessary to specify columns for slack or
+surplus variables as this is taken care of automatically.
 
 C. The RHS section contains information for the right-hand side of the problem.
 
 D. The RANGES section is for constraints of the form:  h <= constraint <= u .
-   The range of the constraint is  r = u - h .  The value of r is specified
-   in the RANGES section, and the value of u or h is specified in the RHS
-   section.  If b is the value entered in the RHS section, and r is the
-   value entered in the RANGES section, then u and h are thus defined:
+The range of the constraint is  r = u - h .  The value of r is specified
+in the RANGES section, and the value of u or h is specified in the RHS
+section.  If b is the value entered in the RHS section, and r is the
+value entered in the RANGES section, then u and h are thus defined:
 
-        row type       sign of r       h          u
-        ----------------------------------------------
-           G            + or -         b        b + |r|
-           L            + or -       b - |r|      b
-           E              +            b        b + |r|
-           E              -          b - |r|      b
+row type       sign of r       h          u
+----------------------------------------------
+G            + or -         b        b + |r|
+L            + or -       b - |r|      b
+E              +            b        b + |r|
+E              -          b - |r|      b
 
 
 E. In the BOUNDS section, bounds on the variables are specified.  When
-   bounds are not indicated, the default bounds ( 0 <= x < infinity )
-   are assumed.  The code for indicating bound type is as follows:
+bounds are not indicated, the default bounds ( 0 <= x < infinity )
+are assumed.  The code for indicating bound type is as follows:
 
-                    type            meaning
-                   -----------------------------------
-                     LO    lower bound        b <= x
-                     UP    upper bound        x <= b
-                     FX    fixed variable     x = b
-                     FR    free variable
-                     MI    lower bound -inf   -inf < x
-                     BV    binary variable    x = 0 or 1
+type            meaning
+-----------------------------------
+LO    lower bound        b <= x
+UP    upper bound        x <= b
+FX    fixed variable     x = b
+FR    free variable
+MI    lower bound -inf   -inf < x
+BV    binary variable    x = 0 or 1
 
 F. Sections RANGES and BOUNDS are optional as are the fields 5 and 6.
-   Everything else is required.  In regards to fields 5 and 6, consider
-   the following 2 constraints:
+Everything else is required.  In regards to fields 5 and 6, consider
+the following 2 constraints:
 
-                       const1:  2x + 3y < 6
-                       const2:  5x + 8y < 20
+const1:  2x + 3y < 6
+const2:  5x + 8y < 20
 
-   Two ways to enter the variable x in the COLUMNS section are:
+Two ways to enter the variable x in the COLUMNS section are:
 
-     (Field:  2    3           4            5         6  )
-   1.         x  const1       2.0         const2     5.0
+(Field:  2    3           4            5         6  )
+1.         x  const1       2.0         const2     5.0
 
-   2.         x  const1       2.0
-              x  const2       5.0
+2.         x  const1       2.0
+x  const2       5.0
 
 G. A mixed integer program requires the specification of which variables
-   are required to be integer.  Markers are used to indicate the start
-   and end of a group of integer variables.  The start marker has its
-   name in field 2, 'MARKER' in field 3, and 'INTORG' in field 5.  The
-   end marker has its name in field 2, 'MARKER' in field 3, and 'INTEND'
-   in field 5.  These markers are placed in the COLUMNS section.
+are required to be integer.  Markers are used to indicate the start
+and end of a group of integer variables.  The start marker has its
+name in field 2, 'MARKER' in field 3, and 'INTORG' in field 5.  The
+end marker has its name in field 2, 'MARKER' in field 3, and 'INTEND'
+in field 5.  These markers are placed in the COLUMNS section.
 
 
 ============================================================================

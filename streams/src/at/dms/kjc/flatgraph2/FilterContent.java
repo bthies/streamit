@@ -37,295 +37,295 @@ public class FilterContent {
     private int total;
 
     public FilterContent(FilterContent content) {
-	name=content.name;
-	init=content.init;
-	steady=content.steady;
-	inputType=content.inputType;
-	outputType=content.outputType;
-	initMult=content.initMult;
-	steadyMult=content.steadyMult;
-	methods=content.methods;
-	paramList=content.paramList;
-	initFunction=content.initFunction;
-	is2stage=content.is2stage;
-	fields=content.fields;
-	array=content.array;
-	constant=content.constant;
-	popCount=content.popCount;
-	peek=content.peek;
-	linear=content.linear;
-	begin=content.begin;
-	end=content.end;
-	pos=content.pos;
-	total=content.total;
+        name=content.name;
+        init=content.init;
+        steady=content.steady;
+        inputType=content.inputType;
+        outputType=content.outputType;
+        initMult=content.initMult;
+        steadyMult=content.steadyMult;
+        methods=content.methods;
+        paramList=content.paramList;
+        initFunction=content.initFunction;
+        is2stage=content.is2stage;
+        fields=content.fields;
+        array=content.array;
+        constant=content.constant;
+        popCount=content.popCount;
+        peek=content.peek;
+        linear=content.linear;
+        begin=content.begin;
+        end=content.end;
+        pos=content.pos;
+        total=content.total;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
-	name=filter.getName();
-	init=filter.getInitPhases();
-	steady=filter.getPhases();
-	inputType=filter.getInputType();
-	outputType=filter.getOutputType();
-	methods=filter.getMethods();
-	fields = filter.getFields();
-	paramList=filter.getParams();
-	initFunction = filter.getInit();
-	assert init.length < 1 && steady.length == 1;
-	//if this filter is two stage, then it has the 
-	//init work function as the only member of the init phases
-	is2stage = init.length == 1;
-	//is2stage = steady.length > 1;
-	linear=false;
-	//total=1;
+        name=filter.getName();
+        init=filter.getInitPhases();
+        steady=filter.getPhases();
+        inputType=filter.getInputType();
+        outputType=filter.getOutputType();
+        methods=filter.getMethods();
+        fields = filter.getFields();
+        paramList=filter.getParams();
+        initFunction = filter.getInit();
+        assert init.length < 1 && steady.length == 1;
+        //if this filter is two stage, then it has the 
+        //init work function as the only member of the init phases
+        is2stage = init.length == 1;
+        //is2stage = steady.length > 1;
+        linear=false;
+        //total=1;
     }
 
     public FilterContent(UnflatFilter unflat) {
-	SIRFilter filter=unflat.filter;
-	name=filter.getName();
-	inputType=filter.getInputType();
-	outputType=filter.getOutputType();
-	initMult=unflat.initMult;
-	steadyMult=unflat.steadyMult;
-	array=unflat.array;
-	if(array!=null&&initMult<1) {
-	    int reg=20-array.length/unflat.popCount-1;
-	    if(array.length<=reg) {
-		linear=true;
-		constant=unflat.constant;
-		popCount=unflat.popCount;
-		assert popCount>0:"SDFSDFSDF";
-		peek=array.length;
-		int mod=array.length%popCount;
-		if(mod!=0) {
-		    final int len=array.length+popCount-mod;
-		    double[] temp=new double[len];
-		    System.arraycopy(array,0,temp,0,array.length);
-		    array=temp;
-		}
-		begin=true;
-		end=true;
-		pos=0;
-		total=1;
-		//methods=filter.getMethods(); //Keep nonlinear rep
-		//steady=filter.getPhases(); //Keep nonlinear rep
-		//fields=filter.getFields(); //Keep nonlinear rep
-		//paramList = filter.getParams(); //Keep nonlinear rep
-		//initFunction=filter.getInit(); //Keep nonlinear rep
-		//init=filter.getInitPhases(); //Keep nonlinear rep
-	    } else {
-		linear=false;
-		init=filter.getInitPhases();
-		steady=filter.getPhases();
-		methods=filter.getMethods();
-		fields = filter.getFields();
-		paramList=filter.getParams();
-		initFunction = filter.getInit();
-		
-		assert init.length < 1 && steady.length == 1;
-		//if this filter is two stage, then it has the 
-		//init work function as the only member of the init phases
-		is2stage = init.length == 1;
-		
-		//		is2stage = steady.length > 1;
-	    }
-	} else {
-	    linear=false;
-	    init=filter.getInitPhases();
-	    steady=filter.getPhases();
-	    methods=filter.getMethods();
-	    fields = filter.getFields();
-	    paramList=filter.getParams();
-	    initFunction = filter.getInit();
-	    assert init.length < 1 && steady.length == 1;
-	    //if this filter is two stage, then it has the 
-	    //init work function as the only member of the init phases
-	    is2stage = init.length == 1;
+        SIRFilter filter=unflat.filter;
+        name=filter.getName();
+        inputType=filter.getInputType();
+        outputType=filter.getOutputType();
+        initMult=unflat.initMult;
+        steadyMult=unflat.steadyMult;
+        array=unflat.array;
+        if(array!=null&&initMult<1) {
+            int reg=20-array.length/unflat.popCount-1;
+            if(array.length<=reg) {
+                linear=true;
+                constant=unflat.constant;
+                popCount=unflat.popCount;
+                assert popCount>0:"SDFSDFSDF";
+                peek=array.length;
+                int mod=array.length%popCount;
+                if(mod!=0) {
+                    final int len=array.length+popCount-mod;
+                    double[] temp=new double[len];
+                    System.arraycopy(array,0,temp,0,array.length);
+                    array=temp;
+                }
+                begin=true;
+                end=true;
+                pos=0;
+                total=1;
+                //methods=filter.getMethods(); //Keep nonlinear rep
+                //steady=filter.getPhases(); //Keep nonlinear rep
+                //fields=filter.getFields(); //Keep nonlinear rep
+                //paramList = filter.getParams(); //Keep nonlinear rep
+                //initFunction=filter.getInit(); //Keep nonlinear rep
+                //init=filter.getInitPhases(); //Keep nonlinear rep
+            } else {
+                linear=false;
+                init=filter.getInitPhases();
+                steady=filter.getPhases();
+                methods=filter.getMethods();
+                fields = filter.getFields();
+                paramList=filter.getParams();
+                initFunction = filter.getInit();
+        
+                assert init.length < 1 && steady.length == 1;
+                //if this filter is two stage, then it has the 
+                //init work function as the only member of the init phases
+                is2stage = init.length == 1;
+        
+                //      is2stage = steady.length > 1;
+            }
+        } else {
+            linear=false;
+            init=filter.getInitPhases();
+            steady=filter.getPhases();
+            methods=filter.getMethods();
+            fields = filter.getFields();
+            paramList=filter.getParams();
+            initFunction = filter.getInit();
+            assert init.length < 1 && steady.length == 1;
+            //if this filter is two stage, then it has the 
+            //init work function as the only member of the init phases
+            is2stage = init.length == 1;
 
-	    //is2stage = steady.length > 1;
-	}
+            //is2stage = steady.length > 1;
+        }
     }
     
     public boolean isLinear() {
-	return linear;
+        return linear;
     }
 
     public void setArray(double[] array) {
-	//this.array=array;
-	int mod=array.length%popCount;
-	if(mod!=0) {
-	    final int len=array.length+popCount-mod;
-	    double[] temp=new double[len];
-	    System.arraycopy(array,0,temp,0,array.length);
-	    array=temp;
-	} else
-	    this.array=array;
+        //this.array=array;
+        int mod=array.length%popCount;
+        if(mod!=0) {
+            final int len=array.length+popCount-mod;
+            double[] temp=new double[len];
+            System.arraycopy(array,0,temp,0,array.length);
+            array=temp;
+        } else
+            this.array=array;
     }
 
     public void setBegin(boolean begin) {
-	this.begin=begin;
+        this.begin=begin;
     }
 
     public boolean getBegin() {
-	return begin;
+        return begin;
     }
 
     public void setEnd(boolean end) {
-	this.end=end;
+        this.end=end;
     }
 
     public boolean getEnd() {
-	return end;
+        return end;
     }
 
     public void setPos(int pos) {
-	this.pos=pos;
+        this.pos=pos;
     }
 
     public int getPos() {
-	return pos;
+        return pos;
     }
 
     public void setTotal(int total) {
-	this.total=total;
+        this.total=total;
     }
 
     public int getTotal() {
-	return total;
+        return total;
     }
 
     public double[] getArray() {
-	return array;
+        return array;
     }
 
     public double getConstant() {
-	return constant;
+        return constant;
     }
 
     public int getPopCount() {
-	return popCount;
+        return popCount;
     }
 
     public int getPeek() {
-	return peek;
+        return peek;
     }
 
     public boolean isTwoStage() 
     {
-	return is2stage;
+        return is2stage;
     }
     
     public String toString() {
-	if(array==null)
-	    return name;
-	else {
-	    if(true)
-		return name+" ["+array.length+","+popCount+"]";
-	    else {
-		StringBuffer out=new StringBuffer(name);
-		out.append("[");
-		out.append(popCount);
-		out.append("][");
-		double[] array=this.array;
-		final int len=array.length;
-		if(len>0) {
-		    out.append(array[0]);
-		    for(int i=1;i<len;i++) {
-			out.append(",");
-			out.append(array[i]);
-		    }
-		}
-		out.append("]");
-		out.append(begin);
-		out.append(",");
-		out.append(end);
-		out.append(",");
-		out.append(pos);
-		//out.append(",");
-		//out.append(total);
-		return out.toString();
-	    }
-	}
+        if(array==null)
+            return name;
+        else {
+            if(true)
+                return name+" ["+array.length+","+popCount+"]";
+            else {
+                StringBuffer out=new StringBuffer(name);
+                out.append("[");
+                out.append(popCount);
+                out.append("][");
+                double[] array=this.array;
+                final int len=array.length;
+                if(len>0) {
+                    out.append(array[0]);
+                    for(int i=1;i<len;i++) {
+                        out.append(",");
+                        out.append(array[i]);
+                    }
+                }
+                out.append("]");
+                out.append(begin);
+                out.append(",");
+                out.append(end);
+                out.append(",");
+                out.append(pos);
+                //out.append(",");
+                //out.append(total);
+                return out.toString();
+            }
+        }
     }
 
     public String getName() {
-	return name;
+        return name;
     }
 
     public CType getInputType() {
-	return inputType;
+        return inputType;
     }
 
     public CType getOutputType () {
-	return outputType;
+        return outputType;
     }
 
     public JMethodDeclaration[] getSteadyList() {
-	return steady;
+        return steady;
     }
     
     public JMethodDeclaration[] getInitList() {
-	return init;
+        return init;
     }
 
     public JMethodDeclaration getWork() {
-	if(steady!=null)
-	    return steady[0];
-	else
-	    return null;
+        if(steady!=null)
+            return steady[0];
+        else
+            return null;
     }
 
     public JMethodDeclaration getInit() {
-	return initFunction;
+        return initFunction;
     }
 
     public int getInitMult() {
-	return initMult;
+        return initMult;
     }
     
     public void multSteadyMult(int mult) 
     {
-	steadyMult *= mult;
+        steadyMult *= mult;
     }
     
     public int getSteadyMult() {
-	return steadyMult;
+        return steadyMult;
     }
 
     public int getPushInt() {
-	if(linear)
-	    return 1;
-	return steady[0].getPushInt();
+        if(linear)
+            return 1;
+        return steady[0].getPushInt();
     }
 
     public int getPopInt() {
-	if(linear)
-	    return getPopCount();
-	return steady[0].getPopInt();
+        if(linear)
+            return getPopCount();
+        return steady[0].getPopInt();
     }
 
     public int getPeekInt() {
-	return steady[0].getPeekInt();
+        return steady[0].getPeekInt();
     }
 
     public int getInitPush() {
-	return init[0].getPushInt();
+        return init[0].getPushInt();
     }
 
     public int getInitPop() {
-	return init[0].getPopInt();
+        return init[0].getPopInt();
     }
 
     public int getInitPeek() {
-	return init[0].getPeekInt();
+        return init[0].getPeekInt();
     }
 
     public JMethodDeclaration[] getMethods() {
-	return methods;
+        return methods;
     }
     
     public JFieldDeclaration[] getFields() 
     {
-	return fields;
+        return fields;
     }
     
     public JMethodDeclaration getInitWork() {
@@ -333,6 +333,6 @@ public class FilterContent {
     }
     
     public List getParams() {
-	return paramList;
+        return paramList;
     }
 }

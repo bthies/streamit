@@ -13,30 +13,30 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
  * @author jcarlos
  *
 
- */
+*/
 public class ViewSetContainerLocation extends AbstractActionDefault {
 
-	//
-	
-	/**
-	 * Constructor for ViewSetContainerLocation.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ViewSetContainerLocation(GPGraphpad graphpad) {
-		super(graphpad);
-	}
-		
-	/**
-	 */
-	public void actionPerformed(ActionEvent e) 
-	{	
-		GPDocument doc = graphpad.getCurrentDocument();
-		GraphStructure graphStruct = doc.getGraphStructure();
-		if (!(doc.areContainersInvisible()))
-		{
-			graphStruct.containerNodes.setLocationOfContainersAtLevel(graphStruct);
-			
-		}
-	}
+    //
+    
+    /**
+     * Constructor for ViewSetContainerLocation.
+     * @param graphpad
+     * @param name
+     */
+    public ViewSetContainerLocation(GPGraphpad graphpad) {
+        super(graphpad);
+    }
+        
+    /**
+     */
+    public void actionPerformed(ActionEvent e) 
+    {   
+        GPDocument doc = graphpad.getCurrentDocument();
+        GraphStructure graphStruct = doc.getGraphStructure();
+        if (!(doc.areContainersInvisible()))
+            {
+                graphStruct.containerNodes.setLocationOfContainersAtLevel(graphStruct);
+            
+            }
+    }
 }

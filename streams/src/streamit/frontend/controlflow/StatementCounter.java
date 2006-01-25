@@ -23,7 +23,7 @@ import streamit.frontend.nodes.Statement;
  * statement appears in a CFG.  Lattice values are {@link CountLattice}.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StatementCounter.java,v 1.1 2004-01-21 21:13:50 dmaze Exp $
+ * @version $Id: StatementCounter.java,v 1.2 2006-01-25 17:04:23 thies Exp $
  */
 public abstract class StatementCounter extends DataFlow
 {
@@ -60,12 +60,12 @@ public abstract class StatementCounter extends DataFlow
         
         Statement stmt = node.getStmt();
         if (statementQualifies(stmt))
-        {
-            CountLattice cl = (CountLattice)in;
-            if (cl.isTop() || cl.isBottom())
-                return in;
-            return new CountLattice(cl.getValue() + 1);
-        }
+            {
+                CountLattice cl = (CountLattice)in;
+                if (cl.isTop() || cl.isBottom())
+                    return in;
+                return new CountLattice(cl.getValue() + 1);
+            }
         else
             return in;
     }

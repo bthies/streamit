@@ -14,19 +14,19 @@ public class SemanticChecker {
      * Main method to check <str>, outputting errors to System.err.
      */
     public static void doCheck(SIRStream str) {
-	doCheck(str, System.err);
+        doCheck(str, System.err);
     }
 
     /**
      * Main method to check <str>, outputting errors to <out>.
      */
     public static void doCheck(SIRStream str, PrintStream out) {
-	if (str == null) {
-	    out.println("ERROR:  No Top-Level Stream defined!");
-	    System.exit(-1);
-	} else {
-	    IterFactory.createFactory().createIter(str).accept(new StreamSemanticChecker(out));
-	}
+        if (str == null) {
+            out.println("ERROR:  No Top-Level Stream defined!");
+            System.exit(-1);
+        } else {
+            IterFactory.createFactory().createIter(str).accept(new StreamSemanticChecker(out));
+        }
     }
 
     /**
@@ -34,23 +34,23 @@ public class SemanticChecker {
      * checker should also be written.
      */
     static class StreamSemanticChecker extends EmptyStreamVisitor {
-	/**
-	 * Where to send output.
-	 */
-	private PrintStream out;
+        /**
+         * Where to send output.
+         */
+        private PrintStream out;
 
-	public StreamSemanticChecker(PrintStream out) {
-	    this.out = out;
-	}
+        public StreamSemanticChecker(PrintStream out) {
+            this.out = out;
+        }
     
-	/* pre-visit a feedbackloop */
-	public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-					 SIRFeedbackLoopIter iter) {
-	    if (self.getLoop()==null) {
-		out.println("ERROR:  Loop stream is null in " + iter + ";\n" +
-			    "  should be set with setLoop(...) until we have internal" +
-			    "  support for compiler-recognized Identity filters");
-	    }
-	}
+        /* pre-visit a feedbackloop */
+        public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+                                         SIRFeedbackLoopIter iter) {
+            if (self.getLoop()==null) {
+                out.println("ERROR:  Loop stream is null in " + iter + ";\n" +
+                            "  should be set with setLoop(...) until we have internal" +
+                            "  support for compiler-recognized Identity filters");
+            }
+        }
     }
 }

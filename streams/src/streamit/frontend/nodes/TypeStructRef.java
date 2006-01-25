@@ -22,7 +22,7 @@ package streamit.frontend.nodes;
  * should replace these with TypeStructs as appropriate.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStructRef.java,v 1.3 2004-02-13 21:41:53 dmaze Exp $
+ * @version $Id: TypeStructRef.java,v 1.4 2006-01-25 17:04:25 thies Exp $
  */
 public class TypeStructRef extends Type
 {
@@ -43,16 +43,16 @@ public class TypeStructRef extends Type
     public boolean equals(Object other)
     {
         if (other instanceof TypeStruct)
-        {
-            TypeStruct that = (TypeStruct)other;
-            return name.equals(that.getName());
-        }
+            {
+                TypeStruct that = (TypeStruct)other;
+                return name.equals(that.getName());
+            }
         
         if (other instanceof TypeStructRef)
-        {
-            TypeStructRef that = (TypeStructRef)other;
-            return this.name.equals(that.name);
-        }
+            {
+                TypeStructRef that = (TypeStructRef)other;
+                return this.name.equals(that.name);
+            }
         
         if (this.isComplex() && other instanceof Type)
             return ((Type)other).isComplex();

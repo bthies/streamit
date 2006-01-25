@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenCache.java,v 1.1 2001-08-30 16:32:38 thies Exp $
+ * $Id: TokenCache.java,v 1.2 2006-01-25 17:00:53 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
@@ -24,82 +24,82 @@ import java.util.Hashtable;
 
 public class TokenCache {
 
-  // --------------------------------------------------------------------
-  // LOOKUP
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // LOOKUP
+    // --------------------------------------------------------------------
 
-  public CToken lookupToken(int type, char[] data, int start, int length) {
-    CToken	tok = null;
+    public CToken lookupToken(int type, char[] data, int start, int length) {
+        CToken  tok = null;
 
-    currentToken.data = data;
-    currentToken.start = start;
-    currentToken.length = length;
-    currentToken.type = type;
+        currentToken.data = data;
+        currentToken.start = start;
+        currentToken.length = length;
+        currentToken.type = type;
 
-    tok = (CToken)table.get(currentToken);
-    if (tok == null) {
-      tok = new CToken(type, String.valueOf(data, start, length).intern());
-      table.put(currentToken.store(), tok);
+        tok = (CToken)table.get(currentToken);
+        if (tok == null) {
+            tok = new CToken(type, String.valueOf(data, start, length).intern());
+            table.put(currentToken.store(), tok);
+        }
+
+        return tok;
     }
 
-    return tok;
-  }
+    static class LookupToken {
+        public char[] data;
+        public int    start;
+        public int    length;
+        public int    type;
 
-  static class LookupToken {
-    public char[] data;
-    public int    start;
-    public int    length;
-    public int	  type;
+        public LookupToken store() {
+            char[] temp = new char[length];
+            LookupToken store = new LookupToken();
 
-    public LookupToken store() {
-      char[] temp = new char[length];
-      LookupToken store = new LookupToken();
+            System.arraycopy(data, start, temp, 0, length);
+            store.data = temp;
+            store.length = length;
+            store.type = type;
 
-      System.arraycopy(data, start, temp, 0, length);
-      store.data = temp;
-      store.length = length;
-      store.type = type;
+            return store;
+        }
 
-      return store;
+        public int hashCode() {
+            int h = 0;
+            int index1 = start;
+            char[]  val = data;
+
+            for (int i = length - 1 ; i >= 0; i--) {
+                h = (h * 37) + val[index1++];
+            }
+
+            return h * 37 + type;
+        }
+
+        public boolean equals(Object o) {
+            if (!(o instanceof LookupToken)) {
+                return false;
+            }
+            LookupToken tok = (LookupToken)o;
+
+            if (length != tok.length || type != tok.type) {
+                return false;
+            }
+
+            char[]  data1 = this.data;
+            char[]  data2 = tok.data;
+            int index1 = start;
+            int index2 = tok.start;
+
+            for (int i = 0; i < length; i++) {
+                if (data1[index1++] != data2[index2++]) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
-    public int hashCode() {
-      int	h = 0;
-      int	index1 = start;
-      char[]	val = data;
-
-      for (int i = length - 1 ; i >= 0; i--) {
-	h = (h * 37) + val[index1++];
-      }
-
-      return h * 37 + type;
-    }
-
-    public boolean equals(Object o) {
-      if (!(o instanceof LookupToken)) {
-	return false;
-      }
-      LookupToken tok = (LookupToken)o;
-
-      if (length != tok.length || type != tok.type) {
-	return false;
-      }
-
-      char[]	data1 = this.data;
-      char[]	data2 = tok.data;
-      int	index1 = start;
-      int	index2 = tok.start;
-
-      for (int i = 0; i < length; i++) {
-	if (data1[index1++] != data2[index2++]) {
-	  return false;
-	}
-      }
-
-      return true;
-    }
-  }
-
-  private LookupToken	currentToken = new LookupToken();
-  private Hashtable	table = new Hashtable(1000);
+    private LookupToken currentToken = new LookupToken();
+    private Hashtable   table = new Hashtable(1000);
 }

@@ -18,12 +18,12 @@ class ClusterUtils {
     // don't know exactly how they handle pre-defined filters.)
 
     public static String getWorkName(SIRFilter f, int id) {
-		if (f instanceof SIRPredefinedFilter) {
-			return f.getName() + "__work__" + id;
-		} else {
-			return f.getWork().getName() + "__" + id;
-		}
-	}
+        if (f instanceof SIRPredefinedFilter) {
+            return f.getName() + "__work__" + id;
+        } else {
+            return f.getWork().getName() + "__" + id;
+        }
+    }
     
     /**
      * Convert a {@see at.dms.kjc.CType} into a string.
@@ -38,7 +38,7 @@ class ClusterUtils {
      * @return     String translation of CType
      */
     public static String CTypeToString(CType s) {
-    	return CommonUtils.CTypeToString(s, true);
+        return CommonUtils.CTypeToString(s, true);
     }
  
     /**
@@ -56,7 +56,7 @@ class ClusterUtils {
      * @return       String translation of declaration
      */
     public static String declToString(CType s, String ident) {
-    	return CommonUtils.declToString(s, ident, true);
+        return CommonUtils.declToString(s, ident, true);
     }
 
     /**
@@ -69,7 +69,7 @@ class ClusterUtils {
      * @return         name for push function based on the passed identifier.
      */
     public static String peekName(int selfID) {
-    	return "__peek__"+selfID;
+        return "__peek__"+selfID;
     }
 
  
@@ -83,7 +83,7 @@ class ClusterUtils {
      * @return         name for pop function based on the passed identifier.
      */
     public static String pushName(int selfID) {
-    	return "__push__"+selfID;
+        return "__push__"+selfID;
     }
 
     /**
@@ -96,6 +96,6 @@ class ClusterUtils {
      * @return         name for pop function based on the passed identifier.
      */
     public static String popName(int selfID) {
-    	return "__pop__"+selfID;
+        return "__pop__"+selfID;
     }
 }

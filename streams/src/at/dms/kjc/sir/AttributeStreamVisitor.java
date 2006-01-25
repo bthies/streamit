@@ -32,11 +32,11 @@ public interface AttributeStreamVisitor {
 
     /* visit a filter */
     Object visitFilter(SIRFilter self,
-		       JFieldDeclaration[] fields,
-		       JMethodDeclaration[] methods,
-		       JMethodDeclaration init,
-		       JMethodDeclaration work,
-		       CType inputType, CType outputType);
+                       JFieldDeclaration[] fields,
+                       JMethodDeclaration[] methods,
+                       JMethodDeclaration init,
+                       JMethodDeclaration work,
+                       CType inputType, CType outputType);
   
     /* visit a phased filter */
     Object visitPhasedFilter(SIRPhasedFilter self,
@@ -50,32 +50,32 @@ public interface AttributeStreamVisitor {
   
     /* visit a splitter */
     Object visitSplitter(SIRSplitter self,
-			 SIRSplitType type,
-			 JExpression[] weights);
+                         SIRSplitType type,
+                         JExpression[] weights);
     
     /* visit a joiner */
     Object visitJoiner(SIRJoiner self,
-			SIRJoinType type,
-			JExpression[] weights);
+                       SIRJoinType type,
+                       JExpression[] weights);
     
     /* pre-visit a pipeline */
     Object visitPipeline(SIRPipeline self,
-			 JFieldDeclaration[] fields,
-			 JMethodDeclaration[] methods,
-			 JMethodDeclaration init);
+                         JFieldDeclaration[] fields,
+                         JMethodDeclaration[] methods,
+                         JMethodDeclaration init);
 
     /* pre-visit a splitjoin */
     Object visitSplitJoin(SIRSplitJoin self,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  SIRSplitter splitter,
-			  SIRJoiner joiner);
+                          JFieldDeclaration[] fields,
+                          JMethodDeclaration[] methods,
+                          JMethodDeclaration init,
+                          SIRSplitter splitter,
+                          SIRJoiner joiner);
 
     /* pre-visit a feedbackloop */
     Object visitFeedbackLoop(SIRFeedbackLoop self,
-			     JFieldDeclaration[] fields,
-			     JMethodDeclaration[] methods,
-			     JMethodDeclaration init,
-			     JMethodDeclaration initPath);
+                             JFieldDeclaration[] fields,
+                             JMethodDeclaration[] methods,
+                             JMethodDeclaration init,
+                             JMethodDeclaration initPath);
 }

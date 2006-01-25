@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: List.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: List.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -28,15 +28,15 @@ import java.util.NoSuchElementException;
  * on a list.
  */
 public interface List {
-  void add(Object o); // can insert at head or append.
+    void add(Object o); // can insert at head or append.
 
-  void append(Object o);
+    void append(Object o);
 
-  Object elementAt(int index) throws NoSuchElementException;
+    Object elementAt(int index) throws NoSuchElementException;
 
-  Enumeration elements();
+    Enumeration elements();
 
-  boolean includes(Object o);
+    boolean includes(Object o);
 
-  int length();
+    int length();
 }

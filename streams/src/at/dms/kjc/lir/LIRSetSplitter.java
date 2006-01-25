@@ -37,11 +37,11 @@ public class LIRSetSplitter extends LIRNode
         if (weights == null)
             this.weights = null;
         else
-        {
-            this.weights = new int[ways];
-            for (int i = 0; i < ways; i++)
-                this.weights[i] = weights[i];
-        }
+            {
+                this.weights = new int[ways];
+                for (int i = 0; i < ways; i++)
+                    this.weights[i] = weights[i];
+            }
     }
 
     public SIRSplitType getSplitType()
@@ -65,10 +65,10 @@ public class LIRSetSplitter extends LIRNode
     {
         int[] weights = null;
         if (this.weights != null)
-        {
-            weights = new int[ways];
-            getWeights(weights);
-        }
+            {
+                weights = new int[ways];
+                getWeights(weights);
+            }
         v.visitSetSplitter(this, getStreamContext(), type, ways, weights);
     }
 }

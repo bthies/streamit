@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenManager.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: TokenManager.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -28,63 +28,63 @@ import at.dms.compiler.tools.antlr.runtime.*;
  * Interface that describes the set of defined tokens
  */
 interface TokenManager {
-  Object clone();
+    Object clone();
 
-  /**
-   * define a token symbol
-   */
-  void define(TokenSymbol ts);
+    /**
+     * define a token symbol
+     */
+    void define(TokenSymbol ts);
 
-  /**
-   * Get the name of the token manager
-   */
-  String getName();
+    /**
+     * Get the name of the token manager
+     */
+    String getName();
 
-  /**
-   * Get a token string by index
-   */
-  String getTokenStringAt(int idx);
+    /**
+     * Get a token string by index
+     */
+    String getTokenStringAt(int idx);
 
-  /**
-   * Get the TokenSymbol for a string
-   */
-  TokenSymbol getTokenSymbol(String sym);
-  TokenSymbol getTokenSymbolAt(int idx);
+    /**
+     * Get the TokenSymbol for a string
+     */
+    TokenSymbol getTokenSymbol(String sym);
+    TokenSymbol getTokenSymbolAt(int idx);
 
-  /**
-   * Get an enumerator over the symbol table
-   */
-  Enumeration getTokenSymbolElements();
-  Enumeration getTokenSymbolKeys();
+    /**
+     * Get an enumerator over the symbol table
+     */
+    Enumeration getTokenSymbolElements();
+    Enumeration getTokenSymbolKeys();
 
-  /**
-   * Get the token vocabulary (read-only).
-   * @return A Vector of Strings indexed by token type */
-  Vector getVocabulary();
+    /**
+     * Get the token vocabulary (read-only).
+     * @return A Vector of Strings indexed by token type */
+    Vector getVocabulary();
 
-  /**
-   * Is this token manager read-only?
-   */
-  boolean isReadOnly();
+    /**
+     * Is this token manager read-only?
+     */
+    boolean isReadOnly();
 
-  void mapToTokenSymbol(String name, TokenSymbol sym);
+    void mapToTokenSymbol(String name, TokenSymbol sym);
 
-  /**
-   * Get the highest token type in use
-   */
-  int maxTokenType();
+    /**
+     * Get the highest token type in use
+     */
+    int maxTokenType();
 
-  /**
-   * Get the next unused token type
-   */
-  int nextTokenType();
+    /**
+     * Get the next unused token type
+     */
+    int nextTokenType();
 
-  void setName(String n);
+    void setName(String n);
 
-  void setReadOnly(boolean ro);
+    void setReadOnly(boolean ro);
 
-  /**
-   * Is a token symbol defined?
-   */
-  boolean tokenDefined(String symbol);
+    /**
+     * Is a token symbol defined?
+     */
+    boolean tokenDefined(String symbol);
 }

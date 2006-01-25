@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LexerSharedInputState.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: LexerSharedInputState.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -30,28 +30,28 @@ import java.io.InputStream;
  *  the same input stream.
  */
 public class LexerSharedInputState {
-  protected int column=1;
-  protected int line=1;
-  protected int tokenStartColumn = 1;
-  protected int tokenStartLine = 1;
-  protected InputBuffer input;
+    protected int column=1;
+    protected int line=1;
+    protected int tokenStartColumn = 1;
+    protected int tokenStartLine = 1;
+    protected InputBuffer input;
 
-  /**
-   * What file (if known) caused the problem?
-   */
-  protected String filename;
+    /**
+     * What file (if known) caused the problem?
+     */
+    protected String filename;
 
-  public int guessing = 0;
+    public int guessing = 0;
 
-  public LexerSharedInputState(InputBuffer inbuf) {
-    input = inbuf;
-  }
+    public LexerSharedInputState(InputBuffer inbuf) {
+        input = inbuf;
+    }
 
-  public LexerSharedInputState(InputStream in) {
-    this(new ByteBuffer(in));
-  }
+    public LexerSharedInputState(InputStream in) {
+        this(new ByteBuffer(in));
+    }
 
-  public LexerSharedInputState(Reader in) {
-    this(new CharBuffer(in));
-  }
+    public LexerSharedInputState(Reader in) {
+        this(new CharBuffer(in));
+    }
 }

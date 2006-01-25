@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BadAccessorException.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: BadAccessorException.java,v 1.2 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -25,19 +25,19 @@ package at.dms.classfile;
  */
 public class BadAccessorException extends Exception {
 
-  /**
-   * Constructs a BadAccessorException object.
-   */
-  public BadAccessorException() {
-    super();
-  }
+    /**
+     * Constructs a BadAccessorException object.
+     */
+    public BadAccessorException() {
+        super();
+    }
 
-  /**
-   * Constructs a BadAccessorException object.
-   *
-   * @param	message		the detail message
-   */
-  public BadAccessorException(String message) {
-    super(message);
-  }
+    /**
+     * Constructs a BadAccessorException object.
+     *
+     * @param   message     the detail message
+     */
+    public BadAccessorException(String message) {
+        super(message);
+    }
 }

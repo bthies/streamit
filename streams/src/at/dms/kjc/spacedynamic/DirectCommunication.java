@@ -80,11 +80,11 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
             return false;
         // must popping a scalar
         if (filter.getInputType().isClassType()
-                || filter.getInputType().isArrayType())
+            || filter.getInputType().isArrayType())
             return false;
         // must be pushing a scalar
         if (filter.getOutputType().isClassType()
-                || filter.getOutputType().isArrayType())
+            || filter.getOutputType().isArrayType())
             return false;
         // for a filter with dynamic input we don't care if the pushes and
         // pops are intermixed, because the pops will use the dynamic network
@@ -107,13 +107,13 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
     private void rawMainFunction(SIRFilter filter) {
         JBlock statements = new JBlock();
 
-	//index variable for loop of work function in init stage
-	JVariableDefinition exeIndex1Var = 
-	    new JVariableDefinition(null, 
-				    0, 
-				    CStdType.Integer,
-				    RawExecutionCode.exeIndex1,
-				    null);
+        //index variable for loop of work function in init stage
+        JVariableDefinition exeIndex1Var = 
+            new JVariableDefinition(null, 
+                                    0, 
+                                    CStdType.Integer,
+                                    RawExecutionCode.exeIndex1,
+                                    null);
 
 
         // create the params list, for some reason
@@ -126,68 +126,68 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         else
             paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
 
-	//get the init multiplicty
-	initMult = ssg.getMult(node, true);
+        //get the init multiplicty
+        initMult = ssg.getMult(node, true);
 
-	//if we execute in the init stage, then create the local to index the for loop
-	if (initMult > 0) {
-	    statements.addStatement
-		(new JVariableDeclarationStatement(null,
-						   exeIndex1Var,
-						   null));	
-	}
-	
-	//if standalone, add a field for the iteration counter...
-	JFieldDeclaration iterationCounter = null;
-	if (KjcOptions.standalone) {
-	    iterationCounter = 
-		new JFieldDeclaration(new JVariableDefinition(0,
-							      CStdType.Integer, 
-							      FlatIRToC.MAINMETHOD_COUNTER,
-							      new JIntLiteral(-1)));
-	    filter.addField(iterationCounter);
-	}
-	
+        //if we execute in the init stage, then create the local to index the for loop
+        if (initMult > 0) {
+            statements.addStatement
+                (new JVariableDeclarationStatement(null,
+                                                   exeIndex1Var,
+                                                   null));  
+        }
+    
+        //if standalone, add a field for the iteration counter...
+        JFieldDeclaration iterationCounter = null;
+        if (KjcOptions.standalone) {
+            iterationCounter = 
+                new JFieldDeclaration(new JVariableDefinition(0,
+                                                              CStdType.Integer, 
+                                                              FlatIRToC.MAINMETHOD_COUNTER,
+                                                              new JIntLiteral(-1)));
+            filter.addField(iterationCounter);
+        }
+    
 
         // add the call to the init function
         statements.addStatement(new JExpressionStatement(null,
-                new JMethodCallExpression(null, new JThisExpression(null),
-                        filter.getInit().getName(), paramArray), null));
-	
-	//if we execute in the init stage, then create the loop'ed work function
-	if (initMult > 0) {
-	    //inline the work function in a while loop
-	    JBlock workInitBlock = 
-		(JBlock)ObjectDeepCloner.
-		deepCopy(filter.getWork().getBody());
-	    
-	    //call work function for init stage????
-	    statements.addStatement
-		(RawExecutionCode.makeForLoop(workInitBlock, 
-					      exeIndex1Var,
-					      new JIntLiteral(initMult)));
-	}
-	
+                                                         new JMethodCallExpression(null, new JThisExpression(null),
+                                                                                   filter.getInit().getName(), paramArray), null));
+    
+        //if we execute in the init stage, then create the loop'ed work function
+        if (initMult > 0) {
+            //inline the work function in a while loop
+            JBlock workInitBlock = 
+                (JBlock)ObjectDeepCloner.
+                deepCopy(filter.getWork().getBody());
+        
+            //call work function for init stage????
+            statements.addStatement
+                (RawExecutionCode.makeForLoop(workInitBlock, 
+                                              exeIndex1Var,
+                                              new JIntLiteral(initMult)));
+        }
+    
 
-	if (!IMEMEstimation.TESTING_IMEM) {
-	    //add call to raw_init2, only if not testing imem
-	    statements.addStatement(new JExpressionStatement(null,
-							     new JMethodCallExpression
-							     (null, 
-							      new JThisExpression(null),
-							      SwitchCode.SW_SS_TRIPS,
-							      new JExpression[0]),
-							     null));
-	}
+        if (!IMEMEstimation.TESTING_IMEM) {
+            //add call to raw_init2, only if not testing imem
+            statements.addStatement(new JExpressionStatement(null,
+                                                             new JMethodCallExpression
+                                                             (null, 
+                                                              new JThisExpression(null),
+                                                              SwitchCode.SW_SS_TRIPS,
+                                                              new JExpression[0]),
+                                                             null));
+        }
 
         // inline the work function in a while loop
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                .getBody());
+                                                              .getBody());
 
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             statements.addStatement(new SIRPrintStatement(null,
-                    new JStringLiteral(null, filter.getName()
-                            + " Starting Steady-State\\n"), null));
+                                                          new JStringLiteral(null, filter.getName()
+                                                                             + " Starting Steady-State\\n"), null));
         }
 
         // if we are in decoupled mode do not put the work function in a for
@@ -195,28 +195,28 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         // and add the print statements
         if (KjcOptions.decoupled) {
             workBlock.addStatementFirst(new SIRPrintStatement(null,
-                    new JIntLiteral(0), null));
+                                                              new JIntLiteral(0), null));
             workBlock.addStatement(workBlock.size(), new SIRPrintStatement(
-                    null, new JIntLiteral(1), null));
+                                                                           null, new JIntLiteral(1), null));
             statements.addStatement(workBlock);
         } else {
-	      statements.addStatement
-		(new JWhileStatement
-		 (null, 
-		  KjcOptions.standalone ?  
-		 (JExpression) new JPostfixExpression(null, 
-					 Constants.OPE_POSTDEC, 
-					 new JFieldAccessExpression(new JThisExpression(null), 
-								    FlatIRToC.MAINMETHOD_COUNTER)) :
-		  (JExpression)new JBooleanLiteral(null, true),
-		  workBlock, 
-		  null));
+            statements.addStatement
+                (new JWhileStatement
+                 (null, 
+                  KjcOptions.standalone ?  
+                  (JExpression) new JPostfixExpression(null, 
+                                                       Constants.OPE_POSTDEC, 
+                                                       new JFieldAccessExpression(new JThisExpression(null), 
+                                                                                  FlatIRToC.MAINMETHOD_COUNTER)) :
+                  (JExpression)new JBooleanLiteral(null, true),
+                  workBlock, 
+                  null));
         }
 
         JMethodDeclaration rawMainFunct = new JMethodDeclaration(null,
-                at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
-                RawExecutionCode.rawMain, JFormalParameter.EMPTY,
-                CClassType.EMPTY, statements, null, null);
+                                                                 at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
+                                                                 RawExecutionCode.rawMain, JFormalParameter.EMPTY,
+                                                                 CClassType.EMPTY, statements, null, null);
         filter.addMethod(rawMainFunct);
 
     }
@@ -229,13 +229,13 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public Object visitAssignmentExpression(JAssignmentExpression oldself,
-                JExpression oldleft, JExpression oldright) {
+                                                JExpression oldleft, JExpression oldright) {
             // a little optimization, use the pointer version of the
             // structure's pop in struct.h to avoid copying
             if (oldright instanceof JCastExpression
-                    && (((JCastExpression) oldright).getExpr() instanceof SIRPopExpression)) {
+                && (((JCastExpression) oldright).getExpr() instanceof SIRPopExpression)) {
                 SIRPopExpression pop = (SIRPopExpression) ((JCastExpression) oldright)
-                        .getExpr();
+                    .getExpr();
 
                 if (pop.getType().isClassType()) {
                     JExpression left = (JExpression) oldleft.accept(this);
@@ -243,10 +243,10 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
                     JExpression[] arg = { left };
 
                     JMethodCallExpression receive = new JMethodCallExpression(
-                            null, new JThisExpression(null),
-                            RawExecutionCode.structReceivePrefix
-                                    + (dynamic ? "Dynamic" : "Static")
-                                    + pop.getType(), arg);
+                                                                              null, new JThisExpression(null),
+                                                                              RawExecutionCode.structReceivePrefix
+                                                                              + (dynamic ? "Dynamic" : "Static")
+                                                                              + pop.getType(), arg);
                     receive.setTapeType(pop.getType());
                     return receive;
                 }
@@ -257,29 +257,29 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
 
             // otherwise do the normal thing
             JExpression self = (JExpression) super.visitAssignmentExpression(
-                    oldself, oldleft, oldright);
+                                                                             oldself, oldleft, oldright);
             return self;
         }
 
         public Object visitPopExpression(SIRPopExpression oldSelf,
-                CType oldTapeType) {
+                                         CType oldTapeType) {
 
             // do the super
             SIRPopExpression self = (SIRPopExpression) super
-                    .visitPopExpression(oldSelf, oldTapeType);
+                .visitPopExpression(oldSelf, oldTapeType);
 
             // if this is a struct, use the struct's pop method, generated in
             // struct.h
             if (self.getType().isClassType()) {
                 return new JMethodCallExpression(null,
-                        new JThisExpression(null), "pop" + self.getType(),
-                        new JExpression[0]);
+                                                 new JThisExpression(null), "pop" + self.getType(),
+                                                 new JExpression[0]);
             } else if (self.getType().isArrayType()) {
                 return null;
             } else {
                 JMethodCallExpression receive = new JMethodCallExpression(null,
-                        new JThisExpression(null),
-                        RawExecutionCode.receiveMethod, new JExpression[0]);
+                                                                          new JThisExpression(null),
+                                                                          RawExecutionCode.receiveMethod, new JExpression[0]);
                 receive.setTapeType(self.getType());
                 return receive;
             }
@@ -294,9 +294,9 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public Object visitPeekExpression(SIRPeekExpression oldSelf,
-                CType oldTapeType, JExpression oldArg) {
+                                          CType oldTapeType, JExpression oldArg) {
             Utils.fail("Should not see a peek expression when generating "
-                    + "direct communication");
+                       + "direct communication");
             return null;
         }
     }
@@ -311,7 +311,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
                 if (!filter.getMethods()[i].equals(filter.getWork())) {
                     found = false;
                     filter.getMethods()[i]
-                            .accept(new CommunicationOutsideWork());
+                        .accept(new CommunicationOutsideWork());
                     if (found)
                         return true;
                 }
@@ -320,7 +320,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
-                JExpression arg) {
+                                        JExpression arg) {
             found = true;
         }
 
@@ -329,7 +329,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitPushExpression(SIRPushExpression self, CType tapeType,
-                JExpression arg) {
+                                        JExpression arg) {
             arg.accept(this);
         }
     }
@@ -348,7 +348,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
-                JExpression arg) {
+                                        JExpression arg) {
             Utils.fail("Should not see a peek expression");
         }
 
@@ -358,7 +358,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitPushExpression(SIRPushExpression self, CType tapeType,
-                JExpression arg) {
+                                        JExpression arg) {
             sawPush = true;
         }
 
@@ -368,7 +368,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         // case where a push comes before a pop
 
         public void visitWhileStatement(JWhileStatement self, JExpression cond,
-                JStatement body) {
+                                        JStatement body) {
             cond.accept(this);
             body.accept(this);
             // second pass
@@ -377,7 +377,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitForStatement(JForStatement self, JStatement init,
-                JExpression cond, JStatement incr, JStatement body) {
+                                      JExpression cond, JStatement incr, JStatement body) {
             if (init != null) {
                 init.accept(this);
             }
@@ -399,7 +399,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         public void visitDoStatement(JDoStatement self, JExpression cond,
-                JStatement body) {
+                                     JStatement body) {
             body.accept(this);
             cond.accept(this);
             // second pass
@@ -421,7 +421,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
          * if we find a peek expression set found to true;
          */
         public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
-                JExpression arg) {
+                                        JExpression arg) {
             found = true;
         }
     }

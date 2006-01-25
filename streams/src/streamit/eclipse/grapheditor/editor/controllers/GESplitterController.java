@@ -20,120 +20,120 @@ import streamit.eclipse.grapheditor.graph.GEType;
  * @author jcarlos
  */
 public class GESplitterController extends GEStreamNodeController{
-	
-	GESplitterConfigurationDialog dialog = null;
-	
-	/**
-	  * Constructor. Set the default properties for the GESplitterController. 
-	  */
-	 public GESplitterController() 
-	 {    	
-		super();
-		 setDefaultProperties();
-	 }
+    
+    GESplitterConfigurationDialog dialog = null;
+    
+    /**
+     * Constructor. Set the default properties for the GESplitterController. 
+     */
+    public GESplitterController() 
+    {       
+        super();
+        setDefaultProperties();
+    }
 
-	 /**
-	  * Return the type of the controller.
-	  */
-	 public String toString() 
-	 {
-		 return GEType.GETypeToString(GEType.SPLITTER);
-	 }
+    /**
+     * Return the type of the controller.
+     */
+    public String toString() 
+    {
+        return GEType.GETypeToString(GEType.SPLITTER);
+    }
 
 
-	/**
-	 * Display the dialog that allows the user to configure the values for the splitter. 
-	 * @return True if the properties clicked were accepted and valid, false otherwise.
-	 */
-	 public boolean configure(GPDocument document) 
-	 {
-		setDefaultProperties();
-    	
-		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
-		setPropertiesInDialog(this.properties);
-		
-		dialog.setVisible(true);
-		if (dialog.canceled()) return false;
+    /**
+     * Display the dialog that allows the user to configure the values for the splitter. 
+     * @return True if the properties clicked were accepted and valid, false otherwise.
+     */
+    public boolean configure(GPDocument document) 
+    {
+        setDefaultProperties();
+        
+        dialog = new GESplitterConfigurationDialog(new JFrame(), document);
+        setPropertiesInDialog(this.properties);
+        
+        dialog.setVisible(true);
+        if (dialog.canceled()) return false;
 
-		getPropertiesInDialog();
+        getPropertiesInDialog();
          
-         return true;
-	 }
+        return true;
+    }
 
-	/**
-	 * Display the dialog that allows the user to configure the values for the splitter. 
-	 * @return True if the properties clicked were accepted and valid, false otherwise.
-	 */
-	 public boolean configure(GPDocument document, Properties propert) 
-	 {
-		setDefaultProperties();
+    /**
+     * Display the dialog that allows the user to configure the values for the splitter. 
+     * @return True if the properties clicked were accepted and valid, false otherwise.
+     */
+    public boolean configure(GPDocument document, Properties propert) 
+    {
+        setDefaultProperties();
 
-		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
-		setPropertiesInDialog(propert);
-		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
-		dialog.saveConnected(propert.getProperty(GEProperties.KEY_IS_CONNECTED));
-		
-		dialog.setVisible(true);
-		if (dialog.canceled()) return false;
+        dialog = new GESplitterConfigurationDialog(new JFrame(), document);
+        setPropertiesInDialog(propert);
+        dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
+        dialog.saveConnected(propert.getProperty(GEProperties.KEY_IS_CONNECTED));
+        
+        dialog.setVisible(true);
+        if (dialog.canceled()) return false;
 
-		getPropertiesInDialog();
+        getPropertiesInDialog();
          
-		 return true;
-	 }
+        return true;
+    }
 
-	/**
-	 * Set the properties in the dialog according to the values of propert
-	 * @param propert Properties
-	 */
-	public void setPropertiesInDialog(Properties propert)
-	{
-       	dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
-		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
-		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
-		dialog.setSplitterWeights(propert.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS));
-		dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));
-	}
-	
-	/**
-	 * Get the properties in the dialog and place them in the controller's
-	 * Properties field.
-	 */
-	public void getPropertiesInDialog()
-	{
-		properties.put(GEProperties.KEY_NAME, dialog.getName());
-		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
-		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, dialog.getSplitterWeights());
-		properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
-	}
-	
-	 /**
-	  * Set the default properties of the GESplitterController. If the default properties
-	  * are not set again, then the values that are changed in the GESplitterController, will
-	  * remain stored. 
-	  *
-	  */
-	 public void setDefaultProperties()
-	 {
-		properties.put(GEProperties.KEY_NAME, "StrSplitter"+ GEProperties.id_count++);
-		properties.put(GEProperties.KEY_PARENT, "Toplevel");
-		properties.put(GEProperties.KEY_TYPE, GEType.SPLITTER);
-		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
-		properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
-	 }
-	
-	
-	
-	
+    /**
+     * Set the properties in the dialog according to the values of propert
+     * @param propert Properties
+     */
+    public void setPropertiesInDialog(Properties propert)
+    {
+        dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
+        dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
+        dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
+        dialog.setSplitterWeights(propert.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS));
+        dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));
+    }
+    
+    /**
+     * Get the properties in the dialog and place them in the controller's
+     * Properties field.
+     */
+    public void getPropertiesInDialog()
+    {
+        properties.put(GEProperties.KEY_NAME, dialog.getName());
+        properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
+        properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, dialog.getSplitterWeights());
+        properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
+    }
+    
+    /**
+     * Set the default properties of the GESplitterController. If the default properties
+     * are not set again, then the values that are changed in the GESplitterController, will
+     * remain stored. 
+     *
+     */
+    public void setDefaultProperties()
+    {
+        properties.put(GEProperties.KEY_NAME, "StrSplitter"+ GEProperties.id_count++);
+        properties.put(GEProperties.KEY_PARENT, "Toplevel");
+        properties.put(GEProperties.KEY_TYPE, GEType.SPLITTER);
+        properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
+        properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
+    }
+    
+    
+    
+    
 
-	/**
-	 * Get the default properties for a GESplitterController.
-	 * @return Properties the default properties of a GESplitterController.
-	 */
-	 public Properties getDefaultConfiguration()
-	 {
-		 setDefaultProperties();
-		 return properties;
-	 }		
-	
-	
+    /**
+     * Get the default properties for a GESplitterController.
+     * @return Properties the default properties of a GESplitterController.
+     */
+    public Properties getDefaultConfiguration()
+    {
+        setDefaultProperties();
+        return properties;
+    }       
+    
+    
 }

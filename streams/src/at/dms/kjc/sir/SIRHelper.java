@@ -15,7 +15,7 @@ public class SIRHelper extends SIRStream
     public SIRHelper(boolean _native)
     {
         super();
-	this._native = _native;
+        this._native = _native;
     }
 
     public boolean isNative() { return _native; }
@@ -35,12 +35,12 @@ public class SIRHelper extends SIRStream
     public int getPushForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPushForSchedule for Helper");
-	return -1;
+        return -1;
     }
     public int getPopForSchedule(HashMap[] counts)
     {
         at.dms.util.Utils.fail(ident + ": attempt to call getPopForSchedule for Helper");
-	return -1;
+        return -1;
     }
 
     /* Things that we need to implement: */
@@ -51,13 +51,13 @@ public class SIRHelper extends SIRStream
     public boolean needsWork() { return false; }
 
     //public void setIdent(java.lang.String name) {
-    //	System.out.println("Warning: Refuse to rename Helper!");
+    //  System.out.println("Warning: Refuse to rename Helper!");
     //}
 
     public Object accept(AttributeStreamVisitor v)
     {
         at.dms.util.Utils.fail(ident + ": SIRHelper does not accept AttributeStreamVisitor");
-	return null;
+        return null;
         //return v.visitHelper(this, methods);
     }
 

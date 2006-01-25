@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclarationStatement.java,v 1.8 2003-11-13 10:46:11 thies Exp $
+ * $Id: JTypeDeclarationStatement.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,98 +31,98 @@ import at.dms.compiler.UnpositionedError;
  */
 public class JTypeDeclarationStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JTypeDeclarationStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	decl		the type declaration
-   */
-  public JTypeDeclarationStatement(TokenReference where, JTypeDeclaration decl) {
-    super(where, null);
-    this.decl = decl;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    CClass	owner = context.getClassContext().getCClass();
-    String	prefix = owner.getQualifiedName() + "$" + context.getClassContext().getNextSyntheticIndex();
-
-    decl.generateInterface(owner, prefix);
-
-    try {
-      context.getBlockContext().addClass(decl.getCClass());
-    } catch (UnpositionedError cue) {
-      throw cue.addPosition(getTokenReference());
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   decl        the type declaration
+     */
+    public JTypeDeclarationStatement(TokenReference where, JTypeDeclaration decl) {
+        super(where, null);
+        this.decl = decl;
     }
 
-    decl.checkInterface(context);
-    decl.checkInitializers(context);
-    decl.checkTypeBody(context);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        CClass  owner = context.getClassContext().getCClass();
+        String  prefix = owner.getQualifiedName() + "$" + context.getClassContext().getNextSyntheticIndex();
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitTypeDeclarationStatement(this, decl);
-  }
+        decl.generateInterface(owner, prefix);
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return p.visitTypeDeclarationStatement(this, decl);
-  }
+        try {
+            context.getBlockContext().addClass(decl.getCClass());
+        } catch (UnpositionedError cue) {
+            throw cue.addPosition(getTokenReference());
+        }
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    // nothing to do here
-  }
+        decl.checkInterface(context);
+        decl.checkInitializers(context);
+        decl.checkTypeBody(context);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  private JTypeDeclaration		decl;
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitTypeDeclarationStatement(this, decl);
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitTypeDeclarationStatement(this, decl);
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JTypeDeclarationStatement other = new at.dms.kjc.JTypeDeclarationStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        // nothing to do here
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JTypeDeclarationStatement other) {
-  super.deepCloneInto(other);
-  other.decl = (at.dms.kjc.JTypeDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
-}
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    private JTypeDeclaration        decl;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JTypeDeclarationStatement other = new at.dms.kjc.JTypeDeclarationStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JTypeDeclarationStatement other) {
+        super.deepCloneInto(other);
+        other.decl = (at.dms.kjc.JTypeDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

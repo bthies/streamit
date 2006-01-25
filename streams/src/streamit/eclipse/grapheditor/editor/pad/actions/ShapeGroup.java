@@ -1,5 +1,5 @@
 /*
- * @(#)ShapeGroup.java	1.2 01.02.2003
+ * @(#)ShapeGroup.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,35 +35,35 @@ import org.jgraph.graph.ParentMap;
  */
 public class ShapeGroup extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ShapeGroup.
-	 * @param graphpad
-	 */
-	public ShapeGroup(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ShapeGroup.
+     * @param graphpad
+     */
+    public ShapeGroup(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Object[] cells = getCurrentGraphLayoutCache().order(getCurrentGraph().getSelectionCells());
-		if (cells != null && cells.length > 0) {
-			DefaultGraphCell group = new DefaultGraphCell("Group");
-			
-			// FIX: for the next JGraph binary
-		 	ParentMap map = new ParentMap();
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraphLayoutCache().order(getCurrentGraph().getSelectionCells());
+        if (cells != null && cells.length > 0) {
+            DefaultGraphCell group = new DefaultGraphCell("Group");
+            
+            // FIX: for the next JGraph binary
+            ParentMap map = new ParentMap();
 
-			//ParentMap map = new ParentMap();
-			for (int i = cells.length-1; i >=0; i--)
-				map.addEntry(cells[i], group);
-			getCurrentGraph().getGraphLayoutCache().insert(
-				new Object[] { group },
-				null,
-				null,
-				map,
-				null);
-		}
-	}
+            //ParentMap map = new ParentMap();
+            for (int i = cells.length-1; i >=0; i--)
+                map.addEntry(cells[i], group);
+            getCurrentGraph().getGraphLayoutCache().insert(
+                                                           new Object[] { group },
+                                                           null,
+                                                           null,
+                                                           map,
+                                                           null);
+        }
+    }
 
 }

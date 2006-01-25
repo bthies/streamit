@@ -10,26 +10,26 @@ public class LinearPrinter {
     private static boolean outputEnabled = false;
     /** Return flag status. **/
     public static boolean getOutput() {
-	return outputEnabled;
+        return outputEnabled;
     }
     /** Set output flag status. **/
     public static void setOutput(boolean outFlag) {
-	outputEnabled = outFlag;
+        outputEnabled = outFlag;
     }
     /** Prints message to stderr if flag is set to true. **/
     public static void println(String message) {
-	if (outputEnabled) {
-	    System.err.println(message);
-	}
+        if (outputEnabled) {
+            System.err.println(message);
+        }
     }
     /** Prints message to stderr if flag is set to true. **/
     public static void print(String message) {
-	if (outputEnabled) {
-	    System.err.print(message);
-	}
+        if (outputEnabled) {
+            System.err.print(message);
+        }
     }
     /** Prints message with WARNING: prefix to stderr if flag is set to true. **/
     public static void warn(String message) {
-	System.err.println("WARNING: " + message);
+        System.err.println("WARNING: " + message);
     }
 }

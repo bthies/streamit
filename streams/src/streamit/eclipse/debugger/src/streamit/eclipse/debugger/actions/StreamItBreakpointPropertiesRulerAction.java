@@ -23,66 +23,66 @@ import org.eclipse.ui.texteditor.ITextEditor;
  */
 public class StreamItBreakpointPropertiesRulerAction extends ManageBreakpointRulerAction {
 
-	protected IBreakpoint fBreakpoint;
-	
-	/**
-	 * Creates the action to enable/disable breakpoints
-	 */
-	public StreamItBreakpointPropertiesRulerAction(ITextEditor editor, IVerticalRulerInfo info) {
-		super(editor, info);
-		setText(ActionMessages.getString(IStreamItActionConstants.JAVA_BREAKPOINT_PROPERTIES_RULER_ACTION_BREAKPOINT_PROPERTIES)); //$NON-NLS-1$
-		fBreakpoint = null;
-	}
-	
-	protected IBreakpoint getBreakpoint() {
-		return fBreakpoint;
-	}
+    protected IBreakpoint fBreakpoint;
+    
+    /**
+     * Creates the action to enable/disable breakpoints
+     */
+    public StreamItBreakpointPropertiesRulerAction(ITextEditor editor, IVerticalRulerInfo info) {
+        super(editor, info);
+        setText(ActionMessages.getString(IStreamItActionConstants.JAVA_BREAKPOINT_PROPERTIES_RULER_ACTION_BREAKPOINT_PROPERTIES)); //$NON-NLS-1$
+        fBreakpoint = null;
+    }
+    
+    protected IBreakpoint getBreakpoint() {
+        return fBreakpoint;
+    }
 
-	protected void setBreakpoint(IBreakpoint breakpoint) {
-		fBreakpoint = breakpoint;
-	}
-	
-	/**
-	 * @see Action#run()
-	 */
-	public void run() {
-		if (getBreakpoint() != null) {
-			Dialog d=
-			new JavaBreakpointPropertiesDialog(getTextEditor().getEditorSite().getShell(), (IJavaBreakpoint)getBreakpoint());
-			d.open();
-		}
-	}
-	
-	/**
-	 * @see IUpdate#update()
-	 */
-	public void update() {
-		updateBreakpointData();
-		setBreakpoint(determineBreakpoint());
-		if (getBreakpoint() == null || !(getBreakpoint() instanceof IJavaBreakpoint)) {
-			setBreakpoint(null);
-			setEnabled(false);
-			return;
-		}
-		setEnabled(true);
-	}
-	
-	protected IBreakpoint determineBreakpoint() {
-		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
-		
-		Iterator i = getJavaMarkers(false).iterator();
-		while (i.hasNext()) {
-			IBreakpoint breakpoint = breakpointManager.getBreakpoint((IMarker) i.next());
-			if (breakpoint instanceof IJavaLineBreakpoint) return (IJavaLineBreakpoint)breakpoint;
-		}
+    protected void setBreakpoint(IBreakpoint breakpoint) {
+        fBreakpoint = breakpoint;
+    }
+    
+    /**
+     * @see Action#run()
+     */
+    public void run() {
+        if (getBreakpoint() != null) {
+            Dialog d=
+                new JavaBreakpointPropertiesDialog(getTextEditor().getEditorSite().getShell(), (IJavaBreakpoint)getBreakpoint());
+            d.open();
+        }
+    }
+    
+    /**
+     * @see IUpdate#update()
+     */
+    public void update() {
+        updateBreakpointData();
+        setBreakpoint(determineBreakpoint());
+        if (getBreakpoint() == null || !(getBreakpoint() instanceof IJavaBreakpoint)) {
+            setBreakpoint(null);
+            setEnabled(false);
+            return;
+        }
+        setEnabled(true);
+    }
+    
+    protected IBreakpoint determineBreakpoint() {
+        IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
+        
+        Iterator i = getJavaMarkers(false).iterator();
+        while (i.hasNext()) {
+            IBreakpoint breakpoint = breakpointManager.getBreakpoint((IMarker) i.next());
+            if (breakpoint instanceof IJavaLineBreakpoint) return (IJavaLineBreakpoint)breakpoint;
+        }
 
-		i = getJavaMarkers(true).iterator();
-		while (i.hasNext()) {
-			IBreakpoint breakpoint = breakpointManager.getBreakpoint((IMarker) i.next());
-			if (breakpoint instanceof IJavaBreakpoint) return (IJavaLineBreakpoint)breakpoint;
-		}
-		
+        i = getJavaMarkers(true).iterator();
+        while (i.hasNext()) {
+            IBreakpoint breakpoint = breakpointManager.getBreakpoint((IMarker) i.next());
+            if (breakpoint instanceof IJavaBreakpoint) return (IJavaLineBreakpoint)breakpoint;
+        }
+        
 
-		return null;
-	}	
+        return null;
+    }   
 }

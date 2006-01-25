@@ -1,5 +1,5 @@
 /*
- * @(#)CellMapper.java	1.0 1/1/02
+ * @(#)CellMapper.java  1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -31,19 +31,19 @@ package org.jgraph.graph;
 
 public interface CellMapper {
 
-	/**
-	 * Returns the view that is associated with <code>cell</code>.
-	 *
-	 * @param create whether a new view should created
-	 */
-	CellView getMapping(Object cell, boolean create);
+    /**
+     * Returns the view that is associated with <code>cell</code>.
+     *
+     * @param create whether a new view should created
+     */
+    CellView getMapping(Object cell, boolean create);
 
-	/**
-	 * Inserts the association between <code>cell</code> and <code>view</code>.
-	 *
-	 * @param cell the cell that constitutes the model element
-	 * @param view the view that constitutes the view element
-	 */
-	void putMapping(Object cell, CellView view);
+    /**
+     * Inserts the association between <code>cell</code> and <code>view</code>.
+     *
+     * @param cell the cell that constitutes the model element
+     * @param view the view that constitutes the view element
+     */
+    void putMapping(Object cell, CellView view);
 
 }

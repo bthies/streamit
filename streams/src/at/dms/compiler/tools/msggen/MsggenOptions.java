@@ -6,66 +6,66 @@ import gnu.getopt.LongOpt;
 
 public class MsggenOptions extends at.dms.compiler.tools.common.Options {
 
-  public MsggenOptions(String name) {
-    super(name);
-  }
-
-  public MsggenOptions() {
-    this("Msggen");
-  }
-
-  public boolean processOption(int code, Getopt g) {
-    switch (code) {
-    default:
-      return super.processOption(code, g);
+    public MsggenOptions(String name) {
+        super(name);
     }
-  }
 
-  public String[] getOptions() {
-    String[]	parent = super.getOptions();
-    String[]	total = new String[parent.length + 0];
-    System.arraycopy(parent, 0, total, 0, parent.length);
+    public MsggenOptions() {
+        this("Msggen");
+    }
+
+    public boolean processOption(int code, Getopt g) {
+        switch (code) {
+        default:
+            return super.processOption(code, g);
+        }
+    }
+
+    public String[] getOptions() {
+        String[]    parent = super.getOptions();
+        String[]    total = new String[parent.length + 0];
+        System.arraycopy(parent, 0, total, 0, parent.length);
     
-    return total;
-  }
+        return total;
+    }
 
 
-  public String getShortOptions() {
-    return "" + super.getShortOptions();
-  }
+    public String getShortOptions() {
+        return "" + super.getShortOptions();
+    }
 
 
-  public void version() {
-    System.out.println("Version 1.5B released 9 August 2001");
-  }
+    public void version() {
+        System.out.println("Version 1.5B released 9 August 2001");
+    }
 
 
-  public void usage() {
-    System.err.println("usage: at.dms.msggen <file>");
-  }
+    public void usage() {
+        System.err.println("usage: at.dms.msggen <file>");
+    }
 
 
-  public void help() {
-    System.err.println("usage: at.dms.msggen <file>");
-    printOptions();
-    System.err.println();
-    version();
-    System.err.println();
-    System.err.println("This program is part of the Kopi Suite.");
-    System.err.println("For more info, please see: http://www.dms.at/kopi");
-  }
+    public void help() {
+        System.err.println("usage: at.dms.msggen <file>");
+        printOptions();
+        System.err.println();
+        version();
+        System.err.println();
+        System.err.println("This program is part of the Kopi Suite.");
+        System.err.println("For more info, please see: http://www.dms.at/kopi");
+    }
 
-  public LongOpt[] getLongOptions() {
-    LongOpt[]	parent = super.getLongOptions();
-    LongOpt[]	total = new LongOpt[parent.length + LONGOPTS.length];
+    public LongOpt[] getLongOptions() {
+        LongOpt[]   parent = super.getLongOptions();
+        LongOpt[]   total = new LongOpt[parent.length + LONGOPTS.length];
     
-    System.arraycopy(parent, 0, total, 0, parent.length);
-    System.arraycopy(LONGOPTS, 0, total, parent.length, LONGOPTS.length);
+        System.arraycopy(parent, 0, total, 0, parent.length);
+        System.arraycopy(LONGOPTS, 0, total, parent.length, LONGOPTS.length);
     
-    return total;
-  }
+        return total;
+    }
 
-  private static final LongOpt[] LONGOPTS = {
+    private static final LongOpt[] LONGOPTS = {
 
-  };
+    };
 }

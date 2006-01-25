@@ -1,5 +1,5 @@
 /*
- * @(#)RealGraphCellRenderer.java	1.2 11/11/02
+ * @(#)RealGraphCellRenderer.java   1.2 11/11/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -36,64 +36,64 @@ import org.jgraph.graph.CellView;
 
 public class RealGraphCellRenderer extends JComponent {
 
-	protected CellRendererPane rendererPane;
-	protected CellView[] views;
-	protected GPGraph graph;
-	protected double scale = 1.0;
+    protected CellRendererPane rendererPane;
+    protected CellView[] views;
+    protected GPGraph graph;
+    protected double scale = 1.0;
 
-	public RealGraphCellRenderer(GPGraph graph, CellView[] views) {
-		add(rendererPane = new CellRendererPane());
-		this.views = views;
-		this.graph = graph;
-	}
+    public RealGraphCellRenderer(GPGraph graph, CellView[] views) {
+        add(rendererPane = new CellRendererPane());
+        this.views = views;
+        this.graph = graph;
+    }
 
-	public void setScale(double scale) {
-		this.scale = scale;
-	}
+    public void setScale(double scale) {
+        this.scale = scale;
+    }
 
-	public Dimension getPreferredSize() {
-		if (views != null) {
-			Rectangle r = AbstractCellView.getBounds(views);
-			r.width *= scale;
-			r.height *= scale;
-			return new Dimension(r.width + 2, r.height + 2);
-		}
-		return new Dimension(10, 10);
-	}
+    public Dimension getPreferredSize() {
+        if (views != null) {
+            Rectangle r = AbstractCellView.getBounds(views);
+            r.width *= scale;
+            r.height *= scale;
+            return new Dimension(r.width + 2, r.height + 2);
+        }
+        return new Dimension(10, 10);
+    }
 
-	public void paint(Graphics g) {
-		Graphics2D g2 = (Graphics2D) g;
-		AffineTransform at = g2.getTransform();
-		g2.scale(scale, scale);
-		if (views != null) {
-			Rectangle r = AbstractCellView.getBounds(views);
-			g.translate(-r.x, -r.y);
-			for (int i = 0; i < views.length; i++) {
-				Rectangle b = views[i].getBounds();
-				Component c;
-				if (graph.isGroup(views[i].getCell()))
-					c =
-						new RealGraphCellRenderer(
-							graph,
-							((CellView) views[i]).getChildViews());
-				else
-					c =
-						views[i].getRendererComponent(
-							graph,
-							false,
-							false,
-							false);
-				rendererPane.paintComponent(
-					g,
-					c,
-					this,
-					b.x,
-					b.y,
-					b.width,
-					b.height);
-			}
-		}
-		g2.setTransform(at);
-	}
+    public void paint(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g;
+        AffineTransform at = g2.getTransform();
+        g2.scale(scale, scale);
+        if (views != null) {
+            Rectangle r = AbstractCellView.getBounds(views);
+            g.translate(-r.x, -r.y);
+            for (int i = 0; i < views.length; i++) {
+                Rectangle b = views[i].getBounds();
+                Component c;
+                if (graph.isGroup(views[i].getCell()))
+                    c =
+                        new RealGraphCellRenderer(
+                                                  graph,
+                                                  ((CellView) views[i]).getChildViews());
+                else
+                    c =
+                        views[i].getRendererComponent(
+                                                      graph,
+                                                      false,
+                                                      false,
+                                                      false);
+                rendererPane.paintComponent(
+                                            g,
+                                            c,
+                                            this,
+                                            b.x,
+                                            b.y,
+                                            b.width,
+                                            b.height);
+            }
+        }
+        g2.setTransform(at);
+    }
 
 }

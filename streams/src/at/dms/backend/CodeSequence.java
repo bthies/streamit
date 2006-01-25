@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.1 2001-08-30 16:32:24 thies Exp $
+ * $Id: CodeSequence.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -29,147 +29,147 @@ import java.util.Stack;
  */
 public class CodeSequence {
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the first instruction of the sequence
-   */
-  public InstructionHandle getCodeStart() {
-    return codeStart;
-  }
-
-  /**
-   * Returns the (current) last instruction of the sequence
-   */
-  public InstructionHandle getCurrent() {
-    return current;
-  }
-
-  // --------------------------------------------------------------------
-  // CODE GENERATION
-  // --------------------------------------------------------------------
-
-  /**
-   * Adds an instruction at the end of the sequence
-   * @param	handle		an instruction handle
-   */
-  public void plantInstruction(InstructionHandle handle) {
-    if (current != null) {
-      current.setNext(handle);
+    /**
+     * Returns the first instruction of the sequence
+     */
+    public InstructionHandle getCodeStart() {
+        return codeStart;
     }
-    current = handle;
+
+    /**
+     * Returns the (current) last instruction of the sequence
+     */
+    public InstructionHandle getCurrent() {
+        return current;
+    }
+
+    // --------------------------------------------------------------------
+    // CODE GENERATION
+    // --------------------------------------------------------------------
+
+    /**
+     * Adds an instruction at the end of the sequence
+     * @param   handle      an instruction handle
+     */
+    public void plantInstruction(InstructionHandle handle) {
+        if (current != null) {
+            current.setNext(handle);
+        }
+        current = handle;
         handle.getInstruction().dump();
-    if (codeStart == null) {
-      codeStart = current;
+        if (codeStart == null) {
+            codeStart = current;
+        }
     }
-  }
 
-  /**
-   * Adds an instruction at the end of the sequence
-   * @param	insn		the instruction
-   */
-  public void plantInstruction(Instruction insn) {
-    plantInstruction(new InstructionHandle(insn, current));
-  }
-
-  /**
-   * Adds a quadruple at the end of the sequence
-   * @param	node		the node of the quadruple
-   */
-  public void plantQuadruple(QNode node) {
-    node.generate(this);
-  }
-
-  /**
-   * Adds a basic block and a jump instruction as needed
-   * @param	block		the destination (BasicBlock)
-   */
-  public void jumpToBasicBlock(BasicBlock block) {
-    if (block.isMarked() || block.getPosition() >= max) {
-      plantInstruction(new InstructionHandle(new JumpInstruction(at.dms.classfile.Constants.opc_goto, block), current));
+    /**
+     * Adds an instruction at the end of the sequence
+     * @param   insn        the instruction
+     */
+    public void plantInstruction(Instruction insn) {
+        plantInstruction(new InstructionHandle(insn, current));
     }
-    plantBasicBlock(block);
-  }
 
-  /**
-   * Adds a basic block at the end of the sequence
-   * @param	block		the destination (BasicBlock)
-   */
-  public void plantBasicBlock(BasicBlock block) {
-    if (!block.isMarked()) {
-      if (block.getPosition() >= max) {
-	stack.push(block);
-      } else {
-	block.generateQuadruple(this);
-      }
+    /**
+     * Adds a quadruple at the end of the sequence
+     * @param   node        the node of the quadruple
+     */
+    public void plantQuadruple(QNode node) {
+        node.generate(this);
     }
-  }
 
-  /**
-   * Adds a basic block at the end of the sequence
-   * @param	block		the destination (BasicBlock)
-   * @param	jump		the jump instruction to this block
-   * @param	transition	the quadruple MOVE instructions
-   */
-  public void plantBasicBlock(BasicBlock block, JumpInstruction jump, QQuadruple[] transition) {
-    if (transition != null && transition.length != 0) {
-      BasicBlock	trans = new BasicBlock(-1);
-
-      trans.setBody(transition);
-      jump.setTarget(trans);
-      plantBasicBlock(trans);
-      jumpToBasicBlock(block);
-    } else {
-      plantBasicBlock(block);
+    /**
+     * Adds a basic block and a jump instruction as needed
+     * @param   block       the destination (BasicBlock)
+     */
+    public void jumpToBasicBlock(BasicBlock block) {
+        if (block.isMarked() || block.getPosition() >= max) {
+            plantInstruction(new InstructionHandle(new JumpInstruction(at.dms.classfile.Constants.opc_goto, block), current));
+        }
+        plantBasicBlock(block);
     }
-  }
 
-  /**
-   * Adds a basic block at the end of the sequence
-   * @param	block		the destination (BasicBlock)
-   * @param	max		the maximum position of this block on the original source
-   *				this is made to avoid locality problems
-   */
-  public void plantBasicBlock(BasicBlock block, int max) {
-    int		oldMax = this.max;
-
-    this.max = max;
-
-    plantBasicBlock(block);
-
-    this.max = oldMax;
-  }
-
-  /**
-   * Closes the code sequence
-   * Generates pending basic blocks code
-   */
-  public void close() {
-    if (stack.size() > 0) {
-      Stack	todo = stack;
-
-      stack = new Stack();
-
-      while (todo.size() > 0) {
-	BasicBlock	block = (BasicBlock)todo.pop();
-
-	if (!block.isMarked()) {
-	  plantBasicBlock(block);
-	}
-      }
-
-      close();
+    /**
+     * Adds a basic block at the end of the sequence
+     * @param   block       the destination (BasicBlock)
+     */
+    public void plantBasicBlock(BasicBlock block) {
+        if (!block.isMarked()) {
+            if (block.getPosition() >= max) {
+                stack.push(block);
+            } else {
+                block.generateQuadruple(this);
+            }
+        }
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Adds a basic block at the end of the sequence
+     * @param   block       the destination (BasicBlock)
+     * @param   jump        the jump instruction to this block
+     * @param   transition  the quadruple MOVE instructions
+     */
+    public void plantBasicBlock(BasicBlock block, JumpInstruction jump, QQuadruple[] transition) {
+        if (transition != null && transition.length != 0) {
+            BasicBlock  trans = new BasicBlock(-1);
 
-  private InstructionHandle		codeStart;
-  private InstructionHandle		current;
-  private int				max = Integer.MAX_VALUE;
-  private Stack				stack = new Stack();
+            trans.setBody(transition);
+            jump.setTarget(trans);
+            plantBasicBlock(trans);
+            jumpToBasicBlock(block);
+        } else {
+            plantBasicBlock(block);
+        }
+    }
+
+    /**
+     * Adds a basic block at the end of the sequence
+     * @param   block       the destination (BasicBlock)
+     * @param   max     the maximum position of this block on the original source
+     *              this is made to avoid locality problems
+     */
+    public void plantBasicBlock(BasicBlock block, int max) {
+        int     oldMax = this.max;
+
+        this.max = max;
+
+        plantBasicBlock(block);
+
+        this.max = oldMax;
+    }
+
+    /**
+     * Closes the code sequence
+     * Generates pending basic blocks code
+     */
+    public void close() {
+        if (stack.size() > 0) {
+            Stack   todo = stack;
+
+            stack = new Stack();
+
+            while (todo.size() > 0) {
+                BasicBlock  block = (BasicBlock)todo.pop();
+
+                if (!block.isMarked()) {
+                    plantBasicBlock(block);
+                }
+            }
+
+            close();
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private InstructionHandle       codeStart;
+    private InstructionHandle       current;
+    private int             max = Integer.MAX_VALUE;
+    private Stack               stack = new Stack();
 }

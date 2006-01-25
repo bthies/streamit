@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: AbstractInstructionAccessor.java,v 1.2 2003-05-28 05:58:36 thies Exp $
+ * $Id: AbstractInstructionAccessor.java,v 1.3 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -27,28 +27,28 @@ package at.dms.classfile;
  * access to the accessor to be transformed.
  */
 public abstract class AbstractInstructionAccessor
-  implements InstructionAccessor
+    implements InstructionAccessor
 {
-  /**
-   * Transforms the accessor.
-   * @param	transformer		the transformer to be used
-   * @param	container		the object which contains the accessor
-   */
-  public InstructionAccessor transform(AccessorTransformer transformer,
-				       AccessorContainer container)
-    throws BadAccessorException
-  {
-    return transformer.transform(this, container);
-  }
+    /**
+     * Transforms the accessor.
+     * @param   transformer     the transformer to be used
+     * @param   container       the object which contains the accessor
+     */
+    public InstructionAccessor transform(AccessorTransformer transformer,
+                                         AccessorContainer container)
+        throws BadAccessorException
+    {
+        return transformer.transform(this, container);
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.classfile.AbstractInstructionAccessor other) {
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.classfile.AbstractInstructionAccessor other) {
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -12,5 +12,5 @@ public interface CodeGenerator extends at.dms.kjc.SLIRVisitor {
      *         with code created outside of descendents of classes implementing
      *         CodeGenerator.
      */
-	public CodegenPrintWriter getPrinter();
+    public CodegenPrintWriter getPrinter();
 }

@@ -17,7 +17,7 @@
 package streamit.scheduler2.singleappearance;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FilterIter;
+    FilterIter;
 import streamit.scheduler2.Schedule;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
 
@@ -48,28 +48,28 @@ public class Filter extends streamit.scheduler2.hierarchical.Filter
             int initPeek = 0, initPop = 0, initPush = 0;
             int initStage;
             for (initStage = 0;
-                initStage < filterIter.getNumInitStages();
-                initStage++)
-            {
-                Object initFunc = filterIter.getInitFunctionStage(initStage);
-                int peek = filterIter.getInitPeekStage(initStage);
-                int pop = filterIter.getInitPopStage(initStage);
-                int push = filterIter.getInitPushStage(initStage);
+                 initStage < filterIter.getNumInitStages();
+                 initStage++)
+                {
+                    Object initFunc = filterIter.getInitFunctionStage(initStage);
+                    int peek = filterIter.getInitPeekStage(initStage);
+                    int pop = filterIter.getInitPopStage(initStage);
+                    int push = filterIter.getInitPushStage(initStage);
 
-                initPeek = MAX(initPeek, initPop + peek);
-                initPop += pop;
-                initPush += push;
+                    initPeek = MAX(initPeek, initPop + peek);
+                    initPop += pop;
+                    initPush += push;
 
-                initPhasingSchedule.appendPhase(
-                    new PhasingSchedule(
-                        this,
-                        new Schedule(
-                            initFunc,
-                            filterIter.getUnspecializedIter()),
-                        peek,
-                        pop,
-                        push));
-            }
+                    initPhasingSchedule.appendPhase(
+                                                    new PhasingSchedule(
+                                                                        this,
+                                                                        new Schedule(
+                                                                                     initFunc,
+                                                                                     filterIter.getUnspecializedIter()),
+                                                                        peek,
+                                                                        pop,
+                                                                        push));
+                }
 
             if (initPhasingSchedule.getNumPhases() != 0)
                 addInitScheduleStage(initPhasingSchedule);
@@ -81,32 +81,32 @@ public class Filter extends streamit.scheduler2.hierarchical.Filter
             int steadyPeek = 0, steadyPop = 0, steadyPush = 0;
             int steadyPhase;
             for (steadyPhase = 0;
-                steadyPhase < filterIter.getNumWorkPhases();
-                steadyPhase++)
-            {
-                Object steadyFunc =
-                    filterIter.getWorkFunctionPhase(steadyPhase);
-                int peek = filterIter.getPeekPhase(steadyPhase);
-                int pop = filterIter.getPopPhase(steadyPhase);
-                int push = filterIter.getPushPhase(steadyPhase);
+                 steadyPhase < filterIter.getNumWorkPhases();
+                 steadyPhase++)
+                {
+                    Object steadyFunc =
+                        filterIter.getWorkFunctionPhase(steadyPhase);
+                    int peek = filterIter.getPeekPhase(steadyPhase);
+                    int pop = filterIter.getPopPhase(steadyPhase);
+                    int push = filterIter.getPushPhase(steadyPhase);
 
-                steadyPeek = MAX(steadyPeek, steadyPop + peek);
-                steadyPop += pop;
-                steadyPush += push;
+                    steadyPeek = MAX(steadyPeek, steadyPop + peek);
+                    steadyPop += pop;
+                    steadyPush += push;
 
-                steadySchedule.addSubSchedule(
-                    new Schedule(
-                        steadyFunc,
-                        filterIter.getUnspecializedIter()));
-            }
+                    steadySchedule.addSubSchedule(
+                                                  new Schedule(
+                                                               steadyFunc,
+                                                               filterIter.getUnspecializedIter()));
+                }
 
             steadyPhasingSchedule =
                 new PhasingSchedule(
-                    this,
-                    steadySchedule,
-                    steadyPeek,
-                    steadyPop,
-                    steadyPush);
+                                    this,
+                                    steadySchedule,
+                                    steadyPeek,
+                                    steadyPop,
+                                    steadyPush);
             addSteadySchedulePhase(steadyPhasingSchedule);
         }
     }

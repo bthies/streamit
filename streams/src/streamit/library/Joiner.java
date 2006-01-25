@@ -60,45 +60,45 @@ abstract public class Joiner extends Operator
         int inputIndx = 0;
         ListIterator iter = srcs.listIterator();
         while (iter.hasNext())
-        {
-            // connect the input streams:
-            Stream s = (Stream)iter.next();
-
-            // it is possible for a stream to be null - if I'm doing a
-            // weighted joiner and I really don't have the stream!
-            if (s != null)
             {
-                s.setupOperator();
+                // connect the input streams:
+                Stream s = (Stream)iter.next();
 
-                // retrieve the output of this filter, which will be an
-                // input to this joiner
-                Channel channel = s.getOutputChannel();
-                input[inputIndx] = channel;
-
-                // if it is not a sink, make sure that it produces data
-                // of the same kind as everything else in this Joiner
-                if (channel != null)
-                {
-                    // handle input channel
-                    if (output == null)
+                // it is possible for a stream to be null - if I'm doing a
+                // weighted joiner and I really don't have the stream!
+                if (s != null)
                     {
-                        output = new Channel(channel);
-                        output.setSource(this);
-                    }
-                    else
-                    {
-                        // check that the input types agree
-                        assert channel.getType().getName().equals(
-                                output.getType().getName());
+                        s.setupOperator();
+
+                        // retrieve the output of this filter, which will be an
+                        // input to this joiner
+                        Channel channel = s.getOutputChannel();
+                        input[inputIndx] = channel;
+
+                        // if it is not a sink, make sure that it produces data
+                        // of the same kind as everything else in this Joiner
+                        if (channel != null)
+                            {
+                                // handle input channel
+                                if (output == null)
+                                    {
+                                        output = new Channel(channel);
+                                        output.setSource(this);
+                                    }
+                                else
+                                    {
+                                        // check that the input types agree
+                                        assert channel.getType().getName().equals(
+                                                                                  output.getType().getName());
+                                    }
+
+                                // now connect the channel to me
+                                channel.setSink(this);
+                            }
                     }
 
-                    // now connect the channel to me
-                    channel.setSink(this);
-                }
+                inputIndx++;
             }
-
-            inputIndx++;
-        }
     }
 
     public String toString()
@@ -121,19 +121,19 @@ abstract public class Joiner extends Operator
 
 
     public void prepareToWork() {
-	if (!Stream.scheduledRun) {
-	    // for the day when joiners can ever receive messages,
-	    // make sure that all inputs are ready before starting
-	    // execution, so that messages can be delivered in time
-	    int throughput[] =
-		(sjIter != null
-		 ? sjIter.getJoinPopWeights(nWork)
-		 : flIter.getJoinPopWeights(nWork));
-	    for (int i=0; i<input.length; i++) {
-		input[i].ensureData(throughput[i]);
-	    }
-	}
-	super.prepareToWork();
+        if (!Stream.scheduledRun) {
+            // for the day when joiners can ever receive messages,
+            // make sure that all inputs are ready before starting
+            // execution, so that messages can be delivered in time
+            int throughput[] =
+                (sjIter != null
+                 ? sjIter.getJoinPopWeights(nWork)
+                 : flIter.getJoinPopWeights(nWork));
+            for (int i=0; i<input.length; i++) {
+                input[i].ensureData(throughput[i]);
+            }
+        }
+        super.prepareToWork();
     }
 
     int nWork = 0;
@@ -141,25 +141,25 @@ abstract public class Joiner extends Operator
     {
         int throughput[] =
             (sjIter != null
-                ? sjIter.getJoinPopWeights(nWork)
-                : flIter.getJoinPopWeights(nWork));
+             ? sjIter.getJoinPopWeights(nWork)
+             : flIter.getJoinPopWeights(nWork));
 
         int totalWork =
             (sjIter != null
-                ? sjIter.getJoinerNumWork()
-                : flIter.getJoinerNumWork());
+             ? sjIter.getJoinerNumWork()
+             : flIter.getJoinerNumWork());
 
         nWork++;
         nWork = nWork % totalWork;
 
         for (int nCh = 0; nCh < srcs.size(); nCh++)
-        {
-            for (int nData = 0; nData < throughput[nCh]; nData++)
             {
-                passOneData(input[nCh], output);
-            }
+                for (int nData = 0; nData < throughput[nCh]; nData++)
+                    {
+                        passOneData(input[nCh], output);
+                    }
 
-        }
+            }
     }
 
     Pair joinWorks[];
@@ -167,16 +167,16 @@ abstract public class Joiner extends Operator
     public Object getWork(int nWork)
     {
         if (joinWorks == null)
-        {
-            joinWorks =
-                new Pair[sjIter != null
-                    ? sjIter.getJoinerNumWork()
-                    : flIter.getJoinerNumWork()];
-        }
+            {
+                joinWorks =
+                    new Pair[sjIter != null
+                             ? sjIter.getJoinerNumWork()
+                             : flIter.getJoinerNumWork()];
+            }
         if (joinWorks[nWork] == null)
-        {
-            joinWorks[nWork] = new Pair(this, new Integer(nWork));
-        }
+            {
+                joinWorks[nWork] = new Pair(this, new Integer(nWork));
+            }
 
         return joinWorks[nWork];
     }

@@ -1,5 +1,5 @@
 /*
- * @(#)GraphSelectionListener.java	1.0 1/1/02
+ * @(#)GraphSelectionListener.java  1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -32,9 +32,9 @@ import java.util.EventListener;
  */
 
 public interface GraphSelectionListener extends EventListener {
-	/**
-	  * Called whenever the value of the selection changes.
-	  * @param e the event that characterizes the change.
-	  */
-	void valueChanged(GraphSelectionEvent e);
+    /**
+     * Called whenever the value of the selection changes.
+     * @param e the event that characterizes the change.
+     */
+    void valueChanged(GraphSelectionEvent e);
 }

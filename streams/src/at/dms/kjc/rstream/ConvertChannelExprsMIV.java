@@ -33,7 +33,7 @@ import at.dms.util.SIRPrinter;
  * 
  *
  * @author Michael Gordon
-*/
+ */
 public class ConvertChannelExprsMIV {
 
     private JLocalVariable popBuffer;
@@ -43,32 +43,32 @@ public class ConvertChannelExprsMIV {
     FilterFusionState fusionState;
 
     /** Create a new conversion object that will try to convert the communication
-	expression in *current* to MIVs for the current stage (init if *isInit* == true).
-	Don't forget to call tryMIV();
+        expression in *current* to MIVs for the current stage (init if *isInit* == true).
+        Don't forget to call tryMIV();
     **/
     public ConvertChannelExprsMIV(FilterFusionState current, boolean isInit)
     {
-	//calculate push offset!!
-	
-	this.pushBuffer = null;
+        //calculate push offset!!
+    
+        this.pushBuffer = null;
 
-	//set the push buffer and the push counter if this filter pushes
-	if (current.getNode().ways > 0) {
-	    assert current.getNode().ways == 1;
-	    assert current.getNode().edges[0] != null;
-	    
-	    FusionState next = FusionState.getFusionState(current.getNode().edges[0]);
+        //set the push buffer and the push counter if this filter pushes
+        if (current.getNode().ways > 0) {
+            assert current.getNode().ways == 1;
+            assert current.getNode().edges[0] != null;
+        
+            FusionState next = FusionState.getFusionState(current.getNode().edges[0]);
 
-	    this.pushBuffer = current.getPushBufferVar(isInit);
-	    //if this is not the init, then remember to push after the items saved,
-	    //by the downstream filter (these items were not pop'ed and they were copied to 
-	    //the beginning of the downstream buffer)
-	    this.pushOffset = isInit ? 0 :  next.getRemaining(current.getNode(), isInit);
-	}
-	
-	this.popBuffer = current.getBufferVar(null /*this is a filter, so only one previous */,
-					      isInit);
-	fusionState = current;
+            this.pushBuffer = current.getPushBufferVar(isInit);
+            //if this is not the init, then remember to push after the items saved,
+            //by the downstream filter (these items were not pop'ed and they were copied to 
+            //the beginning of the downstream buffer)
+            this.pushOffset = isInit ? 0 :  next.getRemaining(current.getNode(), isInit);
+        }
+    
+        this.popBuffer = current.getBufferVar(null /*this is a filter, so only one previous */,
+                                              isInit);
+        fusionState = current;
     }
     
     /**
@@ -79,29 +79,29 @@ public class ConvertChannelExprsMIV {
      **/
     public boolean tryMIV(JDoLoopStatement top) 
     {
-	ConvertChannelExprsPhase1 phase1 = new ConvertChannelExprsPhase1(top);
-	//run phase 1 that will check to see if the conversion can be correctly applied
-	// and saves some state in the process.
-	boolean passed = phase1.run();
-	if (passed) {
-	    //assert that the calculated rates match the declared rates...
-	    assert fusionState.getFilter().getPushInt() == phase1.getTopLevelPushCount() :
-		"Declared push rate does not match calculated rated for ConvertChannelExprMIV";
-	    
-	    assert fusionState.getFilter().getPopInt() == phase1.getTopLevelPopCount() :
-		"Declared pop rate does not match calculated rated for ConvertChannelExprMIV";
+        ConvertChannelExprsPhase1 phase1 = new ConvertChannelExprsPhase1(top);
+        //run phase 1 that will check to see if the conversion can be correctly applied
+        // and saves some state in the process.
+        boolean passed = phase1.run();
+        if (passed) {
+            //assert that the calculated rates match the declared rates...
+            assert fusionState.getFilter().getPushInt() == phase1.getTopLevelPushCount() :
+                "Declared push rate does not match calculated rated for ConvertChannelExprMIV";
+        
+            assert fusionState.getFilter().getPopInt() == phase1.getTopLevelPopCount() :
+                "Declared pop rate does not match calculated rated for ConvertChannelExprMIV";
 
-	    ConvertChannelExprsPhase2 phase2 = 
-		new ConvertChannelExprsPhase2(top, phase1, 
-					      popBuffer, pushBuffer, 
-					      pushOffset);
-	    //run the second phase
-	    phase2.run();
-	}
-	//	else 
-	//    System.out.println("** Could not generate MIVs for " + fusionState.getNode().contents);
-	
-	return passed;
+            ConvertChannelExprsPhase2 phase2 = 
+                new ConvertChannelExprsPhase2(top, phase1, 
+                                              popBuffer, pushBuffer, 
+                                              pushOffset);
+            //run the second phase
+            phase2.run();
+        }
+        //  else 
+        //    System.out.println("** Could not generate MIVs for " + fusionState.getNode().contents);
+    
+        return passed;
     }    
 }
 

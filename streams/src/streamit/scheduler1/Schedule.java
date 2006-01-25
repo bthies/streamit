@@ -24,23 +24,23 @@ public class Schedule extends AssertedClass
 
         Object [] dataArray = null;
         if (result instanceof Object[])
-        {
-            dataArray = (Object []) result;
-        } else {
-            ASSERT (result instanceof List);
-
-            List dataList = (List) result;
-            ListIterator iter = dataList.listIterator ();
-            while (iter.hasNext ())
             {
-                dataArray = (Object[]) iter.next ();
-                ASSERT (dataArray);
+                dataArray = (Object []) result;
+            } else {
+                ASSERT (result instanceof List);
 
-                if (dataArray [0] == streamDst) break;
-                dataArray = null;
+                List dataList = (List) result;
+                ListIterator iter = dataList.listIterator ();
+                while (iter.hasNext ())
+                    {
+                        dataArray = (Object[]) iter.next ();
+                        ASSERT (dataArray);
+
+                        if (dataArray [0] == streamDst) break;
+                        dataArray = null;
+                    }
+                ASSERT (dataArray);
             }
-            ASSERT (dataArray);
-        }
 
         ASSERT (dataArray [0] == streamDst);
         ASSERT (dataArray [1] instanceof BigInteger);
@@ -69,26 +69,26 @@ public class Schedule extends AssertedClass
     {
         List dataList = null;
         if (bufferSizes.containsKey (join))
-        {
-            Object result = bufferSizes.get (join);
-            ASSERT (result != null && result instanceof List);
-            dataList = (List) result;
-
-            // make sure that this is the first destionation so far
             {
-                ListIterator iter = dataList.listIterator ();
-                while (iter.hasNext ())
-                {
-                    Object [] dataArray = (Object[]) iter.next ();
-                    ASSERT (dataArray);
+                Object result = bufferSizes.get (join);
+                ASSERT (result != null && result instanceof List);
+                dataList = (List) result;
 
-                    ASSERT (dataArray [0] != streamDst);
+                // make sure that this is the first destionation so far
+                {
+                    ListIterator iter = dataList.listIterator ();
+                    while (iter.hasNext ())
+                        {
+                            Object [] dataArray = (Object[]) iter.next ();
+                            ASSERT (dataArray);
+
+                            ASSERT (dataArray [0] != streamDst);
+                        }
                 }
+            } else {
+                dataList = new LinkedList ();
+                bufferSizes.put (join, dataList);
             }
-        } else {
-            dataList = new LinkedList ();
-            bufferSizes.put (join, dataList);
-        }
 
         Object [] dataArray = new Object [2];
         dataArray [0] = streamDst;
@@ -129,32 +129,32 @@ public class Schedule extends AssertedClass
 
         ListIterator iter = schedule.listIterator ();
         while (iter.hasNext ())
-        {
-            Object c = iter.next ();
-            ASSERT (c);
+            {
+                Object c = iter.next ();
+                ASSERT (c);
 
-            if (c instanceof List) checkSchedule ((List)c);
-            ASSERT (! (c instanceof SchedStream));
-        }
+                if (c instanceof List) checkSchedule ((List)c);
+                ASSERT (! (c instanceof SchedStream));
+            }
     }
 
     public void setSchedules (Object steadySchedule, Object initSchedule)
     {
         if (steadySchedule instanceof List)
-        {
-            this.steadySchedule = (List) steadySchedule;
-        } else {
-            this.steadySchedule = new LinkedList ();
-            this.steadySchedule.add (steadySchedule);
-        }
+            {
+                this.steadySchedule = (List) steadySchedule;
+            } else {
+                this.steadySchedule = new LinkedList ();
+                this.steadySchedule.add (steadySchedule);
+            }
 
         if (initSchedule instanceof List)
-        {
-            this.initSchedule = (List) initSchedule;
-        } else {
-            this.initSchedule = new LinkedList ();
-            this.initSchedule.add (initSchedule);
-        }
+            {
+                this.initSchedule = (List) initSchedule;
+            } else {
+                this.initSchedule = new LinkedList ();
+                this.initSchedule.add (initSchedule);
+            }
     }
 }
 

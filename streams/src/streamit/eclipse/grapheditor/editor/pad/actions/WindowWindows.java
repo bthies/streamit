@@ -1,5 +1,5 @@
 /*
- * @(#)WindowWindows.java	1.2 09.02.2003
+ * @(#)WindowWindows.java   1.2 09.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,88 +37,88 @@ import streamit.eclipse.grapheditor.editor.pad.GPInternalFrame;
  *
  */
 public class WindowWindows
-	extends AbstractActionList {
+    extends AbstractActionList {
 
-	/** a list of the menus
-	 */
-	Vector menus = new Vector();
+    /** a list of the menus
+     */
+    Vector menus = new Vector();
 
-	/**
-	 * Constructor for WindowWindows.
-	 * @param graphpad
-	 */
-	public WindowWindows(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for WindowWindows.
+     * @param graphpad
+     */
+    public WindowWindows(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**Returns an empty item list by default.
-	 *
-	 * @see org.jgraph.pad.actions.AbstractActionList#getItems()
-	 */
-	protected Object[] getItems() {
-		return new Object[] {
-		};
-	}
+    /**Returns an empty item list by default.
+     *
+     * @see org.jgraph.pad.actions.AbstractActionList#getItems()
+     */
+    protected Object[] getItems() {
+        return new Object[] {
+        };
+    }
 
-	/**
-	 * Gets the GPInternalFrame from the ActionEvent and sets the
-	 * frame toFront and selected.
-	 *
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		GPInternalFrame gpframe = (GPInternalFrame) this.getSelectedItem(e);
-		gpframe.toFront();
-		try {
-			gpframe.setSelected(true);
-		} catch (PropertyVetoException pve) {
-		}
-	}
+    /**
+     * Gets the GPInternalFrame from the ActionEvent and sets the
+     * frame toFront and selected.
+     *
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        GPInternalFrame gpframe = (GPInternalFrame) this.getSelectedItem(e);
+        gpframe.toFront();
+        try {
+            gpframe.setSelected(true);
+        } catch (PropertyVetoException pve) {
+        }
+    }
 
-	/**Returns a JMenu and stores the JMenu at the menus Vector
-	 *
-	 * @see #menus
-	 * @see org.jgraph.pad.actions.AbstractActionList#getMenuBarComponent()
-	 */
-	protected JMenu getMenuBarComponent() {
-		JMenu menu = new JMenu(this);
-		menu.setName(getName());
-		menus.add(menu);
-		return menu;
-	}
+    /**Returns a JMenu and stores the JMenu at the menus Vector
+     *
+     * @see #menus
+     * @see org.jgraph.pad.actions.AbstractActionList#getMenuBarComponent()
+     */
+    protected JMenu getMenuBarComponent() {
+        JMenu menu = new JMenu(this);
+        menu.setName(getName());
+        menus.add(menu);
+        return menu;
+    }
 
-	/** returns the actionCommand (The presentation file name from the document)
-	 */
-	public String getPresentationText(String actionCommand) {
-		return actionCommand;
-	}
+    /** returns the actionCommand (The presentation file name from the document)
+     */
+    public String getPresentationText(String actionCommand) {
+        return actionCommand;
+    }
 
-	/** returns null
-	 */
-	public String getItemPresentationText(Object itemValue) {
-		return null;
-	}
+    /** returns null
+     */
+    public String getItemPresentationText(Object itemValue) {
+        return null;
+    }
 
-	/** updates the window list at the menu entries
-	 *
-	 */
-	public void update(){
-		super.update() ;
+    /** updates the window list at the menu entries
+     *
+     */
+    public void update(){
+        super.update() ;
 
-		JInternalFrame[] iframes = graphpad.getAllFrames();
+        JInternalFrame[] iframes = graphpad.getAllFrames();
 
-		for (int j = 0; j < menus.size(); j++) {
-			JMenu menu = (JMenu) menus.get(j);
-			menu.removeAll();
+        for (int j = 0; j < menus.size(); j++) {
+            JMenu menu = (JMenu) menus.get(j);
+            menu.removeAll();
 
-			for (int i = 0; i < iframes.length; i++) {
-				GPInternalFrame internalFrame = (GPInternalFrame) iframes[i];
-				menu.add(
-					getMenuComponent(
-						internalFrame.getDocument().getFrameTitle(),
-						internalFrame));
-			}
-		}
-	}
+            for (int i = 0; i < iframes.length; i++) {
+                GPInternalFrame internalFrame = (GPInternalFrame) iframes[i];
+                menu.add(
+                         getMenuComponent(
+                                          internalFrame.getDocument().getFrameTitle(),
+                                          internalFrame));
+            }
+        }
+    }
 
 }

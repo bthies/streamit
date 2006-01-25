@@ -31,11 +31,11 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
     private HashMap partitions;
 
     private ApplyPartitions(HashMap partitions) {
-	this.partitions = partitions;
+        this.partitions = partitions;
     }
 
     public static void doit(SIRStream str, HashMap partitions) {
-	str.accept(new ApplyPartitions(partitions));
+        str.accept(new ApplyPartitions(partitions));
     }
 
     /******************************************************************/
@@ -45,17 +45,17 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
      * Visits/replaces the children of <cont>
      */
     private void replaceChildren(SIRContainer cont) {
-	// visit children
-	for (int i=0; i<cont.size(); i++) {
-	    SIRStream newChild = (SIRStream)cont.get(i).accept(this);
-	    cont.set(i, newChild);
-	    // if we got a pipeline, try lifting it.  note that this
-	    // will mutate the children array and the init function of
-	    // <self>
-	    if (newChild instanceof SIRPipeline) {
-		Lifter.eliminatePipe((SIRPipeline)newChild);
-	    }
-	}
+        // visit children
+        for (int i=0; i<cont.size(); i++) {
+            SIRStream newChild = (SIRStream)cont.get(i).accept(this);
+            cont.set(i, newChild);
+            // if we got a pipeline, try lifting it.  note that this
+            // will mutate the children array and the init function of
+            // <self>
+            if (newChild instanceof SIRPipeline) {
+                Lifter.eliminatePipe((SIRPipeline)newChild);
+            }
+        }
     }
 
     /******************************************************************/
@@ -63,57 +63,57 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 
     /* visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
-			 JFieldDeclaration[] fields,
-			 JMethodDeclaration[] methods,
-			 JMethodDeclaration init) {
-	// replace children
-	replaceChildren(self);
-	// fuse children internally
-	FusePipe.fuse(self, PartitionGroup.createFromAssignments(self.getChildren(), partitions));
-	return self;
+                                JFieldDeclaration[] fields,
+                                JMethodDeclaration[] methods,
+                                JMethodDeclaration init) {
+        // replace children
+        replaceChildren(self);
+        // fuse children internally
+        FusePipe.fuse(self, PartitionGroup.createFromAssignments(self.getChildren(), partitions));
+        return self;
     }
 
     /* visit a splitjoin */
     public Object visitSplitJoin(SIRSplitJoin self,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  SIRSplitter splitter,
-			  SIRJoiner joiner) {
-	//System.err.println("visiting " + self);
-	// replace children
-	replaceChildren(self);
-	PartitionGroup group = PartitionGroup.createFromAssignments(self.getParallelStreams(), partitions);
-	// fuse
-	SIRStream result = FuseSplit.fuse(self, group);
-	// if we got pipelines back, that means we used old fusion,
-	// and we should fuse the pipe again
-	if (group.size()==1 && result instanceof SIRPipeline) {
-	    // if the whole thing is a pipeline
-	    FusePipe.fuse((SIRPipeline)result);
-	} else {
-	    // if we might have component pipelines
-	    for (int i=0; i<group.size(); i++) {
-		if (group.get(i)>1 && ((SIRSplitJoin)result).get(i) instanceof SIRPipeline) {
-		    FusePipe.fuse((SIRPipeline)((SIRSplitJoin)result).get(i));
-		}
-	    }
-	}
-	return result;
+                                 JFieldDeclaration[] fields,
+                                 JMethodDeclaration[] methods,
+                                 JMethodDeclaration init,
+                                 SIRSplitter splitter,
+                                 SIRJoiner joiner) {
+        //System.err.println("visiting " + self);
+        // replace children
+        replaceChildren(self);
+        PartitionGroup group = PartitionGroup.createFromAssignments(self.getParallelStreams(), partitions);
+        // fuse
+        SIRStream result = FuseSplit.fuse(self, group);
+        // if we got pipelines back, that means we used old fusion,
+        // and we should fuse the pipe again
+        if (group.size()==1 && result instanceof SIRPipeline) {
+            // if the whole thing is a pipeline
+            FusePipe.fuse((SIRPipeline)result);
+        } else {
+            // if we might have component pipelines
+            for (int i=0; i<group.size(); i++) {
+                if (group.get(i)>1 && ((SIRSplitJoin)result).get(i) instanceof SIRPipeline) {
+                    FusePipe.fuse((SIRPipeline)((SIRSplitJoin)result).get(i));
+                }
+            }
+        }
+        return result;
     }
 
     /* visit a feedbackloop */
     public Object visitFeedbackLoop(SIRFeedbackLoop self,
-			     JFieldDeclaration[] fields,
-			     JMethodDeclaration[] methods,
-			     JMethodDeclaration init,
-			     JMethodDeclaration initPath) {
-	//System.err.println("visiting " + self);
-	// fusing a whole feedback loop isn't supported yet
-	assert getPartition(self)==-1;
-	// replace children
-	replaceChildren(self);
-	return self;
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init,
+                                    JMethodDeclaration initPath) {
+        //System.err.println("visiting " + self);
+        // fusing a whole feedback loop isn't supported yet
+        assert getPartition(self)==-1;
+        // replace children
+        replaceChildren(self);
+        return self;
     }
 
     /******************************************************************/
@@ -122,8 +122,8 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
      * Returns int partition for <str>
      */
     private int getPartition(Object str) {
-	assert partitions.containsKey(str) : "No partition recorded for: " + str;
-	return ((Integer)partitions.get(str)).intValue();
+        assert partitions.containsKey(str) : "No partition recorded for: " + str;
+        return ((Integer)partitions.get(str)).intValue();
     }
 }
 

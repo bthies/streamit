@@ -1,5 +1,5 @@
 /*
- * @(#)FileNewView.java	1.2 30.01.2003
+ * @(#)FileNewView.java 1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,41 +34,41 @@ import org.jgraph.graph.DefaultGraphModel;
  */
 public class FileNewView extends AbstractActionFile {
 
-	/**
-	 * Constructor for FileNewView.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FileNewView(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FileNewView.
+     * @param graphpad
+     * @param name
+     */
+    public FileNewView(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		graphpad.addDocument(
-			null,
-			getCurrentDocument().getGraphModelProvider() ,
-			null,
-			getCurrentGraph().getModel(),
-			getCurrentDocument().getGraphUndoManager());
-		/** Copy Existing View Attributes */
-		Object[] cells = getCurrentGraph().getRoots();
-		Object[] all =
-			DefaultGraphModel
-				.getDescendants(getCurrentGraph().getModel(), cells)
-				.toArray();
-		for (int i = 0; i < all.length; i++) {
-			CellView orig =
-				getCurrentGraphLayoutCache().getMapping(all[i], false);
-			CellView target =
-				getCurrentDocument().getGraphLayoutCache().getMapping(
-					all[i],
-					false);
-			if (orig != null && target != null)
-				target.setAttributes(orig.getAttributes());
-		}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        graphpad.addDocument(
+                             null,
+                             getCurrentDocument().getGraphModelProvider() ,
+                             null,
+                             getCurrentGraph().getModel(),
+                             getCurrentDocument().getGraphUndoManager());
+        /** Copy Existing View Attributes */
+        Object[] cells = getCurrentGraph().getRoots();
+        Object[] all =
+            DefaultGraphModel
+            .getDescendants(getCurrentGraph().getModel(), cells)
+            .toArray();
+        for (int i = 0; i < all.length; i++) {
+            CellView orig =
+                getCurrentGraphLayoutCache().getMapping(all[i], false);
+            CellView target =
+                getCurrentDocument().getGraphLayoutCache().getMapping(
+                                                                      all[i],
+                                                                      false);
+            if (orig != null && target != null)
+                target.setAttributes(orig.getAttributes());
+        }
+    }
 
 }

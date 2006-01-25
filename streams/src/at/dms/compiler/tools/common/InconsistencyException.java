@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InconsistencyException.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: InconsistencyException.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -26,19 +26,19 @@ package at.dms.compiler.tools.common;
  */
 public class InconsistencyException extends RuntimeException {
 
-  /**
-   * Constructs am InconsistencyException with no specified detail message.
-   */
-  public InconsistencyException() {
-    super();
-  }
+    /**
+     * Constructs am InconsistencyException with no specified detail message.
+     */
+    public InconsistencyException() {
+        super();
+    }
 
-  /**
-   * Constructs am InconsistencyException with the specified detail message.
-   *
-   * @param	message		the detail message
-   */
-  public InconsistencyException(String message) {
-    super(message);
-  }
+    /**
+     * Constructs am InconsistencyException with the specified detail message.
+     *
+     * @param   message     the detail message
+     */
+    public InconsistencyException(String message) {
+        super(message);
+    }
 }

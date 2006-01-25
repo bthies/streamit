@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TraceInferenceGraph.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: TraceInferenceGraph.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -29,137 +29,137 @@ import java.util.Vector;
  */
 public class TraceInferenceGraph extends Trace {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates a new instruction handle.
-   *
-   * @param	insn		the instruction
-   * @param	prev		the handle of the next instruction
-   *				in textual order
-   */
-  public TraceInferenceGraph(InferenceNode[] nodes) {
-    super("infer.vcg");
+    /**
+     * Creates a new instruction handle.
+     *
+     * @param   insn        the instruction
+     * @param   prev        the handle of the next instruction
+     *              in textual order
+     */
+    public TraceInferenceGraph(InferenceNode[] nodes) {
+        super("infer.vcg");
 
-    this.nodes = nodes;
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  public void run() {
-    try {
-      generateHeader();
-
-      for (int i = 0; i < nodes.length; i++) {
-	trace(nodes[i]);
-      }
-
-      write("}");
-      close();
-    } catch (IOException io) {
-      System.err.println("Cannot write infer.vcg");
+        this.nodes = nodes;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // PRIVATE METHODS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Prints a trace of quadruples
-   */
-  private void trace(InferenceNode node) throws IOException {
-    QTemporary[]	temps = node.getTemporaries();
-    Vector		links = node.getInferences();
-    String		label;
+    public void run() {
+        try {
+            generateHeader();
 
+            for (int i = 0; i < nodes.length; i++) {
+                trace(nodes[i]);
+            }
 
-    // GENERATE LABEL
-    label = "" + node.getColor();
-    label += " = ";
-    for (int i = 0; i < temps.length; i++) {
-      label += temps[i] + (i == temps.length - 1 ? "" : ", ");
+            write("}");
+            close();
+        } catch (IOException io) {
+            System.err.println("Cannot write infer.vcg");
+        }
     }
-    generateNode("" + node, label, node.getColor());
 
-    // GENERATE LINKS
-    for (int i = 0; i < links.size(); i++) {
-      InferenceNode	dest = (InferenceNode)links.elementAt(i);
+    // --------------------------------------------------------------------
+    // PRIVATE METHODS
+    // --------------------------------------------------------------------
 
-      if (node.getPosition() < dest.getPosition()) {
-	write(generateEdge("" + node, "" + links.elementAt(i), i, links.size(), false));
-      }
+    /**
+     * Prints a trace of quadruples
+     */
+    private void trace(InferenceNode node) throws IOException {
+        QTemporary[]    temps = node.getTemporaries();
+        Vector      links = node.getInferences();
+        String      label;
+
+
+        // GENERATE LABEL
+        label = "" + node.getColor();
+        label += " = ";
+        for (int i = 0; i < temps.length; i++) {
+            label += temps[i] + (i == temps.length - 1 ? "" : ", ");
+        }
+        generateNode("" + node, label, node.getColor());
+
+        // GENERATE LINKS
+        for (int i = 0; i < links.size(); i++) {
+            InferenceNode   dest = (InferenceNode)links.elementAt(i);
+
+            if (node.getPosition() < dest.getPosition()) {
+                write(generateEdge("" + node, "" + links.elementAt(i), i, links.size(), false));
+            }
+        }
     }
-  }
 
-  private void generateNode(String pos, String label, int color) throws IOException {
-    String	tcolor = color < COLORS.length ? COLORS[color] : COLORS[COLORS.length - 1];
+    private void generateNode(String pos, String label, int color) throws IOException {
+        String  tcolor = color < COLORS.length ? COLORS[color] : COLORS[COLORS.length - 1];
 
-    write("node: { title:\"" + pos + "\" label: \"" + label + "\" color: " + tcolor + "}");
-  }
+        write("node: { title:\"" + pos + "\" label: \"" + label + "\" color: " + tcolor + "}");
+    }
 
-  private void generateHeader() throws IOException {
-    write("graph: { title: \"CFG_GRAPH\"");
-    write("x: 150");
-    write("y: 30");
-    write("width: 716");
-    write("height: 960");
-    write("layoutalgorithm: minbackward  ");
-    write("display_edge_labels: yes");
-    //write("manhatten_edges: yes");
-    write("layout_nearfactor: 0");
-    write("xspace: 25");
-    write("node.color: lightyellow");
-    write("node.textcolor: blue");
-    write("edge.color: blue");
-    write("edge.arrowsize: 15");
-    write("edge.thickness: 1");
-    write("stretch: 43");
-    write("shrink: 100");
-    write("classname 1 : \"CFG Edges (blue)\"");
-    write("classname 2 : \"Const Lists (red)\"");
-    write("classname 3 : \"Live Variable Lists (green)\"");
-  }
+    private void generateHeader() throws IOException {
+        write("graph: { title: \"CFG_GRAPH\"");
+        write("x: 150");
+        write("y: 30");
+        write("width: 716");
+        write("height: 960");
+        write("layoutalgorithm: minbackward  ");
+        write("display_edge_labels: yes");
+        //write("manhatten_edges: yes");
+        write("layout_nearfactor: 0");
+        write("xspace: 25");
+        write("node.color: lightyellow");
+        write("node.textcolor: blue");
+        write("edge.color: blue");
+        write("edge.arrowsize: 15");
+        write("edge.thickness: 1");
+        write("stretch: 43");
+        write("shrink: 100");
+        write("classname 1 : \"CFG Edges (blue)\"");
+        write("classname 2 : \"Const Lists (red)\"");
+        write("classname 3 : \"Live Variable Lists (green)\"");
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private InferenceNode[]		nodes;
-  private static String[]		COLORS = new String[] {
-    "red",
-    "green",
-    "yellow",
-    "magenta",
-    "cyan",
-    "white",
-    "darkgrey",
-    "darkblue",
-    "darkred",
-    "darkgreen",
-    "darkyellow",
-    "darkmagenta",
-    "darkcyan",
-    "gold",
-    "lightgrey",
-    "lightblue",
-    "lightred",
-    "lightgreen",
-    "lightyellow",
-    "lightmagenta",
-    "lightcyan",
-    "lilac",
-    "turquoise",
-    "aquamarine",
-    "khaki",
-    "purple",
-    "yellowgreen",
-    "pink",
-    "orange",
-    "orchid"
-  };
+    private InferenceNode[]     nodes;
+    private static String[]     COLORS = new String[] {
+        "red",
+        "green",
+        "yellow",
+        "magenta",
+        "cyan",
+        "white",
+        "darkgrey",
+        "darkblue",
+        "darkred",
+        "darkgreen",
+        "darkyellow",
+        "darkmagenta",
+        "darkcyan",
+        "gold",
+        "lightgrey",
+        "lightblue",
+        "lightred",
+        "lightgreen",
+        "lightyellow",
+        "lightmagenta",
+        "lightcyan",
+        "lilac",
+        "turquoise",
+        "aquamarine",
+        "khaki",
+        "purple",
+        "yellowgreen",
+        "pink",
+        "orange",
+        "orchid"
+    };
 }

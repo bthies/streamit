@@ -17,10 +17,10 @@ public interface StreamVisitor {
     /**
      * PLAIN-VISITS 
      */
-	    
+        
     /* visit a filter */
     void visitFilter(SIRFilter self,
-		     SIRFilterIter iter);
+                     SIRFilterIter iter);
   
     /* visit a phased filter */
     void visitPhasedFilter(SIRPhasedFilter self,
@@ -29,32 +29,32 @@ public interface StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     void preVisitPipeline(SIRPipeline self,
-			  SIRPipelineIter iter);
+                          SIRPipelineIter iter);
 
     /* pre-visit a splitjoin */
     void preVisitSplitJoin(SIRSplitJoin self,
-			   SIRSplitJoinIter iter);
+                           SIRSplitJoinIter iter);
 
     /* pre-visit a feedbackloop */
     void preVisitFeedbackLoop(SIRFeedbackLoop self,
-			      SIRFeedbackLoopIter iter);
+                              SIRFeedbackLoopIter iter);
 
     /**
      * POST-VISITS 
      */
-	    
+        
     /* post-visit a pipeline */
     void postVisitPipeline(SIRPipeline self,
-			   SIRPipelineIter iter);
+                           SIRPipelineIter iter);
 
     /* post-visit a splitjoin */
     void postVisitSplitJoin(SIRSplitJoin self,
-			    SIRSplitJoinIter iter);
+                            SIRSplitJoinIter iter);
 
     /* post-visit a feedbackloop */
     void postVisitFeedbackLoop(SIRFeedbackLoop self,
-			       SIRFeedbackLoopIter iter);
+                               SIRFeedbackLoopIter iter);
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)DefaultPort.java	1.0 1/1/02
+ * @(#)DefaultPort.java 1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -34,101 +34,101 @@ import java.util.Set;
 
 public class DefaultPort extends DefaultGraphCell implements Port {
 
-	/** Edges that are connected to the port */
-	protected HashSet edges = new HashSet();
+    /** Edges that are connected to the port */
+    protected HashSet edges = new HashSet();
 
-	/** Reference to the anchor of this port */
-	protected Port anchor;
+    /** Reference to the anchor of this port */
+    protected Port anchor;
 
-	/**
-	 * Constructs an empty port.
-	 */
-	public DefaultPort() {
-		this(null, null);
-	}
+    /**
+     * Constructs an empty port.
+     */
+    public DefaultPort() {
+        this(null, null);
+    }
 
-	/**
-	 * Constructs a vertex that holds a reference to the specified user object.
-	 *
-	 * @param userObject reference to the user object
-	 */
-	public DefaultPort(Object userObject) {
-		this(userObject, null);
-	}
+    /**
+     * Constructs a vertex that holds a reference to the specified user object.
+     *
+     * @param userObject reference to the user object
+     */
+    public DefaultPort(Object userObject) {
+        this(userObject, null);
+    }
 
-	/**
-	 * Constructs a vertex that holds a reference to the specified user object
-	 * and a reference to the specified anchor.
-	 *
-	 * @param userObject reference to the user object
-	 * @param reference to a a graphcell that constitutes the anchor
-	 */
-	public DefaultPort(Object userObject, Port anchor) {
-		super(userObject, false);
-		this.anchor = anchor;
-	}
+    /**
+     * Constructs a vertex that holds a reference to the specified user object
+     * and a reference to the specified anchor.
+     *
+     * @param userObject reference to the user object
+     * @param reference to a a graphcell that constitutes the anchor
+     */
+    public DefaultPort(Object userObject, Port anchor) {
+        super(userObject, false);
+        this.anchor = anchor;
+    }
 
-	/**
-	 * Returns an iterator of the edges connected
-	 * to the port.
-	 */
-	public Iterator edges() {
-		return edges.iterator();
-	}
+    /**
+     * Returns an iterator of the edges connected
+     * to the port.
+     */
+    public Iterator edges() {
+        return edges.iterator();
+    }
 
-	/**
-	 * Adds <code>edge</code> to the list of ports.
-	 */
-	public boolean addEdge(Object edge) {
-		return edges.add(edge);
-	}
+    /**
+     * Adds <code>edge</code> to the list of ports.
+     */
+    public boolean addEdge(Object edge) {
+        return edges.add(edge);
+    }
 
-	/**
-	 * Removes <code>edge</code> from the list of ports.
-	 */
-	public boolean removeEdge(Object edge) {
-		return edges.remove(edge);
-	}
+    /**
+     * Removes <code>edge</code> from the list of ports.
+     */
+    public boolean removeEdge(Object edge) {
+        return edges.remove(edge);
+    }
 
-	/**
-	 * Returns the anchor of this port.
-	 */
-	public Set getEdges() {
-		return new HashSet(edges);
-	}
+    /**
+     * Returns the anchor of this port.
+     */
+    public Set getEdges() {
+        return new HashSet(edges);
+    }
 
-	/**
-	 * Sets the anchor of this port.
-	 */
-	public void setEdges(Set edges) {
-		this.edges = new HashSet(edges);
-	}
+    /**
+     * Sets the anchor of this port.
+     */
+    public void setEdges(Set edges) {
+        this.edges = new HashSet(edges);
+    }
 
-	/**
-	 * Returns the anchor of this port.
-	 */
-	public Port getAnchor() {
-		return anchor;
-	}
+    /**
+     * Returns the anchor of this port.
+     */
+    public Port getAnchor() {
+        return anchor;
+    }
 
-	/**
-	 * Sets the anchor of this port.
-	 */
-	public void setAnchor(Port port) {
-		anchor = port;
-	}
+    /**
+     * Sets the anchor of this port.
+     */
+    public void setAnchor(Port port) {
+        anchor = port;
+    }
 
-	/**
-	 * Create a clone of the cell. The cloning of the
-	 * user object is deferred to the cloneUserObject()
-	 * method.
-	 *
-	 * @return Object  a clone of this object.
-	 */
-	public Object clone() {
-		DefaultPort c = (DefaultPort) super.clone();
-		c.edges = new HashSet();
-		return c;
-	}
+    /**
+     * Create a clone of the cell. The cloning of the
+     * user object is deferred to the cloneUserObject()
+     * method.
+     *
+     * @return Object  a clone of this object.
+     */
+    public Object clone() {
+        DefaultPort c = (DefaultPort) super.clone();
+        c.edges = new HashSet();
+        return c;
+    }
 
 }

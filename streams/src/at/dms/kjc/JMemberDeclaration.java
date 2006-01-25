@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMemberDeclaration.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JMemberDeclaration.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,133 +30,133 @@ import at.dms.compiler.JavaStyleComment;
  */
 public abstract class JMemberDeclaration extends JPhylum {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JMemberDeclaration() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	javadoc		java documentation comments
-   * @param	comments	other comments in the source code
-   */
-  public JMemberDeclaration(TokenReference where,
-			    JavadocComment javadoc,
-			    JavaStyleComment[] comments)
-  {
-    super(where);
-    this.comments = comments;
-    this.javadoc = javadoc;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS (INTERFACE)
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns true if this member is deprecated
-   */
-  public boolean isDeprecated() {
-    return javadoc != null && javadoc.isDeprecated();
-  }
-
-  /**
-   * @return	the interface
-   */
-  public CField getField() {
-    return export.getField();
-  }
-
-  /**
-   * @return	the interface
-   */
-  public CMethod getMethod() {
-    return export.getMethod();
-  }
-
-  /**
-   * @return	the interface
-   */
-  public CClass getCClass() {
-    return export.getCClass();
-  }
-
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    genComments(p);
-  }
-
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return genComments1(p);
-  }
-
-  /**
-   * Generate the code in pure java form
-   * It is useful to debug and tune compilation process
-   * @param	p		the printwriter into the code is generated
-   */
-  public Object genComments1(AttributeVisitor p) {
-    if (comments != null) {
-      return p.visitComments(comments);
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   javadoc     java documentation comments
+     * @param   comments    other comments in the source code
+     */
+    public JMemberDeclaration(TokenReference where,
+                              JavadocComment javadoc,
+                              JavaStyleComment[] comments)
+    {
+        super(where);
+        this.comments = comments;
+        this.javadoc = javadoc;
     }
-    if (javadoc != null) {
-      return p.visitJavadoc(javadoc);
+
+    // ----------------------------------------------------------------------
+    // ACCESSORS (INTERFACE)
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns true if this member is deprecated
+     */
+    public boolean isDeprecated() {
+        return javadoc != null && javadoc.isDeprecated();
     }
-    return null;
-  }
-     /**
-   * Generate the code in pure java form
-   * It is useful to debug and tune compilation process
-   * @param	p		the printwriter into the code is generated
-   */
-  public void genComments(KjcVisitor p) {
-    if (comments != null) {
-      p.visitComments(comments);
+
+    /**
+     * @return  the interface
+     */
+    public CField getField() {
+        return export.getField();
     }
-    if (javadoc != null) {
-      p.visitJavadoc(javadoc);
+
+    /**
+     * @return  the interface
+     */
+    public CMethod getMethod() {
+        return export.getMethod();
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // PROTECTED ACCESSORS
-  // ----------------------------------------------------------------------
+    /**
+     * @return  the interface
+     */
+    public CClass getCClass() {
+        return export.getCClass();
+    }
 
-  protected void setInterface(CMember export) {
-    this.export = export;
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        genComments(p);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return genComments1(p);
+    }
 
-  private CMember			export;
-    private /* final */ JavadocComment		javadoc;  // removed final for cloner
-    private /* final */ JavaStyleComment[]	comments; // removed final for cloner
+    /**
+     * Generate the code in pure java form
+     * It is useful to debug and tune compilation process
+     * @param   p       the printwriter into the code is generated
+     */
+    public Object genComments1(AttributeVisitor p) {
+        if (comments != null) {
+            return p.visitComments(comments);
+        }
+        if (javadoc != null) {
+            return p.visitJavadoc(javadoc);
+        }
+        return null;
+    }
+    /**
+     * Generate the code in pure java form
+     * It is useful to debug and tune compilation process
+     * @param   p       the printwriter into the code is generated
+     */
+    public void genComments(KjcVisitor p) {
+        if (comments != null) {
+            p.visitComments(comments);
+        }
+        if (javadoc != null) {
+            p.visitJavadoc(javadoc);
+        }
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    // ----------------------------------------------------------------------
+    // PROTECTED ACCESSORS
+    // ----------------------------------------------------------------------
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    protected void setInterface(CMember export) {
+        this.export = export;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JMemberDeclaration other) {
-  super.deepCloneInto(other);
-  other.export = (at.dms.kjc.CMember)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
-  other.javadoc = (at.dms.compiler.JavadocComment)at.dms.kjc.AutoCloner.cloneToplevel(this.javadoc);
-  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
-}
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    private CMember         export;
+    private /* final */ JavadocComment      javadoc;  // removed final for cloner
+    private /* final */ JavaStyleComment[]  comments; // removed final for cloner
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JMemberDeclaration other) {
+        super.deepCloneInto(other);
+        other.export = (at.dms.kjc.CMember)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
+        other.javadoc = (at.dms.compiler.JavadocComment)at.dms.kjc.AutoCloner.cloneToplevel(this.javadoc);
+        other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
  

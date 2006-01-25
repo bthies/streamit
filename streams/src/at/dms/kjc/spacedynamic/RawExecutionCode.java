@@ -28,7 +28,7 @@ import java.math.BigInteger;
  * 
  */
 public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
-        Constants {
+                                                                   Constants {
     /** * fields for the var names we introduce ** */
     public static String recvBuffer = "__RECVBUFFER__";
 
@@ -68,10 +68,10 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     public static String structReceivePrefix = "__popPointer";
 
     public static String structReceivePrefixStatic = structReceivePrefix
-            + "Static";
+        + "Static";
 
     public static String structReceivePrefixDynamic = structReceivePrefix
-            + "Dynamic";
+        + "Dynamic";
 
     /** the name of the pop mehtod for each filter when the filter has
      * dynamic input and we are not inlining 
@@ -115,8 +115,8 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             streamGraph.getStaticSubGraphs()[i].getTopLevel().accept(
-                    new RawExecutionCode(streamGraph.getStaticSubGraphs()[i]),
-                    null, true);
+                                                                     new RawExecutionCode(streamGraph.getStaticSubGraphs()[i]),
+                                                                     null, true);
             /*
              * SIRPrinter printer1 = new SIRPrinter("sir" +
              * streamGraph.getStaticSubGraphs()[i].toString() + ".out");
@@ -136,13 +136,13 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             calculateItems(filter);
 
             System.out.print("Generating Raw Code: "
-                    + node.contents.getName() + " ");
+                             + node.contents.getName() + " ");
 
-//          attempt to generate direct communication code
+            //          attempt to generate direct communication code
             // (no buffer), if this returns true it was sucessful
             // and the code was produced
             if (bottomPeek == 0 && remaining == 0
-                    && DirectCommunication.doit(ssg, node)) {
+                && DirectCommunication.doit(ssg, node)) {
                 System.out.println("(Direct Communication)");
 
                 return;
@@ -156,7 +156,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
                 // create static network code and a buffer (maybe circular or
                 // linear)
                 (new BufferedStaticCommunication(ssg, node, bottomPeek,
-                        remaining, initFire)).doit();
+                                                 remaining, initFire)).doit();
             }
         }
     }
@@ -189,7 +189,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             // otherwise, we should be doing this only for work
             // estimation--check that the filter is the only thing in the graph
             assert filter.getParent() == null || filter.getParent().size() == 1
-                    && filter.getParent().getParent() == null : "Found null pointer where unexpected.";
+                && filter.getParent().getParent() == null : "Found null pointer where unexpected.";
         }
 
         // if this is not a twostage, fake it by adding to initFire,
@@ -219,7 +219,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             } else {
                 // upstream not a splitter, just get the number of executions
                 upStreamItems = getUpStreamItems(ssg.getExecutionCounts(true),
-                        node);
+                                                 node);
             }
         }
 
@@ -230,12 +230,12 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             bottomPeek = 0;
 
         remaining = upStreamItems
-                - (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+            - (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
 
         System.out.println("Remaining for " + filter + " " + remaining + "("
-                + upStreamItems + " >>> "
-                + (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop)
-                + ")");
+                           + upStreamItems + " >>> "
+                           + (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop)
+                           + ")");
     }
 
     /*
@@ -258,7 +258,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // get the push rate for the previous
         if (prevInitCount > 0) {
             if (previous.contents instanceof SIRSplitter
-                    || previous.contents instanceof SIRJoiner) {
+                || previous.contents instanceof SIRJoiner) {
                 prevPush = 1;
             } else
                 prevPush = ((SIRFilter) previous.contents).getPushInt();
@@ -275,9 +275,9 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // in the initialItemsTo Receive
         if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
             upStreamItems -= ((SIRTwoStageFilter) previous.contents)
-                    .getPushInt();
+                .getPushInt();
             upStreamItems += ((SIRTwoStageFilter) previous.contents)
-                    .getInitPushInt();
+                .getInitPushInt();
         }
 
         return upStreamItems;
@@ -316,7 +316,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // now current must be a joiner or filter
         // get the number of item current produces
         int currentUpStreamItems = getUpStreamItems(ssg
-                .getExecutionCounts(true), current.edges[0]);
+                                                    .getExecutionCounts(true), current.edges[0]);
         System.out.println(currentUpStreamItems);
         /*
          * if (getUpStreamItems(ssg.getExecutionCounts(true), node) !=
@@ -341,7 +341,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
      * empty (!not legal in the general case)
      */
     public static JStatement makeForLoop(JStatement body, JLocalVariable var,
-            JExpression count) {
+                                         JExpression count) {
         if (body == null)
             return new JEmptyStatement(null, null);
 
@@ -352,21 +352,21 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
                 // return empty statement
                 return new JEmptyStatement(null, null);
             }
-	    if (intCount==1) {
-		return body;
-	    }
+            if (intCount==1) {
+                return body;
+            }
         }
         // make init statement - assign zero to <var>. We need to use
         // an expression list statement to follow the convention of
         // other for loops and to get the codegen right.
         JExpression initExpr[] = { new JAssignmentExpression(null,
-                new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
+                                                             new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
         JStatement init = new JExpressionListStatement(null, initExpr, null);
         // make conditional - test if <var> less than <count>
         JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
-                new JLocalVariableExpression(null, var), count);
+                                                     new JLocalVariableExpression(null, var), count);
         JExpression incrExpr = new JPostfixExpression(null,
-                Constants.OPE_POSTINC, new JLocalVariableExpression(null, var));
+                                                      Constants.OPE_POSTINC, new JLocalVariableExpression(null, var));
         JStatement incr = new JExpressionStatement(null, incrExpr, null);
 
         return new JForStatement(null, init, cond, incr, body, null);

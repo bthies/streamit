@@ -43,12 +43,12 @@ public class FilterIter
     public int getNumInitStages ()
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getNumInitPhases();
-        } else {
-            // if not using the multi-phase style, cannot have any init phases!
-            return 0;
-        }
+            {
+                return filter.getNumInitPhases();
+            } else {
+                // if not using the multi-phase style, cannot have any init phases!
+                return 0;
+            }
     }
     
     public int getInitPeekStage (int stage)
@@ -78,60 +78,60 @@ public class FilterIter
     public int getNumWorkPhases ()
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getNumSteadyPhases();
-        } else {
-            // if not using the multi-phase style, must have exactly one phase!
-            return 1;
-        }
+            {
+                return filter.getNumSteadyPhases();
+            } else {
+                // if not using the multi-phase style, must have exactly one phase!
+                return 1;
+            }
     }
     
     public int getPeekPhase (int phase)
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getSteadyPeekPhase(phase);
-        } else {
-            // if not using the multi-phase style, must have exactly one phase!
-            assert phase == 0;
-            return filter.peekCount;
-        }
+            {
+                return filter.getSteadyPeekPhase(phase);
+            } else {
+                // if not using the multi-phase style, must have exactly one phase!
+                assert phase == 0;
+                return filter.peekCount;
+            }
     }
     
     public int getPopPhase (int phase)
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getSteadyPopPhase(phase);
-        } else {
-            // if not using the multi-phase style, must have exactly one phase!
-            assert phase == 0;
-            return filter.popCount;
-        }
+            {
+                return filter.getSteadyPopPhase(phase);
+            } else {
+                // if not using the multi-phase style, must have exactly one phase!
+                assert phase == 0;
+                return filter.popCount;
+            }
     }
     
     public int getPushPhase (int phase)
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getSteadyPushPhase(phase);
-        } else {
-            // if not using the multi-phase style, must have exactly one phase!
-            assert phase == 0;
-            return filter.pushCount;
-        }
+            {
+                return filter.getSteadyPushPhase(phase);
+            } else {
+                // if not using the multi-phase style, must have exactly one phase!
+                assert phase == 0;
+                return filter.pushCount;
+            }
     }
 
     public Object getWorkFunctionPhase (int phase)
     {
         if (filter.isMultiPhaseStyle())
-        {
-            return filter.getSteadyFunctionPhaseName(phase);
-        } else {
-            // if not using the multi-phase style, must have exactly one phase!
-            assert phase == 0;
-            return workName;
-        }
+            {
+                return filter.getSteadyFunctionPhaseName(phase);
+            } else {
+                // if not using the multi-phase style, must have exactly one phase!
+                assert phase == 0;
+                return workName;
+            }
     }
     
     public boolean equals(Object other)

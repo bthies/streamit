@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ClassConstant.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: ClassConstant.java,v 1.2 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -31,107 +31,107 @@ import at.dms.util.InconsistencyException;
  */
 public class ClassConstant extends PooledConstant {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new class constant.
-   *
-   * @param	name		the qualified name of the class
-   */
-  public ClassConstant(String name) {
-    this(new AsciiConstant(name));
-  }
+    /**
+     * Constructs a new class constant.
+     *
+     * @param   name        the qualified name of the class
+     */
+    public ClassConstant(String name) {
+        this(new AsciiConstant(name));
+    }
 
-  /**
-   * Constructs a new class constant.
-   *
-   * @param	name		the qualified name of the class
-   */
-  public ClassConstant(AsciiConstant name) {
-    this.name = name;
-  }
+    /**
+     * Constructs a new class constant.
+     *
+     * @param   name        the qualified name of the class
+     */
+    public ClassConstant(AsciiConstant name) {
+        this.name = name;
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  public String getName() {
-    return name.getValue();
-  }
+    public String getName() {
+        return name.getValue();
+    }
 
-  /**
-   * Returns the associated literal: this constant type has none
-   */
-  /*package*/ Object getLiteral() {
-    throw new InconsistencyException("attempt to read literal in a class constant");
-  }
+    /**
+     * Returns the associated literal: this constant type has none
+     */
+    /*package*/ Object getLiteral() {
+        throw new InconsistencyException("attempt to read literal in a class constant");
+    }
 
-  // --------------------------------------------------------------------
-  // POOLING
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // POOLING
+    // --------------------------------------------------------------------
 
-  /**
-   * hashCode (a fast comparison)
-   * CONVENTION: return XXXXXXXXXXXX << 4 + Y
-   * with Y = ident of the type of the pooled constant
-   */
-  public final int hashCode() {
-    // we know already that name is an ascii: &
-    return (name.hashCode() & 0xFFFFFFF0) + POO_CLASS_CONSTANT;
-  }
+    /**
+     * hashCode (a fast comparison)
+     * CONVENTION: return XXXXXXXXXXXX << 4 + Y
+     * with Y = ident of the type of the pooled constant
+     */
+    public final int hashCode() {
+        // we know already that name is an ascii: &
+        return (name.hashCode() & 0xFFFFFFF0) + POO_CLASS_CONSTANT;
+    }
 
-  /**
-   * equals (an exact comparison)
-   * ASSERT: this.hashCode == o.hashCode ===> cast
-   */
-  public final boolean equals(Object o) {
-    return (o instanceof ClassConstant) &&
-      ((ClassConstant)o).name.equals(name);
-  }
+    /**
+     * equals (an exact comparison)
+     * ASSERT: this.hashCode == o.hashCode ===> cast
+     */
+    public final boolean equals(Object o) {
+        return (o instanceof ClassConstant) &&
+            ((ClassConstant)o).name.equals(name);
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Check location of constant value on constant pool
-   *
-   * @param	pc		the already in pooled constant
-   * ASSERT pc.getClass() == this.getClass()
-   */
-  /*package*/ final void resolveConstants(PooledConstant pc) {
-    setIndex(pc.getIndex());
-    name.setIndex(((ClassConstant)pc).name.getIndex());
-  }
+    /**
+     * Check location of constant value on constant pool
+     *
+     * @param   pc      the already in pooled constant
+     * ASSERT pc.getClass() == this.getClass()
+     */
+    /*package*/ final void resolveConstants(PooledConstant pc) {
+        setIndex(pc.getIndex());
+        name.setIndex(((ClassConstant)pc).name.getIndex());
+    }
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(name);
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(name);
+    }
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeByte(CST_CLASS);
-    out.writeShort(name.getIndex());
-  }
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeByte(CST_CLASS);
+        out.writeShort(name.getIndex());
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private AsciiConstant		name;
+    private AsciiConstant       name;
 }

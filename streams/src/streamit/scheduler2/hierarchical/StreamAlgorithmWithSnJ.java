@@ -101,10 +101,10 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         // if the splitter or joiner is NULL, it doesn't have
         // steady phases - don't even try to create a phase for it!
         if (numSteadyPhases == 0) 
-        {
-            assert nPhases == 0;
-            return phase;
-        } 
+            {
+                assert nPhases == 0;
+                return phase;
+            } 
         
         // round up to a steady-state:
         // if there aren't enough executions here to make it worth
@@ -118,15 +118,15 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
             nPhases -= mod;
             
             for(;mod > 0; mod--)
-            {
-                if (isSplitter){
-                    phase.appendPhase(getSplitSteadyPhase(0));
-                    advanceSplitSchedule(1);
-                } else {
-                    phase.appendPhase(getJoinSteadyPhase(0));
-                    advanceJoinSchedule(1);
+                {
+                    if (isSplitter){
+                        phase.appendPhase(getSplitSteadyPhase(0));
+                        advanceSplitSchedule(1);
+                    } else {
+                        phase.appendPhase(getJoinSteadyPhase(0));
+                        advanceJoinSchedule(1);
+                    }
                 }
-            }
         }
         
         // if I'm not actually adding more phases, quit early
@@ -135,23 +135,23 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         // create a steady-state phase:
         PhasingSchedule steadyState = new PhasingSchedule(stream);
         for (int nPhase = 0; nPhase < numSteadyPhases;nPhase++)
-        {
-            if (isSplitter)
             {
-                steadyState.appendPhase(getSplitSteadyPhase(nPhase));
-            } else{
-                steadyState.appendPhase(getJoinSteadyPhase(nPhase));
+                if (isSplitter)
+                    {
+                        steadyState.appendPhase(getSplitSteadyPhase(nPhase));
+                    } else{
+                        steadyState.appendPhase(getJoinSteadyPhase(nPhase));
+                    }
             }
-        }
         
         phase.appendPhase(duplicatePhase(steadyState, nPhases/numSteadyPhases));
 
         if(isSplitter)
-        {
-            advanceSplitSchedule(nPhases);
-        } else {
-            advanceJoinSchedule(nPhases);
-        }
+            {
+                advanceSplitSchedule(nPhases);
+            } else {
+                advanceJoinSchedule(nPhases);
+            }
         
         return phase;
     }

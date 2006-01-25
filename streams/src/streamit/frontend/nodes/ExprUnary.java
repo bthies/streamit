@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * it could be "!a" or "-b" or "c++".
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprUnary.java,v 1.5 2005-02-01 05:09:41 rabbah Exp $
+ * @version $Id: ExprUnary.java,v 1.6 2006-01-25 17:04:25 thies Exp $
  */
 public class ExprUnary extends Expression
 {
@@ -79,17 +79,17 @@ public class ExprUnary extends Expression
     {
         String preOp = "", postOp = "";
         switch(op)
-        {
-        case UNOP_NOT: preOp = "!"; break;
-        case UNOP_NEG: preOp = "-"; break;
-        case UNOP_PREINC: preOp = "++"; break;
-        case UNOP_POSTINC: postOp = "++"; break;
-        case UNOP_PREDEC: preOp = "--"; break;
-        case UNOP_POSTDEC: postOp = "--"; break;
-	  case UNOP_COMPLEMENT: preOp = "~"; break;
+            {
+            case UNOP_NOT: preOp = "!"; break;
+            case UNOP_NEG: preOp = "-"; break;
+            case UNOP_PREINC: preOp = "++"; break;
+            case UNOP_POSTINC: postOp = "++"; break;
+            case UNOP_PREDEC: preOp = "--"; break;
+            case UNOP_POSTDEC: postOp = "--"; break;
+            case UNOP_COMPLEMENT: preOp = "~"; break;
 
-        default: preOp = "?(" + op + ")"; break;
-        }
+            default: preOp = "?(" + op + ")"; break;
+            }
         return preOp + "(" + expr.toString() + ")" + postOp;
     }
 }

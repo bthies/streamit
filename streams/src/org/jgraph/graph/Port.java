@@ -1,5 +1,5 @@
 /*
- * @(#)Port.java	1.0 1/1/02
+ * @(#)Port.java    1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -33,30 +33,30 @@ import java.util.Iterator;
 
 public interface Port extends GraphCell {
 
-	/**
-	 * Returns an iterator of the edges connected
-	 * to the port.
-	 */
-	Iterator edges();
+    /**
+     * Returns an iterator of the edges connected
+     * to the port.
+     */
+    Iterator edges();
 
-	/**
-	 * Adds <code>edge</code> to the list of ports.
-	 */
-	boolean addEdge(Object edge);
+    /**
+     * Adds <code>edge</code> to the list of ports.
+     */
+    boolean addEdge(Object edge);
 
-	/**
-	 * Removes <code>edge</code> from the list of ports.
-	 */
-	boolean removeEdge(Object edge);
+    /**
+     * Removes <code>edge</code> from the list of ports.
+     */
+    boolean removeEdge(Object edge);
 
-	/**
-	 * Returns the anchor of the port.
-	 */
-	Port getAnchor();
+    /**
+     * Returns the anchor of the port.
+     */
+    Port getAnchor();
 
-	/**
-	 * Sets the anchor of the port.
-	 */
-	void setAnchor(Port port);
+    /**
+     * Sets the anchor of the port.
+     */
+    void setAnchor(Port port);
 
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)ShapeUngroup.java	1.2 01.02.2003
+ * @(#)ShapeUngroup.java    1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,37 +34,37 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ShapeUngroup extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ShapeUngroup.
-	 * @param graphpad
-	 */
-	public ShapeUngroup(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ShapeUngroup.
+     * @param graphpad
+     */
+    public ShapeUngroup(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Object[] cells = getCurrentGraph().getSelectionCells();
-		if (cells != null) {
-			ArrayList groups = new ArrayList();
-			ArrayList children = new ArrayList();
-			for (int i = 0; i < cells.length; i++) {
-				if (getCurrentGraph().isGroup(cells[i])) {
-					groups.add(cells[i]);
-					for (int j = 0;
-						j < getCurrentGraph().getModel().getChildCount(cells[i]);
-						j++) {
-						Object child = getCurrentGraph().getModel().getChild(cells[i], j);
-						if (!getCurrentGraph().getModel().isPort(child))
-							children.add(child);
-					}
-				}
-			}
-			getCurrentGraph().getModel().remove(groups.toArray());
-			getCurrentGraph().setSelectionCells(children.toArray());
-		}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getSelectionCells();
+        if (cells != null) {
+            ArrayList groups = new ArrayList();
+            ArrayList children = new ArrayList();
+            for (int i = 0; i < cells.length; i++) {
+                if (getCurrentGraph().isGroup(cells[i])) {
+                    groups.add(cells[i]);
+                    for (int j = 0;
+                         j < getCurrentGraph().getModel().getChildCount(cells[i]);
+                         j++) {
+                        Object child = getCurrentGraph().getModel().getChild(cells[i], j);
+                        if (!getCurrentGraph().getModel().isPort(child))
+                            children.add(child);
+                    }
+                }
+            }
+            getCurrentGraph().getModel().remove(groups.toArray());
+            getCurrentGraph().setSelectionCells(children.toArray());
+        }
+    }
 
 }

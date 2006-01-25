@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * these out first.)
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexProp.java,v 1.14 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ComplexProp.java,v 1.15 2006-01-25 17:04:25 thies Exp $
  */
 public class ComplexProp extends FEReplacer
 {
@@ -76,164 +76,164 @@ public class ComplexProp extends FEReplacer
         FEContext ctx = exp.getContext();
         // We need at least one side to be complex to care.
         if ((left instanceof ExprComplex) || (right instanceof ExprComplex))
-        {
-            // Okay, build child expressions for the real and imaginary
-            // parts of both sides.
-            Expression lr, li, rr, ri;
-            Expression ar, ai, br, bi, denom;
-            if (left instanceof ExprComplex)
             {
-                lr = ((ExprComplex)left).getReal();
-                li = ((ExprComplex)left).getImag();
-            }
-            else
-            {
-                lr = left;
-                li = null;
-            }
-            if (right instanceof ExprComplex)
-            {
-                rr = ((ExprComplex)right).getReal();
-                ri = ((ExprComplex)right).getImag();
-            }
-            else
-            {
-                rr = right;
-                ri = null;
-            }
+                // Okay, build child expressions for the real and imaginary
+                // parts of both sides.
+                Expression lr, li, rr, ri;
+                Expression ar, ai, br, bi, denom;
+                if (left instanceof ExprComplex)
+                    {
+                        lr = ((ExprComplex)left).getReal();
+                        li = ((ExprComplex)left).getImag();
+                    }
+                else
+                    {
+                        lr = left;
+                        li = null;
+                    }
+                if (right instanceof ExprComplex)
+                    {
+                        rr = ((ExprComplex)right).getReal();
+                        ri = ((ExprComplex)right).getImag();
+                    }
+                else
+                    {
+                        rr = right;
+                        ri = null;
+                    }
 
-            // Expressions to be used for returning values:
-            Expression real, imag;
+                // Expressions to be used for returning values:
+                Expression real, imag;
             
-            // Decide what to do based on the operation:
-            switch (exp.getOp())
-            {
-                // Deal with real and imaginary parts piecewise:
-            case ExprBinary.BINOP_ADD:
-                if (lr == null)
-                    real = rr;
-                else if (rr == null)
-                    real = lr;
-                else
-                    real = new ExprBinary(ctx, exp.getOp(), lr, rr);
+                // Decide what to do based on the operation:
+                switch (exp.getOp())
+                    {
+                        // Deal with real and imaginary parts piecewise:
+                    case ExprBinary.BINOP_ADD:
+                        if (lr == null)
+                            real = rr;
+                        else if (rr == null)
+                            real = lr;
+                        else
+                            real = new ExprBinary(ctx, exp.getOp(), lr, rr);
                 
-                if (li == null)
-                    imag = ri;
-                else if (ri == null)
-                    imag = li;
-                else
-                    imag = new ExprBinary(ctx, exp.getOp(), li, ri);
+                        if (li == null)
+                            imag = ri;
+                        else if (ri == null)
+                            imag = li;
+                        else
+                            imag = new ExprBinary(ctx, exp.getOp(), li, ri);
                 
-                return new ExprComplex(ctx, real, imag);
+                        return new ExprComplex(ctx, real, imag);
 
-            case ExprBinary.BINOP_SUB:
-                if (lr == null)
-                    real = new ExprUnary(ctx, ExprUnary.UNOP_NEG, rr);
-                else if (rr == null)
-                    real = lr;
-                else
-                    real = new ExprBinary(ctx, exp.getOp(), lr, rr);
+                    case ExprBinary.BINOP_SUB:
+                        if (lr == null)
+                            real = new ExprUnary(ctx, ExprUnary.UNOP_NEG, rr);
+                        else if (rr == null)
+                            real = lr;
+                        else
+                            real = new ExprBinary(ctx, exp.getOp(), lr, rr);
                 
-                if (li == null)
-                    imag = new ExprUnary(ctx, ExprUnary.UNOP_NEG, ri);
-                else if (ri == null)
-                    imag = li;
-                else
-                    imag = new ExprBinary(ctx, exp.getOp(), li, ri);
+                        if (li == null)
+                            imag = new ExprUnary(ctx, ExprUnary.UNOP_NEG, ri);
+                        else if (ri == null)
+                            imag = li;
+                        else
+                            imag = new ExprBinary(ctx, exp.getOp(), li, ri);
                 
-                return new ExprComplex(ctx, real, imag);
+                        return new ExprComplex(ctx, real, imag);
 
-                // Complex multiply:
-            case ExprBinary.BINOP_MUL:
-                // (lr + i*li) * (rr + i*ri)
-                // lr * rr + i*lr*ri + i*rr*li - li * ri
-                // (lr * rr - li * ri) + i*(lr*ri + rr*li)
-                // Note that some of these terms can be simplified if
-                // various parts are null (always zero).
-                // But we won't do that for now; it involves thinking
-                // more.
-                if (lr == null) lr = new ExprConstFloat(0.0);
-                if (li == null) li = new ExprConstFloat(0.0);
-                if (rr == null) rr = new ExprConstFloat(0.0);
-                if (ri == null) ri = new ExprConstFloat(0.0);
+                        // Complex multiply:
+                    case ExprBinary.BINOP_MUL:
+                        // (lr + i*li) * (rr + i*ri)
+                        // lr * rr + i*lr*ri + i*rr*li - li * ri
+                        // (lr * rr - li * ri) + i*(lr*ri + rr*li)
+                        // Note that some of these terms can be simplified if
+                        // various parts are null (always zero).
+                        // But we won't do that for now; it involves thinking
+                        // more.
+                        if (lr == null) lr = new ExprConstFloat(0.0);
+                        if (li == null) li = new ExprConstFloat(0.0);
+                        if (rr == null) rr = new ExprConstFloat(0.0);
+                        if (ri == null) ri = new ExprConstFloat(0.0);
                 
-                ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, rr);
-                br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, ri);
-                real = new ExprBinary(ctx, ExprBinary.BINOP_SUB, ar, br);
+                        ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, rr);
+                        br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, ri);
+                        real = new ExprBinary(ctx, ExprBinary.BINOP_SUB, ar, br);
                 
-                ai = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, ri);
-                bi = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, rr);
-                imag = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ai, bi);
+                        ai = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, ri);
+                        bi = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, rr);
+                        imag = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ai, bi);
                 
-                return new ExprComplex(ctx, real, imag);
+                        return new ExprComplex(ctx, real, imag);
                 
-                // Complex divide:
-            case ExprBinary.BINOP_DIV:
-                // This works out to
-                // (lr*rr+li*ri)/(rr*rr-ri*ri) + i(li*rr-lr*ri)/(rr*rr-ri*ri)
-                // So precalculate the denominator, and share it between
-                // both sides.
-                // Again, punt on any cleverness involving null bits.
-                if (lr == null) lr = new ExprConstFloat(0.0);
-                if (li == null) li = new ExprConstFloat(0.0);
-                if (rr == null) rr = new ExprConstFloat(0.0);
-                if (ri == null) ri = new ExprConstFloat(0.0);
+                        // Complex divide:
+                    case ExprBinary.BINOP_DIV:
+                        // This works out to
+                        // (lr*rr+li*ri)/(rr*rr-ri*ri) + i(li*rr-lr*ri)/(rr*rr-ri*ri)
+                        // So precalculate the denominator, and share it between
+                        // both sides.
+                        // Again, punt on any cleverness involving null bits.
+                        if (lr == null) lr = new ExprConstFloat(0.0);
+                        if (li == null) li = new ExprConstFloat(0.0);
+                        if (rr == null) rr = new ExprConstFloat(0.0);
+                        if (ri == null) ri = new ExprConstFloat(0.0);
 
-                ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, rr, rr);
-                br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, ri, ri);
-                denom = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ar, br);
+                        ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, rr, rr);
+                        br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, ri, ri);
+                        denom = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ar, br);
                 
-                ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, rr);
-                br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, ri);
-                real = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ar, br);
-                real = new ExprBinary(ctx, ExprBinary.BINOP_DIV, real, denom);
+                        ar = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, rr);
+                        br = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, ri);
+                        real = new ExprBinary(ctx, ExprBinary.BINOP_ADD, ar, br);
+                        real = new ExprBinary(ctx, ExprBinary.BINOP_DIV, real, denom);
                 
-                ai = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, rr);
-                bi = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, ri);
-                imag = new ExprBinary(ctx, ExprBinary.BINOP_SUB, ai, bi);
-                imag = new ExprBinary(ctx, ExprBinary.BINOP_DIV, imag, denom);
+                        ai = new ExprBinary(ctx, ExprBinary.BINOP_MUL, li, rr);
+                        bi = new ExprBinary(ctx, ExprBinary.BINOP_MUL, lr, ri);
+                        imag = new ExprBinary(ctx, ExprBinary.BINOP_SUB, ai, bi);
+                        imag = new ExprBinary(ctx, ExprBinary.BINOP_DIV, imag, denom);
                 
-                return new ExprComplex(ctx, real, imag);
+                        return new ExprComplex(ctx, real, imag);
                 
-                // Direct comparisons need to get translated to
-                // piecewise comparisons, but the result is a single
-                // real-valued expression.
-            case ExprBinary.BINOP_EQ:
-                // Need to construct (lr == rr) && (li == ri),
-                // forcing things to be 0.0 if needed.
-                if (lr == null) lr = new ExprConstFloat(0.0);
-                if (li == null) li = new ExprConstFloat(0.0);
-                if (rr == null) rr = new ExprConstFloat(0.0);
-                if (ri == null) ri = new ExprConstFloat(0.0);
+                        // Direct comparisons need to get translated to
+                        // piecewise comparisons, but the result is a single
+                        // real-valued expression.
+                    case ExprBinary.BINOP_EQ:
+                        // Need to construct (lr == rr) && (li == ri),
+                        // forcing things to be 0.0 if needed.
+                        if (lr == null) lr = new ExprConstFloat(0.0);
+                        if (li == null) li = new ExprConstFloat(0.0);
+                        if (rr == null) rr = new ExprConstFloat(0.0);
+                        if (ri == null) ri = new ExprConstFloat(0.0);
 
-                left = new ExprBinary(ctx, ExprBinary.BINOP_EQ, lr, rr);
-                right = new ExprBinary(ctx, ExprBinary.BINOP_EQ, li, ri);
-                return new ExprBinary(ctx, ExprBinary.BINOP_AND, left, right);
+                        left = new ExprBinary(ctx, ExprBinary.BINOP_EQ, lr, rr);
+                        right = new ExprBinary(ctx, ExprBinary.BINOP_EQ, li, ri);
+                        return new ExprBinary(ctx, ExprBinary.BINOP_AND, left, right);
 
-            case ExprBinary.BINOP_NEQ:
-                // Need to construct (lr != rr) || (li != ri),
-                // forcing things to be 0.0 if needed.
-                if (lr == null) lr = new ExprConstFloat(0.0);
-                if (li == null) li = new ExprConstFloat(0.0);
-                if (rr == null) rr = new ExprConstFloat(0.0);
-                if (ri == null) ri = new ExprConstFloat(0.0);
+                    case ExprBinary.BINOP_NEQ:
+                        // Need to construct (lr != rr) || (li != ri),
+                        // forcing things to be 0.0 if needed.
+                        if (lr == null) lr = new ExprConstFloat(0.0);
+                        if (li == null) li = new ExprConstFloat(0.0);
+                        if (rr == null) rr = new ExprConstFloat(0.0);
+                        if (ri == null) ri = new ExprConstFloat(0.0);
 
-                left = new ExprBinary(ctx, ExprBinary.BINOP_NEQ, lr, rr);
-                right = new ExprBinary(ctx, ExprBinary.BINOP_NEQ, li, ri);
-                return new ExprBinary(ctx, ExprBinary.BINOP_OR, left, right);
+                        left = new ExprBinary(ctx, ExprBinary.BINOP_NEQ, lr, rr);
+                        right = new ExprBinary(ctx, ExprBinary.BINOP_NEQ, li, ri);
+                        return new ExprBinary(ctx, ExprBinary.BINOP_OR, left, right);
                 
-                // Anything else is wrong; punt on the problem.
-            default:
+                        // Anything else is wrong; punt on the problem.
+                    default:
+                    }
+
+                // Reconstruct the left and right sides if we need to.
+                // For now, always recreate them (we need to test whether
+                // left and right are complex).
+                // if (lr != left.getReal() || li != left.getImag())
+                left = new ExprComplex(ctx, lr, li);
+                // if (rr != right.getReal() || ri != right.getImag())
+                right = new ExprComplex(ctx, rr, ri);
             }
-
-            // Reconstruct the left and right sides if we need to.
-            // For now, always recreate them (we need to test whether
-            // left and right are complex).
-            // if (lr != left.getReal() || li != left.getImag())
-            left = new ExprComplex(ctx, lr, li);
-            // if (rr != right.getReal() || ri != right.getImag())
-            right = new ExprComplex(ctx, rr, ri);
-        }
         // Now build the new result, but only if we need to.
         if (left == exp.getLeft() && right == exp.getRight())
             return exp;
@@ -291,10 +291,10 @@ public class ComplexProp extends FEReplacer
         List params = new ArrayList();
         Iterator iter = exp.getParams().iterator();
         while (iter.hasNext())
-        {
-            Expression expr = (Expression)iter.next();
-            params.add(expr.accept(this));
-        }
+            {
+                Expression expr = (Expression)iter.next();
+                params.add(expr.accept(this));
+            }
         
         // Lots of special cases here.  We care about a function if
         // it matches the conditions in isEligibleFunCall().
@@ -310,9 +310,9 @@ public class ComplexProp extends FEReplacer
             return fcSin(exp, (ExprComplex)params.get(0));
         if (isEligibleFunCall(exp, params, "cos", 1))
             return fcCos(exp, (ExprComplex)params.get(0));
-	if (isEligibleFunCall(exp, params, "pow", 2))
-	    return fcPow(exp, (Expression)params.get(0),
-			 (Expression)params.get(1));
+        if (isEligibleFunCall(exp, params, "pow", 2))
+            return fcPow(exp, (Expression)params.get(0),
+                         (Expression)params.get(1));
 
         // sqrt() is special; sqrt() of a real can return a complex
         // answer if its argument is negative, but we don't always
@@ -327,7 +327,7 @@ public class ComplexProp extends FEReplacer
     }
 
     private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn,
-				      int nParams)
+                                      int nParams)
     {
         // A function call is eligible if:
         // -- Its name is exactly fn;
@@ -337,12 +337,12 @@ public class ComplexProp extends FEReplacer
             return false;
         if (params.size() != nParams)
             return false;
-	for (Iterator iter = params.iterator(); iter.hasNext(); )
-	{
-	    Expression param = (Expression)iter.next();
-	    if (param instanceof ExprComplex)
-		return true;
-	}
+        for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Expression param = (Expression)iter.next();
+                if (param instanceof ExprComplex)
+                    return true;
+            }
         return false;
     }
 
@@ -464,16 +464,16 @@ public class ComplexProp extends FEReplacer
 
     public Expression fcPow(ExprFunCall fc, Expression base, Expression exp)
     {
-	// In general, base^exp = e^(exp*ln(base)).  This is easy enough
-	// to do here, solves all of the nasty corner cases, and might
-	// have a prayer of being efficient.
-	Expression lnBase = new ExprFunCall(base.getContext(), "log", base);
-	Expression newExp = new ExprBinary(exp.getContext(),
-					   ExprBinary.BINOP_MUL,
-					   exp, lnBase);
-	Expression result = new ExprFunCall(fc.getContext(), "exp", newExp);
-	result = (Expression)result.accept(this);
-	return result;
+        // In general, base^exp = e^(exp*ln(base)).  This is easy enough
+        // to do here, solves all of the nasty corner cases, and might
+        // have a prayer of being efficient.
+        Expression lnBase = new ExprFunCall(base.getContext(), "log", base);
+        Expression newExp = new ExprBinary(exp.getContext(),
+                                           ExprBinary.BINOP_MUL,
+                                           exp, lnBase);
+        Expression result = new ExprFunCall(fc.getContext(), "exp", newExp);
+        result = (Expression)result.accept(this);
+        return result;
     }
 
     public Expression fcSqrt(ExprFunCall fc, ExprComplex param)

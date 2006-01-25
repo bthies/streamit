@@ -50,69 +50,69 @@ abstract public class Pipeline extends Stream
             if (debugrates) {
                 if (librarydebug) {
                     System.err.print("PIPELINE "+ pipeline.getObject().getClass()
-                            .getName());
+                                     .getName());
                 } else {
                     System.err.print("PIPELINE "+ ((SIRStream)pipeline.getObject())
-                             .getIdent());
+                                     .getIdent());
                 }
                 System.err.println("[" + nChildren + "]");
             }
             // End Debugging
 
-           // a pipeline must have some children
+            // a pipeline must have some children
             assert nChildren > 0;
 
             children = new StreamInterface[nChildren];
 
             int nChild;
             for (nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
-            {
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(pipeline.getObject().getClass()
-                                .getName() + "[" + nChild + "] begin: "
-                                + ((at.dms.kjc.iterator.SIRIterator) pipeline
-                                        .getChild(nChild)).getObject()
-                                        .getClass().getName());
-                    } else {
-                        System.err.println(((SIRStream)pipeline.getObject())
-                                 .getIdent() + "[" + nChild + "] begin: "
-                                 + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)pipeline
-                                        .getChild(nChild)).getObject()).getIdent());
+                {
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(pipeline.getObject().getClass()
+                                               .getName() + "[" + nChild + "] begin: "
+                                               + ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                                  .getChild(nChild)).getObject()
+                                               .getClass().getName());
+                        } else {
+                            System.err.println(((SIRStream)pipeline.getObject())
+                                               .getIdent() + "[" + nChild + "] begin: "
+                                               + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)pipeline
+                                                               .getChild(nChild)).getObject()).getIdent());
+                        }
                     }
-                }
-                // End Debugging
+                    // End Debugging
             
-                // create a new child object
-                children[nChild] =
-                    factory.newFrom(pipeline.getChild(nChild), pipeline.getUnspecializedIter());
+                    // create a new child object
+                    children[nChild] =
+                        factory.newFrom(pipeline.getChild(nChild), pipeline.getUnspecializedIter());
 
                 
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(pipeline.getObject().getClass()
-                                .getName() + "[" + nChild + "] end: "
-                                + ((at.dms.kjc.iterator.SIRIterator) pipeline
-                                        .getChild(nChild)).getObject()
-                                        .getClass().getName());
-                    } else {
-                        System.err.println(((SIRStream) pipeline.getObject())
-                                .getIdent() + "[" + nChild + "] end: "
-                                + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator) pipeline
-                                        .getChild(nChild)).getObject()).getIdent());
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(pipeline.getObject().getClass()
+                                               .getName() + "[" + nChild + "] end: "
+                                               + ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                                  .getChild(nChild)).getObject()
+                                               .getClass().getName());
+                        } else {
+                            System.err.println(((SIRStream) pipeline.getObject())
+                                               .getIdent() + "[" + nChild + "] end: "
+                                               + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator) pipeline
+                                                               .getChild(nChild)).getObject()).getIdent());
+                        }
                     }
+                    // End Debugging
                 }
-                // End Debugging
-            }
             
             // compute my steady schedule
             // my children already have computed their steady schedules,
             // so I just have to do mine
-	    if (factory.needsSchedule()) {
-		computeSteadyState();
-	    }
+            if (factory.needsSchedule()) {
+                computeSteadyState();
+            }
         }
     }
 
@@ -169,16 +169,16 @@ abstract public class Pipeline extends Stream
 
             int nChild;
             for (nChild = 0; nChild < nChildren; nChild++)
-            {
-                StreamInterface child = children[nChild];
-                assert child != null;
+                {
+                    StreamInterface child = children[nChild];
+                    assert child != null;
 
-                childrenNumExecs[nChild] = outProduct;
+                    childrenNumExecs[nChild] = outProduct;
                 
-                outProduct =
-                    outProduct.multiply(
-                        BigInteger.valueOf(child.getSteadyPush()));
-            }
+                    outProduct =
+                        outProduct.multiply(
+                                            BigInteger.valueOf(child.getSteadyPush()));
+                }
         }
 
         // now multiply the children's num of executions
@@ -189,18 +189,18 @@ abstract public class Pipeline extends Stream
 
             int nChild;
             for (nChild = nChildren - 1; nChild >= 0; nChild--)
-            {
-                StreamInterface child = children[nChild];
-                assert child != null;
+                {
+                    StreamInterface child = children[nChild];
+                    assert child != null;
 
-                // continue computing the number of executions this child needs
-                childrenNumExecs[nChild] =
-                    childrenNumExecs[nChild].multiply(inProduct);
+                    // continue computing the number of executions this child needs
+                    childrenNumExecs[nChild] =
+                        childrenNumExecs[nChild].multiply(inProduct);
 
-                inProduct =
-                    inProduct.multiply(
-                        BigInteger.valueOf(child.getSteadyPop()));
-            }
+                    inProduct =
+                        inProduct.multiply(
+                                           BigInteger.valueOf(child.getSteadyPop()));
+                }
         }
 
         // compute the GCD of number of executions of the children
@@ -212,61 +212,61 @@ abstract public class Pipeline extends Stream
 
             int nChild;
             for (nChild = 0; nChild < nChildren; nChild++)
-            {
-                gcd = gcd.gcd(childrenNumExecs[nChild]);
+                {
+                    gcd = gcd.gcd(childrenNumExecs[nChild]);
 
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(pipeline.getObject().
-                                getClass().getName() + "[" + nChild 
-                                + "] executions before gcd = " 
-                                + childrenNumExecs[nChild]);
-                    } else {
-                        System.err.println(((SIRStream) pipeline.getObject())
-                                .getIdent() + "[" + nChild + "] executions before gcd = " 
-                                + childrenNumExecs[nChild]);
-                    }
-                }                       
-                // End Debugging
-            }
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(pipeline.getObject().
+                                               getClass().getName() + "[" + nChild 
+                                               + "] executions before gcd = " 
+                                               + childrenNumExecs[nChild]);
+                        } else {
+                            System.err.println(((SIRStream) pipeline.getObject())
+                                               .getIdent() + "[" + nChild + "] executions before gcd = " 
+                                               + childrenNumExecs[nChild]);
+                        }
+                    }                       
+                    // End Debugging
+                }
         }
 
         // divide the children's execution counts by the gcd
         {
             int nChild;
             for (nChild = 0; nChild < nChildren; nChild++)
-            {
-                StreamInterface child = children[nChild];
-                assert child != null;
-                assert childrenNumExecs[nChild].mod(gcd)
-                    .equals(BigInteger.ZERO);
+                {
+                    StreamInterface child = children[nChild];
+                    assert child != null;
+                    assert childrenNumExecs[nChild].mod(gcd)
+                        .equals(BigInteger.ZERO);
 
-                childrenNumExecs[nChild] =
-                    childrenNumExecs[nChild].divide(gcd);
+                    childrenNumExecs[nChild] =
+                        childrenNumExecs[nChild].divide(gcd);
 
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(pipeline.getObject().
-                                getClass().getName() + "[" + nChild 
-                                + "] executions = " 
-                                + childrenNumExecs[nChild]);
-                    } else {
-                        System.err.println(((SIRStream) pipeline.getObject())
-                                .getIdent() + "[" + nChild + "] executions = " 
-                                + childrenNumExecs[nChild]);
-                    }
-                }                       
-                // End Debugging
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(pipeline.getObject().
+                                               getClass().getName() + "[" + nChild 
+                                               + "] executions = " 
+                                               + childrenNumExecs[nChild]);
+                        } else {
+                            System.err.println(((SIRStream) pipeline.getObject())
+                                               .getIdent() + "[" + nChild + "] executions = " 
+                                               + childrenNumExecs[nChild]);
+                        }
+                    }                       
+                    // End Debugging
 
-                // make sure that the child executes a positive
-                // number of times!
-                assert childrenNumExecs[nChild].signum() == 1 :"" 
-                  + childrenNumExecs[nChild].signum() + " == 1  " 
-                  + pipeline.getObject().getClass().getName() 
-                  + "[" + nChild + "]";
-            }
+                    // make sure that the child executes a positive
+                    // number of times!
+                    assert childrenNumExecs[nChild].signum() == 1 :"" 
+                        + childrenNumExecs[nChild].signum() + " == 1  " 
+                        + pipeline.getObject().getClass().getName() 
+                        + "[" + nChild + "]";
+                }
         }
 
         // initialize self
@@ -275,11 +275,11 @@ abstract public class Pipeline extends Stream
                 children[0].getSteadyPeek() - children[0].getSteadyPop();
             int pop =
                 childrenNumExecs[0].intValue()
-                    * children[0].getSteadyPop();
+                * children[0].getSteadyPop();
             int push =
                 childrenNumExecs[nChildren
-                    - 1].intValue() * children[nChildren
-                    - 1].getSteadyPush();
+                                 - 1].intValue() * children[nChildren
+                                                            - 1].getSteadyPush();
 
             setSteadyPeek(pop + peekExtra);
             setSteadyPop(pop);
@@ -289,10 +289,10 @@ abstract public class Pipeline extends Stream
             if (debugrates) {
                 if (librarydebug) {
                     System.err.print(pipeline.getObject().
-                            getClass().getName());
+                                     getClass().getName());
                 } else {
                     System.err.print(((SIRStream)pipeline.getObject())
-                            .getIdent()); 
+                                     .getIdent()); 
                 }
                 System.err.println(" steady state: push " + push + " pop " + pop + " peekExtra " + peekExtra);
             }                       
@@ -305,12 +305,12 @@ abstract public class Pipeline extends Stream
     { 
         int nodes = 0;
         for (int nChild = 0; nChild < nChildren; nChild++)
-        {
-            StreamInterface child = children[nChild];
-            assert child != null;
+            {
+                StreamInterface child = children[nChild];
+                assert child != null;
             
-            nodes += child.getNumNodes ();
-        }
+                nodes += child.getNumNodes ();
+            }
         return nodes;
     }
     
@@ -318,12 +318,12 @@ abstract public class Pipeline extends Stream
     {
         int firings = 0;
         for (int nChild = 0; nChild < nChildren; nChild++)
-        {
-            StreamInterface child = children[nChild];
-            assert child != null;
+            {
+                StreamInterface child = children[nChild];
+                assert child != null;
             
-            firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
-        }
+                firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
+            }
         return firings;
     }
 }

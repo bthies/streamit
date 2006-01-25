@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InputBuffer.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: InputBuffer.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -42,100 +42,100 @@ import java.io.IOException;
  * @see at.dms.compiler.tools.antlr.CharQueue
  */
 public abstract class InputBuffer {
-  // char source
-  //	transient Reader input;  // leave to subclasses
+    // char source
+    //  transient Reader input;  // leave to subclasses
 
-  // Number of active markers
-  protected int nMarkers = 0;
+    // Number of active markers
+    protected int nMarkers = 0;
 
-  // Additional offset used when markers are active
-  protected int markerOffset = 0;
+    // Additional offset used when markers are active
+    protected int markerOffset = 0;
 
-  // Number of calls to consume() since last LA() or LT() call
-  protected int numToConsume = 0;
+    // Number of calls to consume() since last LA() or LT() call
+    protected int numToConsume = 0;
 
-  // Circular queue
-  protected CharQueue queue;
+    // Circular queue
+    protected CharQueue queue;
 
-  /**
-   * Create an input buffer
-   */
-  public InputBuffer() {
-    queue = new CharQueue(1);
-  }
-  /**
-   * This method updates the state of the input buffer so that
-   *  the text matched since the most recent mark() is no longer
-   *  held by the buffer.  So, you either do a mark/rewind for
-   *  failed predicate or mark/commit to keep on parsing without
-   *  rewinding the input.
-   */
-  public void commit() {
-    nMarkers--;
-  }
-  /**
-   * Mark another character for deferred consumption
-   */
-  public void consume() {
-    numToConsume++;
-  }
-  /**
-   * Ensure that the input buffer is sufficiently full
-   */
-  public abstract void fill(int amount) throws CharStreamException;
-  public String getLAChars() {
-    StringBuffer la = new StringBuffer();
-    for(int i = markerOffset; i < queue.nbrEntries; i++)
-      la.append(queue.elementAt(i));
-    return la.toString();
-  }
-  public String getMarkedChars() {
-    StringBuffer marked = new StringBuffer();
-    for(int i = 0; i < markerOffset; i++)
-      marked.append(queue.elementAt(i));
-    return marked.toString();
-  }
-  public boolean isMarked() {
-    return (nMarkers != 0);
-  }
-  /**
-   * Get a lookahead character
-   */
-  public char LA(int i) throws CharStreamException {
-    fill(i);
-    return queue.elementAt(markerOffset + i - 1);
-  }
-  /**
-   * Return an integer marker that can be used to rewind the buffer to
-   * its current state.
-   */
-  public int mark() {
-    syncConsume();
-    nMarkers++;
-    return markerOffset;
-  }
-  /**
-   * Rewind the character buffer to a marker.
-   * @param mark Marker returned previously from mark()
-   */
-  public void rewind(int mark) {
-    syncConsume();
-    markerOffset = mark;
-    nMarkers--;
-  }
-  /**
-   * Sync up deferred consumption
-   */
-  protected void syncConsume() {
-    while (numToConsume > 0) {
-      if (nMarkers > 0) {
-	// guess mode -- leave leading characters and bump offset.
-	markerOffset++;
-      } else {
-	// normal mode -- remove first character
-	queue.removeFirst();
-      }
-      numToConsume--;
+    /**
+     * Create an input buffer
+     */
+    public InputBuffer() {
+        queue = new CharQueue(1);
     }
-  }
+    /**
+     * This method updates the state of the input buffer so that
+     *  the text matched since the most recent mark() is no longer
+     *  held by the buffer.  So, you either do a mark/rewind for
+     *  failed predicate or mark/commit to keep on parsing without
+     *  rewinding the input.
+     */
+    public void commit() {
+        nMarkers--;
+    }
+    /**
+     * Mark another character for deferred consumption
+     */
+    public void consume() {
+        numToConsume++;
+    }
+    /**
+     * Ensure that the input buffer is sufficiently full
+     */
+    public abstract void fill(int amount) throws CharStreamException;
+    public String getLAChars() {
+        StringBuffer la = new StringBuffer();
+        for(int i = markerOffset; i < queue.nbrEntries; i++)
+            la.append(queue.elementAt(i));
+        return la.toString();
+    }
+    public String getMarkedChars() {
+        StringBuffer marked = new StringBuffer();
+        for(int i = 0; i < markerOffset; i++)
+            marked.append(queue.elementAt(i));
+        return marked.toString();
+    }
+    public boolean isMarked() {
+        return (nMarkers != 0);
+    }
+    /**
+     * Get a lookahead character
+     */
+    public char LA(int i) throws CharStreamException {
+        fill(i);
+        return queue.elementAt(markerOffset + i - 1);
+    }
+    /**
+     * Return an integer marker that can be used to rewind the buffer to
+     * its current state.
+     */
+    public int mark() {
+        syncConsume();
+        nMarkers++;
+        return markerOffset;
+    }
+    /**
+     * Rewind the character buffer to a marker.
+     * @param mark Marker returned previously from mark()
+     */
+    public void rewind(int mark) {
+        syncConsume();
+        markerOffset = mark;
+        nMarkers--;
+    }
+    /**
+     * Sync up deferred consumption
+     */
+    protected void syncConsume() {
+        while (numToConsume > 0) {
+            if (nMarkers > 0) {
+                // guess mode -- leave leading characters and bump offset.
+                markerOffset++;
+            } else {
+                // normal mode -- remove first character
+                queue.removeFirst();
+            }
+            numToConsume--;
+        }
+    }
 }

@@ -52,8 +52,8 @@ public class ExprDynamicToken extends Expression
     
     public int hashCode()
     {
-	// following the pattern in the integer constants -- constants
-	// of the same value have the same hashcode
+        // following the pattern in the integer constants -- constants
+        // of the same value have the same hashcode
         return new Character('*').hashCode();
     }
     

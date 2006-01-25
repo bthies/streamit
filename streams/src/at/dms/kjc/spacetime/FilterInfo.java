@@ -9,7 +9,7 @@ import java.util.HashMap;
 
 /** 
     A class to hold all the various information for a filter
- */
+*/
 public class FilterInfo 
 {
     public int prePeek;
@@ -42,151 +42,151 @@ public class FilterInfo
     
     static 
     {
-	filterInfos = new HashMap();
-	canuse = false;
+        filterInfos = new HashMap();
+        canuse = false;
     }
     
     public static void canUse() 
     {
-	canuse = true;
+        canuse = true;
     }
     
 
     public static FilterInfo getFilterInfo(FilterTraceNode traceNode) 
     {
-	assert canuse;
-	if (!filterInfos.containsKey(traceNode)) {
-	    FilterInfo info = new FilterInfo(traceNode);
-	    filterInfos.put(traceNode, info);
-	    return info;
-	}
-	else
-	    return (FilterInfo)filterInfos.get(traceNode);
+        assert canuse;
+        if (!filterInfos.containsKey(traceNode)) {
+            FilterInfo info = new FilterInfo(traceNode);
+            filterInfos.put(traceNode, info);
+            return info;
+        }
+        else
+            return (FilterInfo)filterInfos.get(traceNode);
     }
     
 
     private FilterInfo(FilterTraceNode traceNode)
     {
-	filter = traceNode.getFilter();
-	this.traceNode = traceNode;
-	this.steadyMult = filter.getSteadyMult();
-	this.initMult = filter.getInitMult();
-	//multiply the primepump number by the
-	//steady state multiplicity to get the true 
-	//primepump multiplicity
-	this.primePumpTrue = traceNode.getParent().getPrimePump();
-	this.primePump = primePumpTrue * this.steadyMult;
-	prePeek = 0;
-	prePush = 0;
-	prePop = 0;
-	linear=filter.isLinear();
-	if(linear) {
-	    peek=filter.getArray().length;
-	    push=1;
-	    pop=filter.getPopCount();
-	    calculateRemaining();
-	}
-	else if (traceNode.isFileInput()) {
-	    push = 1;
-	    pop = 0;
-	    peek = 0;
-	    calculateRemaining();
-	}
-	else if (traceNode.isFileOutput()) {
-	    push = 0;
-	    pop = 1;
-	    peek = 0;
-	    calculateRemaining();
-	}
-	else {
-	    push = filter.getPushInt();
-	    pop = filter.getPopInt();
-	    peek = filter.getPeekInt();
-	    if (isTwoStage()) {
-		prePeek = filter.getInitPeek();
-		prePush = filter.getInitPush();
-		prePop = filter.getInitPop();
-	    } 
-	    calculateRemaining();
-	    direct = DirectCommunication.testDC(this);
-	}
+        filter = traceNode.getFilter();
+        this.traceNode = traceNode;
+        this.steadyMult = filter.getSteadyMult();
+        this.initMult = filter.getInitMult();
+        //multiply the primepump number by the
+        //steady state multiplicity to get the true 
+        //primepump multiplicity
+        this.primePumpTrue = traceNode.getParent().getPrimePump();
+        this.primePump = primePumpTrue * this.steadyMult;
+        prePeek = 0;
+        prePush = 0;
+        prePop = 0;
+        linear=filter.isLinear();
+        if(linear) {
+            peek=filter.getArray().length;
+            push=1;
+            pop=filter.getPopCount();
+            calculateRemaining();
+        }
+        else if (traceNode.isFileInput()) {
+            push = 1;
+            pop = 0;
+            peek = 0;
+            calculateRemaining();
+        }
+        else if (traceNode.isFileOutput()) {
+            push = 0;
+            pop = 1;
+            peek = 0;
+            calculateRemaining();
+        }
+        else {
+            push = filter.getPushInt();
+            pop = filter.getPopInt();
+            peek = filter.getPeekInt();
+            if (isTwoStage()) {
+                prePeek = filter.getInitPeek();
+                prePush = filter.getInitPush();
+                prePop = filter.getInitPop();
+            } 
+            calculateRemaining();
+            direct = DirectCommunication.testDC(this);
+        }
     }
     
     public boolean isTwoStage() 
     {
-	return filter.isTwoStage();
+        return filter.isTwoStage();
     }
 
     private int calculateRemaining() 
     {
-	//the number of times this filter fires in the initialization
-	//schedule
-	int initFire = initMult;
+        //the number of times this filter fires in the initialization
+        //schedule
+        int initFire = initMult;
 
-	//if this is not a twostage, fake it by adding to initFire,
-	//so we always think the preWork is called
-	//if (!(filter instanceof SIRTwoStageFilter))
-	if(!filter.isTwoStage())
-	    initFire++;
-	
-	//see my thesis for an explanation of this calculation
-	if (initFire  - 1 > 0) {
-	    bottomPeek = Math.max(0, 
-				  peek - (prePeek - prePop));
-	}
-	else
-	    bottomPeek = 0;
-	
-	//don't call initItemsReceived() here it 
-	//may cause an infinite loop because it creates filter infos
-	int initItemsRec = 0;
-	if (traceNode.getPrevious().isFilterTrace()) {
-	    FilterContent filterC = ((FilterTraceNode)traceNode.getPrevious()).getFilter();
-	    initItemsRec = filterC.getPushInt() * filterC.getInitMult();
-	    if (filterC.isTwoStage()) {
-		initItemsRec -= filterC.getPushInt();
-		initItemsRec += filterC.getInitPush();
-	    }
-	}
-	else { //previous is an input trace
-	    InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
-	    
-	    //add all the upstream filters items that reach this filter
-	    for (int i = 0; i < in.getWeights().length; i++) {
-		Edge incoming = in.getSources()[i];
-		FilterContent filterC = ((FilterTraceNode)incoming.getSrc().getPrevious()).getFilter();
-		//calculate the init items sent by the upstream filter
-		int upstreamInitItems = 0;
-		upstreamInitItems = filterC.getPushInt() * filterC.getInitMult();
-		if (filterC.isTwoStage()) {
-		    upstreamInitItems -= filterC.getPushInt();
-		    upstreamInitItems += filterC.getInitPush();
-		}
-		initItemsRec += (int)((double)upstreamInitItems * incoming.getSrc().ratio(incoming));
-	    }
-	}
-	remaining = initItemsRec -
-	    (prePeek + 
-	     bottomPeek + 
-	     Math.max((initFire - 2), 0) * pop);
-	
-	assert remaining >= 0 : filter.getName() + ": Error calculating remaining " + 
-	    initItemsRec + " < " + (prePeek + 
-				    bottomPeek + 
-				    Math.max((initFire - 2), 0) * pop);
-	return remaining;
+        //if this is not a twostage, fake it by adding to initFire,
+        //so we always think the preWork is called
+        //if (!(filter instanceof SIRTwoStageFilter))
+        if(!filter.isTwoStage())
+            initFire++;
+    
+        //see my thesis for an explanation of this calculation
+        if (initFire  - 1 > 0) {
+            bottomPeek = Math.max(0, 
+                                  peek - (prePeek - prePop));
+        }
+        else
+            bottomPeek = 0;
+    
+        //don't call initItemsReceived() here it 
+        //may cause an infinite loop because it creates filter infos
+        int initItemsRec = 0;
+        if (traceNode.getPrevious().isFilterTrace()) {
+            FilterContent filterC = ((FilterTraceNode)traceNode.getPrevious()).getFilter();
+            initItemsRec = filterC.getPushInt() * filterC.getInitMult();
+            if (filterC.isTwoStage()) {
+                initItemsRec -= filterC.getPushInt();
+                initItemsRec += filterC.getInitPush();
+            }
+        }
+        else { //previous is an input trace
+            InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+        
+            //add all the upstream filters items that reach this filter
+            for (int i = 0; i < in.getWeights().length; i++) {
+                Edge incoming = in.getSources()[i];
+                FilterContent filterC = ((FilterTraceNode)incoming.getSrc().getPrevious()).getFilter();
+                //calculate the init items sent by the upstream filter
+                int upstreamInitItems = 0;
+                upstreamInitItems = filterC.getPushInt() * filterC.getInitMult();
+                if (filterC.isTwoStage()) {
+                    upstreamInitItems -= filterC.getPushInt();
+                    upstreamInitItems += filterC.getInitPush();
+                }
+                initItemsRec += (int)((double)upstreamInitItems * incoming.getSrc().ratio(incoming));
+            }
+        }
+        remaining = initItemsRec -
+            (prePeek + 
+             bottomPeek + 
+             Math.max((initFire - 2), 0) * pop);
+    
+        assert remaining >= 0 : filter.getName() + ": Error calculating remaining " + 
+            initItemsRec + " < " + (prePeek + 
+                                    bottomPeek + 
+                                    Math.max((initFire - 2), 0) * pop);
+        return remaining;
     }
 
     //returns true if this filter does not need a receive buffer
     public boolean isLinear() {
-	return linear;
+        return linear;
     }
 
     //returns true if this filter does not need a receive buffer
     //but it does receive items
     public boolean isDirect() 
     {
-	return direct;
+        return direct;
     }
     
 
@@ -194,70 +194,70 @@ public class FilterInfo
     //generation
     public boolean noBuffer() 
     {
-	if (peek == 0 &&
-	    prePeek == 0)
-	    return true;
-	return false;		
+        if (peek == 0 &&
+            prePeek == 0)
+            return true;
+        return false;       
     }
 
     //can we use a simple (non-circular) receive buffer for this filter
     public boolean isSimple()
     {
- 	if (noBuffer())
- 	    return false;
-	
- 	if (peek == pop &&
- 	    remaining == 0 &&
- 	    (prePop == prePeek))
- 	    return true;
- 	return false;
+        if (noBuffer())
+            return false;
+    
+        if (peek == pop &&
+            remaining == 0 &&
+            (prePop == prePeek))
+            return true;
+        return false;
     }
 
     //calculate the number of items produced in the primepump stage but
     //consumed in the steady state of the down stream filters...
     public int primePumpItemsNotConsumed() 
     {
-	//	assert traceNode.getNext() instanceof OutputTraceNode :
-	//    "Need to call primePumpItemsNotConsumed() on last filter of trace";
+        //  assert traceNode.getNext() instanceof OutputTraceNode :
+        //    "Need to call primePumpItemsNotConsumed() on last filter of trace";
 
-	if (!(traceNode.getNext() instanceof OutputTraceNode) || push == 0)
-	    return 0;
+        if (!(traceNode.getNext() instanceof OutputTraceNode) || push == 0)
+            return 0;
 
-	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
-	
-	//if there is a downstream, true outputtrace node, let it deal
-	//with the primepump items not consumed
-	if (!OffChipBuffer.unnecessary(out))
-	    return 0;
+        OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
+    
+        //if there is a downstream, true outputtrace node, let it deal
+        //with the primepump items not consumed
+        if (!OffChipBuffer.unnecessary(out))
+            return 0;
 
-	int itemsSent = primePump * push;
-	InputTraceNode input = out.getSingleEdge().getDest();
-	FilterInfo downstream = 
-	    FilterInfo.getFilterInfo(input.getNextFilter());
-	int itemsConsumed = 
-	    (int) ((double)downstream.totalItemsReceived(false, true) * 
-	    ((double) (input.getWeight(out.getSingleEdge()) / (double) input.totalWeights())));
+        int itemsSent = primePump * push;
+        InputTraceNode input = out.getSingleEdge().getDest();
+        FilterInfo downstream = 
+            FilterInfo.getFilterInfo(input.getNextFilter());
+        int itemsConsumed = 
+            (int) ((double)downstream.totalItemsReceived(false, true) * 
+                   ((double) (input.getWeight(out.getSingleEdge()) / (double) input.totalWeights())));
 
-	assert (itemsSent - itemsConsumed >= 0) :
-	    "negative primepump items not consumed";
-	
-	assert ((itemsSent - itemsConsumed) % push == 0) :
-	    "primepump items not consumed is not multiple of push!";
-	return itemsSent - itemsConsumed;
+        assert (itemsSent - itemsConsumed >= 0) :
+            "negative primepump items not consumed";
+    
+        assert ((itemsSent - itemsConsumed) % push == 0) :
+            "primepump items not consumed is not multiple of push!";
+        return itemsSent - itemsConsumed;
     }
     
 
     //return the number of items produced in the init stage
     public int initItemsSent() 
     {
-	int items = push * initMult;
-	if (isTwoStage()) {
-	    /*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
-	      upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
-	    items -= push;
-	    items += prePush;
-	}	
-	return items;
+        int items = push * initMult;
+        if (isTwoStage()) {
+            /*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
+              upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
+            items -= push;
+            items += prePush;
+        }   
+        return items;
     }
     
     //return the number of items received in the init stage including
@@ -265,137 +265,137 @@ public class FilterInfo
     //schedule
     public int initItemsReceived() 
     {
-	//the number of items produced by the upstream filter in
-	//initialization
-	int upStreamItems = 0;
-	
-	if (traceNode.getPrevious().isFilterTrace()) {
-	    upStreamItems = 
-		FilterInfo.getFilterInfo((FilterTraceNode)traceNode.getPrevious()).initItemsSent();
-	}
-	else { //previous is an input trace
-	    InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
-	    
-	    //add all the upstream filters items that reach this filter
-	    for (int i = 0; i < in.getWeights().length; i++) {
-		Edge incoming = in.getSources()[i];
-		upStreamItems +=
-		    (int)(FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious()).initItemsSent() *
-			  ((double)incoming.getSrc().getWeight(incoming) / incoming.getSrc().totalWeights()));
-		//upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
-		//   ((double)out.getWeight(in) / out.totalWeights()));
-	    }
-	}
-	return upStreamItems;
+        //the number of items produced by the upstream filter in
+        //initialization
+        int upStreamItems = 0;
+    
+        if (traceNode.getPrevious().isFilterTrace()) {
+            upStreamItems = 
+                FilterInfo.getFilterInfo((FilterTraceNode)traceNode.getPrevious()).initItemsSent();
+        }
+        else { //previous is an input trace
+            InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+        
+            //add all the upstream filters items that reach this filter
+            for (int i = 0; i < in.getWeights().length; i++) {
+                Edge incoming = in.getSources()[i];
+                upStreamItems +=
+                    (int)(FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious()).initItemsSent() *
+                          ((double)incoming.getSrc().getWeight(incoming) / incoming.getSrc().totalWeights()));
+                //upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
+                //   ((double)out.getWeight(in) / out.totalWeights()));
+            }
+        }
+        return upStreamItems;
     }
 
     public int totalItemsReceived(boolean init, boolean primepump) 
     {
-	assert !((init) && (init && primepump)) :
-	    "incorrect usage";
-	int items = 0;
-	//get the number of items received
-	if (init) 
-	    items = initItemsReceived();
-	else if (primepump) 
-	    items = primePump * pop;
-	else
-	    items = steadyMult * pop;
-	
-	return items;
+        assert !((init) && (init && primepump)) :
+            "incorrect usage";
+        int items = 0;
+        //get the number of items received
+        if (init) 
+            items = initItemsReceived();
+        else if (primepump) 
+            items = primePump * pop;
+        else
+            items = steadyMult * pop;
+    
+        return items;
     }
     
     public int totalItemsSent(boolean init, boolean primepump) 
     {
-	assert !((init) && (init && primepump)) :
-	    "incorrect usage";
-	int items = 0;
-	if (init) 
-	    items = initItemsSent();
-	else if (primepump) 
-	    items = primePump * push;
-	else
-	    items = steadyMult * push;
-	return items;
+        assert !((init) && (init && primepump)) :
+            "incorrect usage";
+        int items = 0;
+        if (init) 
+            items = initItemsSent();
+        else if (primepump) 
+            items = primePump * push;
+        else
+            items = steadyMult * push;
+        return items;
     }
 
     public int itemsFiring(int exeCount, boolean init) 
     {
-	int items = push;
-	
-	if (init && exeCount == 0 && isTwoStage())
-	    items = prePush;
-	
-	return items;
+        int items = push;
+    
+        if (init && exeCount == 0 && isTwoStage())
+            items = prePush;
+    
+        return items;
     }
     
 
     public int itemsNeededToFire(int exeCount, boolean init) 
     {
-	int items = pop;
-	
-	//if we and this is the first execution we need either peek or initPeek
-	if (init && exeCount == 0) {
-	    if (isTwoStage())
-		items = prePeek;
-	    else
-		items = peek;
-	}
-	
-	return items;
+        int items = pop;
+    
+        //if we and this is the first execution we need either peek or initPeek
+        if (init && exeCount == 0) {
+            if (isTwoStage())
+                items = prePeek;
+            else
+                items = peek;
+        }
+    
+        return items;
     }
 
     public String toString() 
     {
-	return traceNode.toString();
+        return traceNode.toString();
     }
     
 
-/*  Not needed now, but needed for magic crap
-      public FilterTraceNode[] getNextFilters() 
-    {
-	FilterTraceNode[] ret;
-	
-	if (traceNode.getNext() == null) 
-	    return new FilterTraceNode[0];
-	else if (traceNode.getNext().isFilterTrace()) {
-	    ret = new FilterTraceNode[1];
-	    ret[0] = (FilterTraceNode)traceNode.getNext();
-	}
-	else { //output trace node
-	    HashSet set = new HashSet();
-	    OutputTraceNode output = (OutputTraceNode)traceNode.getNext();
-	    for (int i = 0; i < output.getDests().length; i++) 
-		for (int j = 0; j < output.getDests()[i].length; j++)
-		    set.add(output.getDests()[i][j].getNext());
-	    ret = (FilterTraceNode[])set.toArray(new FilterTraceNode[0]);
-	}
-	return ret;
-    }
+    /*  Not needed now, but needed for magic crap
+        public FilterTraceNode[] getNextFilters() 
+        {
+        FilterTraceNode[] ret;
+    
+        if (traceNode.getNext() == null) 
+        return new FilterTraceNode[0];
+        else if (traceNode.getNext().isFilterTrace()) {
+        ret = new FilterTraceNode[1];
+        ret[0] = (FilterTraceNode)traceNode.getNext();
+        }
+        else { //output trace node
+        HashSet set = new HashSet();
+        OutputTraceNode output = (OutputTraceNode)traceNode.getNext();
+        for (int i = 0; i < output.getDests().length; i++) 
+        for (int j = 0; j < output.getDests()[i].length; j++)
+        set.add(output.getDests()[i][j].getNext());
+        ret = (FilterTraceNode[])set.toArray(new FilterTraceNode[0]);
+        }
+        return ret;
+        }
 
 
-     //for the filter trace node, get all upstream filter trace nodes,
-    //going thru input and output trace nodes
-    public FilterTraceNode[] getPreviousFilters() 
-    {
-	FilterTraceNode[] ret;
-	
-	if (traceNode.getPrevious() == null)
-	    return new FilterTraceNode[0];
-	
-	if (traceNode.getPrevious().isFilterTrace()) {
-	    ret = new FilterTraceNode[1];
-	    ret[0] = (FilterTraceNode)traceNode.getPrevious();
-	} else { //input trace node
-	    InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
-	    
-	    //here we assume each trace has at least one filter trace node
-	    ret = new FilterTraceNode[input.getSources().length];
-	    for (int i = 0; i < ret.length; i++) {
-		ret[i] = (FilterTraceNode)input.getSources()[i].getSrc().getPrevious();
-	    }
-	}    
-	return ret;
-    }
-*/
+        //for the filter trace node, get all upstream filter trace nodes,
+        //going thru input and output trace nodes
+        public FilterTraceNode[] getPreviousFilters() 
+        {
+        FilterTraceNode[] ret;
+    
+        if (traceNode.getPrevious() == null)
+        return new FilterTraceNode[0];
+    
+        if (traceNode.getPrevious().isFilterTrace()) {
+        ret = new FilterTraceNode[1];
+        ret[0] = (FilterTraceNode)traceNode.getPrevious();
+        } else { //input trace node
+        InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
+        
+        //here we assume each trace has at least one filter trace node
+        ret = new FilterTraceNode[input.getSources().length];
+        for (int i = 0; i < ret.length; i++) {
+        ret[i] = (FilterTraceNode)input.getSources()[i].getSrc().getPrevious();
+        }
+        }    
+        return ret;
+        }
+    */
 }

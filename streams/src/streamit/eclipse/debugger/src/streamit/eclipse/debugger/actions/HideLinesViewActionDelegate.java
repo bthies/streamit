@@ -13,26 +13,26 @@ import streamit.eclipse.debugger.graph.StreamViewer;
  */
 public class HideLinesViewActionDelegate implements IViewActionDelegate {
 
-	private StreamViewer fStreamViewer;
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IViewActionDelegate#init(org.eclipse.ui.IViewPart)
-	 */
-	public void init(IViewPart view) {
-		if (view instanceof StreamView) fStreamViewer = ((StreamView) view).getViewer();
-	}
+    private StreamViewer fStreamViewer;
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.IViewActionDelegate#init(org.eclipse.ui.IViewPart)
+     */
+    public void init(IViewPart view) {
+        if (view instanceof StreamView) fStreamViewer = ((StreamView) view).getViewer();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
-	 */
-	public void run(IAction action) {
-		// how to determine state before this
-		fStreamViewer.hideLines(action.isChecked());
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.IActionDelegate#run(org.eclipse.jface.action.IAction)
+     */
+    public void run(IAction action) {
+        // how to determine state before this
+        fStreamViewer.hideLines(action.isChecked());
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IActionDelegate#selectionChanged(org.eclipse.jface.action.IAction, org.eclipse.jface.viewers.ISelection)
-	 */
-	public void selectionChanged(IAction action, ISelection selection) {
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.IActionDelegate#selectionChanged(org.eclipse.jface.action.IAction, org.eclipse.jface.viewers.ISelection)
+     */
+    public void selectionChanged(IAction action, ISelection selection) {
+    }
 }

@@ -13,69 +13,69 @@ public class TraceBufferSchedule
     
     static 
     {
-	nodes = new HashMap();
+        nodes = new HashMap();
     }
     
     private TraceBufferSchedule(InputTraceNode in) 
     {
-	input = in;
-	output = null;
-	
-	currentWeight = input.getWeights()[0];
-	currentBuffer = 0;
+        input = in;
+        output = null;
+    
+        currentWeight = input.getWeights()[0];
+        currentBuffer = 0;
     }
     
     private TraceBufferSchedule(OutputTraceNode out) 
     {
-	output = out;
-	input = null;
+        output = out;
+        input = null;
 
-	currentWeight = output.getWeights()[0];
-	currentBuffer = 0;
+        currentWeight = output.getWeights()[0];
+        currentBuffer = 0;
     }
 
     public static Edge getOutputBuffer(InputTraceNode in) 
     {
-	if (!nodes.containsKey(in))
-	    nodes.put(in, new TraceBufferSchedule(in));
+        if (!nodes.containsKey(in))
+            nodes.put(in, new TraceBufferSchedule(in));
 
-	return ((TraceBufferSchedule)nodes.get(in)).updateInput();
+        return ((TraceBufferSchedule)nodes.get(in)).updateInput();
     }
     
     public static Edge[] getInputBuffers(OutputTraceNode out)
     {
-	if (!nodes.containsKey(out))
-	    nodes.put(out, new TraceBufferSchedule(out));
-	return ((TraceBufferSchedule)nodes.get(out)).updateOutput();
+        if (!nodes.containsKey(out))
+            nodes.put(out, new TraceBufferSchedule(out));
+        return ((TraceBufferSchedule)nodes.get(out)).updateOutput();
     }
 
     private Edge updateInput() {
-	if (input == null)
-	    Utils.fail("Calling get outputbuffer illegally");
+        if (input == null)
+            Utils.fail("Calling get outputbuffer illegally");
 
-	if (currentWeight <= 0) {
-	    currentBuffer = (currentBuffer + 1) % (input.getSources().length);
-	    //reset the round-robin weight
-	    currentWeight = input.getWeights()[currentBuffer];
-	}
-	//decrement the weight on this arc
-	currentWeight --;
-	//return the appropriate output buffer to receive from
-	return input.getSources()[currentBuffer];
+        if (currentWeight <= 0) {
+            currentBuffer = (currentBuffer + 1) % (input.getSources().length);
+            //reset the round-robin weight
+            currentWeight = input.getWeights()[currentBuffer];
+        }
+        //decrement the weight on this arc
+        currentWeight --;
+        //return the appropriate output buffer to receive from
+        return input.getSources()[currentBuffer];
     }
 
     private Edge[] updateOutput() 
     {
-	if (output == null)
-	    Utils.fail("Calling getInputBuffer illegally");
-	
-	if (currentWeight <= 0) {
-	    currentBuffer = (currentBuffer + 1) % (output.getDests().length);
-	    //reset the round-robin weight
-	    currentWeight = output.getWeights()[currentBuffer];
-	}
-	currentWeight--;
-	return output.getDests()[currentBuffer];
+        if (output == null)
+            Utils.fail("Calling getInputBuffer illegally");
+    
+        if (currentWeight <= 0) {
+            currentBuffer = (currentBuffer + 1) % (output.getDests().length);
+            //reset the round-robin weight
+            currentWeight = output.getWeights()[currentBuffer];
+        }
+        currentWeight--;
+        return output.getDests()[currentBuffer];
     }
     
     

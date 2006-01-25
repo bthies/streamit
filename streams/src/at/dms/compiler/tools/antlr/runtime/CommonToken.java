@@ -15,42 +15,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CommonToken.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: CommonToken.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 public class CommonToken extends Token {
-  // most tokens will want line and text information
-  protected int line;
-  protected String text = null;
-  protected int col;
+    // most tokens will want line and text information
+    protected int line;
+    protected String text = null;
+    protected int col;
 
-  public CommonToken() {}
+    public CommonToken() {}
 
-  public CommonToken(int t, String txt) {
-    type = t;
-    setText(txt);
-  }
+    public CommonToken(int t, String txt) {
+        type = t;
+        setText(txt);
+    }
 
-  public CommonToken(String s)	{ text = s; }
+    public CommonToken(String s)    { text = s; }
 
-  public int  getLine()		{ return line; }
+    public int  getLine()       { return line; }
 
-  public String getText()		{ return text; }
+    public String getText()     { return text; }
 
-  public void setLine(int l)		{ line = l; }
+    public void setLine(int l)      { line = l; }
 
-  public void setText(String s)	{ text = s; }
+    public void setText(String s)   { text = s; }
 
-  public String toString() {
-    return "[\""+getText()+"\",<"+type+">,line="+line+",col="+col+"]";
-  }
+    public String toString() {
+        return "[\""+getText()+"\",<"+type+">,line="+line+",col="+col+"]";
+    }
 
-  /**
-   * Return token's start column
-   */
-  public int getColumn() { return col; }
+    /**
+     * Return token's start column
+     */
+    public int getColumn() { return col; }
 
-  public void setColumn(int c) { col = c; }
+    public void setColumn(int c) { col = c; }
 }

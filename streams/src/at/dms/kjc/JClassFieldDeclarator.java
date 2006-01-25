@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassFieldDeclarator.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: JClassFieldDeclarator.java,v 1.8 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,87 +30,87 @@ import at.dms.compiler.TokenReference;
  */
 public class JClassFieldDeclarator extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JClassFieldDeclarator() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	decl		the declarator of this field
-   */
-  public JClassFieldDeclarator(TokenReference where, JFieldDeclaration decl) {
-    super(where, null);
-    this.decl = decl;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    decl.analyse(context);
-
-    if (decl.hasInitializer()) {
-      ((CSourceField)decl.getField()).setValue(decl.getVariable().getValue());
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   decl        the declarator of this field
+     */
+    public JClassFieldDeclarator(TokenReference where, JFieldDeclaration decl) {
+        super(where, null);
+        this.decl = decl;
     }
-  }
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    // utility class for classfile
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    null;   // utility class for classfile
-  }
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        decl.analyse(context);
 
-  /**
-   * Generates a sequence of bytescodes
-   *
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    if (decl.getField().getConstantValue() == null) {
-      decl.genCode(code);
+        if (decl.hasInitializer()) {
+            ((CSourceField)decl.getField()).setValue(decl.getVariable().getValue());
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        // utility class for classfile
+    }
 
-  private JFieldDeclaration	decl;
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    null;   // utility class for classfile
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Generates a sequence of bytescodes
+     *
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        if (decl.getField().getConstantValue() == null) {
+            decl.genCode(code);
+        }
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JClassFieldDeclarator other = new at.dms.kjc.JClassFieldDeclarator();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JClassFieldDeclarator other) {
-  super.deepCloneInto(other);
-  other.decl = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
-}
+    private JFieldDeclaration   decl;
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JClassFieldDeclarator other = new at.dms.kjc.JClassFieldDeclarator();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JClassFieldDeclarator other) {
+        super.deepCloneInto(other);
+        other.decl = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

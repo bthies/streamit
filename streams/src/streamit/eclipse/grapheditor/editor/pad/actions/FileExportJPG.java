@@ -1,5 +1,5 @@
 /*
- * @(#)FileExportJPG.java	1.2 01.02.2003
+ * @(#)FileExportJPG.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -40,45 +40,45 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class FileExportJPG extends AbstractActionFile {
 
-	/* File type to pass to ImageIO. Default is "jpg". */
-	protected transient String fileType = "jpg";
+    /* File type to pass to ImageIO. Default is "jpg". */
+    protected transient String fileType = "jpg";
 
-	/**
-	 * Constructor for FileExportJPG.
-	 * @param graphpad
-	 */
-	public FileExportJPG(GPGraphpad graphpad) {
-		this(graphpad, "jpg");
-	}
+    /**
+     * Constructor for FileExportJPG.
+     * @param graphpad
+     */
+    public FileExportJPG(GPGraphpad graphpad) {
+        this(graphpad, "jpg");
+    }
 
-	public FileExportJPG(GPGraphpad graphpad, String fileType) {
-		super(graphpad);
-		this.fileType = fileType;
-	}
+    public FileExportJPG(GPGraphpad graphpad, String fileType) {
+        super(graphpad);
+        this.fileType = fileType;
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		try {
-			GPDocument doc = graphpad.getCurrentDocument();
-			String file =
-				saveDialog(
-					Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
-					fileType.toLowerCase(),
-					fileType.toUpperCase()+" Image");
-			if (file != null)
-			{
-				if (getCurrentDocument().getModel().getRootCount() > 0) {
-					BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
-															doc.getGraphStructure().getTopLevel().getDimension(),
-															doc.areContainersInvisible());
-					ImageIO.write(img, fileType.toLowerCase(), new File(file));
-				};
-			}
-		} catch (IOException ex) {
-			graphpad.error(ex.getMessage());
-		}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        try {
+            GPDocument doc = graphpad.getCurrentDocument();
+            String file =
+                saveDialog(
+                           Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
+                           fileType.toLowerCase(),
+                           fileType.toUpperCase()+" Image");
+            if (file != null)
+                {
+                    if (getCurrentDocument().getModel().getRootCount() > 0) {
+                        BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
+                                                                doc.getGraphStructure().getTopLevel().getDimension(),
+                                                                doc.areContainersInvisible());
+                        ImageIO.write(img, fileType.toLowerCase(), new File(file));
+                    };
+                }
+        } catch (IOException ex) {
+            graphpad.error(ex.getMessage());
+        }
+    }
 
 }

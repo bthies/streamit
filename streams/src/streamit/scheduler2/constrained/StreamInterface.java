@@ -91,6 +91,6 @@ public interface StreamInterface
     public void registerConstraint(P2PPortal portal);
     
     public PhasingSchedule getNextPhase(
-        Restrictions restrs,
-        int nDataAvailable);
+                                        Restrictions restrs,
+                                        int nDataAvailable);
 }

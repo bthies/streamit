@@ -39,13 +39,13 @@ public class SIRMessageStatement extends JStatement {
      * Construct a node in the parsing tree
      */
     public SIRMessageStatement(JExpression portal, String iname, String ident, JExpression[] args, SIRLatency latency) {
-	super(null, null);
+        super(null, null);
 
-	this.portal = portal;
+        this.portal = portal;
         this.iname = iname;
         this.ident = ident;
-	this.args = args;
-	this.latency = latency;
+        this.args = args;
+        this.latency = latency;
     }
 
     
@@ -53,17 +53,17 @@ public class SIRMessageStatement extends JStatement {
      * Construct a node in the parsing tree
      */
     public SIRMessageStatement() {
-	super(null, null);
+        super(null, null);
 
-	this.portal = null;
+        this.portal = null;
         this.iname = null;
         this.ident = null;
-	this.args = null;
-	this.latency = null;
+        this.args = null;
+        this.latency = null;
     }
 
     public JExpression getPortal() {
-	return portal;
+        return portal;
     }
     public String getInterfaceName() {
         return iname;
@@ -72,14 +72,14 @@ public class SIRMessageStatement extends JStatement {
         return ident;
     }
     public SIRLatency getLatency() {
-	return latency;
+        return latency;
     }
     public JExpression[] getArgs() {
-	return args;
+        return args;
     }
 
     public void setPortal (JExpression p) {
-	this.portal = p;
+        this.portal = p;
     }
     public void setInterfaceName (String iname) {
         this.iname = iname;
@@ -88,10 +88,10 @@ public class SIRMessageStatement extends JStatement {
         this.ident = ident;
     }
     public void setArgs (JExpression[] a) {
-	this.args = a;
+        this.args = a;
     }
     public void setLatency (SIRLatency l) {
-	this.latency = l;
+        this.latency = l;
     }
     
 
@@ -104,7 +104,7 @@ public class SIRMessageStatement extends JStatement {
      * Analyses the statement (semantically) - NOT SUPPORTED YET.
      */
     public void analyse(CBodyContext context) throws PositionedError {
-	at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
     }
 
     // ----------------------------------------------------------------------
@@ -115,7 +115,7 @@ public class SIRMessageStatement extends JStatement {
      * Generates a sequence of bytescodes - NOT SUPPORTED YET.
      */
     public void genCode(CodeSequence code) {
-	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 
     /**
@@ -123,57 +123,57 @@ public class SIRMessageStatement extends JStatement {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).visitMessageStatement(this,
-								   portal,
-								   iname,
-								   ident,
-								   args,
-								   latency);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitMessageStatement(this,
+                                                                   portal,
+                                                                   iname,
+                                                                   ident,
+                                                                   args,
+                                                                   latency);
+        } else {
+            return this;
+        }
     }
 
     /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitMessageStatement(this, 
-						   portal,
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitMessageStatement(this, 
+                                                   portal,
                                                    iname,
                                                    ident,
-						   args,
-						   latency);
-	} else {
-	    // otherwise, visit the arguments
-	    for (int i=0; i<args.length; i++) {
-		args[i].accept(p);
-	    }
-	}
+                                                   args,
+                                                   latency);
+        } else {
+            // otherwise, visit the arguments
+            for (int i=0; i<args.length; i++) {
+                args[i].accept(p);
+            }
+        }
     }
 
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRMessageStatement other = new at.dms.kjc.sir.SIRMessageStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRMessageStatement other = new at.dms.kjc.sir.SIRMessageStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRMessageStatement other) {
-  super.deepCloneInto(other);
-  other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
-  other.iname = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.iname);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
-  other.args = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.args);
-  other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRMessageStatement other) {
+        super.deepCloneInto(other);
+        other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
+        other.iname = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.iname);
+        other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+        other.args = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.args);
+        other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

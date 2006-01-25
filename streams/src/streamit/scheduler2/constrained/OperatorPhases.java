@@ -43,9 +43,9 @@ public class OperatorPhases extends Misc
     final PhasingSchedule phases[];
 
     public OperatorPhases(
-        int _nPhases,
-        int _nInputChannels,
-        int _nOutputChannels)
+                          int _nPhases,
+                          int _nInputChannels,
+                          int _nOutputChannels)
     {
         nPhases = _nPhases;
         nInputChannels = _nInputChannels;
@@ -106,37 +106,37 @@ public class OperatorPhases extends Misc
         {
             int channel;
             for (channel = 0; channel < nInputChannels; channel++)
-            {
-                overallChannelPeek[channel] = channelPeek[channel][0];
-                overallChannelPop[channel] = channelPop[channel][0];
-            }
+                {
+                    overallChannelPeek[channel] = channelPeek[channel][0];
+                    overallChannelPop[channel] = channelPop[channel][0];
+                }
 
             for (channel = 0; channel < nOutputChannels; channel++)
-            {
-                overallChannelPush[channel] = channelPush[channel][0];
-            }
+                {
+                    overallChannelPush[channel] = channelPush[channel][0];
+                }
         }
 
         // and now go from phase 1 and on (skipping phase 0) and collect
         // the rest of the e/o/u information
         int nPhase;
         for (nPhase = 1; nPhase < nPhases; nPhase++)
-        {
-            int channel;
-            for (channel = 0; channel < nInputChannels; channel++)
             {
-                overallChannelPeek[channel] =
-                    MAX(
-                        channelPeek[channel][nPhase]
-                            + overallChannelPop[channel],
-                        overallChannelPeek[channel]);
-                overallChannelPop[channel] += channelPop[channel][nPhase];
+                int channel;
+                for (channel = 0; channel < nInputChannels; channel++)
+                    {
+                        overallChannelPeek[channel] =
+                            MAX(
+                                channelPeek[channel][nPhase]
+                                + overallChannelPop[channel],
+                                overallChannelPeek[channel]);
+                        overallChannelPop[channel] += channelPop[channel][nPhase];
+                    }
+                for (channel = 0; channel < nOutputChannels; channel++)
+                    {
+                        overallChannelPush[channel] += channelPush[channel][nPhase];
+                    }
             }
-            for (channel = 0; channel < nOutputChannels; channel++)
-            {
-                overallChannelPush[channel] += channelPush[channel][nPhase];
-            }
-        }
 
         overallValuesValid = true;
     }

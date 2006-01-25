@@ -16,19 +16,19 @@ class SIRFineGrainedUtil {
      * @return number of work functions for this Splitter
      */
     static int getSplitterNumWork (SIRSplitter splitter) {
-	if (splitter.getType()==SIRSplitType.DUPLICATE) {
-	    return 1;
-	} else if (splitter.getType()==SIRSplitType.NULL) {
-	    return 1;
-	} else {
-	    int sum = splitter.getSumOfWeights();
-	    // if the sum is zero, still represent that we have 1 work function
-	    if (sum==0) {
-		return 1;
-	    } else {
-		return sum;
-	    }
-	}
+        if (splitter.getType()==SIRSplitType.DUPLICATE) {
+            return 1;
+        } else if (splitter.getType()==SIRSplitType.NULL) {
+            return 1;
+        } else {
+            int sum = splitter.getSumOfWeights();
+            // if the sum is zero, still represent that we have 1 work function
+            if (sum==0) {
+                return 1;
+            } else {
+                return sum;
+            }
+        }
     }
 
     /**
@@ -41,12 +41,12 @@ class SIRFineGrainedUtil {
      * of work function for the Splitter of this Stream.
      */
     static int[] getSplitPushWeights (SIRSplitter splitter, int nWork) {
-	if ((splitter.getType()==SIRSplitType.DUPLICATE ||
-	     splitter.getType()==SIRSplitType.NULL)) {
-	    return splitter.getWeights();
-	} else {
-	    return getWeightsForPhase(nWork, splitter.getWeights());
-	}
+        if ((splitter.getType()==SIRSplitType.DUPLICATE ||
+             splitter.getType()==SIRSplitType.NULL)) {
+            return splitter.getWeights();
+        } else {
+            return getWeightsForPhase(nWork, splitter.getWeights());
+        }
     }
 
     /**
@@ -56,28 +56,28 @@ class SIRFineGrainedUtil {
      * only 1 item passes through in a given phase.
      */
     private static int[] getWeightsForPhase(int phase, int[] weights) {
-	// for round-robins, we simulate a single item going
-	// through at a time.  Figure out which stream the
-	// nWork'th item will go to.
-	int targetStream=-1;
-	int sum=0;
-	do {
-	    targetStream++;
-	    sum+=weights[targetStream];
-	} while (sum<(phase+1) && targetStream<weights.length-1);
-	// if we hit the end and the sum is still zero, then there
-	// are no push weights, and we return an empty array
-	if (sum==0) {
-	    // weights is all zero (and not a rep exposure)
-	    return weights;
-	} else {
-	    // otherwise, we return an array that is zero
-	    // everywhere except targetStream, where it should be
-	    // "1"
-	    int[] result = new int[weights.length];
-	    result[targetStream] = 1;
-	    return result;
-	}
+        // for round-robins, we simulate a single item going
+        // through at a time.  Figure out which stream the
+        // nWork'th item will go to.
+        int targetStream=-1;
+        int sum=0;
+        do {
+            targetStream++;
+            sum+=weights[targetStream];
+        } while (sum<(phase+1) && targetStream<weights.length-1);
+        // if we hit the end and the sum is still zero, then there
+        // are no push weights, and we return an empty array
+        if (sum==0) {
+            // weights is all zero (and not a rep exposure)
+            return weights;
+        } else {
+            // otherwise, we return an array that is zero
+            // everywhere except targetStream, where it should be
+            // "1"
+            int[] result = new int[weights.length];
+            result[targetStream] = 1;
+            return result;
+        }
     }
     
     /**
@@ -89,19 +89,19 @@ class SIRFineGrainedUtil {
      * of work function for Splitter of this Stream.
      */
     static int getSplitPop (SIRSplitter splitter, int nWork) {
-	if (splitter.getType()==SIRSplitType.DUPLICATE) {
-	    return 1;
-	} else if (splitter.getType()==SIRSplitType.NULL) {
-	    return 0;
-	} else {
-	    // if we consume anything, we will consume 1
-	    int sum = splitter.getSumOfWeights();
-	    if (sum==0) {
-		return 0;
-	    } else {
-		return 1;
-	    }
-	}
+        if (splitter.getType()==SIRSplitType.DUPLICATE) {
+            return 1;
+        } else if (splitter.getType()==SIRSplitType.NULL) {
+            return 0;
+        } else {
+            // if we consume anything, we will consume 1
+            int sum = splitter.getSumOfWeights();
+            if (sum==0) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }
     }
 
     /**
@@ -111,14 +111,14 @@ class SIRFineGrainedUtil {
      * Stream
      */
     static int getJoinerNumWork (SIRJoiner joiner) {
-	// have as many work functions as there are weights, making
-	// sure to have at least 1 work function
-	int sum = joiner.getSumOfWeights();
-	if (sum==0) {
-	    return 1;
-	} else {
-	    return sum;
-	}
+        // have as many work functions as there are weights, making
+        // sure to have at least 1 work function
+        int sum = joiner.getSumOfWeights();
+        if (sum==0) {
+            return 1;
+        } else {
+            return sum;
+        }
     }
 
     /**
@@ -131,11 +131,11 @@ class SIRFineGrainedUtil {
      * of work function for Joiner of this SplitJoin.
      */
     static int[] getJoinPopWeights (SIRJoiner joiner, int nWork) {
-	if (joiner.getType()==SIRJoinType.NULL) {
-	    return joiner.getWeights();
-	} else {
-	    return getWeightsForPhase(nWork, joiner.getWeights());
-	}
+        if (joiner.getType()==SIRJoinType.NULL) {
+            return joiner.getWeights();
+        } else {
+            return getWeightsForPhase(nWork, joiner.getWeights());
+        }
     }
     
     /**
@@ -146,12 +146,12 @@ class SIRFineGrainedUtil {
      * of work function for Joiner of this SplitJoin.
      */
     static int getJoinPush (SIRJoiner joiner, int nWork) {
-	// if we push anything, we push 1 per phase
-	int sum = joiner.getSumOfWeights();
-	if (sum==0) {
-	    return 0;
-	} else {
-	    return 1;
-	}
+        // if we push anything, we push 1 per phase
+        int sum = joiner.getSumOfWeights();
+        if (sum==0) {
+            return 0;
+        } else {
+            return 1;
+        }
     }
 }

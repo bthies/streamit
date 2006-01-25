@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: Pair.java,v 1.5 2004-01-28 21:17:13 dmaze Exp $ */
+/* $Id: Pair.java,v 1.6 2006-01-25 17:04:38 thies Exp $ */
 
 /**
  * <dl>
@@ -56,15 +56,15 @@ public class Pair
     {
         // you can only compare two pairs!
         //assert o instanceof Pair;
-	if(!(o instanceof Pair))
-	    return false;
+        if(!(o instanceof Pair))
+            return false;
 
         Pair other = (Pair) o;
 
         int firstDiff, secondDiff;
 
         return getFirst() == other.getFirst() && 
-                getSecond() == other.getSecond();
+            getSecond() == other.getSecond();
     }
 
     /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLiteral.java,v 1.5 2005-04-06 12:01:52 thies Exp $
+ * $Id: JLiteral.java,v 1.6 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,104 +28,104 @@ import at.dms.compiler.TokenReference;
  */
 public abstract class JLiteral extends JExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JLiteral() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param where the line of this node in the source code
-   */
-  public JLiteral(TokenReference where) {
-    super(where);
-  }
-
-  /**
-   * Constructs a real (float or double) literal
-   * @param	where		the line of this node in the source code
-   * @param	image		the textual representation of this literal
-   */
-  public static JLiteral parseReal(TokenReference where, String image)
-    throws PositionedError
-  {
-    switch (image.charAt(image.length() - 1)) {
-    case 'f':
-    case 'F':
-      return new JFloatLiteral(where, image.substring(0, image.length() - 1));
-
-    case 'd':
-    case 'D':
-      return new JDoubleLiteral(where, image.substring(0, image.length() - 1));
-
-    default:
-      return new JDoubleLiteral(where, image);
+    /**
+     * Construct a node in the parsing tree
+     * @param where the line of this node in the source code
+     */
+    public JLiteral(TokenReference where) {
+        super(where);
     }
-  }
 
-  /**
-   * Constructs an integer (int or long) literal
-   * @param	where		the line of this node in the source code
-   * @param	image		the textual representation of this literal
-   */
-  public static JLiteral parseInteger(TokenReference where, String image)
-    throws PositionedError
-  {
-    switch (image.charAt(image.length() - 1)) {
-    case 'l':
-    case 'L':
-      return new JLongLiteral(where, image.substring(0, image.length() - 1));
+    /**
+     * Constructs a real (float or double) literal
+     * @param   where       the line of this node in the source code
+     * @param   image       the textual representation of this literal
+     */
+    public static JLiteral parseReal(TokenReference where, String image)
+        throws PositionedError
+    {
+        switch (image.charAt(image.length() - 1)) {
+        case 'f':
+        case 'F':
+            return new JFloatLiteral(where, image.substring(0, image.length() - 1));
 
-    default:
-      return new JIntLiteral(where, image);
+        case 'd':
+        case 'D':
+            return new JDoubleLiteral(where, image.substring(0, image.length() - 1));
+
+        default:
+            return new JDoubleLiteral(where, image);
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    /**
+     * Constructs an integer (int or long) literal
+     * @param   where       the line of this node in the source code
+     * @param   image       the textual representation of this literal
+     */
+    public static JLiteral parseInteger(TokenReference where, String image)
+        throws PositionedError
+    {
+        switch (image.charAt(image.length() - 1)) {
+        case 'l':
+        case 'L':
+            return new JLongLiteral(where, image.substring(0, image.length() - 1));
 
-  /**
-   * Tests whether this expression denotes a compile-time constant (JLS 15.28).
-   *
-   * @return	true iff this expression is constant
-   */
-  public boolean isConstant() {
-    return true;
-  }
+        default:
+            return new JIntLiteral(where, image);
+        }
+    }
 
-  /**
-   * Returns the literal value of an expression
-   */
-  public JLiteral getLiteral() {
-    return this;
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Tests whether this expression denotes a compile-time constant (JLS 15.28).
+     *
+     * @return  true iff this expression is constant
+     */
+    public boolean isConstant() {
+        return true;
+    }
+
+    /**
+     * Returns the literal value of an expression
+     */
+    public JLiteral getLiteral() {
+        return this;
+    }
 
     /**
      * For up-casting into a string type.
      */
     public abstract String convertToString();
 
-  /**
-   * Returns true iff the value of this literal is the
-   * default value for this type (JLS 4.5.5).
-   */
-  public abstract boolean isDefault();
+    /**
+     * Returns true iff the value of this literal is the
+     * default value for this type (JLS 4.5.5).
+     */
+    public abstract boolean isDefault();
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    return this;
-  }
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        return this;
+    }
 
     /**
      * convertType
@@ -134,15 +134,15 @@ public abstract class JLiteral extends JExpression {
      */
     public abstract JExpression convertType(CType dest, CExpressionContext context);
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JLiteral other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JLiteral other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

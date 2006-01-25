@@ -1,5 +1,5 @@
 /*
- * @(#)FileExportJPG.java	1.2 01.02.2003
+ * @(#)FileExportJPG.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -30,12 +30,12 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class FileExportPNG extends FileExportJPG {
 
-	/**
-	 * Constructor for FileExportJPG.
-	 * @param graphpad
-	 */
-	public FileExportPNG(GPGraphpad graphpad) {
-		super(graphpad, "png");
-	}
+    /**
+     * Constructor for FileExportJPG.
+     * @param graphpad
+     */
+    public FileExportPNG(GPGraphpad graphpad) {
+        super(graphpad, "png");
+    }
 
 }

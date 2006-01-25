@@ -31,7 +31,7 @@ public class FuseSimpleSplit {
         List children = sj.getParallelStreams();
         // rename components
         doRenaming(children);
-	// inline phases
+        // inline phases
         doPhaseInlining(children);
         // calculate the repetitions for the split-join
         SRepInfo rep = SRepInfo.calcReps(sj);
@@ -160,21 +160,21 @@ public class FuseSimpleSplit {
     }
 
     private static void doRenaming(List children) {
-	// Rename all of the child streams of this.
+        // Rename all of the child streams of this.
         Iterator iter = children.iterator();
         while (iter.hasNext()) {
-	    SIRFilter filter = (SIRFilter)iter.next();
+            SIRFilter filter = (SIRFilter)iter.next();
             RenameAll.renameFilterContents((SIRFilter)filter);
         }
     }
 
     private static void doPhaseInlining(List children) {
-	// inline all phases, as they aren't supported in fusion yet
+        // inline all phases, as they aren't supported in fusion yet
         Iterator iter = children.iterator();
         while (iter.hasNext()) {
-	    SIRFilter filter = (SIRFilter)iter.next();
-	    InlinePhases.doit(filter);
-	}
+            SIRFilter filter = (SIRFilter)iter.next();
+            InlinePhases.doit(filter);
+        }
     }
 
     /**
@@ -270,8 +270,8 @@ public class FuseSimpleSplit {
         // make list of statements for work function
         LinkedList list = new LinkedList();
 
-	// mark beginning of splitter
-	list.add(MarkFilterBoundaries.makeBeginMarker(split));
+        // mark beginning of splitter
+        list.add(MarkFilterBoundaries.makeBeginMarker(split));
 
         // see how many statements we would generate
         int numStatements = 0;
@@ -346,15 +346,15 @@ public class FuseSimpleSplit {
         // pop the right number of items at the end
         if (sumOfWeights * rep.splitter > 0) {
             list.add(new JExpressionStatement(new SIRPopExpression(type, 
-                    sumOfWeights * rep.splitter)));
+                                                                   sumOfWeights * rep.splitter)));
         }
-//        list.add(Utils.makeForLoop(new JExpressionStatement(null,
-//                                                            new SIRPopExpression(type),
-//                                                            null),
-//                                   sumOfWeights * rep.splitter));
+        //        list.add(Utils.makeForLoop(new JExpressionStatement(null,
+        //                                                            new SIRPopExpression(type),
+        //                                                            null),
+        //                                   sumOfWeights * rep.splitter));
 
-	// mark end of splitter
-	list.add(MarkFilterBoundaries.makeEndMarker(split));
+        // mark end of splitter
+        list.add(MarkFilterBoundaries.makeEndMarker(split));
         return new JBlock(null, list, null);
     }
 
@@ -381,8 +381,8 @@ public class FuseSimpleSplit {
         // make list of statements for work function
         LinkedList list = new LinkedList();
 
-	// mark end of splitter
-	list.add(MarkFilterBoundaries.makeBeginMarker(join));
+        // mark end of splitter
+        list.add(MarkFilterBoundaries.makeBeginMarker(join));
 
         // see how many statements we would generate
         int numStatements = 0;
@@ -434,46 +434,46 @@ public class FuseSimpleSplit {
             JVariableDefinition _k = new JVariableDefinition(null, 0, CStdType.Integer, "_k", new JIntLiteral(0));
             // make loop body
             JStatement inner = new JExpressionStatement(null,
-                    new SIRPushExpression(new SIRPeekExpression(
-                            new JAddExpression(null, new JMultExpression(null,
-                                    new JLocalVariableExpression(null, _k),
-                                    new JArrayAccessExpression(null,
-                                            new JLocalVariableExpression(null,
-                                                    _weights),
-                                            new JLocalVariableExpression(null,
-                                                    _i))), new JAddExpression(
-                                    null, new JArrayAccessExpression(null,
-                                            new JLocalVariableExpression(null,
-                                                    _partialSum),
-                                            new JLocalVariableExpression(null,
-                                                    _i), CStdType.Integer),
-                                    new JLocalVariableExpression(null, _j))),
-                            type),
+                                                        new SIRPushExpression(new SIRPeekExpression(
+                                                                                                    new JAddExpression(null, new JMultExpression(null,
+                                                                                                                                                 new JLocalVariableExpression(null, _k),
+                                                                                                                                                 new JArrayAccessExpression(null,
+                                                                                                                                                                            new JLocalVariableExpression(null,
+                                                                                                                                                                                                         _weights),
+                                                                                                                                                                            new JLocalVariableExpression(null,
+                                                                                                                                                                                                         _i))), new JAddExpression(
+                                                                                                                                                                                                                                   null, new JArrayAccessExpression(null,
+                                                                                                                                                                                                                                                                    new JLocalVariableExpression(null,
+                                                                                                                                                                                                                                                                                                 _partialSum),
+                                                                                                                                                                                                                                                                    new JLocalVariableExpression(null,
+                                                                                                                                                                                                                                                                                                 _i), CStdType.Integer),
+                                                                                                                                                                                                                                   new JLocalVariableExpression(null, _j))),
+                                                                                                    type),
 
-                    type), null);
+                                                                              type), null);
             // add k loop
             JStatement jLoop = Utils.makeForLoop(inner,
-                    new JArrayAccessExpression(null,
-                            new JLocalVariableExpression(null, _weights),
-                            new JLocalVariableExpression(null, _i)), _j);
+                                                 new JArrayAccessExpression(null,
+                                                                            new JLocalVariableExpression(null, _weights),
+                                                                            new JLocalVariableExpression(null, _i)), _j);
             JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(
-                    weights.length), _i);
+                                                                        weights.length), _i);
             JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(
-                    rep.joiner), _k);
+                                                                        rep.joiner), _k);
             list.add(kLoop);
         }
         // pop the right number of items at the end
         if (sumOfWeights * rep.joiner > 0) {
             list.add(new JExpressionStatement(new SIRPopExpression(type,
-                    sumOfWeights * rep.joiner)));
+                                                                   sumOfWeights * rep.joiner)));
         }
-// list.add(Utils.makeForLoop(new JExpressionStatement(null,
-// new SIRPopExpression(type),
-// null),
-// sumOfWeights * rep.joiner));
+        // list.add(Utils.makeForLoop(new JExpressionStatement(null,
+        // new SIRPopExpression(type),
+        // null),
+        // sumOfWeights * rep.joiner));
 
-	// mark end of splitter
-	list.add(MarkFilterBoundaries.makeEndMarker(join));
+        // mark end of splitter
+        list.add(MarkFilterBoundaries.makeEndMarker(join));
 
         return new JBlock(null, list, null);
     }
@@ -535,12 +535,12 @@ public class FuseSimpleSplit {
         // times for the splitjoin
         if (isDup && rep.splitter > 0) {
             newStatements.addStatement(
-                    new JExpressionStatement(
-                            new SIRPopExpression(sj.getInputType(),rep.splitter)));
+                                       new JExpressionStatement(
+                                                                new SIRPopExpression(sj.getInputType(),rep.splitter)));
                         
-// Utils.makeForLoop(new JExpressionStatement(null,
-//                new SIRPopExpression(sj.getInputType()), null),
-//                rep.splitter));
+            // Utils.makeForLoop(new JExpressionStatement(null,
+            //                new SIRPopExpression(sj.getInputType()), null),
+            //                rep.splitter));
         }
 
         //add variable declarations calculated by FindVarDecls
@@ -583,47 +583,47 @@ public class FuseSimpleSplit {
 
         // adjust the contents of <orig> to be relative to <var>
         orig.accept(new SLIRReplacingVisitor() {
-            // Whether we are in an ExpressionStatement or not affects
-            // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
-            // they do not have to return a value.
+                // Whether we are in an ExpressionStatement or not affects
+                // behaviour of pops:  as an immediate subexpression of ExpressionStatment,
+                // they do not have to return a value.
             
-            private boolean inExpressionStatement = false;
+                private boolean inExpressionStatement = false;
                
-            public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
-                boolean oldInExpressionStatement = inExpressionStatement;
-                if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
-                Object result = super.visitExpressionStatement(self,expr);
-                inExpressionStatement = oldInExpressionStatement;
-                return result;
-            }
+                public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+                    boolean oldInExpressionStatement = inExpressionStatement;
+                    if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
+                    Object result = super.visitExpressionStatement(self,expr);
+                    inExpressionStatement = oldInExpressionStatement;
+                    return result;
+                }
 
-            public Object visitPopExpression(SIRPopExpression oldSelf,
-                    CType oldTapeType) {
-                // Recurse into children.
-                SIRPopExpression self = (SIRPopExpression) super
+                public Object visitPopExpression(SIRPopExpression oldSelf,
+                                                 CType oldTapeType) {
+                    // Recurse into children.
+                    SIRPopExpression self = (SIRPopExpression) super
                         .visitPopExpression(oldSelf, oldTapeType);
  
-                int ntimes = self.getNumPop();
+                    int ntimes = self.getNumPop();
 
-                if (inExpressionStatement) {
-                    JExpression lhs = new JLocalVariableExpression(null, var);
-                    JExpression rhs = new JAddExpression(
-                            new JLocalVariableExpression(null, var),
-                            new JIntLiteral(ntimes)
-                    );
-                    return new JAssignmentExpression(lhs,rhs);
+                    if (inExpressionStatement) {
+                        JExpression lhs = new JLocalVariableExpression(null, var);
+                        JExpression rhs = new JAddExpression(
+                                                             new JLocalVariableExpression(null, var),
+                                                             new JIntLiteral(ntimes)
+                                                             );
+                        return new JAssignmentExpression(lhs,rhs);
+                    }
+                    // if assertion fires, need code to bump past numPop-1 items
+                    // then peek
+                    // the final popped item.
+                    assert ntimes == 1 : "Need code here to handle multiple pop";
+                    // reference our var
+                    JLocalVariableExpression ref = new JLocalVariableExpression(
+                                                                                null, var);
+                    // Return new peek expression.
+                    return new SIRPeekExpression(new JPostfixExpression(null,
+                                                                        OPE_POSTINC, ref), oldTapeType);
                 }
-                // if assertion fires, need code to bump past numPop-1 items
-                // then peek
-                // the final popped item.
-                assert ntimes == 1 : "Need code here to handle multiple pop";
-                // reference our var
-                JLocalVariableExpression ref = new JLocalVariableExpression(
-                        null, var);
-                // Return new peek expression.
-                return new SIRPeekExpression(new JPostfixExpression(null,
-                        OPE_POSTINC, ref), oldTapeType);
-            }
             
                 public Object visitPeekExpression(SIRPeekExpression oldSelf,
                                                   CType oldTapeType,

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CNumericType.java,v 1.4 2006-01-10 05:11:19 thies Exp $
+ * $Id: CNumericType.java,v 1.5 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,155 +29,155 @@ import at.dms.util.SimpleStringBuffer;
  */
 public abstract class CNumericType extends CType {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Constructor
-   * @param	typeID		the ident (int value) of this type
-   */
-  protected CNumericType(int typeID) {
-    super(typeID);
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns a string representation of this type.
-   */
-  public abstract String toString();
-
-  /**
-   * Returns the VM signature of this type.
-   */
-  public abstract String getSignature();
-
-  /**
-   * Appends the VM signature of this type to the specified buffer.
-   */
-  protected abstract void appendSignature(SimpleStringBuffer buffer);
-
-  /**
-   * Returns the stack size (conservative estimate of maximum number
-   * of bytes needed in C on 32-bit machine) used by a value of this
-   * type.
-   */
-  public abstract int getSizeInC();
-
-  /**
-   * Returns the stack size used by a value of this type.
-   */
-  public abstract int getSize();
-
-  /**
-   * Is this type ordinal ?
-   */
-  public abstract boolean isOrdinal();
-
-  /**
-   * Is this a floating point type ?
-   */
-  public abstract boolean isFloatingPoint();
-
-  /**
-   * Is this a numeric type ?
-   */
-  public boolean isNumeric() {
-    return true;
-  }
-
-  // ----------------------------------------------------------------------
-  // BODY CHECKING
-  // ----------------------------------------------------------------------
-
-  /**
-   * check that type is valid
-   * necessary to resolve String into java/lang/String
-   * @exception	UnpositionedError	this error will be positioned soon
-   */
-  public void checkType(CContext context) throws UnpositionedError {
-  }
-
-  /**
-   * Can this type be converted to the specified type by assignment conversion (JLS 5.2) ?
-   * @param	dest		the destination type
-   * @return	true iff the conversion is valid
-   */
-  public abstract boolean isAssignableTo(CType dest);
-
-  /**
-   * Can this type be converted to the specified type by casting conversion (JLS 5.5) ?
-   * @param	dest		the destination type
-   * @return	true iff the conversion is valid
-   */
-  public boolean isCastableTo(CType dest) {
-    return dest.isNumeric();
-  }
-
-  /**
-   * unaryPromote
-   * search the type corresponding to the type after computation
-   * @param t1 the type
-   * @return the corresponding type after operation
-   */
-  public static CType unaryPromote(CType t1) {
-    if (t1 == CStdType.Byte || t1 == CStdType.Short || t1 == CStdType.Char) {
-      return CStdType.Integer;
-    } else {
-      return t1;
+    /**
+     * Constructor
+     * @param   typeID      the ident (int value) of this type
+     */
+    protected CNumericType(int typeID) {
+        super(typeID);
     }
-  }
 
-  /**
-   * binaryPromote
-   * search the type corresponding to the promotion of the two types
-   * @param t1 the first type
-   * @param t2 the second type
-   * @return the corresponding type or null
-   */
-  public static CType binaryPromote(CType t1, CType t2) {
-    assert t1.isNumeric() && t2.isNumeric();
-    if (t1 == CStdType.Double) {
-      return CStdType.Double;
-    } else if (t2 == CStdType.Double) {
-      return CStdType.Double;
-    } else if (t1 == CStdType.Float) {
-      return CStdType.Float;
-    } else if (t2 == CStdType.Float) {
-      return CStdType.Float;
-    } else if (t1 == CStdType.Long) {
-      return CStdType.Long;
-    } else if (t2 == CStdType.Long) {
-      return CStdType.Long;
-    } else {
-      return CStdType.Integer;
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns a string representation of this type.
+     */
+    public abstract String toString();
+
+    /**
+     * Returns the VM signature of this type.
+     */
+    public abstract String getSignature();
+
+    /**
+     * Appends the VM signature of this type to the specified buffer.
+     */
+    protected abstract void appendSignature(SimpleStringBuffer buffer);
+
+    /**
+     * Returns the stack size (conservative estimate of maximum number
+     * of bytes needed in C on 32-bit machine) used by a value of this
+     * type.
+     */
+    public abstract int getSizeInC();
+
+    /**
+     * Returns the stack size used by a value of this type.
+     */
+    public abstract int getSize();
+
+    /**
+     * Is this type ordinal ?
+     */
+    public abstract boolean isOrdinal();
+
+    /**
+     * Is this a floating point type ?
+     */
+    public abstract boolean isFloatingPoint();
+
+    /**
+     * Is this a numeric type ?
+     */
+    public boolean isNumeric() {
+        return true;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // BODY CHECKING
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates a bytecode sequence to convert a value of this type to the
-   * specified destination type.
-   * @param	dest		the destination type
-   * @param	code		the code sequence
-   */
-  public abstract void genCastTo(CNumericType dest, CodeSequence code);
+    /**
+     * check that type is valid
+     * necessary to resolve String into java/lang/String
+     * @exception   UnpositionedError   this error will be positioned soon
+     */
+    public void checkType(CContext context) throws UnpositionedError {
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Can this type be converted to the specified type by assignment conversion (JLS 5.2) ?
+     * @param   dest        the destination type
+     * @return  true iff the conversion is valid
+     */
+    public abstract boolean isAssignableTo(CType dest);
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /**
+     * Can this type be converted to the specified type by casting conversion (JLS 5.5) ?
+     * @param   dest        the destination type
+     * @return  true iff the conversion is valid
+     */
+    public boolean isCastableTo(CType dest) {
+        return dest.isNumeric();
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CNumericType other) {
-  super.deepCloneInto(other);
-}
+    /**
+     * unaryPromote
+     * search the type corresponding to the type after computation
+     * @param t1 the type
+     * @return the corresponding type after operation
+     */
+    public static CType unaryPromote(CType t1) {
+        if (t1 == CStdType.Byte || t1 == CStdType.Short || t1 == CStdType.Char) {
+            return CStdType.Integer;
+        } else {
+            return t1;
+        }
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * binaryPromote
+     * search the type corresponding to the promotion of the two types
+     * @param t1 the first type
+     * @param t2 the second type
+     * @return the corresponding type or null
+     */
+    public static CType binaryPromote(CType t1, CType t2) {
+        assert t1.isNumeric() && t2.isNumeric();
+        if (t1 == CStdType.Double) {
+            return CStdType.Double;
+        } else if (t2 == CStdType.Double) {
+            return CStdType.Double;
+        } else if (t1 == CStdType.Float) {
+            return CStdType.Float;
+        } else if (t2 == CStdType.Float) {
+            return CStdType.Float;
+        } else if (t1 == CStdType.Long) {
+            return CStdType.Long;
+        } else if (t2 == CStdType.Long) {
+            return CStdType.Long;
+        } else {
+            return CStdType.Integer;
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Generates a bytecode sequence to convert a value of this type to the
+     * specified destination type.
+     * @param   dest        the destination type
+     * @param   code        the code sequence
+     */
+    public abstract void genCastTo(CNumericType dest, CodeSequence code);
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CNumericType other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

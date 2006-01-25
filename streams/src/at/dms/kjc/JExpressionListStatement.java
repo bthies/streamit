@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpressionListStatement.java,v 1.10 2005-01-23 00:33:01 thies Exp $
+ * $Id: JExpressionListStatement.java,v 1.11 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,119 +33,119 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JExpressionListStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JExpressionListStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	exprs		the expressions to evaluate
-   * @param	comments	comments in the source code
-   */
-  public JExpressionListStatement(TokenReference where,
-				  JExpression[] exprs,
-				  JavaStyleComment[] comments)
-  {
-    super(where, comments);
-    this.exprs = exprs;
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   exprs       the expressions to evaluate
+     * @param   comments    comments in the source code
+     */
+    public JExpressionListStatement(TokenReference where,
+                                    JExpression[] exprs,
+                                    JavaStyleComment[] comments)
+    {
+        super(where, comments);
+        this.exprs = exprs;
+    }
 
     public JExpressionListStatement(JExpression[] exprs) {
-	this(null, exprs, null);
+        this(null, exprs, null);
     }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns an array of expression
-   */
-  public JExpression[] getExpressions() {
-   return exprs;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    for (int i = 0; i < exprs.length; i++) {
-      // the result of the expression will be discarded
-      exprs[i] = exprs[i].analyse(new CExpressionContext(context, false, true));
+    /**
+     * Returns an array of expression
+     */
+    public JExpression[] getExpressions() {
+        return exprs;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitExpressionListStatement(this, exprs);
-  }
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        for (int i = 0; i < exprs.length; i++) {
+            // the result of the expression will be discarded
+            exprs[i] = exprs[i].analyse(new CExpressionContext(context, false, true));
+        }
+    }
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-   return  p.visitExpressionListStatement(this, exprs);
-  }
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitExpressionListStatement(this, exprs);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return  p.visitExpressionListStatement(this, exprs);
+    }
       
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    for (int i = 0; i < exprs.length; i++) {
-      exprs[i].genCode(code, true);
+        for (int i = 0; i < exprs.length; i++) {
+            exprs[i].genCode(code, true);
+        }
     }
-  }
 
     /**
      * Returns the i'th expression
      */
     public JExpression getExpression(int i) {
-	return exprs[i];
+        return exprs[i];
     }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression[]		exprs;
+    private JExpression[]       exprs;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JExpressionListStatement other = new at.dms.kjc.JExpressionListStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JExpressionListStatement other = new at.dms.kjc.JExpressionListStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JExpressionListStatement other) {
-  super.deepCloneInto(other);
-  other.exprs = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.exprs);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JExpressionListStatement other) {
+        super.deepCloneInto(other);
+        other.exprs = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.exprs);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

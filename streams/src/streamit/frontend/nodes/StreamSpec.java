@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * will need to determine the stream type on its own.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamSpec.java,v 1.16 2005-07-19 18:09:14 madrake Exp $
+ * @version $Id: StreamSpec.java,v 1.17 2006-01-25 17:04:25 thies Exp $
  */
 public class StreamSpec extends FENode
 {
@@ -127,17 +127,17 @@ public class StreamSpec extends FENode
      * @return  String type of the stream object
      */
     public String getTypeString() {
-	switch(type) {
-	case STREAM_FILTER:
-	    return "Filter";
-	case STREAM_PIPELINE:
-	    return "Pipeline";
-	case STREAM_SPLITJOIN:
-	    return "SplitJoin";
-	case STREAM_FEEDBACKLOOP:
-	    return "FeedbackLoop";
-	}
-	return null;
+        switch(type) {
+        case STREAM_FILTER:
+            return "Filter";
+        case STREAM_PIPELINE:
+            return "Pipeline";
+        case STREAM_SPLITJOIN:
+            return "SplitJoin";
+        case STREAM_FEEDBACKLOOP:
+            return "FeedbackLoop";
+        }
+        return null;
     }
 
     /**
@@ -204,11 +204,11 @@ public class StreamSpec extends FENode
     public Function getInitFunc()
     {
         for (Iterator iter = funcs.iterator(); iter.hasNext(); )
-        {
-            Function func = (Function)iter.next();
-            if (func.getCls() == Function.FUNC_INIT)
-                return func;
-        }
+            {
+                Function func = (Function)iter.next();
+                if (func.getCls() == Function.FUNC_INIT)
+                    return func;
+            }
         return null;
     }
 
@@ -223,11 +223,11 @@ public class StreamSpec extends FENode
     public FuncWork getWorkFunc()
     {
         for (Iterator iter = funcs.iterator(); iter.hasNext(); )
-        {
-            Function func = (Function)iter.next();
-            if (func.getCls() == Function.FUNC_WORK)
-                return (FuncWork)func;
-        }
+            {
+                Function func = (Function)iter.next();
+                if (func.getCls() == Function.FUNC_WORK)
+                    return (FuncWork)func;
+            }
         return null;
     }
 
@@ -259,12 +259,12 @@ public class StreamSpec extends FENode
     public Function getFuncNamed(String name)
     {
         for (Iterator iter = funcs.iterator(); iter.hasNext(); )
-        {
-            Function func = (Function)iter.next();
-            String fname = func.getName();
-            if (fname != null && fname.equals(name))
-                return func;
-        }
+            {
+                Function func = (Function)iter.next();
+                String fname = func.getName();
+                if (fname != null && fname.equals(name))
+                    return func;
+            }
         return null;
     }
 

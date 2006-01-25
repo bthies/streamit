@@ -40,75 +40,75 @@ class IDDoLoopsCheckBody extends SLIREmptyVisitor
      */
     public static boolean check(DoLoopInformation info, JStatement body)
     {
-	IDDoLoopsCheckBody check = new IDDoLoopsCheckBody(info, body);
+        IDDoLoopsCheckBody check = new IDDoLoopsCheckBody(info, body);
 
-	Iterator it;	
-	//check for method calls
-	body.accept(check);
-	    
+        Iterator it;    
+        //check for method calls
+        body.accept(check);
+        
 
-	if (check.hasFields && check.hasMethods)
-	    return false;
-	    
-	it  = check.varsAssigned.iterator();
-	/*System.out.println("*** Vars assigned: ");
-	while (it.hasNext()) {
-	  Object cur = it.next();
-	  System.out.println("  " + cur);
-	  }
-	System.out.println("*** Vars assigned.  ");
-	*/
+        if (check.hasFields && check.hasMethods)
+            return false;
+        
+        it  = check.varsAssigned.iterator();
+        /*System.out.println("*** Vars assigned: ");
+          while (it.hasNext()) {
+          Object cur = it.next();
+          System.out.println("  " + cur);
+          }
+          System.out.println("*** Vars assigned.  ");
+        */
 
-	//for all the variables we want to check,
-	//make sure they are not assigned
-	it = check.varsToCheck.iterator();
-	while (it.hasNext()) {
-	    Object var = it.next();
-	    if (check.varsAssigned.contains(var)) {
-		//System.out.println("Cannot formulate do loop, var " + var + 
-		//		   " assigned in loop ");
-		return false;
-	    }
-		
-	}
-	//System.out.println("Body okay");
-	return true;
+        //for all the variables we want to check,
+        //make sure they are not assigned
+        it = check.varsToCheck.iterator();
+        while (it.hasNext()) {
+            Object var = it.next();
+            if (check.varsAssigned.contains(var)) {
+                //System.out.println("Cannot formulate do loop, var " + var + 
+                //         " assigned in loop ");
+                return false;
+            }
+        
+        }
+        //System.out.println("Body okay");
+        return true;
     }
-	
+    
     private IDDoLoopsCheckBody(DoLoopInformation info, JStatement body) 
     {
-	this.info = info;
-	varsToCheck = new HashSet();
-	hasFields = false;
-	hasMethods = false;
-	findVarsToCheck();
-	//get all the vars assigned in the body...
-	varsAssigned =	VarsAssigned.getVarsAssigned(body);
+        this.info = info;
+        varsToCheck = new HashSet();
+        hasFields = false;
+        hasMethods = false;
+        findVarsToCheck();
+        //get all the vars assigned in the body...
+        varsAssigned =  VarsAssigned.getVarsAssigned(body);
     }
-	
+    
     private void findVarsToCheck() 
     {
-	//add the induction variable
-	varsToCheck.add(info.induction);
-	//find all the vars to check if they are assigned,
-	//anything used in the cond init or incr...
-	StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.cond));
-	StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.incr));
+        //add the induction variable
+        varsToCheck.add(info.induction);
+        //find all the vars to check if they are assigned,
+        //anything used in the cond init or incr...
+        StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.cond));
+        StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.incr));
 
-	Iterator it = varsToCheck.iterator();
-	while (it.hasNext()) {
-	    Object cur = it.next();
-	    if (cur instanceof String) 
-		hasFields = true;
-	}
+        Iterator it = varsToCheck.iterator();
+        while (it.hasNext()) {
+            Object cur = it.next();
+            if (cur instanceof String) 
+                hasFields = true;
+        }
     }
 
     public void visitMethodCallExpression(JMethodCallExpression self,
-					  JExpression prefix,
-					  String ident,
-					  JExpression[] args) {
-	hasMethods = true;
-	for (int i = 0; i < args.length; i++) 
-	    args[i].accept(this);    
+                                          JExpression prefix,
+                                          String ident,
+                                          JExpression[] args) {
+        hasMethods = true;
+        for (int i = 0; i < args.length; i++) 
+            args[i].accept(this);    
     }
 }

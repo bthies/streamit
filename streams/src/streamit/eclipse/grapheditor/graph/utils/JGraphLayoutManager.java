@@ -16,31 +16,31 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
  *
  */
 public class JGraphLayoutManager {
-	private GraphStructure graphStruct;
+    private GraphStructure graphStruct;
 
-	/**
-	 * JGraphLayoutManager constructor that will use the SugiyamaLayoutAlgorithm 
-	 * and the SugiyamaLayoutController as defaults.
-	 * @param jgraph The JGraph structure to be laid out.
-	 */
+    /**
+     * JGraphLayoutManager constructor that will use the SugiyamaLayoutAlgorithm 
+     * and the SugiyamaLayoutController as defaults.
+     * @param jgraph The JGraph structure to be laid out.
+     */
 
 
-	public JGraphLayoutManager(GraphStructure graphStruct)
-	{
-		this.graphStruct = graphStruct;
-	}
-	
+    public JGraphLayoutManager(GraphStructure graphStruct)
+    {
+        this.graphStruct = graphStruct;
+    }
+    
 
-	/**
-	 * Perform the layout of the JGraph accoring to the specified LayoutAlgorithm
-	 * and LayoutController.
-	 */
+    /**
+     * Perform the layout of the JGraph accoring to the specified LayoutAlgorithm
+     * and LayoutController.
+     */
 
-	public void arrange()
-	{
-		StreamItLayoutAlgorithm sla = new StreamItLayoutAlgorithm();
-		sla.perform(this.graphStruct);
-	}
+    public void arrange()
+    {
+        StreamItLayoutAlgorithm sla = new StreamItLayoutAlgorithm();
+        sla.perform(this.graphStruct);
+    }
 
 
 }

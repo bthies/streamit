@@ -13,20 +13,20 @@ import at.dms.kjc.sir.lowering.fusion.*;
  */
 public final class RemoveSyncTransform extends IdempotentTransform {
     public RemoveSyncTransform() {
-	super();
+        super();
     }
 
     /**
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	assert str instanceof SIRPipeline;
-	boolean ok = RefactorSplitJoin.removeMatchingSyncPoints((SIRPipeline)str);
-	assert ok: "Remove matching sync failed.";
-	return str;
+        assert str instanceof SIRPipeline;
+        boolean ok = RefactorSplitJoin.removeMatchingSyncPoints((SIRPipeline)str);
+        assert ok: "Remove matching sync failed.";
+        return str;
     }
 
     public String toString() {
-	return "Remove matching sync transform, #" + id;
+        return "Remove matching sync transform, #" + id;
     }
 }

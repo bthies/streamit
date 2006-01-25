@@ -9,11 +9,11 @@ public class InitUpstreamRestriction extends Restriction
     final InitDownstreamRestriction downstreamRestriction;
 
     public InitUpstreamRestriction(
-        P2PPortal _portal,
-        SDEPData _sdep,
-        StreamInterface _parent,
-        InitDownstreamRestriction _downstreamRestriction,
-        Restrictions restrictions)
+                                   P2PPortal _portal,
+                                   SDEPData _sdep,
+                                   StreamInterface _parent,
+                                   InitDownstreamRestriction _downstreamRestriction,
+                                   Restrictions restrictions)
     {
         super(_portal.getUpstreamNode(), _portal);
 
@@ -27,44 +27,44 @@ public class InitUpstreamRestriction extends Restriction
         int maxLatency = portal.getMaxLatency();
 
         if (portal.isDownstream())
-        {
-            if (portal.getMaxLatency() >= 0)
             {
-                // downstream, positive latency
-                ERROR("not tested");
+                if (portal.getMaxLatency() >= 0)
+                    {
+                        // downstream, positive latency
+                        ERROR("not tested");
 
-                // there is no actual initial restriction on the number 
-                // of executions that the upstream filter must complete
-                // before this portal has a valid amount of data
+                        // there is no actual initial restriction on the number 
+                        // of executions that the upstream filter must complete
+                        // before this portal has a valid amount of data
 
-                // this means that we want to have maxExecution set
-                // to 0, so that I will use my usual framework to
-                // right away change the restriction to a steady-state
-                // restriction
+                        // this means that we want to have maxExecution set
+                        // to 0, so that I will use my usual framework to
+                        // right away change the restriction to a steady-state
+                        // restriction
 
-                setMaxExecutions(0);
+                        setMaxExecutions(0);
+                    }
+                else
+                    {
+                        // downstream, negative latency
+                        assert portal.getMinLatency() < 0;
+
+                        assert false: "not implemented";
+                    }
             }
-            else
-            {
-                // downstream, negative latency
-                assert portal.getMinLatency() < 0;
-
-                assert false: "not implemented";
-            }
-        }
         else
-        {
-            // upstream, positive latency
-            assert portal.getMinLatency() >= 0;
+            {
+                // upstream, positive latency
+                assert portal.getMinLatency() >= 0;
 
-            // this type of portal does not cause me to have to execute
-            // the upstream filter a certain # of times before being
-            // ready to correctly process messages for this portal.
-            // that means that I can just set my max executions to 0,
-            // and get removed immediately :)
+                // this type of portal does not cause me to have to execute
+                // the upstream filter a certain # of times before being
+                // ready to correctly process messages for this portal.
+                // that means that I can just set my max executions to 0,
+                // and get removed immediately :)
             
-            setMaxExecutions (0);
-        }
+                setMaxExecutions (0);
+            }
     }
 
     public boolean notifyExpired()

@@ -34,7 +34,7 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.6 2006-01-05 22:28:33 thies Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.7 2006-01-25 17:04:28 thies Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
@@ -95,31 +95,31 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         List formals = new java.util.ArrayList();
         List params = new java.util.ArrayList();
         for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
-        {
-            String name = (String)iter.next();
-            Expression var = new ExprVar(creator.getContext(), name);
-            // Arrays are special: we need an extra parameter for
-            // their length.
-            Type type = getType(var);
-	    Type formalType;
-            if (type instanceof TypeArray)
             {
-		String lengthName = "_len_" + name;
-                params.add(((TypeArray)type).getLength());
-                formals.add(new Parameter
-                            (new TypePrimitive(TypePrimitive.TYPE_INT),
-                             lengthName));
-		// reset length of the array to reference the
-		// parameter passed in, rather than the old length
-		formalType = new TypeArray(((TypeArray)type).getBase(),
-					   new ExprVar(newSpec.getContext(), 
-						       lengthName));
-            } else {
-		formalType = getType(var);
-	    }
-	    params.add(var);
-	    formals.add(new Parameter(formalType, name));
-        }
+                String name = (String)iter.next();
+                Expression var = new ExprVar(creator.getContext(), name);
+                // Arrays are special: we need an extra parameter for
+                // their length.
+                Type type = getType(var);
+                Type formalType;
+                if (type instanceof TypeArray)
+                    {
+                        String lengthName = "_len_" + name;
+                        params.add(((TypeArray)type).getLength());
+                        formals.add(new Parameter
+                                    (new TypePrimitive(TypePrimitive.TYPE_INT),
+                                     lengthName));
+                        // reset length of the array to reference the
+                        // parameter passed in, rather than the old length
+                        formalType = new TypeArray(((TypeArray)type).getBase(),
+                                                   new ExprVar(newSpec.getContext(), 
+                                                               lengthName));
+                    } else {
+                        formalType = getType(var);
+                    }
+                params.add(var);
+                formals.add(new Parameter(formalType, name));
+            }
         StreamSpec namedSpec = new StreamSpec(newSpec.getContext(),
                                               newSpec.getType(),
                                               newSpec.getStreamType(),

@@ -12,40 +12,40 @@ public class MagicDramLoop extends MagicDramInstruction
 
     public MagicDramLoop()
     {
-	ins = new LinkedList();
-	tripCount = 0;
+        ins = new LinkedList();
+        tripCount = 0;
     }
     
     public MagicDramLoop(int tc, LinkedList insList) 
     {
-	tripCount = tc;
-	ins = insList;
+        tripCount = tc;
+        ins = insList;
     }
 
     public void addIns(MagicDramInstruction in) 
     {
-	if (in instanceof MagicDramLoop) 
-	    Utils.fail("Cannot have nested loop in magic dram loop");
-	ins.add(in);
+        if (in instanceof MagicDramLoop) 
+            Utils.fail("Cannot have nested loop in magic dram loop");
+        ins.add(in);
     }
     
     public void setTripCount(int tc) 
     {
-	tripCount = tc;
+        tripCount = tc;
     }
 
     public String toC() 
     {
-	StringBuffer sb = new StringBuffer();
-	sb.append("for (index = 0; index < " + tripCount + "; index++) {\n");
-	Iterator it = ins.iterator();
-	while (it.hasNext()) {
-	    MagicDramInstruction in = (MagicDramInstruction)it.next();
-	    if (in instanceof MagicDramLoop)
-		Utils.fail("Cannot have nested loop in magic dram loop");
-	    sb.append(in.toC());
-	}
-	sb.append("}\n");
-	return sb.toString();
+        StringBuffer sb = new StringBuffer();
+        sb.append("for (index = 0; index < " + tripCount + "; index++) {\n");
+        Iterator it = ins.iterator();
+        while (it.hasNext()) {
+            MagicDramInstruction in = (MagicDramInstruction)it.next();
+            if (in instanceof MagicDramLoop)
+                Utils.fail("Cannot have nested loop in magic dram loop");
+            sb.append(in.toC());
+        }
+        sb.append("}\n");
+        return sb.toString();
     }
 }

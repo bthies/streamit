@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIfStatement.java,v 1.11 2003-11-13 10:46:10 thies Exp $
+ * $Id: JIfStatement.java,v 1.12 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,183 +33,183 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JIfStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JIfStatement() {} // for cloner only
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	cond		the expression to evaluate
-   * @param	thenClause	the statement to execute if the condition is true
-   * @param	elseClause	the statement to execute if the condition is false
-   */
-  public JIfStatement(TokenReference where,
-		      JExpression cond,
-		      JStatement thenClause,
-		      JStatement elseClause,
-		      JavaStyleComment[] comments)
-  {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   cond        the expression to evaluate
+     * @param   thenClause  the statement to execute if the condition is true
+     * @param   elseClause  the statement to execute if the condition is false
+     */
+    public JIfStatement(TokenReference where,
+                        JExpression cond,
+                        JStatement thenClause,
+                        JStatement elseClause,
+                        JavaStyleComment[] comments)
+    {
+        super(where, comments);
 
-    this.cond = cond;
-    this.thenClause = thenClause;
-    this.elseClause = elseClause;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    cond = cond.analyse(new CExpressionContext(context));
-    check(context,
-	  cond.getType() == CStdType.Boolean,
-	  KjcMessages.IF_COND_NOTBOOLEAN, cond.getType());
-    if (cond instanceof JAssignmentExpression) {
-      context.reportTrouble(new CWarning(getTokenReference(),
-					 KjcMessages.ASSIGNMENT_IN_CONDITION));
+        this.cond = cond;
+        this.thenClause = thenClause;
+        this.elseClause = elseClause;
     }
 
-    CBodyContext	thenContext = new CSimpleBodyContext(context, context);
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-    thenClause.analyse(thenContext);
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        cond = cond.analyse(new CExpressionContext(context));
+        check(context,
+              cond.getType() == CStdType.Boolean,
+              KjcMessages.IF_COND_NOTBOOLEAN, cond.getType());
+        if (cond instanceof JAssignmentExpression) {
+            context.reportTrouble(new CWarning(getTokenReference(),
+                                               KjcMessages.ASSIGNMENT_IN_CONDITION));
+        }
 
-    if (elseClause == null) {
-      context.merge(thenContext);
-    } else {
-      elseClause.analyse(context);
-      if (thenContext.isReachable() && context.isReachable()) {
-	context.merge(thenContext);
-      } else if (thenContext.isReachable()) {
-	context.adopt(thenContext);
-      }
+        CBodyContext    thenContext = new CSimpleBodyContext(context, context);
+
+        thenClause.analyse(thenContext);
+
+        if (elseClause == null) {
+            context.merge(thenContext);
+        } else {
+            elseClause.analyse(context);
+            if (thenContext.isReachable() && context.isReachable()) {
+                context.merge(thenContext);
+            } else if (thenContext.isReachable()) {
+                context.adopt(thenContext);
+            }
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitIfStatement(this, cond, thenClause, elseClause);
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitIfStatement(this, cond, thenClause, elseClause);
+    }
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-    return p.visitIfStatement(this, cond, thenClause, elseClause);
-  }        
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitIfStatement(this, cond, thenClause, elseClause);
+    }        
 
     /**
      * Sets condition of this.
      */
     public void setCondition(JExpression cond) {
-	this.cond = cond;
+        this.cond = cond;
     }
 
     /**
      * Gets condition of this.
      */
     public JExpression getCondition() {
-	return cond;
+        return cond;
     }
 
     /**
      * Set then clause.
      */
     public void setThenClause(JStatement thenClause) {
-	this.thenClause = thenClause;
+        this.thenClause = thenClause;
     }
 
     /**
      * Get then clause.
      */
     public JStatement getThenClause() {
-	return thenClause;
+        return thenClause;
     }
 
     /**
      * Get else clause.
      */
     public JStatement getElseClause() {
-	return elseClause;
+        return elseClause;
     }
 
     /**
      * Set else clause.
      */
     public void setElseClause(JStatement elseClause) {
-	this.elseClause = elseClause;
+        this.elseClause = elseClause;
     }
 
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    if (cond.isConstant()) {
-      if (cond.booleanValue()) {
-	thenClause.genCode(code);
-      } else if (elseClause != null) {
-	elseClause.genCode(code);
-      }
-    } else {
-      CodeLabel		elseLabel = new CodeLabel();
-      CodeLabel		nextLabel = new CodeLabel();
+        if (cond.isConstant()) {
+            if (cond.booleanValue()) {
+                thenClause.genCode(code);
+            } else if (elseClause != null) {
+                elseClause.genCode(code);
+            }
+        } else {
+            CodeLabel       elseLabel = new CodeLabel();
+            CodeLabel       nextLabel = new CodeLabel();
 
-      cond.genBranch(false, code, elseLabel);   //		COND IFEQ else
-      thenClause.genCode(code);			//		THEN CODE
-      code.plantJumpInstruction(opc_goto, nextLabel);	//		GOTO next
-      code.plantLabel(elseLabel);		//	else:
-      if (elseClause != null) {
-	elseClause.genCode(code);		//		ELSE CODE
-      }
-      code.plantLabel(nextLabel);		//	next	...
+            cond.genBranch(false, code, elseLabel);   //        COND IFEQ else
+            thenClause.genCode(code);           //      THEN CODE
+            code.plantJumpInstruction(opc_goto, nextLabel); //      GOTO next
+            code.plantLabel(elseLabel);     //  else:
+            if (elseClause != null) {
+                elseClause.genCode(code);       //      ELSE CODE
+            }
+            code.plantLabel(nextLabel);     //  next    ...
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression		cond;
-  private JStatement		thenClause;
-  private JStatement		elseClause;
+    private JExpression     cond;
+    private JStatement      thenClause;
+    private JStatement      elseClause;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JIfStatement other = new at.dms.kjc.JIfStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JIfStatement other = new at.dms.kjc.JIfStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JIfStatement other) {
-  super.deepCloneInto(other);
-  other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
-  other.thenClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.thenClause);
-  other.elseClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.elseClause);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JIfStatement other) {
+        super.deepCloneInto(other);
+        other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
+        other.thenClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.thenClause);
+        other.elseClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.elseClause);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -19,18 +19,18 @@ public class SIRLatency implements Serializable, DeepCloneable {
     protected SIRLatency() {}
     
     public String toString() {
-	return "SIRLatency BEST_EFFORT";
+        return "SIRLatency BEST_EFFORT";
     }
 
     /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitLatency(this);
-	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
-	}
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitLatency(this);
+        } else {
+            at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+        }
     }
 
     /**
@@ -38,27 +38,27 @@ public class SIRLatency implements Serializable, DeepCloneable {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).visitLatency(this);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitLatency(this);
+        } else {
+            return this;
+        }
     }
 
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRLatency other = new at.dms.kjc.sir.SIRLatency();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRLatency other = new at.dms.kjc.sir.SIRLatency();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRLatency other) {
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRLatency other) {
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -34,12 +34,12 @@ public class UseDefInfo extends SLIREmptyVisitor
      */
     public static HashMap getUsesMap(JMethodDeclaration meth) 
     {
-	UseDefInfo useInfo = new UseDefInfo();
-	meth.accept(useInfo);
-	return useInfo.uses;
+        UseDefInfo useInfo = new UseDefInfo();
+        meth.accept(useInfo);
+        return useInfo.uses;
     }
 
-     /**
+    /**
      * Given a for loop, return a hashmap from local vars -> HashSet, 
      * where the hashset holds all the accesses of the local variable in 
      * the for looping including body, init, cond, and increment.
@@ -51,19 +51,19 @@ public class UseDefInfo extends SLIREmptyVisitor
      */
     public static HashSet getForUses(JForStatement jfor) 
     {
-	UseDefInfo useInfo = new UseDefInfo();
-	jfor.getBody().accept(useInfo);
-	jfor.getInit().accept(useInfo);
-	jfor.getCondition().accept(useInfo);
-	jfor.getIncrement().accept(useInfo);
-	
-	HashSet ret = new HashSet();
-	Iterator vars = useInfo.uses.keySet().iterator();
-	while (vars.hasNext()) {
-	    StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
-	}
+        UseDefInfo useInfo = new UseDefInfo();
+        jfor.getBody().accept(useInfo);
+        jfor.getInit().accept(useInfo);
+        jfor.getCondition().accept(useInfo);
+        jfor.getIncrement().accept(useInfo);
+    
+        HashSet ret = new HashSet();
+        Iterator vars = useInfo.uses.keySet().iterator();
+        while (vars.hasNext()) {
+            StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
+        }
 
-	return ret;
+        return ret;
     }
     
     /**
@@ -78,50 +78,50 @@ public class UseDefInfo extends SLIREmptyVisitor
      */
     public static HashSet getUses(JPhylum jsomething)  
     {
-	UseDefInfo useInfo = new UseDefInfo();
-	jsomething.accept(useInfo);
+        UseDefInfo useInfo = new UseDefInfo();
+        jsomething.accept(useInfo);
 
-	HashSet ret = new HashSet();
-	Iterator vars = useInfo.uses.keySet().iterator();
-	while (vars.hasNext()) {
-	    StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
-	}
+        HashSet ret = new HashSet();
+        Iterator vars = useInfo.uses.keySet().iterator();
+        while (vars.hasNext()) {
+            StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
+        }
 
-	return ret;
+        return ret;
     }
     
     private UseDefInfo() 
     {
-	uses = new HashMap();
+        uses = new HashMap();
     }
 
     /*    
-    private void addUse(JFieldAccessExpression exp)
-    {
+          private void addUse(JFieldAccessExpression exp)
+          {
 
-	if (!uses.containsKey(exp.getIdent()))
-	    uses.put(exp.getIdent(), new HashSet());
+          if (!uses.containsKey(exp.getIdent()))
+          uses.put(exp.getIdent(), new HashSet());
 
-	((HashSet)uses.get(exp.getIdent())).add(exp);
-    }
+          ((HashSet)uses.get(exp.getIdent())).add(exp);
+          }
     */
     private void addUse(JLocalVariableExpression exp) 
     {
-	//if we didn't see this var before, add the 
-	//hashset to hold uses
-	
-	if (exp.getVariable() == null) 
-	    System.out.println("Null variable");
-	
+        //if we didn't see this var before, add the 
+        //hashset to hold uses
+    
+        if (exp.getVariable() == null) 
+            System.out.println("Null variable");
+    
 
-	if (!uses.containsKey(exp.getVariable()))
-	    uses.put(exp.getVariable(), new HashSet());
+        if (!uses.containsKey(exp.getVariable()))
+            uses.put(exp.getVariable(), new HashSet());
 
-	((HashSet)uses.get(exp.getVariable())).add(exp);
+        ((HashSet)uses.get(exp.getVariable())).add(exp);
     }
     
     public void visitLocalVariableExpression(JLocalVariableExpression self,
-					     String ident) {
-	addUse(self);
+                                             String ident) {
+        addUse(self);
     }
 }

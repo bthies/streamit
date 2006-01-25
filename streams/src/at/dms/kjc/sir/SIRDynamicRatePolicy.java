@@ -12,18 +12,18 @@ public abstract class SIRDynamicRatePolicy {
      * Cache of the identity policy.
      */
     private static SIRDynamicRatePolicy identity =  
-	new SIRDynamicRatePolicy() {
-	    public JExpression interpretRate(JExpression rate) {
-		return rate;
-	    }
-	};
+        new SIRDynamicRatePolicy() {
+            public JExpression interpretRate(JExpression rate) {
+                return rate;
+            }
+        };
     
     /**
      * Returns an identity policy, which interprets dynamic rates as
      * they were originally written.
      */
     static SIRDynamicRatePolicy identityPolicy() {
-	return identity;
+        return identity;
     }
 
     /**
@@ -31,17 +31,17 @@ public abstract class SIRDynamicRatePolicy {
      * constant.
      */
     static SIRDynamicRatePolicy constantPolicy(final int constant) {
-	return new SIRDynamicRatePolicy() {
-		public JExpression interpretRate(JExpression rate) {
-		    if (rate.isDynamic()) {
-			// for dynamic rates, return the constant
-			return new JIntLiteral(constant);
-		    } else {
-			// otherwise return the original rate.
-			return rate;
-		    }
-		}
-	    };
+        return new SIRDynamicRatePolicy() {
+                public JExpression interpretRate(JExpression rate) {
+                    if (rate.isDynamic()) {
+                        // for dynamic rates, return the constant
+                        return new JIntLiteral(constant);
+                    } else {
+                        // otherwise return the original rate.
+                        return rate;
+                    }
+                }
+            };
     }
     
     /**

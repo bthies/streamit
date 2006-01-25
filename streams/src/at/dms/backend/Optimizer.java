@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Optimizer.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: Optimizer.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -40,227 +40,227 @@ import at.dms.util.Utils;
  */
 public class Optimizer implements AccessorContainer {
 
-  // --------------------------------------------------------------------
-  // UTILITIES
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // UTILITIES
+    // --------------------------------------------------------------------
 
-  /**
-   * Optimizes the byte code for a single method.
-   */
-  public static CodeInfo optimize(MethodInfo info, CodeInfo code, BackendOptions options) {
-    Optimizer	opt = new Optimizer(code);
+    /**
+     * Optimizes the byte code for a single method.
+     */
+    public static CodeInfo optimize(MethodInfo info, CodeInfo code, BackendOptions options) {
+        Optimizer   opt = new Optimizer(code);
 
-    opt.buildBasicBlocks(opt.codeStart);
+        opt.buildBasicBlocks(opt.codeStart);
 
-    MethodEnv	env = new MethodEnv(info);
-    ControlFlow	cflow = new ControlFlow(env, opt.getCodeStart(), opt.handlers);
+        MethodEnv   env = new MethodEnv(info);
+        ControlFlow cflow = new ControlFlow(env, opt.getCodeStart(), opt.handlers);
 
-    if (options.verbose) {
-      cflow.trace();
+        if (options.verbose) {
+            cflow.trace();
+        }
+
+        cflow.optimize();
+
+        opt.setCodeStart(cflow.getInstructions());
+
+        opt.cleanCode(opt.codeStart);
+
+        return at.dms.optimize.Optimizer.optimize(opt.getCodeInfo(), options.optimize);
+        //return opt.getCodeInfo();
     }
 
-    cflow.optimize();
-
-    opt.setCodeStart(cflow.getInstructions());
-
-    opt.cleanCode(opt.codeStart);
-
-    return at.dms.optimize.Optimizer.optimize(opt.getCodeInfo(), options.optimize);
-    //return opt.getCodeInfo();
-  }
-
-  /**
-   * Optimizes the byte code for a single method.
-   */
-  public static CodeInfo optimize(CodeInfo code) {
-    return optimize(null, code, new BackendOptions());
-  }
-
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Constructs a new optimizer object.
-   */
-  public Optimizer(CodeInfo codeInfo) {
-    setCodeStart(installInstructionHandles(codeInfo));
-    this.handlers = codeInfo.getHandlers();
-    this.localVariables = codeInfo.getLocalVariables();
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns a new, optimized code info structure.
-   */
-  public CodeInfo getCodeInfo() {
-    CodeInfo	codeInfo;
-
-    codeInfo = new CodeInfo(buildInstructionArray(),
-			    handlers,
-			    buildLineNumberInfo(),
-			    localVariables);
-
-    // replace instruction handles by actual instructions
-    try {
-      AccessorTransformer	transformer = new AccessorTransformer() {
-	  public InstructionAccessor transform(InstructionAccessor accessor,
-					       AccessorContainer container)
-	  {
-	    // the only accessors to resolve are instruction handles
-	    return ((InstructionHandle)accessor).getInstruction();
-	  }
-	};
-
-      codeInfo.transformAccessors(transformer);
-    } catch (BadAccessorException e) {
-      throw new InconsistencyException(e.getMessage());	//!!!!
+    /**
+     * Optimizes the byte code for a single method.
+     */
+    public static CodeInfo optimize(CodeInfo code) {
+        return optimize(null, code, new BackendOptions());
     }
 
-    return codeInfo;
-  }
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // OPTIMIZE
-  // --------------------------------------------------------------------
-
-  private void buildBasicBlocks(InstructionHandle start) {
-    for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
-      handle.reset();
+    /**
+     * Constructs a new optimizer object.
+     */
+    public Optimizer(CodeInfo codeInfo) {
+        setCodeStart(installInstructionHandles(codeInfo));
+        this.handlers = codeInfo.getHandlers();
+        this.localVariables = codeInfo.getLocalVariables();
     }
 
-    for (int i = 0; i < handlers.length; i++) {
-      ((InstructionHandle)handlers[i].getHandler()).addAccessor(handlers[i]);
-      ((InstructionHandle)handlers[i].getStart()).addAccessor(handlers[i]);
-      ((InstructionHandle)handlers[i].getEnd()).addAccessor(handlers[i]);
-    }
-  }
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  private void cleanCode(InstructionHandle start) {
-    InstructionHandle	current = start;
+    /**
+     * Returns a new, optimized code info structure.
+     */
+    public CodeInfo getCodeInfo() {
+        CodeInfo    codeInfo;
 
-    if (current.isJump()) {
-      setCodeStart(current.getTarget());
+        codeInfo = new CodeInfo(buildInstructionArray(),
+                                handlers,
+                                buildLineNumberInfo(),
+                                localVariables);
 
-      current = getCodeStart();
-    }
+        // replace instruction handles by actual instructions
+        try {
+            AccessorTransformer transformer = new AccessorTransformer() {
+                    public InstructionAccessor transform(InstructionAccessor accessor,
+                                                         AccessorContainer container)
+                    {
+                        // the only accessors to resolve are instruction handles
+                        return ((InstructionHandle)accessor).getInstruction();
+                    }
+                };
 
-    start.clean();
+            codeInfo.transformAccessors(transformer);
+        } catch (BadAccessorException e) {
+            throw new InconsistencyException(e.getMessage());   //!!!!
+        }
 
-    for (InstructionHandle handle = current.getNext(); handle != null; handle = handle.getNext()) {
-      current.setNext(handle);
-      current = handle;
-      handle.clean();
-    }
-
-    if (current == start) {
-      current.setNext(null);
-    }
-
-    setCodeStart(start);
-  }
-
-  // --------------------------------------------------------------------
-  // INSTALL WRAPPERS
-  // --------------------------------------------------------------------
-
-  /**
-   * Install handles around instructions.
-   */
-  private InstructionHandle installInstructionHandles(CodeInfo info) {
-    Instruction[]		insns = info.getInstructions();
-
-    InstructionHandle[]		handles = new InstructionHandle[insns.length];
-    for (int i = 0; i < handles.length; i++) {
-      // this also sets the field next in handles
-      handles[i] = new InstructionHandle(insns[i], i == 0 ? null : handles[i-1]);
+        return codeInfo;
     }
 
-    try {
-      info.transformAccessors(new HandleCreator(insns, handles));
-    } catch (BadAccessorException e) {
-      dumpCode(insns);
-      throw new InconsistencyException(e.getMessage());
+    // --------------------------------------------------------------------
+    // OPTIMIZE
+    // --------------------------------------------------------------------
+
+    private void buildBasicBlocks(InstructionHandle start) {
+        for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
+            handle.reset();
+        }
+
+        for (int i = 0; i < handlers.length; i++) {
+            ((InstructionHandle)handlers[i].getHandler()).addAccessor(handlers[i]);
+            ((InstructionHandle)handlers[i].getStart()).addAccessor(handlers[i]);
+            ((InstructionHandle)handlers[i].getEnd()).addAccessor(handlers[i]);
+        }
     }
 
-    return handles[0];
-  }
+    private void cleanCode(InstructionHandle start) {
+        InstructionHandle   current = start;
 
-  private void dumpCode(Instruction[] insns) {
-    for (int i = 0; i < insns.length; i++) {
-      insns[i].dump();
-    }
-    System.err.flush();
-  }
+        if (current.isJump()) {
+            setCodeStart(current.getTarget());
 
-  // --------------------------------------------------------------------
-  // RECONSTRUCT A CodeInfo STRUCTURE
-  // --------------------------------------------------------------------
+            current = getCodeStart();
+        }
 
-  /**
-   * Build the array of the instructions resulting from the optimization
-   * process.
-   *
-   * @return	the array of instructions
-   */
-  private Instruction[] buildInstructionArray() {
-    int		length;
+        start.clean();
 
-    // count size of instruction array
-    length = 0;
-    for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
-      length += 1;
+        for (InstructionHandle handle = current.getNext(); handle != null; handle = handle.getNext()) {
+            current.setNext(handle);
+            current = handle;
+            handle.clean();
+        }
+
+        if (current == start) {
+            current.setNext(null);
+        }
+
+        setCodeStart(start);
     }
 
-    Instruction[]	insns = new Instruction[length];
+    // --------------------------------------------------------------------
+    // INSTALL WRAPPERS
+    // --------------------------------------------------------------------
 
-    length = 0;
-    for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
-      insns[length] = handle.getInstruction();
-      length += 1;
+    /**
+     * Install handles around instructions.
+     */
+    private InstructionHandle installInstructionHandles(CodeInfo info) {
+        Instruction[]       insns = info.getInstructions();
+
+        InstructionHandle[]     handles = new InstructionHandle[insns.length];
+        for (int i = 0; i < handles.length; i++) {
+            // this also sets the field next in handles
+            handles[i] = new InstructionHandle(insns[i], i == 0 ? null : handles[i-1]);
+        }
+
+        try {
+            info.transformAccessors(new HandleCreator(insns, handles));
+        } catch (BadAccessorException e) {
+            dumpCode(insns);
+            throw new InconsistencyException(e.getMessage());
+        }
+
+        return handles[0];
     }
 
-    return insns;
-  }
-
-  /**
-   * Build the array of line number information for the optimized
-   * instruction sequence.
-   */
-  private LineNumberInfo[] buildLineNumberInfo() {
-    Vector	lineNumbers = new Vector();
-
-    for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
-      handle.addLineNumberInfo(lineNumbers);
+    private void dumpCode(Instruction[] insns) {
+        for (int i = 0; i < insns.length; i++) {
+            insns[i].dump();
+        }
+        System.err.flush();
     }
 
-    return (LineNumberInfo[])Utils.toArray(lineNumbers, LineNumberInfo.class);
-  }
+    // --------------------------------------------------------------------
+    // RECONSTRUCT A CodeInfo STRUCTURE
+    // --------------------------------------------------------------------
 
-  /**
-   * Transforms targets (deferences to actual instructions).
-   */
-  public void transformAccessors(AccessorTransformer transformer) throws BadAccessorException {
-    this.codeStart = (InstructionHandle)this.codeStart.transform(transformer, this);
-  }
+    /**
+     * Build the array of the instructions resulting from the optimization
+     * process.
+     *
+     * @return  the array of instructions
+     */
+    private Instruction[] buildInstructionArray() {
+        int     length;
 
-  public void setCodeStart(InstructionHandle handle) {
-    codeStart = handle;
-    codeStart.addAccessor(this);
-  }
+        // count size of instruction array
+        length = 0;
+        for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
+            length += 1;
+        }
 
-  public InstructionHandle getCodeStart() {
-    return codeStart;
-  }
+        Instruction[]   insns = new Instruction[length];
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+        length = 0;
+        for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
+            insns[length] = handle.getInstruction();
+            length += 1;
+        }
 
-  private InstructionHandle		codeStart;
-  private HandlerInfo[]			handlers;
-  private LocalVariableInfo[]		localVariables;
+        return insns;
+    }
+
+    /**
+     * Build the array of line number information for the optimized
+     * instruction sequence.
+     */
+    private LineNumberInfo[] buildLineNumberInfo() {
+        Vector  lineNumbers = new Vector();
+
+        for (InstructionHandle handle = this.codeStart; handle != null; handle = handle.getNext()) {
+            handle.addLineNumberInfo(lineNumbers);
+        }
+
+        return (LineNumberInfo[])Utils.toArray(lineNumbers, LineNumberInfo.class);
+    }
+
+    /**
+     * Transforms targets (deferences to actual instructions).
+     */
+    public void transformAccessors(AccessorTransformer transformer) throws BadAccessorException {
+        this.codeStart = (InstructionHandle)this.codeStart.transform(transformer, this);
+    }
+
+    public void setCodeStart(InstructionHandle handle) {
+        codeStart = handle;
+        codeStart.addAccessor(this);
+    }
+
+    public InstructionHandle getCodeStart() {
+        return codeStart;
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private InstructionHandle       codeStart;
+    private HandlerInfo[]           handlers;
+    private LocalVariableInfo[]     localVariables;
 }

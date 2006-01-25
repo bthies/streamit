@@ -104,22 +104,22 @@ public class Operator extends DestroyedClass
      * on the operator.
      */
     public void cleanupWork() {
-	// if we have not pushed or popped anything, throw exception.
-	// Do not count this as an execution.
-	if (currentPopped==0 && currentPushed==0) {
-	    throw new NoPushPopException(this.toString() + " did not push or pop anything.");
-	}
+        // if we have not pushed or popped anything, throw exception.
+        // Do not count this as an execution.
+        if (currentPopped==0 && currentPushed==0) {
+            throw new NoPushPopException(this.toString() + " did not push or pop anything.");
+        }
 
-	// for phased filters, executions are incremented at phase boundaries
-	if (!(this instanceof PhasedFilter)) {
-	    numExecutions++;
-	}
+        // for phased filters, executions are incremented at phase boundaries
+        if (!(this instanceof PhasedFilter)) {
+            numExecutions++;
+        }
     }
     /**
      * Register a pop, push, or peek.
      */
     public void registerPop() {
-	Profiler.registerPop();
+        Profiler.registerPop();
         currentPopped++;
         // update peek index in case we've popped items without
         // peeking them.
@@ -128,7 +128,7 @@ public class Operator extends DestroyedClass
         }
     }
     public void registerPush() {
-	Profiler.registerPush();
+        Profiler.registerPush();
         currentPushed++;
     }
     public void registerPeek(int i) {
@@ -259,7 +259,7 @@ public class Operator extends DestroyedClass
             .add("i1", i1).add("i2", i2).add("f1", f1).add("f2", f2).add("f3", f3);
     }
 
-   public Operator(int i1, int i2, int i3, int i4, int i5, float f)
+    public Operator(int i1, int i2, int i3, int i4, int i5, float f)
     {
         initParams = new ParameterContainer("int-int-int-int-int-float")
             .add("i1",i1)
@@ -498,8 +498,8 @@ public class Operator extends DestroyedClass
             .add("f", f);
     }
 
-   public Operator (int i1, int i2, int i3, int i4, 
-                    int i5, int i6, int i7, int i8, int i9)
+    public Operator (int i1, int i2, int i3, int i4, 
+                     int i5, int i6, int i7, int i8, int i9)
     {
         initParams = new ParameterContainer ("int-int-int-int-int-int-int-int-int")
             .add("i1", i1)
@@ -656,26 +656,26 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(int i1,
-		    int i2, 
-		    int i3, 
-		    int i4, 
-		    int i5, 
-		    int i6, 
-		    int i7, 
-		    int i8, 
-		    int i9, 
-		    float f) {
+                    int i2, 
+                    int i3, 
+                    int i4, 
+                    int i5, 
+                    int i6, 
+                    int i7, 
+                    int i8, 
+                    int i9, 
+                    float f) {
         initParams = new ParameterContainer ("int-int-int-int-int-int-int-int-int-float").add ("i1", i1).add ("i2", i2).add ("i3", i3).add ("i4", i4).add ("i5", i5).add ("i6", i6).add ("i7", i7).add ("i8", i8).add ("i9", i9).add ("f", f);
-	    }
+    }
 
 
     public Operator(int i1,
-		    int i2, 
-		    int i3, 
-		    int i4, 
-		    int i5, 
-		    int i6, 
-		    float f) {
+                    int i2, 
+                    int i3, 
+                    int i4, 
+                    int i5, 
+                    int i6, 
+                    float f) {
         initParams = new ParameterContainer ("int-int-int-int-int-int-float").add ("i1", i1).add ("i2", i2).add ("i3", i3).add ("i4", i4).add ("i5", i5).add ("i6", i6).add ("f", f);
     }
 
@@ -715,8 +715,8 @@ public class Operator extends DestroyedClass
 
     public Operator(Object o1, Object o2) {
         initParams = new ParameterContainer("Object-Object")
-	    .add("o1", o1)
-	    .add("o2", o2);
+            .add("o1", o1)
+            .add("o2", o2);
     }
 
     public Operator(Object o1, Object o2, Object o3) {
@@ -1027,37 +1027,37 @@ public class Operator extends DestroyedClass
             iter = allFilters.listIterator ();
 
         // go over all the sinks
-	int executions = 0;
+        int executions = 0;
         while (iter.hasNext ())
-        {
-            Operator sink;
-            sink = (Operator) iter.next ();
-            assert sink != null;
+            {
+                Operator sink;
+                sink = (Operator) iter.next ();
+                assert sink != null;
 
-	    // get a snapshot of how much the sources have executed.
-	    // We will execute a sink until some source executes at
-	    // least once.  This is an effort to drain intermediate
-	    // buffers between sink executions -- otherwise it is not
-	    // clear in -nosched mode how often to execute sinks with
-	    // mismatching steady-state multiplicities.
-	    int beforeSink = getSourceExecs();
-	    int afterSink;
-	    do {
-		try {
-		    sink.doWork();
-		    executions++;
-		} catch (NoPushPopException e) {
-		    // this indicates that an upstream filter has no
-		    // more output to offer to the given sink, so we
-		    // should switch to a different sink.
-		    break;
-		}
-		afterSink = getSourceExecs();
-	    } while (afterSink == beforeSink);
-        }
+                // get a snapshot of how much the sources have executed.
+                // We will execute a sink until some source executes at
+                // least once.  This is an effort to drain intermediate
+                // buffers between sink executions -- otherwise it is not
+                // clear in -nosched mode how often to execute sinks with
+                // mismatching steady-state multiplicities.
+                int beforeSink = getSourceExecs();
+                int afterSink;
+                do {
+                    try {
+                        sink.doWork();
+                        executions++;
+                    } catch (NoPushPopException e) {
+                        // this indicates that an upstream filter has no
+                        // more output to offer to the given sink, so we
+                        // should switch to a different sink.
+                        break;
+                    }
+                    afterSink = getSourceExecs();
+                } while (afterSink == beforeSink);
+            }
 
-	// return whether or not someone executed
-	return executions>0;
+        // return whether or not someone executed
+        return executions>0;
     }
 
     /**
@@ -1065,26 +1065,26 @@ public class Operator extends DestroyedClass
      * executed.
      */
     int getSourceExecs() {
-	int sourceExecs = 0;
-	for (Iterator i = allSources.listIterator(); i.hasNext(); ) {
-	    sourceExecs += ((Operator)i.next()).numExecutions;
-	}
-	return sourceExecs;
+        int sourceExecs = 0;
+        for (Iterator i = allSources.listIterator(); i.hasNext(); ) {
+            sourceExecs += ((Operator)i.next()).numExecutions;
+        }
+        return sourceExecs;
     }
 
     void drainChannels ()
     {
         while (!fullChannels.isEmpty ())
-        {
-            // empty any full channels:
-            Iterator fullChannel;
-            fullChannel = fullChannels.iterator ();
+            {
+                // empty any full channels:
+                Iterator fullChannel;
+                fullChannel = fullChannels.iterator ();
             
-            Channel ch = (Channel) fullChannel.next ();
-            assert ch != null;
+                Channel ch = (Channel) fullChannel.next ();
+                assert ch != null;
             
-            ch.getSink().doWork();
-        }
+                ch.getSink().doWork();
+            }
     }
 
 
@@ -1104,27 +1104,27 @@ public class Operator extends DestroyedClass
         assert type == to.getType ();
 
         if (type == Integer.TYPE)
-        {
-            to.pushInt (from.popInt ());
-        } else
-        if (type == Short.TYPE)
-        {
-            to.pushShort (from.popShort ());
-        } else
-        if (type == Character.TYPE)
-        {
-            to.pushChar (from.popChar ());
-        } else
-        if (type == Float.TYPE)
-        {
-            to.pushFloat (from.popFloat ());
-        } else
-        if (type == Double.TYPE)
-        {
-            to.pushDouble (from.popDouble ());
-        } else {
-            to.push (from.pop ());
-        }
+            {
+                to.pushInt (from.popInt ());
+            } else
+                if (type == Short.TYPE)
+                    {
+                        to.pushShort (from.popShort ());
+                    } else
+                        if (type == Character.TYPE)
+                            {
+                                to.pushChar (from.popChar ());
+                            } else
+                                if (type == Float.TYPE)
+                                    {
+                                        to.pushFloat (from.popFloat ());
+                                    } else
+                                        if (type == Double.TYPE)
+                                            {
+                                                to.pushDouble (from.popDouble ());
+                                            } else {
+                                                to.push (from.pop ());
+                                            }
     }
 
     public static void duplicateOneData (Channel from, Channel [] to)
@@ -1133,63 +1133,63 @@ public class Operator extends DestroyedClass
         assert to != null && type == to[0].getType ();
 
         if (type == Integer.TYPE)
-        {
-            int data = from.popInt ();
-
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .pushInt (data);
-            }
-        } else
-        if (type == Short.TYPE)
-        {
-            short data = from.popShort ();
+                int data = from.popInt ();
 
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
-            {
-                to [indx] .pushShort (data);
-            }
-        } else
-        if (type == Character.TYPE)
-        {
-            char data = from.popChar ();
+                int indx;
+                for (indx = to.length - 1; indx >= 0; indx--)
+                    {
+                        to [indx] .pushInt (data);
+                    }
+            } else
+                if (type == Short.TYPE)
+                    {
+                        short data = from.popShort ();
 
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
-            {
-                to [indx] .pushChar (data);
-            }
-        } else
-        if (type == Float.TYPE)
-        {
-            float data = from.popFloat ();
+                        int indx;
+                        for (indx = to.length - 1; indx >= 0; indx--)
+                            {
+                                to [indx] .pushShort (data);
+                            }
+                    } else
+                        if (type == Character.TYPE)
+                            {
+                                char data = from.popChar ();
 
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
-            {
-                to [indx] .pushFloat (data);
-            }
-        } else
-        if (type == Double.TYPE)
-        {
-            double data = from.popDouble ();
+                                int indx;
+                                for (indx = to.length - 1; indx >= 0; indx--)
+                                    {
+                                        to [indx] .pushChar (data);
+                                    }
+                            } else
+                                if (type == Float.TYPE)
+                                    {
+                                        float data = from.popFloat ();
 
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
-            {
-                to [indx] .pushDouble (data);
-            }
-        } else {
-            Object data = from.pop ();
+                                        int indx;
+                                        for (indx = to.length - 1; indx >= 0; indx--)
+                                            {
+                                                to [indx] .pushFloat (data);
+                                            }
+                                    } else
+                                        if (type == Double.TYPE)
+                                            {
+                                                double data = from.popDouble ();
 
-            int indx;
-            for (indx = to.length - 1; indx >= 0; indx--)
-            {
-                to [indx] .push (data);
-            }
-        }
+                                                int indx;
+                                                for (indx = to.length - 1; indx >= 0; indx--)
+                                                    {
+                                                        to [indx] .pushDouble (data);
+                                                    }
+                                            } else {
+                                                Object data = from.pop ();
+
+                                                int indx;
+                                                for (indx = to.length - 1; indx >= 0; indx--)
+                                                    {
+                                                        to [indx] .push (data);
+                                                    }
+                                            }
     }
 
     // send a message to a handler that returns <stub> within <delay>
@@ -1233,406 +1233,406 @@ public class Operator extends DestroyedClass
         assert initParams != null;
 
         if(initParams.getParamName().equals(("int-int-float-float")))
-	    init (initParams.getIntParam("i1"),
-		  initParams.getIntParam("i2"),
-		  initParams.getFloatParam("f1"),
-		  initParams.getFloatParam("f2"));
-	else
-        if(initParams.getParamName().equals(("int-int-float-float-float")))
-	    init (initParams.getIntParam("i1"),
-		  initParams.getIntParam("i2"),
-		  initParams.getFloatParam("f1"),
-		  initParams.getFloatParam("f2"),
-		  initParams.getFloatParam("f3"));
-	else
-        if(initParams.getParamName().equals(("int-int-float")))
-	    init (initParams.getIntParam("i1"),
-		  initParams.getIntParam("i2"),
-		  initParams.getFloatParam("f"));
-	else
-        if(initParams.getParamName().equals(("boolean")))
-	    init (initParams.getBoolParam("b1"));
-	else
-        if(initParams.getParamName().equals(("int-boolean")))
-	    init (initParams.getIntParam("i1"),
-		  initParams.getBoolParam("b1"));
-	else
-        if(initParams.getParamName().equals(("int-int-boolean")))
-	    init (initParams.getIntParam("i1"),
-		  initParams.getIntParam("i2"),
-		  initParams.getBoolParam("b1"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-float"))
-            init (initParams.getIntParam("x"),
-                  initParams.getIntParam("y"),
-                  initParams.getIntParam("z"),
-                  initParams.getIntParam("a"),
-                  initParams.getFloatParam("b"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-float"))
             init (initParams.getIntParam("i1"),
                   initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getFloatParam("f"));
-	else
-
-       if(initParams.getParamName().equals("int-int-int-int-int-int-float-float"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-		  initParams.getIntParam("i6"),
                   initParams.getFloatParam("f1"),
-		  initParams.getFloatParam("f2"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int-float-float"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-		  initParams.getIntParam("i6"),
-		  initParams.getIntParam("i7"),
-                  initParams.getFloatParam("f1"),
-		  initParams.getFloatParam("f2"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getIntParam("i6"),
-                  initParams.getIntParam("i7"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-float[][]-float[][]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getIntParam("d"),
-                  (float[][])initParams.getObjParam("e"),
-                  (float[][])initParams.getObjParam("f"));
+                  initParams.getFloatParam("f2"));
         else
-        if(initParams.getParamName().equals("int-int-int-int-int-int"))
-            init (initParams.getIntParam("x"),
-                  initParams. getIntParam("y"),
-                  initParams.getIntParam("z"),
-                  initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"));
-        else
-        if(initParams.getParamName().equals("float-float-float-int-int-int"))
-            init (initParams.getFloatParam("a"),
-                  initParams. getFloatParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getIntParam("d"),
-                  initParams.getIntParam("e"),
-                  initParams.getIntParam("f"));
-        else
-        if(initParams.getParamName().equals("float-float-float-int-int"))
-            init (initParams.getFloatParam("a"),
-                  initParams. getFloatParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getIntParam("d"),
-                  initParams.getIntParam("e"));
-        else
-        if(initParams.getParamName().equals("int-float"))
-            init (initParams.getIntParam("a"),
-                  initParams.getFloatParam("b"));
-        else
-        if(initParams.getParamName().equals("int-float[]"))
-            init (initParams.getIntParam("a"),
-                  (float[])initParams.getObjParam("b"));
-        else
-        if(initParams.getParamName().equals("int-int[]"))
-            init (initParams.getIntParam("a"),
-                  (int[])initParams.getObjParam("b"));
-        else
-        if(initParams.getParamName().equals("float[]"))
-            init ((float[])initParams.getObjParam("a"));
-        else
-        if(initParams.getParamName().equals("int-float[][]"))
-            init (initParams.getIntParam("a"),
-                  (float[][])initParams.getObjParam("b"));
-        else
-        if(initParams.getParamName().equals("float-int"))
-            init (initParams.getFloatParam("a"),
-                  initParams.getIntParam("b"));
-        else
-        if(initParams.getParamName().equals("float-float"))
-            init (initParams.getFloatParam("a"),
-                  initParams.getFloatParam("b"));
-        else
-        if(initParams.getParamName().equals("float-float-int"))
-            init (initParams.getFloatParam("x1"),
-                  initParams.getFloatParam("y1"),
-                  initParams.getIntParam("z1"));
-        else
-        if(initParams.getParamName().equals("float-float-float-float"))
-            init (initParams.getFloatParam("a"),
-                  initParams.getFloatParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getFloatParam("d"));
-        else
-        if(initParams.getParamName().equals("float-float-float-float-float-float-float"))
-            init (initParams.getFloatParam("a"),
-                  initParams.getFloatParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getFloatParam("d"),
-                  initParams.getFloatParam("e"),
-                  initParams.getFloatParam("f"),
-                  initParams.getFloatParam("g"));
-        else
-        if(initParams.getParamName().equals("float-float-float-float-int-int"))
-            init (initParams.getFloatParam("a"),
-                  initParams.getFloatParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getFloatParam("d"),
-                  initParams.getIntParam("e"),
-                  initParams.getIntParam("f"));
-        else
-        if(initParams.getParamName().equals("float-float-int-int"))
-            init (initParams.getFloatParam("x3"),
-                  initParams.getFloatParam("y3"),
-                  initParams.getIntParam("z3"),
-                  initParams.getIntParam("a3"));
-        else
-            if(initParams.getParamName().equals("float-float-int-int-int-int"))
-                init(initParams.getFloatParam("f1"),
-                     initParams.getFloatParam("f2"),
-                     initParams.getIntParam("i1"),
-                     initParams.getIntParam("i2"),
-                     initParams.getIntParam("i3"),
-                     initParams.getIntParam("i4"));
-        else
-            if(initParams.getParamName().equals("float-float-int-int-int-int-int"))
-                init(initParams.getFloatParam("f1"),
-                     initParams.getFloatParam("f2"),
-                     initParams.getIntParam("i1"),
-                     initParams.getIntParam("i2"),
-                     initParams.getIntParam("i3"),
-                     initParams.getIntParam("i4"),
-                     initParams.getIntParam("i5"));
-        else
-            if(initParams.getParamName().equals("float-float-int-int-int"))
-                init(initParams.getFloatParam("x3"),
-                     initParams.getFloatParam("y3"),
-                     initParams.getIntParam("z3"),
-                     initParams.getIntParam("a3"),
-                     initParams.getIntParam("b3"));
-        else
-        if(initParams.getParamName().equals("float-float-float-int-float"))
-            init (initParams.getFloatParam("x2"),
-                  initParams.getFloatParam("y2"),
-                  initParams.getFloatParam("z2"),
-                  initParams.getIntParam("a2"),
-                  initParams.getFloatParam("b2"));
-        else
-        if(initParams.getParamName().equals("float-int-float[]-float[]-int"))
-            init (initParams.getFloatParam("f1"),
-                  initParams.getIntParam("i1"),
-                  (float[])initParams.getObjParam("f2"),
-                  (float[])initParams.getObjParam("f3"),
-                  initParams.getIntParam("i2"));
-        else
-        if(initParams.getParamName().equals("int-int-float-int-float"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getFloatParam("c"),
-                  initParams.getIntParam("d"),
-                  initParams.getFloatParam("e"));
-        else
-        if(initParams.getParamName().equals("int-int-int-float-float"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getFloatParam("d"),
-                  initParams.getFloatParam("e"));
-        else
-        if(initParams.getParamName().equals("int-int-int-float-int"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getFloatParam("d"),
-                  initParams.getIntParam("e"));
-        else
-        if(initParams.getParamName().equals("int-int-int-int-int"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getIntParam("d"),
-                  initParams.getIntParam("e"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-float"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getIntParam("i6"),
-                  initParams.getFloatParam("f"));
-	else
-        if(initParams.getParamName().equals("int-int-float[]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  (float[])initParams.getObjParam("c"));
-	else
-        if(initParams.getParamName().equals("int-int-int-float[]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  (float[])initParams.getObjParam("d"));
-	else
-        if(initParams.getParamName().equals("int-float[]-float[]"))
-            init (initParams.getIntParam("a"),
-                  (float[])initParams.getObjParam("c"),
-                  (float[])initParams.getObjParam("d"));
-    else
-        if(initParams.getParamName().equals("int-int-float[]-float[]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  (float[])initParams.getObjParam("c"),
-                  (float[])initParams.getObjParam("d"));
-	else
-        if(initParams.getParamName().equals("int-int-int-float[][]-float[][]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  (float[][])initParams.getObjParam("x"),
-                  (float[][])initParams.getObjParam("y"));
-    else
-        if(initParams.getParamName().equals("int-int-float[][]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  (float[][])initParams.getObjParam("c"));
-    else
-	if(initParams.getParamName().equals("int-int-float[][]-float[]"))
-	    init(initParams.getIntParam("a"),
-		 initParams.getIntParam("b"),
-		 (float[][])initParams.getObjParam("c"),
-		 (float[])initParams.getObjParam("d"));
-    else
-	if(initParams.getParamName().equals("int-int-int-float[][]-float[]"))
-	    init(initParams.getIntParam("a"),
-		 initParams.getIntParam("b"),
-		 initParams.getIntParam("c"),
-		 (float[][])initParams.getObjParam("d"),
-		 (float[])initParams.getObjParam("e"));
-    else
-	if(initParams.getParamName().equals("int-boolean-float-float-float[][]-float[]"))
-	    init(initParams.getIntParam("a"),
-		 initParams.getBoolParam("b"),
-		 initParams.getFloatParam("c"),
-		 initParams.getFloatParam("d"),
-		 (float[][])initParams.getObjParam("e"),
-		 (float[])initParams.getObjParam("f"));
-    else
-	if(initParams.getParamName().equals("int-int-int-float"))
-	    init(initParams.getIntParam("i1"),
-		 initParams.getIntParam("i2"),
-		 initParams.getIntParam("i3"),
-		 initParams.getFloatParam("f1"));
-	else
-        if(initParams.getParamName().equals("int-int-int-float[][]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  (float[][])initParams.getObjParam("d"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-float[][]"))
-            init (initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getIntParam("d"),
-                  (float[][])initParams.getObjParam("e"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int-float"))
-            init (initParams.getIntParam("x"),
-                  initParams.getIntParam("y"),
-                  initParams.getIntParam("z"),
-                  initParams.getIntParam("a"),
-                  initParams.getIntParam("b"),
-                  initParams.getIntParam("c"),
-                  initParams.getIntParam("d"),
-                  initParams.getFloatParam("f"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-float"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getIntParam("i6"),
-                  initParams.getIntParam("i7"),
-                  initParams.getIntParam("i8"),
-                  initParams.getIntParam("i9"),
-                  initParams.getFloatParam("f"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getIntParam("i6"),
-                  initParams.getIntParam("i7"),
-                  initParams.getIntParam("i8"),
-                  initParams.getIntParam("i9"));
-	else
-        if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-int-float"))
-            init (initParams.getIntParam("i1"),
-                  initParams.getIntParam("i2"),
-                  initParams.getIntParam("i3"),
-                  initParams.getIntParam("i4"),
-                  initParams.getIntParam("i5"),
-                  initParams.getIntParam("i6"),
-                  initParams.getIntParam("i7"),
-                  initParams.getIntParam("i8"),
-                  initParams.getIntParam("i9"),
-                  initParams.getIntParam("i10"),
-                  initParams.getFloatParam("f"));
-        else
-        if(initParams.getParamName().equals("float-float-float-int"))
-            init (initParams.getFloatParam("x2"),
-                  initParams.getFloatParam("y2"),
-                  initParams.getFloatParam("z2"),
-                  initParams.getIntParam("a2"));
-        else if(initParams.getParamName().equals("Object"))
-	    init(initParams.getObjectParam("o1"));
-        else if(initParams.getParamName().equals("Object-int"))
-            init(initParams.getObjectParam("o1"),
-                 initParams.getIntParam("i1"));
+            if(initParams.getParamName().equals(("int-int-float-float-float")))
+                init (initParams.getIntParam("i1"),
+                      initParams.getIntParam("i2"),
+                      initParams.getFloatParam("f1"),
+                      initParams.getFloatParam("f2"),
+                      initParams.getFloatParam("f3"));
+            else
+                if(initParams.getParamName().equals(("int-int-float")))
+                    init (initParams.getIntParam("i1"),
+                          initParams.getIntParam("i2"),
+                          initParams.getFloatParam("f"));
+                else
+                    if(initParams.getParamName().equals(("boolean")))
+                        init (initParams.getBoolParam("b1"));
+                    else
+                        if(initParams.getParamName().equals(("int-boolean")))
+                            init (initParams.getIntParam("i1"),
+                                  initParams.getBoolParam("b1"));
+                        else
+                            if(initParams.getParamName().equals(("int-int-boolean")))
+                                init (initParams.getIntParam("i1"),
+                                      initParams.getIntParam("i2"),
+                                      initParams.getBoolParam("b1"));
+                            else
+                                if(initParams.getParamName().equals("int-int-int-int-float"))
+                                    init (initParams.getIntParam("x"),
+                                          initParams.getIntParam("y"),
+                                          initParams.getIntParam("z"),
+                                          initParams.getIntParam("a"),
+                                          initParams.getFloatParam("b"));
+                                else
+                                    if(initParams.getParamName().equals("int-int-int-int-int-float"))
+                                        init (initParams.getIntParam("i1"),
+                                              initParams.getIntParam("i2"),
+                                              initParams.getIntParam("i3"),
+                                              initParams.getIntParam("i4"),
+                                              initParams.getIntParam("i5"),
+                                              initParams.getFloatParam("f"));
+                                    else
 
-        else if(initParams.getParamName().equals("int-int-Object"))
-            init(initParams.getIntParam("i1"),
-                 initParams.getIntParam("i2"),
-                 initParams.getObjectParam("o1"));
+                                        if(initParams.getParamName().equals("int-int-int-int-int-int-float-float"))
+                                            init (initParams.getIntParam("i1"),
+                                                  initParams.getIntParam("i2"),
+                                                  initParams.getIntParam("i3"),
+                                                  initParams.getIntParam("i4"),
+                                                  initParams.getIntParam("i5"),
+                                                  initParams.getIntParam("i6"),
+                                                  initParams.getFloatParam("f1"),
+                                                  initParams.getFloatParam("f2"));
+                                        else
+                                            if(initParams.getParamName().equals("int-int-int-int-int-int-int-float-float"))
+                                                init (initParams.getIntParam("i1"),
+                                                      initParams.getIntParam("i2"),
+                                                      initParams.getIntParam("i3"),
+                                                      initParams.getIntParam("i4"),
+                                                      initParams.getIntParam("i5"),
+                                                      initParams.getIntParam("i6"),
+                                                      initParams.getIntParam("i7"),
+                                                      initParams.getFloatParam("f1"),
+                                                      initParams.getFloatParam("f2"));
+                                            else
+                                                if(initParams.getParamName().equals("int-int-int-int-int-int-int"))
+                                                    init (initParams.getIntParam("i1"),
+                                                          initParams.getIntParam("i2"),
+                                                          initParams.getIntParam("i3"),
+                                                          initParams.getIntParam("i4"),
+                                                          initParams.getIntParam("i5"),
+                                                          initParams.getIntParam("i6"),
+                                                          initParams.getIntParam("i7"));
+                                                else
+                                                    if(initParams.getParamName().equals("int-int-int-int-float[][]-float[][]"))
+                                                        init (initParams.getIntParam("a"),
+                                                              initParams.getIntParam("b"),
+                                                              initParams.getIntParam("c"),
+                                                              initParams.getIntParam("d"),
+                                                              (float[][])initParams.getObjParam("e"),
+                                                              (float[][])initParams.getObjParam("f"));
+                                                    else
+                                                        if(initParams.getParamName().equals("int-int-int-int-int-int"))
+                                                            init (initParams.getIntParam("x"),
+                                                                  initParams. getIntParam("y"),
+                                                                  initParams.getIntParam("z"),
+                                                                  initParams.getIntParam("a"),
+                                                                  initParams.getIntParam("b"),
+                                                                  initParams.getIntParam("c"));
+                                                        else
+                                                            if(initParams.getParamName().equals("float-float-float-int-int-int"))
+                                                                init (initParams.getFloatParam("a"),
+                                                                      initParams. getFloatParam("b"),
+                                                                      initParams.getFloatParam("c"),
+                                                                      initParams.getIntParam("d"),
+                                                                      initParams.getIntParam("e"),
+                                                                      initParams.getIntParam("f"));
+                                                            else
+                                                                if(initParams.getParamName().equals("float-float-float-int-int"))
+                                                                    init (initParams.getFloatParam("a"),
+                                                                          initParams. getFloatParam("b"),
+                                                                          initParams.getFloatParam("c"),
+                                                                          initParams.getIntParam("d"),
+                                                                          initParams.getIntParam("e"));
+                                                                else
+                                                                    if(initParams.getParamName().equals("int-float"))
+                                                                        init (initParams.getIntParam("a"),
+                                                                              initParams.getFloatParam("b"));
+                                                                    else
+                                                                        if(initParams.getParamName().equals("int-float[]"))
+                                                                            init (initParams.getIntParam("a"),
+                                                                                  (float[])initParams.getObjParam("b"));
+                                                                        else
+                                                                            if(initParams.getParamName().equals("int-int[]"))
+                                                                                init (initParams.getIntParam("a"),
+                                                                                      (int[])initParams.getObjParam("b"));
+                                                                            else
+                                                                                if(initParams.getParamName().equals("float[]"))
+                                                                                    init ((float[])initParams.getObjParam("a"));
+                                                                                else
+                                                                                    if(initParams.getParamName().equals("int-float[][]"))
+                                                                                        init (initParams.getIntParam("a"),
+                                                                                              (float[][])initParams.getObjParam("b"));
+                                                                                    else
+                                                                                        if(initParams.getParamName().equals("float-int"))
+                                                                                            init (initParams.getFloatParam("a"),
+                                                                                                  initParams.getIntParam("b"));
+                                                                                        else
+                                                                                            if(initParams.getParamName().equals("float-float"))
+                                                                                                init (initParams.getFloatParam("a"),
+                                                                                                      initParams.getFloatParam("b"));
+                                                                                            else
+                                                                                                if(initParams.getParamName().equals("float-float-int"))
+                                                                                                    init (initParams.getFloatParam("x1"),
+                                                                                                          initParams.getFloatParam("y1"),
+                                                                                                          initParams.getIntParam("z1"));
+                                                                                                else
+                                                                                                    if(initParams.getParamName().equals("float-float-float-float"))
+                                                                                                        init (initParams.getFloatParam("a"),
+                                                                                                              initParams.getFloatParam("b"),
+                                                                                                              initParams.getFloatParam("c"),
+                                                                                                              initParams.getFloatParam("d"));
+                                                                                                    else
+                                                                                                        if(initParams.getParamName().equals("float-float-float-float-float-float-float"))
+                                                                                                            init (initParams.getFloatParam("a"),
+                                                                                                                  initParams.getFloatParam("b"),
+                                                                                                                  initParams.getFloatParam("c"),
+                                                                                                                  initParams.getFloatParam("d"),
+                                                                                                                  initParams.getFloatParam("e"),
+                                                                                                                  initParams.getFloatParam("f"),
+                                                                                                                  initParams.getFloatParam("g"));
+                                                                                                        else
+                                                                                                            if(initParams.getParamName().equals("float-float-float-float-int-int"))
+                                                                                                                init (initParams.getFloatParam("a"),
+                                                                                                                      initParams.getFloatParam("b"),
+                                                                                                                      initParams.getFloatParam("c"),
+                                                                                                                      initParams.getFloatParam("d"),
+                                                                                                                      initParams.getIntParam("e"),
+                                                                                                                      initParams.getIntParam("f"));
+                                                                                                            else
+                                                                                                                if(initParams.getParamName().equals("float-float-int-int"))
+                                                                                                                    init (initParams.getFloatParam("x3"),
+                                                                                                                          initParams.getFloatParam("y3"),
+                                                                                                                          initParams.getIntParam("z3"),
+                                                                                                                          initParams.getIntParam("a3"));
+                                                                                                                else
+                                                                                                                    if(initParams.getParamName().equals("float-float-int-int-int-int"))
+                                                                                                                        init(initParams.getFloatParam("f1"),
+                                                                                                                             initParams.getFloatParam("f2"),
+                                                                                                                             initParams.getIntParam("i1"),
+                                                                                                                             initParams.getIntParam("i2"),
+                                                                                                                             initParams.getIntParam("i3"),
+                                                                                                                             initParams.getIntParam("i4"));
+                                                                                                                    else
+                                                                                                                        if(initParams.getParamName().equals("float-float-int-int-int-int-int"))
+                                                                                                                            init(initParams.getFloatParam("f1"),
+                                                                                                                                 initParams.getFloatParam("f2"),
+                                                                                                                                 initParams.getIntParam("i1"),
+                                                                                                                                 initParams.getIntParam("i2"),
+                                                                                                                                 initParams.getIntParam("i3"),
+                                                                                                                                 initParams.getIntParam("i4"),
+                                                                                                                                 initParams.getIntParam("i5"));
+                                                                                                                        else
+                                                                                                                            if(initParams.getParamName().equals("float-float-int-int-int"))
+                                                                                                                                init(initParams.getFloatParam("x3"),
+                                                                                                                                     initParams.getFloatParam("y3"),
+                                                                                                                                     initParams.getIntParam("z3"),
+                                                                                                                                     initParams.getIntParam("a3"),
+                                                                                                                                     initParams.getIntParam("b3"));
+                                                                                                                            else
+                                                                                                                                if(initParams.getParamName().equals("float-float-float-int-float"))
+                                                                                                                                    init (initParams.getFloatParam("x2"),
+                                                                                                                                          initParams.getFloatParam("y2"),
+                                                                                                                                          initParams.getFloatParam("z2"),
+                                                                                                                                          initParams.getIntParam("a2"),
+                                                                                                                                          initParams.getFloatParam("b2"));
+                                                                                                                                else
+                                                                                                                                    if(initParams.getParamName().equals("float-int-float[]-float[]-int"))
+                                                                                                                                        init (initParams.getFloatParam("f1"),
+                                                                                                                                              initParams.getIntParam("i1"),
+                                                                                                                                              (float[])initParams.getObjParam("f2"),
+                                                                                                                                              (float[])initParams.getObjParam("f3"),
+                                                                                                                                              initParams.getIntParam("i2"));
+                                                                                                                                    else
+                                                                                                                                        if(initParams.getParamName().equals("int-int-float-int-float"))
+                                                                                                                                            init (initParams.getIntParam("a"),
+                                                                                                                                                  initParams.getIntParam("b"),
+                                                                                                                                                  initParams.getFloatParam("c"),
+                                                                                                                                                  initParams.getIntParam("d"),
+                                                                                                                                                  initParams.getFloatParam("e"));
+                                                                                                                                        else
+                                                                                                                                            if(initParams.getParamName().equals("int-int-int-float-float"))
+                                                                                                                                                init (initParams.getIntParam("a"),
+                                                                                                                                                      initParams.getIntParam("b"),
+                                                                                                                                                      initParams.getIntParam("c"),
+                                                                                                                                                      initParams.getFloatParam("d"),
+                                                                                                                                                      initParams.getFloatParam("e"));
+                                                                                                                                            else
+                                                                                                                                                if(initParams.getParamName().equals("int-int-int-float-int"))
+                                                                                                                                                    init (initParams.getIntParam("a"),
+                                                                                                                                                          initParams.getIntParam("b"),
+                                                                                                                                                          initParams.getIntParam("c"),
+                                                                                                                                                          initParams.getFloatParam("d"),
+                                                                                                                                                          initParams.getIntParam("e"));
+                                                                                                                                                else
+                                                                                                                                                    if(initParams.getParamName().equals("int-int-int-int-int"))
+                                                                                                                                                        init (initParams.getIntParam("a"),
+                                                                                                                                                              initParams.getIntParam("b"),
+                                                                                                                                                              initParams.getIntParam("c"),
+                                                                                                                                                              initParams.getIntParam("d"),
+                                                                                                                                                              initParams.getIntParam("e"));
+                                                                                                                                                    else
+                                                                                                                                                        if(initParams.getParamName().equals("int-int-int-int-int-int-float"))
+                                                                                                                                                            init (initParams.getIntParam("i1"),
+                                                                                                                                                                  initParams.getIntParam("i2"),
+                                                                                                                                                                  initParams.getIntParam("i3"),
+                                                                                                                                                                  initParams.getIntParam("i4"),
+                                                                                                                                                                  initParams.getIntParam("i5"),
+                                                                                                                                                                  initParams.getIntParam("i6"),
+                                                                                                                                                                  initParams.getFloatParam("f"));
+                                                                                                                                                        else
+                                                                                                                                                            if(initParams.getParamName().equals("int-int-float[]"))
+                                                                                                                                                                init (initParams.getIntParam("a"),
+                                                                                                                                                                      initParams.getIntParam("b"),
+                                                                                                                                                                      (float[])initParams.getObjParam("c"));
+                                                                                                                                                            else
+                                                                                                                                                                if(initParams.getParamName().equals("int-int-int-float[]"))
+                                                                                                                                                                    init (initParams.getIntParam("a"),
+                                                                                                                                                                          initParams.getIntParam("b"),
+                                                                                                                                                                          initParams.getIntParam("c"),
+                                                                                                                                                                          (float[])initParams.getObjParam("d"));
+                                                                                                                                                                else
+                                                                                                                                                                    if(initParams.getParamName().equals("int-float[]-float[]"))
+                                                                                                                                                                        init (initParams.getIntParam("a"),
+                                                                                                                                                                              (float[])initParams.getObjParam("c"),
+                                                                                                                                                                              (float[])initParams.getObjParam("d"));
+                                                                                                                                                                    else
+                                                                                                                                                                        if(initParams.getParamName().equals("int-int-float[]-float[]"))
+                                                                                                                                                                            init (initParams.getIntParam("a"),
+                                                                                                                                                                                  initParams.getIntParam("b"),
+                                                                                                                                                                                  (float[])initParams.getObjParam("c"),
+                                                                                                                                                                                  (float[])initParams.getObjParam("d"));
+                                                                                                                                                                        else
+                                                                                                                                                                            if(initParams.getParamName().equals("int-int-int-float[][]-float[][]"))
+                                                                                                                                                                                init (initParams.getIntParam("a"),
+                                                                                                                                                                                      initParams.getIntParam("b"),
+                                                                                                                                                                                      initParams.getIntParam("c"),
+                                                                                                                                                                                      (float[][])initParams.getObjParam("x"),
+                                                                                                                                                                                      (float[][])initParams.getObjParam("y"));
+                                                                                                                                                                            else
+                                                                                                                                                                                if(initParams.getParamName().equals("int-int-float[][]"))
+                                                                                                                                                                                    init (initParams.getIntParam("a"),
+                                                                                                                                                                                          initParams.getIntParam("b"),
+                                                                                                                                                                                          (float[][])initParams.getObjParam("c"));
+                                                                                                                                                                                else
+                                                                                                                                                                                    if(initParams.getParamName().equals("int-int-float[][]-float[]"))
+                                                                                                                                                                                        init(initParams.getIntParam("a"),
+                                                                                                                                                                                             initParams.getIntParam("b"),
+                                                                                                                                                                                             (float[][])initParams.getObjParam("c"),
+                                                                                                                                                                                             (float[])initParams.getObjParam("d"));
+                                                                                                                                                                                    else
+                                                                                                                                                                                        if(initParams.getParamName().equals("int-int-int-float[][]-float[]"))
+                                                                                                                                                                                            init(initParams.getIntParam("a"),
+                                                                                                                                                                                                 initParams.getIntParam("b"),
+                                                                                                                                                                                                 initParams.getIntParam("c"),
+                                                                                                                                                                                                 (float[][])initParams.getObjParam("d"),
+                                                                                                                                                                                                 (float[])initParams.getObjParam("e"));
+                                                                                                                                                                                        else
+                                                                                                                                                                                            if(initParams.getParamName().equals("int-boolean-float-float-float[][]-float[]"))
+                                                                                                                                                                                                init(initParams.getIntParam("a"),
+                                                                                                                                                                                                     initParams.getBoolParam("b"),
+                                                                                                                                                                                                     initParams.getFloatParam("c"),
+                                                                                                                                                                                                     initParams.getFloatParam("d"),
+                                                                                                                                                                                                     (float[][])initParams.getObjParam("e"),
+                                                                                                                                                                                                     (float[])initParams.getObjParam("f"));
+                                                                                                                                                                                            else
+                                                                                                                                                                                                if(initParams.getParamName().equals("int-int-int-float"))
+                                                                                                                                                                                                    init(initParams.getIntParam("i1"),
+                                                                                                                                                                                                         initParams.getIntParam("i2"),
+                                                                                                                                                                                                         initParams.getIntParam("i3"),
+                                                                                                                                                                                                         initParams.getFloatParam("f1"));
+                                                                                                                                                                                                else
+                                                                                                                                                                                                    if(initParams.getParamName().equals("int-int-int-float[][]"))
+                                                                                                                                                                                                        init (initParams.getIntParam("a"),
+                                                                                                                                                                                                              initParams.getIntParam("b"),
+                                                                                                                                                                                                              initParams.getIntParam("c"),
+                                                                                                                                                                                                              (float[][])initParams.getObjParam("d"));
+                                                                                                                                                                                                    else
+                                                                                                                                                                                                        if(initParams.getParamName().equals("int-int-int-int-float[][]"))
+                                                                                                                                                                                                            init (initParams.getIntParam("a"),
+                                                                                                                                                                                                                  initParams.getIntParam("b"),
+                                                                                                                                                                                                                  initParams.getIntParam("c"),
+                                                                                                                                                                                                                  initParams.getIntParam("d"),
+                                                                                                                                                                                                                  (float[][])initParams.getObjParam("e"));
+                                                                                                                                                                                                        else
+                                                                                                                                                                                                            if(initParams.getParamName().equals("int-int-int-int-int-int-int-float"))
+                                                                                                                                                                                                                init (initParams.getIntParam("x"),
+                                                                                                                                                                                                                      initParams.getIntParam("y"),
+                                                                                                                                                                                                                      initParams.getIntParam("z"),
+                                                                                                                                                                                                                      initParams.getIntParam("a"),
+                                                                                                                                                                                                                      initParams.getIntParam("b"),
+                                                                                                                                                                                                                      initParams.getIntParam("c"),
+                                                                                                                                                                                                                      initParams.getIntParam("d"),
+                                                                                                                                                                                                                      initParams.getFloatParam("f"));
+                                                                                                                                                                                                            else
+                                                                                                                                                                                                                if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-float"))
+                                                                                                                                                                                                                    init (initParams.getIntParam("i1"),
+                                                                                                                                                                                                                          initParams.getIntParam("i2"),
+                                                                                                                                                                                                                          initParams.getIntParam("i3"),
+                                                                                                                                                                                                                          initParams.getIntParam("i4"),
+                                                                                                                                                                                                                          initParams.getIntParam("i5"),
+                                                                                                                                                                                                                          initParams.getIntParam("i6"),
+                                                                                                                                                                                                                          initParams.getIntParam("i7"),
+                                                                                                                                                                                                                          initParams.getIntParam("i8"),
+                                                                                                                                                                                                                          initParams.getIntParam("i9"),
+                                                                                                                                                                                                                          initParams.getFloatParam("f"));
+                                                                                                                                                                                                                else
+                                                                                                                                                                                                                    if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int"))
+                                                                                                                                                                                                                        init (initParams.getIntParam("i1"),
+                                                                                                                                                                                                                              initParams.getIntParam("i2"),
+                                                                                                                                                                                                                              initParams.getIntParam("i3"),
+                                                                                                                                                                                                                              initParams.getIntParam("i4"),
+                                                                                                                                                                                                                              initParams.getIntParam("i5"),
+                                                                                                                                                                                                                              initParams.getIntParam("i6"),
+                                                                                                                                                                                                                              initParams.getIntParam("i7"),
+                                                                                                                                                                                                                              initParams.getIntParam("i8"),
+                                                                                                                                                                                                                              initParams.getIntParam("i9"));
+                                                                                                                                                                                                                    else
+                                                                                                                                                                                                                        if(initParams.getParamName().equals("int-int-int-int-int-int-int-int-int-int-float"))
+                                                                                                                                                                                                                            init (initParams.getIntParam("i1"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i2"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i3"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i4"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i5"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i6"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i7"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i8"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i9"),
+                                                                                                                                                                                                                                  initParams.getIntParam("i10"),
+                                                                                                                                                                                                                                  initParams.getFloatParam("f"));
+                                                                                                                                                                                                                        else
+                                                                                                                                                                                                                            if(initParams.getParamName().equals("float-float-float-int"))
+                                                                                                                                                                                                                                init (initParams.getFloatParam("x2"),
+                                                                                                                                                                                                                                      initParams.getFloatParam("y2"),
+                                                                                                                                                                                                                                      initParams.getFloatParam("z2"),
+                                                                                                                                                                                                                                      initParams.getIntParam("a2"));
+                                                                                                                                                                                                                            else if(initParams.getParamName().equals("Object"))
+                                                                                                                                                                                                                                init(initParams.getObjectParam("o1"));
+                                                                                                                                                                                                                            else if(initParams.getParamName().equals("Object-int"))
+                                                                                                                                                                                                                                init(initParams.getObjectParam("o1"),
+                                                                                                                                                                                                                                     initParams.getIntParam("i1"));
 
-	else if(initParams.getParamName().equals("Object-Object"))
-	    init(initParams.getObjectParam("o1"),
-		 initParams.getObjectParam("o2"));
-	else if(initParams.getParamName().equals("Object-Object-Object"))
-	    init(initParams.getObjectParam("o1"),
-		 initParams.getObjectParam("o2"),
-		 initParams.getObjectParam("o3")); else
-        if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
-        if (initParams.getParamName ().equals("int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z")); else
-        if (initParams.getParamName ().equals("int-int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z"), initParams.getIntParam ("a")); else
-        if (initParams.getParamName ().equals("float-float-float")) init (initParams.getFloatParam ("a"), initParams.getFloatParam ("b"), initParams.getFloatParam ("c")); else
-        if (initParams.getParamName ().equals("short-short-short")) init (initParams.getShortParam ("s1"), initParams.getShortParam ("s2"), initParams.getShortParam ("s3")); else
-        if (initParams.getParamName ().equals("")) init (); else
-        if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
-        if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else
-        if (initParams.getParamName ().equals("char")) init (initParams.getCharParam ("c")); else
-        if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str")); else
-        if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
-        else {
-            // labels don't match - print an error
-            ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.\n(paramName=" + initParams.getParamName() + ")");
-        }
+                                                                                                                                                                                                                            else if(initParams.getParamName().equals("int-int-Object"))
+                                                                                                                                                                                                                                init(initParams.getIntParam("i1"),
+                                                                                                                                                                                                                                     initParams.getIntParam("i2"),
+                                                                                                                                                                                                                                     initParams.getObjectParam("o1"));
+
+                                                                                                                                                                                                                            else if(initParams.getParamName().equals("Object-Object"))
+                                                                                                                                                                                                                                init(initParams.getObjectParam("o1"),
+                                                                                                                                                                                                                                     initParams.getObjectParam("o2"));
+                                                                                                                                                                                                                            else if(initParams.getParamName().equals("Object-Object-Object"))
+                                                                                                                                                                                                                                init(initParams.getObjectParam("o1"),
+                                                                                                                                                                                                                                     initParams.getObjectParam("o2"),
+                                                                                                                                                                                                                                     initParams.getObjectParam("o3")); else
+                                                                                                                                                                                                                                         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
+                                                                                                                                                                                                                                             if (initParams.getParamName ().equals("int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z")); else
+                                                                                                                                                                                                                                                 if (initParams.getParamName ().equals("int-int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z"), initParams.getIntParam ("a")); else
+                                                                                                                                                                                                                                                     if (initParams.getParamName ().equals("float-float-float")) init (initParams.getFloatParam ("a"), initParams.getFloatParam ("b"), initParams.getFloatParam ("c")); else
+                                                                                                                                                                                                                                                         if (initParams.getParamName ().equals("short-short-short")) init (initParams.getShortParam ("s1"), initParams.getShortParam ("s2"), initParams.getShortParam ("s3")); else
+                                                                                                                                                                                                                                                             if (initParams.getParamName ().equals("")) init (); else
+                                                                                                                                                                                                                                                                 if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
+                                                                                                                                                                                                                                                                     if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else
+                                                                                                                                                                                                                                                                         if (initParams.getParamName ().equals("char")) init (initParams.getCharParam ("c")); else
+                                                                                                                                                                                                                                                                             if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str")); else
+                                                                                                                                                                                                                                                                                 if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
+                                                                                                                                                                                                                                                                                 else {
+                                                                                                                                                                                                                                                                                     // labels don't match - print an error
+                                                                                                                                                                                                                                                                                     ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.\n(paramName=" + initParams.getParamName() + ")");
+                                                                                                                                                                                                                                                                                 }
     }
 
     public void connectGraph ()
@@ -1653,35 +1653,35 @@ public class Operator extends DestroyedClass
         Channel fieldsInstance [] = null;
 
         try
-        {
-            Class thisClass = this.getClass ();
-            assert thisClass != null;
-
-            Field ioField;
-            ioField  = thisClass.getField (fieldName);
-
-            Object fieldValue = ioField.get (this);
-
-            if (ioField.getType ().isArray ())
             {
-                fieldsInstance = (Channel []) fieldValue;
-            } else {
-                fieldsInstance = new Channel [1];
-                fieldsInstance [0] = (Channel) fieldValue;
+                Class thisClass = this.getClass ();
+                assert thisClass != null;
 
-                if (fieldsInstance [0] == null) fieldsInstance = null;
+                Field ioField;
+                ioField  = thisClass.getField (fieldName);
+
+                Object fieldValue = ioField.get (this);
+
+                if (ioField.getType ().isArray ())
+                    {
+                        fieldsInstance = (Channel []) fieldValue;
+                    } else {
+                        fieldsInstance = new Channel [1];
+                        fieldsInstance [0] = (Channel) fieldValue;
+
+                        if (fieldsInstance [0] == null) fieldsInstance = null;
+                    }
             }
-        }
         catch (NoSuchFieldException noError)
-        {
-            // do not do anything here, this is NOT an error!
-        }
+            {
+                // do not do anything here, this is NOT an error!
+            }
         catch (Throwable error)
-        {
-            // this is all the other errors:
-            error.getClass ();
-            assert false : error.toString ();
-        }
+            {
+                // this is all the other errors:
+                error.getClass ();
+                assert false : error.toString ();
+            }
 
         return fieldsInstance;
     }
@@ -1695,10 +1695,10 @@ public class Operator extends DestroyedClass
             fieldInstance = getIOFields (fieldName);
 
             if (fieldInstance != null)
-            {
-                assert fieldInstance.length > fieldIndex;
-                field = fieldInstance [fieldIndex];
-            }
+                {
+                    assert fieldInstance.length > fieldIndex;
+                    field = fieldInstance [fieldIndex];
+                }
         }
 
         return field;
@@ -1711,31 +1711,31 @@ public class Operator extends DestroyedClass
         Channel fieldsInstance [];
 
         try
-        {
-            Class thisClass = this.getClass ();
-            assert thisClass != null;
-
-            Field ioField;
-            ioField  = thisClass.getField (fieldName);
-
-            if (ioField.getType () == newChannel.getClass ())
             {
-                assert fieldIndex == 0;
-                ioField.set (this, newChannel);
-            } else {
-                fieldsInstance = (Channel []) ioField.get (this);
-                assert fieldsInstance != null;
-                assert fieldsInstance.length > fieldIndex;
+                Class thisClass = this.getClass ();
+                assert thisClass != null;
 
-                fieldsInstance [fieldIndex] = newChannel;
+                Field ioField;
+                ioField  = thisClass.getField (fieldName);
+
+                if (ioField.getType () == newChannel.getClass ())
+                    {
+                        assert fieldIndex == 0;
+                        ioField.set (this, newChannel);
+                    } else {
+                        fieldsInstance = (Channel []) ioField.get (this);
+                        assert fieldsInstance != null;
+                        assert fieldsInstance.length > fieldIndex;
+
+                        fieldsInstance [fieldIndex] = newChannel;
+                    }
+
             }
-
-        }
         catch (Throwable error)
-        {
-            // this is all the other errors:
-            assert false : error.toString ();
-        }
+            {
+                // this is all the other errors:
+                assert false : error.toString ();
+            }
     }
 
 
@@ -1753,43 +1753,43 @@ public class Operator extends DestroyedClass
     }        
 
     static float[][] copyFloatArray2D(float[][] input) {
-	// according to streamit semantics, assume arrays are rectangular
-	float[][] result = new float[input.length][input[0].length];
-	for (int i=0; i<input.length; i++) {
-	    for (int j=0; j<input[0].length; j++) {
-		result[i][j] = input[i][j];
-	    }
-	}
-	return result;
+        // according to streamit semantics, assume arrays are rectangular
+        float[][] result = new float[input.length][input[0].length];
+        for (int i=0; i<input.length; i++) {
+            for (int j=0; j<input[0].length; j++) {
+                result[i][j] = input[i][j];
+            }
+        }
+        return result;
     }
 
     static int[][] copyIntArray2D(int[][] input) {
-	// according to streamit semantics, assume arrays are rectangular
-	int[][] result = new int[input.length][input[0].length];
-	for (int i=0; i<input.length; i++) {
-	    for (int j=0; j<input[0].length; j++) {
-		result[i][j] = input[i][j];
-	    }
-	}
-	return result;
+        // according to streamit semantics, assume arrays are rectangular
+        int[][] result = new int[input.length][input[0].length];
+        for (int i=0; i<input.length; i++) {
+            for (int j=0; j<input[0].length; j++) {
+                result[i][j] = input[i][j];
+            }
+        }
+        return result;
     }
 
     static float[] copyFloatArray1D(float[] input) {
-	// according to streamit semantics, assume arrays are rectangular
-	float[] result = new float[input.length];
-	for (int i=0; i<input.length; i++) {
-	    result[i] = input[i];
-	}
-	return result;
+        // according to streamit semantics, assume arrays are rectangular
+        float[] result = new float[input.length];
+        for (int i=0; i<input.length; i++) {
+            result[i] = input[i];
+        }
+        return result;
     }
 
     static int[] copyIntArray1D(int[] input) {
-	// according to streamit semantics, assume arrays are rectangular
-	int[] result = new int[input.length];
-	for (int i=0; i<input.length; i++) {
-	    result[i] = input[i];
-	}
-	return result;
+        // according to streamit semantics, assume arrays are rectangular
+        int[] result = new int[input.length];
+        for (int i=0; i<input.length; i++) {
+            result[i] = input[i];
+        }
+        return result;
     }
 
     /**
@@ -1797,7 +1797,7 @@ public class Operator extends DestroyedClass
      * library.
      */
     public String toString() {
-	return getClass().getName();
+        return getClass().getName();
     }
 
 }

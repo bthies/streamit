@@ -21,15 +21,15 @@ public class LIRSetStreamType extends LIRNode {
      * Construct a node.
      */
     public LIRSetStreamType(JExpression streamContext,
-			    LIRStreamType streamType) {
-	super(streamContext);
-	this.streamType = streamType;
+                            LIRStreamType streamType) {
+        super(streamContext);
+        this.streamType = streamType;
     }
 
     public void accept(SLIRVisitor v)
     {
         v.visitSetStreamType(this, 
-			     this.getStreamContext(), 
-			     this.streamType);
+                             this.getStreamContext(), 
+                             this.streamType);
     }
 }

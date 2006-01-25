@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QLiteral.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QLiteral.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -27,61 +27,61 @@ import at.dms.classfile.PushLiteralInstruction;
  */
 class QLiteral extends QOperand {
 
-  QLiteral(InstructionHandle insn) {
-    this.insn = insn;
-  }
+    QLiteral(InstructionHandle insn) {
+        this.insn = insn;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * The size (in instruction) of the subtree
-   */
-  public int getType() {
-    return insn.getInstruction().getReturnType();
-  }
+    /**
+     * The size (in instruction) of the subtree
+     */
+    public int getType() {
+        return insn.getInstruction().getReturnType();
+    }
 
-  /**
-   * Human readable form
-   */
-  public String toString() {
-    return "" + ((PushLiteralInstruction)insn.getInstruction()).getLiteral();
-  }
+    /**
+     * Human readable form
+     */
+    public String toString() {
+        return "" + ((PushLiteralInstruction)insn.getInstruction()).getLiteral();
+    }
 
-  /**
-   * Duplicate this node
-   */
-  public QOrigin duplicate() {
-    return new QLiteral(new InstructionHandle(insn.getInstruction(), null));
-  }
+    /**
+     * Duplicate this node
+     */
+    public QOrigin duplicate() {
+        return new QLiteral(new InstructionHandle(insn.getInstruction(), null));
+    }
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the used temporaries.
-   */
-  public QTemporary[] getUses() {
-    return QTemporary.EMPTY;
-  }
+    /**
+     * Returns the used temporaries.
+     */
+    public QTemporary[] getUses() {
+        return QTemporary.EMPTY;
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  public void generate(CodeSequence seq) {
-    seq.plantInstruction(insn);
-  }
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    public void generate(CodeSequence seq) {
+        seq.plantInstruction(insn);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private InstructionHandle insn;
+    private InstructionHandle insn;
 }

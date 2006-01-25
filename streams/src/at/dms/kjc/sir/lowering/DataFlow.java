@@ -19,7 +19,7 @@ public abstract class DataFlow extends SLIRReplacingVisitor {
     protected HashMap map;
     
     public DataFlow() {
-	map=new HashMap();
+        map=new HashMap();
     }
     
     // ----------------------------------------------------------------------
@@ -30,75 +30,75 @@ public abstract class DataFlow extends SLIRReplacingVisitor {
      * Visits a while statement
      */
     public Object visitWhileStatement(JWhileStatement self,
-				      JExpression cond,
-				      JStatement body) {
-	cond.accept(this);
-	HashMap mapStore=(HashMap)map.clone();
-	body.accept(this);
-	mergeFunction(mapStore);
-	while(!map.equals(mapStore)) { //Iterate until fixed point
-	    body.accept(this);
-	    mergeFunction(mapStore);
-	}
-	return self;
+                                      JExpression cond,
+                                      JStatement body) {
+        cond.accept(this);
+        HashMap mapStore=(HashMap)map.clone();
+        body.accept(this);
+        mergeFunction(mapStore);
+        while(!map.equals(mapStore)) { //Iterate until fixed point
+            body.accept(this);
+            mergeFunction(mapStore);
+        }
+        return self;
     }
 
     /**
      * Visits a if statement
      */
     public Object visitIfStatement(JIfStatement self,
-				   JExpression cond,
-				   JStatement thenClause,
-				   JStatement elseClause) {
-	cond.accept(this);
-	HashMap mapStore=(HashMap)map.clone();
-	thenClause.accept(this);
-	HashMap mapThen=map;
-	map=mapStore;
-	elseClause.accept(this);
-	mergeFunction(mapThen);
-	return self;
+                                   JExpression cond,
+                                   JStatement thenClause,
+                                   JStatement elseClause) {
+        cond.accept(this);
+        HashMap mapStore=(HashMap)map.clone();
+        thenClause.accept(this);
+        HashMap mapThen=map;
+        map=mapStore;
+        elseClause.accept(this);
+        mergeFunction(mapThen);
+        return self;
     }
     
     /**
      * Visits a for statement
      */
     public Object visitForStatement(JForStatement self,
-				    JStatement init,
-				    JExpression cond,
-				    JStatement incr,
-				    JStatement body) {
-	init.accept(this);
-	cond.accept(this);
-	HashMap mapStore=(HashMap)map.clone();
-	body.accept(this);
-	incr.accept(this);
-	mergeFunction(mapStore);
-	while(!map.equals(mapStore)) { //Iterate until fixed point
-	    body.accept(this);
-	    incr.accept(this);
-	    mergeFunction(mapStore);
-	}
-	return self;
+                                    JStatement init,
+                                    JExpression cond,
+                                    JStatement incr,
+                                    JStatement body) {
+        init.accept(this);
+        cond.accept(this);
+        HashMap mapStore=(HashMap)map.clone();
+        body.accept(this);
+        incr.accept(this);
+        mergeFunction(mapStore);
+        while(!map.equals(mapStore)) { //Iterate until fixed point
+            body.accept(this);
+            incr.accept(this);
+            mergeFunction(mapStore);
+        }
+        return self;
     }
 
     /**
      * Visits a switch statement
      */
     public Object visitSwitchStatement(JSwitchStatement self,
-				       JExpression expr,
-				       JSwitchGroup[] body) {
-	expr.accept(this);
-	HashMap mapStore=(HashMap)map.clone();
-	HashMap mapAccum=(HashMap)map.clone();
-	for (int i = 0; i < body.length; i++) {
-	    body[i].accept(this);
-	    mergeFunction(mapAccum);
-	    mapAccum=map;
-	    map=mapStore;	  
-	}
-	map=mapAccum;
-	return self;
+                                       JExpression expr,
+                                       JSwitchGroup[] body) {
+        expr.accept(this);
+        HashMap mapStore=(HashMap)map.clone();
+        HashMap mapAccum=(HashMap)map.clone();
+        for (int i = 0; i < body.length; i++) {
+            body[i].accept(this);
+            mergeFunction(mapAccum);
+            mapAccum=map;
+            map=mapStore;     
+        }
+        map=mapAccum;
+        return self;
     }
     
     //Merges map2 with field map and stores in map

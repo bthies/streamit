@@ -1,5 +1,5 @@
 /*
- * @(#)ViewAntiAlias.java	1.2 02.02.2003
+ * @(#)ViewAntiAlias.java   1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,28 +32,28 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ViewAntiAlias extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for ViewAntiAlias.
-	 * @param graphpad
-	 */
-	public ViewAntiAlias(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ViewAntiAlias.
+     * @param graphpad
+     */
+    public ViewAntiAlias(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		if (getCurrentGraph() == null)
-			return false;
-		return getCurrentGraph().isAntiAliased();
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        if (getCurrentGraph() == null)
+            return false;
+        return getCurrentGraph().isAntiAliased();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		getCurrentGraph().setAntiAliased(!getCurrentGraph().isAntiAliased());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentGraph().setAntiAliased(!getCurrentGraph().isAntiAliased());
+    }
 
 }

@@ -32,16 +32,16 @@ public class RoundRobinJoiner extends Joiner
     
     public void work ()
     {
-        int inputIndex;
-        for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
-        {
-            assert input [inputIndex] != 0;
-            int w;
-            for (w = 0; w < weight; w++)
-            {
-                passOneData (input [inputIndex], output);
-            }
-        }
+    int inputIndex;
+    for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
+    {
+    assert input [inputIndex] != 0;
+    int w;
+    for (w = 0; w < weight; w++)
+    {
+    passOneData (input [inputIndex], output);
+    }
+    }
     }
     */
 
@@ -52,12 +52,12 @@ public class RoundRobinJoiner extends Joiner
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
             {
-                weights [i] = weight;
+                if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
+                    {
+                        weights [i] = weight;
+                    }
             }
-        }
         
         return weights;
     }
@@ -69,17 +69,17 @@ public class RoundRobinJoiner extends Joiner
         
         int i;
         for (i=0;i<numChildren;i++)
-        {
-            if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
             {
-                outputTotal += weight;
+                if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
+                    {
+                        outputTotal += weight;
+                    }
             }
-        }
         
         return outputTotal;
     }
 
     public String toString() {
-	return "roundrobin";
+        return "roundrobin";
     }
 }

@@ -16,20 +16,20 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
 public class ViewContainersUnhide extends AbstractActionDefault {
 
 
-	public ViewContainersUnhide(GPGraphpad graphpad) {
-		super(graphpad);
-	}
-	
-	/**
-	 * Unhide the expanded container nodes in the graph.
-	 */
-	public void actionPerformed(ActionEvent e) 
-	{
-		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
-		graphStruct.containerNodes.unhideAllContainers();
-		ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
-												get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
-		ac.actionPerformed(null);
-		
-	}
+    public ViewContainersUnhide(GPGraphpad graphpad) {
+        super(graphpad);
+    }
+    
+    /**
+     * Unhide the expanded container nodes in the graph.
+     */
+    public void actionPerformed(ActionEvent e) 
+    {
+        GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
+        graphStruct.containerNodes.unhideAllContainers();
+        ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
+            get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
+        ac.actionPerformed(null);
+        
+    }
 }

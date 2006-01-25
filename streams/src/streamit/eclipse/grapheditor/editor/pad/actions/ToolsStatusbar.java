@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsStatusbar.java	1.2 01.02.2003
+ * @(#)ToolsStatusbar.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,46 +34,46 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ToolsStatusbar extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for ToolsStatusbar.
-	 * @param graphpad
-	 */
-	public ToolsStatusbar(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolsStatusbar.
+     * @param graphpad
+     */
+    public ToolsStatusbar(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for ToolsStatusbar.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ToolsStatusbar(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for ToolsStatusbar.
+     * @param graphpad
+     * @param name
+     */
+    public ToolsStatusbar(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for ToolsStatusbar.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public ToolsStatusbar(GPGraphpad graphpad, String name, Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for ToolsStatusbar.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public ToolsStatusbar(GPGraphpad graphpad, String name, Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		graphpad.getStatusBar().setVisible(
-			!graphpad.getStatusBar().isVisible());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        graphpad.getStatusBar().setVisible(
+                                           !graphpad.getStatusBar().isVisible());
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		return graphpad.getStatusBar().isVisible();
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        return graphpad.getStatusBar().isVisible();
+    }
 
 }

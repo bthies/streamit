@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:46 thies Exp $
+ * $Id: Main.java,v 1.2 2006-01-25 17:01:19 thies Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -31,161 +31,161 @@ import java.util.Hashtable;
  */
 public class Main {
 
-  // --------------------------------------------------------------------
-  // ENTRY POINT
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ENTRY POINT
+    // --------------------------------------------------------------------
 
-  /**
-   * Program entry point.
-   */
-  public static void main(String[] args) {
-    boolean	success;
+    /**
+     * Program entry point.
+     */
+    public static void main(String[] args) {
+        boolean success;
 
-    success = new Main().run(args);
+        success = new Main().run(args);
 
-    System.exit(success ? 0 : 1);
-  }
-
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Only main can construct Main.
-   */
-  private Main() {
-  }
-
-  /**
-   * Runs a compilation session.
-   *
-   * @param	args		the command line arguments
-   */
-  private boolean run(String[] args) {
-    if (!parseArguments(args)) {
-      return false;
+        System.exit(success ? 0 : 1);
     }
 
-    boolean		errorsFound = false;
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-    for (int i = 0; i < options.nonOptions.length; i++) {
-      errorsFound = !processFile(options.nonOptions[i]);
+    /**
+     * Only main can construct Main.
+     */
+    private Main() {
     }
 
-    return !errorsFound;
-  }
+    /**
+     * Runs a compilation session.
+     *
+     * @param   args        the command line arguments
+     */
+    private boolean run(String[] args) {
+        if (!parseArguments(args)) {
+            return false;
+        }
 
-  /*
-   * Parse command line arguments.
-   */
-  private boolean parseArguments(String[] args) {
-    options = new OptgenOptions();
-    if (!options.parseCommandLine(args)) {
-      return false;
-    }
-    if (options.nonOptions.length == 0) {
-      System.err.println(OptgenMessages.NO_INPUT_FILE.getFormat());
-      options.usage();
-      return false;
-    }
-    return true;
-  }
+        boolean     errorsFound = false;
 
-  private boolean processFile(String sourceFile) {
-    if (! parseSource(sourceFile)) {
-      return false;
-    }
-    if (options.release != null) {
-      definition.setVersion(options.release);
-    }
-    if (! checkIdentifiers()) {
-      return false;
-    }
-    if (! checkShortcuts()) {
-      return false;
-    }
-    if (! buildInterfaceFile()) {
-      return false;
-    }
-    return true;
-  }
+        for (int i = 0; i < options.nonOptions.length; i++) {
+            errorsFound = !processFile(options.nonOptions[i]);
+        }
 
-  /**
-   *
-   */
-  private boolean parseSource(String sourceFile) {
-    boolean		errorsFound = false;
-
-    try {
-      definition = DefinitionFile.read(sourceFile);
-    } catch (OptgenError e) {
-      System.err.println(e.getMessage());
-      errorsFound = true;
+        return !errorsFound;
     }
 
-    return !errorsFound;
-  }
-
-
-  /**
-   *
-   */
-  private boolean checkIdentifiers() {
-    boolean		errorsFound = false;
-
-    try {
-      definition.checkIdentifiers();
-    } catch (OptgenError e) {
-      System.err.println(e.getMessage());
-      errorsFound = true;
+    /*
+     * Parse command line arguments.
+     */
+    private boolean parseArguments(String[] args) {
+        options = new OptgenOptions();
+        if (!options.parseCommandLine(args)) {
+            return false;
+        }
+        if (options.nonOptions.length == 0) {
+            System.err.println(OptgenMessages.NO_INPUT_FILE.getFormat());
+            options.usage();
+            return false;
+        }
+        return true;
     }
 
-    return !errorsFound;
-  }
-
-  /**
-   *
-   */
-  private boolean checkShortcuts() {
-    boolean		errorsFound = false;
-
-    try {
-      definition.checkShortcuts();
-    } catch (OptgenError e) {
-      System.err.println(e.getMessage());
-      errorsFound = true;
+    private boolean processFile(String sourceFile) {
+        if (! parseSource(sourceFile)) {
+            return false;
+        }
+        if (options.release != null) {
+            definition.setVersion(options.release);
+        }
+        if (! checkIdentifiers()) {
+            return false;
+        }
+        if (! checkShortcuts()) {
+            return false;
+        }
+        if (! buildInterfaceFile()) {
+            return false;
+        }
+        return true;
     }
 
-    return !errorsFound;
-  }
+    /**
+     *
+     */
+    private boolean parseSource(String sourceFile) {
+        boolean     errorsFound = false;
 
-  /**
-   *
-   */
-  private boolean buildInterfaceFile() {
-    String		prefix = definition.getPrefix();
-    File		outputFile = new File(prefix + "Options.java");
-    boolean		errorsFound = false;
+        try {
+            definition = DefinitionFile.read(sourceFile);
+        } catch (OptgenError e) {
+            System.err.println(e.getMessage());
+            errorsFound = true;
+        }
 
-    try {
-      PrintWriter	out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
-
-      definition.printFile(out);
-
-      out.flush();
-      out.close();
-    } catch (java.io.IOException e) {
-      System.err.println("I/O Exception on " + outputFile.getPath() + ": " + e.getMessage());
-      errorsFound = true;
+        return !errorsFound;
     }
 
-    return !errorsFound;
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     *
+     */
+    private boolean checkIdentifiers() {
+        boolean     errorsFound = false;
 
-  private OptgenOptions		options;
-  private DefinitionFile	definition;
+        try {
+            definition.checkIdentifiers();
+        } catch (OptgenError e) {
+            System.err.println(e.getMessage());
+            errorsFound = true;
+        }
+
+        return !errorsFound;
+    }
+
+    /**
+     *
+     */
+    private boolean checkShortcuts() {
+        boolean     errorsFound = false;
+
+        try {
+            definition.checkShortcuts();
+        } catch (OptgenError e) {
+            System.err.println(e.getMessage());
+            errorsFound = true;
+        }
+
+        return !errorsFound;
+    }
+
+    /**
+     *
+     */
+    private boolean buildInterfaceFile() {
+        String      prefix = definition.getPrefix();
+        File        outputFile = new File(prefix + "Options.java");
+        boolean     errorsFound = false;
+
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
+
+            definition.printFile(out);
+
+            out.flush();
+            out.close();
+        } catch (java.io.IOException e) {
+            System.err.println("I/O Exception on " + outputFile.getPath() + ": " + e.getMessage());
+            errorsFound = true;
+        }
+
+        return !errorsFound;
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private OptgenOptions       options;
+    private DefinitionFile  definition;
 }

@@ -15,9 +15,9 @@ public class FileWriterDevice extends IODevice {
     public FileWriterDevice(StreamGraph sg, FlatNode node) {
         assert node.contents instanceof SIRFileWriter : "Trying to create a FileWriterDevice with non-SIRFileWriter";
         this.node = node;
-	this.streamGraph = sg;
+        this.streamGraph = sg;
         fileWriter = (SIRFileWriter) node.contents;
-	isDynamic = false;
+        isDynamic = false;
     }
 
     public FlatNode getFlatNode() {
@@ -26,7 +26,7 @@ public class FileWriterDevice extends IODevice {
 
     public void setDynamic() 
     {
-	isDynamic = true;
+        isDynamic = true;
     }
     
 
@@ -40,13 +40,13 @@ public class FileWriterDevice extends IODevice {
 
     /** return the data type that this file writer writes */
     public CType getType() {
-	//if we have a dynamic file writer we cannot query the 
-	//type of the SIRFW because the type was set to void, so 
-	//ask the parent SSG
-	if (isDynamic) 
-	    return streamGraph.getParentSSG(node).getInputType(node);
-	else 
-	    return fileWriter.getInputType();
+        //if we have a dynamic file writer we cannot query the 
+        //type of the SIRFW because the type was set to void, so 
+        //ask the parent SSG
+        if (isDynamic) 
+            return streamGraph.getParentSSG(node).getInputType(node);
+        else 
+            return fileWriter.getInputType();
     }
 
     public String toString() {
@@ -55,7 +55,7 @@ public class FileWriterDevice extends IODevice {
 
     public String getTypeCode() {
         assert getType().isFloatingPoint() || getType().isOrdinal() : "Invalid type for file writer: "
-                + getType();
+            + getType();
         Integer i = new Integer(getType().isFloatingPoint() ? 1 : 0);
         return i.toString();
     }

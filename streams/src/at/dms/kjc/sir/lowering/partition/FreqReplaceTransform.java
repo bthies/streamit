@@ -21,25 +21,25 @@ public final class FreqReplaceTransform extends StreamTransform {
     private LinearAnalyzer lfa;
 
     public FreqReplaceTransform(LinearAnalyzer lfa) {
-	super();
-	this.lfa = lfa;
+        super();
+        this.lfa = lfa;
     }
 
     /**
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	// again detect that <str> is linear, since it is a newly constructed stream
-	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
-	FrequencyReplacer.doReplace(lfa, str);
-	// kind of hard to get a handle on the new stream... return
-	// null for now; this shouldn't get dereferenced in linear
-	// partitioner
-	return null;
+        // again detect that <str> is linear, since it is a newly constructed stream
+        LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
+        FrequencyReplacer.doReplace(lfa, str);
+        // kind of hard to get a handle on the new stream... return
+        // null for now; this shouldn't get dereferenced in linear
+        // partitioner
+        return null;
     }
 
     public String toString() {
-	return "FreqReplace Transform, #" + id;
+        return "FreqReplace Transform, #" + id;
     }
 
 }

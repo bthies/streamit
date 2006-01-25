@@ -42,30 +42,30 @@ public class ObjectDeepCloner
      * Deep copy a stream structure.
      */
     static public Object deepCopy(SIRStream oldObj) {
-	if (!KjcOptions.clone_with_serialization) {
-	    return AutoCloner.deepCopy(oldObj);
-	} else {
-	    // set the list of what we should clone
-	    CloningVisitor visitor = new CloningVisitor();
-	    IterFactory.createFactory().createIter(oldObj).accept(visitor);
-	    toBeCloned = visitor.getToBeCloned();
-	    return doCopy(oldObj);
-	}
+        if (!KjcOptions.clone_with_serialization) {
+            return AutoCloner.deepCopy(oldObj);
+        } else {
+            // set the list of what we should clone
+            CloningVisitor visitor = new CloningVisitor();
+            IterFactory.createFactory().createIter(oldObj).accept(visitor);
+            toBeCloned = visitor.getToBeCloned();
+            return doCopy(oldObj);
+        }
     }
 
     /**
      * Deep copy a KJC structure.
      */
     static public Object deepCopy(JPhylum oldObj) {
-	if (!KjcOptions.clone_with_serialization) {
-	    return AutoCloner.deepCopy(oldObj);
-	} else {
-	    // set the list of what we should clone
-	    CloningVisitor visitor = new CloningVisitor();
-	    oldObj.accept(visitor);
-	    toBeCloned = visitor.getToBeCloned();
-	    return doCopy(oldObj);
-	}
+        if (!KjcOptions.clone_with_serialization) {
+            return AutoCloner.deepCopy(oldObj);
+        } else {
+            // set the list of what we should clone
+            CloningVisitor visitor = new CloningVisitor();
+            oldObj.accept(visitor);
+            toBeCloned = visitor.getToBeCloned();
+            return doCopy(oldObj);
+        }
     }
 
     /**
@@ -73,15 +73,15 @@ public class ObjectDeepCloner
      * Useful in BranchAnalyzer
      */
     static public Object deepCopy(int offset,JBlock oldObj) {
-	if (!KjcOptions.clone_with_serialization) {
-	    return AutoCloner.deepCopy(offset, oldObj);
-	} else {
-	    // set the list of what we should clone
-	    CloningVisitor visitor = new CloningVisitor();
-	    visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
-	    toBeCloned = visitor.getToBeCloned();
-	    return doCopy(oldObj);
-	}
+        if (!KjcOptions.clone_with_serialization) {
+            return AutoCloner.deepCopy(offset, oldObj);
+        } else {
+            // set the list of what we should clone
+            CloningVisitor visitor = new CloningVisitor();
+            visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
+            toBeCloned = visitor.getToBeCloned();
+            return doCopy(oldObj);
+        }
     }
 
     /**
@@ -89,13 +89,13 @@ public class ObjectDeepCloner
      * elements of the array are of the same type.
      */
     static public JPhylum[] deepCopy(JPhylum[] oldObj) {
-	Class componentType = oldObj.getClass().getComponentType();
-	JPhylum[] result = (JPhylum[])Array.newInstance(componentType, oldObj.length);
+        Class componentType = oldObj.getClass().getComponentType();
+        JPhylum[] result = (JPhylum[])Array.newInstance(componentType, oldObj.length);
 
-	for (int i=0; i<oldObj.length; i++) {
-	    result[i] = (JPhylum)deepCopy(oldObj[i]);
-	}
-	return result;
+        for (int i=0; i<oldObj.length; i++) {
+            result[i] = (JPhylum)deepCopy(oldObj[i]);
+        }
+        return result;
     }
 
     /**
@@ -135,13 +135,13 @@ public class ObjectDeepCloner
      * its identity across a serialization operation.
      */
     static public Object getHandle(Object oldInstance) {
-	if (toBeCloned.contains(oldInstance)) {
-	    return new Integer(-1);
-	} else {
-	    //System.err.println("Preserving across a cloning call: " + oldInstance.getClass());
-	    preserved.add(oldInstance);
-	    return new Integer(preserved.size() - 1);
-	}
+        if (toBeCloned.contains(oldInstance)) {
+            return new Integer(-1);
+        } else {
+            //System.err.println("Preserving across a cloning call: " + oldInstance.getClass());
+            preserved.add(oldInstance);
+            return new Integer(preserved.size() - 1);
+        }
     }
 
     /**
@@ -150,25 +150,25 @@ public class ObjectDeepCloner
      * it was handed <handle> prior to the serialization.
      */
     static public Object getInstance(Object handle, Object newInstance) {
-	assert handle instanceof Integer:
+        assert handle instanceof Integer:
             "DeepObjectCloner being called with a handle it didn't "
             + " give out:  handle is " + handle + " of type " +
             handle.getClass();
 
-	int index = ((Integer)handle).intValue();
-	// if the instance was not preserved, then return current instance
-	if (index==-1) {
-	    /*
-	      System.err.println("Cloning container " + newInstance);
-	    */
-	    return newInstance;
-	} else {
-	    /*
-	      System.err.println("Preserving container " + preserved.get(index));
-	    */
-	    // otherwise, return our old preserved version
-	    return preserved.get(index);
-	}
+        int index = ((Integer)handle).intValue();
+        // if the instance was not preserved, then return current instance
+        if (index==-1) {
+            /*
+              System.err.println("Cloning container " + newInstance);
+            */
+            return newInstance;
+        } else {
+            /*
+              System.err.println("Preserving container " + preserved.get(index));
+            */
+            // otherwise, return our old preserved version
+            return preserved.get(index);
+        }
     }
 
     /**
@@ -177,35 +177,35 @@ public class ObjectDeepCloner
      */ 
     static private Object doCopy(Object oldObj)
     {
-	ObjectOutputStream oos = null;
-	ObjectInputStream ois = null;
-	try
-	    {
-		// clear the list of objects we're preserving
-		preserved = new LinkedList();
-		// get an output stream ready
-		ByteArrayOutputStream bos = 
-		    new ByteArrayOutputStream();
-		oos = new ObjectOutputStream(bos);
-		// serialize and pass the object
-		oos.writeObject(oldObj);  
-		oos.flush();              
-		ByteArrayInputStream bin = 
-		    new ByteArrayInputStream(bos.toByteArray()); 
-		ois = new ObjectInputStream(bin);                  
-		// return the new object
-		oos.close();
-		ois.close();
-		return ois.readObject(); 
-	    }
-	catch(Exception e)
-	    {
-		System.err.println("Exception in ObjectCloner = " + e);
-		e.printStackTrace();
-		System.exit(-1);
-	 
-	    }
-	return null;
+        ObjectOutputStream oos = null;
+        ObjectInputStream ois = null;
+        try
+            {
+                // clear the list of objects we're preserving
+                preserved = new LinkedList();
+                // get an output stream ready
+                ByteArrayOutputStream bos = 
+                    new ByteArrayOutputStream();
+                oos = new ObjectOutputStream(bos);
+                // serialize and pass the object
+                oos.writeObject(oldObj);  
+                oos.flush();              
+                ByteArrayInputStream bin = 
+                    new ByteArrayInputStream(bos.toByteArray()); 
+                ois = new ObjectInputStream(bin);                  
+                // return the new object
+                oos.close();
+                ois.close();
+                return ois.readObject(); 
+            }
+        catch(Exception e)
+            {
+                System.err.println("Exception in ObjectCloner = " + e);
+                e.printStackTrace();
+                System.exit(-1);
+     
+            }
+        return null;
     }
 }
 

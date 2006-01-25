@@ -32,7 +32,7 @@ public class ExprComposite extends Expression
      * @param context  file and line number this expression corresponds to
      */
     public ExprComposite(FEContext context, Expression x, Expression y,
-		       Expression z, Expression w)
+                         Expression z, Expression w)
     {
         super(context);
         this.x = x;
@@ -52,19 +52,19 @@ public class ExprComposite extends Expression
     /** Accept a front-end visitor. */
     public Object accept(FEVisitor v)
     {
-	return v.visitExprComposite(this);
+        return v.visitExprComposite(this);
     }
 
     public int getDim() {
-	int dim = 2;
-	if (z != null) dim++;
-	if (w != null) dim++;
-	return dim;
+        int dim = 2;
+        if (z != null) dim++;
+        if (w != null) dim++;
+        return dim;
     }
 
     public String toString()
     {
-	String result = "[" + x + "," + y;
+        String result = "[" + x + "," + y;
         if (z != null)result += "," + z;
         if (w != null)result += "," + w;
         return result + "]";
@@ -83,13 +83,13 @@ public class ExprComposite extends Expression
 
         if (this.z != null && !(this.z.equals(that.z)))
             return false;
-	if (this.z == null && that.z != null) 
-	    return false;
+        if (this.z == null && that.z != null) 
+            return false;
 
         if (this.w != null && !(this.w.equals(that.w)))
             return false;
-	if (this.w == null && that.w != null) 
-	    return false;
+        if (this.w == null && that.w != null) 
+            return false;
 
         return true;
     }

@@ -13,31 +13,31 @@ public class NumberDot extends StreamItDot
 {
 
     public NumberDot(PrintStream outputStream) {
-	super(outputStream);
+        super(outputStream);
     }
 
     /**
      * Prints dot graph of <str> to System.out
      */
     public static void printGraph(SIRStream str) {
-	str.accept(new NumberDot(System.out));
+        str.accept(new NumberDot(System.out));
     }
 
     /**
      * Prints dot graph of <str> to <filename>
      */
     public static void printGraph(SIRStream str, String filename) {
-	try {
-	    FileOutputStream out = new FileOutputStream(filename);
-	    NumberDot dot = new NumberDot(new PrintStream(out));
-	    dot.print("digraph streamit {\n");
-	    str.accept(dot);
-	    dot.print("}\n");
-	    out.flush();
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            FileOutputStream out = new FileOutputStream(filename);
+            NumberDot dot = new NumberDot(new PrintStream(out));
+            dot.print("digraph streamit {\n");
+            str.accept(dot);
+            dot.print("}\n");
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public Object visitFilter(SIRFilter self,
@@ -47,18 +47,18 @@ public class NumberDot extends StreamItDot
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
-	return new NamePair(makeLabelledNode(pruneIdent(self.getIdent()) + " (" + self.getNumber() + ")"));
+        return new NamePair(makeLabelledNode(pruneIdent(self.getIdent()) + " (" + self.getNumber() + ")"));
     }
 
     /**
      * Cuts off anything after _ to prune compiler stuff.
      */
     private String pruneIdent(String ident) {
-	int index = ident.indexOf("_");
-	if (index>0) {
-	    return ident.substring(0, index);
-	}
-	return ident;
+        int index = ident.indexOf("_");
+        if (index>0) {
+            return ident.substring(0, index);
+        }
+        return ident;
     }
 
     /**
@@ -66,12 +66,12 @@ public class NumberDot extends StreamItDot
      * pipelines and splitjoins in LinearDot.
      **/
     public String getClusterString(SIRStream self) {
-	String qualified = self.getIdent()+"";
-	int i = qualified.lastIndexOf(".");
-	if (i>0) {
-	    qualified = qualified.substring(i+4).toLowerCase();
-	}
-	return "subgraph cluster_" + getName() + " {\n label=\"" + pruneIdent(qualified) + " (" + self.getNumber() + ")" + "\";\n";
+        String qualified = self.getIdent()+"";
+        int i = qualified.lastIndexOf(".");
+        if (i>0) {
+            qualified = qualified.substring(i+4).toLowerCase();
+        }
+        return "subgraph cluster_" + getName() + " {\n label=\"" + pruneIdent(qualified) + " (" + self.getNumber() + ")" + "\";\n";
     }
 
 }

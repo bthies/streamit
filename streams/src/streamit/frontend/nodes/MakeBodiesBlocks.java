@@ -26,7 +26,7 @@ import java.util.List;
  * with StmtBlocks if they are a different sort of statement.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MakeBodiesBlocks.java,v 1.4 2005-06-27 21:08:51 janiss Exp $
+ * @version $Id: MakeBodiesBlocks.java,v 1.5 2006-01-25 17:04:25 thies Exp $
  */
 public class MakeBodiesBlocks extends FEReplacer
 {
@@ -39,7 +39,7 @@ public class MakeBodiesBlocks extends FEReplacer
 
     public Object visitFunction(Function func)
     {
-	if (func.getCls() == Function.FUNC_NATIVE) return func;
+        if (func.getCls() == Function.FUNC_NATIVE) return func;
         Statement newBody = (Statement)func.getBody().accept(this);
         newBody = buildBlock(newBody);
         if (newBody == func.getBody()) return func;
@@ -85,16 +85,16 @@ public class MakeBodiesBlocks extends FEReplacer
     {
         Statement newCons = null;
         if (stmt.getCons() != null)
-        {
-            newCons = (Statement)stmt.getCons().accept(this);
-            newCons = buildBlock(newCons);
-        }
+            {
+                newCons = (Statement)stmt.getCons().accept(this);
+                newCons = buildBlock(newCons);
+            }
         Statement newAlt = null;
         if (stmt.getAlt() != null)
-        {
-            newAlt = (Statement)stmt.getAlt().accept(this);
-            newAlt = buildBlock(newAlt);
-        }
+            {
+                newAlt = (Statement)stmt.getAlt().accept(this);
+                newAlt = buildBlock(newAlt);
+            }
         if (newCons == stmt.getCons() && newAlt == stmt.getAlt())
             return stmt;
         return new StmtIfThen(stmt.getContext(), stmt.getCond(),

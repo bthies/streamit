@@ -1,5 +1,5 @@
 /*
- * @(#)HelpAbout.java	1.2 01.02.2003
+ * @(#)HelpAbout.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,35 +37,35 @@ import streamit.eclipse.grapheditor.editor.utils.BrowserLauncher;
  */
 public class HelpHomepage extends AbstractActionDefault {
 
-	/** The about dialog for JGraphpad
-	 */
-	protected JDialog aboutDlg;
+    /** The about dialog for JGraphpad
+     */
+    protected JDialog aboutDlg;
 
-	/**
-	 * Constructor 
-	 * @param graphpad
-	 */
-	public HelpHomepage(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor 
+     * @param graphpad
+     */
+    public HelpHomepage(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/** Opens the url that corresponds to the StreamIt home page</a>.
-	 * 
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
+    /** Opens the url that corresponds to the StreamIt home page</a>.
+     * 
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
 
-		try {		
-			BrowserLauncher.openURL("http://cag.lcs.mit.edu/streamit");		
-		} catch (Exception ex){
-			JOptionPane.showMessageDialog(graphpad, ex.toString(), Translator.getString("Error"), JOptionPane.ERROR_MESSAGE );
-		}
-		
-	}
-	/** Empty implementation. 
-	 *  This Action should be available
-	 *  each time.
-	 */
-	public void update(){};
+        try {       
+            BrowserLauncher.openURL("http://cag.lcs.mit.edu/streamit");     
+        } catch (Exception ex){
+            JOptionPane.showMessageDialog(graphpad, ex.toString(), Translator.getString("Error"), JOptionPane.ERROR_MESSAGE );
+        }
+        
+    }
+    /** Empty implementation. 
+     *  This Action should be available
+     *  each time.
+     */
+    public void update(){};
 
 }

@@ -65,8 +65,8 @@ public class StreaMITMain {
         
         System.err.println("Starting Kopi2SIR..");
 
- //       if(!KjcOptions.graph)
- //           System.out.println("/*");
+        //       if(!KjcOptions.graph)
+        //           System.out.println("/*");
         Kopi2SIR k2s = new Kopi2SIR(app);
         SIRStream stream = null;
         for (int i = 0; i < app.length; i++) {
@@ -81,7 +81,7 @@ public class StreaMITMain {
 
         SemanticChecker.doCheck(stream);
 
-//        System.err.println("Out of semantic checker.");
+        //        System.err.println("Out of semantic checker.");
         System.err.println("Done Semantic Check..");
 
         String backendClass = null;
@@ -93,7 +93,7 @@ public class StreaMITMain {
         } else if (KjcOptions.rstream) {
             backendClass = "at.dms.kjc.rstream.StrToRStream";
         } else if (KjcOptions.raw != -1) {
-//            System.out.println("*/");
+            //            System.out.println("*/");
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
             } else if (KjcOptions.spacedynamic) {
@@ -102,11 +102,11 @@ public class StreaMITMain {
                 backendClass = "at.dms.kjc.raw.RawBackend";
             }
         } else if (KjcOptions.cluster != -1) {
-//            System.out.println("*/");
+            //            System.out.println("*/");
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
-//            backendMethod = "flatten";
+            //            backendMethod = "flatten";
         }
         
         // To find a method, we need its name and signature.  To
@@ -122,28 +122,28 @@ public class StreaMITMain {
         Method theMethod = null;
         Class theBackend = null;
         
-    try {
-        paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
-        paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
-        for (int i = 1; i < 5; i++) {
-            paramTypes[i] = params[i].getClass(); }
-        } catch (ClassNotFoundException e) {
-        System.err.println("*** The class " + e.getMessage() +
-                           " does not exist.");
-            return;
-    }
-
         try {
-            theBackend = Class.forName(backendClass);
-    } catch (ClassNotFoundException e) {
+            paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
+            paramTypes[5] = Class.forName("at.dms.kjc.sir.SIRGlobal");
+            for (int i = 1; i < 5; i++) {
+                paramTypes[i] = params[i].getClass(); }
+        } catch (ClassNotFoundException e) {
             System.err.println("*** The class " + e.getMessage() +
                                " does not exist.");
             return;
-    }       
+        }
+
+        try {
+            theBackend = Class.forName(backendClass);
+        } catch (ClassNotFoundException e) {
+            System.err.println("*** The class " + e.getMessage() +
+                               " does not exist.");
+            return;
+        }       
             
         try {
             theMethod = theBackend.getMethod(backendMethod, paramTypes);
-    } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException e) {
 
             //try the old calling convention
 

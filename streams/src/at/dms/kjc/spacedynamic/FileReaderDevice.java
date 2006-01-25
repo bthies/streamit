@@ -15,8 +15,8 @@ import at.dms.kjc.flatgraph.*;
 public class FileReaderDevice extends IODevice {
     private SIRFileReader fileReader;
     private FlatNode node;
-     /** if dynamic the downstream node of this file reader, note we only support reader that 
-     connect to filter (not splitters!) when dynamic */ 
+    /** if dynamic the downstream node of this file reader, note we only support reader that 
+        connect to filter (not splitters!) when dynamic */ 
     private FlatNode dest = null;
 
     private StreamGraph streamGraph;
@@ -64,7 +64,7 @@ public class FileReaderDevice extends IODevice {
 
     public String getTypeCode() {
         assert getType().isFloatingPoint() || getType().isOrdinal() : "Invalid type for file reader: "
-                + getType();
+            + getType();
         Integer i = new Integer(getType().isFloatingPoint() ? 1 : 0);
         return i.toString();
     }

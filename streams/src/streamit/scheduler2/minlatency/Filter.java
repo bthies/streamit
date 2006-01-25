@@ -17,7 +17,7 @@
 package streamit.scheduler2.minlatency;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FilterIter;
+    FilterIter;
 import streamit.scheduler2.Schedule;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
 
@@ -46,44 +46,44 @@ public class Filter extends streamit.scheduler2.hierarchical.Filter
         {
             int nStage;
             for (nStage = 0;
-                nStage < filterIter.getNumInitStages();
-                nStage++)
-            {
-                Schedule initCall =
-                    new Schedule(
-                        filterIter.getInitFunctionStage(nStage),
-                        filterIter.getUnspecializedIter());
-                PhasingSchedule stage =
-                    new PhasingSchedule(
-                        this,
-                        initCall,
-                        filterIter.getInitPeekStage(nStage),
-                        filterIter.getInitPopStage(nStage),
-                        filterIter.getInitPushStage(nStage));
-                addInitScheduleStage(stage);
-            }
+                 nStage < filterIter.getNumInitStages();
+                 nStage++)
+                {
+                    Schedule initCall =
+                        new Schedule(
+                                     filterIter.getInitFunctionStage(nStage),
+                                     filterIter.getUnspecializedIter());
+                    PhasingSchedule stage =
+                        new PhasingSchedule(
+                                            this,
+                                            initCall,
+                                            filterIter.getInitPeekStage(nStage),
+                                            filterIter.getInitPopStage(nStage),
+                                            filterIter.getInitPushStage(nStage));
+                    addInitScheduleStage(stage);
+                }
         }
 
         // do the steady stage schedule
         {
             int nPhase;
             for (nPhase = 0;
-                nPhase < filterIter.getNumWorkPhases();
-                nPhase++)
-            {
-                Schedule workFunction =
-                    new Schedule(
-                        filterIter.getWorkFunctionPhase(nPhase),
-                        filterIter.getUnspecializedIter());
-                PhasingSchedule phase =
-                    new PhasingSchedule(
-                        this,
-                        workFunction,
-                        filterIter.getPeekPhase(nPhase),
-                        filterIter.getPopPhase(nPhase),
-                        filterIter.getPushPhase(nPhase));
-                addSteadySchedulePhase(phase);
-            }
+                 nPhase < filterIter.getNumWorkPhases();
+                 nPhase++)
+                {
+                    Schedule workFunction =
+                        new Schedule(
+                                     filterIter.getWorkFunctionPhase(nPhase),
+                                     filterIter.getUnspecializedIter());
+                    PhasingSchedule phase =
+                        new PhasingSchedule(
+                                            this,
+                                            workFunction,
+                                            filterIter.getPeekPhase(nPhase),
+                                            filterIter.getPopPhase(nPhase),
+                                            filterIter.getPushPhase(nPhase));
+                    addSteadySchedulePhase(phase);
+                }
         }
     }
 }

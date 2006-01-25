@@ -42,72 +42,72 @@ import javax.swing.SwingUtilities;
  */
 public class GPEscAction extends AbstractAction {
 
-	JButton button = null;
+    JButton button = null;
 
-	/** Creates a new instance
-	 * 
-	 */
-	public GPEscAction() {
-		super();
-	}
+    /** Creates a new instance
+     * 
+     */
+    public GPEscAction() {
+        super();
+    }
 
-	/** Creates a new instance for the esc button
-	 * 
-	 */
-	public GPEscAction(JButton button) {
-		super();
-		this.button = button;
-	}
+    /** Creates a new instance for the esc button
+     * 
+     */
+    public GPEscAction(JButton button) {
+        super();
+        this.button = button;
+    }
 
-	/**If the button is set, then
-	 * the method will call the do click
-	 * method at the button.
-	 * 
-	 * If the event source 
-	 * is a JInternalFrame or a Window, then
-	 * the action will call the dispose method. 
-	 * 
-	 * 
-	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-	 * @see javax.swing.JButton#doClick()
-	 */
-	public void actionPerformed(ActionEvent e) {
-		System.out.println(e.getSource().getClass());
+    /**If the button is set, then
+     * the method will call the do click
+     * method at the button.
+     * 
+     * If the event source 
+     * is a JInternalFrame or a Window, then
+     * the action will call the dispose method. 
+     * 
+     * 
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     * @see javax.swing.JButton#doClick()
+     */
+    public void actionPerformed(ActionEvent e) {
+        System.out.println(e.getSource().getClass());
 
-		// is the esc button set?
-		if (button != null){
-			button.doClick();
-			return;
-		}
-			 
+        // is the esc button set?
+        if (button != null){
+            button.doClick();
+            return;
+        }
+             
 
-		// is it an internal frame?
-		try {
-			JInternalFrame jif =
-				(JInternalFrame) SwingUtilities.getAncestorOfClass(
-					JInternalFrame.class,
-					(Component) e.getSource());
-			if (jif != null) {
-				jif.dispose();
-				return;
-			}
-		} catch (Exception ex) {
-			System.err.println(ex);
-		}
+        // is it an internal frame?
+        try {
+            JInternalFrame jif =
+                (JInternalFrame) SwingUtilities.getAncestorOfClass(
+                                                                   JInternalFrame.class,
+                                                                   (Component) e.getSource());
+            if (jif != null) {
+                jif.dispose();
+                return;
+            }
+        } catch (Exception ex) {
+            System.err.println(ex);
+        }
 
-		// is it an window?
-		try {
-			Window w =
-				(Window) SwingUtilities.getAncestorOfClass(
-					Window.class,
-					(Component) e.getSource());
-			if (w != null) {
-				w.dispose();
-				return;
-			}
-		} catch (Exception ex) {
-			System.err.println(ex);
-		}
+        // is it an window?
+        try {
+            Window w =
+                (Window) SwingUtilities.getAncestorOfClass(
+                                                           Window.class,
+                                                           (Component) e.getSource());
+            if (w != null) {
+                w.dispose();
+                return;
+            }
+        } catch (Exception ex) {
+            System.err.println(ex);
+        }
 
-	}
+    }
 }

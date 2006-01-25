@@ -40,7 +40,7 @@ package streamit.frontend.nodes;
  * specified, or gleaned from a program representation.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TempVarGen.java,v 1.5 2004-02-13 21:23:22 dmaze Exp $
+ * @version $Id: TempVarGen.java,v 1.6 2006-01-25 17:04:25 thies Exp $
  */
 public class TempVarGen
 {
@@ -111,14 +111,14 @@ public class TempVarGen
     private void checkPrefix(char c)
     {
         if (Character.isLetter(c))
-        {
-            char op = prefix.charAt(0);
-            if (c >= op)
             {
-                char np = (char)((int)c + 1);
-                prefix = String.valueOf(np);
+                char op = prefix.charAt(0);
+                if (c >= op)
+                    {
+                        char np = (char)((int)c + 1);
+                        prefix = String.valueOf(np);
+                    }
             }
-        }
     }
     
     /**

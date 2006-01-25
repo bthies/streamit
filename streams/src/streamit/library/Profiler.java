@@ -35,25 +35,25 @@ public class Profiler {
     private static final List tempOpToName = new LinkedList();
     // for constructing operations
     private static final int registerOp(String name) {
-	tempOpToName.add(name);
-	return tempOpToName.size()-1;
+        tempOpToName.add(name);
+        return tempOpToName.size()-1;
     }
 
     // the names of these fields should match those targetted from
     // streamit.frontend.tojava.NodesToJava.  
-    public static final int BINOP_ADD =	      registerOp("add");
-    public static final int BINOP_SUB =	      registerOp("sub");
-    public static final int BINOP_MUL =	      registerOp("mul");
-    public static final int BINOP_DIV =	      registerOp("div");
-    public static final int BINOP_MOD =	      registerOp("mod");
-    public static final int BINOP_AND =	      registerOp("and");
-    public static final int BINOP_OR = 	      registerOp("or");
-    public static final int BINOP_EQ = 	      registerOp("eq");
-    public static final int BINOP_NEQ =	      registerOp("neq");
-    public static final int BINOP_LT = 	      registerOp("lt");
-    public static final int BINOP_LE = 	      registerOp("le");
-    public static final int BINOP_GT = 	      registerOp("gt");
-    public static final int BINOP_GE = 	      registerOp("ge");
+    public static final int BINOP_ADD =       registerOp("add");
+    public static final int BINOP_SUB =       registerOp("sub");
+    public static final int BINOP_MUL =       registerOp("mul");
+    public static final int BINOP_DIV =       registerOp("div");
+    public static final int BINOP_MOD =       registerOp("mod");
+    public static final int BINOP_AND =       registerOp("and");
+    public static final int BINOP_OR =        registerOp("or");
+    public static final int BINOP_EQ =        registerOp("eq");
+    public static final int BINOP_NEQ =       registerOp("neq");
+    public static final int BINOP_LT =        registerOp("lt");
+    public static final int BINOP_LE =        registerOp("le");
+    public static final int BINOP_GT =        registerOp("gt");
+    public static final int BINOP_GE =        registerOp("ge");
     // These are bitwise AND/OR/XOR:       
     public static final int BINOP_BAND =      registerOp("band");
     public static final int BINOP_BOR =       registerOp("bor");
@@ -136,11 +136,11 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static int registerOp(int op, int id, String code, int val) {
-	idCode[id] = code;
-	idCounts[id]++;
-	intOps[op]++;
-	intTotal++;
-	return val;
+        idCode[id] = code;
+        idCounts[id]++;
+        intOps[op]++;
+        intTotal++;
+        return val;
     }
 
     /**
@@ -155,11 +155,11 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static float registerOp(int op, int id, String code, float val) {
-	idCode[id] = code;
-	idCounts[id]++;
-	floatOps[op]++;
-	floatTotal++;
-	return val;
+        idCode[id] = code;
+        idCounts[id]++;
+        floatOps[op]++;
+        floatTotal++;
+        return val;
     }
 
     /**
@@ -174,11 +174,11 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static boolean registerOp(int op, int id, String code, boolean val) {
-	idCode[id] = code;
-	idCounts[id]++;
-	boolOps[op]++;
-	boolTotal++;
-	return val;
+        idCode[id] = code;
+        idCounts[id]++;
+        boolOps[op]++;
+        boolTotal++;
+        return val;
     }
 
     /**
@@ -186,9 +186,9 @@ public class Profiler {
      * ID's there will be.
      */
     public static void setNumIds(int numIds) {
-	// initialize arrays
-	idCounts = new int[numIds];
-	idCode = new String[numIds];
+        // initialize arrays
+        idCounts = new int[numIds];
+        idCode = new String[numIds];
     }
 
     /**
@@ -202,8 +202,8 @@ public class Profiler {
      * @return The value of the parameter <val>.
      */
     public static String registerOp(int op, int id, String code, String val) {
-	// don't profile string ops, should only be used for debugging
-	return val;
+        // don't profile string ops, should only be used for debugging
+        return val;
     }
 
     /**
@@ -211,7 +211,7 @@ public class Profiler {
      * datatype -- will only be called once when pushing arrays.
      */
     public static void registerPop() {
-	popTotal++;
+        popTotal++;
     }
     
     /**
@@ -219,112 +219,112 @@ public class Profiler {
      * datatype -- will only be called once when pushing arrays.
      */
     public static void registerPush() {
-	pushTotal++;
+        pushTotal++;
     }
     
     /**
      * Called when the program has finished, to print results, etc.
      */
     public static void summarize() {
-	try {
-	    PrintStream out = new PrintStream(new FileOutputStream("countops.java.log"));
-	    summarize(out);
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            PrintStream out = new PrintStream(new FileOutputStream("countops.java.log"));
+            summarize(out);
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	System.out.println("Operation counts written to countops.java.log.");
+        System.out.println("Operation counts written to countops.java.log.");
     }
 
     /**
      * Write profile information to <out>.
      */
     private static void summarize(PrintStream out) throws IOException {
-	// total ops 
-	int opsTotal = floatTotal + intTotal + boolTotal;
-	out.println("Total ops:    " + opsTotal);
-	out.println("  float ops:  " + floatTotal);
-	out.println("  int ops:    " + intTotal);
-	out.println("  bool ops:   " + boolTotal);
+        // total ops 
+        int opsTotal = floatTotal + intTotal + boolTotal;
+        out.println("Total ops:    " + opsTotal);
+        out.println("  float ops:  " + floatTotal);
+        out.println("  int ops:    " + intTotal);
+        out.println("  bool ops:   " + boolTotal);
 
-	// communication
-	out.println();
-	out.println("Items pushed: " + pushTotal);
+        // communication
+        out.println();
+        out.println("Items pushed: " + pushTotal);
 
-	// communication-to-computation ratio
-	out.println();
-	out.println("Ops / push:   " + (opsTotal / (float)pushTotal));
-	out.println("  float+int:  " + ((floatTotal + intTotal) / (float)pushTotal));
-	out.println("  bool:       " + (boolTotal / (float)pushTotal));
+        // communication-to-computation ratio
+        out.println();
+        out.println("Ops / push:   " + (opsTotal / (float)pushTotal));
+        out.println("  float+int:  " + ((floatTotal + intTotal) / (float)pushTotal));
+        out.println("  bool:       " + (boolTotal / (float)pushTotal));
 
-	// float ops summary
-	out.println("\nFloat ops breakdown:");
-	for (int i=0; i<NUM_OPS; i++) {
-	    out.println("  " + OP_TO_NAME[i] + ": " + floatOps[i]);
-	}
-	// int ops summary
-	out.println("\nInt ops breakdown:");
-	for (int i=0; i<NUM_OPS; i++) {
-	    out.println("  " + OP_TO_NAME[i] + ": " + intOps[i]);
-	}
-	// float ops summary
-	out.println("\nBool ops breakdown:");
-	for (int i=0; i<NUM_OPS; i++) {
-	    out.println("  " + OP_TO_NAME[i] + ": " + boolOps[i]);
-	}
+        // float ops summary
+        out.println("\nFloat ops breakdown:");
+        for (int i=0; i<NUM_OPS; i++) {
+            out.println("  " + OP_TO_NAME[i] + ": " + floatOps[i]);
+        }
+        // int ops summary
+        out.println("\nInt ops breakdown:");
+        for (int i=0; i<NUM_OPS; i++) {
+            out.println("  " + OP_TO_NAME[i] + ": " + intOps[i]);
+        }
+        // float ops summary
+        out.println("\nBool ops breakdown:");
+        for (int i=0; i<NUM_OPS; i++) {
+            out.println("  " + OP_TO_NAME[i] + ": " + boolOps[i]);
+        }
 
-	// the count by actual statement in the code
-	out.println("\nCount for each static operation ID (see .java file for ID's):");
-	out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
-	out.println("------------------------------------------------------------------------------------------");
-	for (int i=0; i<idCounts.length; i++) {
-	    String code = (idCode[i] == null ? "" : idCode[i]);
-	    out.println("  " + format(i, 10) + format(idCounts[i], 15) + format(100*idCounts[i]/(float)opsTotal, 4) + "          " + code);
-	}
+        // the count by actual statement in the code
+        out.println("\nCount for each static operation ID (see .java file for ID's):");
+        out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
+        out.println("------------------------------------------------------------------------------------------");
+        for (int i=0; i<idCounts.length; i++) {
+            String code = (idCode[i] == null ? "" : idCode[i]);
+            out.println("  " + format(i, 10) + format(idCounts[i], 15) + format(100*idCounts[i]/(float)opsTotal, 4) + "          " + code);
+        }
 
-	// the sorted count by actual statement in the code
-	out.println("\nSorted count for each static operation ID (see .java file for ID's):");
-	out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
-	out.println("------------------------------------------------------------------------------------------");
-	// just do selection sort because I had it handy from C++ code
-	for (int i=0; i<idCounts.length; i++) {
-	    int max = 0;
-	    // find greatest
-	    for (int j=0; j<idCounts.length; j++) {
-		if (idCounts[j] > idCounts[max]) {
-		    max = j;
-		}
-	    }
-	    // print greatest
-	    String code = (idCode[max] == null ? "" : idCode[max]);
-	    out.println("  " + format(max, 10) + format(idCounts[max], 15) + format(100*idCounts[max]/(float)opsTotal, 4) + "          " + code);
-	    // zero-out greatest
-	    idCounts[max] = -1;
-	}
+        // the sorted count by actual statement in the code
+        out.println("\nSorted count for each static operation ID (see .java file for ID's):");
+        out.println("  ID        COUNT          % OF TOTAL    CODE (if no arith op, then on RHS of +=, *=, etc) ");
+        out.println("------------------------------------------------------------------------------------------");
+        // just do selection sort because I had it handy from C++ code
+        for (int i=0; i<idCounts.length; i++) {
+            int max = 0;
+            // find greatest
+            for (int j=0; j<idCounts.length; j++) {
+                if (idCounts[j] > idCounts[max]) {
+                    max = j;
+                }
+            }
+            // print greatest
+            String code = (idCode[max] == null ? "" : idCode[max]);
+            out.println("  " + format(max, 10) + format(idCounts[max], 15) + format(100*idCounts[max]/(float)opsTotal, 4) + "          " + code);
+            // zero-out greatest
+            idCounts[max] = -1;
+        }
     }
 
     /**
      * Formats <f> into an <n>-character string.
      */
     private static String format(float f, int n) {
-	String str = ""+f;
-	int length = str.length();
-	for (int j=length; j<n; j++) {
-	    str += " ";
-	}
-	return str.substring(0, n);
+        String str = ""+f;
+        int length = str.length();
+        for (int j=length; j<n; j++) {
+            str += " ";
+        }
+        return str.substring(0, n);
     }
 
     /**
      * Formats <i> into an <n>-character string.
      */
     private static String format(int i, int n) {
-	String str = ""+i;
-	int length = str.length();
-	for (int j=length; j<n; j++) {
-	    str += " ";
-	}
-	return str;
+        String str = ""+i;
+        int length = str.length();
+        for (int j=length; j<n; j++) {
+            str += " ";
+        }
+        return str;
     }
 }

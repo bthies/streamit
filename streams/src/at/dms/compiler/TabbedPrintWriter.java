@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.7 2005-11-18 19:58:48 dimock Exp $
+ * $Id: TabbedPrintWriter.java,v 1.8 2006-01-25 17:00:42 thies Exp $
  */
 
 package at.dms.compiler;
@@ -28,136 +28,136 @@ import java.io.Writer;
  */
 public class TabbedPrintWriter implements at.dms.kjc.DeepCloneable {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     private TabbedPrintWriter() {} // for cloner only
 
-  /**
-   * construct a pretty printer object for java code
-   * @param	fileName		the file into the code is generated
-   */
-  public TabbedPrintWriter(Writer writer) {
-    p =  new PrintWriter(writer);
+    /**
+     * construct a pretty printer object for java code
+     * @param   fileName        the file into the code is generated
+     */
+    public TabbedPrintWriter(Writer writer) {
+        p =  new PrintWriter(writer);
 
-    this.pos = 0;
-  }
-
-  /**
-   * Close the stream at the end
-   */
-  public void close() {
-    p.close();
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  public int getLine() {
-    return line;
-  }
-
-  public int getColumn() {
-    return column;
-  }
-
-  public int getPos() {
-    return pos;
-  }
-
-  /**
-   * Set pos
-   */
-  public void setPos(int pos) {
-    this.pos = pos;
-  }
-
-  /**
-   * Increment tab
-   */
-  public void add(int pos) {
-    this.pos += pos;
-  }
-
-  /**
-   * Decrement tab
-   */
-  public void sub(int pos) {
-    this.pos -= pos;
-  }
-
-  /**
-   * Print a new line
-   */
-  public void println() {
-    p.println();
-    column = 0;
-    line++;
-  }
-
-  /**
-   * Print a string
-   */
-  public void print(String s) {
-    /*if (Math.max(column, pos) + s.length() > 80 && s.length() > 2) {
-      println();
-    }*/
-    checkPos();
-    p.print(s);
-    column += s.length();
-  }
-
-  // ----------------------------------------------------------------------
-  // PRIVATE METHODS
-  // ----------------------------------------------------------------------
-
-  private void checkPos() {
-    if (column < pos) {
-      p.print(space(pos - column));
-      column = Math.max(column, pos);
+        this.pos = 0;
     }
-  }
 
-  private String space(int count) {
-    if (count <= 0) {
-      count = 1;
+    /**
+     * Close the stream at the end
+     */
+    public void close() {
+        p.close();
     }
-    return spaceIn(count);
-  }
 
-  private String spaceIn(int count) {
-    return new String(new char[count]).replace((char)0, ' ');
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    public int getLine() {
+        return line;
+    }
 
-  private PrintWriter			p;
+    public int getColumn() {
+        return column;
+    }
 
-  protected int				pos;
-  protected int				line;
-  protected int				column;
+    public int getPos() {
+        return pos;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Set pos
+     */
+    public void setPos(int pos) {
+        this.pos = pos;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.compiler.TabbedPrintWriter other = new at.dms.compiler.TabbedPrintWriter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Increment tab
+     */
+    public void add(int pos) {
+        this.pos += pos;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.compiler.TabbedPrintWriter other) {
-  other.p = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p);
-  other.pos = this.pos;
-  other.line = this.line;
-  other.column = this.column;
-}
+    /**
+     * Decrement tab
+     */
+    public void sub(int pos) {
+        this.pos -= pos;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Print a new line
+     */
+    public void println() {
+        p.println();
+        column = 0;
+        line++;
+    }
+
+    /**
+     * Print a string
+     */
+    public void print(String s) {
+        /*if (Math.max(column, pos) + s.length() > 80 && s.length() > 2) {
+          println();
+          }*/
+        checkPos();
+        p.print(s);
+        column += s.length();
+    }
+
+    // ----------------------------------------------------------------------
+    // PRIVATE METHODS
+    // ----------------------------------------------------------------------
+
+    private void checkPos() {
+        if (column < pos) {
+            p.print(space(pos - column));
+            column = Math.max(column, pos);
+        }
+    }
+
+    private String space(int count) {
+        if (count <= 0) {
+            count = 1;
+        }
+        return spaceIn(count);
+    }
+
+    private String spaceIn(int count) {
+        return new String(new char[count]).replace((char)0, ' ');
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private PrintWriter         p;
+
+    protected int               pos;
+    protected int               line;
+    protected int               column;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.compiler.TabbedPrintWriter other = new at.dms.compiler.TabbedPrintWriter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.compiler.TabbedPrintWriter other) {
+        other.p = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p);
+        other.pos = this.pos;
+        other.line = this.line;
+        other.column = this.column;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

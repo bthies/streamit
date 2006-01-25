@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: HandleCreator.java,v 1.1 2001-08-30 16:32:24 thies Exp $
+ * $Id: HandleCreator.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -34,44 +34,44 @@ import at.dms.util.ArrayLocator;
  */
 class HandleCreator implements AccessorTransformer {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates a new HandleCreator object
-   * @param	insns			the array of instructions
-   * @param	handles			the array of instruction handles
-   */
-  public HandleCreator(Instruction[] insns, InstructionHandle[] handles) {
-    this.locator = new ArrayLocator(insns);
-    this.handles = handles;
-  }
-
-  /**
-   * Transforms the specified accessor.
-   * @param	accessor		the accessor to transform
-   * @return	the transformed accessor
-   */
-  public InstructionAccessor transform(InstructionAccessor accessor,
-				       AccessorContainer container)
-    throws BadAccessorException
-  {
-    int		index = locator.getIndex(accessor);
-
-    if (index == -1) {
-      throw new BadAccessorException("not in array: " + "container: " + container + ", accessor: " + accessor);
+    /**
+     * Creates a new HandleCreator object
+     * @param   insns           the array of instructions
+     * @param   handles         the array of instruction handles
+     */
+    public HandleCreator(Instruction[] insns, InstructionHandle[] handles) {
+        this.locator = new ArrayLocator(insns);
+        this.handles = handles;
     }
 
-    handles[index].attachTo(container);
+    /**
+     * Transforms the specified accessor.
+     * @param   accessor        the accessor to transform
+     * @return  the transformed accessor
+     */
+    public InstructionAccessor transform(InstructionAccessor accessor,
+                                         AccessorContainer container)
+        throws BadAccessorException
+    {
+        int     index = locator.getIndex(accessor);
 
-    return handles[index];
-  }
+        if (index == -1) {
+            throw new BadAccessorException("not in array: " + "container: " + container + ", accessor: " + accessor);
+        }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+        handles[index].attachTo(container);
 
-  private final ArrayLocator		locator;
-  private final InstructionHandle[]	handles;
+        return handles[index];
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private final ArrayLocator      locator;
+    private final InstructionHandle[]   handles;
 }

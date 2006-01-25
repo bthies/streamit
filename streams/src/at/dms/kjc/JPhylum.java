@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.10 2004-01-27 23:13:13 dmaze Exp $
+ * $Id: JPhylum.java,v 1.11 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,155 +33,155 @@ import at.dms.kjc.iterator.*;
 public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants, Finalizable {
     /*static Vector registry = new Vector (200);
       
-      public static void addTokenReference(JPhylum j) {
-      registry.add(j);
-      }
+    public static void addTokenReference(JPhylum j) {
+    registry.add(j);
+    }
       
-      public static JPhylum getTokenReference(int index) {
-      return ((JPhylum) registry.get(index));
-      }
+    public static JPhylum getTokenReference(int index) {
+    return ((JPhylum) registry.get(index));
+    }
       
-      public static int regSize() {
-      return registry.size();
-      }*/
+    public static int regSize() {
+    return registry.size();
+    }*/
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JPhylum() {} // for cloner only
 
-  /**
-   * construct an element of the parsing tree
-   * @param where the token reference of this node
-   */
-  public JPhylum(TokenReference where) {
-    super(where);
+    /**
+     * construct an element of the parsing tree
+     * @param where the token reference of this node
+     */
+    public JPhylum(TokenReference where) {
+        super(where);
 
-    //this.addTokenReference(this);
-  }
+        //this.addTokenReference(this);
+    }
 
 
-  // ----------------------------------------------------------------------
-  // FINALIZABLE INTERFACE
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // FINALIZABLE INTERFACE
+    // ----------------------------------------------------------------------
 
     public void assertMutable() {
-	assert !IterFactory.isFinalized(this): "A mutability check failed.";
+        assert !IterFactory.isFinalized(this): "A mutability check failed.";
     }
 
-  // ----------------------------------------------------------------------
-  // ERROR HANDLING
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ERROR HANDLING
+    // ----------------------------------------------------------------------
 
-  /**
-   * Adds a compiler error.
-   * Redefine this method to change error handling behaviour.
-   * @param	context		the context in which the error occurred
-   * @param	description	the message ident to be displayed
-   * @param	params		the array of parameters
-   *
-   */
-  protected void fail(CContext context, MessageDescription description, Object[] params)
-    throws PositionedError
-  {
-    throw new CLineError(getTokenReference(), description, params);
-  }
-
-  /**
-   * Verifies that the condition is true; otherwise adds an error.
-   * @param	context		the context in which the check occurred
-   * @param	cond		the condition to verify
-   * @param	description	the message ident to be displayed
-   * @param	params		the array of parameters
-   */
-  public final void check(CContext context, boolean cond, MessageDescription description, Object[] params)
-    throws PositionedError
-  {
-    if (!cond) {
-      fail(context, description, params);
+    /**
+     * Adds a compiler error.
+     * Redefine this method to change error handling behaviour.
+     * @param   context     the context in which the error occurred
+     * @param   description the message ident to be displayed
+     * @param   params      the array of parameters
+     *
+     */
+    protected void fail(CContext context, MessageDescription description, Object[] params)
+        throws PositionedError
+    {
+        throw new CLineError(getTokenReference(), description, params);
     }
-  }
 
-  /**
-   * Verifies that the condition is true; otherwise adds an error.
-   * @param	context		the context in which the check occurred
-   * @param	cond		the condition to verify
-   * @param	description	the message ident to be displayed
-   * @param	param1		the first parameter
-   * @param	param2		the second parameter
-   */
-  public final void check(CContext context, boolean cond, MessageDescription description, Object param1, Object param2)
-    throws PositionedError
-  {
-    if (!cond) {
-      fail(context, description, new Object[] { param1, param2 });
+    /**
+     * Verifies that the condition is true; otherwise adds an error.
+     * @param   context     the context in which the check occurred
+     * @param   cond        the condition to verify
+     * @param   description the message ident to be displayed
+     * @param   params      the array of parameters
+     */
+    public final void check(CContext context, boolean cond, MessageDescription description, Object[] params)
+        throws PositionedError
+    {
+        if (!cond) {
+            fail(context, description, params);
+        }
     }
-  }
 
-  /**
-   * Verifies that the condition is true; otherwise adds an error.
-   * @param	context		the context in which the check occurred
-   * @param	cond		the condition to verify
-   * @param	description	the message ident to be displayed
-   * @param	param		the parameter
-   */
-  public final void check(CContext context, boolean cond, MessageDescription description, Object param)
-    throws PositionedError
-  {
-    if (!cond) {
-      fail(context, description, new Object[] { param });
+    /**
+     * Verifies that the condition is true; otherwise adds an error.
+     * @param   context     the context in which the check occurred
+     * @param   cond        the condition to verify
+     * @param   description the message ident to be displayed
+     * @param   param1      the first parameter
+     * @param   param2      the second parameter
+     */
+    public final void check(CContext context, boolean cond, MessageDescription description, Object param1, Object param2)
+        throws PositionedError
+    {
+        if (!cond) {
+            fail(context, description, new Object[] { param1, param2 });
+        }
     }
-  }
 
-  /**
-   * Verifies that the condition is true; otherwise adds an error.
-   * @param	context		the context in which the check occurred
-   * @param	cond		the condition to verify
-   * @param	description	the message ident to be displayed
-   */
-  public final void check(CContext context, boolean cond, MessageDescription description)
-    throws PositionedError
-  {
-    if (!cond) {
-      fail(context, description, null);
+    /**
+     * Verifies that the condition is true; otherwise adds an error.
+     * @param   context     the context in which the check occurred
+     * @param   cond        the condition to verify
+     * @param   description the message ident to be displayed
+     * @param   param       the parameter
+     */
+    public final void check(CContext context, boolean cond, MessageDescription description, Object param)
+        throws PositionedError
+    {
+        if (!cond) {
+            fail(context, description, new Object[] { param });
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Verifies that the condition is true; otherwise adds an error.
+     * @param   context     the context in which the check occurred
+     * @param   cond        the condition to verify
+     * @param   description the message ident to be displayed
+     */
+    public final void check(CContext context, boolean cond, MessageDescription description)
+        throws PositionedError
+    {
+        if (!cond) {
+            fail(context, description, null);
+        }
+    }
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public abstract void accept(KjcVisitor p);
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public abstract void accept(KjcVisitor p);
 
     /**
      * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public abstract Object accept(AttributeVisitor p);
+     * @param   p       the visitor
+     */
+    public abstract Object accept(AttributeVisitor p);
 
-  /**
-   * Sets the line number of this phylum in the code sequence.
-   *
-   * @param	code		the bytecode sequence
-   */
-  public void setLineNumber(CodeSequence code) {
-    code.setLineNumber(getTokenReference().getLine());
-  }
+    /**
+     * Sets the line number of this phylum in the code sequence.
+     *
+     * @param   code        the bytecode sequence
+     */
+    public void setLineNumber(CodeSequence code) {
+        code.setLineNumber(getTokenReference().getLine());
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JPhylum other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JPhylum other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

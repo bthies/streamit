@@ -90,49 +90,49 @@ public class ImageDisplay extends Filter {
         info.setPreferredSize(new Dimension(130, 20));
 
         timer = new Timer(50, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                currentImage += 1;
-                if (currentImage > imageList.size())
-                  currentImage = 1;
-                displayWindow.repaint();
-            }
-          });
+                public void actionPerformed(ActionEvent e) {
+                    currentImage += 1;
+                    if (currentImage > imageList.size())
+                        currentImage = 1;
+                    displayWindow.repaint();
+                }
+            });
 
         JButton buttonFrameBck = new JButton("<");
         buttonFrameBck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              timer.stop();
-              currentImage -= 1;
-              if (currentImage <= 0) {
-                currentImage = 1;
-              }
-              displayWindow.repaint();
-            }
-          });
+                public void actionPerformed(ActionEvent e) {
+                    timer.stop();
+                    currentImage -= 1;
+                    if (currentImage <= 0) {
+                        currentImage = 1;
+                    }
+                    displayWindow.repaint();
+                }
+            });
         JButton buttonFrameFwd = new JButton(">");
         buttonFrameFwd.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              timer.stop();
-              currentImage += 1;
-              if (currentImage > imageList.size()) {
-                currentImage = imageList.size();
-              }
-              displayWindow.repaint();
-            }
-          });
+                public void actionPerformed(ActionEvent e) {
+                    timer.stop();
+                    currentImage += 1;
+                    if (currentImage > imageList.size()) {
+                        currentImage = imageList.size();
+                    }
+                    displayWindow.repaint();
+                }
+            });
 
         JButton buttonPlay = new JButton("Play");
         buttonPlay.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              timer.start();
-            }
-          });
+                public void actionPerformed(ActionEvent e) {
+                    timer.start();
+                }
+            });
         JButton buttonStop = new JButton("Stop");
         buttonStop.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-              timer.stop();
-            }
-          });
+                public void actionPerformed(ActionEvent e) {
+                    timer.stop();
+                }
+            });
 
         JWindow controlWindow = new JWindow();
         int controlWindow_width = 280;
@@ -209,26 +209,26 @@ public class ImageDisplay extends Filter {
 
 /* -- Code from Sun's Online Training Website, August 2nd 2002 --- */
 class WindowDragger extends MouseInputAdapter {
-  JWindow window;
-  Point origin = new Point();
+    JWindow window;
+    Point origin = new Point();
 
-  public WindowDragger(JWindow window) {
-    this.window = window;
-  }
+    public WindowDragger(JWindow window) {
+        this.window = window;
+    }
 
-  public void mousePressed(MouseEvent e) {
-    // Remember offset into window for dragging
-    origin.x = e.getX();
-    origin.y = e.getY();
-  }
+    public void mousePressed(MouseEvent e) {
+        // Remember offset into window for dragging
+        origin.x = e.getX();
+        origin.y = e.getY();
+    }
 
-  public void mouseDragged(MouseEvent e) {
-    // Move window relative to drag start
-    Point p = window.getLocation();
-    window.setLocation(
-      p.x + e.getX() - origin.x, 
-      p.y + e.getY() - origin.y);
-  }
+    public void mouseDragged(MouseEvent e) {
+        // Move window relative to drag start
+        Point p = window.getLocation();
+        window.setLocation(
+                           p.x + e.getX() - origin.x, 
+                           p.y + e.getY() - origin.y);
+    }
 
 }
 /* --- 

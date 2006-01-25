@@ -33,24 +33,24 @@ public class StreamFactory
     public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (streamIter.isFilter() != null)
-        {
-            return new Filter(streamIter.isFilter());
-        }
+            {
+                return new Filter(streamIter.isFilter());
+            }
 
         if (streamIter.isPipeline() != null)
-        {
-            return new Pipeline(streamIter.isPipeline(), this);
-        }
+            {
+                return new Pipeline(streamIter.isPipeline(), this);
+            }
         
         if (streamIter.isSplitJoin() != null)
-        {
-            return new SplitJoin(streamIter.isSplitJoin(), this);
-        }
+            {
+                return new SplitJoin(streamIter.isSplitJoin(), this);
+            }
 
         if (streamIter.isFeedbackLoop() != null)
-        {
-            return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
-        }
+            {
+                return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
+            }
 
         ERROR ("Unsupported type passed to StreamFactory!");
         return null;

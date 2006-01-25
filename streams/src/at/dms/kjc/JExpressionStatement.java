@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpressionStatement.java,v 1.11 2005-01-23 00:33:01 thies Exp $
+ * $Id: JExpressionStatement.java,v 1.12 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,112 +33,112 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JExpressionStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JExpressionStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	expr		the expression to evaluate.
-   */
-  public JExpressionStatement(TokenReference where, JExpression expr, JavaStyleComment[] comments) {
-    super(where, comments);
-    this.expr = expr;
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   expr        the expression to evaluate.
+     */
+    public JExpressionStatement(TokenReference where, JExpression expr, JavaStyleComment[] comments) {
+        super(where, comments);
+        this.expr = expr;
+    }
 
-  public JExpressionStatement(JExpression expr) {
-      this(null, expr, null);
-  }
+    public JExpressionStatement(JExpression expr) {
+        this(null, expr, null);
+    }
 
-  public JExpression getExpression() {
-    return expr;
-  }
+    public JExpression getExpression() {
+        return expr;
+    }
 
-  public void setExpression(JExpression expr) {
-    this.expr = expr;
-  }
+    public void setExpression(JExpression expr) {
+        this.expr = expr;
+    }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    // the result of the expression will be discarded
-    expr = expr.analyse(new CExpressionContext(context, false, true));
-    check(context, expr.isStatementExpression(), KjcMessages.INVALID_EXPRESSION_STATEMENT);
-  }
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        // the result of the expression will be discarded
+        expr = expr.analyse(new CExpressionContext(context, false, true));
+        check(context, expr.isStatementExpression(), KjcMessages.INVALID_EXPRESSION_STATEMENT);
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitExpressionStatement(this, expr);
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitExpressionStatement(this, expr);
+    }
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-    return p.visitExpressionStatement(this, expr);
-  }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitExpressionStatement(this, expr);
+    }
   
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    // ignore the result
-    expr.genCode(code, true);
-  }
+        // ignore the result
+        expr.genCode(code, true);
+    }
 
-  public String toString() {
-    StringBuffer	buffer = new StringBuffer();
+    public String toString() {
+        StringBuffer    buffer = new StringBuffer();
 
-    buffer.append("JExpressionStatement[");
-    buffer.append(expr.toString());
-    buffer.append("]");
-    return buffer.toString();
-  }
+        buffer.append("JExpressionStatement[");
+        buffer.append(expr.toString());
+        buffer.append("]");
+        return buffer.toString();
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression		expr;
+    private JExpression     expr;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JExpressionStatement other = new at.dms.kjc.JExpressionStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JExpressionStatement other = new at.dms.kjc.JExpressionStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JExpressionStatement other) {
-  super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JExpressionStatement other) {
+        super.deepCloneInto(other);
+        other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QVoid.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QVoid.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -27,88 +27,88 @@ import at.dms.util.InconsistencyException;
  */
 class QVoid extends QNode {
 
-  public QVoid(QOrigin origin) {
-    this.origin = origin;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Human readable form
-   */
-  public String toString() {
-    return "V " +  origin;
-  }
-
-  /**
-   * The type of this instruction
-   */
-  public int getType() {
-    return at.dms.classfile.Constants.TYP_VOID;
-  }
-
-  /**
-   * Returns the primitive instruction
-   */
-  public InstructionHandle getInstruction() {
-    return origin.getInstruction();
-  }
-
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the defined temporary.
-   */
-  public QTemporary getDef() {
-    return null;
-  }
-
-  /**
-   * Returns the used temporaries.
-   */
-  public QTemporary[] getUses() {
-    return origin.getUses();
-  }
-
-  /**
-   * returns the parameters of this instruction
-   */
-  public QOrigin[] getOrigins() {
-    return origin.getOrigins();
-  }
-
-  /**
-   * Sets the parameters of this instruction
-   */
-  public void setOrigin(QOrigin origin, int i) {
-    if (this.origin instanceof QOperator) {
-      this.origin.setOrigin(origin, i);
-    } else if (i == 0) {
-      this.origin = origin;
-    } else {
-      throw new InconsistencyException();
+    public QVoid(QOrigin origin) {
+        this.origin = origin;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  public void generate(CodeSequence seq) {
-    origin.generate(seq);
-  }
+    /**
+     * Human readable form
+     */
+    public String toString() {
+        return "V " +  origin;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * The type of this instruction
+     */
+    public int getType() {
+        return at.dms.classfile.Constants.TYP_VOID;
+    }
 
-  private QOrigin	origin;
+    /**
+     * Returns the primitive instruction
+     */
+    public InstructionHandle getInstruction() {
+        return origin.getInstruction();
+    }
+
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the defined temporary.
+     */
+    public QTemporary getDef() {
+        return null;
+    }
+
+    /**
+     * Returns the used temporaries.
+     */
+    public QTemporary[] getUses() {
+        return origin.getUses();
+    }
+
+    /**
+     * returns the parameters of this instruction
+     */
+    public QOrigin[] getOrigins() {
+        return origin.getOrigins();
+    }
+
+    /**
+     * Sets the parameters of this instruction
+     */
+    public void setOrigin(QOrigin origin, int i) {
+        if (this.origin instanceof QOperator) {
+            this.origin.setOrigin(origin, i);
+        } else if (i == 0) {
+            this.origin = origin;
+        } else {
+            throw new InconsistencyException();
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    public void generate(CodeSequence seq) {
+        origin.generate(seq);
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private QOrigin origin;
 }

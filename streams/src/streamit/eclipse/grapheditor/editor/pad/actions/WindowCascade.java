@@ -1,5 +1,5 @@
 /*
- * @(#)WindowCascade.java	1.2 09.02.2003
+ * @(#)WindowCascade.java   1.2 09.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,61 +37,61 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class WindowCascade extends AbstractActionDefault {
 
-	/**
-	 * Constructor for WindowCascade.
-	 * @param graphpad
-	 */
-	public WindowCascade(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for WindowCascade.
+     * @param graphpad
+     */
+    public WindowCascade(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Calls the method setLocation, setSize
-	 * and toFont for each JInternalFrame.
-	 *
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		JInternalFrame[] ajif = graphpad.getAllFrames();
-		if (!(ajif.length > 0))
-			return;
+    /**
+     * Calls the method setLocation, setSize
+     * and toFont for each JInternalFrame.
+     *
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        JInternalFrame[] ajif = graphpad.getAllFrames();
+        if (!(ajif.length > 0))
+            return;
 
-		try {
-			ajif[0].setMaximum(true);
-		} catch (PropertyVetoException pve) {
-		}
+        try {
+            ajif[0].setMaximum(true);
+        } catch (PropertyVetoException pve) {
+        }
 
-		int desktopX = ajif[0].getX();
-		int desktopY = ajif[0].getY();
-		int desktopWidth = ajif[0].getWidth();
-		int desktopHeight = ajif[0].getHeight();
-		int diffWidth = 20;
-		int diffHeight = 20;
+        int desktopX = ajif[0].getX();
+        int desktopY = ajif[0].getY();
+        int desktopWidth = ajif[0].getWidth();
+        int desktopHeight = ajif[0].getHeight();
+        int diffWidth = 20;
+        int diffHeight = 20;
 
-		for (int i = 0; i < ajif.length; i++) {
-			int frmWidth = desktopWidth - (ajif.length - 1) * diffWidth;
-			int frmHeight = desktopHeight - (ajif.length - 1) * diffHeight;
+        for (int i = 0; i < ajif.length; i++) {
+            int frmWidth = desktopWidth - (ajif.length - 1) * diffWidth;
+            int frmHeight = desktopHeight - (ajif.length - 1) * diffHeight;
 
-			try {
-				ajif[i].setIcon(false);
-				ajif[i].setMaximum(false);
-			} catch (java.beans.PropertyVetoException pvex) {
-				// do nothing only display error
-			}
+            try {
+                ajif[i].setIcon(false);
+                ajif[i].setMaximum(false);
+            } catch (java.beans.PropertyVetoException pvex) {
+                // do nothing only display error
+            }
 
-			ajif[i].setLocation(desktopX, desktopY);
-			ajif[i].setSize(frmWidth, frmHeight);
-			ajif[i].toFront();
+            ajif[i].setLocation(desktopX, desktopY);
+            ajif[i].setSize(frmWidth, frmHeight);
+            ajif[i].toFront();
 
-			try {
-				ajif[i].setSelected(true);
-			} catch (java.beans.PropertyVetoException pvex) {
-				// do nothing only display error
-			}
+            try {
+                ajif[i].setSelected(true);
+            } catch (java.beans.PropertyVetoException pvex) {
+                // do nothing only display error
+            }
 
-			desktopX += diffWidth;
-			desktopY += diffHeight;
-		}
-	}
+            desktopX += diffWidth;
+            desktopY += diffHeight;
+        }
+    }
 
 }

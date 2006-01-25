@@ -8,41 +8,41 @@ import org.eclipse.swt.widgets.Control;
  */
 public class ManageBreakpointRulerInfo implements IVerticalRulerInfo {
 
-	private int fLineNumber;
+    private int fLineNumber;
 
-	public ManageBreakpointRulerInfo() {
-		super();
-	}
+    public ManageBreakpointRulerInfo() {
+        super();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getControl()
-	 */
-	public Control getControl() {
-		return null;
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getControl()
+     */
+    public Control getControl() {
+        return null;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getLineOfLastMouseButtonActivity()
-	 */
-	public int getLineOfLastMouseButtonActivity() {
-		return fLineNumber;
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getLineOfLastMouseButtonActivity()
+     */
+    public int getLineOfLastMouseButtonActivity() {
+        return fLineNumber;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.text.source.IVerticalRulerInfo#toDocumentLineNumber(int)
-	 */
-	public int toDocumentLineNumber(int y_coordinate) {
-		return 0;
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.text.source.IVerticalRulerInfo#toDocumentLineNumber(int)
+     */
+    public int toDocumentLineNumber(int y_coordinate) {
+        return 0;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getWidth()
-	 */
-	public int getWidth() {
-		return 0;
-	}
-	
-	protected void setLineNumber(int l) {
-		fLineNumber = l;
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.text.source.IVerticalRulerInfo#getWidth()
+     */
+    public int getWidth() {
+        return 0;
+    }
+    
+    protected void setLineNumber(int l) {
+        fLineNumber = l;
+    }
 }

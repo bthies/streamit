@@ -24,7 +24,7 @@ import java.util.*;
  * by derived classes.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DataFlow.java,v 1.1 2004-01-21 21:04:30 dmaze Exp $
+ * @version $Id: DataFlow.java,v 1.2 2006-01-25 17:04:23 thies Exp $
  */
 public abstract class DataFlow
 {
@@ -59,36 +59,36 @@ public abstract class DataFlow
             dfin.put(iter.next(), top);
 
         while (!worklist.isEmpty())
-        {
-            // Get an arbitrary element from the list.
-            CFGNode b = (CFGNode)worklist.iterator().next();
-            worklist.remove(b);
-            Lattice totaleffect = top;
+            {
+                // Get an arbitrary element from the list.
+                CFGNode b = (CFGNode)worklist.iterator().next();
+                worklist.remove(b);
+                Lattice totaleffect = top;
             
-            List preds;
-            if (isForward())
-                preds = cfg.getPredecessors(b);
-            else
-                preds = cfg.getSuccessors(b);
-            for (Iterator iter = preds.iterator(); iter.hasNext(); )
-            {
-                CFGNode p = (CFGNode)iter.next();
-                Lattice in = (Lattice)dfin.get(p);
-                Lattice effect = flowFunction(p, in);
-                totaleffect = totaleffect.meet(effect);
-            }
-
-            if (!totaleffect.equals(dfin.get(b)))
-            {
-                // entry to this node has changed; save new value
-                // and put successors in worklist
-                dfin.put(b, totaleffect);
+                List preds;
                 if (isForward())
-                    worklist.addAll(cfg.getSuccessors(b));
+                    preds = cfg.getPredecessors(b);
                 else
-                    worklist.addAll(cfg.getPredecessors(b));
+                    preds = cfg.getSuccessors(b);
+                for (Iterator iter = preds.iterator(); iter.hasNext(); )
+                    {
+                        CFGNode p = (CFGNode)iter.next();
+                        Lattice in = (Lattice)dfin.get(p);
+                        Lattice effect = flowFunction(p, in);
+                        totaleffect = totaleffect.meet(effect);
+                    }
+
+                if (!totaleffect.equals(dfin.get(b)))
+                    {
+                        // entry to this node has changed; save new value
+                        // and put successors in worklist
+                        dfin.put(b, totaleffect);
+                        if (isForward())
+                            worklist.addAll(cfg.getSuccessors(b));
+                        else
+                            worklist.addAll(cfg.getPredecessors(b));
+                    }
             }
-        }
 
         return dfin;
     }

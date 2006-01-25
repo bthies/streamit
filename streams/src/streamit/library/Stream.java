@@ -109,15 +109,15 @@ public abstract class Stream extends Operator
     }
 
     public Stream(int a, int b, float[][] c, float[] d) {
-	super(a,b,c,d);
+        super(a,b,c,d);
     }
 
     public Stream(int a, int b, int c, float[][] d, float[] e) {
-	super(a,b,c,d,e);
+        super(a,b,c,d,e);
     }
 
     public Stream(int a, boolean b, float c, float d, float[][] e, float[] f) {
-	super(a,b,c,d,e,f);
+        super(a,b,c,d,e,f);
     }
 
     public Stream(int a, int b, int c, int d, float[][] e)
@@ -141,28 +141,28 @@ public abstract class Stream extends Operator
     }
 
     public Stream(
-        int a,
-        int b,
-        int c,
-        int d,
-        int e,
-        int f,
-        float g,
-        float h)
+                  int a,
+                  int b,
+                  int c,
+                  int d,
+                  int e,
+                  int f,
+                  float g,
+                  float h)
     {
         super(a, b, c, d, e, f, g, h);
     }
 
     public Stream(
-        int a,
-        int b,
-        int c,
-        int d,
-        int e,
-        int f,
-        int g,
-        float h,
-        float i)
+                  int a,
+                  int b,
+                  int c,
+                  int d,
+                  int e,
+                  int f,
+                  int g,
+                  float h,
+                  float i)
     {
         super(a, b, c, d, e, f, g, h, i);
     }
@@ -332,31 +332,31 @@ public abstract class Stream extends Operator
     }
 
     public Stream(
-        int n1,
-        int n2,
-        int n3,
-        int n4,
-        int n5,
-        int n6,
-        int n7,
-        int n8,
-        int n9,
-        int n10,
-        float f)
+                  int n1,
+                  int n2,
+                  int n3,
+                  int n4,
+                  int n5,
+                  int n6,
+                  int n7,
+                  int n8,
+                  int n9,
+                  int n10,
+                  float f)
     {
         super(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
     }
 
     public Stream(
-        int n1,
-        int n2,
-        int n3,
-        int n4,
-        int n5,
-        int n6,
-        int n7,
-        int n8,
-        int n9)
+                  int n1,
+                  int n2,
+                  int n3,
+                  int n4,
+                  int n5,
+                  int n6,
+                  int n7,
+                  int n8,
+                  int n9)
     {
         super(n1, n2, n3, n4, n5, n6, n7, n8, n9);
     }
@@ -377,16 +377,16 @@ public abstract class Stream extends Operator
     }
 
     public Stream(
-        int i1,
-        int i2,
-        int i3,
-        int i4,
-        int i5,
-        int i6,
-        int i7,
-        int i8,
-        int i9,
-        float f)
+                  int i1,
+                  int i2,
+                  int i3,
+                  int i4,
+                  int i5,
+                  int i6,
+                  int i7,
+                  int i8,
+                  int i9,
+                  float f)
     {
         super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
     }
@@ -460,7 +460,7 @@ public abstract class Stream extends Operator
      * unpredictable exceptions).
      */
     public int hashCode() {
-	return id;
+        return id;
     }
 
     // ------------------------------------------------------------------
@@ -537,10 +537,10 @@ public abstract class Stream extends Operator
     {
         int size = integers.size();
         while (size < i + 1)
-        {
-            integers.add(new Integer(size));
-            size++;
-        }
+            {
+                integers.add(new Integer(size));
+                size++;
+            }
 
         return (Integer)integers.get(i);
     }
@@ -548,10 +548,10 @@ public abstract class Stream extends Operator
     public int computeSize(Object s, boolean top)
     {
         if (sizeMap.get(s) != null)
-        {
-            //System.out.print (".");
-            return 0;
-        }
+            {
+                //System.out.print (".");
+                return 0;
+            }
 
         {
             assert s instanceof Schedule;
@@ -566,9 +566,9 @@ public abstract class Stream extends Operator
 
             int size = sched.getNumPhases();
             for (int nSched = 0; nSched < sched.getNumPhases(); nSched++)
-            {
-                size += computeSize(sched.getSubSched(nSched), top);
-            }
+                {
+                    size += computeSize(sched.getSubSched(nSched), top);
+                }
 
             return size;
         }
@@ -577,79 +577,79 @@ public abstract class Stream extends Operator
     void runSchedule(Object schedule, Object function)
     {
         if (schedule instanceof Operator)
-        {
-            numSteadyStates++;
-            if (numSteadyStates == 10000)
             {
-                if (marksteady)
-                    System.out.print(".");
-                numSteadyStates = 0;
-            }
-            Operator oper = (Operator)schedule;
-            int filterPop, filterPush;
-            if (oper instanceof Filter)
-            {
-                Filter f = (Filter)oper;
-                f.executeNextPhase((String)function);
-            }
-            else if (oper instanceof SplitJoin)
-            {
-                assert function instanceof Pair;
-                Pair pair = (Pair)function;
-                assert pair.getFirst() instanceof Operator;
-                Operator sORj = (Operator)pair.getFirst();
-                int funcNum = ((Integer)pair.getSecond()).intValue();
+                numSteadyStates++;
+                if (numSteadyStates == 10000)
+                    {
+                        if (marksteady)
+                            System.out.print(".");
+                        numSteadyStates = 0;
+                    }
+                Operator oper = (Operator)schedule;
+                int filterPop, filterPush;
+                if (oper instanceof Filter)
+                    {
+                        Filter f = (Filter)oper;
+                        f.executeNextPhase((String)function);
+                    }
+                else if (oper instanceof SplitJoin)
+                    {
+                        assert function instanceof Pair;
+                        Pair pair = (Pair)function;
+                        assert pair.getFirst() instanceof Operator;
+                        Operator sORj = (Operator)pair.getFirst();
+                        int funcNum = ((Integer)pair.getSecond()).intValue();
 
-                sORj.doWork();
-            }
-            else if (oper instanceof FeedbackLoop)
-            {
-                assert function instanceof Operator;
-                ((Operator)function).doWork();
-            }
-            else
-                assert false : oper;
+                        sORj.doWork();
+                    }
+                else if (oper instanceof FeedbackLoop)
+                    {
+                        assert function instanceof Operator;
+                        ((Operator)function).doWork();
+                    }
+                else
+                    assert false : oper;
 
-        }
+            }
     }
     void runSchedule(Object schedule, int nTimes)
     {
         if (schedule instanceof Schedule)
-        {
-            Schedule repSchedule = (Schedule)schedule;
-
-            for (; nTimes > 0; nTimes--)
             {
-                if (repSchedule.isBottomSchedule())
-                {
-                    runSchedule(
-                        repSchedule.getStream().getObject(),
-                        repSchedule.getWorkFunc());
-                }
-                else
-                {
-                    int nSched;
-                    for (nSched = 0;
-                        nSched < repSchedule.getNumPhases();
-                        nSched++)
-                    {
-                        runSchedule(
-                            repSchedule.getSubSched(nSched),
-                            repSchedule.getSubSchedNumExecs(nSched));
-                    }
-                }
-            }
+                Schedule repSchedule = (Schedule)schedule;
 
-        }
+                for (; nTimes > 0; nTimes--)
+                    {
+                        if (repSchedule.isBottomSchedule())
+                            {
+                                runSchedule(
+                                            repSchedule.getStream().getObject(),
+                                            repSchedule.getWorkFunc());
+                            }
+                        else
+                            {
+                                int nSched;
+                                for (nSched = 0;
+                                     nSched < repSchedule.getNumPhases();
+                                     nSched++)
+                                    {
+                                        runSchedule(
+                                                    repSchedule.getSubSched(nSched),
+                                                    repSchedule.getSubSchedNumExecs(nSched));
+                                    }
+                            }
+                    }
+
+            }
         else
             assert false : schedule;
     }
 
     /* removing this to force people to pass arguments
-    public void run ()
-    {
-        run(null);
-    }
+       public void run ()
+       {
+       run(null);
+       }
     */
 
     Stream getStreamFromString(String path)
@@ -663,10 +663,10 @@ public abstract class Stream extends Operator
      * rate is detected in the stream graph).
      */
     public static void ensureUnscheduled() {
-	if (scheduledRun) {
-	    //System.out.println("Note: detected dynamic rate in stream graph, using demand-driven schedule.");
-	    scheduledRun = false;
-	}
+        if (scheduledRun) {
+            //System.out.println("Note: detected dynamic rate in stream graph, using demand-driven schedule.");
+            scheduledRun = false;
+        }
     }
     
     // just a runtime hook to run the stream
@@ -680,255 +680,255 @@ public abstract class Stream extends Operator
         String sdepTOPString = null, sdepBOTTOMString = null;
         int nIters = -1;
 
-	// we're running this as the toplevel stream
-	toplevel = this;
+        // we're running this as the toplevel stream
+        toplevel = this;
 
-	try {
-        // read the args:
-        if (args != null)
-        {
-            int length = args.length;
-            int index;
-            for (index = 0; index < length; index++)
-            {
-                if (args[index].equals("-nosched"))
+        try {
+            // read the args:
+            if (args != null)
                 {
-                    scheduledRun = false;
+                    int length = args.length;
+                    int index;
+                    for (index = 0; index < length; index++)
+                        {
+                            if (args[index].equals("-nosched"))
+                                {
+                                    scheduledRun = false;
+                                }
+                            else if (args[index].equals("-printgraph"))
+                                {
+                                    printGraph = true;
+                                }
+                            else if (args[index].equals("-i"))
+                                {
+                                    index++;
+                                    nIters = Integer.valueOf(args[index]).intValue();
+                                }
+                            else if (args[index].equals("-marksteady"))
+                                {
+                                    marksteady = true;
+                                }
+                            else if (args[index].equals("-printsched"))
+                                {
+                                    printsched = true;
+                                }
+                            else if (args[index].equals("-printreps"))
+                                {
+                                    printreps = true;
+                                }
+                            else if (args[index].equals("-norun"))
+                                {
+                                    doRun = false;
+                                }
+                            else if (args[index].equals("-singeappsched"))
+                                {
+                                    singeappsched = true;
+                                }
+                            else if (args[index].equals("-finegrained"))
+                                {
+                                    finegrained = true;
+                                }
+                            else if (args[index].equals("-printsdep"))
+                                {
+                                    printSDEP = true;
+                                    sdepTOPString = args[index + 1];
+                                    sdepBOTTOMString = args[index + 2];
+                                    index += 2;
+                                }
+                            else
+                                {
+                                    ERROR("Unrecognized argument: " + args[index] + ".");
+                                }
+                        }
                 }
-                else if (args[index].equals("-printgraph"))
-                {
-                    printGraph = true;
-                }
-                else if (args[index].equals("-i"))
-                {
-                    index++;
-                    nIters = Integer.valueOf(args[index]).intValue();
-                }
-                else if (args[index].equals("-marksteady"))
-                {
-                    marksteady = true;
-                }
-                else if (args[index].equals("-printsched"))
-                {
-                    printsched = true;
-                }
-                else if (args[index].equals("-printreps"))
-                {
-                    printreps = true;
-                }
-                else if (args[index].equals("-norun"))
-                {
-                    doRun = false;
-                }
-                else if (args[index].equals("-singeappsched"))
-                {
-                    singeappsched = true;
-                }
-                else if (args[index].equals("-finegrained"))
-                {
-                    finegrained = true;
-                }
-                else if (args[index].equals("-printsdep"))
-                {
-                    printSDEP = true;
-                    sdepTOPString = args[index + 1];
-                    sdepBOTTOMString = args[index + 2];
-                    index += 2;
-                }
-                else
-                {
-                    ERROR("Unrecognized argument: " + args[index] + ".");
-                }
-            }
-        }
 
-        setupOperator();
+            setupOperator();
 
-        if (getInputChannel() != null)
-            throw new IllegalArgumentException(
-            "The toplevel stream can't have any input or output channels,\n"
-            + "but in this program there is an input to the first filter.");
-        if (getOutputChannel() != null)
-            throw new IllegalArgumentException(
-            "The toplevel stream can't have any input or output channels,\n"
-            + "but in this program there is an output of the last filter.");
+            if (getInputChannel() != null)
+                throw new IllegalArgumentException(
+                                                   "The toplevel stream can't have any input or output channels,\n"
+                                                   + "but in this program there is an input to the first filter.");
+            if (getOutputChannel() != null)
+                throw new IllegalArgumentException(
+                                                   "The toplevel stream can't have any input or output channels,\n"
+                                                   + "but in this program there is an output of the last filter.");
 
-        if (finegrained)
-        {
-            streamit.library.iriter.SplitJoinIter.fineGrained = true;
-            streamit.library.Splitter.finegrained = true;
-            streamit.library.Joiner.finegrained = true;
-        }
-
-        // setup the scheduler
-        if (printGraph)
-        {
-            Iterator selfIter = new streamit.library.iriter.Iterator(this);
-            new PrintGraph().printProgram(selfIter);
-        }
-
-        // compute latency from top to bottom
-        if (printSDEP)
-            try
-            {
-                Stream top = getStreamFromString(sdepTOPString);
-                Stream bottom = getStreamFromString(sdepBOTTOMString);
-                Iterator selfIter =
-                    new streamit.library.iriter.Iterator(this);
-                streamit.scheduler2.constrained.Scheduler sched =
-                    streamit.scheduler2.constrained.Scheduler.create(selfIter);
-                streamit.scheduler2.SDEPData sdep =
-                    sched.computeSDEP(
-                        new streamit.library.iriter.Iterator(top),
-                        new streamit.library.iriter.Iterator(bottom));
-
-                System.out.println("Init SDEP:");
-                System.out.println("Upstream Downstream");
-                for (int n = 0; n < sdep.getNumDstInitPhases(); n++)
+            if (finegrained)
                 {
-                    System.out.println(
-                        "  "
-                            + sdep.getSrcPhase4DstPhase(n)
-                            + "         "
-                            + n);
+                    streamit.library.iriter.SplitJoinIter.fineGrained = true;
+                    streamit.library.Splitter.finegrained = true;
+                    streamit.library.Joiner.finegrained = true;
                 }
-                System.out.println(
-                    "Total: "
-                        + sdep.getNumSrcInitPhases()
-                        + " "
-                        + sdep.getNumDstInitPhases()
-                        + "\n");
 
-                System.out.println("Steady SDEP:");
-                System.out.println("Upstream Downstream");
-                for (int n = 0; n < sdep.getNumDstSteadyPhases(); n++)
+            // setup the scheduler
+            if (printGraph)
                 {
-                    System.out.println(
-                        "  "
-                            + (sdep
-                                .getSrcPhase4DstPhase(
-                                    n + sdep.getNumDstInitPhases()))
-                            + "         "
-                            + (n + sdep.getNumDstInitPhases()));
+                    Iterator selfIter = new streamit.library.iriter.Iterator(this);
+                    new PrintGraph().printProgram(selfIter);
                 }
-                System.out.println(
-                    "Total: "
-                        + sdep.getNumSrcSteadyPhases()
-                        + " "
-                        + sdep.getNumDstSteadyPhases()
-                        + "\n");
-            }
-            catch (NoPathException x)
-            {
-                ERROR(x);
-            }
 
-        // setup the scheduler
-        if (scheduledRun)
-        {
-            Iterator selfIter = new streamit.library.iriter.Iterator(this);
-            streamit.scheduler2.Scheduler scheduler;
-            if (singeappsched)
-                scheduler =
-                    streamit.scheduler2.singleappearance.Scheduler.create(
-                        selfIter);
+            // compute latency from top to bottom
+            if (printSDEP)
+                try
+                    {
+                        Stream top = getStreamFromString(sdepTOPString);
+                        Stream bottom = getStreamFromString(sdepBOTTOMString);
+                        Iterator selfIter =
+                            new streamit.library.iriter.Iterator(this);
+                        streamit.scheduler2.constrained.Scheduler sched =
+                            streamit.scheduler2.constrained.Scheduler.create(selfIter);
+                        streamit.scheduler2.SDEPData sdep =
+                            sched.computeSDEP(
+                                              new streamit.library.iriter.Iterator(top),
+                                              new streamit.library.iriter.Iterator(bottom));
+
+                        System.out.println("Init SDEP:");
+                        System.out.println("Upstream Downstream");
+                        for (int n = 0; n < sdep.getNumDstInitPhases(); n++)
+                            {
+                                System.out.println(
+                                                   "  "
+                                                   + sdep.getSrcPhase4DstPhase(n)
+                                                   + "         "
+                                                   + n);
+                            }
+                        System.out.println(
+                                           "Total: "
+                                           + sdep.getNumSrcInitPhases()
+                                           + " "
+                                           + sdep.getNumDstInitPhases()
+                                           + "\n");
+
+                        System.out.println("Steady SDEP:");
+                        System.out.println("Upstream Downstream");
+                        for (int n = 0; n < sdep.getNumDstSteadyPhases(); n++)
+                            {
+                                System.out.println(
+                                                   "  "
+                                                   + (sdep
+                                                      .getSrcPhase4DstPhase(
+                                                                            n + sdep.getNumDstInitPhases()))
+                                                   + "         "
+                                                   + (n + sdep.getNumDstInitPhases()));
+                            }
+                        System.out.println(
+                                           "Total: "
+                                           + sdep.getNumSrcSteadyPhases()
+                                           + " "
+                                           + sdep.getNumDstSteadyPhases()
+                                           + "\n");
+                    }
+                catch (NoPathException x)
+                    {
+                        ERROR(x);
+                    }
+
+            // setup the scheduler
+            if (scheduledRun)
+                {
+                    Iterator selfIter = new streamit.library.iriter.Iterator(this);
+                    streamit.scheduler2.Scheduler scheduler;
+                    if (singeappsched)
+                        scheduler =
+                            streamit.scheduler2.singleappearance.Scheduler.create(
+                                                                                  selfIter);
+                    else
+                        scheduler =
+                            streamit.scheduler2.minlatency.Scheduler.create(selfIter);
+
+                    /*scheduler =
+                      streamit.scheduler2.constrained.Scheduler.create(selfIter);*/
+
+                    scheduler.computeSchedule();
+                    scheduler.computeBufferUse();
+                    Schedule initSched = scheduler.getOptimizedInitSchedule();
+                    Schedule steadySched = scheduler.getOptimizedSteadySchedule();
+
+                    // setup the buffer lengths for the stream setup here:
+                    setupBufferLengths(scheduler);
+
+                    totalSize = this.computeSize(initSched, true);
+                    totalSize += this.computeSize(steadySched, true);
+
+                    int mlSize = totalSize;
+                    int mlBuffer = totalBuffer;
+
+                    // fill all filter fields with the initial and steady
+                    // execution count, so that they can be inspected from
+                    // Eclipse debugger
+                    Filter.fillScheduleFields(scheduler);
+
+                    if (printsched)
+                        {
+                            scheduler.printOptimizedSchedule();
+                            System.out.println("!ml sched size = " + mlSize);
+                            System.out.println("!ml buff size = " + mlBuffer);
+                        }
+
+                    // print number of steady state executions for every leaf
+                    // of schedule
+                    if (printreps) {
+                        scheduler.printReps();
+                    }
+
+                    if (!doRun)
+                        System.exit(0);
+
+                    // run the init schedule:
+                    if (nIters != 0)
+                        runSchedule(initSched, 1);
+
+                    //nIters = 0;
+
+                    // and run the steady schedule forever:
+                    while (nIters != 0)
+                        {
+                            runSchedule(steadySched, 1);
+                            if (marksteady)
+                                System.out.print("*");
+                            if (nIters > 0)
+                                nIters--;
+                        }
+                }
             else
-                scheduler =
-                    streamit.scheduler2.minlatency.Scheduler.create(selfIter);
+                {
+                    if (!doRun) {
+                        System.exit(0);
+                    }
 
-            /*scheduler =
-                streamit.scheduler2.constrained.Scheduler.create(selfIter);*/
-
-            scheduler.computeSchedule();
-            scheduler.computeBufferUse();
-            Schedule initSched = scheduler.getOptimizedInitSchedule();
-            Schedule steadySched = scheduler.getOptimizedSteadySchedule();
-
-            // setup the buffer lengths for the stream setup here:
-            setupBufferLengths(scheduler);
-
-            totalSize = this.computeSize(initSched, true);
-            totalSize += this.computeSize(steadySched, true);
-
-            int mlSize = totalSize;
-            int mlBuffer = totalBuffer;
-
-	    // fill all filter fields with the initial and steady
-	    // execution count, so that they can be inspected from
-	    // Eclipse debugger
-	    Filter.fillScheduleFields(scheduler);
-
-            if (printsched)
-            {
-                scheduler.printOptimizedSchedule();
-                System.out.println("!ml sched size = " + mlSize);
-                System.out.println("!ml buff size = " + mlBuffer);
-            }
-
-	    // print number of steady state executions for every leaf
-	    // of schedule
-	    if (printreps) {
-		scheduler.printReps();
-	    }
-
-            if (!doRun)
-                System.exit(0);
-
-            // run the init schedule:
-            if (nIters != 0)
-                runSchedule(initSched, 1);
-
-            //nIters = 0;
-
-            // and run the steady schedule forever:
-            while (nIters != 0)
-            {
-                runSchedule(steadySched, 1);
-                if (marksteady)
-                    System.out.print("*");
-                if (nIters > 0)
-                    nIters--;
-            }
+                    if (scheduledRun) {
+                        // scheduled run: know how many times to try to execute
+                        while (nIters != 0) {
+                            runSinks();
+                            drainChannels();
+                            if (nIters > 0) {
+                                nIters--;
+                            }
+                        }
+                    } else {
+                        // unscheduled: run for an iteration count if one is
+                        // passed in, otherwise run as long as someone fires
+                        if (nIters > 0) {
+                            // iteration count
+                            for (int i=0; i<nIters; i++) {
+                                runSinks();
+                            }
+                        } else {
+                            // as long as possible
+                            boolean makingProgress;
+                            do {
+                                makingProgress = runSinks();
+                            } while (makingProgress);
+                        }
+                    }
+                }
+        } catch (Throwable e) {
+            /* Any unhandled error or exception in running the program
+             * results in "exit 1" so that automated testing is informed of 
+             * the error in running the program. */
+            e.printStackTrace();
+            System.exit(1);
         }
-        else
-        {
-            if (!doRun) {
-                System.exit(0);
-	    }
-
-	    if (scheduledRun) {
-		// scheduled run: know how many times to try to execute
-		while (nIters != 0) {
-		    runSinks();
-		    drainChannels();
-		    if (nIters > 0) {
-			nIters--;
-		    }
-		}
-	    } else {
-		// unscheduled: run for an iteration count if one is
-		// passed in, otherwise run as long as someone fires
-		if (nIters > 0) {
-		    // iteration count
-		    for (int i=0; i<nIters; i++) {
-			runSinks();
-		    }
-		} else {
-		    // as long as possible
-		    boolean makingProgress;
-		    do {
-			makingProgress = runSinks();
-		    } while (makingProgress);
-		}
-	    }
-        }
-	} catch (Throwable e) {
-	    /* Any unhandled error or exception in running the program
-	     * results in "exit 1" so that automated testing is informed of 
-	     * the error in running the program. */
-		e.printStackTrace();
-	    System.exit(1);
-	}
     }
 
     /*************************************************************/

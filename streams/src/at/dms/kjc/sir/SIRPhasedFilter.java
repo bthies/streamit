@@ -35,11 +35,11 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     public SIRPhasedFilter(String ident)
     {
         this(null, ident, 
-	     JFieldDeclaration.EMPTY(), 
-	     JMethodDeclaration.EMPTY(),
-	     JMethodDeclaration.EMPTY(),
-	     JMethodDeclaration.EMPTY(),
-	     null, null);
+             JFieldDeclaration.EMPTY(), 
+             JMethodDeclaration.EMPTY(),
+             JMethodDeclaration.EMPTY(),
+             JMethodDeclaration.EMPTY(),
+             null, null);
     }
     
     public SIRPhasedFilter(SIRContainer parent,
@@ -102,27 +102,27 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     }
     
     public void setInputType(CType t){
-	this.inputType = t;
+        this.inputType = t;
     }
     public CType getInputType(){
-	return inputType;
+        return inputType;
     }
 
     public void setOutputType(CType t) {
-	this.outputType = t;
+        this.outputType = t;
     }
     public CType getOutputType() {
-	return this.outputType;
+        return this.outputType;
     }
 
     public JMethodDeclaration[] getInitPhases() {
-	return initPhases;
+        return initPhases;
     }
     
     public void setInitPhases(JMethodDeclaration[] initPhases) {
-	this.initPhases = initPhases;
+        this.initPhases = initPhases;
     }
-	
+    
     public JMethodDeclaration[] getPhases() {
         return phases;
     }
@@ -132,43 +132,43 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     }
 
     public String toString() {
-	return "SIRPhasedFilter name=" + getName();
+        return "SIRPhasedFilter name=" + getName();
     }
 
     public int getPushForSchedule(HashMap[] counts) {
-	// not implementing this right now because I'm unclear if
-	// there is a distinct execution count for each phase.  can
-	// fix without too much trouble later. --bft
-	Utils.fail("Don't yet support getPushForSchedule for phased filters.");
-	return -1;
+        // not implementing this right now because I'm unclear if
+        // there is a distinct execution count for each phase.  can
+        // fix without too much trouble later. --bft
+        Utils.fail("Don't yet support getPushForSchedule for phased filters.");
+        return -1;
     }
 
     public int getPopForSchedule(HashMap[] counts) {
-	// not implementing this right now because I'm unclear if
-	// there is a distinct execution count for each phase.  can
-	// fix without too much trouble later. --bft
-	Utils.fail("Don't yet support getPopForSchedule for phased filters.");
-	return -1;
+        // not implementing this right now because I'm unclear if
+        // there is a distinct execution count for each phase.  can
+        // fix without too much trouble later. --bft
+        Utils.fail("Don't yet support getPopForSchedule for phased filters.");
+        return -1;
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRPhasedFilter other = new at.dms.kjc.sir.SIRPhasedFilter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRPhasedFilter other = new at.dms.kjc.sir.SIRPhasedFilter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
-  super.deepCloneInto(other);
-  other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
-  other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
-  other.initPhases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
-  other.phases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
+        super.deepCloneInto(other);
+        other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
+        other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
+        other.initPhases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
+        other.phases = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

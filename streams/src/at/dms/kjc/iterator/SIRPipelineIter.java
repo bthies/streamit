@@ -20,51 +20,51 @@ public class SIRPipelineIter extends SIRIterator implements PipelineIter {
      * Returns new iterator for <obj> with no parent.
      */
     SIRPipelineIter(IterFactory _factory, SIRPipeline obj) {
-	super(_factory);
-	this.obj = obj;
+        super(_factory);
+        this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
     SIRPipelineIter(IterFactory _factory, SIRPipeline obj, SIRIterator parent, int pos) {
-	super(_factory, parent, pos);
-	this.obj = obj;
+        super(_factory, parent, pos);
+        this.obj = obj;
     }
 
     public PipelineIter isPipeline() {
-	return this;
+        return this;
     }
 
     /**
      * Return the stream pointed to by this.
      */
     public SIRStream getStream() {
-	checkValidity();
-	return obj;
+        checkValidity();
+        return obj;
     }
 
     public int getNumChildren () {
-	return obj.size();
+        return obj.size();
     }
 
     public Iterator getChild (int n) {
-	return factory.createIter(obj.get(n), this, n);
+        return factory.createIter(obj.get(n), this, n);
     }
 
     /**
      * The same as <getChild> with a different signature.
      */
     public SIRIterator get (int n) {
-	return (SIRIterator)getChild(n);
+        return (SIRIterator)getChild(n);
     }
 
     public void accept(StreamVisitor v) {
-	v.preVisitPipeline(obj, this);
-	for (int i=0; i<getNumChildren(); i++) {
-	    ((SIRIterator)getChild(i)).accept(v);
-	}
-	v.postVisitPipeline(obj, this);
+        v.preVisitPipeline(obj, this);
+        for (int i=0; i<getNumChildren(); i++) {
+            ((SIRIterator)getChild(i)).accept(v);
+        }
+        v.postVisitPipeline(obj, this);
     }
 
     /**
@@ -72,6 +72,6 @@ public class SIRPipelineIter extends SIRIterator implements PipelineIter {
      * the compiler.
      */
     public Iterator getUnspecializedIter() {
-	return this;
+        return this;
     }
 }

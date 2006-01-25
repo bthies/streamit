@@ -72,8 +72,8 @@ public class Schedule extends AssertedClass
      * work function.
      */
     public Schedule(
-        Object workFunction,
-        streamit.scheduler2.iriter.Iterator stream)
+                    Object workFunction,
+                    streamit.scheduler2.iriter.Iterator stream)
     {
         workFunc = workFunction;
         workStream = stream;
@@ -183,7 +183,7 @@ public class Schedule extends AssertedClass
      * unpredictable exceptions).
      */
     public int hashCode() {
-	return id;
+        return id;
     }
 
 }

@@ -14,24 +14,24 @@ import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
  * @author kkuo
  */
 public class StreamItDocumentProvider extends CompilationUnitDocumentProvider {
-	
-	protected class StreamItAnnotationModel extends ResourceMarkerAnnotationModel {
-		protected StreamItAnnotationModel(IFile file) {
-			super(file);
-		}
-		protected MarkerAnnotation createMarkerAnnotation(IMarker marker) {
-			return new JavaMarkerAnnotation(marker);
-		}
-	}
-	
-	/*
-	 * @see AbstractDocumentProvider#createAnnotationModel(Object)
-	 */
-	protected IAnnotationModel createAnnotationModel(Object element) throws CoreException {
-		if (element instanceof IFileEditorInput) {
-			IFileEditorInput input= (IFileEditorInput) element;
-			return new StreamItAnnotationModel(input.getFile());
-		}
-		return super.createAnnotationModel(element);
-	}
+    
+    protected class StreamItAnnotationModel extends ResourceMarkerAnnotationModel {
+        protected StreamItAnnotationModel(IFile file) {
+            super(file);
+        }
+        protected MarkerAnnotation createMarkerAnnotation(IMarker marker) {
+            return new JavaMarkerAnnotation(marker);
+        }
+    }
+    
+    /*
+     * @see AbstractDocumentProvider#createAnnotationModel(Object)
+     */
+    protected IAnnotationModel createAnnotationModel(Object element) throws CoreException {
+        if (element instanceof IFileEditorInput) {
+            IFileEditorInput input= (IFileEditorInput) element;
+            return new StreamItAnnotationModel(input.getFile());
+        }
+        return super.createAnnotationModel(element);
+    }
 }

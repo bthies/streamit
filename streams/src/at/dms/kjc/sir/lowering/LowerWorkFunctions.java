@@ -24,8 +24,8 @@ public class LowerWorkFunctions implements StreamVisitor
         // add the entry node before the variable declarations, since
         // the variable declarations might include initializations
         // that read from the input tape.
-	method.addStatementFirst(new LIRWorkEntry
-				 (LoweringConstants.getStreamContext()));
+        method.addStatementFirst(new LIRWorkEntry
+                                 (LoweringConstants.getStreamContext()));
         // append an exit node
         method.addStatement(new LIRWorkExit
                             (LoweringConstants.getStreamContext()));
@@ -67,89 +67,89 @@ public class LowerWorkFunctions implements StreamVisitor
     
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-	doGeneralFilter(self);
+                            SIRFilterIter iter) {
+        doGeneralFilter(self);
     }
 
     /* visit a phased filter */
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
-	doGeneralFilter(self);
+        doGeneralFilter(self);
     }
 
     private void doGeneralFilter(SIRPhasedFilter self) {
-	// only worry about actual SIRFilter's, not special cases like
-	// FileReader's and FileWriter's
-	if (!self.needsWork()) {
-	    return;
-	}
-        // dismantle arrays
-	new ArrayDestroyer().destroyArrays(self);
-        for (int i = 0; i < self.getMethods().length; i++)
-        {
-            self.getMethods()[i].accept(new VarDeclRaiser());
+        // only worry about actual SIRFilter's, not special cases like
+        // FileReader's and FileWriter's
+        if (!self.needsWork()) {
+            return;
         }
-	// current limitation: DeadCode only works for plain
-	// SIRFilters, not SIRPhasedFilters
-	if (self instanceof SIRFilter) {
-	    DeadCodeElimination.doit((SIRFilter)self);
-	}
+        // dismantle arrays
+        new ArrayDestroyer().destroyArrays(self);
+        for (int i = 0; i < self.getMethods().length; i++)
+            {
+                self.getMethods()[i].accept(new VarDeclRaiser());
+            }
+        // current limitation: DeadCode only works for plain
+        // SIRFilters, not SIRPhasedFilters
+        if (self instanceof SIRFilter) {
+            DeadCodeElimination.doit((SIRFilter)self);
+        }
 
-	addEntryExits(self);
+        addEntryExits(self);
     }
 
     /**
      * add entry/exit nodes to any function directly doing I/O
      */
     private void addEntryExits(SIRPhasedFilter self) {
-	// search for peek/pop statements instead of looking at
-	// declared I/O rates because we don't want decls for
-	// hierarchical functions.  Note: hierarchical functions still
-	// cause problems (those that call pop() and also call a
-	// phase.)
-	for (int i=0; i<self.getMethods().length; i++) {
-	    JMethodDeclaration method = self.getMethods()[i];
-	    final boolean[] IO = { false };
-	    method.accept(new SLIREmptyVisitor() {
-		    public void visitPopExpression(SIRPopExpression self, CType tapeType) {
-			IO[0] = true;
-		    }
-		    public void visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
-			IO[0] = true;
-		    }
-		    public void visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
-			IO[0] = true;
-		    }
-		});
-	    
-	    if (IO[0]) {
+        // search for peek/pop statements instead of looking at
+        // declared I/O rates because we don't want decls for
+        // hierarchical functions.  Note: hierarchical functions still
+        // cause problems (those that call pop() and also call a
+        // phase.)
+        for (int i=0; i<self.getMethods().length; i++) {
+            JMethodDeclaration method = self.getMethods()[i];
+            final boolean[] IO = { false };
+            method.accept(new SLIREmptyVisitor() {
+                    public void visitPopExpression(SIRPopExpression self, CType tapeType) {
+                        IO[0] = true;
+                    }
+                    public void visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
+                        IO[0] = true;
+                    }
+                    public void visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
+                        IO[0] = true;
+                    }
+                });
+        
+            if (IO[0]) {
                 addEntryExit(method);
-		removeStructureNew(method);
-	    }
-	}
-	// also remove structures from init functions
-	removeStructureNew(self.getInit());
+                removeStructureNew(method);
+            }
+        }
+        // also remove structures from init functions
+        removeStructureNew(self.getInit());
     }
     
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
+                                 SIRPipelineIter iter) {
         removeStructureNew(self.getInit());
     }
   
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
+                                  SIRSplitJoinIter iter) {
         removeStructureNew(self.getInit());
     }
   
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
+                                     SIRFeedbackLoopIter iter) {
         removeStructureNew(self.getInit());
     }
   
@@ -159,16 +159,16 @@ public class LowerWorkFunctions implements StreamVisitor
 
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) { 
+                                  SIRPipelineIter iter) { 
     }
   
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
+                                   SIRSplitJoinIter iter) {
     }
   
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
+                                      SIRFeedbackLoopIter iter) {
     }
 }

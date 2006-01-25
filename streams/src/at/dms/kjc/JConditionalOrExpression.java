@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConditionalOrExpression.java,v 1.5 2003-05-28 05:58:43 thies Exp $
+ * $Id: JConditionalOrExpression.java,v 1.6 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,129 +28,129 @@ import at.dms.compiler.TokenReference;
  */
 public class JConditionalOrExpression extends JBinaryExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JConditionalOrExpression() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	left		the left operand
-   * @param	right		the right operand
-   */
-  public JConditionalOrExpression(TokenReference where,
-				  JExpression left,
-				  JExpression right)
-  {
-    super(where, left, right);
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    left = left.analyse(context);
-    right = right.analyse(context);
-
-    CType	leftType = left.getType();
-    CType	rightType = right.getType();
-
-    check(context, leftType == CStdType.Boolean &&  rightType == CStdType.Boolean,
-	  KjcMessages.OR_BADTYPE);
-
-    type = CStdType.Boolean;
-
-    // JLS 15.28: Constant Expression ?
-    if (left.isConstant() && right.isConstant()) {
-      return new JBooleanLiteral(getTokenReference(), left.booleanValue() || right.booleanValue());
-    } else {
-      return this;
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   left        the left operand
+     * @param   right       the right operand
+     */
+    public JConditionalOrExpression(TokenReference where,
+                                    JExpression left,
+                                    JExpression right)
+    {
+        super(where, left, right);
     }
-  }
 
-  public JExpression constantFolding() {
-    if (left instanceof JBooleanLiteral && right instanceof JBooleanLiteral)
-      return new JBooleanLiteral(null,
-				 ((JBooleanLiteral) left).booleanValue() || 
-				 ((JBooleanLiteral) right).booleanValue());
-    else 
-      return super.constantFolding();
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        left = left.analyse(context);
+        right = right.analyse(context);
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitBinaryExpression(this, "||", left, right);
-  }
+        CType   leftType = left.getType();
+        CType   rightType = right.getType();
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitBinaryExpression(this, "||", left, right);
-  }
+        check(context, leftType == CStdType.Boolean &&  rightType == CStdType.Boolean,
+              KjcMessages.OR_BADTYPE);
 
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    genBooleanResultCode(code, discardValue);
-  }
+        type = CStdType.Boolean;
 
-  /**
-   * Optimize a bi-conditional expression
-   */
-  protected void genBranch(JExpression left,
-			   JExpression right,
-			   boolean cond,
-			   CodeSequence code,
-			   CodeLabel label)
-  {
-    if (cond) {
-      left.genBranch(true, code, label);
-      right.genBranch(true, code, label);
-    } else {
-      CodeLabel		skip = new CodeLabel();
-      left.genBranch(true, code, skip);
-      right.genBranch(false, code, label);
-      code.plantLabel(skip);
+        // JLS 15.28: Constant Expression ?
+        if (left.isConstant() && right.isConstant()) {
+            return new JBooleanLiteral(getTokenReference(), left.booleanValue() || right.booleanValue());
+        } else {
+            return this;
+        }
     }
-  }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    public JExpression constantFolding() {
+        if (left instanceof JBooleanLiteral && right instanceof JBooleanLiteral)
+            return new JBooleanLiteral(null,
+                                       ((JBooleanLiteral) left).booleanValue() || 
+                                       ((JBooleanLiteral) right).booleanValue());
+        else 
+            return super.constantFolding();
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JConditionalOrExpression other = new at.dms.kjc.JConditionalOrExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JConditionalOrExpression other) {
-  super.deepCloneInto(other);
-}
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitBinaryExpression(this, "||", left, right);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitBinaryExpression(this, "||", left, right);
+    }
+
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        genBooleanResultCode(code, discardValue);
+    }
+
+    /**
+     * Optimize a bi-conditional expression
+     */
+    protected void genBranch(JExpression left,
+                             JExpression right,
+                             boolean cond,
+                             CodeSequence code,
+                             CodeLabel label)
+    {
+        if (cond) {
+            left.genBranch(true, code, label);
+            right.genBranch(true, code, label);
+        } else {
+            CodeLabel       skip = new CodeLabel();
+            left.genBranch(true, code, skip);
+            right.genBranch(false, code, label);
+            code.plantLabel(skip);
+        }
+    }
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JConditionalOrExpression other = new at.dms.kjc.JConditionalOrExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JConditionalOrExpression other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

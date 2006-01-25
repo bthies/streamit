@@ -5,10 +5,10 @@ package streamit.eclipse.debugger.grapheditor;
  */
 public class TestGEStreamNode {
 
-	/**
-	 * 
-	 */
-	public TestGEStreamNode() {
-	}
+    /**
+     * 
+     */
+    public TestGEStreamNode() {
+    }
 
 }

@@ -20,19 +20,19 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
     private RemoveDynamicRates() {}
 
     public static void doit(SIRStream str) {
-	IterFactory.createFactory().createIter(str).accept(new RemoveDynamicRates());
+        IterFactory.createFactory().createIter(str).accept(new RemoveDynamicRates());
     }
      
     public void preVisitStream(SIRStream self, SIRIterator iter) {
-	SLIRRemoveDynamicRates replacer = new SLIRRemoveDynamicRates();
-	JMethodDeclaration[] methods = self.getMethods();
-	for (int i=0; i<methods.length; i++) {
-	    // replace push, pop, peek values in all methods.  This
-	    // should cover work, initWork, helpers, utils, etc.
-	    methods[i].setPush((JExpression)methods[i].getPush().accept(replacer));
-	    methods[i].setPop((JExpression)methods[i].getPop().accept(replacer));
-	    methods[i].setPeek((JExpression)methods[i].getPeek().accept(replacer));
-	}
+        SLIRRemoveDynamicRates replacer = new SLIRRemoveDynamicRates();
+        JMethodDeclaration[] methods = self.getMethods();
+        for (int i=0; i<methods.length; i++) {
+            // replace push, pop, peek values in all methods.  This
+            // should cover work, initWork, helpers, utils, etc.
+            methods[i].setPush((JExpression)methods[i].getPush().accept(replacer));
+            methods[i].setPop((JExpression)methods[i].getPop().accept(replacer));
+            methods[i].setPeek((JExpression)methods[i].getPeek().accept(replacer));
+        }
     }
 
 
@@ -40,12 +40,12 @@ public class RemoveDynamicRates extends EmptyStreamVisitor {
      * Visit SLIR and replace all dynamic rates with the constant 1.
      */
     class SLIRRemoveDynamicRates extends SLIRReplacingVisitor {
-	public Object visitRangeExpression(SIRRangeExpression self) {
-        //TODO: eventually change to self.max or 1000 if max dynamic 
-        // for now: to push MPEG through cluster need size 
-        // of apps/benchmarks/mpeg2/input/momessage.m2v in bits rounded up
-        // to a multiple of 32.
-        return new JIntLiteral(/*625032*/1000000);
-	}
+        public Object visitRangeExpression(SIRRangeExpression self) {
+            //TODO: eventually change to self.max or 1000 if max dynamic 
+            // for now: to push MPEG through cluster need size 
+            // of apps/benchmarks/mpeg2/input/momessage.m2v in bits rounded up
+            // to a multiple of 32.
+            return new JIntLiteral(/*625032*/1000000);
+        }
     }
 }

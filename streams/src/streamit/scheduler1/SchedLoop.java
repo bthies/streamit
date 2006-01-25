@@ -59,22 +59,22 @@ public class SchedLoop extends SchedStream
             BigInteger loopProd, loopCons;
 
             if (body != null)
-            {
-                bodyProd = BigInteger.valueOf (body.getProduction ());
-                bodyCons = BigInteger.valueOf (body.getConsumption ());
-            } else {
-                bodyProd = BigInteger.ONE;
-                bodyCons = BigInteger.ONE;
-            }
+                {
+                    bodyProd = BigInteger.valueOf (body.getProduction ());
+                    bodyCons = BigInteger.valueOf (body.getConsumption ());
+                } else {
+                    bodyProd = BigInteger.ONE;
+                    bodyCons = BigInteger.ONE;
+                }
 
             if (loop != null)
-            {
-                loopProd = BigInteger.valueOf (loop.getProduction ());
-                loopCons = BigInteger.valueOf (loop.getConsumption ());
-            } else {
-                loopProd = BigInteger.ONE;
-                loopCons = BigInteger.ONE;
-            }
+                {
+                    loopProd = BigInteger.valueOf (loop.getProduction ());
+                    loopCons = BigInteger.valueOf (loop.getConsumption ());
+                } else {
+                    loopProd = BigInteger.ONE;
+                    loopCons = BigInteger.ONE;
+                }
 
             BigInteger splitProd, splitCons;
             BigInteger joinProd, joinCons;
@@ -93,9 +93,9 @@ public class SchedLoop extends SchedStream
 
             // make sure that the rates are self consistant
             if (!joinFrac.multiply (joinProd).divide (bodyCons).equals (bodyFrac))
-            {
-                ERROR ("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
-            }
+                {
+                    ERROR ("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
+                }
 
             // compute a minimal multiplier for all the fractions
             // s.t. multiplying the fractions by the multiplier will yield

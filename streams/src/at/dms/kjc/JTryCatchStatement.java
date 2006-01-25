@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTryCatchStatement.java,v 1.7 2003-11-13 10:46:11 thies Exp $
+ * $Id: JTryCatchStatement.java,v 1.8 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -44,221 +44,221 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JTryCatchStatement extends JStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JTryCatchStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where			the line of this node in the source code
-   * @param	tryClause		the body
-   * @param	catchClauses		a vector of catch clause
-   */
-  public JTryCatchStatement(TokenReference where,
-			    JBlock tryClause,
-			    JCatchClause[] catchClauses,
-			    JavaStyleComment[] comments)
-  {
-    super(where, comments);
-
-    this.tryClause = tryClause;
-    this.catchClauses = catchClauses;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    /*
-     * Analyse the try clause.
+    /**
+     * Construct a node in the parsing tree
+     * @param   where           the line of this node in the source code
+     * @param   tryClause       the body
+     * @param   catchClauses        a vector of catch clause
      */
-    CTryContext		tryContext;
+    public JTryCatchStatement(TokenReference where,
+                              JBlock tryClause,
+                              JCatchClause[] catchClauses,
+                              JavaStyleComment[] comments)
+    {
+        super(where, comments);
 
-    tryContext = new CTryContext(context);
-    tryClause.analyse(tryContext);
-    if (tryContext.isReachable()) {
-      context.adopt(tryContext);
-    }
-    context.setReachable(tryContext.isReachable());
-
-    /*
-     * JLS 14.20 :
-     * A try-catch statement can complete normally iff :
-     * - the try block can complete normally or
-     * - any catch block can complete normally.
-     */
-
-    /*
-     * JLS 14.20 :
-     * The try block is reachable iff the try statement is reachable.
-     * A catch block C is reachable iff both of the following are true :
-     * - Some expression or throw statement in the try block is reachable
-     *   and can throw an exception whose type is assignable to the parameter
-     *   of the catch clause C.
-     * - There is no earlier catch block A in the try statement such that
-     *   the type of C's parameter is the same as or a subclass of the
-     *   type of A's parameter.
-     *
-     * Note : as show in http://www.ergnosis.com/java-spec-report,
-     * - "is assignable" should be replaced by "is cast convertible"
-     * - a catch clause is always reachable if its parameter's type is an
-     *   unchecked exception class, Exception, or Throwable
-     */
-
-    /*
-     * Analyse each catch clause. In a first step, assume that every
-     * catch clause is reachable.
-     */
-    for (int i = 0; i < catchClauses.length; i++) {
-      CCatchContext	catchContext;
-
-      catchContext = new CCatchContext(context);
-      catchContext.adopt(tryContext);
-      catchContext.setReachable(true);
-
-      catchClauses[i].analyse(catchContext);
-      if (catchContext.isReachable()) {
-	if (! context.isReachable()) {
-	  context.adopt(catchContext);
-	  context.setReachable(true);
-	} else {
-	  context.merge(catchContext);
-	}
-      }
-      context.mergeThrowables(catchContext);
+        this.tryClause = tryClause;
+        this.catchClauses = catchClauses;
     }
 
-    /*
-     * Check that every catch clause is reachable.
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
      */
-    boolean[]	catchReachable = new boolean[catchClauses.length];
+    public void analyse(CBodyContext context) throws PositionedError {
+        /*
+         * Analyse the try clause.
+         */
+        CTryContext     tryContext;
 
-    Enumeration	enum = tryContext.getThrowables().elements();
-    while (enum.hasMoreElements()) {
-      CThrowableInfo	info = (CThrowableInfo)enum.nextElement();
-      CClassType	type = info.getThrowable();
-      boolean		consumed = false;
+        tryContext = new CTryContext(context);
+        tryClause.analyse(tryContext);
+        if (tryContext.isReachable()) {
+            context.adopt(tryContext);
+        }
+        context.setReachable(tryContext.isReachable());
 
-      for (int i = 0; !consumed && i < catchClauses.length; i++) {
-	if (type.isCastableTo(catchClauses[i].getType())) {
-	  catchReachable[i] = true;
-	  consumed = type.isAssignableTo(catchClauses[i].getType());
-	}
-      }
-      if (!consumed) {
-	context.addThrowable(info);
-      }
+        /*
+         * JLS 14.20 :
+         * A try-catch statement can complete normally iff :
+         * - the try block can complete normally or
+         * - any catch block can complete normally.
+         */
+
+        /*
+         * JLS 14.20 :
+         * The try block is reachable iff the try statement is reachable.
+         * A catch block C is reachable iff both of the following are true :
+         * - Some expression or throw statement in the try block is reachable
+         *   and can throw an exception whose type is assignable to the parameter
+         *   of the catch clause C.
+         * - There is no earlier catch block A in the try statement such that
+         *   the type of C's parameter is the same as or a subclass of the
+         *   type of A's parameter.
+         *
+         * Note : as show in http://www.ergnosis.com/java-spec-report,
+         * - "is assignable" should be replaced by "is cast convertible"
+         * - a catch clause is always reachable if its parameter's type is an
+         *   unchecked exception class, Exception, or Throwable
+         */
+
+        /*
+         * Analyse each catch clause. In a first step, assume that every
+         * catch clause is reachable.
+         */
+        for (int i = 0; i < catchClauses.length; i++) {
+            CCatchContext   catchContext;
+
+            catchContext = new CCatchContext(context);
+            catchContext.adopt(tryContext);
+            catchContext.setReachable(true);
+
+            catchClauses[i].analyse(catchContext);
+            if (catchContext.isReachable()) {
+                if (! context.isReachable()) {
+                    context.adopt(catchContext);
+                    context.setReachable(true);
+                } else {
+                    context.merge(catchContext);
+                }
+            }
+            context.mergeThrowables(catchContext);
+        }
+
+        /*
+         * Check that every catch clause is reachable.
+         */
+        boolean[]   catchReachable = new boolean[catchClauses.length];
+
+        Enumeration enum = tryContext.getThrowables().elements();
+        while (enum.hasMoreElements()) {
+            CThrowableInfo  info = (CThrowableInfo)enum.nextElement();
+            CClassType  type = info.getThrowable();
+            boolean     consumed = false;
+
+            for (int i = 0; !consumed && i < catchClauses.length; i++) {
+                if (type.isCastableTo(catchClauses[i].getType())) {
+                    catchReachable[i] = true;
+                    consumed = type.isAssignableTo(catchClauses[i].getType());
+                }
+            }
+            if (!consumed) {
+                context.addThrowable(info);
+            }
+        }
+
+        /*
+         * Mark each catch clause reachable reachable if its parameter's
+         * type is an unchecked exception class, Exception, or Throwable.
+         */
+        for (int i = 0; i < catchClauses.length; i++) {
+            CClassType  type = catchClauses[i].getType();
+
+            if (!catchReachable[i]
+                && (! type.isCheckedException()
+                    || type.equals(CStdType.Throwable)
+                    || type.equals(CStdType.Exception))) {
+                catchReachable[i] = true;
+            }
+        }
+
+        /*
+         * Check there is no earlier catch clause of the try statement
+         * which can handle the same exception.
+         */
+        for (int i = 0; i < catchClauses.length; i++) {
+            if (catchReachable[i]) {
+                for (int j = i + 1; j < catchClauses.length; j++) {
+                    if (catchReachable[j]
+                        && catchClauses[j].getType().isAssignableTo(catchClauses[i].getType())) {
+                        catchReachable[j] = false;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < catchClauses.length; i++) {
+            if (! catchReachable[i]) {
+                context.reportTrouble(new PositionedError(catchClauses[i].getTokenReference(),
+                                                          KjcMessages.CATCH_UNREACHABLE));
+            }
+        }
     }
 
-    /*
-     * Mark each catch clause reachable reachable if its parameter's
-     * type is an unchecked exception class, Exception, or Throwable.
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
      */
-    for (int i = 0; i < catchClauses.length; i++) {
-      CClassType	type = catchClauses[i].getType();
-
-      if (!catchReachable[i]
-	  && (! type.isCheckedException()
-	      || type.equals(CStdType.Throwable)
-	      || type.equals(CStdType.Exception))) {
-	catchReachable[i] = true;
-      }
+    public void accept(KjcVisitor p) {
+        p.visitTryCatchStatement(this, tryClause, catchClauses);
     }
 
-    /*
-     * Check there is no earlier catch clause of the try statement
-     * which can handle the same exception.
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
      */
-    for (int i = 0; i < catchClauses.length; i++) {
-      if (catchReachable[i]) {
-	for (int j = i + 1; j < catchClauses.length; j++) {
-	  if (catchReachable[j]
-	      && catchClauses[j].getType().isAssignableTo(catchClauses[i].getType())) {
-	    catchReachable[j] = false;
-	  }
-	}
-      }
+    public Object accept(AttributeVisitor p) {
+        return    p.visitTryCatchStatement(this, tryClause, catchClauses);
     }
 
-    for (int i = 0; i < catchClauses.length; i++) {
-      if (! catchReachable[i]) {
-	context.reportTrouble(new PositionedError(catchClauses[i].getTokenReference(),
-						  KjcMessages.CATCH_UNREACHABLE));
-      }
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
+
+        CodeLabel       nextLabel = new CodeLabel();
+
+        int     startPC = code.getPC();
+        tryClause.genCode(code);            //      TRY CODE
+        int     endPC = code.getPC();
+        code.plantJumpInstruction(opc_goto, nextLabel); //      GOTO next
+        for (int i = 0; i < catchClauses.length; i++) {
+            catchClauses[i].genCode(code, startPC, endPC);
+            code.plantJumpInstruction(opc_goto, nextLabel); //      GOTO next
+        }
+        code.plantLabel(nextLabel);         //  next:   ...
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitTryCatchStatement(this, tryClause, catchClauses);
-  }
+    private JBlock      tryClause;
+    private JCatchClause[]  catchClauses;
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitTryCatchStatement(this, tryClause, catchClauses);
-  }
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
-
-    CodeLabel		nextLabel = new CodeLabel();
-
-    int		startPC = code.getPC();
-    tryClause.genCode(code);			//		TRY CODE
-    int		endPC = code.getPC();
-    code.plantJumpInstruction(opc_goto, nextLabel);	//		GOTO next
-    for (int i = 0; i < catchClauses.length; i++) {
-      catchClauses[i].genCode(code, startPC, endPC);
-      code.plantJumpInstruction(opc_goto, nextLabel);	//		GOTO next
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JTryCatchStatement other = new at.dms.kjc.JTryCatchStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
     }
-    code.plantLabel(nextLabel);			//	next:	...
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JTryCatchStatement other) {
+        super.deepCloneInto(other);
+        other.tryClause = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.tryClause);
+        other.catchClauses = (at.dms.kjc.JCatchClause[])at.dms.kjc.AutoCloner.cloneToplevel(this.catchClauses);
+    }
 
-  private JBlock		tryClause;
-  private JCatchClause[]	catchClauses;
-
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
-
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JTryCatchStatement other = new at.dms.kjc.JTryCatchStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
-
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JTryCatchStatement other) {
-  super.deepCloneInto(other);
-  other.tryClause = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.tryClause);
-  other.catchClauses = (at.dms.kjc.JCatchClause[])at.dms.kjc.AutoCloner.cloneToplevel(this.catchClauses);
-}
-
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

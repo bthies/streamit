@@ -11,17 +11,17 @@ public class SIRPortalSender {
     protected SIRLatency latency;
 
     public SIRPortalSender(SIRStream stream, SIRLatency latency) {
-	this.stream = stream;
-	this.latency = latency;
+        this.stream = stream;
+        this.latency = latency;
     }
 
     public boolean equals(Object obj) {   
-	if (obj instanceof SIRPortalSender) {
-	    SIRPortalSender ps = (SIRPortalSender)obj;
-	    return stream.equals(ps.stream)&&latency.equals(ps.latency);
-	} else {
-	    return false;
-	}
+        if (obj instanceof SIRPortalSender) {
+            SIRPortalSender ps = (SIRPortalSender)obj;
+            return stream.equals(ps.stream)&&latency.equals(ps.latency);
+        } else {
+            return false;
+        }
     }
 
     /*
@@ -29,7 +29,7 @@ public class SIRPortalSender {
      */
 
     public SIRStream getStream() {
-	return stream;
+        return stream;
     } 
 
     /*
@@ -37,6 +37,6 @@ public class SIRPortalSender {
      */
 
     public SIRLatency getLatency() {
-	return latency;
+        return latency;
     } 
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)ViewScaleZoomOut.java	1.2 30.01.2003
+ * @(#)ViewScaleZoomOut.java    1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -33,24 +33,24 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ViewScaleZoomOut extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ViewScaleZoomOut.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ViewScaleZoomOut(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ViewScaleZoomOut.
+     * @param graphpad
+     * @param name
+     */
+    public ViewScaleZoomOut(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
 
-	public void actionPerformed(ActionEvent e) {
-		getCurrentDocument().setResizeAction(null);
-		getCurrentDocument().setScale(getCurrentGraph().getScale() / 2);
-		if (getCurrentGraph().getSelectionCell() != null)
-			getCurrentGraph().scrollCellToVisible(getCurrentGraph().getSelectionCell());
-	}
+    public void actionPerformed(ActionEvent e) {
+        getCurrentDocument().setResizeAction(null);
+        getCurrentDocument().setScale(getCurrentGraph().getScale() / 2);
+        if (getCurrentGraph().getSelectionCell() != null)
+            getCurrentGraph().scrollCellToVisible(getCurrentGraph().getSelectionCell());
+    }
 
 }

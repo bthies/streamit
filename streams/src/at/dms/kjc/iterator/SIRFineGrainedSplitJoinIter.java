@@ -16,14 +16,14 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * Returns new iterator for <obj> with no parent.
      */
     SIRFineGrainedSplitJoinIter(IterFactory _factory, SIRSplitJoin obj) {
-	super(_factory, obj);
+        super(_factory, obj);
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
     SIRFineGrainedSplitJoinIter(IterFactory _factory, SIRSplitJoin obj, SIRIterator parent, int pos) {
-	super(_factory, obj, parent, pos);
+        super(_factory, obj, parent, pos);
     }
 
     /**
@@ -31,7 +31,7 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * @return number of work functions for this Splitter
      */
     public int getSplitterNumWork () {
-	return SIRFineGrainedUtil.getSplitterNumWork(obj.getSplitter());
+        return SIRFineGrainedUtil.getSplitterNumWork(obj.getSplitter());
     }
 
     /**
@@ -44,7 +44,7 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * of work function for the Splitter of this Stream.
      */
     public int[] getSplitPushWeights (int nWork) {
-	return SIRFineGrainedUtil.getSplitPushWeights(obj.getSplitter(), nWork);
+        return SIRFineGrainedUtil.getSplitPushWeights(obj.getSplitter(), nWork);
     }
 
     /**
@@ -56,7 +56,7 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * of work function for Splitter of this Stream.
      */
     public int getSplitPop (int nWork) {
-	return SIRFineGrainedUtil.getSplitPop(obj.getSplitter(), nWork);
+        return SIRFineGrainedUtil.getSplitPop(obj.getSplitter(), nWork);
     }
 
     /**
@@ -66,7 +66,7 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * Stream
      */
     public int getJoinerNumWork () {
-	return SIRFineGrainedUtil.getJoinerNumWork(obj.getJoiner());
+        return SIRFineGrainedUtil.getJoinerNumWork(obj.getJoiner());
     }
 
     /**
@@ -79,7 +79,7 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * of work function for Joiner of this SplitJoin.
      */
     public int[] getJoinPopWeights (int nWork) {
-	return SIRFineGrainedUtil.getJoinPopWeights(obj.getJoiner(), nWork);
+        return SIRFineGrainedUtil.getJoinPopWeights(obj.getJoiner(), nWork);
     }
     
     /**
@@ -90,6 +90,6 @@ public class SIRFineGrainedSplitJoinIter extends SIRSplitJoinIter {
      * of work function for Joiner of this SplitJoin.
      */
     public int getJoinPush (int nWork) {
-	return SIRFineGrainedUtil.getJoinPush(obj.getJoiner(), nWork);
+        return SIRFineGrainedUtil.getJoinPush(obj.getJoiner(), nWork);
     }
 }

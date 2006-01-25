@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeLabel.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CodeLabel.java,v 1.4 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,63 +29,63 @@ import java.io.Serializable;
  */
 class CodeLabel extends AbstractInstructionAccessor implements Serializable, DeepCloneable {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new code label.
-   */
-  public CodeLabel() {
-    this.address = -1;
-  }
+    /**
+     * Constructs a new code label.
+     */
+    public CodeLabel() {
+        this.address = -1;
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Sets the address of the label in the code array.
-   */
-  public void setAddress(int address) {
-    this.address = address;
-  }
+    /**
+     * Sets the address of the label in the code array.
+     */
+    public void setAddress(int address) {
+        this.address = address;
+    }
 
-  /**
-   * Returns the address of the label in the code array.
-   */
-  public int getAddress() {
-    return address;
-  }
+    /**
+     * Returns the address of the label in the code array.
+     */
+    public int getAddress() {
+        return address;
+    }
 
-  /**
-   * Returns true iff the label has already been planted.
-   */
-  public boolean hasAddress() {
-    return address != -1;
-  }
+    /**
+     * Returns true iff the label has already been planted.
+     */
+    public boolean hasAddress() {
+        return address != -1;
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private int				address;
+    private int             address;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CodeLabel other = new at.dms.kjc.CodeLabel();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CodeLabel other = new at.dms.kjc.CodeLabel();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CodeLabel other) {
-  super.deepCloneInto(other);
-  other.address = this.address;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CodeLabel other) {
+        super.deepCloneInto(other);
+        other.address = this.address;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

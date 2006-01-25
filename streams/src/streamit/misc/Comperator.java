@@ -16,9 +16,9 @@
 
 package streamit.misc;
 
-/* $Id: Comperator.java,v 1.2 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: Comperator.java,v 1.3 2006-01-25 17:04:38 thies Exp $ */
 
 public interface Comperator
 {
-	public boolean isLess(Object left, Object right);
+    public boolean isLess(Object left, Object right);
 }

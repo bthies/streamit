@@ -58,60 +58,60 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
     private boolean libraryFormat;
     
     public SeparateFieldInitializers(boolean libraryFormat) {
-	super();
-	fieldInits = new ArrayList();
-	this.libraryFormat = libraryFormat;
+        super();
+        fieldInits = new ArrayList();
+        this.libraryFormat = libraryFormat;
     }
 
     public Object visitStreamSpec(StreamSpec spec) {
-	// maintain a separate list of field inits per stream
-	ArrayList oldFieldInits = fieldInits;
-	fieldInits = new ArrayList();	    
+        // maintain a separate list of field inits per stream
+        ArrayList oldFieldInits = fieldInits;
+        fieldInits = new ArrayList();       
 
         spec = (StreamSpec)super.visitStreamSpec(spec);
-	
-	// now that we've visited whole thing, replace init with
-	// version that has field assigments
-	List fns = new ArrayList(spec.getFuncs());
+    
+        // now that we've visited whole thing, replace init with
+        // version that has field assigments
+        List fns = new ArrayList(spec.getFuncs());
         fns = replaceInitWithPrepended(spec.getContext(), 
-				       fns, 
-				       fieldInits);
+                                       fns, 
+                                       fieldInits);
 
-	// And create the new stream spec.
-	spec = new StreamSpec(spec.getContext(), spec.getType(),
-			      spec.getStreamType(), spec.getName(),
-			      spec.getParams(), spec.getVars(), fns);
+        // And create the new stream spec.
+        spec = new StreamSpec(spec.getContext(), spec.getType(),
+                              spec.getStreamType(), spec.getName(),
+                              spec.getParams(), spec.getVars(), fns);
 
-	// restore old field inits for parent stream
-	fieldInits = oldFieldInits;
+        // restore old field inits for parent stream
+        fieldInits = oldFieldInits;
 
-	return spec;
+        return spec;
     }
 
     public Object visitFieldDecl(FieldDecl field)
     {
-	field = (FieldDecl)super.visitFieldDecl(field);
+        field = (FieldDecl)super.visitFieldDecl(field);
 
         List newInits = new ArrayList();
         for (int i = 0; i < field.getNumFields(); i++)
-        {
-            Expression init = field.getInit(i);
-	    // don't move array initializers, they need to stay.
-            if (init!=null && !(init instanceof ExprArrayInit) &&
-		// Also, don't move anything of type array if we're going
-		// through the compiler path.
-		(libraryFormat || !(field.getType(i) instanceof TypeArray))) {
-		// move assignment to init function
-		FEContext context = init.getContext();
-		Expression lhs = new ExprVar(context, field.getName(i));
-		Expression rhs = init;
-		fieldInits.add(new StmtAssign(context, lhs, rhs));
+            {
+                Expression init = field.getInit(i);
+                // don't move array initializers, they need to stay.
+                if (init!=null && !(init instanceof ExprArrayInit) &&
+                    // Also, don't move anything of type array if we're going
+                    // through the compiler path.
+                    (libraryFormat || !(field.getType(i) instanceof TypeArray))) {
+                    // move assignment to init function
+                    FEContext context = init.getContext();
+                    Expression lhs = new ExprVar(context, field.getName(i));
+                    Expression rhs = init;
+                    fieldInits.add(new StmtAssign(context, lhs, rhs));
 
-		// existing initializer becomes empty
-		init = null;
-	    }
-            newInits.add(init);
-        }
+                    // existing initializer becomes empty
+                    init = null;
+                }
+                newInits.add(init);
+            }
         return new FieldDecl(field.getContext(), field.getTypes(),
                              field.getNames(), newInits);
     }

@@ -1,5 +1,5 @@
 /*
- * @(#)EllipseCell.java	1.2 11/11/02
+ * @(#)EllipseCell.java 1.2 11/11/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -25,12 +25,12 @@ import org.jgraph.graph.DefaultGraphCell;
 
 public class EllipseCell extends DefaultGraphCell {
 
-	public EllipseCell() {
-		this(null);
-	}
+    public EllipseCell() {
+        this(null);
+    }
 
-	public EllipseCell(Object userObject) {
-		super(userObject);
-	}
+    public EllipseCell(Object userObject) {
+        super(userObject);
+    }
 
 }

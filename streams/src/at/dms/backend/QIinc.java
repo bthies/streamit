@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QIinc.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QIinc.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -29,84 +29,84 @@ import at.dms.util.InconsistencyException;
  */
 class QIinc extends QNode {
 
-  public QIinc(Instruction insn, QTemporary temp) {
-    this.iinc = (IincInstruction)insn;
-    this.temp = temp;
-  }
+    public QIinc(Instruction insn, QTemporary temp) {
+        this.iinc = (IincInstruction)insn;
+        this.temp = temp;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Human readable form
-   */
-  public String toString() {
-    return "iinc " + temp;
-  }
+    /**
+     * Human readable form
+     */
+    public String toString() {
+        return "iinc " + temp;
+    }
 
-  /**
-   * The type of this instruction
-   */
-  public int getType() {
-    return at.dms.classfile.Constants.TYP_VOID;
-  }
+    /**
+     * The type of this instruction
+     */
+    public int getType() {
+        return at.dms.classfile.Constants.TYP_VOID;
+    }
 
-  /**
-   * Duplicate this node
-   */
-  public QOrigin duplicate() {
-    throw new InconsistencyException("NYI");
-  }
+    /**
+     * Duplicate this node
+     */
+    public QOrigin duplicate() {
+        throw new InconsistencyException("NYI");
+    }
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the defined temporary.
-   */
-  public QTemporary getDef() {
-    return temp;
-  }
+    /**
+     * Returns the defined temporary.
+     */
+    public QTemporary getDef() {
+        return temp;
+    }
 
-  /**
-   * Returns the used temporaries.
-   */
-  public QTemporary[] getUses() {
-    return new QTemporary[]{temp};
-  }
+    /**
+     * Returns the used temporaries.
+     */
+    public QTemporary[] getUses() {
+        return new QTemporary[]{temp};
+    }
 
-  /**
-   * returns the parameters of this instruction
-   */
-  public QOrigin[] getOrigins() {
-    return new QOrigin[0]; // !!! share
-  }
+    /**
+     * returns the parameters of this instruction
+     */
+    public QOrigin[] getOrigins() {
+        return new QOrigin[0]; // !!! share
+    }
 
-  /**
-   * Sets the parameters of this instruction
-   */
-  public void setOrigin(QOrigin origin, int i) {
-    throw new InconsistencyException();
-  }
+    /**
+     * Sets the parameters of this instruction
+     */
+    public void setOrigin(QOrigin origin, int i) {
+        throw new InconsistencyException();
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for this quadruple
-   * @param	seq		The code sequence of instruction
-   */
-  public void generate(CodeSequence seq) {
-    seq.plantInstruction(new IincInstruction(temp.getRegister(), iinc.getIncrement()));
-  }
+    /**
+     * Generates instructions for this quadruple
+     * @param   seq     The code sequence of instruction
+     */
+    public void generate(CodeSequence seq) {
+        seq.plantInstruction(new IincInstruction(temp.getRegister(), iinc.getIncrement()));
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private IincInstruction	iinc;
-  private QTemporary		temp;
+    private IincInstruction iinc;
+    private QTemporary      temp;
 }

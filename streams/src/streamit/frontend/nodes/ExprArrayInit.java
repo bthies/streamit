@@ -37,7 +37,7 @@ import java.util.List;
  * checker and GenerateCopies.
  *
  * @author  Bill Thies &lt;thies@mit.edu&gt;
- * @version $Id: ExprArrayInit.java,v 1.1 2004-07-08 06:35:58 thies Exp $
+ * @version $Id: ExprArrayInit.java,v 1.2 2006-01-25 17:04:25 thies Exp $
  */
 public class ExprArrayInit extends Expression
 {
@@ -56,16 +56,16 @@ public class ExprArrayInit extends Expression
     {
         super(context);
         this.elements = elements;
-	// determine dims based on first element.  That the elements
-	// are uniform will be checked in semantic checker.
-	if (elements.size()==0) {
-	    dims = 1;
-	} else if (elements.get(0) instanceof ExprArrayInit) {
-	    dims = 1 + ((ExprArrayInit)elements.get(0)).dims;
-	} else {
-	    // assumes all literals in array are specified
-	    dims = 1;
-	}
+        // determine dims based on first element.  That the elements
+        // are uniform will be checked in semantic checker.
+        if (elements.size()==0) {
+            dims = 1;
+        } else if (elements.get(0) instanceof ExprArrayInit) {
+            dims = 1 + ((ExprArrayInit)elements.get(0)).dims;
+        } else {
+            // assumes all literals in array are specified
+            dims = 1;
+        }
     }
     
     /** Returns the components of this.  The returned list is a list
@@ -94,15 +94,15 @@ public class ExprArrayInit extends Expression
 
     public String toString()
     {
-	StringBuffer sb = new StringBuffer();
-	sb.append("{");
-	for (int i=0; i<elements.size(); i++) {
-	    sb.append(elements.get(i));
-	    if (i!=elements.size()-1) {
-		sb.append(",");
-	    }
-	}
-	sb.append("}");
+        StringBuffer sb = new StringBuffer();
+        sb.append("{");
+        for (int i=0; i<elements.size(); i++) {
+            sb.append(elements.get(i));
+            if (i!=elements.size()-1) {
+                sb.append(",");
+            }
+        }
+        sb.append("}");
         return sb.toString();
     }
     
@@ -111,11 +111,11 @@ public class ExprArrayInit extends Expression
         if (!(o instanceof ExprArrayInit))
             return false;
         ExprArrayInit ao = (ExprArrayInit)o;
-	for (int i=0; i<elements.size(); i++) {
-	    if (!(elements.get(i).equals(ao.elements.get(i)))) {
-		return false;
-	    }
-	}
-	return true;
+        for (int i=0; i<elements.size(); i++) {
+            if (!(elements.get(i).equals(ao.elements.get(i)))) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.12 2005-11-30 19:14:13 dimock Exp $
+ * $Id: SIRPrintStatement.java,v 1.13 2006-01-25 17:01:54 thies Exp $
  */
 
 package at.dms.kjc.sir;
@@ -52,37 +52,37 @@ public class SIRPrintStatement extends JStatement {
      * @param where the line of this node in the source code
      */
     public SIRPrintStatement(TokenReference where, JExpression arg,
-			     boolean newline, JavaStyleComment[] comments) {
-    	super(where, comments);
-    	this.arg = arg;
-		this.newline = newline;
+                             boolean newline, JavaStyleComment[] comments) {
+        super(where, comments);
+        this.arg = arg;
+        this.newline = newline;
     }
-	
+    
 
     public SIRPrintStatement(TokenReference where, JExpression arg, 
-			     JavaStyleComment[] comments) {
-	this(where,arg,true,comments);
+                             JavaStyleComment[] comments) {
+        this(where,arg,true,comments);
     }
 
     public SIRPrintStatement() {
-	this(null,null,true,null);
+        this(null,null,true,null);
     }
 
 
     public JExpression getArg() {
-	return this.arg;
+        return this.arg;
     }
 
     public void setArg(JExpression a) {
-	this.arg = a;
+        this.arg = a;
     }
 
     public boolean getNewline() {
-	return newline;
+        return newline;
     }
 
     public void setNewline(boolean val) {
-	newline = val;
+        newline = val;
     }
 
     // ----------------------------------------------------------------------
@@ -91,8 +91,8 @@ public class SIRPrintStatement extends JStatement {
 
     /**
      * Analyses the statement (semantically) - NOT IMPLEMENTED YET.
-     * @param	context		the analysis context
-     * @exception	PositionedError	the analysis detected an error
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
      */
     public void analyse(CBodyContext context) throws PositionedError {
     }
@@ -103,7 +103,7 @@ public class SIRPrintStatement extends JStatement {
 
     /**
      * Generates a sequence of bytescodes - NOT IMPLEMENTED YET.
-     * @param	code		the code list
+     * @param   code        the code list
      */
     public void genCode(CodeSequence code) {}
 
@@ -112,41 +112,41 @@ public class SIRPrintStatement extends JStatement {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).visitPrintStatement(this,
-								 arg);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).visitPrintStatement(this,
+                                                                 arg);
+        } else {
+            return this;
+        }
     }
 
     /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitPrintStatement(this, arg);
-	} else {
-	    arg.accept(p);
-	}
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitPrintStatement(this, arg);
+        } else {
+            arg.accept(p);
+        }
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRPrintStatement other = new at.dms.kjc.sir.SIRPrintStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRPrintStatement other = new at.dms.kjc.sir.SIRPrintStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRPrintStatement other) {
-  super.deepCloneInto(other);
-  other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg);
-  other.newline = this.newline;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRPrintStatement other) {
+        super.deepCloneInto(other);
+        other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg);
+        other.newline = this.newline;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

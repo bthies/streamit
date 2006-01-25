@@ -15,28 +15,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Option.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: Option.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
 
 class Option {
-  protected String name;
-  protected String rhs;
-  protected GrammarDefinition enclosingGrammar;
+    protected String name;
+    protected String rhs;
+    protected GrammarDefinition enclosingGrammar;
 
-  public Option(String n, String rhs, GrammarDefinition gr) {
-    name = n;
-    this.rhs = rhs;
-    setEnclosingGrammar(gr);
-  }
-  public GrammarDefinition getEnclosingGrammar() {return enclosingGrammar;}
-  public String getName() { return name; }
-  public String getRHS() { return rhs; }
-  public void setEnclosingGrammar(GrammarDefinition g) { enclosingGrammar=g; }
-  public void setName(String n) {name=n;}
-  public void setRHS(String rhs) {this.rhs = rhs;}
-  public String toString() {
-    return "\t"+name+rhs;
-  }
+    public Option(String n, String rhs, GrammarDefinition gr) {
+        name = n;
+        this.rhs = rhs;
+        setEnclosingGrammar(gr);
+    }
+    public GrammarDefinition getEnclosingGrammar() {return enclosingGrammar;}
+    public String getName() { return name; }
+    public String getRHS() { return rhs; }
+    public void setEnclosingGrammar(GrammarDefinition g) { enclosingGrammar=g; }
+    public void setName(String n) {name=n;}
+    public void setRHS(String rhs) {this.rhs = rhs;}
+    public String toString() {
+        return "\t"+name+rhs;
+    }
 }

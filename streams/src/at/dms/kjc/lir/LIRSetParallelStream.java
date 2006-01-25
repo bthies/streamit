@@ -55,29 +55,29 @@ public class LIRSetParallelStream extends LIRNode {
      */
     public LIRSetParallelStream(JExpression streamContext,
                                 JExpression childContext,
-				int position,
-				CType inputType,
-				CType outputType,
-				int inputSize,
-				int outputSize) {
-	super(streamContext);
+                                int position,
+                                CType inputType,
+                                CType outputType,
+                                int inputSize,
+                                int outputSize) {
+        super(streamContext);
         this.childContext = childContext;
-	this.position = position;
-	this.inputType = inputType;
-	this.outputType = outputType;
-	this.inputSize = inputSize;
-	this.outputSize = outputSize;
+        this.position = position;
+        this.inputType = inputType;
+        this.outputType = outputType;
+        this.inputSize = inputSize;
+        this.outputSize = outputSize;
     }
 
     public void accept(SLIRVisitor v)
     {
         v.visitSetParallelStream(this,
-				 this.getStreamContext(), 
+                                 this.getStreamContext(), 
                                  this.childContext,
-				 this.position,
-				 this.inputType,
-				 this.outputType,
-				 this.inputSize,
-				 this.outputSize);
+                                 this.position,
+                                 this.inputType,
+                                 this.outputType,
+                                 this.inputSize,
+                                 this.outputSize);
     }
 }

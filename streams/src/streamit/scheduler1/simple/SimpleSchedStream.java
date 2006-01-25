@@ -19,5 +19,5 @@ interface SimpleSchedStream extends SchedStreamInterface
      * Return number of data produced by this stream.  Normally this is 0,
      * but feedback loops might need to produce some data.
      */
-     public int getInitDataProduction ();
+    public int getInitDataProduction ();
 }

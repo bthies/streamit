@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoStatement.java,v 1.10 2003-11-13 10:46:10 thies Exp $
+ * $Id: JDoStatement.java,v 1.11 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,161 +33,161 @@ import at.dms.compiler.TokenReference;
  */
 public class JDoStatement extends JLoopStatement {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JDoStatement() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	where		the line of this node in the source code
-   * @param	cond		the expression to evaluate
-   * @param	body		the loop body
-   * @param	comments	comments in the source text
-   */
-  public JDoStatement(TokenReference where,
-		      JExpression cond,
-		      JStatement body,
-		      JavaStyleComment[] comments)
-  {
-    super(where, comments);
+    /**
+     * Construct a node in the parsing tree
+     * @param   where       the line of this node in the source code
+     * @param   cond        the expression to evaluate
+     * @param   body        the loop body
+     * @param   comments    comments in the source text
+     */
+    public JDoStatement(TokenReference where,
+                        JExpression cond,
+                        JStatement body,
+                        JavaStyleComment[] comments)
+    {
+        super(where, comments);
 
-    this.cond = cond;
-    this.body = body;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    try {
-      CLoopContext	loopContext;
-
-      loopContext = new CLoopContext(context, this);
-
-      body.analyse(loopContext);
-
-      if (loopContext.isContinueTarget()) {
-	if (loopContext.isReachable()) {
-	  loopContext.merge(loopContext.getContinueContextSummary());
-	} else {
-	  loopContext.adopt(loopContext.getContinueContextSummary());
-	  loopContext.setReachable(true);
-	}
-      }
-
-      cond = cond.analyse(new CExpressionContext(loopContext));
-      check(loopContext,
-	    cond.getType() == CStdType.Boolean,
-	    KjcMessages.DO_COND_NOTBOOLEAN, cond.getType());
-      if (cond instanceof JAssignmentExpression) {
-	loopContext.reportTrouble(new CWarning(getTokenReference(),
-					       KjcMessages.ASSIGNMENT_IN_CONDITION));
-      }
-
-      loopContext.close(getTokenReference());
-
-      if (cond.isConstant() && cond.booleanValue()) {
-	context.setReachable(false);
-      }
-
-      if (loopContext.isBreakTarget()) {
-	if (context.isReachable()) {
-	  context.merge(loopContext.getBreakContextSummary());
-	} else {
-	  context.adopt(loopContext.getBreakContextSummary());
-	}
-      }
-    } catch (CBlockError e) {
-      context.reportTrouble(e);
+        this.cond = cond;
+        this.body = body;
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    super.accept(p);
-    p.visitDoStatement(this, cond, body);
-  }
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        try {
+            CLoopContext    loopContext;
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return p.visitDoStatement(this, cond, body);
-  }
+            loopContext = new CLoopContext(context, this);
+
+            body.analyse(loopContext);
+
+            if (loopContext.isContinueTarget()) {
+                if (loopContext.isReachable()) {
+                    loopContext.merge(loopContext.getContinueContextSummary());
+                } else {
+                    loopContext.adopt(loopContext.getContinueContextSummary());
+                    loopContext.setReachable(true);
+                }
+            }
+
+            cond = cond.analyse(new CExpressionContext(loopContext));
+            check(loopContext,
+                  cond.getType() == CStdType.Boolean,
+                  KjcMessages.DO_COND_NOTBOOLEAN, cond.getType());
+            if (cond instanceof JAssignmentExpression) {
+                loopContext.reportTrouble(new CWarning(getTokenReference(),
+                                                       KjcMessages.ASSIGNMENT_IN_CONDITION));
+            }
+
+            loopContext.close(getTokenReference());
+
+            if (cond.isConstant() && cond.booleanValue()) {
+                context.setReachable(false);
+            }
+
+            if (loopContext.isBreakTarget()) {
+                if (context.isReachable()) {
+                    context.merge(loopContext.getBreakContextSummary());
+                } else {
+                    context.adopt(loopContext.getBreakContextSummary());
+                }
+            }
+        } catch (CBlockError e) {
+            context.reportTrouble(e);
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        super.accept(p);
+        p.visitDoStatement(this, cond, body);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return p.visitDoStatement(this, cond, body);
+    }
 
     /**
      * Sets the condition.
      */
     public void setCondition(JExpression cond) {
-	this.cond = cond;
+        this.cond = cond;
     }
 
     /**
      * Sets the body.
      */
     public void setBody(JStatement body) {
-	this.body = body;
+        this.body = body;
     }
 
-  /**
-   * Generates a sequence of bytescodes
-   * @param	code		the code list
-   */
-  public void genCode(CodeSequence code) {
-    setLineNumber(code);
+    /**
+     * Generates a sequence of bytescodes
+     * @param   code        the code list
+     */
+    public void genCode(CodeSequence code) {
+        setLineNumber(code);
 
-    code.pushContext(this);
+        code.pushContext(this);
 
-    CodeLabel		bodyLabel = new CodeLabel();
+        CodeLabel       bodyLabel = new CodeLabel();
 
-    code.plantLabel(bodyLabel);				//	body:
-    body.genCode(code);					//		BODY CODE
-    code.plantLabel(getContinueLabel());			//	cont:
-    cond.genBranch(true, code, bodyLabel);		//		EXPR CODE; IFNE body
-    code.plantLabel(getBreakLabel());				//	end:	...
+        code.plantLabel(bodyLabel);             //  body:
+        body.genCode(code);                 //      BODY CODE
+        code.plantLabel(getContinueLabel());            //  cont:
+        cond.genBranch(true, code, bodyLabel);      //      EXPR CODE; IFNE body
+        code.plantLabel(getBreakLabel());               //  end:    ...
 
-    code.popContext(this);
-  }
+        code.popContext(this);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression		cond;
-  private JStatement		body;
+    private JExpression     cond;
+    private JStatement      body;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JDoStatement other = new at.dms.kjc.JDoStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JDoStatement other = new at.dms.kjc.JDoStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JDoStatement other) {
-  super.deepCloneInto(other);
-  other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
-  other.body = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JDoStatement other) {
+        super.deepCloneInto(other);
+        other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
+        other.body = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

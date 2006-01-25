@@ -67,10 +67,10 @@ public class SwitchCode extends at.dms.util.Utils {
                 String initCode = "";
                 if (RawBackend.simulator.initSchedules.get(tile) != null)
                     initCode = ((StringBuffer) RawBackend.simulator.initSchedules
-                            .get(tile)).toString();
+                                .get(tile)).toString();
                 if (RawBackend.simulator.steadySchedules.get(tile) != null)
                     steadyCode = ((StringBuffer) RawBackend.simulator.steadySchedules
-                            .get(tile)).toString();
+                                  .get(tile)).toString();
 
                 // the sequences we are going to compress if compression is
                 // needed
@@ -80,21 +80,21 @@ public class SwitchCode extends at.dms.util.Utils {
                 int codeSize = getCodeLength(steadyCode + initCode);
                 if (codeSize > 5000) {
                     System.out.println("Compression needed.  Code size = "
-                            + codeSize);
+                                       + codeSize);
                     compression = true;
-		    if (USE_BETTER_COMP) {
-			//use the more heavyweight compression algorithm...
-			big3init = threeBiggestRepetitions(initCode);
-			big3work = threeBiggestRepetitions(steadyCode);
-		    }
-		    else {
-			big3init = threeBiggestOneReps(initCode);
-			big3work = threeBiggestOneReps(steadyCode);
-		    }
+                    if (USE_BETTER_COMP) {
+                        //use the more heavyweight compression algorithm...
+                        big3init = threeBiggestRepetitions(initCode);
+                        big3work = threeBiggestRepetitions(steadyCode);
+                    }
+                    else {
+                        big3init = threeBiggestOneReps(initCode);
+                        big3work = threeBiggestOneReps(steadyCode);
+                    }
                 }
 
                 FileWriter fw = new FileWriter("sw"
-                        + Layout.getTileNumber(tile) + ".s");
+                                               + Layout.getTileNumber(tile) + ".s");
                 fw.write("#  Switch code\n");
                 fw.write(getHeader());
                 // if this tile is the north neighbor of a bc file i/o device
@@ -133,12 +133,12 @@ public class SwitchCode extends at.dms.util.Utils {
                  */
 
                 System.out.println("sw" + Layout.getTileNumber(tile)
-                        + ".s written");
+                                   + ".s written");
             } catch (Exception e) {
                 e.printStackTrace();
 
                 Utils.fail("Error creating switch code file for tile "
-                        + Layout.getTileNumber(tile));
+                           + Layout.getTileNumber(tile));
             }
         }
     }
@@ -147,14 +147,14 @@ public class SwitchCode extends at.dms.util.Utils {
     // send a
     // dummy
     private static void printIOStartUp(Coordinate tile, FileWriter fw)
-            throws Exception {
+        throws Exception {
         if (FileVisitor.connectedToFR(tile))
             fw.write("\tnop\troute $csto->$cEo\n");
     }
 
     // receives the constants from the tile processor
     private static void getRepetitionCounts(Repetition[] compressMe,
-            FileWriter fw) throws Exception {
+                                            FileWriter fw) throws Exception {
         if (compressMe != null) {
             // print the code to get the immediates from the
             for (int i = 0; i < compressMe.length; i++) {
@@ -167,18 +167,18 @@ public class SwitchCode extends at.dms.util.Utils {
     // then we are printing the init schedule and if we have repetitions
     // we must get the constants from the processor
     private static void toASM(String ins, String side, Repetition[] compressMe,
-            FileWriter fw) throws Exception {
+                              FileWriter fw) throws Exception {
         int seq = 0;
         StringTokenizer t = new StringTokenizer(ins, "\n");
-	int instrCount = t.countTokens();
-	//a count of the instructions we have produced (including loop trip counts)
-	int instrDumped = 0;
+        int instrCount = t.countTokens();
+        //a count of the instructions we have produced (including loop trip counts)
+        int instrDumped = 0;
 
         if (compressMe == null) {
             // no compression --- just dump the routes with nops as the
             // instructions
             while (t.hasMoreTokens()) {
-		instrDumped++;
+                instrDumped++;
                 fw.write("\tnop\t" + t.nextToken() + "\n");
             }
         } else {
@@ -190,51 +190,51 @@ public class SwitchCode extends at.dms.util.Utils {
                 current = t.nextToken();
                 counter++;
                 int repetitions = 1;
-		//the size of the repetition, if one starts at this counter (line num)
-		int repSize = 1;
+                //the size of the repetition, if one starts at this counter (line num)
+                int repSize = 1;
                 for (int i = 0; i < compressMe.length; i++) {
                     if (compressMe[i].hasLine(counter)) {
                         repetitions = compressMe[i].repetitions;
-			assert repetitions > 1 : "Invalid repetition size for switch code compression.";
-			repSize = compressMe[i].getSize(counter);			
+                        assert repetitions > 1 : "Invalid repetition size for switch code compression.";
+                        repSize = compressMe[i].getSize(counter);           
                         fw.write("\tmove $3, $" + i + "\n");
                         fw.write("seq_start" + side + seq + ":\n");
                         // fw.write("\tnop\t" + current + "\n");
                         // fw.write("\tbnezd $3, $3, seq_start" + i + "\n");
-			if (repSize == 0) {
-			    fw.write("\tbnezd $3, $3, seq_start" + side + seq
-				     + "\t" + current + "\n");
-			}
-			else {
-			    for (int j = 0; j < repSize - 1; j++) {
-				fw.write("\tnop\t" + current + "\n");
-				current = t.nextToken();
-				counter++;
-			    }
-			    fw.write("\tbnezd $3, $3, seq_start" + side + seq
-				     + "\t" + current + "\n");
-			}
-			
+                        if (repSize == 0) {
+                            fw.write("\tbnezd $3, $3, seq_start" + side + seq
+                                     + "\t" + current + "\n");
+                        }
+                        else {
+                            for (int j = 0; j < repSize - 1; j++) {
+                                fw.write("\tnop\t" + current + "\n");
+                                current = t.nextToken();
+                                counter++;
+                            }
+                            fw.write("\tbnezd $3, $3, seq_start" + side + seq
+                                     + "\t" + current + "\n");
+                        }
+            
                         seq++;
                         break;
                     }
                 }
                 if (repetitions == 1) {
-		    instrDumped++;
+                    instrDumped++;
                     fw.write("\tnop\t" + current + "\n");
-		}
+                }
                 else {  //there was a loop found starting a this line...
                     for (int i = 0; i < (repetitions - 1) * repSize; i++) {
                         // skip over remainders
-			t.nextToken();
+                        t.nextToken();
                         counter++;
                     }
-		    instrDumped += (repetitions * repSize);
+                    instrDumped += (repetitions * repSize);
                 }
             }
         }
-	assert instrCount == instrDumped : "Error in Switch Compression! (" + instrCount + " != " + 
-	    instrDumped + ")";
+        assert instrCount == instrDumped : "Error in Switch Compression! (" + instrCount + " != " + 
+            instrDumped + ")";
     }
 
     private static int getCodeLength(String str) {
@@ -281,7 +281,7 @@ public class SwitchCode extends at.dms.util.Utils {
     }
 
     private static void addToThreeBiggest(Repetition[] threeBiggest, int line,
-            int repetitions, int size) {
+                                          int repetitions, int size) {
         for (int i = 0; i < 3; i++) {
             if (repetitions == threeBiggest[i].repetitions) {
                 threeBiggest[i].addLoop(line, size);
@@ -293,7 +293,7 @@ public class SwitchCode extends at.dms.util.Utils {
                     threeBiggest[j] = threeBiggest[j - 1];
                 // add the new one:
                 threeBiggest[i] = new Repetition(repetitions);
-		threeBiggest[i].addLoop(line, size);
+                threeBiggest[i].addLoop(line, size);
                 break;
             }
         }
@@ -313,80 +313,80 @@ public class SwitchCode extends at.dms.util.Utils {
      * are only 3 switch regs (well, there are 4 but we use one for scratch).
      */    
     private static Repetition[] threeBiggestRepetitions(String str) {
-	String[] nodes = getStringArray(new StringTokenizer(str, "\n")); 
-	System.out.println("Size of switch instruction array: " + nodes.length);
-	
-	Repetition[] threeBiggest = new Repetition[3]; //force the repetition count to be > 1
-	for (int i = 0; i < 3; i++) 
-	    threeBiggest[i] = new Repetition(4);
-	// pos is our location in <nodes> 
-	int pos = 0; 
-	// keep going 'til we've printed all the nodes 
-	while (pos<nodes.length) { 
-	    // ahead is our repetition-looking device 
-	    int ahead=1; 
-	    do { 
-		while (ahead <= MAX_LOOKAHEAD && 
-		       pos+ahead < nodes.length && 
-		       !nodes[pos].equals(nodes[pos+ahead])) {
-		    ahead++; 
-		} 
-		// if we found a match, try to build on it. <reps> denotes
-		//how many iterations of a loop we have. 
-		int reps = 0; 
-		if (ahead <= MAX_LOOKAHEAD && pos+ahead < nodes.length &&
-		    nodes[pos].equals(nodes[pos+ahead])) { 
-		    // see how many repetitions of the loop we can make... 
-		    do { 
-			int i; 
-			for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) { 
-			    // quit if we reach the end of the array 
-			    if (i+ahead >= nodes.length) { 
-				break; 
-			    } // quit if there's something non-matching 
-			    if (!nodes[i].equals(nodes[i+ahead])) { 
-				break; 
-			    } 
-			} 
-			// if we finished loop, increment <reps>; otherwise break 
-			if (i==pos+(reps+1)*ahead) { 
-			    reps++; 
-			}
-			else { 
-			    break; 
-			} 
-		    } while (true); 
-		} 
-		// if reps is <= 1, it's not worth the loop, so just 
-		// add the statement (or keep looking for loops) and 
-		// continue 
-		if (reps <= 1) { 
-		    // if we've't exhausted the possibility of finding 
-		    // loops, then make a single statement 
-		    if (ahead >= MAX_LOOKAHEAD) { 
-			pos++; 
-		    } 
-		} else { 
-		    //we need to add one to reps because it counts the number of repetitions
-		    //of the sequence, for the subsequent calculation we need it to count the first 
-		    //occurance also
-		    reps++;
-		    
-		    //see if the repetition count is larger for the last sequence 
-		    //we need to add the 1 to the position because we use tokens everywhere else
-		    //and the first token is at position one...
-		    addToThreeBiggest(threeBiggest, pos + 1, reps, ahead);
-		    // increment the position 
-		    pos += reps*ahead; 
-		    // quit looking for loops 
-		    break; 
-		} 
-		// increment ahead so that we have a chance the next time through 
-		ahead++; 
-	    } while (ahead<=MAX_LOOKAHEAD); 
-	}
-	
-	return threeBiggest;
+        String[] nodes = getStringArray(new StringTokenizer(str, "\n")); 
+        System.out.println("Size of switch instruction array: " + nodes.length);
+    
+        Repetition[] threeBiggest = new Repetition[3]; //force the repetition count to be > 1
+        for (int i = 0; i < 3; i++) 
+            threeBiggest[i] = new Repetition(4);
+        // pos is our location in <nodes> 
+        int pos = 0; 
+        // keep going 'til we've printed all the nodes 
+        while (pos<nodes.length) { 
+            // ahead is our repetition-looking device 
+            int ahead=1; 
+            do { 
+                while (ahead <= MAX_LOOKAHEAD && 
+                       pos+ahead < nodes.length && 
+                       !nodes[pos].equals(nodes[pos+ahead])) {
+                    ahead++; 
+                } 
+                // if we found a match, try to build on it. <reps> denotes
+                //how many iterations of a loop we have. 
+                int reps = 0; 
+                if (ahead <= MAX_LOOKAHEAD && pos+ahead < nodes.length &&
+                    nodes[pos].equals(nodes[pos+ahead])) { 
+                    // see how many repetitions of the loop we can make... 
+                    do { 
+                        int i; 
+                        for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) { 
+                            // quit if we reach the end of the array 
+                            if (i+ahead >= nodes.length) { 
+                                break; 
+                            } // quit if there's something non-matching 
+                            if (!nodes[i].equals(nodes[i+ahead])) { 
+                                break; 
+                            } 
+                        } 
+                        // if we finished loop, increment <reps>; otherwise break 
+                        if (i==pos+(reps+1)*ahead) { 
+                            reps++; 
+                        }
+                        else { 
+                            break; 
+                        } 
+                    } while (true); 
+                } 
+                // if reps is <= 1, it's not worth the loop, so just 
+                // add the statement (or keep looking for loops) and 
+                // continue 
+                if (reps <= 1) { 
+                    // if we've't exhausted the possibility of finding 
+                    // loops, then make a single statement 
+                    if (ahead >= MAX_LOOKAHEAD) { 
+                        pos++; 
+                    } 
+                } else { 
+                    //we need to add one to reps because it counts the number of repetitions
+                    //of the sequence, for the subsequent calculation we need it to count the first 
+                    //occurance also
+                    reps++;
+            
+                    //see if the repetition count is larger for the last sequence 
+                    //we need to add the 1 to the position because we use tokens everywhere else
+                    //and the first token is at position one...
+                    addToThreeBiggest(threeBiggest, pos + 1, reps, ahead);
+                    // increment the position 
+                    pos += reps*ahead; 
+                    // quit looking for loops 
+                    break; 
+                } 
+                // increment ahead so that we have a chance the next time through 
+                ahead++; 
+            } while (ahead<=MAX_LOOKAHEAD); 
+        }
+    
+        return threeBiggest;
     }
     
 
@@ -404,7 +404,7 @@ public class SwitchCode extends at.dms.util.Utils {
     }
 
     private static String getTrailer(Coordinate tile,
-            Repetition[] compressInit, Repetition[] compressWork) {
+                                     Repetition[] compressInit, Repetition[] compressWork) {
         StringBuffer buf = new StringBuffer();
 
         buf.append(".text\n\n");
@@ -412,7 +412,7 @@ public class SwitchCode extends at.dms.util.Utils {
         // buf.append("\tmtsri SW_PC, %lo(sw_begin)\n");
         buf.append("\tla $3, sw_begin\n");
         buf.append("\tmtsr SW_PC, $3\n");
-        buf.append("\tmtsri	SW_FREEZE, 0\n");
+        buf.append("\tmtsri SW_FREEZE, 0\n");
         if (FileVisitor.connectedToFR(tile))
             buf.append("\tori! $0, $0, 1\n");
 
@@ -425,7 +425,7 @@ public class SwitchCode extends at.dms.util.Utils {
                 // instruction to the
                 // branch and it will execute regardless of whether we branch
                 buf.append("\tori! $0, $0, "
-                        + (compressInit[i].repetitions - 1) + "\n");
+                           + (compressInit[i].repetitions - 1) + "\n");
             }
         }
         buf.append("\tjr $31\n");
@@ -438,7 +438,7 @@ public class SwitchCode extends at.dms.util.Utils {
                 // instruction to the
                 // branch and it will execute regardless of whether we branch
                 buf.append("\tori! $0, $0, "
-                        + (compressWork[i].repetitions - 1) + "\n");
+                           + (compressWork[i].repetitions - 1) + "\n");
             }
         }
         buf.append("\tjr $31\n");
@@ -449,7 +449,7 @@ public class SwitchCode extends at.dms.util.Utils {
     // class used to encapsulate a sequence: the starting line, the
     // repetition count, and the size of the repetition
     static class Repetition {
-	//
+        //
         public HashMap lineToSize;
 
         public int repetitions;
@@ -459,17 +459,17 @@ public class SwitchCode extends at.dms.util.Utils {
             repetitions = r;
         }
 
-	public void addLoop(int line, int size) 
-	{
-	    assert size < MAX_REP : "Trying to create a switch loop larger than immediate size";
-	    lineToSize.put(new Integer(line), new Integer(size));
-	}
-	
-	public int getSize(int l) 
-	{
-	    return ((Integer)lineToSize.get(new Integer(l))).intValue();
-	}
-	
+        public void addLoop(int line, int size) 
+        {
+            assert size < MAX_REP : "Trying to create a switch loop larger than immediate size";
+            lineToSize.put(new Integer(line), new Integer(size));
+        }
+    
+        public int getSize(int l) 
+        {
+            return ((Integer)lineToSize.get(new Integer(l))).intValue();
+        }
+    
 
         public boolean hasLine(int l) {
             return lineToSize.containsKey(new Integer(l));
@@ -479,12 +479,12 @@ public class SwitchCode extends at.dms.util.Utils {
             String ret = "reps: " + repetitions;
             Iterator it = lineToSize.keySet().iterator();
             while (it.hasNext()) {
-		Integer line = (Integer)it.next();
+                Integer line = (Integer)it.next();
                 ret = ret + "(" + line.toString() + ", " +
-		    lineToSize.get(line) + ")";
-		
-	    }
-	    
+                    lineToSize.get(line) + ")";
+        
+            }
+        
             return ret;
         }
 

@@ -8,14 +8,14 @@ import at.dms.kjc.sir.linear.*;
 
 public class PredefinedContent extends FilterContent {
     public PredefinedContent(PredefinedContent content) {
-	super(content);
+        super(content);
     }
 
     public PredefinedContent(SIRPredefinedFilter filter) {
-	super(filter);
+        super(filter);
     }
 
     public PredefinedContent(UnflatFilter unflat) {
-	super(unflat);
+        super(unflat);
     }
 }

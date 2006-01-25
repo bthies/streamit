@@ -1,5 +1,5 @@
 /*
- * @(#)SelectEdges.java	1.2 01.02.2003
+ * @(#)SelectEdges.java 1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,20 +32,20 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class SelectEdges extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectEdges.
-	 * @param graphpad
-	 */
-	public SelectEdges(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectEdges.
+     * @param graphpad
+     */
+    public SelectEdges(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Object[] cells = getCurrentGraph().getEdges(getCurrentGraph().getAll());
-			getCurrentGraph().addSelectionCells(cells);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getEdges(getCurrentGraph().getAll());
+        getCurrentGraph().addSelectionCells(cells);
+    }
 
 }

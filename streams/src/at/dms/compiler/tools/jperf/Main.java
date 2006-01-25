@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.2 2002-12-18 06:28:52 karczma Exp $
+ * $Id: Main.java,v 1.3 2006-01-25 17:01:10 thies Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -33,164 +33,164 @@ import at.dms.compiler.tools.common.Utils;
 
 public class Main {
 
-  // --------------------------------------------------------------------
-  // INPUT HANDLING
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // INPUT HANDLING
+    // --------------------------------------------------------------------
 
-  /**
-   * read and skip the declaration part
-   * Assume that file is already open and
-   * file pointer is already set correctly
-   */
-  private static String[] readHeader(RandomAccessFile input) throws java.io.IOException {
-    Vector	lines = new Vector();
+    /**
+     * read and skip the declaration part
+     * Assume that file is already open and
+     * file pointer is already set correctly
+     */
+    private static String[] readHeader(RandomAccessFile input) throws java.io.IOException {
+        Vector  lines = new Vector();
 
-    // read until meet /^%%/
-    while (true) {
-      String	currentLine = null;
+        // read until meet /^%%/
+        while (true) {
+            String  currentLine = null;
 
-      // have met End Of File
-      // According to source code of java.io.RandomAccessFile
-      // a `null' return value means EOF
-      if ((currentLine = input.readLine()) == null) {
-	System.err.println("Unexpected EOF in declaration part: incomplete input file.");
-	System.exit(-1);
-      }
+            // have met End Of File
+            // According to source code of java.io.RandomAccessFile
+            // a `null' return value means EOF
+            if ((currentLine = input.readLine()) == null) {
+                System.err.println("Unexpected EOF in declaration part: incomplete input file.");
+                System.exit(-1);
+            }
 
-      if (currentLine.startsWith("%%")) {
-	break;
-      }
+            if (currentLine.startsWith("%%")) {
+                break;
+            }
 
-      lines.addElement(currentLine);
+            lines.addElement(currentLine);
+        }
+
+        return (String[])Utils.toArray(lines, String.class);
     }
 
-    return (String[])Utils.toArray(lines, String.class);
-  }
+    /**
+     * Reads keyword section
+     * Assume that file is already open and
+     * file pointer is already set correctly
+     */
+    private static String[] readKeywords(RandomAccessFile input) {
+        Vector  lines = new Vector();
 
-  /**
-   * Reads keyword section
-   * Assume that file is already open and
-   * file pointer is already set correctly
-   */
-  private static String[] readKeywords(RandomAccessFile input) {
-    Vector	lines = new Vector();
+        while (true) {
+            String  currentLine = null;
 
-    while (true) {
-      String	currentLine = null;
+            try {
+                // have met End Of File
+                // According to source code of java.io.RandomAccessFile
+                // a `null' return value means EOF
+                if ((currentLine = input.readLine()) == null) {
+                    break;
+                }
+            } catch (IOException e) {
+                System.err.println("Error in reading file.");
+                System.exit(-1);
+            }
 
-      try {
-	// have met End Of File
-	// According to source code of java.io.RandomAccessFile
-	// a `null' return value means EOF
-	if ((currentLine = input.readLine()) == null) {
-	  break;
-	}
-      } catch (IOException e) {
-	System.err.println("Error in reading file.");
-	System.exit(-1);
-      }
+            if ((currentLine.charAt(0) == '%') && (currentLine.charAt(1) == '%')) {
+                break;
+            }
 
-      if ((currentLine.charAt(0) == '%') && (currentLine.charAt(1) == '%')) {
-	break;
-      }
+            // "//" leads comments
+            if (currentLine.charAt(0) != '/' || currentLine.charAt(1) != '/') {
+                lines.addElement(currentLine);
+            }
+        }
 
-      // "//" leads comments
-      if (currentLine.charAt(0) != '/' || currentLine.charAt(1) != '/') {
-	lines.addElement(currentLine);
-      }
+        return (String[])Utils.toArray(lines, String.class);
     }
 
-    return (String[])Utils.toArray(lines, String.class);
-  }
+    /**
+     * Reads unction section
+     * Assume that file is already open and
+     * file pointer is already set correctly
+     */
+    private static String[] readFooter(RandomAccessFile input) throws java.io.IOException {
+        Vector  lines = new Vector();
 
-  /**
-   * Reads unction section
-   * Assume that file is already open and
-   * file pointer is already set correctly
-   */
-  private static String[] readFooter(RandomAccessFile input) throws java.io.IOException {
-    Vector	lines = new Vector();
+        while (true) {
+            String  currentLine = null;
 
-    while (true) {
-      String	currentLine = null;
+            if ((currentLine = input.readLine()) == null) {
+                break;
+            }
 
-      if ((currentLine = input.readLine()) == null) {
-	break;
-      }
+            lines.addElement(currentLine);
+        }
 
-      lines.addElement(currentLine);
+        return (String[])Utils.toArray(lines, String.class);
     }
 
-    return (String[])Utils.toArray(lines, String.class);
-  }
+    // --------------------------------------------------------------------
+    // MAIN
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // MAIN
-  // --------------------------------------------------------------------
+    /**
+     * The main driver.
+     */
+    public static void main(String[] args) throws java.io.IOException {
+        parseOptions(args);
 
-  /**
-   * The main driver.
-   */
-  public static void main(String[] args) throws java.io.IOException {
-    parseOptions(args);
+        RandomAccessFile    input = new RandomAccessFile(input_file_name, "r");
 
-    RandomAccessFile	input = new RandomAccessFile(input_file_name, "r");
+        String[]        header = readHeader(input);
+        String[]        keywords = readKeywords(input);
+        String[]        footer = readFooter(input);
 
-    String[]		header = readHeader(input);
-    String[]		keywords = readKeywords(input);
-    String[]		footer = readFooter(input);
+        input.close();
 
-    input.close();
+        JPerf   generator = new JPerf(keywords, header, footer, loadFactor);
 
-    JPerf	generator = new JPerf(keywords, header, footer, loadFactor);
-
-    generator.build();
-    generator.genCode(output_file_name);
-  }
-
-  // process options from command line or AWT interface
-  private static void parseOptions(String[] args) {
-    for (int i=0; i<args.length; i++) {
-      if (args[i].charAt(0) == '-') {
-	if (args[i].startsWith("-C=")) {
-	  loadFactor = new Double(args[i].substring(3)).doubleValue();
-	} else {
-	  usage(args);
-	}
-      } else {
-	if (input_file_name == null) {
-	  input_file_name = args[i];
-	} else if (output_file_name == null) {
-	  output_file_name = args[i];
-	  if (output_file_name.indexOf('.') == -1) {
-	    output_file_name = output_file_name.concat(".java");
-	    System.err.println("Extension name of output file defaults to `java'.");
-	  }
-	} else {
-	  usage(args);
-	}
-      }
+        generator.build();
+        generator.genCode(output_file_name);
     }
 
-    if (input_file_name == null || output_file_name == null) {
-      usage(args);
+    // process options from command line or AWT interface
+    private static void parseOptions(String[] args) {
+        for (int i=0; i<args.length; i++) {
+            if (args[i].charAt(0) == '-') {
+                if (args[i].startsWith("-C=")) {
+                    loadFactor = new Double(args[i].substring(3)).doubleValue();
+                } else {
+                    usage(args);
+                }
+            } else {
+                if (input_file_name == null) {
+                    input_file_name = args[i];
+                } else if (output_file_name == null) {
+                    output_file_name = args[i];
+                    if (output_file_name.indexOf('.') == -1) {
+                        output_file_name = output_file_name.concat(".java");
+                        System.err.println("Extension name of output file defaults to `java'.");
+                    }
+                } else {
+                    usage(args);
+                }
+            }
+        }
+
+        if (input_file_name == null || output_file_name == null) {
+            usage(args);
+        }
     }
-  }
 
-  // print usage information
-  private static void usage(String[] args) {
-    System.err.println("java PerfectHash <options> input_file_name output_file_name");
-    System.err.println("where options are:");
-    System.err.println("\t-C=<float>\t\tset load factor value to <float>");
-    System.exit(-1);
-  }
+    // print usage information
+    private static void usage(String[] args) {
+        System.err.println("java PerfectHash <options> input_file_name output_file_name");
+        System.err.println("where options are:");
+        System.err.println("\t-C=<float>\t\tset load factor value to <float>");
+        System.exit(-1);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  // command line parameters
-  private static double		loadFactor = 25.0/12.0;
-  private static String		input_file_name = null;
-  private static String		output_file_name = null;
+    // command line parameters
+    private static double       loadFactor = 25.0/12.0;
+    private static String       input_file_name = null;
+    private static String       output_file_name = null;
 }

@@ -5,9 +5,9 @@ package at.dms.kjc.spacetime.switchIR;
 public interface SwitchIns {
     /*protected String op;
       
-      public abstract String toString();
+    public abstract String toString();
       
-      public SwitchIns(String op) {
-      this.op = op;
-      }*/
+    public SwitchIns(String op) {
+    this.op = op;
+    }*/
 }

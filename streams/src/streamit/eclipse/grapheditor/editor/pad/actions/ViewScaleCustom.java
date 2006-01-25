@@ -1,5 +1,5 @@
 /*
- * @(#)ViewScaleCustom.java	1.2 30.01.2003
+ * @(#)ViewScaleCustom.java 1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,31 +36,31 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class ViewScaleCustom extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ViewScaleCustom.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ViewScaleCustom(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ViewScaleCustom.
+     * @param graphpad
+     * @param name
+     */
+    public ViewScaleCustom(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		try {
-			double s =
-				Double.parseDouble(
-					JOptionPane.showInputDialog(
-						Translator.getString("ScaleDialog")));
-			getCurrentDocument().setResizeAction(null);
-			getCurrentDocument().setScale(s / 100);
-		} catch (NullPointerException npe) {
-			// ignore
-		} catch (Exception ex) {
-			graphpad.error(ex.getMessage());
-		}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        try {
+            double s =
+                Double.parseDouble(
+                                   JOptionPane.showInputDialog(
+                                                               Translator.getString("ScaleDialog")));
+            getCurrentDocument().setResizeAction(null);
+            getCurrentDocument().setScale(s / 100);
+        } catch (NullPointerException npe) {
+            // ignore
+        } catch (Exception ex) {
+            graphpad.error(ex.getMessage());
+        }
+    }
 
 }

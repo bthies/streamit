@@ -29,7 +29,7 @@ import java.util.List;
  * init functions to filters without any.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CreateInitFunctions.java,v 1.2 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: CreateInitFunctions.java,v 1.3 2006-01-25 17:04:28 thies Exp $
  */
 public class CreateInitFunctions extends FEReplacer
 {
@@ -37,22 +37,22 @@ public class CreateInitFunctions extends FEReplacer
     {
         boolean hasInit = false;
         for (Iterator iter = ss.getFuncs().iterator(); iter.hasNext(); )
-        {
-            Function func = (Function)iter.next();
-            if (func.getCls() == Function.FUNC_INIT)
-                hasInit = true;
-        }
+            {
+                Function func = (Function)iter.next();
+                if (func.getCls() == Function.FUNC_INIT)
+                    hasInit = true;
+            }
         if (!hasInit)
-        {
-            List newFuncs = new java.util.ArrayList();
-            newFuncs.addAll(ss.getFuncs());
-            Statement body = new StmtBlock(ss.getContext(),
-                                           Collections.EMPTY_LIST);
-            newFuncs.add(Function.newInit(ss.getContext(), body));
-            ss = new StreamSpec(ss.getContext(), ss.getType(),
-                                ss.getStreamType(), ss.getName(),
-                                ss.getParams(), ss.getVars(), newFuncs);
-        }
+            {
+                List newFuncs = new java.util.ArrayList();
+                newFuncs.addAll(ss.getFuncs());
+                Statement body = new StmtBlock(ss.getContext(),
+                                               Collections.EMPTY_LIST);
+                newFuncs.add(Function.newInit(ss.getContext(), body));
+                ss = new StreamSpec(ss.getContext(), ss.getType(),
+                                    ss.getStreamType(), ss.getName(),
+                                    ss.getParams(), ss.getVars(), newFuncs);
+            }
         // might have anonymous child filters with no init functions
         return super.visitStreamSpec(ss);
     }

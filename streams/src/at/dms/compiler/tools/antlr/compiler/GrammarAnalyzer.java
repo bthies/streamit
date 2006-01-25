@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: GrammarAnalyzer.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: GrammarAnalyzer.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -39,12 +39,12 @@ package at.dms.compiler.tools.antlr.compiler;
  * versus "does this specific k-sequence match?".
  */
 public interface GrammarAnalyzer {
-  /**
-   * The epsilon token type is an imaginary type used
-   * during analysis.  It indicates an incomplete look() computation.
-   * Must be kept consistent with Token constants to be between
-   * MIN_USER_TYPE and INVALID_TYPE.
-   */
-  int		NONDETERMINISTIC = Integer.MAX_VALUE; // lookahead depth
-  int		LOOKAHEAD_DEPTH_INIT = -1;
+    /**
+     * The epsilon token type is an imaginary type used
+     * during analysis.  It indicates an incomplete look() computation.
+     * Must be kept consistent with Token constants to be between
+     * MIN_USER_TYPE and INVALID_TYPE.
+     */
+    int     NONDETERMINISTIC = Integer.MAX_VALUE; // lookahead depth
+    int     LOOKAHEAD_DEPTH_INIT = -1;
 }

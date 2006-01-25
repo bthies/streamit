@@ -1,5 +1,5 @@
 /*
- * @(#)GraphOptionsBendable.java	1.2 02.02.2003
+ * @(#)GraphOptionsBendable.java    1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,29 +32,29 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class GraphOptionsBendable extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for GraphOptionsBendable.
-	 * @param graphpad
-	 */
-	public GraphOptionsBendable(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for GraphOptionsBendable.
+     * @param graphpad
+     */
+    public GraphOptionsBendable(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		if (getCurrentGraph() == null)
-			return false;
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        if (getCurrentGraph() == null)
+            return false;
 
-		return getCurrentGraph().isBendable();
-	}
+        return getCurrentGraph().isBendable();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		getCurrentGraph().setBendable(!getCurrentGraph().isBendable());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentGraph().setBendable(!getCurrentGraph().isBendable());
+    }
 
 }

@@ -15,38 +15,38 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public class ToolBoxSplitter extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ToolBoxSplitter.
-	 * @param graphpad
-	 */
-	public ToolBoxSplitter(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolBoxSplitter.
+     * @param graphpad
+     */
+    public ToolBoxSplitter(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-	}
-	
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JToggleButton button = graphpad.getMarqueeHandler().getButtonSplitter();
-		GPBarFactory.fillToolbarButton(
-					button,
-					getName(),
-					actionCommand);
-		return button;
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+    }
+    
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JToggleButton button = graphpad.getMarqueeHandler().getButtonSplitter();
+        GPBarFactory.fillToolbarButton(
+                                       button,
+                                       getName(),
+                                       actionCommand);
+        return button;
+    }
 
-	/**
-	 * Set the button as enabled or not enabled depending on its status.
-	 */
-	public void update() {
-		super.update();
-		graphpad.getMarqueeHandler().getButtonSplitter().setEnabled(isEnabled());
-	}
+    /**
+     * Set the button as enabled or not enabled depending on its status.
+     */
+    public void update() {
+        super.update();
+        graphpad.getMarqueeHandler().getButtonSplitter().setEnabled(isEnabled());
+    }
 
 }

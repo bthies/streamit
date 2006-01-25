@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDescription.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: MessageDescription.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -31,110 +31,110 @@ import java.text.MessageFormat;
  */
 public class MessageDescription {
 
-  public static final int LVL_UNDEFINED		= -1;
-  public static final int LVL_ERROR		= 0;
-  public static final int LVL_CAUTION		= 1;
-  public static final int LVL_WARNING		= 2;
-  public static final int LVL_NOTICE		= 3;
-  public static final int LVL_INFO		= 4;
+    public static final int LVL_UNDEFINED       = -1;
+    public static final int LVL_ERROR       = 0;
+    public static final int LVL_CAUTION     = 1;
+    public static final int LVL_WARNING     = 2;
+    public static final int LVL_NOTICE      = 3;
+    public static final int LVL_INFO        = 4;
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Constructs a message description
-   * @param	format		the textual message format (with placeholders)
-   * @param	reference	the document describing the reason for this message
-   * @param	level		the severity level of this message
-   */
-  public MessageDescription(String format, String reference, int level) {
-    this.format = format;
-    this.reference = reference;
-    this.level = level;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the message format.
-   */
-  public String getFormat() {
-    return format;
-  }
-
-  /**
-   * Returns a reference to a documentation on this message.
-   */
-  public String getReference() {
-    return reference;
-  }
-
-  /**
-   * Returns the level of this message.
-   */
-  public int getLevel() {
-    return level;
-  }
-
-  // ----------------------------------------------------------------------
-  // FORMATTING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns a string explaining the error.
-   *
-   * @param	parameters		the array of parameters
-   */
-  public String format(Object[] parameters) {
-    String	prefix;			// the text for the severity level
-    String	body;			// the formatted message
-    String	suffix;			// the reference
-
-    switch (level) {
-    case LVL_UNDEFINED:
-      // no qualifier
-      prefix = "";
-      break;
-    case LVL_ERROR:
-      prefix = "error:";
-      break;
-    case LVL_CAUTION:
-      prefix = "caution:";
-      break;
-    case LVL_WARNING:
-      prefix = "warning:";
-      break;
-    case LVL_NOTICE:
-      prefix = "notice:";
-      break;
-    case LVL_INFO:
-      prefix = "";
-      break;
-    default:
-      // unknown: mark as error
-      prefix = "error:";
+    /**
+     * Constructs a message description
+     * @param   format      the textual message format (with placeholders)
+     * @param   reference   the document describing the reason for this message
+     * @param   level       the severity level of this message
+     */
+    public MessageDescription(String format, String reference, int level) {
+        this.format = format;
+        this.reference = reference;
+        this.level = level;
     }
 
-    try {
-      body = MessageFormat.format(format, parameters);
-    } catch (RuntimeException e) {
-      // wrong number of parameters: give at least message text with placeholders
-      body = format;
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the message format.
+     */
+    public String getFormat() {
+        return format;
     }
 
-    suffix = reference == null ? "" : " [" + reference + "]";
+    /**
+     * Returns a reference to a documentation on this message.
+     */
+    public String getReference() {
+        return reference;
+    }
 
-    return prefix + body + suffix;
-  }
+    /**
+     * Returns the level of this message.
+     */
+    public int getLevel() {
+        return level;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // FORMATTING
+    // ----------------------------------------------------------------------
 
-  private final String		format;
-  private final String		reference;
-  private int			level;
+    /**
+     * Returns a string explaining the error.
+     *
+     * @param   parameters      the array of parameters
+     */
+    public String format(Object[] parameters) {
+        String  prefix;         // the text for the severity level
+        String  body;           // the formatted message
+        String  suffix;         // the reference
+
+        switch (level) {
+        case LVL_UNDEFINED:
+            // no qualifier
+            prefix = "";
+            break;
+        case LVL_ERROR:
+            prefix = "error:";
+            break;
+        case LVL_CAUTION:
+            prefix = "caution:";
+            break;
+        case LVL_WARNING:
+            prefix = "warning:";
+            break;
+        case LVL_NOTICE:
+            prefix = "notice:";
+            break;
+        case LVL_INFO:
+            prefix = "";
+            break;
+        default:
+            // unknown: mark as error
+            prefix = "error:";
+        }
+
+        try {
+            body = MessageFormat.format(format, parameters);
+        } catch (RuntimeException e) {
+            // wrong number of parameters: give at least message text with placeholders
+            body = format;
+        }
+
+        suffix = reference == null ? "" : " [" + reference + "]";
+
+        return prefix + body + suffix;
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private final String        format;
+    private final String        reference;
+    private int         level;
 }

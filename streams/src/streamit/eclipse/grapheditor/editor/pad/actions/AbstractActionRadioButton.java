@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractActionRadioButton.java	1.2 01.02.2003
+ * @(#)AbstractActionRadioButton.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -39,107 +39,107 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public abstract class AbstractActionRadioButton extends AbstractActionToggle {
 
-	/** Contains the last Action Command
-	 *
-	 */
-	public String lastActionCommand = null;
+    /** Contains the last Action Command
+     *
+     */
+    public String lastActionCommand = null;
 
 
-	/**
-	 * Constructor for AbstractActionRadioButton.
-	 * @param graphpad
-	 */
-	public AbstractActionRadioButton(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for AbstractActionRadioButton.
+     * @param graphpad
+     */
+    public AbstractActionRadioButton(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for AbstractActionRadioButton.
-	 * @param graphpad
-	 * @param name
-	 */
-	public AbstractActionRadioButton(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for AbstractActionRadioButton.
+     * @param graphpad
+     * @param name
+     */
+    public AbstractActionRadioButton(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for AbstractActionRadioButton.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public AbstractActionRadioButton(
-		GPGraphpad graphpad,
-		String name,
-		Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for AbstractActionRadioButton.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public AbstractActionRadioButton(
+                                     GPGraphpad graphpad,
+                                     String name,
+                                     Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	public abstract String[] getPossibleActionCommands();
+    public abstract String[] getPossibleActionCommands();
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponents()
-	 */
-	public Component[] getMenuComponents() {
-		String[] actionCommands = getPossibleActionCommands();
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponents()
+     */
+    public Component[] getMenuComponents() {
+        String[] actionCommands = getPossibleActionCommands();
 
-		Component[] components = new JComponent[actionCommands.length ];
+        Component[] components = new JComponent[actionCommands.length ];
 
-		for (int i = 0; i < actionCommands.length ; i++){
-			components[i] = getMenuComponent(actionCommands[i]);
-		}
+        for (int i = 0; i < actionCommands.length ; i++){
+            components[i] = getMenuComponent(actionCommands[i]);
+        }
 
-		return components;
-	}
+        return components;
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponents()
-	 */
-	public Component[] getToolComponents() {
-		String[] actionCommands = getPossibleActionCommands();
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponents()
+     */
+    public Component[] getToolComponents() {
+        String[] actionCommands = getPossibleActionCommands();
 
-		Component[] components = new JComponent[actionCommands.length ];
+        Component[] components = new JComponent[actionCommands.length ];
 
-		for (int i = 0; i < actionCommands.length ; i++){
-			components[i] = getToolComponent(actionCommands[i]);
-		}
+        for (int i = 0; i < actionCommands.length ; i++){
+            components[i] = getToolComponent(actionCommands[i]);
+        }
 
-		return components;
-	}
+        return components;
+    }
 
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponents()
-	 */
-	protected Component getMenuComponent(String actionCommand) {
-		JMenuItem button = new JRadioButtonMenuItem(this);
-		GPBarFactory.fillMenuButton(button, getName()+actionCommand, actionCommand);
-		abstractButtons.add(button);
-		if (lastActionCommand.endsWith(actionCommand))
-			button.setSelected(true);
-		String presentationText = getPresentationText(actionCommand);
-		if (presentationText != null)
-			button.setText(presentationText);
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponents()
+     */
+    protected Component getMenuComponent(String actionCommand) {
+        JMenuItem button = new JRadioButtonMenuItem(this);
+        GPBarFactory.fillMenuButton(button, getName()+actionCommand, actionCommand);
+        abstractButtons.add(button);
+        if (lastActionCommand.endsWith(actionCommand))
+            button.setSelected(true);
+        String presentationText = getPresentationText(actionCommand);
+        if (presentationText != null)
+            button.setText(presentationText);
 
-		return button;
-	}
+        return button;
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JRadioButton button = new JRadioButton(this);
-		GPBarFactory.fillToolbarButton(button, getName()+actionCommand, actionCommand);
-		abstractButtons.add(button);
-		if (lastActionCommand.endsWith(actionCommand))
-			button.setSelected(true);
-		return button;
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JRadioButton button = new JRadioButton(this);
+        GPBarFactory.fillToolbarButton(button, getName()+actionCommand, actionCommand);
+        abstractButtons.add(button);
+        if (lastActionCommand.endsWith(actionCommand))
+            button.setSelected(true);
+        return button;
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		return actionCommand.equals(lastActionCommand);
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        return actionCommand.equals(lastActionCommand);
+    }
 }

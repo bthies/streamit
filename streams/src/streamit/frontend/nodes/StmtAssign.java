@@ -29,7 +29,7 @@ package streamit.frontend.nodes;
  * be performed on both sides.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtAssign.java,v 1.4 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StmtAssign.java,v 1.5 2006-01-25 17:04:25 thies Exp $
  */
 public class StmtAssign extends Statement
 {
@@ -82,14 +82,14 @@ public class StmtAssign extends Statement
     {
         String theOp;
         switch (op)
-        {
-        case 0: theOp = "="; break;
-        case ExprBinary.BINOP_ADD: theOp = "+="; break;
-        case ExprBinary.BINOP_SUB: theOp = "-="; break;
-        case ExprBinary.BINOP_MUL: theOp = "*="; break;
-        case ExprBinary.BINOP_DIV: theOp = "/="; break;
-        default: theOp = "?= (" + op + ")"; break;
-        }
+            {
+            case 0: theOp = "="; break;
+            case ExprBinary.BINOP_ADD: theOp = "+="; break;
+            case ExprBinary.BINOP_SUB: theOp = "-="; break;
+            case ExprBinary.BINOP_MUL: theOp = "*="; break;
+            case ExprBinary.BINOP_DIV: theOp = "/="; break;
+            default: theOp = "?= (" + op + ")"; break;
+            }
         return lhs + " " + theOp + " " + rhs;
     }
 }

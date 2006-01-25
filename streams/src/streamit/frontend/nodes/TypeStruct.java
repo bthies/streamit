@@ -34,7 +34,7 @@ import java.util.HashMap;
  * to sanely compare equal.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStruct.java,v 1.5 2004-02-13 21:43:28 dmaze Exp $
+ * @version $Id: TypeStruct.java,v 1.6 2006-01-25 17:04:25 thies Exp $
  */
 public class TypeStruct extends Type
 {
@@ -121,16 +121,16 @@ public class TypeStruct extends Type
     public boolean equals(Object other)
     {
         if (other instanceof TypeStruct)
-        {
-            TypeStruct that = (TypeStruct)other;
-            return this.name.equals(that.name);
-        }
+            {
+                TypeStruct that = (TypeStruct)other;
+                return this.name.equals(that.name);
+            }
         
         if (other instanceof TypeStructRef)
-        {
-            TypeStructRef that = (TypeStructRef)other;
-            return name.equals(that.getName());
-        }
+            {
+                TypeStructRef that = (TypeStructRef)other;
+                return name.equals(that.getName());
+            }
         
         if (this.isComplex() && other instanceof Type)
             return ((Type)other).isComplex();

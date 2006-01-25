@@ -24,9 +24,9 @@ public class LIRNode extends JStatement {
      * Construct a node in the parsing tree
      */
     protected LIRNode(JExpression streamContext) {
-	// no token reference or comments
-	super(null, null);
-	this.streamContext = streamContext;
+        // no token reference or comments
+        super(null, null);
+        this.streamContext = streamContext;
     }
 
     // ----------------------------------------------------------------------
@@ -37,7 +37,7 @@ public class LIRNode extends JStatement {
      * Analyses the statement (semantically) - NOT SUPPORTED YET.
      */
     public void analyse(CBodyContext context) throws PositionedError {
-	at.dms.util.Utils.fail("Analysis of LIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Analysis of LIR nodes not supported yet.");
     }
 
     // ----------------------------------------------------------------------
@@ -59,15 +59,15 @@ public class LIRNode extends JStatement {
     }
 
     public Object accept(AttributeVisitor p) {
-	// no action is defined for attribute visitors on lir nodes
-	return this;
+        // no action is defined for attribute visitors on lir nodes
+        return this;
     }
 
     /**
      * Generates a sequence of bytescodes - NOT SUPPORTED YET.
      */
     public void genCode(CodeSequence code) {
-	at.dms.util.Utils.fail("Codegen of LIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Codegen of LIR nodes not supported yet.");
     }
 
     /**

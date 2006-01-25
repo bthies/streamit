@@ -21,14 +21,14 @@ public class SwitchCode extends at.dms.util.Utils
     /** use heavy-weight compression algorithm */
     private static final boolean USE_BETTER_COMP = true;
     /** the max-ahead is the maximum number of lines that this will
-	recognize as a pattern for folding into a loop */
+        recognize as a pattern for folding into a loop */
     private static final int MAX_LOOKAHEAD = 100;
 
     /** the maximum number of repetitions allowed for a switch sequence
-	this is 2^16 because that is the largest immediate allowed */
+        this is 2^16 because that is the largest immediate allowed */
     private static final int MAX_REP = 65535;
     /** the name of the function that sends the loop trip counts to the 
-	switch for switch code compression in the steady state */
+        switch for switch code compression in the steady state */
     public static final String  SW_SS_TRIPS = "raw_init2";
 
 
@@ -38,149 +38,149 @@ public class SwitchCode extends at.dms.util.Utils
   
     public static void generate(final StreamGraph sg) 
     {
-	streamGraph = sg;
-	rawChip = sg.getRawChip();
-	layout = streamGraph.getLayout();
+        streamGraph = sg;
+        rawChip = sg.getRawChip();
+        layout = streamGraph.getLayout();
 
-	//create the joiner schedules before simulation
-	sg.joinerSimulator = new JoinerSimulator(streamGraph);
-	sg.joinerSimulator.createJoinerSchedules();
-	
-	/*StaticStreamGraph current = streamGraph.getTopLevel();
-	
-	while (current != null) {
-	    current.scheduleCommunication(sg.joinerSimulator);
-	    current = current.getNext();
-	    }*/
-	
-	streamGraph.getTopLevel().accept(new StreamGraphVisitor() {
-		public void visitStaticStreamGraph(StaticStreamGraph ssg) 
-		{
-		    ssg.scheduleCommunication(sg.joinerSimulator);
-		}
-		
-	    }, null, true);
+        //create the joiner schedules before simulation
+        sg.joinerSimulator = new JoinerSimulator(streamGraph);
+        sg.joinerSimulator.createJoinerSchedules();
+    
+        /*StaticStreamGraph current = streamGraph.getTopLevel();
+    
+        while (current != null) {
+        current.scheduleCommunication(sg.joinerSimulator);
+        current = current.getNext();
+        }*/
+    
+        streamGraph.getTopLevel().accept(new StreamGraphVisitor() {
+                public void visitStaticStreamGraph(StaticStreamGraph ssg) 
+                {
+                    ssg.scheduleCommunication(sg.joinerSimulator);
+                }
+        
+            }, null, true);
 
-	//now print the schedules
-	dumpSchedules();
+        //now print the schedules
+        dumpSchedules();
     }
     
     public static void dumpSchedules() 
     {
-	//this is a hash set that keeps tiles that we have already generated
-	//code for
-	HashSet tilesGenerated = new HashSet();
+        //this is a hash set that keeps tiles that we have already generated
+        //code for
+        HashSet tilesGenerated = new HashSet();
 
-	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-	    //get all the nodes that have either init switch code
-	    //or steady state switch code
-	    HashSet computeNodes = new HashSet();
+        for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+            //get all the nodes that have either init switch code
+            //or steady state switch code
+            HashSet computeNodes = new HashSet();
 
-	    //SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
+            //SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
 
-	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
-	    SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.initSchedules.keySet());
-	    SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.steadySchedules.keySet());
+            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.initSchedules.keySet());
+            SpaceDynamicBackend.addAll(computeNodes, ssg.simulator.steadySchedules.keySet());
 
-	    //now add any tiles that don't perform any switching and were assigned filters
-	    FlatNode node;
-	    Iterator flatNodes = ssg.getFlatNodes().iterator(); 
-	    while (flatNodes.hasNext()) {
-		node = (FlatNode)flatNodes.next();
-		if (node.isFilter() && Layout.assignToATile(node))
-		    computeNodes.add(layout.getTile(node));
-	    }
+            //now add any tiles that don't perform any switching and were assigned filters
+            FlatNode node;
+            Iterator flatNodes = ssg.getFlatNodes().iterator(); 
+            while (flatNodes.hasNext()) {
+                node = (FlatNode)flatNodes.next();
+                if (node.isFilter() && Layout.assignToATile(node))
+                    computeNodes.add(layout.getTile(node));
+            }
 
-	    Iterator tileIterator = computeNodes.iterator();	    
-			
-	    //for each tiles dump the code
-	    while(tileIterator.hasNext()) {
-		ComputeNode cn = (ComputeNode)tileIterator.next();
-		assert cn != null;
-		//ignore ioports because we do not generate switch code for them
-		if (!cn.isTile())
-		    continue;
-		RawTile tile = (RawTile)cn;
-		
-		assert !tilesGenerated.contains(tile) : 
-		    "Trying to generated switch code for a tile that has already been seen";
+            Iterator tileIterator = computeNodes.iterator();        
+            
+            //for each tiles dump the code
+            while(tileIterator.hasNext()) {
+                ComputeNode cn = (ComputeNode)tileIterator.next();
+                assert cn != null;
+                //ignore ioports because we do not generate switch code for them
+                if (!cn.isTile())
+                    continue;
+                RawTile tile = (RawTile)cn;
+        
+                assert !tilesGenerated.contains(tile) : 
+                    "Trying to generated switch code for a tile that has already been seen";
 
-		tilesGenerated.add(tile);
-		
+                tilesGenerated.add(tile);
+        
 
-		try {
-		    //true if we are compressing the switch code
-		    boolean compression = false;
-		    
-		    //get the code
-		    String steadyCode = "";
-		    String initCode = "";
-		    if (ssg.simulator.initSchedules.get(tile) != null)
-			initCode = ((StringBuffer)ssg.simulator.initSchedules.get(tile)).toString();
-		    if (ssg.simulator.steadySchedules.get(tile) != null)
-			steadyCode = ((StringBuffer)ssg.simulator.steadySchedules.get(tile)).toString();
-		    
-		    //the sequences we are going to compress if compression is needed
-		    Repetition[] big3init = null;
-		    Repetition[] big3work = null;
-		    
-		    int codeSize = getCodeLength(steadyCode + initCode);
-		    if (codeSize > 5000) {
-			System.out.println("Compression needed.  Code size = " + codeSize);
-			compression = true;
-			if (USE_BETTER_COMP) {
-			    //use the more heavyweight compression algorithm...
-			    big3init = threeBiggestRepetitions(initCode);
-			    big3work = threeBiggestRepetitions(steadyCode);
-			}
-			else {
-			    big3init = threeBiggestOneReps(initCode);
-			    big3work = threeBiggestOneReps(steadyCode);
-			}
-		    }
-		   
-		    FileWriter fw =
-			new FileWriter("sw" + tile.getTileNumber() 
-				       + ".s");
-		    fw.write("#  Switch code\n");
-		    fw.write(getHeader());
-		    //if this tile is the north neighbor of a bc file i/o device
-		    //we need to send a data word to it
-		    printIOStartUp(tile, fw);
-		    //print the code to get the repetition counts from the processor
-		    //print the init switch code
-		    if (big3init != null)
-			getRepetitionCounts(big3init, fw);
-		    toASM(initCode, "i", big3init, fw);
-		    //loop label
-		    if (big3work != null)
-			getRepetitionCounts(big3work, fw);
-		    fw.write("sw_loop:\n");
-		    //print the steady state switch code
-		    if (ssg.simulator.steadySchedules.get(tile) != null)
-			toASM(steadyCode, "w", big3work, fw);
-		    //print the jump ins
-		    fw.write("\tj\tsw_loop\n\n");
-		    fw.write(getTrailer(tile, big3init, big3work));
-		    fw.close();
-		    /*if (threeBiggest != null) {
-		      System.out.print("Found Seqeunces of: " +
-		      threeBiggest[0].repetitions + " " + t" " + 
-		      threeBiggest[1].repetitions + " " + threeBiggest[1].length + " " + 
-		      threeBiggest[2].repetitions + " " + threeBiggest[2].length + "\n");
-		      } */
-		    
-		    System.out.println("sw" + tile.getTileNumber() 
-				       + ".s written");
-		}
-		catch (Exception e) {
-		    e.printStackTrace();
-		    
-		    Utils.fail("Error creating switch code file for tile " + 
-			       tile.getTileNumber());
-		}
-	    }
-	}
+                try {
+                    //true if we are compressing the switch code
+                    boolean compression = false;
+            
+                    //get the code
+                    String steadyCode = "";
+                    String initCode = "";
+                    if (ssg.simulator.initSchedules.get(tile) != null)
+                        initCode = ((StringBuffer)ssg.simulator.initSchedules.get(tile)).toString();
+                    if (ssg.simulator.steadySchedules.get(tile) != null)
+                        steadyCode = ((StringBuffer)ssg.simulator.steadySchedules.get(tile)).toString();
+            
+                    //the sequences we are going to compress if compression is needed
+                    Repetition[] big3init = null;
+                    Repetition[] big3work = null;
+            
+                    int codeSize = getCodeLength(steadyCode + initCode);
+                    if (codeSize > 5000) {
+                        System.out.println("Compression needed.  Code size = " + codeSize);
+                        compression = true;
+                        if (USE_BETTER_COMP) {
+                            //use the more heavyweight compression algorithm...
+                            big3init = threeBiggestRepetitions(initCode);
+                            big3work = threeBiggestRepetitions(steadyCode);
+                        }
+                        else {
+                            big3init = threeBiggestOneReps(initCode);
+                            big3work = threeBiggestOneReps(steadyCode);
+                        }
+                    }
+           
+                    FileWriter fw =
+                        new FileWriter("sw" + tile.getTileNumber() 
+                                       + ".s");
+                    fw.write("#  Switch code\n");
+                    fw.write(getHeader());
+                    //if this tile is the north neighbor of a bc file i/o device
+                    //we need to send a data word to it
+                    printIOStartUp(tile, fw);
+                    //print the code to get the repetition counts from the processor
+                    //print the init switch code
+                    if (big3init != null)
+                        getRepetitionCounts(big3init, fw);
+                    toASM(initCode, "i", big3init, fw);
+                    //loop label
+                    if (big3work != null)
+                        getRepetitionCounts(big3work, fw);
+                    fw.write("sw_loop:\n");
+                    //print the steady state switch code
+                    if (ssg.simulator.steadySchedules.get(tile) != null)
+                        toASM(steadyCode, "w", big3work, fw);
+                    //print the jump ins
+                    fw.write("\tj\tsw_loop\n\n");
+                    fw.write(getTrailer(tile, big3init, big3work));
+                    fw.close();
+                    /*if (threeBiggest != null) {
+                      System.out.print("Found Seqeunces of: " +
+                      threeBiggest[0].repetitions + " " + t" " + 
+                      threeBiggest[1].repetitions + " " + threeBiggest[1].length + " " + 
+                      threeBiggest[2].repetitions + " " + threeBiggest[2].length + "\n");
+                      } */
+            
+                    System.out.println("sw" + tile.getTileNumber() 
+                                       + ".s written");
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+            
+                    Utils.fail("Error creating switch code file for tile " + 
+                               tile.getTileNumber());
+                }
+            }
+        }
     }
     
     
@@ -188,24 +188,24 @@ public class SwitchCode extends at.dms.util.Utils
     //dummy value to start the streaming of the file
     private static void printIOStartUp(RawTile tile, FileWriter fw) throws Exception 
     {
-	if (streamGraph.getFileState().isConnectedToFileReader(tile)) {
-	    FileReaderDevice dev = (FileReaderDevice)tile.getAttachedDevice();
-	    fw.write("\tnop\troute $csto->$c" +
-		     rawChip.getDirection(tile, dev.getPort()) + 
-		     "o\n");
-	}
-	
+        if (streamGraph.getFileState().isConnectedToFileReader(tile)) {
+            FileReaderDevice dev = (FileReaderDevice)tile.getAttachedDevice();
+            fw.write("\tnop\troute $csto->$c" +
+                     rawChip.getDirection(tile, dev.getPort()) + 
+                     "o\n");
+        }
+    
     }
 
     //receives the constants from the tile processor
     private static void getRepetitionCounts(Repetition[] compressMe, FileWriter fw) throws Exception
     {
-	if (compressMe != null) {
-	    //print the code to get the immediates from the 
-	    for (int i = 0; i < compressMe.length; i++) {
-		fw.write("\tmove $" + i +", $csto\n");
-	    }
-	}
+        if (compressMe != null) {
+            //print the code to get the immediates from the 
+            for (int i = 0; i < compressMe.length; i++) {
+                fw.write("\tmove $" + i +", $csto\n");
+            }
+        }
     }
     
     //print the assemble for the tile routing instructions.  if init is true
@@ -213,17 +213,17 @@ public class SwitchCode extends at.dms.util.Utils
     //we must get the constants from the processor
     private static void toASM(String ins, String side, Repetition[] compressMe, FileWriter fw) throws Exception
     {
-	int seq = 0;
+        int seq = 0;
         StringTokenizer t = new StringTokenizer(ins, "\n");
-	int instrCount = t.countTokens();
-	//a count of the instructions we have produced (including loop trip counts)
-	int instrDumped = 0;
+        int instrCount = t.countTokens();
+        //a count of the instructions we have produced (including loop trip counts)
+        int instrDumped = 0;
 
         if (compressMe == null) {
             // no compression --- just dump the routes with nops as the
             // instructions
             while (t.hasMoreTokens()) {
-		instrDumped++;
+                instrDumped++;
                 fw.write("\tnop\t" + t.nextToken() + "\n");
             }
         } else {
@@ -235,63 +235,63 @@ public class SwitchCode extends at.dms.util.Utils
                 current = t.nextToken();
                 counter++;
                 int repetitions = 1;
-		//the size of the repetition, if one starts at this counter (line num)
-		int repSize = 1;
+                //the size of the repetition, if one starts at this counter (line num)
+                int repSize = 1;
                 for (int i = 0; i < compressMe.length; i++) {
                     if (compressMe[i].hasLine(counter)) {
                         repetitions = compressMe[i].repetitions;
-			assert repetitions > 1 : "Invalid repetition size for switch code compression.";
-			repSize = compressMe[i].getSize(counter);			
+                        assert repetitions > 1 : "Invalid repetition size for switch code compression.";
+                        repSize = compressMe[i].getSize(counter);           
                         fw.write("\tmove $3, $" + i + "\n");
                         fw.write("seq_start" + side + seq + ":\n");
                         // fw.write("\tnop\t" + current + "\n");
                         // fw.write("\tbnezd $3, $3, seq_start" + i + "\n");
-			if (repSize == 0) {
-			    fw.write("\tbnezd $3, $3, seq_start" + side + seq
-				     + "\t" + current + "\n");
-			}
-			else {
-			    for (int j = 0; j < repSize - 1; j++) {
-				fw.write("\tnop\t" + current + "\n");
-				current = t.nextToken();
-				counter++;
-			    }
-			    fw.write("\tbnezd $3, $3, seq_start" + side + seq
-				     + "\t" + current + "\n");
-			}
-			
+                        if (repSize == 0) {
+                            fw.write("\tbnezd $3, $3, seq_start" + side + seq
+                                     + "\t" + current + "\n");
+                        }
+                        else {
+                            for (int j = 0; j < repSize - 1; j++) {
+                                fw.write("\tnop\t" + current + "\n");
+                                current = t.nextToken();
+                                counter++;
+                            }
+                            fw.write("\tbnezd $3, $3, seq_start" + side + seq
+                                     + "\t" + current + "\n");
+                        }
+            
                         seq++;
                         break;
                     }
                 }
                 if (repetitions == 1) {
-		    instrDumped++;
+                    instrDumped++;
                     fw.write("\tnop\t" + current + "\n");
-		}
+                }
                 else {  //there was a loop found starting a this line...
                     for (int i = 0; i < (repetitions - 1) * repSize; i++) {
                         // skip over remainders
-			t.nextToken();
+                        t.nextToken();
                         counter++;
                     }
-		    instrDumped += (repetitions * repSize);
+                    instrDumped += (repetitions * repSize);
                 }
             }
         }
-	assert instrCount == instrDumped : "Error in Switch Compression! (" + instrCount + " != " + 
-	    instrDumped + ")";
+        assert instrCount == instrDumped : "Error in Switch Compression! (" + instrCount + " != " + 
+            instrDumped + ")";
     }
     
     private static int getCodeLength(String str) 
     {
-	StringTokenizer t = new StringTokenizer(str, "\n");
-	return t.countTokens();
+        StringTokenizer t = new StringTokenizer(str, "\n");
+        return t.countTokens();
     }
 
     private static Repetition[] threeBiggestOneReps(String str) {
         StringTokenizer t = new StringTokenizer(str, "\n");
         Repetition[] threeBiggest = new Repetition[3];
-	
+    
         // force the repetition count to be > 4 because there needs to be 3
         // instructions for a compressed loop...
         for (int i = 0; i < 3; i++)
@@ -327,7 +327,7 @@ public class SwitchCode extends at.dms.util.Utils
     }
 
     private static void addToThreeBiggest(Repetition[] threeBiggest, int line,
-            int repetitions, int size) {
+                                          int repetitions, int size) {
         for (int i = 0; i < 3; i++) {
             if (repetitions == threeBiggest[i].repetitions) {
                 threeBiggest[i].addLoop(line, size);
@@ -339,7 +339,7 @@ public class SwitchCode extends at.dms.util.Utils
                     threeBiggest[j] = threeBiggest[j - 1];
                 // add the new one:
                 threeBiggest[i] = new Repetition(repetitions);
-		threeBiggest[i].addLoop(line, size);
+                threeBiggest[i].addLoop(line, size);
                 break;
             }
         }
@@ -359,141 +359,141 @@ public class SwitchCode extends at.dms.util.Utils
      * are only 3 switch regs (well, there are 4 but we use one for scratch).
      */    
     private static Repetition[] threeBiggestRepetitions(String str) {
-	String[] nodes = getStringArray(new StringTokenizer(str, "\n")); 
-	System.out.println("Size of switch instruction array: " + nodes.length);
-	
-	Repetition[] threeBiggest = new Repetition[3]; //force the repetition count to be > 1
-	for (int i = 0; i < 3; i++) 
-	    threeBiggest[i] = new Repetition(4);
-	// pos is our location in <nodes> 
-	int pos = 0; 
-	// keep going 'til we've printed all the nodes 
-	while (pos<nodes.length) { 
-	    // ahead is our repetition-looking device 
-	    int ahead=1; 
-	    do { 
-		while (ahead <= MAX_LOOKAHEAD && 
-		       pos+ahead < nodes.length && 
-		       !nodes[pos].equals(nodes[pos+ahead])) {
-		    ahead++; 
-		} 
-		// if we found a match, try to build on it. <reps> denotes
-		//how many iterations of a loop we have. 
-		int reps = 0; 
-		if (ahead <= MAX_LOOKAHEAD && pos+ahead < nodes.length &&
-		    nodes[pos].equals(nodes[pos+ahead])) { 
-		    // see how many repetitions of the loop we can make... 
-		    do { 
-			int i; 
-			for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) { 
-			    // quit if we reach the end of the array 
-			    if (i+ahead >= nodes.length) { 
-				break; 
-			    } // quit if there's something non-matching 
-			    if (!nodes[i].equals(nodes[i+ahead])) { 
-				break; 
-			    } 
-			} 
-			// if we finished loop, increment <reps>; otherwise break 
-			if (i==pos+(reps+1)*ahead) { 
-			    reps++; 
-			}
-			else { 
-			    break; 
-			} 
-		    } while (true); 
-		} 
-		// if reps is <= 1, it's not worth the loop, so just 
-		// add the statement (or keep looking for loops) and 
-		// continue 
-		if (reps <= 1) { 
-		    // if we've't exhausted the possibility of finding 
-		    // loops, then make a single statement 
-		    if (ahead >= MAX_LOOKAHEAD) { 
-			pos++; 
-		    } 
-		} else { 
-		    //we need to add one to reps because it counts the number of repetitions
-		    //of the sequence, for the subsequent calculation we need it to count the first 
-		    //occurance also
-		    reps++;
-		    
-		    //see if the repetition count is larger for the last sequence 
-		    //we need to add the 1 to the position because we use tokens everywhere else
-		    //and the first token is at position one...
-		    addToThreeBiggest(threeBiggest, pos + 1, reps, ahead);
-		    // increment the position 
-		    pos += reps*ahead; 
-		    // quit looking for loops 
-		    break; 
-		} 
-		// increment ahead so that we have a chance the next time through 
-		ahead++; 
-	    } while (ahead<=MAX_LOOKAHEAD); 
-	}
-	
-	return threeBiggest;
+        String[] nodes = getStringArray(new StringTokenizer(str, "\n")); 
+        System.out.println("Size of switch instruction array: " + nodes.length);
+    
+        Repetition[] threeBiggest = new Repetition[3]; //force the repetition count to be > 1
+        for (int i = 0; i < 3; i++) 
+            threeBiggest[i] = new Repetition(4);
+        // pos is our location in <nodes> 
+        int pos = 0; 
+        // keep going 'til we've printed all the nodes 
+        while (pos<nodes.length) { 
+            // ahead is our repetition-looking device 
+            int ahead=1; 
+            do { 
+                while (ahead <= MAX_LOOKAHEAD && 
+                       pos+ahead < nodes.length && 
+                       !nodes[pos].equals(nodes[pos+ahead])) {
+                    ahead++; 
+                } 
+                // if we found a match, try to build on it. <reps> denotes
+                //how many iterations of a loop we have. 
+                int reps = 0; 
+                if (ahead <= MAX_LOOKAHEAD && pos+ahead < nodes.length &&
+                    nodes[pos].equals(nodes[pos+ahead])) { 
+                    // see how many repetitions of the loop we can make... 
+                    do { 
+                        int i; 
+                        for (i=pos+reps*ahead; i<pos+(reps+1)*ahead; i++) { 
+                            // quit if we reach the end of the array 
+                            if (i+ahead >= nodes.length) { 
+                                break; 
+                            } // quit if there's something non-matching 
+                            if (!nodes[i].equals(nodes[i+ahead])) { 
+                                break; 
+                            } 
+                        } 
+                        // if we finished loop, increment <reps>; otherwise break 
+                        if (i==pos+(reps+1)*ahead) { 
+                            reps++; 
+                        }
+                        else { 
+                            break; 
+                        } 
+                    } while (true); 
+                } 
+                // if reps is <= 1, it's not worth the loop, so just 
+                // add the statement (or keep looking for loops) and 
+                // continue 
+                if (reps <= 1) { 
+                    // if we've't exhausted the possibility of finding 
+                    // loops, then make a single statement 
+                    if (ahead >= MAX_LOOKAHEAD) { 
+                        pos++; 
+                    } 
+                } else { 
+                    //we need to add one to reps because it counts the number of repetitions
+                    //of the sequence, for the subsequent calculation we need it to count the first 
+                    //occurance also
+                    reps++;
+            
+                    //see if the repetition count is larger for the last sequence 
+                    //we need to add the 1 to the position because we use tokens everywhere else
+                    //and the first token is at position one...
+                    addToThreeBiggest(threeBiggest, pos + 1, reps, ahead);
+                    // increment the position 
+                    pos += reps*ahead; 
+                    // quit looking for loops 
+                    break; 
+                } 
+                // increment ahead so that we have a chance the next time through 
+                ahead++; 
+            } while (ahead<=MAX_LOOKAHEAD); 
+        }
+    
+        return threeBiggest;
     }
 
     
     private static String getHeader() 
     {
-	StringBuffer buf = new StringBuffer();
-	
-	buf.append("#include \"module_test.h\"\n\n");
-	buf.append(".swtext\n");
-	buf.append(".global sw_begin\n");
-	buf.append(".global raw_init\n");
+        StringBuffer buf = new StringBuffer();
+    
+        buf.append("#include \"module_test.h\"\n\n");
+        buf.append(".swtext\n");
+        buf.append(".global sw_begin\n");
+        buf.append(".global raw_init\n");
         buf.append(".global raw_init2\n\n");
-	buf.append("sw_begin:\n");
-	
-	return buf.toString();
+        buf.append("sw_begin:\n");
+    
+        return buf.toString();
     }
     
     private static String getTrailer(RawTile tile,
                                      Repetition[] compressInit,
                                      Repetition[] compressWork) 
     {
-	StringBuffer buf = new StringBuffer();
-	
-	buf.append(".text\n\n");
-	buf.append("raw_init:\n");
-	//buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
-	buf.append("\tla $3, sw_begin\n");
-	buf.append("\tmtsr SW_PC, $3\n");
-	buf.append("\tmtsri	SW_FREEZE, 0\n");
-	if (streamGraph.getFileState().isConnectedToFileReader(tile))
-	    buf.append("\tori! $0, $0, 1\n");
+        StringBuffer buf = new StringBuffer();
+    
+        buf.append(".text\n\n");
+        buf.append("raw_init:\n");
+        //buf.append("\tmtsri   SW_PC, %lo(sw_begin)\n");
+        buf.append("\tla $3, sw_begin\n");
+        buf.append("\tmtsr SW_PC, $3\n");
+        buf.append("\tmtsri SW_FREEZE, 0\n");
+        if (streamGraph.getFileState().isConnectedToFileReader(tile))
+            buf.append("\tori! $0, $0, 1\n");
 
-	if (compressInit != null) {
-	    for (int i = 0; i < compressInit.length; i++) {
-		//System.out.println("line: " + compressMe[i].line + " reps: " + compressMe[i].repetitions);
-		
-		//need to subtract 1 because we are adding the route instruction to the
-		//branch and it will execute regardless of whether we branch
-		buf.append("\tori! $0, $0, " + (compressInit[i].repetitions  - 1) + "\n");
-	    }
-	}
-	buf.append("\tjr $31\n");
-
-	buf.append(SW_SS_TRIPS + ":\n");
-	if (compressWork != null) {
-	    for (int i = 0; i < compressWork.length; i++) {
-		
-		//need to subtract 1 because we are adding the route instruction to the
-		//branch and it will execute regardless of whether we branch
-		buf.append("\tori! $0, $0, " + (compressWork[i].repetitions  - 1) + "\n");
-	    }
-	}
+        if (compressInit != null) {
+            for (int i = 0; i < compressInit.length; i++) {
+                //System.out.println("line: " + compressMe[i].line + " reps: " + compressMe[i].repetitions);
+        
+                //need to subtract 1 because we are adding the route instruction to the
+                //branch and it will execute regardless of whether we branch
+                buf.append("\tori! $0, $0, " + (compressInit[i].repetitions  - 1) + "\n");
+            }
+        }
         buf.append("\tjr $31\n");
 
-	return buf.toString();
+        buf.append(SW_SS_TRIPS + ":\n");
+        if (compressWork != null) {
+            for (int i = 0; i < compressWork.length; i++) {
+        
+                //need to subtract 1 because we are adding the route instruction to the
+                //branch and it will execute regardless of whether we branch
+                buf.append("\tori! $0, $0, " + (compressWork[i].repetitions  - 1) + "\n");
+            }
+        }
+        buf.append("\tjr $31\n");
+
+        return buf.toString();
     }
 
-     // class used to encapsulate a sequence: the starting line, the
+    // class used to encapsulate a sequence: the starting line, the
     // repetition count, and the size of the repetition
     static class Repetition {
-	//
+        //
         public HashMap lineToSize;
 
         public int repetitions;
@@ -503,17 +503,17 @@ public class SwitchCode extends at.dms.util.Utils
             repetitions = r;
         }
 
-	public void addLoop(int line, int size) 
-	{
-	    assert size < MAX_REP : "Trying to create a switch loop larger than immediate size";
-	    lineToSize.put(new Integer(line), new Integer(size));
-	}
-	
-	public int getSize(int l) 
-	{
-	    return ((Integer)lineToSize.get(new Integer(l))).intValue();
-	}
-	
+        public void addLoop(int line, int size) 
+        {
+            assert size < MAX_REP : "Trying to create a switch loop larger than immediate size";
+            lineToSize.put(new Integer(line), new Integer(size));
+        }
+    
+        public int getSize(int l) 
+        {
+            return ((Integer)lineToSize.get(new Integer(l))).intValue();
+        }
+    
 
         public boolean hasLine(int l) {
             return lineToSize.containsKey(new Integer(l));
@@ -523,12 +523,12 @@ public class SwitchCode extends at.dms.util.Utils
             String ret = "reps: " + repetitions;
             Iterator it = lineToSize.keySet().iterator();
             while (it.hasNext()) {
-		Integer line = (Integer)it.next();
+                Integer line = (Integer)it.next();
                 ret = ret + "(" + line.toString() + ", " +
-		    lineToSize.get(line) + ")";
-		
-	    }
-	    
+                    lineToSize.get(line) + ")";
+        
+            }
+        
             return ret;
         }
 

@@ -33,7 +33,7 @@ import java.util.List;
  * inside the anonymous stream) corresponds to a local.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FindFreeVariables.java,v 1.5 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: FindFreeVariables.java,v 1.6 2006-01-25 17:04:28 thies Exp $
  */
 public class FindFreeVariables extends SymbolTableVisitor
 {
@@ -67,53 +67,53 @@ public class FindFreeVariables extends SymbolTableVisitor
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
         for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
-        {
-            String name = (String)iter.next();
-            // Is the variable free here, too?
-            if (!symtab.hasVar(name))
-                oldFreeVars.add(name);
-            // Look up the variable in the symbol table; only print
-            // if it's a local.
-            else if (symtab.lookupKind(name) == SymbolTable.KIND_LOCAL)
             {
-                final String was = name;
-                final String wrapped = "_final_" + name;
-                Type type = symtab.lookupVar(name);
-                result = ((FENode)result).accept
-                    (new SymbolTableVisitor(new SymbolTable(null)) {
-                        public Object visitExprVar(ExprVar expr)
-                        {
-                            Object result = super.visitExprVar(expr);
-                            try
+                String name = (String)iter.next();
+                // Is the variable free here, too?
+                if (!symtab.hasVar(name))
+                    oldFreeVars.add(name);
+                // Look up the variable in the symbol table; only print
+                // if it's a local.
+                else if (symtab.lookupKind(name) == SymbolTable.KIND_LOCAL)
+                    {
+                        final String was = name;
+                        final String wrapped = "_final_" + name;
+                        Type type = symtab.lookupVar(name);
+                        result = ((FENode)result).accept
+                            (new SymbolTableVisitor(new SymbolTable(null)) {
+                                    public Object visitExprVar(ExprVar expr)
+                                    {
+                                        Object result = super.visitExprVar(expr);
+                                        try
+                                            {
+                                                symtab.lookupVar(expr.getName());
+                                            }
+                                        catch (UnrecognizedVariableException e)
+                                            {
+                                                if (expr.getName().equals(was))
+                                                    return new ExprVar(expr.getContext(),
+                                                                       wrapped);
+                                                // else fall through
+                                            }
+                                        return result;
+                                    }
+                                });
+                        // Also insert a statement for that variable and add
+                        // it to the local symbol table.  addStatement will
+                        // add the statement *before* the one that includes this
+                        // StreamSpec, so we're set.  But only do this if
+                        // we haven't already; specifically, if symtab doesn't
+                        // contain the wrapped variable.
+                        if (!(symtab.hasVar(wrapped)))
                             {
-                                symtab.lookupVar(expr.getName());
+                                FEContext context = ((FENode)result).getContext();
+                                addVarDecl(context, type, wrapped);
+                                addStatement(new StmtAssign(context,
+                                                            new ExprVar(context, wrapped),
+                                                            new ExprVar(context, name)));
                             }
-                            catch (UnrecognizedVariableException e)
-                            {
-                                if (expr.getName().equals(was))
-                                    return new ExprVar(expr.getContext(),
-                                                       wrapped);
-                                // else fall through
-                            }
-                            return result;
-                        }
-                    });
-                // Also insert a statement for that variable and add
-                // it to the local symbol table.  addStatement will
-                // add the statement *before* the one that includes this
-                // StreamSpec, so we're set.  But only do this if
-                // we haven't already; specifically, if symtab doesn't
-                // contain the wrapped variable.
-                if (!(symtab.hasVar(wrapped)))
-                {
-                    FEContext context = ((FENode)result).getContext();
-                    addVarDecl(context, type, wrapped);
-                    addStatement(new StmtAssign(context,
-                                                new ExprVar(context, wrapped),
-                                                new ExprVar(context, name)));
-                }
+                    }
             }
-        }
         freeVars = oldFreeVars;
         return result;
     }

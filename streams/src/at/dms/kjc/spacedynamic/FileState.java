@@ -62,11 +62,11 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         if (KjcOptions.devassignfile != null) {
             try { // read from the file specified...
                 inputBuffer = new BufferedReader(new FileReader(
-                        KjcOptions.devassignfile));
+                                                                KjcOptions.devassignfile));
             } catch (Exception e) {
                 System.err
-                        .println("Error opening device-to-port assignment file "
-                                + KjcOptions.devassignfile);
+                    .println("Error opening device-to-port assignment file "
+                             + KjcOptions.devassignfile);
                 System.exit(1);
             }
         } else
@@ -80,7 +80,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
                 inputBuffer.close();
         } catch (Exception e) {
             System.err
-                    .println("Error closing device-to-port assignment stream");
+                .println("Error closing device-to-port assignment stream");
             System.exit(1);
         }
 
@@ -90,9 +90,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     }
 
     /** If we have a file reader or writer, create the device and connect
-	it to the raw chip **/
+        it to the raw chip **/
     public void visitNode(FlatNode node) {
-	//lots of duplication here, but oh well
+        //lots of duplication here, but oh well
         if (node.contents instanceof SIRFileReader) {
             FileReaderDevice dev = new FileReaderDevice(streamGraph, node);
             StaticStreamGraph parent = streamGraph.getParentSSG(node);
@@ -109,7 +109,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             foundReader = true;
         } else if (node.contents instanceof SIRFileWriter) {
             FileWriterDevice dev = new FileWriterDevice(streamGraph, node);
-	    StaticStreamGraph parent = streamGraph.getParentSSG(node);
+            StaticStreamGraph parent = streamGraph.getParentSSG(node);
             
             if (parent.getIOFilters().contains(node.contents)) {
                 //we have a dynamic file reader
@@ -143,13 +143,13 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 
             if (num < 0 || num >= streamGraph.getRawChip().getNumPorts()) {
                 System.out.println("Enter valid port number  [0, "
-                        + streamGraph.getRawChip().getNumPorts() + ")\n");
+                                   + streamGraph.getRawChip().getNumPorts() + ")\n");
                 continue;
             }
 
             if (streamGraph.getRawChip().getIOPort(num).hasDevice()) {
                 System.out.println("Port " + num
-                        + " already assigned a device!\n");
+                                   + " already assigned a device!\n");
                 continue;
             }
             break;
@@ -180,7 +180,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     public boolean isConnectedToFileReader(RawTile tile) {
         for (int i = 0; i < tile.getIOPorts().length; i++)
             if (tile.getIOPorts()[i].hasDevice()
-                    && tile.getIOPorts()[i].getDevice().isFileReader())
+                && tile.getIOPorts()[i].getDevice().isFileReader())
                 return true;
         return false;
     }

@@ -22,31 +22,31 @@ public abstract class SIRContainer extends SIRStream {
     private static LinkedList toClear=new LinkedList();
 
     protected SIRContainer() {
-	super();
-	this.children = new MutableList();
-	this.params = new MutableList();
-	toClear.add(this);
+        super();
+        this.children = new MutableList();
+        this.params = new MutableList();
+        toClear.add(this);
     }
 
     protected SIRContainer(SIRContainer parent,
-			   String ident,
-			   JFieldDeclaration[] fields,
-			   JMethodDeclaration[] methods) {
-	super(parent, ident, fields, methods);
-	this.children = new MutableList();
-	this.params = new MutableList();
-	toClear.add(this);
+                           String ident,
+                           JFieldDeclaration[] fields,
+                           JMethodDeclaration[] methods) {
+        super(parent, ident, fields, methods);
+        this.children = new MutableList();
+        this.params = new MutableList();
+        toClear.add(this);
     }
 
     //Do not use unless not using structure anymore
     public static void destroy() {
-	while(toClear.size()>0) {
-	    SIRContainer cont=(SIRContainer)toClear.removeFirst();
-	    cont.children.clear();
-	    cont.children=null;
-	    cont.params.clear();
-	    cont.params=null;
-	}
+        while(toClear.size()>0) {
+            SIRContainer cont=(SIRContainer)toClear.removeFirst();
+            cont.children.clear();
+            cont.children=null;
+            cont.params.clear();
+            cont.params=null;
+        }
     }
 
     /**
@@ -56,29 +56,29 @@ public abstract class SIRContainer extends SIRStream {
      * by subclasses to include splitters/joiners etc.
      */
     public List getChildren() {
-	List result = new LinkedList();
-	for (int i=0; i<size(); i++) {
-	    result.add(get(i));
-	}
-	return result;
+        List result = new LinkedList();
+        for (int i=0; i<size(); i++) {
+            result.add(get(i));
+        }
+        return result;
     }
 
     /**
      * Returns copy of list of parameters passed to children of this.
      */
     public List getParams() {
-	List result = new LinkedList();
-	for (int i=0; i<size(); i++) {
-	    result.add(getParams(i));
-	}
-	return result;
+        List result = new LinkedList();
+        for (int i=0; i<size(); i++) {
+            result.add(getParams(i));
+        }
+        return result;
     }
 
     /**
      * So subclasses can view parameter list.
      */
     protected ConstList myParams() {
-	return params;
+        return params;
     }
 
     /**
@@ -86,43 +86,43 @@ public abstract class SIRContainer extends SIRStream {
      * appear in this.
      */
     public int indexOf(SIRStream str) {
-	return children.indexOf(str);
+        return children.indexOf(str);
     }
 
     /**
      * Clears the child/param lists.
      */
     public void clear() {
-	children.clear();
-	params.clear();
+        children.clear();
+        params.clear();
     }
 
     /**
      * So subclasses can view children.
      */
     protected ConstList myChildren() {
-	return children;
+        return children;
     }
 
     /**
      * Add a <child> with empty parameters.
      */
     public void add(SIRStream str) {
-	this.add(str, new LinkedList());
+        this.add(str, new LinkedList());
     }
 
     /**
      * Adds <str> at index <index> with empty parameters.
      */
     public void add(int index, SIRStream str) {
-	this.add(index, str, new LinkedList());
+        this.add(index, str, new LinkedList());
     }
 
     /**
      * Adds <str> at the end of this with parameters <param>.
      */
     public void add(SIRStream str, List param) {
-	this.add(size(), str, param);
+        this.add(size(), str, param);
     }
 
     /**
@@ -130,11 +130,11 @@ public abstract class SIRContainer extends SIRStream {
      * parent of <str> to this.
      */
     public void add(int index, SIRStream str, List param) {
-	children.add(index, str);
-	params.add(index, param);
-	if (str!=null) {
-	    str.setParent(this);
-	}
+        children.add(index, str);
+        params.add(index, param);
+        if (str!=null) {
+            str.setParent(this);
+        }
     }
 
     /**
@@ -142,8 +142,8 @@ public abstract class SIRContainer extends SIRStream {
      * constant indices defined in SIRFeedbackLoop, or getBody/getLoop.
      */
     public SIRStream get(int i) {
-	SIRStream child = (SIRStream)children.get(i);
-	return child;
+        SIRStream child = (SIRStream)children.get(i);
+        return child;
     }
 
     /**
@@ -154,12 +154,12 @@ public abstract class SIRContainer extends SIRStream {
      * parents (e.g. in partitioning).
      */
     public void reclaimChildren() {
-	for (int i=0; i<size(); i++) {
-	    get(i).setParent(this);
-	    if (get(i) instanceof SIRContainer) {
-		((SIRContainer)get(i)).reclaimChildren();
-	    }
-	}
+        for (int i=0; i<size(); i++) {
+            get(i).setParent(this);
+            if (get(i) instanceof SIRContainer) {
+                ((SIRContainer)get(i)).reclaimChildren();
+            }
+        }
     }
 
     /**
@@ -170,55 +170,55 @@ public abstract class SIRContainer extends SIRStream {
      * be a joiner.
      */
     public SIROperator getSuccessor(SIRStream child) {
-	List myChildren = getChildren();
-	int i = myChildren.indexOf(child);
-	if (i==myChildren.size()-1) {
-	    // if it's at the end of the whole program, return null
-	    if (getParent()==null) {
-		return null;
-	    } else {
-		// otherwise, go for first element in parent's successor
-		SIROperator succ = getParent().getSuccessor(this);
-		// recurse down through the successor to find it's first
-		// child
-		while (succ instanceof SIRContainer) {
-		    succ = (SIROperator)((SIRContainer)succ).getChildren().get(0);
-		}
-		return succ;
-	    }
-	} else {
-	    return (SIROperator)myChildren.get(i+1);
-	}
+        List myChildren = getChildren();
+        int i = myChildren.indexOf(child);
+        if (i==myChildren.size()-1) {
+            // if it's at the end of the whole program, return null
+            if (getParent()==null) {
+                return null;
+            } else {
+                // otherwise, go for first element in parent's successor
+                SIROperator succ = getParent().getSuccessor(this);
+                // recurse down through the successor to find it's first
+                // child
+                while (succ instanceof SIRContainer) {
+                    succ = (SIROperator)((SIRContainer)succ).getChildren().get(0);
+                }
+                return succ;
+            }
+        } else {
+            return (SIROperator)myChildren.get(i+1);
+        }
     }
 
     /**
      * Removes the i'th child of this.
      */
     public void remove(int i) {
-	children.remove(i);
-	params.remove(i);
+        children.remove(i);
+        params.remove(i);
     }
 
     /**
      * Removes <str> from this.
      */
     public void remove(SIRStream str) {
-	assert this.contains(str);
-	remove(indexOf(str));
+        assert this.contains(str);
+        remove(indexOf(str));
     }
 
     /**
      * Set child at index <index> to <str>
      */
     public void set(int index, SIRStream str) {
-	children.set(index, str);
+        children.set(index, str);
     }
 
     /**
      * Set parameters for <i>'th child to <params>
      */
     public void setParams(int index, List params) {
-	this.params.set(index, params);
+        this.params.set(index, params);
     }
 
     /**
@@ -227,7 +227,7 @@ public abstract class SIRContainer extends SIRStream {
      * have not been resolved yet.
      */
     public List getParams(int i) {
-	return (List)params.get(i);
+        return (List)params.get(i);
     }
 
     /**
@@ -235,7 +235,7 @@ public abstract class SIRContainer extends SIRStream {
      * for feedbackloop's).
      */
     public int size() {
-	return children.size();
+        return children.size();
     }
 
     /**
@@ -259,12 +259,12 @@ public abstract class SIRContainer extends SIRStream {
      * Whether or not <str> is an immediate child of this.
      */
     public boolean contains(SIROperator str) {
-	for (int i=0; i<children.size(); i++) {
-	    if (children.get(i)==str) {
-		return true;
-	    }
-	}
-	return false;
+        for (int i=0; i<children.size(); i++) {
+            if (children.get(i)==str) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -272,29 +272,29 @@ public abstract class SIRContainer extends SIRStream {
      * contain the wrapper in between itself and <str>.
      */
     public static SIRPipeline makeWrapper(SIRStream str) {
-	// wrapper.add below changes the parent of str, so grab the
-	// old parent now.
-	SIRContainer oldParent = str.getParent();
-	SIRPipeline wrapper = new SIRPipeline(oldParent, str.getIdent());
-	wrapper.setInit(SIRStream.makeEmptyInit());
-	wrapper.add(str);
-	if (oldParent!=null) {
-	    oldParent.replace(str, wrapper);
-	}
-	return wrapper;
+        // wrapper.add below changes the parent of str, so grab the
+        // old parent now.
+        SIRContainer oldParent = str.getParent();
+        SIRPipeline wrapper = new SIRPipeline(oldParent, str.getIdent());
+        wrapper.setInit(SIRStream.makeEmptyInit());
+        wrapper.add(str);
+        if (oldParent!=null) {
+            oldParent.replace(str, wrapper);
+        }
+        return wrapper;
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRContainer other) {
-  super.deepCloneInto(other);
-  other.children = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.children);
-  other.params = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.params);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRContainer other) {
+        super.deepCloneInto(other);
+        other.children = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.children);
+        other.params = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.params);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: AccessorContainer.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: AccessorContainer.java,v 1.2 2006-01-25 17:00:38 thies Exp $
  */
 
 package at.dms.classfile;
@@ -26,9 +26,9 @@ package at.dms.classfile;
  */
 public interface AccessorContainer {
 
-  /**
-   * Transforms the accessors contained in this class.
-   * @param	transformer		the transformer used to transform accessors
-   */
-  void transformAccessors(AccessorTransformer transformer) throws BadAccessorException;
+    /**
+     * Transforms the accessors contained in this class.
+     * @param   transformer     the transformer used to transform accessors
+     */
+    void transformAccessors(AccessorTransformer transformer) throws BadAccessorException;
 }

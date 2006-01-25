@@ -48,55 +48,55 @@ public class LatencyConstraint {
     int dependencyData[];
 
     LatencyConstraint(int sourceInit, 
-		      int sourceSteadyExec,
-		      int destSteadyExec,
-		      SIRFilter receiver) {
-	this.sourceInit = sourceInit;
-	this.sourceSteadyExec = sourceSteadyExec;
-	this.destSteadyExec = destSteadyExec;
-	this.receiver = receiver;
-	dependencyData = new int[sourceSteadyExec];
-	for (int t = 0; t < sourceSteadyExec; t++) {
-	    dependencyData[t] = 0;
-	}
+                      int sourceSteadyExec,
+                      int destSteadyExec,
+                      SIRFilter receiver) {
+        this.sourceInit = sourceInit;
+        this.sourceSteadyExec = sourceSteadyExec;
+        this.destSteadyExec = destSteadyExec;
+        this.receiver = receiver;
+        dependencyData = new int[sourceSteadyExec];
+        for (int t = 0; t < sourceSteadyExec; t++) {
+            dependencyData[t] = 0;
+        }
     }
 
     public void setDependencyData(int index, int value) {
-	dependencyData[index] = value;
+        dependencyData[index] = value;
     }
 
     public int getDependencyData(int index) {
-	return dependencyData[index];
+        return dependencyData[index];
     }
 
     public SIRFilter getReceiver() {
-	return receiver;
+        return receiver;
     }
 
     public int getSourceInit() {
-	return sourceInit;
+        return sourceInit;
     }
 
     public int getSourceSteadyExec() {
-	return sourceSteadyExec;
+        return sourceSteadyExec;
     }
 
     public int getDestSteadyExec() {
-	return destSteadyExec;
+        return destSteadyExec;
     }
 
     public void output() {
-	System.out.println(" init: "+sourceInit+
-			   " source: "+sourceSteadyExec+
-			   " dest: "+destSteadyExec);
-	System.out.print(" data: ");
-	for (int t = 0; t < sourceSteadyExec; t++) {
-	    System.out.print(dependencyData[t]+" ");
-	
-	}
+        System.out.println(" init: "+sourceInit+
+                           " source: "+sourceSteadyExec+
+                           " dest: "+destSteadyExec);
+        System.out.print(" data: ");
+        for (int t = 0; t < sourceSteadyExec; t++) {
+            System.out.print(dependencyData[t]+" ");
+    
+        }
 
-	System.out.print(" receiver id: "+NodeEnumerator.getSIROperatorId(receiver));
-	System.out.println();
+        System.out.print(" receiver id: "+NodeEnumerator.getSIROperatorId(receiver));
+        System.out.println();
     }
 }
 

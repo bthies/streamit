@@ -1,5 +1,5 @@
 /*
- * @(#)ViewActualSize.java	1.2 29.01.2003
+ * @(#)ViewActualSize.java  1.2 29.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,18 +34,18 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ViewActualSize extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ViewActualSize.
-	 */
-	public ViewActualSize(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ViewActualSize.
+     */
+    public ViewActualSize(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			graphpad.getCurrentDocument().setResizeAction(null);
-			graphpad.getCurrentDocument().setScale(1);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        graphpad.getCurrentDocument().setResizeAction(null);
+        graphpad.getCurrentDocument().setScale(1);
+    }
 }

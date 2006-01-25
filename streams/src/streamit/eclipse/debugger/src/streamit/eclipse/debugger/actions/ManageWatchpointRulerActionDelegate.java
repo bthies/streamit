@@ -10,10 +10,10 @@ import org.eclipse.ui.texteditor.ITextEditor;
  */
 public class ManageWatchpointRulerActionDelegate extends AbstractRulerActionDelegate {
 
-	/**
-	 * @see AbstractRulerActionDelegate#createAction()
-	 */
-	protected IAction createAction(ITextEditor editor, IVerticalRulerInfo rulerInfo) {
-		return new ManageWatchpointRulerAction(editor, rulerInfo);
-	}
+    /**
+     * @see AbstractRulerActionDelegate#createAction()
+     */
+    protected IAction createAction(ITextEditor editor, IVerticalRulerInfo rulerInfo) {
+        return new ManageWatchpointRulerAction(editor, rulerInfo);
+    }
 }

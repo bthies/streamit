@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ActionElement.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: ActionElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -23,22 +23,22 @@ package at.dms.compiler.tools.antlr.compiler;
 import at.dms.compiler.tools.antlr.runtime.*;
 
 class ActionElement extends AlternativeElement {
-  protected String actionText;
-  protected boolean isSemPred = false;
+    protected String actionText;
+    protected boolean isSemPred = false;
 
 
-  public ActionElement(Grammar g, Token t) {
-    super(g);
-    actionText = t.getText();
-    line = t.getLine();
-  }
-  public void generate(JavaCodeGenerator generator) {
-    generator.gen(this);
-  }
-  public Lookahead look(int k) {
-    return grammar.theLLkAnalyzer.look(k, this);
-  }
-  public String toString() {
-    return " "+actionText + (isSemPred?"?":"");
-  }
+    public ActionElement(Grammar g, Token t) {
+        super(g);
+        actionText = t.getText();
+        line = t.getLine();
+    }
+    public void generate(JavaCodeGenerator generator) {
+        generator.gen(this);
+    }
+    public Lookahead look(int k) {
+        return grammar.theLLkAnalyzer.look(k, this);
+    }
+    public String toString() {
+        return " "+actionText + (isSemPred?"?":"");
+    }
 }

@@ -21,9 +21,9 @@ public class LIRSetPush extends LIRNode {
      * Construct a node.
      */
     public LIRSetPush(JExpression streamContext,
-		      int push) {
-	super(streamContext);
-	this.push = push;
+                      int push) {
+        super(streamContext);
+        this.push = push;
     }
 
     public void accept(SLIRVisitor v)

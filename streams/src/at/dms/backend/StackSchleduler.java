@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StackSchleduler.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: StackSchleduler.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -28,128 +28,128 @@ import java.util.Stack;
  */
 public class StackSchleduler extends TreeWalker {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates a new instruction handle.
-   *
-   * @param	insn		the instruction
-   * @param	prev		the handle of the next instruction
-   *				in textual order
-   */
-  public StackSchleduler(BasicBlock[] bblocks, BasicBlock[] eblocks) {
-    super(bblocks, eblocks);
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Runs the deadcode algorithm
-   */
-  public void run() {
-    traverse();
-  }
-
-  // --------------------------------------------------------------------
-  // PROTECTED METHODS
-  // --------------------------------------------------------------------
-
-  /**
-   * Processes the node
-   *
-   * @param	node		the node to be processed
-   */
-  protected void processNode(QNode node) {
-    QOrigin[]	origins = node.getOrigins();
-    int		pos = 0;
-
-    for (int i = origins.length - 1; i >= 0; i--) {
-      if (origins[i] == getTemp(pos) && !isInList(getTemp(pos), node.getLiveout())) {
-
-	getNode(pos).useStack();
-	node.setOrigin(new QStack(getTemp(pos).getType()), i);// !!! share
-	pos += 1;
-      } else if (!(origins[i] instanceof QLiteral)) {
-	break;
-      }
+    /**
+     * Creates a new instruction handle.
+     *
+     * @param   insn        the instruction
+     * @param   prev        the handle of the next instruction
+     *              in textual order
+     */
+    public StackSchleduler(BasicBlock[] bblocks, BasicBlock[] eblocks) {
+        super(bblocks, eblocks);
     }
 
-    if (node.hasSideEffect()) {
-      stack.setSize(0);
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
+
+    /**
+     * Runs the deadcode algorithm
+     */
+    public void run() {
+        traverse();
     }
 
-    if (node.isStore()) {
-      stack.push(node);
+    // --------------------------------------------------------------------
+    // PROTECTED METHODS
+    // --------------------------------------------------------------------
+
+    /**
+     * Processes the node
+     *
+     * @param   node        the node to be processed
+     */
+    protected void processNode(QNode node) {
+        QOrigin[]   origins = node.getOrigins();
+        int     pos = 0;
+
+        for (int i = origins.length - 1; i >= 0; i--) {
+            if (origins[i] == getTemp(pos) && !isInList(getTemp(pos), node.getLiveout())) {
+
+                getNode(pos).useStack();
+                node.setOrigin(new QStack(getTemp(pos).getType()), i);// !!! share
+                pos += 1;
+            } else if (!(origins[i] instanceof QLiteral)) {
+                break;
+            }
+        }
+
+        if (node.hasSideEffect()) {
+            stack.setSize(0);
+        }
+
+        if (node.isStore()) {
+            stack.push(node);
+        }
     }
-  }
 
-  /**
-   * Processes the node
-   *
-   * @param	node		the node to be processed
-   *
-  protected void processNode(QNode node) {
-    QTemporary[]	uses = node.getUses();
+    /**
+     * Processes the node
+     *
+     * @param   node        the node to be processed
+     *
+     protected void processNode(QNode node) {
+     QTemporary[]   uses = node.getUses();
 
-    for (int i = 0; i < uses.length; i++) {
-      QTemporary	temp = uses[i];
+     for (int i = 0; i < uses.length; i++) {
+     QTemporary temp = uses[i];
 
-      if (!isInList(temp, node.getLiveout()) && defs.containsKey(temp)) {
-	QQuadruple	defNode = (QQuadruple)defs.get(temp);
+     if (!isInList(temp, node.getLiveout()) && defs.containsKey(temp)) {
+     QQuadruple defNode = (QQuadruple)defs.get(temp);
 
-	removeNode(defNode);
-	//node.setParameter(temp, defNode);
-	System.out.println("YOU'VE GOT IT " + defNode);
-      }
+     removeNode(defNode);
+     //node.setParameter(temp, defNode);
+     System.out.println("YOU'VE GOT IT " + defNode);
+     }
+     }
+
+     if (node.isStore()) {
+     QTemporary def = node.getDef();
+
+     defs.put(def, node);
+     }
+     }
+
+     /**
+     * Called when a branch is reached
+     */
+    protected void kill() {
+        stack.setSize(0);
     }
 
-    if (node.isStore()) {
-      QTemporary	def = node.getDef();
+    // --------------------------------------------------------------------
+    // PRIVATE METHODS
+    // --------------------------------------------------------------------
 
-      defs.put(def, node);
+    private QTemporary getTemp(int pos) {
+        QQuadruple  quad = getNode(pos);
+
+        return quad == null ? null : quad.getDef();
     }
-  }
 
-  /**
-   * Called when a branch is reached
-   */
-  protected void kill() {
-    stack.setSize(0);
-  }
-
-  // --------------------------------------------------------------------
-  // PRIVATE METHODS
-  // --------------------------------------------------------------------
-
-  private QTemporary getTemp(int pos) {
-    QQuadruple	quad = getNode(pos);
-
-    return quad == null ? null : quad.getDef();
-  }
-
-  private QQuadruple getNode(int pos) {
-    return stack.size() - 1 - pos >= 0 ?
-      (QQuadruple)stack.elementAt(stack.size() - 1 - pos) :
-      null;
-  }
-
-  private static boolean isInList(QTemporary temp, QTemporary[] list) {
-    for (int i = 0; i < list.length; i++) {
-      if (temp == list[i]) {
-	return true;
-      }
+    private QQuadruple getNode(int pos) {
+        return stack.size() - 1 - pos >= 0 ?
+            (QQuadruple)stack.elementAt(stack.size() - 1 - pos) :
+            null;
     }
-    return false;
-  }
 
-  // --------------------------------------------------------------------
-  // PRIVATE MEMBERS
-  // --------------------------------------------------------------------
+    private static boolean isInList(QTemporary temp, QTemporary[] list) {
+        for (int i = 0; i < list.length; i++) {
+            if (temp == list[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-  private Stack		stack = new Stack();
-  private Hashtable	defs = new Hashtable();
+    // --------------------------------------------------------------------
+    // PRIVATE MEMBERS
+    // --------------------------------------------------------------------
+
+    private Stack       stack = new Stack();
+    private Hashtable   defs = new Hashtable();
 }

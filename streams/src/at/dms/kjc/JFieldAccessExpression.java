@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.14 2005-12-23 15:12:52 dimock Exp $
+ * $Id: JFieldAccessExpression.java,v 1.15 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -44,48 +44,48 @@ public class JFieldAccessExpression extends JExpression {
      * note that cfield goes missing otherwise.
      */
     public JFieldAccessExpression(TokenReference where,
-				  JExpression prefix,
-				  String ident,
-				  CField field) {
-	super(where);
+                                  JExpression prefix,
+                                  String ident,
+                                  CField field) {
+        super(where);
 
-	this.prefix = prefix;
-	this.ident = ident;
-	this.constantPrefix = false;
-	this.field = field;
+        this.prefix = prefix;
+        this.ident = ident;
+        this.constantPrefix = false;
+        this.field = field;
     }
 
     /**
      * Construct a node in the parsing tree
      *
-     * @param	where		the line of this node in the source code
-     * @param	prefix		the prefix denoting the object to search
-     * @param	ident		the simple name of the field
+     * @param   where       the line of this node in the source code
+     * @param   prefix      the prefix denoting the object to search
+     * @param   ident       the simple name of the field
      */
     public JFieldAccessExpression(TokenReference where,
-				  JExpression prefix,
-				  String ident)
+                                  JExpression prefix,
+                                  String ident)
     {
-	this(where, prefix, ident, null);
+        this(where, prefix, ident, null);
     }
     public JFieldAccessExpression(JExpression prefix,
-				  String ident)
+                                  String ident)
     {
-	this(null, prefix, ident, null);
+        this(null, prefix, ident, null);
     }
 
 
     /**
      * Construct a node in the parsing tree
-     * @param	where		the line of this node in the source code
-     * @param	ident		the simple name of the field
+     * @param   where       the line of this node in the source code
+     * @param   ident       the simple name of the field
      */
     public JFieldAccessExpression(TokenReference where, String ident) {
-	this(where, new JThisExpression(), ident);
+        this(where, new JThisExpression(), ident);
     }
 
     public JFieldAccessExpression(String ident) {
-	this(null, new JThisExpression(), ident);
+        this(null, new JThisExpression(), ident);
     }
 
     // ----------------------------------------------------------------------
@@ -96,7 +96,7 @@ public class JFieldAccessExpression extends JExpression {
      * Returns the simple name of the field.
      */
     public String getIdent() {
-	return ident;
+        return ident;
     }
 
     /**
@@ -105,16 +105,16 @@ public class JFieldAccessExpression extends JExpression {
      */
 
     public void setIdent(String _ident) {
-	ident = _ident;
+        ident = _ident;
     }
 
     /**
      * Returns the type of the expression.
      */
     public CType getType() {
-	if(field==null)
-	    return null;
-	return field.getType();
+        if(field==null)
+            return null;
+        return field.getType();
     }
 
     /**
@@ -127,34 +127,34 @@ public class JFieldAccessExpression extends JExpression {
     /**
      * Tests whether this expression denotes a compile-time constant (JLS 15.28).
      *
-     * @return	true iff this expression is constant
+     * @return  true iff this expression is constant
      */
     public boolean isConstant() {
-	// A compile-time constant expression is an expression [...]
-	// that is composed using only the following :
-	// - Simple names that refer to final variables whose initializers
-	//   are constant expressions
-	// - Qualified names of the form TypeName . Identifier that refer to
-	//   final variables whose initializers are constant expressions
+        // A compile-time constant expression is an expression [...]
+        // that is composed using only the following :
+        // - Simple names that refer to final variables whose initializers
+        //   are constant expressions
+        // - Qualified names of the form TypeName . Identifier that refer to
+        //   final variables whose initializers are constant expressions
 
-	return constantPrefix
-	    && field.isFinal()
-	    && field.getValue() != null
-	    && field.getValue().isConstant();
+        return constantPrefix
+            && field.isFinal()
+            && field.getValue() != null
+            && field.getValue().isConstant();
     }
 
     /**
      * Returns true if this field accepts assignments.
      */
     public boolean isLValue(CExpressionContext context) {
-	if (!field.isFinal() || !(field instanceof CSourceField)) {
-	    return true;
-	} else if (context.getClassContext().getCClass() == field.getOwner()
-		   && !((CSourceField)field).isFullyDeclared()) {
-	    return !CVariableInfo.mayBeInitialized(context.getBodyContext().getFieldInfo(((CSourceField)field).getPosition()));
-	} else {
-	    return true; 
-	}
+        if (!field.isFinal() || !(field instanceof CSourceField)) {
+            return true;
+        } else if (context.getClassContext().getCClass() == field.getOwner()
+                   && !((CSourceField)field).isFullyDeclared()) {
+            return !CVariableInfo.mayBeInitialized(context.getBodyContext().getFieldInfo(((CSourceField)field).getPosition()));
+        } else {
+            return true; 
+        }
     }
 
     /**
@@ -163,7 +163,7 @@ public class JFieldAccessExpression extends JExpression {
      * @return true if the field is final.
      */
     public boolean isFinal() {
-	return field.isFinal();
+        return field.isFinal();
     }
 
     
@@ -173,72 +173,72 @@ public class JFieldAccessExpression extends JExpression {
      * been done.
      */
     public boolean isThisAccess() {
-	return (prefix instanceof JThisExpression);
+        return (prefix instanceof JThisExpression);
     }
 
     /**
      * Sets the prefix expression of this to <exp>.
      */
     public void setPrefix(JExpression exp) {
-	this.prefix = exp;
+        this.prefix = exp;
     }
 
     /**
      * Returns true iff this field is already initialized.
      */
     public boolean isInitialized(CExpressionContext context) {
-	if (!(field instanceof CSourceField) || field.isStatic()) {
-	    return true;
-	} else if (context.getClassContext().getCClass() == field.getOwner() &&
-		   !((CSourceField)field).isFullyDeclared()) {
-	    return CVariableInfo.isInitialized(context.getBodyContext().getFieldInfo(((CSourceField)field).getPosition()));
-	} else {
-	    return true;
-	}
+        if (!(field instanceof CSourceField) || field.isStatic()) {
+            return true;
+        } else if (context.getClassContext().getCClass() == field.getOwner() &&
+                   !((CSourceField)field).isFullyDeclared()) {
+            return CVariableInfo.isInitialized(context.getBodyContext().getFieldInfo(((CSourceField)field).getPosition()));
+        } else {
+            return true;
+        }
     }
 
     /**
      * Declares this variable to be initialized.
      *
-     * @exception	UnpositionedError an error if this object can't actually
-     *		be assignated this may happen with final variables.
+     * @exception   UnpositionedError an error if this object can't actually
+     *      be assignated this may happen with final variables.
      */
     public void setInitialized(CExpressionContext context) {
-	if ((field instanceof CSourceField) && (context.getClassContext().getCClass() == field.getOwner() && !((CSourceField)field).isFullyDeclared())) {
-	    context.setFieldInfo(((CSourceField)field).getPosition(), CVariableInfo.INITIALIZED);
-	}
+        if ((field instanceof CSourceField) && (context.getClassContext().getCClass() == field.getOwner() && !((CSourceField)field).isFullyDeclared())) {
+            context.setFieldInfo(((CSourceField)field).getPosition(), CVariableInfo.INITIALIZED);
+        }
     }
 
     /**
      * Returns the exported field.
      */
     public CField getField() {
-	return field;
+        return field;
     }
 
     /**
      * Returns the literal value of this field.
      */
     public JLiteral getLiteral() {
-	return (JLiteral)field.getValue();
+        return (JLiteral)field.getValue();
     }
 
     /**
      * Returns a string representation of this expression.
      */
     public String toString() {
-	StringBuffer	buffer = new StringBuffer();
+        StringBuffer    buffer = new StringBuffer();
 
-	buffer.append("JFieldAccessExpression[");
-	buffer.append(prefix);
-	buffer.append(", ");
-	buffer.append(ident);
-	if (isConstant()) {
-	    buffer.append(" = ");
-	    buffer.append(field);
-	}
-	buffer.append("]");
-	return buffer.toString();
+        buffer.append("JFieldAccessExpression[");
+        buffer.append(prefix);
+        buffer.append(", ");
+        buffer.append(ident);
+        if (isConstant()) {
+            buffer.append(" = ");
+            buffer.append(field);
+        }
+        buffer.append("]");
+        return buffer.toString();
     }
 
     // ----------------------------------------------------------------------
@@ -247,114 +247,114 @@ public class JFieldAccessExpression extends JExpression {
 
     /**
      * Analyses the expression (semantically).
-     * @param	context		the analysis context
-     * @return	an equivalent, analysed expression
-     * @exception	PositionedError	the analysis detected an error
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
      */
     public JExpression analyse(CExpressionContext context) throws PositionedError {
-	CClass	local = context.getClassContext().getCClass();
+        CClass  local = context.getClassContext().getCClass();
 
-	findPrefix(local, context);
-	checkAccess(local, context);
+        findPrefix(local, context);
+        checkAccess(local, context);
 
-	check(context,
-	      field.isStatic() || !(prefix instanceof JTypeNameExpression),
-	      KjcMessages.FIELD_NOSTATIC, ident);
-	if (field.isStatic() && !(prefix instanceof JTypeNameExpression)) {
-	    context.reportTrouble(new CWarning(getTokenReference(),
-					       KjcMessages.INSTANCE_PREFIXES_STATIC_FIELD,
-					       ident,
-					       prefix.getType()));
-	}
+        check(context,
+              field.isStatic() || !(prefix instanceof JTypeNameExpression),
+              KjcMessages.FIELD_NOSTATIC, ident);
+        if (field.isStatic() && !(prefix instanceof JTypeNameExpression)) {
+            context.reportTrouble(new CWarning(getTokenReference(),
+                                               KjcMessages.INSTANCE_PREFIXES_STATIC_FIELD,
+                                               ident,
+                                               prefix.getType()));
+        }
 
-	if (field instanceof CSourceField && !context.discardValue()) {
-	    ((CSourceField)field).setUsed();
-	}
+        if (field instanceof CSourceField && !context.discardValue()) {
+            ((CSourceField)field).setUsed();
+        }
 
-	if (isConstant()) {
-	    return field.getValue();
-	} else {
-	    return this;
-	}
+        if (isConstant()) {
+            return field.getValue();
+        } else {
+            return this;
+        }
     }
 
     /**
      * Finds the type of the prefix.
      *
-     * @exception	PositionedError		Error catched as soon as possible
+     * @exception   PositionedError     Error catched as soon as possible
      */
     protected void findPrefix(CClass local, CExpressionContext context) throws PositionedError {
-	if (prefix != null) {
-	    prefix = prefix.analyse(context);
-	    check(context,
-		  prefix.getType().isClassType(),
-		  KjcMessages.FIELD_BADACCESS, prefix.getType());
-	    constantPrefix = prefix instanceof JTypeNameExpression;
-	} else {
-	    constantPrefix = true;
+        if (prefix != null) {
+            prefix = prefix.analyse(context);
+            check(context,
+                  prefix.getType().isClassType(),
+                  KjcMessages.FIELD_BADACCESS, prefix.getType());
+            constantPrefix = prefix instanceof JTypeNameExpression;
+        } else {
+            constantPrefix = true;
 
-	    try {
-		field = context.lookupField(local, ident);
-		if (field == null) {
-		    field = context.getClassContext().lookupOuterField(local, ident); // $$$ Why searching again
-		}
-	    } catch (UnpositionedError e) {
-		throw e.addPosition(getTokenReference());
-	    }
-	    check(context, field != null, KjcMessages.FIELD_UNKNOWN, ident);
+            try {
+                field = context.lookupField(local, ident);
+                if (field == null) {
+                    field = context.getClassContext().lookupOuterField(local, ident); // $$$ Why searching again
+                }
+            } catch (UnpositionedError e) {
+                throw e.addPosition(getTokenReference());
+            }
+            check(context, field != null, KjcMessages.FIELD_UNKNOWN, ident);
 
-	    if (!field.isStatic()) {
-		check(context,
-		      !local.isStatic() || local.descendsFrom(field.getOwner()),
-		      KjcMessages.FIELD_STATICERR, ident);
-		prefix = new JThisExpression(getTokenReference(), field.getOwner());
-	    } else {
-		prefix = new JTypeNameExpression(getTokenReference(), field.getOwner().getType());
-	    }
-	    prefix = prefix.analyse(context);
-	}
+            if (!field.isStatic()) {
+                check(context,
+                      !local.isStatic() || local.descendsFrom(field.getOwner()),
+                      KjcMessages.FIELD_STATICERR, ident);
+                prefix = new JThisExpression(getTokenReference(), field.getOwner());
+            } else {
+                prefix = new JTypeNameExpression(getTokenReference(), field.getOwner().getType());
+            }
+            prefix = prefix.analyse(context);
+        }
     }
 
     /**
      * Checks is access to prefix is okay
      *
-     * @exception	PositionedError	Error catched as soon as possible
+     * @exception   PositionedError Error catched as soon as possible
      */
     public void checkAccess(CClass local, CExpressionContext context) throws PositionedError {
-	CClass	access = prefix.getType().getCClass();
+        CClass  access = prefix.getType().getCClass();
 
-	try {
-	    field = access.lookupField(local, ident);
-	} catch (UnpositionedError e) {
-	    throw e.addPosition(getTokenReference());
-	}
-	check(context, field != null, KjcMessages.FIELD_UNKNOWN, ident);
+        try {
+            field = access.lookupField(local, ident);
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
+        check(context, field != null, KjcMessages.FIELD_UNKNOWN, ident);
 
-	//!!!DEBUG 000213 graf (see CClassType.getCClass())
-	try {
-	    field.getType().checkType(context);
-	} catch (UnpositionedError e) {
-	    throw e.addPosition(getTokenReference());
-	}
-	//!!!DEBUG 000213 graf
+        //!!!DEBUG 000213 graf (see CClassType.getCClass())
+        try {
+            field.getType().checkType(context);
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
+        //!!!DEBUG 000213 graf
  
-	if ((context.getMethodContext() instanceof CConstructorContext) &&
-	    (prefix instanceof JThisExpression) &&
-	    !field.isStatic()) {
-	    if (field.getType().isClassType() &&
-		field.getType().getCClass() == context.getClassContext().getCClass()) {
-		check(context,
-		      ((CConstructorContext)context.getMethodContext()).isSuperConstructorCalled(),
-		      KjcMessages.CONSTRUCTOR_EXPLICIT_CALL, field.getIdent());
-	    }
-	}
+        if ((context.getMethodContext() instanceof CConstructorContext) &&
+            (prefix instanceof JThisExpression) &&
+            !field.isStatic()) {
+            if (field.getType().isClassType() &&
+                field.getType().getCClass() == context.getClassContext().getCClass()) {
+                check(context,
+                      ((CConstructorContext)context.getMethodContext()).isSuperConstructorCalled(),
+                      KjcMessages.CONSTRUCTOR_EXPLICIT_CALL, field.getIdent());
+            }
+        }
     }
 
     public boolean equals(Object o) {
-	return (o instanceof JFieldAccessExpression) &&
-	    field.equals(((JFieldAccessExpression)o).field) &&
-	    prefix.equals(((JFieldAccessExpression)o).prefix);
-	
+        return (o instanceof JFieldAccessExpression) &&
+            field.equals(((JFieldAccessExpression)o).field) &&
+            prefix.equals(((JFieldAccessExpression)o).prefix);
+    
     }
 
     // ----------------------------------------------------------------------
@@ -363,37 +363,37 @@ public class JFieldAccessExpression extends JExpression {
 
     /**
      * Accepts the specified visitor
-     * @param	p		the visitor
+     * @param   p       the visitor
      */
     public void accept(KjcVisitor p) {
-	p.visitFieldExpression(this, prefix, getIdent());
+        p.visitFieldExpression(this, prefix, getIdent());
     }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return	p.visitFieldExpression(this, prefix, getIdent());
-  }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return  p.visitFieldExpression(this, prefix, getIdent());
+    }
 
     /**
      * Generates JVM bytecode to evaluate this expression.
      *
-     * @param	code		the bytecode sequence
-     * @param	discardValue	discard the result of the evaluation ?
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
      */
     public void genCode(CodeSequence code, boolean discardValue) {
-	setLineNumber(code);
+        setLineNumber(code);
 
-	if (! field.isStatic()) {
-	    prefix.genCode(code, discardValue);
-	} else if (prefix != null) {
-	    prefix.genCode(code, true);
-	}
-	if (!discardValue) {
-	    field.genLoad(code);
-	}
+        if (! field.isStatic()) {
+            prefix.genCode(code, discardValue);
+        } else if (prefix != null) {
+            prefix.genCode(code, true);
+        }
+        if (!discardValue) {
+            field.genLoad(code);
+        }
     }
 
     /**
@@ -405,14 +405,14 @@ public class JFieldAccessExpression extends JExpression {
      * - code to determine the value to store,
      * - suffix code for the storage location.
      *
-     * @param	code		the code list
+     * @param   code        the code list
      */
     public void genStartStoreCode(CodeSequence code) {
-	if (! field.isStatic()) {
-	    prefix.genCode(code, false);
-	} else if (prefix != null) {
-	    prefix.genCode(code, true);
-	}
+        if (! field.isStatic()) {
+            prefix.genCode(code, false);
+        } else if (prefix != null) {
+            prefix.genCode(code, true);
+        }
     }
 
     /**
@@ -424,31 +424,31 @@ public class JFieldAccessExpression extends JExpression {
      * - code to determine the value to store,
      * - suffix code for the storage location.
      *
-     * @param	code		the code list
-     * @param	discardValue	discard the result of the evaluation ?
+     * @param   code        the code list
+     * @param   discardValue    discard the result of the evaluation ?
      */
     public void genEndStoreCode(CodeSequence code, boolean discardValue) {
-	if (!discardValue) {
-	    int	opcode;
+        if (!discardValue) {
+            int opcode;
 
-	    if (field.isStatic()) {
-		if (getType().getSize() == 2) {
-		    opcode = opc_dup2;
-		} else {
-		    opcode = opc_dup;
-		}
-	    } else {
-		if (getType().getSize() == 2) {
-		    opcode = opc_dup2_x1;
-		} else {
-		    opcode = opc_dup_x1;
-		}
-	    }
+            if (field.isStatic()) {
+                if (getType().getSize() == 2) {
+                    opcode = opc_dup2;
+                } else {
+                    opcode = opc_dup;
+                }
+            } else {
+                if (getType().getSize() == 2) {
+                    opcode = opc_dup2_x1;
+                } else {
+                    opcode = opc_dup_x1;
+                }
+            }
 
-	    code.plantNoArgInstruction(opcode);
-	}
+            code.plantNoArgInstruction(opcode);
+        }
 
-	field.genStore(code);
+        field.genStore(code);
     }
 
     // ----------------------------------------------------------------------
@@ -458,30 +458,30 @@ public class JFieldAccessExpression extends JExpression {
     /*
      * Is the prefix null or a type name ? Needed for isConstant().
      */
-    private boolean		constantPrefix;
+    private boolean     constantPrefix;
 
-    protected JExpression       prefix;		// !!! graf 991205 make private
-    protected String		ident;
-    protected CField		field;
+    protected JExpression       prefix;     // !!! graf 991205 make private
+    protected String        ident;
+    protected CField        field;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JFieldAccessExpression other = new at.dms.kjc.JFieldAccessExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JFieldAccessExpression other = new at.dms.kjc.JFieldAccessExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JFieldAccessExpression other) {
-  super.deepCloneInto(other);
-  other.constantPrefix = this.constantPrefix;
-  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
-  other.field = (at.dms.kjc.CField)at.dms.kjc.AutoCloner.cloneToplevel(this.field);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JFieldAccessExpression other) {
+        super.deepCloneInto(other);
+        other.constantPrefix = this.constantPrefix;
+        other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);
+        other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+        other.field = (at.dms.kjc.CField)at.dms.kjc.AutoCloner.cloneToplevel(this.field);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

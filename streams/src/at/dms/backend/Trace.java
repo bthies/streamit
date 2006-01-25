@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Trace.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: Trace.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -30,46 +30,46 @@ import java.io.IOException;
  */
 public class Trace {
 
-  Trace(String fileName) {
-    try {
-      writer = new FileWriter(new File(fileName + _count++));
-    } catch (IOException e) {
-      System.err.println("Cannot write " + fileName);
+    Trace(String fileName) {
+        try {
+            writer = new FileWriter(new File(fileName + _count++));
+        } catch (IOException e) {
+            System.err.println("Cannot write " + fileName);
+        }
     }
-  }
 
-  // --------------------------------------------------------------------
-  // PUBLIC UTILITIES
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // PUBLIC UTILITIES
+    // --------------------------------------------------------------------
 
-  /**
-   * Generates a node
-   */
-  public static String generateNode(String title, String label) {
-    return "node: { title:\"" + title + "\" label: \"" + label + "\"}";
-  }
+    /**
+     * Generates a node
+     */
+    public static String generateNode(String title, String label) {
+        return "node: { title:\"" + title + "\" label: \"" + label + "\"}";
+    }
 
-  /**
-   * Generates a node
-   */
-  public static String generateEdge(String from, String to, int nb, int count, boolean arrow) {
-    return "edge: { sourcename:\"" + from + "\" targetname:\"" + to + "\" class: 1 " +
-      (arrow ? "" : "arrowstyle:none" ) + "}";
-  }
+    /**
+     * Generates a node
+     */
+    public static String generateEdge(String from, String to, int nb, int count, boolean arrow) {
+        return "edge: { sourcename:\"" + from + "\" targetname:\"" + to + "\" class: 1 " +
+            (arrow ? "" : "arrowstyle:none" ) + "}";
+    }
 
-  protected void write(String s) throws IOException {
-    writer.write(s);
-    writer.write("\n");
-  }
+    protected void write(String s) throws IOException {
+        writer.write(s);
+        writer.write("\n");
+    }
 
-  protected void close() throws IOException {
-    writer.close();
-  }
+    protected void close() throws IOException {
+        writer.close();
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private FileWriter			writer;
-  private static int			_count;
+    private FileWriter          writer;
+    private static int          _count;
 }

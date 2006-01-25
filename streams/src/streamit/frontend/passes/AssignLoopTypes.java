@@ -29,7 +29,7 @@ import java.util.*;
  * don't declare I/O types, the program visitor returns null.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: AssignLoopTypes.java,v 1.3 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: AssignLoopTypes.java,v 1.4 2006-01-25 17:04:28 thies Exp $
  */
 public class AssignLoopTypes extends FEReplacer
 {
@@ -48,10 +48,10 @@ public class AssignLoopTypes extends FEReplacer
         
         // build the map of stream types from toplevel named streams
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-        {
-            StreamSpec ss = (StreamSpec)iter.next();
-            toplevels.put(ss.getName(), ss.getStreamType());
-        }
+            {
+                StreamSpec ss = (StreamSpec)iter.next();
+                toplevels.put(ss.getName(), ss.getStreamType());
+            }
 
         // recurse
         Object result = super.visitProgram(prog);
@@ -72,21 +72,21 @@ public class AssignLoopTypes extends FEReplacer
             return ss;
         StreamType st = ss.getStreamType();
         if (st != null)
-        {
-            Type loopType = st.getLoop();
-            // Do we think the loop type is void?
-            if (!(loopType instanceof TypePrimitive) ||
-                ((TypePrimitive)loopType).getType() != TypePrimitive.TYPE_VOID)
-                return ss;
-        }
+            {
+                Type loopType = st.getLoop();
+                // Do we think the loop type is void?
+                if (!(loopType instanceof TypePrimitive) ||
+                    ((TypePrimitive)loopType).getType() != TypePrimitive.TYPE_VOID)
+                    return ss;
+            }
         else
-        {
-            // Untyped anonymous loop.  Let st be a completely
-            // random guess, but definitely go on with the detection.
-            st = new StreamType(ss.getContext(),
-                                new TypePrimitive(TypePrimitive.TYPE_FLOAT),
-                                new TypePrimitive(TypePrimitive.TYPE_FLOAT));
-        }
+            {
+                // Untyped anonymous loop.  Let st be a completely
+                // random guess, but definitely go on with the detection.
+                st = new StreamType(ss.getContext(),
+                                    new TypePrimitive(TypePrimitive.TYPE_FLOAT),
+                                    new TypePrimitive(TypePrimitive.TYPE_FLOAT));
+            }
         
         // So now we're looking for the loop stream.  Work under the
         // assumption that all loop statements and all body statements
@@ -113,12 +113,12 @@ public class AssignLoopTypes extends FEReplacer
         else if (theBody != null)
             enqType = theBody.getIn();
         else
-        {
-            System.err.println(ss.getContext() +
-                               ": could not determine enqueue type");
-            hasFailed = true;
-            return ss;
-        }
+            {
+                System.err.println(ss.getContext() +
+                                   ": could not determine enqueue type");
+                hasFailed = true;
+                return ss;
+            }
 
         // Build the new stream type and stream spec and return that.
         st = new StreamType(st.getContext(), st.getIn(), st.getOut(),
@@ -134,25 +134,25 @@ public class AssignLoopTypes extends FEReplacer
         // This is either a simple or anonymous creator.
         StreamType st = null;
         if (sc instanceof SCSimple)
-        {
-            SCSimple scs = (SCSimple)sc;
-            st = (StreamType)toplevels.get(scs.getName());
-            // If we didn't find that, is this a parameterized stream?
-            // If so, assume it's T->T.
-            if (st == null)
             {
-                List types = scs.getTypes();
-                if (!types.isEmpty())
-                    st = new StreamType(sc.getContext(),
-                                        (Type)types.get(0),
-                                        (Type)types.get(0));
+                SCSimple scs = (SCSimple)sc;
+                st = (StreamType)toplevels.get(scs.getName());
+                // If we didn't find that, is this a parameterized stream?
+                // If so, assume it's T->T.
+                if (st == null)
+                    {
+                        List types = scs.getTypes();
+                        if (!types.isEmpty())
+                            st = new StreamType(sc.getContext(),
+                                                (Type)types.get(0),
+                                                (Type)types.get(0));
+                    }
             }
-        }
         else if (sc instanceof SCAnon)
-        {
-            StreamSpec ss = ((SCAnon)sc).getSpec();
-            st = ss.getStreamType();
-        }
+            {
+                StreamSpec ss = ((SCAnon)sc).getSpec();
+                st = ss.getStreamType();
+            }
         // If st at this point is null, we failed to get useful data.
         // Punt now rather than clobber anything.
         if (st == null)

@@ -27,7 +27,7 @@ import java.lang.reflect.*;
  *
  * There is a distinct message for every receiver object.
  *
- * @version $Id: Message.java,v 1.2 2004-11-16 10:04:42 thies Exp $
+ * @version $Id: Message.java,v 1.3 2006-01-25 17:04:32 thies Exp $
  */
 public class Message {
     /**
@@ -46,9 +46,9 @@ public class Message {
     private Object[] args;
     
     public Message(int _deliveryTime, String _methodName, Object[] _args) {
-	this.deliveryTime = _deliveryTime;
-	this.methodName = _methodName;
-	this.args = _args;
+        this.deliveryTime = _deliveryTime;
+        this.methodName = _methodName;
+        this.args = _args;
     }
 
     /**
@@ -56,7 +56,7 @@ public class Message {
      * should be delivered.
      */
     public int getDeliveryTime() {
-	return deliveryTime;
+        return deliveryTime;
     }
 
     /**
@@ -64,49 +64,49 @@ public class Message {
      * implement the appropriate method.
      */
     public void deliver(Object receiver) {
-	try {
-	    //System.err.println("Delivering message " + methodName + " to " + receiver);
-	    // get parameter types
-	    Class[] paramTypes = new Class[args.length];
-	    for (int i=0; i<args.length; i++) {
-		paramTypes[i] = extractPrimitive(args[i]);
-	    }
-	    // get receiver class
-	    Class receiverClass = receiver.getClass();
-	    // get receiver method
-	    Method receiverMeth = receiverClass.getMethod(methodName, paramTypes);
-	    // invoke method
-	    receiverMeth.setAccessible(true);
-	    receiverMeth.invoke(receiver, args);
-	} catch (Exception e) {
-	    System.err.println("Message delivery failed while using reflection.");
-	    e.printStackTrace();
-	    System.exit(1);
-	}
+        try {
+            //System.err.println("Delivering message " + methodName + " to " + receiver);
+            // get parameter types
+            Class[] paramTypes = new Class[args.length];
+            for (int i=0; i<args.length; i++) {
+                paramTypes[i] = extractPrimitive(args[i]);
+            }
+            // get receiver class
+            Class receiverClass = receiver.getClass();
+            // get receiver method
+            Method receiverMeth = receiverClass.getMethod(methodName, paramTypes);
+            // invoke method
+            receiverMeth.setAccessible(true);
+            receiverMeth.invoke(receiver, args);
+        } catch (Exception e) {
+            System.err.println("Message delivery failed while using reflection.");
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
     /**
      * If <c> represents a primitive type, return that primitive type.
      */
     public Class extractPrimitive(Object o) { 
-	if (o instanceof Byte) {
-	    return Byte.TYPE;
-	} else if (o instanceof Boolean) {
-	    return Boolean.TYPE;
-	} else if (o instanceof Character) {
-	    return Character.TYPE;
-	} else if (o instanceof Float) {
-	    return Float.TYPE;
-	} else if (o instanceof Double) {
-	    return Double.TYPE;
-	} else if (o instanceof Integer) {
-	    return Integer.TYPE;
-	} else if (o instanceof Long) {
-	    return Long.TYPE;
-	} else if (o instanceof Short) {
-	    return Short.TYPE;
-	} else {
-	    return o.getClass();
-	}
+        if (o instanceof Byte) {
+            return Byte.TYPE;
+        } else if (o instanceof Boolean) {
+            return Boolean.TYPE;
+        } else if (o instanceof Character) {
+            return Character.TYPE;
+        } else if (o instanceof Float) {
+            return Float.TYPE;
+        } else if (o instanceof Double) {
+            return Double.TYPE;
+        } else if (o instanceof Integer) {
+            return Integer.TYPE;
+        } else if (o instanceof Long) {
+            return Long.TYPE;
+        } else if (o instanceof Short) {
+            return Short.TYPE;
+        } else {
+            return o.getClass();
+        }
     }
 }

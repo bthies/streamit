@@ -1,5 +1,5 @@
 /*
- * @(#)GraphOptionsCloneable.java	1.2 02.02.2003
+ * @(#)GraphOptionsCloneable.java   1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,28 +32,28 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class GraphOptionsCloneable extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for GraphOptionsCloneable.
-	 * @param graphpad
-	 */
-	public GraphOptionsCloneable(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for GraphOptionsCloneable.
+     * @param graphpad
+     */
+    public GraphOptionsCloneable(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		if (getCurrentGraph() == null) return false;
-		return getCurrentGraph().isCloneable();
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        if (getCurrentGraph() == null) return false;
+        return getCurrentGraph().isCloneable();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		getCurrentGraph().setCloneable(!getCurrentGraph().isCloneable());
-	
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentGraph().setCloneable(!getCurrentGraph().isCloneable());
+    
+    }
 
 }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LongConstant.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: LongConstant.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -29,98 +29,98 @@ import java.io.IOException;
  */
 public class LongConstant extends PooledConstant {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * @param value Value for Long constant
-   */
-  public LongConstant(long value) {
-    this.value = value;
-  }
+    /**
+     * @param value Value for Long constant
+     */
+    public LongConstant(long value) {
+        this.value = value;
+    }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the associated literal
-   */
-  /*package*/ Object getLiteral() {
-    return new Long(value);
-  }
+    /**
+     * Returns the associated literal
+     */
+    /*package*/ Object getLiteral() {
+        return new Long(value);
+    }
 
-  /**
-   * Returns the number of slots in the constant pool used by this entry.
-   * A long constant uses 2 slots.
-   */
-  /*package*/ int getSlotsUsed() {
-    return 2;
-  }
+    /**
+     * Returns the number of slots in the constant pool used by this entry.
+     * A long constant uses 2 slots.
+     */
+    /*package*/ int getSlotsUsed() {
+        return 2;
+    }
 
-  // --------------------------------------------------------------------
-  // POOLING
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // POOLING
+    // --------------------------------------------------------------------
 
-  /**
-   * hashCode (a fast comparison)
-   * CONVENTION: return XXXXXXXXXXXX << 4 + Y
-   * with Y = ident of the type of the pooled constant
-   */
-  public final int hashCode() {
-    return ((int)value << 4) + POO_LONG_CONSTANT;
-  }
+    /**
+     * hashCode (a fast comparison)
+     * CONVENTION: return XXXXXXXXXXXX << 4 + Y
+     * with Y = ident of the type of the pooled constant
+     */
+    public final int hashCode() {
+        return ((int)value << 4) + POO_LONG_CONSTANT;
+    }
 
-  /**
-   * equals (an exact comparison)
-   * ASSERT: this.hashCode == o.hashCode ===> cast
-   */
-  public final boolean equals(Object o) {
-    return (o instanceof LongConstant) &&
-      ((LongConstant)o).value == value;
-  }
+    /**
+     * equals (an exact comparison)
+     * ASSERT: this.hashCode == o.hashCode ===> cast
+     */
+    public final boolean equals(Object o) {
+        return (o instanceof LongConstant) &&
+            ((LongConstant)o).value == value;
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Check location of constant value on constant pool
-   *
-   * @param	pc		the already in pooled constant
-   * ASSERT pc.getClass() == this.getClass()
-   */
-  /*package*/ final void resolveConstants(PooledConstant pc) {
-    setIndex(pc.getIndex());
-  }
+    /**
+     * Check location of constant value on constant pool
+     *
+     * @param   pc      the already in pooled constant
+     * ASSERT pc.getClass() == this.getClass()
+     */
+    /*package*/ final void resolveConstants(PooledConstant pc) {
+        setIndex(pc.getIndex());
+    }
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    return;
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        return;
+    }
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeByte(CST_LONG);
-    out.writeLong(value);
-  }
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeByte(CST_LONG);
+        out.writeLong(value);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private long		value;
+    private long        value;
 }

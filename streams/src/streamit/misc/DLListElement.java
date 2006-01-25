@@ -83,7 +83,7 @@ public class DLListElement
         // removed from the list already!
         assert nextElem != null;
     
-    	// and return the nextElement    
+        // and return the nextElement    
         return nextElem;
     }
     
@@ -119,7 +119,7 @@ public class DLListElement
         // (which holds no data)
         assert data != this;
      
-     	// return the data   
+        // return the data   
         return data;
     }
 }

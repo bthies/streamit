@@ -15,22 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: FileLineFormatter.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: FileLineFormatter.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 public abstract class FileLineFormatter {
 
-  private static FileLineFormatter formatter = new DefaultFileLineFormatter();
+    private static FileLineFormatter formatter = new DefaultFileLineFormatter();
 
-  public static FileLineFormatter getFormatter() {
-    return formatter;
-  }
+    public static FileLineFormatter getFormatter() {
+        return formatter;
+    }
 
-  public static void setFormatter(FileLineFormatter f) {
-    formatter = f;
-  }
+    public static void setFormatter(FileLineFormatter f) {
+        formatter = f;
+    }
 
-  public abstract String getFormatString(String fileName, int line);
+    public abstract String getFormatString(String fileName, int line);
 }

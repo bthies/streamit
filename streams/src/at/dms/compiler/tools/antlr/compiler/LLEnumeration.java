@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LLEnumeration.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: LLEnumeration.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -29,37 +29,37 @@ import java.util.NoSuchElementException;
  * while we were walking this list.
  */
 final class LLEnumeration implements Enumeration {
-  LLCell cursor;
-  LList list;
+    LLCell cursor;
+    LList list;
 
 
-  /**
-   * Create an enumeration attached to a LList
-   */
-  public LLEnumeration(LList l) {list = l; cursor=list.head;}
-  /**
-   * Return true/false depending on whether there are more
-   * elements to enumerate.
-   */
-  public boolean hasMoreElements() {
-    if ( cursor!=null ) {
-	return true;
-    } else {
-	return false;
+    /**
+     * Create an enumeration attached to a LList
+     */
+    public LLEnumeration(LList l) {list = l; cursor=list.head;}
+    /**
+     * Return true/false depending on whether there are more
+     * elements to enumerate.
+     */
+    public boolean hasMoreElements() {
+        if ( cursor!=null ) {
+            return true;
+        } else {
+            return false;
+        }
     }
-  }
-  /**
-   * Get the next element in the enumeration.  Destructive in that
-   * the returned element is removed from the enumeration.  This
-   * does not affect the list itself.
-   * @return the next object in the enumeration.
-   */
-  public Object nextElement() {
-    if ( !hasMoreElements() ) {
-	throw new NoSuchElementException();
+    /**
+     * Get the next element in the enumeration.  Destructive in that
+     * the returned element is removed from the enumeration.  This
+     * does not affect the list itself.
+     * @return the next object in the enumeration.
+     */
+    public Object nextElement() {
+        if ( !hasMoreElements() ) {
+            throw new NoSuchElementException();
+        }
+        LLCell p = cursor;
+        cursor = cursor.next;
+        return p.data;
     }
-    LLCell p = cursor;
-    cursor = cursor.next;
-    return p.data;
-  }
 }

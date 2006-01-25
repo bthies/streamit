@@ -33,9 +33,9 @@ public class AssertedClass
     // assert the condition
     // if the condition is false, print an error and exit the program
     public static void ASSERT(
-        Object object,
-        boolean condition,
-        String message)
+                              Object object,
+                              boolean condition,
+                              String message)
     {
         if (condition)
             return;
@@ -44,13 +44,13 @@ public class AssertedClass
         // print an error and exit.
 
         System.err.println(
-            "An ASSERT has failed in class "
-                + (object != null
-                    ? object.getClass().getName()
-                    : "(unknown)")
-                + ".  Exiting.\n\n"
-                + message
-                + "\n");
+                           "An ASSERT has failed in class "
+                           + (object != null
+                              ? object.getClass().getName()
+                              : "(unknown)")
+                           + ".  Exiting.\n\n"
+                           + message
+                           + "\n");
 
         // print the trace and throw an exception
         RuntimeException e = new RuntimeException();

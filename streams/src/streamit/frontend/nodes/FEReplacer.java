@@ -54,7 +54,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.38 2005-12-23 15:08:42 dimock Exp $
+ * @version $Id: FEReplacer.java,v 1.39 2006-01-25 17:04:25 thies Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -151,12 +151,12 @@ public class FEReplacer implements FEVisitor
         boolean hasChanged = false;
         List newElements = new ArrayList();
         for (Iterator iter = exp.getElements().iterator(); iter.hasNext(); )
-        {
-            Expression element = (Expression)iter.next();
-            Expression newElement = doExpression(element);
-            newElements.add(newElement);
-            if (element != newElement) hasChanged = true;
-        }
+            {
+                Expression element = (Expression)iter.next();
+                Expression newElement = doExpression(element);
+                newElements.add(newElement);
+                if (element != newElement) hasChanged = true;
+            }
         if (!hasChanged) return exp;
         return new ExprArrayInit(exp.getContext(), newElements);
     }
@@ -184,19 +184,19 @@ public class FEReplacer implements FEVisitor
     }
 
     public Object visitExprComposite(ExprComposite exp) {
-	Expression x = exp.getX();
-	if (x != null) x = doExpression(x);
-	Expression y = exp.getY();
-	if (y != null) y = doExpression(y);
-	Expression z = exp.getZ();
-	if (z != null) z = doExpression(z);
-	Expression w = exp.getW();
-	if (w != null) w = doExpression(w);
-	if (x == exp.getX() && y == exp.getY() && 
-	    z == exp.getZ() && w == exp.getW() )
-	    return exp;
-	else
-	    return new ExprComposite(exp.getContext(), x, y, z, w);
+        Expression x = exp.getX();
+        if (x != null) x = doExpression(x);
+        Expression y = exp.getY();
+        if (y != null) y = doExpression(y);
+        Expression z = exp.getZ();
+        if (z != null) z = doExpression(z);
+        Expression w = exp.getW();
+        if (w != null) w = doExpression(w);
+        if (x == exp.getX() && y == exp.getY() && 
+            z == exp.getZ() && w == exp.getW() )
+            return exp;
+        else
+            return new ExprComposite(exp.getContext(), x, y, z, w);
     }
     
     public Object visitExprConstBoolean(ExprConstBoolean exp) { return exp; }
@@ -220,30 +220,30 @@ public class FEReplacer implements FEVisitor
         boolean hasChanged = false;
         List newParams = new ArrayList();
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
-        {
-            Expression param = (Expression)iter.next();
-            Expression newParam = doExpression(param);
-            newParams.add(newParam);
-            if (param != newParam) hasChanged = true;
-        }
+            {
+                Expression param = (Expression)iter.next();
+                Expression newParam = doExpression(param);
+                newParams.add(newParam);
+                if (param != newParam) hasChanged = true;
+            }
         if (!hasChanged) return exp;
         return new ExprFunCall(exp.getContext(), exp.getName(), newParams);
     }
 
     public Object visitExprHelperCall(ExprHelperCall exp)
     {
-	boolean hasChanged = false;
-	List newParams = new ArrayList();
-	for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
-	    {
-		Expression param = (Expression)iter.next();
-		Expression newParam = doExpression(param);
-		newParams.add(newParam);
-		if (param != newParam) hasChanged = true;
-	    }
-	if (!hasChanged) return exp;
-	return new ExprHelperCall(exp.getContext(), exp.getHelperPackage(), 
-				  exp.getName(), newParams);
+        boolean hasChanged = false;
+        List newParams = new ArrayList();
+        for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+            {
+                Expression param = (Expression)iter.next();
+                Expression newParam = doExpression(param);
+                newParams.add(newParam);
+                if (param != newParam) hasChanged = true;
+            }
+        if (!hasChanged) return exp;
+        return new ExprHelperCall(exp.getContext(), exp.getHelperPackage(), 
+                                  exp.getName(), newParams);
     }
 
     public Object visitExprPeek(ExprPeek exp)
@@ -258,14 +258,14 @@ public class FEReplacer implements FEVisitor
     public Object visitExprPop(ExprPop exp) { return exp; }
 
     public Object visitExprRange(ExprRange exp) {
-	Expression min = doExpression(exp.getMin());
-	Expression ave = doExpression(exp.getAve());
-	Expression max = doExpression(exp.getMax());
-	if (min == exp.getMin() && ave == exp.getAve() && max == exp.getMax()) {
-	    return exp;
-	} else {
-	    return new ExprRange(exp.getContext(), min, ave, max);
-	}
+        Expression min = doExpression(exp.getMin());
+        Expression ave = doExpression(exp.getAve());
+        Expression max = doExpression(exp.getMax());
+        if (min == exp.getMin() && ave == exp.getAve() && max == exp.getMax()) {
+            return exp;
+        } else {
+            return new ExprRange(exp.getContext(), min, ave, max);
+        }
     }
     
     public Object visitExprTernary(ExprTernary exp)
@@ -301,31 +301,31 @@ public class FEReplacer implements FEVisitor
 
     public Object visitFieldDecl(FieldDecl field)
     {
-	int num = field.getNumFields();
+        int num = field.getNumFields();
         List newInits = new ArrayList(num);
         List newTypes = new ArrayList(num);
         for (int i = 0; i < num; i++)
-        {
-            Expression init = field.getInit(i);
-            if (init != null)
-                init = (Expression)init.accept(this);
-            newInits.add(init);
+            {
+                Expression init = field.getInit(i);
+                if (init != null)
+                    init = (Expression)init.accept(this);
+                newInits.add(init);
 
-	    Type type = field.getType(i);
-	    if (type instanceof TypeArray) {
-		TypeArray ta = (TypeArray)type;
-		type = new TypeArray(ta.getBase(),
-				(Expression)ta.getLength().accept(this));
-	    }
-	    newTypes.add(type);
-        }
+                Type type = field.getType(i);
+                if (type instanceof TypeArray) {
+                    TypeArray ta = (TypeArray)type;
+                    type = new TypeArray(ta.getBase(),
+                                         (Expression)ta.getLength().accept(this));
+                }
+                newTypes.add(type);
+            }
         return new FieldDecl(field.getContext(), newTypes,
                              field.getNames(), newInits);
     }
 
     public Object visitFunction(Function func)
     {
-	if (func.getCls() == Function.FUNC_NATIVE) return func;
+        if (func.getCls() == Function.FUNC_NATIVE) return func;
         Statement newBody = (Statement)func.getBody().accept(this);
         if (newBody == func.getBody()) return func;
         return new Function(func.getContext(), func.getCls(),
@@ -357,13 +357,13 @@ public class FEReplacer implements FEVisitor
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
             newStreams.add(((FENode)(iter.next())).accept(this));
 
-	List newHelpers = prog.getHelpers();
-	for (Iterator iter = newHelpers.iterator(); iter.hasNext(); ) {
-	    TypeHelper helper = (TypeHelper)iter.next();
-	    for (int i = 0; i < helper.getNumFuncs(); i++) {
-		helper.setFunction(i, (Function)helper.getFunction(i).accept(this));
-	    }
-	}
+        List newHelpers = prog.getHelpers();
+        for (Iterator iter = newHelpers.iterator(); iter.hasNext(); ) {
+            TypeHelper helper = (TypeHelper)iter.next();
+            for (int i = 0; i < helper.getNumFuncs(); i++) {
+                helper.setFunction(i, (Function)helper.getFunction(i).accept(this));
+            }
+        }
 
         return new Program(prog.getContext(), newStreams, prog.getStructs(), newHelpers);
     }
@@ -382,19 +382,19 @@ public class FEReplacer implements FEVisitor
         List newPortals = new ArrayList();
         boolean hasChanged = false;
         for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
-        {
-            Expression param = (Expression)iter.next();
-            Expression newParam = doExpression(param);
-            newParams.add(newParam);
-            if (newParam != param) hasChanged = true;
-        }
+            {
+                Expression param = (Expression)iter.next();
+                Expression newParam = doExpression(param);
+                newParams.add(newParam);
+                if (newParam != param) hasChanged = true;
+            }
         for (Iterator iter = creator.getPortals().iterator(); iter.hasNext(); )
-        {
-            Expression portal = (Expression)iter.next();
-            Expression newPortal = doExpression(portal);
-            newPortals.add(newPortal);
-            if (newPortal != portal) hasChanged = true;
-        }
+            {
+                Expression portal = (Expression)iter.next();
+                Expression newPortal = doExpression(portal);
+                newPortals.add(newPortal);
+                if (newPortal != portal) hasChanged = true;
+            }
         if (!hasChanged)
             return creator;
         return new SCSimple(creator.getContext(), creator.getName(),
@@ -415,12 +415,12 @@ public class FEReplacer implements FEVisitor
         boolean changed = false;
         List newWeights = new ArrayList();
         for (Iterator iter = sj.getWeights().iterator(); iter.hasNext(); )
-        {
-            Expression oldWeight = (Expression)iter.next();
-            Expression newWeight = doExpression(oldWeight);
-            if (newWeight != oldWeight) changed = true;
-            newWeights.add(newWeight);
-        }
+            {
+                Expression oldWeight = (Expression)iter.next();
+                Expression newWeight = doExpression(oldWeight);
+                if (newWeight != oldWeight) changed = true;
+                newWeights.add(newWeight);
+            }
         if (!changed) return sj;
         return new SJWeightedRR(sj.getContext(), newWeights);
     }
@@ -448,14 +448,14 @@ public class FEReplacer implements FEVisitor
         List oldStatements = newStatements;
         newStatements = new ArrayList();
         for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
-        {
-            Statement s = (Statement)iter.next();
-            // completely ignore null statements, causing them to
-            // be dropped in the output
-            if (s == null)
-                continue;
-            doStatement(s);
-        }
+            {
+                Statement s = (Statement)iter.next();
+                // completely ignore null statements, causing them to
+                // be dropped in the output
+                if (s == null)
+                    continue;
+                doStatement(s);
+            }
         Statement result = new StmtBlock(stmt.getContext(), newStatements);
         newStatements = oldStatements;
         return result;
@@ -550,9 +550,9 @@ public class FEReplacer implements FEVisitor
         return new StmtPhase(stmt.getContext(), (ExprFunCall)newFc);
     }
 
-//    public Object visitStmtAddPhase(StmtAddPhase stmt) {
-//        Expression peek = 
-//    }
+    //    public Object visitStmtAddPhase(StmtAddPhase stmt) {
+    //        Expression peek = 
+    //    }
     public Object visitStmtPush(StmtPush stmt)
     {
         Expression newValue = doExpression(stmt.getValue());
@@ -575,12 +575,12 @@ public class FEReplacer implements FEVisitor
         if (newReceiver != stmt.getReceiver()) hasChanged = true;
         List newParams = new ArrayList();
         for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
-        {
-            Expression param = (Expression)iter.next();
-            Expression newParam = doExpression(param);
-            newParams.add(newParam);
-            if (param != newParam) hasChanged = true;
-        }
+            {
+                Expression param = (Expression)iter.next();
+                Expression newParam = doExpression(param);
+                newParams.add(newParam);
+                if (param != newParam) hasChanged = true;
+            }
         Expression newMin = stmt.getMinLatency();
         if (newMin != null) newMin = (Expression)newMin.accept(this);
         if (newMin != stmt.getMinLatency()) hasChanged = true;
@@ -594,17 +594,17 @@ public class FEReplacer implements FEVisitor
 
     public Object visitStmtHelperCall(StmtHelperCall stmt) 
     {
-	boolean hasChanged = false;
-	List newParams = new ArrayList();
-	for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); ) {
-	    Expression param = (Expression)iter.next();
-	    Expression newParam = doExpression(param);
-	    newParams.add(newParam);
-	    if (param != newParam) hasChanged = true;
-	}
-	if (!hasChanged) return stmt;
-	return new StmtHelperCall(stmt.getContext(), stmt.getHelperPackage(),
-				  stmt.getName(), newParams);
+        boolean hasChanged = false;
+        List newParams = new ArrayList();
+        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); ) {
+            Expression param = (Expression)iter.next();
+            Expression newParam = doExpression(param);
+            newParams.add(newParam);
+            if (param != newParam) hasChanged = true;
+        }
+        if (!hasChanged) return stmt;
+        return new StmtHelperCall(stmt.getContext(), stmt.getHelperPackage(),
+                                  stmt.getName(), newParams);
     }
 
     public Object visitStmtSplit(StmtSplit stmt)
@@ -619,12 +619,12 @@ public class FEReplacer implements FEVisitor
     {
         List newInits = new ArrayList();
         for (int i = 0; i < stmt.getNumVars(); i++)
-        {
-            Expression init = stmt.getInit(i);
-            if (init != null)
-                init = doExpression(init);
-            newInits.add(init);
-        }
+            {
+                Expression init = stmt.getInit(i);
+                if (init != null)
+                    init = doExpression(init);
+                newInits.add(init);
+            }
         return new StmtVarDecl(stmt.getContext(), stmt.getTypes(),
                                stmt.getNames(), newInits);
     }
@@ -650,19 +650,19 @@ public class FEReplacer implements FEVisitor
         boolean changed = false;
         
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
-        {
-            FieldDecl oldVar = (FieldDecl)iter.next();
-            FieldDecl newVar = (FieldDecl)oldVar.accept(this);
-            if (oldVar != newVar) changed = true;
-            newVars.add(newVar);
-        }
+            {
+                FieldDecl oldVar = (FieldDecl)iter.next();
+                FieldDecl newVar = (FieldDecl)oldVar.accept(this);
+                if (oldVar != newVar) changed = true;
+                newVars.add(newVar);
+            }
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
-        {
-            Function oldFunc = (Function)iter.next();
-            Function newFunc = (Function)oldFunc.accept(this);
-            if (oldFunc != newFunc) changed = true;
-            newFuncs.add(newFunc);
-        }
+            {
+                Function oldFunc = (Function)iter.next();
+                Function newFunc = (Function)oldFunc.accept(this);
+                if (oldFunc != newFunc) changed = true;
+                newFuncs.add(newFunc);
+            }
 
         if (!changed && newST == spec.getStreamType()) return spec;
         return new StreamSpec(spec.getContext(), spec.getType(),
@@ -676,9 +676,9 @@ public class FEReplacer implements FEVisitor
         // streamit.frontend.tojava.StmtSetTypes: has only types
         // not processed.
         if (node instanceof StmtSetTypes) return node;
-	// streamit.frontend.tojava.ExprJavaConstructor: has only types
+        // streamit.frontend.tojava.ExprJavaConstructor: has only types
         if (node instanceof ExprJavaConstructor) return node;
-	
+    
         
         // streamit.frontend.tojava.StmtIODecl: has rate declaration 
         // expressions getRate1(), getRate2()
@@ -698,9 +698,9 @@ public class FEReplacer implements FEVisitor
             }
             if (! changed) return node;
             return new StmtIODecl(node.getContext(),
-                    ((StmtIODecl)node).getName(),
-                    ((StmtIODecl)node).getType(),
-                    newRate1, newRate2);
+                                  ((StmtIODecl)node).getName(),
+                                  ((StmtIODecl)node).getType(),
+                                  newRate1, newRate2);
         }
         // streamit.frontend.tojava.StmtAddPhase:
         // need to visit expressions getPeek(), getPop(), getPush()
@@ -726,16 +726,16 @@ public class FEReplacer implements FEVisitor
             }
             if (! changed) return node;
             return new StmtAddPhase(node.getContext(),
-                    ((StmtAddPhase)node).isInit(),
-                    newPeek, newPop, newPush, 
-                    ((StmtAddPhase)node).getName());
+                                    ((StmtAddPhase)node).isInit(),
+                                    newPeek, newPop, newPush, 
+                                    ((StmtAddPhase)node).getName());
         }
         // Some other case of visitOther that we have not seen yet
         
         System.err.println(this.getClass().getName() 
-                + " visitOther for "
-                + node.getClass().getName()
-                + " may require support in code");
-                return node; 
+                           + " visitOther for "
+                           + node.getClass().getName()
+                           + " may require support in code");
+        return node; 
     }
 }

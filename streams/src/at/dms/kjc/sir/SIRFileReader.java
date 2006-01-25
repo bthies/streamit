@@ -16,55 +16,55 @@ public class SIRFileReader extends SIRPredefinedFilter implements Cloneable {
     private JExpression fileName;
 
     public SIRFileReader() {
-	super(null,
-	      "FileReader",
-	      /* fields */ JFieldDeclaration.EMPTY(),
-	      /* methods */ JMethodDeclaration.EMPTY(),
-	      new JIntLiteral(null, 0),
-	      new JIntLiteral(null, 0),
-	      new JIntLiteral(null, 1),
-	      CStdType.Void, null);
-	this.fileName = new JStringLiteral("");
+        super(null,
+              "FileReader",
+              /* fields */ JFieldDeclaration.EMPTY(),
+              /* methods */ JMethodDeclaration.EMPTY(),
+              new JIntLiteral(null, 0),
+              new JIntLiteral(null, 0),
+              new JIntLiteral(null, 1),
+              CStdType.Void, null);
+        this.fileName = new JStringLiteral("");
     }
 
     public void setFileName(JExpression fileName) {
-	this.fileName = fileName;
+        this.fileName = fileName;
     }
 
     public String getFileName() {
-	if (!(fileName instanceof JStringLiteral)) {
-	    System.err.println("Error:  have not yet resolved filename for filereader.\n" +
-			       "        the filename expression is " + fileName);
-	    new RuntimeException().printStackTrace();
-	    System.exit(1);
-	}
-	return ((JStringLiteral)fileName).stringValue();
+        if (!(fileName instanceof JStringLiteral)) {
+            System.err.println("Error:  have not yet resolved filename for filereader.\n" +
+                               "        the filename expression is " + fileName);
+            new RuntimeException().printStackTrace();
+            System.exit(1);
+        }
+        return ((JStringLiteral)fileName).stringValue();
     }
 
     public void propagatePredefinedFields(Propagator propagator) {
-	JExpression newFilename = (JExpression)fileName.accept(propagator);
-	if (newFilename!=null && newFilename!=fileName) {
-	    fileName = newFilename;
-	}
+        JExpression newFilename = (JExpression)fileName.accept(propagator);
+        if (newFilename!=null && newFilename!=fileName) {
+            fileName = newFilename;
+        }
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRFileReader other = new at.dms.kjc.sir.SIRFileReader();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRFileReader other = new at.dms.kjc.sir.SIRFileReader();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRFileReader other) {
-  super.deepCloneInto(other);
-  other.fileName = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRFileReader other) {
+        super.deepCloneInto(other);
+        other.fileName = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

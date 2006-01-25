@@ -156,8 +156,8 @@ public class StreamAlgorithm extends DestroyedClass
      * Advance the child's init schedule by numStages.
      */
     public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages)
+                                         StreamInterface child,
+                                         int numStages)
     {
         assert numStages > 0;
 
@@ -173,8 +173,8 @@ public class StreamAlgorithm extends DestroyedClass
      * Makes sure that the child has already executed its full init schedule.
      */
     public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases)
+                                           StreamInterface child,
+                                           int numPhases)
     {
         assert numPhases > 0;
 
@@ -208,24 +208,24 @@ public class StreamAlgorithm extends DestroyedClass
      * @return init stage of a child
      */
     public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage)
+                                             StreamInterface child,
+                                             int nStage)
     {
         int realStage = getPhaseShift(child) + nStage;
 
         if (realStage < child.getNumInitStages())
-        {
-            // I actually want an init stage
-            return child.getInitScheduleStage(realStage);
-        }
+            {
+                // I actually want an init stage
+                return child.getInitScheduleStage(realStage);
+            }
         else
-        {
-            // I actually want a steady phase
-            int phase =
-                (realStage - child.getNumInitStages())
+            {
+                // I actually want a steady phase
+                int phase =
+                    (realStage - child.getNumInitStages())
                     % child.getNumSteadyPhases();
-            return child.getSteadySchedulePhase(phase);
-        }
+                return child.getSteadySchedulePhase(phase);
+            }
     }
 
     /**
@@ -235,8 +235,8 @@ public class StreamAlgorithm extends DestroyedClass
      * @return steady state phase of a child
      */
     public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase)
+                                               StreamInterface child,
+                                               int nPhase)
     {
         int consumedPhases = getPhaseShift(child);
 
@@ -255,20 +255,20 @@ public class StreamAlgorithm extends DestroyedClass
         
         final int multiplier = 10;
         for(;numTimes > 0;numTimes = numTimes / multiplier)
-        {
-            for(int nPhase = numTimes % multiplier;nPhase > 0;nPhase--)
             {
-                duplicatedPhase.appendPhase(phase);
-            }
+                for(int nPhase = numTimes % multiplier;nPhase > 0;nPhase--)
+                    {
+                        duplicatedPhase.appendPhase(phase);
+                    }
             
-            PhasingSchedule newSteadyPhase = new PhasingSchedule(phase.getStream());
-            for (int nPhase = 0; nPhase < multiplier; nPhase++)
-            {
-                newSteadyPhase.appendPhase(phase);
-            }
+                PhasingSchedule newSteadyPhase = new PhasingSchedule(phase.getStream());
+                for (int nPhase = 0; nPhase < multiplier; nPhase++)
+                    {
+                        newSteadyPhase.appendPhase(phase);
+                    }
             
-            phase = newSteadyPhase;
-        }
+                phase = newSteadyPhase;
+            }
         
         return duplicatedPhase;
     }
@@ -288,16 +288,16 @@ public class StreamAlgorithm extends DestroyedClass
         {
             int childPhaseOffset = getPhaseShift (child);
             if (childPhaseOffset < child.getNumInitStages() && childPhaseOffset + nPhases > child.getNumInitStages())
-            {
-                // the phases will span across boundary of 
-                // initialization and steady state, so break up
-                // this computation into two steps - one for 
-                // initialization, and one for steady state
-                phase.appendPhase(getChildPhases(child, child.getNumInitStages() - childPhaseOffset));
-                phase.appendPhase(getChildPhases(child, nPhases - (child.getNumInitStages() - childPhaseOffset)));
+                {
+                    // the phases will span across boundary of 
+                    // initialization and steady state, so break up
+                    // this computation into two steps - one for 
+                    // initialization, and one for steady state
+                    phase.appendPhase(getChildPhases(child, child.getNumInitStages() - childPhaseOffset));
+                    phase.appendPhase(getChildPhases(child, nPhases - (child.getNumInitStages() - childPhaseOffset)));
                 
-                return phase;
-            }
+                    return phase;
+                }
             
         }
         
@@ -315,14 +315,14 @@ public class StreamAlgorithm extends DestroyedClass
         // rotation of the schedule. if less than 4, then just
         // do this in the dumb way 
         if (nPhases / nPhasesPeriod < 4)
-        {
-            for (int nPhase=0;nPhase < nPhases;nPhase++)
             {
-                phase.appendPhase(getChildInitStage(child, 0));
-                advanceChildInitSchedule(child, 1);
+                for (int nPhase=0;nPhase < nPhases;nPhase++)
+                    {
+                        phase.appendPhase(getChildInitStage(child, 0));
+                        advanceChildInitSchedule(child, 1);
+                    }
+                return phase;
             }
-            return phase;
-        }
         
         // okay, I have to do this more than 4 times
         // construct a "smart" schedule. Note that since I'm going to 
@@ -335,10 +335,10 @@ public class StreamAlgorithm extends DestroyedClass
             nPhases -= mod;
             
             for(;mod > 0; mod--)
-            {
-                phase.appendPhase(getChildSteadyPhase(child, 0));
-                advanceChildSteadySchedule(child, 1);
-            }
+                {
+                    phase.appendPhase(getChildSteadyPhase(child, 0));
+                    advanceChildSteadySchedule(child, 1);
+                }
             
         }
         
@@ -346,9 +346,9 @@ public class StreamAlgorithm extends DestroyedClass
         PhasingSchedule steadyState = new PhasingSchedule (child);
         {
             for (int nPhase = 0; nPhase < child.getNumSteadyPhases(); nPhase++)
-            {
-                steadyState.appendPhase(getChildSteadyPhase(child, nPhase));
-            }
+                {
+                    steadyState.appendPhase(getChildSteadyPhase(child, nPhase));
+                }
         }
         
         phase.appendPhase(duplicatePhase(steadyState, nPhases/child.getNumSteadyPhases()));
@@ -360,32 +360,32 @@ public class StreamAlgorithm extends DestroyedClass
 
     
     /*
-    public int getScheduleSize ()
-    {
-        return getScheduleSize (getSteadySchedule()) + getScheduleSize (getInitializationSchedule ());
-    }
+      public int getScheduleSize ()
+      {
+      return getScheduleSize (getSteadySchedule()) + getScheduleSize (getInitializationSchedule ());
+      }
 
-    int getScheduleSize (PhasingSchedule sched)
-    {
-        int size = 0;
-        if (sched.getNumPhases() > 1) size += sched.getNumPhases ();
+      int getScheduleSize (PhasingSchedule sched)
+      {
+      int size = 0;
+      if (sched.getNumPhases() > 1) size += sched.getNumPhases ();
         
-        int nPhase;
-        for (nPhase = 0; nPhase < sched.getNumPhases(); sched++)
-        {
-            // compute the size of a phase
-            PhasingSchedule phase = sched.getPhase(nPhase);
-        }
+      int nPhase;
+      for (nPhase = 0; nPhase < sched.getNumPhases(); sched++)
+      {
+      // compute the size of a phase
+      PhasingSchedule phase = sched.getPhase(nPhase);
+      }
         
-        return size;
-    }
+      return size;
+      }
     
-    Set phasesComputed = new HashSet ();
+      Set phasesComputed = new HashSet ();
     
-    int getChildScheduleSize (PhasingSchedule sched)
-    {
-        if (phasesComputed.contains(sched)) return 0;
-        return sched.getStream().getScheduleSize (sched);
-    }
+      int getChildScheduleSize (PhasingSchedule sched)
+      {
+      if (phasesComputed.contains(sched)) return 0;
+      return sched.getStream().getScheduleSize (sched);
+      }
     */
 }

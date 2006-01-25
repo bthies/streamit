@@ -47,13 +47,13 @@ public class LinearPartitioner {
      * String names for collapse values
      */
     public static final String COLLAPSE_STRING(int collapse) {
-	switch(collapse) {
-	case COLLAPSE_NONE: return   "NONE  ";
-	case COLLAPSE_ANY: return    "ANY   ";
-	case COLLAPSE_LINEAR: return "LINEAR";
-	case COLLAPSE_FREQ: return   "FREQ  ";
-	default: return "UNKNOWN_COLLAPSE_TYPE: " + collapse;
-	}
+        switch(collapse) {
+        case COLLAPSE_NONE: return   "NONE  ";
+        case COLLAPSE_ANY: return    "ANY   ";
+        case COLLAPSE_LINEAR: return "LINEAR";
+        case COLLAPSE_FREQ: return   "FREQ  ";
+        default: return "UNKNOWN_COLLAPSE_TYPE: " + collapse;
+        }
     }
 
     /**
@@ -75,47 +75,47 @@ public class LinearPartitioner {
     private HashMap[] counts;
     
     public LinearPartitioner(SIRStream str, LinearAnalyzer lfa) {
-	this.str = str;
-	this.lfa = lfa;
-	this.configMap = new HashMap();
+        this.str = str;
+        this.lfa = lfa;
+        this.configMap = new HashMap();
     }
 
     /**
      * This is the toplevel call for doing partitioning.
      */
     public SIRStream toplevel() {
-	// lift before and after
-	Lifter.lift(str);
+        // lift before and after
+        Lifter.lift(str);
 
-	// debug setup
-	long start = System.currentTimeMillis();
+        // debug setup
+        long start = System.currentTimeMillis();
 
-	// calculate partitions
-	StreamTransform st = calcPartitions();
-	if (DEBUG) { st.printHierarchy(); }
+        // calculate partitions
+        StreamTransform st = calcPartitions();
+        if (DEBUG) { st.printHierarchy(); }
 
-	// debug output
-	System.err.println("Linear partitioner took " + 
-			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
+        // debug output
+        System.err.println("Linear partitioner took " + 
+                           (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 
-	// perform partitioning transformations
-	SIRStream result = st.doTransform(str);
+        // perform partitioning transformations
+        SIRStream result = st.doTransform(str);
 
-	// remove unnecessary identities
-	Lifter.eliminateIdentities(result);
-	// lift before and after
-	Lifter.lift(result);
+        // remove unnecessary identities
+        Lifter.eliminateIdentities(result);
+        // lift before and after
+        Lifter.lift(result);
 
-	// reclaim children here, since they might've been shuffled
-	// around in the config process
-	if (result instanceof SIRContainer) {
-	    ((SIRContainer)result).reclaimChildren();
-	}
-	// also set toplevel parent to be null, in case it was
-	// shuffled
-	result.setParent(null);
+        // reclaim children here, since they might've been shuffled
+        // around in the config process
+        if (result instanceof SIRContainer) {
+            ((SIRContainer)result).reclaimChildren();
+        }
+        // also set toplevel parent to be null, in case it was
+        // shuffled
+        result.setParent(null);
 
-	return result;
+        return result;
     }
 
     /**
@@ -123,22 +123,22 @@ public class LinearPartitioner {
      * for <str>.
      */
     private StreamTransform calcPartitions() {
-	// build stream config
-	LDPConfig topConfig = buildStreamConfig();
-	// set execution counts here, because we want to account for
-	// identities that we added to the stream
-	this.counts = SIRScheduler.getExecutionCounts(str);
-	// build up tables.
-	long cost = topConfig.get(COLLAPSE_ANY);
-	// clear dot traces
-	LDPConfig.numAssigned = 0;
-	LDPConfig.partitions = new HashMap();
-	tracingBack = true;
-	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
-	tracingBack = false;
-	// make dot graph of partitions
-	PartitionDot.printPartitionGraph(str, "linear-partitions.dot", LDPConfig.partitions);
-	return result;
+        // build stream config
+        LDPConfig topConfig = buildStreamConfig();
+        // set execution counts here, because we want to account for
+        // identities that we added to the stream
+        this.counts = SIRScheduler.getExecutionCounts(str);
+        // build up tables.
+        long cost = topConfig.get(COLLAPSE_ANY);
+        // clear dot traces
+        LDPConfig.numAssigned = 0;
+        LDPConfig.partitions = new HashMap();
+        tracingBack = true;
+        StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
+        tracingBack = false;
+        // make dot graph of partitions
+        PartitionDot.printPartitionGraph(str, "linear-partitions.dot", LDPConfig.partitions);
+        return result;
     }
 
     /**
@@ -146,17 +146,17 @@ public class LinearPartitioner {
      * config for the toplevel stream.
      */
     private LDPConfig buildStreamConfig() {
-	RefactorSplitJoin.addDeepRectangularSyncPoints(str);
-	StreamItDot.printGraph(str, "ldp-partition-input.dot");
-	return (LDPConfig)str.accept(new ConfigBuilder());
+        RefactorSplitJoin.addDeepRectangularSyncPoints(str);
+        StreamItDot.printGraph(str, "ldp-partition-input.dot");
+        return (LDPConfig)str.accept(new ConfigBuilder());
     }
 
     public LDPConfig getConfig(SIRStream str) {
-	return (LDPConfig) configMap.get(str);
+        return (LDPConfig) configMap.get(str);
     }
 
     public LinearAnalyzer getLinearAnalyzer() {
-	return this.lfa;
+        return this.lfa;
     }
 
     /**
@@ -164,78 +164,78 @@ public class LinearPartitioner {
      * we're partitioning.
      */
     public HashMap[] getExecutionCounts() {
-	return counts;
+        return counts;
     }
 
     /**
      * Returns a LDPConfig for <str>
      */
     private LDPConfig createConfig(SIRStream str) {
-	if (str instanceof SIRFilter) {
-	    return new LDPConfigFilter((SIRFilter)str, this);
-	} else if (str instanceof SIRPipeline) {
-	    return new LDPConfigPipeline((SIRPipeline)str, this);
-	} else if (str instanceof SIRSplitJoin) {
-	    return new LDPConfigSplitJoin((SIRSplitJoin)str, this);
-	} else {
-	    assert str instanceof SIRFeedbackLoop:
+        if (str instanceof SIRFilter) {
+            return new LDPConfigFilter((SIRFilter)str, this);
+        } else if (str instanceof SIRPipeline) {
+            return new LDPConfigPipeline((SIRPipeline)str, this);
+        } else if (str instanceof SIRSplitJoin) {
+            return new LDPConfigSplitJoin((SIRSplitJoin)str, this);
+        } else {
+            assert str instanceof SIRFeedbackLoop:
                 "Unexpected stream type: " + str;
-	    return new LDPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
-	}
+            return new LDPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
+        }
     }
 
     class ConfigBuilder extends EmptyAttributeStreamVisitor {
 
-	public Object visitSplitJoin(SIRSplitJoin self,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     SIRSplitter splitter,
-				     SIRJoiner joiner) {
-	    // shouldn't have 0-sized SJ's
-	    assert self.size()!=0: "Didn't expect SJ with no children.";
-	    super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
-	    // if parent is a pipeline, don't need a config for this splitjoin
-	    if (self.getParent() instanceof SIRPipeline) {
-		return self;
-	    } else {
-		return makeConfig(self);
-	    }
-	}
+        public Object visitSplitJoin(SIRSplitJoin self,
+                                     JFieldDeclaration[] fields,
+                                     JMethodDeclaration[] methods,
+                                     JMethodDeclaration init,
+                                     SIRSplitter splitter,
+                                     SIRJoiner joiner) {
+            // shouldn't have 0-sized SJ's
+            assert self.size()!=0: "Didn't expect SJ with no children.";
+            super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
+            // if parent is a pipeline, don't need a config for this splitjoin
+            if (self.getParent() instanceof SIRPipeline) {
+                return self;
+            } else {
+                return makeConfig(self);
+            }
+        }
 
-	public Object visitPipeline(SIRPipeline self,
-				    JFieldDeclaration[] fields,
-				    JMethodDeclaration[] methods,
-				    JMethodDeclaration init) {
-	    super.visitPipeline(self, fields, methods, init);
-	    return makeConfig(self);
-	}
+        public Object visitPipeline(SIRPipeline self,
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init) {
+            super.visitPipeline(self, fields, methods, init);
+            return makeConfig(self);
+        }
 
-	/* pre-visit a feedbackloop */
-	public Object visitFeedbackLoop(SIRFeedbackLoop self,
-					JFieldDeclaration[] fields,
-					JMethodDeclaration[] methods,
-					JMethodDeclaration init,
-					JMethodDeclaration initPath) {
-	    super.visitFeedbackLoop(self, fields, methods, init, initPath);
-	    return makeConfig(self);
-	}
+        /* pre-visit a feedbackloop */
+        public Object visitFeedbackLoop(SIRFeedbackLoop self,
+                                        JFieldDeclaration[] fields,
+                                        JMethodDeclaration[] methods,
+                                        JMethodDeclaration init,
+                                        JMethodDeclaration initPath) {
+            super.visitFeedbackLoop(self, fields, methods, init, initPath);
+            return makeConfig(self);
+        }
 
-	public Object visitFilter(SIRFilter self,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  JMethodDeclaration work,
-				  CType inputType, CType outputType) {
-	    super.visitFilter(self, fields, methods, init, work, inputType, outputType);
-	    return makeConfig(self);
-	}
+        public Object visitFilter(SIRFilter self,
+                                  JFieldDeclaration[] fields,
+                                  JMethodDeclaration[] methods,
+                                  JMethodDeclaration init,
+                                  JMethodDeclaration work,
+                                  CType inputType, CType outputType) {
+            super.visitFilter(self, fields, methods, init, work, inputType, outputType);
+            return makeConfig(self);
+        }
 
-	private LDPConfig makeConfig(SIRStream self) {
-	    LDPConfig config = createConfig(self);
-	    configMap.put(self, config);
-	    return config;
-	}
+        private LDPConfig makeConfig(SIRStream self) {
+            LDPConfig config = createConfig(self);
+            configMap.put(self, config);
+            return config;
+        }
     }
 
 }

@@ -35,13 +35,13 @@ public class SplitJoinIter
 
         if (splitjoin.getSplitter()
             instanceof streamit.library.DuplicateSplitter)
-        {
-            splitterFineGrained = false;
-        }
+            {
+                splitterFineGrained = false;
+            }
         else
-        {
-            splitterFineGrained = fineGrained;
-        }
+            {
+                splitterFineGrained = fineGrained;
+            }
         
         splitjoin.getSplitter().useSJ(this);
         splitjoin.getJoiner().useSJ(this);
@@ -79,18 +79,18 @@ public class SplitJoinIter
     public int getSplitterNumWork()
     {
         if (splitjoin.getSplitter() instanceof NullSplitter || splitjoin.getSplitter().getConsumption() == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            if (splitterFineGrained)
             {
-                return splitjoin.getSplitter().getConsumption();
+                return 0;
             }
-            else
-                return 1;
-        }
+        else
+            {
+                if (splitterFineGrained)
+                    {
+                        return splitjoin.getSplitter().getConsumption();
+                    }
+                else
+                    return 1;
+            }
     }
 
     public Object getSplitterWork(int nWork)
@@ -103,18 +103,18 @@ public class SplitJoinIter
     public int getJoinerNumWork()
     {
         if (splitjoin.getJoiner() instanceof NullJoiner || splitjoin.getJoiner().getProduction() == 0)
-        {
-            return 0;
-        }
-        else
-        {
-            if (fineGrained)
             {
-                return splitjoin.getJoiner().getProduction();
+                return 0;
             }
-            else
-                return 1;
-        }
+        else
+            {
+                if (fineGrained)
+                    {
+                        return splitjoin.getJoiner().getProduction();
+                    }
+                else
+                    return 1;
+            }
     }
 
     public Object getJoinerWork(int nWork)
@@ -130,24 +130,24 @@ public class SplitJoinIter
     public int[] getSplitPushWeights(int nWork)
     {
         if (splitWeights == null)
-        {
-            splitWeights = splitjoin.getSplitter().getWeights();
-
-            fineSplitPushWeights =
-                new int[getSplitterNumWork()][getFanOut()];
-
-            int n = 0, m = 0;
-            for (int total = 0; total < getSplitterNumWork(); total++)
             {
-                while (n >= splitWeights[m])
-                {
-                    n = 0;
-                    m++;
-                }
-                fineSplitPushWeights[total][m] = 1;
-                n++;
+                splitWeights = splitjoin.getSplitter().getWeights();
+
+                fineSplitPushWeights =
+                    new int[getSplitterNumWork()][getFanOut()];
+
+                int n = 0, m = 0;
+                for (int total = 0; total < getSplitterNumWork(); total++)
+                    {
+                        while (n >= splitWeights[m])
+                            {
+                                n = 0;
+                                m++;
+                            }
+                        fineSplitPushWeights[total][m] = 1;
+                        n++;
+                    }
             }
-        }
 
         if (splitterFineGrained)
             return fineSplitPushWeights[nWork];
@@ -163,23 +163,23 @@ public class SplitJoinIter
     public int[] getJoinPopWeights(int nWork)
     {
         if (joinWeights == null)
-        {
-            joinWeights = splitjoin.getJoiner().getWeights();
-
-            fineJoinPushWeights = new int[getJoinerNumWork()][getFanIn()];
-
-            int n = 0, m = 0;
-            for (int total = 0; total < getJoinerNumWork(); total++)
             {
-                while (n >= joinWeights[m])
-                {
-                    n = 0;
-                    m++;
-                }
-                fineJoinPushWeights[total][m] = 1;
-                n++;
+                joinWeights = splitjoin.getJoiner().getWeights();
+
+                fineJoinPushWeights = new int[getJoinerNumWork()][getFanIn()];
+
+                int n = 0, m = 0;
+                for (int total = 0; total < getJoinerNumWork(); total++)
+                    {
+                        while (n >= joinWeights[m])
+                            {
+                                n = 0;
+                                m++;
+                            }
+                        fineJoinPushWeights[total][m] = 1;
+                        n++;
+                    }
             }
-        }
 
         if (fineGrained)
             return fineJoinPushWeights[nWork];

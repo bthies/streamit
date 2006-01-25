@@ -6,8 +6,8 @@ public class IntArrayList {
     IntList next;
 
     IntArrayList(int[] value,IntList prev,IntList next) {
-	this.value=value;
-	this.prev=prev;
-	this.next=next;
+        this.value=value;
+        this.prev=prev;
+        this.next=next;
     }
 }

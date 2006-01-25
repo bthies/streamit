@@ -28,7 +28,7 @@ import java.util.List;
  * infrastructure to understand bit types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: RenameBitVars.java,v 1.6 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: RenameBitVars.java,v 1.7 2006-01-25 17:04:28 thies Exp $
  */
 public class RenameBitVars extends SymbolTableVisitor
 {
@@ -53,17 +53,17 @@ public class RenameBitVars extends SymbolTableVisitor
         // Then change the name if appropriate
         List newNames = new java.util.ArrayList();
         for (int i = 0; i < stmt.getNumVars(); i++)
-        {
-            String name = stmt.getName(i);
-            Type type = stmt.getType(i);
-            if ((type instanceof TypePrimitive) &&
-                (((TypePrimitive)(type)).getType() == TypePrimitive.TYPE_BIT))
             {
-                name = "_bit_" + name;
-                symtab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
+                String name = stmt.getName(i);
+                Type type = stmt.getType(i);
+                if ((type instanceof TypePrimitive) &&
+                    (((TypePrimitive)(type)).getType() == TypePrimitive.TYPE_BIT))
+                    {
+                        name = "_bit_" + name;
+                        symtab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
+                    }
+                newNames.add(name);
             }
-            newNames.add(name);
-        }
         return new StmtVarDecl(stmt.getContext(), stmt.getTypes(),
                                newNames, stmt.getInits());
     }

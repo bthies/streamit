@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: UnpositionedError.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: UnpositionedError.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -30,92 +30,92 @@ import at.dms.compiler.tools.common.MessageDescription;
 
 public class UnpositionedError extends Throwable {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Creates an error with a formatted message as argument.
-   * @param	message		the formatted message
-   */
-  public UnpositionedError(Message message) {
-    super(message.getDescription().getFormat());
+    /**
+     * Creates an error with a formatted message as argument.
+     * @param   message     the formatted message
+     */
+    public UnpositionedError(Message message) {
+        super(message.getDescription().getFormat());
 
-    this.message = message;
-  }
+        this.message = message;
+    }
 
-  /**
-   * Creates an error with an arbitrary number of parameters.
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public UnpositionedError(MessageDescription description, Object[] parameters) {
-    this(new Message(description, parameters));
-  }
+    /**
+     * Creates an error with an arbitrary number of parameters.
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public UnpositionedError(MessageDescription description, Object[] parameters) {
+        this(new Message(description, parameters));
+    }
 
-  /**
-   * Creates an error with two parameters.
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public UnpositionedError(MessageDescription description, Object parameter1, Object parameter2) {
-    this(description, new Object[] { parameter1, parameter2 });
-  }
+    /**
+     * Creates an error with two parameters.
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public UnpositionedError(MessageDescription description, Object parameter1, Object parameter2) {
+        this(description, new Object[] { parameter1, parameter2 });
+    }
 
-  /**
-   * Creates an error with one parameter.
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public UnpositionedError(MessageDescription description, Object parameter) {
-    this(description, new Object[] { parameter });
-  }
+    /**
+     * Creates an error with one parameter.
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public UnpositionedError(MessageDescription description, Object parameter) {
+        this(description, new Object[] { parameter });
+    }
 
-  /**
-   * Creates an error without parameters.
-   * @param	description	the message description
-   */
-  public UnpositionedError(MessageDescription description) {
-    this(description, null);
-  }
+    /**
+     * Creates an error without parameters.
+     * @param   description the message description
+     */
+    public UnpositionedError(MessageDescription description) {
+        this(description, null);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns a string explaining the error.
-   */
-  public String getMessage() {
-    return message.getMessage();
-  }
+    /**
+     * Returns a string explaining the error.
+     */
+    public String getMessage() {
+        return message.getMessage();
+    }
 
-  /**
-   * Returns the formatted message.
-   */
-  public Message getFormattedMessage() {
-    return message;
-  }
+    /**
+     * Returns the formatted message.
+     */
+    public Message getFormattedMessage() {
+        return message;
+    }
 
-  /**
-   * Returns true iff the error has specified description.
-   */
-  public boolean hasDescription(MessageDescription description) {
-    return message.getDescription() == description;
-  }
+    /**
+     * Returns true iff the error has specified description.
+     */
+    public boolean hasDescription(MessageDescription description) {
+        return message.getDescription() == description;
+    }
 
-  /**
-   * Returns an error with a reference to the source file.
-   * @param	where		the position in the source file responsible for the error
-   */
-  public PositionedError addPosition(TokenReference where) {
-    return new PositionedError(where, message);
-  }
+    /**
+     * Returns an error with a reference to the source file.
+     * @param   where       the position in the source file responsible for the error
+     */
+    public PositionedError addPosition(TokenReference where) {
+        return new PositionedError(where, message);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private /* javac bug final */ Message		message;
+    private /* javac bug final */ Message       message;
 }

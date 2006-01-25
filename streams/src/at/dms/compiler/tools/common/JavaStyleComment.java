@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: JavaStyleComment.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -25,60 +25,60 @@ package at.dms.compiler.tools.common;
  */
 public class JavaStyleComment {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	text		the string representation of this comment
-   * @param	!!! COMPLETE
-   */
-  public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
-    this.text = text;
-    this.isLineComment = isLineComment;
-    this.spaceBefore = spaceBefore;
-    this.spaceAfter = spaceAfter;
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   text        the string representation of this comment
+     * @param   !!! COMPLETE
+     */
+    public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
+        this.text = text;
+        this.isLineComment = isLineComment;
+        this.spaceBefore = spaceBefore;
+        this.spaceAfter = spaceAfter;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   *
-   */
-  public String getText() {
-    return text;
-  }
+    /**
+     *
+     */
+    public String getText() {
+        return text;
+    }
 
-  /**
-   *
-   */
-  public boolean isLineComment() {
-    return isLineComment;
-  }
+    /**
+     *
+     */
+    public boolean isLineComment() {
+        return isLineComment;
+    }
 
-  /**
-   *
-   */
-  public boolean hadSpaceBefore() {
-    return spaceBefore;
-  }
+    /**
+     *
+     */
+    public boolean hadSpaceBefore() {
+        return spaceBefore;
+    }
 
-  /**
-   *
-   */
-  public boolean hadSpaceAfter() {
-    return spaceAfter;
-  }
+    /**
+     *
+     */
+    public boolean hadSpaceAfter() {
+        return spaceAfter;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  protected	String		text;
-  private final boolean		isLineComment;
-  private final boolean		spaceBefore;
-  private final boolean		spaceAfter;
+    protected   String      text;
+    private final boolean       isLineComment;
+    private final boolean       spaceBefore;
+    private final boolean       spaceAfter;
 }

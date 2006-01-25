@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsShowToolbar.java	1.2 02.02.2003
+ * @(#)ToolsShowToolbar.java    1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,57 +36,57 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ToolsShowToolbar extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for ToolsShowToolbar.
-	 * @param graphpad
-	 */
-	public ToolsShowToolbar(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolsShowToolbar.
+     * @param graphpad
+     */
+    public ToolsShowToolbar(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for ToolsShowToolbar.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ToolsShowToolbar(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for ToolsShowToolbar.
+     * @param graphpad
+     * @param name
+     */
+    public ToolsShowToolbar(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for ToolsShowToolbar.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public ToolsShowToolbar(GPGraphpad graphpad, String name, Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for ToolsShowToolbar.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public ToolsShowToolbar(GPGraphpad graphpad, String name, Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		return graphpad.isToolBarsVisible();
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        return graphpad.isToolBarsVisible();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		graphpad.setToolBarsVisible(!graphpad.isToolBarsVisible());
-		graphpad.invalidate();
-		graphpad.repaint();
-		update();
-	}
-	/** updates all Abstract Buttons from this action
-	 */
-	public void update(){
-		Enumeration enum = abstractButtons.elements();
-		while (enum.hasMoreElements()) {
-			AbstractButton button = (AbstractButton) enum.nextElement();
-			button.setSelected(isSelected(button.getActionCommand()));
-		}
-	};
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        graphpad.setToolBarsVisible(!graphpad.isToolBarsVisible());
+        graphpad.invalidate();
+        graphpad.repaint();
+        update();
+    }
+    /** updates all Abstract Buttons from this action
+     */
+    public void update(){
+        Enumeration enum = abstractButtons.elements();
+        while (enum.hasMoreElements()) {
+            AbstractButton button = (AbstractButton) enum.nextElement();
+            button.setSelected(isSelected(button.getActionCommand()));
+        }
+    };
 
 }

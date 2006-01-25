@@ -26,19 +26,19 @@ public class CommonUtils {
      *
      */
     public static String CTypeToString(CType s, boolean hasBoolType) {
-	if (s instanceof CArrayType){
-	    return CTypeToString(((CArrayType)s).getElementType(), hasBoolType)  + "*";
-	} else if (s.getTypeID() == CType.TID_BOOLEAN) {
-	    return hasBoolType ? "bool" : "int";
-	} else if (s.toString().endsWith("Portal")) {
-	    // ignore the specific type of portal in the C library
-	    return "portal";
-	} else if (s instanceof CBitType) {
-	    // for now convert bit's to int's
-	    return "int";
-	} else {
-           return s.toString();
-	}
+        if (s instanceof CArrayType){
+            return CTypeToString(((CArrayType)s).getElementType(), hasBoolType)  + "*";
+        } else if (s.getTypeID() == CType.TID_BOOLEAN) {
+            return hasBoolType ? "bool" : "int";
+        } else if (s.toString().endsWith("Portal")) {
+            // ignore the specific type of portal in the C library
+            return "portal";
+        } else if (s instanceof CBitType) {
+            // for now convert bit's to int's
+            return "int";
+        } else {
+            return s.toString();
+        }
     } 
 
     /**
@@ -51,48 +51,48 @@ public class CommonUtils {
      *                     if false then Java 'boolean' becomse 'int' for C
      */
     public static String declToString(CType s, String ident, boolean hasBoolType) {
-	StringBuffer result = new StringBuffer();
-	if (s instanceof CArrayType) {
-	    // special case: "int main(char** argv)" does not have
-	    // static bounds in array
-	    if (ident.equals("argv")) {
-		// first print type
-		result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
-		// then *
-		for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++) {
-		    result.append("*");
-		}
-		// then identifier
-		result.append(" ");
-		result.append(ident);
-	    } else {
-		// first print type
-		result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
-		// the identifier
-		result.append(" ");
-		result.append(ident);
-		// then dims
-		JExpression[] dims = ((CArrayType)s).getDims();
-		for (int i = 0; i < dims.length; i++) {
-		    result.append("[");
-		    // require that dimensions are resolved to int
-		    // literals.  It might be more general to send a
-		    // visitor through, but some of the cluster code
-		    // generators do not have visitors handy (e.g.,
-		    // ClusterCode.java)
-		    assert dims[i] instanceof JIntLiteral : "Array dimension is not int literal during codegen, instead is: " + dims[i];
-		    result.append(((JIntLiteral)dims[i]).intValue());
-		    result.append("]");
-		}
-	    }
-	} else {
-	    // print type
-	    result.append(CTypeToString(s, hasBoolType));
-	    // then identifier
-	    result.append(" ");
-	    result.append(ident);
-	}
-	return result.toString();
+        StringBuffer result = new StringBuffer();
+        if (s instanceof CArrayType) {
+            // special case: "int main(char** argv)" does not have
+            // static bounds in array
+            if (ident.equals("argv")) {
+                // first print type
+                result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
+                // then *
+                for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++) {
+                    result.append("*");
+                }
+                // then identifier
+                result.append(" ");
+                result.append(ident);
+            } else {
+                // first print type
+                result.append(CTypeToString(((CArrayType)s).getBaseType(), hasBoolType));
+                // the identifier
+                result.append(" ");
+                result.append(ident);
+                // then dims
+                JExpression[] dims = ((CArrayType)s).getDims();
+                for (int i = 0; i < dims.length; i++) {
+                    result.append("[");
+                    // require that dimensions are resolved to int
+                    // literals.  It might be more general to send a
+                    // visitor through, but some of the cluster code
+                    // generators do not have visitors handy (e.g.,
+                    // ClusterCode.java)
+                    assert dims[i] instanceof JIntLiteral : "Array dimension is not int literal during codegen, instead is: " + dims[i];
+                    result.append(((JIntLiteral)dims[i]).intValue());
+                    result.append("]");
+                }
+            }
+        } else {
+            // print type
+            result.append(CTypeToString(s, hasBoolType));
+            // then identifier
+            result.append(" ");
+            result.append(ident);
+        }
+        return result.toString();
     }
     
     

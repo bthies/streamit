@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedAnonymousCreation.java,v 1.11 2006-01-22 06:20:11 thies Exp $
+ * $Id: JUnqualifiedAnonymousCreation.java,v 1.12 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,298 +29,298 @@ import at.dms.compiler.UnpositionedError;
  */
 public class JUnqualifiedAnonymousCreation extends JExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JUnqualifiedAnonymousCreation() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	objectType	the type of this object allocator
-   * @param	params		parameters to be passed to constructor
-   */
-  public JUnqualifiedAnonymousCreation(TokenReference where,
-				      CClassType objectType,
-				      JExpression[] params,
-				      JClassDeclaration decl)
-  {
-    super(where);
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   objectType  the type of this object allocator
+     * @param   params      parameters to be passed to constructor
+     */
+    public JUnqualifiedAnonymousCreation(TokenReference where,
+                                         CClassType objectType,
+                                         JExpression[] params,
+                                         JClassDeclaration decl)
+    {
+        super(where);
 
-    this.type = objectType;
-    this.params = params;
-    this.decl = decl;
-  }
+        this.type = objectType;
+        this.params = params;
+        this.decl = decl;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Compute the type of this expression (called after parsing)
-   * @return the type of this expression
-   */
-  public CType getType() {
-    return type;
-  }
+    /**
+     * Compute the type of this expression (called after parsing)
+     * @return the type of this expression
+     */
+    public CType getType() {
+        return type;
+    }
 
-  /**
-   * Returns the parameter list for the object.
-   * @return the parameter list
-   */
-  public JExpression[] getParams() {
-    return params;
-  }
+    /**
+     * Returns the parameter list for the object.
+     * @return the parameter list
+     */
+    public JExpression[] getParams() {
+        return params;
+    }
     
-  /**
-   * Returns the class declaration for the object.
-   * @return the class declaration
-   */
-  public JClassDeclaration getDecl() {
-    return decl;
-  }
-
-  /**
-   * Returns true iff this expression can be used as a statement (JLS 14.8)
-   */
-  public boolean isStatementExpression() {
-    return true;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    CType[]	argsType;
-    CClass	owner = context.getClassContext().getCClass();
-    CClassType	superClass;
-
-    try {
-      type.checkType(context);
-    } catch (UnpositionedError e) {
-      throw e.addPosition(getTokenReference());
+    /**
+     * Returns the class declaration for the object.
+     * @return the class declaration
+     */
+    public JClassDeclaration getDecl() {
+        return decl;
     }
 
-    argsType = new CType[params.length];
-
-    for (int i = 0; i < argsType.length; i++) {
-      params[i] = params[i].analyse(context);
-      argsType[i] = params[i].getType();
-      assert argsType[i] != null;
+    /**
+     * Returns true iff this expression can be used as a statement (JLS 14.8)
+     */
+    public boolean isStatementExpression() {
+        return true;
     }
 
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-    /* JLS 15.9.2: If the class instance creation expression occurs 
-       in a static context (§8.1.2), then i has no immediately enclosing 
-       instance. Otherwise, the immediately enclosing instance of i is this. */
-    decl.generateInterface(owner,
-			   owner.getQualifiedName() + "$" + context.getClassContext().getNextSyntheticIndex() + "$");
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        CType[] argsType;
+        CClass  owner = context.getClassContext().getCClass();
+        CClassType  superClass;
 
-    CClass      superCClass = type.getCClass();
+        try {
+            type.checkType(context);
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
 
-    if (type.getCClass().isInterface()) {
-      superClass = CStdType.Object;
-      decl.setInterfaces(new CClassType[] { type });
-    } else {
-      superClass = type;
-    }
-    decl.setSuperClass(superClass);
+        argsType = new CType[params.length];
 
-    // The class of the super class must be set explicitly
-    // before lookup of the constructor of the superclass
-    // because it will be set in decl only in checkInterface.
-    // On the other hand checkInterface needs the constructor
-    // to be created.
-    // graf 010422 :
-    // But, why not analyse the constructor later ? Perhaps
-    // to be able to signal an error ?
+        for (int i = 0; i < argsType.length; i++) {
+            params[i] = params[i].analyse(context);
+            argsType[i] = params[i].getType();
+            assert argsType[i] != null;
+        }
 
-    decl.getCClass().setSuperClass(superClass);
 
-    // add implicit constructor
-    JConstructorDeclaration	cstr;
-    CMethod			superCstr;
+        /* JLS 15.9.2: If the class instance creation expression occurs 
+           in a static context (§8.1.2), then i has no immediately enclosing 
+           instance. Otherwise, the immediately enclosing instance of i is this. */
+        decl.generateInterface(owner,
+                               owner.getQualifiedName() + "$" + context.getClassContext().getNextSyntheticIndex() + "$");
 
-    try {
-      superCstr = superClass.getCClass().lookupMethod(decl.getCClass(), JAV_CONSTRUCTOR, argsType);
-    } catch (UnpositionedError cue) {
-      throw cue.addPosition(getTokenReference());
-    }
-    if (superCstr == null) {
-      throw new CMethodNotFoundError(getTokenReference(), null, superClass.toString(), argsType);
-    }
+        CClass      superCClass = type.getCClass();
 
-    CType[]		parameters = superCstr.getParameters();
-    JFormalParameter[]	fparams = new JFormalParameter[parameters.length];
-    CClassType[]	throwables = superCstr.getThrowables();
+        if (type.getCClass().isInterface()) {
+            superClass = CStdType.Object;
+            decl.setInterfaces(new CClassType[] { type });
+        } else {
+            superClass = type;
+        }
+        decl.setSuperClass(superClass);
 
-    for (int i = 0; i < parameters.length; i++) {
-      fparams[i] = new JFormalParameter(getTokenReference(),
-					JLocalVariable.DES_GENERATED,
-					parameters[i],
-					"dummy" + i,
-					true);
-    }
+        // The class of the super class must be set explicitly
+        // before lookup of the constructor of the superclass
+        // because it will be set in decl only in checkInterface.
+        // On the other hand checkInterface needs the constructor
+        // to be created.
+        // graf 010422 :
+        // But, why not analyse the constructor later ? Perhaps
+        // to be able to signal an error ?
 
-    JExpression[]		checkedParams = new JExpression[params.length];
+        decl.getCClass().setSuperClass(superClass);
 
-    for (int i = 0; i < params.length; i++) {
-      checkedParams[i] = new JLocalVariableExpression(getTokenReference(),
-						      fparams[i]);
-    }
+        // add implicit constructor
+        JConstructorDeclaration cstr;
+        CMethod         superCstr;
 
-    cstr = new JConstructorDeclaration(getTokenReference(),
-				       ACC_PUBLIC,
-				       decl.getCClass().getIdent(),
-				       fparams,
-				       throwables,
-				       new JConstructorCall(getTokenReference(), false, checkedParams),
-				       new JStatement[0],
-				       null,
-				       null);
-    decl.setDefaultConstructor(cstr);
-    decl.checkInterface(context.getCompilationUnitContext());
-    decl.checkInitializers(context);
-    decl.checkTypeBody(context);
+        try {
+            superCstr = superClass.getCClass().lookupMethod(decl.getCClass(), JAV_CONSTRUCTOR, argsType);
+        } catch (UnpositionedError cue) {
+            throw cue.addPosition(getTokenReference());
+        }
+        if (superCstr == null) {
+            throw new CMethodNotFoundError(getTokenReference(), null, superClass.toString(), argsType);
+        }
 
-    type = decl.getCClass().getType();
+        CType[]     parameters = superCstr.getParameters();
+        JFormalParameter[]  fparams = new JFormalParameter[parameters.length];
+        CClassType[]    throwables = superCstr.getThrowables();
 
-    //!!! review and create test cases
-    context = new CExpressionContext(context);
+        for (int i = 0; i < parameters.length; i++) {
+            fparams[i] = new JFormalParameter(getTokenReference(),
+                                              JLocalVariable.DES_GENERATED,
+                                              parameters[i],
+                                              "dummy" + i,
+                                              true);
+        }
 
-    check(context, !type.getCClass().isAbstract(), KjcMessages.NEW_ABSTRACT, type);
-    check(context, !type.getCClass().isInterface(), KjcMessages.NEW_INTERFACE, type);
+        JExpression[]       checkedParams = new JExpression[params.length];
 
-    constructor = cstr.getMethod();
+        for (int i = 0; i < params.length; i++) {
+            checkedParams[i] = new JLocalVariableExpression(getTokenReference(),
+                                                            fparams[i]);
+        }
 
-    // check access
-    local = context.getClassContext().getCClass();
-    check(context, constructor.isAccessible(local), KjcMessages.CONSTRUCTOR_NOACCESS, type);
+        cstr = new JConstructorDeclaration(getTokenReference(),
+                                           ACC_PUBLIC,
+                                           decl.getCClass().getIdent(),
+                                           fparams,
+                                           throwables,
+                                           new JConstructorCall(getTokenReference(), false, checkedParams),
+                                           new JStatement[0],
+                                           null,
+                                           null);
+        decl.setDefaultConstructor(cstr);
+        decl.checkInterface(context.getCompilationUnitContext());
+        decl.checkInitializers(context);
+        decl.checkTypeBody(context);
 
-    if (constructor.getOwner().isNested()) {
-      check(context, !constructor.getOwner().hasOuterThis() ||
-	    ((!context.getMethodContext().getCMethod().isStatic()) &&
-	     (local.descendsFrom(constructor.getOwner().getOwner()) || (local.getOwner() != null && local.getOwner() == constructor.getOwner().getOwner()))),
-	    KjcMessages.INNER_INHERITENCE, constructor.getOwner().getType(), local.getType());
-    }
+        type = decl.getCClass().getType();
 
-    CClassType[]	exceptions = constructor.getThrowables();
-    for (int i = 0; i < exceptions.length; i++) {
-      context.getBodyContext().addThrowable(new CThrowableInfo(exceptions[i], this));
-    }
+        //!!! review and create test cases
+        context = new CExpressionContext(context);
 
-    argsType = constructor.getParameters();
+        check(context, !type.getCClass().isAbstract(), KjcMessages.NEW_ABSTRACT, type);
+        check(context, !type.getCClass().isInterface(), KjcMessages.NEW_INTERFACE, type);
 
-    for (int i = 0; i < params.length; i++) {
-      params[i] = params[i].convertType(argsType[i], context);
-    }
+        constructor = cstr.getMethod();
 
-    return this;
-  }
+        // check access
+        local = context.getClassContext().getCClass();
+        check(context, constructor.isAccessible(local), KjcMessages.CONSTRUCTOR_NOACCESS, type);
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+        if (constructor.getOwner().isNested()) {
+            check(context, !constructor.getOwner().hasOuterThis() ||
+                  ((!context.getMethodContext().getCMethod().isStatic()) &&
+                   (local.descendsFrom(constructor.getOwner().getOwner()) || (local.getOwner() != null && local.getOwner() == constructor.getOwner().getOwner()))),
+                  KjcMessages.INNER_INHERITENCE, constructor.getOwner().getType(), local.getType());
+        }
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitUnqualifiedAnonymousCreation(this, type, params, decl);
-  }
+        CClassType[]    exceptions = constructor.getThrowables();
+        for (int i = 0; i < exceptions.length; i++) {
+            context.getBodyContext().addThrowable(new CThrowableInfo(exceptions[i], this));
+        }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitUnqualifiedAnonymousCreation(this, type, params, decl);
-  }
+        argsType = constructor.getParameters();
 
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    setLineNumber(code);
+        for (int i = 0; i < params.length; i++) {
+            params[i] = params[i].convertType(argsType[i], context);
+        }
 
-    code.plantClassRefInstruction(opc_new, type.getCClass().getQualifiedName());
-
-    if (!discardValue) {
-      code.plantNoArgInstruction(opc_dup);
+        return this;
     }
 
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-    if (!constructor.getOwner().isStatic() 
-        && constructor.getOwner().hasOuterThis()) {
-      // inner class
-
-
-      if (!(local.getOwner() != null 
-            && constructor.getOwner().getOwner() != null
-            && local.getOwner() == constructor.getOwner().getOwner().getOwner())) {
-	code.plantLoadThis();
-      } else {
-        // create inner class in inner class
-        //!!! FIXME !!!! To be fixed with get/set to private inner fields 
-	code.plantLoadThis();
-        /*	code.plantFieldRefInstruction(opc_getfield,
-				      local.getType().getSignature().substring(1, local.getType().getSignature().length() - 1),
-				      JAV_OUTER_THIS,
-				      local.getOwner().getType().getSignature());*/
-      }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitUnqualifiedAnonymousCreation(this, type, params, decl);
     }
 
-    for (int i = 0; i < params.length; i++) {
-      params[i].genCode(code, false);
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitUnqualifiedAnonymousCreation(this, type, params, decl);
     }
-    //    if (constructor.getOwner().isNested()) {
-      constructor.getOwner().genOuterSyntheticParams(code);
-      //    }
-    constructor.genCode(code, true);
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        setLineNumber(code);
 
-  private JExpression[]		params;
-  private CClassType		type;
-  private CClass		local;
-  private CMethod		constructor;
-  private JClassDeclaration	decl;
+        code.plantClassRefInstruction(opc_new, type.getCClass().getQualifiedName());
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        if (!discardValue) {
+            code.plantNoArgInstruction(opc_dup);
+        }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JUnqualifiedAnonymousCreation other = new at.dms.kjc.JUnqualifiedAnonymousCreation();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JUnqualifiedAnonymousCreation other) {
-  super.deepCloneInto(other);
-  other.params = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
-  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.local = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.local);
-  other.constructor = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.constructor);
-  other.decl = (at.dms.kjc.JClassDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
-}
+        if (!constructor.getOwner().isStatic() 
+            && constructor.getOwner().hasOuterThis()) {
+            // inner class
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+            if (!(local.getOwner() != null 
+                  && constructor.getOwner().getOwner() != null
+                  && local.getOwner() == constructor.getOwner().getOwner().getOwner())) {
+                code.plantLoadThis();
+            } else {
+                // create inner class in inner class
+                //!!! FIXME !!!! To be fixed with get/set to private inner fields 
+                code.plantLoadThis();
+                /*  code.plantFieldRefInstruction(opc_getfield,
+                    local.getType().getSignature().substring(1, local.getType().getSignature().length() - 1),
+                    JAV_OUTER_THIS,
+                    local.getOwner().getType().getSignature());*/
+            }
+        }
+
+        for (int i = 0; i < params.length; i++) {
+            params[i].genCode(code, false);
+        }
+        //    if (constructor.getOwner().isNested()) {
+        constructor.getOwner().genOuterSyntheticParams(code);
+        //    }
+        constructor.genCode(code, true);
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private JExpression[]       params;
+    private CClassType      type;
+    private CClass      local;
+    private CMethod     constructor;
+    private JClassDeclaration   decl;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JUnqualifiedAnonymousCreation other = new at.dms.kjc.JUnqualifiedAnonymousCreation();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JUnqualifiedAnonymousCreation other) {
+        super.deepCloneInto(other);
+        other.params = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
+        other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+        other.local = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.local);
+        other.constructor = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.constructor);
+        other.decl = (at.dms.kjc.JClassDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

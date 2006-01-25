@@ -14,39 +14,39 @@ import streamit.eclipse.grapheditor.graph.GEStreamNode;
  * @author jcarlos
  */
 public class TreeNode extends DefaultMutableTreeNode{
-	
-	/** The GEStreamNode that TreeNode represents */
-	private GEStreamNode node;
-	
-	/** Default Constructor */
-	public TreeNode(GEStreamNode node)
-	{
-		this.node = node;
-	}
-	
-	/**
-	 * Get the GEStreamNode belonging to the TreeNode.
-	 * @return GEStreamNode
-	 */
-	public GEStreamNode getNode()
-	{
-		return this.node;		
-	}
-	
-	/**
-	 * Get the String representation of TreeNode.
-	 * @return String representation of the object. 
-	 */
-	public String toString()
-	{
-		if (node instanceof GEContainer)
-		{
-			return node.getNameWithID();
-		}
-		else
-		{
-			return node.getName();
-		}
-		
-	}
+    
+    /** The GEStreamNode that TreeNode represents */
+    private GEStreamNode node;
+    
+    /** Default Constructor */
+    public TreeNode(GEStreamNode node)
+    {
+        this.node = node;
+    }
+    
+    /**
+     * Get the GEStreamNode belonging to the TreeNode.
+     * @return GEStreamNode
+     */
+    public GEStreamNode getNode()
+    {
+        return this.node;       
+    }
+    
+    /**
+     * Get the String representation of TreeNode.
+     * @return String representation of the object. 
+     */
+    public String toString()
+    {
+        if (node instanceof GEContainer)
+            {
+                return node.getNameWithID();
+            }
+        else
+            {
+                return node.getName();
+            }
+        
+    }
 }

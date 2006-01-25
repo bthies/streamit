@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTopLevel.java,v 1.3 2004-01-28 16:55:35 dmaze Exp $
+ * $Id: CTopLevel.java,v 1.4 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,95 +31,95 @@ import at.dms.compiler.Compiler;
  */
 public final class CTopLevel extends at.dms.util.Utils {
 
-  // ----------------------------------------------------------------------
-  // LOAD CLASS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // LOAD CLASS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Loads class definition from .class file
-   */
-  public static CClass loadClass(String name) {
-    CClass		cl = (CClass)allLoadedClasses.get(name);
+    /**
+     * Loads class definition from .class file
+     */
+    public static CClass loadClass(String name) {
+        CClass      cl = (CClass)allLoadedClasses.get(name);
 
-    if (cl != null) {
-      // look in cache
-      return cl != CClass.CLS_UNDEFINED ? cl : null;
-    } else {
-      ClassInfo		file = ClassPath.getClassInfo(name, true);
+        if (cl != null) {
+            // look in cache
+            return cl != CClass.CLS_UNDEFINED ? cl : null;
+        } else {
+            ClassInfo       file = ClassPath.getClassInfo(name, true);
 
-      cl = file == null ? CClass.CLS_UNDEFINED : new CBinaryClass(file);
-      allLoadedClasses.put(name, cl);
+            cl = file == null ? CClass.CLS_UNDEFINED : new CBinaryClass(file);
+            allLoadedClasses.put(name, cl);
 
-      return cl;
-    }
-  }
-
-  /**
-   * @return  false if name exists for source class as source class
-   *          in an other file
-   * @param CClass a class to add (must be a CSourceClass)
-   */
-  public static boolean addSourceClass(CClass cl) {
-    assert cl instanceof CSourceClass;
-
-    CClass	last = (CClass)allLoadedClasses.put(cl.getQualifiedName(), cl);
-    return (last == null) ||
-      (cl.getOwner() != null) ||
-      !(last instanceof CSourceClass) ||
-      last.getSourceFile() == cl.getSourceFile();
-  }
-
-  /**
-   * @return a class file that contain the class named name
-   * @param name the name of the class file
-   */
-  public static boolean hasClassFile(String name) {
-    CClass		cl = (CClass)allLoadedClasses.get(name);
-
-    if (cl == null) {
-      ClassInfo		file = ClassPath.getClassInfo(name, true);
-
-      cl = file == null ? CClass.CLS_UNDEFINED : new CBinaryClass(file);
-      allLoadedClasses.put(name, cl);
+            return cl;
+        }
     }
 
-    assert cl != null;
-    return cl != CClass.CLS_UNDEFINED;
-  }
+    /**
+     * @return  false if name exists for source class as source class
+     *          in an other file
+     * @param CClass a class to add (must be a CSourceClass)
+     */
+    public static boolean addSourceClass(CClass cl) {
+        assert cl instanceof CSourceClass;
 
-  /**
-   * Removes all source classes
-   */
-  public static void initSession(Compiler compiler) {
-    allLoadedClasses = new Hashtable(2000);
-  }
+        CClass  last = (CClass)allLoadedClasses.put(cl.getQualifiedName(), cl);
+        return (last == null) ||
+            (cl.getOwner() != null) ||
+            !(last instanceof CSourceClass) ||
+            last.getSourceFile() == cl.getSourceFile();
+    }
 
-  /**
-   *
-   */
-  public static void endSession(Compiler compiler) {
-  }
+    /**
+     * @return a class file that contain the class named name
+     * @param name the name of the class file
+     */
+    public static boolean hasClassFile(String name) {
+        CClass      cl = (CClass)allLoadedClasses.get(name);
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+        if (cl == null) {
+            ClassInfo       file = ClassPath.getClassInfo(name, true);
 
-  private static Hashtable	allLoadedClasses = new Hashtable(2000);
+            cl = file == null ? CClass.CLS_UNDEFINED : new CBinaryClass(file);
+            allLoadedClasses.put(name, cl);
+        }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        assert cl != null;
+        return cl != CClass.CLS_UNDEFINED;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CTopLevel other = new at.dms.kjc.CTopLevel();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /**
+     * Removes all source classes
+     */
+    public static void initSession(Compiler compiler) {
+        allLoadedClasses = new Hashtable(2000);
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CTopLevel other) {
-  super.deepCloneInto(other);
-}
+    /**
+     *
+     */
+    public static void endSession(Compiler compiler) {
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private static Hashtable    allLoadedClasses = new Hashtable(2000);
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CTopLevel other = new at.dms.kjc.CTopLevel();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CTopLevel other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

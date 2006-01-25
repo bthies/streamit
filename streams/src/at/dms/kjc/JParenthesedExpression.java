@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.11 2005-04-09 03:05:50 thies Exp $
+ * $Id: JParenthesedExpression.java,v 1.12 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,139 +31,139 @@ public class JParenthesedExpression extends JExpression {
 
     protected JParenthesedExpression() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	expr		the expression beetwen parenthese
-   */
-  public JParenthesedExpression(TokenReference where, JExpression expr) {
-    super(where);
-    this.expr = expr;
-  }
-  public JParenthesedExpression(JExpression expr) {
-      this(null, expr);
-  }
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   expr        the expression beetwen parenthese
+     */
+    public JParenthesedExpression(TokenReference where, JExpression expr) {
+        super(where);
+        this.expr = expr;
+    }
+    public JParenthesedExpression(JExpression expr) {
+        this(null, expr);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Compute the type of this expression (called after parsing)
-   * @return the type of this expression
-   */
-  public CType getType() {
-    return expr.getType();
-  }
+    /**
+     * Compute the type of this expression (called after parsing)
+     * @return the type of this expression
+     */
+    public CType getType() {
+        return expr.getType();
+    }
 
     /**
      * Sets the expression.
      */
     public void setExpression(JExpression expr) {
-	this.expr = expr;
+        this.expr = expr;
     }
 
-  /**
-   * Returns a string representation of this literal.
-   */
-  public String toString() {
-    StringBuffer	buffer = new StringBuffer();
+    /**
+     * Returns a string representation of this literal.
+     */
+    public String toString() {
+        StringBuffer    buffer = new StringBuffer();
 
-    buffer.append("JParenthesedExpression[");
-    buffer.append(expr.toString());
-    buffer.append("]");
-    return buffer.toString();
-  }
+        buffer.append("JParenthesedExpression[");
+        buffer.append(expr.toString());
+        buffer.append("]");
+        return buffer.toString();
+    }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    expr = expr.analyse(context);
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        expr = expr.analyse(context);
 
-    return expr;
-  }
+        return expr;
+    }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitParenthesedExpression(this, expr);
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitParenthesedExpression(this, expr);
+    }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitParenthesedExpression(this, expr);
-  }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitParenthesedExpression(this, expr);
+    }
 
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    throw new InconsistencyException("should be unreachable");
-  }
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        throw new InconsistencyException("should be unreachable");
+    }
 
-  /**
-   * Generates a sequence of bytescodes to branch on a label
-   * This method helps to handle heavy optimizables conditions
-   * @param	code		the code list
-   */
-  public void genBranch(boolean cond, CodeSequence code, CodeLabel label) {
-    throw new InconsistencyException("should be unreachable");
-  }
+    /**
+     * Generates a sequence of bytescodes to branch on a label
+     * This method helps to handle heavy optimizables conditions
+     * @param   code        the code list
+     */
+    public void genBranch(boolean cond, CodeSequence code, CodeLabel label) {
+        throw new InconsistencyException("should be unreachable");
+    }
 
     
     public void setExpr(JExpression e)
     {
-	expr = e;
+        expr = e;
     }
 
     public JExpression getExpr() {
-	return expr;
+        return expr;
     }
 
 
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private JExpression		expr;
+    private JExpression     expr;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JParenthesedExpression other = new at.dms.kjc.JParenthesedExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JParenthesedExpression other = new at.dms.kjc.JParenthesedExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JParenthesedExpression other) {
-  super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JParenthesedExpression other) {
+        super.deepCloneInto(other);
+        other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

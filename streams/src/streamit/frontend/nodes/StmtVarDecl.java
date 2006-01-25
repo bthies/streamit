@@ -25,7 +25,7 @@ import java.util.List;
  * optional initialization value.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtVarDecl.java,v 1.6 2004-01-16 21:43:59 dmaze Exp $
+ * @version $Id: StmtVarDecl.java,v 1.7 2006-01-25 17:04:25 thies Exp $
  */
 public class StmtVarDecl extends Statement
 {
@@ -181,17 +181,17 @@ public class StmtVarDecl extends Statement
         if (svd.types.size() != types.size())
             return false;
         for (int i = 0; i < types.size(); i++)
-        {
-            if (!(types.get(i).equals(svd.types.get(i))))
-                return false;
-            if (!(names.get(i).equals(svd.names.get(i))))
-                return false;
-            if (inits.get(i) == null && svd.inits.get(i) != null)
-                return false;
-            if (inits.get(i) != null &&
-                !(inits.get(i).equals(svd.inits.get(i))))
-                return false;
-        }
+            {
+                if (!(types.get(i).equals(svd.types.get(i))))
+                    return false;
+                if (!(names.get(i).equals(svd.names.get(i))))
+                    return false;
+                if (inits.get(i) == null && svd.inits.get(i) != null)
+                    return false;
+                if (inits.get(i) != null &&
+                    !(inits.get(i).equals(svd.inits.get(i))))
+                    return false;
+            }
         return true;
     }
     
@@ -205,13 +205,13 @@ public class StmtVarDecl extends Statement
     {
         StringBuffer result = new StringBuffer();
         for (int i = 0; i < types.size(); i++)
-        {
-            if (i != 0)
-                result.append("; ");
-            result.append(types.get(i) + " " + names.get(i));
-            if (inits.get(i) != null)
-                result.append("=" + inits.get(i));
-        }
+            {
+                if (i != 0)
+                    result.append("; ");
+                result.append(types.get(i) + " " + names.get(i));
+                if (inits.get(i) != null)
+                    result.append("=" + inits.get(i));
+            }
         return result.toString();
     }
 }

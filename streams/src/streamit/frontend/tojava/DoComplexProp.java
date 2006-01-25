@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.26 2005-07-15 00:21:06 janiss Exp $
+ * @version $Id: DoComplexProp.java,v 1.27 2006-01-25 17:04:30 thies Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -81,16 +81,16 @@ public class DoComplexProp extends SymbolTableVisitor
         // Check: do we have (c.real)+i(c.imag)?  If so, just return c.
         if (cplx.getReal() instanceof ExprField &&
             cplx.getImag() instanceof ExprField)
-        {
-            ExprField fr = (ExprField)cplx.getReal();
-            ExprField fi = (ExprField)cplx.getImag();
-            if (fr.getName().equals("real") && fr.getLeft().isLValue() &&
-                fi.getName().equals("imag") && fi.getLeft().isLValue() &&
-                fr.getLeft().equals(fi.getLeft()))
             {
-                return fi.getLeft();
+                ExprField fr = (ExprField)cplx.getReal();
+                ExprField fi = (ExprField)cplx.getImag();
+                if (fr.getName().equals("real") && fr.getLeft().isLValue() &&
+                    fi.getName().equals("imag") && fi.getLeft().isLValue() &&
+                    fr.getLeft().equals(fi.getLeft()))
+                    {
+                        return fi.getLeft();
+                    }
             }
-        }
         // This code path almost certainly isn't going to follow
         // the path tojava.TempVarGen was written for, so we can
         // ignore the type parameter.
@@ -145,12 +145,12 @@ public class DoComplexProp extends SymbolTableVisitor
     {
         List nl = new ArrayList();
         for (Iterator iter = l.iterator(); iter.hasNext(); )
-        {
-            Expression expr = (Expression)iter.next();
-            if (expr instanceof ExprComplex)
-                expr = makeComplexTemporary(expr);
-            nl.add(expr);
-        }
+            {
+                Expression expr = (Expression)iter.next();
+                if (expr instanceof ExprComplex)
+                    expr = makeComplexTemporary(expr);
+                nl.add(expr);
+            }
         return nl;
     }
 
@@ -205,8 +205,8 @@ public class DoComplexProp extends SymbolTableVisitor
         // If the type of the expression is complex, decompose it;
         // otherwise, move on.
         if (getType(exp).isComplex())
-	    // this path will never be taken because <exp> will be an
-	    // array type, not a complex type, right?  --BFT
+            // this path will never be taken because <exp> will be an
+            // array type, not a complex type, right?  --BFT
             return makeComplexPair(exp);
         else
             return exp;
@@ -214,10 +214,10 @@ public class DoComplexProp extends SymbolTableVisitor
 
     public Object visitExprArrayInit(ExprArrayInit exp)
     {
-	// Not sure what to do here -- let's try visiting the super.
-	// I bet that static initializers with complex numbers would
-	// fail at this point.  --BFT
-	return super.visitExprArrayInit(exp);
+        // Not sure what to do here -- let's try visiting the super.
+        // I bet that static initializers with complex numbers would
+        // fail at this point.  --BFT
+        return super.visitExprArrayInit(exp);
     }
 
     public Object visitSCSimple(SCSimple creator)
@@ -236,35 +236,35 @@ public class DoComplexProp extends SymbolTableVisitor
         Expression lhs = stmt.getLHS();
         Expression rhs = doExprProp(stmt.getRHS());
         if (rhs instanceof ExprComplex)
-        {
-            ExprComplex cplx = (ExprComplex)rhs;
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(lhs.getContext(),
-                                                      lhs, "real"),
-                                        cplx.getRealExpr(),
-                                        stmt.getOp()));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(lhs.getContext(),
-                                                      lhs, "imag"),
-                                        cplx.getImagExpr(),
-                                        stmt.getOp()));
-            return null;
-        }
+            {
+                ExprComplex cplx = (ExprComplex)rhs;
+                addStatement(new StmtAssign(stmt.getContext(),
+                                            new ExprField(lhs.getContext(),
+                                                          lhs, "real"),
+                                            cplx.getRealExpr(),
+                                            stmt.getOp()));
+                addStatement(new StmtAssign(stmt.getContext(),
+                                            new ExprField(lhs.getContext(),
+                                                          lhs, "imag"),
+                                            cplx.getImagExpr(),
+                                            stmt.getOp()));
+                return null;
+            }
         else if (getType(lhs).isComplex() && !(getType(rhs).isComplex()))
-        {
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(lhs.getContext(),
-                                                     lhs, "real"),
-                                        rhs,
-                                        stmt.getOp()));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(lhs.getContext(),
-                                                      lhs, "imag"),
-                                        new ExprConstInt(lhs.getContext(),
-                                                         0),
-                                        stmt.getOp()));
-            return null;
-        }
+            {
+                addStatement(new StmtAssign(stmt.getContext(),
+                                            new ExprField(lhs.getContext(),
+                                                          lhs, "real"),
+                                            rhs,
+                                            stmt.getOp()));
+                addStatement(new StmtAssign(stmt.getContext(),
+                                            new ExprField(lhs.getContext(),
+                                                          lhs, "imag"),
+                                            new ExprConstInt(lhs.getContext(),
+                                                             0),
+                                            stmt.getOp()));
+                return null;
+            }
         else if (rhs != stmt.getRHS())
             return new StmtAssign(stmt.getContext(), lhs, rhs, stmt.getOp());
         else
@@ -283,12 +283,12 @@ public class DoComplexProp extends SymbolTableVisitor
     {
         Expression newExpr = doExprProp(stmt.getExpression());
         if (newExpr instanceof ExprComplex)
-        {
-            ExprComplex cplx = (ExprComplex)newExpr;
-            addStatement(new StmtExpr(stmt.getContext(), cplx.getRealExpr()));
-            addStatement(new StmtExpr(stmt.getContext(), cplx.getImagExpr()));
-            return null;
-        }
+            {
+                ExprComplex cplx = (ExprComplex)newExpr;
+                addStatement(new StmtExpr(stmt.getContext(), cplx.getRealExpr()));
+                addStatement(new StmtExpr(stmt.getContext(), cplx.getImagExpr()));
+                return null;
+            }
         if (newExpr == stmt.getExpression())
             return stmt;
         return new StmtExpr(stmt.getContext(), newExpr);
@@ -322,59 +322,59 @@ public class DoComplexProp extends SymbolTableVisitor
         List newNames = new java.util.ArrayList();
         List newInits = new java.util.ArrayList();
         for (int i = 0; i < stmt.getNumVars(); i++)
-        {
-            String name = stmt.getName(i);
-            Type type = stmt.getType(i);
-            Expression init = stmt.getInit(i);
-
-            // If this is uninitialized, or the type isn't complex,
-            // go on with our lives.
-            //
-            // (But what about things like float foo=abs(a+bi)?  --dzm)
-            if (init == null || !type.isComplex())
             {
+                String name = stmt.getName(i);
+                Type type = stmt.getType(i);
+                Expression init = stmt.getInit(i);
+
+                // If this is uninitialized, or the type isn't complex,
+                // go on with our lives.
+                //
+                // (But what about things like float foo=abs(a+bi)?  --dzm)
+                if (init == null || !type.isComplex())
+                    {
+                        newTypes.add(type);
+                        newNames.add(name);
+                        newInits.add(init);
+                        continue;
+                    }
+
+                // Is the right-hand side complex too?
+                Expression exprVar = new ExprVar(ctx, name);
+                if (init instanceof ExprComplex)
+                    {
+                        // Right.  Create the separate initialization statements.
+                        ExprComplex cplx = (ExprComplex)init;
+                        addStatement(new StmtVarDecl(ctx, type, name, null));
+                        addStatement(new StmtAssign(ctx,
+                                                    new ExprField(ctx,
+                                                                  exprVar, "real"),
+                                                    cplx.getRealExpr()));
+                        addStatement(new StmtAssign(ctx,
+                                                    new ExprField(ctx,
+                                                                  exprVar, "imag"),
+                                                    cplx.getImagExpr()));
+                        continue;
+                    }
+                // Maybe the right-hand side isn't complex at all.
+                if (!(getType(init).isComplex()))
+                    {
+                        addStatement(new StmtVarDecl(ctx, type, name, null));
+                        addStatement(new StmtAssign(ctx,
+                                                    new ExprField(ctx,
+                                                                  exprVar, "real"),
+                                                    init));
+                        addStatement(new StmtAssign(ctx,
+                                                    new ExprField(ctx,
+                                                                  exprVar, "imag"),
+                                                    new ExprConstInt(ctx, 0)));
+                        continue;
+                    }
+                // Otherwise, we have complex foo = (complex)bar(), which is fine.
                 newTypes.add(type);
                 newNames.add(name);
                 newInits.add(init);
-                continue;
             }
-
-            // Is the right-hand side complex too?
-            Expression exprVar = new ExprVar(ctx, name);
-            if (init instanceof ExprComplex)
-            {
-                // Right.  Create the separate initialization statements.
-                ExprComplex cplx = (ExprComplex)init;
-                addStatement(new StmtVarDecl(ctx, type, name, null));
-                addStatement(new StmtAssign(ctx,
-                                            new ExprField(ctx,
-                                                          exprVar, "real"),
-                                            cplx.getRealExpr()));
-                addStatement(new StmtAssign(ctx,
-                                            new ExprField(ctx,
-                                                          exprVar, "imag"),
-                                            cplx.getImagExpr()));
-                continue;
-            }
-            // Maybe the right-hand side isn't complex at all.
-            if (!(getType(init).isComplex()))
-            {
-                addStatement(new StmtVarDecl(ctx, type, name, null));
-                addStatement(new StmtAssign(ctx,
-                                            new ExprField(ctx,
-                                                          exprVar, "real"),
-                                            init));
-                addStatement(new StmtAssign(ctx,
-                                            new ExprField(ctx,
-                                                          exprVar, "imag"),
-                                            new ExprConstInt(ctx, 0)));
-                continue;
-            }
-            // Otherwise, we have complex foo = (complex)bar(), which is fine.
-            newTypes.add(type);
-            newNames.add(name);
-            newInits.add(init);
-        }
         // It's possible that this will leave us with no variables.
         // If so, don't return anything.  Assume all three lists are
         // the same length.

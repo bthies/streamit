@@ -15,22 +15,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: AlternativeElement.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: AlternativeElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
 
 abstract class AlternativeElement extends GrammarElement {
-  AlternativeElement next;
+    AlternativeElement next;
 
-  protected String enclosingRuleName;
+    protected String enclosingRuleName;
 
 
-  public AlternativeElement(Grammar g) {
-    super(g);
-  }
-  public String getLabel() {
-    return null;
-  }
-  public void setLabel(String label) {}
+    public AlternativeElement(Grammar g) {
+        super(g);
+    }
+    public String getLabel() {
+        return null;
+    }
+    public void setLabel(String label) {}
 }

@@ -33,7 +33,7 @@ import at.dms.kjc.iterator.*;
  * This was too much of a reimplementation of ConstProp.
  * </H1>
  *
- * $Id: AccessWrapper.java,v 1.3 2003-06-02 15:09:39 aalamb Exp $ 
+ * $Id: AccessWrapper.java,v 1.4 2006-01-25 17:01:57 thies Exp $ 
  **/
 
 abstract class AccessWrapper {
@@ -49,31 +49,31 @@ abstract class AccessWrapper {
      * object (same being computed by value, not boject equality).
      **/
     public AccessWrapper(String name) {
-	if (name == null) {throw new IllegalArgumentException("Null name passed to AccessWrapper constructor");}
-	this.ident = name;
+        if (name == null) {throw new IllegalArgumentException("Null name passed to AccessWrapper constructor");}
+        this.ident = name;
     }
 
     /** check identities. **/
     public boolean equals(Object o) {
-	if (o == null) {return false;}
-	if (!(o instanceof AccessWrapper)) {return false;}
-	// cast for convenience
-	AccessWrapper other = (AccessWrapper)o;
-	if (other.ident.equals(this.ident)) {
-	    return true;
-	} else {
-	    return false;
-	}
+        if (o == null) {return false;}
+        if (!(o instanceof AccessWrapper)) {return false;}
+        // cast for convenience
+        AccessWrapper other = (AccessWrapper)o;
+        if (other.ident.equals(this.ident)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /** Return the hashcode from the string identity. **/
     public int hashCode() {
-	return this.ident.hashCode();
+        return this.ident.hashCode();
     }
     /** returns the identity string of this access wrapper. **/
     public String getIdent() {return this.ident;}
 
 }
-	    
+        
     
-	
+    

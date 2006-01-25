@@ -5,12 +5,12 @@ public class EdgeList {
     EdgeList next;
 
     EdgeList(UnflatEdge val,EdgeList next) {
-	this.val=val;
-	this.next=next;
+        this.val=val;
+        this.next=next;
     }
 
     EdgeList(UnflatEdge val) {
-	this.val=val;
-	this.next=null;
+        this.val=val;
+        this.next=null;
     }
 }

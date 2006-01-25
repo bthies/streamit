@@ -22,12 +22,12 @@ import at.dms.kjc.sir.lowering.*;
 class CheckForCommunication extends SLIREmptyVisitor
 {
     private boolean found;
-	
+    
     private CheckForCommunication() 
     {
-	found = false;
+        found = false;
     }
-	
+    
     /**
      * This function returns true if *filter* contains
      * a push, pop, or peek statement in any of its 
@@ -41,50 +41,50 @@ class CheckForCommunication extends SLIREmptyVisitor
      */
     public static boolean check(SIRFilter filter) 
     {
-	CheckForCommunication checker = new CheckForCommunication();
+        CheckForCommunication checker = new CheckForCommunication();
 
-	//iterate over the methods to check for a comm. exp.
-	JMethodDeclaration[] methods = filter.getMethods();
-	for (int i = 0; i < methods.length; i++) {
-	    //iterate over the statements
-	    for (ListIterator it = methods[i].getStatementIterator();
-		 it.hasNext(); ){
-		((JStatement)it.next()).accept(checker);
-	    }
-	}
-	return checker.found;
+        //iterate over the methods to check for a comm. exp.
+        JMethodDeclaration[] methods = filter.getMethods();
+        for (int i = 0; i < methods.length; i++) {
+            //iterate over the statements
+            for (ListIterator it = methods[i].getStatementIterator();
+                 it.hasNext(); ){
+                ((JStatement)it.next()).accept(checker);
+            }
+        }
+        return checker.found;
     }
-	
+    
     /**
      * Visitor method for pop expressions, set found to true
      * if we get here.  Called by the visitor.
      *
      */
     public void visitPopExpression(SIRPopExpression oldSelf,
-				   CType oldTapeType) {
-	  
-	found = true;
+                                   CType oldTapeType) {
+      
+        found = true;
     }
-	
+    
     /**
      * Visitor method for peek expressions, set found to true
      * if we get here.  Called by the visitor.
      *
      */
     public void visitPeekExpression(SIRPeekExpression oldSelf,
-				    CType oldTapeType,
-				    JExpression oldArg) {
-	found = true;
+                                    CType oldTapeType,
+                                    JExpression oldArg) {
+        found = true;
     }
-	
+    
     /**
      * Visitor method for push expressions, set found to true
      * if we get here.  Called by the visitor.
      *
      */
     public void visitPushExpression(SIRPushExpression self,
-				    CType tapeType,
-				    JExpression arg) {
-	found = true;
+                                    CType tapeType,
+                                    JExpression arg) {
+        found = true;
     }
 }

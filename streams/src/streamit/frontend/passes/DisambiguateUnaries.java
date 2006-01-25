@@ -27,7 +27,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.11 2005-12-08 00:13:37 rabbah Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.12 2006-01-25 17:04:28 thies Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -80,52 +80,52 @@ public class DisambiguateUnaries extends SymbolTableVisitor
      * the other pops or peeks.
      */
     private boolean calcVisitPopPeek(Statement stmt) {
-	final int[] popCount = { 0 };
-	final int[] peekCount = { 0 };
-	stmt.accept(new FEReplacer() {
-		public Object visitExprPop(ExprPop expr) {
-		    popCount[0]++;
-		    return super.visitExprPop(expr);
-		}
-		public Object visitExprPeek(ExprPeek expr) {
-		    peekCount[0]++;
-		    return super.visitExprPeek(expr);
-		}
-	    });
-	return (// more than one pop, or
-		popCount[0] > 1 ||  
-		// at least one pop and at least one peek
-		popCount[0] >= 1 && peekCount[0] >= 1);
+        final int[] popCount = { 0 };
+        final int[] peekCount = { 0 };
+        stmt.accept(new FEReplacer() {
+                public Object visitExprPop(ExprPop expr) {
+                    popCount[0]++;
+                    return super.visitExprPop(expr);
+                }
+                public Object visitExprPeek(ExprPeek expr) {
+                    peekCount[0]++;
+                    return super.visitExprPeek(expr);
+                }
+            });
+        return (// more than one pop, or
+                popCount[0] > 1 ||  
+                // at least one pop and at least one peek
+                popCount[0] >= 1 && peekCount[0] >= 1);
     }
 
     public Object visitExprUnary(ExprUnary expr)
     {
-	  /* RMR { do not transform ++/-- operators to new expressions,
-	   * instead simply return the original expression
-	   */
-//         // Does this modify its argument?
-//         int op = expr.getOp();
-//         if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC ||
-//             op == ExprUnary.UNOP_POSTINC || op == ExprUnary.UNOP_POSTDEC)
-//         {
-//             // Insert a statement: a = a + 1.
-//             // Assume that the child expression of expr is a valid
-//             // left-hand side; it can usefully be a field, array
-//             // reference, or local variable.
-//             FEContext ctx = expr.getContext();
-//             Expression lhs = expr.getExpr();
-//             int bop = ExprBinary.BINOP_ADD;
-//             if (op == ExprUnary.UNOP_PREDEC || op == ExprUnary.UNOP_POSTDEC)
-//                 bop = ExprBinary.BINOP_SUB;
-//             Expression rhs =
-//                 new ExprBinary(ctx, bop, lhs, new ExprConstInt(ctx, 1));
-//             Statement assign = new StmtAssign(ctx, lhs, rhs, 0);
-//             if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
-//                 addStatement(assign);
-//             else
-//                 successors.add(assign);
-//             return lhs;
-//         }
+        /* RMR { do not transform ++/-- operators to new expressions,
+         * instead simply return the original expression
+         */
+        //         // Does this modify its argument?
+        //         int op = expr.getOp();
+        //         if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC ||
+        //             op == ExprUnary.UNOP_POSTINC || op == ExprUnary.UNOP_POSTDEC)
+        //         {
+        //             // Insert a statement: a = a + 1.
+        //             // Assume that the child expression of expr is a valid
+        //             // left-hand side; it can usefully be a field, array
+        //             // reference, or local variable.
+        //             FEContext ctx = expr.getContext();
+        //             Expression lhs = expr.getExpr();
+        //             int bop = ExprBinary.BINOP_ADD;
+        //             if (op == ExprUnary.UNOP_PREDEC || op == ExprUnary.UNOP_POSTDEC)
+        //                 bop = ExprBinary.BINOP_SUB;
+        //             Expression rhs =
+        //                 new ExprBinary(ctx, bop, lhs, new ExprConstInt(ctx, 1));
+        //             Statement assign = new StmtAssign(ctx, lhs, rhs, 0);
+        //             if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
+        //                 addStatement(assign);
+        //             else
+        //                 successors.add(assign);
+        //             return lhs;
+        //         }
         /* } RMR */
         return expr;
     }
@@ -137,32 +137,32 @@ public class DisambiguateUnaries extends SymbolTableVisitor
      */
     private Object visitPeekOrPop(Expression expr)
     {
-	  /* RMR { make sure peek arguements get visited
-	   * to handle pre/post decrements/increments 
-	   */
-	  if (expr instanceof ExprPeek) {
-		ExprPeek peekArgument = (ExprPeek) expr;
-		expr = new ExprPeek(expr.getContext(), 
-					  (Expression) peekArgument.getExpr().accept(this));
-	  }
-	  /* } RMR */
-	  
-	  // don't change anything if we're not to be visiting pops or
-	  // peeks
-	  if (!visitPopPeek) {
-		return expr;
-	  }
-	  
-	  // Create a temporary variable...
-	  FEContext ctx = expr.getContext();
-	  String name = varGen.nextVar();
-	  Type type = getType(expr);
-	  addStatement(new StmtVarDecl(ctx, type, name, null));
-	  // Generate an assignment to that..
-	  Expression var = new ExprVar(ctx, name);
-	  addStatement(new StmtAssign(ctx, var, expr, 0));
-	  // ...and return the variable.
-	  return var;
+        /* RMR { make sure peek arguements get visited
+         * to handle pre/post decrements/increments 
+         */
+        if (expr instanceof ExprPeek) {
+            ExprPeek peekArgument = (ExprPeek) expr;
+            expr = new ExprPeek(expr.getContext(), 
+                                (Expression) peekArgument.getExpr().accept(this));
+        }
+        /* } RMR */
+      
+        // don't change anything if we're not to be visiting pops or
+        // peeks
+        if (!visitPopPeek) {
+            return expr;
+        }
+      
+        // Create a temporary variable...
+        FEContext ctx = expr.getContext();
+        String name = varGen.nextVar();
+        Type type = getType(expr);
+        addStatement(new StmtVarDecl(ctx, type, name, null));
+        // Generate an assignment to that..
+        Expression var = new ExprVar(ctx, name);
+        addStatement(new StmtAssign(ctx, var, expr, 0));
+        // ...and return the variable.
+        return var;
     }
     
     public Object visitExprPeek(ExprPeek expr)

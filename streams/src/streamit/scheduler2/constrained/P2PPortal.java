@@ -14,12 +14,12 @@ public class P2PPortal extends streamit.misc.AssertedClass
     final PhasingSchedule messageCheckPhase;
 
     public P2PPortal(
-        boolean _isUpstreamPortal,
-        LatencyNode _upstreamNode,
-        LatencyNode _downstreamNode,
-        int _minLatency,
-        int _maxLatency,
-        StreamInterface _parentStream)
+                     boolean _isUpstreamPortal,
+                     LatencyNode _upstreamNode,
+                     LatencyNode _downstreamNode,
+                     int _minLatency,
+                     int _maxLatency,
+                     StreamInterface _parentStream)
     {
         isUpstreamPortal = _isUpstreamPortal;
         upstreamNode = _upstreamNode;
@@ -31,15 +31,15 @@ public class P2PPortal extends streamit.misc.AssertedClass
     }
 
     public P2PPortal(
-        boolean _isUpstreamPortal,
-        LatencyNode _upstreamNode,
-        LatencyNode _downstreamNode,
-        int _minLatency,
-        int _maxLatency,
-        StreamInterface _parentStream,
-        StreamInterface receiverStream,
-        Iterator receiverStreamIter,
-        Object workFunction)
+                     boolean _isUpstreamPortal,
+                     LatencyNode _upstreamNode,
+                     LatencyNode _downstreamNode,
+                     int _minLatency,
+                     int _maxLatency,
+                     StreamInterface _parentStream,
+                     StreamInterface receiverStream,
+                     Iterator receiverStreamIter,
+                     Object workFunction)
     {
         isUpstreamPortal = _isUpstreamPortal;
         upstreamNode = _upstreamNode;
@@ -50,11 +50,11 @@ public class P2PPortal extends streamit.misc.AssertedClass
 
         messageCheckPhase =
             new PhasingSchedule(
-                receiverStream,
-                new Schedule(workFunction, receiverStreamIter),
-                0,
-                0,
-                0);
+                                receiverStream,
+                                new Schedule(workFunction, receiverStreamIter),
+                                0,
+                                0,
+                                0);
     }
 
     public boolean isDownstream()

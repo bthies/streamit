@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceMethod.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: CSourceMethod.java,v 1.8 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,152 +28,152 @@ import at.dms.classfile.CodeInfo;
  */
 public class CSourceMethod extends CMethod {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CSourceMethod() {} // for cloner only
 
-  /**
-   * Constructs a method export.
-   *
-   * @param	owner		the owner of this method
-   * @param	modifiers	the modifiers on this method
-   * @param	ident		the ident of this method
-   * @param	returnType	the return type of this method
-   * @param	paramTypes	the parameter types of this method
-   * @param	exceptions	a list of all exceptions in the throws list
-   * @param	deprecated	is this method deprecated
-   * @param	body		the source code
-   */
-  public CSourceMethod(CClass owner,
-		       int modifiers,
-		       String ident,
-		       CType returnType,
-		       CType[] paramTypes,
-		       CClassType[] exceptions,
-		       boolean deprecated,
-		       JBlock body)
-  {
-    super(owner, modifiers, ident, returnType, paramTypes, exceptions, deprecated);
+    /**
+     * Constructs a method export.
+     *
+     * @param   owner       the owner of this method
+     * @param   modifiers   the modifiers on this method
+     * @param   ident       the ident of this method
+     * @param   returnType  the return type of this method
+     * @param   paramTypes  the parameter types of this method
+     * @param   exceptions  a list of all exceptions in the throws list
+     * @param   deprecated  is this method deprecated
+     * @param   body        the source code
+     */
+    public CSourceMethod(CClass owner,
+                         int modifiers,
+                         String ident,
+                         CType returnType,
+                         CType[] paramTypes,
+                         CClassType[] exceptions,
+                         boolean deprecated,
+                         JBlock body)
+    {
+        super(owner, modifiers, ident, returnType, paramTypes, exceptions, deprecated);
 
-    this.body = body;
-  }
+        this.body = body;
+    }
 
 
-  /**
-   * Accessor for the body of the method
-   *
-   */
+    /**
+     * Accessor for the body of the method
+     *
+     */
     
     public JBlock getBody() {
-	return body;
+        return body;
     }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  public boolean isUsed() {
-    return used || !isPrivate() || getIdent().indexOf("$") >= 0; // $$$
-  }
-
-  public void setUsed() {
-    used = true;
-  }
-
-  // ----------------------------------------------------------------------
-  // GENERATE CLASSFILE INFO
-  // ----------------------------------------------------------------------
-
-  /**
-   * Generate the code in a class file
-   *
-   * @param	optimizer	the bytecode optimizer to use
-   */
-  public MethodInfo genMethodInfo(BytecodeOptimizer optimizer) {
-    CClassType[]	excs = getThrowables();
-    String[]		exceptions = new String[excs.length];
-    for (int i = 0; i < excs.length; i++) {
-      exceptions[i] = excs[i].getQualifiedName();
+    public boolean isUsed() {
+        return used || !isPrivate() || getIdent().indexOf("$") >= 0; // $$$
     }
 
-    return new MethodInfo((short)getModifiers(),
-			  getIdent(),
-			  getSignature(),
-			  exceptions,
-			  body != null ? optimizer.run(genCode()) : null,
-			  isDeprecated(),
-			  false);
-  }
-
-  /**
-   * @return the type of this field
-   */
-  public String getSignature() {
-    CType[]     params = getParameters();
-
-    if (getOwner().isNested() && isConstructor()) {
-      params = ((CSourceClass)getOwner()).genConstructorArray(params);
-    }
-    return CType.genMethodSignature(getReturnType(), params);
-  }
-
-  /**
-   * Generates JVM bytecode for this method.
-   */
-  public CodeInfo genCode() {
-    CodeSequence	code = CodeSequence.getCodeSequence();
-
-    body.genCode(code);
-    if (getReturnType() == CStdType.Void) {
-      code.plantNoArgInstruction(opc_return);
+    public void setUsed() {
+        used = true;
     }
 
-    CodeInfo info = new CodeInfo(code.getInstructionArray(),
-				 code.getHandlers(),
-				 code.getLineNumbers(),
-				 null);    //code.getLocalVariableInfos());
-    code.release();
-    body = null;
+    // ----------------------------------------------------------------------
+    // GENERATE CLASSFILE INFO
+    // ----------------------------------------------------------------------
 
-    CType[]	parameters = getParameters();
-    int		paramCount = 0;
+    /**
+     * Generate the code in a class file
+     *
+     * @param   optimizer   the bytecode optimizer to use
+     */
+    public MethodInfo genMethodInfo(BytecodeOptimizer optimizer) {
+        CClassType[]    excs = getThrowables();
+        String[]        exceptions = new String[excs.length];
+        for (int i = 0; i < excs.length; i++) {
+            exceptions[i] = excs[i].getQualifiedName();
+        }
 
-    for (int i = 0; i < parameters.length; i++) {
-      paramCount += parameters[i].getSize();
+        return new MethodInfo((short)getModifiers(),
+                              getIdent(),
+                              getSignature(),
+                              exceptions,
+                              body != null ? optimizer.run(genCode()) : null,
+                              isDeprecated(),
+                              false);
     }
-    paramCount += getReturnType().getSize();
-    paramCount += isStatic() ? 0 : 1;
 
-    info.setParameterCount(paramCount);
+    /**
+     * @return the type of this field
+     */
+    public String getSignature() {
+        CType[]     params = getParameters();
 
-    return info;
-  }
+        if (getOwner().isNested() && isConstructor()) {
+            params = ((CSourceClass)getOwner()).genConstructorArray(params);
+        }
+        return CType.genMethodSignature(getReturnType(), params);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Generates JVM bytecode for this method.
+     */
+    public CodeInfo genCode() {
+        CodeSequence    code = CodeSequence.getCodeSequence();
 
-  private JBlock		body;
-  private boolean		used;
+        body.genCode(code);
+        if (getReturnType() == CStdType.Void) {
+            code.plantNoArgInstruction(opc_return);
+        }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        CodeInfo info = new CodeInfo(code.getInstructionArray(),
+                                     code.getHandlers(),
+                                     code.getLineNumbers(),
+                                     null);    //code.getLocalVariableInfos());
+        code.release();
+        body = null;
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CSourceMethod other = new at.dms.kjc.CSourceMethod();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+        CType[] parameters = getParameters();
+        int     paramCount = 0;
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CSourceMethod other) {
-  super.deepCloneInto(other);
-  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
-  other.used = this.used;
-}
+        for (int i = 0; i < parameters.length; i++) {
+            paramCount += parameters[i].getSize();
+        }
+        paramCount += getReturnType().getSize();
+        paramCount += isStatic() ? 0 : 1;
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        info.setParameterCount(paramCount);
+
+        return info;
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private JBlock      body;
+    private boolean     used;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CSourceMethod other = new at.dms.kjc.CSourceMethod();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CSourceMethod other) {
+        super.deepCloneInto(other);
+        other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+        other.used = this.used;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

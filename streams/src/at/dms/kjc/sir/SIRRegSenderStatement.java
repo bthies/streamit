@@ -28,31 +28,31 @@ public class SIRRegSenderStatement extends JStatement {
      * Construct a node in the parsing tree
      */
     public SIRRegSenderStatement(TokenReference where, 
-				 JavaStyleComment[] comments, 
-				 String portal, 
-				 SIRLatency latency) {
-	super(where, comments);
+                                 JavaStyleComment[] comments, 
+                                 String portal, 
+                                 SIRLatency latency) {
+        super(where, comments);
 
-	this.portal = portal;
-	this.latency = latency;
+        this.portal = portal;
+        this.latency = latency;
     }
 
-     /**
+    /**
      * Construct a node in the parsing tree
      */
     public SIRRegSenderStatement() {
-	super(null, null);
+        super(null, null);
 
-	this.portal = null;
-	this.latency = null;
+        this.portal = null;
+        this.latency = null;
     }
 
     public void setPortal(String p) {
-	this.portal = p;
+        this.portal = p;
     }
     
     public void setLatency (SIRLatency l) {
-	this.latency = l;
+        this.latency = l;
     }
 
     // ----------------------------------------------------------------------
@@ -63,7 +63,7 @@ public class SIRRegSenderStatement extends JStatement {
      * Analyses the statement (semantically) - NOT SUPPORTED YET.
      */
     public void analyse(CBodyContext context) throws PositionedError {
-	at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");
     }
 
     // ----------------------------------------------------------------------
@@ -74,13 +74,13 @@ public class SIRRegSenderStatement extends JStatement {
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitRegSenderStatement(this, portal, latency);
-	} else {
-	    // otherwise, do nothing... this node appears in the body of
-	    // work functions, so a KjcVisitor might find it, but doesn't
-	    // have anything to do to it.
-	}
+        if (p instanceof SLIRVisitor) {
+            ((SLIRVisitor)p).visitRegSenderStatement(this, portal, latency);
+        } else {
+            // otherwise, do nothing... this node appears in the body of
+            // work functions, so a KjcVisitor might find it, but doesn't
+            // have anything to do to it.
+        }
     }
 
     /**
@@ -88,39 +88,39 @@ public class SIRRegSenderStatement extends JStatement {
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	if (p instanceof SLIRAttributeVisitor) {
-	    return ((SLIRAttributeVisitor)p).
-		visitRegSenderStatement(this,
-					  portal,
-					latency);
-	} else {
-	    return this;
-	}
+        if (p instanceof SLIRAttributeVisitor) {
+            return ((SLIRAttributeVisitor)p).
+                visitRegSenderStatement(this,
+                                        portal,
+                                        latency);
+        } else {
+            return this;
+        }
     }
 
     /*
      * Generates a sequence of bytescodes - NOT SUPPORTED YET.
      */
     public void genCode(CodeSequence code) {
-	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
+        at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRRegSenderStatement other = new at.dms.kjc.sir.SIRRegSenderStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRRegSenderStatement other = new at.dms.kjc.sir.SIRRegSenderStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRRegSenderStatement other) {
-  super.deepCloneInto(other);
-  other.portal = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
-  other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRRegSenderStatement other) {
+        super.deepCloneInto(other);
+        other.portal = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
+        other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CThrowableInfo.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: CThrowableInfo.java,v 1.8 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,92 +25,92 @@ package at.dms.kjc;
  */
 public class CThrowableInfo extends at.dms.util.Utils {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     private CThrowableInfo() {} // for cloner only
 
-  /**
-   * Constructs an informztion handler
-   * @param	throwable		the type of exception
-   * @param	location		the throw statement
-   */
-  public CThrowableInfo(CClassType throwable, JPhylum location) {
-    this.throwable = throwable;
-    this.location = location;
-  }
+    /**
+     * Constructs an informztion handler
+     * @param   throwable       the type of exception
+     * @param   location        the throw statement
+     */
+    public CThrowableInfo(CClassType throwable, JPhylum location) {
+        this.throwable = throwable;
+        this.location = location;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * getVar
-   * @return	the variable definition
-   */
-  public CClassType getThrowable() {
-    return throwable;
-  }
+    /**
+     * getVar
+     * @return  the variable definition
+     */
+    public CClassType getThrowable() {
+        return throwable;
+    }
 
-  /**
-   * Return the location of this throwable
-   */
-  public JPhylum getLocation() {
-    return location;
-  }
+    /**
+     * Return the location of this throwable
+     */
+    public JPhylum getLocation() {
+        return location;
+    }
 
-  /**
-   * Sets this throwable to be cached or not
-   */
-  public void setCatched(boolean catched) {
-    this.catched = catched;
-  }
+    /**
+     * Sets this throwable to be cached or not
+     */
+    public void setCatched(boolean catched) {
+        this.catched = catched;
+    }
 
-  /**
-   * Return true if this throwable is catched
-   */
-  public boolean isCatched() {
-    return catched;
-  }
+    /**
+     * Return true if this throwable is catched
+     */
+    public boolean isCatched() {
+        return catched;
+    }
 
-  // ----------------------------------------------------------------------
-  // OPTIMIZATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // OPTIMIZATION
+    // ----------------------------------------------------------------------
 
-  public boolean equals(Object o) {
-    return ((CThrowableInfo)o).throwable.getCClass() == throwable.getCClass();
-  }
+    public boolean equals(Object o) {
+        return ((CThrowableInfo)o).throwable.getCClass() == throwable.getCClass();
+    }
 
-  public int hashCode() {
-    return throwable.getCClass().hashCode();
-  }
+    public int hashCode() {
+        return throwable.getCClass().hashCode();
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final*/ CClassType	throwable; // removed final for cloner
-    private /* final*/ JPhylum		location; // removed final for cloner
-    private boolean		catched;
+    private /* final*/ CClassType   throwable; // removed final for cloner
+    private /* final*/ JPhylum      location; // removed final for cloner
+    private boolean     catched;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CThrowableInfo other = new at.dms.kjc.CThrowableInfo();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CThrowableInfo other = new at.dms.kjc.CThrowableInfo();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CThrowableInfo other) {
-  super.deepCloneInto(other);
-  other.throwable = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.throwable);
-  other.location = (at.dms.kjc.JPhylum)at.dms.kjc.AutoCloner.cloneToplevel(this.location);
-  other.catched = this.catched;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CThrowableInfo other) {
+        super.deepCloneInto(other);
+        other.throwable = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.throwable);
+        other.location = (at.dms.kjc.JPhylum)at.dms.kjc.AutoCloner.cloneToplevel(this.location);
+        other.catched = this.catched;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

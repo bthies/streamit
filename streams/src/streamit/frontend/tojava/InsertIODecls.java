@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.11 2005-08-21 07:03:46 thies Exp $
+ * @version $Id: InsertIODecls.java,v 1.12 2006-01-25 17:04:30 thies Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -64,17 +64,17 @@ public class InsertIODecls extends InitMunger
     {
         Function work = null;
         for (Iterator iter = fns.iterator(); iter.hasNext(); )
-        {
-            Function fn = (Function)iter.next();
-            int cls = init ? Function.FUNC_PREWORK : Function.FUNC_WORK;
-            if (fn.getCls() == cls)
             {
-                if (fn.getName() == null)
-                    work = fn;
-                if (work == null)
-                    work = fn;
+                Function fn = (Function)iter.next();
+                int cls = init ? Function.FUNC_PREWORK : Function.FUNC_WORK;
+                if (fn.getCls() == cls)
+                    {
+                        if (fn.getName() == null)
+                            work = fn;
+                        if (work == null)
+                            work = fn;
+                    }
             }
-        }
         return work;
     }
 
@@ -123,18 +123,18 @@ public class InsertIODecls extends InitMunger
 
         // We need to add phases.  Is this a phased filter?
         if (phaseList.size() > 0)
-        {
-            // This will ignore control flow in the work function which may cause
-            // problems outside of the library.
-            for (Iterator iter = phaseList.iterator(); iter.hasNext();) {
-                newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
+            {
+                // This will ignore control flow in the work function which may cause
+                // problems outside of the library.
+                for (Iterator iter = phaseList.iterator(); iter.hasNext();) {
+                    newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
+                }
             }
+        // Also add the work function as a phase.  Except in the
+        // library, for now (which only evaluates work() in phased
+        // filters in -nosched mode, as of 8/05.  This should change.)
+        if (!libraryFormat || phaseList.size()==0) {
+            newStmts.add(new StmtAddPhase(work.getContext(), init, work));
         }
-	// Also add the work function as a phase.  Except in the
-	// library, for now (which only evaluates work() in phased
-	// filters in -nosched mode, as of 8/05.  This should change.)
-	if (!libraryFormat || phaseList.size()==0) {
-	    newStmts.add(new StmtAddPhase(work.getContext(), init, work));
-	}
     }
 }

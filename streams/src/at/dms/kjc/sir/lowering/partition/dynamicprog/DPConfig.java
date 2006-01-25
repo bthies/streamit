@@ -19,7 +19,7 @@ abstract class DPConfig implements Cloneable {
     protected DynamicProgPartitioner partitioner;
 
     protected DPConfig(DynamicProgPartitioner partitioner) {
-	this.partitioner = partitioner;
+        this.partitioner = partitioner;
     }
 
     /**
@@ -47,16 +47,16 @@ abstract class DPConfig implements Cloneable {
      * stream.
      */
     public DPConfig copyWithStream(SIRStream str) {
-	// use cloning instead of a new constructor so that we
-	// don't reconstruct a fresh A array.
-	DPConfig result = null;
-	try {
-	    result = (DPConfig)this.clone();
-	} catch (CloneNotSupportedException e) {
-	    e.printStackTrace();
-	}
-	result.setStream(str);
-	return result;
+        // use cloning instead of a new constructor so that we
+        // don't reconstruct a fresh A array.
+        DPConfig result = null;
+        try {
+            result = (DPConfig)this.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        result.setStream(str);
+        return result;
     }
 
     /**

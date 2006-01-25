@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InnerClassTable.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: InnerClassTable.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -33,102 +33,102 @@ import java.io.DataOutput;
  */
 public class InnerClassTable extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create a line number table attribute.
-   */
-  public InnerClassTable(InnerClassInfo[] entries) {
-    this.entries = entries;
-  }
-
-  /**
-   * Constructs a line number table attribute from a class file stream.
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   * @exception	ClassFileFormatException	attempt to
-   *					write a bad classfile info
-   */
-  public InnerClassTable(DataInput in, ConstantPool cp)
-    throws IOException, ClassFileFormatException
-  {
-    in.readInt();	// ignore
-
-    this.entries = new InnerClassInfo[in.readUnsignedShort()];
-    for (int i = 0; i < this.entries.length; i++) {
-      this.entries[i] = new InnerClassInfo(in, cp);
+    /**
+     * Create a line number table attribute.
+     */
+    public InnerClassTable(InnerClassInfo[] entries) {
+        this.entries = entries;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    /**
+     * Constructs a line number table attribute from a class file stream.
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     * @exception   ClassFileFormatException    attempt to
+     *                  write a bad classfile info
+     */
+    public InnerClassTable(DataInput in, ConstantPool cp)
+        throws IOException, ClassFileFormatException
+    {
+        in.readInt();   // ignore
 
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_INNERCLASSES;
-  }
-
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4 + 2 + 8*entries.length;
-  }
-
-  /**
-   * Returns line number information
-   */
-  /*package*/ InnerClassInfo[] getEntries() {
-    return entries;
-  }
-
-
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
-
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(attr);
-    for (int i = 0; i < entries.length; i++) {
-      entries[i].resolveConstants(cp);
+        this.entries = new InnerClassInfo[in.readUnsignedShort()];
+        for (int i = 0; i < this.entries.length; i++) {
+            this.entries[i] = new InnerClassInfo(in, cp);
+        }
     }
-  }
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
- /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(attr.getIndex());
-    out.writeInt(2 + 8*entries.length);
-    out.writeShort(entries.length);
-    for (int i = 0; i < entries.length; i++) {
-      entries[i].write(cp, out);
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_INNERCLASSES;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4 + 2 + 8*entries.length;
+    }
 
-  private static AsciiConstant		attr = new AsciiConstant("InnerClasses");
-  private InnerClassInfo[]		entries;
+    /**
+     * Returns line number information
+     */
+    /*package*/ InnerClassInfo[] getEntries() {
+        return entries;
+    }
+
+
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
+
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(attr);
+        for (int i = 0; i < entries.length; i++) {
+            entries[i].resolveConstants(cp);
+        }
+    }
+
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(attr.getIndex());
+        out.writeInt(2 + 8*entries.length);
+        out.writeShort(entries.length);
+        for (int i = 0; i < entries.length; i++) {
+            entries[i].write(cp, out);
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private static AsciiConstant        attr = new AsciiConstant("InnerClasses");
+    private InnerClassInfo[]        entries;
 }

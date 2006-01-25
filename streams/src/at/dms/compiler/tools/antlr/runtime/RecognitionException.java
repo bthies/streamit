@@ -15,53 +15,53 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: RecognitionException.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: RecognitionException.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 public class RecognitionException extends ParserException {
-  public String fileName;		// not used by treeparsers
-  public int line;			// not used by treeparsers
-  public int column;			// not used by treeparsers
+    public String fileName;     // not used by treeparsers
+    public int line;            // not used by treeparsers
+    public int column;          // not used by treeparsers
 
-  public RecognitionException() {
-    super("parsing error");
-  }
+    public RecognitionException() {
+        super("parsing error");
+    }
 
-  /**
-   * RecognitionException constructor comment.
-   * @param s java.lang.String
-   */
-  public RecognitionException(String s) {
-    super(s);
-  }
+    /**
+     * RecognitionException constructor comment.
+     * @param s java.lang.String
+     */
+    public RecognitionException(String s) {
+        super(s);
+    }
 
-  /**
-   * RecognitionException constructor comment.
-   * @param s java.lang.String
-   */
-  public RecognitionException(String s, String fileName, int line) {
-    super(s);
-    this.fileName = fileName;
-    this.line = line;
-  }
+    /**
+     * RecognitionException constructor comment.
+     * @param s java.lang.String
+     */
+    public RecognitionException(String s, String fileName, int line) {
+        super(s);
+        this.fileName = fileName;
+        this.line = line;
+    }
 
-  public int getColumn() { return column; }
+    public int getColumn() { return column; }
 
-  /**
-   * @deprecated As of ANTLR 2.7.0
-   */
-  public String getErrorMessage () { return getMessage(); }
+    /**
+     * @deprecated As of ANTLR 2.7.0
+     */
+    public String getErrorMessage () { return getMessage(); }
 
-  public String getFilename() {
-    return fileName;
-  }
+    public String getFilename() {
+        return fileName;
+    }
 
-  public int getLine() { return line; }
+    public int getLine() { return line; }
 
-  public String toString() {
-    return FileLineFormatter.getFormatter().
-      getFormatString(fileName,line)+getMessage();
-  }
+    public String toString() {
+        return FileLineFormatter.getFormatter().
+            getFormatString(fileName,line)+getMessage();
+    }
 }

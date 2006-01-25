@@ -26,31 +26,31 @@ public class FuseAll implements StreamVisitor {
      * which is also mutated in the stream graph.
      */
     public static SIRPipeline fuse(SIRStream str) {
-	// try fusing toplevel separately since noone contains it
-	SIRPipeline wrapper = SIRContainer.makeWrapper(str);
-	FuseAll fuseAll = new FuseAll();
-	boolean hasFused = true;
-	while (hasFused) {
-	    try {
-		assert wrapper.get(0).getParent() == wrapper;
-		Lifter.lift(wrapper);
-		if (wrapper.size()>1) {
-		    wrapper = SIRContainer.makeWrapper(wrapper);
-		}
-		IterFactory.createFactory().createIter(wrapper.get(0)).accept(fuseAll);
-		hasFused = false;
-	    } catch (SuccessfulFuseException e) {}
-	}
-	return wrapper;
+        // try fusing toplevel separately since noone contains it
+        SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+        FuseAll fuseAll = new FuseAll();
+        boolean hasFused = true;
+        while (hasFused) {
+            try {
+                assert wrapper.get(0).getParent() == wrapper;
+                Lifter.lift(wrapper);
+                if (wrapper.size()>1) {
+                    wrapper = SIRContainer.makeWrapper(wrapper);
+                }
+                IterFactory.createFactory().createIter(wrapper.get(0)).accept(fuseAll);
+                hasFused = false;
+            } catch (SuccessfulFuseException e) {}
+        }
+        return wrapper;
     }
 
     /**
      * PLAIN-VISITS 
      */
-	    
+        
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
+                            SIRFilterIter iter) {
     }
 
     /* visit a phased filter */
@@ -64,21 +64,21 @@ public class FuseAll implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
+                                 SIRPipelineIter iter) {
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
+                                  SIRSplitJoinIter iter) {
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	Utils.fail("Don't yet support fusion of feedback loops.");
+                                     SIRFeedbackLoopIter iter) {
+        Utils.fail("Don't yet support fusion of feedback loops.");
     }
 
     /**
@@ -87,28 +87,28 @@ public class FuseAll implements StreamVisitor {
 
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
-	int elim = FusePipe.fuse(self);
-	// now fusion fuses as much as possible, but might leave a
-	// few filters (e.g., filereaders and filewriters) 
-	if (elim > 0) {
-	    throw new SuccessfulFuseException();
-	}
+                                  SIRPipelineIter iter) {
+        int elim = FusePipe.fuse(self);
+        // now fusion fuses as much as possible, but might leave a
+        // few filters (e.g., filereaders and filewriters) 
+        if (elim > 0) {
+            throw new SuccessfulFuseException();
+        }
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
-	if (FuseSplit.isFusable(self)) {
-	    SIRStream result = FuseSplit.fuse(self);
-	    // should always be successful, given that it's fusable
-	    throw new SuccessfulFuseException();
-	}
+                                   SIRSplitJoinIter iter) {
+        if (FuseSplit.isFusable(self)) {
+            SIRStream result = FuseSplit.fuse(self);
+            // should always be successful, given that it's fusable
+            throw new SuccessfulFuseException();
+        }
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
+                                      SIRFeedbackLoopIter iter) {
     }
 
     /**
@@ -118,7 +118,7 @@ public class FuseAll implements StreamVisitor {
      * top; fusing within the visitor doesn't quite do the right thing.
      */
     static class SuccessfulFuseException extends RuntimeException {
-	public SuccessfulFuseException() { super(); }
-	public SuccessfulFuseException(String str) { super(str); }
+        public SuccessfulFuseException() { super(); }
+        public SuccessfulFuseException(String str) { super(str); }
     }
 }

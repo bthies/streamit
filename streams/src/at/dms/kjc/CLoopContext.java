@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLoopContext.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: CLoopContext.java,v 1.8 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -26,139 +26,139 @@ package at.dms.kjc;
  */
 public class CLoopContext extends CBodyContext {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CLoopContext() {} // for cloner only
 
-  /**
-   * Constructs the context to analyse a loop statement semantically.
-   * @param	parent		the parent context
-   * @param	stmt		the loop statement
-   */
-  CLoopContext(CBodyContext parent, JLoopStatement stmt) {
-    super(parent);
+    /**
+     * Constructs the context to analyse a loop statement semantically.
+     * @param   parent      the parent context
+     * @param   stmt        the loop statement
+     */
+    CLoopContext(CBodyContext parent, JLoopStatement stmt) {
+        super(parent);
 
-    this.stmt = stmt;
+        this.stmt = stmt;
 
-    setInLoop(true);
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the innermost statement which can be target of a break
-   * statement without label.
-   */
-  public JStatement getNearestBreakableStatement() {
-    return stmt;
-  }
-
-  /**
-   * Returns the innermost statement which can be target of a continue
-   * statement without label.
-   */
-  public JStatement getNearestContinuableStatement() {
-    return stmt;
-  }
-
-  /**
-   *
-   */
-  protected void addBreak(JStatement target,
-			  CBodyContext context)
-  {
-    if (stmt == target) {
-      if (breakContextSummary == null) {
-	breakContextSummary = context.cloneContext();
-      } else {
-	breakContextSummary.merge(context);
-      }
-      breakContextSummary.setReachable(true);
-    } else {
-      ((CBodyContext)getParentContext()).addBreak(target, context);
+        setInLoop(true);
     }
-  }
 
-  /**
-   *
-   */
-  protected void addContinue(JStatement target,
-			     CBodyContext context)
-  {
-    if (stmt == target) {
-      if (continueContextSummary == null) {
-	continueContextSummary = context.cloneContext();
-      } else {
-	continueContextSummary.merge(context);
-      }
-    } else {
-      ((CBodyContext)getParentContext()).addContinue(target, context);
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the innermost statement which can be target of a break
+     * statement without label.
+     */
+    public JStatement getNearestBreakableStatement() {
+        return stmt;
     }
-  }
 
-  /**
-   * Checks whether this statement is target of a break statement.
-   *
-   * @return	true iff this statement is target of a break statement.
-   */
-  public boolean isBreakTarget() {
-    return breakContextSummary != null;
-  }
+    /**
+     * Returns the innermost statement which can be target of a continue
+     * statement without label.
+     */
+    public JStatement getNearestContinuableStatement() {
+        return stmt;
+    }
 
-  /**
-   * Returns the context state after break statements.
-   */
-  public CBodyContext getBreakContextSummary() {
-    return breakContextSummary;
-  }
+    /**
+     *
+     */
+    protected void addBreak(JStatement target,
+                            CBodyContext context)
+    {
+        if (stmt == target) {
+            if (breakContextSummary == null) {
+                breakContextSummary = context.cloneContext();
+            } else {
+                breakContextSummary.merge(context);
+            }
+            breakContextSummary.setReachable(true);
+        } else {
+            ((CBodyContext)getParentContext()).addBreak(target, context);
+        }
+    }
 
-  /**
-   * Checks whether this statement is target of a continue statement.
-   *
-   * @return	true iff this statement is target of a continue statement.
-   */
-  public boolean isContinueTarget() {
-    return continueContextSummary != null;
-  }
+    /**
+     *
+     */
+    protected void addContinue(JStatement target,
+                               CBodyContext context)
+    {
+        if (stmt == target) {
+            if (continueContextSummary == null) {
+                continueContextSummary = context.cloneContext();
+            } else {
+                continueContextSummary.merge(context);
+            }
+        } else {
+            ((CBodyContext)getParentContext()).addContinue(target, context);
+        }
+    }
 
-  /**
-   * Returns the context state after continue statements.
-   */
-  public CBodyContext getContinueContextSummary() {
-    return continueContextSummary;
-  }
+    /**
+     * Checks whether this statement is target of a break statement.
+     *
+     * @return  true iff this statement is target of a break statement.
+     */
+    public boolean isBreakTarget() {
+        return breakContextSummary != null;
+    }
+
+    /**
+     * Returns the context state after break statements.
+     */
+    public CBodyContext getBreakContextSummary() {
+        return breakContextSummary;
+    }
+
+    /**
+     * Checks whether this statement is target of a continue statement.
+     *
+     * @return  true iff this statement is target of a continue statement.
+     */
+    public boolean isContinueTarget() {
+        return continueContextSummary != null;
+    }
+
+    /**
+     * Returns the context state after continue statements.
+     */
+    public CBodyContext getContinueContextSummary() {
+        return continueContextSummary;
+    }
 
 
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /*final*/ JLoopStatement		stmt; // removed final for cloner
-  private CBodyContext			breakContextSummary;
-  private CBodyContext			continueContextSummary;
+    private /*final*/ JLoopStatement        stmt; // removed final for cloner
+    private CBodyContext            breakContextSummary;
+    private CBodyContext            continueContextSummary;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CLoopContext other = new at.dms.kjc.CLoopContext();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CLoopContext other = new at.dms.kjc.CLoopContext();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CLoopContext other) {
-  super.deepCloneInto(other);
-  other.stmt = (at.dms.kjc.JLoopStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
-  other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary);
-  other.continueContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.continueContextSummary);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CLoopContext other) {
+        super.deepCloneInto(other);
+        other.stmt = (at.dms.kjc.JLoopStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
+        other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary);
+        other.continueContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.continueContextSummary);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

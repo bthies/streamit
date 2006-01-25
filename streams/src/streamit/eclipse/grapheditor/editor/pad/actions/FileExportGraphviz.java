@@ -1,5 +1,5 @@
 /*
- * @(#)FileExportGraphviz.java	1.2 01.02.2003
+ * @(#)FileExportGraphviz.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,45 +37,45 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class FileExportGraphviz extends AbstractActionFile {
 
-	/**
-	 * Constructor for FileExportGraphviz.
-	 * @param graphpad
-	 */
-	public FileExportGraphviz(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FileExportGraphviz.
+     * @param graphpad
+     */
+    public FileExportGraphviz(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		FileDialog f =
-			new FileDialog(graphpad.getFrame(), Translator.getString("DOTFile"/*#Finished:Original="DOT File"*/), FileDialog.SAVE);
-		f.show();
-		if (f.getFile() == null)
-			return;
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        FileDialog f =
+            new FileDialog(graphpad.getFrame(), Translator.getString("DOTFile"/*#Finished:Original="DOT File"*/), FileDialog.SAVE);
+        f.show();
+        if (f.getFile() == null)
+            return;
 
-		try {
-			Object[] cells = getCurrentGraph().getAll();
+        try {
+            Object[] cells = getCurrentGraph().getAll();
 
-			if (cells != null && cells.length > 0) {
-				// Create temp file
-				String tmpFile = f.getDirectory() + f.getFile();
-				//File tmpFile = File.createTempFile("TODOT", ".dot");
-				//tmpFile.deleteOnExit();
+            if (cells != null && cells.length > 0) {
+                // Create temp file
+                String tmpFile = f.getDirectory() + f.getFile();
+                //File tmpFile = File.createTempFile("TODOT", ".dot");
+                //tmpFile.deleteOnExit();
 
-				// File Output stream
-				FileOutputStream fos = new FileOutputStream(tmpFile);
-				fos.write(GPConverter.toGraphviz(getCurrentGraph(), cells).getBytes());
+                // File Output stream
+                FileOutputStream fos = new FileOutputStream(tmpFile);
+                fos.write(GPConverter.toGraphviz(getCurrentGraph(), cells).getBytes());
 
-				// Write to file
-				fos.flush();
-				fos.close();
+                // Write to file
+                fos.flush();
+                fos.close();
 
-			};
-		} catch (IOException ex) {
-			graphpad.error(ex.toString());
-		}
-	}
+            };
+        } catch (IOException ex) {
+            graphpad.error(ex.toString());
+        }
+    }
 
 }

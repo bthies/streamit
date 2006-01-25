@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.HashMap;
 import streamit.misc.Pair;
 
-/* $Id: UniquePairContainer.java,v 1.3 2004-01-28 21:17:13 dmaze Exp $ */
+/* $Id: UniquePairContainer.java,v 1.4 2006-01-25 17:04:38 thies Exp $ */
 
 /**
  * <dl>
@@ -47,19 +47,19 @@ public class UniquePairContainer
         secondMap = (Map)firstMap.get(first);
         
         if (secondMap == null)
-        {
-            secondMap = new HashMap ();
-            firstMap.put(first, secondMap);
-        }
+            {
+                secondMap = new HashMap ();
+                firstMap.put(first, secondMap);
+            }
         
         Pair pair;
         pair = (Pair) secondMap.get (second);
         
         if (pair == null)
-        {
-            pair = new Pair (first, second);
-            secondMap.put(second, pair);
-        }
+            {
+                pair = new Pair (first, second);
+                secondMap.put(second, pair);
+            }
         
         return pair;
     }

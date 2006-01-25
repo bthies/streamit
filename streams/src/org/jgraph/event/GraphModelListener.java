@@ -1,5 +1,5 @@
 /*
- * @(#)GraphModelListener.java	1.0 1/1/02
+ * @(#)GraphModelListener.java  1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -32,12 +32,12 @@ import java.util.EventListener;
  */
 public interface GraphModelListener extends EventListener {
 
-	/**
-	 * Invoked after a cell has changed in some way.
-	 * The vertex/vertices may have changed bounds or
-	 * altered adjacency, or other attributes have
-	 * changed that may affect presentation.
-	 */
-	void graphChanged(GraphModelEvent e);
+    /**
+     * Invoked after a cell has changed in some way.
+     * The vertex/vertices may have changed bounds or
+     * altered adjacency, or other attributes have
+     * changed that may affect presentation.
+     */
+    void graphChanged(GraphModelEvent e);
 
 }

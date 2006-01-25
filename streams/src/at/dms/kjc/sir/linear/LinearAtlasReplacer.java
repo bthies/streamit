@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * This replacer works by calling the matrix multiply routines in the
  * ATLAS package, which it assumes are installed in $ATLAS_HOME.<br>
  *
- * $Id: LinearAtlasReplacer.java,v 1.4 2004-01-27 23:13:25 dmaze Exp $
+ * $Id: LinearAtlasReplacer.java,v 1.5 2006-01-25 17:01:57 thies Exp $
  **/
 public class LinearAtlasReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -39,45 +39,45 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
     private JFieldDeclaration yField;
     
     protected LinearAtlasReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
-	super(lfa, costs);
+        super(lfa, costs);
     }
 
     /** start the process of replacement on str using the Linearity information in lfa. **/
     public static void doReplace(LinearAnalyzer lfa, SIRStream str) {
-	// calculate the best way to replace linear components.
-	LinearReplaceCalculator replaceCosts = new LinearReplaceCalculator(lfa);
-	str.accept(replaceCosts);
-	LinearPrinter.println("starting replacement pass. Will replace " + replaceCosts.getDoReplace().keySet().size() + " filters:");
-	Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
-	while(keyIter.hasNext()) {
-	    Object key = keyIter.next();
-	    LinearPrinter.println(" " + key);
-	}
-	// make a new replacer with the information contained in the analyzer and the costs
-	LinearAtlasReplacer replacer = new LinearAtlasReplacer(lfa, replaceCosts);
-	// pump the replacer through the stream graph.
-	IterFactory.createFactory().createIter(str).accept(replacer);
+        // calculate the best way to replace linear components.
+        LinearReplaceCalculator replaceCosts = new LinearReplaceCalculator(lfa);
+        str.accept(replaceCosts);
+        LinearPrinter.println("starting replacement pass. Will replace " + replaceCosts.getDoReplace().keySet().size() + " filters:");
+        Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
+        while(keyIter.hasNext()) {
+            Object key = keyIter.next();
+            LinearPrinter.println(" " + key);
+        }
+        // make a new replacer with the information contained in the analyzer and the costs
+        LinearAtlasReplacer replacer = new LinearAtlasReplacer(lfa, replaceCosts);
+        // pump the replacer through the stream graph.
+        IterFactory.createFactory().createIter(str).accept(replacer);
     }
 
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
-						    LinearFilterRepresentation linearRep) {
-	// only deal with real things for now
-	assert linearRep.getA().isReal() && linearRep.getb().isReal():
+                                                    LinearFilterRepresentation linearRep) {
+        // only deal with real things for now
+        assert linearRep.getA().isReal() && linearRep.getb().isReal():
             "Don't support linear replacement of " +
             "complex coefficients for now.";
-	// make coefficient and index fields
-	makeFields(linearRep);
-	// make actual filter
-	SIRFilter result = super.makeEfficientImplementation(oldStream, linearRep);
-	// set fields
-	JFieldDeclaration[] fields = { this.aField, 
-				       this.xField,
-				       this.bField,
-				       this.yField };
-	result.setFields(fields);
-	// add initialization of fields to init function 
-	addInitialization(result.getInit(), linearRep);
-	return result;
+        // make coefficient and index fields
+        makeFields(linearRep);
+        // make actual filter
+        SIRFilter result = super.makeEfficientImplementation(oldStream, linearRep);
+        // set fields
+        JFieldDeclaration[] fields = { this.aField, 
+                                       this.xField,
+                                       this.bField,
+                                       this.yField };
+        result.setFields(fields);
+        // add initialization of fields to init function 
+        addInitialization(result.getInit(), linearRep);
+        return result;
     }
 
     /**
@@ -85,83 +85,83 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
      * fields of this.
      */
     private void makeFields(LinearFilterRepresentation linearRep) {
-	this.aField = new JFieldDeclaration(null,
-					    new JVariableDefinition(null,
-								    0,
-								    new CArrayType(CStdType.Float, 1),
-								    NAME_A,
-								    null),
-					    null,
-					    null);
-	this.xField = new JFieldDeclaration(null,
-					    new JVariableDefinition(null,
-								    0,
-								    new CArrayType(CStdType.Float, 1),
-								    NAME_X,
-								    null),
-					    null,
-					    null);
-	this.bField = new JFieldDeclaration(null,
-					    new JVariableDefinition(null,
-								    0,
-								    new CArrayType(CStdType.Float, 1),
-								    NAME_B,
-								    null),
-					    null,
-					    null);
-	this.yField = new JFieldDeclaration(null,
-					    new JVariableDefinition(null,
-								    0,
-								    new CArrayType(CStdType.Float, 1),
-								    NAME_Y,
-								    null),
-					    null,
-					    null);
+        this.aField = new JFieldDeclaration(null,
+                                            new JVariableDefinition(null,
+                                                                    0,
+                                                                    new CArrayType(CStdType.Float, 1),
+                                                                    NAME_A,
+                                                                    null),
+                                            null,
+                                            null);
+        this.xField = new JFieldDeclaration(null,
+                                            new JVariableDefinition(null,
+                                                                    0,
+                                                                    new CArrayType(CStdType.Float, 1),
+                                                                    NAME_X,
+                                                                    null),
+                                            null,
+                                            null);
+        this.bField = new JFieldDeclaration(null,
+                                            new JVariableDefinition(null,
+                                                                    0,
+                                                                    new CArrayType(CStdType.Float, 1),
+                                                                    NAME_B,
+                                                                    null),
+                                            null,
+                                            null);
+        this.yField = new JFieldDeclaration(null,
+                                            new JVariableDefinition(null,
+                                                                    0,
+                                                                    new CArrayType(CStdType.Float, 1),
+                                                                    NAME_Y,
+                                                                    null),
+                                            null,
+                                            null);
     }
 
     /**
      * Adds field initialization functions to init function <init>.
      */
     private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep) {
-	JBlock block = init.getBody();
-	FilterMatrix A = linearRep.getA();
-	FilterVector b = linearRep.getb();
-	// allocate A
-	JExpression[] dims1 = { new JIntLiteral(A.getRows()*A.getCols()) };
-	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
-						   new JNewArrayExpression(null, CStdType.Float, dims1, null)));
-	// allocate x
-	JExpression[] dims2 = { new JIntLiteral(A.getRows()) };
-	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_X),
-						   new JNewArrayExpression(null, CStdType.Float, dims2, null)));
-	// allocate b
-	JExpression[] dims3 = { new JIntLiteral(A.getCols()) };
-	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
-						   new JNewArrayExpression(null, CStdType.Float, dims3, null)));
-	// allocate y
-	JExpression[] dims4 = { new JIntLiteral(A.getCols()) };
-	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_Y),
-						   new JNewArrayExpression(null, CStdType.Float, dims4, null)));
+        JBlock block = init.getBody();
+        FilterMatrix A = linearRep.getA();
+        FilterVector b = linearRep.getb();
+        // allocate A
+        JExpression[] dims1 = { new JIntLiteral(A.getRows()*A.getCols()) };
+        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
+                                                   new JNewArrayExpression(null, CStdType.Float, dims1, null)));
+        // allocate x
+        JExpression[] dims2 = { new JIntLiteral(A.getRows()) };
+        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_X),
+                                                   new JNewArrayExpression(null, CStdType.Float, dims2, null)));
+        // allocate b
+        JExpression[] dims3 = { new JIntLiteral(A.getCols()) };
+        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
+                                                   new JNewArrayExpression(null, CStdType.Float, dims3, null)));
+        // allocate y
+        JExpression[] dims4 = { new JIntLiteral(A.getCols()) };
+        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_Y),
+                                                   new JNewArrayExpression(null, CStdType.Float, dims4, null)));
 
-	// initialize the entries of A.  Do this on TRANSPOSE of A,
-	// since we're doing A*b instead of b*A.
-	FilterMatrix AT = A.transpose();
-	int rowsAT = AT.getRows();
-	int colsAT = AT.getCols();
-	for (int i=0; i<rowsAT; i++) {
-	    for (int j=0; j<colsAT; j++) {
-		// use row-major order
-		JExpression lhs = makeArrayFieldAccessExpr(aField.getVariable(), i*colsAT + j);
-		JExpression rhs = new JFloatLiteral((float)AT.getElement(i, j).getReal());
-		block.addStatement(makeAssignmentStatement(lhs, rhs));
-	    }
-	}
-	// initialize elements of b
-	for (int j=0; j<A.getCols(); j++) {
-	    JExpression lhs = makeArrayFieldAccessExpr(bField.getVariable(), j);
-	    JExpression rhs = new JFloatLiteral((float)b.getElement(j).getReal());
-	    block.addStatement(makeAssignmentStatement(lhs, rhs));
-	}
+        // initialize the entries of A.  Do this on TRANSPOSE of A,
+        // since we're doing A*b instead of b*A.
+        FilterMatrix AT = A.transpose();
+        int rowsAT = AT.getRows();
+        int colsAT = AT.getCols();
+        for (int i=0; i<rowsAT; i++) {
+            for (int j=0; j<colsAT; j++) {
+                // use row-major order
+                JExpression lhs = makeArrayFieldAccessExpr(aField.getVariable(), i*colsAT + j);
+                JExpression rhs = new JFloatLiteral((float)AT.getElement(i, j).getReal());
+                block.addStatement(makeAssignmentStatement(lhs, rhs));
+            }
+        }
+        // initialize elements of b
+        for (int j=0; j<A.getCols(); j++) {
+            JExpression lhs = makeArrayFieldAccessExpr(bField.getVariable(), j);
+            JExpression rhs = new JFloatLiteral((float)b.getElement(j).getReal());
+            block.addStatement(makeAssignmentStatement(lhs, rhs));
+        }
     }
 
     /**
@@ -180,41 +180,41 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
      * </pre>
      **/
     public Vector makePushStatementVector(LinearFilterRepresentation linearRep,
-					  CType inputType,
-					  CType outputType) {
-	Vector result = new Vector();
+                                          CType inputType,
+                                          CType outputType) {
+        Vector result = new Vector();
 
-	// make loop bodies and loop counters
-	JVariableDefinition iVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
-							   /* ident */ "i", /* initializer */ null);
-	JVariableDefinition jVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
-							   /* ident */ "j", /* initializer */ null);
+        // make loop bodies and loop counters
+        JVariableDefinition iVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
+                                                           /* ident */ "i", /* initializer */ null);
+        JVariableDefinition jVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
+                                                           /* ident */ "j", /* initializer */ null);
 
-	// make peek loop
-	JExpression lhs = makeArrayFieldAccessExpr(xField.getVariable(), new JLocalVariableExpression(null, iVar));
-	JExpression rhs = new SIRPeekExpression(new JMinusExpression(null, new JIntLiteral(linearRep.getPeekCount()-1), new JLocalVariableExpression(null, iVar)), inputType);
-	result.add(Utils.makeForLoop(makeAssignmentStatement(lhs, rhs),
-				     new JIntLiteral(linearRep.getPeekCount()),
-				     iVar));
+        // make peek loop
+        JExpression lhs = makeArrayFieldAccessExpr(xField.getVariable(), new JLocalVariableExpression(null, iVar));
+        JExpression rhs = new SIRPeekExpression(new JMinusExpression(null, new JIntLiteral(linearRep.getPeekCount()-1), new JLocalVariableExpression(null, iVar)), inputType);
+        result.add(Utils.makeForLoop(makeAssignmentStatement(lhs, rhs),
+                                     new JIntLiteral(linearRep.getPeekCount()),
+                                     iVar));
 
-	// make call to atlas
-	JExpression[] args = { new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
-			       new JFieldAccessExpression(null, new JThisExpression(null), NAME_X),
-			       new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
-			       new JIntLiteral(linearRep.getPushCount()),
-			       new JIntLiteral(linearRep.getPeekCount()),
-			       new JFieldAccessExpression(null, new JThisExpression(null), NAME_Y) };
-	result.add(new JExpressionStatement(null, new JMethodCallExpression(null, null, "atlasMatrixVectorProduct", args), null));
+        // make call to atlas
+        JExpression[] args = { new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
+                               new JFieldAccessExpression(null, new JThisExpression(null), NAME_X),
+                               new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
+                               new JIntLiteral(linearRep.getPushCount()),
+                               new JIntLiteral(linearRep.getPeekCount()),
+                               new JFieldAccessExpression(null, new JThisExpression(null), NAME_Y) };
+        result.add(new JExpressionStatement(null, new JMethodCallExpression(null, null, "atlasMatrixVectorProduct", args), null));
 
-	// make push loop
-	result.add(Utils.makeCountdownForLoop(new JExpressionStatement(null,
-								       new SIRPushExpression(makeArrayFieldAccessExpr(yField.getVariable(), 
-														      new JLocalVariableExpression(null, jVar)), 
-											     inputType),
-								       null),
-					      new JIntLiteral(linearRep.getPushCount()),
-					      jVar));
+        // make push loop
+        result.add(Utils.makeCountdownForLoop(new JExpressionStatement(null,
+                                                                       new SIRPushExpression(makeArrayFieldAccessExpr(yField.getVariable(), 
+                                                                                                                      new JLocalVariableExpression(null, jVar)), 
+                                                                                             inputType),
+                                                                       null),
+                                              new JIntLiteral(linearRep.getPushCount()),
+                                              jVar));
 
-	return result;
+        return result;
     }
 }

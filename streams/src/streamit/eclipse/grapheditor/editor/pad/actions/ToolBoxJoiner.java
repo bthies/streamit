@@ -16,56 +16,56 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public class ToolBoxJoiner extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ToolBoxJoiner.
-	 * @param graphpad
-	 */
-	public ToolBoxJoiner(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolBoxJoiner.
+     * @param graphpad
+     */
+    public ToolBoxJoiner(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for ToolBoxJoiner.
-	 * @param graphpad
-	 * @param name
-	 */
-	public ToolBoxJoiner(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for ToolBoxJoiner.
+     * @param graphpad
+     * @param name
+     */
+    public ToolBoxJoiner(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for ToolBoxJoiner.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public ToolBoxJoiner(GPGraphpad graphpad, String name, Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for ToolBoxJoiner.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public ToolBoxJoiner(GPGraphpad graphpad, String name, Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-	}
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JToggleButton button = graphpad.getMarqueeHandler().getButtonJoiner() ;
-		GPBarFactory.fillToolbarButton(
-					button,
-					getName(),
-					actionCommand);
-		return button;
-	}
-	
-	/**
-	 * Set the button as enabled or not enabled depending on its status.
-	 */
-	public void update() {
-		super.update();
-		graphpad.getMarqueeHandler().getButtonJoiner().setEnabled(isEnabled());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+    }
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JToggleButton button = graphpad.getMarqueeHandler().getButtonJoiner() ;
+        GPBarFactory.fillToolbarButton(
+                                       button,
+                                       getName(),
+                                       actionCommand);
+        return button;
+    }
+    
+    /**
+     * Set the button as enabled or not enabled depending on its status.
+     */
+    public void update() {
+        super.update();
+        graphpad.getMarqueeHandler().getButtonJoiner().setEnabled(isEnabled());
+    }
 
 }

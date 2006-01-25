@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InstructionAccessor.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: InstructionAccessor.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -25,12 +25,12 @@ package at.dms.classfile;
  */
 public interface InstructionAccessor {
 
-  /**
-   * Transforms the accessor.
-   * @param	transformer		the transformer to be used
-   * @param	container		the object which contains the accessor
-   */
-  InstructionAccessor transform(AccessorTransformer transformer,
-				AccessorContainer container)
-    throws BadAccessorException;
+    /**
+     * Transforms the accessor.
+     * @param   transformer     the transformer to be used
+     * @param   container       the object which contains the accessor
+     */
+    InstructionAccessor transform(AccessorTransformer transformer,
+                                  AccessorContainer container)
+        throws BadAccessorException;
 }

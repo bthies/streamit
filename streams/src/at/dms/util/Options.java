@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Options.java,v 1.3 2005-09-29 21:27:04 dimock Exp $
+ * $Id: Options.java,v 1.4 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -28,163 +28,163 @@ import at.dms.compiler.getopt.LongOpt;
  */
 public abstract class Options {
 
-  /**
-   * Creates a new Option object.
-   *
-   * @param	name		the command name to pass to getopt
-   */
-  public Options(String name) {
-    this.name = name;
-  }
-
-  /**
-   * Parses the command line and processes the arguments.
-   *
-   * @param	args		the command line arguments
-   * @return true iff the command line is valid
-   */
-  public boolean parseCommandLine(String[] argv) {
-    Getopt	parser = new Getopt(name, argv, getShortOptions(), getLongOptions(), true);
-
-    for (;;) {
-      int	code;
-
-      code = parser.getopt();
-      if (code == -1) {
-	break;
-      }
-      if (!processOption(code, parser)) {
-	return false;
-      }
+    /**
+     * Creates a new Option object.
+     *
+     * @param   name        the command name to pass to getopt
+     */
+    public Options(String name) {
+        this.name = name;
     }
 
-    // store remaining arguments
-    nonOptions = new String[argv.length - parser.getOptind()];
-    System.arraycopy(argv, parser.getOptind(), nonOptions, 0, nonOptions.length);
+    /**
+     * Parses the command line and processes the arguments.
+     *
+     * @param   args        the command line arguments
+     * @return true iff the command line is valid
+     */
+    public boolean parseCommandLine(String[] argv) {
+        Getopt  parser = new Getopt(name, argv, getShortOptions(), getLongOptions(), true);
 
-    return true;
-  }
+        for (;;) {
+            int code;
 
-  /**
-   * @param	args		the command line arguments
-   */
-  public boolean processOption(int code, Getopt g) {
-    switch (code) {
-    case 'h':
-      help();
-      System.exit(0);
-      break;
-    case 'V':
-      version();
-      System.exit(0);
-      break;
-    default:
-      return false;
+            code = parser.getopt();
+            if (code == -1) {
+                break;
+            }
+            if (!processOption(code, parser)) {
+                return false;
+            }
+        }
+
+        // store remaining arguments
+        nonOptions = new String[argv.length - parser.getOptind()];
+        System.arraycopy(argv, parser.getOptind(), nonOptions, 0, nonOptions.length);
+
+        return true;
     }
 
-    return true;
-  }
+    /**
+     * @param   args        the command line arguments
+     */
+    public boolean processOption(int code, Getopt g) {
+        switch (code) {
+        case 'h':
+            help();
+            System.exit(0);
+            break;
+        case 'V':
+            version();
+            System.exit(0);
+            break;
+        default:
+            return false;
+        }
 
-  public String[] getOptions() {
-    return new String[] {
-      "  --help, -h:           Displays the help information",
-      "  --version, -V:        Prints out the version information"
-    };
-  }
-
-  /**
-   * Prints the available options.
-   */
-  public void printOptions() {
-    String[]	options = getOptions();
-
-    for (int i = options.length; --i >= 0; ) {
-      for (int j = 0; j < i; j++) {
-	if (options[j].compareTo(options[j + 1]) > 0) {
-	  String	tmp = options[j];
-	  options[j] = options[j+1];
-	  options[j+1] = tmp;
-	}
-      }
+        return true;
     }
 
-    for (int i = 0; i < options.length; i++) {
-      System.out.println(options[i]);
+    public String[] getOptions() {
+        return new String[] {
+            "  --help, -h:           Displays the help information",
+            "  --version, -V:        Prints out the version information"
+        };
     }
-  }
 
-  /**
-   * shows a help message.
-   */
-  protected abstract void help();
+    /**
+     * Prints the available options.
+     */
+    public void printOptions() {
+        String[]    options = getOptions();
 
-  /**
-   * Shows the version number.
-   */
-  protected abstract void version();
+        for (int i = options.length; --i >= 0; ) {
+            for (int j = 0; j < i; j++) {
+                if (options[j].compareTo(options[j + 1]) > 0) {
+                    String  tmp = options[j];
+                    options[j] = options[j+1];
+                    options[j+1] = tmp;
+                }
+            }
+        }
 
-  /**
-   * Shows a usage message.
-   */
-  protected abstract void usage();
-
-  // ----------------------------------------------------------------------
-  // UTILITIES
-  // ----------------------------------------------------------------------
-
-  /**
-   * Processes an integer argument.
-   */
-  protected int getInt(Getopt g, int defaultValue) {
-    try {
-      return g.getOptarg() != null ?
-	new Integer(g.getOptarg()).intValue() :
-	defaultValue;
-    } catch (Throwable e) {
-      System.err.println("malformed option: " + g.getOptarg());
-      System.exit(1);
-      return 1;
+        for (int i = 0; i < options.length; i++) {
+            System.out.println(options[i]);
+        }
     }
-  }
 
-  /**
-   * Processes a string argument.
-   */
-  protected String getString(Getopt g, String defaultValue) {
-    return g.getOptarg() != null ?
-      g.getOptarg() :
-      defaultValue;
-  }
+    /**
+     * shows a help message.
+     */
+    protected abstract void help();
 
-  // ----------------------------------------------------------------------
-  // DEFAULT OPTIONS
-  // ----------------------------------------------------------------------
+    /**
+     * Shows the version number.
+     */
+    protected abstract void version();
 
-  /**
-   * Gets short options.
-   */
-  public String getShortOptions() {
-    return "hV";
-  }
+    /**
+     * Shows a usage message.
+     */
+    protected abstract void usage();
 
-  /**
-   * Gets long options.
-   */
-  public LongOpt[] getLongOptions() {
-    return new LongOpt[] {
-      new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
-      new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V')
-    };
-  }
+    // ----------------------------------------------------------------------
+    // UTILITIES
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * Processes an integer argument.
+     */
+    protected int getInt(Getopt g, int defaultValue) {
+        try {
+            return g.getOptarg() != null ?
+                new Integer(g.getOptarg()).intValue() :
+                defaultValue;
+        } catch (Throwable e) {
+            System.err.println("malformed option: " + g.getOptarg());
+            System.exit(1);
+            return 1;
+        }
+    }
 
-  /**
-   * The array of non-option arguments.
-   */
-  public String[]		nonOptions;
+    /**
+     * Processes a string argument.
+     */
+    protected String getString(Getopt g, String defaultValue) {
+        return g.getOptarg() != null ?
+            g.getOptarg() :
+            defaultValue;
+    }
 
-  private final String		name;
+    // ----------------------------------------------------------------------
+    // DEFAULT OPTIONS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Gets short options.
+     */
+    public String getShortOptions() {
+        return "hV";
+    }
+
+    /**
+     * Gets long options.
+     */
+    public LongOpt[] getLongOptions() {
+        return new LongOpt[] {
+            new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
+            new LongOpt("version", LongOpt.NO_ARGUMENT, null, 'V')
+        };
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    /**
+     * The array of non-option arguments.
+     */
+    public String[]     nonOptions;
+
+    private final String        name;
 }

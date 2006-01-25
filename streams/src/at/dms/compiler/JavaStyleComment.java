@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.8 2003-11-13 10:46:06 thies Exp $
+ * $Id: JavaStyleComment.java,v 1.9 2006-01-25 17:00:41 thies Exp $
  */
 
 package at.dms.compiler;
@@ -27,82 +27,82 @@ import java.io.*;
  */
 public class JavaStyleComment implements Serializable, at.dms.kjc.DeepCloneable {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JavaStyleComment() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	text		the string representation of this comment
-   * @param	!!! COMPLETE
-   */
-  public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
-    this.text = text;
-    this.isLineComment = isLineComment;
-    this.spaceBefore = spaceBefore;
-    this.spaceAfter = spaceAfter;
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   text        the string representation of this comment
+     * @param   !!! COMPLETE
+     */
+    public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
+        this.text = text;
+        this.isLineComment = isLineComment;
+        this.spaceBefore = spaceBefore;
+        this.spaceAfter = spaceAfter;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   *
-   */
-  public String getText() {
-    return text;
-  }
+    /**
+     *
+     */
+    public String getText() {
+        return text;
+    }
 
-  /**
-   *
-   */
-  public boolean isLineComment() {
-    return isLineComment;
-  }
+    /**
+     *
+     */
+    public boolean isLineComment() {
+        return isLineComment;
+    }
 
-  /**
-   *
-   */
-  public boolean hadSpaceBefore() {
-    return spaceBefore;
-  }
+    /**
+     *
+     */
+    public boolean hadSpaceBefore() {
+        return spaceBefore;
+    }
 
-  /**
-   *
-   */
-  public boolean hadSpaceAfter() {
-    return spaceAfter;
-  }
+    /**
+     *
+     */
+    public boolean hadSpaceAfter() {
+        return spaceAfter;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  protected	String		text;
-    private /* final */ boolean		isLineComment; // removed "final" for cloner
-    private /* final */ boolean		spaceBefore; // removed "final" for cloner
-    private  /* final */ boolean		spaceAfter; // removed "final" for cloner
+    protected   String      text;
+    private /* final */ boolean     isLineComment; // removed "final" for cloner
+    private /* final */ boolean     spaceBefore; // removed "final" for cloner
+    private  /* final */ boolean        spaceAfter; // removed "final" for cloner
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.compiler.JavaStyleComment other = new at.dms.compiler.JavaStyleComment();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.compiler.JavaStyleComment other = new at.dms.compiler.JavaStyleComment();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.compiler.JavaStyleComment other) {
-  other.text = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.text);
-  other.isLineComment = this.isLineComment;
-  other.spaceBefore = this.spaceBefore;
-  other.spaceAfter = this.spaceAfter;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.compiler.JavaStyleComment other) {
+        other.text = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.text);
+        other.isLineComment = this.isLineComment;
+        other.spaceBefore = this.spaceBefore;
+        other.spaceAfter = this.spaceAfter;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

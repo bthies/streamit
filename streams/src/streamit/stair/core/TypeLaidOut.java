@@ -17,7 +17,7 @@ import java.util.ArrayList;
  *
  * @see     TypeStruct
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeLaidOut.java,v 1.1 2003-02-24 21:45:11 dmaze Exp $
+ * @version $Id: TypeLaidOut.java,v 1.2 2006-01-25 17:05:05 thies Exp $
  */
 public class TypeLaidOut extends Type
 {
@@ -116,11 +116,11 @@ public class TypeLaidOut extends Type
     {
         int size = 0;
         for (int i = 0; i < getNumFields(); i++)
-        {
-            int candidate = getOffset(n) + getType(n).getBitWidth();
-            if (candidate > size)
-                size = candidate;
-        }
+            {
+                int candidate = getOffset(n) + getType(n).getBitWidth();
+                if (candidate > size)
+                    size = candidate;
+            }
         return size;
     }
 
@@ -142,14 +142,14 @@ public class TypeLaidOut extends Type
             return false;
         // loop through:
         for (int i = 0; i < getNumFields(); i++)
-        {
-            if (!(getName(i).equals(tl.getName(i))))
-                return false;
-            if (!(getType(i).isConvertibleTo(tl.getType(i))))
-                return false;
-            if (getOffset(i) != tl.getOffset(i))
-                return false;
-        }
+            {
+                if (!(getName(i).equals(tl.getName(i))))
+                    return false;
+                if (!(getType(i).isConvertibleTo(tl.getType(i))))
+                    return false;
+                if (getOffset(i) != tl.getOffset(i))
+                    return false;
+            }
         return true;
     }
 
@@ -170,14 +170,14 @@ public class TypeLaidOut extends Type
             return false;
         // loop through:
         for (int i = 0; i < getNumFields(); i++)
-        {
-            if (!(getName(i).equals(tl.getName(i))))
-                return false;
-            if (!(getType(i).equals(tl.getType(i))))
-                return false;
-            if (getOffset(i) != tl.getOffset(i))
-                return false;
-        }
+            {
+                if (!(getName(i).equals(tl.getName(i))))
+                    return false;
+                if (!(getType(i).equals(tl.getType(i))))
+                    return false;
+                if (getOffset(i) != tl.getOffset(i))
+                    return false;
+            }
         return true;
     }
 
@@ -194,12 +194,12 @@ public class TypeLaidOut extends Type
         // be "small".
         int code = 0;
         for (int i = 0; i < getNumFields(); i++)
-        {
-            code <<= 1;
-            code ^= getName(i).hashCode();
-            code <<= 1;
-            code ^= getType(i).hashCode();
-        }
+            {
+                code <<= 1;
+                code ^= getName(i).hashCode();
+                code <<= 1;
+                code ^= getType(i).hashCode();
+            }
         return code;
     }
 }

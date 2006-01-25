@@ -19,37 +19,37 @@ public class CPLEXServer extends UnicastRemoteObject implements RMISolver {
     }
 
     public static String getBaseHostName() {
-	return hostname + "-" + "base";
+        return hostname + "-" + "base";
     }
 
     public String getOpenPort() throws RemoteException {
-	openPort++;
-	String name = hostname + "-" + openPort;
-	bindServer(name);
-	return name;
+        openPort++;
+        String name = hostname + "-" + openPort;
+        bindServer(name);
+        return name;
     }
 
     public void clearPort(String name) throws RemoteException {
-	try {
-	    Naming.unbind(name);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        try {
+            Naming.unbind(name);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Returns solution to <model>
      */
     public double[] solveOverRMI(CPLEXSolve model) throws RemoteException {
-	try {
-	    return model.solve();
-	} catch (LPSolverFailedException e) {
-	    throw new RemoteException(e.toString());
-	}
+        try {
+            return model.solve();
+        } catch (LPSolverFailedException e) {
+            throw new RemoteException(e.toString());
+        }
     }
 
     public static void main(String[] args) {
-	bindServer(getBaseHostName());
+        bindServer(getBaseHostName());
     }
 
     private static void bindServer(String name) {

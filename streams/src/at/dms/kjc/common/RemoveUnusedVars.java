@@ -19,7 +19,7 @@ import at.dms.util.Utils;
 public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisitor
 {
     /** holds alls vars referenced in the filter
-	see VariablesUsed **/
+        see VariablesUsed **/
     private HashSet varsUsed;
     /** Holds idents of arrays that are fields have have zero dimensionality **/
     private HashSet zeroDimArrays;
@@ -35,77 +35,77 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
      */
     public static void doit(FlatNode node) 
     {
-	node.accept(new RemoveUnusedVars(), null, true);
+        node.accept(new RemoveUnusedVars(), null, true);
     }
 
     private RemoveUnusedVars()
     {
-	varsUsed = null;
-	zeroDimArrays = new HashSet();
+        varsUsed = null;
+        zeroDimArrays = new HashSet();
     }
 
     public static void doit(SIRFilter filter) 
     {
-	(new RemoveUnusedVars()).visitFilter(filter);
+        (new RemoveUnusedVars()).visitFilter(filter);
     }
     
     public void visitNode(FlatNode node) 
     {
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    visitFilter(filter);
-	}
+        if (node.isFilter()) {
+            SIRFilter filter = (SIRFilter)node.contents;
+            visitFilter(filter);
+        }
     }
     
     public void visitFilter(SIRFilter filter)
     {
-	varsUsed = VariablesUsed.getVars(filter, true);
-	
-	
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    filter.getMethods()[i].accept(this);
-	}
-	
-	//now check the fields
-	Vector newFields = new Vector();
-	for (int i = 0; i < filter.getFields().length; i++) {
-	    if (varsUsed.contains(filter.getFields()[i].getVariable().getIdent())) 
-		newFields.add(filter.getFields()[i]);
-	}
-	filter.setFields((JFieldDeclaration[])newFields.toArray(new JFieldDeclaration[0]));
+        varsUsed = VariablesUsed.getVars(filter, true);
+    
+    
+        for (int i = 0; i < filter.getMethods().length; i++) {
+            filter.getMethods()[i].accept(this);
+        }
+    
+        //now check the fields
+        Vector newFields = new Vector();
+        for (int i = 0; i < filter.getFields().length; i++) {
+            if (varsUsed.contains(filter.getFields()[i].getVariable().getIdent())) 
+                newFields.add(filter.getFields()[i]);
+        }
+        filter.setFields((JFieldDeclaration[])newFields.toArray(new JFieldDeclaration[0]));
     }
     
     public Object visitAssignmentExpression(JAssignmentExpression self,
-					    JExpression left,
-					    JExpression right) {
-	//remove an assignment expression if it 
-	if (!varsUsed.contains(getVariable(left)) &&
-	    !HasSideEffects.hasSideEffects(right) &&
-	    !HasSideEffects.hasSideEffects(left))
-	    return null;
-	    
-	return doBinaryExpression(self, left, right);
+                                            JExpression left,
+                                            JExpression right) {
+        //remove an assignment expression if it 
+        if (!varsUsed.contains(getVariable(left)) &&
+            !HasSideEffects.hasSideEffects(right) &&
+            !HasSideEffects.hasSideEffects(left))
+            return null;
+        
+        return doBinaryExpression(self, left, right);
     }
 
     public Object getVariable(Object access) 
     {
-	if (access instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression facc = (JFieldAccessExpression)access;
-	    if (facc.getPrefix() instanceof JThisExpression)
-		return facc.getIdent();
-	    else {
-		return getVariable(facc.getPrefix());
-	    }
-	}
-	else if (access instanceof JLocalVariableExpression) {
-	    return ((JLocalVariableExpression)access).getVariable();
-	}
-	else if (access instanceof JArrayAccessExpression) {
-	    return getVariable(((JArrayAccessExpression)access).getPrefix());
-	}
-	
-	assert false;
-	return null;
+        if (access instanceof JFieldAccessExpression) {
+            JFieldAccessExpression facc = (JFieldAccessExpression)access;
+            if (facc.getPrefix() instanceof JThisExpression)
+                return facc.getIdent();
+            else {
+                return getVariable(facc.getPrefix());
+            }
+        }
+        else if (access instanceof JLocalVariableExpression) {
+            return ((JLocalVariableExpression)access).getVariable();
+        }
+        else if (access instanceof JArrayAccessExpression) {
+            return getVariable(((JArrayAccessExpression)access).getPrefix());
+        }
+    
+        assert false;
+        return null;
     }
     
     
@@ -113,69 +113,69 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
      * prints an expression statement
      */
     public Object visitExpressionStatement(JExpressionStatement self,
-					   JExpression expr) {
-	JExpression newExp = (JExpression)expr.accept(this);
-	if (newExp == null) {
-	    return new JEmptyStatement(null, null);
-	}
-	if (newExp!=expr) {
-	    self.setExpression(newExp);
-	}
-	return self;
+                                           JExpression expr) {
+        JExpression newExp = (JExpression)expr.accept(this);
+        if (newExp == null) {
+            return new JEmptyStatement(null, null);
+        }
+        if (newExp!=expr) {
+            self.setExpression(newExp);
+        }
+        return self;
     }
 
     /**
      * prints a variable declaration statement
      */
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
-						    JVariableDefinition[] vars) {
-	Vector newDecls = new Vector();
-	for (int i = 0; i < vars.length; i++) {
-	    JVariableDefinition result = 
-		(JVariableDefinition)vars[i].accept(this);
-	    if (result != null) 
-		newDecls.add(result);
-	}
-	
-	if (newDecls.size() == 0)
-	    return new JEmptyStatement(null, null);
+                                                    JVariableDefinition[] vars) {
+        Vector newDecls = new Vector();
+        for (int i = 0; i < vars.length; i++) {
+            JVariableDefinition result = 
+                (JVariableDefinition)vars[i].accept(this);
+            if (result != null) 
+                newDecls.add(result);
+        }
+    
+        if (newDecls.size() == 0)
+            return new JEmptyStatement(null, null);
 
-	return new JVariableDeclarationStatement(null, 
-						 (JVariableDefinition[])
-						 newDecls.toArray(new JVariableDefinition[0]),
-						 null);
+        return new JVariableDeclarationStatement(null, 
+                                                 (JVariableDefinition[])
+                                                 newDecls.toArray(new JVariableDefinition[0]),
+                                                 null);
     }
 
     /**
      * prints a variable declaration statement
      */
     public Object visitVariableDefinition(JVariableDefinition self,
-					  int modifiers,
-					  CType type,
-					  String ident,
-					  JExpression expr) {
-	if (varsUsed.contains(self))
-	    return self;
-	else return null;
+                                          int modifiers,
+                                          CType type,
+                                          String ident,
+                                          JExpression expr) {
+        if (varsUsed.contains(self))
+            return self;
+        else return null;
     }
     
     /**
      * this is a private method for visiting binary expressions
      */
     protected Object doBinaryExpression(JBinaryExpression self, 
-				    JExpression left, 
-				    JExpression right) {
-	JExpression newExp = (JExpression)left.accept(this);
-	if (newExp!=null && newExp!=left) {
-	    self.setLeft(newExp);
-	}
-	
-	newExp = (JExpression)right.accept(this);
-	if (newExp!=null && newExp!=right) {
-	    self.setRight(newExp);
-	}
+                                        JExpression left, 
+                                        JExpression right) {
+        JExpression newExp = (JExpression)left.accept(this);
+        if (newExp!=null && newExp!=left) {
+            self.setLeft(newExp);
+        }
+    
+        newExp = (JExpression)right.accept(this);
+        if (newExp!=null && newExp!=right) {
+            self.setRight(newExp);
+        }
 
-	return self;
+        return self;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * @(#)GPConfiguration.java	1.0 18.02.2003
+ * @(#)GPConfiguration.java 1.0 18.02.2003
  *
  * Copyright (C) 2003 luzar
  *
@@ -37,12 +37,12 @@ import javax.swing.ActionMap;
  * the file exit action key.
  *
  * <pre>
- * MyFileExitAction 	a 			= new MyFileExitAction();
- * ActionMap 			actionMap 	= new ActionMap();
- * actionMap.put(		a.getValue(Action.NAME),a);
- * GPConfiguration 		config 		= new GPConfiguration();
- * config.setActionMap(	actionMap);
- * GPGraphpad 			pad 		= new GPGraphpad(config);
+ * MyFileExitAction     a           = new MyFileExitAction();
+ * ActionMap            actionMap   = new ActionMap();
+ * actionMap.put(       a.getValue(Action.NAME),a);
+ * GPConfiguration      config      = new GPConfiguration();
+ * config.setActionMap( actionMap);
+ * GPGraphpad           pad         = new GPGraphpad(config);
  * </pre>
  *
  *
@@ -51,24 +51,24 @@ import javax.swing.ActionMap;
  */
 public class GPConfiguration {
 
-	/** Actionmap for user defined actions
-	 */
-	ActionMap actionMap;
+    /** Actionmap for user defined actions
+     */
+    ActionMap actionMap;
 
-	/**
-	 * Returns the actionMap.
-	 * @return ActionMap
-	 */
-	public ActionMap getActionMap() {
-		return actionMap;
-	}
+    /**
+     * Returns the actionMap.
+     * @return ActionMap
+     */
+    public ActionMap getActionMap() {
+        return actionMap;
+    }
 
-	/**
-	 * Sets the actionMap.
-	 * @param actionMap The actionMap to set
-	 */
-	public void setActionMap(ActionMap actionMap) {
-		this.actionMap = actionMap;
-	}
+    /**
+     * Sets the actionMap.
+     * @param actionMap The actionMap to set
+     */
+    public void setActionMap(ActionMap actionMap) {
+        this.actionMap = actionMap;
+    }
 
 }

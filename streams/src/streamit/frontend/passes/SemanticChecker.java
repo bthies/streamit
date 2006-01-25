@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.32 2005-09-30 21:29:52 rabbah Exp $
+ * @version $Id: SemanticChecker.java,v 1.33 2006-01-25 17:04:28 thies Exp $
  */
 public class SemanticChecker
 {
@@ -96,31 +96,31 @@ public class SemanticChecker
         names.put("ImageDisplay", ctx);
 
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-        {
-            StreamSpec spec = (StreamSpec)iter.next();
-            checkAStreamName(names, spec.getName(), spec.getContext());
-        }
+            {
+                StreamSpec spec = (StreamSpec)iter.next();
+                checkAStreamName(names, spec.getName(), spec.getContext());
+            }
 
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-        {
-            TypeStruct ts = (TypeStruct)iter.next();
-            checkAStreamName(names, ts.getName(), ts.getContext());
-        }
+            {
+                TypeStruct ts = (TypeStruct)iter.next();
+                checkAStreamName(names, ts.getName(), ts.getContext());
+            }
         return names;
     }
     
     private void checkAStreamName(Map map, String name, FEContext ctx)
     {
         if (map.containsKey(name))
-        {
-            FEContext octx = (FEContext)map.get(name);
-            report(ctx, "Multiple declarations of '" + name + "'");
-            report(octx, "as a stream or structure");
-        }
+            {
+                FEContext octx = (FEContext)map.get(name);
+                report(ctx, "Multiple declarations of '" + name + "'");
+                report(octx, "as a stream or structure");
+            }
         else
-        {
-            map.put(name, ctx);
-        }
+            {
+                map.put(name, ctx);
+            }
     }
 
     /**
@@ -136,83 +136,83 @@ public class SemanticChecker
     public void checkDupFieldNames(Program prog, Map streamNames)
     {
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-        {
-            StreamSpec spec = (StreamSpec)iter.next();
-            Map localNames = new HashMap();
-            Iterator i2;
-            for (i2 = spec.getParams().iterator(); i2.hasNext(); )
             {
-                Parameter param = (Parameter)i2.next();
-                checkADupFieldName(localNames, streamNames,
-                                   param.getName(), spec.getContext());
-            }
-            for (i2 = spec.getVars().iterator(); i2.hasNext(); )
-            {
-                FieldDecl field = (FieldDecl)i2.next();
-                for (int i = 0; i < field.getNumFields(); i++)
-                    checkADupFieldName(localNames, streamNames,
-                                       field.getName(i), field.getContext());
-            }
-            for (i2 = spec.getFuncs().iterator(); i2.hasNext(); )
-            {
-                Function func = (Function)i2.next();
-                // Some functions get alternate names if their real
-                // name is null:
-                String name = func.getName();
-                if (name == null)
-                {
-                    switch(func.getCls())
+                StreamSpec spec = (StreamSpec)iter.next();
+                Map localNames = new HashMap();
+                Iterator i2;
+                for (i2 = spec.getParams().iterator(); i2.hasNext(); )
                     {
-                    case Function.FUNC_INIT: name = "init"; break;
-                    case Function.FUNC_WORK: name = "work"; break;
-                    case Function.FUNC_PREWORK: name = "prework"; break;
-                    case Function.FUNC_HANDLER:
-                        report(func, "message handlers must have names");
-                        break;
-                    case Function.FUNC_HELPER:
-                        report(func, "helper functions must have names");
-                        break;
-                    case Function.FUNC_PHASE:
-                        report(func, "phase functions must have names");
-                        break;
-                    default:
-                        // is BUILTIN_HELPER and CONST_HELPER.  Ignore
+                        Parameter param = (Parameter)i2.next();
+                        checkADupFieldName(localNames, streamNames,
+                                           param.getName(), spec.getContext());
                     }
-                }
-                if (name != null)
-                    checkADupFieldName(localNames, streamNames,
-                                       name, func.getContext());
+                for (i2 = spec.getVars().iterator(); i2.hasNext(); )
+                    {
+                        FieldDecl field = (FieldDecl)i2.next();
+                        for (int i = 0; i < field.getNumFields(); i++)
+                            checkADupFieldName(localNames, streamNames,
+                                               field.getName(i), field.getContext());
+                    }
+                for (i2 = spec.getFuncs().iterator(); i2.hasNext(); )
+                    {
+                        Function func = (Function)i2.next();
+                        // Some functions get alternate names if their real
+                        // name is null:
+                        String name = func.getName();
+                        if (name == null)
+                            {
+                                switch(func.getCls())
+                                    {
+                                    case Function.FUNC_INIT: name = "init"; break;
+                                    case Function.FUNC_WORK: name = "work"; break;
+                                    case Function.FUNC_PREWORK: name = "prework"; break;
+                                    case Function.FUNC_HANDLER:
+                                        report(func, "message handlers must have names");
+                                        break;
+                                    case Function.FUNC_HELPER:
+                                        report(func, "helper functions must have names");
+                                        break;
+                                    case Function.FUNC_PHASE:
+                                        report(func, "phase functions must have names");
+                                        break;
+                                    default:
+                                        // is BUILTIN_HELPER and CONST_HELPER.  Ignore
+                                    }
+                            }
+                        if (name != null)
+                            checkADupFieldName(localNames, streamNames,
+                                               name, func.getContext());
+                    }
             }
-        }
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-        {
-            TypeStruct ts = (TypeStruct)iter.next();
-            Map localNames = new HashMap();
-            for (int i = 0; i < ts.getNumFields(); i++)
-                checkADupFieldName(localNames, streamNames,
-                                   ts.getField(i), ts.getContext());
-        }
+            {
+                TypeStruct ts = (TypeStruct)iter.next();
+                Map localNames = new HashMap();
+                for (int i = 0; i < ts.getNumFields(); i++)
+                    checkADupFieldName(localNames, streamNames,
+                                       ts.getField(i), ts.getContext());
+            }
     }
 
     private void checkADupFieldName(Map localNames, Map streamNames,
                                     String name, FEContext ctx)
     {
         if (localNames.containsKey(name))
-        {
-            FEContext octx = (FEContext)localNames.get(name);
-            report(ctx, "Duplicate declaration of '" + name + "'");
-            report(octx, "(also declared here)");
-        }
-        else
-        {
-            localNames.put(name, ctx);
-            if (streamNames.containsKey(name))
             {
-                FEContext octx = (FEContext)streamNames.get(name);
-                report(ctx, "'" + name + "' has the same name as");
-                report(octx, "a stream or structure");
+                FEContext octx = (FEContext)localNames.get(name);
+                report(ctx, "Duplicate declaration of '" + name + "'");
+                report(octx, "(also declared here)");
             }
-        }
+        else
+            {
+                localNames.put(name, ctx);
+                if (streamNames.containsKey(name))
+                    {
+                        FEContext octx = (FEContext)streamNames.get(name);
+                        report(ctx, "'" + name + "' has the same name as");
+                        report(octx, "a stream or structure");
+                    }
+            }
     }
 
     /**
@@ -261,21 +261,21 @@ public class SemanticChecker
                         TypePrimitive.TYPE_VOID &&
                         ((TypePrimitive)st.getOut()).getType() ==
                         TypePrimitive.TYPE_VOID)
-                    {
-                        // Okay, we have a void->void object.
-                        if (ss.getName() == null)
-                            report(ss, "anonymous stream cannot be top-level");
-                        else if (theTopLevel == null)
-                            theTopLevel = ss;
-                        else
                         {
-                            report(theTopLevel,
-                                   "first declared top-level stream " +
-                                   theTopLevel.getName());
-                            report(ss, "duplicate top-level stream " +
-                                   ss.getName());
+                            // Okay, we have a void->void object.
+                            if (ss.getName() == null)
+                                report(ss, "anonymous stream cannot be top-level");
+                            else if (theTopLevel == null)
+                                theTopLevel = ss;
+                            else
+                                {
+                                    report(theTopLevel,
+                                           "first declared top-level stream " +
+                                           theTopLevel.getName());
+                                    report(ss, "duplicate top-level stream " +
+                                           ss.getName());
+                                }
                         }
-                    }
                     return super.visitStreamSpec(ss);
                 }
             });
@@ -297,36 +297,36 @@ public class SemanticChecker
     public void checkFunctionValidity(Program prog)
     {
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-        {
-            StreamSpec spec = (StreamSpec)iter.next();
-            boolean hasInit = false;
-            boolean hasWork = false;
-            for (Iterator ifunc = spec.getFuncs().iterator();
-                 ifunc.hasNext(); )
             {
-                Function func = (Function)ifunc.next();
-                if (func.getCls() == Function.FUNC_INIT)
-                    hasInit = true;
-                if (func.getCls() == Function.FUNC_WORK)
-                {
-                    hasWork = true;
-                    if (spec.getType() != StreamSpec.STREAM_FILTER)
-                        report(func, "work functions only allowed in filters");
-                }
-                if (func.getCls() == Function.FUNC_PREWORK)
-                    if (spec.getType() != StreamSpec.STREAM_FILTER)
-                        report(func, "prework functions only allowed " +
-                               "in filters");
-                if (func.getCls() == Function.FUNC_PHASE)
-                    if (spec.getType() != StreamSpec.STREAM_FILTER)
-                        report(func, "phase functions only allowed " +
-                               "in filters");
+                StreamSpec spec = (StreamSpec)iter.next();
+                boolean hasInit = false;
+                boolean hasWork = false;
+                for (Iterator ifunc = spec.getFuncs().iterator();
+                     ifunc.hasNext(); )
+                    {
+                        Function func = (Function)ifunc.next();
+                        if (func.getCls() == Function.FUNC_INIT)
+                            hasInit = true;
+                        if (func.getCls() == Function.FUNC_WORK)
+                            {
+                                hasWork = true;
+                                if (spec.getType() != StreamSpec.STREAM_FILTER)
+                                    report(func, "work functions only allowed in filters");
+                            }
+                        if (func.getCls() == Function.FUNC_PREWORK)
+                            if (spec.getType() != StreamSpec.STREAM_FILTER)
+                                report(func, "prework functions only allowed " +
+                                       "in filters");
+                        if (func.getCls() == Function.FUNC_PHASE)
+                            if (spec.getType() != StreamSpec.STREAM_FILTER)
+                                report(func, "phase functions only allowed " +
+                                       "in filters");
+                    }
+                if (spec.getType() == StreamSpec.STREAM_FILTER && !hasWork)
+                    report(spec, "missing work function");
+                if (spec.getType() != StreamSpec.STREAM_FILTER && !hasInit)
+                    report(spec, "missing init function");
             }
-            if (spec.getType() == StreamSpec.STREAM_FILTER && !hasWork)
-                report(spec, "missing work function");
-            if (spec.getType() != StreamSpec.STREAM_FILTER && !hasInit)
-                report(spec, "missing init function");
-        }
     }
 
     /**
@@ -519,54 +519,54 @@ public class SemanticChecker
                 {
                     Type ot = getType(expr.getExpr());
                     if (ot != null)
-                    {
-                        Type inttype =
-                            new TypePrimitive(TypePrimitive.TYPE_INT);
-                        Type bittype =
-                            new TypePrimitive(TypePrimitive.TYPE_BIT);
-                        Type float2type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
-                        Type float3type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
-                        Type float4type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
-
-                        switch(expr.getOp())
                         {
-                        case ExprUnary.UNOP_NEG:
-			    if (ot.equals(float2type) ||
-				ot.equals(float3type) ||
-				ot.equals(float4type)) break; 
+                            Type inttype =
+                                new TypePrimitive(TypePrimitive.TYPE_INT);
+                            Type bittype =
+                                new TypePrimitive(TypePrimitive.TYPE_BIT);
+                            Type float2type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+                            Type float3type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+                            Type float4type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
 
-			    // you can negate a bit, since 0 and 1
-			    // literals always count as bits.
-			    // However, the resulting negation will be
-			    // an int.
-                            if (!bittype.promotesTo(ot)) 
-                                report(expr, "cannot negate " + ot);
-                            break;
-                            
-                        case ExprUnary.UNOP_NOT:
-                            if (!ot.promotesTo(bittype))
-                                report(expr, "cannot take boolean not of " +
-                                       ot);
-                            break;
-                            
-                        case ExprUnary.UNOP_PREDEC:
-                        case ExprUnary.UNOP_PREINC:
-                        case ExprUnary.UNOP_POSTDEC:
-                        case ExprUnary.UNOP_POSTINC:
-			    // same as negation, regarding bits
-                            if (!bittype.promotesTo(ot))
-                                report(expr, "cannot perform ++/-- on " + ot);
-                            break;
+                            switch(expr.getOp())
+                                {
+                                case ExprUnary.UNOP_NEG:
+                                    if (ot.equals(float2type) ||
+                                        ot.equals(float3type) ||
+                                        ot.equals(float4type)) break; 
 
-                        case ExprUnary.UNOP_COMPLEMENT:
-                            if (!bittype.promotesTo(ot)) 
-                                report(expr, "cannot complement " + ot);
-                            break;
+                                    // you can negate a bit, since 0 and 1
+                                    // literals always count as bits.
+                                    // However, the resulting negation will be
+                                    // an int.
+                                    if (!bittype.promotesTo(ot)) 
+                                        report(expr, "cannot negate " + ot);
+                                    break;
+                            
+                                case ExprUnary.UNOP_NOT:
+                                    if (!ot.promotesTo(bittype))
+                                        report(expr, "cannot take boolean not of " +
+                                               ot);
+                                    break;
+                            
+                                case ExprUnary.UNOP_PREDEC:
+                                case ExprUnary.UNOP_PREINC:
+                                case ExprUnary.UNOP_POSTDEC:
+                                case ExprUnary.UNOP_POSTINC:
+                                    // same as negation, regarding bits
+                                    if (!bittype.promotesTo(ot))
+                                        report(expr, "cannot perform ++/-- on " + ot);
+                                    break;
+
+                                case ExprUnary.UNOP_COMPLEMENT:
+                                    if (!bittype.promotesTo(ot)) 
+                                        report(expr, "cannot complement " + ot);
+                                    break;
+                                }
                         }
-                    }
                     
                     return super.visitExprUnary(expr);
                 }
@@ -577,113 +577,113 @@ public class SemanticChecker
                     Type rt = getType(expr.getRight());
 
                     if (lt != null && rt != null)
-                    {                        
-                        Type ct = lt.leastCommonPromotion(rt);
-                        Type inttype =
-                            new TypePrimitive(TypePrimitive.TYPE_INT);
-                        Type bittype =
-                            new TypePrimitive(TypePrimitive.TYPE_BIT);
-                        Type cplxtype =
-                            new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
-                        Type floattype =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT);
-                        Type float2type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
-                        Type float3type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
-                        Type float4type =
-                            new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
-                        Type stringtype =
-                            new TypePrimitive(TypePrimitive.TYPE_STRING);
-                        if (ct == null)
-                        {
-                            report (expr,
-                                    "incompatible types in binary expression");
+                        {                        
+                            Type ct = lt.leastCommonPromotion(rt);
+                            Type inttype =
+                                new TypePrimitive(TypePrimitive.TYPE_INT);
+                            Type bittype =
+                                new TypePrimitive(TypePrimitive.TYPE_BIT);
+                            Type cplxtype =
+                                new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
+                            Type floattype =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+                            Type float2type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT2);
+                            Type float3type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT3);
+                            Type float4type =
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT4);
+                            Type stringtype =
+                                new TypePrimitive(TypePrimitive.TYPE_STRING);
+                            if (ct == null)
+                                {
+                                    report (expr,
+                                            "incompatible types in binary expression");
+                                    return expr;
+                                }
+                            // Check whether ct is an appropriate type.
+                            switch (expr.getOp())
+                                {
+                                    // Arithmetic / concatenation operations:
+                                case ExprBinary.BINOP_ADD:
+                                    // can concatenate strings and characters
+                                    if (!ct.promotesTo(cplxtype) && 
+                                        !ct.promotesTo(stringtype) &&
+                                        !ct.promotesTo(float2type) && 
+                                        !ct.promotesTo(float3type) && 
+                                        !ct.promotesTo(float4type)) 
+                                        report(expr,
+                                               "cannot perform + on " + ct);
+                                    break;
+
+                                    // Arithmetic operations:
+                                case ExprBinary.BINOP_DIV:
+                                case ExprBinary.BINOP_MUL:
+                                case ExprBinary.BINOP_SUB:
+                                    if (!ct.promotesTo(cplxtype) &&
+                                        !ct.promotesTo(float2type) && 
+                                        !ct.promotesTo(float3type) && 
+                                        !ct.promotesTo(float4type))
+                                        report(expr,
+                                               "cannot perform arithmetic on " + ct);
+                                    break;
+
+                                case ExprBinary.BINOP_LSHIFT:
+                                case ExprBinary.BINOP_RSHIFT:
+                                    if (!inttype.promotesTo(ct))
+                                        report(expr,
+                                               "1cannot perform shift operations on "
+                                               + ct);
+                                    break;
+
+                                    // Bitwise and integer operations:
+                                case ExprBinary.BINOP_BAND:
+                                case ExprBinary.BINOP_BOR:
+                                case ExprBinary.BINOP_BXOR:
+                                    if (!ct.promotesTo(inttype))
+                                        report(expr,
+                                               "cannot perform bitwise operations on "
+                                               + ct);
+                                    break;
+
+                                case ExprBinary.BINOP_MOD:
+                                    if (!ct.promotesTo(inttype))
+                                        report(expr, "cannot perform % on " + ct);
+                                    break;
+                            
+                                    // Boolean operations:
+                                case ExprBinary.BINOP_AND:
+                                case ExprBinary.BINOP_OR:
+                                    if (!ct.promotesTo(bittype))
+                                        report(expr,
+                                               "cannot perform boolean operations on "
+                                               + ct);
+                                    break;
+
+                                    // Comparison operations:
+                                case ExprBinary.BINOP_GE:
+                                case ExprBinary.BINOP_GT:
+                                case ExprBinary.BINOP_LE:
+                                case ExprBinary.BINOP_LT:
+                                    if (!ct.promotesTo(floattype) &&
+                                        !ct.promotesTo(float3type)) 
+                                        report(expr,
+                                               "cannot compare type " + ct);
+                                    break;
+                        
+                                    // Equality, can compare anything:
+                                case ExprBinary.BINOP_EQ:
+                                case ExprBinary.BINOP_NEQ:
+                                    break;
+                        
+                                    // And now we should have covered everything.
+                                default:
+                                    report(expr,
+                                           "semantic checker missed a binop type");
+                                    break;
+                                }
                             return expr;
                         }
-                        // Check whether ct is an appropriate type.
-                        switch (expr.getOp())
-                        {
-                        // Arithmetic / concatenation operations:
-                        case ExprBinary.BINOP_ADD:
-			    // can concatenate strings and characters
-                            if (!ct.promotesTo(cplxtype) && 
-				!ct.promotesTo(stringtype) &&
-				!ct.promotesTo(float2type) && 
-				!ct.promotesTo(float3type) && 
-				!ct.promotesTo(float4type)) 
-				report(expr,
-                                       "cannot perform + on " + ct);
-                            break;
-
-                        // Arithmetic operations:
-                        case ExprBinary.BINOP_DIV:
-                        case ExprBinary.BINOP_MUL:
-                        case ExprBinary.BINOP_SUB:
-                            if (!ct.promotesTo(cplxtype) &&
-				!ct.promotesTo(float2type) && 
-				!ct.promotesTo(float3type) && 
-				!ct.promotesTo(float4type))
-                                report(expr,
-                                       "cannot perform arithmetic on " + ct);
-                            break;
-
-                        case ExprBinary.BINOP_LSHIFT:
-                        case ExprBinary.BINOP_RSHIFT:
-                            if (!inttype.promotesTo(ct))
-                                report(expr,
-                                       "1cannot perform shift operations on "
-                                       + ct);
-                            break;
-
-                        // Bitwise and integer operations:
-                        case ExprBinary.BINOP_BAND:
-                        case ExprBinary.BINOP_BOR:
-                        case ExprBinary.BINOP_BXOR:
-                            if (!ct.promotesTo(inttype))
-                                report(expr,
-                                       "cannot perform bitwise operations on "
-                                       + ct);
-                            break;
-
-                        case ExprBinary.BINOP_MOD:
-                            if (!ct.promotesTo(inttype))
-                                report(expr, "cannot perform % on " + ct);
-                            break;
-                            
-                        // Boolean operations:
-                        case ExprBinary.BINOP_AND:
-                        case ExprBinary.BINOP_OR:
-                            if (!ct.promotesTo(bittype))
-                                report(expr,
-                                       "cannot perform boolean operations on "
-                                       + ct);
-                            break;
-
-                        // Comparison operations:
-                        case ExprBinary.BINOP_GE:
-                        case ExprBinary.BINOP_GT:
-                        case ExprBinary.BINOP_LE:
-                        case ExprBinary.BINOP_LT:
-                            if (!ct.promotesTo(floattype) &&
-				!ct.promotesTo(float3type)) 
-                                report(expr,
-                                       "cannot compare type " + ct);
-                            break;
-                        
-                        // Equality, can compare anything:
-                        case ExprBinary.BINOP_EQ:
-                        case ExprBinary.BINOP_NEQ:
-                            break;
-                        
-                        // And now we should have covered everything.
-                        default:
-                            report(expr,
-                                   "semantic checker missed a binop type");
-                            break;
-                        }
-                        return expr;
-                    }
 
                     return super.visitExprBinary(expr);
                 }
@@ -695,22 +695,22 @@ public class SemanticChecker
                     Type ct = getType(expr.getC());
                     
                     if (at != null)
-                    {
-                        if (!at.promotesTo
-                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
-                            report(expr,
-                                   "first part of ternary expression "+
-                                   "must be int");
-                    }
+                        {
+                            if (!at.promotesTo
+                                (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                                report(expr,
+                                       "first part of ternary expression "+
+                                       "must be int");
+                        }
 
                     if (bt != null && ct != null)
-                    {                        
-                        Type xt = bt.leastCommonPromotion(ct);
-                        if (xt == null)
-                            report(expr,
-                                   "incompatible second and third types "+
-                                   "in ternary expression");
-                    }
+                        {                        
+                            Type xt = bt.leastCommonPromotion(ct);
+                            if (xt == null)
+                                report(expr,
+                                       "incompatible second and third types "+
+                                       "in ternary expression");
+                        }
                     
                     return super.visitExprTernary(expr);
                 }
@@ -722,66 +722,66 @@ public class SemanticChecker
                     // Either lt is complex, or it's a structure
                     // type, or it's null, or it's an error.
                     if (lt == null)
-                    {
-                        // pass
-                    }
+                        {
+                            // pass
+                        }
                     else if (lt.isComplex())
-                    {
-                        String rn = expr.getName();
-                        if (!rn.equals("real") &&
-                            !rn.equals("imag"))
-                            report(expr,
-                                   "complex variables have only "+
-                                   "'real' and 'imag' fields");
-                    }
+                        {
+                            String rn = expr.getName();
+                            if (!rn.equals("real") &&
+                                !rn.equals("imag"))
+                                report(expr,
+                                       "complex variables have only "+
+                                       "'real' and 'imag' fields");
+                        }
                     else if (lt.isComposite())
-                    {
-                        String rn = expr.getName();
-			TypePrimitive pt = (TypePrimitive)lt;
+                        {
+                            String rn = expr.getName();
+                            TypePrimitive pt = (TypePrimitive)lt;
 
-			if (pt.getType() == TypePrimitive.TYPE_FLOAT2) {
-			    if (!rn.equals("x") &&
-				!rn.equals("y"))
-				report(expr,
-				       "invalid field access");
-			} else if (pt.getType() == TypePrimitive.TYPE_FLOAT3) {
-			    if (!rn.equals("x") &&
-				!rn.equals("y") &&
-				!rn.equals("z"))
-				report(expr,
-				       "invalid field access");
-			} else if (pt.getType() == TypePrimitive.TYPE_FLOAT4) {
-			    if (!rn.equals("x") &&
-				!rn.equals("y") &&
-				!rn.equals("z") &&
-				!rn.equals("w"))
-				report(expr,
-				       "invalid field access");
-			} else report(expr, "unknown composite data type");
+                            if (pt.getType() == TypePrimitive.TYPE_FLOAT2) {
+                                if (!rn.equals("x") &&
+                                    !rn.equals("y"))
+                                    report(expr,
+                                           "invalid field access");
+                            } else if (pt.getType() == TypePrimitive.TYPE_FLOAT3) {
+                                if (!rn.equals("x") &&
+                                    !rn.equals("y") &&
+                                    !rn.equals("z"))
+                                    report(expr,
+                                           "invalid field access");
+                            } else if (pt.getType() == TypePrimitive.TYPE_FLOAT4) {
+                                if (!rn.equals("x") &&
+                                    !rn.equals("y") &&
+                                    !rn.equals("z") &&
+                                    !rn.equals("w"))
+                                    report(expr,
+                                           "invalid field access");
+                            } else report(expr, "unknown composite data type");
 
-                    }
+                        }
                     else if (lt instanceof TypeStruct)
-                    {
-                        TypeStruct ts = (TypeStruct)lt;
-                        String rn = expr.getName();
-                        boolean found = false;
-                        for (int i = 0; i < ts.getNumFields(); i++)
-                            if (ts.getField(i).equals(rn))
-                            {
-                                found = true;
-                                break;
-                            }
+                        {
+                            TypeStruct ts = (TypeStruct)lt;
+                            String rn = expr.getName();
+                            boolean found = false;
+                            for (int i = 0; i < ts.getNumFields(); i++)
+                                if (ts.getField(i).equals(rn))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
                         
-                        if (!found)
-                            report(expr,
-                                   "structure does not have a field named "+
-                                   "'" + rn + "'");
-                    }
+                            if (!found)
+                                report(expr,
+                                       "structure does not have a field named "+
+                                       "'" + rn + "'");
+                        }
                     else
-                    {
-                        report(expr,
-                               "field reference of a non-structure type");
-                    }
+                        {
+                            report(expr,
+                                   "field reference of a non-structure type");
+                        }
 
                     return super.visitExprField(expr);
                 }
@@ -792,60 +792,60 @@ public class SemanticChecker
                     Type ot = getType(expr.getOffset());
                     
                     if (bt != null)
-                    {
-                        if (!(bt instanceof TypeArray))
-                            report(expr, "array access with a non-array base");
-                    }
+                        {
+                            if (!(bt instanceof TypeArray))
+                                report(expr, "array access with a non-array base");
+                        }
 
                     if (ot != null)
-                    {
-                        if (!ot.promotesTo
-                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
-                            report(expr, "array index must be an int");
-                    }
+                        {
+                            if (!ot.promotesTo
+                                (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                                report(expr, "array index must be an int");
+                        }
                     
                     return super.visitExprArray(expr);
                 }
 
                 public Object visitExprArrayInit(ExprArrayInit expr)
                 {
-		    // check for uniform length and dimensions among all children.
-		    List elems = expr.getElements();
-		    
-		    // only worry about it if we have elements
-		    if (elems.size()>0) {
-			Expression first = (Expression)elems.get(0);
-			// if one is an array, they should all be
-			// arrays of the same length and dimensions
-			if (first instanceof ExprArrayInit) {
-			    ExprArrayInit firstArr = (ExprArrayInit)first;
-			    for (int i=1; i<elems.size(); i++) {
-				ExprArrayInit other = (ExprArrayInit)elems.get(i);
-				if (firstArr.getDims() != other.getDims()) {
-				    report(expr, 
-					   "non-uniform number of array " +
-					   "dimensions in array initializer");
-				}
-				if (firstArr.getElements().size() != other.getElements().size()) {
-				    report(expr, 
-					   "two rows of a multi-dimensional " +  
-					   "array are initialized to different " + 
-					   "lengths (arrays must be rectangular)");
-				}
-			    }
-			} else {
-			    // if first element is not array, no other
-			    // element should be an array
-			    for (int i=1; i<elems.size(); i++) {
-				if (elems.get(i) instanceof ExprArrayInit) {
-				    report(expr, 
-					   "non-uniform number of array " +
-					   "dimensions in array initializer");
-				}
-			    }
-			}
-		    }
-		    
+                    // check for uniform length and dimensions among all children.
+                    List elems = expr.getElements();
+            
+                    // only worry about it if we have elements
+                    if (elems.size()>0) {
+                        Expression first = (Expression)elems.get(0);
+                        // if one is an array, they should all be
+                        // arrays of the same length and dimensions
+                        if (first instanceof ExprArrayInit) {
+                            ExprArrayInit firstArr = (ExprArrayInit)first;
+                            for (int i=1; i<elems.size(); i++) {
+                                ExprArrayInit other = (ExprArrayInit)elems.get(i);
+                                if (firstArr.getDims() != other.getDims()) {
+                                    report(expr, 
+                                           "non-uniform number of array " +
+                                           "dimensions in array initializer");
+                                }
+                                if (firstArr.getElements().size() != other.getElements().size()) {
+                                    report(expr, 
+                                           "two rows of a multi-dimensional " +  
+                                           "array are initialized to different " + 
+                                           "lengths (arrays must be rectangular)");
+                                }
+                            }
+                        } else {
+                            // if first element is not array, no other
+                            // element should be an array
+                            for (int i=1; i<elems.size(); i++) {
+                                if (elems.get(i) instanceof ExprArrayInit) {
+                                    report(expr, 
+                                           "non-uniform number of array " +
+                                           "dimensions in array initializer");
+                                }
+                            }
+                        }
+                    }
+            
                     return super.visitExprArrayInit(expr);
                 }
 
@@ -854,61 +854,61 @@ public class SemanticChecker
                     Type it = getType(expr.getExpr());
                     
                     if (it != null)
-                    {
-                        if (!it.promotesTo
-                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
-                            report(expr, "peek index must be an int");
-                    }
+                        {
+                            if (!it.promotesTo
+                                (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                                report(expr, "peek index must be an int");
+                        }
                     
                     return super.visitExprPeek(expr);                    
                 }
 
-		public Object visitFieldDecl(FieldDecl field) {
-		    // check that array sizes match
-		    for (int i=0; i<field.getNumFields(); i++) {
-			// the types are backwards from the initializers
-			Type type = field.getType(i);
-			Expression init = field.getInit(i);
-			// deep-check the array types (to deal with multi-dim arrays)
-			boolean recurse = true;
-			while (type instanceof TypeArray && init!=null && recurse) {
-			    // check that initializer is array initializer
-			    // (I guess it could also be conditional expression?  Don't bother.)
-			    if (!(init instanceof ExprArrayInit)) {
-				// this is not an error case because
-				// it might be a function call, e.g.,
-				// to init_array_1D_float(filename, size)
+                public Object visitFieldDecl(FieldDecl field) {
+                    // check that array sizes match
+                    for (int i=0; i<field.getNumFields(); i++) {
+                        // the types are backwards from the initializers
+                        Type type = field.getType(i);
+                        Expression init = field.getInit(i);
+                        // deep-check the array types (to deal with multi-dim arrays)
+                        boolean recurse = true;
+                        while (type instanceof TypeArray && init!=null && recurse) {
+                            // check that initializer is array initializer
+                            // (I guess it could also be conditional expression?  Don't bother.)
+                            if (!(init instanceof ExprArrayInit)) {
+                                // this is not an error case because
+                                // it might be a function call, e.g.,
+                                // to init_array_1D_float(filename, size)
 
-				// stop looking deeper into array decl
-				recurse = false;
-			    } else {
-				// check that lengths match
-				Expression lengthExpr = ((TypeArray)type).getLength();
-				// only check it if we have resolved it
-				if (lengthExpr instanceof ExprConstInt) {
-				    int length = ((ExprConstInt)lengthExpr).getVal();
-				    if (length != ((ExprArrayInit)init).getElements().size()) {
-					report(field, 
-					       "declared array length does not match " +
-					       "array initializer");
-				    }
-				}
-				// update for next check.  Check as
-				// long as there are array
-				// initializers to match.
-				type = ((TypeArray)type).getBase();
-				List elems = ((ExprArrayInit)init).getElements();
-				if (elems.size()>0) {
-				    init = (Expression)elems.get(0);
-				} else {
-				    recurse = false;
-				}
-			    }
-			}
-		    }
+                                // stop looking deeper into array decl
+                                recurse = false;
+                            } else {
+                                // check that lengths match
+                                Expression lengthExpr = ((TypeArray)type).getLength();
+                                // only check it if we have resolved it
+                                if (lengthExpr instanceof ExprConstInt) {
+                                    int length = ((ExprConstInt)lengthExpr).getVal();
+                                    if (length != ((ExprArrayInit)init).getElements().size()) {
+                                        report(field, 
+                                               "declared array length does not match " +
+                                               "array initializer");
+                                    }
+                                }
+                                // update for next check.  Check as
+                                // long as there are array
+                                // initializers to match.
+                                type = ((TypeArray)type).getBase();
+                                List elems = ((ExprArrayInit)init).getElements();
+                                if (elems.size()>0) {
+                                    init = (Expression)elems.get(0);
+                                } else {
+                                    recurse = false;
+                                }
+                            }
+                        }
+                    }
 
-		    return super.visitFieldDecl(field);
-		}
+                    return super.visitFieldDecl(field);
+                }
 
                 public Object visitStmtPush(StmtPush stmt)
                 {
@@ -931,15 +931,15 @@ public class SemanticChecker
                     // the input type is void.  (We'd have to
                     // determine the loopback type now.)
                     if (xt != null && streamType != null)
-                    {
-                        Type in = streamType.getIn();
-                        if (!((in instanceof TypePrimitive) &&
-                              ((TypePrimitive)in).getType() ==
-                              TypePrimitive.TYPE_VOID) &&
-                            !(xt.promotesTo(in)))
-                        report(stmt, "enqueue expression must be of "+
-                               "input type of feedback loop");
-                    }
+                        {
+                            Type in = streamType.getIn();
+                            if (!((in instanceof TypePrimitive) &&
+                                  ((TypePrimitive)in).getType() ==
+                                  TypePrimitive.TYPE_VOID) &&
+                                !(xt.promotesTo(in)))
+                                report(stmt, "enqueue expression must be of "+
+                                       "input type of feedback loop");
+                        }
                     
                     return super.visitStmtEnqueue(stmt);
                 }
@@ -975,10 +975,10 @@ public class SemanticChecker
         // Generic map of stream names:
         final Map streams = new HashMap();
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-        {
-            StreamSpec ss = (StreamSpec)iter.next();
-            streams.put(ss.getName(), ss);
-        }
+            {
+                StreamSpec ss = (StreamSpec)iter.next();
+                streams.put(ss.getName(), ss);
+            }
         
         // Look for init functions in composite streams:
         prog.accept(new FEReplacer() {
@@ -1027,33 +1027,33 @@ public class SemanticChecker
                     if (sc instanceof SCAnon)
                         st2 = ((SCAnon)sc).getSpec().getStreamType();
                     else
-                    {
-                        String name = ((SCSimple)sc).getName();
-                        StreamSpec spec = (StreamSpec)streams.get(name);
-                        if (spec == null)
-                            // Technically an error; keep going.
-                            return stl.getTop();
-                        st2 = spec.getStreamType();
-                    }
+                        {
+                            String name = ((SCSimple)sc).getName();
+                            StreamSpec spec = (StreamSpec)streams.get(name);
+                            if (spec == null)
+                                // Technically an error; keep going.
+                                return stl.getTop();
+                            st2 = spec.getStreamType();
+                        }
                     // Report on conflicts at this node, but only
                     // if we haven't yet.
                     if (!reported.contains(stmt))
-                    {
-                        // Is the input bottom?
-                        if (stl.isBottom())
                         {
-                            reported.add(stmt);
-                            report(stmt, "ambiguous prevailing stream type");
+                            // Is the input bottom?
+                            if (stl.isBottom())
+                                {
+                                    reported.add(stmt);
+                                    report(stmt, "ambiguous prevailing stream type");
+                                }
+                            // If we have a stream type, does it disagree?
+                            else if (!stl.isTop() && st2 != null &&
+                                     !(stl.getValue().equals(st2.getIn())))
+                                {
+                                    reported.add(stmt);
+                                    report(stmt, "prevailing stream type " +
+                                           stl.getValue() + " disagrees with child");
+                                }
                         }
-                        // If we have a stream type, does it disagree?
-                        else if (!stl.isTop() && st2 != null &&
-                                 !(stl.getValue().equals(st2.getIn())))
-                        {
-                            reported.add(stmt);
-                            report(stmt, "prevailing stream type " +
-                                   stl.getValue() + " disagrees with child");
-                        }
-                    }
                     // In any case, the output type is top if our stream
                     // type is null, or a value.
                     if (st2 == null)
@@ -1061,7 +1061,7 @@ public class SemanticChecker
                     else
                         return new StrictTypeLattice(st2.getOut());
                 }
-        }.run(cfg);
+            }.run(cfg);
 
         // At this point we've reported if stream types don't match
         // within the stream.  Check the output:
@@ -1137,22 +1137,22 @@ public class SemanticChecker
                     StreamCreator sc;
                     boolean takeInput;
                     if (stmt instanceof StmtAdd)
-                    {
-                        sc = ((StmtAdd)stmt).getCreator();
-                        takeInput = forInput;
-                    }
+                        {
+                            sc = ((StmtAdd)stmt).getCreator();
+                            takeInput = forInput;
+                        }
                     else if (stmt instanceof StmtBody)
-                    {
-                        sc = ((StmtBody)stmt).getCreator();
-                        // child input connected to loop input
-                        takeInput = forInput;
-                    }
+                        {
+                            sc = ((StmtBody)stmt).getCreator();
+                            // child input connected to loop input
+                            takeInput = forInput;
+                        }
                     else if (stmt instanceof StmtLoop)
-                    {
-                        sc = ((StmtLoop)stmt).getCreator();
-                        // child input connected to loop output
-                        takeInput = !forInput;
-                    }
+                        {
+                            sc = ((StmtLoop)stmt).getCreator();
+                            // child input connected to loop output
+                            takeInput = !forInput;
+                        }
                     else
                         // uninteresting statement
                         return in;
@@ -1162,10 +1162,10 @@ public class SemanticChecker
                     if (sc instanceof SCAnon)
                         ss = ((SCAnon)sc).getSpec();
                     else if (sc instanceof SCSimple)
-                    {
-                        String name = ((SCSimple)sc).getName();
-                        ss = (StreamSpec)streams.get(name);
-                    }
+                        {
+                            String name = ((SCSimple)sc).getName();
+                            ss = (StreamSpec)streams.get(name);
+                        }
 
                     if (ss == null)
                         return in;
@@ -1213,16 +1213,16 @@ public class SemanticChecker
         StrictTypeLattice exitVal =
             (StrictTypeLattice)typeMap.get(cfg.getExit());
         if (exitVal.isBottom())
-        {
-            if (forSJ && forInput)
-                report(ss, "types at splitjoin entry disagree");
-            else if (forSJ && !forInput)
-                report(ss, "types at splitjoin exit disagree");
-            else if (!forSJ && forInput)
-                report(ss, "types at feedbackloop entry disagree");
-            else if (!forSJ && !forInput)
-                report(ss, "types at feedbackloop exit disagree");
-        }
+            {
+                if (forSJ && forInput)
+                    report(ss, "types at splitjoin entry disagree");
+                else if (forSJ && !forInput)
+                    report(ss, "types at splitjoin exit disagree");
+                else if (!forSJ && forInput)
+                    report(ss, "types at feedbackloop entry disagree");
+                else if (!forSJ && !forInput)
+                    report(ss, "types at feedbackloop exit disagree");
+            }
     }
 
     /**
@@ -1241,40 +1241,40 @@ public class SemanticChecker
                 {
                     if (ss.getType() == StreamSpec.STREAM_SPLITJOIN ||
                         ss.getType() == StreamSpec.STREAM_FEEDBACKLOOP)
-                    {
-                        exactlyOneStatement
-                            (ss, "split",
-                             new StatementCounter() {
-                                 public boolean
-                                     statementQualifies(Statement stmt)
-                                 { return stmt instanceof StmtSplit; }
-                             });
-                        exactlyOneStatement
-                            (ss, "join",
-                             new StatementCounter() {
-                                 public boolean
-                                     statementQualifies(Statement stmt)
-                                 { return stmt instanceof StmtJoin; }
-                             });
-                    }
+                        {
+                            exactlyOneStatement
+                                (ss, "split",
+                                 new StatementCounter() {
+                                     public boolean
+                                         statementQualifies(Statement stmt)
+                                     { return stmt instanceof StmtSplit; }
+                                 });
+                            exactlyOneStatement
+                                (ss, "join",
+                                 new StatementCounter() {
+                                     public boolean
+                                         statementQualifies(Statement stmt)
+                                     { return stmt instanceof StmtJoin; }
+                                 });
+                        }
 
                     if (ss.getType() == StreamSpec.STREAM_FEEDBACKLOOP)
-                    {
-                        exactlyOneStatement
-                            (ss, "body",
-                             new StatementCounter() {
-                                 public boolean
-                                     statementQualifies(Statement stmt)
-                                 { return stmt instanceof StmtBody; }
-                             });
-                        exactlyOneStatement
-                            (ss, "loop",
-                             new StatementCounter() {
-                                 public boolean
-                                     statementQualifies(Statement stmt)
-                                 { return stmt instanceof StmtLoop; }
-                             });
-                    }
+                        {
+                            exactlyOneStatement
+                                (ss, "body",
+                                 new StatementCounter() {
+                                     public boolean
+                                         statementQualifies(Statement stmt)
+                                     { return stmt instanceof StmtBody; }
+                                 });
+                            exactlyOneStatement
+                                (ss, "loop",
+                                 new StatementCounter() {
+                                     public boolean
+                                         statementQualifies(Statement stmt)
+                                     { return stmt instanceof StmtLoop; }
+                                 });
+                        }
                     return super.visitStreamSpec(ss);
                 }
             });
@@ -1460,29 +1460,29 @@ public class SemanticChecker
                 {
                     // Check: the variable is declared somewhere.
                     try
-                    {
-                        symtab.lookupVar(var);
-                    }
+                        {
+                            symtab.lookupVar(var);
+                        }
                     catch(UnrecognizedVariableException e)
-                    {
-                        report(var, "unrecognized variable");
-                    }
+                        {
+                            report(var, "unrecognized variable");
+                        }
                     return super.visitExprVar(var);
                 }
 
                 private boolean isStreamParam(String name)
                 {
                     try
-                    {
-                        int kind = symtab.lookupKind(name);
-                        if (kind == SymbolTable.KIND_STREAM_PARAM)
-                            return true;
-                    }
+                        {
+                            int kind = symtab.lookupKind(name);
+                            if (kind == SymbolTable.KIND_STREAM_PARAM)
+                                return true;
+                        }
                     catch(UnrecognizedVariableException e)
-                    {
-                        // ignore; calling code should have recursive
-                        // calls which will catch this
-                    }
+                        {
+                            // ignore; calling code should have recursive
+                            // calls which will catch this
+                        }
                     return false;
                 }
 
@@ -1490,12 +1490,12 @@ public class SemanticChecker
                 {
                     // Check: none of the locals shadow stream parameters.
                     for (int i = 0; i < stmt.getNumVars(); i++)
-                    {
-                        String name = stmt.getName(i);
-                        if (isStreamParam(name))
-                            report(stmt,
-                                   "local variable shadows stream parameter");
-                    }
+                        {
+                            String name = stmt.getName(i);
+                            if (isStreamParam(name))
+                                report(stmt,
+                                       "local variable shadows stream parameter");
+                        }
                     return super.visitStmtVarDecl(stmt);
                 }
 
@@ -1504,12 +1504,12 @@ public class SemanticChecker
                     // Check: LHS isn't a stream parameter.
                     Expression lhs = stmt.getLHS();
                     if (lhs instanceof ExprVar)
-                    {
-                        ExprVar lhsv = (ExprVar)lhs;
-                        String name = lhsv.getName();
-                        if (isStreamParam(name))
-                            report(stmt, "assignment to stream parameter");
-                    }
+                        {
+                            ExprVar lhsv = (ExprVar)lhs;
+                            String name = lhsv.getName();
+                            if (isStreamParam(name))
+                                report(stmt, "assignment to stream parameter");
+                        }
                     return super.visitStmtAssign(stmt);
                 }
 
@@ -1522,12 +1522,12 @@ public class SemanticChecker
                          op == ExprUnary.UNOP_POSTINC ||
                          op == ExprUnary.UNOP_PREDEC ||
                          op == ExprUnary.UNOP_POSTDEC))
-                    {
-                        ExprVar var = (ExprVar)child;
-                        String name = var.getName();
-                        if (isStreamParam(name))
-                            report(expr, "modification of stream parameter");
-                    }
+                        {
+                            ExprVar var = (ExprVar)child;
+                            String name = var.getName();
+                            if (isStreamParam(name))
+                                report(expr, "modification of stream parameter");
+                        }
                     return super.visitExprUnary(expr);
                 }
             });

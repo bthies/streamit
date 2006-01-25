@@ -17,7 +17,7 @@
 package streamit.scheduler2.hierarchical;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FilterIter;
+    FilterIter;
 import streamit.scheduler2.Schedule;
 
 /**
@@ -80,15 +80,15 @@ abstract public class Filter
     {
         Schedule workFunction =
             new Schedule(
-                filterIter.getWorkFunctionPhase(nPhase),
-                filterIter.getUnspecializedIter());
+                         filterIter.getWorkFunctionPhase(nPhase),
+                         filterIter.getUnspecializedIter());
         PhasingSchedule phase =
             new PhasingSchedule(
-                this,
-                workFunction,
-                filterIter.getPeekPhase(nPhase),
-                filterIter.getPopPhase(nPhase),
-                filterIter.getPushPhase(nPhase));
+                                this,
+                                workFunction,
+                                filterIter.getPeekPhase(nPhase),
+                                filterIter.getPopPhase(nPhase),
+                                filterIter.getPushPhase(nPhase));
         return phase;
     }
 
@@ -116,15 +116,15 @@ abstract public class Filter
     {
         Schedule initCall =
             new Schedule(
-                filterIter.getInitFunctionStage(nPhase),
-                filterIter.getUnspecializedIter());
+                         filterIter.getInitFunctionStage(nPhase),
+                         filterIter.getUnspecializedIter());
         PhasingSchedule initPhase =
             new PhasingSchedule(
-                this,
-                initCall,
-                filterIter.getInitPeekStage(nPhase),
-                filterIter.getInitPopStage(nPhase),
-                filterIter.getInitPushStage(nPhase));
+                                this,
+                                initCall,
+                                filterIter.getInitPeekStage(nPhase),
+                                filterIter.getInitPopStage(nPhase),
+                                filterIter.getInitPushStage(nPhase));
         return initPhase;
     }
 
@@ -233,8 +233,8 @@ abstract public class Filter
     }
 
     public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages)
+                                         StreamInterface child,
+                                         int numStages)
     {
         algorithm.advanceChildInitSchedule(child, numStages);
     }
@@ -245,15 +245,15 @@ abstract public class Filter
     }
 
     public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases)
+                                           StreamInterface child,
+                                           int numPhases)
     {
         algorithm.advanceChildSteadySchedule(child, numPhases);
     }
 
     public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage)
+                                             StreamInterface child,
+                                             int nStage)
     {
         return algorithm.getChildInitStage(child, nStage);
     }
@@ -263,8 +263,8 @@ abstract public class Filter
         return algorithm.getChildInitStage(child, 0);
     }
     public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase)
+                                               StreamInterface child,
+                                               int nPhase)
     {
         return algorithm.getChildSteadyPhase(child, nPhase);
     }

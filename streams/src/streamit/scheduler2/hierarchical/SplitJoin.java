@@ -17,7 +17,7 @@
 package streamit.scheduler2.hierarchical;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitJoinIter;
+    SplitJoinIter;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.Schedule;
 
@@ -52,22 +52,22 @@ abstract public class SplitJoin
 
             int nPhase;
             for (nPhase = 0;
-                nPhase < splitjoin.getSplitterNumWork();
-                nPhase++)
-            {
-                Schedule sched =
-                    new Schedule(
-                        splitjoin.getSplitterWork(nPhase),
-                        splitjoin.getUnspecializedIter());
-                int popAmount = splitjoin.getSplitPop(nPhase);
-                splitPhases[nPhase] =
-                    new PhasingSchedule(
-                        this,
-                        sched,
-                        popAmount,
-                        popAmount,
-                        0);
-            }
+                 nPhase < splitjoin.getSplitterNumWork();
+                 nPhase++)
+                {
+                    Schedule sched =
+                        new Schedule(
+                                     splitjoin.getSplitterWork(nPhase),
+                                     splitjoin.getUnspecializedIter());
+                    int popAmount = splitjoin.getSplitPop(nPhase);
+                    splitPhases[nPhase] =
+                        new PhasingSchedule(
+                                            this,
+                                            sched,
+                                            popAmount,
+                                            popAmount,
+                                            0);
+                }
         }
 
         // pre-compute the joiner phases
@@ -76,17 +76,17 @@ abstract public class SplitJoin
 
             int nPhase;
             for (nPhase = 0;
-                nPhase < splitjoin.getJoinerNumWork();
-                nPhase++)
-            {
-                Schedule sched =
-                    new Schedule(
-                        splitjoin.getJoinerWork(nPhase),
-                        splitjoin.getUnspecializedIter());
-                int pushAmount = splitjoin.getJoinPush(nPhase);
-                joinPhases[nPhase] =
-                    new PhasingSchedule(this, sched, 0, 0, pushAmount);
-            }
+                 nPhase < splitjoin.getJoinerNumWork();
+                 nPhase++)
+                {
+                    Schedule sched =
+                        new Schedule(
+                                     splitjoin.getJoinerWork(nPhase),
+                                     splitjoin.getUnspecializedIter());
+                    int pushAmount = splitjoin.getJoinPush(nPhase);
+                    joinPhases[nPhase] =
+                        new PhasingSchedule(this, sched, 0, 0, pushAmount);
+                }
         }
     }
 
@@ -107,9 +107,9 @@ abstract public class SplitJoin
         child = getChild(nChild);
 
         if (!(child instanceof StreamInterface))
-        {
-            ERROR("This splitjoin contains a child that is not hierarchical");
-        }
+            {
+                ERROR("This splitjoin contains a child that is not hierarchical");
+            }
 
         return (StreamInterface)child;
     }
@@ -261,8 +261,8 @@ abstract public class SplitJoin
     }
 
     public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages)
+                                         StreamInterface child,
+                                         int numStages)
     {
         algorithm.advanceChildInitSchedule(child, numStages);
     }
@@ -273,15 +273,15 @@ abstract public class SplitJoin
     }
 
     public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases)
+                                           StreamInterface child,
+                                           int numPhases)
     {
         algorithm.advanceChildSteadySchedule(child, numPhases);
     }
 
     public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage)
+                                             StreamInterface child,
+                                             int nStage)
     {
         return algorithm.getChildInitStage(child, nStage);
     }
@@ -291,8 +291,8 @@ abstract public class SplitJoin
         return algorithm.getChildInitStage(child, 0);
     }
     public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase)
+                                               StreamInterface child,
+                                               int nPhase)
     {
         return algorithm.getChildSteadyPhase(child, nPhase);
     }
@@ -367,8 +367,8 @@ abstract public class SplitJoin
     }
 
     public PhasingSchedule getChildPhases(
-        StreamInterface child,
-        int nPhases)
+                                          StreamInterface child,
+                                          int nPhases)
     {
         return algorithm.getChildPhases(child, nPhases);
     }

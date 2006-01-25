@@ -21,9 +21,9 @@ public class LIRSetWork extends LIRNode {
      * Construct a node.
      */
     public LIRSetWork(JExpression streamContext,
-		      LIRFunctionPointer work) {
-	super(streamContext);
-	this.work = work;
+                      LIRFunctionPointer work) {
+        super(streamContext);
+        this.work = work;
     }
 
     public void accept(SLIRVisitor v) {

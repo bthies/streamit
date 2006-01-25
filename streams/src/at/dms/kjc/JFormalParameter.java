@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFormalParameter.java,v 1.7 2005-01-23 00:33:01 thies Exp $
+ * $Id: JFormalParameter.java,v 1.8 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,118 +29,118 @@ import java.io.*;
  * This class represents a parameter declaration in the syntax tree
  */
 public class JFormalParameter extends JLocalVariable {
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JFormalParameter() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	ident		the name of this variable
-   * @param	initializer	the initializer
-   */
-  public JFormalParameter(TokenReference where,
-			  int desc,
-			  CType type,
-			  String ident,
-			  boolean isFinal) {
-    super(where, isFinal ? ACC_FINAL : 0, desc, type, ident, null);
-  }
-
-
-  public JFormalParameter(CType type,
-			  String ident) {
-      this(null, 0, type, ident, false);
-  }
-
-  // ----------------------------------------------------------------------
-  // INTERFACE CHECKING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Second pass (quick), check interface looks good
-   * Exceptions are not allowed here, this pass is just a tuning
-   * pass in order to create informations about exported elements
-   * such as Classes, Interfaces, Methods, Constructors and Fields
-   * sub classes must check modifiers and call checkInterface(super)
-   * @return true iff sub tree is correct enought to check code
-   */
-  public CType checkInterface(CClassContext context) {
-    try {
-      type.checkType(context);
-      return type;
-    } catch (UnpositionedError cue) {
-      context.reportTrouble(cue.addPosition(getTokenReference()));
-      return CStdType.Object;
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   ident       the name of this variable
+     * @param   initializer the initializer
+     */
+    public JFormalParameter(TokenReference where,
+                            int desc,
+                            CType type,
+                            String ident,
+                            boolean isFinal) {
+        super(where, isFinal ? ACC_FINAL : 0, desc, type, ident, null);
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
 
-  /**
-   * Analyses the node (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    try {
-      type.checkType(context);
-    } catch (UnpositionedError e) {
-      throw e.addPosition(getTokenReference());
+    public JFormalParameter(CType type,
+                            String ident) {
+        this(null, 0, type, ident, false);
     }
-    try {
-      context.getBlockContext().addVariable(this);
-    } catch (UnpositionedError e) {
-      throw e.addPosition(getTokenReference());
+
+    // ----------------------------------------------------------------------
+    // INTERFACE CHECKING
+    // ----------------------------------------------------------------------
+
+    /**
+     * Second pass (quick), check interface looks good
+     * Exceptions are not allowed here, this pass is just a tuning
+     * pass in order to create informations about exported elements
+     * such as Classes, Interfaces, Methods, Constructors and Fields
+     * sub classes must check modifiers and call checkInterface(super)
+     * @return true iff sub tree is correct enought to check code
+     */
+    public CType checkInterface(CClassContext context) {
+        try {
+            type.checkType(context);
+            return type;
+        } catch (UnpositionedError cue) {
+            context.reportTrouble(cue.addPosition(getTokenReference()));
+            return CStdType.Object;
+        }
     }
-    context.setVariableInfo(getIndex(), CVariableInfo.INITIALIZED);
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitFormalParameters(this, isFinal(), getType(), getIdent());
-  }
+    /**
+     * Analyses the node (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        try {
+            type.checkType(context);
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
+        try {
+            context.getBlockContext().addVariable(this);
+        } catch (UnpositionedError e) {
+            throw e.addPosition(getTokenReference());
+        }
+        context.setVariableInfo(getIndex(), CVariableInfo.INITIALIZED);
+    }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitFormalParameters(this, isFinal(), getType(), getIdent());
-  }
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // PUBLIC CONSTANTS
-  // ----------------------------------------------------------------------
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitFormalParameters(this, isFinal(), getType(), getIdent());
+    }
 
-  public static final JFormalParameter[]	EMPTY = new JFormalParameter[0];
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitFormalParameters(this, isFinal(), getType(), getIdent());
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    // ----------------------------------------------------------------------
+    // PUBLIC CONSTANTS
+    // ----------------------------------------------------------------------
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JFormalParameter other = new at.dms.kjc.JFormalParameter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    public static final JFormalParameter[]  EMPTY = new JFormalParameter[0];
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JFormalParameter other) {
-  super.deepCloneInto(other);
-}
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JFormalParameter other = new at.dms.kjc.JFormalParameter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JFormalParameter other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,19 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefaultFileLineFormatter.java,v 1.2 2002-12-11 23:56:11 karczma Exp $
+ * $Id: DefaultFileLineFormatter.java,v 1.3 2006-01-25 17:00:46 thies Exp $
  */
 
 package at.dms.compiler.antlr.runtime;
 
 public class DefaultFileLineFormatter extends FileLineFormatter {
-  public String getFormatString(String fileName, int line) {
-    if (fileName != null) {
-      return fileName+":"+line+": ";
-    } else if (line != 0) {
-      return "line "+line+": ";
-    } else {
-      return "";
+    public String getFormatString(String fileName, int line) {
+        if (fileName != null) {
+            return fileName+":"+line+": ";
+        } else if (line != 0) {
+            return "line "+line+": ";
+        } else {
+            return "";
+        }
     }
-  }
 }

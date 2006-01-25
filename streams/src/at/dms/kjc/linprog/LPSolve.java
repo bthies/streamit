@@ -24,10 +24,10 @@ public class LPSolve implements LinearProgramSolver {
      * variables.
      */
     public LPSolve(int numConstraints, int numVars) {
-	this.numConstraints = numConstraints;
-	this.numVars = numVars;
-	this.lp = new lprec(numConstraints, numVars);
-	this.solver = new solve();
+        this.numConstraints = numConstraints;
+        this.numVars = numVars;
+        this.lp = new lprec(numConstraints, numVars);
+        this.solver = new solve();
     }
 
     /**
@@ -36,21 +36,21 @@ public class LPSolve implements LinearProgramSolver {
      * coefficients before checking in as a new constraint.)
      */
     public double[] getEmptyConstraint() {
-	return new double[wrap(numVars)];
+        return new double[wrap(numVars)];
     }
 
     /**
      * Sets the objective function to be <obj>.
      */
     public void setObjective(double[] obj) {
-	solver.set_obj_fn(lp, wrap(obj));
+        solver.set_obj_fn(lp, wrap(obj));
     }
 
     /**
      * Constrains the i'th variable of this to be an integer.
      */
     public void setBoolVar(int i) {
-	solver.set_int(lp, wrap(i), constant.TRUE);
+        solver.set_int(lp, wrap(i), constant.TRUE);
     }
 
     /**
@@ -60,7 +60,7 @@ public class LPSolve implements LinearProgramSolver {
      * That is, <constraint> <dot> <variables> >= <rhs>. 
      */
     public void addConstraintGE(double[] constraint, double rhs) {
-	solver.add_constraint(lp, wrap(constraint), constant.GE, rhs);
+        solver.add_constraint(lp, wrap(constraint), constant.GE, rhs);
     }
 
     /**
@@ -68,7 +68,7 @@ public class LPSolve implements LinearProgramSolver {
      * coefficients <constraint> and the right-hand-side <rhs>.
      */
     public void addConstraintEQ(double[] constraint, double rhs) {
-	solver.add_constraint(lp, wrap(constraint), constant.EQ, rhs);
+        solver.add_constraint(lp, wrap(constraint), constant.EQ, rhs);
     }
     
     /**
@@ -76,12 +76,12 @@ public class LPSolve implements LinearProgramSolver {
      * (indices 0...numVars-1) in the optimum.
      */
     public double[] solve() {
-	solver.dosolve(lp);
-	double[] result = new double[numVars];
-	for (int i=0; i<numVars; i++) {
-	    result[i] = lp.getBestSolution(lp.getRows()+i+1);
-	}
-	return result;
+        solver.dosolve(lp);
+        double[] result = new double[numVars];
+        for (int i=0; i<numVars; i++) {
+            result[i] = lp.getBestSolution(lp.getRows()+i+1);
+        }
+        return result;
     }
 
     /**
@@ -89,7 +89,7 @@ public class LPSolve implements LinearProgramSolver {
      * to be off by one in the way it expects some indices.
      */
     private int wrap(int i) {
-	return i+1;
+        return i+1;
     }
     
     /**
@@ -97,17 +97,17 @@ public class LPSolve implements LinearProgramSolver {
      * Mutates the argument and also returns it.
      */
     private double[] wrap(double[] arr) {
-	// make sure user isn't expecting arr[arr.length-1] to be
-	// preserved
-	if (arr[arr.length-1]!=0) {
-	    System.err.println("Warning: user set a coefficient for a variable that doesn't exist.");
-	}
-	// shift everything up
-	for (int i=arr.length-1; i>0; i--) {
-	    arr[i] = arr[i-1];
-	}
-	arr[0] = 0;
-	return arr;
+        // make sure user isn't expecting arr[arr.length-1] to be
+        // preserved
+        if (arr[arr.length-1]!=0) {
+            System.err.println("Warning: user set a coefficient for a variable that doesn't exist.");
+        }
+        // shift everything up
+        for (int i=arr.length-1; i>0; i--) {
+            arr[i] = arr[i-1];
+        }
+        arr[0] = 0;
+        return arr;
     }
     
 }

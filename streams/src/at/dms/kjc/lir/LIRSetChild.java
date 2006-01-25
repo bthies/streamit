@@ -33,18 +33,18 @@ public class LIRSetChild extends LIRNode {
      * Construct a node.
      */
     public LIRSetChild(JExpression streamContext,
-		       String childType,
-		       String childName) {
-	super(streamContext);
-	this.childType = childType;
-	this.childName = childName;
+                       String childType,
+                       String childName) {
+        super(streamContext);
+        this.childType = childType;
+        this.childName = childName;
     }
 
     public void accept(SLIRVisitor v)
     {
         v.visitSetChild(this, 
-			this.getStreamContext(), 
-			this.childType,
-			this.childName);
+                        this.getStreamContext(), 
+                        this.childType,
+                        this.childName);
     }
 }

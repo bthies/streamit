@@ -1,5 +1,5 @@
 /*
- * @(#)FormatBorderColor.java	1.2 31.01.2003
+ * @(#)FormatBorderColor.java   1.2 31.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -38,33 +38,33 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class FormatBorderColor extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatBorderColor.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FormatBorderColor(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatBorderColor.
+     * @param graphpad
+     * @param name
+     */
+    public FormatBorderColor(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		if (getCurrentGraph().getSelectionCount() > 0) {
-			Color value =
-				JColorChooser.showDialog(
-					graphpad.getFrame(),
-					Translator.getString("ColorDialog"),
-					null);
-			if (value != null) {
-				Map map = GraphConstants.createMap();
-				Object[] keys = new Object[] { GraphConstants.BORDER };
-				GraphConstants.setRemoveAttributes(map, keys);
-				GraphConstants.setBorderColor(map, value);
-				setSelectionAttributes(map);
-			}
-		}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        if (getCurrentGraph().getSelectionCount() > 0) {
+            Color value =
+                JColorChooser.showDialog(
+                                         graphpad.getFrame(),
+                                         Translator.getString("ColorDialog"),
+                                         null);
+            if (value != null) {
+                Map map = GraphConstants.createMap();
+                Object[] keys = new Object[] { GraphConstants.BORDER };
+                GraphConstants.setRemoveAttributes(map, keys);
+                GraphConstants.setBorderColor(map, value);
+                setSelectionAttributes(map);
+            }
+        }
+    }
 
 }

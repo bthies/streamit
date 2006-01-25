@@ -5,21 +5,21 @@ public class NodeSteadyRestriction extends Restriction
     final LatencyNode node;
     
     NodeSteadyRestriction(
-        LatencyNode _node,
-        int numSteadyState,
-        StreamInterface _parent)
+                          LatencyNode _node,
+                          int numSteadyState,
+                          StreamInterface _parent)
     {
         super(
-            _node,
-            new P2PPortal(
-                true,
-                _node,
-                _node,
-                numSteadyState,
-                numSteadyState,
-                _parent));
+              _node,
+              new P2PPortal(
+                            true,
+                            _node,
+                            _node,
+                            numSteadyState,
+                            numSteadyState,
+                            _parent));
                 
-         node = _node;
+        node = _node;
     }
 
     public boolean notifyExpired()

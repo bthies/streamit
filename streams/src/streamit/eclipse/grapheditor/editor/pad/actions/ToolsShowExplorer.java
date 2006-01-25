@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsShowOverview.java	1.2 01.02.2003
+ * @(#)ToolsShowOverview.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -38,32 +38,32 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class ToolsShowExplorer extends AbstractActionDefault {
 
-	protected transient JFrame explorerDialog;
+    protected transient JFrame explorerDialog;
 
-	/**
-	 * Constructor for ToolsShowOverview.
-	 * @param graphpad
-	 */
-	public ToolsShowExplorer(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolsShowOverview.
+     * @param graphpad
+     */
+    public ToolsShowExplorer(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		if (explorerDialog == null) {
-			String title = Translator.getString("ExplorerFrameTitle");
-			explorerDialog = new JFrame(title);
-			explorerDialog.getContentPane().setLayout(new BorderLayout());
-			explorerDialog.getContentPane().add(
-				new GPExplorer(getCurrentGraph()),
-				BorderLayout.CENTER);
-			explorerDialog.pack();
-			explorerDialog.setSize(new Dimension(Math.max(320, explorerDialog.getWidth()),
-												Math.max(240, explorerDialog.getHeight())));
-		}
-		explorerDialog.show();
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        if (explorerDialog == null) {
+            String title = Translator.getString("ExplorerFrameTitle");
+            explorerDialog = new JFrame(title);
+            explorerDialog.getContentPane().setLayout(new BorderLayout());
+            explorerDialog.getContentPane().add(
+                                                new GPExplorer(getCurrentGraph()),
+                                                BorderLayout.CENTER);
+            explorerDialog.pack();
+            explorerDialog.setSize(new Dimension(Math.max(320, explorerDialog.getWidth()),
+                                                 Math.max(240, explorerDialog.getHeight())));
+        }
+        explorerDialog.show();
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)FilePrint.java	1.2 30.01.2003
+ * @(#)FilePrint.java   1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -34,34 +34,34 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class FilePrint extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FilePrint.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FilePrint(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FilePrint.
+     * @param graphpad
+     * @param name
+     */
+    public FilePrint(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			PrinterJob printJob = PrinterJob.getPrinterJob();
-			printJob.setPrintable(graphpad.getCurrentDocument() );
-			if (printJob.printDialog()) {
-				try {
-					boolean oldvalue = false;
-					double oldscale = getCurrentGraph().getScale();
-					graphpad.getCurrentDocument().setScale(1);
-					oldvalue = getCurrentGraph().isPageVisible();
-					printJob.print();
-					graphpad.getCurrentDocument() .setScale(oldscale);
-					getCurrentGraph().setPageVisible(oldvalue);
-				} catch (Exception printException) {
-					printException.printStackTrace();
-				}
-			}
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        PrinterJob printJob = PrinterJob.getPrinterJob();
+        printJob.setPrintable(graphpad.getCurrentDocument() );
+        if (printJob.printDialog()) {
+            try {
+                boolean oldvalue = false;
+                double oldscale = getCurrentGraph().getScale();
+                graphpad.getCurrentDocument().setScale(1);
+                oldvalue = getCurrentGraph().isPageVisible();
+                printJob.print();
+                graphpad.getCurrentDocument() .setScale(oldscale);
+                getCurrentGraph().setPageVisible(oldvalue);
+            } catch (Exception printException) {
+                printException.printStackTrace();
+            }
+        }
+    }
 
 }

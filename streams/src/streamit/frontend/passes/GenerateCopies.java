@@ -28,7 +28,7 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.14 2006-01-06 18:35:27 thies Exp $
+ * @version $Id: GenerateCopies.java,v 1.15 2006-01-25 17:04:28 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -73,12 +73,12 @@ public class GenerateCopies extends SymbolTableVisitor
      * type, it needs to be copied so it won't share that pointer.
      */
     private boolean structNeedsCopy(TypeStruct type) {
-	for (int i=0; i<type.getNumFields(); i++) {
-	    if (needsCopy(type.getType(type.getField(i)))) {
-		return true;
-	    }
-	}
-	return false;
+        for (int i=0; i<type.getNumFields(); i++) {
+            if (needsCopy(type.getType(type.getField(i)))) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
@@ -87,19 +87,19 @@ public class GenerateCopies extends SymbolTableVisitor
      */
     private boolean needsCopy(Expression expr)
     {
-	// don't generate copies for array initializers, since we
-	// currently assume that they specify every literal in the
-	// array (they don't contain variable references).
-	if (expr instanceof ExprComposite) {
-	    return true;
-	}
+        // don't generate copies for array initializers, since we
+        // currently assume that they specify every literal in the
+        // array (they don't contain variable references).
+        if (expr instanceof ExprComposite) {
+            return true;
+        }
 
-	if (expr instanceof ExprArrayInit) {
-	    return false;
-	} else {
-	    if (getType(expr) == null) return false;
-	    return needsCopy(getType(expr));
-	}
+        if (expr instanceof ExprArrayInit) {
+            return false;
+        } else {
+            if (getType(expr) == null) return false;
+            return needsCopy(getType(expr));
+        }
     }
 
     /**
@@ -183,11 +183,11 @@ public class GenerateCopies extends SymbolTableVisitor
                                 TypeStruct type)
     {
         for (int i = 0; i < type.getNumFields(); i++)
-        {
-            String fname = type.getField(i);
-            makeCopy(new ExprField(from.getContext(), from, fname),
-                     new ExprField(to.getContext(), to, fname));
-        }
+            {
+                String fname = type.getField(i);
+                makeCopy(new ExprField(from.getContext(), from, fname),
+                         new ExprField(to.getContext(), to, fname));
+            }
     }
 
     private void makeCopyComplex(Expression from, Expression to)
@@ -205,48 +205,48 @@ public class GenerateCopies extends SymbolTableVisitor
     
     private void makeCopyComposite(Expression from, Expression to, int type)
     {
-	addStatement
-	    (new StmtAssign(to.getContext(),
-			    new ExprField(to.getContext(), to, "x"),
-			    from instanceof ExprComposite ? 
-			    ((ExprComposite)from).getX() : new ExprField(from.getContext(), from, "x")));
-	addStatement
-	    (new StmtAssign(to.getContext(),
-			    new ExprField(to.getContext(), to, "y"),
-			    from instanceof ExprComposite ? 
-			    ((ExprComposite)from).getY() : new ExprField(from.getContext(), from, "y")));
-	if (type == TypePrimitive.TYPE_FLOAT3 ||
-	    type == TypePrimitive.TYPE_FLOAT4)
-	    addStatement
-		(new StmtAssign(to.getContext(),
-				new ExprField(to.getContext(), to, "z"),
-				from instanceof ExprComposite ? 
-				((ExprComposite)from).getZ() : new ExprField(from.getContext(), from, "z")));
-	if (type == TypePrimitive.TYPE_FLOAT4)
-	    addStatement
-		(new StmtAssign(to.getContext(),
-				new ExprField(to.getContext(), to, "w"),
-				from instanceof ExprComposite ? 
-				((ExprComposite)from).getW() : new ExprField(from.getContext(), from, "w")));
+        addStatement
+            (new StmtAssign(to.getContext(),
+                            new ExprField(to.getContext(), to, "x"),
+                            from instanceof ExprComposite ? 
+                            ((ExprComposite)from).getX() : new ExprField(from.getContext(), from, "x")));
+        addStatement
+            (new StmtAssign(to.getContext(),
+                            new ExprField(to.getContext(), to, "y"),
+                            from instanceof ExprComposite ? 
+                            ((ExprComposite)from).getY() : new ExprField(from.getContext(), from, "y")));
+        if (type == TypePrimitive.TYPE_FLOAT3 ||
+            type == TypePrimitive.TYPE_FLOAT4)
+            addStatement
+                (new StmtAssign(to.getContext(),
+                                new ExprField(to.getContext(), to, "z"),
+                                from instanceof ExprComposite ? 
+                                ((ExprComposite)from).getZ() : new ExprField(from.getContext(), from, "z")));
+        if (type == TypePrimitive.TYPE_FLOAT4)
+            addStatement
+                (new StmtAssign(to.getContext(),
+                                new ExprField(to.getContext(), to, "w"),
+                                from instanceof ExprComposite ? 
+                                ((ExprComposite)from).getW() : new ExprField(from.getContext(), from, "w")));
     }
 
     /**
      * Returns whether or not <exp> contains a function call.
      */
     private boolean containsFunCall(Expression expr) {
-	final boolean[] result = { false };
+        final boolean[] result = { false };
 
         expr.accept(new FEReplacer() {
                 public Object visitExprFunCall(ExprFunCall expr)
                 {
-		    result[0] = true;
-		    // don't need to visit any further; we found what
-		    // we were looking for
-		    return expr;
-		}
-	    });
-	
-	return result[0];
+                    result[0] = true;
+                    // don't need to visit any further; we found what
+                    // we were looking for
+                    return expr;
+                }
+            });
+    
+        return result[0];
     }
 
     public Object visitExprPeek(ExprPeek expr)
@@ -267,90 +267,90 @@ public class GenerateCopies extends SymbolTableVisitor
 
     public Object visitExprHelperCall(ExprHelperCall expr)
     {
-	boolean hasChanged = false;
-	Expression result = expr;
-	List newParams = new ArrayList();
-	for (Iterator iter = expr.getParams().iterator(); iter.hasNext(); )
-	    {
-		Expression param = (Expression)iter.next();
-		Expression newParam = param;
-		/*
-		  if (needsCopy(newParam))
-		  newParam = assignToTemp(newParam, true, false);
-		*/
-		newParam = doExpression(newParam);
-		newParams.add(newParam);
-		if (param != newParam) hasChanged = true;
-	    }
-	if (hasChanged)
-	    result = new ExprHelperCall(expr.getContext(), 
-					expr.getHelperPackage(), 
-					expr.getName(), newParams);
-	if (needsCopy(result))
-	    result = assignToTemp(result, false);
-	return result;
+        boolean hasChanged = false;
+        Expression result = expr;
+        List newParams = new ArrayList();
+        for (Iterator iter = expr.getParams().iterator(); iter.hasNext(); )
+            {
+                Expression param = (Expression)iter.next();
+                Expression newParam = param;
+                /*
+                  if (needsCopy(newParam))
+                  newParam = assignToTemp(newParam, true, false);
+                */
+                newParam = doExpression(newParam);
+                newParams.add(newParam);
+                if (param != newParam) hasChanged = true;
+            }
+        if (hasChanged)
+            result = new ExprHelperCall(expr.getContext(), 
+                                        expr.getHelperPackage(), 
+                                        expr.getName(), newParams);
+        if (needsCopy(result))
+            result = assignToTemp(result, false);
+        return result;
     }
 
     public Object visitStmtAssign(StmtAssign stmt)
     {
 
-	//System.out.println("GenCopies::visitStmtAssign"+
-	//		   " lhs: "+getType(stmt.getLHS())+
-	//		   " rhs: "+getType(stmt.getRHS())+" \n");
+        //System.out.println("GenCopies::visitStmtAssign"+
+        //         " lhs: "+getType(stmt.getLHS())+
+        //         " rhs: "+getType(stmt.getRHS())+" \n");
 
         // recurse:
         Statement result = (Statement)super.visitStmtAssign(stmt);
         if (result instanceof StmtAssign) // it probably is:
-        {
-            stmt = (StmtAssign)result;
-	    
-	    //System.out.println("GenCopies::visitStmtAssign take2 "+
-	    //		       " lhs: "+getType(stmt.getLHS())+
-	    //		       " rhs: "+getType(stmt.getRHS())+
-	    //		       " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
-
-	    Expression rhs = stmt.getRHS();
-
-            if (needsCopy(rhs))
             {
+                stmt = (StmtAssign)result;
+        
+                //System.out.println("GenCopies::visitStmtAssign take2 "+
+                //             " lhs: "+getType(stmt.getLHS())+
+                //             " rhs: "+getType(stmt.getRHS())+
+                //             " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
 
-		if (rhs instanceof ExprComposite) {
+                Expression rhs = stmt.getRHS();
 
-		    // if rhs is a float vector constant assigning to
-		    // temporary variable will not work
+                if (needsCopy(rhs))
+                    {
 
-		    makeCopy(rhs, stmt.getLHS());                
+                        if (rhs instanceof ExprComposite) {
 
-		} else {
+                            // if rhs is a float vector constant assigning to
+                            // temporary variable will not work
 
-		    // if RHS is a function call, make a copy of it.
-		    // We don't want to call the function multiple
-		    // times for each element.
-		    if (containsFunCall(rhs)) {
-			rhs = assignToTemp(stmt.getRHS(), 
-					   // "true" as deep
-					   // argument will cause
-					   // bugs; need more
-					   // sophisticated
-					   // framework to do
-					   // nested structures
-					   // correctly
-					   false);
-		    }
-		    
-		    // drops op!  If there are compound assignments
-		    // like "a += b" here, we lose.  There shouldn't be,
-		    // though, since those operators aren't well-defined
-		    // for structures and arrays and this should be run
-		    // after complex prop.
-		    
-		    makeCopy(rhs, stmt.getLHS());                
-		
-		}
+                            makeCopy(rhs, stmt.getLHS());                
 
-		return null;
+                        } else {
+
+                            // if RHS is a function call, make a copy of it.
+                            // We don't want to call the function multiple
+                            // times for each element.
+                            if (containsFunCall(rhs)) {
+                                rhs = assignToTemp(stmt.getRHS(), 
+                                                   // "true" as deep
+                                                   // argument will cause
+                                                   // bugs; need more
+                                                   // sophisticated
+                                                   // framework to do
+                                                   // nested structures
+                                                   // correctly
+                                                   false);
+                            }
+            
+                            // drops op!  If there are compound assignments
+                            // like "a += b" here, we lose.  There shouldn't be,
+                            // though, since those operators aren't well-defined
+                            // for structures and arrays and this should be run
+                            // after complex prop.
+            
+                            makeCopy(rhs, stmt.getLHS());                
+        
+                        }
+
+                        return null;
+                    }
             }
-        }
         return result;
     }
 

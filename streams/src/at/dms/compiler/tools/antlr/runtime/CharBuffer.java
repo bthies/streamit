@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CharBuffer.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: CharBuffer.java,v 1.2 2006-01-25 17:00:54 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -40,30 +40,30 @@ import java.io.IOException;
 // SAS: Move most functionality into InputBuffer -- just the file-specific
 //      stuff is in here
 public class CharBuffer extends InputBuffer {
-  // char source
-  transient Reader input;
+    // char source
+    transient Reader input;
 
-  /**
-   * Create a character buffer
-   */
-  public CharBuffer(Reader input_) { // SAS: for proper text i/o
-    super();
-    input = input_;
-  }
-
-  /**
-   * Ensure that the character buffer is sufficiently full
-   */
-  public void fill(int amount) throws CharStreamException {
-    try {
-      syncConsume();
-      // Fill the buffer sufficiently to hold needed characters
-      while (queue.nbrEntries < amount + markerOffset) {
-	// Append the next character
-	queue.append((char) input.read());
-      }
-    } catch (IOException io) {
-      throw new CharStreamIOException(io);
+    /**
+     * Create a character buffer
+     */
+    public CharBuffer(Reader input_) { // SAS: for proper text i/o
+        super();
+        input = input_;
     }
-  }
+
+    /**
+     * Ensure that the character buffer is sufficiently full
+     */
+    public void fill(int amount) throws CharStreamException {
+        try {
+            syncConsume();
+            // Fill the buffer sufficiently to hold needed characters
+            while (queue.nbrEntries < amount + markerOffset) {
+                // Append the next character
+                queue.append((char) input.read());
+            }
+        } catch (IOException io) {
+            throw new CharStreamIOException(io);
+        }
+    }
 }

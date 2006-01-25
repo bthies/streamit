@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QDestination.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QDestination.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -25,23 +25,23 @@ package at.dms.backend;
  */
 interface QDestination {
 
-  // ----------------------------------------------------------------------
-  // ANALYSIS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ANALYSIS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the defined temporary.
-   */
-  QTemporary getDef();
+    /**
+     * Returns the defined temporary.
+     */
+    QTemporary getDef();
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Generates instructions for destination
-   * @param	seq		The code sequence of instruction
-   * @param	isLive		Is the destination live after this store ?
-   */
-  void store(CodeSequence seq, boolean isLive);
+    /**
+     * Generates instructions for destination
+     * @param   seq     The code sequence of instruction
+     * @param   isLive      Is the destination live after this store ?
+     */
+    void store(CodeSequence seq, boolean isLive);
 }

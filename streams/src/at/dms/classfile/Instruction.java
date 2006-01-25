@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Instruction.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: Instruction.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -31,181 +31,181 @@ import at.dms.util.InconsistencyException;
  * An instruction is defined by its opcode and its arguments.
  */
 public abstract class Instruction
-  extends AbstractInstructionAccessor
-  implements Constants
+    extends AbstractInstructionAccessor
+    implements Constants
 {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new instruction
-   *
-   * @param	opcode		the opcode of the instruction
-   */
-  public Instruction(int opcode) {
-    this.opcode = opcode;
-    this.address = -1;
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the opcode of the instruction
-   */
-  public final int getOpcode() {
-    return opcode;
-  }
-
-  /**
-   * Returns the opcode of the instruction
-   * Needed by PushLiteralInstruction
-   */
-  /*package*/ final void setOpcode(int opcode) {
-    this.opcode = opcode;
-  }
-
-  /**
-   * Returns the offset in bytes of the instruction from the beginning
-   * of the method code (ie classfile).
-   */
-  /*package*/ final int getAddress() {
-    if (address == -1) {
-      throw new InconsistencyException("instruction not reached");
+    /**
+     * Constructs a new instruction
+     *
+     * @param   opcode      the opcode of the instruction
+     */
+    public Instruction(int opcode) {
+        this.opcode = opcode;
+        this.address = -1;
     }
-    return address;
-  }
 
-  /**
-   * Sets the the offset in bytes of the instruction from the beginning
-   * of the method code
-   */
-  /*package*/ final void setAddress(int address) {
-    this.address = address;
-  }
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the number of bytes used by the the instruction in the code array.
-   */
-  /*package*/ abstract int getSize();
+    /**
+     * Returns the opcode of the instruction
+     */
+    public final int getOpcode() {
+        return opcode;
+    }
 
-  /**
-   * Returns the maximum index of local vars used by this instruction.
-   */
-  /*package*/ int getLocalVar() {
-    return 0;
-  }
+    /**
+     * Returns the opcode of the instruction
+     * Needed by PushLiteralInstruction
+     */
+    /*package*/ final void setOpcode(int opcode) {
+        this.opcode = opcode;
+    }
 
-  // --------------------------------------------------------------------
-  // CHECK CONTROL FLOW
-  // --------------------------------------------------------------------
+    /**
+     * Returns the offset in bytes of the instruction from the beginning
+     * of the method code (ie classfile).
+     */
+    /*package*/ final int getAddress() {
+        if (address == -1) {
+            throw new InconsistencyException("instruction not reached");
+        }
+        return address;
+    }
 
-  /**
-   * Verifies the enclosed instruction and computes the stack height.
-   *
-   * @param	env			the check environment
-   * @param	curStack		the stack height at the end
-   *					of the execution of the instruction
-   * @return	true iff the next instruction in textual order needs to be
-   *		checked, i.e. this instruction has not been checked before
-   *		and it can complete normally
-   * @exception	ClassFileFormatException	a problem was detected
-   */
-  /*package*/ void check(CodeEnv env, int curStack)
-    throws ClassFileFormatException
-  {}
+    /**
+     * Sets the the offset in bytes of the instruction from the beginning
+     * of the method code
+     */
+    /*package*/ final void setAddress(int address) {
+        this.address = address;
+    }
 
-  /**
-   * Computes the address of the end of the instruction.
-   *
-   * @param	position	the minimum and maximum address of the
-   *				begin of this instruction. This parameter
-   *				is changed to the minimum and maximum
-   *				address of the end of this instruction.
-   */
-  /*package*/ void computeEndAddress(CodePosition position) {
-    position.addOffset(getSize());
-  }
+    /**
+     * Returns the number of bytes used by the the instruction in the code array.
+     */
+    /*package*/ abstract int getSize();
 
-  /**
-   * Returns the type pushed on the stack
-   */
-  public abstract byte getReturnType();
+    /**
+     * Returns the maximum index of local vars used by this instruction.
+     */
+    /*package*/ int getLocalVar() {
+        return 0;
+    }
 
-  /**
-   * Returns the amount of stack (positive or negative) used by this instruction.
-   */
-  public abstract int getStack();
+    // --------------------------------------------------------------------
+    // CHECK CONTROL FLOW
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the size of data pushed on the stack by this instruction
-   */
-  public abstract int getPushedOnStack();
+    /**
+     * Verifies the enclosed instruction and computes the stack height.
+     *
+     * @param   env         the check environment
+     * @param   curStack        the stack height at the end
+     *                  of the execution of the instruction
+     * @return  true iff the next instruction in textual order needs to be
+     *      checked, i.e. this instruction has not been checked before
+     *      and it can complete normally
+     * @exception   ClassFileFormatException    a problem was detected
+     */
+    /*package*/ void check(CodeEnv env, int curStack)
+        throws ClassFileFormatException
+    {}
 
-  /**
-   * Returns the size of data pushed on the stack by this instruction
-   */
-  public final int getPoppedFromStack() {
-    return Math.abs(getStack() - getPushedOnStack());
-  }
+    /**
+     * Computes the address of the end of the instruction.
+     *
+     * @param   position    the minimum and maximum address of the
+     *              begin of this instruction. This parameter
+     *              is changed to the minimum and maximum
+     *              address of the end of this instruction.
+     */
+    /*package*/ void computeEndAddress(CodePosition position) {
+        position.addOffset(getSize());
+    }
 
-  // --------------------------------------------------------------------
-  // INFOS ABOUT SUBCLASSES
-  // --------------------------------------------------------------------
+    /**
+     * Returns the type pushed on the stack
+     */
+    public abstract byte getReturnType();
 
-  /**
-   * Returns true iff this instruction is a literal.
-   */
-  public boolean isLiteral() {
-    return false;
-  }
+    /**
+     * Returns the amount of stack (positive or negative) used by this instruction.
+     */
+    public abstract int getStack();
 
-  /**
-   * Returns true iff control flow can reach the next instruction
-   * in textual order after executing this instruction.
-   */
-  public abstract boolean canComplete();
+    /**
+     * Returns the size of data pushed on the stack by this instruction
+     */
+    public abstract int getPushedOnStack();
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    /**
+     * Returns the size of data pushed on the stack by this instruction
+     */
+    public final int getPoppedFromStack() {
+        return Math.abs(getStack() - getPushedOnStack());
+    }
 
-  /**
-   * Inserts or checks location of constant value in constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ abstract void resolveConstants(ConstantPool cp);
+    // --------------------------------------------------------------------
+    // INFOS ABOUT SUBCLASSES
+    // --------------------------------------------------------------------
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ abstract void write(ConstantPool cp, DataOutput out)
-    throws IOException;
+    /**
+     * Returns true iff this instruction is a literal.
+     */
+    public boolean isLiteral() {
+        return false;
+    }
 
-  // --------------------------------------------------------------------
-  // DEBUG
-  // --------------------------------------------------------------------
+    /**
+     * Returns true iff control flow can reach the next instruction
+     * in textual order after executing this instruction.
+     */
+    public abstract boolean canComplete();
 
-  public void dump() {
-    System.err.println("" + OpcodeNames.getName(getOpcode()) + " [" + this + "]");
-  }
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Inserts or checks location of constant value in constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ abstract void resolveConstants(ConstantPool cp);
 
-  private int			opcode;
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ abstract void write(ConstantPool cp, DataOutput out)
+        throws IOException;
 
-  // the offset in bytes of the instruction from the beginning of the method code
-  private int			address;
+    // --------------------------------------------------------------------
+    // DEBUG
+    // --------------------------------------------------------------------
+
+    public void dump() {
+        System.err.println("" + OpcodeNames.getName(getOpcode()) + " [" + this + "]");
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private int         opcode;
+
+    // the offset in bytes of the instruction from the beginning of the method code
+    private int         address;
 }

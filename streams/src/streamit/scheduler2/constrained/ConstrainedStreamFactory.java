@@ -38,7 +38,7 @@ public class ConstrainedStreamFactory
     ConstrainedStreamFactory (Scheduler _scheduler, boolean _needsSchedule)
     {
         scheduler = _scheduler;
-	needsSchedule = _needsSchedule;
+        needsSchedule = _needsSchedule;
     }
     
     private LatencyGraph latencyGraph = new LatencyGraph();
@@ -48,35 +48,35 @@ public class ConstrainedStreamFactory
     public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (iter2stream.containsKey(streamIter))
-        {
-            return (StreamInterface)iter2stream.get(streamIter);
-        }
+            {
+                return (StreamInterface)iter2stream.get(streamIter);
+            }
 
         StreamInterface newStream;
 
         if (streamIter.isFilter() != null)
-        {
-            newStream = new Filter(streamIter.isFilter(), parent, this);
-        }
+            {
+                newStream = new Filter(streamIter.isFilter(), parent, this);
+            }
         else if (streamIter.isPipeline() != null)
-        {
-            newStream = new Pipeline(streamIter.isPipeline(), parent, this);
-        }
+            {
+                newStream = new Pipeline(streamIter.isPipeline(), parent, this);
+            }
         else if (streamIter.isSplitJoin() != null)
-        {
-            newStream =
-                new SplitJoin(streamIter.isSplitJoin(), parent, this);
-        }
+            {
+                newStream =
+                    new SplitJoin(streamIter.isSplitJoin(), parent, this);
+            }
         else if (streamIter.isFeedbackLoop() != null)
-        {
-            newStream =
-                new FeedbackLoop(streamIter.isFeedbackLoop(), parent, this);
-        }
+            {
+                newStream =
+                    new FeedbackLoop(streamIter.isFeedbackLoop(), parent, this);
+            }
         else
-        {
-            ERROR("Unsupported type passed to StreamFactory!");
-            newStream = null;
-        }
+            {
+                ERROR("Unsupported type passed to StreamFactory!");
+                newStream = null;
+            }
 
         iter2stream.put(streamIter, newStream);
         return newStream;
@@ -93,6 +93,6 @@ public class ConstrainedStreamFactory
     }
 
     public boolean needsSchedule() {
-	return needsSchedule;
+        return needsSchedule;
     }
 }

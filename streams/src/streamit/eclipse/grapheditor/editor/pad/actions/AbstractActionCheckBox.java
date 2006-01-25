@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractActionCheckBox.java	1.2 01.02.2003
+ * @(#)AbstractActionCheckBox.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -37,57 +37,57 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public abstract class AbstractActionCheckBox extends AbstractActionToggle {
 
-	/**
-	 * Constructor for AbstractActionCheckBox.
-	 * @param graphpad
-	 */
-	public AbstractActionCheckBox(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for AbstractActionCheckBox.
+     * @param graphpad
+     */
+    public AbstractActionCheckBox(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Constructor for AbstractActionCheckBox.
-	 * @param graphpad
-	 * @param name
-	 */
-	public AbstractActionCheckBox(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
+    /**
+     * Constructor for AbstractActionCheckBox.
+     * @param graphpad
+     * @param name
+     */
+    public AbstractActionCheckBox(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
 
-	/**
-	 * Constructor for AbstractActionCheckBox.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public AbstractActionCheckBox(
-		GPGraphpad graphpad,
-		String name,
-		Icon icon) {
-		super(graphpad, name, icon);
-	}
+    /**
+     * Constructor for AbstractActionCheckBox.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public AbstractActionCheckBox(
+                                  GPGraphpad graphpad,
+                                  String name,
+                                  Icon icon) {
+        super(graphpad, name, icon);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponent(String)
-	 */
-	protected Component getMenuComponent(String actionCommand) {
-		JCheckBoxMenuItem button = new JCheckBoxMenuItem(this);
-		abstractButtons.add(button);
-		GPBarFactory.fillMenuButton(button, getName(), actionCommand);
-		String presentationText = getPresentationText(actionCommand);
-		if (presentationText != null)
-			button.setText(presentationText);
-		
-		return button;
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getMenuComponent(String)
+     */
+    protected Component getMenuComponent(String actionCommand) {
+        JCheckBoxMenuItem button = new JCheckBoxMenuItem(this);
+        abstractButtons.add(button);
+        GPBarFactory.fillMenuButton(button, getName(), actionCommand);
+        String presentationText = getPresentationText(actionCommand);
+        if (presentationText != null)
+            button.setText(presentationText);
+        
+        return button;
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JCheckBox button = new JCheckBox(this);
-		abstractButtons.add(button);
-		GPBarFactory.fillToolbarButton(button, getName(), actionCommand);
-		return button;
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JCheckBox button = new JCheckBox(this);
+        abstractButtons.add(button);
+        GPBarFactory.fillToolbarButton(button, getName(), actionCommand);
+        return button;
+    }
 }

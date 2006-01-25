@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BlockWithImpliedExitPath.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: BlockWithImpliedExitPath.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -23,18 +23,18 @@ package at.dms.compiler.tools.antlr.compiler;
 import at.dms.compiler.tools.antlr.runtime.*;
 
 abstract class BlockWithImpliedExitPath extends AlternativeBlock {
-  protected int exitLookaheadDepth;	// lookahead needed to handle optional path
-  /**
-   * lookahead to bypass block; set
-   * by deterministic().  1..k of Lookahead
-   */
-  protected Lookahead[] exitCache = new Lookahead[grammar.maxk+1];
+    protected int exitLookaheadDepth;   // lookahead needed to handle optional path
+    /**
+     * lookahead to bypass block; set
+     * by deterministic().  1..k of Lookahead
+     */
+    protected Lookahead[] exitCache = new Lookahead[grammar.maxk+1];
 
 
-  public BlockWithImpliedExitPath(Grammar g) {
-    super(g);
-  }
-  public BlockWithImpliedExitPath(Grammar g, int line) {
-    super(g, line, false);
-  }
+    public BlockWithImpliedExitPath(Grammar g) {
+        super(g);
+    }
+    public BlockWithImpliedExitPath(Grammar g, int line) {
+        super(g, line, false);
+    }
 }

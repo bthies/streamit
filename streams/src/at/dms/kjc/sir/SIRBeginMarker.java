@@ -17,7 +17,7 @@ public class SIRBeginMarker extends SIRMarker {
      * For cloner only.
      */
     private SIRBeginMarker() {
-	super();
+        super();
     }
 
     /**
@@ -26,32 +26,32 @@ public class SIRBeginMarker extends SIRMarker {
      * @param name   The name of the stream, function, etc.
      */
     public SIRBeginMarker(String name) {
-	super();
-	this.name = name;
+        super();
+        this.name = name;
     }
 
     /**
      * @return the name of the stream being marked.
      */
     public String getName() {
-	return name;
+        return name;
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRBeginMarker other = new at.dms.kjc.sir.SIRBeginMarker();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRBeginMarker other = new at.dms.kjc.sir.SIRBeginMarker();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRBeginMarker other) {
-  super.deepCloneInto(other);
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRBeginMarker other) {
+        super.deepCloneInto(other);
+        other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

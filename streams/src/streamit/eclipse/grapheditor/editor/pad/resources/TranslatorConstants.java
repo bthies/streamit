@@ -1,5 +1,5 @@
 /*
- * @(#)TranslatorConstants.java	1.2 02.02.2003
+ * @(#)TranslatorConstants.java 1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -30,85 +30,85 @@ package streamit.eclipse.grapheditor.editor.pad.resources;
  */
 public interface TranslatorConstants {
 
-	/**
-	 * Prefix for component requests
-	 * 
-	 */
-	public static final String PREFIX_COMPONENT = "Component.";
-	
-	/**
-	 * Prefix for information message requests
-	 * 
-	 */
-	public static final String PREFIX_MESSAGE_INFORMATION = "Message.Information.";
-	
-	/**
-	 * Prefix for warning message requests
-	 * 
-	 */
-	public static final String PREFIX_MESSAGE_WARING = "Message.Warning.";	
+    /**
+     * Prefix for component requests
+     * 
+     */
+    public static final String PREFIX_COMPONENT = "Component.";
+    
+    /**
+     * Prefix for information message requests
+     * 
+     */
+    public static final String PREFIX_MESSAGE_INFORMATION = "Message.Information.";
+    
+    /**
+     * Prefix for warning message requests
+     * 
+     */
+    public static final String PREFIX_MESSAGE_WARING = "Message.Warning.";  
 
-	/**
-	 * Prefix for error message requests
-	 * 
-	 */
-	public static final String PREFIX_MESSAGE_ERROR = "Message.Error.";	
+    /**
+     * Prefix for error message requests
+     * 
+     */
+    public static final String PREFIX_MESSAGE_ERROR = "Message.Error."; 
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for an image.
-	 */
-	public static final String SUFFIX_IMAGE = ".Image";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for an image.
+     */
+    public static final String SUFFIX_IMAGE = ".Image";
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for a label.
-	 */
-	public static final String SUFFIX_LABEL = ".Label";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for a label.
+     */
+    public static final String SUFFIX_LABEL = ".Label";
 
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for a menuitem (instead of action)
-	 */
-	public static final String SUFFIX_ACCELERATOR = ".Accelerator";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for a menuitem (instead of action)
+     */
+    public static final String SUFFIX_ACCELERATOR = ".Accelerator";
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for a menuitem (instead of action)
-	 */
-	public static final String SUFFIX_MNEMONIC = ".Mnemonic";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for a menuitem (instead of action)
+     */
+    public static final String SUFFIX_MNEMONIC = ".Mnemonic";
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for tooltip text.
-	 */
-	public static final String SUFFIX_TOOL_TIP_TEXT = ".ToolTipText";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for tooltip text.
+     */
+    public static final String SUFFIX_TOOL_TIP_TEXT = ".ToolTipText";
 
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for menu.
-	 */
-	public static final String SUFFIX_ACTION = ".Action";
-	
-	/**
-	 * Suffix applied to the key used in resource file
-	 * lookups for a submenu
-	 */
-	public static final String SUFFIX_MENU = ".Menu";
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for menu.
+     */
+    public static final String SUFFIX_ACTION = ".Action";
+    
+    /**
+     * Suffix applied to the key used in resource file
+     * lookups for a submenu
+     */
+    public static final String SUFFIX_MENU = ".Menu";
 
-	/**
-	 * suffix for the text key
-	 */
-	public static final String SUFFIX_TEXT = ".Text";
+    /**
+     * suffix for the text key
+     */
+    public static final String SUFFIX_TEXT = ".Text";
 
-	/**
-	 * suffix for the title key
-	 */
-	public static final String SUFFIX_TITLE = ".Title";
-	/**
-	 * suffix for the icon key
-	 */
-	public static final String SUFFIX_ICON = ".Icon";
+    /**
+     * suffix for the title key
+     */
+    public static final String SUFFIX_TITLE = ".Title";
+    /**
+     * suffix for the icon key
+     */
+    public static final String SUFFIX_ICON = ".Icon";
 
 }

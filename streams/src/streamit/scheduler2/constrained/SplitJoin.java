@@ -19,9 +19,9 @@ package streamit.scheduler2.constrained;
 import streamit.misc.DLList;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitJoinIter;
+    SplitJoinIter;
 import streamit.scheduler2.iriter./*persistent.*/
-Iterator;
+    Iterator;
 
 import streamit.scheduler2.hierarchical.PhasingSchedule;
 
@@ -42,19 +42,19 @@ public class SplitJoin
     LatencyEdge splitterLatencyEdges[];
 
     public SplitJoin(
-        SplitJoinIter iterator,
-        Iterator parent,
-        streamit.scheduler2.constrained.StreamFactory factory)
+                     SplitJoinIter iterator,
+                     Iterator parent,
+                     streamit.scheduler2.constrained.StreamFactory factory)
     {
         super(iterator, factory);
 
         latencyGraph = factory.getLatencyGraph();
 
         if (parent == null)
-        {
-            latencyGraph.registerParent(this, null);
-            initiateConstrained();
-        }
+            {
+                latencyGraph.registerParent(this, null);
+                initiateConstrained();
+            }
     }
 
     public void initiateConstrained()
@@ -66,43 +66,43 @@ public class SplitJoin
 
         // register all children
         for (int nChild = 0; nChild < getNumChildren(); nChild++)
-        {
-            StreamInterface child = getConstrainedChild(nChild);
-            latencyGraph.registerParent(child, this);
-            child.initiateConstrained();
-        }
+            {
+                StreamInterface child = getConstrainedChild(nChild);
+                latencyGraph.registerParent(child, this);
+                child.initiateConstrained();
+            }
 
         // add all children to the latency graph
         for (int nChild = 0; nChild < getNumChildren(); nChild++)
-        {
-            StreamInterface child = getConstrainedChild(nChild);
+            {
+                StreamInterface child = getConstrainedChild(nChild);
 
-            LatencyNode topChildNode = child.getTopLatencyNode();
-            LatencyNode bottomChildNode = child.getBottomLatencyNode();
+                LatencyNode topChildNode = child.getTopLatencyNode();
+                LatencyNode bottomChildNode = child.getBottomLatencyNode();
 
-            //create the appropriate edges
-            LatencyEdge topEdge =
-                new LatencyEdge(
-                    latencySplitter,
-                    nChild,
-                    topChildNode,
-                    0,
-                    0);
-            latencySplitter.addDependency(topEdge);
-            topChildNode.addDependency(topEdge);
+                //create the appropriate edges
+                LatencyEdge topEdge =
+                    new LatencyEdge(
+                                    latencySplitter,
+                                    nChild,
+                                    topChildNode,
+                                    0,
+                                    0);
+                latencySplitter.addDependency(topEdge);
+                topChildNode.addDependency(topEdge);
 
-            LatencyEdge bottomEdge =
-                new LatencyEdge(
-                    bottomChildNode,
-                    0,
-                    latencyJoiner,
-                    nChild,
-                    0);
-            latencyJoiner.addDependency(bottomEdge);
-            bottomChildNode.addDependency(bottomEdge);
+                LatencyEdge bottomEdge =
+                    new LatencyEdge(
+                                    bottomChildNode,
+                                    0,
+                                    latencyJoiner,
+                                    nChild,
+                                    0);
+                latencyJoiner.addDependency(bottomEdge);
+                bottomChildNode.addDependency(bottomEdge);
 
-            splitterLatencyEdges[nChild] = topEdge;
-        }
+                splitterLatencyEdges[nChild] = topEdge;
+            }
     }
 
     StreamInterface getConstrainedChild(int nChild)
@@ -111,9 +111,9 @@ public class SplitJoin
         child = getChild(nChild);
 
         if (!(child instanceof StreamInterface))
-        {
-            ERROR("This splitjoin contains a child that is not CONSTRAINED");
-        }
+            {
+                ERROR("This splitjoin contains a child that is not CONSTRAINED");
+            }
 
         return (StreamInterface)child;
     }
@@ -173,26 +173,26 @@ public class SplitJoin
     {
         // create restrictions for my children
         for (int nChild = 0; nChild < getNumChildren(); nChild++)
-        {
-            StreamInterface child = getConstrainedChild(nChild);
-            child.createSteadyStateRestrictions(
-                streamNumExecs * getChildNumExecs(nChild));
-            steadyStateRestrictedChildren.pushBack(child);
-        }
+            {
+                StreamInterface child = getConstrainedChild(nChild);
+                child.createSteadyStateRestrictions(
+                                                    streamNumExecs * getChildNumExecs(nChild));
+                steadyStateRestrictedChildren.pushBack(child);
+            }
 
         // and for the splitter and joiner
         NodeSteadyRestriction splitterRestriction =
             new NodeSteadyRestriction(
-                latencySplitter,
-                streamNumExecs * getNumSplitPhases() * getSplitNumRounds(),
-                this);
+                                      latencySplitter,
+                                      streamNumExecs * getNumSplitPhases() * getSplitNumRounds(),
+                                      this);
         restrictions.add(splitterRestriction);
 
         NodeSteadyRestriction joinerRestriction =
             new NodeSteadyRestriction(
-                latencyJoiner,
-                streamNumExecs * getNumJoinPhases() * getJoinNumRounds(),
-                this);
+                                      latencyJoiner,
+                                      streamNumExecs * getNumJoinPhases() * getJoinNumRounds(),
+                                      this);
         restrictions.add(joinerRestriction);
 
         numSteadyStateRestrictions = 2;
@@ -220,42 +220,42 @@ public class SplitJoin
         {
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                StreamInterface child = getConstrainedChild(nChild);
-                child.initializeRestrictions(restrictions);
+                {
+                    StreamInterface child = getConstrainedChild(nChild);
+                    child.initializeRestrictions(restrictions);
 
-                initRestrictedChildren.pushBack(child);
-            }
+                    initRestrictedChildren.pushBack(child);
+                }
         }
 
         // create init restrictions for peeking filters
         {
             int nChild;
             for (nChild = 0; nChild < getNumChildren() - 1; nChild++)
-            {
-                StreamInterface bottomChild = getConstrainedChild(nChild);
-                LatencyEdge edge = splitterLatencyEdges[nChild];
-
-                // if the steady state of the bottom node peeks no more
-                // than the initialization state of the top node, I don't
-                // need to provide the provide it with any extra data
-                // beyond what's needed for straight initialization
-                if (bottomChild.getSteadyPeek()
-                    - bottomChild.getSteadyPop()
-                    <= bottomChild.getInitPeek() - bottomChild.getInitPop())
                 {
-                    continue;
+                    StreamInterface bottomChild = getConstrainedChild(nChild);
+                    LatencyEdge edge = splitterLatencyEdges[nChild];
+
+                    // if the steady state of the bottom node peeks no more
+                    // than the initialization state of the top node, I don't
+                    // need to provide the provide it with any extra data
+                    // beyond what's needed for straight initialization
+                    if (bottomChild.getSteadyPeek()
+                        - bottomChild.getSteadyPop()
+                        <= bottomChild.getInitPeek() - bottomChild.getInitPop())
+                        {
+                            continue;
+                        }
+
+                    // I need the upstream node to push some extra data
+                    // in order to make sure that the steady state will be 
+                    // initialized properly!
+                    Restriction peekRestriction =
+                        new InitPeekRestriction(edge, this);
+                    restrictions.add(peekRestriction);
+
+                    numInitialRestrictions++;
                 }
-
-                // I need the upstream node to push some extra data
-                // in order to make sure that the steady state will be 
-                // initialized properly!
-                Restriction peekRestriction =
-                    new InitPeekRestriction(edge, this);
-                restrictions.add(peekRestriction);
-
-                numInitialRestrictions++;
-            }
         }
     }
 
@@ -265,18 +265,18 @@ public class SplitJoin
             return false;
 
         while (!initRestrictedChildren.empty())
-        {
-            StreamInterface child =
-                (StreamInterface)initRestrictedChildren.front().get();
-            if (child.isDoneInitializing())
             {
-                initRestrictedChildren.popFront();
+                StreamInterface child =
+                    (StreamInterface)initRestrictedChildren.front().get();
+                if (child.isDoneInitializing())
+                    {
+                        initRestrictedChildren.popFront();
+                    }
+                else
+                    {
+                        return false;
+                    }
             }
-            else
-            {
-                return false;
-            }
-        }
 
         return true;
     }
@@ -286,20 +286,20 @@ public class SplitJoin
     int nSplitterPhase = 0, nJoinerPhase = 0;
 
     public PhasingSchedule getNextPhase(
-        Restrictions restrs,
-        int nDataAvailable)
+                                        Restrictions restrs,
+                                        int nDataAvailable)
     {
         PhasingSchedule phase = new PhasingSchedule(this);
 
         if (postSplitterDataAvailable == null)
-        {
-            postSplitterDataAvailable = new int[getNumChildren()];
-        }
+            {
+                postSplitterDataAvailable = new int[getNumChildren()];
+            }
 
         if (preJoinerDataAvailable == null)
-        {
-            preJoinerDataAvailable = new int[getNumChildren()];
-        }
+            {
+                preJoinerDataAvailable = new int[getNumChildren()];
+            }
 
         // first execute the splitter as much as possible:
         {
@@ -308,48 +308,48 @@ public class SplitJoin
 
             int maxExecs =
                 (strongestRestriction != null
-                    ? strongestRestriction.getNumAllowedExecutions()
-                    : -1);
+                 ? strongestRestriction.getNumAllowedExecutions()
+                 : -1);
 
             while (strongestRestriction == null || maxExecs > 0)
-            {
-                SplitFlow flow = getSplitSteadyPhaseFlow(nSplitterPhase);
-                if (flow.getPopWeight() <= nDataAvailable)
                 {
-                    phase.appendPhase(getSplitPhase(nSplitterPhase));
-                    nSplitterPhase++;
+                    SplitFlow flow = getSplitSteadyPhaseFlow(nSplitterPhase);
+                    if (flow.getPopWeight() <= nDataAvailable)
+                        {
+                            phase.appendPhase(getSplitPhase(nSplitterPhase));
+                            nSplitterPhase++;
 
-                    maxExecs--;
-                    int executedTimes =
-                        restrictions.execute(latencySplitter, 1);
-                    assert executedTimes == 1;
+                            maxExecs--;
+                            int executedTimes =
+                                restrictions.execute(latencySplitter, 1);
+                            assert executedTimes == 1;
 
-                    nDataAvailable -= flow.getPopWeight();
-                    for (int nChild = 0;
-                        nChild < getNumChildren();
-                        nChild++)
-                    {
-                        postSplitterDataAvailable[nChild]
-                            += flow.getPushWeight(nChild);
-                    }
+                            nDataAvailable -= flow.getPopWeight();
+                            for (int nChild = 0;
+                                 nChild < getNumChildren();
+                                 nChild++)
+                                {
+                                    postSplitterDataAvailable[nChild]
+                                        += flow.getPushWeight(nChild);
+                                }
+                        }
+                    else
+                        break;
                 }
-                else
-                    break;
-            }
         }
 
         // now execute all children:
         for (int nChild = 0; nChild < getNumChildren(); nChild++)
-        {
-            PhasingSchedule childPhase =
-                getConstrainedChild(nChild).getNextPhase(
-                    restrictions,
-                    postSplitterDataAvailable[nChild]);
-            postSplitterDataAvailable[nChild] -= childPhase.getOverallPop();
-            preJoinerDataAvailable[nChild] += childPhase.getOverallPush();
+            {
+                PhasingSchedule childPhase =
+                    getConstrainedChild(nChild).getNextPhase(
+                                                             restrictions,
+                                                             postSplitterDataAvailable[nChild]);
+                postSplitterDataAvailable[nChild] -= childPhase.getOverallPop();
+                preJoinerDataAvailable[nChild] += childPhase.getOverallPush();
 
-            phase.appendPhase(childPhase);
-        }
+                phase.appendPhase(childPhase);
+            }
 
         // and finally execute the joiner as much as possible
         {
@@ -358,37 +358,37 @@ public class SplitJoin
 
             int maxExecs =
                 (strongestRestriction != null
-                    ? strongestRestriction.getNumAllowedExecutions()
-                    : -1);
+                 ? strongestRestriction.getNumAllowedExecutions()
+                 : -1);
 
             execute_joiner : while (
-                strongestRestriction == null || maxExecs > 0)
-            {
-                JoinFlow flow = getJoinSteadyPhaseFlow(nJoinerPhase);
-                for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                                    strongestRestriction == null || maxExecs > 0)
                 {
-                    if (flow.getPopWeight(nChild)
-                        > preJoinerDataAvailable[nChild])
-                    {
-                        break execute_joiner;
-                    }
+                    JoinFlow flow = getJoinSteadyPhaseFlow(nJoinerPhase);
+                    for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                        {
+                            if (flow.getPopWeight(nChild)
+                                > preJoinerDataAvailable[nChild])
+                                {
+                                    break execute_joiner;
+                                }
+                        }
+
+                    for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                        {
+                            preJoinerDataAvailable[nChild]
+                                -= flow.getPopWeight(nChild);
+                        }
+
+                    phase.appendPhase(getJoinPhase(nJoinerPhase));
+                    nJoinerPhase++;
+
+                    maxExecs--;
+                    int executedTimes =
+                        restrictions.execute(latencyJoiner, 1);
+                    assert executedTimes == 1;
+
                 }
-
-                for (int nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    preJoinerDataAvailable[nChild]
-                        -= flow.getPopWeight(nChild);
-                }
-
-                phase.appendPhase(getJoinPhase(nJoinerPhase));
-                nJoinerPhase++;
-
-                maxExecs--;
-                int executedTimes =
-                    restrictions.execute(latencyJoiner, 1);
-                assert executedTimes == 1;
-
-            }
         }
 
         return phase;

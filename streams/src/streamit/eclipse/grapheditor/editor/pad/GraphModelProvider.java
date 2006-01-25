@@ -1,5 +1,5 @@
 /*
- * @(#)GraphModelProvider.java	1.0 17.02.2003
+ * @(#)GraphModelProvider.java  1.0 17.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -36,109 +36,109 @@ import org.jgraph.graph.GraphModel;
  */
 public interface GraphModelProvider {
 
-	/** const to specify an ellipse vertex
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_VERTEX_ELLIPSE = 1;
+    /** const to specify an ellipse vertex
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_VERTEX_ELLIPSE = 1;
 
-	/** const to specify a default vertex
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_VERTEX_DEFAULT = 2;
+    /** const to specify a default vertex
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_VERTEX_DEFAULT = 2;
 
-	/** const to specify an image vertex
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_VERTEX_IMAGE = 3;
-	
-	/** const to specify a text vertex
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_VERTEX_TEXT = 4;
+    /** const to specify an image vertex
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_VERTEX_IMAGE = 3;
+    
+    /** const to specify a text vertex
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_VERTEX_TEXT = 4;
 
-	/** const to specify a default port
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_PORT_DEFAULT = 5;
+    /** const to specify a default port
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_PORT_DEFAULT = 5;
 
-	/** const to specify a default edge
-	 * 
-	 *  @see #createCell(GraphModel, int, Object, Map)
-	 */
-	public static final int CELL_EDGE_DEFAULT = 6;
+    /** const to specify a default edge
+     * 
+     *  @see #createCell(GraphModel, int, Object, Map)
+     */
+    public static final int CELL_EDGE_DEFAULT = 6;
 
-	/** Returns the presentation name for this 
-	 *  provider. If there are more than one
-	 *  provider avialable a frame 
-	 *  was shown at the file new command.
-	 * 
-	 *  At this frame you can select the model provider
-	 *  and the renderer for this list uses this method.
-	 */
-	public String getPresentationName();
+    /** Returns the presentation name for this 
+     *  provider. If there are more than one
+     *  provider avialable a frame 
+     *  was shown at the file new command.
+     * 
+     *  At this frame you can select the model provider
+     *  and the renderer for this list uses this method.
+     */
+    public String getPresentationName();
 
-	/** Creates a new cell for the corresponding graph model
-	 * 
-	 *  @param cellType One of the const values with the prefix CELL_.
-	 * 					 If you need to add you own const values use number > 1000.
-	 *  @param userObject The user object for the new Cell
-	 *  @param map The map with the corresponding properties for this cell.
-	 * 
-	 */	
-	public Object createCell(GraphModel model, int cellType, Object userObject, Map map);
+    /** Creates a new cell for the corresponding graph model
+     * 
+     *  @param cellType One of the const values with the prefix CELL_.
+     *                   If you need to add you own const values use number > 1000.
+     *  @param userObject The user object for the new Cell
+     *  @param map The map with the corresponding properties for this cell.
+     * 
+     */ 
+    public Object createCell(GraphModel model, int cellType, Object userObject, Map map);
 
-	/** Adds the port to the vertex.
-	 * 
-	 *  @param vertex Vertex from the corresponding graph model
-	 *  @param port A Port form the corresponding graph model
-	 */	
-	public void addPort(Object vertex, Object port);
+    /** Adds the port to the vertex.
+     * 
+     *  @param vertex Vertex from the corresponding graph model
+     *  @param port A Port form the corresponding graph model
+     */ 
+    public void addPort(Object vertex, Object port);
 
-	/** Creates a clean and empty graph model
-	 */	
-	public GraphModel createCleanGraphModel();
-	
-	/** Creates a clean graph for this graph model provider.
-	 *  If needed, you can set at this method a user defined
-	 *  view factory.
-	 */
-	public GPGraph createCleanGraph(GraphModel model);
+    /** Creates a clean and empty graph model
+     */ 
+    public GraphModel createCleanGraphModel();
+    
+    /** Creates a clean graph for this graph model provider.
+     *  If needed, you can set at this method a user defined
+     *  view factory.
+     */
+    public GPGraph createCleanGraph(GraphModel model);
 
-	/** Returns true if the method mutateTo can convert
-	 *  to the other graph model class.
-	 *  
-	 *  @param otherGraphModelClass The Class object for the
-	 * 								 other Graph Model
-	 * 
-	 * @see #mutateTo(GraphModel, Class)
-	 */
-	public boolean isMutateAbleTo(Class otherGraphModelClass);
+    /** Returns true if the method mutateTo can convert
+     *  to the other graph model class.
+     *  
+     *  @param otherGraphModelClass The Class object for the
+     *                               other Graph Model
+     * 
+     * @see #mutateTo(GraphModel, Class)
+     */
+    public boolean isMutateAbleTo(Class otherGraphModelClass);
 
-	/** The graph model <tt>sourceGraphModel</tt> is a corresponding
-	 *  graph model for this provider. The <tt>otherGraphModelClass</tt>
-	 *  specifies another graph model. This method converts the 
-	 *  source graph model to a graph model like the class parameter
-	 *  specifies. The new instance, witch is corresponding 
-	 *  with the <tt>otherGraphModelClass</tt> parameter, 
-	 *  is the return value.
-	 * 
-	 *  @param sourceGraphModel A graph model from this provider.
-	 *  @param otherGraphModelClass A graph model from another provider.
-	 *  @param the new graph model.
-	 */
-	public GraphModel mutateTo(GraphModel sourceGraphModel, Class otherGraphModelClass);
+    /** The graph model <tt>sourceGraphModel</tt> is a corresponding
+     *  graph model for this provider. The <tt>otherGraphModelClass</tt>
+     *  specifies another graph model. This method converts the 
+     *  source graph model to a graph model like the class parameter
+     *  specifies. The new instance, witch is corresponding 
+     *  with the <tt>otherGraphModelClass</tt> parameter, 
+     *  is the return value.
+     * 
+     *  @param sourceGraphModel A graph model from this provider.
+     *  @param otherGraphModelClass A graph model from another provider.
+     *  @param the new graph model.
+     */
+    public GraphModel mutateTo(GraphModel sourceGraphModel, Class otherGraphModelClass);
 
-	/** Returns all possible file formats for this
-	 *  graph model provider.
-	 * 
-	 */
-	public GraphModelFileFormat[] getGraphModelFileFormats();
+    /** Returns all possible file formats for this
+     *  graph model provider.
+     * 
+     */
+    public GraphModelFileFormat[] getGraphModelFileFormats();
 
 
-	
+    
 }

@@ -1,5 +1,5 @@
 /*
- * @(#)FormatBorderColorList.java	1.2 04.02.2003
+ * @(#)FormatBorderColorList.java   1.2 04.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -43,100 +43,100 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
  */
 public class FormatBorderColorList extends AbstractActionListCellColor {
 
-	protected Border[] borders =
-		new Border[] {
-			BorderFactory.createRaisedBevelBorder(),
-			BorderFactory.createLoweredBevelBorder(),
-			BorderFactory.createEtchedBorder()};
+    protected Border[] borders =
+        new Border[] {
+            BorderFactory.createRaisedBevelBorder(),
+            BorderFactory.createLoweredBevelBorder(),
+            BorderFactory.createEtchedBorder()};
 
-	/**
-	 * Constructor for FormatBorderColorList.
-	 * @param graphpad
-	 */
-	public FormatBorderColorList(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatBorderColorList.
+     * @param graphpad
+     */
+    public FormatBorderColorList(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionListCell#fillCustomItems(Vector)
-	 */
-	protected void fillCustomItems(Vector items) {
-		VertexView v;
-		Map map;
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionListCell#fillCustomItems(Vector)
+     */
+    protected void fillCustomItems(Vector items) {
+        VertexView v;
+        Map map;
 
-		for (int i = 0; i < borders.length; i++) {
-			v =
-				new VertexView(
-					null,
-					dummyGraph,
-					dummyGraph.getGraphLayoutCache());
-			map = GraphConstants.createMap();
-			GraphConstants.setBounds(map, new Rectangle(point, size));
-			GraphConstants.setBorder(map, borders[i]);
-			GraphConstants.setRemoveAttributes(
-				v.getAttributes(),
-				new Object[] { GraphConstants.BORDER });
-			v.setAttributes(map);
-			items.add(v);
-		}
+        for (int i = 0; i < borders.length; i++) {
+            v =
+                new VertexView(
+                               null,
+                               dummyGraph,
+                               dummyGraph.getGraphLayoutCache());
+            map = GraphConstants.createMap();
+            GraphConstants.setBounds(map, new Rectangle(point, size));
+            GraphConstants.setBorder(map, borders[i]);
+            GraphConstants.setRemoveAttributes(
+                                               v.getAttributes(),
+                                               new Object[] { GraphConstants.BORDER });
+            v.setAttributes(map);
+            items.add(v);
+        }
 
-		for (int i = 0; i < colors.length; i++) {
-			v =
-				new VertexView(
-					null,
-					dummyGraph,
-					dummyGraph.getGraphLayoutCache());
-			map = GraphConstants.createMap();
-			GraphConstants.setBounds(map, new Rectangle(point, size));
-			GraphConstants.setBorderColor(map, colors[i]);
-			v.setAttributes(map);
-			GraphConstants.setRemoveAttributes(
-				v.getAttributes(),
-				new Object[] { GraphConstants.BORDER });
-			items.add(v);
-		}
-	}
+        for (int i = 0; i < colors.length; i++) {
+            v =
+                new VertexView(
+                               null,
+                               dummyGraph,
+                               dummyGraph.getGraphLayoutCache());
+            map = GraphConstants.createMap();
+            GraphConstants.setBounds(map, new Rectangle(point, size));
+            GraphConstants.setBorderColor(map, colors[i]);
+            v.setAttributes(map);
+            GraphConstants.setRemoveAttributes(
+                                               v.getAttributes(),
+                                               new Object[] { GraphConstants.BORDER });
+            items.add(v);
+        }
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionListCell#fillResetMap(Map)
-	 */
-	protected void fillResetMap(Map target) {
-		Object[] keys =
-			new Object[] { GraphConstants.BORDER, GraphConstants.BORDERCOLOR };
-		GraphConstants.setRemoveAttributes(target, keys);
-		GraphConstants.setBorderColor(target, Color.BLACK );
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionListCell#fillResetMap(Map)
+     */
+    protected void fillResetMap(Map target) {
+        Object[] keys =
+            new Object[] { GraphConstants.BORDER, GraphConstants.BORDERCOLOR };
+        GraphConstants.setRemoveAttributes(target, keys);
+        GraphConstants.setBorderColor(target, Color.BLACK );
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionListCell#fillApplyMap(CellView, Map)
-	 */
-	protected void fillApplyMap(CellView source, Map target) {
-		Object[] keys = new Object[] { GraphConstants.BORDER, GraphConstants.BORDERCOLOR };
-		GraphConstants.setRemoveAttributes(target, keys);
-		Color c = GraphConstants.getBorderColor(source.getAttributes());
-		if (c != null)
-			GraphConstants.setBorderColor(target, c );
-		Border b = GraphConstants.getBorder(source.getAttributes());
-		if (b != null)
-			GraphConstants.setBorder(target, b );
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionListCell#fillApplyMap(CellView, Map)
+     */
+    protected void fillApplyMap(CellView source, Map target) {
+        Object[] keys = new Object[] { GraphConstants.BORDER, GraphConstants.BORDERCOLOR };
+        GraphConstants.setRemoveAttributes(target, keys);
+        Color c = GraphConstants.getBorderColor(source.getAttributes());
+        if (c != null)
+            GraphConstants.setBorderColor(target, c );
+        Border b = GraphConstants.getBorder(source.getAttributes());
+        if (b != null)
+            GraphConstants.setBorder(target, b );
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionListCell#selectAndFillMap(Map)
-	 */
-	protected void selectAndFillMap(Map target) {
-		if (getCurrentGraph().getSelectionCount() > 0) {
-			Color value =
-				JColorChooser.showDialog(
-					graphpad.getFrame(),
-					Translator.getString("ColorDialog"),
-					null);
-			if (value != null) {
-				Object[] keys = new Object[] { GraphConstants.BORDER };
-				GraphConstants.setRemoveAttributes(target, keys);
-				GraphConstants.setBorderColor(target, value);
-			}
-		}
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionListCell#selectAndFillMap(Map)
+     */
+    protected void selectAndFillMap(Map target) {
+        if (getCurrentGraph().getSelectionCount() > 0) {
+            Color value =
+                JColorChooser.showDialog(
+                                         graphpad.getFrame(),
+                                         Translator.getString("ColorDialog"),
+                                         null);
+            if (value != null) {
+                Object[] keys = new Object[] { GraphConstants.BORDER };
+                GraphConstants.setRemoveAttributes(target, keys);
+                GraphConstants.setBorderColor(target, value);
+            }
+        }
+    }
 
 }

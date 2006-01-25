@@ -22,28 +22,28 @@ import java.math.BigInteger;
 public class RemovePrintStatements implements FlatVisitor {
     
     public static void doIt(FlatNode top) {
-	top.accept(new RemovePrintStatements(), null, true);
+        top.accept(new RemovePrintStatements(), null, true);
     }
     
     public void visitNode(FlatNode node) {
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    for (int i = 0; i < filter.getMethods().length; i++)
-		filter.getMethods()[i].accept(new RemovePrintStatementsHelper());
-	}
+        if (node.isFilter()) {
+            SIRFilter filter = (SIRFilter)node.contents;
+            for (int i = 0; i < filter.getMethods().length; i++)
+                filter.getMethods()[i].accept(new RemovePrintStatementsHelper());
+        }
     }
 
     static class RemovePrintStatementsHelper extends SLIRReplacingVisitor {
 
 
-	public Object visitPrintStatement(SIRPrintStatement oldself,
-					  JExpression exp) {
+        public Object visitPrintStatement(SIRPrintStatement oldself,
+                                          JExpression exp) {
 
-	    SIRPrintStatement self = (SIRPrintStatement)
-		super.visitPrintStatement(oldself, exp);
-	
-	    return new JExpressionStatement(null, self.getArg(), null);
-	}
+            SIRPrintStatement self = (SIRPrintStatement)
+                super.visitPrintStatement(oldself, exp);
+    
+            return new JExpressionStatement(null, self.getArg(), null);
+        }
     
     }
 }

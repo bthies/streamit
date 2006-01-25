@@ -1,5 +1,5 @@
 /*
- * @(#) TextCell.java	1.0 11/2/03
+ * @(#) TextCell.java   1.0 11/2/03
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -22,25 +22,25 @@ package streamit.eclipse.grapheditor.editor.pad;
 
 public class TextCell extends org.jgraph.graph.DefaultGraphCell {
 
-	private boolean multiLined = true;
+    private boolean multiLined = true;
 
     public TextCell() {
-      this(null);
+        this(null);
     }
 
     public TextCell(Object userObject) {
-      this(userObject, true);
+        this(userObject, true);
     }
 
     public TextCell(Object userObject, boolean multiLined) {
-      super(userObject);
-      this.multiLined = multiLined;
+        super(userObject);
+        this.multiLined = multiLined;
     }
 
 
-	public boolean isMultiLined() {
-		return multiLined;
-	}
+    public boolean isMultiLined() {
+        return multiLined;
+    }
 
 
 }

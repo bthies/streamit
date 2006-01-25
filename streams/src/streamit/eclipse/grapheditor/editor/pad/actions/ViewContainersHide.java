@@ -15,16 +15,16 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
 public class ViewContainersHide extends AbstractActionDefault {
 
 
-	public ViewContainersHide(GPGraphpad graphpad) {
-		super(graphpad);
-	}
-	
-	/**
-	 * Hide the expanded container nodes in the graph.
-	 */
-	public void actionPerformed(ActionEvent e) 
-	{
-		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
-		graphStruct.containerNodes.hideAllContainers();
-	}
+    public ViewContainersHide(GPGraphpad graphpad) {
+        super(graphpad);
+    }
+    
+    /**
+     * Hide the expanded container nodes in the graph.
+     */
+    public void actionPerformed(ActionEvent e) 
+    {
+        GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
+        graphStruct.containerNodes.hideAllContainers();
+    }
 }

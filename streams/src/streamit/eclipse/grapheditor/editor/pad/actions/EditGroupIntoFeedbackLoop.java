@@ -42,79 +42,78 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
  */
 public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 
-	/**
-	 * Constructor for EditGroupIntoFeedbackLoop.
-	 * @param graphpad
-	 */
-	public EditGroupIntoFeedbackLoop(GPGraphpad graphpad) {
-		super(graphpad);
-	}
-	
-	/**
-	 * Group the selected cells into a newly created GEFeedbackLoop.
-	 */
-	public void actionPerformed(ActionEvent e) 
-	{
-		Object[] cells = getCurrentGraph().getSelectionCells();
-		GESplitter splitter = null;
-		GEJoiner joiner = null;
-		ArrayList succList = new ArrayList(); 
-		GEContainer toplevel = graphpad.getCurrentDocument().getGraphStructure().getTopLevel();
-	
-		/** Determine which of the cells are splitters, joiners, and others */
-		for (int j = 0; j < cells.length; j++)
-		{
-			if (cells[j] instanceof GESplitter)
-			{
-				splitter = (GESplitter) cells[j];
-			}
-			else if (cells[j] instanceof GEJoiner)
-			{
-				joiner =  (GEJoiner) cells[j];
-			}
-			else if (cells[j] instanceof GEStreamNode)
-			{
-				succList.add(cells[j]);
-			}
-		}
-		
-		/** Must have a splitter among the selected cells */
-		if (splitter == null)
-		{
-			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_SPLITTER);	
-			return;	
-		}
-		/** Must have a joiner among the selected cells */
-		else if (joiner == null)
-		{
-			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_JOINER);			
-			return;
-		}
-		
-		
-		splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
-		joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
-					
-		GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
-		
-		/** Create the GEFeedbackLoop that will hold the selected components */
-		GEFeedbackLoop floop = new GEFeedbackLoop("FeedbackLoop_"+ GEProperties.id_count++, 
-													splitter, joiner, null, null);
-		toplevel.addNodeToContainer(floop);
-		floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
+    /**
+     * Constructor for EditGroupIntoFeedbackLoop.
+     * @param graphpad
+     */
+    public EditGroupIntoFeedbackLoop(GPGraphpad graphpad) {
+        super(graphpad);
+    }
+    
+    /**
+     * Group the selected cells into a newly created GEFeedbackLoop.
+     */
+    public void actionPerformed(ActionEvent e) 
+    {
+        Object[] cells = getCurrentGraph().getSelectionCells();
+        GESplitter splitter = null;
+        GEJoiner joiner = null;
+        ArrayList succList = new ArrayList(); 
+        GEContainer toplevel = graphpad.getCurrentDocument().getGraphStructure().getTopLevel();
+    
+        /** Determine which of the cells are splitters, joiners, and others */
+        for (int j = 0; j < cells.length; j++)
+            {
+                if (cells[j] instanceof GESplitter)
+                    {
+                        splitter = (GESplitter) cells[j];
+                    }
+                else if (cells[j] instanceof GEJoiner)
+                    {
+                        joiner =  (GEJoiner) cells[j];
+                    }
+                else if (cells[j] instanceof GEStreamNode)
+                    {
+                        succList.add(cells[j]);
+                    }
+            }
+        
+        /** Must have a splitter among the selected cells */
+        if (splitter == null)
+            {
+                ErrorCode.handleErrorCode(ErrorCode.CODE_NO_SPLITTER);  
+                return; 
+            }
+        /** Must have a joiner among the selected cells */
+        else if (joiner == null)
+            {
+                ErrorCode.handleErrorCode(ErrorCode.CODE_NO_JOINER);            
+                return;
+            }
+        
+        
+        splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
+        joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
+                    
+        GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
+        
+        /** Create the GEFeedbackLoop that will hold the selected components */
+        GEFeedbackLoop floop = new GEFeedbackLoop("FeedbackLoop_"+ GEProperties.id_count++, 
+                                                  splitter, joiner, null, null);
+        toplevel.addNodeToContainer(floop);
+        floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
 
-		
-		for (Iterator succListIter = succList.iterator(); succListIter.hasNext();)
-		{
-			((GEStreamNode) succListIter.next()).changeParentTo(floop);	
-		}
+        
+        for (Iterator succListIter = succList.iterator(); succListIter.hasNext();)
+            {
+                ((GEStreamNode) succListIter.next()).changeParentTo(floop); 
+            }
 
 
-		
-		/** Update hierarchy panel */
-		EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
-										get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
-		ac.actionPerformed(null);
-	}		
+        
+        /** Update hierarchy panel */
+        EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
+            get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+        ac.actionPerformed(null);
+    }       
 }
-	

@@ -30,7 +30,7 @@ public class SIRDynamicRateManager {
     private static Stack policies = new Stack();
     // default policy is identity policy
     static {
-	pushIdentityPolicy();
+        pushIdentityPolicy();
     }
     
     /**
@@ -39,7 +39,7 @@ public class SIRDynamicRateManager {
      * the current policy to interpret that rate.
      */
     public static JExpression interpretRate(JExpression rate) {
-	return ((SIRDynamicRatePolicy)policies.peek()).interpretRate(rate);
+        return ((SIRDynamicRatePolicy)policies.peek()).interpretRate(rate);
     }
 
     /**
@@ -47,7 +47,7 @@ public class SIRDynamicRateManager {
      * all rates unaltered).  Pushes this policy onto the stack.
      */
     public static void pushIdentityPolicy() {
-	policies.push(SIRDynamicRatePolicy.identityPolicy());
+        policies.push(SIRDynamicRatePolicy.identityPolicy());
     }
 
     /**
@@ -56,17 +56,17 @@ public class SIRDynamicRateManager {
      * stack.
      */
     public static void pushConstantPolicy(int constant) {
-	policies.push(SIRDynamicRatePolicy.constantPolicy(constant));
+        policies.push(SIRDynamicRatePolicy.constantPolicy(constant));
     }
 
     /**
      * Pops a policy off the stack.
      */
     public static void popPolicy() {
-	policies.pop();
-	// fail early -- should never pop default policy off the stack
-	if (policies.empty()) {
-	    throw new RuntimeException("Error: popped more SIRDynamicRatePolicy's than pushed.");
-	}
+        policies.pop();
+        // fail early -- should never pop default policy off the stack
+        if (policies.empty()) {
+            throw new RuntimeException("Error: popped more SIRDynamicRatePolicy's than pushed.");
+        }
     }
 }

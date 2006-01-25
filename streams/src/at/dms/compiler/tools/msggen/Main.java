@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:45 thies Exp $
+ * $Id: Main.java,v 1.2 2006-01-25 17:01:16 thies Exp $
  */
 
 package at.dms.compiler.tools.msggen;
@@ -35,133 +35,133 @@ import gnu.getopt.LongOpt;
  */
 public class Main {
 
-  // ----------------------------------------------------------------------
-  // ENTRY POINT
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ENTRY POINT
+    // ----------------------------------------------------------------------
 
-  /**
-   * Entry point
-   *
-   * @param	args		the command line arguments
-   */
-  public static void main(String[] args) {
-    boolean	success;
+    /**
+     * Entry point
+     *
+     * @param   args        the command line arguments
+     */
+    public static void main(String[] args) {
+        boolean success;
 
-    success = new Main().run(args);
+        success = new Main().run(args);
 
-    System.exit(success ? 0 : 1);
-  }
-
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Only main can construct Main
-   */
-  private Main() {
-  }
-
-  /**
-   * Runs a compilation session
-   *
-   * @param	args		the command line arguments
-   */
-  private boolean run(String[] args) {
-    if (!parseArguments(args)) {
-      return false;
-    }
-    if (!parseSourceFiles()) {
-      return false;
-    }
-    if (!checkIdentifiers()) {
-      return false;
-    }
-    if (!buildInterfaceFile()) {
-      return false;
+        System.exit(success ? 0 : 1);
     }
 
-    return true;
-  }
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Parse the argument list
-   */
-  private boolean parseArguments(String[] args) {
-    options = new MsggenOptions();
-    if (!options.parseCommandLine(args)) {
-      return false;
-    }
-    if (options.nonOptions.length == 0) {
-      System.err.println(MsggenMessages.NO_INPUT_FILE.getFormat());
-      return false;
-    } else if (options.nonOptions.length > 1) {
-      options.usage();
-      return false;
+    /**
+     * Only main can construct Main
+     */
+    private Main() {
     }
 
-    return true;
-  }
+    /**
+     * Runs a compilation session
+     *
+     * @param   args        the command line arguments
+     */
+    private boolean run(String[] args) {
+        if (!parseArguments(args)) {
+            return false;
+        }
+        if (!parseSourceFiles()) {
+            return false;
+        }
+        if (!checkIdentifiers()) {
+            return false;
+        }
+        if (!buildInterfaceFile()) {
+            return false;
+        }
 
-  /**
-   *
-   */
-  private boolean parseSourceFiles() {
-    boolean		errorsFound = false;
-
-    try {
-      definition = DefinitionFile.read(options.nonOptions[0]);
-    } catch (MsggenError e) {
-      System.err.println(e.getMessage());
-      errorsFound = true;
+        return true;
     }
 
-    return !errorsFound;
-  }
+    /**
+     * Parse the argument list
+     */
+    private boolean parseArguments(String[] args) {
+        options = new MsggenOptions();
+        if (!options.parseCommandLine(args)) {
+            return false;
+        }
+        if (options.nonOptions.length == 0) {
+            System.err.println(MsggenMessages.NO_INPUT_FILE.getFormat());
+            return false;
+        } else if (options.nonOptions.length > 1) {
+            options.usage();
+            return false;
+        }
 
-
-  /**
-   *
-   */
-  private boolean checkIdentifiers() {
-    Hashtable		identifiers = new Hashtable();
-    boolean		errorsFound = false;
-
-    try {
-      definition.checkIdentifiers(identifiers);
-    } catch (MsggenError e) {
-      System.err.println(e.getMessage());
-      errorsFound = true;
+        return true;
     }
 
-    return !errorsFound;
-  }
+    /**
+     *
+     */
+    private boolean parseSourceFiles() {
+        boolean     errorsFound = false;
 
-  /**
-   *
-   */
-  private boolean buildInterfaceFile() {
-    String		prefix = definition.getPrefix();
-    File		outputFile = new File(prefix + "Messages.java");
+        try {
+            definition = DefinitionFile.read(options.nonOptions[0]);
+        } catch (MsggenError e) {
+            System.err.println(e.getMessage());
+            errorsFound = true;
+        }
 
-    try {
-      PrintWriter	out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
-
-      definition.printFile(out);
-
-      out.flush();
-      out.close();
-      return true;
-    } catch (IOException e) {
-      System.err.println("I/O Exception on " + outputFile.getPath() + ": " + e.getMessage());
-      return false;
+        return !errorsFound;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
 
-  private MsggenOptions		options;
-  private DefinitionFile	definition;
+    /**
+     *
+     */
+    private boolean checkIdentifiers() {
+        Hashtable       identifiers = new Hashtable();
+        boolean     errorsFound = false;
+
+        try {
+            definition.checkIdentifiers(identifiers);
+        } catch (MsggenError e) {
+            System.err.println(e.getMessage());
+            errorsFound = true;
+        }
+
+        return !errorsFound;
+    }
+
+    /**
+     *
+     */
+    private boolean buildInterfaceFile() {
+        String      prefix = definition.getPrefix();
+        File        outputFile = new File(prefix + "Messages.java");
+
+        try {
+            PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(outputFile)));
+
+            definition.printFile(out);
+
+            out.flush();
+            out.close();
+            return true;
+        } catch (IOException e) {
+            System.err.println("I/O Exception on " + outputFile.getPath() + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private MsggenOptions       options;
+    private DefinitionFile  definition;
 }

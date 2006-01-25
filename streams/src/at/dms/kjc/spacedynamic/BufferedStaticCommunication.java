@@ -60,7 +60,7 @@ import at.dms.util.Utils;
  * 
  */
 public class BufferedStaticCommunication extends at.dms.util.Utils implements
-        Constants {
+                                                                       Constants {
     /** the layout object for the flatnode * */
     private Layout layout;
 
@@ -117,7 +117,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
      * @param initFire The init multiplicity of the filter (assuming all filters are 2 stage).
      */
     public BufferedStaticCommunication(StaticStreamGraph ssg, FlatNode node,
-            int bottomPeek, int remaining, int initFire) {
+                                       int bottomPeek, int remaining, int initFire) {
         this.ssg = ssg;
         this.layout = ssg.getStreamGraph().getLayout();
         this.bottomPeek = bottomPeek;
@@ -154,9 +154,9 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
         // create the method and add it to the filter
         JMethodDeclaration rawMainFunct = new JMethodDeclaration(null,
-                at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
-                RawExecutionCode.rawMain, JFormalParameter.EMPTY,
-                CClassType.EMPTY, block, null, null);
+                                                                 at.dms.kjc.Constants.ACC_PUBLIC, CStdType.Void,
+                                                                 RawExecutionCode.rawMain, JFormalParameter.EMPTY,
+                                                                 CClassType.EMPTY, block, null, null);
         filter.addMethod(rawMainFunct);
     }
 
@@ -175,35 +175,35 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             // copy the dims for the basetype
             for (int i = 0; i < baseTypeDims.length; i++)
                 dims[i + 1] = baseTypeDims[i];
-	    return dims;
+            return dims;
         } else {
-	    JExpression dims[] = { new JIntLiteral(buffersize) };
-	    return dims;
-	}
+            JExpression dims[] = { new JIntLiteral(buffersize) };
+            return dims;
+        }
     }
 
     private void createLocalVariables(FlatNode node, JBlock block,
-            LocalVariables localVariables) {
+                                      LocalVariables localVariables) {
         SIRFilter filter = (SIRFilter) node.contents;
 
         // index variable for certain for loops
         JVariableDefinition exeIndexVar = new JVariableDefinition(null, 0,
-                CStdType.Integer, RawExecutionCode.exeIndex, null);
+                                                                  CStdType.Integer, RawExecutionCode.exeIndex, null);
 
         // remember the JVarDef for latter (in the raw main function)
         localVariables.exeIndex = exeIndexVar;
 
         block.addStatement(new JVariableDeclarationStatement(null, exeIndexVar,
-                null));
+                                                             null));
 
         // index variable for certain for loops
         JVariableDefinition exeIndex1Var = new JVariableDefinition(null, 0,
-                CStdType.Integer, RawExecutionCode.exeIndex1, null);
+                                                                   CStdType.Integer, RawExecutionCode.exeIndex1, null);
 
         localVariables.exeIndex1 = exeIndex1Var;
 
         block.addStatement(new JVariableDeclarationStatement(null,
-                exeIndex1Var, null));
+                                                             exeIndex1Var, null));
 
         // only add the receive buffer and its vars if the
         // filter receives data
@@ -230,71 +230,71 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                     // in case
                     // include it. Make the buffer big enough to hold
                     buffersize = Math
-                            .max((ssg.getMult(node, false) - 1)
-                                    * filter.getPopInt() + filter.getPeekInt(),
-                                    prepeek);
+                        .max((ssg.getMult(node, false) - 1)
+                             * filter.getPopInt() + filter.getPeekInt(),
+                             prepeek);
                 } else
                     // not ratematching and we do not have a circular buffer
                     buffersize = maxpeek;
 
                 // define the simple index variable
                 JVariableDefinition simpleIndexVar = new JVariableDefinition(
-                        null, 0, CStdType.Integer,
-                        RawExecutionCode.simpleIndex, new JIntLiteral(-1));
+                                                                             null, 0, CStdType.Integer,
+                                                                             RawExecutionCode.simpleIndex, new JIntLiteral(-1));
 
                 // remember the JVarDef for latter (in the raw main function)
                 localVariables.simpleIndex = simpleIndexVar;
 
                 block.addStatement(new JVariableDeclarationStatement(null,
-                        simpleIndexVar, null));
+                                                                     simpleIndexVar, null));
             } else { // filter with remaing items on the buffer after
                 // initialization
                 // see Mgordon's thesis for explanation (Code Generation
                 // Section)
                 if (KjcOptions.ratematch)
                     buffersize = Util.nextPow2(Math
-                            .max((ssg.getMult(node, false) - 1)
-                                    * filter.getPopInt() + filter.getPeekInt(),
-                                    prepeek)
-                            + remaining);
+                                               .max((ssg.getMult(node, false) - 1)
+                                                    * filter.getPopInt() + filter.getPeekInt(),
+                                                    prepeek)
+                                               + remaining);
                 else
                     buffersize = Util.nextPow2(maxpeek + remaining);
             }
 
             int dim = (filter.getInputType().isArrayType()) ? ((CArrayType) filter
-                    .getInputType()).getDims().length + 1
-                    : 1;
+                                                               .getInputType()).getDims().length + 1
+                : 1;
 
             JVariableDefinition recvBufVar = new JVariableDefinition(
-                    null,
-                    at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    new CArrayType(filter.getInputType(), dim /* dimension */, bufferDims(filter, filter.getInputType(), buffersize)),
-                    RawExecutionCode.recvBuffer, null);
+                                                                     null,
+                                                                     at.dms.kjc.Constants.ACC_FINAL, // ?????????
+                                                                     new CArrayType(filter.getInputType(), dim /* dimension */, bufferDims(filter, filter.getInputType(), buffersize)),
+                                                                     RawExecutionCode.recvBuffer, null);
 
             // the size of the buffer
             JVariableDefinition recvBufferSizeVar = new JVariableDefinition(
-                    null, at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    CStdType.Integer, RawExecutionCode.recvBufferSize,
-                    new JIntLiteral(buffersize));
+                                                                            null, at.dms.kjc.Constants.ACC_FINAL, // ?????????
+                                                                            CStdType.Integer, RawExecutionCode.recvBufferSize,
+                                                                            new JIntLiteral(buffersize));
 
             // the size of the buffer
             JVariableDefinition recvBufferBitsVar = new JVariableDefinition(
-                    null, at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    CStdType.Integer, RawExecutionCode.recvBufferBits,
-                    new JIntLiteral(buffersize - 1));
+                                                                            null, at.dms.kjc.Constants.ACC_FINAL, // ?????????
+                                                                            CStdType.Integer, RawExecutionCode.recvBufferBits,
+                                                                            new JIntLiteral(buffersize - 1));
 
             // the receive buffer index (start of the buffer)
             JVariableDefinition recvBufferIndexVar = new JVariableDefinition(
-                    null, 0, CStdType.Integer,
-                    RawExecutionCode.recvBufferIndex, new JIntLiteral(-1));
+                                                                             null, 0, CStdType.Integer,
+                                                                             RawExecutionCode.recvBufferIndex, new JIntLiteral(-1));
 
             // the index to the end of the receive buffer)
             JVariableDefinition recvIndexVar = new JVariableDefinition(null, 0,
-                    CStdType.Integer, RawExecutionCode.recvIndex,
-                    new JIntLiteral(-1));
+                                                                       CStdType.Integer, RawExecutionCode.recvIndex,
+                                                                       new JIntLiteral(-1));
 
             JVariableDefinition[] indices = { recvBufferSizeVar,
-                    recvBufferBitsVar, recvBufferIndexVar, recvIndexVar };
+                                              recvBufferBitsVar, recvBufferIndexVar, recvIndexVar };
 
             localVariables.recvBuffer = recvBufVar;
             localVariables.recvBufferSize = recvBufferSizeVar;
@@ -303,10 +303,10 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             localVariables.recvIndex = recvIndexVar;
 
             block.addStatement(new JVariableDeclarationStatement(null, indices,
-                    null));
+                                                                 null));
 
             block.addStatement(new JVariableDeclarationStatement(null,
-                    recvBufVar, null));
+                                                                 recvBufVar, null));
 
         }
 
@@ -314,31 +314,31 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // index
         if (KjcOptions.ratematch && filter.getPushInt() > 0) {
             int steady = ssg.getMult(layout.getNode(layout.getTile(filter)),
-                    false);
+                                     false);
 
             // define the send buffer index variable
             JVariableDefinition sendBufferIndexVar = new JVariableDefinition(
-                    null, 0, CStdType.Integer, RawExecutionCode.sendBufferIndex,
-                    new JIntLiteral(-1));
+                                                                             null, 0, CStdType.Integer, RawExecutionCode.sendBufferIndex,
+                                                                             new JIntLiteral(-1));
 
             localVariables.sendBufferIndex = sendBufferIndexVar;
             block.addStatement(new JVariableDeclarationStatement(null,
-                    sendBufferIndexVar, null));
+                                                                 sendBufferIndexVar, null));
             // define the send buffer
 
             JExpression[] dims = new JExpression[1];
             // the size of the output array is number of executions in steady *
             // number of items pushed * size of item
             dims[0] = new JIntLiteral(steady * filter.getPushInt()
-                    * Util.getTypeSize(filter.getOutputType()));
+                                      * Util.getTypeSize(filter.getOutputType()));
 
             JVariableDefinition sendBufVar = new JVariableDefinition(null,
-                    at.dms.kjc.Constants.ACC_FINAL, // ?????????
-                    new CArrayType(filter.getOutputType(), 1 /* dimension */, dims),
-                    RawExecutionCode.sendBuffer, null);
+                                                                     at.dms.kjc.Constants.ACC_FINAL, // ?????????
+                                                                     new CArrayType(filter.getOutputType(), 1 /* dimension */, dims),
+                                                                     RawExecutionCode.sendBuffer, null);
             localVariables.sendBuffer = sendBufVar;
             block.addStatement(new JVariableDeclarationStatement(null,
-                    sendBufVar, null));
+                                                                 sendBufVar, null));
         }
 
         // print the declarations for the array indices for pushing and popping
@@ -352,12 +352,12 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             // create enough index vars as max dim
             for (int i = 0; i < inputDim; i++) {
                 JVariableDefinition arrayIndexVar = new JVariableDefinition(
-                        null, 0, CStdType.Integer, RawExecutionCode.ARRAY_INDEX + i, null);
+                                                                            null, 0, CStdType.Integer, RawExecutionCode.ARRAY_INDEX + i, null);
                 // remember the array index vars
                 localVariables.ARRAY_INDEX[i] = arrayIndexVar;
 
                 block.addStatement(new JVariableDeclarationStatement(null,
-                        arrayIndexVar, null));
+                                                                     arrayIndexVar, null));
             }
         }
     }
@@ -367,10 +367,10 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             return false;
 
         if (filter.getPeekInt() == filter.getPopInt()
-                && remaining == 0
-                && (!(filter instanceof SIRTwoStageFilter) || ((SIRTwoStageFilter) filter)
-                        .getInitPop() == ((SIRTwoStageFilter) filter)
-                        .getInitPeek()))
+            && remaining == 0
+            && (!(filter instanceof SIRTwoStageFilter) || ((SIRTwoStageFilter) filter)
+                .getInitPop() == ((SIRTwoStageFilter) filter)
+                .getInitPeek()))
             return true;
         return false;
     }
@@ -379,7 +379,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     // buffer accesses, do this for all functions just in case helper
     // functions call peek or pop
     private void convertCommExps(SIRFilter filter, boolean simple,
-            LocalVariables localVars) {
+                                 LocalVariables localVars) {
         SLIRReplacingVisitor convert;
 
         if (simple) {
@@ -392,7 +392,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             // iterate over the statements and call the ConvertCommunication
             // class to convert peek, pop
             for (ListIterator it = methods[i].getStatementIterator(); it
-                    .hasNext();) {
+                     .hasNext();) {
                 ((JStatement) it.next()).accept(convert);
             }
         }
@@ -404,8 +404,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // return false;
 
         if (filter.getPeekInt() == 0
-                && (!(filter instanceof SIRTwoStageFilter) || (((SIRTwoStageFilter) filter)
-                        .getInitPeekInt() == 0)))
+            && (!(filter instanceof SIRTwoStageFilter) || (((SIRTwoStageFilter) filter)
+                                                           .getInitPeekInt() == 0)))
             return true;
         return false;
     }
@@ -414,7 +414,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     // LocalVariables localVariables
 
     private void rawMainFunction(FlatNode node, JBlock statements,
-            LocalVariables localVariables) {
+                                 LocalVariables localVariables) {
         SIRFilter filter = (SIRFilter) node.contents;
 
         // generate the code to define the local variables
@@ -429,40 +429,40 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         else
             paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
 
-	// if standalone, add a field for the iteration counter...
+        // if standalone, add a field for the iteration counter...
         JFieldDeclaration iterationCounter = null;
         if (KjcOptions.standalone) {
             iterationCounter = new JFieldDeclaration(new JVariableDefinition(0,
-                    CStdType.Integer, FlatIRToC.MAINMETHOD_COUNTER,
-                    new JIntLiteral(-1)));
+                                                                             CStdType.Integer, FlatIRToC.MAINMETHOD_COUNTER,
+                                                                             new JIntLiteral(-1)));
             filter.addField(iterationCounter);
         }
 
         // add the call to the init function
         statements.addStatement(new JExpressionStatement(null,
-                new JMethodCallExpression(null, new JThisExpression(null),
-                        filter.getInit().getName(), paramArray), null));
+                                                         new JMethodCallExpression(null, new JThisExpression(null),
+                                                                                   filter.getInit().getName(), paramArray), null));
 
         // add the call to initWork
         if (filter instanceof SIRTwoStageFilter) {
             SIRTwoStageFilter two = (SIRTwoStageFilter) filter;
             JBlock body = (JBlock) ObjectDeepCloner.deepCopy(two.getInitWork()
-                    .getBody());
+                                                             .getBody());
 
             // add the code to receive the items into the buffer
             statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                    .getInputType(), localVariables), localVariables.exeIndex,
-                    new JIntLiteral(two.getInitPeekInt())));
+                                                                             .getInputType(), localVariables), localVariables.exeIndex,
+                                                                 new JIntLiteral(two.getInitPeekInt())));
 
             // now inline the init work body
             statements.addStatement(body);
             // if a simple filter, reset the simpleIndex
             if (isSimple(filter)) {
                 statements.addStatement(new JExpressionStatement(null,
-                        (new JAssignmentExpression(null,
-                                new JLocalVariableExpression(null,
-                                        localVariables.simpleIndex),
-                                new JIntLiteral(-1))), null));
+                                                                 (new JAssignmentExpression(null,
+                                                                                            new JLocalVariableExpression(null,
+                                                                                                                         localVariables.simpleIndex),
+                                                                                            new JIntLiteral(-1))), null));
             }
         }
 
@@ -472,65 +472,65 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             if (bottomPeek > 0) {
                 statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                        .getInputType(), localVariables),
-                        localVariables.exeIndex, new JIntLiteral(bottomPeek)));
+                                                                                 .getInputType(), localVariables),
+                                                                     localVariables.exeIndex, new JIntLiteral(bottomPeek)));
             }
 
             // add the calls for the work function in the initialization stage
             statements
-                    .addStatement(generateInitWorkLoop(filter, localVariables));
+                .addStatement(generateInitWorkLoop(filter, localVariables));
         }
 
         // add the code to collect all data produced by the upstream filter
         // but not consumed by this filter in the initialization stage
         if (remaining > 0) {
             statements.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                    .getInputType(), localVariables), localVariables.exeIndex,
-                    new JIntLiteral(remaining)));
+                                                                             .getInputType(), localVariables), localVariables.exeIndex,
+                                                                 new JIntLiteral(remaining)));
         }
 
-	if (!IMEMEstimation.TESTING_IMEM) {
+        if (!IMEMEstimation.TESTING_IMEM) {
             // add a call to raw_init2 only if not testing imem
             statements.addStatement(new JExpressionStatement(null,
-                    new JMethodCallExpression(null, new JThisExpression(null),
-                            SwitchCode.SW_SS_TRIPS, new JExpression[0]), null));
+                                                             new JMethodCallExpression(null, new JThisExpression(null),
+                                                                                       SwitchCode.SW_SS_TRIPS, new JExpression[0]), null));
         }
 
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             statements.addStatement(new SIRPrintStatement(null,
-                    new JStringLiteral(null, filter.getName()
-                            + " Starting Steady-State\\n"), null));
+                                                          new JStringLiteral(null, filter.getName()
+                                                                             + " Starting Steady-State\\n"), null));
         }
 
         // add the call to the work function
         statements
-                .addStatement(generateSteadyStateLoop(filter, localVariables));
+            .addStatement(generateSteadyStateLoop(filter, localVariables));
 
     }
 
     // generate the loop for the work function firings in the
     // initialization schedule
     JStatement generateInitWorkLoop(SIRFilter filter,
-            LocalVariables localVariables) {
+                                    LocalVariables localVariables) {
         JStatement innerReceiveLoop = RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                .getInputType(), localVariables), localVariables.exeIndex,
-                new JIntLiteral(filter.getPopInt()));
+                                                                               .getInputType(), localVariables), localVariables.exeIndex,
+                                                                   new JIntLiteral(filter.getPopInt()));
 
         JExpression isFirst = new JEqualityExpression(null, false,
-                new JLocalVariableExpression(null, localVariables.exeIndex1),
-                new JIntLiteral(0));
+                                                      new JLocalVariableExpression(null, localVariables.exeIndex1),
+                                                      new JIntLiteral(0));
         JStatement ifStatement = new JIfStatement(null, isFirst,
-                innerReceiveLoop, null, null);
+                                                  innerReceiveLoop, null, null);
 
         JBlock block = new JBlock(null, new JStatement[0], null);
 
         // if a simple filter, reset the simpleIndex
         if (isSimple(filter)) {
             block.addStatement(new JExpressionStatement(null,
-                    (new JAssignmentExpression(null,
-                            new JLocalVariableExpression(null,
-                                    localVariables.simpleIndex),
-                            new JIntLiteral(-1))), null));
+                                                        (new JAssignmentExpression(null,
+                                                                                   new JLocalVariableExpression(null,
+                                                                                                                localVariables.simpleIndex),
+                                                                                   new JIntLiteral(-1))), null));
         }
 
         // add the if statement
@@ -538,12 +538,12 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
         // clone the work function and inline it
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                .getBody());
+                                                              .getBody());
 
         // if we are in debug mode, print out that the filter is firing
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             block.addStatement(new SIRPrintStatement(null, new JStringLiteral(
-                    null, filter.getName() + " firing (init).\\n"), null));
+                                                                              null, filter.getName() + " firing (init).\\n"), null));
         }
 
         block.addStatement(workBlock);
@@ -551,7 +551,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // return the for loop that executes the block init - 1
         // times
         return RawExecutionCode.makeForLoop(block, localVariables.exeIndex1, new JIntLiteral(
-                initFire - 1));
+                                                                                             initFire - 1));
     }
 
     private int lcm(int x, int y) { // least common multiple
@@ -568,37 +568,37 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     }
 
     JStatement generateRateMatchSteadyState(SIRFilter filter,
-            LocalVariables localVariables) {
+                                            LocalVariables localVariables) {
         JBlock block = new JBlock(null, new JStatement[0], null);
         int steady = ssg.getMult(layout.getNode(layout.getTile(filter)), false);
 
         // reset the simple index
         if (isSimple(filter)) {
             block.addStatement(new JExpressionStatement(null,
-                    (new JAssignmentExpression(null,
-                            new JLocalVariableExpression(null,
-                                    localVariables.simpleIndex),
-                            new JIntLiteral(-1))), null));
+                                                        (new JAssignmentExpression(null,
+                                                                                   new JLocalVariableExpression(null,
+                                                                                                                localVariables.simpleIndex),
+                                                                                   new JIntLiteral(-1))), null));
         }
 
         // should be at least peek - pop items in the buffer, so
         // just receive pop * steady in the buffer and we can
         // run for an entire steady state
         block.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                .getInputType(), localVariables), localVariables.exeIndex,
-                new JIntLiteral(filter.getPopInt() * steady)));
+                                                                    .getInputType(), localVariables), localVariables.exeIndex,
+                                                        new JIntLiteral(filter.getPopInt() * steady)));
         if (filter.getPushInt() > 0) {
             // reset the send buffer index
             block.addStatement(new JExpressionStatement(null,
-                    new JAssignmentExpression(null,
-                            new JLocalVariableExpression(null,
-                                    localVariables.sendBufferIndex),
-                            new JIntLiteral(-1)), null));
+                                                        new JAssignmentExpression(null,
+                                                                                  new JLocalVariableExpression(null,
+                                                                                                               localVariables.sendBufferIndex),
+                                                                                  new JIntLiteral(-1)), null));
         }
 
         // now, run the work function steady times...
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                .getBody());
+                                                              .getBody());
 
         // convert all of the push expressions in the steady state work block
         // into
@@ -608,12 +608,12 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // if we are in debug mode, print out that the filter is firing
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             block.addStatement(new SIRPrintStatement(null, new JStringLiteral(
-                    null, filter.getName() + " firing.\\n"), null));
+                                                                              null, filter.getName() + " firing.\\n"), null));
         }
 
         // add the cloned work function to the block
         block.addStatement(RawExecutionCode.makeForLoop(workBlock, localVariables.exeIndex,
-                new JIntLiteral(steady)));
+                                                        new JIntLiteral(steady)));
 
         // now add the code to push the output buffer onto the static network
         // and
@@ -623,20 +623,20 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         if (filter.getPushInt() > 0) {
 
             SIRPushExpression pushExp = new SIRPushExpression(
-                    new JArrayAccessExpression(null,
-                            new JLocalVariableExpression(null,
-                                    localVariables.sendBuffer),
-                            new JLocalVariableExpression(null,
-                                    localVariables.exeIndex)));
+                                                              new JArrayAccessExpression(null,
+                                                                                         new JLocalVariableExpression(null,
+                                                                                                                      localVariables.sendBuffer),
+                                                                                         new JLocalVariableExpression(null,
+                                                                                                                      localVariables.exeIndex)));
 
             pushExp.setTapeType(Util.getBaseType(filter.getOutputType()));
 
             JExpressionStatement send = new JExpressionStatement(null, pushExp,
-                    null);
+                                                                 null);
 
             block.addStatement(RawExecutionCode.makeForLoop(send, localVariables.exeIndex,
-                    new JIntLiteral(steady * filter.getPushInt()
-                            * Util.getTypeSize(filter.getOutputType()))));
+                                                            new JIntLiteral(steady * filter.getPushInt()
+                                                                            * Util.getTypeSize(filter.getOutputType()))));
 
         }
 
@@ -645,21 +645,21 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // and add the print statements
         if (KjcOptions.decoupled) {
             block.addStatementFirst(new SIRPrintStatement(null,
-                    new JIntLiteral(0), null));
+                                                          new JIntLiteral(0), null));
             block.addStatement(block.size(), new SIRPrintStatement(null,
-                    new JIntLiteral(1), null));
+                                                                   new JIntLiteral(1), null));
             return block;
         }
 
         // return the infinite loop
         return new JWhileStatement(null, new JBooleanLiteral(null, true),
-                block, null);
+                                   block, null);
 
     }
 
     // generate the code for the steady state loop
     JStatement generateSteadyStateLoop(SIRFilter filter,
-            LocalVariables localVariables) {
+                                       LocalVariables localVariables) {
 
         // is we are rate matching generate the appropriate code
         if (KjcOptions.ratematch)
@@ -670,24 +670,24 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // reset the simple index
         if (isSimple(filter)) {
             block.addStatement(new JExpressionStatement(null,
-                    (new JAssignmentExpression(null,
-                            new JLocalVariableExpression(null,
-                                    localVariables.simpleIndex),
-                            new JIntLiteral(-1))), null));
+                                                        (new JAssignmentExpression(null,
+                                                                                   new JLocalVariableExpression(null,
+                                                                                                                localVariables.simpleIndex),
+                                                                                   new JIntLiteral(-1))), null));
         }
 
         // add the statements to receive pop items into the buffer
         block.addStatement(RawExecutionCode.makeForLoop(receiveCode(filter, filter
-                .getInputType(), localVariables), localVariables.exeIndex,
-                new JIntLiteral(filter.getPopInt())));
+                                                                    .getInputType(), localVariables), localVariables.exeIndex,
+                                                        new JIntLiteral(filter.getPopInt())));
 
         JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                .getBody());
+                                                              .getBody());
 
         // if we are in debug mode, print out that the filter is firing
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             block.addStatement(new SIRPrintStatement(null, new JStringLiteral(
-                    null, filter.getName() + " firing.\\n"), null));
+                                                                              null, filter.getName() + " firing.\\n"), null));
         }
 
         // add the cloned work function to the block
@@ -701,23 +701,23 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // and add the print statements
         if (KjcOptions.decoupled) {
             block.addStatementFirst(new SIRPrintStatement(null,
-                    new JIntLiteral(0), null));
+                                                          new JIntLiteral(0), null));
             block.addStatement(block.size(), new SIRPrintStatement(null,
-                    new JIntLiteral(1), null));
+                                                                   new JIntLiteral(1), null));
             return block;
         }
 
-	return new JWhileStatement(null,
-				   KjcOptions.standalone ? (JExpression) new JPostfixExpression(
-                        null, Constants.OPE_POSTDEC,
-                        new JFieldAccessExpression(new JThisExpression(null),
-                                FlatIRToC.MAINMETHOD_COUNTER))
-                        : (JExpression) new JBooleanLiteral(null, true), block,
-                null);
+        return new JWhileStatement(null,
+                                   KjcOptions.standalone ? (JExpression) new JPostfixExpression(
+                                                                                                null, Constants.OPE_POSTDEC,
+                                                                                                new JFieldAccessExpression(new JThisExpression(null),
+                                                                                                                           FlatIRToC.MAINMETHOD_COUNTER))
+                                   : (JExpression) new JBooleanLiteral(null, true), block,
+                                   null);
     }
 
     JStatement receiveCode(SIRFilter filter, CType type,
-            LocalVariables localVariables) {
+                           LocalVariables localVariables) {
         if (noBuffer(filter))
             return null;
 
@@ -737,17 +737,17 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
         // create the array access expression to access the buffer
         JArrayAccessExpression arrayAccess = new JArrayAccessExpression(null,
-                new JLocalVariableExpression(null, localVariables.recvBuffer),
-                bufferIndex(filter, localVariables));
+                                                                        new JLocalVariableExpression(null, localVariables.recvBuffer),
+                                                                        bufferIndex(filter, localVariables));
 
         // put the arrayaccess in an array...
         JExpression[] bufferAccess = { new JParenthesedExpression(null,
-                arrayAccess) };
+                                                                  arrayAccess) };
 
         // the method call expression, for scalars, flatIRtoC
         // changes this into c code thatw will perform the receive...
         JMethodCallExpression exp = new JMethodCallExpression(null,
-                new JThisExpression(null), receiveMethodName, bufferAccess);
+                                                              new JThisExpression(null), receiveMethodName, bufferAccess);
 
         exp.setTapeType(type);
         // return a statement
@@ -756,7 +756,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
     // generate the code to receive the array into the buffer
     JStatement arrayReceiveCode(SIRFilter filter, CArrayType type,
-            LocalVariables localVariables) {
+                                LocalVariables localVariables) {
         // get the dimensionality of the input buffer
         int dim = type.getDims().length + 1;
         // make sure there are enough indices
@@ -764,13 +764,13 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
             Utils.fail("Error generating array receive code");
         // generate the first (outermost array access)
         JArrayAccessExpression arrayAccess = new JArrayAccessExpression(null,
-                new JLocalVariableExpression(null, localVariables.recvBuffer),
-                bufferIndex(filter, localVariables));
+                                                                        new JLocalVariableExpression(null, localVariables.recvBuffer),
+                                                                        bufferIndex(filter, localVariables));
         // generate the remaining array accesses
         for (int i = 0; i < dim - 1; i++)
             arrayAccess = new JArrayAccessExpression(null, arrayAccess,
-                    new JLocalVariableExpression(null,
-                            localVariables.ARRAY_INDEX[i]));
+                                                     new JLocalVariableExpression(null,
+                                                                                  localVariables.ARRAY_INDEX[i]));
 
         // now place the array access in a method call to alert flatirtoc that
         // it is a
@@ -779,7 +779,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         args[0] = arrayAccess;
 
         JMethodCallExpression methodCall = new JMethodCallExpression(null,
-                new JThisExpression(null), RawExecutionCode.receiveMethod, args);
+                                                                     new JThisExpression(null), RawExecutionCode.receiveMethod, args);
 
         methodCall.setTapeType(type);
         // now generate the nested for loops
@@ -796,14 +796,14 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     // return the buffer access expression for the receive code
     // depends if this is a simple filter
     private JExpression bufferIndex(SIRFilter filter,
-            LocalVariables localVariables) {
+                                    LocalVariables localVariables) {
         if (isSimple(filter)) {
             return new JLocalVariableExpression(null, localVariables.exeIndex);
         } else {
             // create the increment of the index var
             JPrefixExpression bufferIncrement = new JPrefixExpression(null,
-                    OPE_PREINC, new JLocalVariableExpression(null,
-                            localVariables.recvIndex));
+                                                                      OPE_PREINC, new JLocalVariableExpression(null,
+                                                                                                               localVariables.recvIndex));
             /*
              * //create the modulo expression JModuloExpression indexMod = new
              * JModuloExpression(null, bufferIncrement, new
@@ -812,8 +812,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             // create the modulo expression
             JBitwiseExpression indexAnd = new JBitwiseExpression(null,
-                    OPE_BAND, bufferIncrement, new JLocalVariableExpression(
-                            null, localVariables.recvBufferBits));
+                                                                 OPE_BAND, bufferIncrement, new JLocalVariableExpression(
+                                                                                                                         null, localVariables.recvBufferBits));
 
             return indexAnd;
         }
@@ -829,21 +829,21 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // for pop expressions convert to the form
         // (recvBuffer[++recvBufferIndex % recvBufferSize])
         public Object visitPopExpression(SIRPopExpression oldSelf,
-                CType oldTapeType) {
+                                         CType oldTapeType) {
 
             // do the super
             SIRPopExpression self = (SIRPopExpression) super
-                    .visitPopExpression(oldSelf, oldTapeType);
+                .visitPopExpression(oldSelf, oldTapeType);
 
             // create the increment of the index var
             JPrefixExpression increment = new JPrefixExpression(null,
-                    OPE_PREINC, new JLocalVariableExpression(null,
-                            localVariables.simpleIndex));
+                                                                OPE_PREINC, new JLocalVariableExpression(null,
+                                                                                                         localVariables.simpleIndex));
 
             // create the array access expression
             JArrayAccessExpression bufferAccess = new JArrayAccessExpression(
-                    null, new JLocalVariableExpression(null,
-                            localVariables.recvBuffer), increment);
+                                                                             null, new JLocalVariableExpression(null,
+                                                                                                                localVariables.recvBuffer), increment);
 
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
@@ -852,22 +852,22 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // convert peek exps into:
         // (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize])
         public Object visitPeekExpression(SIRPeekExpression oldSelf,
-                CType oldTapeType, JExpression oldArg) {
+                                          CType oldTapeType, JExpression oldArg) {
             // do the super
             SIRPeekExpression self = (SIRPeekExpression) super
-                    .visitPeekExpression(oldSelf, oldTapeType, oldArg);
+                .visitPeekExpression(oldSelf, oldTapeType, oldArg);
 
             JAddExpression argIncrement = new JAddExpression(null, self
-                    .getArg(), new JIntLiteral(1));
+                                                             .getArg(), new JIntLiteral(1));
 
             JAddExpression index = new JAddExpression(null,
-                    new JLocalVariableExpression(null,
-                            localVariables.simpleIndex), argIncrement);
+                                                      new JLocalVariableExpression(null,
+                                                                                   localVariables.simpleIndex), argIncrement);
 
             // create the array access expression
             JArrayAccessExpression bufferAccess = new JArrayAccessExpression(
-                    null, new JLocalVariableExpression(null,
-                            localVariables.recvBuffer), index);
+                                                                             null, new JLocalVariableExpression(null,
+                                                                                                                localVariables.recvBuffer), index);
 
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
@@ -889,12 +889,12 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             // create the increment of the index var
             JPrefixExpression bufferIncrement = new JPrefixExpression(null,
-                    OPE_PREINC, new JLocalVariableExpression(null,
-                            localVariables.recvBufferIndex));
+                                                                      OPE_PREINC, new JLocalVariableExpression(null,
+                                                                                                               localVariables.recvBufferIndex));
 
             JBitwiseExpression indexAnd = new JBitwiseExpression(null,
-                    OPE_BAND, bufferIncrement, new JLocalVariableExpression(
-                            null, localVariables.recvBufferBits));
+                                                                 OPE_BAND, bufferIncrement, new JLocalVariableExpression(
+                                                                                                                         null, localVariables.recvBufferBits));
             /*
              * //create the modulo expression JModuloExpression indexMod = new
              * JModuloExpression(null, bufferIncrement, new
@@ -903,8 +903,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             // create the array access expression
             JArrayAccessExpression bufferAccess = new JArrayAccessExpression(
-                    null, new JLocalVariableExpression(null,
-                            localVariables.recvBuffer), indexAnd);
+                                                                             null, new JLocalVariableExpression(null,
+                                                                                                                localVariables.recvBuffer), indexAnd);
 
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
@@ -913,21 +913,21 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // convert peek exps into:
         // (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize])
         public Object visitPeekExpression(SIRPeekExpression oldSelf,
-                CType oldTapeType, JExpression oldArg) {
+                                          CType oldTapeType, JExpression oldArg) {
             // do the super
             SIRPeekExpression self = (SIRPeekExpression) super
-                    .visitPeekExpression(oldSelf, oldTapeType, oldArg);
+                .visitPeekExpression(oldSelf, oldTapeType, oldArg);
 
             // create the index calculation expression
             JAddExpression argIncrement = new JAddExpression(null, self
-                    .getArg(), new JIntLiteral(1));
+                                                             .getArg(), new JIntLiteral(1));
             JAddExpression index = new JAddExpression(null,
-                    new JLocalVariableExpression(null,
-                            localVariables.recvBufferIndex), argIncrement);
+                                                      new JLocalVariableExpression(null,
+                                                                                   localVariables.recvBufferIndex), argIncrement);
 
             JBitwiseExpression indexAnd = new JBitwiseExpression(null,
-                    OPE_BAND, index, new JLocalVariableExpression(null,
-                            localVariables.recvBufferBits));
+                                                                 OPE_BAND, index, new JLocalVariableExpression(null,
+                                                                                                               localVariables.recvBufferBits));
 
             /*
              * //create the mod expression JModuloExpression indexMod = new
@@ -937,8 +937,8 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
             // create the array access expression
             JArrayAccessExpression bufferAccess = new JArrayAccessExpression(
-                    null, new JLocalVariableExpression(null,
-                            localVariables.recvBuffer), indexAnd);
+                                                                             null, new JLocalVariableExpression(null,
+                                                                                                                localVariables.recvBuffer), indexAnd);
 
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
@@ -961,14 +961,14 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
          * Visits a push expression.
          */
         public Object visitPushExpression(SIRPushExpression self,
-                CType tapeType, JExpression arg) {
+                                          CType tapeType, JExpression arg) {
             JExpression newExp = (JExpression) arg.accept(this);
             return new JAssignmentExpression(null, new JArrayAccessExpression(
-                    null, new JLocalVariableExpression(null,
-                            localVariables.sendBuffer), new JPrefixExpression(
-                            null, OPE_PREINC, new JLocalVariableExpression(
-                                    null, localVariables.sendBufferIndex))),
-                    newExp);
+                                                                              null, new JLocalVariableExpression(null,
+                                                                                                                 localVariables.sendBuffer), new JPrefixExpression(
+                                                                                                                                                                   null, OPE_PREINC, new JLocalVariableExpression(
+                                                                                                                                                                                                                  null, localVariables.sendBufferIndex))),
+                                             newExp);
 
             /*
              * JExpression[] args = new JExpression[1]; args[0] = newExp;

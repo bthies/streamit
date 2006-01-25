@@ -8,10 +8,10 @@ import at.dms.kjc.sir.statespace.*;
  * explicity checked for and so that the compiler doesn't die (this optimization just
  * stops where it is).<br>
  *
- * $Id: NoTransformPossibleException.java,v 1.1 2004-02-09 17:55:22 thies Exp $
+ * $Id: NoTransformPossibleException.java,v 1.2 2006-01-25 17:02:33 thies Exp $
  **/
 public class NoTransformPossibleException extends Exception {
     public NoTransformPossibleException(String message) {
-	super(message);
+        super(message);
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JEqualityExpression.java,v 1.5 2003-05-28 05:58:43 thies Exp $
+ * $Id: JEqualityExpression.java,v 1.6 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,245 +30,245 @@ import at.dms.util.InconsistencyException;
  */
 public class JEqualityExpression extends JBinaryExpression {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JEqualityExpression() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	equal		is the operator '==' ?
-   * @param	left		the left operand
-   * @param	right		the right operand
-   */
-  public JEqualityExpression(TokenReference where,
-			     boolean equal,
-			     JExpression left,
-			     JExpression right)
-  {
-    super(where, left, right);
-    this.equal = equal;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns a string representation of this literal.
-   */
-  public String toString() {
-    StringBuffer	buffer = new StringBuffer();
-
-    buffer.append("JEqualityExpression[");
-    buffer.append(left.toString());
-    buffer.append(equal ? " == " : " != ");
-    buffer.append(right.toString());
-    buffer.append("]");
-    return buffer.toString();
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the expression (semantically).
-   * @param	context		the analysis context
-   * @return	an equivalent, analysed expression
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public JExpression analyse(CExpressionContext context) throws PositionedError {
-    left = left.analyse(context);
-    right = right.analyse(context);
-
-    CType	leftType = left.getType();
-    CType	rightType = right.getType();
-
-    if (leftType.isNumeric()) {
-      // JLS 15.21.1: Numerical Equality Operators
-      check(context, rightType.isNumeric(), KjcMessages.EQUALITY_TYPE, leftType, rightType);
-
-      CType	promoted = CNumericType.binaryPromote(leftType, rightType);
-
-      left = left.convertType(promoted, context);
-      right = right.convertType(promoted, context);
-    } else if (leftType == CStdType.Boolean) {
-      // JLS 15.21.2: Boolean Equality Operators
-      check(context, rightType == CStdType.Boolean, KjcMessages.EQUALITY_TYPE, leftType, rightType);
-      if (left instanceof JBooleanLiteral || right instanceof JBooleanLiteral) {
-	context.reportTrouble(new CWarning(getTokenReference(), KjcMessages.COMPARING_BOOLEAN_CONSTANT));
-      }
-    } else {
-      // JLS 15.21.3: Reference Equality Operators
-      check(context,
-	    leftType.isReference() && rightType.isReference(),
-	    KjcMessages.EQUALITY_TYPE, leftType, rightType);
-      check(context,
-	    rightType.isCastableTo(leftType) || leftType.isCastableTo(rightType),
-	    KjcMessages.EQUALITY_TYPE, leftType, rightType);
-      if (left.getType().equals(CStdType.String) && right.getType().equals(CStdType.String) &&
-	  (left.isConstant() || right.isConstant())) {
-	context.reportTrouble(new CWarning(getTokenReference(), KjcMessages.STRING_COMPARISON));
-      }
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   equal       is the operator '==' ?
+     * @param   left        the left operand
+     * @param   right       the right operand
+     */
+    public JEqualityExpression(TokenReference where,
+                               boolean equal,
+                               JExpression left,
+                               JExpression right)
+    {
+        super(where, left, right);
+        this.equal = equal;
     }
 
-    type = CStdType.Boolean;
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-    if (left.isConstant() && right.isConstant()) {
-      return constantFolding();
-    } else {
-      return this;
-    }
-  }
+    /**
+     * Returns a string representation of this literal.
+     */
+    public String toString() {
+        StringBuffer    buffer = new StringBuffer();
 
-  /**
-   * @return	a literal resulting of an operation over two literals
-   */
-  public JExpression constantFolding() {
-    boolean	result;
-
-    switch (left.getType().getTypeID()) {
-    case TID_INT:
-      result = left.intValue() == right.intValue();
-      break;
-    case TID_LONG:
-      result = left.longValue() == right.longValue();
-      break;
-    case TID_FLOAT:
-      result = left.floatValue() == right.floatValue();
-      break;
-    case TID_DOUBLE:
-      result = left.doubleValue() == right.doubleValue();
-      break;
-    case TID_BOOLEAN:
-      result = left.booleanValue() == right.booleanValue();
-      break;
-    case TID_CLASS:
-      if (left.getType() != CStdType.String) {
-	throw new InconsistencyException("unexpected type " + left.getType());
-      }
-      result = left.stringValue().equals(right.stringValue());
-      break;
-    default:
-      throw new InconsistencyException("unexpected type " + left.getType());
+        buffer.append("JEqualityExpression[");
+        buffer.append(left.toString());
+        buffer.append(equal ? " == " : " != ");
+        buffer.append(right.toString());
+        buffer.append("]");
+        return buffer.toString();
     }
 
-    return new JBooleanLiteral(getTokenReference(), equal ? result : !result);
-  }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    /**
+     * Analyses the expression (semantically).
+     * @param   context     the analysis context
+     * @return  an equivalent, analysed expression
+     * @exception   PositionedError the analysis detected an error
+     */
+    public JExpression analyse(CExpressionContext context) throws PositionedError {
+        left = left.analyse(context);
+        right = right.analyse(context);
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitEqualityExpression(this, equal, left, right);
-  }
+        CType   leftType = left.getType();
+        CType   rightType = right.getType();
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitEqualityExpression(this, equal, left, right);
-  }
+        if (leftType.isNumeric()) {
+            // JLS 15.21.1: Numerical Equality Operators
+            check(context, rightType.isNumeric(), KjcMessages.EQUALITY_TYPE, leftType, rightType);
 
-  /**
-   * Generates JVM bytecode to evaluate this expression.
-   *
-   * @param	code		the bytecode sequence
-   * @param	discardValue	discard the result of the evaluation ?
-   */
-  public void genCode(CodeSequence code, boolean discardValue) {
-    genBooleanResultCode(code, discardValue);
-  }
+            CType   promoted = CNumericType.binaryPromote(leftType, rightType);
 
-  /**
-   * Optimize a bi-conditional expression
-   */
-  protected void genBranch(JExpression left,
-			   JExpression right,
-			   boolean cond,
-			   CodeSequence code,
-			   CodeLabel label)
-  {
-    setLineNumber(code);
+            left = left.convertType(promoted, context);
+            right = right.convertType(promoted, context);
+        } else if (leftType == CStdType.Boolean) {
+            // JLS 15.21.2: Boolean Equality Operators
+            check(context, rightType == CStdType.Boolean, KjcMessages.EQUALITY_TYPE, leftType, rightType);
+            if (left instanceof JBooleanLiteral || right instanceof JBooleanLiteral) {
+                context.reportTrouble(new CWarning(getTokenReference(), KjcMessages.COMPARING_BOOLEAN_CONSTANT));
+            }
+        } else {
+            // JLS 15.21.3: Reference Equality Operators
+            check(context,
+                  leftType.isReference() && rightType.isReference(),
+                  KjcMessages.EQUALITY_TYPE, leftType, rightType);
+            check(context,
+                  rightType.isCastableTo(leftType) || leftType.isCastableTo(rightType),
+                  KjcMessages.EQUALITY_TYPE, leftType, rightType);
+            if (left.getType().equals(CStdType.String) && right.getType().equals(CStdType.String) &&
+                (left.isConstant() || right.isConstant())) {
+                context.reportTrouble(new CWarning(getTokenReference(), KjcMessages.STRING_COMPARISON));
+            }
+        }
 
-    if (left.getType() == CStdType.Null) {
-      // use specific instruction to compare to null
-      right.genCode(code, false);
-      code.plantJumpInstruction(cond == equal ? opc_ifnull : opc_ifnonnull, label);
-    } else if (right.getType() == CStdType.Null) {
-      // use specific instruction to compare to null
-      left.genCode(code, false);
-      code.plantJumpInstruction(cond == equal ? opc_ifnull : opc_ifnonnull, label);
-    } else if (left.isConstant()
-	       && (left.getType() == CStdType.Integer || left.getType() == CStdType.Boolean)
-	       && ((JLiteral)left).isDefault()) {
-      // use specific instruction to compare to 0
-      right.genCode(code, false);
-      code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
-    } else if (right.isConstant()
-	       && (right.getType() == CStdType.Integer || right.getType() == CStdType.Boolean)
-	       && ((JLiteral)right).isDefault()) {
-      // use specific instruction to compare to 0
-      left.genCode(code, false);
-      code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
-    } else {
-      left.genCode(code, false);
-      right.genCode(code, false);
+        type = CStdType.Boolean;
 
-      switch (left.getType().getTypeID()) {
-      case TID_ARRAY:
-      case TID_CLASS:
-	code.plantJumpInstruction(cond  == equal ? opc_if_acmpeq : opc_if_acmpne, label);
-	break;
-      case TID_FLOAT:
-	code.plantNoArgInstruction(opc_fcmpl);
-	code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
-	break;
-      case TID_LONG:
-	code.plantNoArgInstruction(opc_lcmp);
-	code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
-	break;
-      case TID_DOUBLE:
-	code.plantNoArgInstruction(opc_dcmpl);
-	code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
-	break;
-      default:
-	code.plantJumpInstruction(cond == equal ? opc_if_icmpeq : opc_if_icmpne, label);
-      }
+        if (left.isConstant() && right.isConstant()) {
+            return constantFolding();
+        } else {
+            return this;
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    /**
+     * @return  a literal resulting of an operation over two literals
+     */
+    public JExpression constantFolding() {
+        boolean result;
 
-    protected /* final */ boolean		equal; // removed final for cloner
+        switch (left.getType().getTypeID()) {
+        case TID_INT:
+            result = left.intValue() == right.intValue();
+            break;
+        case TID_LONG:
+            result = left.longValue() == right.longValue();
+            break;
+        case TID_FLOAT:
+            result = left.floatValue() == right.floatValue();
+            break;
+        case TID_DOUBLE:
+            result = left.doubleValue() == right.doubleValue();
+            break;
+        case TID_BOOLEAN:
+            result = left.booleanValue() == right.booleanValue();
+            break;
+        case TID_CLASS:
+            if (left.getType() != CStdType.String) {
+                throw new InconsistencyException("unexpected type " + left.getType());
+            }
+            result = left.stringValue().equals(right.stringValue());
+            break;
+        default:
+            throw new InconsistencyException("unexpected type " + left.getType());
+        }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        return new JBooleanLiteral(getTokenReference(), equal ? result : !result);
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JEqualityExpression other = new at.dms.kjc.JEqualityExpression();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JEqualityExpression other) {
-  super.deepCloneInto(other);
-  other.equal = this.equal;
-}
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitEqualityExpression(this, equal, left, right);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitEqualityExpression(this, equal, left, right);
+    }
+
+    /**
+     * Generates JVM bytecode to evaluate this expression.
+     *
+     * @param   code        the bytecode sequence
+     * @param   discardValue    discard the result of the evaluation ?
+     */
+    public void genCode(CodeSequence code, boolean discardValue) {
+        genBooleanResultCode(code, discardValue);
+    }
+
+    /**
+     * Optimize a bi-conditional expression
+     */
+    protected void genBranch(JExpression left,
+                             JExpression right,
+                             boolean cond,
+                             CodeSequence code,
+                             CodeLabel label)
+    {
+        setLineNumber(code);
+
+        if (left.getType() == CStdType.Null) {
+            // use specific instruction to compare to null
+            right.genCode(code, false);
+            code.plantJumpInstruction(cond == equal ? opc_ifnull : opc_ifnonnull, label);
+        } else if (right.getType() == CStdType.Null) {
+            // use specific instruction to compare to null
+            left.genCode(code, false);
+            code.plantJumpInstruction(cond == equal ? opc_ifnull : opc_ifnonnull, label);
+        } else if (left.isConstant()
+                   && (left.getType() == CStdType.Integer || left.getType() == CStdType.Boolean)
+                   && ((JLiteral)left).isDefault()) {
+            // use specific instruction to compare to 0
+            right.genCode(code, false);
+            code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
+        } else if (right.isConstant()
+                   && (right.getType() == CStdType.Integer || right.getType() == CStdType.Boolean)
+                   && ((JLiteral)right).isDefault()) {
+            // use specific instruction to compare to 0
+            left.genCode(code, false);
+            code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
+        } else {
+            left.genCode(code, false);
+            right.genCode(code, false);
+
+            switch (left.getType().getTypeID()) {
+            case TID_ARRAY:
+            case TID_CLASS:
+                code.plantJumpInstruction(cond  == equal ? opc_if_acmpeq : opc_if_acmpne, label);
+                break;
+            case TID_FLOAT:
+                code.plantNoArgInstruction(opc_fcmpl);
+                code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
+                break;
+            case TID_LONG:
+                code.plantNoArgInstruction(opc_lcmp);
+                code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
+                break;
+            case TID_DOUBLE:
+                code.plantNoArgInstruction(opc_dcmpl);
+                code.plantJumpInstruction(cond == equal ? opc_ifeq : opc_ifne, label);
+                break;
+            default:
+                code.plantJumpInstruction(cond == equal ? opc_if_icmpeq : opc_if_icmpne, label);
+            }
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    protected /* final */ boolean       equal; // removed final for cloner
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JEqualityExpression other = new at.dms.kjc.JEqualityExpression();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JEqualityExpression other) {
+        super.deepCloneInto(other);
+        other.equal = this.equal;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

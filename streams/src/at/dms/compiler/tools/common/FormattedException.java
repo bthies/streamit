@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: FormattedException.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: FormattedException.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -25,84 +25,84 @@ package at.dms.compiler.tools.common;
  */
 public class FormattedException extends Exception {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * An exception with a formatted message as argument
-   * @param	message		the formatted message
-   */
-  public FormattedException(Message message) {
-    super(message.getDescription().getFormat());
+    /**
+     * An exception with a formatted message as argument
+     * @param   message     the formatted message
+     */
+    public FormattedException(Message message) {
+        super(message.getDescription().getFormat());
 
-    this.message = message;
-  }
+        this.message = message;
+    }
 
-  /**
-   * An exception with an arbitrary number of parameters
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public FormattedException(MessageDescription description, Object[] parameters) {
-    this(new Message(description, parameters));
-  }
+    /**
+     * An exception with an arbitrary number of parameters
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public FormattedException(MessageDescription description, Object[] parameters) {
+        this(new Message(description, parameters));
+    }
 
-  /**
-   * An exception with two parameters
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public FormattedException(MessageDescription description, Object parameter1, Object parameter2) {
-    this(description, new Object[] { parameter1, parameter2 });
-  }
+    /**
+     * An exception with two parameters
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public FormattedException(MessageDescription description, Object parameter1, Object parameter2) {
+        this(description, new Object[] { parameter1, parameter2 });
+    }
 
-  /**
-   * An exception with one parameter
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public FormattedException(MessageDescription description, Object parameter) {
-    this(description, new Object[] { parameter });
-  }
+    /**
+     * An exception with one parameter
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public FormattedException(MessageDescription description, Object parameter) {
+        this(description, new Object[] { parameter });
+    }
 
-  /**
-   * An exception without parameters
-   * @param	description	the message description
-   */
-  public FormattedException(MessageDescription description) {
-    this(description, null);
-  }
+    /**
+     * An exception without parameters
+     * @param   description the message description
+     */
+    public FormattedException(MessageDescription description) {
+        this(description, null);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns a string explaining the exception.
-   */
-  public String getMessage() {
-    return message.getMessage();
-  }
+    /**
+     * Returns a string explaining the exception.
+     */
+    public String getMessage() {
+        return message.getMessage();
+    }
 
-  /**
-   * Returns the formatted message.
-   */
-  public Message getFormattedMessage() {
-    return message;
-  }
+    /**
+     * Returns the formatted message.
+     */
+    public Message getFormattedMessage() {
+        return message;
+    }
 
-  /**
-   * Returns true iff the error has specified description.
-   */
-  public boolean hasDescription(MessageDescription description) {
-    return message.getDescription() == description;
-  }
+    /**
+     * Returns true iff the error has specified description.
+     */
+    public boolean hasDescription(MessageDescription description) {
+        return message.getDescription() == description;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private final Message		message;
+    private final Message       message;
 }

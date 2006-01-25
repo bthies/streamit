@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: UnicodeReader.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: UnicodeReader.java,v 1.2 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -37,109 +37,109 @@ import java.io.Reader;
  */
 public class UnicodeReader extends FilterReader {
 
-  /**
-   * Creates a new unicode reader.
-   *
-   * @param	in		the reader from which characters will be read
-   */
-  public UnicodeReader(Reader in) {
-    super(in);
-    lookahead = -2;
-  }
-
-  /**
-   * Reads a single character.
-   * @return	the character read, or -1 if the end of the stream has been reached
-   * @throws	IOException	if an I/O error occurs
-   */
-  public int read() throws IOException {
-    if (lookahead != -2) {
-      int		c;
-
-      c = lookahead;
-      lookahead = -2;
-      return c;
-    } else {
-      int		c;
-
-      c = super.read();
-      if (c != '\\') {
-	return c;
-      } else {
-	c = super.read();
-	if (c != 'u') {
-	  lookahead = c;
-	  return '\\';
-	} else {
-	  do {
-	    c = super.read();
-	  } while (c == 'u');
-
-	  int	value;
-
-	  value = decodeHexDigit(c);
-	  value = (value << 4) + decodeHexDigit(super.read());
-	  value = (value << 4) + decodeHexDigit(super.read());
-	  value = (value << 4) + decodeHexDigit(super.read());
-
-	  return value;
-	}
-      }
-    }
-  }
-
-  /**
-   * Returns the numeric value of the character c interpreted as hexadecimal digit.
-   * @param	c		the character to be converted
-   * @return	the numeric value represented by the character in radix 16
-   * @throws	IOException	if the character represents EOF or is not a hexadecimal digit
-   */
-  private static int decodeHexDigit(int c) throws IOException {
-    int		result;
-
-    if (c == -1) {
-      throw new EOFException("end of file reached while scanning unicode escape sequence");
-    }
-    result = Character.digit((char)c, 16);
-    if (result == -1) {
-      throw new EOFException("invalid character " + (char)c + " in unicode escape sequence");
-    }
-    return result;
-  }
-
-  /**
-   * Reads characters into a portion of an array.
-   * @param	buf		destination buffer
-   * @param	off		offset at which to start writing characters
-   * @param	len		maximum number of characters to read
-   * @return	the number of characters read, or -1 if the end of the stream has been reached
-   * @throws	IOException	if an I/O error occurs
-   */
-  public int read(char[] buf, int off, int len)
-    throws IOException
-  {
-    int		act = 0;	// # of characters actually read
-    int		c;
-
-    while (act < len && (c = read()) != -1) {
-      buf[off + act] = (char)c;
-      act += 1;
+    /**
+     * Creates a new unicode reader.
+     *
+     * @param   in      the reader from which characters will be read
+     */
+    public UnicodeReader(Reader in) {
+        super(in);
+        lookahead = -2;
     }
 
-    return act == 0 ? -1 : act;
-  }
+    /**
+     * Reads a single character.
+     * @return  the character read, or -1 if the end of the stream has been reached
+     * @throws  IOException if an I/O error occurs
+     */
+    public int read() throws IOException {
+        if (lookahead != -2) {
+            int     c;
 
-  /**
-   * Tell whether this stream supports the mark() operation.
-   * @return	false: this stream does not support mark()
-   */
-  public boolean markSupported() {
-    return false;
-  }
+            c = lookahead;
+            lookahead = -2;
+            return c;
+        } else {
+            int     c;
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+            c = super.read();
+            if (c != '\\') {
+                return c;
+            } else {
+                c = super.read();
+                if (c != 'u') {
+                    lookahead = c;
+                    return '\\';
+                } else {
+                    do {
+                        c = super.read();
+                    } while (c == 'u');
 
-  private int		lookahead = -2;		// lookahead character
+                    int value;
+
+                    value = decodeHexDigit(c);
+                    value = (value << 4) + decodeHexDigit(super.read());
+                    value = (value << 4) + decodeHexDigit(super.read());
+                    value = (value << 4) + decodeHexDigit(super.read());
+
+                    return value;
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns the numeric value of the character c interpreted as hexadecimal digit.
+     * @param   c       the character to be converted
+     * @return  the numeric value represented by the character in radix 16
+     * @throws  IOException if the character represents EOF or is not a hexadecimal digit
+     */
+    private static int decodeHexDigit(int c) throws IOException {
+        int     result;
+
+        if (c == -1) {
+            throw new EOFException("end of file reached while scanning unicode escape sequence");
+        }
+        result = Character.digit((char)c, 16);
+        if (result == -1) {
+            throw new EOFException("invalid character " + (char)c + " in unicode escape sequence");
+        }
+        return result;
+    }
+
+    /**
+     * Reads characters into a portion of an array.
+     * @param   buf     destination buffer
+     * @param   off     offset at which to start writing characters
+     * @param   len     maximum number of characters to read
+     * @return  the number of characters read, or -1 if the end of the stream has been reached
+     * @throws  IOException if an I/O error occurs
+     */
+    public int read(char[] buf, int off, int len)
+        throws IOException
+    {
+        int     act = 0;    // # of characters actually read
+        int     c;
+
+        while (act < len && (c = read()) != -1) {
+            buf[off + act] = (char)c;
+            act += 1;
+        }
+
+        return act == 0 ? -1 : act;
+    }
+
+    /**
+     * Tell whether this stream supports the mark() operation.
+     * @return  false: this stream does not support mark()
+     */
+    public boolean markSupported() {
+        return false;
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private int     lookahead = -2;     // lookahead character
 }

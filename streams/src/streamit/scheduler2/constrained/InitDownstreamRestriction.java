@@ -8,10 +8,10 @@ public class InitDownstreamRestriction extends Restriction
     final StreamInterface parent;
 
     public InitDownstreamRestriction(
-        P2PPortal _portal,
-        SDEPData _sdep,
-        StreamInterface _parent,
-        Restrictions restrictions)
+                                     P2PPortal _portal,
+                                     SDEPData _sdep,
+                                     StreamInterface _parent,
+                                     Restrictions restrictions)
     {
         super(_portal.getDownstreamNode(), _portal);
 

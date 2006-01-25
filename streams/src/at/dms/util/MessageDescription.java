@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDescription.java,v 1.8 2003-11-13 10:47:07 thies Exp $
+ * $Id: MessageDescription.java,v 1.9 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -31,131 +31,131 @@ import java.text.MessageFormat;
  */
 public class MessageDescription implements at.dms.kjc.DeepCloneable {
 
-  public static final int LVL_UNDEFINED		= -1;
-  public static final int LVL_ERROR		= 0;
-  public static final int LVL_CAUTION		= 1;
-  public static final int LVL_WARNING		= 2;
-  public static final int LVL_NOTICE		= 3;
-  public static final int LVL_INFO		= 4;
+    public static final int LVL_UNDEFINED       = -1;
+    public static final int LVL_ERROR       = 0;
+    public static final int LVL_CAUTION     = 1;
+    public static final int LVL_WARNING     = 2;
+    public static final int LVL_NOTICE      = 3;
+    public static final int LVL_INFO        = 4;
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     private MessageDescription() {} // for cloner only
 
-  /**
-   * Constructs a message description
-   * @param	format		the textual message format (with placeholders)
-   * @param	reference	the document describing the reason for this message
-   * @param	level		the severity level of this message
-   */
-  public MessageDescription(String format, String reference, int level) {
-    this.format = format;
-    this.reference = reference;
-    this.level = level;
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the message format.
-   */
-  public String getFormat() {
-    return format;
-  }
-
-  /**
-   * Returns a reference to a documentation on this message.
-   */
-  public String getReference() {
-    return reference;
-  }
-
-  /**
-   * Returns the level of this message.
-   */
-  public int getLevel() {
-    return level;
-  }
-
-  // ----------------------------------------------------------------------
-  // FORMATTING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns a string explaining the error.
-   *
-   * @param	parameters		the array of parameters
-   */
-  public String format(Object[] parameters) {
-    String	prefix;			// the text for the severity level
-    String	body;			// the formatted message
-    String	suffix;			// the reference
-
-    switch (level) {
-    case LVL_UNDEFINED:
-      // no qualifier
-      prefix = "";
-      break;
-    case LVL_ERROR:
-      prefix = "error:";
-      break;
-    case LVL_CAUTION:
-      prefix = "caution:";
-      break;
-    case LVL_WARNING:
-      prefix = "warning:";
-      break;
-    case LVL_NOTICE:
-      prefix = "notice:";
-      break;
-    case LVL_INFO:
-      prefix = "";
-      break;
-    default:
-      // unknown: mark as error
-      prefix = "error:";
+    /**
+     * Constructs a message description
+     * @param   format      the textual message format (with placeholders)
+     * @param   reference   the document describing the reason for this message
+     * @param   level       the severity level of this message
+     */
+    public MessageDescription(String format, String reference, int level) {
+        this.format = format;
+        this.reference = reference;
+        this.level = level;
     }
 
-    try {
-      body = MessageFormat.format(format, parameters);
-    } catch (RuntimeException e) {
-      // wrong number of parameters: give at least message text with placeholders
-      body = format;
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Returns the message format.
+     */
+    public String getFormat() {
+        return format;
     }
 
-    suffix = reference == null ? "" : " [" + reference + "]";
+    /**
+     * Returns a reference to a documentation on this message.
+     */
+    public String getReference() {
+        return reference;
+    }
 
-    return prefix + body + suffix;
-  }
+    /**
+     * Returns the level of this message.
+     */
+    public int getLevel() {
+        return level;
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // FORMATTING
+    // ----------------------------------------------------------------------
 
-    private /* final */ String		format; // removed final for cloner
-	     private /* final */ String		reference; // removed final for cloner
-  private int			level;
+    /**
+     * Returns a string explaining the error.
+     *
+     * @param   parameters      the array of parameters
+     */
+    public String format(Object[] parameters) {
+        String  prefix;         // the text for the severity level
+        String  body;           // the formatted message
+        String  suffix;         // the reference
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        switch (level) {
+        case LVL_UNDEFINED:
+            // no qualifier
+            prefix = "";
+            break;
+        case LVL_ERROR:
+            prefix = "error:";
+            break;
+        case LVL_CAUTION:
+            prefix = "caution:";
+            break;
+        case LVL_WARNING:
+            prefix = "warning:";
+            break;
+        case LVL_NOTICE:
+            prefix = "notice:";
+            break;
+        case LVL_INFO:
+            prefix = "";
+            break;
+        default:
+            // unknown: mark as error
+            prefix = "error:";
+        }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.util.MessageDescription other = new at.dms.util.MessageDescription();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+        try {
+            body = MessageFormat.format(format, parameters);
+        } catch (RuntimeException e) {
+            // wrong number of parameters: give at least message text with placeholders
+            body = format;
+        }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.util.MessageDescription other) {
-  other.format = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.format);
-  other.reference = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.reference);
-  other.level = this.level;
-}
+        suffix = reference == null ? "" : " [" + reference + "]";
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+        return prefix + body + suffix;
+    }
+
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
+
+    private /* final */ String      format; // removed final for cloner
+    private /* final */ String      reference; // removed final for cloner
+    private int         level;
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.util.MessageDescription other = new at.dms.util.MessageDescription();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
+
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.util.MessageDescription other) {
+        other.format = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.format);
+        other.reference = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.reference);
+        other.level = this.level;
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -20,8 +20,8 @@ abstract public class Restriction extends streamit.misc.AssertedClass
     int maxExecution;
 
     public Restriction(
-        LatencyNode _node,
-        P2PPortal _portal)
+                       LatencyNode _node,
+                       P2PPortal _portal)
     {
         node = _node;
         portal = _portal;

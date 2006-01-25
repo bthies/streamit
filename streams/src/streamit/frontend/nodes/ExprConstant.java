@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * static methods for creating constants.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprConstant.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprConstant.java,v 1.4 2006-01-25 17:04:25 thies Exp $
  */
 abstract public class ExprConstant extends Expression
 {
@@ -49,21 +49,21 @@ abstract public class ExprConstant extends Expression
     {
         // Either val ends in "i", or it doesn't.
         if (val.endsWith("i"))
-        {
-            val = val.substring(0, val.length()-1);
-            return new ExprComplex(context, null,
-                                   createConstant(context, val));
-        }
+            {
+                val = val.substring(0, val.length()-1);
+                return new ExprComplex(context, null,
+                                       createConstant(context, val));
+            }
 
         // Maybe it's integral.
         try
-        {
-            return new ExprConstInt(context, val);
-        }
+            {
+                return new ExprConstInt(context, val);
+            }
         catch(NumberFormatException e)
-        {
-            // No; create a float (and lose if this is wrong too).
-            return new ExprConstFloat(context, val);
-        }
+            {
+                // No; create a float (and lose if this is wrong too).
+                return new ExprConstFloat(context, val);
+            }
     }
 }

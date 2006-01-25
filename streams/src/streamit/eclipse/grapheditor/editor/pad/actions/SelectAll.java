@@ -1,5 +1,5 @@
 /*
- * @(#)SelectAll.java	1.2 01.02.2003
+ * @(#)SelectAll.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,19 +32,19 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class SelectAll extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectAll.
-	 * @param graphpad
-	 */
-	public SelectAll(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectAll.
+     * @param graphpad
+     */
+    public SelectAll(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			getCurrentGraph().addSelectionCells(getCurrentGraph().getRoots());
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        getCurrentGraph().addSelectionCells(getCurrentGraph().getRoots());
+    }
 
 }

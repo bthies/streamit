@@ -29,40 +29,40 @@ public class FileVisitor implements FlatVisitor {
     public static HashSet fileNodes;
 
     public static void init(FlatNode top) {
-	FileVisitor frv = new FileVisitor();
-	top.accept(frv, new HashSet(), false);
-	//add everything to the fileNodes hashset
-	RawBackend.addAll(fileNodes, fileReaders);
-	RawBackend.addAll(fileNodes, fileWriters);
+        FileVisitor frv = new FileVisitor();
+        top.accept(frv, new HashSet(), false);
+        //add everything to the fileNodes hashset
+        RawBackend.addAll(fileNodes, fileReaders);
+        RawBackend.addAll(fileNodes, fileWriters);
     }
-	
+    
     public FileVisitor() 
     {
-	foundReader = false;
-	foundWriter = false;
-	fileReaders = new HashSet();
-	fileWriters = new HashSet();
-	fileNodes = new HashSet();
+        foundReader = false;
+        foundWriter = false;
+        fileReaders = new HashSet();
+        fileWriters = new HashSet();
+        fileNodes = new HashSet();
     }
-	
+    
     public void visitNode (FlatNode node) 
     {
-	if (node.contents instanceof SIRFileReader) {
-	    fileReaders.add(node);
-	    foundReader = true;
-	}
-	else if (node.contents instanceof SIRFileWriter) {
-	    foundWriter = true;
-	    fileWriters.add(node);
-	}
+        if (node.contents instanceof SIRFileReader) {
+            fileReaders.add(node);
+            foundReader = true;
+        }
+        else if (node.contents instanceof SIRFileWriter) {
+            foundWriter = true;
+            fileWriters.add(node);
+        }
     }
 
     public static boolean connectedToFR(Coordinate tile) {
-	Iterator frs = fileReaders.iterator();
-	while (frs.hasNext()) {
-	    if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
-		return true;
-	}
-	return false;
+        Iterator frs = fileReaders.iterator();
+        while (frs.hasNext()) {
+            if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
+                return true;
+        }
+        return false;
     }
 }

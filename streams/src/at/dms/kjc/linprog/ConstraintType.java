@@ -17,15 +17,15 @@ class ConstraintType implements Serializable {
 
     private final String name;
     private ConstraintType(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     public String toString() {
-	return "Constraint type: " + name;
+        return "Constraint type: " + name;
     }
 
     public boolean equals(Object o) {
-	return (o instanceof ConstraintType &&
-		((ConstraintType)o).name.equals(this.name));
+        return (o instanceof ConstraintType &&
+                ((ConstraintType)o).name.equals(this.name));
     }
 }

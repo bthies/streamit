@@ -11,23 +11,23 @@ class Estimator implements StreamVisitor {
     public Estimator() {}
 
     public static void estimate(SIRStream str) {
-	Estimator est = new Estimator();
-	System.out.print("Estimating Code size of Filters...");
-	IterFactory.createFactory().createIter(str).accept(est);
-	System.out.println("done.");
+        Estimator est = new Estimator();
+        System.out.print("Estimating Code size of Filters...");
+        IterFactory.createFactory().createIter(str).accept(est);
+        System.out.println("done.");
     }
 
     public void visitFilter(SIRFilter filter,
-		     SIRFilterIter iter) { 
+                            SIRFilterIter iter) { 
 
-	int code, locals;
-	
-	CodeEstimate est = CodeEstimate.estimate(filter);
-	code = est.getCodeSize();
-	locals = est.getLocalsSize();
+        int code, locals;
+    
+        CodeEstimate est = CodeEstimate.estimate(filter);
+        code = est.getCodeSize();
+        locals = est.getLocalsSize();
 
-	//System.out.println("Estimator Filter: "+filter+" Code: "+code+" Locals: "+locals);
-	
+        //System.out.println("Estimator Filter: "+filter+" Code: "+code+" Locals: "+locals);
+    
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -39,7 +39,7 @@ class Estimator implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     
@@ -52,7 +52,7 @@ class Estimator implements StreamVisitor {
     /**
      * POST-VISITS 
      */
-	    
+        
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
    

@@ -17,74 +17,74 @@ class FusionInfo {
     private int output_size;
 
     FusionInfo(int work_estimate, int work_estimate_no_penalty, int code_size, int data_size, int pop, int peek, int push, int input_size, int output_size) {
-	this.work_estimate = work_estimate;
-	this.work_estimate_no_penalty = work_estimate_no_penalty;
-	this.code_size = code_size;
-	this.data_size = data_size;
-	pop_int = pop;
-	peek_int = peek;
-	push_int = push;
-	this.input_size = input_size;
-	this.output_size = output_size;
+        this.work_estimate = work_estimate;
+        this.work_estimate_no_penalty = work_estimate_no_penalty;
+        this.code_size = code_size;
+        this.data_size = data_size;
+        pop_int = pop;
+        peek_int = peek;
+        push_int = push;
+        this.input_size = input_size;
+        this.output_size = output_size;
     }
 
     CCost getCost() {
-	int cost = work_estimate;
+        int cost = work_estimate;
 
-	// ICode > (L1 Instruction Cache) / 0.8 
+        // ICode > (L1 Instruction Cache) / 0.8 
 
-	//if (code_size > 200*1000) { // 200 Kb instruction limit
+        //if (code_size > 200*1000) { // 200 Kb instruction limit
 
-	if (code_size > (CachePartitioner.getCodeCacheSize()*10/8)) {	    
-	    cost += cost/2; 
-	}
-	
-	// Data > 2/3 of L1 Data Cache
-	if (data_size > (CachePartitioner.getDataCacheSize()*2/3)) {
-	    cost += cost/2;
-	}
-	
-	return new CCost(cost);
+        if (code_size > (CachePartitioner.getCodeCacheSize()*10/8)) {       
+            cost += cost/2; 
+        }
+    
+        // Data > 2/3 of L1 Data Cache
+        if (data_size > (CachePartitioner.getDataCacheSize()*2/3)) {
+            cost += cost/2;
+        }
+    
+        return new CCost(cost);
     }
 
     void addPenalty(int amount) {
-	work_estimate += amount;
+        work_estimate += amount;
     }
 
     int getWorkEstimate() {
-	return work_estimate;
+        return work_estimate;
     }
 
     int getWorkEstimateNoPenalty() {
-	return work_estimate_no_penalty;
+        return work_estimate_no_penalty;
     }
 
     int getCodeSize() {
-	return code_size;
+        return code_size;
     }
 
     int getDataSize() {
-	return data_size;
+        return data_size;
     }
 
     int getPopInt() {
-	return pop_int;
+        return pop_int;
     }
 
     int getPeekInt() {
-	return peek_int;
+        return peek_int;
     }
 
     int getPushInt() {
-	return push_int;
+        return push_int;
     }
 
     int getInputSize() {
-	return input_size;
+        return input_size;
     }
 
     int getOutputSize() {
-	return output_size;
+        return output_size;
     }
     
 }

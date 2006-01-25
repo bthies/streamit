@@ -1,5 +1,5 @@
 /*
- * @(#)FileExportGIF.java	1.2 01.02.2003
+ * @(#)FileExportGIF.java   1.2 01.02.2003
  *
  * Copyright (C) 2003 gaudenz alder
  *
@@ -44,70 +44,70 @@ import streamit.eclipse.grapheditor.editor.utils.encoders.Web216ColorsFilter;
  */
 public class FileExportGIF extends AbstractActionFile {
 
-	/* File type to pass to ImageIO. Default is "jpg". */
-	protected transient String fileType = "gif";
+    /* File type to pass to ImageIO. Default is "jpg". */
+    protected transient String fileType = "gif";
 
-	/**
-	 * Constructor for FileExportJPG.
-	 * @param graphpad
-	 */
-	public FileExportGIF(GPGraphpad graphpad) {
-		this(graphpad, "gif");
-	}
+    /**
+     * Constructor for FileExportJPG.
+     * @param graphpad
+     */
+    public FileExportGIF(GPGraphpad graphpad) {
+        this(graphpad, "gif");
+    }
 
-	public FileExportGIF(GPGraphpad graphpad, String fileType) {
-		super(graphpad);
-		this.fileType = fileType;
-	}
+    public FileExportGIF(GPGraphpad graphpad, String fileType) {
+        super(graphpad);
+        this.fileType = fileType;
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		try {
-			GPDocument doc = graphpad.getCurrentDocument();
-			String file =
-				saveDialog(
-					Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
-					fileType.toLowerCase(),
-					fileType.toUpperCase()+" Image");
-			if (file != null)
-			{
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        try {
+            GPDocument doc = graphpad.getCurrentDocument();
+            String file =
+                saveDialog(
+                           Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
+                           fileType.toLowerCase(),
+                           fileType.toUpperCase()+" Image");
+            if (file != null)
+                {
 
-				if (getCurrentDocument().getModel().getRootCount() > 0) {
-					BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
-															doc.getGraphStructure().getTopLevel().getDimension(),
-															doc.areContainersInvisible());
-					
-					FileOutputStream fos = new FileOutputStream(file);
-					fos.write(convertToGif(img));
-	
-					// Write to file
-					fos.flush();
-					fos.close();
-				}
-			};
-		} catch (IOException ex) {
-			graphpad.error(ex.getMessage());
-		}
-	}
+                    if (getCurrentDocument().getModel().getRootCount() > 0) {
+                        BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
+                                                                doc.getGraphStructure().getTopLevel().getDimension(),
+                                                                doc.areContainersInvisible());
+                    
+                        FileOutputStream fos = new FileOutputStream(file);
+                        fos.write(convertToGif(img));
+    
+                        // Write to file
+                        fos.flush();
+                        fos.close();
+                    }
+                };
+        } catch (IOException ex) {
+            graphpad.error(ex.getMessage());
+        }
+    }
 
-	/** convert Image to GIF-encoded data, reducing the number of colors if needed */
-	public static byte [] convertToGif(Image oImgBuffer) throws IOException
-	{
-		Graphics oGrf = oImgBuffer.getGraphics();
-		ByteArrayOutputStream oOut = null;
-		try {
-			oOut = new ByteArrayOutputStream();
-			new GifEncoder(oImgBuffer,oOut).encode();
-		} catch(IOException ioe) {
-			// GifEncoder throws IOException when GIF contains too many colors
-			// if this happens, filter image to reduce number of colors
-			final FilteredImageSource filter = new FilteredImageSource(oImgBuffer.getSource(),new Web216ColorsFilter());
-			oOut = new ByteArrayOutputStream();
-			new GifEncoder(filter,oOut).encode (); 
-		}
-		return oOut.toByteArray();
-	}
+    /** convert Image to GIF-encoded data, reducing the number of colors if needed */
+    public static byte [] convertToGif(Image oImgBuffer) throws IOException
+    {
+        Graphics oGrf = oImgBuffer.getGraphics();
+        ByteArrayOutputStream oOut = null;
+        try {
+            oOut = new ByteArrayOutputStream();
+            new GifEncoder(oImgBuffer,oOut).encode();
+        } catch(IOException ioe) {
+            // GifEncoder throws IOException when GIF contains too many colors
+            // if this happens, filter image to reduce number of colors
+            final FilteredImageSource filter = new FilteredImageSource(oImgBuffer.getSource(),new Web216ColorsFilter());
+            oOut = new ByteArrayOutputStream();
+            new GifEncoder(filter,oOut).encode (); 
+        }
+        return oOut.toByteArray();
+    }
 
 }

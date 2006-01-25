@@ -11,18 +11,18 @@ public abstract class ComputeNode
 
     public ComputeNode(RawChip chip) 
     {
-	this.rawChip = chip;
+        this.rawChip = chip;
     }
     
     public RawChip getRawChip() {
-	return rawChip;
+        return rawChip;
     }
     
     public int getX() {
-	return X;
+        return X;
     }
 
     public int getY() {
-	return Y;
+        return Y;
     }
 }

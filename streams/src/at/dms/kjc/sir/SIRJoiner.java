@@ -15,15 +15,15 @@ public class SIRJoiner extends SIROperator {
      * could be replaced with a custom, instance-wise work function.
      */
     public static final JMethodDeclaration WORK_FUNCTION = 
-	new JMethodDeclaration(/* tokref     */ null,
-			       /* modifiers  */ at.dms.kjc.Constants.ACC_PUBLIC,
-			       /* returntype */ CStdType.Void,
-			       /* identifier -- important for uniprocessor */ LoweringConstants.JOINER_WORK_NAME,
-			       /* parameters */ JFormalParameter.EMPTY, 
-			       /* exceptions */ CClassType.EMPTY,
-			       /* body       */ new JBlock(),
-			       /* javadoc    */ null,
-			       /* comments   */ null);
+        new JMethodDeclaration(/* tokref     */ null,
+                               /* modifiers  */ at.dms.kjc.Constants.ACC_PUBLIC,
+                               /* returntype */ CStdType.Void,
+                               /* identifier -- important for uniprocessor */ LoweringConstants.JOINER_WORK_NAME,
+                               /* parameters */ JFormalParameter.EMPTY, 
+                               /* exceptions */ CClassType.EMPTY,
+                               /* body       */ new JBlock(),
+                               /* javadoc    */ null,
+                               /* comments   */ null);
     /** 
      * The type of this joiner.
      */
@@ -48,59 +48,59 @@ public class SIRJoiner extends SIROperator {
      * No argument constructor, FOR AUTOMATIC CLONING ONLY.
      */
     private SIRJoiner() {
-	super();
+        super();
     }
     
     private SIRJoiner(SIRContainer parent, 
-		      SIRJoinType type, 
-		      JExpression[] weights,
-		      boolean uniform) {
-      super(parent);
-      this.weights = weights;
-      this.type = type;
-      this.uniform = uniform;
+                      SIRJoinType type, 
+                      JExpression[] weights,
+                      boolean uniform) {
+        super(parent);
+        this.weights = weights;
+        this.type = type;
+        this.uniform = uniform;
     }
 
     public static SIRJoiner create(SIRContainer parent, 
-				   SIRJoinType type, 
-				   JExpression[] weights) {
-	if (type==SIRJoinType.NULL) {
-	    return new SIRJoiner(parent, type, Utils.initLiteralArray(weights.length, 0), true);
-	} else if (type==SIRJoinType.WEIGHTED_RR) {
-	    return createWeightedRR(parent,weights);
-	} else if (type==SIRJoinType.ROUND_ROBIN) {
-	    JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
-	    createUniformRR(parent,weight);
-	} else {
-	    Utils.fail("Unrecognized joiner type.");
-	}
-	// stupid compiler
-	return null;
+                                   SIRJoinType type, 
+                                   JExpression[] weights) {
+        if (type==SIRJoinType.NULL) {
+            return new SIRJoiner(parent, type, Utils.initLiteralArray(weights.length, 0), true);
+        } else if (type==SIRJoinType.WEIGHTED_RR) {
+            return createWeightedRR(parent,weights);
+        } else if (type==SIRJoinType.ROUND_ROBIN) {
+            JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
+            createUniformRR(parent,weight);
+        } else {
+            Utils.fail("Unrecognized joiner type.");
+        }
+        // stupid compiler
+        return null;
     }
 
     /**
      * Constructs a joiner with given parent, type and n number of inputs.
      */
     public static SIRJoiner create(SIRContainer parent,
-				   SIRJoinType type, 
-				   int n) {
-	if (type==SIRJoinType.COMBINE) {
-	    // fill weights with 1
-	    return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 1), true);
+                                   SIRJoinType type, 
+                                   int n) {
+        if (type==SIRJoinType.COMBINE) {
+            // fill weights with 1
+            return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 1), true);
         } else if (type==SIRJoinType.NULL) {
-	    // for null type, fill with zero weights
-	    return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 0), true);
-	} else if (type==SIRJoinType.WEIGHTED_RR) {
-	    // if making a weighted round robin, should use other constructor
-	    Utils.fail("Need to specify weights for weighted round robin");
-	} else if (type==SIRJoinType.ROUND_ROBIN) {
-	    // if making a round robin, should use other constructor
-	    Utils.fail("Need to specify weight for uniform round robin");
-	} else {
-	    Utils.fail("Unreckognized joiner type.");
-	}
-	// stupid compiler
-	return null;
+            // for null type, fill with zero weights
+            return new SIRJoiner(parent, type, Utils.initLiteralArray(n, 0), true);
+        } else if (type==SIRJoinType.WEIGHTED_RR) {
+            // if making a weighted round robin, should use other constructor
+            Utils.fail("Need to specify weights for weighted round robin");
+        } else if (type==SIRJoinType.ROUND_ROBIN) {
+            // if making a round robin, should use other constructor
+            Utils.fail("Need to specify weight for uniform round robin");
+        } else {
+            Utils.fail("Unreckognized joiner type.");
+        }
+        // stupid compiler
+        return null;
     }
 
     /**
@@ -109,8 +109,8 @@ public class SIRJoiner extends SIROperator {
      * of weights in the splitjoin.
      */
     public static SIRJoiner createWeightedRR(SIRContainer parent, 
-					     JExpression[] weights) {
-	return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights, false);
+                                             JExpression[] weights) {
+        return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights, false);
     }
 
     /**
@@ -118,12 +118,12 @@ public class SIRJoiner extends SIROperator {
      * the stream.
      */
     public static SIRJoiner createUniformRR(SIRContainer parent, 
-					    JExpression weight) {
-	// make a uniform rr joiner
-	return new SIRJoiner(parent, 
-			     SIRJoinType.WEIGHTED_RR,
-			     Utils.initArray(Math.max(parent.size(), 1), weight),
-			     true);
+                                            JExpression weight) {
+        // make a uniform rr joiner
+        return new SIRJoiner(parent, 
+                             SIRJoinType.WEIGHTED_RR,
+                             Utils.initArray(Math.max(parent.size(), 1), weight),
+                             true);
     }
 
     /**
@@ -132,28 +132,28 @@ public class SIRJoiner extends SIROperator {
      * different numbers of outputs if the type is not a weighted
      * round robin.  */
     public boolean equals(SIRJoiner obj) {
-	if (type    !=SIRJoinType.WEIGHTED_RR || 
-	    obj.type!=SIRJoinType.WEIGHTED_RR) {
-	    return type==obj.type;
-	} else {
-	    return Utils.equalArrays(getWeights(), obj.getWeights());
-	}
+        if (type    !=SIRJoinType.WEIGHTED_RR || 
+            obj.type!=SIRJoinType.WEIGHTED_RR) {
+            return type==obj.type;
+        } else {
+            return Utils.equalArrays(getWeights(), obj.getWeights());
+        }
     }
 
     /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {
-	return v.visitJoiner(this,
-			     type,
-			     weights);
+        return v.visitJoiner(this,
+                             type,
+                             weights);
     }
 
     /**
      * Return type of this.
      */
     public SIRJoinType getType() {
-	return type;
+        return type;
     }
 
     /**
@@ -161,92 +161,92 @@ public class SIRJoiner extends SIROperator {
      * the weights to be of the given <extent>
      */
     public void rescale(int extent) {
-	if (uniform) {
-	    this.weights = Utils.initArray(extent, weights[0]);
-	}
+        if (uniform) {
+            this.weights = Utils.initArray(extent, weights[0]);
+        }
     }
 
     /**
      * Return the number of inputs to this.
      */
     public int getWays() {
-	return weights.length;
+        return weights.length;
     }
 
     /**
      * See doc in SIROperator.
      */
     public String getIdent() {
-	return type.toString() + "_Joiner";
+        return type.toString() + "_Joiner";
     }
 
     public String toString() {
-	return "SIRJoiner:"+getName();
+        return "SIRJoiner:"+getName();
     }
 
     /**
      * Returns JExpression weights of this.
      */
     public JExpression[] getInternalWeights() {
-	return weights;
+        return weights;
     }
 
     /**
      * Returns the sum of all weights in this.
      */
     public int getSumOfWeights() {
-	int[] weights = getWeights();
-	int sum = 0;
-	for (int i=0; i<weights.length; i++) {
-	    sum += weights[i];
-	}
-	return sum;
+        int[] weights = getWeights();
+        int sum = 0;
+        for (int i=0; i<weights.length; i++) {
+            sum += weights[i];
+        }
+        return sum;
     }
 
     /**
      * Return int weights array of this.
      */
     public int[] getWeights() {
-	int[] result = new int[weights.length];
-	for (int i=0; i<weights.length; i++) {
-	    result[i] = getWeight(i);
-	}
-	return result;
+        int[] result = new int[weights.length];
+        for (int i=0; i<weights.length; i++) {
+            result[i] = getWeight(i);
+        }
+        return result;
     }
 
     /**
      * Return int weight at position i.
      */
     public int getWeight(int i) {
-	assert weights[i] instanceof JIntLiteral:
+        assert weights[i] instanceof JIntLiteral:
             "Expecting JIntLiteral as weight to round-robin--" +
             "could have problems with constant prop (maybe " +
             "it hasn't been run yet) or orig program";
-	return ((JIntLiteral)weights[i]).intValue();
+        return ((JIntLiteral)weights[i]).intValue();
     }
 
     public JExpression getWeightNoChecking(int i) {
         return weights[i];
     }
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRJoiner other = new at.dms.kjc.sir.SIRJoiner();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRJoiner other = new at.dms.kjc.sir.SIRJoiner();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRJoiner other) {
-  super.deepCloneInto(other);
-  other.type = (at.dms.kjc.sir.SIRJoinType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
-  other.uniform = this.uniform;
-  other.oldSumWeights = this.oldSumWeights;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRJoiner other) {
+        super.deepCloneInto(other);
+        other.type = (at.dms.kjc.sir.SIRJoinType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+        other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
+        other.uniform = this.uniform;
+        other.oldSumWeights = this.oldSumWeights;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

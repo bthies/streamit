@@ -1,5 +1,5 @@
 /*
- * @(#)GPTransferable.java	1.2 11/11/02
+ * @(#)GPTransferable.java  1.2 11/11/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -30,25 +30,25 @@ import org.jgraph.graph.ParentMap;
 
 public class GPTransferable extends GraphTransferable {
 
-	protected String text;
+    protected String text;
 
-	public GPTransferable(
-		String text,
-		Object[] cells,
-		Map viewAttributes,
-		Rectangle bounds,
-		ConnectionSet cs,
-		ParentMap pm) {
-		super(cells, viewAttributes, bounds, cs, pm);
-		this.text = text;
-	}
+    public GPTransferable(
+                          String text,
+                          Object[] cells,
+                          Map viewAttributes,
+                          Rectangle bounds,
+                          ConnectionSet cs,
+                          ParentMap pm) {
+        super(cells, viewAttributes, bounds, cs, pm);
+        this.text = text;
+    }
 
-	public boolean isPlainSupported() {
-		return (text != null);
-	}
+    public boolean isPlainSupported() {
+        return (text != null);
+    }
 
-	public String getPlainData() {
-		return text;
-	}
+    public String getPlainData() {
+        return text;
+    }
 
 }

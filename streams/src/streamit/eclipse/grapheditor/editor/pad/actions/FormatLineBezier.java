@@ -1,5 +1,5 @@
 /*
- * @(#)FormatLineBezier.java	1.2 30.01.2003
+ * @(#)FormatLineBezier.java    1.2 30.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,22 +35,22 @@ import org.jgraph.graph.GraphConstants;
  */
 public class FormatLineBezier extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FormatLineBezier.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FormatLineBezier(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FormatLineBezier.
+     * @param graphpad
+     * @param name
+     */
+    public FormatLineBezier(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Map map = GraphConstants.createMap();
-			GraphConstants.setLineStyle(map, GraphConstants.STYLE_BEZIER);
-			graphpad.getCurrentDocument() .setSelectionAttributes(map);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Map map = GraphConstants.createMap();
+        GraphConstants.setLineStyle(map, GraphConstants.STYLE_BEZIER);
+        graphpad.getCurrentDocument() .setSelectionAttributes(map);
+    }
 
 }

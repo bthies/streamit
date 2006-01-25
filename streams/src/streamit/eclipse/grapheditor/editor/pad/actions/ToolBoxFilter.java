@@ -14,36 +14,36 @@ import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
  */
 public class ToolBoxFilter extends AbstractActionDefault {
 
-	/**
-	 * Constructor for ToolBoxFilter.
-	 * @param graphpad GPGraphpad
-	 */
-	public ToolBoxFilter(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolBoxFilter.
+     * @param graphpad GPGraphpad
+     */
+    public ToolBoxFilter(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Add a GEPhasedFilter in the graph editor.
-	 */
-	public void actionPerformed(ActionEvent e) {
-	}
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
-	 */
-	protected Component getToolComponent(String actionCommand) {
-		JToggleButton button = graphpad.getMarqueeHandler().getButtonFilter();
-		GPBarFactory.fillToolbarButton(
-					button,
-					getName(),
-					actionCommand);
-		return button;
-	}
-	/** 
-	 * 
-	 */
-	public void update() {
-		super.update();
-		graphpad.getMarqueeHandler().getButtonFilter().setEnabled(isEnabled());
-	}
+    /**
+     * Add a GEPhasedFilter in the graph editor.
+     */
+    public void actionPerformed(ActionEvent e) {
+    }
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
+     */
+    protected Component getToolComponent(String actionCommand) {
+        JToggleButton button = graphpad.getMarqueeHandler().getButtonFilter();
+        GPBarFactory.fillToolbarButton(
+                                       button,
+                                       getName(),
+                                       actionCommand);
+        return button;
+    }
+    /** 
+     * 
+     */
+    public void update() {
+        super.update();
+        graphpad.getMarqueeHandler().getButtonFilter().setEnabled(isEnabled());
+    }
 
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavadocComment.java,v 1.3 2003-05-28 05:58:39 thies Exp $
+ * $Id: JavadocComment.java,v 1.4 2006-01-25 17:00:41 thies Exp $
  */
 
 package at.dms.compiler;
@@ -25,52 +25,52 @@ package at.dms.compiler;
  */
 public class JavadocComment extends JavaStyleComment {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JavadocComment() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * @param	text		the string representation of this comment
-   */
-  public JavadocComment(String text, boolean spaceBefore, boolean spaceAfter) {
-    super(text, false, spaceBefore, spaceAfter);
-  }
+    /**
+     * Construct a node in the parsing tree
+     * @param   text        the string representation of this comment
+     */
+    public JavadocComment(String text, boolean spaceBefore, boolean spaceAfter) {
+        super(text, false, spaceBefore, spaceAfter);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Return if this javadoc comment contains a deprecated clause
-   */
-  public boolean isDeprecated() {
-    return text.indexOf("@deprecated") >= 0;
-  }
+    /**
+     * Return if this javadoc comment contains a deprecated clause
+     */
+    public boolean isDeprecated() {
+        return text.indexOf("@deprecated") >= 0;
+    }
 
-  /**
-   *
-   */
-  public String getParams() {
-    return text;
-  }
+    /**
+     *
+     */
+    public String getParams() {
+        return text;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.compiler.JavadocComment other = new at.dms.compiler.JavadocComment();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.compiler.JavadocComment other = new at.dms.compiler.JavadocComment();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.compiler.JavadocComment other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.compiler.JavadocComment other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

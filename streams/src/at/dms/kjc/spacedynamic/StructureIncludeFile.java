@@ -44,7 +44,7 @@ public class StructureIncludeFile {
     }
 
     public StructureIncludeFile(SIRStructure[] structs, StreamGraph sg,
-            String dir) {
+                                String dir) {
         this.streamGraph = sg;
         structSet = new HashSet();
         for (int i = 0; i < structs.length; i++)
@@ -73,14 +73,14 @@ public class StructureIncludeFile {
      * structs.
      */
     private void createStructureDefs(SIRStructure[] structs, FileWriter fw)
-            throws Exception {
+        throws Exception {
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
             fw.write("typedef struct __" + current.getIdent() + " {\n");
             for (int j = 0; j < current.getFields().length; j++) {
                 fw.write("\t" + current.getFields()[j].getType() + " "
-                        + current.getFields()[j].getVariable().getIdent()
-                        + ";\n");
+                         + current.getFields()[j].getVariable().getIdent()
+                         + ";\n");
             }
             fw.write("} " + current.getIdent() + ";\n");
             // write the defs for the push/pop functions
@@ -102,18 +102,18 @@ public class StructureIncludeFile {
                         // accounts for the
                         // total size of the struct
                         fw.write("inline void pushNested" + network
-                                + current.getIdent() + "(" + current.getIdent()
-                                + "*);\n");
+                                 + current.getIdent() + "(" + current.getIdent()
+                                 + "*);\n");
                     }
 
                     fw.write("inline void push" + network + current.getIdent()
-                            + "(" + current.getIdent() + "*);\n");
+                             + "(" + current.getIdent() + "*);\n");
                     fw.write("inline " + current.getIdent() + " pop" + network
-                            + current.getIdent() + "();\n");
+                             + current.getIdent() + "();\n");
                     fw.write("inline void "
-                            + RawExecutionCode.structReceivePrefix + network
-                            + current.getIdent() + "(" + current.getIdent()
-                            + "*);\n\n");
+                             + RawExecutionCode.structReceivePrefix + network
+                             + current.getIdent() + "(" + current.getIdent()
+                             + "*);\n\n");
                 }
             }
         }
@@ -121,7 +121,7 @@ public class StructureIncludeFile {
 
     /** create the push/pop functions for the structs, over <network> * */
     private void createPushPopFunctions(SIRStructure[] structs, FileWriter fw,
-            String network) throws Exception {
+                                        String network) throws Exception {
         assert network.equals("Static") || network.equals("Dynamic");
         // which network we are using
         boolean dynamic = false;
@@ -133,10 +133,10 @@ public class StructureIncludeFile {
             SIRStructure current = structs[i];
 
             fw.write("inline " + current.getIdent() + " pop" + network
-                    + current.getIdent() + "() {\n");
+                     + current.getIdent() + "() {\n");
             fw.write("\t" + current.getIdent() + "* temp = ("
-                    + current.getIdent() + "*)" + "malloc(sizeof("
-                    + current.getIdent() + "));\n");
+                     + current.getIdent() + "*)" + "malloc(sizeof("
+                     + current.getIdent() + "));\n");
             for (int j = 0; j < current.getFields().length; j++) {
                 fw.write("\t//" + current.getFields()[j].getType() + "\n");
                 if (current.getFields()[j].getType().isArrayType()) {
@@ -145,17 +145,17 @@ public class StructureIncludeFile {
                 } else if (current.getFields()[j].getType().isClassType()) {
 
                     fw.write("\ttemp->"
-                            + current.getFields()[j].getVariable().getIdent()
-                            + " = pop" + network
-                            + current.getFields()[j].getType() + "();\n");
+                             + current.getFields()[j].getVariable().getIdent()
+                             + " = pop" + network
+                             + current.getFields()[j].getType() + "();\n");
                 } else {
                     fw.write("\t");
                     fw.write("temp->"
-                            + current.getFields()[j].getVariable().getIdent());
+                             + current.getFields()[j].getVariable().getIdent());
                     fw.write(" = ");
                     fw.write(Util.networkReceive(dynamic,
-                            current.getFields()[j].getType())
-                            + ";\n");
+                                                 current.getFields()[j].getType())
+                             + ";\n");
                 }
             }
             fw.write("\treturn *temp;\n}\n");
@@ -163,8 +163,8 @@ public class StructureIncludeFile {
             // create the pop functions that take a pointer argument
             // these are more efficent, we use these when we can
             fw.write("inline void " + RawExecutionCode.structReceivePrefix
-                    + network + current.getIdent() + "(" + current.getIdent()
-                    + "* temp) {\n");
+                     + network + current.getIdent() + "(" + current.getIdent()
+                     + "* temp) {\n");
             for (int j = 0; j < current.getFields().length; j++) {
                 if (current.getFields()[j].getType().isArrayType()) {
                     // assert false;
@@ -172,18 +172,18 @@ public class StructureIncludeFile {
                     // if this is struct field, call the struct's popPointer
                     // method
                     fw.write("\t" + RawExecutionCode.structReceivePrefix
-                            + network + current.getFields()[j].getType()
-                            + "(&temp->"
-                            + current.getFields()[j].getVariable().getIdent()
-                            + ");\n");
+                             + network + current.getFields()[j].getType()
+                             + "(&temp->"
+                             + current.getFields()[j].getVariable().getIdent()
+                             + ");\n");
                 } else {
                     fw.write("\t");
                     fw.write("temp->"
-                            + current.getFields()[j].getVariable().getIdent());
+                             + current.getFields()[j].getVariable().getIdent());
                     fw.write(" = ");
                     fw.write(Util.networkReceive(dynamic,
-                            current.getFields()[j].getType())
-                            + ";\n");
+                                                 current.getFields()[j].getType())
+                             + ";\n");
                 }
             }
             fw.write("}\n");
@@ -210,14 +210,14 @@ public class StructureIncludeFile {
                     dynHeader = "Nested";
 
                 fw.write("inline void push" + dynHeader + network
-                        + current.getIdent() + "(" + current.getIdent()
-                        + "* temp) {\n");
+                         + current.getIdent() + "(" + current.getIdent()
+                         + "* temp) {\n");
 
                 if (network.equals("Dynamic") && funct == 0) {
                     // we must generate the header for the dynamic network send
                     // (not the nested version)
                     fw.write(Util.CGNOINTVAR + " = " + FlatIRToC.DYNMSGHEADER
-                            + ";\n");
+                             + ";\n");
                 }
 
                 for (int j = 0; j < current.getFields().length; j++) {
@@ -239,19 +239,19 @@ public class StructureIncludeFile {
                         }
 
                         fw.write("push"
-                                + nested
-                                + network
-                                + current.getFields()[j].getType()
-                                + "(&temp->"
-                                + current.getFields()[j].getVariable()
-                                        .getIdent() + ");\n");
+                                 + nested
+                                 + network
+                                 + current.getFields()[j].getType()
+                                 + "(&temp->"
+                                 + current.getFields()[j].getVariable()
+                                 .getIdent() + ");\n");
                     } else {
                         fw.write("\t"
-                                + Util.networkSendPrefix(dynamic, current
-                                        .getFields()[j].getType()));
+                                 + Util.networkSendPrefix(dynamic, current
+                                                          .getFields()[j].getType()));
                         fw.write("temp->"
-                                + current.getFields()[j].getVariable()
-                                        .getIdent());
+                                 + current.getFields()[j].getVariable()
+                                 .getIdent());
                         fw.write(Util.networkSendSuffix(dynamic) + ";\n");
                     }
                 }
@@ -278,21 +278,21 @@ public class StructureIncludeFile {
                     // System.out.println(node.getFilter().getInputType());
                     // System.out.println(node.getFilter().getOutputType());
                     if (node.getFilter().getOutputType().isClassType()
-                            && !passedStructs.contains(node.getFilter()
-                                    .getOutputType().getCClass())) {
+                        && !passedStructs.contains(node.getFilter()
+                                                   .getOutputType().getCClass())) {
                         passedStructs.add(node.getFilter().getOutputType()
-                                .getCClass());
+                                          .getCClass());
                         System.out.println(node.getFilter().getOutputType()
-                                + " is passed on the tape");
+                                           + " is passed on the tape");
                     }
 
                     if (node.getFilter().getInputType().isClassType()
-                            && !passedStructs.contains(node.getFilter()
-                                    .getInputType().getCClass())) {
+                        && !passedStructs.contains(node.getFilter()
+                                                   .getInputType().getCClass())) {
                         passedStructs.add(node.getFilter().getInputType()
-                                .getCClass());
+                                          .getCClass());
                         System.out.println(node.getFilter().getInputType()
-                                + " is passed on the tape");
+                                           + " is passed on the tape");
                     }
                 }
             }

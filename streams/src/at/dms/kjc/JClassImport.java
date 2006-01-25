@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JClassImport.java,v 1.9 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,132 +33,132 @@ import at.dms.compiler.JavaStyleComment;
  */
 public class JClassImport extends JPhylum {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JClassImport() {} // for cloner only
 
-  /**
-   * Constructs a single-type-import declaration node in the syntax tree.
-   *
-   * @param	where		the line of this node in the source code
-   * @param	name		the canonical name of the type
-   * @param	comments	other comments in the source code
-   */
-  public JClassImport(TokenReference where,
-		      String name,
-		      JavaStyleComment[] comments)
-  {
-    super(where);
+    /**
+     * Constructs a single-type-import declaration node in the syntax tree.
+     *
+     * @param   where       the line of this node in the source code
+     * @param   name        the canonical name of the type
+     * @param   comments    other comments in the source code
+     */
+    public JClassImport(TokenReference where,
+                        String name,
+                        JavaStyleComment[] comments)
+    {
+        super(where);
 
-    this.name = name;
-    this.comments = comments;
+        this.name = name;
+        this.comments = comments;
 
-    this.used = false;
+        this.used = false;
 
-    int		index = name.lastIndexOf('/');
+        int     index = name.lastIndexOf('/');
 
-    this.ident = index == -1 ? name : name.substring(index + 1).intern();
-  }
-
-  // ----------------------------------------------------------------------
-  // ACCESSORS & MUTATORS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Returns the fully qualified name of the imported type.
-   */
-  public String getQualifiedName() {
-    return name;
-  }
-
-  /**
-   * Returns the simple qualified name of the imported type.
-   */
-  public String getSimpleName() {
-    return ident;
-  }
-
-  /**
-   * States that specified class is used.
-   */
-  public void setUsed() {
-    used = true;
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Analyses the statement (semantically).
-   * @param	context		the analysis context
-   * @exception	PositionedError	the analysis detected an error
-   */
-  public void analyse(Compiler compiler) {
-    if (!used && getTokenReference() != TokenReference.NO_REF) {
-      compiler.reportTrouble(new CWarning(getTokenReference(),
-					  KjcMessages.UNUSED_CLASS_IMPORT,
-					  name.replace('/', '.'),
-					  null));
+        this.ident = index == -1 ? name : name.substring(index + 1).intern();
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS & MUTATORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    if (comments != null) {
-      p.visitComments(comments);
+    /**
+     * Returns the fully qualified name of the imported type.
+     */
+    public String getQualifiedName() {
+        return name;
     }
-    p.visitClassImport(name);
-  }
 
-     /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      if (comments != null) {
-	  return p.visitComments(comments);
-      }
-      return p.visitClassImport(name);
-  }
+    /**
+     * Returns the simple qualified name of the imported type.
+     */
+    public String getSimpleName() {
+        return ident;
+    }
+
+    /**
+     * States that specified class is used.
+     */
+    public void setUsed() {
+        used = true;
+    }
+
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
+
+    /**
+     * Analyses the statement (semantically).
+     * @param   context     the analysis context
+     * @exception   PositionedError the analysis detected an error
+     */
+    public void analyse(Compiler compiler) {
+        if (!used && getTokenReference() != TokenReference.NO_REF) {
+            compiler.reportTrouble(new CWarning(getTokenReference(),
+                                                KjcMessages.UNUSED_CLASS_IMPORT,
+                                                name.replace('/', '.'),
+                                                null));
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
+
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        if (comments != null) {
+            p.visitComments(comments);
+        }
+        p.visitClassImport(name);
+    }
+
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        if (comments != null) {
+            return p.visitComments(comments);
+        }
+        return p.visitClassImport(name);
+    }
 
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final */ String			name;  // removed final for cloner
-    private /* final */ String			ident;  // removed final for cloner
-  private /* final */ JavaStyleComment[]	comments;  // removed final for cloner
-  private boolean			used;
+    private /* final */ String          name;  // removed final for cloner
+    private /* final */ String          ident;  // removed final for cloner
+    private /* final */ JavaStyleComment[]  comments;  // removed final for cloner
+    private boolean         used;
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JClassImport other = new at.dms.kjc.JClassImport();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JClassImport other = new at.dms.kjc.JClassImport();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JClassImport other) {
-  super.deepCloneInto(other);
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
-  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
-  other.used = this.used;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JClassImport other) {
+        super.deepCloneInto(other);
+        other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+        other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+        other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
+        other.used = this.used;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

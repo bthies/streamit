@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.7 2005-02-17 00:09:29 thies Exp $
+ * $Id: JDoLoopStatement.java,v 1.8 2006-01-25 17:01:51 thies Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -52,159 +52,159 @@ public class JDoLoopStatement extends JForStatement
     private boolean zeroInit;
   
     /** construct a new JDoLoopStatement, see the class comment for 
-	semantics. 
-	for (*type_of_induction* *induction* = *initExpr*; *induction* < *cond*; *induction* += incr) *body*.
-	*countUp* is true if this loop increments the induction var **/
+        semantics. 
+        for (*type_of_induction* *induction* = *initExpr*; *induction* < *cond*; *induction* += incr) *body*.
+        *countUp* is true if this loop increments the induction var **/
     public JDoLoopStatement (JLocalVariable induction,
-			     JExpression initVal,
-			     JExpression condVal,
-			     JExpression incrVal,
-			     JStatement body,
-			     boolean countUp)
+                             JExpression initVal,
+                             JExpression condVal,
+                             JExpression incrVal,
+                             JStatement body,
+                             boolean countUp)
     {
-	//try to construct a legal for loop that will represent this do loop
-	super(null, new JExpressionStatement(null, 
-					     new JAssignmentExpression
-					     (null, 
-					      new JLocalVariableExpression(null, induction),
-					      initVal), 
-					     null),
-	      new JRelationalExpression(null,
-					Constants.OPE_LT,
-new JLocalVariableExpression(null, induction),
-					condVal),
-	      new JExpressionStatement(null,
-				       new JCompoundAssignmentExpression
-				       (null, OPE_PLUS,
-					new JLocalVariableExpression(null, induction),
-					incrVal), 
-				       null),
-	      body,
-	      null);
-	
-	assert countUp;
-	//set the state of the loop
-	this.induction = induction;
-	this.initValue = initVal;
-	this.incrValue = incrVal;
-	this.condValue = condVal;
-	this.countUp = countUp;
-	this.zeroInit =  (Util.passThruParens(initVal) instanceof JIntLiteral &&
-			  ((JIntLiteral)Util.passThruParens(initVal)).intValue() == 0);
-	
+        //try to construct a legal for loop that will represent this do loop
+        super(null, new JExpressionStatement(null, 
+                                             new JAssignmentExpression
+                                             (null, 
+                                              new JLocalVariableExpression(null, induction),
+                                              initVal), 
+                                             null),
+              new JRelationalExpression(null,
+                                        Constants.OPE_LT,
+                                        new JLocalVariableExpression(null, induction),
+                                        condVal),
+              new JExpressionStatement(null,
+                                       new JCompoundAssignmentExpression
+                                       (null, OPE_PLUS,
+                                        new JLocalVariableExpression(null, induction),
+                                        incrVal), 
+                                       null),
+              body,
+              null);
+    
+        assert countUp;
+        //set the state of the loop
+        this.induction = induction;
+        this.initValue = initVal;
+        this.incrValue = incrVal;
+        this.condValue = condVal;
+        this.countUp = countUp;
+        this.zeroInit =  (Util.passThruParens(initVal) instanceof JIntLiteral &&
+                          ((JIntLiteral)Util.passThruParens(initVal)).intValue() == 0);
+    
     }
     
     /** construct a new JDoLoopStatement, see the class comment for 
-	semantics. 
-	for (*type_of_induction* *induction* = *initExpr*; *induction* < *cond*; *induction* += incr) *body*.
-	*countUp* is true if this loop increments the induction var
-	*zeroInit* is true if the induction var is initialized to zero
-    **/
+        semantics. 
+        for (*type_of_induction* *induction* = *initExpr*; *induction* < *cond*; *induction* += incr) *body*.
+        *countUp* is true if this loop increments the induction var
+        *zeroInit* is true if the induction var is initialized to zero
+        **/
     public JDoLoopStatement (JLocalVariable induction,
-			     JExpression initVal,
-			     JExpression condVal,
-			     JExpression incrVal,
-			     JStatement body,
-			     boolean countUp,
-			     boolean zeroInit)  
+                             JExpression initVal,
+                             JExpression condVal,
+                             JExpression incrVal,
+                             JStatement body,
+                             boolean countUp,
+                             boolean zeroInit)  
     {
-	//try to construct a legal for loop that will represent this do loop
-	super(null, new JExpressionStatement(null, 
-					     new JAssignmentExpression
-					     (null, 
-					      new JLocalVariableExpression(null, induction),
-					      initVal), 
-					     null),
-	      new JRelationalExpression(null,
-					Constants.OPE_LT,
-					new JLocalVariableExpression(null, induction),
-					condVal),
-	      new JExpressionStatement(null,
-				       new JCompoundAssignmentExpression
-				       (null, OPE_PLUS,
-					new JLocalVariableExpression(null, induction),
-					incrVal), 
-				       null),
-	      body,
-	      null);
-	
-	this.induction = induction;
-	this.initValue = initVal;
-	this.incrValue = incrVal;
-	this.condValue = condVal;
-	this.countUp = countUp;
-	this.zeroInit = zeroInit;
+        //try to construct a legal for loop that will represent this do loop
+        super(null, new JExpressionStatement(null, 
+                                             new JAssignmentExpression
+                                             (null, 
+                                              new JLocalVariableExpression(null, induction),
+                                              initVal), 
+                                             null),
+              new JRelationalExpression(null,
+                                        Constants.OPE_LT,
+                                        new JLocalVariableExpression(null, induction),
+                                        condVal),
+              new JExpressionStatement(null,
+                                       new JCompoundAssignmentExpression
+                                       (null, OPE_PLUS,
+                                        new JLocalVariableExpression(null, induction),
+                                        incrVal), 
+                                       null),
+              body,
+              null);
+    
+        this.induction = induction;
+        this.initValue = initVal;
+        this.incrValue = incrVal;
+        this.condValue = condVal;
+        this.countUp = countUp;
+        this.zeroInit = zeroInit;
     }
     /** return the value that the induction var is compared to in : *induction* < *cond* */
     public JExpression getCondValue() 
     {
-	return condValue;
+        return condValue;
     }
 
     /** return the induction var of this loop **/
     public JLocalVariable getInduction() 
     {
-	return induction;
+        return induction;
     }
 
     /** return true if this loop increments the induction var **/
     public boolean countUp() 
     {
-	return true;
+        return true;
     }
 
     /** return true if this loop initializes the induction to zero **/
     public boolean zeroInit() 
     {
-	return true;
+        return true;
     }
     
     /** return the value that the induction var is initialized to **/
     public JExpression getInitValue() 
     {
-	return initValue;
+        return initValue;
     }
     
     /** return the value that is added to the induction var for each iterations **/
     public JExpression getIncrValue() 
     {
-	return incrValue;
+        return incrValue;
     }
 
     /** return true if the init, cond, and incr values are int literals at compile time **/
     public boolean staticBounds() 
     {
-	return (Util.passThruParens(initValue) instanceof JIntLiteral &&
-		Util.passThruParens(condValue) instanceof JIntLiteral &&
-		Util.passThruParens(incrValue) instanceof JIntLiteral);	
+        return (Util.passThruParens(initValue) instanceof JIntLiteral &&
+                Util.passThruParens(condValue) instanceof JIntLiteral &&
+                Util.passThruParens(incrValue) instanceof JIntLiteral); 
     }
 
     /** return the integer value of the increment value, if not a int literal, fail **/
     public int getIncrInt() 
     {
-	assert Util.passThruParens(incrValue) instanceof JIntLiteral;
-	
-	return ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
+        assert Util.passThruParens(incrValue) instanceof JIntLiteral;
+    
+        return ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
     }
     
     /** return the trip count of the loop, for this function to pass, the loop
-	must have static bounds **/
+        must have static bounds **/
     public int getTripCount() 
     {
-	assert staticBounds();
-	
-	int init, cond, incr;
-	
-	init = ((JIntLiteral)Util.passThruParens(initValue)).intValue();
-	cond = ((JIntLiteral)Util.passThruParens(condValue)).intValue();
-	incr = ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
-	
-	int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)));
-	
-	if (tripCount < 0)
-	    return 0;
-	
-	return tripCount;
+        assert staticBounds();
+    
+        int init, cond, incr;
+    
+        init = ((JIntLiteral)Util.passThruParens(initValue)).intValue();
+        cond = ((JIntLiteral)Util.passThruParens(condValue)).intValue();
+        incr = ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
+    
+        int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)));
+    
+        if (tripCount < 0)
+            return 0;
+    
+        return tripCount;
     }
     
 
@@ -212,29 +212,29 @@ new JLocalVariableExpression(null, induction),
     //for cloning only
     protected JDoLoopStatement() 
     {
-	
+    
     }
     
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.rstream.JDoLoopStatement other = new at.dms.kjc.rstream.JDoLoopStatement();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.rstream.JDoLoopStatement other = new at.dms.kjc.rstream.JDoLoopStatement();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.rstream.JDoLoopStatement other) {
-  super.deepCloneInto(other);
-  other.induction = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.induction);
-  other.initValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.initValue);
-  other.incrValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.incrValue);
-  other.condValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.condValue);
-  other.countUp = this.countUp;
-  other.zeroInit = this.zeroInit;
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.rstream.JDoLoopStatement other) {
+        super.deepCloneInto(other);
+        other.induction = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.induction);
+        other.initValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.initValue);
+        other.incrValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.incrValue);
+        other.condValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.condValue);
+        other.countUp = this.countUp;
+        other.zeroInit = this.zeroInit;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

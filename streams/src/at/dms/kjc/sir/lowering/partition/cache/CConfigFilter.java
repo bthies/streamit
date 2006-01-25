@@ -24,33 +24,33 @@ class CConfigFilter extends CConfig {
     private SIRFilter filter;
 
     public CConfigFilter(SIRFilter filter, CachePartitioner partitioner) {
-	super(partitioner);
-	this.filter = filter;
-	
-	//estimate work, code size and data size
-	int work_estimate = partitioner.getWorkEstimate().getWork(filter);
-	int code_size = getICodeSize();
-	int data_size = DataEstimate.estimateDWS(filter);
-	int input = DataEstimate.getTypeSize(filter.getInputType());
-	int output = DataEstimate.getTypeSize(filter.getInputType());
-	fusion_info = new FusionInfo(work_estimate, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);	
+        super(partitioner);
+        this.filter = filter;
+    
+        //estimate work, code size and data size
+        int work_estimate = partitioner.getWorkEstimate().getWork(filter);
+        int code_size = getICodeSize();
+        int data_size = DataEstimate.estimateDWS(filter);
+        int input = DataEstimate.getTypeSize(filter.getInputType());
+        int output = DataEstimate.getTypeSize(filter.getInputType());
+        fusion_info = new FusionInfo(work_estimate, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);  
     }
 
     public boolean getPeek() {
-	return filter.getPeekInt() > filter.getPopInt();
+        return filter.getPeekInt() > filter.getPopInt();
     }
 
 
     public int numberOfTiles() {
-	return 1;
+        return 1;
     }
 
     public FusionInfo getFusionInfo() {
-	return fusion_info;
+        return fusion_info;
     }
 
     public CCost get(int tileLimit) {
-	return getFusionInfo().getCost();
+        return getFusionInfo().getCost();
     }
 
     /**
@@ -58,23 +58,23 @@ class CConfigFilter extends CConfig {
      * use for this filter.
      */
     private int getICodeSize() {
-	int iCodeSize;
-	iCodeSize = partitioner.getWorkEstimate().getICodeSize(filter);
-	// if estimate is above threshold, count it as being
-	// exactly at threshold, so that we don't propagate up
-	// decisions that are based on an exceeded icode size.
-	// That is, we only want to constrain the filter NOT to
-	// fuse with anyone else.  We don't want all containers of
-	// this filter to have a high cost just because this guy
-	// exceeded the icode limit.
-	if (iCodeSize>partitioner.getCodeCacheSize()) {
-	    iCodeSize = partitioner.getCodeCacheSize();
-	}
-	return iCodeSize;
+        int iCodeSize;
+        iCodeSize = partitioner.getWorkEstimate().getICodeSize(filter);
+        // if estimate is above threshold, count it as being
+        // exactly at threshold, so that we don't propagate up
+        // decisions that are based on an exceeded icode size.
+        // That is, we only want to constrain the filter NOT to
+        // fuse with anyone else.  We don't want all containers of
+        // this filter to have a high cost just because this guy
+        // exceeded the icode limit.
+        if (iCodeSize>partitioner.getCodeCacheSize()) {
+            iCodeSize = partitioner.getCodeCacheSize();
+        }
+        return iCodeSize;
     }
 
     public SIRStream getStream() {
-	return filter;
+        return filter;
     }    
 
 
@@ -82,12 +82,12 @@ class CConfigFilter extends CConfig {
      * Add this to the map and return.
      */
     public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, SIRStream str) {
-	curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
-	return filter;
+        curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
+        return filter;
     }
 
     public void printArray(int numTiles) {
-	System.err.println("Filter cost");
+        System.err.println("Filter cost");
     }
 
 }

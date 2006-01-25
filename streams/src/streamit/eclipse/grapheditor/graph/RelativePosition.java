@@ -10,6 +10,6 @@ package streamit.eclipse.grapheditor.graph;
  */
 public class RelativePosition 
 {
-	public static final int AFTER = 16;
-	public static final int BEFORE = 32;
+    public static final int AFTER = 16;
+    public static final int BEFORE = 32;
 }

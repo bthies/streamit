@@ -100,7 +100,7 @@ public abstract class Filter extends Stream
     }
 
     public Filter(int a, int b, int c, float[][] d, float[] e) {
-	super(a, b, c, d, e);
+        super(a, b, c, d, e);
     }
 
     public Filter(int a, int b, int c, int d, int e, float f)
@@ -256,36 +256,36 @@ public abstract class Filter extends Stream
 
     public Filter(int a, int b, int c, int d, int e, int f, int g) 
     {
-	super (a, b, c, d, e, f, g);
+        super (a, b, c, d, e, f, g);
     }
 
     public Filter(int n1, int n2, int n3,
-		  int n4, float f1) {
-      super(n1, n2, n3, n4, f1);
+                  int n4, float f1) {
+        super(n1, n2, n3, n4, f1);
     }
 
     public Filter(int x, int y, int z,
-		   int a, int b, int c)
+                  int a, int b, int c)
     {
         super (x, y, z, a, b, c);
     }
 
     public Filter(int x, int y, int z,
-		   int a, int b, int c, int d, float f)
+                  int a, int b, int c, int d, float f)
     {
         super (x, y, z, a, b, c, d, f);
     }
 
     public Filter(int n1, int n2, int n3,
-		   int n4, int n5, int n6, int n7, int n8, 
-		   int n9, int n10, float f)
+                  int n4, int n5, int n6, int n7, int n8, 
+                  int n9, int n10, float f)
     {
         super (n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f);
     }
 
     public Filter(int n1, int n2, int n3,
-		   int n4, int n5, int n6, int n7, int n8, 
-		   int n9)
+                  int n4, int n5, int n6, int n7, int n8, 
+                  int n9)
     {
         super (n1, n2, n3, n4, n5, n6, n7, n8, n9);
     }
@@ -306,26 +306,26 @@ public abstract class Filter extends Stream
     }
 
     public Filter( int i1, 
-		   int i2, 
-		   int i3, 
-		   int i4, 
-		   int i5, 
-		   int i6, 
-		   int i7, 
-		   int i8, 
-		   int i9, 
-		   float f) {
-	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+                   int i2, 
+                   int i3, 
+                   int i4, 
+                   int i5, 
+                   int i6, 
+                   int i7, 
+                   int i8, 
+                   int i9, 
+                   float f) {
+        super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
     }
 
     public Filter( int i1, 
-		   int i2, 
-		   int i3, 
-		   int i4, 
-		   int i5, 
-		   int i6, 
-		   float f) {
-	super(i1, i2, i3, i4, i5, i6, f);
+                   int i2, 
+                   int i3, 
+                   int i4, 
+                   int i5, 
+                   int i6, 
+                   float f) {
+        super(i1, i2, i3, i4, i5, i6, f);
     }
 
     public Filter(int n1, int n2, float f1[], float f2[])
@@ -334,7 +334,7 @@ public abstract class Filter extends Stream
     }
 
     public Filter(short s1, short s2, short s3) {
-	super(s1, s2, s3);
+        super(s1, s2, s3);
     }
 
     public Filter(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
@@ -396,9 +396,9 @@ public abstract class Filter extends Stream
         final public String name;
         public PhaseInfo(int _e, int _o, int _u, String _name)
         {
-	    // might be passing in a peek rate that is less than the
-	    // pop rate; remember it as the pop rate instead.
-	    if (_e < _o) { _e = _o; }
+            // might be passing in a peek rate that is less than the
+            // pop rate; remember it as the pop rate instead.
+            if (_e < _o) { _e = _o; }
             e = _e;
             o = _o;
             u = _u;
@@ -427,13 +427,13 @@ public abstract class Filter extends Stream
 
     public void addSteadyPhase(Rate e, Rate o, Rate u, String name)
     {
-	// if we detect a dynamic rate, make sure we're in unscheduled
-	// mode
-	if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
-	    Stream.ensureUnscheduled();
-	}
+        // if we detect a dynamic rate, make sure we're in unscheduled
+        // mode
+        if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
+            Stream.ensureUnscheduled();
+        }
 
-	// use max rates in case they are dynamic
+        // use max rates in case they are dynamic
         steadyPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
         multiPhaseStyle = true;
     }
@@ -445,36 +445,36 @@ public abstract class Filter extends Stream
      * rate in the compiler.
      */
     public void addSteadyPhase(int e, int o, int u, String name) {
-	addSteadyPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
+        addSteadyPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
     }
     public void addSteadyPhase(Rate e, int o, int u, String name) {
-	addSteadyPhase(e, new RateStatic(o), new RateStatic(u), name);
+        addSteadyPhase(e, new RateStatic(o), new RateStatic(u), name);
     }
     public void addSteadyPhase(int e, Rate o, int u, String name) {
-	addSteadyPhase(new RateStatic(e), o, new RateStatic(u), name);
+        addSteadyPhase(new RateStatic(e), o, new RateStatic(u), name);
     }
     public void addSteadyPhase(int e, int o, Rate u, String name) {
-	addSteadyPhase(new RateStatic(e), new RateStatic(o), u, name);
+        addSteadyPhase(new RateStatic(e), new RateStatic(o), u, name);
     }
     public void addSteadyPhase(Rate e, int o, Rate u, String name) {
-	addSteadyPhase(e, new RateStatic(o), u, name);
+        addSteadyPhase(e, new RateStatic(o), u, name);
     }
     public void addSteadyPhase(Rate e, Rate o, int u, String name) {
-	addSteadyPhase(e, o, new RateStatic(u), name);
+        addSteadyPhase(e, o, new RateStatic(u), name);
     }
     public void addSteadyPhase(int e, Rate o, Rate u, String name) {
-	addSteadyPhase(new RateStatic(e), o, u, name);
+        addSteadyPhase(new RateStatic(e), o, u, name);
     }
 
     public void addInitPhase(Rate e, Rate o, Rate u, String name)
     {
-	// if we detect a dynamic rate, make sure we're in unscheduled
-	// mode
-	if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
-	    Stream.ensureUnscheduled();
-	}
+        // if we detect a dynamic rate, make sure we're in unscheduled
+        // mode
+        if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
+            Stream.ensureUnscheduled();
+        }
 
-	// use max rates in case they are dynamic
+        // use max rates in case they are dynamic
         initPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
         multiPhaseStyle = true;
     }
@@ -486,25 +486,25 @@ public abstract class Filter extends Stream
      * rate in the compiler.
      */
     public void addInitPhase(int e, int o, int u, String name) {
-	addInitPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
+        addInitPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
     }
     public void addInitPhase(Rate e, int o, int u, String name) {
-	addInitPhase(e, new RateStatic(o), new RateStatic(u), name);
+        addInitPhase(e, new RateStatic(o), new RateStatic(u), name);
     }
     public void addInitPhase(int e, Rate o, int u, String name) {
-	addInitPhase(new RateStatic(e), o, new RateStatic(u), name);
+        addInitPhase(new RateStatic(e), o, new RateStatic(u), name);
     }
     public void addInitPhase(int e, int o, Rate u, String name) {
-	addInitPhase(new RateStatic(e), new RateStatic(o), u, name);
+        addInitPhase(new RateStatic(e), new RateStatic(o), u, name);
     }
     public void addInitPhase(Rate e, int o, Rate u, String name) {
-	addInitPhase(e, new RateStatic(o), u, name);
+        addInitPhase(e, new RateStatic(o), u, name);
     }
     public void addInitPhase(Rate e, Rate o, int u, String name) {
-	addInitPhase(e, o, new RateStatic(u), name);
+        addInitPhase(e, o, new RateStatic(u), name);
     }
     public void addInitPhase(int e, Rate o, Rate u, String name) {
-	addInitPhase(new RateStatic(e), o, u, name);
+        addInitPhase(new RateStatic(e), o, u, name);
     }
 
     public int getNumInitPhases()
@@ -591,63 +591,63 @@ public abstract class Filter extends Stream
     }
 
     public void prepareToWork() {
-	if (!Stream.scheduledRun) {
-	    // if the phase is static-rate, we require enough inputs
-	    // to execute the whole phase.  This ensures that all
-	    // upstream messages are sent (and hence received by this
-	    // filter) prior to execution.
-	    PhaseInfo phase = getCurrentPhase();
-	    if (phase.e!=Rate.DYNAMIC_RATE && phase.e>0) {
-		input.ensureData(phase.e);
-	    }
-	}
-	super.prepareToWork();
+        if (!Stream.scheduledRun) {
+            // if the phase is static-rate, we require enough inputs
+            // to execute the whole phase.  This ensures that all
+            // upstream messages are sent (and hence received by this
+            // filter) prior to execution.
+            PhaseInfo phase = getCurrentPhase();
+            if (phase.e!=Rate.DYNAMIC_RATE && phase.e>0) {
+                input.ensureData(phase.e);
+            }
+        }
+        super.prepareToWork();
     }
 
     public void doWork() {
-	prepareToWork();
+        prepareToWork();
 
-	// call work or prework, etc.
-	PhaseInfo phase = getCurrentPhase();
-	if (phase.name.equals("prework")) {
-	    prework();
-	} else if (phase.name.equals("work")) {
-	    work();
-	} else {
-	    throw new RuntimeException("Unrecognized phase name: " + phase.name);
-	}
+        // call work or prework, etc.
+        PhaseInfo phase = getCurrentPhase();
+        if (phase.name.equals("prework")) {
+            prework();
+        } else if (phase.name.equals("work")) {
+            work();
+        } else {
+            throw new RuntimeException("Unrecognized phase name: " + phase.name);
+        }
 
-	cleanupWork();
+        cleanupWork();
     }
 
     public void cleanupWork() {
-	super.cleanupWork();
+        super.cleanupWork();
 
-	if (!Stream.scheduledRun) {
-	    // this is where phase is advanced for unscheduled run
-	    advancePhase();
-	}
+        if (!Stream.scheduledRun) {
+            // this is where phase is advanced for unscheduled run
+            advancePhase();
+        }
     }
 
     
     public void executeNextPhase(String schedName)
     {
         assert multiPhaseStyle;
-	assert Stream.scheduledRun;  // this is only executed when there's a schedule
+        assert Stream.scheduledRun;  // this is only executed when there's a schedule
 
         int inputCount=0, outputCount=0;
         if (input != null)
-        {
-            inputCount = input.getItemsPopped();
-        }
+            {
+                inputCount = input.getItemsPopped();
+            }
         if (output != null)
-        {
-            outputCount = output.getItemsPushed();
-        }
+            {
+                outputCount = output.getItemsPushed();
+            }
 
-	// this is where phase is advanced for scheduled run
+        // this is where phase is advanced for scheduled run
         PhaseInfo phase = getCurrentPhase();
-	advancePhase();
+        advancePhase();
 
         // make sure that the next phase to execute is the one asked for!
         assert schedName.equals(phase.name);
@@ -658,60 +658,60 @@ public abstract class Filter extends Stream
 
         // execute the phase
         try
-        {
-            if (schedName.equals ("work")) {
-                doWork();
-            } else if (schedName.equals ("prework")) {
-                prepareToWork();
-                prework ();
-                cleanupWork();
-            } else {
-                prepareToWork();
-                Method m = getClass().getMethod(phase.name, null);
-                m.setAccessible(true);
-                m.invoke(this, null);
-                cleanupWork();
+            {
+                if (schedName.equals ("work")) {
+                    doWork();
+                } else if (schedName.equals ("prework")) {
+                    prepareToWork();
+                    prework ();
+                    cleanupWork();
+                } else {
+                    prepareToWork();
+                    Method m = getClass().getMethod(phase.name, null);
+                    m.setAccessible(true);
+                    m.invoke(this, null);
+                    cleanupWork();
+                }
             }
-        }
         catch (Throwable x)
-        {
-            ERROR(x);
-        }
+            {
+                ERROR(x);
+            }
 
         int newInputCount, newOutputCount;
         if (input != null)
-        {
-            newInputCount = input.getItemsPopped();
-            if (newInputCount - inputCount != phase.o)
-                throw new IllegalArgumentException(
-                "This probably means that you declared the wrong pop rate for "
-                    + this
-                    + "\n  have newInput=="
-                    + newInputCount
-                    + " and inputCount=="
-                    + inputCount
-                    + " and popCount=="
-                    + phase.o
-                    + " on Stream "
-                    + this);
-        }
+            {
+                newInputCount = input.getItemsPopped();
+                if (newInputCount - inputCount != phase.o)
+                    throw new IllegalArgumentException(
+                                                       "This probably means that you declared the wrong pop rate for "
+                                                       + this
+                                                       + "\n  have newInput=="
+                                                       + newInputCount
+                                                       + " and inputCount=="
+                                                       + inputCount
+                                                       + " and popCount=="
+                                                       + phase.o
+                                                       + " on Stream "
+                                                       + this);
+            }
         if (output != null)
-        {
-            newOutputCount = output.getItemsPushed();
-            if (newOutputCount - outputCount != phase.u)
-                throw new IllegalArgumentException(
-                "This probably means that you declared the wrong push rate for "
-                    + this
-                    + "\n"
-                    + "Pushed: "
-                    + newOutputCount
-                    + " and outputCount: "
-                    + outputCount
-                    + " but declared: "
-                    + phase.u
-                    + " on Stream "
-                    + this);
-        }
+            {
+                newOutputCount = output.getItemsPushed();
+                if (newOutputCount - outputCount != phase.u)
+                    throw new IllegalArgumentException(
+                                                       "This probably means that you declared the wrong push rate for "
+                                                       + this
+                                                       + "\n"
+                                                       + "Pushed: "
+                                                       + newOutputCount
+                                                       + " and outputCount: "
+                                                       + outputCount
+                                                       + " but declared: "
+                                                       + phase.u
+                                                       + " on Stream "
+                                                       + this);
+            }
 
     }
 
@@ -721,64 +721,64 @@ public abstract class Filter extends Stream
     public void connectGraph()
     {
         if (ccStyleInit)
-        {
-            if (outputType != null)
             {
-                output = new Channel(outputType, pushAmount);
-            }
+                if (outputType != null)
+                    {
+                        output = new Channel(outputType, pushAmount);
+                    }
 
-            if (inputType != null)
-            {
-                if (peekAmount == -1)
-                    peekAmount = popAmount;
-                input = new Channel(inputType, popAmount, peekAmount);
+                if (inputType != null)
+                    {
+                        if (peekAmount == -1)
+                            peekAmount = popAmount;
+                        input = new Channel(inputType, popAmount, peekAmount);
+                    }
             }
-        }
         else if (multiPhaseStyle)
-        {
-            if (inType != null)
             {
-		// if only one steady phase, pass the rates to the
-		// Channel (for Eclipse debugger to find it there).
-		if (initPhases.size()==0 && steadyPhases.size()==1) {
-		    PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
-		    input = new Channel(inType, pi.o, pi.e);
-		} else {
-		    input = new Channel(inType);
-		}
-            }
+                if (inType != null)
+                    {
+                        // if only one steady phase, pass the rates to the
+                        // Channel (for Eclipse debugger to find it there).
+                        if (initPhases.size()==0 && steadyPhases.size()==1) {
+                            PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+                            input = new Channel(inType, pi.o, pi.e);
+                        } else {
+                            input = new Channel(inType);
+                        }
+                    }
 
-            if (outType != null)
-            {
-		// if only one steady phase, pass the rates to the
-		// Channel (for Eclipse debugger to find it there).
-		if (initPhases.size()==0 && steadyPhases.size()==1) {
-		    PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
-		    output = new Channel(outType, pi.u);
-		} else {
-		    output = new Channel(outType);
-		}
+                if (outType != null)
+                    {
+                        // if only one steady phase, pass the rates to the
+                        // Channel (for Eclipse debugger to find it there).
+                        if (initPhases.size()==0 && steadyPhases.size()==1) {
+                            PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+                            output = new Channel(outType, pi.u);
+                        } else {
+                            output = new Channel(outType);
+                        }
+                    }
             }
-        }
 
         Channel myInput = getInputChannel();
         Channel myOutput = getOutputChannel();
 
         if (myOutput != null)
-        {
-            myOutput.setSource(this);
-        }
+            {
+                myOutput.setSource(this);
+            }
         else
-        {
-            addSink();
-        }
+            {
+                addSink();
+            }
 
         if (myInput != null)
-        {
-            myInput.setSink(this);
-        } else {
-	    addSource();
-	}
+            {
+                myInput.setSink(this);
+            } else {
+                addSource();
+            }
 
         addFilter();
         initCount();
@@ -800,19 +800,19 @@ public abstract class Filter extends Stream
     final void initCount()
     {
         if (!multiPhaseStyle)
-        {
-            if (getInputChannel() != null)
             {
-                popCount = getInputChannel().getPopCount();
-                peekCount = getInputChannel().getPeekCount();
-            }
+                if (getInputChannel() != null)
+                    {
+                        popCount = getInputChannel().getPopCount();
+                        peekCount = getInputChannel().getPeekCount();
+                    }
 
-            if (getOutputChannel() != null)
-            {
-                pushCount = getOutputChannel().getPushCount();
+                if (getOutputChannel() != null)
+                    {
+                        pushCount = getOutputChannel().getPushCount();
+                    }
+                addSteadyPhase(peekCount, popCount, pushCount, "work");
             }
-            addSteadyPhase(peekCount, popCount, pushCount, "work");
-        }
     }
 
     void setupBufferLengths(Scheduler buffers)
@@ -834,23 +834,23 @@ public abstract class Filter extends Stream
     private int initExecutionCount;
     private int steadyExecutionCount;
     public static void fillScheduleFields(Scheduler scheduler) {
-	HashMap[] counts = scheduler.getExecutionCounts();
-	for (int i=0; i<2; i++) {
-	    java.util.Set keys = counts[i].keySet();
-	    for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
-		Object obj = it.next();
-		if (obj instanceof Filter) {
-		    int count = ((int[])counts[i].get(obj))[0];
-		    if (i==0) {
-			((Filter)obj).initExecutionCount = count;
-			//System.out.println("init for " + obj + " = " + count);
-		    } else {
-			((Filter)obj).steadyExecutionCount = count;
-			//System.out.println("steady for " + obj + " = " + count);
-		    }
-		}
-	    }
-	}
+        HashMap[] counts = scheduler.getExecutionCounts();
+        for (int i=0; i<2; i++) {
+            java.util.Set keys = counts[i].keySet();
+            for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
+                Object obj = it.next();
+                if (obj instanceof Filter) {
+                    int count = ((int[])counts[i].get(obj))[0];
+                    if (i==0) {
+                        ((Filter)obj).initExecutionCount = count;
+                        //System.out.println("init for " + obj + " = " + count);
+                    } else {
+                        ((Filter)obj).steadyExecutionCount = count;
+                        //System.out.println("steady for " + obj + " = " + count);
+                    }
+                }
+            }
+        }
     }
 
 }

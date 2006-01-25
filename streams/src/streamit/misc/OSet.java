@@ -64,8 +64,8 @@ public class OSet
     {
         Pair result = tree.insert(data, false);
         return new Pair(
-            new OSetIterator((RBNode)result.first),
-            result.second);
+                        new OSetIterator((RBNode)result.first),
+                        result.second);
     }
 
     public void erase(OSetIterator iter)

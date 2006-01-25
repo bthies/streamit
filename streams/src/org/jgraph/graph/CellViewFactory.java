@@ -1,5 +1,5 @@
 /*
- * @(#)CellViewFactory.java	1.0 1/1/02
+ * @(#)CellViewFactory.java 1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -31,17 +31,17 @@ package org.jgraph.graph;
 
 public interface CellViewFactory {
 
-	/**
-	 * Constructs a view for the specified cell and associates it
-	 * with the specified object using the specified CellMapper.
-	 *
-	 * @param cell reference to the object in the model
-	 */
-	CellView createView(Object cell, CellMapper map);
+    /**
+     * Constructs a view for the specified cell and associates it
+     * with the specified object using the specified CellMapper.
+     *
+     * @param cell reference to the object in the model
+     */
+    CellView createView(Object cell, CellMapper map);
 
-	/**
-	  * Sets the preferred size for <code>view</code>.
-	  */
-	void updateAutoSize(CellView view);
+    /**
+     * Sets the preferred size for <code>view</code>.
+     */
+    void updateAutoSize(CellView view);
 
 }

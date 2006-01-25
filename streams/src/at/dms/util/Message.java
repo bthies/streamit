@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.7 2003-11-13 10:47:07 thies Exp $
+ * $Id: Message.java,v 1.8 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -25,104 +25,104 @@ package at.dms.util;
  */
 public class Message implements at.dms.kjc.DeepCloneable {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     private Message() {} // for cloner only
 
-  /**
-   * Constructs a message with an arbitrary number of parameters
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public Message(MessageDescription description, Object[] parameters) {
-    this.description = description;
-    this.parameters	= parameters;
-  }
+    /**
+     * Constructs a message with an arbitrary number of parameters
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public Message(MessageDescription description, Object[] parameters) {
+        this.description = description;
+        this.parameters = parameters;
+    }
 
-  /**
-   * Constructs a message with two parameters
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public Message(MessageDescription description, Object parameter1, Object parameter2) {
-    this(description, new Object[] { parameter1, parameter2 });
-  }
+    /**
+     * Constructs a message with two parameters
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public Message(MessageDescription description, Object parameter1, Object parameter2) {
+        this(description, new Object[] { parameter1, parameter2 });
+    }
 
-  /**
-   * Constructs a message with one parameter
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public Message(MessageDescription description, Object parameter) {
-    this(description, new Object[] { parameter });
-  }
+    /**
+     * Constructs a message with one parameter
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public Message(MessageDescription description, Object parameter) {
+        this(description, new Object[] { parameter });
+    }
 
-  /**
-   * Constructs a message without parameters
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public Message(MessageDescription description) {
-    this(description, null);
-  }
+    /**
+     * Constructs a message without parameters
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public Message(MessageDescription description) {
+        this(description, null);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the message description.
-   */
-  public MessageDescription getDescription() {
-    return description;
-  }
+    /**
+     * Returns the message description.
+     */
+    public MessageDescription getDescription() {
+        return description;
+    }
 
-  /**
-   * Returns the message description.
-   */
-  public Object[] getParams() {
-    return parameters;
-  }
+    /**
+     * Returns the message description.
+     */
+    public Object[] getParams() {
+        return parameters;
+    }
 
-  /**
-   * Returns the severity level
-   */
-  public int getSeverityLevel() {
-    return getDescription().getLevel();
-  }
+    /**
+     * Returns the severity level
+     */
+    public int getSeverityLevel() {
+        return getDescription().getLevel();
+    }
 
-  /**
-   * Returns the string explaining the error
-   */
-  public String getMessage() {
-    return this.description.format(this.parameters);
-  }
+    /**
+     * Returns the string explaining the error
+     */
+    public String getMessage() {
+        return this.description.format(this.parameters);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-    private /* final */ MessageDescription	description; // removed final for cloner
-	     private /* final */ Object[]		parameters; // removed final for cloner
+    private /* final */ MessageDescription  description; // removed final for cloner
+    private /* final */ Object[]        parameters; // removed final for cloner
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.util.Message other = new at.dms.util.Message();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.util.Message other = new at.dms.util.Message();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.util.Message other) {
-  other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description);
-  other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.util.Message other) {
+        other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description);
+        other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

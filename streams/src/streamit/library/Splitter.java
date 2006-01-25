@@ -50,36 +50,36 @@ abstract public class Splitter extends Operator
     }
 
     public void prepareToWork() {
-	if (!Stream.scheduledRun) {
-	    // for the day when splitters can ever receive messages,
-	    // make sure that all inputs are ready before starting
-	    // execution, so that messages can be delivered in time
+        if (!Stream.scheduledRun) {
+            // for the day when splitters can ever receive messages,
+            // make sure that all inputs are ready before starting
+            // execution, so that messages can be delivered in time
 
-	    // get output weights
-	    int throughput[] =
-		(sjIter != null
-		 ? sjIter.getSplitPushWeights(nWork)
-		 : flIter.getSplitPushWeights(nWork));
+            // get output weights
+            int throughput[] =
+                (sjIter != null
+                 ? sjIter.getSplitPushWeights(nWork)
+                 : flIter.getSplitPushWeights(nWork));
 
-	    // sum output weights to get input weights
-	    int totalData = 0;
-	    for (int i=0; i<throughput.length; i++) {
-		/* RMR { for duplicate splitters, only take the max output weight
-		 * since the data on the input channel is shared 
-		 */
-		if (duplicateSplitter) {
-		    totalData = MAX(throughput[i], totalData);
-		}
-		else {
-		    totalData += throughput[i];
-		}
-		/* } RMR */
-	    }
+            // sum output weights to get input weights
+            int totalData = 0;
+            for (int i=0; i<throughput.length; i++) {
+                /* RMR { for duplicate splitters, only take the max output weight
+                 * since the data on the input channel is shared 
+                 */
+                if (duplicateSplitter) {
+                    totalData = MAX(throughput[i], totalData);
+                }
+                else {
+                    totalData += throughput[i];
+                }
+                /* } RMR */
+            }
 
-	    // ensure data
-	    input.ensureData(totalData);
-	}
-	super.prepareToWork();
+            // ensure data
+            input.ensureData(totalData);
+        }
+        super.prepareToWork();
     }
 
     int nWork = 0;
@@ -87,25 +87,25 @@ abstract public class Splitter extends Operator
     {
         int throughput[] =
             (sjIter != null
-                ? sjIter.getSplitPushWeights(nWork)
-                : flIter.getSplitPushWeights(nWork));
+             ? sjIter.getSplitPushWeights(nWork)
+             : flIter.getSplitPushWeights(nWork));
 
         int totalWork =
             (sjIter != null
-                ? sjIter.getSplitterNumWork()
-                : flIter.getSplitterNumWork());
+             ? sjIter.getSplitterNumWork()
+             : flIter.getSplitterNumWork());
 
         nWork++;
         nWork = nWork % totalWork;
 
         for (int nCh = 0; nCh < dest.size(); nCh++)
-        {
-            for (int nData = 0; nData < throughput[nCh]; nData++)
             {
-                passOneData(input, output[nCh]);
-            }
+                for (int nData = 0; nData < throughput[nCh]; nData++)
+                    {
+                        passOneData(input, output[nCh]);
+                    }
 
-        }
+            }
 
     }
 
@@ -133,48 +133,48 @@ abstract public class Splitter extends Operator
         int outputIndx = 0;
         ListIterator iter = dest.listIterator();
         while (iter.hasNext())
-        {
-            // get the stream
-            Stream s = (Stream)iter.next();
-
-            // it is possible that the stream will legitimately be null
-            // just don't do anything in this case!
-            if (s != null)
             {
-                // connect it and retrieve its input and copy it into
-                // the output array for this splitter
-                s.setupOperator();
-                Channel channel = s.getIOField("input");
-                output[outputIndx] = channel;
+                // get the stream
+                Stream s = (Stream)iter.next();
 
-                // if it is not a source, make sure that it consumes data
-                // of the same kind as everything else in this Splitter
-                if (channel != null)
-                {
-                    // handle input channel
-                    if (input == null)
+                // it is possible that the stream will legitimately be null
+                // just don't do anything in this case!
+                if (s != null)
                     {
-                        input = new Channel(channel);
-                        input.setSink(this);
-                    }
-                    else
-                    {
-                        // check that the input types agree
-                        assert channel.getType().getName()
-                            .equals(input.getType().getName()):
-                            "input type = "
-                            + input.getType().getName()
-                            + " but channel type = "
-                            + channel.getType().getName();
+                        // connect it and retrieve its input and copy it into
+                        // the output array for this splitter
+                        s.setupOperator();
+                        Channel channel = s.getIOField("input");
+                        output[outputIndx] = channel;
+
+                        // if it is not a source, make sure that it consumes data
+                        // of the same kind as everything else in this Splitter
+                        if (channel != null)
+                            {
+                                // handle input channel
+                                if (input == null)
+                                    {
+                                        input = new Channel(channel);
+                                        input.setSink(this);
+                                    }
+                                else
+                                    {
+                                        // check that the input types agree
+                                        assert channel.getType().getName()
+                                            .equals(input.getType().getName()):
+                                            "input type = "
+                                            + input.getType().getName()
+                                            + " but channel type = "
+                                            + channel.getType().getName();
+                                    }
+
+                                // now connect the channel to the Splitter
+                                channel.setSource(this);
+                            }
                     }
 
-                    // now connect the channel to the Splitter
-                    channel.setSource(this);
-                }
+                outputIndx++;
             }
-
-            outputIndx++;
-        }
     }
 
     public String toString()
@@ -187,16 +187,16 @@ abstract public class Splitter extends Operator
     public Object getWork(int nWork)
     {
         if (splitWorks == null)
-        {
-            splitWorks =
-                new Pair[sjIter != null
-                    ? sjIter.getSplitterNumWork()
-                    : flIter.getSplitterNumWork()];
-        }
+            {
+                splitWorks =
+                    new Pair[sjIter != null
+                             ? sjIter.getSplitterNumWork()
+                             : flIter.getSplitterNumWork()];
+            }
         if (splitWorks[nWork] == null)
-        {
-            splitWorks[nWork] = new Pair(this, new Integer(nWork));
-        }
+            {
+                splitWorks[nWork] = new Pair(this, new Integer(nWork));
+            }
 
         return splitWorks[nWork];
     }

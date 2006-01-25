@@ -11,28 +11,28 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class FileClose extends AbstractActionDefault {
 
-	/**
-	 * Constructor for FileClose.
-	 * @param graphpad
-	 * @param name
-	 */
-	public FileClose(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for FileClose.
+     * @param graphpad
+     * @param name
+     */
+    public FileClose(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * Close the current document in the graph editor. 
-	 */
-	public void actionPerformed(ActionEvent e) 
-	{
-		if (graphpad.getCurrentDocument() == null)
-		{
-			return;
-		}
-		if (graphpad.getCurrentDocument().close(true))
-		{
-			graphpad.removeDocument(graphpad.getCurrentDocument());
-		}
-	}
+    /**
+     * Close the current document in the graph editor. 
+     */
+    public void actionPerformed(ActionEvent e) 
+    {
+        if (graphpad.getCurrentDocument() == null)
+            {
+                return;
+            }
+        if (graphpad.getCurrentDocument().close(true))
+            {
+                graphpad.removeDocument(graphpad.getCurrentDocument());
+            }
+    }
 
 }

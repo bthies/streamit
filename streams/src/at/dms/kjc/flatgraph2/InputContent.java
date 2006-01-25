@@ -8,14 +8,14 @@ import at.dms.kjc.sir.linear.*;
 
 public class InputContent extends PredefinedContent {
     public InputContent(InputContent content) {
-	super(content);
+        super(content);
     }
 
     public InputContent(SIRPredefinedFilter filter) {
-	super(filter);
+        super(filter);
     }
 
     public InputContent(UnflatFilter unflat) {
-	super(unflat);
+        super(unflat);
     }
 }

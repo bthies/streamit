@@ -17,9 +17,9 @@
 package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FeedbackLoopIter;
+    FeedbackLoopIter;
 import streamit.scheduler2.iriter./*persistent.*/
-Iterator;
+    Iterator;
 
 import streamit.scheduler2.hierarchical.PhasingSchedule;
 
@@ -39,19 +39,19 @@ public class FeedbackLoop
     LatencyNode latencySplitter, latencyJoiner;
 
     public FeedbackLoop(
-        FeedbackLoopIter iterator,
-        Iterator parent,
-        streamit.scheduler2.constrained.StreamFactory factory)
+                        FeedbackLoopIter iterator,
+                        Iterator parent,
+                        streamit.scheduler2.constrained.StreamFactory factory)
     {
         super(iterator, factory);
 
         latencyGraph = factory.getLatencyGraph();
 
         if (parent == null)
-        {
-            latencyGraph.registerParent(this, null);
-            initiateConstrained();
-        }
+            {
+                latencyGraph.registerParent(this, null);
+                initiateConstrained();
+            }
     }
 
     public void initiateConstrained()
@@ -87,11 +87,11 @@ public class FeedbackLoop
 
                 LatencyEdge bottomBodyEdge =
                     new LatencyEdge(
-                        bottomBodyNode,
-                        0,
-                        latencySplitter,
-                        0,
-                        0);
+                                    bottomBodyNode,
+                                    0,
+                                    latencySplitter,
+                                    0,
+                                    0);
                 latencySplitter.addDependency(bottomBodyEdge);
                 bottomBodyNode.addDependency(bottomBodyEdge);
             }
@@ -110,11 +110,11 @@ public class FeedbackLoop
 
                 LatencyEdge bottomLoopEdge =
                     new LatencyEdge(
-                        bottomLoopNode,
-                        0,
-                        latencyJoiner,
-                        1,
-                        feedbackLoop.getDelaySize());
+                                    bottomLoopNode,
+                                    0,
+                                    latencyJoiner,
+                                    1,
+                                    feedbackLoop.getDelaySize());
                 latencyJoiner.addDependency(bottomLoopEdge);
                 bottomLoopNode.addDependency(bottomLoopEdge);
             }
@@ -134,9 +134,9 @@ public class FeedbackLoop
     protected StreamInterface getConstrainedLoop()
     {
         if (!(getLoop() instanceof StreamInterface))
-        {
-            ERROR("This feedbackloop contains a loop that is not CONSTRAINED");
-        }
+            {
+                ERROR("This feedbackloop contains a loop that is not CONSTRAINED");
+            }
 
         return (StreamInterface)getLoop();
     }
@@ -144,9 +144,9 @@ public class FeedbackLoop
     protected StreamInterface getConstrainedBody()
     {
         if (!(getBody() instanceof StreamInterface))
-        {
-            ERROR("This feedbackloop contains a body that is not CONSTRAINED");
-        }
+            {
+                ERROR("This feedbackloop contains a body that is not CONSTRAINED");
+            }
 
         return (StreamInterface)getBody();
     }
@@ -196,8 +196,8 @@ public class FeedbackLoop
     }
 
     public PhasingSchedule getNextPhase(
-        Restrictions restrs,
-        int nDataAvailable)
+                                        Restrictions restrs,
+                                        int nDataAvailable)
     {
         ERROR("not implemented");
         return null;

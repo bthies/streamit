@@ -26,25 +26,25 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     private HashSet toBeCloned;
 
     public CloningVisitor() {
-	this.toBeCloned = new HashSet();
+        this.toBeCloned = new HashSet();
     }
     
     /**
      * Used by deepCopy(int offset,JBlock oldObj) above
      */
     public void visitBlockStatement(int offset,
-				    JBlock self,
-				    JavaStyleComment[] comments) {
-	for(;offset<self.size();offset++) {
-	    self.getStatement(offset).accept(this);
-	}
+                                    JBlock self,
+                                    JavaStyleComment[] comments) {
+        for(;offset<self.size();offset++) {
+            self.getStatement(offset).accept(this);
+        }
     }
 
     /**
      * Return the list of what should be cloned.
      */
     public HashSet getToBeCloned() {
-	return toBeCloned;
+        return toBeCloned;
     }
 
     /**
@@ -52,42 +52,42 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
      * but make sure we don't, either.
      */
     public void visitLocalVariableExpression(JLocalVariableExpression self,
-					     String ident) {
+                                             String ident) {
     }
 
     /**
      * Visits a variable decl.
      */
     public void visitVariableDefinition(JVariableDefinition self,
-					int modifiers,
-					CType type,
-					String ident,
-					JExpression expr) {
-	super.visitVariableDefinition(self, modifiers, type, ident, expr);
-	// record that we should clone this, since we reached it
-	toBeCloned.add(self);
+                                        int modifiers,
+                                        CType type,
+                                        String ident,
+                                        JExpression expr) {
+        super.visitVariableDefinition(self, modifiers, type, ident, expr);
+        // record that we should clone this, since we reached it
+        toBeCloned.add(self);
     }
     
     /**
      * visits a formal param.
      */
     public void visitFormalParameters(JFormalParameter self,
-				      boolean isFinal,
-				      CType type,
-				      String ident) {
-	super.visitFormalParameters(self, isFinal, type, ident);
-	// record that we should clone this, since we reached it
-	toBeCloned.add(self);
+                                      boolean isFinal,
+                                      CType type,
+                                      String ident) {
+        super.visitFormalParameters(self, isFinal, type, ident);
+        // record that we should clone this, since we reached it
+        toBeCloned.add(self);
     }
 
     /**
      * Visits an init statement (recurses into the target stream)
      */
     public void visitInitStatement(SIRInitStatement self,
-				   SIRStream target) {
-	super.visitInitStatement(self, target);
-	// also recurse into the stream target
-	IterFactory.createFactory().createIter(target).accept(this);
+                                   SIRStream target) {
+        super.visitInitStatement(self, target);
+        // also recurse into the stream target
+        IterFactory.createFactory().createIter(target).accept(this);
     }
 
     /**
@@ -98,25 +98,25 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
      * For visiting all fields and methods of SIRStreams.
      */
     private void visitStream(SIRStream stream) {
-	// visit the methods
-	JMethodDeclaration[] methods = stream.getMethods();
+        // visit the methods
+        JMethodDeclaration[] methods = stream.getMethods();
         if (methods != null) {
             for (int i=0; i<methods.length; i++) {
                 methods[i].accept(this);
             }
         }
-	// visit the fields
-	JFieldDeclaration[] fields = stream.getFields();
-	for (int i=0; i<fields.length; i++) {
-	    fields[i].accept(this);
-	}
+        // visit the fields
+        JFieldDeclaration[] fields = stream.getFields();
+        for (int i=0; i<fields.length; i++) {
+            fields[i].accept(this);
+        }
     }
-	    
+        
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-	// visit node
-	visitStream(self);
+                            SIRFilterIter iter) {
+        // visit node
+        visitStream(self);
     }
 
     /* visit a phased filter */
@@ -128,50 +128,50 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     /**
      * PRE-VISITS 
      */
-	    
+        
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
-	// record this container as one that should be cloned
-	toBeCloned.add(self);
-	// visit node
-	visitStream(self);
+                                 SIRPipelineIter iter) {
+        // record this container as one that should be cloned
+        toBeCloned.add(self);
+        // visit node
+        visitStream(self);
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
-	// record this container as one that should be cloned
-	toBeCloned.add(self);
-	// visit node
-	visitStream(self);
+                                  SIRSplitJoinIter iter) {
+        // record this container as one that should be cloned
+        toBeCloned.add(self);
+        // visit node
+        visitStream(self);
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	// record this container as one that should be cloned
-	toBeCloned.add(self);
-	// visit node
-	visitStream(self);
+                                     SIRFeedbackLoopIter iter) {
+        // record this container as one that should be cloned
+        toBeCloned.add(self);
+        // visit node
+        visitStream(self);
     }
 
     /**
      * POST-VISITS 
      */
-	    
+        
     /* post-visit a pipeline -- do nothing, visit on way down */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
+                                  SIRPipelineIter iter) {
     }
 
     /* post-visit a splitjoin -- do nothing, visit on way down */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
+                                   SIRSplitJoinIter iter) {
     }
 
     /* post-visit a feedbackloop -- do nothing, visit on way down */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
+                                      SIRFeedbackLoopIter iter) {
     }
 }

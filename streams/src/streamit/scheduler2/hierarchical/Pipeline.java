@@ -17,7 +17,7 @@
 package streamit.scheduler2.hierarchical;
 
 import streamit.scheduler2.iriter./*persistent.*/
-PipelineIter;
+    PipelineIter;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.Schedule;
 
@@ -59,9 +59,9 @@ abstract public class Pipeline
         child = getChild(nChild);
 
         if (!(child instanceof StreamInterface))
-        {
-            ERROR("This pipeline contains a child that is not hierarchical");
-        }
+            {
+                ERROR("This pipeline contains a child that is not hierarchical");
+            }
 
         return (StreamInterface) child;
     }
@@ -181,8 +181,8 @@ abstract public class Pipeline
     }
 
     public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages)
+                                         StreamInterface child,
+                                         int numStages)
     {
         algorithm.advanceChildInitSchedule(child, numStages);
     }
@@ -193,15 +193,15 @@ abstract public class Pipeline
     }
 
     public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases)
+                                           StreamInterface child,
+                                           int numPhases)
     {
         algorithm.advanceChildSteadySchedule(child, numPhases);
     }
 
     public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage)
+                                             StreamInterface child,
+                                             int nStage)
     {
         return algorithm.getChildInitStage(child, nStage);
     }
@@ -211,8 +211,8 @@ abstract public class Pipeline
         return algorithm.getChildInitStage(child, 0);
     }
     public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase)
+                                               StreamInterface child,
+                                               int nPhase)
     {
         return algorithm.getChildSteadyPhase(child, nPhase);
     }

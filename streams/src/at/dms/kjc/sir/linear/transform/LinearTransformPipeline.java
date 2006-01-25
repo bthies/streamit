@@ -17,96 +17,96 @@ import at.dms.kjc.sir.linear.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformPipeline.java,v 1.9 2003-05-30 14:05:04 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.10 2006-01-25 17:02:01 thies Exp $
  **/
 public class LinearTransformPipeline extends LinearTransform {
     List repList;
     
     private LinearTransformPipeline(List l) {
-	// assert that the list has more than one element in it.
-	if (l.size() < 2) {
-	    throw new IllegalArgumentException("Representation list has fewer than two elements: " +
-					       l.size());
-	}
-	// assert that all arguments are LinearFilterRepresentations
-	Iterator iter = l.iterator();
-	while(iter.hasNext()) {
-	    if (!(iter.next() instanceof LinearFilterRepresentation)) {
-		throw new IllegalArgumentException("non LFR in list passed to linear transform pipeline");
-	    }
-	}
-	this.repList = new LinkedList(l);
+        // assert that the list has more than one element in it.
+        if (l.size() < 2) {
+            throw new IllegalArgumentException("Representation list has fewer than two elements: " +
+                                               l.size());
+        }
+        // assert that all arguments are LinearFilterRepresentations
+        Iterator iter = l.iterator();
+        while(iter.hasNext()) {
+            if (!(iter.next() instanceof LinearFilterRepresentation)) {
+                throw new IllegalArgumentException("non LFR in list passed to linear transform pipeline");
+            }
+        }
+        this.repList = new LinkedList(l);
     }
 
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
-	// we know that our rep list has at least two children in it.
-	// start running down the rep list transforming things
-	LinearFilterRepresentation rep1; // the current "upstream" filter
-	LinearFilterRepresentation rep2; // the current "downstream" filter
+        // we know that our rep list has at least two children in it.
+        // start running down the rep list transforming things
+        LinearFilterRepresentation rep1; // the current "upstream" filter
+        LinearFilterRepresentation rep2; // the current "downstream" filter
 
-	Iterator repIter = this.repList.iterator();
-	
-	rep1 = (LinearFilterRepresentation)repIter.next();
-	// iterate over all of the represenations
-	while(repIter.hasNext()) {
-	    rep2 = (LinearFilterRepresentation)repIter.next();
-	    // pull out peek, pop, and push rates so the following code looks as much like
-	    // the paper as possible (e=peek, o=pop, u=push)
-	    int e1 = rep1.getPeekCount();
-	    int o1 = rep1.getPopCount();
-	    int u1 = rep1.getPushCount();
-	    int e2 = rep2.getPeekCount();
-	    int o2 = rep2.getPopCount();
-	    int u2 = rep2.getPushCount();
+        Iterator repIter = this.repList.iterator();
+    
+        rep1 = (LinearFilterRepresentation)repIter.next();
+        // iterate over all of the represenations
+        while(repIter.hasNext()) {
+            rep2 = (LinearFilterRepresentation)repIter.next();
+            // pull out peek, pop, and push rates so the following code looks as much like
+            // the paper as possible (e=peek, o=pop, u=push)
+            int e1 = rep1.getPeekCount();
+            int o1 = rep1.getPopCount();
+            int u1 = rep1.getPushCount();
+            int e2 = rep2.getPeekCount();
+            int o2 = rep2.getPopCount();
+            int u2 = rep2.getPushCount();
 
-	    // calculate chanPeek and chanPop
-	    int chanPop = lcm(u1,o2);
-	    int chanPeek = chanPop + (e2-o2);
+            // calculate chanPeek and chanPop
+            int chanPop = lcm(u1,o2);
+            int chanPeek = chanPop + (e2-o2);
 
-	    // calculate expanded peek, pop, and push rates
-	    int ee1 = divCeiling(chanPeek,u1) * o1 + (e1-o1);
-	    int oe1 = chanPop*o1/u1;
-	    int ue1 = chanPeek;
-	    int ee2 = chanPeek;
-	    int oe2 = chanPop;
-	    int ue2 = chanPop*u2/o2;
+            // calculate expanded peek, pop, and push rates
+            int ee1 = divCeiling(chanPeek,u1) * o1 + (e1-o1);
+            int oe1 = chanPop*o1/u1;
+            int ue1 = chanPeek;
+            int ee2 = chanPeek;
+            int oe2 = chanPop;
+            int ue2 = chanPop*u2/o2;
 
-	    LinearPrinter.println("  expansion for upstream filter:(peek,pop,push):" +
-				  "(" + e1 + "," + o1 + "," + u1 + ")-->" +
-				  "(" + ee1 + "," + oe1 + "," + ue1 + ")");
-	    LinearPrinter.println("  expansion for downstream filter:(peek,pop,push):" +
-				  "(" + e2 + "," + o2 + "," + u2 + ")-->" +
-				  "(" + ee2 + "," + oe2 + "," + ue2 + ")");
+            LinearPrinter.println("  expansion for upstream filter:(peek,pop,push):" +
+                                  "(" + e1 + "," + o1 + "," + u1 + ")-->" +
+                                  "(" + ee1 + "," + oe1 + "," + ue1 + ")");
+            LinearPrinter.println("  expansion for downstream filter:(peek,pop,push):" +
+                                  "(" + e2 + "," + o2 + "," + u2 + ")-->" +
+                                  "(" + ee2 + "," + oe2 + "," + ue2 + ")");
 
-	    
-	    // now, actually create the expanded reps.
-	    LinearFilterRepresentation rep1Expanded = rep1.expand(ee1, oe1, ue1);
-	    LinearFilterRepresentation rep2Expanded = rep2.expand(ee2, oe2, ue2);
+        
+            // now, actually create the expanded reps.
+            LinearFilterRepresentation rep1Expanded = rep1.expand(ee1, oe1, ue1);
+            LinearFilterRepresentation rep2Expanded = rep2.expand(ee2, oe2, ue2);
 
-	    // figure out the matrix and vector of the combined rep
-	    // A' = Ae1*Ae2
-	    FilterMatrix Aprime = rep1Expanded.getA().times(rep2Expanded.getA());
-	    // b' = be1*Ae2 + be2
-	    FilterMatrix partialProduct = rep1Expanded.getb().times(rep2Expanded.getA());
-	    FilterVector bprime = FilterVector.toVector(partialProduct.plus(rep2Expanded.getb()));
-	    	    
-	    // now, assemble the overall linear rep.
-	    LinearFilterRepresentation combinedRep;
-	    combinedRep = new LinearFilterRepresentation(Aprime, bprime, oe1);
+            // figure out the matrix and vector of the combined rep
+            // A' = Ae1*Ae2
+            FilterMatrix Aprime = rep1Expanded.getA().times(rep2Expanded.getA());
+            // b' = be1*Ae2 + be2
+            FilterMatrix partialProduct = rep1Expanded.getb().times(rep2Expanded.getA());
+            FilterVector bprime = FilterVector.toVector(partialProduct.plus(rep2Expanded.getb()));
+                
+            // now, assemble the overall linear rep.
+            LinearFilterRepresentation combinedRep;
+            combinedRep = new LinearFilterRepresentation(Aprime, bprime, oe1);
 
 
-	    LinearPrinter.println("Created new linear rep: \n" +
-				  " peek=" + combinedRep.getPeekCount() + "\n" +
-				  " pop=" + combinedRep.getPopCount() + "\n" +
-				  " push=" + combinedRep.getPushCount());
-				  
+            LinearPrinter.println("Created new linear rep: \n" +
+                                  " peek=" + combinedRep.getPeekCount() + "\n" +
+                                  " pop=" + combinedRep.getPopCount() + "\n" +
+                                  " push=" + combinedRep.getPushCount());
+                  
 
-	    // now, we set the combined rep to be rep1 and repeat
-	    rep1 = combinedRep;
-	}
+            // now, we set the combined rep to be rep1 and repeat
+            rep1 = combinedRep;
+        }
 
-	// all we have to do is to return the combined rep and we are done
-	return rep1;
+        // all we have to do is to return the combined rep and we are done
+        return rep1;
     }
 
     
@@ -125,7 +125,7 @@ public class LinearTransformPipeline extends LinearTransform {
      * compatible. See the pldi-03-linear paper for the gory details.<p> 
      **/
     public static LinearTransform calculate(List linearRepList) {
-	// we punt any actual work until the "transform" method is called.
-	return new LinearTransformPipeline(linearRepList);
+        // we punt any actual work until the "transform" method is called.
+        return new LinearTransformPipeline(linearRepList);
     }
 }

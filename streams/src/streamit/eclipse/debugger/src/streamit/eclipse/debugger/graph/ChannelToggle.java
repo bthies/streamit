@@ -11,25 +11,25 @@ import org.eclipse.draw2d.geometry.Dimension;
  */
 public class ChannelToggle extends Label {
 
-	private String fId;
-	/**
-	 * @param image
-	 */
-	public ChannelToggle(String id, boolean expand, int realSize, StreamItViewFactory factoryInst) {
-		super();
-		
-		fId = id;
-		if (expand) setIcon(factoryInst.getMinus());
-		else setIcon(factoryInst.getPlus());
-		setText(String.valueOf(realSize));
-		setTextPlacement(PositionConstants.SOUTH);
-		Dimension d = FigureUtilities.getTextExtents(getText(), factoryInst.getFont());
-		setSize(Math.max(factoryInst.getImageWidth(), d.width + IStreamItGraphConstants.MARGIN), 
-				factoryInst.getImageHeight() + d.height + IStreamItGraphConstants.MARGIN);
-		new ChannelToggleSelector(this);
-	}
+    private String fId;
+    /**
+     * @param image
+     */
+    public ChannelToggle(String id, boolean expand, int realSize, StreamItViewFactory factoryInst) {
+        super();
+        
+        fId = id;
+        if (expand) setIcon(factoryInst.getMinus());
+        else setIcon(factoryInst.getPlus());
+        setText(String.valueOf(realSize));
+        setTextPlacement(PositionConstants.SOUTH);
+        Dimension d = FigureUtilities.getTextExtents(getText(), factoryInst.getFont());
+        setSize(Math.max(factoryInst.getImageWidth(), d.width + IStreamItGraphConstants.MARGIN), 
+                factoryInst.getImageHeight() + d.height + IStreamItGraphConstants.MARGIN);
+        new ChannelToggleSelector(this);
+    }
 
-	public String getId() {
-		return fId;
-	}
+    public String getId() {
+        return fId;
+    }
 }

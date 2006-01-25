@@ -1,5 +1,5 @@
 /*
- * @(#)ToolsShowStatusbar.java	1.2 02.02.2003
+ * @(#)ToolsShowStatusbar.java  1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -35,37 +35,37 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class ToolsShowStatusbar extends AbstractActionCheckBox {
 
-	/**
-	 * Constructor for ToolsShowStatusbar.
-	 * @param graphpad
-	 */
-	public ToolsShowStatusbar(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for ToolsShowStatusbar.
+     * @param graphpad
+     */
+    public ToolsShowStatusbar(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
-	 */
-	public boolean isSelected(String actionCommand) {
-		return graphpad.getStatusBar().isVisible();
-	}
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
+     */
+    public boolean isSelected(String actionCommand) {
+        return graphpad.getStatusBar().isVisible();
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		graphpad.getStatusBar().setVisible(
-			!graphpad.getStatusBar().isVisible());
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        graphpad.getStatusBar().setVisible(
+                                           !graphpad.getStatusBar().isVisible());
 
-	}
-	/** updates all Abstract Buttons from this action
-	 */
-	public void update(){
-		Enumeration enum = abstractButtons.elements();
-		while (enum.hasMoreElements()) {
-			AbstractButton button = (AbstractButton) enum.nextElement();
-			button.setSelected(isSelected(button.getActionCommand()));
-		}
-	};
+    }
+    /** updates all Abstract Buttons from this action
+     */
+    public void update(){
+        Enumeration enum = abstractButtons.elements();
+        while (enum.hasMoreElements()) {
+            AbstractButton button = (AbstractButton) enum.nextElement();
+            button.setSelected(isSelected(button.getActionCommand()));
+        }
+    };
 
 }

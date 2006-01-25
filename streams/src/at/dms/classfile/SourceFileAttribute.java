@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SourceFileAttribute.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: SourceFileAttribute.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -32,95 +32,95 @@ import java.io.DataOutput;
  */
 public class SourceFileAttribute extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create a source file attribute.
-   * @param	name		the name of the source file
-   */
-  public SourceFileAttribute(String name) {
-    this.name = new AsciiConstant(name);
-  }
-
-  /**
-   * Constructs a source file attribute from a class file stream.
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   * @exception	ClassFileFormatException	attempt to
-   *					write a bad classfile info
-   */
-  public SourceFileAttribute(DataInput in, ConstantPool cp)
-    throws IOException, ClassFileFormatException
-  {
-    if (in.readInt() != 2) {
-      throw new ClassFileFormatException("bad attribute length");
+    /**
+     * Create a source file attribute.
+     * @param   name        the name of the source file
+     */
+    public SourceFileAttribute(String name) {
+        this.name = new AsciiConstant(name);
     }
-    this.name = (AsciiConstant)cp.getEntryAt(in.readUnsignedShort());
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    /**
+     * Constructs a source file attribute from a class file stream.
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     * @exception   ClassFileFormatException    attempt to
+     *                  write a bad classfile info
+     */
+    public SourceFileAttribute(DataInput in, ConstantPool cp)
+        throws IOException, ClassFileFormatException
+    {
+        if (in.readInt() != 2) {
+            throw new ClassFileFormatException("bad attribute length");
+        }
+        this.name = (AsciiConstant)cp.getEntryAt(in.readUnsignedShort());
+    }
 
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_SOURCEFILE;
-  }
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4 + 2;
-  }
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_SOURCEFILE;
+    }
 
-  /**
-   * Return the name of the source file
-   */
-  /*package*/ String getValue() {
-    return name.getValue();
-  }
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4 + 2;
+    }
 
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
+    /**
+     * Return the name of the source file
+     */
+    /*package*/ String getValue() {
+        return name.getValue();
+    }
 
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(attr);
-    cp.addItem(name);
-  }
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(attr.getIndex());
-    out.writeInt(2);
-    out.writeShort(name.getIndex());
-  }
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(attr);
+        cp.addItem(name);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(attr.getIndex());
+        out.writeInt(2);
+        out.writeShort(name.getIndex());
+    }
 
-  private static AsciiConstant		attr = new AsciiConstant("SourceFile");
-  private AsciiConstant			name;
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private static AsciiConstant        attr = new AsciiConstant("SourceFile");
+    private AsciiConstant           name;
 }

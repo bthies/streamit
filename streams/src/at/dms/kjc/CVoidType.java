@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVoidType.java,v 1.6 2006-01-10 05:11:19 thies Exp $
+ * $Id: CVoidType.java,v 1.7 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,106 +29,106 @@ import at.dms.util.SimpleStringBuffer;
  */
 final class CVoidType extends CType {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Constructor
-   */
-  protected CVoidType() {
-    super(TID_VOID);
-  }
-
-    private Object readResolve() throws Exception {
-	return CStdType.Void;
+    /**
+     * Constructor
+     */
+    protected CVoidType() {
+        super(TID_VOID);
     }
 
-  // ----------------------------------------------------------------------
-  // BODY CHECKING
-  // ----------------------------------------------------------------------
+    private Object readResolve() throws Exception {
+        return CStdType.Void;
+    }
 
-  /**
-   * check that type is valid
-   * necessary to resolve String into java/lang/String
-   * @exception	UnpositionedError	this error will be positioned soon
-   */
-  public void checkType(CContext context) throws UnpositionedError {
-  }
+    // ----------------------------------------------------------------------
+    // BODY CHECKING
+    // ----------------------------------------------------------------------
 
-  /**
-   * Can this type be converted to the specified type by assignment conversion (JLS 5.2) ?
-   * @param	dest		the destination type
-   * @return	true iff the conversion is valid
-   */
-  public boolean isAssignableTo(CType dest) {
-    return false;
-  }
+    /**
+     * check that type is valid
+     * necessary to resolve String into java/lang/String
+     * @exception   UnpositionedError   this error will be positioned soon
+     */
+    public void checkType(CContext context) throws UnpositionedError {
+    }
 
-  /**
-   * Can this type be converted to the specified type by casting conversion (JLS 5.5) ?
-   * @param	dest		the destination type
-   * @return	true iff the conversion is valid
-   */
-  public boolean isCastableTo(CType dest) {
-    return false;
-  }
+    /**
+     * Can this type be converted to the specified type by assignment conversion (JLS 5.2) ?
+     * @param   dest        the destination type
+     * @return  true iff the conversion is valid
+     */
+    public boolean isAssignableTo(CType dest) {
+        return false;
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    /**
+     * Can this type be converted to the specified type by casting conversion (JLS 5.5) ?
+     * @param   dest        the destination type
+     * @return  true iff the conversion is valid
+     */
+    public boolean isCastableTo(CType dest) {
+        return false;
+    }
 
-  /**
-   * Transforms this type to a string
-   */
-  public String toString() {
-    return "void";
-  }
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the VM signature of this type.
-   */
-  public String getSignature() {
-    return "V";
-  }
+    /**
+     * Transforms this type to a string
+     */
+    public String toString() {
+        return "void";
+    }
 
-  /**
-   * Appends the VM signature of this type to the specified buffer.
-   */
-  protected void appendSignature(SimpleStringBuffer buffer) {
-    buffer.append('V');
-  }
+    /**
+     * Returns the VM signature of this type.
+     */
+    public String getSignature() {
+        return "V";
+    }
 
-  /**
-   * Returns the stack size (conservative estimate of maximum number
-   * of bytes needed in C on 32-bit machine) used by a value of this
-   * type.
-   */
-  public int getSizeInC() {
-    return 0;
-  }
+    /**
+     * Appends the VM signature of this type to the specified buffer.
+     */
+    protected void appendSignature(SimpleStringBuffer buffer) {
+        buffer.append('V');
+    }
 
-  /**
-   * Returns the stack size used by a value of this type.
-   */
-  public int getSize() {
-    return 0;
-  }
+    /**
+     * Returns the stack size (conservative estimate of maximum number
+     * of bytes needed in C on 32-bit machine) used by a value of this
+     * type.
+     */
+    public int getSizeInC() {
+        return 0;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /**
+     * Returns the stack size used by a value of this type.
+     */
+    public int getSize() {
+        return 0;
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CVoidType other = new at.dms.kjc.CVoidType();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CVoidType other) {
-  super.deepCloneInto(other);
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CVoidType other = new at.dms.kjc.CVoidType();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CVoidType other) {
+        super.deepCloneInto(other);
+    }
+
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

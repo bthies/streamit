@@ -1,5 +1,5 @@
 /*
- * @(#)Graphpad.java	1.2 11/11/02
+ * @(#)Graphpad.java    1.2 11/11/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -51,266 +51,266 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 
 public class JGraphpad extends Applet {
 
-	// Main method
-	public static void main(String[] args) {
-		
-		System.out.println("Entered main in JGraphpad");
-		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
-		
+    // Main method
+    public static void main(String[] args) {
+        
+        System.out.println("Entered main in JGraphpad");
+        System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
+        
 
-		try {
-			//frame.setUndecorated(true); // JDK 1.3
-			GraphModelProviderRegistry.addGraphModelProvider(new DefaultGraphModelProvider());
-			new GPGraphpad();
-		} catch (Exception e) {
-			
-			e.printStackTrace();
-			System.err.println(e.getMessage());
-		} 
-	}
-	
-	public static GPGraphpad run()
-	{
-		System.out.println("Entered main in JGraphpad");
-		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
-		try {
-			//frame.setUndecorated(true); // JDK 1.3
-			GraphModelProviderRegistry.addGraphModelProvider(new DefaultGraphModelProvider());
-			return new GPGraphpad();
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println(e.getMessage());
-			return null;
-		} 
-	}
-	
+        try {
+            //frame.setUndecorated(true); // JDK 1.3
+            GraphModelProviderRegistry.addGraphModelProvider(new DefaultGraphModelProvider());
+            new GPGraphpad();
+        } catch (Exception e) {
+            
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+        } 
+    }
+    
+    public static GPGraphpad run()
+    {
+        System.out.println("Entered main in JGraphpad");
+        System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
+        try {
+            //frame.setUndecorated(true); // JDK 1.3
+            GraphModelProviderRegistry.addGraphModelProvider(new DefaultGraphModelProvider());
+            return new GPGraphpad();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+            return null;
+        } 
+    }
+    
 
-	// From Applet
-	public void init() {
-		setLayout(new BorderLayout());
-		setBackground(Color.white);
-		JButton button = new JButton("Start");
-		button.setIcon(GPGraphpad.applicationIcon);
-		add(button, BorderLayout.CENTER);
-		button.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				launchFromApplet();
-				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-			}
-		});
-		button.setPreferredSize(getSize());
-		button.revalidate();
+    // From Applet
+    public void init() {
+        setLayout(new BorderLayout());
+        setBackground(Color.white);
+        JButton button = new JButton("Start");
+        button.setIcon(GPGraphpad.applicationIcon);
+        add(button, BorderLayout.CENTER);
+        button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    setCursor(new Cursor(Cursor.WAIT_CURSOR));
+                    launchFromApplet();
+                    setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                }
+            });
+        button.setPreferredSize(getSize());
+        button.revalidate();
 
-		GraphModelProviderRegistry.addGraphModelProvider(
-			new DefaultGraphModelProvider());
+        GraphModelProviderRegistry.addGraphModelProvider(
+                                                         new DefaultGraphModelProvider());
 
-		launchFromApplet();
-	}
+        launchFromApplet();
+    }
 
-	public void launchFromApplet() {
-		GPGraphpad pad = new GPGraphpad(this);
-		//GPGraphpad.init();
-		// Are we a Tiki applet?
-		String drawPath = getParameter("drawpath");
-		if (drawPath != null && !drawPath.equals("")) {
-			try {
-				setCursor(new Cursor(Cursor.WAIT_CURSOR));
-				URL tikiURL =
-					new URL(
-						"http",
-						getCodeBase().getHost(),
-						getCodeBase().getPort(),
-						drawPath);
-				pad.addDocument(tikiURL);
-			} catch (MalformedURLException ex) {
-				JOptionPane.showMessageDialog(
-					pad,
-					ex.getLocalizedMessage(),
-					Translator.getString("Error"),
-					JOptionPane.ERROR_MESSAGE);
-			} finally {
-				setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-			}
-			
-		}
-	}
+    public void launchFromApplet() {
+        GPGraphpad pad = new GPGraphpad(this);
+        //GPGraphpad.init();
+        // Are we a Tiki applet?
+        String drawPath = getParameter("drawpath");
+        if (drawPath != null && !drawPath.equals("")) {
+            try {
+                setCursor(new Cursor(Cursor.WAIT_CURSOR));
+                URL tikiURL =
+                    new URL(
+                            "http",
+                            getCodeBase().getHost(),
+                            getCodeBase().getPort(),
+                            drawPath);
+                pad.addDocument(tikiURL);
+            } catch (MalformedURLException ex) {
+                JOptionPane.showMessageDialog(
+                                              pad,
+                                              ex.getLocalizedMessage(),
+                                              Translator.getString("Error"),
+                                              JOptionPane.ERROR_MESSAGE);
+            } finally {
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+            }
+            
+        }
+    }
 
 
 
-	static public boolean post(
-		String serverName,
-		int portNumber,
-		String url,
-		String fileName,
-		String type,
-		String path,
-		String content,
-		String comment)
-		throws MalformedURLException, IOException {
+    static public boolean post(
+                               String serverName,
+                               int portNumber,
+                               String url,
+                               String fileName,
+                               String type,
+                               String path,
+                               String content,
+                               String comment)
+        throws MalformedURLException, IOException {
 
-		String sep = "89692781418184";
-		while (content.indexOf(sep) != -1)
-			sep += "x";
+        String sep = "89692781418184";
+        while (content.indexOf(sep) != -1)
+            sep += "x";
 
-		String message =
-			makeMimeForm(fileName, type, path, content, comment, sep);
+        String message =
+            makeMimeForm(fileName, type, path, content, comment, sep);
 
-		// Ask for parameters
-		URL server = new URL("http", serverName, portNumber, url);
-		URLConnection connection = server.openConnection();
+        // Ask for parameters
+        URL server = new URL("http", serverName, portNumber, url);
+        URLConnection connection = server.openConnection();
 
-		connection.setAllowUserInteraction(false);
-		connection.setDoOutput(true);
-		//connection.setDoInput(true);
-		connection.setUseCaches(false);
+        connection.setAllowUserInteraction(false);
+        connection.setDoOutput(true);
+        //connection.setDoInput(true);
+        connection.setUseCaches(false);
 
-		connection.setRequestProperty(
-			"Content-type",
-			"multipart/form-data; boundary=" + sep);
-		connection.setRequestProperty(
-			"Content-length",
-			Integer.toString(message.length()));
+        connection.setRequestProperty(
+                                      "Content-type",
+                                      "multipart/form-data; boundary=" + sep);
+        connection.setRequestProperty(
+                                      "Content-length",
+                                      Integer.toString(message.length()));
 
-		//System.out.println(url);
-		String replyString = null;
-		try {
-			DataOutputStream out =
-				new DataOutputStream(connection.getOutputStream());
-			out.writeBytes(message);
-			out.close();
-			System.out.println(
-				"Wrote " + message.length() + " bytes to\n" + connection);
+        //System.out.println(url);
+        String replyString = null;
+        try {
+            DataOutputStream out =
+                new DataOutputStream(connection.getOutputStream());
+            out.writeBytes(message);
+            out.close();
+            System.out.println(
+                               "Wrote " + message.length() + " bytes to\n" + connection);
 
-			try {
-				BufferedReader in =
-					new BufferedReader(
-						new InputStreamReader(connection.getInputStream()));
-				String reply = null;
-				while ((reply = in.readLine()) != null) {
-					if (reply.startsWith("ERROR ")) {
-						replyString = reply.substring("ERROR ".length());
-					}
-				}
-				in.close();
-			} catch (IOException ioe) {
-				replyString = ioe.toString();
-				System.out.println(ioe + ": " + connection);
-			}
-		} catch (UnknownServiceException use) {
-			replyString = use.getMessage();
-			System.out.println(message);
-		}
-		if (replyString != null) {
-			System.out.println("---- Reply " + replyString);
-			/*
-			if (replyString.startsWith("URL ")) {
-				URL eurl = getURL(replyString.substring("URL ".length()));
-				getAppletContext().showDocument(eurl);
-			} else if (
-				replyString.startsWith("java.io.FileNotFoundException")) {
-				// debug; when run from appletviewer, the http connection
-				// is not available so write the file content
-				if (path.endsWith(".draw") || path.endsWith(".map"))
-					System.out.println(content);
-			} else
-				showStatus(replyString);
-			*/
-			return false;
-		} else {
-			System.out.println(url + " saved");
-			//showStatus(url + " saved");
-			return true;
-		}
-	}
+            try {
+                BufferedReader in =
+                    new BufferedReader(
+                                       new InputStreamReader(connection.getInputStream()));
+                String reply = null;
+                while ((reply = in.readLine()) != null) {
+                    if (reply.startsWith("ERROR ")) {
+                        replyString = reply.substring("ERROR ".length());
+                    }
+                }
+                in.close();
+            } catch (IOException ioe) {
+                replyString = ioe.toString();
+                System.out.println(ioe + ": " + connection);
+            }
+        } catch (UnknownServiceException use) {
+            replyString = use.getMessage();
+            System.out.println(message);
+        }
+        if (replyString != null) {
+            System.out.println("---- Reply " + replyString);
+            /*
+              if (replyString.startsWith("URL ")) {
+              URL eurl = getURL(replyString.substring("URL ".length()));
+              getAppletContext().showDocument(eurl);
+              } else if (
+              replyString.startsWith("java.io.FileNotFoundException")) {
+              // debug; when run from appletviewer, the http connection
+              // is not available so write the file content
+              if (path.endsWith(".draw") || path.endsWith(".map"))
+              System.out.println(content);
+              } else
+              showStatus(replyString);
+            */
+            return false;
+        } else {
+            System.out.println(url + " saved");
+            //showStatus(url + " saved");
+            return true;
+        }
+    }
 
-	//-----------------------------------------------------------------------
+    //-----------------------------------------------------------------------
 
-	/**
-	 * create name="value" MIME form data like:
-	 *   -----------------------------1234567
-	 *   Content-Disposition: form-data; name="theName"
-	 *   
-	 *   theValue
-	 */
+    /**
+     * create name="value" MIME form data like:
+     *   -----------------------------1234567
+     *   Content-Disposition: form-data; name="theName"
+     *   
+     *   theValue
+     */
 
-	/**
-	 * create name="value" file MIME form data like:
-	 *   -----------------------------1234567
-	 *   Content-Disposition: form-data; name="theName"; filename="theValue"
-	 *   
-	 *   theContent
-	 */
+    /**
+     * create name="value" file MIME form data like:
+     *   -----------------------------1234567
+     *   Content-Disposition: form-data; name="theName"; filename="theValue"
+     *   
+     *   theContent
+     */
 
-	static String NL = "\r\n";
-	static String NLNL = NL + NL;
+    static String NL = "\r\n";
+    static String NLNL = NL + NL;
 
-	/** Post the given message */
-	private static String makeMimeForm(
-		String fileName,
-		String type,
-		String path,
-		String content,
-		String comment,
-		String sep) {
+    /** Post the given message */
+    private static String makeMimeForm(
+                                       String fileName,
+                                       String type,
+                                       String path,
+                                       String content,
+                                       String comment,
+                                       String sep) {
 
-		String binary = "";
-		if (type.equals("image/gif")) {
-			binary = "Content-Transfer-Encoding: binary" + NL;
-		}
+        String binary = "";
+        if (type.equals("image/gif")) {
+            binary = "Content-Transfer-Encoding: binary" + NL;
+        }
 
-		String mime_sep = NL + "--" + sep + NL;
+        String mime_sep = NL + "--" + sep + NL;
 
-		return "--"
-			+ sep
-			+ "\r\n"
-			+ "Content-Disposition: form-data; name=\"filename\""
-			+ NLNL
-			+ fileName
-			+ mime_sep
-			+ "Content-Disposition: form-data; name=\"noredirect\""
-			+ NLNL
-			+ 1
-			+ mime_sep
-			+ "Content-Disposition: form-data; name=\"filepath\"; "
-			+ "filename=\""
-			+ path
-			+ "\""
-			+ NL
-			+ "Content-Type: "
-			+ type
-			+ NL
-			+ binary
-			+ NL
-			+ content
-			+ mime_sep
-			+ "Content-Disposition: form-data; name=\"filecomment\""
-			+ NLNL
-			+ comment
-			+ NL
-			+ "--"
-			+ sep
-			+ "--"
-			+ NL;
-	}
+        return "--"
+            + sep
+            + "\r\n"
+            + "Content-Disposition: form-data; name=\"filename\""
+            + NLNL
+            + fileName
+            + mime_sep
+            + "Content-Disposition: form-data; name=\"noredirect\""
+            + NLNL
+            + 1
+            + mime_sep
+            + "Content-Disposition: form-data; name=\"filepath\"; "
+            + "filename=\""
+            + path
+            + "\""
+            + NL
+            + "Content-Type: "
+            + type
+            + NL
+            + binary
+            + NL
+            + content
+            + mime_sep
+            + "Content-Disposition: form-data; name=\"filecomment\""
+            + NLNL
+            + comment
+            + NL
+            + "--"
+            + sep
+            + "--"
+            + NL;
+    }
 
-	/** Replace current app with a different URL */
-	void exit(GPGraphpad application) {
-		application.getFrame().dispose();
-		String viewPath = getParameter(VIEWPATH_PARAMETER);
-		if (viewPath != null) {
-			try {
-				//String serverName = getCodeBase().getHost();		//unused code
-				//int portNumber = getCodeBase().getPort();			//unused code
-				URL url = new URL(getCodeBase(), viewPath);
-				getAppletContext().showDocument(url, "_self");
-			} catch (MalformedURLException mue) {
-				System.out.println(mue);
-				//showStatus("Bad URL for viewpath " + viewPath);
-			}
-		}
-	}
+    /** Replace current app with a different URL */
+    void exit(GPGraphpad application) {
+        application.getFrame().dispose();
+        String viewPath = getParameter(VIEWPATH_PARAMETER);
+        if (viewPath != null) {
+            try {
+                //String serverName = getCodeBase().getHost();      //unused code
+                //int portNumber = getCodeBase().getPort();         //unused code
+                URL url = new URL(getCodeBase(), viewPath);
+                getAppletContext().showDocument(url, "_self");
+            } catch (MalformedURLException mue) {
+                System.out.println(mue);
+                //showStatus("Bad URL for viewpath " + viewPath);
+            }
+        }
+    }
 
-	static private String VIEWPATH_PARAMETER = "viewpath";
+    static private String VIEWPATH_PARAMETER = "viewpath";
 
 }

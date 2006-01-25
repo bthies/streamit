@@ -23,22 +23,22 @@ public class FissionTransform extends StreamTransform {
      * transform.
      */
     public FissionTransform(int reps) {
-	assert reps>1;
-	this.reps = reps;
+        assert reps>1;
+        this.reps = reps;
     }
 
     /**
      * Perform the transform on <str> and return new stream.
      */
     protected SIRStream doMyTransform(SIRStream str) {
-	// make sure we're fissable
-	assert ((str instanceof SIRFilter) && StatelessDuplicate.isFissable((SIRFilter)str)) :
-	    "Didn't get a filter or it wasn't fissable: " + str;
-	//System.err.println("trying to split " + str + " " + reps + " ways.");
-	return StatelessDuplicate.doit((SIRFilter)str, reps);
+        // make sure we're fissable
+        assert ((str instanceof SIRFilter) && StatelessDuplicate.isFissable((SIRFilter)str)) :
+            "Didn't get a filter or it wasn't fissable: " + str;
+        //System.err.println("trying to split " + str + " " + reps + " ways.");
+        return StatelessDuplicate.doit((SIRFilter)str, reps);
     }
 
     public String toString() {
-	return "Fission transform, #" + id + " (" + reps + " ways)";
+        return "Fission transform, #" + id + " (" + reps + " ways)";
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenSymbol.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: TokenSymbol.java,v 1.2 2006-01-25 17:00:50 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -23,26 +23,26 @@ package at.dms.compiler.tools.antlr.compiler;
 import at.dms.compiler.tools.antlr.runtime.*;
 
 class TokenSymbol extends GrammarSymbol {
-  protected int ttype;
-  /**
-   * describes what token matches in "human terms"
-   */
-  protected String paraphrase = null;
+    protected int ttype;
+    /**
+     * describes what token matches in "human terms"
+     */
+    protected String paraphrase = null;
 
-  public TokenSymbol(String r) {
-    super(r);
-    ttype = Token.INVALID_TYPE;
-  }
+    public TokenSymbol(String r) {
+        super(r);
+        ttype = Token.INVALID_TYPE;
+    }
 
-  public String getParaphrase() {return paraphrase;}
+    public String getParaphrase() {return paraphrase;}
 
-  public int getTokenType() {
-    return ttype;
-  }
+    public int getTokenType() {
+        return ttype;
+    }
 
-  public void setParaphrase(String p) {paraphrase = p;}
+    public void setParaphrase(String p) {paraphrase = p;}
 
-  public void setTokenType(int t) {
-    ttype = t;
-  }
+    public void setTokenType(int t) {
+        ttype = t;
+    }
 }

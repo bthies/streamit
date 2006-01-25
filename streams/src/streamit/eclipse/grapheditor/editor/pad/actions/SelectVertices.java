@@ -1,5 +1,5 @@
 /*
- * @(#)SelectVertices.java	1.2 01.02.2003
+ * @(#)SelectVertices.java  1.2 01.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -32,20 +32,20 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
  */
 public class SelectVertices extends AbstractActionDefault {
 
-	/**
-	 * Constructor for SelectVertices.
-	 * @param graphpad
-	 */
-	public SelectVertices(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+    /**
+     * Constructor for SelectVertices.
+     * @param graphpad
+     */
+    public SelectVertices(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-			Object[] cells = getCurrentGraph().getVertices(getCurrentGraph().getAll());
-			getCurrentGraph().addSelectionCells(cells);
-	}
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object[] cells = getCurrentGraph().getVertices(getCurrentGraph().getAll());
+        getCurrentGraph().addSelectionCells(cells);
+    }
 
 }

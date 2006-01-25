@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSimpleBodyContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CSimpleBodyContext.java,v 1.4 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,27 +34,27 @@ public class CSimpleBodyContext extends CBodyContext {
 
     protected CSimpleBodyContext() {} // for cloner only
 
-  /**
-   * Constructs a simple body context from a source context.
-   */
-  public CSimpleBodyContext(CBodyContext parent, CBodyContext source) {
-    super(parent, source);
-  }
+    /**
+     * Constructs a simple body context from a source context.
+     */
+    public CSimpleBodyContext(CBodyContext parent, CBodyContext source) {
+        super(parent, source);
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CSimpleBodyContext other = new at.dms.kjc.CSimpleBodyContext();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CSimpleBodyContext other = new at.dms.kjc.CSimpleBodyContext();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CSimpleBodyContext other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CSimpleBodyContext other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -17,7 +17,7 @@
 package streamit.scheduler2.hierarchical;
 
 import streamit.scheduler2.iriter./*persistent.*/
-FeedbackLoopIter;
+    FeedbackLoopIter;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.Schedule;
 
@@ -52,17 +52,17 @@ abstract public class FeedbackLoop
 
             int nPhase;
             for (nPhase = 0;
-                nPhase < feedbackLoop.getSplitterNumWork();
-                nPhase++)
-            {
-                Schedule sched =
-                    new Schedule(
-                        feedbackLoop.getSplitterWork(nPhase),
-                        feedbackLoop.getUnspecializedIter());
-                int pushAmount = feedbackLoop.getSplitPushWeights(nPhase)[0];
-                splitPhases[nPhase] =
-                    new PhasingSchedule(this, sched, 0, 0, pushAmount);
-            }
+                 nPhase < feedbackLoop.getSplitterNumWork();
+                 nPhase++)
+                {
+                    Schedule sched =
+                        new Schedule(
+                                     feedbackLoop.getSplitterWork(nPhase),
+                                     feedbackLoop.getUnspecializedIter());
+                    int pushAmount = feedbackLoop.getSplitPushWeights(nPhase)[0];
+                    splitPhases[nPhase] =
+                        new PhasingSchedule(this, sched, 0, 0, pushAmount);
+                }
         }
 
         // pre-compute the joiner phases
@@ -71,17 +71,17 @@ abstract public class FeedbackLoop
 
             int nPhase;
             for (nPhase = 0;
-                nPhase < feedbackLoop.getJoinerNumWork();
-                nPhase++)
-            {
-                Schedule sched =
-                    new Schedule(
-                        feedbackLoop.getJoinerWork(nPhase),
-                        feedbackLoop.getUnspecializedIter());
-                int popAmount = feedbackLoop.getJoinPopWeights(nPhase)[0];
-                joinPhases[nPhase] =
-                    new PhasingSchedule(this, sched, popAmount, popAmount, 0);
-            }
+                 nPhase < feedbackLoop.getJoinerNumWork();
+                 nPhase++)
+                {
+                    Schedule sched =
+                        new Schedule(
+                                     feedbackLoop.getJoinerWork(nPhase),
+                                     feedbackLoop.getUnspecializedIter());
+                    int popAmount = feedbackLoop.getJoinPopWeights(nPhase)[0];
+                    joinPhases[nPhase] =
+                        new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+                }
         }
     }
 
@@ -98,9 +98,9 @@ abstract public class FeedbackLoop
     protected StreamInterface getHierarchicalBody()
     {
         if (!(getBody() instanceof StreamInterface))
-        {
-            ERROR("This feedback loop contains a body that is not hierarchical");
-        }
+            {
+                ERROR("This feedback loop contains a body that is not hierarchical");
+            }
 
         return (StreamInterface) getBody();
     }
@@ -114,9 +114,9 @@ abstract public class FeedbackLoop
     protected StreamInterface getHierarchicalLoop()
     {
         if (!(getLoop() instanceof StreamInterface))
-        {
-            ERROR("This feedback loop contains a feedback path that is not hierarchical");
-        }
+            {
+                ERROR("This feedback loop contains a feedback path that is not hierarchical");
+            }
 
         return (StreamInterface) getLoop();
     }
@@ -268,8 +268,8 @@ abstract public class FeedbackLoop
     }
 
     public void advanceChildInitSchedule(
-        StreamInterface child,
-        int numStages)
+                                         StreamInterface child,
+                                         int numStages)
     {
         algorithm.advanceChildInitSchedule(child, numStages);
     }
@@ -280,15 +280,15 @@ abstract public class FeedbackLoop
     }
 
     public void advanceChildSteadySchedule(
-        StreamInterface child,
-        int numPhases)
+                                           StreamInterface child,
+                                           int numPhases)
     {
         algorithm.advanceChildSteadySchedule(child, numPhases);
     }
 
     public PhasingSchedule getChildInitStage(
-        StreamInterface child,
-        int nStage)
+                                             StreamInterface child,
+                                             int nStage)
     {
         return algorithm.getChildInitStage(child, nStage);
     }
@@ -298,8 +298,8 @@ abstract public class FeedbackLoop
         return algorithm.getChildInitStage(child, 0);
     }
     public PhasingSchedule getChildSteadyPhase(
-        StreamInterface child,
-        int nPhase)
+                                               StreamInterface child,
+                                               int nPhase)
     {
         return algorithm.getChildSteadyPhase(child, nPhase);
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ExceptionSpec.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: ExceptionSpec.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -24,19 +24,19 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
 class ExceptionSpec {
 
-  // Non-null if this refers to a labeled rule
-  // Use a token instead of a string to get the line information
-  protected Token label;
+    // Non-null if this refers to a labeled rule
+    // Use a token instead of a string to get the line information
+    protected Token label;
 
-  // List of ExceptionHandler (catch phrases)
-  protected Vector handlers;
+    // List of ExceptionHandler (catch phrases)
+    protected Vector handlers;
 
 
-  public ExceptionSpec(Token label_) {
-    label = label_;
-    handlers = new Vector();
-  }
-  public void addHandler(ExceptionHandler handler) {
-    handlers.appendElement(handler);
-  }
+    public ExceptionSpec(Token label_) {
+        label = label_;
+        handlers = new Vector();
+    }
+    public void addHandler(ExceptionHandler handler) {
+        handlers.appendElement(handler);
+    }
 }

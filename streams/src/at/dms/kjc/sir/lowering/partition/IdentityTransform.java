@@ -15,17 +15,17 @@ import at.dms.kjc.sir.lowering.fusion.*;
 public final class IdentityTransform extends IdempotentTransform {
 
     public IdentityTransform() {
-	super();
+        super();
     }
 
     /**
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	return str;
+        return str;
     }
 
     public String toString() {
-	return "Identity Transform, #" + id;
+        return "Identity Transform, #" + id;
     }
 }

@@ -41,23 +41,23 @@ public class InsertTimers extends InsertCounters implements Constants {
      * Returns number of timers that have appeared in output code.
      */
     public static int getNumTimers() {
-	return MAX_ID;
+        return MAX_ID;
     }
 
     /**
      * Returns the name for a given timer ID.
      */
     public static String getTimerName(int id) {
-	Integer i = new Integer(id);
-	assert idToName.containsKey(i) : "Looking up unknown timer.";
-	return (String)idToName.get(i);
+        Integer i = new Integer(id);
+        assert idToName.containsKey(i) : "Looking up unknown timer.";
+        return (String)idToName.get(i);
     }
 
     /**
      * Returns name of base of timers array.
      */
     public static String getIdentifier() {
-	return "timers";
+        return "timers";
     }
 
     /**
@@ -65,21 +65,21 @@ public class InsertTimers extends InsertCounters implements Constants {
      * name.  (For example, "timers[10]").
      */
     private static String getAccess(String name) {
-	// sanitize name 
-	name = name.replace('\"', '\'');
+        // sanitize name 
+        name = name.replace('\"', '\'');
 
-	// lookup name
-	int id;
-	if (nameToId.containsKey(name)) {
-	    // cached name
-	    id = ((Integer)nameToId.get(name)).intValue();
-	} else {
-	    // unknown name
-	    id = MAX_ID++;
-	    nameToId.put(name, new Integer(id));
-	    idToName.put(new Integer(id), name);
-	}
-	return getIdentifier() + "[" + id + "]";
+        // lookup name
+        int id;
+        if (nameToId.containsKey(name)) {
+            // cached name
+            id = ((Integer)nameToId.get(name)).intValue();
+        } else {
+            // unknown name
+            id = MAX_ID++;
+            nameToId.put(name, new Integer(id));
+            idToName.put(new Integer(id), name);
+        }
+        return getIdentifier() + "[" + id + "]";
     }
 
     /******************************************************
@@ -87,22 +87,22 @@ public class InsertTimers extends InsertCounters implements Constants {
      ******************************************************/
 
     public void visitMarker(SIRMarker self) {
-	// still emit comment
-	super.visitMarker(self);
+        // still emit comment
+        super.visitMarker(self);
 
-	if (KjcOptions.profile) {
-	    // start timer at begin marker
-	    if (self instanceof SIRBeginMarker) {
-		String name = getAccess(((SIRBeginMarker)self).getName());
-		p.print(name + ".start();\n");
-	    }
-	    
-	    // end timer at begin marker
-	    if (self instanceof SIREndMarker) {
-		String name = getAccess(((SIREndMarker)self).getName());
-		p.print(name + ".stop();\n");
-	    }
-	}
+        if (KjcOptions.profile) {
+            // start timer at begin marker
+            if (self instanceof SIRBeginMarker) {
+                String name = getAccess(((SIRBeginMarker)self).getName());
+                p.print(name + ".start();\n");
+            }
+        
+            // end timer at begin marker
+            if (self instanceof SIREndMarker) {
+                String name = getAccess(((SIREndMarker)self).getName());
+                p.print(name + ".stop();\n");
+            }
+        }
     }
     
     /******************************************************

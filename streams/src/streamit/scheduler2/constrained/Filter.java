@@ -15,9 +15,9 @@
 package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter./* persistent. */
-FilterIter;
+    FilterIter;
 import streamit.scheduler2.iriter./* persistent. */
-Iterator;
+    Iterator;
 
 import streamit.scheduler2.Schedule;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
@@ -36,9 +36,9 @@ public class Filter
     int nCurrentPhase = 0;
 
     public Filter(
-        FilterIter filterIter,
-        Iterator parent,
-        StreamFactory factory)
+                  FilterIter filterIter,
+                  Iterator parent,
+                  StreamFactory factory)
     {
         super(filterIter);
 
@@ -49,31 +49,31 @@ public class Filter
             new PhasingSchedule[filterIter.getNumWorkPhases()];
 
         for (int n = 0; n < filterIter.getNumInitStages(); n++)
-        {
-            initWorkPhases[n] =
-                new PhasingSchedule(
-                    this,
-                    new Schedule(
-                        filterIter.getInitFunctionStage(n),
-                        filterIter.getUnspecializedIter()),
-                    filterIter.getInitPeekStage(n),
-                    filterIter.getInitPopStage(n),
-                    filterIter.getInitPushStage(n));
+            {
+                initWorkPhases[n] =
+                    new PhasingSchedule(
+                                        this,
+                                        new Schedule(
+                                                     filterIter.getInitFunctionStage(n),
+                                                     filterIter.getUnspecializedIter()),
+                                        filterIter.getInitPeekStage(n),
+                                        filterIter.getInitPopStage(n),
+                                        filterIter.getInitPushStage(n));
 
-        }
+            }
 
         for (int n = 0; n < filterIter.getNumWorkPhases(); n++)
-        {
-            steadyWorkPhases[n] =
-                new PhasingSchedule(
-                    this,
-                    new Schedule(
-                        filterIter.getWorkFunctionPhase(n),
-                        filterIter.getUnspecializedIter()),
-                    filterIter.getPeekPhase(n),
-                    filterIter.getPopPhase(n),
-                    filterIter.getPushPhase(n));
-        }
+            {
+                steadyWorkPhases[n] =
+                    new PhasingSchedule(
+                                        this,
+                                        new Schedule(
+                                                     filterIter.getWorkFunctionPhase(n),
+                                                     filterIter.getUnspecializedIter()),
+                                        filterIter.getPeekPhase(n),
+                                        filterIter.getPopPhase(n),
+                                        filterIter.getPushPhase(n));
+            }
 
     }
 
@@ -122,58 +122,58 @@ public class Filter
     PhasingSchedule getPhaseSchedule(int nPhase)
     {
         if (nPhase < this.getNumDeclaredInitPhases())
-        {
-            return initWorkPhases[nPhase];
-        }
+            {
+                return initWorkPhases[nPhase];
+            }
         else
-        {
-            return steadyWorkPhases[(
-                nPhase - this.getNumDeclaredInitPhases())
-                % this.getNumDeclaredSteadyPhases()];
-        }
+            {
+                return steadyWorkPhases[(
+                                         nPhase - this.getNumDeclaredInitPhases())
+                                        % this.getNumDeclaredSteadyPhases()];
+            }
     }
 
     public PhasingSchedule getNextPhase(
-        Restrictions restrictions,
-        int nDataAvailable)
+                                        Restrictions restrictions,
+                                        int nDataAvailable)
     {
         PhasingSchedule phase = new PhasingSchedule(this);
         boolean noMoreData = false;
 
         while (!noMoreData
-            && restrictions.getBlockingRestriction(getLatencyNode()) == null)
-        {
-            Restriction strongestRestriction =
-                restrictions.getStrongestRestriction(getLatencyNode());
-
-            int nAllowedPhases =
-                (strongestRestriction != null
-                    ? strongestRestriction.getNumAllowedExecutions()
-                    : -1);
-
-            // BUGBUG this can DEFINITELY be a LOT more efficient!
-            int nExecutions = 0;
-            while (strongestRestriction == null
-                || nAllowedPhases > nExecutions)
+               && restrictions.getBlockingRestriction(getLatencyNode()) == null)
             {
-                PhasingSchedule schedPhase =
-                    getPhaseSchedule(nCurrentPhase);
-                if (schedPhase.getOverallPeek() > nDataAvailable)
-                {
-                    noMoreData = true;
-                    break;
-                }
+                Restriction strongestRestriction =
+                    restrictions.getStrongestRestriction(getLatencyNode());
 
-                phase.appendPhase(schedPhase);
-                nDataAvailable -= schedPhase.getOverallPop();
-                nCurrentPhase++;
-                nExecutions++;
+                int nAllowedPhases =
+                    (strongestRestriction != null
+                     ? strongestRestriction.getNumAllowedExecutions()
+                     : -1);
+
+                // BUGBUG this can DEFINITELY be a LOT more efficient!
+                int nExecutions = 0;
+                while (strongestRestriction == null
+                       || nAllowedPhases > nExecutions)
+                    {
+                        PhasingSchedule schedPhase =
+                            getPhaseSchedule(nCurrentPhase);
+                        if (schedPhase.getOverallPeek() > nDataAvailable)
+                            {
+                                noMoreData = true;
+                                break;
+                            }
+
+                        phase.appendPhase(schedPhase);
+                        nDataAvailable -= schedPhase.getOverallPop();
+                        nCurrentPhase++;
+                        nExecutions++;
+                    }
+
+                int executed =
+                    restrictions.execute(getLatencyNode(), nExecutions);
+                assert executed == nExecutions;
             }
-
-            int executed =
-                restrictions.execute(getLatencyNode(), nExecutions);
-            assert executed == nExecutions;
-        }
         
         return phase;
     }
@@ -195,12 +195,12 @@ public class Filter
         restrictions = _restrictions;
         // I may need to execute my initialization phases!
         if (getNumInitStages() > 0)
-        {
-            // Yep, I have initialization phases to consider here!
-            FilterInitRestriction restriction =
-                new FilterInitRestriction(this);
-            restrictions.add(restriction);
-        }
+            {
+                // Yep, I have initialization phases to consider here!
+                FilterInitRestriction restriction =
+                    new FilterInitRestriction(this);
+                restrictions.add(restriction);
+            }
     }
 
     boolean isFilterDoneSteadyState = false;
@@ -209,9 +209,9 @@ public class Filter
     {
         NodeSteadyRestriction restriction =
             new NodeSteadyRestriction(
-                getLatencyNode(),
-                streamNumExecs,
-                this);
+                                      getLatencyNode(),
+                                      streamNumExecs,
+                                      this);
         restrictions.add(restriction);
     }
 

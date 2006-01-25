@@ -15,69 +15,69 @@ public class FilterTraceNode extends TraceNode
     private boolean laidout;
 
     public FilterTraceNode(FilterContent filter,
-			   int x, int y) {
-	predefined = (filter instanceof PredefinedContent);
-	this.filter = filter;
-	this.x = x;
-	this.y = y;
-	laidout = false;
+                           int x, int y) {
+        predefined = (filter instanceof PredefinedContent);
+        this.filter = filter;
+        this.x = x;
+        this.y = y;
+        laidout = false;
     }
 
     public FilterTraceNode(FilterContent filter) {
-	predefined = (filter instanceof PredefinedContent);
-	this.filter=filter;
-	laidout = false;
+        predefined = (filter instanceof PredefinedContent);
+        this.filter=filter;
+        laidout = false;
     }
     
     public boolean isPredefined() 
     {
-	return predefined;
+        return predefined;
     }
 
     public void setXY(int x,int y) {
-	laidout = true;
-	this.x=x;
-	this.y=y;
+        laidout = true;
+        this.x=x;
+        this.y=y;
     }
     
     public int getX() {
-	assert laidout;
-	return x;
+        assert laidout;
+        return x;
     }    
     
     public int getY() {
-	assert laidout;
-	return y;
+        assert laidout;
+        return y;
     }
 
     public boolean isAssignedTile() 
     {
-	return laidout;
+        return laidout;
     }
 
     public FilterContent getFilter() {
-	return filter;
+        return filter;
     }
 
     public String toString() {
-	return filter.toString() + " [" + x + ", " + y + "]";   
+        return filter.toString() + " [" + x + ", " + y + "]";   
     }
     
     public String toString(RawChip chip) 
     {
-	return filter.toString() + " [" + x + ", " + y + "]" + 
-	    "(" + chip.getTile(x, y).getTileNumber() + ")";   
+        return filter.toString() + " [" + x + ", " + y + "]" + 
+            "(" + chip.getTile(x, y).getTileNumber() + ")";   
     }
     
     
     public boolean isFileInput()
     {
-	return (filter instanceof FileInputContent);
+        return (filter instanceof FileInputContent);
     }
     
     public boolean isFileOutput() 
     {
-	return (filter instanceof FileOutputContent);
+        return (filter instanceof FileOutputContent);
     }
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: GrammarElement.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: GrammarElement.java,v 1.2 2006-01-25 17:00:49 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -29,26 +29,26 @@ package at.dms.compiler.tools.antlr.compiler;
  * to generate code, and how to do analysis.
  */
 abstract class GrammarElement {
-  /*
-   * Note that Java does static argument type matching to
-   * determine which function to execute on the receiver.
-   * Here, that implies that we cannot simply say
-   * generator.gen(this) in GrammarElement or
-   * only JavaCodeGenerator.gen(GrammarElement ge) would
-   * ever be called.
-   */
-  protected Grammar grammar;
-  protected int line;
+    /*
+     * Note that Java does static argument type matching to
+     * determine which function to execute on the receiver.
+     * Here, that implies that we cannot simply say
+     * generator.gen(this) in GrammarElement or
+     * only JavaCodeGenerator.gen(GrammarElement ge) would
+     * ever be called.
+     */
+    protected Grammar grammar;
+    protected int line;
 
 
-  public GrammarElement(Grammar g) {
-    grammar = g;
-  }
-  public void generate(JavaCodeGenerator generator) {
-  }
-  public int getLine() {
-    return line;
-  }
-  public Lookahead look(int k) { return null; }
-  public abstract String toString();
+    public GrammarElement(Grammar g) {
+        grammar = g;
+    }
+    public void generate(JavaCodeGenerator generator) {
+    }
+    public int getLine() {
+        return line;
+    }
+    public Lookahead look(int k) { return null; }
+    public abstract String toString();
 }

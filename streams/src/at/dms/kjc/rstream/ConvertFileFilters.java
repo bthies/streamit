@@ -24,7 +24,7 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
      */
     public static void doit(SIRStream str) 
     {
-	str.accept(new ConvertFileFilters());
+        str.accept(new ConvertFileFilters());
     
     } 
     
@@ -41,18 +41,18 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
      * 
      */
     public Object visitPipeline(SIRPipeline self,
-				JFieldDeclaration[] fields,
-				JMethodDeclaration[] methods,
-				JMethodDeclaration init) {
-	/** visit each child. **/
-	LinkedList newChildren = new LinkedList();
-	Iterator childIter = self.getChildren().iterator();
-	while(childIter.hasNext()) {
-	    SIROperator currentChild = (SIROperator)childIter.next();
-	    newChildren.add(currentChild.accept(this));
-	}
-	self.setChildren(newChildren);
-	return self;
+                                JFieldDeclaration[] fields,
+                                JMethodDeclaration[] methods,
+                                JMethodDeclaration init) {
+        /** visit each child. **/
+        LinkedList newChildren = new LinkedList();
+        Iterator childIter = self.getChildren().iterator();
+        while(childIter.hasNext()) {
+            SIROperator currentChild = (SIROperator)childIter.next();
+            newChildren.add(currentChild.accept(this));
+        }
+        self.setChildren(newChildren);
+        return self;
     }
 
     /**
@@ -60,29 +60,29 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
      * the children returned by the attribute visitor.
      */
     public Object visitSplitJoin(SIRSplitJoin self,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-			  JMethodDeclaration init,
-			  SIRSplitter splitter,
-			  SIRJoiner joiner) {
-	LinkedList newChildren = new LinkedList();
-	// visit splitter
-	self.getSplitter().accept(this);
-	// visit children
-	Iterator childIter = self.getChildren().iterator();
-	while(childIter.hasNext()) {
-	    SIROperator currentChild = (SIROperator)childIter.next();
-	    //don't visit splitter or joiner again.
-	    if (currentChild instanceof SIRSplitter || 
-		currentChild instanceof SIRJoiner)
-		continue;
-	    newChildren.add(currentChild.accept(this));
-	}
-	// visit joiner 
-	self.getJoiner().accept(this);
-	self.setParallelStreams(newChildren);
+                                 JFieldDeclaration[] fields,
+                                 JMethodDeclaration[] methods,
+                                 JMethodDeclaration init,
+                                 SIRSplitter splitter,
+                                 SIRJoiner joiner) {
+        LinkedList newChildren = new LinkedList();
+        // visit splitter
+        self.getSplitter().accept(this);
+        // visit children
+        Iterator childIter = self.getChildren().iterator();
+        while(childIter.hasNext()) {
+            SIROperator currentChild = (SIROperator)childIter.next();
+            //don't visit splitter or joiner again.
+            if (currentChild instanceof SIRSplitter || 
+                currentChild instanceof SIRJoiner)
+                continue;
+            newChildren.add(currentChild.accept(this));
+        }
+        // visit joiner 
+        self.getJoiner().accept(this);
+        self.setParallelStreams(newChildren);
 
-	return self;
+        return self;
     }
 
     /**
@@ -90,15 +90,15 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
      * loop and body as returned by the attribute stream visitor
      */
     public Object visitFeedbackLoop(SIRFeedbackLoop self,
-			     JFieldDeclaration[] fields,
-			     JMethodDeclaration[] methods,
-			     JMethodDeclaration init,
-			     JMethodDeclaration initPath) {
-	// visit the body
-	self.setBody((SIRStream)self.getBody().accept(this));
-	// visit the loop
-	self.setLoop((SIRStream)self.getLoop().accept(this));
-	return self;
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init,
+                                    JMethodDeclaration initPath) {
+        // visit the body
+        self.setBody((SIRStream)self.getBody().accept(this));
+        // visit the loop
+        self.setLoop((SIRStream)self.getLoop().accept(this));
+        return self;
     }
 
     /**
@@ -106,26 +106,26 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
      * replace it with a FileReader or FileWriter, respectively.
      */
     public Object visitFilter(SIRFilter self,
-			      JFieldDeclaration[] fields,
-			      JMethodDeclaration[] methods,
-			      JMethodDeclaration init,
-			      JMethodDeclaration work,
-			      CType inputType, CType outputType) {
-	super.visitFilter(self, fields, methods, init, work, inputType, outputType);
+                              JFieldDeclaration[] fields,
+                              JMethodDeclaration[] methods,
+                              JMethodDeclaration init,
+                              JMethodDeclaration work,
+                              CType inputType, CType outputType) {
+        super.visitFilter(self, fields, methods, init, work, inputType, outputType);
 
-	
-	if (self instanceof SIRFileReader) {
-	    System.out.println("Replacing file reader " + self);
-	    return new FileReader((SIRFileReader)self);
-	}
-	else if (self instanceof SIRFileWriter) {
-	    //do something here...
-	    System.out.println("Replacing file writer " + self);	    
-	    return new File_Writer((SIRFileWriter)self);
-	}
-	else {
-	    return self;
-	}
+    
+        if (self instanceof SIRFileReader) {
+            System.out.println("Replacing file reader " + self);
+            return new FileReader((SIRFileReader)self);
+        }
+        else if (self instanceof SIRFileWriter) {
+            //do something here...
+            System.out.println("Replacing file writer " + self);        
+            return new File_Writer((SIRFileWriter)self);
+        }
+        else {
+            return self;
+        }
     }
     
 }

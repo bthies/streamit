@@ -26,17 +26,17 @@ public class ChannelConnectFilter extends Filter
     }
 
     public ChannelConnectFilter () { 
-	super (); 
+        super (); 
     }
 
     public void init ()
     {
         if (type != null)
-        {
-            input = new Channel (type, 1);
-            output = new Channel (type, 1);
-        }
-	addSteadyPhase(1, 1, 1, "work");
+            {
+                input = new Channel (type, 1);
+                output = new Channel (type, 1);
+            }
+        addSteadyPhase(1, 1, 1, "work");
     }
 
     public void work()

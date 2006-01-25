@@ -25,7 +25,7 @@ import java.util.*;
  * produce a CFG from a function declaration.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFGBuilder.java,v 1.1 2004-01-16 21:32:25 dmaze Exp $
+ * @version $Id: CFGBuilder.java,v 1.2 2006-01-25 17:04:23 thies Exp $
  */
 public class CFGBuilder extends FENullVisitor
 {
@@ -77,10 +77,10 @@ public class CFGBuilder extends FENullVisitor
         if (edges.containsKey(from))
             target = (List)edges.get(from);
         else
-        {
-            target = new ArrayList();
-            edges.put(from, target);
-        }
+            {
+                target = new ArrayList();
+                edges.put(from, target);
+            }
         if (!target.contains(to))
             target.add(to);
     }
@@ -116,20 +116,20 @@ public class CFGBuilder extends FENullVisitor
 
         // Walk through all of the contained statements.
         for (Iterator iter = block.getStmts().iterator(); iter.hasNext(); )
-        {
-            Statement stmt = (Statement)iter.next();
-            CFGNodePair pair = visitStatement(stmt);
-            // Add an edge from our current end to the start of the pair,
-            // but only if the current end is non-null ("we were going
-            // somewhere").  This could lead to a node with no
-            // forward path to it, but that's okay.
-            if (current != null)
-                addEdge(current, pair.start);
-            // Make the end of the pair current.  That could be null if
-            // the statement was a break, continue, or return statement
-            // that doesn't have an interesting outgoing edge.
-            current = pair.end;
-        }
+            {
+                Statement stmt = (Statement)iter.next();
+                CFGNodePair pair = visitStatement(stmt);
+                // Add an edge from our current end to the start of the pair,
+                // but only if the current end is non-null ("we were going
+                // somewhere").  This could lead to a node with no
+                // forward path to it, but that's okay.
+                if (current != null)
+                    addEdge(current, pair.start);
+                // Make the end of the pair current.  That could be null if
+                // the statement was a break, continue, or return statement
+                // that doesn't have an interesting outgoing edge.
+                current = pair.end;
+            }
 
         // Add an edge from the current node to the exit, if there is
         // a current node.  (For example, current could be null if the
@@ -184,28 +184,28 @@ public class CFGBuilder extends FENullVisitor
         nodes.add(exit);
         // Check both branches.
         if (stmt.getCons() != null)
-        {
-            CFGNodePair pair = visitStatement(stmt.getCons());
-            addEdge(entry, pair.start);
-            if (pair.end != null)
-                addEdge(pair.end, exit);
-        }
+            {
+                CFGNodePair pair = visitStatement(stmt.getCons());
+                addEdge(entry, pair.start);
+                if (pair.end != null)
+                    addEdge(pair.end, exit);
+            }
         else
-        {
-            addEdge(entry, exit);
-        }
+            {
+                addEdge(entry, exit);
+            }
 
         if (stmt.getAlt() != null)
-        {
-            CFGNodePair pair = visitStatement(stmt.getAlt());
-            addEdge(entry, pair.start);
-            if (pair.end != null)
-                addEdge(pair.end, exit);
-        }
+            {
+                CFGNodePair pair = visitStatement(stmt.getAlt());
+                addEdge(entry, pair.start);
+                if (pair.end != null)
+                    addEdge(pair.end, exit);
+            }
         else
-        {
-            addEdge(entry, exit);
-        }
+            {
+                addEdge(entry, exit);
+            }
         
         return new CFGNodePair(entry, exit);
     }

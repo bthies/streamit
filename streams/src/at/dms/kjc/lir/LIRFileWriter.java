@@ -32,11 +32,11 @@ public class LIRFileWriter extends LIRNode {
      * Construct a node.
      */
     public LIRFileWriter(JExpression streamContext,
-			 String childName,
-			 String fileName) {
-	super(streamContext);
-	this.childName = childName;
-	this.fileName = fileName;
+                         String childName,
+                         String fileName) {
+        super(streamContext);
+        this.childName = childName;
+        this.fileName = fileName;
     }
 
     public String getChildName() {
@@ -44,7 +44,7 @@ public class LIRFileWriter extends LIRNode {
     }
 
     public String getFileName() {
-	return fileName;
+        return fileName;
     }
 
     public void accept(SLIRVisitor v)

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: IincInstruction.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: IincInstruction.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -38,131 +38,131 @@ import java.io.IOException;
  */
 public class IincInstruction extends Instruction {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new iinc instruction
-   *
-   * @param	var		the index of the variable to be incremented.
-   * @param	inc		value to be added to the variable.
-   */
-  public IincInstruction(int var, int inc) {
-    super(opc_iinc);
+    /**
+     * Constructs a new iinc instruction
+     *
+     * @param   var     the index of the variable to be incremented.
+     * @param   inc     value to be added to the variable.
+     */
+    public IincInstruction(int var, int inc) {
+        super(opc_iinc);
 
-    this.var = var;
-    this.inc = inc;
-  }
-
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns true iff control flow can reach the next instruction
-   * in textual order.
-   */
-  public boolean canComplete() {
-    return true;
-  }
-
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {}
-
-  /**
-   * Returns the number of bytes used by the the instruction in the code array.
-   */
-  /*package*/ int getSize() {
-    return 1 + (isWide() ? 5 : 2);
-  }
-
-  /**
-   * Return the value that is added to this variable
-   */
-  public int getIncrement() {
-    return inc;
-  }
-
-  /**
-   * Return the position of this variable in the local var set
-   */
-  public int getVariable() {
-    return var;
-  }
-
-  // --------------------------------------------------------------------
-  // CHECK CONTROL FLOW
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the type pushed on the stack
-   */
-  public byte getReturnType() {
-    return TYP_INT;
-  }
-
-  /**
-   * Returns the size of data pushed on the stack by this instruction
-   */
-  public int getPushedOnStack() {
-    return 0;
-  }
-
-  /**
-   * Return the amount of stack (positive or negative) used by this instruction
-   */
-  public int getStack() {
-    return 0;
-  }
-
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
-
-  /**
-   * Write this instruction into a file
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    if (isWide()) {
-      out.writeByte((byte)opc_wide);
+        this.var = var;
+        this.inc = inc;
     }
 
-    out.writeByte((byte)getOpcode());
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-    if (isWide()) {
-      out.writeShort((short)(var & 0xFFFF));
-      out.writeShort((short)(inc & 0xFFFF));
-    } else {
-      out.writeByte((byte)(var & 0xFF));
-      out.writeByte((byte)(inc & 0xFF));
+    /**
+     * Returns true iff control flow can reach the next instruction
+     * in textual order.
+     */
+    public boolean canComplete() {
+        return true;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // PRIVATE METHODS
-  // --------------------------------------------------------------------
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {}
 
-  /**
-   * Return true if this instruction is implemented with a wide increment
-   */
-  private boolean isWide() {
-    return (var > 255) || (inc > 127) || (inc < -128);
-  }
+    /**
+     * Returns the number of bytes used by the the instruction in the code array.
+     */
+    /*package*/ int getSize() {
+        return 1 + (isWide() ? 5 : 2);
+    }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    /**
+     * Return the value that is added to this variable
+     */
+    public int getIncrement() {
+        return inc;
+    }
 
-  private int			var;
-  private int			inc;
+    /**
+     * Return the position of this variable in the local var set
+     */
+    public int getVariable() {
+        return var;
+    }
+
+    // --------------------------------------------------------------------
+    // CHECK CONTROL FLOW
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns the type pushed on the stack
+     */
+    public byte getReturnType() {
+        return TYP_INT;
+    }
+
+    /**
+     * Returns the size of data pushed on the stack by this instruction
+     */
+    public int getPushedOnStack() {
+        return 0;
+    }
+
+    /**
+     * Return the amount of stack (positive or negative) used by this instruction
+     */
+    public int getStack() {
+        return 0;
+    }
+
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
+
+    /**
+     * Write this instruction into a file
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        if (isWide()) {
+            out.writeByte((byte)opc_wide);
+        }
+
+        out.writeByte((byte)getOpcode());
+
+        if (isWide()) {
+            out.writeShort((short)(var & 0xFFFF));
+            out.writeShort((short)(inc & 0xFFFF));
+        } else {
+            out.writeByte((byte)(var & 0xFF));
+            out.writeByte((byte)(inc & 0xFF));
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // PRIVATE METHODS
+    // --------------------------------------------------------------------
+
+    /**
+     * Return true if this instruction is implemented with a wide increment
+     */
+    private boolean isWide() {
+        return (var > 255) || (inc > 127) || (inc < -128);
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private int         var;
+    private int         inc;
 }

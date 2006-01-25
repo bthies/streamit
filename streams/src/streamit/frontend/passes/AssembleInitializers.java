@@ -34,7 +34,7 @@ import java.util.ListIterator;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: AssembleInitializers.java,v 1.2 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: AssembleInitializers.java,v 1.3 2006-01-25 17:04:28 thies Exp $
  */
 public class AssembleInitializers extends FEReplacer
 {
@@ -44,48 +44,48 @@ public class AssembleInitializers extends FEReplacer
         newStatements = new java.util.ArrayList();
         for (ListIterator iter = block.getStmts().listIterator();
              iter.hasNext(); )
-        {
-            Statement stmt = (Statement)iter.next();
-            while (stmt instanceof StmtVarDecl && iter.hasNext())
             {
-                Statement nst = (Statement)iter.next();
-                iter.previous();
-                if (!(nst instanceof StmtAssign))
-                    break;
-                // check that the LHS of the next statement is
-                // a simple variable
-                Expression lhs = ((StmtAssign)nst).getLHS();
-                if (!(lhs instanceof ExprVar))
-                    break;
-                String varName = ((ExprVar)lhs).getName();
-                // Now, walk through the declaration.
-                StmtVarDecl decl = (StmtVarDecl)stmt;
-                List newInits = new java.util.ArrayList();
-                boolean found = false;
-                for (int i = 0; i < decl.getNumVars(); i++)
-                {
-                    Expression init = decl.getInit(i);
-                    if (decl.getName(i).equals(varName) &&
-                        init == null)
+                Statement stmt = (Statement)iter.next();
+                while (stmt instanceof StmtVarDecl && iter.hasNext())
                     {
-                        init = ((StmtAssign)nst).getRHS();
-                        found = true;
-                        iter.next(); // consume the assignment
+                        Statement nst = (Statement)iter.next();
+                        iter.previous();
+                        if (!(nst instanceof StmtAssign))
+                            break;
+                        // check that the LHS of the next statement is
+                        // a simple variable
+                        Expression lhs = ((StmtAssign)nst).getLHS();
+                        if (!(lhs instanceof ExprVar))
+                            break;
+                        String varName = ((ExprVar)lhs).getName();
+                        // Now, walk through the declaration.
+                        StmtVarDecl decl = (StmtVarDecl)stmt;
+                        List newInits = new java.util.ArrayList();
+                        boolean found = false;
+                        for (int i = 0; i < decl.getNumVars(); i++)
+                            {
+                                Expression init = decl.getInit(i);
+                                if (decl.getName(i).equals(varName) &&
+                                    init == null)
+                                    {
+                                        init = ((StmtAssign)nst).getRHS();
+                                        found = true;
+                                        iter.next(); // consume the assignment
+                                    }
+                                newInits.add(init);
+                            }
+                        if (!found)
+                            break;
+                        // So, if we've made it here, then newInits
+                        // is different from stmt's initializer list,
+                        // and we want to iterate.  Reassign stmt.
+                        stmt = new StmtVarDecl(decl.getContext(),
+                                               decl.getTypes(),
+                                               decl.getNames(),
+                                               newInits);
                     }
-                    newInits.add(init);
-                }
-                if (!found)
-                    break;
-                // So, if we've made it here, then newInits
-                // is different from stmt's initializer list,
-                // and we want to iterate.  Reassign stmt.
-                stmt = new StmtVarDecl(decl.getContext(),
-                                       decl.getTypes(),
-                                       decl.getNames(),
-                                       newInits);
-            }
-            addStatement(stmt);
-        }   
+                addStatement(stmt);
+            }   
         Statement result = new StmtBlock(block.getContext(), newStatements);
         newStatements = oldStatements;
         return result;

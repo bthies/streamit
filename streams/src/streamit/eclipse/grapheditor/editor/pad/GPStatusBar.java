@@ -1,5 +1,5 @@
 /*
- * @(#)GPStatusBar.java	1.2 02.02.2003
+ * @(#)GPStatusBar.java 1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -33,61 +33,61 @@ import javax.swing.JPanel;
  *
  */
 public class GPStatusBar extends JPanel {
-	/** contains the message at the current
-	 *  Status bar
-	 */
-	protected JLabel message;
+    /** contains the message at the current
+     *  Status bar
+     */
+    protected JLabel message;
 
-	/** contains the scale for the current
-	 *  graph
-	 */
-	protected JLabel scale;
+    /** contains the scale for the current
+     *  graph
+     */
+    protected JLabel scale;
 
-	/**
-	 * Constructor for GPStatusBar.
-	 *
-	 */
-	public GPStatusBar() {
-		super();
-		setLayout(new BorderLayout());
-		message = new JLabel("Ready.");
-		scale = new JLabel("100%");
-		message.setBorder(BorderFactory.createLoweredBevelBorder());
-		scale.setBorder(BorderFactory.createLoweredBevelBorder());
-		add(message, BorderLayout.CENTER);
-		add(scale, BorderLayout.EAST);
-	}
-	/**
-	 * Returns the message.
-	 *
-	 * @return The message from the status bar
-	 */
-	public String getMessage() {
-		return message.getText() ;
-	}
+    /**
+     * Constructor for GPStatusBar.
+     *
+     */
+    public GPStatusBar() {
+        super();
+        setLayout(new BorderLayout());
+        message = new JLabel("Ready.");
+        scale = new JLabel("100%");
+        message.setBorder(BorderFactory.createLoweredBevelBorder());
+        scale.setBorder(BorderFactory.createLoweredBevelBorder());
+        add(message, BorderLayout.CENTER);
+        add(scale, BorderLayout.EAST);
+    }
+    /**
+     * Returns the message.
+     *
+     * @return The message from the status bar
+     */
+    public String getMessage() {
+        return message.getText() ;
+    }
 
-	/**
-	 * Returns the scale.
-	 * @return JLabel
-	 */
-	public String getScale() {
-		return scale.getText() ;
-	}
+    /**
+     * Returns the scale.
+     * @return JLabel
+     */
+    public String getScale() {
+        return scale.getText() ;
+    }
 
-	/**
-	 * Sets the message.
-	 * @param message The message to set
-	 */
-	public void setMessage(String message) {
-		this.message.setText(message);
-	}
+    /**
+     * Sets the message.
+     * @param message The message to set
+     */
+    public void setMessage(String message) {
+        this.message.setText(message);
+    }
 
-	/**
-	 * Sets the scale.
-	 * @param scale The scale to set
-	 */
-	public void setScale(String scale) {
-		this.scale.setText(scale);
-	}
+    /**
+     * Sets the scale.
+     * @param scale The scale to set
+     */
+    public void setScale(String scale) {
+        this.scale.setText(scale);
+    }
 
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QOperand.java,v 1.1 2001-08-30 16:32:25 thies Exp $
+ * $Id: QOperand.java,v 1.2 2006-01-25 17:00:34 thies Exp $
  */
 
 package at.dms.backend;
@@ -26,29 +26,29 @@ import at.dms.util.InconsistencyException;
  * This class represents the origin of a quadruple
  */
 abstract class QOperand implements QOrigin {
-  /**
-   * The type of this instruction
-   */
-  public abstract int getType();
+    /**
+     * The type of this instruction
+     */
+    public abstract int getType();
 
-  /**
-   * Returns the primitive instruction
-   */
-  public InstructionHandle getInstruction() {
-    throw new InconsistencyException();
-  }
+    /**
+     * Returns the primitive instruction
+     */
+    public InstructionHandle getInstruction() {
+        throw new InconsistencyException();
+    }
 
-  /**
-   * returns the parameters of this instruction
-   */
-  public QOrigin[] getOrigins() {
-    return new QOrigin[]{this};
-  }
+    /**
+     * returns the parameters of this instruction
+     */
+    public QOrigin[] getOrigins() {
+        return new QOrigin[]{this};
+    }
 
-  /**
-   * Sets the parameters of this instruction
-   */
-  public void setOrigin(QOrigin origin, int i) {
-    throw new InconsistencyException();
-  }
+    /**
+     * Sets the parameters of this instruction
+     */
+    public void setOrigin(QOrigin origin, int i) {
+        throw new InconsistencyException();
+    }
 }

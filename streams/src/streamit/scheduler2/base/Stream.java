@@ -59,7 +59,7 @@ abstract class Stream extends DestroyedClass implements StreamInterface
      * unpredictable exceptions).
      */
     public int hashCode() {
-	return id;
+        return id;
     }
     
     public Iterator getStreamIter () { return streamIter; }
@@ -95,6 +95,6 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     }
 
     public String toString() {
-	return ""+streamIter.getObject();
+        return ""+streamIter.getObject();
     }
 }

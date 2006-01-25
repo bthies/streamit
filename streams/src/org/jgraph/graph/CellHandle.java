@@ -1,5 +1,5 @@
 /*
- * @(#)CellHandle.java	1.0 1/1/02
+ * @(#)CellHandle.java  1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -34,50 +34,50 @@ import java.awt.event.MouseEvent;
 
 public interface CellHandle {
 
-	/**
-	 * Paint the handle on the given graphics object once.
-	 *
-	 * @param g       the graphics object to paint the handle on
-	 */
-	void paint(Graphics g);
+    /**
+     * Paint the handle on the given graphics object once.
+     *
+     * @param g       the graphics object to paint the handle on
+     */
+    void paint(Graphics g);
 
-	/**
-	 * Paint the handle on the given graphics object during mouse
-	 * operations.
-	 *
-	 * @param g       the graphics object to paint the handle on
-	 */
-	void overlay(Graphics g);
+    /**
+     * Paint the handle on the given graphics object during mouse
+     * operations.
+     *
+     * @param g       the graphics object to paint the handle on
+     */
+    void overlay(Graphics g);
 
-	/**
-	 * Return a cursor for the given point.
-	 *
-	 * @param p   the point for which the cursor is returned
-	 */
-	void mouseMoved(MouseEvent e);
+    /**
+     * Return a cursor for the given point.
+     *
+     * @param p   the point for which the cursor is returned
+     */
+    void mouseMoved(MouseEvent e);
 
-	/**
-	 * Messaged when a drag gesture is recogniced.
-	 *
-	 * @param e   the drag gesture event to be processed
-	 */
-	void mousePressed(MouseEvent event);
+    /**
+     * Messaged when a drag gesture is recogniced.
+     *
+     * @param e   the drag gesture event to be processed
+     */
+    void mousePressed(MouseEvent event);
 
-	/**
-	 * Messagedwhen the user drags the selection.
-	 * The Controller is responsible to determine whether the mouse is
-	 * inside the parent graph or not.
-	 *
-	 * @param e   the drag event to be processed
-	 */
-	void mouseDragged(MouseEvent e);
+    /**
+     * Messagedwhen the user drags the selection.
+     * The Controller is responsible to determine whether the mouse is
+     * inside the parent graph or not.
+     *
+     * @param e   the drag event to be processed
+     */
+    void mouseDragged(MouseEvent e);
 
-	/**
-	 * Messaged when the drag operation has
-	 * terminated with a drop.
-	 *
-	 * @param e   the drop event to be processed
-	 */
-	void mouseReleased(MouseEvent event);
+    /**
+     * Messaged when the drag operation has
+     * terminated with a drop.
+     *
+     * @param e   the drop event to be processed
+     */
+    void mouseReleased(MouseEvent event);
 
 }

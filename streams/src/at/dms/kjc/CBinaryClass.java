@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBinaryClass.java,v 1.5 2003-05-28 05:58:41 thies Exp $
+ * $Id: CBinaryClass.java,v 1.6 2006-01-25 17:01:22 thies Exp $
  */
 
 package at.dms.kjc;
@@ -36,105 +36,105 @@ import at.dms.compiler.Compiler;
  */
 public class CBinaryClass extends CClass {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected CBinaryClass() {} // for cloner only
 
-  /**
-   * Constructs a class export from file
-   */
-  public CBinaryClass(ClassInfo classInfo) {
-    super(getOwner(classInfo.getName()),
-	  classInfo.getSourceFile(),
-	  classInfo.getModifiers(),
-	  getIdent(classInfo.getName()),
-	  classInfo.getName(),
-	  classInfo.getSuperClass() == null ? null : CClassType.lookup(classInfo.getSuperClass()),
-	  classInfo.isDeprecated());
+    /**
+     * Constructs a class export from file
+     */
+    public CBinaryClass(ClassInfo classInfo) {
+        super(getOwner(classInfo.getName()),
+              classInfo.getSourceFile(),
+              classInfo.getModifiers(),
+              getIdent(classInfo.getName()),
+              classInfo.getName(),
+              classInfo.getSuperClass() == null ? null : CClassType.lookup(classInfo.getSuperClass()),
+              classInfo.isDeprecated());
 
-    CClassType[]	interfaces = loadInterfaces(classInfo.getInterfaces());
+        CClassType[]    interfaces = loadInterfaces(classInfo.getInterfaces());
 
-    FieldInfo[]	fields = classInfo.getFields();
-    Hashtable	fields_H = null;
-    boolean	hasOuterThis = false;
+        FieldInfo[] fields = classInfo.getFields();
+        Hashtable   fields_H = null;
+        boolean hasOuterThis = false;
 
-    fields_H = new Hashtable(fields.length + 1, 1.0f);
+        fields_H = new Hashtable(fields.length + 1, 1.0f);
 
-    for (int i = 0; i < fields.length; i++) {
-      CField field = new CBinaryField(this, fields[i]);
+        for (int i = 0; i < fields.length; i++) {
+            CField field = new CBinaryField(this, fields[i]);
 
-      if (field.getIdent().equals(JAV_OUTER_THIS)) {
-	hasOuterThis = true;
-      }
-      fields_H.put(field.getIdent(), field);
+            if (field.getIdent().equals(JAV_OUTER_THIS)) {
+                hasOuterThis = true;
+            }
+            fields_H.put(field.getIdent(), field);
+        }
+
+        MethodInfo[]    methods = classInfo.getMethods();
+        CMethod[]       methods_V = new CMethod[methods.length];
+
+        for (int i = 0; i < methods.length; i++) {
+            methods_V[i] = new CBinaryMethod(this, methods[i]);
+        }
+
+        setInnerClasses(loadInnerClasses(classInfo.getInnerClasses()));
+
+        setHasOuterThis(hasOuterThis);
+        close(interfaces, fields_H, methods_V);
     }
 
-    MethodInfo[]	methods = classInfo.getMethods();
-    CMethod[]		methods_V = new CMethod[methods.length];
-
-    for (int i = 0; i < methods.length; i++) {
-      methods_V[i] = new CBinaryMethod(this, methods[i]);
+    /**
+     *
+     */
+    protected CClassType[] loadInterfaces(String[] interfaces) {
+        if (interfaces != null) {
+            CClassType[]    ret;
+            ret = new CClassType[interfaces.length];
+            for (int i = 0; i < interfaces.length; i++) {
+                ret[i] = CClassType.lookup(interfaces[i]);
+            }
+            return ret;
+        } else {
+            return CClassType.EMPTY;
+        }
     }
 
-    setInnerClasses(loadInnerClasses(classInfo.getInnerClasses()));
-
-    setHasOuterThis(hasOuterThis);
-    close(interfaces, fields_H, methods_V);
-  }
-
-  /**
-   *
-   */
-  protected CClassType[] loadInterfaces(String[] interfaces) {
-    if (interfaces != null) {
-      CClassType[]	ret;
-      ret = new CClassType[interfaces.length];
-      for (int i = 0; i < interfaces.length; i++) {
-	ret[i] = CClassType.lookup(interfaces[i]);
-      }
-      return ret;
-    } else {
-      return CClassType.EMPTY;
+    /**
+     *
+     */
+    protected CClassType[] loadInnerClasses(InnerClassInfo[] inners) {
+        if (inners != null) {
+            CClassType[] innerClasses = new CClassType[inners.length];
+            for (int i = 0; i < inners.length; i++) {
+                innerClasses[i] = CClassType.lookup(inners[i].getQualifiedName());
+            }
+            return innerClasses;
+        } else {
+            return CClassType.EMPTY;
+        }
     }
-  }
 
-  /**
-   *
-   */
-  protected CClassType[] loadInnerClasses(InnerClassInfo[] inners) {
-    if (inners != null) {
-      CClassType[] innerClasses = new CClassType[inners.length];
-      for (int i = 0; i < inners.length; i++) {
-	innerClasses[i] = CClassType.lookup(inners[i].getQualifiedName());
-      }
-      return innerClasses;
-    } else {
-      return CClassType.EMPTY;
+    private static CClass getOwner(String clazz) {
+        int               index = clazz.lastIndexOf("$");
+
+        return index == -1 ? null : CClassType.lookup(clazz.substring(0, index)).getCClass();
     }
-  }
 
-  private static CClass getOwner(String clazz) {
-    int               index = clazz.lastIndexOf("$");
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-    return index == -1 ? null : CClassType.lookup(clazz.substring(0, index)).getCClass();
-  }
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.CBinaryClass other = new at.dms.kjc.CBinaryClass();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.CBinaryClass other) {
+        super.deepCloneInto(other);
+    }
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.CBinaryClass other = new at.dms.kjc.CBinaryClass();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
-
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.CBinaryClass other) {
-  super.deepCloneInto(other);
-}
-
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

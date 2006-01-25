@@ -45,27 +45,27 @@ public class Misc extends AssertedClass
      * should be text with one value per line.
      */
     public static int[] init_array_1D_int(String filename, int size) {
-	int[] result = new int[size];
-	try {
-	    BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
-	    for (int i=0; i<size; i++) {
-		String line = reader.readLine();
-		if (line==null) {
-		    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
-		}
-		result[i] = Integer.parseInt(line);
-	    }
-	    if (reader.readLine()!=null) {
-		System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
-	    }
-	    reader.close();
-	} catch (FileNotFoundException e) {
-	    System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
-	    System.exit(1);
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-	return result;
+        int[] result = new int[size];
+        try {
+            BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
+            for (int i=0; i<size; i++) {
+                String line = reader.readLine();
+                if (line==null) {
+                    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
+                }
+                result[i] = Integer.parseInt(line);
+            }
+            if (reader.readLine()!=null) {
+                System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
+            System.exit(1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
     
     /**
@@ -73,27 +73,27 @@ public class Misc extends AssertedClass
      * which should be text with one value per line.
      */
     public static float[] init_array_1D_float(String filename, int size) {
-	float[] result = new float[size];
-	try {
-	    BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
-	    for (int i=0; i<size; i++) {
-		String line = reader.readLine();
-		if (line==null) {
-		    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
-		}
-		result[i] = Float.parseFloat(line);
-	    }
-	    if (reader.readLine()!=null) {
-		System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
-	    }
-	    reader.close();
-	} catch (FileNotFoundException e) {
-	    System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
-	    System.exit(1);
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-	return result;
+        float[] result = new float[size];
+        try {
+            BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
+            for (int i=0; i<size; i++) {
+                String line = reader.readLine();
+                if (line==null) {
+                    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
+                }
+                result[i] = Float.parseFloat(line);
+            }
+            if (reader.readLine()!=null) {
+                System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
+            System.exit(1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
     
     /**

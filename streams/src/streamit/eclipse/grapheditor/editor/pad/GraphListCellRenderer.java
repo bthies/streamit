@@ -1,5 +1,5 @@
 /*
- * @(#)GraphListCellRenderer.java	1.2 02.02.2003
+ * @(#)GraphListCellRenderer.java   1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -40,44 +40,44 @@ import streamit.eclipse.grapheditor.editor.pad.actions.AbstractActionList;
  *
  */
 public class GraphListCellRenderer extends DefaultListCellRenderer {
-	
-	protected static GPGraph dummyGraph = new GPGraph();
+    
+    protected static GPGraph dummyGraph = new GPGraph();
 
-	/** reference to the combobox for this renderer
-	 */
-	protected AbstractActionList action;
+    /** reference to the combobox for this renderer
+     */
+    protected AbstractActionList action;
 
-	/**
-	 * Constructor for GraphListCellRenderer.
-	 */
-	public GraphListCellRenderer(AbstractActionList action) {
-		this.action = action;
-	}
+    /**
+     * Constructor for GraphListCellRenderer.
+     */
+    public GraphListCellRenderer(AbstractActionList action) {
+        this.action = action;
+    }
 
-	/**
-	 */
-	public Component getListCellRendererComponent(
-		JList list,
-		Object view,
-		int index,
-		boolean isSelected,
-		boolean cellHasFocus) {
-			
-		if (view instanceof String){
-			return new JLabel((String)view);
-		}
-		
-		JComponent c =
-			new RealGraphCellRenderer(
-				dummyGraph ,
-				new CellView[] {(CellView) view });
-		Rectangle b = ((AbstractCellView) view).getBounds();
-		if (b != null)
-			c.setBounds(2, 2, b.width, b.height);
-		c.setPreferredSize(new Dimension(b.width , b.height ));
-		c.setOpaque(true);
-		c.setBackground(dummyGraph .getBackground());
-		return c;
-	}
+    /**
+     */
+    public Component getListCellRendererComponent(
+                                                  JList list,
+                                                  Object view,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+            
+        if (view instanceof String){
+            return new JLabel((String)view);
+        }
+        
+        JComponent c =
+            new RealGraphCellRenderer(
+                                      dummyGraph ,
+                                      new CellView[] {(CellView) view });
+        Rectangle b = ((AbstractCellView) view).getBounds();
+        if (b != null)
+            c.setBounds(2, 2, b.width, b.height);
+        c.setPreferredSize(new Dimension(b.width , b.height ));
+        c.setOpaque(true);
+        c.setBackground(dummyGraph .getBackground());
+        return c;
+    }
 
 }

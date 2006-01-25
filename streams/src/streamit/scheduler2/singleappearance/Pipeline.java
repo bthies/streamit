@@ -17,7 +17,7 @@
 package streamit.scheduler2.singleappearance;
 
 import streamit.scheduler2.iriter./*persistent.*/
-PipelineIter;
+    PipelineIter;
 import streamit.scheduler2.hierarchical.StreamInterface;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
@@ -43,9 +43,9 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
         {
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                getChild(nChild).computeSchedule();
-            }
+                {
+                    getChild(nChild).computeSchedule();
+                }
         }
 
         // now go through all the children again and figure out how many
@@ -62,72 +62,72 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             // go through the children from last to first
             int nChild = getNumChildren() - 1;
             for (; nChild >= 0; nChild--)
-            {
-                StreamInterface child = getHierarchicalChild(nChild);
-
-                int producesForInit = child.getInitPush();
-                int producesPerIter = child.getSteadyPush();
-                int numItersInit;
-                if (producesPerIter != 0)
                 {
-                    // this child actually produces some data - this is
-                    // the common case
-                    numItersInit =
-                        ((neededByNext - producesForInit)
-                            + producesPerIter
-                            - 1)
-                            / producesPerIter;
-                    if (numItersInit < 0)
-                        numItersInit = 0;
-                }
-                else
-                {
-                    // this child does not produce any data
-                    // make sure that consumedByPrev is 0 (otherwise
-                    // I cannot execute the next child, 'cause it will
-                    // never get any input)
-                    assert neededByNext == 0;
+                    StreamInterface child = getHierarchicalChild(nChild);
 
-                    // there will be no cycles executed for initialization
-                    // of children downstream
-                    numItersInit = 0;
-                }
+                    int producesForInit = child.getInitPush();
+                    int producesPerIter = child.getSteadyPush();
+                    int numItersInit;
+                    if (producesPerIter != 0)
+                        {
+                            // this child actually produces some data - this is
+                            // the common case
+                            numItersInit =
+                                ((neededByNext - producesForInit)
+                                 + producesPerIter
+                                 - 1)
+                                / producesPerIter;
+                            if (numItersInit < 0)
+                                numItersInit = 0;
+                        }
+                    else
+                        {
+                            // this child does not produce any data
+                            // make sure that consumedByPrev is 0 (otherwise
+                            // I cannot execute the next child, 'cause it will
+                            // never get any input)
+                            assert neededByNext == 0;
 
-                // associate the child with the number of executions required
-                // by the child to fill up the pipeline
-                numExecutionsForInit[nChild] = numItersInit;
+                            // there will be no cycles executed for initialization
+                            // of children downstream
+                            numItersInit = 0;
+                        }
 
-                // and figure out how many data this particular child
-                // needs to initialize the pipeline.  this is complicated
-                // by the fact that there are essentially two separate
-                // init stages, and because the extra peek on one of these 
-                // might be different from the steady-state peek
-                // explanation in notebook, 02/07/02
-                {
-                    // compute the two-stage-init peek and pop values
-                    int pop_i =
-                        child.getInitPop()
-                            + numItersInit * child.getSteadyPop();
-                    int peek_i =
-                        MAX(
-                            child.getInitPeek(),
+                    // associate the child with the number of executions required
+                    // by the child to fill up the pipeline
+                    numExecutionsForInit[nChild] = numItersInit;
+
+                    // and figure out how many data this particular child
+                    // needs to initialize the pipeline.  this is complicated
+                    // by the fact that there are essentially two separate
+                    // init stages, and because the extra peek on one of these 
+                    // might be different from the steady-state peek
+                    // explanation in notebook, 02/07/02
+                    {
+                        // compute the two-stage-init peek and pop values
+                        int pop_i =
                             child.getInitPop()
+                            + numItersInit * child.getSteadyPop();
+                        int peek_i =
+                            MAX(
+                                child.getInitPeek(),
+                                child.getInitPop()
                                 + numItersInit * child.getSteadyPop()
                                 + (child.getSteadyPeek()
-                                    - child.getSteadyPop()));
+                                   - child.getSteadyPop()));
 
-                    // now save how much data is needed before peek adjust:
-                    neededByNext = peek_i;
+                        // now save how much data is needed before peek adjust:
+                        neededByNext = peek_i;
 
-                    // and perform the peek adjust
-                    neededByNext
-                        += MAX(
-                            (child.getSteadyPeek() - child.getSteadyPop())
-                                - (peek_i - pop_i),
-                            0);
+                        // and perform the peek adjust
+                        neededByNext
+                            += MAX(
+                                   (child.getSteadyPeek() - child.getSteadyPop())
+                                   - (peek_i - pop_i),
+                                   0);
 
+                    }
                 }
-            }
         }
 
         // compute an initialization schedule
@@ -144,21 +144,21 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                StreamInterface child = getHierarchicalChild(nChild);
-                // add the initialization schedule:
-                initStage.appendPhase(child.getPhasingInitSchedule());
-
-                // add the steady schedule an appropriate number of times:
                 {
-                    int n;
-                    for (n = 0; n < numExecutionsForInit[nChild]; n++)
+                    StreamInterface child = getHierarchicalChild(nChild);
+                    // add the initialization schedule:
+                    initStage.appendPhase(child.getPhasingInitSchedule());
+
+                    // add the steady schedule an appropriate number of times:
                     {
-                        initStage.appendPhase(
-                            child.getPhasingSteadySchedule());
+                        int n;
+                        for (n = 0; n < numExecutionsForInit[nChild]; n++)
+                            {
+                                initStage.appendPhase(
+                                                      child.getPhasingSteadySchedule());
+                            }
                     }
                 }
-            }
 
             // now append the one init phase to my initialization phase
             if (initStage.getNumPhases() != 0)
@@ -174,15 +174,15 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                StreamInterface child = getHierarchicalChild(nChild);
-
-                int n;
-                for (n = 0; n < getChildNumExecs(nChild); n++)
                 {
-                    steadyPhase.appendPhase(child.getPhasingSteadySchedule());
+                    StreamInterface child = getHierarchicalChild(nChild);
+
+                    int n;
+                    for (n = 0; n < getChildNumExecs(nChild); n++)
+                        {
+                            steadyPhase.appendPhase(child.getPhasingSteadySchedule());
+                        }
                 }
-            }
 
             addSteadySchedulePhase(steadyPhase);
         }

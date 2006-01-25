@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LineNumberInfo.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: LineNumberInfo.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -32,92 +32,92 @@ import java.io.DataOutput;
  */
 public class LineNumberInfo implements AccessorContainer {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create an entry in the line number table
-   *
-   * @param	line		the line number in the source code
-   * @param	inst		the instruction where the line begins
-   */
-  public LineNumberInfo(short line, InstructionAccessor inst) {
-    this.line = line;
-    this.inst = inst;
-  }
-
-  /**
-   * Create an entry in the line number table from a class file stream
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   * @param	insns		(sparse) array of instructions
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  public LineNumberInfo(DataInput in, ConstantPool cp, Instruction[] insns)
-    throws IOException
-  {
-    int	pos = in.readUnsignedShort();
-    if (pos < insns.length) {
-      this.inst = insns[pos];
+    /**
+     * Create an entry in the line number table
+     *
+     * @param   line        the line number in the source code
+     * @param   inst        the instruction where the line begins
+     */
+    public LineNumberInfo(short line, InstructionAccessor inst) {
+        this.line = line;
+        this.inst = inst;
     }
-    this.line = in.readUnsignedShort();
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    /**
+     * Create an entry in the line number table from a class file stream
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     * @param   insns       (sparse) array of instructions
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    public LineNumberInfo(DataInput in, ConstantPool cp, Instruction[] insns)
+        throws IOException
+    {
+        int pos = in.readUnsignedShort();
+        if (pos < insns.length) {
+            this.inst = insns[pos];
+        }
+        this.line = in.readUnsignedShort();
+    }
 
-  /**
-   * Transforms targets (deferences to actual instructions).
-   */
-  public void transformAccessors(AccessorTransformer transformer) throws BadAccessorException {
-    this.inst = this.inst.transform(transformer, this);
-  }
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Returns the line number in the source code
-   */
-  public int getLine() {
-    return line;
-  }
+    /**
+     * Transforms targets (deferences to actual instructions).
+     */
+    public void transformAccessors(AccessorTransformer transformer) throws BadAccessorException {
+        this.inst = this.inst.transform(transformer, this);
+    }
 
-  /**
-   * Returns the instruction where the line begins
-   */
-  public InstructionAccessor getInstruction() {
-    return inst;
-  }
+    /**
+     * Returns the line number in the source code
+     */
+    public int getLine() {
+        return line;
+    }
 
-  /**
-   * Sets the instruction where the line begins
-   */
-  public void setInstruction(InstructionAccessor inst) {
-    this.inst = inst;
-  }
+    /**
+     * Returns the instruction where the line begins
+     */
+    public InstructionAccessor getInstruction() {
+        return inst;
+    }
 
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(DataOutput out) throws IOException {
-    Instruction		inst = (Instruction)this.inst;
+    /**
+     * Sets the instruction where the line begins
+     */
+    public void setInstruction(InstructionAccessor inst) {
+        this.inst = inst;
+    }
 
-    out.writeShort(inst.getAddress());
-    out.writeShort((short)line);
-  }
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(DataOutput out) throws IOException {
+        Instruction     inst = (Instruction)this.inst;
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+        out.writeShort(inst.getAddress());
+        out.writeShort((short)line);
+    }
 
-  private int				line;
-  private InstructionAccessor		inst;
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private int             line;
+    private InstructionAccessor     inst;
 }

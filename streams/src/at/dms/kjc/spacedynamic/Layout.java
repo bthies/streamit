@@ -20,7 +20,7 @@ import at.dms.kjc.cluster.DataEstimate;
  * the entire StreamGraph.
  */
 public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
-        FlatVisitor {
+                                                         FlatVisitor {
     public Router router;
 
     /** SIRStream -> RawTile * */
@@ -120,8 +120,8 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
         if (assigned.size() > (rawChip.getXSize() * rawChip.getYSize())) {
             System.err.println("\nLAYOUT ERROR: Need " + assigned.size()
-                    + " tiles, have "
-                    + (rawChip.getYSize() * rawChip.getXSize()) + " tiles.");
+                               + " tiles, have "
+                               + (rawChip.getYSize() * rawChip.getXSize()) + " tiles.");
             System.exit(-1);
         }
     }
@@ -147,7 +147,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     public boolean isAssigned(RawTile tile) {
         assert SIRassignment.values().contains(tile) == tileAssignment.keySet()
-                .contains(tile);
+            .contains(tile);
 
         return tileAssignment.keySet().contains(tile);
     }
@@ -177,7 +177,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             return null;
 
         assert SIRassignment.get(str) != null
-                || !(SIRassignment.get(str) instanceof RawTile) : "Calling getTile() on a stream that is not mapped to tile";
+            || !(SIRassignment.get(str) instanceof RawTile) : "Calling getTile() on a stream that is not mapped to tile";
         return (RawTile) SIRassignment.get(str);
     }
 
@@ -225,7 +225,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             return null;
 
         assert SIRassignment.get(str) != null : "calling getComputeNode() on str that is not assigned to a compute node: "
-                + str;
+            + str;
         return (ComputeNode) SIRassignment.get(str);
     }
 
@@ -263,38 +263,38 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         buf.append("digraph Layout {\n");
         buf.append("size = \"8, 10.5\"");
         buf
-                .append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
+            .append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
         for (int i = 0; i < rawChip.getYSize(); i++) {
             buf.append("{rank = same;");
             for (int j = 0; j < rawChip.getXSize(); j++) {
                 buf
-                        .append("tile" + rawChip.getTile(j, i).getTileNumber()
-                                + ";");
+                    .append("tile" + rawChip.getTile(j, i).getTileNumber()
+                            + ";");
             }
             buf.append("}\n");
         }
         for (int i = 0; i < rawChip.getYSize(); i++) {
             for (int j = 0; j < rawChip.getXSize(); j++) {
                 Iterator neighbors = rawChip.getTile(j, i)
-                        .getSouthAndEastNeighbors().iterator();
+                    .getSouthAndEastNeighbors().iterator();
                 while (neighbors.hasNext()) {
                     RawTile n = (RawTile) neighbors.next();
                     buf.append("tile" + rawChip.getTile(j, i).getTileNumber()
-                            + " -> tile" + n.getTileNumber()
-                            + " [weight = 100000000];\n");
+                               + " -> tile" + n.getTileNumber()
+                               + " [weight = 100000000];\n");
                 }
             }
         }
         buf
-                .append("edge[color = red,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
+            .append("edge[color = red,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
         Iterator it = tileAssignment.values().iterator();
         while (it.hasNext()) {
             FlatNode node = (FlatNode) it.next();
             if (streamGraph.getFileState().fileNodes.contains(node))
                 continue;
             buf.append("tile" + getTileNumber(node) + "[label=\"" +
-            // getTileNumber(node) + "\"];\n");
-                    shortName(node.getName()) + "\"];\n");
+                       // getTileNumber(node) + "\"];\n");
+                       shortName(node.getName()) + "\"];\n");
 
             // we only map joiners and filters to tiles and they each have
             // only one output
@@ -307,7 +307,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     continue;
                 // System.out.println(" " + n);
                 buf.append("tile" + getTileNumber(node) + " -> tile"
-                        + getTileNumber(n) + " [weight = 1]");
+                           + getTileNumber(n) + " [weight = 1]");
                 int thisRow = getTile(n).getY();
                 if (Math.abs(thisRow - y) <= 1)
                     buf.append(";\n");
@@ -319,7 +319,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
         // put in the dynamic connections in blue
         buf
-                .append("edge[color = blue,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
+            .append("edge[color = blue,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
             for (int out = 0; out < ssg.getOutputs().length; out++) {
@@ -327,11 +327,11 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     !assignToATile(ssg.getNext(ssg.getOutputs()[out])))
                     continue;
                 assert getTile(ssg.getOutputs()[out]) != null : ssg.toString()
-                        + " has an output not assigned to a tile " + out;
+                    + " has an output not assigned to a tile " + out;
                 buf.append("tile" + getTileNumber(ssg.getOutputs()[out])
-                        + " -> tile"
-                        + getTileNumber(ssg.getNext(ssg.getOutputs()[out]))
-                        + "[weight = 1];");
+                           + " -> tile"
+                           + getTileNumber(ssg.getNext(ssg.getOutputs()[out]))
+                           + "[weight = 1];");
             }
         }
 
@@ -379,7 +379,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             for (int i = 0; i < node.edges.length; i++) {
                 if (node.weights[i] != 0)
                     SpaceDynamicBackend.addAll(ret,
-                            getDownStreamHelper(node.edges[i]));
+                                               getDownStreamHelper(node.edges[i]));
             }
             return ret;
         }
@@ -393,7 +393,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         assert assigned.size() == 1;
         assert rawChip.getTotalTiles() == 1;
         assert (FlatNode) (assigned.toArray()[0]) == streamGraph
-                .getStaticSubGraphs()[0].getTopLevel();
+            .getStaticSubGraphs()[0].getTopLevel();
 
         assign(rawChip.getTile(0), (FlatNode) (assigned.toArray()[0]));
     }
@@ -409,10 +409,10 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
             assignFileFilters();
             System.out.println("Tile Assignment from file "
-                    + KjcOptions.layoutfile);
+                               + KjcOptions.layoutfile);
         } catch (Exception e) {
             System.err.println("Error while reading layout from file "
-                    + KjcOptions.layoutfile);
+                               + KjcOptions.layoutfile);
             System.exit(1);
         }
 
@@ -448,7 +448,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      * for <node>
      */
     private void assignFromReader(BufferedReader inputBuffer,
-            StaticStreamGraph ssg, FlatNode node) {
+                                  StaticStreamGraph ssg, FlatNode node) {
         // Assign a filter, joiner to a tile
         // perform some error checking.
         while (true) {
@@ -474,7 +474,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             }
             // other wise the assignment is valid, assign and break!!
             System.out.println("Assigning " + node.getName() + " to tile "
-                    + tileNumber);
+                               + tileNumber);
             assign(tile, node);
             break;
         }
@@ -483,9 +483,9 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     public void handAssign() {
         assignFileFilters();
         System.out.println("Enter desired tile for each filter of "
-                + streamGraph.getStaticSubGraphs().length + " subgraphs: ");
+                           + streamGraph.getStaticSubGraphs().length + " subgraphs: ");
         BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(
-                System.in));
+                                                                              System.in));
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
@@ -540,14 +540,14 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             if (staticCost < 0.0) {
                 if (debug)
                     System.out
-                            .println("Static route of SSG crosses another SSG!");
+                        .println("Static route of SSG crosses another SSG!");
                 return -1.0;
             }
 
             memoryCost = getMemoryCost(ssg);
 
             cost += (dynamicCost * DYN_MULT) + staticCost
-                    + (memoryCost * MEMORY_SCALE);
+                + (memoryCost * MEMORY_SCALE);
         }
 
         return cost;
@@ -578,7 +578,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                 // divide by 4 because we send 4 bytes over the network at a
                 // time
                 memCost += ((memReq - RawChip.dCacheSizeBytes) / 4)
-                        * tile.hopsToEdge();
+                    * tile.hopsToEdge();
             }
 
             // System.out.println(" *** Memory req of " + node + ": " +
@@ -654,7 +654,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                 }
 
                 ComputeNode[] route = (ComputeNode[]) router.getRoute(ssg,
-                        srcNode, dstNode).toArray(new ComputeNode[0]);
+                                                                      srcNode, dstNode).toArray(new ComputeNode[0]);
 
                 // check if we cannot find a route from src to dst that does not
                 // go
@@ -697,7 +697,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     // router tile, only penalize it if we have routed through
                     // it before
                     if (routers.contains(route[i])
-                            || (getNode((RawTile) route[i]) != null))
+                        || (getNode((RawTile) route[i]) != null))
                         numAssigned += ROUTER_WEIGHT;
                     else
                         // now it is a router tile
@@ -722,7 +722,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     // the dest filter receives
                     if (dst.isFilter())
                         items = ssg.getMult(dst, false)
-                                * dst.getFilter().getPopInt();
+                            * dst.getFilter().getPopInt();
                     else {
                         // this is a joiner
                         assert dst.isJoiner();
@@ -735,16 +735,16 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                         // 0 thru the joiner
                         if (dst.inputs > 1)
                             rate = ((double) dst.incomingWeights[0])
-                                    / ((double) dst.getTotalIncomingWeights());
+                                / ((double) dst.getTotalIncomingWeights());
                         // now calculate the rate at which the splitter sends to
                         // the joiner
                         rate = rate
-                                * (((double) src.edges[0].weights[0]) / ((double) src.edges[0]
-                                        .getTotalOutgoingWeights()));
+                            * (((double) src.edges[0].weights[0]) / ((double) src.edges[0]
+                                                                     .getTotalOutgoingWeights()));
                         // now calculate the number of items sent to this dest
                         // by this filter
                         items = (int) rate * ssg.getMult(dst, false)
-                                * src.getFilter().getPopInt();
+                            * src.getFilter().getPopInt();
                     }
                 } else {
                     // sending without intermediate splitter
@@ -793,13 +793,13 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             ComputeNode dstTile = getComputeNode(dst);
 
             Iterator route = XYRouter.getRoute(ssg, srcTile, dstTile)
-                    .iterator();
+                .iterator();
             // System.out.print("Dynamic Route: ");
 
             // ********* TURNS IN DYNAMIC NETWORK COST IN TERMS OF LATENCY
             // ****//
             if (srcTile.getX() != dstTile.getX()
-                    && srcTile.getY() != dstTile.getY())
+                && srcTile.getY() != dstTile.getY())
                 cost += (1.0 * typeSize);
 
             // ** Don't share links, could lead to starvation?? ***///
@@ -866,7 +866,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             // algorithm
             for (int two = 0; two < rawChip.getYSize(); two++) {
                 System.out.print("\nRunning Annealing Step (" + currentCost
-                        + ", " + minCost + ")");
+                                 + ", " + minCost + ")");
                 double t = annealMaxTemp();
                 double tFinal = annealMinTemp();
                 while (true) {
@@ -881,7 +881,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
                         if (accepted) {
                             filew.write(configuration++ + " " + currentCost
-                                    + "\n");
+                                        + "\n");
                             nsucc++;
                         }
 
@@ -917,7 +917,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
             currentCost = placementCost(false);
             System.out.println("\nFinal Cost: " + currentCost + " Min Cost : "
-                    + minCost + " in  " + j + " iterations.");
+                               + minCost + " in  " + j + " iterations.");
             if (minCost < currentCost) {
                 SIRassignment = sirMin;
                 tileAssignment = tileMin;
@@ -1052,7 +1052,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             if (first == second)
                 continue;
             if ((getNode(rawChip.getTile(first)) == null)
-                    && (getNode(rawChip.getTile(second)) == null))
+                && (getNode(rawChip.getTile(second)) == null))
                 continue;
 
             firstNode = getNode(rawChip.getTile(first));
@@ -1100,14 +1100,14 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      **************************************************************************/
     public static boolean assignToAComputeNode(FlatNode node) {
         return assignToATile(node) || node.contents instanceof SIRFileReader
-                || node.contents instanceof SIRFileWriter;
+            || node.contents instanceof SIRFileWriter;
     }
 
     /** return true if this flatnode is or should be assigned to tile * */
     public static boolean assignToATile(FlatNode node) {
         if (node.isFilter()
-                && !(node.contents instanceof SIRIdentity
-                        || node.contents instanceof SIRFileReader || node.contents instanceof SIRFileWriter))
+            && !(node.contents instanceof SIRIdentity
+                 || node.contents instanceof SIRFileReader || node.contents instanceof SIRFileWriter))
             return true;
         else if (node.isJoiner())
             return assignedJoiner(node);
@@ -1124,7 +1124,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         // do not assign joiners directly connected to other joiners or null
         // joiners
         if (node.edges[0] != null
-                || !(node.edges[0].contents instanceof SIRJoiner)) {
+            || !(node.edges[0].contents instanceof SIRJoiner)) {
             for (int i = 0; i < node.inputs; i++) {
                 if (node.incomingWeights[i] != 0) {
                     return true;
@@ -1141,7 +1141,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         if (node.isFilter()) {
             // create an entry in the memory foot print map
             memoryFP.put(node, new Integer(DataEstimate
-                    .computeFilterGlobalsSize(node.getFilter())));
+                                           .computeFilterGlobalsSize(node.getFilter())));
             // create an entry in the work estimation map
             workEstimates.addEstimate(node);
             // do not map layout.identities, but add them to the

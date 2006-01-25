@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.12 2005-04-05 07:06:53 thies Exp $
+ * $Id: JVariableDefinition.java,v 1.13 2006-01-25 17:01:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,199 +29,199 @@ import java.io.*;
  * This class represents a local variable definition in the syntax tree
  */
 public class JVariableDefinition extends JLocalVariable {
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
     protected JVariableDefinition() {} // for cloner only
 
-  /**
-   * Construct a node in the parsing tree
-   * This method is directly called by the parser
-   * @param	where		the line of this node in the source code
-   * @param	modifiers	the modifiers of this variable
-   * @param	ident		the name of this variable
-   * @param	initializer	the initializer
-   */
-  public JVariableDefinition(TokenReference where,
-			     int modifiers,
-			     CType type,
-			     String ident,
-			     JExpression initializer)
-  {
-    super(where, modifiers, DES_LOCAL_VAR, type, ident, initializer);
-    assert type != null;
-  }
+    /**
+     * Construct a node in the parsing tree
+     * This method is directly called by the parser
+     * @param   where       the line of this node in the source code
+     * @param   modifiers   the modifiers of this variable
+     * @param   ident       the name of this variable
+     * @param   initializer the initializer
+     */
+    public JVariableDefinition(TokenReference where,
+                               int modifiers,
+                               CType type,
+                               String ident,
+                               JExpression initializer)
+    {
+        super(where, modifiers, DES_LOCAL_VAR, type, ident, initializer);
+        assert type != null;
+    }
 
-  public JVariableDefinition(int modifiers,
-			     CType type,
-			     String ident,
-			     JExpression initializer) {
-      this(null, modifiers, type, ident, initializer);
-  }
+    public JVariableDefinition(int modifiers,
+                               CType type,
+                               String ident,
+                               JExpression initializer) {
+        this(null, modifiers, type, ident, initializer);
+    }
 
-  public JVariableDefinition(int modifiers,
-			     CType type,
-			     String ident) {
-      this(null, modifiers, type, ident, null);
-  }
+    public JVariableDefinition(int modifiers,
+                               CType type,
+                               String ident) {
+        this(null, modifiers, type, ident, null);
+    }
 
-  public JVariableDefinition(CType type,
-			     String ident) {
-      this(null, 0, type, ident, null);
-  }
+    public JVariableDefinition(CType type,
+                               String ident) {
+        this(null, 0, type, ident, null);
+    }
 
     public String toString() {
-	return "VarDef["+name+"="+expr+"]";
+        return "VarDef["+name+"="+expr+"]";
     }
     
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * hasInitializer
-   * @return	true if there is an initializer
-   */
-  public boolean hasInitializer() {
-    return getValue() != null;
-  }
+    /**
+     * hasInitializer
+     * @return  true if there is an initializer
+     */
+    public boolean hasInitializer() {
+        return getValue() != null;
+    }
 
-  /**
-   * @return	the initial value
-   */
-  public JExpression getValue() {
-    return expr;
-  }
+    /**
+     * @return  the initial value
+     */
+    public JExpression getValue() {
+        return expr;
+    }
 
     public void setValue(JExpression expr) {
-	this.expr = expr;
+        this.expr = expr;
     }
 
     public void setInitializer (JExpression init) {
-	this.expr = init;
+        this.expr = init;
     }
 
-  // ----------------------------------------------------------------------
-  // INTERFACE CHECKING
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // INTERFACE CHECKING
+    // ----------------------------------------------------------------------
 
-  /**
-   * Second pass (quick), check interface looks good
-   * Exceptions are not allowed here, this pass is just a tuning
-   * pass in order to create informations about exported elements
-   * such as Classes, Interfaces, Methods, Constructors and Fields
-   * @param	context		the current context
-   * @return	true iff sub tree is correct enought to check code
-   */
-  public void checkInterface(CClassContext context) {
-    try {
-      type.checkType(context);
-    } catch (UnpositionedError cue) {
-      /*checkbody will do it*/
-    }
-  }
-
-  // ----------------------------------------------------------------------
-  // SEMANTIC ANALYSIS
-  // ----------------------------------------------------------------------
-
-  /**
-   * Check expression and evaluate and alter context
-   * @param	context			the actual context of analyse
-   * @exception	PositionedError Error catched as soon as possible
-   */
-  public void analyse(CBodyContext context) throws PositionedError {
-    try {
-      type.checkType(context);
-    } catch (UnpositionedError cue) {
-      throw cue.addPosition(getTokenReference());
-    }
-    if (! type.isPrimitive()) {
-      check(context,
-	    type.getCClass().isAccessible(context.getClassContext().getCClass()),
-	    KjcMessages.CLASS_NOACCESS, type);
+    /**
+     * Second pass (quick), check interface looks good
+     * Exceptions are not allowed here, this pass is just a tuning
+     * pass in order to create informations about exported elements
+     * such as Classes, Interfaces, Methods, Constructors and Fields
+     * @param   context     the current context
+     * @return  true iff sub tree is correct enought to check code
+     */
+    public void checkInterface(CClassContext context) {
+        try {
+            type.checkType(context);
+        } catch (UnpositionedError cue) {
+            /*checkbody will do it*/
+        }
     }
 
-    if (expr != null) {
-      // special case for array initializers
-      if (expr instanceof JArrayInitializer) {
-	check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
-	((JArrayInitializer)expr).setType((CArrayType)type);
-      } else {
-	  // first see if RHS has array initializer
-	  final boolean[] hasArray = { false };
-	  expr.accept(new KjcEmptyVisitor() {
-		  public void visitArrayInitializer(JArrayInitializer self,
-						    JExpression[] elems) {
-		      hasArray[0] = true;
-		  }
-	      });
-	  // if there is an array, call check and set type
-	  if (hasArray[0]) {
-	      check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
-	      final CArrayType myType = (CArrayType)type;
-	      expr.accept(new KjcEmptyVisitor() {
-		      public void visitArrayInitializer(JArrayInitializer self,
-							JExpression[] elems) {
-			  self.setType(myType);
-		      }
-		  });
-	  }
-      }
+    // ----------------------------------------------------------------------
+    // SEMANTIC ANALYSIS
+    // ----------------------------------------------------------------------
 
-      CExpressionContext	expressionContext = new CExpressionContext(context);
+    /**
+     * Check expression and evaluate and alter context
+     * @param   context         the actual context of analyse
+     * @exception   PositionedError Error catched as soon as possible
+     */
+    public void analyse(CBodyContext context) throws PositionedError {
+        try {
+            type.checkType(context);
+        } catch (UnpositionedError cue) {
+            throw cue.addPosition(getTokenReference());
+        }
+        if (! type.isPrimitive()) {
+            check(context,
+                  type.getCClass().isAccessible(context.getClassContext().getCClass()),
+                  KjcMessages.CLASS_NOACCESS, type);
+        }
 
-      expr = expr.analyse(expressionContext);
-      if (expr instanceof JTypeNameExpression) {
-	check(context,
-	      false,
-	      KjcMessages.VAR_UNKNOWN,
-	      ((JTypeNameExpression)expr).getQualifiedName());
-      }
+        if (expr != null) {
+            // special case for array initializers
+            if (expr instanceof JArrayInitializer) {
+                check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
+                ((JArrayInitializer)expr).setType((CArrayType)type);
+            } else {
+                // first see if RHS has array initializer
+                final boolean[] hasArray = { false };
+                expr.accept(new KjcEmptyVisitor() {
+                        public void visitArrayInitializer(JArrayInitializer self,
+                                                          JExpression[] elems) {
+                            hasArray[0] = true;
+                        }
+                    });
+                // if there is an array, call check and set type
+                if (hasArray[0]) {
+                    check(context, type.isArrayType(), KjcMessages.ARRAY_INIT_NOARRAY, type);
+                    final CArrayType myType = (CArrayType)type;
+                    expr.accept(new KjcEmptyVisitor() {
+                            public void visitArrayInitializer(JArrayInitializer self,
+                                                              JExpression[] elems) {
+                                self.setType(myType);
+                            }
+                        });
+                }
+            }
 
-      check(context,
-	    expr.isAssignableTo(type),
-	    KjcMessages.VAR_INIT_BADTYPE, getIdent(), expr.getType());
-      expr = expr.convertType(type, expressionContext);
+            CExpressionContext  expressionContext = new CExpressionContext(context);
+
+            expr = expr.analyse(expressionContext);
+            if (expr instanceof JTypeNameExpression) {
+                check(context,
+                      false,
+                      KjcMessages.VAR_UNKNOWN,
+                      ((JTypeNameExpression)expr).getQualifiedName());
+            }
+
+            check(context,
+                  expr.isAssignableTo(type),
+                  KjcMessages.VAR_INIT_BADTYPE, getIdent(), expr.getType());
+            expr = expr.convertType(type, expressionContext);
+        }
     }
-  }
 
-  // ----------------------------------------------------------------------
-  // CODE GENERATION
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CODE GENERATION
+    // ----------------------------------------------------------------------
 
-  /**
-   * Accepts the specified visitor
-   * @param	p		the visitor
-   */
-  public void accept(KjcVisitor p) {
-    p.visitVariableDefinition(this, modifiers, type, getIdent(), expr);
-  }
+    /**
+     * Accepts the specified visitor
+     * @param   p       the visitor
+     */
+    public void accept(KjcVisitor p) {
+        p.visitVariableDefinition(this, modifiers, type, getIdent(), expr);
+    }
 
- /**
-   * Accepts the specified attribute visitor
-   * @param	p		the visitor
-   */
-  public Object accept(AttributeVisitor p) {
-      return    p.visitVariableDefinition(this, modifiers, type, getIdent(), expr);
-  }
+    /**
+     * Accepts the specified attribute visitor
+     * @param   p       the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+        return    p.visitVariableDefinition(this, modifiers, type, getIdent(), expr);
+    }
 
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.JVariableDefinition other = new at.dms.kjc.JVariableDefinition();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.JVariableDefinition other = new at.dms.kjc.JVariableDefinition();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.JVariableDefinition other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.JVariableDefinition other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

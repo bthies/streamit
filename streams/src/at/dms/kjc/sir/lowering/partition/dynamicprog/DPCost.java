@@ -6,20 +6,20 @@ class DPCost {
     private final int iCodeSize;
 
     public DPCost(int maxCost, int sumCost, int iCodeSize) {
-	this.maxCost = maxCost;
-	this.sumCost = sumCost;
-	this.iCodeSize = iCodeSize;
+        this.maxCost = maxCost;
+        this.sumCost = sumCost;
+        this.iCodeSize = iCodeSize;
     }
 
     public int getMaxCost() {
-	return maxCost;
+        return maxCost;
     }
 
     public int getSumCost() {
-	return sumCost;
+        return sumCost;
     }
 
     public int getICodeSize() {
-	return iCodeSize;
+        return iCodeSize;
     }
 }

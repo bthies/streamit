@@ -41,18 +41,18 @@ public class StmtSendToHelper extends SymbolTableVisitor
     public Object visitStmtSendMessage(StmtSendMessage stmt)
     {
 
-	Expression receiver = (Expression)stmt.getReceiver();
-	if (receiver instanceof ExprVar) {
-	    ExprVar var = (ExprVar)receiver;
-	    try {
-		Type type = symtab.lookupVar(var);
-	    } catch (UnrecognizedVariableException ex) {
-		return new StmtHelperCall(stmt.getContext(), 
-					  var.getName(), 
-					  stmt.getName(), 
-					  stmt.getParams()); 
-	    }
-	}
-	return stmt;
+        Expression receiver = (Expression)stmt.getReceiver();
+        if (receiver instanceof ExprVar) {
+            ExprVar var = (ExprVar)receiver;
+            try {
+                Type type = symtab.lookupVar(var);
+            } catch (UnrecognizedVariableException ex) {
+                return new StmtHelperCall(stmt.getContext(), 
+                                          var.getName(), 
+                                          stmt.getName(), 
+                                          stmt.getParams()); 
+            }
+        }
+        return stmt;
     }
 }

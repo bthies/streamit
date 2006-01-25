@@ -29,7 +29,7 @@ import streamit.frontend.nodes.*;
  *
  * @see     streamit.frontend.TranslateEnqueue
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToFunction.java,v 1.3 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: EnqueueToFunction.java,v 1.4 2006-01-25 17:04:30 thies Exp $
  */
 public class EnqueueToFunction extends FEReplacer
 {
@@ -58,21 +58,21 @@ public class EnqueueToFunction extends FEReplacer
         // ExprFunCall.  Find the name of the function:
         String fnName;
         if (enqType instanceof TypePrimitive)
-        {
-            int t = ((TypePrimitive)enqType).getType();
-            if (t == TypePrimitive.TYPE_BIT)
-                fnName = "enqueueInt";
-            else if (t == TypePrimitive.TYPE_COMPLEX)
-                fnName = "enqueueObject";
-            else if (t == TypePrimitive.TYPE_FLOAT)
-                fnName = "enqueueFloat";
-            else if (t == TypePrimitive.TYPE_INT)
-                fnName = "enqueueInt";
-            else
-            throw new IllegalStateException("can't translate enqueue: " +
-                                            "stream's loop type is " +
-                                            enqType);
-        }
+            {
+                int t = ((TypePrimitive)enqType).getType();
+                if (t == TypePrimitive.TYPE_BIT)
+                    fnName = "enqueueInt";
+                else if (t == TypePrimitive.TYPE_COMPLEX)
+                    fnName = "enqueueObject";
+                else if (t == TypePrimitive.TYPE_FLOAT)
+                    fnName = "enqueueFloat";
+                else if (t == TypePrimitive.TYPE_INT)
+                    fnName = "enqueueInt";
+                else
+                    throw new IllegalStateException("can't translate enqueue: " +
+                                                    "stream's loop type is " +
+                                                    enqType);
+            }
         else
             fnName = "enqueueObject";
         Expression theFn = new ExprFunCall(stmt.getContext(), fnName,

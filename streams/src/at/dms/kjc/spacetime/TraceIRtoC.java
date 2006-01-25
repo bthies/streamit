@@ -107,23 +107,23 @@ public class TraceIRtoC extends ToC
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
             if (!KjcOptions.nofieldprop) {
-                 Unroller unroller;
-                 do {
-                     do {
-                         unroller = new Unroller(new Hashtable());
-                         tile.getComputeCode().getMethods()[i].accept(unroller);
-                     } while(unroller.hasUnrolled());
-                     tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
-                     unroller = new Unroller(new Hashtable());
-                     tile.getComputeCode().getMethods()[i].accept(unroller);
-                 } while(unroller.hasUnrolled());
-                 tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
-                 tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
-             } else
-                 tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
+                Unroller unroller;
+                do {
+                    do {
+                        unroller = new Unroller(new Hashtable());
+                        tile.getComputeCode().getMethods()[i].accept(unroller);
+                    } while(unroller.hasUnrolled());
+                    tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
+                    unroller = new Unroller(new Hashtable());
+                    tile.getComputeCode().getMethods()[i].accept(unroller);
+                } while(unroller.hasUnrolled());
+                tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
+                tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
+            } else
+                tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
              
             //tile.getComputeCode().getMethods()[i].accept(arrayDest);
-             tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
+            tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
         }
     }
     
@@ -183,7 +183,7 @@ public class TraceIRtoC extends ToC
     }
 
 
-     /**
+    /**
      * prints a for statement
      */
     public void visitForStatement(JForStatement self,
@@ -237,7 +237,7 @@ public class TraceIRtoC extends ToC
         statementContext = oldStatementContext;
     }
     
-     /**
+    /**
      * prints a variable declaration statement
      */
     public void visitVariableDefinition(JVariableDefinition self,
@@ -246,23 +246,23 @@ public class TraceIRtoC extends ToC
                                         String ident,
                                         JExpression expr) {
         if (expr instanceof JArrayInitializer) {
-	    declareInitializedArray(type, ident, expr);
+            declareInitializedArray(type, ident, expr);
         } else {
-	    
-	    printDecl (type, ident);
-	    
+        
+            printDecl (type, ident);
+        
             if (expr != null && !(expr instanceof JNewArrayExpression)) {
-		p.print ("\t= ");
-		expr.accept (this);
-	    } else if (type.isOrdinal())
-		p.print(" = 0");
-	    else if (type.isFloatingPoint())
-		p.print(" = 0.0f");
-	    else if (type.isArrayType())
-		p.print(" = {0}");
+                p.print ("\t= ");
+                expr.accept (this);
+            } else if (type.isOrdinal())
+                p.print(" = 0");
+            else if (type.isFloatingPoint())
+                p.print(" = 0.0f");
+            else if (type.isArrayType())
+                p.print(" = {0}");
 
-	    p.print(";/* " + type + " */");
-	}
+            p.print(";/* " + type + " */");
+        }
     }
     
 
@@ -346,8 +346,8 @@ public class TraceIRtoC extends ToC
         //print the array indices
         for (int i = 0; i < dims.length; i++) {
             p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+                    RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+                    RawExecutionCode.ARRAY_INDEX + i + "++)\n");
         }
         
         p.print("{");
@@ -357,8 +357,8 @@ public class TraceIRtoC extends ToC
         arg.accept(this);
         //now append the remaining dimensions
         for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
+            p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+        }
         //finish up the receive assembly
         p.print(Util.staticNetworkReceiveSuffix(type.getBaseType()));
         p.print("}");
@@ -411,26 +411,26 @@ public class TraceIRtoC extends ToC
              !(right instanceof JNewArrayExpression))) {
                     
             CArrayType type = (CArrayType)right.getType();
-	    String dims[] = Util.makeString(type.getDims());
+            String dims[] = Util.makeString(type.getDims());
 
-	    // dims should never be null now that we have static array
-	    // bounds
-	    assert dims != null;
-	    /*
+            // dims should never be null now that we have static array
+            // bounds
+            assert dims != null;
+            /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-                boolean oldStatementContext = statementContext;
-                lastLeft=left;
-                printLParen();  // parenthesize if expr, not if stmt
-                statementContext = false;
-                left.accept(this);
-                p.print(" = ");
-                right.accept(this);
-                statementContext = oldStatementContext;
-                printRParen();
-                return;
+            boolean oldStatementContext = statementContext;
+            lastLeft=left;
+            printLParen();  // parenthesize if expr, not if stmt
+            statementContext = false;
+            left.accept(this);
+            p.print(" = ");
+            right.accept(this);
+            statementContext = oldStatementContext;
+            printRParen();
+            return;
             }
-	    */
+            */
 
             p.print("{\n");
             p.print("int ");
@@ -441,7 +441,7 @@ public class TraceIRtoC extends ToC
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
                 p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
-                      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                        " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
@@ -516,10 +516,10 @@ public class TraceIRtoC extends ToC
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
-        if (prefix != null) {
-            prefix.accept(this);
-            i++;
-        }
+           if (prefix != null) {
+           prefix.accept(this);
+           i++;
+           }
         */
         visitArgs(args, i);
         p.print(")");
@@ -646,8 +646,8 @@ public class TraceIRtoC extends ToC
         
         for (int i = 0; i < dims.length; i++) {
             p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+                    RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+                    RawExecutionCode.ARRAY_INDEX + i + "++)\n");
         }
 
         if(KjcOptions.altcodegen || KjcOptions.decoupled) {

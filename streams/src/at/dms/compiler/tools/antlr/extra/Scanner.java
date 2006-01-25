@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Scanner.java,v 1.2 2002-12-18 06:28:43 karczma Exp $
+ * $Id: Scanner.java,v 1.3 2006-01-25 17:00:53 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
@@ -40,166 +40,166 @@ import at.dms.compiler.tools.common.Utils;
  */
 public abstract class Scanner implements TokenStream {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Constructs a new hand written scanner
-   */
-  protected Scanner(Compiler compiler, InputBuffer buffer) {
-    this.compiler = compiler;
-    this.buffer = buffer;
-    this.comments = new Vector();
-  }
-
-  // --------------------------------------------------------------------
-  // TOKEN HANDLING
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the next token in the input.
-   */
-  public final Token nextToken() {
-    while (true) {
-      try {
-	return nextTokenImpl();
-      } catch (IOException e) {
-	reportTrouble(CompilerMessages.IO_EXCEPTION, new Object[]{ buffer.getFile(), e.getMessage()});
-      }
+    /**
+     * Constructs a new hand written scanner
+     */
+    protected Scanner(Compiler compiler, InputBuffer buffer) {
+        this.compiler = compiler;
+        this.buffer = buffer;
+        this.comments = new Vector();
     }
-  }
 
-  /**
-   * Returns the next token in the input.
-   */
-  public abstract Token nextTokenImpl() throws IOException;
+    // --------------------------------------------------------------------
+    // TOKEN HANDLING
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // OPERATIONS
-  // --------------------------------------------------------------------
-
-  /**
-   * Returns the reference of the current token in the source file.
-   */
-  public final TokenReference getTokenReference() {
-    return TokenReference.build(buffer.getFile(), buffer.getLine());
-  }
-
-  /**
-   * Reports that an error has been detected in the lexical analyser.
-   * The handling is delegated to the compiler driver.
-   * @param	error		the error to report
-   */
-  protected final void reportTrouble(PositionedError trouble) {
-    compiler.reportTrouble(trouble);
-  }
-
-  /**
-   * Reports that an error has been detected in the lexical analyser.
-   * The handling is delegated to the compiler driver.
-   * @param	mess		the error message
-   * @param	params		the array of message parameters
-   */
-  protected final void reportTrouble(MessageDescription mess, Object[] params) {
-    reportTrouble(new PositionedError(getTokenReference(), mess, params));
-  }
-
-  // --------------------------------------------------------------------
-  // COMMENT HANDLING
-  // --------------------------------------------------------------------
-
-  /*
-   * Adds a comment
-   */
-  public final void addComment(JavaStyleComment comment) {
-    comments.addElement(comment);
-  }
-
-  /**
-   *
-   */
-  public JavaStyleComment[] getStatementComment() {
-    JavaStyleComment[]	comm = (JavaStyleComment[])Utils.toArray(comments, JavaStyleComment.class);
-
-    comments.setSize(0);
-
-    return comm;
-  }
-
-
-  /**
-   *
-   */
-  public JavadocComment getJavadocComment() {
-    for (int i = comments.size() - 1; i >= 0; i--) {
-      if (comments.elementAt(i) instanceof JavadocComment) {
-	JavadocComment		jdoc = (JavadocComment)comments.elementAt(i);
-
-	comments.setElementAt(null, i);
-	return jdoc;
-      }
+    /**
+     * Returns the next token in the input.
+     */
+    public final Token nextToken() {
+        while (true) {
+            try {
+                return nextTokenImpl();
+            } catch (IOException e) {
+                reportTrouble(CompilerMessages.IO_EXCEPTION, new Object[]{ buffer.getFile(), e.getMessage()});
+            }
+        }
     }
-    return null;
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    /**
+     * Returns the next token in the input.
+     */
+    public abstract Token nextTokenImpl() throws IOException;
 
-  /**
-   * Returns the input buffer.
-   */
-  public final InputBuffer getBuffer() {
-    return buffer;
-  }
+    // --------------------------------------------------------------------
+    // OPERATIONS
+    // --------------------------------------------------------------------
 
-  /**
-   *
-   */
-  public void setFile(String file) {
-    buffer.setFile(file);
-  }
+    /**
+     * Returns the reference of the current token in the source file.
+     */
+    public final TokenReference getTokenReference() {
+        return TokenReference.build(buffer.getFile(), buffer.getLine());
+    }
 
-  /**
-   * Returns the current line number in the source code.
-   */
-  public final int getLine() {
-    return buffer.getLine();
-  }
+    /**
+     * Reports that an error has been detected in the lexical analyser.
+     * The handling is delegated to the compiler driver.
+     * @param   error       the error to report
+     */
+    protected final void reportTrouble(PositionedError trouble) {
+        compiler.reportTrouble(trouble);
+    }
 
-  /**
-   * Sets the current line number in the source code.
-   */
-  public final void setLine(int line) {
-    buffer.setLine(line);
-  }
+    /**
+     * Reports that an error has been detected in the lexical analyser.
+     * The handling is delegated to the compiler driver.
+     * @param   mess        the error message
+     * @param   params      the array of message parameters
+     */
+    protected final void reportTrouble(MessageDescription mess, Object[] params) {
+        reportTrouble(new PositionedError(getTokenReference(), mess, params));
+    }
 
-  /**
-   * Sets the current line number in the source code.
-   */
-  public final void incrementLine() {
-    buffer.incrementLine();
-  }
+    // --------------------------------------------------------------------
+    // COMMENT HANDLING
+    // --------------------------------------------------------------------
 
-  // --------------------------------------------------------------------
-  // IMPLEMENTED BY ACTUAL SCANNERS
-  // --------------------------------------------------------------------
+    /*
+     * Adds a comment
+     */
+    public final void addComment(JavaStyleComment comment) {
+        comments.addElement(comment);
+    }
 
-  /**
-   * Returns the buffer state.
-   */
-  public abstract InputBufferState getBufferState();
+    /**
+     *
+     */
+    public JavaStyleComment[] getStatementComment() {
+        JavaStyleComment[]  comm = (JavaStyleComment[])Utils.toArray(comments, JavaStyleComment.class);
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+        comments.setSize(0);
 
-  public static final CToken		TOKEN_EOF = new CToken(1, "End of file");
+        return comm;
+    }
 
-  private final Compiler		compiler;
-  private final InputBuffer		buffer;
-  private final Vector			comments;
+
+    /**
+     *
+     */
+    public JavadocComment getJavadocComment() {
+        for (int i = comments.size() - 1; i >= 0; i--) {
+            if (comments.elementAt(i) instanceof JavadocComment) {
+                JavadocComment      jdoc = (JavadocComment)comments.elementAt(i);
+
+                comments.setElementAt(null, i);
+                return jdoc;
+            }
+        }
+        return null;
+    }
+
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns the input buffer.
+     */
+    public final InputBuffer getBuffer() {
+        return buffer;
+    }
+
+    /**
+     *
+     */
+    public void setFile(String file) {
+        buffer.setFile(file);
+    }
+
+    /**
+     * Returns the current line number in the source code.
+     */
+    public final int getLine() {
+        return buffer.getLine();
+    }
+
+    /**
+     * Sets the current line number in the source code.
+     */
+    public final void setLine(int line) {
+        buffer.setLine(line);
+    }
+
+    /**
+     * Sets the current line number in the source code.
+     */
+    public final void incrementLine() {
+        buffer.incrementLine();
+    }
+
+    // --------------------------------------------------------------------
+    // IMPLEMENTED BY ACTUAL SCANNERS
+    // --------------------------------------------------------------------
+
+    /**
+     * Returns the buffer state.
+     */
+    public abstract InputBufferState getBufferState();
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    public static final CToken      TOKEN_EOF = new CToken(1, "End of file");
+
+    private final Compiler      compiler;
+    private final InputBuffer       buffer;
+    private final Vector            comments;
 }
 
 //---  // --------------------------------------------------------------------
@@ -246,53 +246,53 @@ public abstract class Scanner implements TokenStream {
 //---  public final Token nextToken() {
 //---    while (true) {
 //---      if (buffer.isEndOfData()) {
-//---	return EOF;
+//---   return EOF;
 //---      } else {
-//---	switch (buffer.thisChar()) {
+//---   switch (buffer.thisChar()) {
 //---
-//---	  // White space:
-//---	case '\n':	// LineTerminator NL
-//---	  buffer.incrLine();
-//---	  buffer.skipChar();
-//---	  continue;
+//---     // White space:
+//---   case '\n':  // LineTerminator NL
+//---     buffer.incrLine();
+//---     buffer.skipChar();
+//---     continue;
 //---
-//---	case '\r':	// LineTerminator CR
-//---	  // No need to handle CR-NL separatly here:
-//---	  // NL will be caught in the next loop cycle
-//---	case ' ':	// ASCII SP
-//---	case '\t':	// ASCII HT
-//---	case '\f':	// ASCII FF
-//---	  buffer.skipChar();
-//---	  continue;
+//---   case '\r':  // LineTerminator CR
+//---     // No need to handle CR-NL separatly here:
+//---     // NL will be caught in the next loop cycle
+//---   case ' ':   // ASCII SP
+//---   case '\t':  // ASCII HT
+//---   case '\f':  // ASCII FF
+//---     buffer.skipChar();
+//---     continue;
 //---
-//---	  // EOF character:
-//---	case '\020': // ASCII SUB
-//---	  buffer.skipChar();
-//---	  return EOF;
+//---     // EOF character:
+//---   case '\020': // ASCII SUB
+//---     buffer.skipChar();
+//---     return EOF;
 //---
-//---	  // else, a Token
-//---	default:
-//---	  try {
-//---	    Token	tok = getToken();
+//---     // else, a Token
+//---   default:
+//---     try {
+//---       Token   tok = getToken();
 //---
-//---	    if (tok != null) {
-//---	      return tok;
-//---	    }
-//---	    continue;
-//---	  } catch (PositionedError e) {
-//---	    reportTrouble(e);
-//---	    buffer.skipChar();
-//---	  } catch (Exception e) {
-//---	    if (! buffer.isEndOfData()) {
-//---	      reportTrouble(CompilerMessages.NO_VIABLE_ALT_FOR_CHAR, "" + buffer.thisChar(), null);
-//---	    } else {
-//---	      // not a very pretty way of handling unexpected EOF
-//---	      reportTrouble(CompilerMessages.UNEXPECTED_EOF, null, null);
-//---	      return EOF;
-//---	    }
-//---	    buffer.skipChar();
-//---	  }
-//---	}
+//---       if (tok != null) {
+//---         return tok;
+//---       }
+//---       continue;
+//---     } catch (PositionedError e) {
+//---       reportTrouble(e);
+//---       buffer.skipChar();
+//---     } catch (Exception e) {
+//---       if (! buffer.isEndOfData()) {
+//---         reportTrouble(CompilerMessages.NO_VIABLE_ALT_FOR_CHAR, "" + buffer.thisChar(), null);
+//---       } else {
+//---         // not a very pretty way of handling unexpected EOF
+//---         reportTrouble(CompilerMessages.UNEXPECTED_EOF, null, null);
+//---         return EOF;
+//---       }
+//---       buffer.skipChar();
+//---     }
+//---   }
 //---      }
 //---    }
 //---  }
@@ -305,7 +305,7 @@ public abstract class Scanner implements TokenStream {
 //---  /**
 //---   * Scans an escape sequence
 //---   *
-//---   * @return	the scanned character
+//---   * @return   the scanned character
 //---   */
 //---  protected char scanEscapeSequence() throws PositionedError {
 //---    if (buffer.nextChar() != '\\') {
@@ -338,8 +338,8 @@ public abstract class Scanner implements TokenStream {
 //---  }
 //---
 //---  private char scanOctCharacter() throws PositionedError {
-//---    int		val = 0;
-//---    int		i;
+//---    int        val = 0;
+//---    int        i;
 //---
 //---    for (i = 0; i < 3 && (Character.digit(buffer.thisChar(), 8) != -1); i++) {
 //---      val = (8*val) + Character.digit(buffer.nextChar(), 8);
@@ -353,8 +353,8 @@ public abstract class Scanner implements TokenStream {
 //---  }
 //---
 //---  private char scanHexCharacter() throws PositionedError {
-//---    int		val = 0;
-//---    int		i;
+//---    int        val = 0;
+//---    int        i;
 //---
 //---    for (i = 0; i < 4 && (Character.digit(buffer.thisChar(), 16) != -1); i++) {
 //---      val = (16*val) + Character.digit(buffer.nextChar(), 16);
@@ -371,7 +371,7 @@ public abstract class Scanner implements TokenStream {
 //---   * Determines if the specified character is permissible as
 //---   * the first character in a Java identifier.
 //---   *
-//---   * @return	true iff the character may start a Java identifier
+//---   * @return   true iff the character may start a Java identifier
 //---   */
 //---  protected static boolean isJavaIdentifierStart(char c) {
 //---    switch (c) {
@@ -420,39 +420,39 @@ public abstract class Scanner implements TokenStream {
 //---  }
 //---
 //---  private void readEndOfLineComment() {
-//---    buffer.skipChars(2);	// skip leading "//"
+//---    buffer.skipChars(2);   // skip leading "//"
 //---
-//---    int		start = buffer.getPosition();
+//---    int        start = buffer.getPosition();
 //---
 //---    // read until end of line
 //---  _loop_:
 //---    while (true) {
 //---      if (buffer.isEndOfData()) {
-//---	//!!! add a warning for
-//---	break _loop_;
+//---   //!!! add a warning for
+//---   break _loop_;
 //---      }
 //---
 //---      switch (buffer.thisChar()) {
 //---      case '\n':
 //---      case '\r':
-//---	break _loop_;
+//---   break _loop_;
 //---      default:
-//---	buffer.skipChar();
+//---   buffer.skipChar();
 //---      }
 //---    }
 //---
 //---    if (compiler.parseComments()) {
 //---      addComment(new JavaStyleComment(new String(buffer.data, start, buffer.getPosition() - start),
-//---				      true,
-//---				      spaceBefore(start),
-//---				      spaceAfter(buffer.getPosition())));
+//---                     true,
+//---                     spaceBefore(start),
+//---                     spaceAfter(buffer.getPosition())));
 //---    }
 //---  }
 //---
 //---  private void readTraditionalComment() {
-//---    buffer.skipChars(2);	// skip leading "/*"
+//---    buffer.skipChars(2);   // skip leading "/*"
 //---
-//---    int		start = buffer.getPosition();
+//---    int        start = buffer.getPosition();
 //---
 //---    // read until "*/" found
 //---  _loop_:
@@ -462,36 +462,36 @@ public abstract class Scanner implements TokenStream {
 //---      //!!! graf 000212: add warning for "/*" inside comment
 //---      switch (buffer.thisChar()) {
 //---      case '*':
-//---	buffer.skipChar();
-//---	while (buffer.thisChar() == '*') {
-//---	  buffer.skipChar();
-//---	}
-//---	if (buffer.thisChar() == '/') {
-//---	  buffer.skipChar();
-//---	  break _loop_;
-//---	}
-//---	break;
+//---   buffer.skipChar();
+//---   while (buffer.thisChar() == '*') {
+//---     buffer.skipChar();
+//---   }
+//---   if (buffer.thisChar() == '/') {
+//---     buffer.skipChar();
+//---     break _loop_;
+//---   }
+//---   break;
 //---      case '\n':
-//---	buffer.incrLine();
-//---	buffer.skipChar();
-//---	break;
+//---   buffer.incrLine();
+//---   buffer.skipChar();
+//---   break;
 //---      default:
-//---	buffer.skipChar();
+//---   buffer.skipChar();
 //---      }
 //---    }
 //---
 //---    if (compiler.parseComments()) {
 //---      if (buffer.charAtPosition(start) == '*') {
-//---	// documentation comment
-//---	addComment(new JavadocComment(new String(buffer.data, start + 1, buffer.getPosition() - start - 3),
-//---				      spaceBefore(start),
-//---				      spaceAfter(buffer.getPosition())));
+//---   // documentation comment
+//---   addComment(new JavadocComment(new String(buffer.data, start + 1, buffer.getPosition() - start - 3),
+//---                     spaceBefore(start),
+//---                     spaceAfter(buffer.getPosition())));
 //---      } else {
-//---	// traditional comment
-//---	addComment(new JavaStyleComment(new String(buffer.data, start, buffer.getPosition() - start - 2),
-//---					false,
-//---					spaceBefore(start),
-//---					spaceAfter(buffer.getPosition())));
+//---   // traditional comment
+//---   addComment(new JavaStyleComment(new String(buffer.data, start, buffer.getPosition() - start - 2),
+//---                   false,
+//---                   spaceBefore(start),
+//---                   spaceAfter(buffer.getPosition())));
 //---      }
 //---    }
 //---  }
@@ -512,7 +512,7 @@ public abstract class Scanner implements TokenStream {
 //---  private int previousReturn(int i) {
 //---    for (; i >= 0; i--) {
 //---      if (buffer.charAtPosition(i) == '\n') {
-//---	return i;
+//---   return i;
 //---      }
 //---    }
 //---    return 0;
@@ -521,7 +521,7 @@ public abstract class Scanner implements TokenStream {
 //---  private int previousNonBlank(int i) {
 //---    for (; i >= 0; i--) {
 //---      if (buffer.charAtPosition(i) != ' ' && buffer.charAtPosition(i) != '\t') {
-//---	return i;
+//---   return i;
 //---      }
 //---    }
 //---    return 0;
@@ -530,7 +530,7 @@ public abstract class Scanner implements TokenStream {
 //---  private int nextReturn(int i) {
 //---    for (; i < buffer.data.length; i++) {
 //---      if (buffer.charAtPosition(i) == '\n' || buffer.charAtPosition(i) == 0) {
-//---	return i;
+//---   return i;
 //---      }
 //---    }
 //---
@@ -540,7 +540,7 @@ public abstract class Scanner implements TokenStream {
 //---  private int nextNonBlank(int i) {
 //---    for (; i < buffer.data.length; i++) {
 //---      if ((buffer.charAtPosition(i) != ' ' && buffer.charAtPosition(i) != '\t') || buffer.charAtPosition(i) == 0) {
-//---	return i;
+//---   return i;
 //---      }
 //---    }
 //---
@@ -548,7 +548,7 @@ public abstract class Scanner implements TokenStream {
 //---  }
 //---
 //---  private boolean spaceBefore(int pos) {
-//---    int		previousReturn = previousReturn(pos);
+//---    int        previousReturn = previousReturn(pos);
 //---
 //---    return previousReturn == 0 ?
 //---      false :
@@ -556,7 +556,7 @@ public abstract class Scanner implements TokenStream {
 //---  }
 //---
 //---  private boolean spaceAfter(int pos) {
-//---    int	  	nextReturn = nextReturn(pos);
+//---    int        nextReturn = nextReturn(pos);
 //---
 //---    return nextNonBlank(nextReturn + 1) >= nextReturn(nextReturn + 1);
 //---  }

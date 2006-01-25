@@ -14,31 +14,31 @@ import at.dms.util.*;
 public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
 
     public SIRPredefinedFilter() {
-	super();
+        super();
     }
 
     public SIRPredefinedFilter(SIRContainer parent,
-			       String ident,
-			       JFieldDeclaration[] fields, 
-			       JMethodDeclaration[] methods, 
-			       JExpression peek, JExpression pop, JExpression push, 
-			       CType inputType, CType outputType) {
-	super(parent,
-	      ident,
-	      fields,
-	      methods,
-	      peek, pop, push,
-	      /* work */ new JMethodDeclaration("SIRPredefinedFilter " + ident),
-	      /* input type */ inputType,
-	      /* output type */ outputType);
+                               String ident,
+                               JFieldDeclaration[] fields, 
+                               JMethodDeclaration[] methods, 
+                               JExpression peek, JExpression pop, JExpression push, 
+                               CType inputType, CType outputType) {
+        super(parent,
+              ident,
+              fields,
+              methods,
+              peek, pop, push,
+              /* work */ new JMethodDeclaration("SIRPredefinedFilter " + ident),
+              /* input type */ inputType,
+              /* output type */ outputType);
     }
 
     public boolean needsInit() {
-	return false;
+        return false;
     }
 
     public boolean needsWork() {
-	return false;
+        return false;
     }
 
     public String getTypeNameInC() {
@@ -52,22 +52,22 @@ public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
     public void propagatePredefinedFields(Propagator propagator) {
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.kjc.sir.SIRPredefinedFilter other = new at.dms.kjc.sir.SIRPredefinedFilter();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+        at.dms.kjc.sir.SIRPredefinedFilter other = new at.dms.kjc.sir.SIRPredefinedFilter();
+        at.dms.kjc.AutoCloner.register(this, other);
+        deepCloneInto(other);
+        return other;
+    }
 
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.kjc.sir.SIRPredefinedFilter other) {
-  super.deepCloneInto(other);
-}
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.sir.SIRPredefinedFilter other) {
+        super.deepCloneInto(other);
+    }
 
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

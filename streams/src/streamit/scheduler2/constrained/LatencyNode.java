@@ -53,34 +53,34 @@ public class LatencyNode extends streamit.misc.Misc
     {
         Integer zero = new Integer(0);
         for (int nChannel = 0;
-            nChannel < getNumInputChannels();
-            nChannel++)
-        {
-            dataItems2numExecs[nChannel] = new OMap();
-            int nDataNeeded = 0, nDataPopped = 0;
-
-            dataItems2numExecs[nChannel].insert(zero, zero);
-
-            // first the initalization schedule
-            int totalPhases = getInitNumPhases() + getSteadyNumPhases();
-            for (int nPhase = 0; nPhase <= totalPhases; nPhase++)
+             nChannel < getNumInputChannels();
+             nChannel++)
             {
-                nDataNeeded =
-                    MAX(
-                        nDataNeeded,
-                        nDataPopped + getPhasePeek(nPhase, nChannel));
-                nDataPopped += getPhasePop(nPhase, nChannel);
+                dataItems2numExecs[nChannel] = new OMap();
+                int nDataNeeded = 0, nDataPopped = 0;
 
-                Integer dataNeeded = new Integer(nDataNeeded);
-                Integer phase = new Integer(nPhase);
+                dataItems2numExecs[nChannel].insert(zero, zero);
 
-                // force insertion of the pair <dataNeeded, phase>
-                // into the map
-                Pair insertResult =
-                    dataItems2numExecs[nChannel].insert(dataNeeded, phase);
-                ((OMapIterator)insertResult.getFirst()).setData(phase);
+                // first the initalization schedule
+                int totalPhases = getInitNumPhases() + getSteadyNumPhases();
+                for (int nPhase = 0; nPhase <= totalPhases; nPhase++)
+                    {
+                        nDataNeeded =
+                            MAX(
+                                nDataNeeded,
+                                nDataPopped + getPhasePeek(nPhase, nChannel));
+                        nDataPopped += getPhasePop(nPhase, nChannel);
+
+                        Integer dataNeeded = new Integer(nDataNeeded);
+                        Integer phase = new Integer(nPhase);
+
+                        // force insertion of the pair <dataNeeded, phase>
+                        // into the map
+                        Pair insertResult =
+                            dataItems2numExecs[nChannel].insert(dataNeeded, phase);
+                        ((OMapIterator)insertResult.getFirst()).setData(phase);
+                    }
             }
-        }
     }
 
     LatencyNode(Filter filter, DLList _ancestors)
@@ -90,30 +90,30 @@ public class LatencyNode extends streamit.misc.Misc
         {
             steadyNodePhases =
                 new OperatorPhases(
-                    filter.getNumDeclaredSteadyPhases(),
-                    1,
-                    1);
+                                   filter.getNumDeclaredSteadyPhases(),
+                                   1,
+                                   1);
 
             int nPhase;
             for (nPhase = 0;
-                nPhase < filter.getNumDeclaredSteadyPhases();
-                nPhase++)
-            {
-                steadyNodePhases.setPhaseInput(
-                    dynamicToStatic(filter.getDeclaredSteadyPhasePeek(nPhase)),
-                    dynamicToStatic(filter.getDeclaredSteadyPhasePop(nPhase)),
-                    nPhase,
-                    0);
+                 nPhase < filter.getNumDeclaredSteadyPhases();
+                 nPhase++)
+                {
+                    steadyNodePhases.setPhaseInput(
+                                                   dynamicToStatic(filter.getDeclaredSteadyPhasePeek(nPhase)),
+                                                   dynamicToStatic(filter.getDeclaredSteadyPhasePop(nPhase)),
+                                                   nPhase,
+                                                   0);
 
-                steadyNodePhases.setPhaseOutput(
-                    dynamicToStatic(filter.getDeclaredSteadyPhasePush(nPhase)),
-                    nPhase,
-                    0);
+                    steadyNodePhases.setPhaseOutput(
+                                                    dynamicToStatic(filter.getDeclaredSteadyPhasePush(nPhase)),
+                                                    nPhase,
+                                                    0);
 
-                steadyNodePhases.setOperatorPhase(
-                    filter.getDeclaredSteadyPhase(nPhase),
-                    nPhase);
-            }
+                    steadyNodePhases.setOperatorPhase(
+                                                      filter.getDeclaredSteadyPhase(nPhase),
+                                                      nPhase);
+                }
         }
 
         {
@@ -122,24 +122,24 @@ public class LatencyNode extends streamit.misc.Misc
 
             int nInitPhase;
             for (nInitPhase = 0;
-                nInitPhase < filter.getNumDeclaredInitPhases();
-                nInitPhase++)
-            {
-                initNodePhases.setPhaseInput(
-                    dynamicToStatic(filter.getDeclaredInitPhasePeek(nInitPhase)),
-                    dynamicToStatic(filter.getDeclaredInitPhasePop(nInitPhase)),
-                    nInitPhase,
-                    0);
+                 nInitPhase < filter.getNumDeclaredInitPhases();
+                 nInitPhase++)
+                {
+                    initNodePhases.setPhaseInput(
+                                                 dynamicToStatic(filter.getDeclaredInitPhasePeek(nInitPhase)),
+                                                 dynamicToStatic(filter.getDeclaredInitPhasePop(nInitPhase)),
+                                                 nInitPhase,
+                                                 0);
 
-                initNodePhases.setPhaseOutput(
-                    dynamicToStatic(filter.getDeclaredInitPhasePush(nInitPhase)),
-                    nInitPhase,
-                    0);
+                    initNodePhases.setPhaseOutput(
+                                                  dynamicToStatic(filter.getDeclaredInitPhasePush(nInitPhase)),
+                                                  nInitPhase,
+                                                  0);
 
-                initNodePhases.setOperatorPhase(
-                    filter.getDeclaredInitPhase(nInitPhase),
-                    nInitPhase);
-            }
+                    initNodePhases.setOperatorPhase(
+                                                    filter.getDeclaredInitPhase(nInitPhase),
+                                                    nInitPhase);
+                }
         }
 
         // compute how many phases can be executed given a certain number
@@ -151,95 +151,95 @@ public class LatencyNode extends streamit.misc.Misc
     }
 
     LatencyNode(
-        StreamInterfaceWithSnJ sj,
-        boolean isSplitter,
-        DLList _ancestors)
+                StreamInterfaceWithSnJ sj,
+                boolean isSplitter,
+                DLList _ancestors)
     {
         ancestors = _ancestors;
 
         if (isSplitter)
-        {
-            initNodePhases = new OperatorPhases(0, 1, sj.getSplitFanOut());
-
-            steadyNodePhases =
-                new OperatorPhases(
-                    sj.getNumSplitPhases(),
-                    1,
-                    sj.getSplitFanOut());
-
-            int nPhase;
-            for (nPhase = 0; nPhase < sj.getNumSplitPhases(); nPhase++)
             {
-                steadyNodePhases.setPhaseInput(
-                    sj.getSplitFlow(nPhase).getPopWeight(),
-                    sj.getSplitFlow(nPhase).getPopWeight(),
-                    nPhase,
-                    0);
+                initNodePhases = new OperatorPhases(0, 1, sj.getSplitFanOut());
 
-                steadyNodePhases.setOperatorPhase(
-                    sj.getSplitPhase(nPhase),
-                    nPhase);
+                steadyNodePhases =
+                    new OperatorPhases(
+                                       sj.getNumSplitPhases(),
+                                       1,
+                                       sj.getSplitFanOut());
 
-                for (int nOutChannel = 0;
-                    nOutChannel < sj.getSplitFanOut();
-                    nOutChannel++)
+                int nPhase;
+                for (nPhase = 0; nPhase < sj.getNumSplitPhases(); nPhase++)
+                    {
+                        steadyNodePhases.setPhaseInput(
+                                                       sj.getSplitFlow(nPhase).getPopWeight(),
+                                                       sj.getSplitFlow(nPhase).getPopWeight(),
+                                                       nPhase,
+                                                       0);
+
+                        steadyNodePhases.setOperatorPhase(
+                                                          sj.getSplitPhase(nPhase),
+                                                          nPhase);
+
+                        for (int nOutChannel = 0;
+                             nOutChannel < sj.getSplitFanOut();
+                             nOutChannel++)
+                            {
+                                steadyNodePhases.setPhaseOutput(
+                                                                sj.getSplitFlow(nPhase).getPushWeight(nOutChannel),
+                                                                nPhase,
+                                                                nOutChannel);
+                            }
+                    }
+
+                // compute how many phases can be executed given a certain number
+                // of data items on the input channel
                 {
-                    steadyNodePhases.setPhaseOutput(
-                        sj.getSplitFlow(nPhase).getPushWeight(nOutChannel),
-                        nPhase,
-                        nOutChannel);
+                    dataItems2numExecs = new OMap[1];
+                    computeDataItems2NumExecs();
                 }
             }
-
-            // compute how many phases can be executed given a certain number
-            // of data items on the input channel
-            {
-                dataItems2numExecs = new OMap[1];
-                computeDataItems2NumExecs();
-            }
-        }
         else
-        {
-            initNodePhases = new OperatorPhases(0, sj.getJoinFanIn(), 1);
-
-
-            steadyNodePhases =
-                new OperatorPhases(
-                    sj.getNumJoinPhases(),
-                    sj.getJoinFanIn(),
-                    1);
-
-            int nPhase;
-            for (nPhase = 0; nPhase < sj.getNumJoinPhases(); nPhase++)
             {
-                steadyNodePhases.setPhaseOutput(
-                    sj.getJoinFlow(nPhase).getPushWeight(),
-                    nPhase,
-                    0);
+                initNodePhases = new OperatorPhases(0, sj.getJoinFanIn(), 1);
 
-                steadyNodePhases.setOperatorPhase(
-                    sj.getJoinPhase(nPhase),
-                    nPhase);
 
-                for (int nOutChannel = 0;
-                    nOutChannel < sj.getJoinFanIn();
-                    nOutChannel++)
+                steadyNodePhases =
+                    new OperatorPhases(
+                                       sj.getNumJoinPhases(),
+                                       sj.getJoinFanIn(),
+                                       1);
+
+                int nPhase;
+                for (nPhase = 0; nPhase < sj.getNumJoinPhases(); nPhase++)
+                    {
+                        steadyNodePhases.setPhaseOutput(
+                                                        sj.getJoinFlow(nPhase).getPushWeight(),
+                                                        nPhase,
+                                                        0);
+
+                        steadyNodePhases.setOperatorPhase(
+                                                          sj.getJoinPhase(nPhase),
+                                                          nPhase);
+
+                        for (int nOutChannel = 0;
+                             nOutChannel < sj.getJoinFanIn();
+                             nOutChannel++)
+                            {
+                                steadyNodePhases.setPhaseInput(
+                                                               sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
+                                                               sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
+                                                               nPhase,
+                                                               nOutChannel);
+                            }
+                    }
+
+                // compute how many phases can be executed given a certain number
+                // of data items on the input channel
                 {
-                    steadyNodePhases.setPhaseInput(
-                        sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
-                        sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
-                        nPhase,
-                        nOutChannel);
+                    dataItems2numExecs = new OMap[getNumInputChannels()];
+                    computeDataItems2NumExecs();
                 }
             }
-
-            // compute how many phases can be executed given a certain number
-            // of data items on the input channel
-            {
-                dataItems2numExecs = new OMap[getNumInputChannels()];
-                computeDataItems2NumExecs();
-            }
-        }
 
     }
 
@@ -292,77 +292,77 @@ public class LatencyNode extends streamit.misc.Misc
     public int getPhasePeek(int nPhase, int nChannel)
     {
         if (nPhase < initNodePhases.getNumPhases())
-        {
-            // it's an init phase
-            return initNodePhases.getPhasePeek(nPhase, nChannel);
+            {
+                // it's an init phase
+                return initNodePhases.getPhasePeek(nPhase, nChannel);
+            }
+        else if (steadyNodePhases.getNumPhases()==0) {
+            // null splitters and joiners have 0 phases
+            return 0;
         }
-	else if (steadyNodePhases.getNumPhases()==0) {
-	    // null splitters and joiners have 0 phases
-	    return 0;
-	}
         else
-        {
-            // it's a steady state
-            return steadyNodePhases.getPhasePeek(
-                (nPhase - initNodePhases.getNumPhases())
-                    % steadyNodePhases.getNumPhases(),
-                nChannel);
-        }
+            {
+                // it's a steady state
+                return steadyNodePhases.getPhasePeek(
+                                                     (nPhase - initNodePhases.getNumPhases())
+                                                     % steadyNodePhases.getNumPhases(),
+                                                     nChannel);
+            }
     }
 
     public int getPhasePop(int nPhase, int nChannel)
     {
         if (nPhase < initNodePhases.getNumPhases())
-        {
-            // it's an init phase
-            return initNodePhases.getPhasePop(nPhase, nChannel);
+            {
+                // it's an init phase
+                return initNodePhases.getPhasePop(nPhase, nChannel);
+            }
+        else if (steadyNodePhases.getNumPhases()==0) {
+            // null splitters and joiners have 0 phases
+            return 0;
         }
-	else if (steadyNodePhases.getNumPhases()==0) {
-	    // null splitters and joiners have 0 phases
-	    return 0;
-	}
         else
-        {
-            // it's a steady state
-            return steadyNodePhases.getPhasePop(
-                (nPhase - initNodePhases.getNumPhases())
-                    % steadyNodePhases.getNumPhases(),
-                nChannel);
-        }
+            {
+                // it's a steady state
+                return steadyNodePhases.getPhasePop(
+                                                    (nPhase - initNodePhases.getNumPhases())
+                                                    % steadyNodePhases.getNumPhases(),
+                                                    nChannel);
+            }
     }
 
     public int getPhasePush(int nPhase, int nChannel)
     {
         if (nPhase < initNodePhases.getNumPhases())
-        {
-            // it's an init phase
-            return initNodePhases.getPhasePush(nPhase, nChannel);
+            {
+                // it's an init phase
+                return initNodePhases.getPhasePush(nPhase, nChannel);
+            }
+        else if (steadyNodePhases.getNumPhases()==0) {
+            // null splitters and joiners have 0 phases
+            return 0;
         }
-	else if (steadyNodePhases.getNumPhases()==0) {
-	    // null splitters and joiners have 0 phases
-	    return 0;
-	}
         else
-        {
-            // it's a steady state
-            return steadyNodePhases.getPhasePush(
-                (nPhase - initNodePhases.getNumPhases())
-                    % steadyNodePhases.getNumPhases(),
-                nChannel);
-        }
+            {
+                // it's a steady state
+                return steadyNodePhases.getPhasePush(
+                                                     (nPhase - initNodePhases.getNumPhases())
+                                                     % steadyNodePhases.getNumPhases(),
+                                                     nChannel);
+            }
     }
 
     public void addDependency(LatencyEdge dependency)
     {
         if (dependency.getSrc() == this)
-        {
-            dependants.pushBack(dependency);
-        }
+            {
+                dependants.pushBack(dependency);
+            }
         else
-        {
-            assert dependency.getDst() == this;
-            dependsOn.pushBack(dependency);
-        }
+            {
+                assert dependency.getDst() == this;
+                dependsOn.pushBack(dependency);
+            }
     }
 
     public DLList_const getDependants()
@@ -381,12 +381,12 @@ public class LatencyNode extends streamit.misc.Misc
         DLListIterator lastAncestorIter = ancestors.end();
 
         for (; !ancestorIter.equals(lastAncestorIter); ancestorIter.next())
-        {
-            if (((StreamInterface)ancestorIter.get()) == ancestor)
             {
-                return true;
+                if (((StreamInterface)ancestorIter.get()) == ancestor)
+                    {
+                        return true;
+                    }
             }
-        }
 
         return false;
     }
@@ -395,16 +395,16 @@ public class LatencyNode extends streamit.misc.Misc
     {
         int nSteadyStates = 0;
         if (nDataItems > getInitPeek(nChannel))
-        {
-            // finished initialization
-            nDataItems -= getInitPop(nChannel);
+            {
+                // finished initialization
+                nDataItems -= getInitPop(nChannel);
 
-            nSteadyStates =
-                ((nDataItems - getInitPop(nChannel))
-                    - (getSteadyStatePeek(nChannel)
+                nSteadyStates =
+                    ((nDataItems - getInitPop(nChannel))
+                     - (getSteadyStatePeek(nChannel)
                         - getSteadyStatePop(nChannel)))
                     / getSteadyStatePop(nChannel);
-        }
+            }
 
         nDataItems -= (nSteadyStates * getSteadyStatePop(nChannel));
 
@@ -416,12 +416,12 @@ public class LatencyNode extends streamit.misc.Misc
         if (upperBound == 0)
             nIters = 0;
         else
-        {
-            OMapIterator iters = upperBoundIters;
-            iters.prev();
+            {
+                OMapIterator iters = upperBoundIters;
+                iters.prev();
 
-            nIters = ((Integer)iters.getData()).intValue();
-        }
+                nIters = ((Integer)iters.getData()).intValue();
+            }
 
         nIters += nSteadyStates * getSteadyNumPhases();
 
@@ -433,10 +433,10 @@ public class LatencyNode extends streamit.misc.Misc
     // avoid assertion checks in the scheduler.  The output of the
     // SDEP calculation will never depend on the placeholder used.
     private int dynamicToStatic(int rate) {
-	if (rate<0) { // e.g., for streamit.library.Rate.DYNAMIC_RATE
-	    return 0; // non-negative placeholder
-	} else {
-	    return rate;
-	}
+        if (rate<0) { // e.g., for streamit.library.Rate.DYNAMIC_RATE
+            return 0; // non-negative placeholder
+        } else {
+            return rate;
+        }
     }
 }

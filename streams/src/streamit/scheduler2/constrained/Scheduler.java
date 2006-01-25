@@ -34,20 +34,20 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         factory = new ConstrainedStreamFactory(this, needsSchedule);
         rootStream =
             (
-                streamit
-                    .scheduler2
-                    .constrained
-                    .StreamInterface)factory
-                    .newFrom(
-                root,
-                null);
+             streamit
+             .scheduler2
+             .constrained
+             .StreamInterface)factory
+            .newFrom(
+                     root,
+                     null);
     }
 
     /**
      * In usual scenario, creating a scheduler to perform scheduling.
      */
     public static Scheduler create(Iterator _root) {
-	return new Scheduler(_root, true);
+        return new Scheduler(_root, true);
     }
 
     /**
@@ -56,7 +56,7 @@ public class Scheduler extends streamit.scheduler2.Scheduler
      * in some parts of graph).
      */
     public static Scheduler createForSDEP(Iterator _root) {
-	return new Scheduler(_root, false);
+        return new Scheduler(_root, false);
     }
 
     public void computeSchedule()
@@ -109,11 +109,11 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     }
 
     public void addDownstreamConstraint(
-        Iterator src,
-        Iterator dst,
-        int min,
-        int max,
-        Object handlerFunction)
+                                        Iterator src,
+                                        Iterator dst,
+                                        int min,
+                                        int max,
+                                        Object handlerFunction)
     {
         ERROR("Not implemented");
     }
@@ -121,11 +121,11 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     final OMap subNoMsgs = new OMap();
 
     public void addUpstreamConstraint(
-        Iterator upstream,
-        Iterator downstream,
-        int min,
-        int max,
-        Object handlerFunction)
+                                      Iterator upstream,
+                                      Iterator downstream,
+                                      int min,
+                                      int max,
+                                      Object handlerFunction)
     {
         LatencyGraph graph = factory.getLatencyGraph();
         Filter upstreamFilter = (Filter)factory.newFrom(upstream, null);
@@ -138,15 +138,15 @@ public class Scheduler extends streamit.scheduler2.Scheduler
 
         P2PPortal portal =
             new P2PPortal(
-                true,
-                srcNode,
-                dstNode,
-                min,
-                max,
-                parent,
-                upstreamFilter,
-                upstream,
-                handlerFunction);
+                          true,
+                          srcNode,
+                          dstNode,
+                          min,
+                          max,
+                          parent,
+                          upstreamFilter,
+                          upstream,
+                          handlerFunction);
         parent.registerConstraint(portal);
         subNoMsgs.insert(portal.getPortalMessageCheckPhase().getSchedule(), null);
     }
@@ -156,9 +156,9 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         // maybe I've already been processed?
         OMapIterator subNoMsgsSched = subNoMsgs.find(sched);
         if (!subNoMsgsSched.equals(subNoMsgs.end()))
-        {
-            return (Schedule)subNoMsgsSched.getData();
-        }
+            {
+                return (Schedule)subNoMsgsSched.getData();
+            }
         
         if (sched.isBottomSchedule()) return sched;
         
@@ -166,14 +166,14 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         // a new set without any nulls :)
         Schedule newSched = new Schedule (sched.getStream());
         for (int i=0;i<sched.getNumPhases();i++)
-        {
-            Schedule newSubSched = removeMsgs (sched.getSubSched(i));
-            if (newSubSched != null)
             {
-                int nTimes = sched.getSubSchedNumExecs(i);
-                newSched.addSubSchedule(newSubSched, nTimes);
+                Schedule newSubSched = removeMsgs (sched.getSubSched(i));
+                if (newSubSched != null)
+                    {
+                        int nTimes = sched.getSubSchedNumExecs(i);
+                        newSched.addSubSchedule(newSubSched, nTimes);
+                    }
             }
-        }
         
         subNoMsgs.insert(sched, newSched);
 

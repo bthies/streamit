@@ -64,22 +64,22 @@ abstract public class Scheduler extends AssertedClass
     void optimizeSchedule()
     {
         if (optimizer == null)
-        {
-//            System.err.println("Printing input to optmizeSchedule -----------------------------------------------------");
-//            printSchedule(initSchedule, steadySchedule);
-//            System.err.println("End of   input to optmizeSchedule -----------------------------------------------------");
-            optimizer = new ScheduleOptimizer(initSchedule, steadySchedule, this);
-            optimizer.optimize();
-            optimizedInitSchedule = optimizer.getOptimizedInitSched();
-            optimizedSteadySchedule = optimizer.getOptimizedSteadySched();
-//            System.err.println("Printing output of optmizeSchedule -----------------------------------------------------");
-//            printSchedule(initSchedule, steadySchedule);
-//            System.err.println("End of   output of optmizeSchedule -----------------------------------------------------");
-//            System.err.println("Printing reps for optmizeSchedule -----------------------------------------------------");
-//            printReps();
-//            System.err.println("End of   reps for optmizeSchedule -----------------------------------------------------");
+            {
+                //            System.err.println("Printing input to optmizeSchedule -----------------------------------------------------");
+                //            printSchedule(initSchedule, steadySchedule);
+                //            System.err.println("End of   input to optmizeSchedule -----------------------------------------------------");
+                optimizer = new ScheduleOptimizer(initSchedule, steadySchedule, this);
+                optimizer.optimize();
+                optimizedInitSchedule = optimizer.getOptimizedInitSched();
+                optimizedSteadySchedule = optimizer.getOptimizedSteadySched();
+                //            System.err.println("Printing output of optmizeSchedule -----------------------------------------------------");
+                //            printSchedule(initSchedule, steadySchedule);
+                //            System.err.println("End of   output of optmizeSchedule -----------------------------------------------------");
+                //            System.err.println("Printing reps for optmizeSchedule -----------------------------------------------------");
+                //            printReps();
+                //            System.err.println("End of   reps for optmizeSchedule -----------------------------------------------------");
             
-        }
+            }
     }
 
     public Schedule getOptimizedInitSchedule()
@@ -111,16 +111,16 @@ abstract public class Scheduler extends AssertedClass
     public void computeBufferUse()
     {
         if (scheduleBuffers == null)
-        {
-            scheduleBuffers = new ScheduleBuffers(root);
-            scheduleBuffers.computeBuffersFor(getOptimizedInitSchedule ());
-            scheduleBuffers.computeBuffersFor(getOptimizedSteadySchedule ());
-        }
+            {
+                scheduleBuffers = new ScheduleBuffers(root);
+                scheduleBuffers.computeBuffersFor(getOptimizedInitSchedule ());
+                scheduleBuffers.computeBuffersFor(getOptimizedSteadySchedule ());
+            }
     }
 
     public int getBufferSizeBetween(
-        Iterator userBefore,
-        Iterator userAfter)
+                                    Iterator userBefore,
+                                    Iterator userAfter)
     {
         computeBufferUse();
         return scheduleBuffers.getBufferSizeBetween(userBefore, userAfter);
@@ -154,8 +154,8 @@ abstract public class Scheduler extends AssertedClass
     public void printOptimizedSchedule()
     {
         printSchedule(
-            getOptimizedInitSchedule(),
-            getOptimizedSteadySchedule());
+                      getOptimizedInitSchedule(),
+                      getOptimizedSteadySchedule());
     }
 
     private void printSched(Schedule sched, Map scheds)
@@ -165,47 +165,47 @@ abstract public class Scheduler extends AssertedClass
             return;
 
         if (!sched.isBottomSchedule())
-        {
-            for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
             {
-                // print the children first
-                printSched(sched.getSubSched(nPhase), scheds);
+                for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
+                    {
+                        // print the children first
+                        printSched(sched.getSubSched(nPhase), scheds);
+                    }
+
+                int symbolicIdx = scheds.size();
+                scheds.put(sched, new Integer (symbolicIdx));
+
+                // and now print self:
+                System.err.print("$" + symbolicIdx + " = { ");
+                for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
+                    {
+                        int times = sched.getSubSchedNumExecs(nPhase);
+                        int idx =
+                            ((Integer)scheds.get(sched.getSubSched(nPhase)))
+                            .intValue();
+
+                        if (times > 1)
+                            System.err.print("{" + times + " $" + idx + "} ");
+                        else
+                            System.err.print("$" + idx + " ");
+
+                    }
+                System.err.println("}");
             }
-
-            int symbolicIdx = scheds.size();
-            scheds.put(sched, new Integer (symbolicIdx));
-
-            // and now print self:
-            System.err.print("$" + symbolicIdx + " = { ");
-            for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
-            {
-                int times = sched.getSubSchedNumExecs(nPhase);
-                int idx =
-                    ((Integer)scheds.get(sched.getSubSched(nPhase)))
-                        .intValue();
-
-                if (times > 1)
-                    System.err.print("{" + times + " $" + idx + "} ");
-                else
-                    System.err.print("$" + idx + " ");
-
-            }
-            System.err.println("}");
-        }
         else
-        {
-            // this is an actual leaf - create a vector with just
-            // a single entry - the schedule
-            int symbolicIdx = scheds.size();
-            scheds.put(sched, new Integer (symbolicIdx));
-            System.err.println(
-			       "$"
-			       + symbolicIdx
-			       + " = "
-			       + sched.getStream().getObject() + "@" + sched.getStream().getObject().hashCode()
-			       + "."
-			       + sched.getWorkFunc());
-        }
+            {
+                // this is an actual leaf - create a vector with just
+                // a single entry - the schedule
+                int symbolicIdx = scheds.size();
+                scheds.put(sched, new Integer (symbolicIdx));
+                System.err.println(
+                                   "$"
+                                   + symbolicIdx
+                                   + " = "
+                                   + sched.getStream().getObject() + "@" + sched.getStream().getObject().hashCode()
+                                   + "."
+                                   + sched.getWorkFunc());
+            }
     }
 
     /**
@@ -218,55 +218,55 @@ abstract public class Scheduler extends AssertedClass
      *  result[1] = map for steady-state schedule
      */     
     public HashMap[] getExecutionCounts() {
-	// make the result
-	HashMap[] result = { new HashMap(), new HashMap() } ;
+        // make the result
+        HashMap[] result = { new HashMap(), new HashMap() } ;
 
-	// fill in the init schedule
-	fillExecutionCounts(getOptimizedInitSchedule(), result[0], 1);
-	// fill in the steady-state schedule
-	fillExecutionCounts(getOptimizedSteadySchedule(), result[1], 1);
-	
-	return result;
+        // fill in the init schedule
+        fillExecutionCounts(getOptimizedInitSchedule(), result[0], 1);
+        // fill in the steady-state schedule
+        fillExecutionCounts(getOptimizedSteadySchedule(), result[1], 1);
+    
+        return result;
     }
     
     // Creates execution counts of filters in graph.
     private void fillExecutionCounts(Schedule schedule, HashMap counts, int numReps) {
-	if (schedule.isBottomSchedule()) {
-	    // tally up for this node.
-	    Object target = schedule.getStream().getObject();
-	    if (!counts.containsKey(target)) {
-		// initialize counter
-		int[] wrapper = { numReps };
-		counts.put(target, wrapper);
-	    } else {
-		// add to counter
-		int[] wrapper = (int[])counts.get(target);
-		wrapper[0] += numReps;
-	    }	    
-	} else {
-	    // otherwise we have a container, so simulate execution of
-	    // children
-	    for (int i=0; i<schedule.getNumPhases(); i++) {
-		fillExecutionCounts(schedule.getSubSched(i), counts, numReps * schedule.getSubSchedNumExecs(i));
-	    }
-	}
+        if (schedule.isBottomSchedule()) {
+            // tally up for this node.
+            Object target = schedule.getStream().getObject();
+            if (!counts.containsKey(target)) {
+                // initialize counter
+                int[] wrapper = { numReps };
+                counts.put(target, wrapper);
+            } else {
+                // add to counter
+                int[] wrapper = (int[])counts.get(target);
+                wrapper[0] += numReps;
+            }       
+        } else {
+            // otherwise we have a container, so simulate execution of
+            // children
+            for (int i=0; i<schedule.getNumPhases(); i++) {
+                fillExecutionCounts(schedule.getSubSched(i), counts, numReps * schedule.getSubSchedNumExecs(i));
+            }
+        }
     }
 
     /**
      * Prints repetition info to screen.
      */
     public void printReps() {
-	HashMap[] counts = getExecutionCounts();
-	// print init schedule
-	for (int i=0; i<2; i++) {
-	    System.err.println("Repetitions in " + (i==0 ? "initial" : "steady") + " schedule:");
-	    java.util.Set keys = counts[i].keySet();
-	    for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
-		Object obj = it.next();
-		int[] reps = (int[])counts[i].get(obj);
-		System.err.println(reps[0] + " reps for " + obj + " (hashcode=" + obj.hashCode() + ")");
-	    }
-	    System.err.println();
-	}
+        HashMap[] counts = getExecutionCounts();
+        // print init schedule
+        for (int i=0; i<2; i++) {
+            System.err.println("Repetitions in " + (i==0 ? "initial" : "steady") + " schedule:");
+            java.util.Set keys = counts[i].keySet();
+            for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
+                Object obj = it.next();
+                int[] reps = (int[])counts[i].get(obj);
+                System.err.println(reps[0] + " reps for " + obj + " (hashcode=" + obj.hashCode() + ")");
+            }
+            System.err.println();
+        }
     }
 }

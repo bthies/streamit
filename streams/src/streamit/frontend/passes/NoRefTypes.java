@@ -31,7 +31,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.8 2005-06-27 21:08:56 janiss Exp $
+ * @version $Id: NoRefTypes.java,v 1.9 2006-01-25 17:04:28 thies Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -40,19 +40,19 @@ public class NoRefTypes extends FEReplacer
 
     private Type remapType(Type type)
     {
-	if (type instanceof TypeArray) {
-	    TypeArray ta = (TypeArray)type;
-	    Type newBase = remapType(ta.getBase());
-	    type = new TypeArray(newBase, ta.getLength());
-	}
-        if (type instanceof TypeStructRef)
-        {
-            TypeStructRef tsr = (TypeStructRef)type;
-            String name = tsr.getName();
-            if (!structs.containsKey(name))
-                throw new UnrecognizedVariableException(name);
-            type = (Type)structs.get(name);
+        if (type instanceof TypeArray) {
+            TypeArray ta = (TypeArray)type;
+            Type newBase = remapType(ta.getBase());
+            type = new TypeArray(newBase, ta.getLength());
         }
+        if (type instanceof TypeStructRef)
+            {
+                TypeStructRef tsr = (TypeStructRef)type;
+                String name = tsr.getName();
+                if (!structs.containsKey(name))
+                    throw new UnrecognizedVariableException(name);
+                type = (Type)structs.get(name);
+            }
         return type;
     }
 
@@ -68,22 +68,22 @@ public class NoRefTypes extends FEReplacer
         // structs that contain structs.
         List newStructs = new java.util.ArrayList();
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
-        {
-            TypeStruct struct = (TypeStruct)iter.next();
-            List newNames = new java.util.ArrayList();
-            List newTypes = new java.util.ArrayList();
-            for (int i = 0; i < struct.getNumFields(); i++)
             {
-                String name = struct.getField(i);
-                Type type = remapType(struct.getType(name));
-                newNames.add(name);
-                newTypes.add(type);
+                TypeStruct struct = (TypeStruct)iter.next();
+                List newNames = new java.util.ArrayList();
+                List newTypes = new java.util.ArrayList();
+                for (int i = 0; i < struct.getNumFields(); i++)
+                    {
+                        String name = struct.getField(i);
+                        Type type = remapType(struct.getType(name));
+                        newNames.add(name);
+                        newTypes.add(type);
+                    }
+                struct = new TypeStruct(struct.getContext(), struct.getName(),
+                                        newNames, newTypes);
+                newStructs.add(struct);
+                structs.put(struct.getName(), struct);
             }
-            struct = new TypeStruct(struct.getContext(), struct.getName(),
-                                    newNames, newTypes);
-            newStructs.add(struct);
-            structs.put(struct.getName(), struct);
-        }
         prog = new Program(prog.getContext(), prog.getStreams(), newStructs, prog.getHelpers());
         return super.visitProgram(prog);
     }
@@ -103,12 +103,12 @@ public class NoRefTypes extends FEReplacer
         // rest of the work.
         List newParams = new java.util.ArrayList();
         for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            Type type = remapType(param.getType());
-            param = new Parameter(type, param.getName());
-            newParams.add(param);
-        }
+            {
+                Parameter param = (Parameter)iter.next();
+                Type type = remapType(param.getType());
+                param = new Parameter(type, param.getName());
+                newParams.add(param);
+            }
         Type returnType = remapType(func.getReturnType());
         return super.visitFunction(new Function(func.getContext(),
                                                 func.getCls(),
@@ -133,12 +133,12 @@ public class NoRefTypes extends FEReplacer
         // rest of the work.
         List newParams = new java.util.ArrayList();
         for (Iterator iter = ss.getParams().iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            Type type = remapType(param.getType());
-            param = new Parameter(type, param.getName());
-            newParams.add(param);
-        }
+            {
+                Parameter param = (Parameter)iter.next();
+                Type type = remapType(param.getType());
+                param = new Parameter(type, param.getName());
+                newParams.add(param);
+            }
         return super.visitStreamSpec(new StreamSpec(ss.getContext(),
                                                     ss.getType(),
                                                     ss.getStreamType(),

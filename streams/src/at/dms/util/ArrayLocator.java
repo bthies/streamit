@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ArrayLocator.java,v 1.1 2001-08-30 16:32:57 thies Exp $
+ * $Id: ArrayLocator.java,v 1.2 2006-01-25 17:02:47 thies Exp $
  */
 
 package at.dms.util;
@@ -27,51 +27,51 @@ import java.util.Hashtable;
  */
 public class ArrayLocator {
 
-  /**
-   * Constructs a new ArrayLocator object.
-   */
-  public ArrayLocator(Object[] array) {
-    if (array.length < MIN_HASH) {
-      this.array = array;
-    } else {
-      System.err.println("WARNING HASH DOES NOT WORK");
-      this.hashed = new Hashtable(array.length + 1, 1.0f);
-      for (int i = 0; i < array.length; i++) {
-	this.hashed.put(array[i], new Integer(i));
-      }
+    /**
+     * Constructs a new ArrayLocator object.
+     */
+    public ArrayLocator(Object[] array) {
+        if (array.length < MIN_HASH) {
+            this.array = array;
+        } else {
+            System.err.println("WARNING HASH DOES NOT WORK");
+            this.hashed = new Hashtable(array.length + 1, 1.0f);
+            for (int i = 0; i < array.length; i++) {
+                this.hashed.put(array[i], new Integer(i));
+            }
+        }
     }
-  }
 
-  /**
-   * Returns the index of the specified object in the array, or -1
-   * if the object cannot be found.
-   * !!! TEST: linear search
-   */
-  public int getIndex(Object object) {
-    if (this.array != null) {
-      for (int i = 0; i < array.length; i++) {
-	if (object == array[i]) {
-	  return i;
-	}
-      }
-      return -1;
-    } else {
-      Object	index = hashed.get(object);
+    /**
+     * Returns the index of the specified object in the array, or -1
+     * if the object cannot be found.
+     * !!! TEST: linear search
+     */
+    public int getIndex(Object object) {
+        if (this.array != null) {
+            for (int i = 0; i < array.length; i++) {
+                if (object == array[i]) {
+                    return i;
+                }
+            }
+            return -1;
+        } else {
+            Object  index = hashed.get(object);
 
-      if (index == null) {
-	return -1;
-      } else {
-	return ((Integer)index).intValue();
-      }
+            if (index == null) {
+                return -1;
+            } else {
+                return ((Integer)index).intValue();
+            }
+        }
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
 
-  private static final int	MIN_HASH = Integer.MAX_VALUE; // Hashtable does not work !!!
-  // The equals method differs from == !!!
-  private Object[]		array;
-  private Hashtable		hashed;
+    private static final int    MIN_HASH = Integer.MAX_VALUE; // Hashtable does not work !!!
+    // The equals method differs from == !!!
+    private Object[]        array;
+    private Hashtable       hashed;
 }

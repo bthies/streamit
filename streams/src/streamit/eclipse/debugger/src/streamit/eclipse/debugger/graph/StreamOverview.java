@@ -11,34 +11,34 @@ import org.eclipse.ui.part.ViewPart;
  */
 public class StreamOverview extends ViewPart implements ISelectionListener {
 
-	private StreamOverviewer fViewer;
+    private StreamOverviewer fViewer;
 
-	public StreamOverview() {
-		super();
-	}
+    public StreamOverview() {
+        super();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
-	 */
-	public void createPartControl(Composite parent) {
-		fViewer = new StreamOverviewer(parent);
-	}
-	
-	public StreamOverviewer getViewer() {
-		return fViewer;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPart#setFocus()
-	 */
-	public void setFocus() {
-		fViewer.getControl().setFocus();
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
-	 */
-	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-	}
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.IWorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
+     */
+    public void createPartControl(Composite parent) {
+        fViewer = new StreamOverviewer(parent);
+    }
+    
+    public StreamOverviewer getViewer() {
+        return fViewer;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.IWorkbenchPart#setFocus()
+     */
+    public void setFocus() {
+        fViewer.getControl().setFocus();
+    }
+    
+    /* (non-Javadoc)
+     * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
+     */
+    public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+    }
 }
 

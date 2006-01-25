@@ -11,11 +11,11 @@ import org.jgraph.JGraph;
  */
 public class GEStreamNodeView 
 {
-	JGraph jgraph;
-	
-	public GEStreamNodeView(JGraph jgraph)
-	{
-		this.jgraph = jgraph;
-	
-	}
+    JGraph jgraph;
+    
+    public GEStreamNodeView(JGraph jgraph)
+    {
+        this.jgraph = jgraph;
+    
+    }
 }

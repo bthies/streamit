@@ -1,5 +1,5 @@
 /*
- * @(#)CellViewRenderer.java	1.0 1/1/02
+ * @(#)CellViewRenderer.java    1.0 1/1/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -35,25 +35,25 @@ import org.jgraph.JGraph;
 
 public interface CellViewRenderer {
 
-	/**
-	 * Configure and return the renderer based on the passed in
-	 * components. The value is typically set from messaging the
-	 * graph with <code>convertValueToString</code>.
-	 * We recommend you check the value's class and throw an
-	 * illegal argument exception if it's not correct.
-	 *
-	 * @param   graph the graph that that defines the rendering context.
-	 * @param   value the object that should be rendered.
-	 * @param   selected whether the object is selected.
-	 * @param   hasFocus whether the object has the focus.
-	 * @param   isPreview whether we are drawing a preview.
-	 * @return	the component used to render the value.
-	 */
-	Component getRendererComponent(
-		JGraph graph,
-		CellView view,
-		boolean sel,
-		boolean focus,
-		boolean preview);
+    /**
+     * Configure and return the renderer based on the passed in
+     * components. The value is typically set from messaging the
+     * graph with <code>convertValueToString</code>.
+     * We recommend you check the value's class and throw an
+     * illegal argument exception if it's not correct.
+     *
+     * @param   graph the graph that that defines the rendering context.
+     * @param   value the object that should be rendered.
+     * @param   selected whether the object is selected.
+     * @param   hasFocus whether the object has the focus.
+     * @param   isPreview whether we are drawing a preview.
+     * @return  the component used to render the value.
+     */
+    Component getRendererComponent(
+                                   JGraph graph,
+                                   CellView view,
+                                   boolean sel,
+                                   boolean focus,
+                                   boolean preview);
 
 }

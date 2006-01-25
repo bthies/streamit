@@ -31,18 +31,18 @@ import java.util.ArrayList;
  * init function.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InitMunger.java,v 1.3 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: InitMunger.java,v 1.4 2006-01-25 17:04:30 thies Exp $
  */
 abstract public class InitMunger extends FEReplacer
 {
     public static Function findInit(FEContext context, List fns)
     {
         for (Iterator iter = fns.iterator(); iter.hasNext(); )
-        {
-            Function fn = (Function)iter.next();
-            if (fn.getCls() == Function.FUNC_INIT)
-                return fn;
-        }
+            {
+                Function fn = (Function)iter.next();
+                if (fn.getCls() == Function.FUNC_INIT)
+                    return fn;
+            }
         
         // No init function; create an empty one.
         return Function.newInit(context,

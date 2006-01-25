@@ -33,8 +33,8 @@ public class StreamItDot implements AttributeStreamVisitor
     private int lastNode;
 
     public StreamItDot(PrintStream outputStream) {
-	lastNode = 0;
-	this.outputStream = outputStream;
+        lastNode = 0;
+        this.outputStream = outputStream;
     }
 
     /**
@@ -45,17 +45,17 @@ public class StreamItDot implements AttributeStreamVisitor
         Kopi2SIR k2s = new Kopi2SIR(app);
         SIRStream stream = null;
         for (int i = 0; i < app.length; i++)
-        {
-            SIRStream top = (SIRStream)app[i].accept(k2s);
-            if (top != null)
-                stream = top;
-        }
+            {
+                SIRStream top = (SIRStream)app[i].accept(k2s);
+                if (top != null)
+                    stream = top;
+            }
         
         if (stream == null)
-        {
-            System.err.println("No top-level stream defined!");
-            System.exit(-1);
-        }
+            {
+                System.err.println("No top-level stream defined!");
+                System.exit(-1);
+            }
 
         // Use the visitor.
         print("digraph streamit {\n");
@@ -67,29 +67,29 @@ public class StreamItDot implements AttributeStreamVisitor
      * Prints dot graph of <str> to System.out
      */
     public static void printGraph(SIRStream str) {
-	str.accept(new StreamItDot(System.out));
+        str.accept(new StreamItDot(System.out));
     }
 
     /**
      * Prints dot graph of <str> to <filename>
      */
     public static void printGraph(SIRStream str, String filename) {
-	try {
-	    FileOutputStream out = new FileOutputStream(filename);
-	    StreamItDot dot = new StreamItDot(new PrintStream(out));
-	    dot.print("digraph streamit {\n");
-	    str.accept(dot);
-	    dot.print("}\n");
-	    out.flush();
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+        try {
+            FileOutputStream out = new FileOutputStream(filename);
+            StreamItDot dot = new StreamItDot(new PrintStream(out));
+            dot.print("digraph streamit {\n");
+            str.accept(dot);
+            dot.print("}\n");
+            out.flush();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void print(String f) 
     {
-	outputStream.print(f);
+        outputStream.print(f);
     }
 
     void printEdge(String from, String to)
@@ -139,26 +139,26 @@ public class StreamItDot implements AttributeStreamVisitor
      * Returns the rate information for a filter.
      */
     protected static String makeFilterLabel(SIRPhasedFilter self) {
-	String label = "";
-	try {
+        String label = "";
+        try {
             JMethodDeclaration[] phases = self.getPhases();
             for (int i = 0; i < phases.length; i++)
-            {
-                label += "\\npush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
-                label += "\\npop" + (phases.length>1 ? ""+i : "")  + "=" + phases[i].getPopString();
-                label += "\\npeek" + (phases.length>1 ? ""+i : "")  + " =" + phases[i].getPeekString();
-            }
+                {
+                    label += "\\npush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
+                    label += "\\npop" + (phases.length>1 ? ""+i : "")  + "=" + phases[i].getPopString();
+                    label += "\\npeek" + (phases.length>1 ? ""+i : "")  + " =" + phases[i].getPeekString();
+                }
             phases = self.getInitPhases();
             for (int i = 0; i < phases.length; i++)
-            {
-                label += "\\ninitPush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
-                label += "\\ninitPop" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPopString();
-                label += "\\ninitPeek" + (phases.length>1 ? ""+i : "") + " =" + phases[i].getPeekString();
-            }
-	} catch (Exception e) {
-	    // if constants not resolved for the ints, will get an exception
-	}
-	return label;
+                {
+                    label += "\\ninitPush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
+                    label += "\\ninitPop" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPopString();
+                    label += "\\ninitPeek" + (phases.length>1 ? ""+i : "") + " =" + phases[i].getPeekString();
+                }
+        } catch (Exception e) {
+            // if constants not resolved for the ints, will get an exception
+        }
+        return label;
     }
 
     /* visit a filter */
@@ -169,7 +169,7 @@ public class StreamItDot implements AttributeStreamVisitor
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
-	return new NamePair(makeLabelledNode(self.getName() + makeFilterLabel(self)));
+        return new NamePair(makeLabelledNode(self.getName() + makeFilterLabel(self)));
     }
 
     /* visit a phased filter */
@@ -189,26 +189,26 @@ public class StreamItDot implements AttributeStreamVisitor
         
         // Walk through each of the phases.
         if (initPhases != null)
-			for (int i = 0; i < initPhases.length; i++)
-			{
-				NamePair p2 = processWorkFunction(initPhases[i]);
-				printEdge(pair.last, p2.first);
-				// Update the known edges.
-				if (pair.first == null)
-					pair.first = p2.first;
-				pair.last = p2.last;
-			}
-		
+            for (int i = 0; i < initPhases.length; i++)
+                {
+                    NamePair p2 = processWorkFunction(initPhases[i]);
+                    printEdge(pair.last, p2.first);
+                    // Update the known edges.
+                    if (pair.first == null)
+                        pair.first = p2.first;
+                    pair.last = p2.last;
+                }
+        
         if (phases != null)
             for (int i = 0; i < phases.length; i++)
-            {
-                NamePair p2 = processWorkFunction(phases[i]);
-                printEdge(pair.last, p2.first);
-                // Update the known edges.
-                if (pair.first == null)
-                    pair.first = p2.first;
-                pair.last = p2.last;
-            }
+                {
+                    NamePair p2 = processWorkFunction(phases[i]);
+                    printEdge(pair.last, p2.first);
+                    // Update the known edges.
+                    if (pair.first == null)
+                        pair.first = p2.first;
+                    pair.last = p2.last;
+                }
         
         print("}\n");
         return pair;
@@ -219,19 +219,19 @@ public class StreamItDot implements AttributeStreamVisitor
                                 SIRSplitType type,
                                 JExpression[] expWeights)
     {
-	String label = type.toString();
-	// try to add weights to label
-	try {
-	    int[] weights = self.getWeights();
-	    label += "(";
-	    for (int i=0; i<weights.length; i++) {
-		label += weights[i];
-		if (i!=weights.length-1) {
-		    label+=",";
-		}
-	    }
-	    label += ")";
-	} catch (Exception e) {}
+        String label = type.toString();
+        // try to add weights to label
+        try {
+            int[] weights = self.getWeights();
+            label += "(";
+            for (int i=0; i<weights.length; i++) {
+                label += weights[i];
+                if (i!=weights.length-1) {
+                    label+=",";
+                }
+            }
+            label += ")";
+        } catch (Exception e) {}
         // Create an empty node and return it.
         return new NamePair(makeLabelledInvisNode(label));
     }
@@ -241,34 +241,34 @@ public class StreamItDot implements AttributeStreamVisitor
                               SIRJoinType type,
                               JExpression[] expWeights)
     {
-	String label = type.toString();
-	// try to add weights to label
-	try {
-	    int[] weights = self.getWeights();
-	    label += "(";
-	    for (int i=0; i<weights.length; i++) {
-		label += weights[i];
-		if (i!=weights.length-1) {
-		    label+=",";
-		}
-	    }
-	    label += ")";
-	} catch (Exception e) {}
+        String label = type.toString();
+        // try to add weights to label
+        try {
+            int[] weights = self.getWeights();
+            label += "(";
+            for (int i=0; i<weights.length; i++) {
+                label += weights[i];
+                if (i!=weights.length-1) {
+                    label+=",";
+                }
+            }
+            label += ")";
+        } catch (Exception e) {}
         return new NamePair(makeLabelledInvisNode(label));
     }
     
     /* process a work function */
     public NamePair processWorkFunction(JMethodDeclaration work) {
-	String label = work.getName();
-	try {
-	    label += "\\npush=" + work.getPushString();
-	    label += "\\npop=" + work.getPopString();
-	    label += "\\npeek=" + work.getPeekString();
-	} catch (Exception e) {
-	    // if constants not resolved for the ints, will get an exception
-	}
-	
-	return new NamePair(makeLabelledNode(label));
+        String label = work.getName();
+        try {
+            label += "\\npush=" + work.getPushString();
+            label += "\\npop=" + work.getPopString();
+            label += "\\npeek=" + work.getPeekString();
+        } catch (Exception e) {
+            // if constants not resolved for the ints, will get an exception
+        }
+    
+        return new NamePair(makeLabelledNode(label));
     }
 
     /* pre-visit a pipeline */
@@ -281,20 +281,20 @@ public class StreamItDot implements AttributeStreamVisitor
         
         // Print this within a subgraph.
         print(getClusterString(self));
-	//print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
+        //print("subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n");
         
         // Walk through each of the elements in the pipeline.
         Iterator iter = self.getChildren().iterator();
         while (iter.hasNext())
-        {
-            SIROperator oper = (SIROperator)iter.next();
-            NamePair p2 = (NamePair)oper.accept(this);
-            printEdge(pair.last, p2.first);
-            // Update the known edges.
-            if (pair.first == null)
-                pair.first = p2.first;
-            pair.last = p2.last;
-        }
+            {
+                SIROperator oper = (SIROperator)iter.next();
+                NamePair p2 = (NamePair)oper.accept(this);
+                printEdge(pair.last, p2.first);
+                // Update the known edges.
+                if (pair.first == null)
+                    pair.first = p2.first;
+                pair.last = p2.last;
+            }
 
         print("}\n");
         return pair;
@@ -357,7 +357,7 @@ public class StreamItDot implements AttributeStreamVisitor
         np = (NamePair)self.getBody().accept(this);
         printEdge(joinName, np.first);
         printEdge(np.last, splitName);
-	np = (NamePair)self.getLoop().accept(this);
+        np = (NamePair)self.getLoop().accept(this);
         printEdge(splitName, np.first);
         printEdge(np.last, joinName);
 
@@ -370,7 +370,7 @@ public class StreamItDot implements AttributeStreamVisitor
      * pipelines and splitjoins in LinearDot.
      **/
     public String getClusterString(SIRStream self) {
-	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getName() + "\";\n";
+        return "subgraph cluster_" + getName() + " {\n label=\"" + self.getName() + "\";\n";
     }
 
 

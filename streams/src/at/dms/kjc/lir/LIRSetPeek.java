@@ -21,9 +21,9 @@ public class LIRSetPeek extends LIRNode {
      * Construct a node.
      */
     public LIRSetPeek(JExpression streamContext,
-		      int peek) {
-	super(streamContext);
-	this.peek = peek;
+                      int peek) {
+        super(streamContext);
+        this.peek = peek;
     }
 
     public void accept(SLIRVisitor v)

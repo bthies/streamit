@@ -29,17 +29,17 @@ public class ModState extends SLIREmptyVisitor {
     boolean mod;
 
     ModState() {
-	mod = false;
+        mod = false;
     }
 
     public static boolean methodModsState(JMethodDeclaration self) {
-	ModState m = new ModState();
+        ModState m = new ModState();
 
-	System.out.println("=========== ModState: "+self.getName()+" ===========");
-	m.visitBlockStatement(self.getBody(), null);
-	System.out.println("============================================");
+        System.out.println("=========== ModState: "+self.getName()+" ===========");
+        m.visitBlockStatement(self.getBody(), null);
+        System.out.println("============================================");
 
-	return m.mod;
+        return m.mod;
     }
 
     
@@ -48,22 +48,22 @@ public class ModState extends SLIREmptyVisitor {
                                       int oper,
                                       JExpression expr) {
 
-	if (expr instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    System.out.println("ModState: field "+f_expr.getIdent()+" changed by a prefix expression");
-	    mod = true;
-	}
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
+            System.out.println("ModState: field "+f_expr.getIdent()+" changed by a prefix expression");
+            mod = true;
+        }
     }
 
     public void visitPostfixExpression(JPostfixExpression self,
                                        int oper,
                                        JExpression expr) {
 
-	if (expr instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    //System.out.println("ModState: field "+f_expr.getIdent()+" changed by a postfix expression");
-	    mod = true;	    
-	}
+        if (expr instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
+            //System.out.println("ModState: field "+f_expr.getIdent()+" changed by a postfix expression");
+            mod = true;     
+        }
     }
 
 
@@ -71,21 +71,21 @@ public class ModState extends SLIREmptyVisitor {
                                           JExpression left,
                                           JExpression right) {
 
-	if (left instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
-	    mod = true;
-	}
+        if (left instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
+            System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+            mod = true;
+        }
 
-	if (left instanceof JArrayAccessExpression) {
-	    JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
+        if (left instanceof JArrayAccessExpression) {
+            JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
 
-	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
-		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
-		mod = true;
-	    }
-	}
+            if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
+                JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
+                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+                mod = true;
+            }
+        }
     }
 
 
@@ -94,21 +94,21 @@ public class ModState extends SLIREmptyVisitor {
                                                   JExpression left,
                                                   JExpression right) {
 
-	if (left instanceof JFieldAccessExpression) {
-	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
-	    mod = true;
-	}
+        if (left instanceof JFieldAccessExpression) {
+            JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
+            System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+            mod = true;
+        }
 
-	if (left instanceof JArrayAccessExpression) {
-	    JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
+        if (left instanceof JArrayAccessExpression) {
+            JArrayAccessExpression a_expr = (JArrayAccessExpression)left;
 
-	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
-		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
-		mod = true;
-	    }
-	}
+            if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
+                JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
+                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+                mod = true;
+            }
+        }
     }
 
 }

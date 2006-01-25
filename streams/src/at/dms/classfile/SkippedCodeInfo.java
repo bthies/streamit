@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SkippedCodeInfo.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: SkippedCodeInfo.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -28,22 +28,22 @@ import java.io.IOException;
  */
 public class SkippedCodeInfo extends CodeInfo {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Make up a new attribute
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  public SkippedCodeInfo(DataInput in, ConstantPool cp)
-    throws IOException
-  {
-    int		length = in.readInt();
-    in.skipBytes(length);
-  }
+    /**
+     * Make up a new attribute
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    public SkippedCodeInfo(DataInput in, ConstantPool cp)
+        throws IOException
+    {
+        int     length = in.readInt();
+        in.skipBytes(length);
+    }
 }

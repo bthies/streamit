@@ -12,24 +12,24 @@ import streamit.eclipse.debugger.ui.StreamItViewsManager;
  */
 public class ManageMethodBreakpointActionDelegate extends ManageBreakpointActionDelegate {
 
-	/**
-	 * Manages a breakpoint.
-	 */
-	protected void manageBreakpoint(IEditorInput editorInput) {
+    /**
+     * Manages a breakpoint.
+     */
+    protected void manageBreakpoint(IEditorInput editorInput) {
 
-		StreamItViewsManager.getInstance().addMenuListener(getTextEditor());
+        StreamItViewsManager.getInstance().addMenuListener(getTextEditor());
 
-		ISelectionProvider sp= getTextEditor().getSelectionProvider();
-		ISelection selection= sp.getSelection();
-		if (selection instanceof ITextSelection) {
-			fRulerInfo.setLineNumber(((ITextSelection) selection).getStartLine());
-			fRulerAction.update();
-			fRulerAction.run();
-		}
-	}
+        ISelectionProvider sp= getTextEditor().getSelectionProvider();
+        ISelection selection= sp.getSelection();
+        if (selection instanceof ITextSelection) {
+            fRulerInfo.setLineNumber(((ITextSelection) selection).getStartLine());
+            fRulerAction.update();
+            fRulerAction.run();
+        }
+    }
 
-	protected void setRulerAction() {
-		fRulerAction = new ManageMethodBreakpointRulerAction(fTextEditor, fRulerInfo);
-	}
-	
+    protected void setRulerAction() {
+        fRulerAction = new ManageMethodBreakpointRulerAction(fTextEditor, fRulerInfo);
+    }
+    
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenStreamIOException.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: TokenStreamIOException.java,v 1.2 2006-01-25 17:00:55 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -26,13 +26,13 @@ import java.io.IOException;
  * Wraps an IOException in a TokenStreamException
  */
 public class TokenStreamIOException extends TokenStreamException {
-  public IOException io;
-  /**
-   * TokenStreamIOException constructor comment.
-   * @param s java.lang.String
-   */
-  public TokenStreamIOException(IOException io) {
-    super(io.getMessage());
-    this.io = io;
-  }
+    public IOException io;
+    /**
+     * TokenStreamIOException constructor comment.
+     * @param s java.lang.String
+     */
+    public TokenStreamIOException(IOException io) {
+        super(io.getMessage());
+        this.io = io;
+    }
 }

@@ -30,9 +30,9 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
      * Create one of these with <numVars> variables.
      */
     public SimpleLinearProgram(int numVars) {
-	this.numVars = numVars;
-	this.boolVar = new boolean[numVars];
-	this.constraints = new LinkedList();
+        this.numVars = numVars;
+        this.boolVar = new boolean[numVars];
+        this.constraints = new LinkedList();
     }
 
     /**
@@ -41,14 +41,14 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
      * coefficients before checking in as a new constraint.)
      */
     public double[] getEmptyConstraint() {
-	return new double[numVars];
+        return new double[numVars];
     }
 
     /**
      * Sets the objective function to be <obj>.
      */
     public void setObjective(double[] obj) {
-	this.obj = obj;
+        this.obj = obj;
     }
 
     /**
@@ -56,7 +56,7 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
      * (zero or one).
      */
     public void setBoolVar(int n) {
-	this.boolVar[n] = true;
+        this.boolVar[n] = true;
     }
 
     /**
@@ -66,7 +66,7 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
      * That is, <constraint> <dot> <variables> >= <rhs>. 
      */
     public void addConstraintGE(double[] constraint, double rhs) {
-	constraints.add(new Constraint(ConstraintType.GE, constraint, rhs));
+        constraints.add(new Constraint(ConstraintType.GE, constraint, rhs));
     }
 
     /**
@@ -74,6 +74,6 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
      * coefficients <constraint> and the right-hand-side <rhs>.
      */
     public void addConstraintEQ(double[] constraint, double rhs) {
-	constraints.add(new Constraint(ConstraintType.EQ, constraint, rhs));
+        constraints.add(new Constraint(ConstraintType.EQ, constraint, rhs));
     }
 }

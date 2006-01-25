@@ -1,5 +1,5 @@
 /*
- * @(#)ImageCell.java	1.2 11/11/02
+ * @(#)ImageCell.java   1.2 11/11/02
  *
  * Copyright (C) 2001 Gaudenz Alder
  *
@@ -25,12 +25,12 @@ import org.jgraph.graph.DefaultGraphCell;
 
 public class ImageCell extends DefaultGraphCell {
 
-	public ImageCell() {
-		this(null);
-	}
+    public ImageCell() {
+        this(null);
+    }
 
-	public ImageCell(Object userObject) {
-		super(userObject);
-	}
+    public ImageCell(Object userObject) {
+        super(userObject);
+    }
 
 }

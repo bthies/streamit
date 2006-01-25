@@ -15,17 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ANTLRException.java,v 1.1 2001-08-30 16:32:39 thies Exp $
+ * $Id: ANTLRException.java,v 1.2 2006-01-25 17:00:54 thies Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 public class ANTLRException extends Exception {
 
-  public ANTLRException() {
-    super();
-  }
-  public ANTLRException(String s) {
-    super(s);
-  }
+    public ANTLRException() {
+        super();
+    }
+    public ANTLRException(String s) {
+        super(s);
+    }
 }

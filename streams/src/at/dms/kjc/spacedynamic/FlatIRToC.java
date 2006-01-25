@@ -124,16 +124,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
             }
         }
         if(KjcOptions.destroyfieldarray)
-           arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-           /*   
-          try {
-            SIRPrinter printer1 = new SIRPrinter();
-            IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-            printer1.close();
-        }
-        catch (Exception e) 
-            {
-            }
+            arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+        /*   
+             try {
+             SIRPrinter printer1 = new SIRPrinter();
+             IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
+             printer1.close();
+             }
+             catch (Exception e) 
+             {
+             }
         */
         //      RemoveUnusedVars.doit(node);
         
@@ -145,9 +145,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         ConvertLonelyReceives.doit(toC.ssg, toC.flatNode);
 
         /*
-        SIRPrinter printer1 = new SIRPrinter("sir" + node + ".out");
-        IterFactory.createFactory().createIter(node.getFilter()).accept(printer1);
-        printer1.close();
+          SIRPrinter printer1 = new SIRPrinter("sir" + node + ".out");
+          IterFactory.createFactory().createIter(node.getFilter()).accept(printer1);
+          printer1.close();
         */
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
@@ -171,15 +171,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
     
 
     /*  
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields)
-    {
+        public void visitStructure(SIRStructure self,
+        SIRStream parent,
+        JFieldDeclaration[] fields)
+        {
         p.print("struct " + self.getIdent() + " {\n");
         for (int i = 0; i < fields.length; i++)
-            fields[i].accept(this);
+        fields[i].accept(this);
         p.print("};\n");
-    }
+        }
     */
 
     public static String getNetRegsDecls() 
@@ -261,16 +261,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //a uniprocessor
         if (!KjcOptions.standalone) {
             p.print("void raw_init();\n");
-	    p.print("void " + SwitchCode.SW_SS_TRIPS + "();\n");
+            p.print("void " + SwitchCode.SW_SS_TRIPS + "();\n");
         }
 
                 
         //Visit fields declared in the filter class
         JFieldDeclaration[] fields = self.getFields();
         for (int i = 0; i < fields.length; i++)
-           fields[i].accept(this);
+            fields[i].accept(this);
 
-	//add function for --standalone that will get the iteration
+        //add function for --standalone that will get the iteration
         //count from the command-line
         if (KjcOptions.standalone) 
             addIterCountFunction();
@@ -292,11 +292,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("void begin(void) {\n");
         }
         else {
-	    //otherwise print a normal main()
+            //otherwise print a normal main()
             p.print("int main(int argc, char** argv) {\n");
         }
         
-	if (KjcOptions.standalone) {
+        if (KjcOptions.standalone) {
             p.print("  " + ARGHELPER_COUNTER + "(argc, argv);\n");
         }
         
@@ -308,7 +308,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             gen_magc_done_boot = true;
             p.print("  __asm__ volatile (\"magc $0, $0, 5\");\n");
         }
-	
+    
         
         //if we are using the dynamic network create the dynamic network
         //header to be used for all outgoing messages
@@ -320,10 +320,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 int size = Util.getTypeSize(ssg.getOutputType(flatNode));
                 assert size < 31 : "Type size too large to fit in single dynamic network packet";
                 /*System.out.println(flatNode + " " + layout.getTile(flatNode) + 
-                                   " dynamically sends to + " + downstream + " " + 
-                                   layout.getTile(downstream) + ", size = " + size);
+                  " dynamically sends to + " + downstream + " " + 
+                  layout.getTile(downstream) + ", size = " + size);
                 */
-                    //if the downstream filter is assigned to a tile then use the    
+                //if the downstream filter is assigned to a tile then use the    
                 //following raw helper function to construct the header for the push dynamic
                 if (layout.isAssigned(downstream)) {          
                     p.print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, " +
@@ -361,7 +361,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         if (!(KjcOptions.standalone || KjcOptions.magic_net || KjcOptions.decoupled ||
               IMEMEstimation.TESTING_IMEM)) {
             p.print("  raw_init();\n");
-	    //the call to raw_init2 is now within __RAW_MAIN__()
+            //the call to raw_init2 is now within __RAW_MAIN__()
         }
         //execute the raw main function
         p.print(RawExecutionCode.rawMain + "();\n");
@@ -397,7 +397,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(" " + DYNMSGHEADER + " = construct_dyn_hdr(" +
                 finalRoute + ", " +
                 size + ", " + 
-		"0, " + //user
+                "0, " + //user
                 (layout.getTile(flatNode)).getY() + ", " +
                 (layout.getTile(flatNode)).getX() + ", " + 
                 neighboringTile.getY() + "," +
@@ -425,7 +425,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {
-	assert false;
+        assert false;
     }
 
     private void createFile() {
@@ -601,33 +601,33 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                         JExpression expr) {
 
         if (expr instanceof JArrayInitializer) {
-	    declareInitializedArray(type, ident, expr);
+            declareInitializedArray(type, ident, expr);
         } else {
 
-	    printDecl (type, ident);
-	    
+            printDecl (type, ident);
+        
             if (expr != null && !(expr instanceof JNewArrayExpression)) {
-		p.print ("\t= ");
-		expr.accept (this);
-	    } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
-		// this is to prevent partial evaluation of inputs to
-		// filter by C compiler if we are trying to simulate work
-		// in a node
-		if (type.isOrdinal())
-		    p.print(" = " + ((int)Math.random()));
-		else if (type.isFloatingPoint()) {
-		    p.print(" = " + ((float)Math.random()) + "f");
-		}
-	    } 
-	    else if (type.isOrdinal())
-		p.print(" = 0");
-	    else if (type.isFloatingPoint())
-		p.print(" = 0.0f");
-	    else if (type.isArrayType()) 
-		p.print(" = {0}");
+                p.print ("\t= ");
+                expr.accept (this);
+            } else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
+                // this is to prevent partial evaluation of inputs to
+                // filter by C compiler if we are trying to simulate work
+                // in a node
+                if (type.isOrdinal())
+                    p.print(" = " + ((int)Math.random()));
+                else if (type.isFloatingPoint()) {
+                    p.print(" = " + ((float)Math.random()) + "f");
+                }
+            } 
+            else if (type.isOrdinal())
+                p.print(" = 0");
+            else if (type.isFloatingPoint())
+                p.print(" = 0.0f");
+            else if (type.isArrayType()) 
+                p.print(" = {0}");
 
-	    p.print(";/* " + type + " */");
-	}
+            p.print(";/* " + type + " */");
+        }
     }
 
     /**
@@ -635,33 +635,33 @@ public class FlatIRToC extends ToC implements StreamVisitor
      * Generates code to receive an array type into the buffer
      **/
     /*
-    public void popArray(JExpression arg) 
-    {
-        String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
+      public void popArray(JExpression arg) 
+      {
+      String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
         
-        //print the array indices
-        for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
-        }
+      //print the array indices
+      for (int i = 0; i < dims.length; i++) {
+      p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
+      RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+      RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+      }
         
-        p.print("{");
-        //print out the receive assembly
-        p.print(Util.staticNetworkReceivePrefix());
-        //print out the buffer variable and the index
-        arg.accept(this);
-        //now append the remaining dimensions
-        for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-        //finish up the receive assembly
-        p.print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
-        p.print("}");
-    }
+      p.print("{");
+      //print out the receive assembly
+      p.print(Util.staticNetworkReceivePrefix());
+      //print out the buffer variable and the index
+      arg.accept(this);
+      //now append the remaining dimensions
+      for (int i = 0; i < dims.length; i++) {
+      p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+      }
+      //finish up the receive assembly
+      p.print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
+      p.print("}");
+      }
     */
     
- /**
+    /**
      * prints an assignment expression
      */
     public void visitAssignmentExpression(JAssignmentExpression self,
@@ -690,32 +690,32 @@ public class FlatIRToC extends ToC implements StreamVisitor
             return;
         }
 
-	// copy arrays element-wise
-	boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
-			     (right.getType()!=null && right.getType().isArrayType()));
-	if (arrayType && !(right instanceof JNewArrayExpression)) {
+        // copy arrays element-wise
+        boolean arrayType = ((left.getType()!=null && left.getType().isArrayType()) ||
+                             (right.getType()!=null && right.getType().isArrayType()));
+        if (arrayType && !(right instanceof JNewArrayExpression)) {
 
             CArrayType type = (CArrayType)right.getType();
-	    String dims[] = Util.makeString(type.getDims());
+            String dims[] = Util.makeString(type.getDims());
 
-	    // dims should never be null now that we have static array
-	    // bounds
-	    assert dims != null;
-	    /*
+            // dims should never be null now that we have static array
+            // bounds
+            assert dims != null;
+            /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-                boolean oldStatementContext = statementContext;
-                lastLeft=left;
-                printLParen();  // parenthesize if expr not if stmt
-                statementContext = false;
-                left.accept(this);
-                p.print(" = ");
-                right.accept(this);
-                statementContext = oldStatementContext;
-                printRParen();
-                return;
+            boolean oldStatementContext = statementContext;
+            lastLeft=left;
+            printLParen();  // parenthesize if expr not if stmt
+            statementContext = false;
+            left.accept(this);
+            p.print(" = ");
+            right.accept(this);
+            statementContext = oldStatementContext;
+            printRParen();
+            return;
             }
-	    */
+            */
 
             p.print("{\n");
             p.print("int ");
@@ -726,7 +726,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
                 p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
-                      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                        " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
@@ -764,16 +764,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
         */
 
         /*  a hack that never was...
-        if (ident.startsWith(ARRAY_INIT_PREFIX)) {
+            if (ident.startsWith(ARRAY_INIT_PREFIX)) {
             assert args.length == 2 : "Error: improper args to init_array";
             assert args[0] instanceof JStringLiteral : "Error: improper args to init_array";
             assert args[1] instanceof JIntLiteral : "Error: improper args to init_array";
             
             p.print(getArrayInitFromFile(ident, 
-                                       ((JStringLiteral)args[0]).stringValue(), 
-                                       ((JIntLiteral)args[1]).intValue()));
+            ((JStringLiteral)args[0]).stringValue(), 
+            ((JIntLiteral)args[1]).intValue()));
             return;
-        }
+            }
         */
 
         //generate the inline asm instruction to execute the 
@@ -783,12 +783,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 visitArgs(args,0);
                 p.print(" = ");
                 p.print(Util.networkReceive
-                      (dynamicInput, Util.getBaseType(filter.getInputType())));
+                        (dynamicInput, Util.getBaseType(filter.getInputType())));
                 
             }
             else {
                 p.print(Util.networkReceive
-                      (dynamicInput, Util.getBaseType(filter.getInputType())));
+                        (dynamicInput, Util.getBaseType(filter.getInputType())));
             }
             return;
         }
@@ -796,15 +796,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
         /*      
         //we are receiving an array type, call the popArray method
         if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
-            popArray(args[0]);
-            return;
+        popArray(args[0]);
+        return;
         }
         */
         /*
-        if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
-            rateMatchPush(args);
-            return;
-        }
+          if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
+          rateMatchPush(args);
+          return;
+          }
         */
         p.print(ident);
         
@@ -822,10 +822,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
-        if (prefix != null) {
-            prefix.accept(this);
-            i++;
-        }
+           if (prefix != null) {
+           prefix.accept(this);
+           i++;
+           }
         */
         visitArgs(args, i);
         p.print(")");
@@ -928,8 +928,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 else if (KjcOptions.decoupled)
                     p.print("print_string(");
                 else {
-                        //assert false : "Can't print strings in the raw simulator without using printf";
-                //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
+                    //assert false : "Can't print strings in the raw simulator without using printf";
+                    //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
                     //for now just print -1 as the string and warn the user!
                     //we don't have to evaluate a string!
                     p.print("raw_test_pass_reg(-1);");    
@@ -980,11 +980,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("(" + tapeType + ")");
         val.accept(this);
         p.print(Util.networkSendSuffix(dynamicOutput));
-	//useful if debugging...!
+        //useful if debugging...!
         /*print(";\n");
-        p.print("raw_test_pass_reg(");
-        val.accept(this);
-        p.print(")");*/
+          p.print("raw_test_pass_reg(");
+          val.accept(this);
+          p.print(")");*/
     }
 
     
@@ -1012,48 +1012,48 @@ public class FlatIRToC extends ToC implements StreamVisitor
                            CType tapeType,
                            JExpression val) 
     {
-	assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
-	CType baseType = ((CArrayType)tapeType).getBaseType();
-	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
-	String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
+        assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
+        CType baseType = ((CArrayType)tapeType).getBaseType();
+        String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
+        String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
 
-	//start a new block
-	p.print("{\n");
-	//print the decls of the loop indices
-	p.print ("  int ");
-	for (int i = 0; i < dims.length; i++) {
-	    p.print(ARRAY_INDEX + i);
-	    if (i < dims.length - 1)
-		p.print(", ");
-	}
-	p.print(";\n");
+        //start a new block
+        p.print("{\n");
+        //print the decls of the loop indices
+        p.print ("  int ");
+        for (int i = 0; i < dims.length; i++) {
+            p.print(ARRAY_INDEX + i);
+            if (i < dims.length - 1)
+                p.print(", ");
+        }
+        p.print(";\n");
 
-	//print the for loops
-	for (int i = 0; i < dims.length; i++) {
-	    p.print("for (" + ARRAY_INDEX + i + " = 0; " +
-		  ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-		  ARRAY_INDEX + i + "++)\n");
-	}
+        //print the for loops
+        for (int i = 0; i < dims.length; i++) {
+            p.print("for (" + ARRAY_INDEX + i + " = 0; " +
+                    ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+                    ARRAY_INDEX + i + "++)\n");
+        }
 
-	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    p.print("{\n");
-	    p.print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
-	    val.accept(this);
-	    for (int i = 0; i < dims.length; i++) {
-		p.print("[" + ARRAY_INDEX + i + "]");
-	    }
-	    p.print(Util.networkSendSuffix(dynamicOutput));
-	    p.print(";\n}\n");
-	} else {
-	    p.print("{");
-	    p.print("static_send((" + baseType + ") ");
-	    val.accept(this);
-	    for (int i = 0; i < dims.length; i++) {
-		p.print("[" + ARRAY_INDEX + i + "]");
-	    }
-	    p.print(");\n}\n");
-	}
-	p.print("}\n");
+        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+            p.print("{\n");
+            p.print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
+            val.accept(this);
+            for (int i = 0; i < dims.length; i++) {
+                p.print("[" + ARRAY_INDEX + i + "]");
+            }
+            p.print(Util.networkSendSuffix(dynamicOutput));
+            p.print(";\n}\n");
+        } else {
+            p.print("{");
+            p.print("static_send((" + baseType + ") ");
+            val.accept(this);
+            for (int i = 0; i < dims.length; i++) {
+                p.print("[" + ARRAY_INDEX + i + "]");
+            }
+            p.print(");\n}\n");
+        }
+        p.print("}\n");
     }
     
     public void visitPushExpression(SIRPushExpression self,
@@ -1093,7 +1093,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     }
 
 
-     // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
     // UNUSED STREAM VISITORS
     // ----------------------------------------------------------------------
 

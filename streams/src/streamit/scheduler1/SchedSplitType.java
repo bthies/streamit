@@ -25,19 +25,19 @@ public class SchedSplitType extends SchedObject
         this.splitWeights = splitWeights;
 
         switch (this.type)
-        {
+            {
             case WEIGHTED_ROUND_ROBIN:
                 {
                     roundConsumption = 0;
                     Iterator weightIter = splitWeights.listIterator ();
 
                     while (weightIter.hasNext ())
-                    {
-                        Integer weight = (Integer) weightIter.next ();
-                        ASSERT (weight);
+                        {
+                            Integer weight = (Integer) weightIter.next ();
+                            ASSERT (weight);
 
-                        roundConsumption += weight.intValue ();
-                    }
+                            roundConsumption += weight.intValue ();
+                        }
                     break;
                 }
             case DUPLICATE:
@@ -46,13 +46,13 @@ public class SchedSplitType extends SchedObject
                     break;
                 }
             case NULL:
-            	{
-            	    roundConsumption = 0;
-            	    break;
-            	}
+                {
+                    roundConsumption = 0;
+                    break;
+                }
             default:
                 ASSERT (false);
-        }
+            }
     }
 
     public int getOutputWeight (int index)
@@ -93,20 +93,20 @@ public class SchedSplitType extends SchedObject
     public String getStreamName ()
     {
         if (streamName == null)
-        {
-            streamName =  "(" + getRoundConsumption () + ") " +
-                          super.getStreamName () +
-                          " (";
-
-            int i;
-            for (i = 0; i < splitWeights.size (); i++)
             {
-                if (i != 0) streamName = streamName + ", ";
-                streamName = streamName + getOutputWeight (i);
-            }
+                streamName =  "(" + getRoundConsumption () + ") " +
+                    super.getStreamName () +
+                    " (";
 
-            streamName = streamName + ")";
-        }
+                int i;
+                for (i = 0; i < splitWeights.size (); i++)
+                    {
+                        if (i != 0) streamName = streamName + ", ";
+                        streamName = streamName + getOutputWeight (i);
+                    }
+
+                streamName = streamName + ")";
+            }
 
         return streamName;
     }

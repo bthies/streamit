@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: Message.java,v 1.3 2006-01-25 17:00:56 thies Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -25,84 +25,84 @@ package at.dms.compiler.tools.common;
  */
 public class Message {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Constructs a message with an arbitrary number of parameters
-   * @param	description	the message description
-   * @param	parameters	the array of parameters
-   */
-  public Message(MessageDescription description, Object[] parameters) {
-    this.description = description;
-    this.parameters	= parameters;
-  }
+    /**
+     * Constructs a message with an arbitrary number of parameters
+     * @param   description the message description
+     * @param   parameters  the array of parameters
+     */
+    public Message(MessageDescription description, Object[] parameters) {
+        this.description = description;
+        this.parameters = parameters;
+    }
 
-  /**
-   * Constructs a message with two parameters
-   * @param	description	the message description
-   * @param	parameter1	the first parameter
-   * @param	parameter2	the second parameter
-   */
-  public Message(MessageDescription description, Object parameter1, Object parameter2) {
-    this(description, new Object[] { parameter1, parameter2 });
-  }
+    /**
+     * Constructs a message with two parameters
+     * @param   description the message description
+     * @param   parameter1  the first parameter
+     * @param   parameter2  the second parameter
+     */
+    public Message(MessageDescription description, Object parameter1, Object parameter2) {
+        this(description, new Object[] { parameter1, parameter2 });
+    }
 
-  /**
-   * Constructs a message with one parameter
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public Message(MessageDescription description, Object parameter) {
-    this(description, new Object[] { parameter });
-  }
+    /**
+     * Constructs a message with one parameter
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public Message(MessageDescription description, Object parameter) {
+        this(description, new Object[] { parameter });
+    }
 
-  /**
-   * Constructs a message without parameters
-   * @param	description	the message description
-   * @param	parameter	the parameter
-   */
-  public Message(MessageDescription description) {
-    this(description, null);
-  }
+    /**
+     * Constructs a message without parameters
+     * @param   description the message description
+     * @param   parameter   the parameter
+     */
+    public Message(MessageDescription description) {
+        this(description, null);
+    }
 
-  // ----------------------------------------------------------------------
-  // ACCESSORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // ACCESSORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Returns the message description.
-   */
-  public MessageDescription getDescription() {
-    return description;
-  }
+    /**
+     * Returns the message description.
+     */
+    public MessageDescription getDescription() {
+        return description;
+    }
 
-  /**
-   * Returns the message description.
-   */
-  public Object[] getParams() {
-    return parameters;
-  }
+    /**
+     * Returns the message description.
+     */
+    public Object[] getParams() {
+        return parameters;
+    }
 
-  /**
-   * Returns the severity level
-   */
-  public int getSeverityLevel() {
-    return getDescription().getLevel();
-  }
+    /**
+     * Returns the severity level
+     */
+    public int getSeverityLevel() {
+        return getDescription().getLevel();
+    }
 
-  /**
-   * Returns the string explaining the error
-   */
-  public String getMessage() {
-    return this.description.format(this.parameters);
-  }
+    /**
+     * Returns the string explaining the error
+     */
+    public String getMessage() {
+        return this.description.format(this.parameters);
+    }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  private final MessageDescription	description;
-  private final Object[]		parameters;
+    private final MessageDescription    description;
+    private final Object[]      parameters;
 }

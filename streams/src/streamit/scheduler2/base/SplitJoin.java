@@ -17,7 +17,7 @@
 package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitJoinIter;
+    SplitJoinIter;
 import java.math.BigInteger;
 
 import at.dms.kjc.sir.SIRStream;
@@ -53,10 +53,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             if (debugrates) {
                 if (librarydebug) {
                     System.err.print("SPLITJOIN "+ splitjoin.getObject().getClass()
-                            .getName());
+                                     .getName());
                 } else {
                     System.err.print("SPLITJOIN "+ ((SIRStream)splitjoin.getObject())
-                             .getIdent());
+                                     .getIdent());
                 }
                 System.err.println("[" + nChildren + "]");
             }
@@ -70,52 +70,52 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 
             int nChild;
             for (nChild = 0; nChild < splitjoin.getNumChildren(); nChild++)
-            {
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(splitjoin.getObject().getClass()
-                                .getName() + "[" + nChild + "] begin: "
-                                + ((at.dms.kjc.iterator.SIRIterator)splitjoin
-                                        .getChild(nChild)).getObject()
-                                        .getClass().getName());
-                    } else {
-                        System.err.println(((SIRStream) splitjoin.getObject())
-                                 .getIdent() + "[" + nChild + "] begin: "
-                                 + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
-                                        .getChild(nChild)).getObject()).getIdent());
+                {
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(splitjoin.getObject().getClass()
+                                               .getName() + "[" + nChild + "] begin: "
+                                               + ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                                  .getChild(nChild)).getObject()
+                                               .getClass().getName());
+                        } else {
+                            System.err.println(((SIRStream) splitjoin.getObject())
+                                               .getIdent() + "[" + nChild + "] begin: "
+                                               + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                                               .getChild(nChild)).getObject()).getIdent());
+                        }
                     }
-                }
-                // End Debugging
+                    // End Debugging
 
-                // create a new object for the child
-                children[nChild] =
-                    factory.newFrom(splitjoin.getChild(nChild), splitjoin.getUnspecializedIter());
+                    // create a new object for the child
+                    children[nChild] =
+                        factory.newFrom(splitjoin.getChild(nChild), splitjoin.getUnspecializedIter());
 
-                // Debugging:
-                if (debugrates) {
-                    if (librarydebug) {
-                        System.err.println(splitjoin.getObject().getClass()
-                                .getName() + "[" + nChild + "] end: "
-                                + ((at.dms.kjc.iterator.SIRIterator)splitjoin
-                                        .getChild(nChild)).getObject()
-                                        .getClass().getName());
-                    } else {
-                        System.err.println(((SIRStream)splitjoin.getObject())
-                                .getIdent() + "[" + nChild + "] end: "
-                                + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
-                                        .getChild(nChild)).getObject()).getIdent());
+                    // Debugging:
+                    if (debugrates) {
+                        if (librarydebug) {
+                            System.err.println(splitjoin.getObject().getClass()
+                                               .getName() + "[" + nChild + "] end: "
+                                               + ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                                  .getChild(nChild)).getObject()
+                                               .getClass().getName());
+                        } else {
+                            System.err.println(((SIRStream)splitjoin.getObject())
+                                               .getIdent() + "[" + nChild + "] end: "
+                                               + ((SIRStream) ((at.dms.kjc.iterator.SIRIterator)splitjoin
+                                                               .getChild(nChild)).getObject()).getIdent());
+                        }
                     }
+                    // End Debugging
                 }
-                // End Debugging
-             }
 
             // compute my steady schedule
             // my children already have computed their steady schedules,
             // so I just have to do mine
-	    if (factory.needsSchedule()) {
-		computeSteadyState();
-	    }
+            if (factory.needsSchedule()) {
+                computeSteadyState();
+            }
         }
     }
 
@@ -218,9 +218,9 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     {
         // amount of data distributed to and collected by the split
         // and join
-//        int splitPushWeights[];
-//        int joinPopWeights[];
-//        int splitPopWeight, joinPushWeight;
+        //        int splitPushWeights[];
+        //        int joinPopWeights[];
+        //        int splitPopWeight, joinPushWeight;
 
         Fraction childrenRates[] = new Fraction[nChildren];
         Fraction splitRate = null;
@@ -233,71 +233,71 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         {
             int nChild;
             for (nChild = 0; nChild < nChildren; nChild++)
-            {
-                StreamInterface child = children[nChild];
-                assert child != null;
-
-                // the rate at which the child should be executed
-                Fraction childRate = null;
-
-                // rates at which the splitter is producing the data
-                // and the child is consuming it:
-                int numOut = getSteadySplitFlow().getPushWeight(nChild);
-                int numIn = child.getSteadyPop();
-
-                // is the splitter actually producing any data?
-                if (numOut != 0)
                 {
-                    // if the slitter is producing data, the child better
-                    // be consuming it!
-                    assert numIn != 0;
+                    StreamInterface child = children[nChild];
+                    assert child != null;
 
-                    if (splitRate == null)
-                    {
-                        // if I hadn't set the split rate yet, do it now
-                        splitRate =
-                            new Fraction(BigInteger.ONE, BigInteger.ONE);
-                    }
+                    // the rate at which the child should be executed
+                    Fraction childRate = null;
 
-                    // compute the rate at which the child should be executing
-                    // (relative to the splitter)
-                    childRate =
-                        new Fraction(numOut, numIn)
-                            .multiply(splitRate)
-                            .reduce();
+                    // rates at which the splitter is producing the data
+                    // and the child is consuming it:
+                    int numOut = getSteadySplitFlow().getPushWeight(nChild);
+                    int numIn = child.getSteadyPop();
 
-                    // if I still hadn't computed the rate at which the joiner
-                    // is executed, try to compute it:
-                    if (joinRate == null && child.getSteadyPush() != 0)
-                    {
-                        // if the child is producing data, the joiner
-                        // better be consuming it!
-                        assert getSteadyJoinFlow().getPopWeight(nChild) != 0;
+                    // is the splitter actually producing any data?
+                    if (numOut != 0)
+                        {
+                            // if the slitter is producing data, the child better
+                            // be consuming it!
+                            assert numIn != 0;
 
-                        int childOut = child.getSteadyPush();
-                        int joinIn = getSteadyJoinFlow().getPopWeight(nChild);
+                            if (splitRate == null)
+                                {
+                                    // if I hadn't set the split rate yet, do it now
+                                    splitRate =
+                                        new Fraction(BigInteger.ONE, BigInteger.ONE);
+                                }
 
-                        joinRate =
-                            new Fraction(childOut, joinIn)
-                                .multiply(childRate)
+                            // compute the rate at which the child should be executing
+                            // (relative to the splitter)
+                            childRate =
+                                new Fraction(numOut, numIn)
+                                .multiply(splitRate)
                                 .reduce();
+
+                            // if I still hadn't computed the rate at which the joiner
+                            // is executed, try to compute it:
+                            if (joinRate == null && child.getSteadyPush() != 0)
+                                {
+                                    // if the child is producing data, the joiner
+                                    // better be consuming it!
+                                    assert getSteadyJoinFlow().getPopWeight(nChild) != 0;
+
+                                    int childOut = child.getSteadyPush();
+                                    int joinIn = getSteadyJoinFlow().getPopWeight(nChild);
+
+                                    joinRate =
+                                        new Fraction(childOut, joinIn)
+                                        .multiply(childRate)
+                                        .reduce();
+                                }
+                        }
+
+                    childrenRates[nChild] = childRate;
+
+                    // Debugging:
+                    if (debugsplitjoin) {
+                        if (librarydebug) {
+                            System.err.print(splitjoin.getObject().getClass().getName());
+                        } else {
+                            System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                        }
+                        System.err.println("[" + nChild + "].splitRate = " + childRate);
                     }
+                    // End Debugging
+
                 }
-
-                childrenRates[nChild] = childRate;
-
-                // Debugging:
-                if (debugsplitjoin) {
-                    if (librarydebug) {
-                        System.err.print(splitjoin.getObject().getClass().getName());
-                    } else {
-                        System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
-                    }
-                    System.err.println("[" + nChild + "].splitRate = " + childRate);
-                }
-                // End Debugging
-
-            }
         }
 
         // compute the rate of execution of the joiner w.r.t. children
@@ -307,97 +307,97 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             // if the splitter never needs to get executed (doesn't produce
             // any data), the joiner rate should be set to ONE:
             if (splitRate == null)
-            {
-                // I better not have computed the join rate yet!
-                assert joinRate == null;
+                {
+                    // I better not have computed the join rate yet!
+                    assert joinRate == null;
 
-                // okay, just set it to ONE/ONE
-                joinRate = new Fraction(BigInteger.ONE, BigInteger.ONE);
-            }
+                    // okay, just set it to ONE/ONE
+                    joinRate = new Fraction(BigInteger.ONE, BigInteger.ONE);
+                }
 
             int nChild;
             for (nChild = 0; nChild < nChildren; nChild++)
-            {
-                StreamInterface child = children[nChild];
-                assert child != null;
-
-                // get the child rate
-                Fraction childRate = childrenRates[nChild];
-
-                // compute the new childRate:
-                Fraction newChildRate = null;
                 {
-                    int childOut = child.getSteadyPush();
-                    int joinIn = getSteadyJoinFlow().getPopWeight(nChild);
+                    StreamInterface child = children[nChild];
+                    assert child != null;
 
-                    // does the child produce any data?
-                    if (childOut != 0)
+                    // get the child rate
+                    Fraction childRate = childrenRates[nChild];
+
+                    // compute the new childRate:
+                    Fraction newChildRate = null;
                     {
-                        // yes
-                        // the split better consume some data too!
-                        assert joinIn != 0;
+                        int childOut = child.getSteadyPush();
+                        int joinIn = getSteadyJoinFlow().getPopWeight(nChild);
 
-                        // compute the rate at which the child should execute
-                        // w.r.t. the splitter
-                        newChildRate =
-                            new Fraction(joinIn, childOut)
-                                .multiply(joinRate)
-                                .reduce();
+                        // does the child produce any data?
+                        if (childOut != 0)
+                            {
+                                // yes
+                                // the split better consume some data too!
+                                assert joinIn != 0;
+
+                                // compute the rate at which the child should execute
+                                // w.r.t. the splitter
+                                newChildRate =
+                                    new Fraction(joinIn, childOut)
+                                    .multiply(joinRate)
+                                    .reduce();
+                            }
+                        else
+                            {
+                                // no
+                                // the splitter better not consume any data either
+                                assert joinIn == 0;
+                            }
                     }
-                    else
-                    {
-                        // no
-                        // the splitter better not consume any data either
-                        assert joinIn == 0;
-                    }
-                }
 
-                // if this is a new rate, put it in the array
-                if (childRate == null)
-                {
-                    // I better have the rate here, or the child
-                    // neither produces nor consumes any data!
-                    assert newChildRate != null;
+                    // if this is a new rate, put it in the array
+                    if (childRate == null)
+                        {
+                            // I better have the rate here, or the child
+                            // neither produces nor consumes any data!
+                            assert newChildRate != null;
 
-                    // set the rate
-                    childrenRates[nChild] = newChildRate;
+                            // set the rate
+                            childrenRates[nChild] = newChildRate;
 
-                    // Debugging:
-                    if (debugsplitjoin) {
-                        if (librarydebug) {
-                            System.err.print(splitjoin.getObject().getClass().getName());
-                        } else {
-                            System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                            // Debugging:
+                            if (debugsplitjoin) {
+                                if (librarydebug) {
+                                    System.err.print(splitjoin.getObject().getClass().getName());
+                                } else {
+                                    System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                                }
+                                System.err.println("[" + nChild + "].joinRate = " + childRate);
+                            }
+                            // End Debugging
                         }
-                        System.err.println("[" + nChild + "].joinRate = " + childRate);
-                    }
-                    // End Debugging
-                }
 
-                // okay, if I have both rates, make sure that they agree!
-                if (childRate != null && newChildRate != null)
-                {
-                    if (!childRate.equals(newChildRate))
-                    {
-			String name = "" + splitjoin.getObject();
-			String msg = "ERROR:\n" +
-			    "Two paths in the splitjoin \"" + name + "\" have different I/O rates.\n" +
-			    "One path produces items at a rate of " + childRate + ", while another has a rate of " + newChildRate + ".\n" + 
-			    "Thus, the program cannot be executed without growing a buffer infinitely.\n" +
-			    "Please check that the round-robin weights match the I/O rates of the\n" +
-			    "child streams.\n";
-			// anonymous names aren't too helpful
-			if (name.startsWith("Anon") /* for library */ || name.startsWith("name=Anon") /* for compiler */ ) {
-			    msg += "\n" + 
-				"Note:  the name \"" + name + "\" indicates that this splitjoin is an\n" +
-				"anonymous wrapper in your program.  You can identify this wrapper by\n" +
-				"opening up the <filename>.java file and searching for this identifier,\n" +
-				"or by refactoring your program to give the splitjoin its own name.\n";
-			}
-                        ERROR(msg);
-                    }
+                    // okay, if I have both rates, make sure that they agree!
+                    if (childRate != null && newChildRate != null)
+                        {
+                            if (!childRate.equals(newChildRate))
+                                {
+                                    String name = "" + splitjoin.getObject();
+                                    String msg = "ERROR:\n" +
+                                        "Two paths in the splitjoin \"" + name + "\" have different I/O rates.\n" +
+                                        "One path produces items at a rate of " + childRate + ", while another has a rate of " + newChildRate + ".\n" + 
+                                        "Thus, the program cannot be executed without growing a buffer infinitely.\n" +
+                                        "Please check that the round-robin weights match the I/O rates of the\n" +
+                                        "child streams.\n";
+                                    // anonymous names aren't too helpful
+                                    if (name.startsWith("Anon") /* for library */ || name.startsWith("name=Anon") /* for compiler */ ) {
+                                        msg += "\n" + 
+                                            "Note:  the name \"" + name + "\" indicates that this splitjoin is an\n" +
+                                            "anonymous wrapper in your program.  You can identify this wrapper by\n" +
+                                            "opening up the <filename>.java file and searching for this identifier,\n" +
+                                            "or by refactoring your program to give the splitjoin its own name.\n";
+                                    }
+                                    ERROR(msg);
+                                }
+                        }
                 }
-            }
         }
 
         // normalize all the rates to be integers
@@ -405,54 +405,54 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             BigInteger multiplier;
 
             if (joinRate != null)
-            {
-                multiplier = joinRate.getDenominator();
-            }
+                {
+                    multiplier = joinRate.getDenominator();
+                }
             else
-            {
-                multiplier = BigInteger.ONE;
-            }
+                {
+                    multiplier = BigInteger.ONE;
+                }
 
             // find a factor to multiply all the fractional rates by
             {
                 int index;
                 for (index = 0; index < nChildren; index++)
-                {
-                    Fraction childRate = (Fraction) childrenRates[index];
-                    assert childRate != null;
+                    {
+                        Fraction childRate = (Fraction) childrenRates[index];
+                        assert childRate != null;
 
-                    BigInteger rateDenom = childRate.getDenominator();
-                    assert rateDenom != null;
+                        BigInteger rateDenom = childRate.getDenominator();
+                        assert rateDenom != null;
 
-                    BigInteger gcd = multiplier.gcd(rateDenom);
-                    multiplier = multiplier.multiply(rateDenom).divide(gcd);
-                }
+                        BigInteger gcd = multiplier.gcd(rateDenom);
+                        multiplier = multiplier.multiply(rateDenom).divide(gcd);
+                    }
             }
 
             // multiply all the rates by this factor and set the rates for
             // the children and splitter and joiner
             {
                 if (splitRate != null)
-                {
-                    splitRate = splitRate.multiply(multiplier);
-                    assert splitRate.getDenominator().equals(BigInteger.ONE);
-                    splitNumRounds = splitRate.getNumerator();
-                }
+                    {
+                        splitRate = splitRate.multiply(multiplier);
+                        assert splitRate.getDenominator().equals(BigInteger.ONE);
+                        splitNumRounds = splitRate.getNumerator();
+                    }
                 else
-                {
-                    splitNumRounds = BigInteger.ZERO;
-                }
+                    {
+                        splitNumRounds = BigInteger.ZERO;
+                    }
 
                 if (joinRate != null)
-                {
-                    joinRate = joinRate.multiply(multiplier);
-                    assert joinRate.getDenominator().equals(BigInteger.ONE);
-                    joinNumRounds = joinRate.getNumerator();
-                }
+                    {
+                        joinRate = joinRate.multiply(multiplier);
+                        assert joinRate.getDenominator().equals(BigInteger.ONE);
+                        joinNumRounds = joinRate.getNumerator();
+                    }
                 else
-                {
-                    joinNumRounds = BigInteger.ZERO;
-                }
+                    {
+                        joinNumRounds = BigInteger.ZERO;
+                    }
 
                 // normalize the children's rates and store them in
                 // childrenNumExecs
@@ -461,34 +461,34 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 
                     int nChild;
                     for (nChild = 0; nChild < nChildren; nChild++)
-                    {
-                        Fraction childRate = (Fraction) childrenRates[nChild];
-                        assert childRate != null;
+                        {
+                            Fraction childRate = (Fraction) childrenRates[nChild];
+                            assert childRate != null;
 
-                        Fraction newChildRate =
-                            childRate.multiply(multiplier);
-                        assert newChildRate.getDenominator()
-                            .equals(BigInteger.ONE);
+                            Fraction newChildRate =
+                                childRate.multiply(multiplier);
+                            assert newChildRate.getDenominator()
+                                .equals(BigInteger.ONE);
 
-                        // set the rate
-                        childrenNumExecs[nChild] =
-                            newChildRate.getNumerator();
+                            // set the rate
+                            childrenNumExecs[nChild] =
+                                newChildRate.getNumerator();
 
-                        // Debugging:
-                        if (debugsplitjoin) {
-                            if (librarydebug) {
-                                System.err.print(splitjoin.getObject().getClass().getName());
-                            } else {
-                                System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                            // Debugging:
+                            if (debugsplitjoin) {
+                                if (librarydebug) {
+                                    System.err.print(splitjoin.getObject().getClass().getName());
+                                } else {
+                                    System.err.print(((SIRStream)splitjoin.getObject()).getIdent());
+                                }
+                                System.err.println("[" + nChild + "] executions = " + childrenNumExecs[nChild]);
                             }
-                            System.err.println("[" + nChild + "] executions = " + childrenNumExecs[nChild]);
-                        }
-                        // End Debugging
+                            // End Debugging
 
-                        // make sure that the child executes a positive
-                        // number of times!
-                        assert childrenNumExecs[nChild].signum() == 1;
-                    }
+                            // make sure that the child executes a positive
+                            // number of times!
+                            assert childrenNumExecs[nChild].signum() == 1;
+                        }
                 }
             }
         }
@@ -497,10 +497,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         {
             int pop =
                 splitNumRounds.intValue()
-                    * getSteadySplitFlow().getPopWeight();
+                * getSteadySplitFlow().getPopWeight();
             int push =
                 joinNumRounds.intValue()
-                    * getSteadyJoinFlow().getPushWeight();
+                * getSteadyJoinFlow().getPushWeight();
 
             setSteadyPeek(pop);
             setSteadyPop(pop);
@@ -510,10 +510,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             if (debugrates) {
                 if (librarydebug) {
                     System.err.print(splitjoin.getObject().
-                            getClass().getName());
+                                     getClass().getName());
                 } else {
                     System.err.print(((SIRStream)splitjoin.getObject())
-                            .getIdent()); 
+                                     .getIdent()); 
                 }
                 System.err.println(" steady state: push " + push + " pop " + pop);
             }                       
@@ -525,12 +525,12 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     { 
         int nodes = 0;
         for (int nChild = 0; nChild < nChildren; nChild++)
-        {
-            StreamInterface child = children[nChild];
-            assert child != null;
+            {
+                StreamInterface child = children[nChild];
+                assert child != null;
             
-            nodes += child.getNumNodes ();
-        }
+                nodes += child.getNumNodes ();
+            }
         if (getSplitNumRounds () > 0) nodes++;
         if (getJoinNumRounds () > 0) nodes++;
         return nodes;
@@ -540,12 +540,12 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     {
         int firings = 0;
         for (int nChild = 0; nChild < nChildren; nChild++)
-        {
-            StreamInterface child = children[nChild];
-            assert child != null;
+            {
+                StreamInterface child = children[nChild];
+                assert child != null;
             
-            firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
-        }
+                firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
+            }
         firings += getSplitNumRounds();
         firings += getJoinNumRounds();
         

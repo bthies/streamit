@@ -74,12 +74,12 @@ public class RemoveMultiPops extends SLIRReplacingVisitor {
     }
     
     public Object visitExpressionStatement(JExpressionStatement self,
-            JExpression expr) {
+                                           JExpression expr) {
         if (expr instanceof SIRPopExpression) {
             SIRPopExpression popExp = (SIRPopExpression) expr;
             return Utils.makeForLoop(new JExpressionStatement(null,
-                    new SIRPopExpression(popExp.getType()), null), 
-                    popExp.getNumPop());
+                                                              new SIRPopExpression(popExp.getType()), null), 
+                                     popExp.getNumPop());
         } else {
             return self;
         }

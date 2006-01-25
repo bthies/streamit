@@ -55,7 +55,7 @@ public class TypeHelper extends Type
 
     public TypeHelper(FEContext context, String name, List funcs)
     {
-	this(context, name, funcs, NORMAL_HELPERS);
+        this(context, name, funcs, NORMAL_HELPERS);
     }
 
     public int getCls() { return cls; }
@@ -110,10 +110,10 @@ public class TypeHelper extends Type
     public boolean equals(Object other)
     {
         if (other instanceof TypeHelper)
-	    {
-		TypeHelper that = (TypeHelper)other;
-		return this.name.equals(that.name);
-	    }
+            {
+                TypeHelper that = (TypeHelper)other;
+                return this.name.equals(that.name);
+            }
         
         return false;
     }

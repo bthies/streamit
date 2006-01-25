@@ -24,7 +24,7 @@ public abstract class RawExecutionCode
     //if true, inline the work function in the init and steady-state
     protected static final boolean INLINE_WORK = true;
     
-     /*** fields for the var names we introduce ***/
+    /*** fields for the var names we introduce ***/
     public static String recvBuffer = "__RECVBUFFER__";
     public static String recvBufferSize = "__RECVBUFFERSIZE__";
     public static String recvBufferBits = "__RECVBUFFERBITS__";
@@ -69,15 +69,15 @@ public abstract class RawExecutionCode
 
     public RawExecutionCode(FilterInfo filterInfo) 
     {
-	this.filterInfo = filterInfo;
-	generatedVariables = new GeneratedVariables();
-	uniqueID = getUniqueID();
+        this.filterInfo = filterInfo;
+        generatedVariables = new GeneratedVariables();
+        uniqueID = getUniqueID();
     }
     
 
     public static int getUniqueID() 
     {
-	return globalID++;
+        return globalID++;
     }
     
     public abstract JFieldDeclaration[] getVarDecls();
@@ -86,69 +86,69 @@ public abstract class RawExecutionCode
     public abstract JBlock getSteadyBlock();
     public abstract JMethodDeclaration getPrimePumpMethod();
     
-     /**
+    /**
      * Returns a for loop that uses field <var> to count
      * <count> times with the body of the loop being <body>.  If count
      * is non-positive, just returns empty (!not legal in the general case)
      */
     public static JStatement makeForLoop(JStatement body,
-					 JVariableDefinition var,
-					 JExpression count) {
-	if (body == null)
-	    return new JEmptyStatement(null, null);
-	
-	// make init statement - assign zero to <var>.  We need to use
-	// an expression list statement to follow the convention of
-	// other for loops and to get the codegen right.
-	JExpression initExpr[] = {
-	    new JAssignmentExpression(null,
-				      new JFieldAccessExpression(null, 
-								 new JThisExpression(null),
-								 var.getIdent()),
-				      new JIntLiteral(0)) };
-	JStatement init = new JExpressionListStatement(null, initExpr, null);
-	// if count==0, just return init statement
-	if (count instanceof JIntLiteral) {
-	    int intCount = ((JIntLiteral)count).intValue();
-	    if (intCount<=0) {
-		// return assignment statement
-		return new JEmptyStatement(null, null);
-	    }
-	}
-	// make conditional - test if <var> less than <count>
-	JExpression cond = 
-	    new JRelationalExpression(null,
-				      Constants.OPE_LT,
-				      new JFieldAccessExpression(null, 
-								   new JThisExpression(null),
-								   var.getIdent()),
-				      count);
-	JExpression incrExpr = 
-	    new JPostfixExpression(null, 
-				   Constants.OPE_POSTINC, 
-				   new JFieldAccessExpression(null, new JThisExpression(null),
-								var.getIdent()));
-	JStatement incr = 
-	    new JExpressionStatement(null, incrExpr, null);
+                                         JVariableDefinition var,
+                                         JExpression count) {
+        if (body == null)
+            return new JEmptyStatement(null, null);
+    
+        // make init statement - assign zero to <var>.  We need to use
+        // an expression list statement to follow the convention of
+        // other for loops and to get the codegen right.
+        JExpression initExpr[] = {
+            new JAssignmentExpression(null,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      new JIntLiteral(0)) };
+        JStatement init = new JExpressionListStatement(null, initExpr, null);
+        // if count==0, just return init statement
+        if (count instanceof JIntLiteral) {
+            int intCount = ((JIntLiteral)count).intValue();
+            if (intCount<=0) {
+                // return assignment statement
+                return new JEmptyStatement(null, null);
+            }
+        }
+        // make conditional - test if <var> less than <count>
+        JExpression cond = 
+            new JRelationalExpression(null,
+                                      Constants.OPE_LT,
+                                      new JFieldAccessExpression(null, 
+                                                                 new JThisExpression(null),
+                                                                 var.getIdent()),
+                                      count);
+        JExpression incrExpr = 
+            new JPostfixExpression(null, 
+                                   Constants.OPE_POSTINC, 
+                                   new JFieldAccessExpression(null, new JThisExpression(null),
+                                                              var.getIdent()));
+        JStatement incr = 
+            new JExpressionStatement(null, incrExpr, null);
 
-	return new JForStatement(null, init, cond, incr, body, null);
+        return new JForStatement(null, init, cond, incr, body, null);
     }
 
     public static JStatement constToSwitchStmt(int constant) 
     {
-	//alt code gen is always enabled!
-	JAssignmentExpression send = 
-	    new JAssignmentExpression(null,
-				      new JFieldAccessExpression(null, new JThisExpression(null),
-								 Util.CSTOINTVAR),
-				      new JIntLiteral(constant));
-	
-	return new JExpressionStatement(null, send, null);
+        //alt code gen is always enabled!
+        JAssignmentExpression send = 
+            new JAssignmentExpression(null,
+                                      new JFieldAccessExpression(null, new JThisExpression(null),
+                                                                 Util.CSTOINTVAR),
+                                      new JIntLiteral(constant));
+    
+        return new JExpressionStatement(null, send, null);
     }
     
     public static JStatement boundToSwitchStmt(int constant)  
     {
-	return constToSwitchStmt(constant - 1);
+        return constToSwitchStmt(constant - 1);
     }
     
 }

@@ -17,7 +17,7 @@
 package streamit.scheduler2.minlatency;
 
 import streamit.scheduler2.iriter./*persistent.*/
-SplitJoinIter;
+    SplitJoinIter;
 import streamit.scheduler2.hierarchical.StreamInterface;
 import streamit.scheduler2.base.StreamFactory;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
@@ -50,12 +50,12 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             advanceChildSchedule(child, 1);
         }
         abstract public void advanceChildSchedule(
-            StreamInterface child,
-            int nPhases);
+                                                  StreamInterface child,
+                                                  int nPhases);
         abstract public PhasingSchedule getChildNextPhase(StreamInterface child);
         abstract public PhasingSchedule getChildPhase(
-            StreamInterface child,
-            int phase);
+                                                      StreamInterface child,
+                                                      int phase);
         abstract public void advanceSplitSchedule();
         abstract public void advanceJoinSchedule();
 
@@ -67,64 +67,64 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
         abstract public PhasingSchedule getNextJoinSteadyPhase();
 
         public PhasingSchedule createPhase(
-            int nSplitPhases,
-            int childrenPhases[],
-            int nJoinPhases,
-            int postSplitBuffers[],
-            int preJoinBuffers[])
+                                           int nSplitPhases,
+                                           int childrenPhases[],
+                                           int nJoinPhases,
+                                           int postSplitBuffers[],
+                                           int preJoinBuffers[])
         {
             // first advance all the appropriate buffers:
             {
                 // first the splitter
                 for (int splitPhase = 0;
-                    splitPhase < nSplitPhases;
-                    splitPhase++)
-                {
-                    // get the appropriate flow
-                    SplitFlow flow = getSplitSteadyPhaseFlow(splitPhase);
-
-                    // update the buffers (add data)
-                    int nChild;
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
+                     splitPhase < nSplitPhases;
+                     splitPhase++)
                     {
-                        postSplitBuffers[nChild] += flow.getPushWeight(nChild);
+                        // get the appropriate flow
+                        SplitFlow flow = getSplitSteadyPhaseFlow(splitPhase);
+
+                        // update the buffers (add data)
+                        int nChild;
+                        for (nChild = 0; nChild < getNumChildren(); nChild++)
+                            {
+                                postSplitBuffers[nChild] += flow.getPushWeight(nChild);
+                            }
                     }
-                }
 
                 // now the children
                 for (int nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = getHierarchicalChild(nChild);
-                    for (int nPhase = 0;
-                        nPhase < childrenPhases[nChild];
-                        nPhase++)
                     {
-                        // get the phase and check that I've enough 
-                        // peek data in the buffer to run it
-                        PhasingSchedule childPhase = getChildPhase(child, nPhase);
-                        assert postSplitBuffers[nChild]
-                            >= childPhase.getOverallPeek();
+                        StreamInterface child = getHierarchicalChild(nChild);
+                        for (int nPhase = 0;
+                             nPhase < childrenPhases[nChild];
+                             nPhase++)
+                            {
+                                // get the phase and check that I've enough 
+                                // peek data in the buffer to run it
+                                PhasingSchedule childPhase = getChildPhase(child, nPhase);
+                                assert postSplitBuffers[nChild]
+                                    >= childPhase.getOverallPeek();
 
-                        // update the buffers
-                        postSplitBuffers[nChild] -= childPhase.getOverallPop();
-                        preJoinBuffers[nChild] += childPhase.getOverallPush();
+                                // update the buffers
+                                postSplitBuffers[nChild] -= childPhase.getOverallPop();
+                                preJoinBuffers[nChild] += childPhase.getOverallPush();
+                            }
                     }
-                }
 
                 // and finally run the joiner
                 for (int joinPhase = 0; joinPhase < nJoinPhases; joinPhase++)
-                {
-                    // get the appropriate flow
-                    JoinFlow flow = getJoinSteadyPhaseFlow(joinPhase);
-
-                    // update the buffers (add data)
-                    int nChild;
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
                     {
-                        preJoinBuffers[nChild] -= flow.getPopWeight(nChild);
-                        assert preJoinBuffers[nChild] >= 0;
+                        // get the appropriate flow
+                        JoinFlow flow = getJoinSteadyPhaseFlow(joinPhase);
+
+                        // update the buffers (add data)
+                        int nChild;
+                        for (nChild = 0; nChild < getNumChildren(); nChild++)
+                            {
+                                preJoinBuffers[nChild] -= flow.getPopWeight(nChild);
+                                assert preJoinBuffers[nChild] >= 0;
+                            }
                     }
-                }
             }
 
             // and now create the phase
@@ -134,11 +134,11 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             {
                 phase.appendPhase(sj.getSplitterPhases(nSplitPhases));
                 for (int nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = sj.getHierarchicalChild(nChild);
-                    phase.appendPhase(
-                        sj.getChildPhases(child, childrenPhases[nChild]));
-                }
+                    {
+                        StreamInterface child = sj.getHierarchicalChild(nChild);
+                        phase.appendPhase(
+                                          sj.getChildPhases(child, childrenPhases[nChild]));
+                    }
                 phase.appendPhase(sj.getJoinerPhases(nJoinPhases));
             }
 
@@ -288,204 +288,204 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
      * I am passed
      */
     public void computeMinLatencySchedule(
-        SJSchedulingUtility utility,
-        int splitExecs,
-        int joinExecs,
-        int childrenExecs[],
-        int postSplitBuffers[],
-        int preJoinBuffers[])
+                                          SJSchedulingUtility utility,
+                                          int splitExecs,
+                                          int joinExecs,
+                                          int childrenExecs[],
+                                          int postSplitBuffers[],
+                                          int preJoinBuffers[])
     {
         // first pull all the data out of the split-join
         // that needs to go (drain the join)
         while (joinExecs > 0)
-        {
-            int splitterPhases = 0;
-            int joinerPhases = 0;
-            int phaseChildrenExecs[] = new int[getNumChildren()];
-
-            int joinerOverallPop[] = new int[getNumChildren()];
-
-            // compute how many times I need to execute the joiner
-            // before I get some output - this will be my phase
             {
-                JoinFlow joinFlow;
-                do
-                {
-                    joinFlow = utility.getJoinSteadyPhaseFlow(joinerPhases);
-                    joinerPhases++;
+                int splitterPhases = 0;
+                int joinerPhases = 0;
+                int phaseChildrenExecs[] = new int[getNumChildren()];
 
-                    int nChild;
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        joinerOverallPop[nChild]
-                            += joinFlow.getPopWeight(nChild);
-                    }
+                int joinerOverallPop[] = new int[getNumChildren()];
 
-                }
-                while (joinFlow.getPushWeight() == 0);
-            }
-
-            int childOverallPeek[] = new int[getNumChildren()];
-            int childOverallPop[] = new int[getNumChildren()];
-            int childOverallPush[] = new int[getNumChildren()];
-
-            // figure out how many times to execute all the children
-            // to provide input for the joiner
-            {
-                int nChild;
-                for (nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    StreamInterface child = getHierarchicalChild(nChild);
-                    while (preJoinBuffers[nChild]
-                        - joinerOverallPop[nChild]
-                        + childOverallPush[nChild]
-                        < 0)
-                    {
-                        PhasingSchedule childPhase =
-                            utility.getChildPhase(
-                                child,
-                                phaseChildrenExecs[nChild]);
-
-                        childOverallPeek[nChild] =
-                            MAX(
-                                childOverallPeek[nChild],
-                                childOverallPop[nChild]
-                                    + childPhase.getOverallPeek());
-                        childOverallPop[nChild] += childPhase.getOverallPop();
-                        childOverallPush[nChild] += childPhase.getOverallPush();
-
-                        phaseChildrenExecs[nChild]++;
-                    }
-                }
-            }
-
-            int splitterOverallPush[] = new int[getNumChildren()];
-
-            // figure out how many times to execute the splitter to
-            // supply enough data for all the children to go
-            {
-                int nChild;
-                for (nChild = 0; nChild < getNumChildren(); nChild++)
-                {
-                    int childSplitterPhases = 0;
-                    int childSplitterPush = 0;
-                    while (postSplitBuffers[nChild]
-                        + childSplitterPush
-                        - childOverallPeek[nChild]
-                        < 0)
-                    {
-                        SplitFlow splitFlow =
-                            utility.getSplitSteadyPhaseFlow(
-                                childSplitterPhases);
-                        childSplitterPhases++;
-
-                        childSplitterPush
-                            += splitFlow.getPushWeight(nChild);
-                    }
-
-                    splitterPhases = MAX(splitterPhases, childSplitterPhases);
-                }
-                
-                for (int nPhase = 0; nPhase < splitterPhases; nPhase++)
-                {
-                    SplitFlow splitFlow =
-                        utility.getSplitSteadyPhaseFlow(
-                            nPhase);
-                    for (nChild = 0; nChild < getNumChildren();nChild++)
-                    {
-                        splitterOverallPush [nChild] += splitFlow.getPushWeight(nChild);
-                    }
-                }
-            }
-
-            // push the data available in the splitjoin down as much
-            // as possible:
-            {
-                // execute the children as much as possible given
-                // how much data they've been given by the splitter
-                {
-                    for (int nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        StreamInterface child = getHierarchicalChild(nChild);
-
-                        while (postSplitBuffers[nChild]
-                            + splitterOverallPush[nChild]
-                            - childOverallPop[nChild]
-                            >= utility
-                                .getChildPhase(
-                                    child,
-                                    phaseChildrenExecs[nChild])
-                                .getOverallPeek()
-                            && phaseChildrenExecs[nChild] < childrenExecs[nChild])
-                        {
-                            PhasingSchedule childPhase =
-                                utility.getChildPhase(
-                                    child,
-                                    phaseChildrenExecs[nChild]);
-
-                            childOverallPeek[nChild] =
-                                MAX(
-                                    childOverallPeek[nChild],
-                                    childOverallPop[nChild]
-                                        + childPhase.getOverallPeek());
-                            childOverallPop[nChild]
-                                += childPhase.getOverallPop();
-                            childOverallPush[nChild]
-                                += childPhase.getOverallPush();
-
-                            phaseChildrenExecs[nChild]++;
-                        }
-                    }
-                }
-
-                // and execute the joiner as much as possible, given
-                // the data available for it in the channels
-                joiner_push_data : while (joinExecs > joinerPhases)
+                // compute how many times I need to execute the joiner
+                // before I get some output - this will be my phase
                 {
                     JoinFlow joinFlow;
-                    joinFlow = utility.getJoinSteadyPhaseFlow(joinerPhases);
+                    do
+                        {
+                            joinFlow = utility.getJoinSteadyPhaseFlow(joinerPhases);
+                            joinerPhases++;
 
+                            int nChild;
+                            for (nChild = 0; nChild < getNumChildren(); nChild++)
+                                {
+                                    joinerOverallPop[nChild]
+                                        += joinFlow.getPopWeight(nChild);
+                                }
+
+                        }
+                    while (joinFlow.getPushWeight() == 0);
+                }
+
+                int childOverallPeek[] = new int[getNumChildren()];
+                int childOverallPop[] = new int[getNumChildren()];
+                int childOverallPush[] = new int[getNumChildren()];
+
+                // figure out how many times to execute all the children
+                // to provide input for the joiner
+                {
                     int nChild;
                     for (nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        if (joinFlow.getPopWeight(nChild)
-                            > preJoinBuffers[nChild]
-                                + childOverallPush[nChild]
-                                - joinerOverallPop[nChild])
-                            break joiner_push_data;
-                    }
-                    for (nChild = 0; nChild < getNumChildren(); nChild++)
-                    {
-                        joinerOverallPop[nChild]
-                            += joinFlow.getPopWeight(nChild);
-                    }
-                    joinerPhases++;
+                        {
+                            StreamInterface child = getHierarchicalChild(nChild);
+                            while (preJoinBuffers[nChild]
+                                   - joinerOverallPop[nChild]
+                                   + childOverallPush[nChild]
+                                   < 0)
+                                {
+                                    PhasingSchedule childPhase =
+                                        utility.getChildPhase(
+                                                              child,
+                                                              phaseChildrenExecs[nChild]);
+
+                                    childOverallPeek[nChild] =
+                                        MAX(
+                                            childOverallPeek[nChild],
+                                            childOverallPop[nChild]
+                                            + childPhase.getOverallPeek());
+                                    childOverallPop[nChild] += childPhase.getOverallPop();
+                                    childOverallPush[nChild] += childPhase.getOverallPush();
+
+                                    phaseChildrenExecs[nChild]++;
+                                }
+                        }
                 }
-            }
 
-            // okay, now I know how many times I need to run the
-            // splitter, children and the joiner.  just run them :)
-            {
-                // get the phase
-                PhasingSchedule phase =
-                    utility.createPhase(
-                        splitterPhases,
-                        phaseChildrenExecs,
-                        joinerPhases,
-                        postSplitBuffers,
-                        preJoinBuffers);
+                int splitterOverallPush[] = new int[getNumChildren()];
 
-                // and adjust counters of execution:
-                splitExecs -= splitterPhases;
-                for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                // figure out how many times to execute the splitter to
+                // supply enough data for all the children to go
                 {
-                    childrenExecs[nChild] -= phaseChildrenExecs[nChild];
-                }
-                joinExecs -= joinerPhases;
+                    int nChild;
+                    for (nChild = 0; nChild < getNumChildren(); nChild++)
+                        {
+                            int childSplitterPhases = 0;
+                            int childSplitterPush = 0;
+                            while (postSplitBuffers[nChild]
+                                   + childSplitterPush
+                                   - childOverallPeek[nChild]
+                                   < 0)
+                                {
+                                    SplitFlow splitFlow =
+                                        utility.getSplitSteadyPhaseFlow(
+                                                                        childSplitterPhases);
+                                    childSplitterPhases++;
 
-                utility.addSchedulePhase(phase);
+                                    childSplitterPush
+                                        += splitFlow.getPushWeight(nChild);
+                                }
+
+                            splitterPhases = MAX(splitterPhases, childSplitterPhases);
+                        }
+                
+                    for (int nPhase = 0; nPhase < splitterPhases; nPhase++)
+                        {
+                            SplitFlow splitFlow =
+                                utility.getSplitSteadyPhaseFlow(
+                                                                nPhase);
+                            for (nChild = 0; nChild < getNumChildren();nChild++)
+                                {
+                                    splitterOverallPush [nChild] += splitFlow.getPushWeight(nChild);
+                                }
+                        }
+                }
+
+                // push the data available in the splitjoin down as much
+                // as possible:
+                {
+                    // execute the children as much as possible given
+                    // how much data they've been given by the splitter
+                    {
+                        for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                            {
+                                StreamInterface child = getHierarchicalChild(nChild);
+
+                                while (postSplitBuffers[nChild]
+                                       + splitterOverallPush[nChild]
+                                       - childOverallPop[nChild]
+                                       >= utility
+                                       .getChildPhase(
+                                                      child,
+                                                      phaseChildrenExecs[nChild])
+                                       .getOverallPeek()
+                                       && phaseChildrenExecs[nChild] < childrenExecs[nChild])
+                                    {
+                                        PhasingSchedule childPhase =
+                                            utility.getChildPhase(
+                                                                  child,
+                                                                  phaseChildrenExecs[nChild]);
+
+                                        childOverallPeek[nChild] =
+                                            MAX(
+                                                childOverallPeek[nChild],
+                                                childOverallPop[nChild]
+                                                + childPhase.getOverallPeek());
+                                        childOverallPop[nChild]
+                                            += childPhase.getOverallPop();
+                                        childOverallPush[nChild]
+                                            += childPhase.getOverallPush();
+
+                                        phaseChildrenExecs[nChild]++;
+                                    }
+                            }
+                    }
+
+                    // and execute the joiner as much as possible, given
+                    // the data available for it in the channels
+                    joiner_push_data : while (joinExecs > joinerPhases)
+                        {
+                            JoinFlow joinFlow;
+                            joinFlow = utility.getJoinSteadyPhaseFlow(joinerPhases);
+
+                            int nChild;
+                            for (nChild = 0; nChild < getNumChildren(); nChild++)
+                                {
+                                    if (joinFlow.getPopWeight(nChild)
+                                        > preJoinBuffers[nChild]
+                                        + childOverallPush[nChild]
+                                        - joinerOverallPop[nChild])
+                                        break joiner_push_data;
+                                }
+                            for (nChild = 0; nChild < getNumChildren(); nChild++)
+                                {
+                                    joinerOverallPop[nChild]
+                                        += joinFlow.getPopWeight(nChild);
+                                }
+                            joinerPhases++;
+                        }
+                }
+
+                // okay, now I know how many times I need to run the
+                // splitter, children and the joiner.  just run them :)
+                {
+                    // get the phase
+                    PhasingSchedule phase =
+                        utility.createPhase(
+                                            splitterPhases,
+                                            phaseChildrenExecs,
+                                            joinerPhases,
+                                            postSplitBuffers,
+                                            preJoinBuffers);
+
+                    // and adjust counters of execution:
+                    splitExecs -= splitterPhases;
+                    for (int nChild = 0; nChild < getNumChildren(); nChild++)
+                        {
+                            childrenExecs[nChild] -= phaseChildrenExecs[nChild];
+                        }
+                    joinExecs -= joinerPhases;
+
+                    utility.addSchedulePhase(phase);
+                }
             }
-        }
 
         // now execute all the components (other than the join, which
         // is done initializing) until they're guaranteed to have been
@@ -494,17 +494,17 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             // create the phase
             PhasingSchedule phase =
                 utility.createPhase(
-                    splitExecs,
-                    childrenExecs,
-                    0,
-                    postSplitBuffers,
-                    preJoinBuffers);
+                                    splitExecs,
+                                    childrenExecs,
+                                    0,
+                                    postSplitBuffers,
+                                    preJoinBuffers);
 
             // add it to the init schedule, if necessary
             if (phase.getNumPhases() != 0)
-            {
-                utility.addSchedulePhase(phase);
-            }
+                {
+                    utility.addSchedulePhase(phase);
+                }
         }
     }
 
@@ -518,17 +518,17 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
         {
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                StreamInterface child = getHierarchicalChild(nChild);
+                {
+                    StreamInterface child = getHierarchicalChild(nChild);
 
-                // compute child's schedule
-                child.computeSchedule();
+                    // compute child's schedule
+                    child.computeSchedule();
 
-                // get the # of phases that this child needs to have executed
-                // to complete a steady state schedule
-                steadyChildPhases[nChild] =
-                    child.getNumSteadyPhases() * getChildNumExecs(nChild);
-            }
+                    // get the # of phases that this child needs to have executed
+                    // to complete a steady state schedule
+                    steadyChildPhases[nChild] =
+                        child.getNumSteadyPhases() * getChildNumExecs(nChild);
+                }
         }
 
         int numInitSplitStages = 0;
@@ -547,81 +547,81 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
         {
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
-            {
-                StreamInterface child = getHierarchicalChild(nChild);
-
-                // minimum number of times the child will need to
-                // get executed to initialize.  Just the # of init stages
-                // this child has (no extra magic)
-                numInitChildStages[nChild] = child.getNumInitStages();
-
-                // figure out how many times this child needs the splitter
-                // to be executed
                 {
-                    int childInitSplitStages = 0;
+                    StreamInterface child = getHierarchicalChild(nChild);
 
-                    int childInitPeek =
-                        child.getInitPop()
+                    // minimum number of times the child will need to
+                    // get executed to initialize.  Just the # of init stages
+                    // this child has (no extra magic)
+                    numInitChildStages[nChild] = child.getNumInitStages();
+
+                    // figure out how many times this child needs the splitter
+                    // to be executed
+                    {
+                        int childInitSplitStages = 0;
+
+                        int childInitPeek =
+                            child.getInitPop()
                             + MAX(
-                                child.getInitPeek() - child.getInitPop(),
-                                child.getSteadyPeek() - child.getSteadyPop());
+                                  child.getInitPeek() - child.getInitPop(),
+                                  child.getSteadyPeek() - child.getSteadyPop());
 
-                    while (childInitPeek > 0)
-                    {
-                        // subtract appropriate amount of data flow
-                        // from the amount of data still needed by the child
-                        childInitPeek
-                            -= getSplitSteadyPhaseFlow(
-                                childInitSplitStages).getPushWeight(
-                                nChild);
+                        while (childInitPeek > 0)
+                            {
+                                // subtract appropriate amount of data flow
+                                // from the amount of data still needed by the child
+                                childInitPeek
+                                    -= getSplitSteadyPhaseFlow(
+                                                               childInitSplitStages).getPushWeight(
+                                                                                                   nChild);
 
-                        // note that I've executed another split stage
-                        childInitSplitStages++;
+                                // note that I've executed another split stage
+                                childInitSplitStages++;
+                            }
+
+                        // make sure that I've got the largest number of split
+                        // executions needed - that's how many times I really
+                        // need to execute the split
+                        numInitSplitStages =
+                            MAX(numInitSplitStages, childInitSplitStages);
                     }
 
-                    // make sure that I've got the largest number of split
-                    // executions needed - that's how many times I really
-                    // need to execute the split
-                    numInitSplitStages =
-                        MAX(numInitSplitStages, childInitSplitStages);
-                }
-
-                // figure out how many times this child needs the joiner
-                // to be executed
-                {
-                    int childInitJoinStages = 0;
-
-                    int childInitPush = child.getInitPush();
-
-                    while (childInitPush > 0)
+                    // figure out how many times this child needs the joiner
+                    // to be executed
                     {
-                        // subtract appropriate amount of data flow
-                        // from the amount of data still needed by the child
-                        childInitPush
-                            -= getJoinSteadyPhaseFlow(
-                                childInitJoinStages).getPopWeight(
-                                nChild);
+                        int childInitJoinStages = 0;
 
-                        // note that I've executed another join stage
-                        childInitJoinStages++;
+                        int childInitPush = child.getInitPush();
+
+                        while (childInitPush > 0)
+                            {
+                                // subtract appropriate amount of data flow
+                                // from the amount of data still needed by the child
+                                childInitPush
+                                    -= getJoinSteadyPhaseFlow(
+                                                              childInitJoinStages).getPopWeight(
+                                                                                                nChild);
+
+                                // note that I've executed another join stage
+                                childInitJoinStages++;
+                            }
+
+                        // since I don't actually want to drain all the data 
+                        // (thus trigger an extra execution of the child to
+                        // provide all this data), I want to execute the
+                        // joiner one time less than I've just calculated above
+                        childInitJoinStages--;
+
+                        // make sure that I've got the largest number of split
+                        // executions needed - that's how many times I really
+                        // need to execute the split
+                        // it's possible that childInitJoinStages became negative
+                        // after the decrease above, but that's OK, 
+                        // 'cause numIniSplitStages started as 0 anyway :)
+                        numInitSplitStages =
+                            MAX(numInitSplitStages, childInitJoinStages);
                     }
-
-                    // since I don't actually want to drain all the data 
-                    // (thus trigger an extra execution of the child to
-                    // provide all this data), I want to execute the
-                    // joiner one time less than I've just calculated above
-                    childInitJoinStages--;
-
-                    // make sure that I've got the largest number of split
-                    // executions needed - that's how many times I really
-                    // need to execute the split
-                    // it's possible that childInitJoinStages became negative
-                    // after the decrease above, but that's OK, 
-                    // 'cause numIniSplitStages started as 0 anyway :)
-                    numInitSplitStages =
-                        MAX(numInitSplitStages, childInitJoinStages);
                 }
-            }
         }
 
         // store amount of data in buffers internal to the splitjoin        
@@ -632,21 +632,21 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
 
         // first the init schedule:
         computeMinLatencySchedule(
-            new SJInitSchedulingUtility(this),
-            numInitSplitStages,
-            numInitJoinStages,
-            numInitChildStages,
-            postSplitBuffers,
-            preJoinBuffers);
+                                  new SJInitSchedulingUtility(this),
+                                  numInitSplitStages,
+                                  numInitJoinStages,
+                                  numInitChildStages,
+                                  postSplitBuffers,
+                                  preJoinBuffers);
 
         // and now the steady schedule
         computeMinLatencySchedule(
-            new SJSteadySchedulingUtility(this),
-            steadySplitPhases,
-            steadyJoinPhases,
-            steadyChildPhases,
-            postSplitBuffers,
-            preJoinBuffers);
+                                  new SJSteadySchedulingUtility(this),
+                                  steadySplitPhases,
+                                  steadyJoinPhases,
+                                  steadyChildPhases,
+                                  postSplitBuffers,
+                                  preJoinBuffers);
 
         // done!
         // (ain't that amazing?)

@@ -25,19 +25,19 @@ public abstract class OffChipBuffer
 
     static 
     {
-	unique_id = 0;
-	bufferStore = new HashMap();
+        unique_id = 0;
+        bufferStore = new HashMap();
     }
     
     protected OffChipBuffer(TraceNode src, TraceNode dst)
     {
-	source = src;
-	dest = dst;
+        source = src;
+        dest = dst;
 
-	users = new Vector();
-	ident = "__buf_" + /*owner.getIODevice().getPort() + */ "_" + unique_id + "__";
-	unique_id++;
-	setType();
+        users = new Vector();
+        ident = "__buf_" + /*owner.getIODevice().getPort() + */ "_" + unique_id + "__";
+        unique_id++;
+        setType();
     }
 
     public abstract boolean redundant();
@@ -52,64 +52,64 @@ public abstract class OffChipBuffer
     //return true if the inputtracenode does anything necessary
     public static boolean unnecessary(InputTraceNode input) 
     {
-	if (input.noInputs())
-	    return true;
-	if (input.oneInput() &&
-	    (InterTraceBuffer.getBuffer(input.getSingleEdge()).getDRAM() ==
-	     IntraTraceBuffer.getBuffer(input, (FilterTraceNode)input.getNext()).getDRAM()))
-	    return true;
-	return false;
+        if (input.noInputs())
+            return true;
+        if (input.oneInput() &&
+            (InterTraceBuffer.getBuffer(input.getSingleEdge()).getDRAM() ==
+             IntraTraceBuffer.getBuffer(input, (FilterTraceNode)input.getNext()).getDRAM()))
+            return true;
+        return false;
     }
     
     //return true if outputtracenode does anything
     public static boolean unnecessary(OutputTraceNode output) 
     {
-	if (output.noOutputs())
-	    return true;
-	if (output.oneOutput() && 
-	    (IntraTraceBuffer.getBuffer((FilterTraceNode)output.getPrevious(), output).getDRAM() ==
-	     InterTraceBuffer.getBuffer(output.getSingleEdge()).getDRAM()))
-	    return true;
-	return false;
+        if (output.noOutputs())
+            return true;
+        if (output.oneOutput() && 
+            (IntraTraceBuffer.getBuffer((FilterTraceNode)output.getPrevious(), output).getDRAM() ==
+             InterTraceBuffer.getBuffer(output.getSingleEdge()).getDRAM()))
+            return true;
+        return false;
     }
 
     public void setDRAM(StreamingDram DRAM) 
     {
-	//	assert !redundant() : "calling setDRAM() on redundant buffer";
-	this.dram = DRAM;
-	if (source.isOutputTrace() && dest.isInputTrace() && redundant())
-	    SpaceTimeBackend.println("*Redundant: " + this.toString());
+        //  assert !redundant() : "calling setDRAM() on redundant buffer";
+        this.dram = DRAM;
+        if (source.isOutputTrace() && dest.isInputTrace() && redundant())
+            SpaceTimeBackend.println("*Redundant: " + this.toString());
 
     }
     
     public boolean isAssigned() 
     {
-	return dram != null;
+        return dram != null;
     }
     
     public StreamingDram getDRAM() 
     {
-	assert dram != null: "need to assign buffer to streaming dram " + this.toString();
-	//assert !redundant() : "calling getDRAM() on redundant buffer";
-	return dram;
+        assert dram != null: "need to assign buffer to streaming dram " + this.toString();
+        //assert !redundant() : "calling getDRAM() on redundant buffer";
+        return dram;
     }
     
     
     public String getIdent(boolean init) 
     {
-	assert !redundant() : this.toString() + " is redundant";
-	return ident + (init ? "_init__" : "_steady__");
+        assert !redundant() : this.toString() + " is redundant";
+        return ident + (init ? "_init__" : "_steady__");
     }
     
     public String getIdentPrefix()
     {
-	assert !redundant();
-	return ident;
+        assert !redundant();
+        return ident;
     }
     
     public CType getType() 
     {
-	return type;
+        return type;
     }
     
     protected abstract void setType();
@@ -117,21 +117,21 @@ public abstract class OffChipBuffer
     //return of the buffers of this stream program    
     public static Set getBuffers() 
     {
-	HashSet set = new HashSet();
-	Iterator sources = bufferStore.keySet().iterator();
-	while (sources.hasNext()) {
-	    set.add(bufferStore.get(sources.next()));
-	}
-	return set;
+        HashSet set = new HashSet();
+        Iterator sources = bufferStore.keySet().iterator();
+        while (sources.hasNext()) {
+            set.add(bufferStore.get(sources.next()));
+        }
+        return set;
     }
     
 
     public Address getSize(boolean init) 
     {
-	if (init)
-	    return sizeInit;
-	else 
-	    return sizeSteady;
+        if (init)
+            return sizeInit;
+        else 
+            return sizeSteady;
     }
     
 
@@ -142,34 +142,34 @@ public abstract class OffChipBuffer
      **/
     public RawTile getOwner() 
     {
-	assert (dram != null) : 
-	    "owner not set yet";
-	return dram.getNeighboringTile();
+        assert (dram != null) : 
+            "owner not set yet";
+        return dram.getNeighboringTile();
     }
 
     public String toString() 
     {
-	return source + "->" + dest + "[" + dram + "]";
+        return source + "->" + dest + "[" + dram + "]";
     }
     
     public TraceNode getSource() 
     {
-	return source;
+        return source;
     }
     
     public TraceNode getDest() 
     {
-	return dest;
+        return dest;
     }
 
     public boolean isIntraTrace() 
     {
-	return (this instanceof IntraTraceBuffer);
+        return (this instanceof IntraTraceBuffer);
     }
     
     public boolean isInterTrace() 
     {
-	return (this instanceof InterTraceBuffer);
+        return (this instanceof InterTraceBuffer);
     }
     
 }

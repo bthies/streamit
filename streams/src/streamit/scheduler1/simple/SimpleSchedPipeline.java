@@ -45,10 +45,10 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         {
             ListIterator iter = children.listIterator ();
             while (iter.hasNext ())
-            {
-                SimpleSchedStream child = (SimpleSchedStream) iter.next ();
-                child.computeSchedule ();
-            }
+                {
+                    SimpleSchedStream child = (SimpleSchedStream) iter.next ();
+                    child.computeSchedule ();
+                }
         }
 
         // now go through all the children again and figure out how many
@@ -66,46 +66,46 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
             ListIterator iter = children.listIterator (children.size ());
 
             while (iter.hasPrevious ())
-            {
-                // get the child
-                SimpleSchedStream child = (SimpleSchedStream) iter.previous ();
-                ASSERT (child);
-
-                // now figure out how many times this child needs to be run
-                int producesForInit = child.getInitDataProduction ();
-                int producesPerIter = child.getProduction ();
-                int numItersInit;
-                if (producesPerIter != 0)
                 {
-                    // this stream actually produces some data - this is
-                    // the common case
-                    numItersInit = ((consumedByNext - producesForInit) + producesPerIter - 1) / producesPerIter;
-                    if (numItersInit < 0) numItersInit = 0;
-                } else {
-                    // this stream does not produce any data
-                    // make sure that consumedByPrev is 0 (otherwise
-                    // I cannot execute the next child, 'cause it will
-                    // never get any input)
-                    ASSERT (consumedByNext == 0);
+                    // get the child
+                    SimpleSchedStream child = (SimpleSchedStream) iter.previous ();
+                    ASSERT (child);
 
-                    // there will be no cycles executed for initialization
-                    // of children downstream
-                    numItersInit = 0;
+                    // now figure out how many times this child needs to be run
+                    int producesForInit = child.getInitDataProduction ();
+                    int producesPerIter = child.getProduction ();
+                    int numItersInit;
+                    if (producesPerIter != 0)
+                        {
+                            // this stream actually produces some data - this is
+                            // the common case
+                            numItersInit = ((consumedByNext - producesForInit) + producesPerIter - 1) / producesPerIter;
+                            if (numItersInit < 0) numItersInit = 0;
+                        } else {
+                            // this stream does not produce any data
+                            // make sure that consumedByPrev is 0 (otherwise
+                            // I cannot execute the next child, 'cause it will
+                            // never get any input)
+                            ASSERT (consumedByNext == 0);
+
+                            // there will be no cycles executed for initialization
+                            // of children downstream
+                            numItersInit = 0;
+                        }
+
+                    // associate the child with the number of executions required
+                    // by the child to fill up the pipeline
+                    numExecutionsForInit.put (child, new Integer (numItersInit));
+
+                    // and figure out how many data this particular child
+                    // needs to initialize the pipeline;  that is:
+                    //  + number of iters * consumption to fill up the pipeline
+                    //  + number of data needed to initialize this particular child
+                    //  + (peek - pop)
+                    consumedByNext = numItersInit * child.getConsumption () +
+                        (child.getPeekConsumption () - child.getConsumption ()) +
+                        child.getInitDataConsumption ();
                 }
-
-                // associate the child with the number of executions required
-                // by the child to fill up the pipeline
-                numExecutionsForInit.put (child, new Integer (numItersInit));
-
-                // and figure out how many data this particular child
-                // needs to initialize the pipeline;  that is:
-                //  + number of iters * consumption to fill up the pipeline
-                //  + number of data needed to initialize this particular child
-                //  + (peek - pop)
-                consumedByNext = numItersInit * child.getConsumption () +
-                                 (child.getPeekConsumption () - child.getConsumption ()) +
-                                 child.getInitDataConsumption ();
-            }
         }
 
         // compute an initialization schedule
@@ -118,25 +118,25 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
             ListIterator iter = children.listIterator ();
 
             while (iter.hasNext ())
-            {
-                SimpleSchedStream child = (SimpleSchedStream) iter.next ();
-                ASSERT (child);
-
-                // add the initialization schedule:
-                if (child.getInitSchedule () != null)
                 {
-                    initSchedule.add (child.getInitSchedule ());
-                }
+                    SimpleSchedStream child = (SimpleSchedStream) iter.next ();
+                    ASSERT (child);
 
-                // add the steady schedule an appropriate number of times:
-                Integer numExecutions = (Integer)numExecutionsForInit.get (child);
-                ASSERT (numExecutions);
+                    // add the initialization schedule:
+                    if (child.getInitSchedule () != null)
+                        {
+                            initSchedule.add (child.getInitSchedule ());
+                        }
 
-                if (numExecutions.intValue () > 0)
-                {
-                    initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (numExecutions.intValue ()), child.getSteadySchedule ()));
+                    // add the steady schedule an appropriate number of times:
+                    Integer numExecutions = (Integer)numExecutionsForInit.get (child);
+                    ASSERT (numExecutions);
+
+                    if (numExecutions.intValue () > 0)
+                        {
+                            initSchedule.add (new SchedRepSchedule (BigInteger.valueOf (numExecutions.intValue ()), child.getSteadySchedule ()));
+                        }
                 }
-            }
         }
 
         // compute the amount of data consumed and produced by initialization
@@ -144,38 +144,38 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // will need to get executed, and how much data it consumes on its
         // own initialization
         if (!children.isEmpty ())
-        {
-            // do consumption first
             {
-                // get my first child
-                SimpleSchedStream firstChild = (SimpleSchedStream) children.get (0);
-                ASSERT (firstChild);
+                // do consumption first
+                {
+                    // get my first child
+                    SimpleSchedStream firstChild = (SimpleSchedStream) children.get (0);
+                    ASSERT (firstChild);
 
-                // now get the amount of data pulled when initializing
-                int initDataConsumed = firstChild.getInitDataConsumption ();
+                    // now get the amount of data pulled when initializing
+                    int initDataConsumed = firstChild.getInitDataConsumption ();
 
-                // and the amount of data pulled when filling the pipeline
-                int fillData = ((Integer)numExecutionsForInit.get (firstChild)).intValue () *
-                               firstChild.getConsumption ();
+                    // and the amount of data pulled when filling the pipeline
+                    int fillData = ((Integer)numExecutionsForInit.get (firstChild)).intValue () *
+                        firstChild.getConsumption ();
 
-                // and thus I have the amount of data need to initialize:
-                initDataConsumption = initDataConsumed + fillData;
+                    // and thus I have the amount of data need to initialize:
+                    initDataConsumption = initDataConsumed + fillData;
+                }
+
+                // now do production
+                {
+                    // get my last child
+                    SimpleSchedStream lastChild = (SimpleSchedStream) children.get (children.size () - 1);
+                    ASSERT (lastChild);
+
+                    // the amount of data produced is simlpy the amount of data
+                    // produced by my last child...
+                    initDataProduction = lastChild.getInitDataProduction ();
+                }
+            } else {
+                initDataConsumption = 0;
+                initDataProduction = 0;
             }
-
-            // now do production
-            {
-                // get my last child
-                SimpleSchedStream lastChild = (SimpleSchedStream) children.get (children.size () - 1);
-                ASSERT (lastChild);
-
-                // the amount of data produced is simlpy the amount of data
-                // produced by my last child...
-                initDataProduction = lastChild.getInitDataProduction ();
-            }
-        } else {
-            initDataConsumption = 0;
-            initDataProduction = 0;
-        }
 
         // compute the steady state schedule
         // this one is quite easy - I go through the children and execute them
@@ -184,14 +184,14 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
             ListIterator iter = children.listIterator ();
 
             while (iter.hasNext ())
-            {
-                SimpleSchedStream child = (SimpleSchedStream) iter.next ();
-                ASSERT (child);
+                {
+                    SimpleSchedStream child = (SimpleSchedStream) iter.next ();
+                    ASSERT (child);
 
-                // in steady state processing, every child should be executed
-                // at least once!
-                steadySchedule.add (new SchedRepSchedule (child.getNumExecutions (), child.getSteadySchedule ()));
-            }
+                    // in steady state processing, every child should be executed
+                    // at least once!
+                    steadySchedule.add (new SchedRepSchedule (child.getNumExecutions (), child.getSteadySchedule ()));
+                }
 
         }
 
@@ -205,44 +205,44 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // implicitly taken care of in the intialization!
         // note: I may want to keep the buffer either n*steadyProduction or 2^n
         if (!children.isEmpty ())
-        {
-            ListIterator iter = children.listIterator ();
-            SimpleSchedStream prevChild = (SimpleSchedStream) iter.next ();
-            ASSERT (prevChild);
-
-            while (iter.hasNext ())
             {
-                SimpleSchedStream child = (SimpleSchedStream) iter.next ();
-                ASSERT (child);
+                ListIterator iter = children.listIterator ();
+                SimpleSchedStream prevChild = (SimpleSchedStream) iter.next ();
+                ASSERT (prevChild);
 
-                // compute the amount of data consumed (produced)
-                // during steady state execution
-                BigInteger steadyStateProd = child.getNumExecutions ().multiply (BigInteger.valueOf (child.getConsumption ()));
+                while (iter.hasNext ())
+                    {
+                        SimpleSchedStream child = (SimpleSchedStream) iter.next ();
+                        ASSERT (child);
 
-                // compute the amount of data produced during initialization
-                BigInteger initProdSize;
-                {
-                    int prod = ((Integer)numExecutionsForInit.get (prevChild)).intValue ()
-                               *  prevChild.getProduction ()
-                             + prevChild.getInitDataProduction ();
-                    initProdSize = BigInteger.valueOf (prod);
-                }
+                        // compute the amount of data consumed (produced)
+                        // during steady state execution
+                        BigInteger steadyStateProd = child.getNumExecutions ().multiply (BigInteger.valueOf (child.getConsumption ()));
 
-                // compute the amount of data consumed during intitialization
-                BigInteger initConsumeSize;
-                {
-                    int initConsume = child.getInitDataConsumption ();
-                    int fillConsume = ((Integer)numExecutionsForInit.get (child)).intValue () *
-                                      child.getConsumption ();
-                    initConsumeSize = BigInteger.valueOf (initConsume + fillConsume);
-                }
+                        // compute the amount of data produced during initialization
+                        BigInteger initProdSize;
+                        {
+                            int prod = ((Integer)numExecutionsForInit.get (prevChild)).intValue ()
+                                *  prevChild.getProduction ()
+                                + prevChild.getInitDataProduction ();
+                            initProdSize = BigInteger.valueOf (prod);
+                        }
 
-                BigInteger bufferSize = initProdSize.max (initProdSize.subtract (initConsumeSize).add (steadyStateProd));
-                scheduler.schedule.setBufferSize (prevChild.getStreamObject (), child.getStreamObject (), bufferSize);
+                        // compute the amount of data consumed during intitialization
+                        BigInteger initConsumeSize;
+                        {
+                            int initConsume = child.getInitDataConsumption ();
+                            int fillConsume = ((Integer)numExecutionsForInit.get (child)).intValue () *
+                                child.getConsumption ();
+                            initConsumeSize = BigInteger.valueOf (initConsume + fillConsume);
+                        }
 
-                prevChild = child;
+                        BigInteger bufferSize = initProdSize.max (initProdSize.subtract (initConsumeSize).add (steadyStateProd));
+                        scheduler.schedule.setBufferSize (prevChild.getStreamObject (), child.getStreamObject (), bufferSize);
+
+                        prevChild = child;
+                    }
             }
-        }
     }
 
     public Object getSteadySchedule ()

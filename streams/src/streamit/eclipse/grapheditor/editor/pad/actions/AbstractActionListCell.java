@@ -1,5 +1,5 @@
 /*
- * @(#)AbstractActionListCell.java	1.2 02.02.2003
+ * @(#)AbstractActionListCell.java  1.2 02.02.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -45,121 +45,121 @@ import streamit.eclipse.grapheditor.editor.pad.GraphListCellRenderer;
  */
 public abstract class AbstractActionListCell extends AbstractActionList {
 
-	/** A dummy jgraph for the menu components based
-	 *  on jgraph components. (For example the arrows.)
-	 *
-	 */
-	public static JGraph dummyGraph = new JGraph();
+    /** A dummy jgraph for the menu components based
+     *  on jgraph components. (For example the arrows.)
+     *
+     */
+    public static JGraph dummyGraph = new JGraph();
 
-	public static final String IDENTIFIER_RESET = " X";
+    public static final String IDENTIFIER_RESET = " X";
 
-	public static final String IDENTIFIER_SELECT = "...";
+    public static final String IDENTIFIER_SELECT = "...";
 
-	protected static java.util.List arrowPoints = new ArrayList();
+    protected static java.util.List arrowPoints = new ArrayList();
 
-	protected static java.util.List arrowEndPoints = new ArrayList();
-
-
-	static {
-		arrowPoints.add(new Point(0, 6));
-		arrowPoints.add(new Point(40, 6));
-		arrowEndPoints.add(new Point(0, 6));
-		arrowEndPoints.add(new Point(14, 6));
-	}
+    protected static java.util.List arrowEndPoints = new ArrayList();
 
 
-	/**
-	 * Constructor for AbstractActionListCell.
-	 * @param graphpad
-	 */
-	public AbstractActionListCell(GPGraphpad graphpad) {
-		super(graphpad);
-	}
-
-	/**
-	 * Constructor for AbstractActionListCell.
-	 * @param graphpad
-	 * @param name
-	 */
-	public AbstractActionListCell(GPGraphpad graphpad, String name) {
-		super(graphpad, name);
-	}
-
-	/**
-	 * Constructor for AbstractActionListCell.
-	 * @param graphpad
-	 * @param name
-	 * @param icon
-	 */
-	public AbstractActionListCell(
-		GPGraphpad graphpad,
-		String name,
-		Icon icon) {
-		super(graphpad, name, icon);
-	}
-
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionList#getToolBarComponent()
-	 */
-	protected JComboBox getToolBarComponent() {
-		JComboBox combo = super.getToolBarComponent();
-		
-		combo.setRenderer(new GraphListCellRenderer(this));
-		combo.setPreferredSize(new Dimension(45, 26));
-		combo.setMaximumSize(combo.getPreferredSize());
-		return combo;
-	}
-
-	/**
-	 * @see org.jgraph.pad.actions.AbstractActionList#getItems()
-	 */
-	protected Object[] getItems() {
-		Vector items = new Vector();
-
-		items.add(IDENTIFIER_RESET);
-		items.add(IDENTIFIER_SELECT);
-
-		fillCustomItems(items);
-
-		return items.toArray();
-	}
-
-	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 */
-	public void actionPerformed(ActionEvent e) {
-		Object source = e.getSource();
-		Map map = GraphConstants.createMap();
-		if (source instanceof JComboBox) {
-			JComboBox box = (JComboBox) e.getSource();
-			Object item = box.getSelectedItem();
-			if (item instanceof CellView) {
-				fillApplyMap((CellView) item, map);
-			}
-			if (item == IDENTIFIER_SELECT) {
-				selectAndFillMap(map);
-			} else if (item == IDENTIFIER_RESET) {
-				fillResetMap(map);
-			}
-
-		}
-		setSelectionAttributes(map);
-
-	}
-
-	protected abstract void fillCustomItems(Vector items);
-
-	protected abstract void fillResetMap(Map target);
-
-	protected abstract void fillApplyMap(CellView source, Map target);
-
-	protected abstract void selectAndFillMap(Map target);
-
-	protected Dimension size = new Dimension(14, 15);
+    static {
+        arrowPoints.add(new Point(0, 6));
+        arrowPoints.add(new Point(40, 6));
+        arrowEndPoints.add(new Point(0, 6));
+        arrowEndPoints.add(new Point(14, 6));
+    }
 
 
+    /**
+     * Constructor for AbstractActionListCell.
+     * @param graphpad
+     */
+    public AbstractActionListCell(GPGraphpad graphpad) {
+        super(graphpad);
+    }
 
-	protected Point point = new Point(0, 0);
+    /**
+     * Constructor for AbstractActionListCell.
+     * @param graphpad
+     * @param name
+     */
+    public AbstractActionListCell(GPGraphpad graphpad, String name) {
+        super(graphpad, name);
+    }
+
+    /**
+     * Constructor for AbstractActionListCell.
+     * @param graphpad
+     * @param name
+     * @param icon
+     */
+    public AbstractActionListCell(
+                                  GPGraphpad graphpad,
+                                  String name,
+                                  Icon icon) {
+        super(graphpad, name, icon);
+    }
+
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionList#getToolBarComponent()
+     */
+    protected JComboBox getToolBarComponent() {
+        JComboBox combo = super.getToolBarComponent();
+        
+        combo.setRenderer(new GraphListCellRenderer(this));
+        combo.setPreferredSize(new Dimension(45, 26));
+        combo.setMaximumSize(combo.getPreferredSize());
+        return combo;
+    }
+
+    /**
+     * @see org.jgraph.pad.actions.AbstractActionList#getItems()
+     */
+    protected Object[] getItems() {
+        Vector items = new Vector();
+
+        items.add(IDENTIFIER_RESET);
+        items.add(IDENTIFIER_SELECT);
+
+        fillCustomItems(items);
+
+        return items.toArray();
+    }
+
+    /**
+     * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+     */
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+        Map map = GraphConstants.createMap();
+        if (source instanceof JComboBox) {
+            JComboBox box = (JComboBox) e.getSource();
+            Object item = box.getSelectedItem();
+            if (item instanceof CellView) {
+                fillApplyMap((CellView) item, map);
+            }
+            if (item == IDENTIFIER_SELECT) {
+                selectAndFillMap(map);
+            } else if (item == IDENTIFIER_RESET) {
+                fillResetMap(map);
+            }
+
+        }
+        setSelectionAttributes(map);
+
+    }
+
+    protected abstract void fillCustomItems(Vector items);
+
+    protected abstract void fillResetMap(Map target);
+
+    protected abstract void fillApplyMap(CellView source, Map target);
+
+    protected abstract void selectAndFillMap(Map target);
+
+    protected Dimension size = new Dimension(14, 15);
+
+
+
+    protected Point point = new Point(0, 0);
 
 
 }

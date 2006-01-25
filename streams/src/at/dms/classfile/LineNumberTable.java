@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LineNumberTable.java,v 1.1 2001-08-30 16:32:27 thies Exp $
+ * $Id: LineNumberTable.java,v 1.2 2006-01-25 17:00:39 thies Exp $
  */
 
 package at.dms.classfile;
@@ -32,97 +32,97 @@ import java.io.DataOutput;
  */
 public class LineNumberTable extends Attribute {
 
-  // --------------------------------------------------------------------
-  // CONSTRUCTORS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // CONSTRUCTORS
+    // --------------------------------------------------------------------
 
-  /**
-   * Create a line number table attribute.
-   */
-  public LineNumberTable(LineNumberInfo[] entries) {
-    this.entries = entries;
-  }
-
-  /**
-   * Constructs a line number table attribute from a class file stream.
-   *
-   * @param	in		the stream to read from
-   * @param	cp		the constant pool
-   * @param	insns		(sparse) array of instructions
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  public LineNumberTable(DataInput in, ConstantPool cp, Instruction[] insns)
-    throws IOException
-  {
-    in.readInt();	// ignore
-
-    this.entries = new LineNumberInfo[in.readUnsignedShort()];
-    for (int i = 0; i < this.entries.length; i++) {
-      this.entries[i] = new LineNumberInfo(in, cp, insns);
+    /**
+     * Create a line number table attribute.
+     */
+    public LineNumberTable(LineNumberInfo[] entries) {
+        this.entries = entries;
     }
-  }
 
-  // --------------------------------------------------------------------
-  // ACCESSORS
-  // --------------------------------------------------------------------
+    /**
+     * Constructs a line number table attribute from a class file stream.
+     *
+     * @param   in      the stream to read from
+     * @param   cp      the constant pool
+     * @param   insns       (sparse) array of instructions
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    public LineNumberTable(DataInput in, ConstantPool cp, Instruction[] insns)
+        throws IOException
+    {
+        in.readInt();   // ignore
 
-  /**
-   * Returns the attribute's tag
-   */
-  /*package*/ int getTag() {
-    return Constants.ATT_LINENUMBERTABLE;
-  }
-
-  /**
-   * Returns the space in bytes used by this attribute in the classfile
-   */
-  /*package*/ int getSize() {
-    return 2 + 4 + 2 + 4*entries.length;
-  }
-
-  /**
-   * Returns line number information
-   */
-  /*package*/ LineNumberInfo[] getLineNumbers() {
-    return entries;
-  }
-
-  // --------------------------------------------------------------------
-  // WRITE
-  // --------------------------------------------------------------------
-
-  /**
-   * Insert or check location of constant value on constant pool
-   *
-   * @param	cp		the constant pool for this class
-   */
-  /*package*/ void resolveConstants(ConstantPool cp) {
-    cp.addItem(attr);
-  }
-
-  /**
-   * Write this class into the the file (out) getting data position from
-   * the constant pool
-   *
-   * @param	cp		the constant pool that contain all data
-   * @param	out		the file where to write this object info
-   *
-   * @exception	java.io.IOException	an io problem has occured
-   */
-  /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
-    out.writeShort(attr.getIndex());
-    out.writeInt(2 + 4 * entries.length);
-    out.writeShort(entries.length);
-    for (int i = 0; i < entries.length; i++) {
-      entries[i].write(out);
+        this.entries = new LineNumberInfo[in.readUnsignedShort()];
+        for (int i = 0; i < this.entries.length; i++) {
+            this.entries[i] = new LineNumberInfo(in, cp, insns);
+        }
     }
-  }
 
-  // --------------------------------------------------------------------
-  // DATA MEMBERS
-  // --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    // ACCESSORS
+    // --------------------------------------------------------------------
 
-  private static AsciiConstant		attr = new AsciiConstant("LineNumberTable");
-  private LineNumberInfo[]		entries;
+    /**
+     * Returns the attribute's tag
+     */
+    /*package*/ int getTag() {
+        return Constants.ATT_LINENUMBERTABLE;
+    }
+
+    /**
+     * Returns the space in bytes used by this attribute in the classfile
+     */
+    /*package*/ int getSize() {
+        return 2 + 4 + 2 + 4*entries.length;
+    }
+
+    /**
+     * Returns line number information
+     */
+    /*package*/ LineNumberInfo[] getLineNumbers() {
+        return entries;
+    }
+
+    // --------------------------------------------------------------------
+    // WRITE
+    // --------------------------------------------------------------------
+
+    /**
+     * Insert or check location of constant value on constant pool
+     *
+     * @param   cp      the constant pool for this class
+     */
+    /*package*/ void resolveConstants(ConstantPool cp) {
+        cp.addItem(attr);
+    }
+
+    /**
+     * Write this class into the the file (out) getting data position from
+     * the constant pool
+     *
+     * @param   cp      the constant pool that contain all data
+     * @param   out     the file where to write this object info
+     *
+     * @exception   java.io.IOException an io problem has occured
+     */
+    /*package*/ void write(ConstantPool cp, DataOutput out) throws IOException {
+        out.writeShort(attr.getIndex());
+        out.writeInt(2 + 4 * entries.length);
+        out.writeShort(entries.length);
+        for (int i = 0; i < entries.length; i++) {
+            entries[i].write(out);
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // DATA MEMBERS
+    // --------------------------------------------------------------------
+
+    private static AsciiConstant        attr = new AsciiConstant("LineNumberTable");
+    private LineNumberInfo[]        entries;
 }

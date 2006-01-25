@@ -10,10 +10,10 @@ public class SwitchReg implements SwitchSrc {
     private String reg;
     
     private SwitchReg(String reg) {
-	this.reg=reg;
+        this.reg=reg;
     }
     
     public String toString() {
-	return reg;
+        return reg;
     }
 }

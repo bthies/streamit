@@ -10,10 +10,10 @@ import org.eclipse.ui.texteditor.ITextEditor;
  */
 public class StreamItBreakpointPropertiesRulerActionDelegate extends AbstractRulerActionDelegate {
 
-	/**
-	 * @see AbstractRulerActionDelegate#createAction(ITextEditor, IVerticalRulerInfo)
-	 */
-	protected IAction createAction(ITextEditor editor, IVerticalRulerInfo rulerInfo) {
-		return new StreamItBreakpointPropertiesRulerAction(editor, rulerInfo);
-	}
+    /**
+     * @see AbstractRulerActionDelegate#createAction(ITextEditor, IVerticalRulerInfo)
+     */
+    protected IAction createAction(ITextEditor editor, IVerticalRulerInfo rulerInfo) {
+        return new StreamItBreakpointPropertiesRulerAction(editor, rulerInfo);
+    }
 }

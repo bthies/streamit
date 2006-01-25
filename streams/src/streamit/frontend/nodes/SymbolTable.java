@@ -38,7 +38,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.10 2005-07-13 22:19:10 janiss Exp $
+ * @version $Id: SymbolTable.java,v 1.11 2006-01-25 17:04:25 thies Exp $
  */
 public class SymbolTable
 {
@@ -225,21 +225,21 @@ public class SymbolTable
         if (fn != null)
             return fn;
         if (parent != null)
-        {
-            fn = parent.doLookupFn(name);
-            if (fn != null)
-                return fn;
-        }
-        if (includedFns != null)
-        {
-            for (Iterator iter = includedFns.iterator(); iter.hasNext(); )
             {
-                SymbolTable other = (SymbolTable)iter.next();
-                fn = other.doLookupFn(name);
+                fn = parent.doLookupFn(name);
                 if (fn != null)
                     return fn;
             }
-        }
+        if (includedFns != null)
+            {
+                for (Iterator iter = includedFns.iterator(); iter.hasNext(); )
+                    {
+                        SymbolTable other = (SymbolTable)iter.next();
+                        fn = other.doLookupFn(name);
+                        if (fn != null)
+                            return fn;
+                    }
+            }
         return null;
     }
 

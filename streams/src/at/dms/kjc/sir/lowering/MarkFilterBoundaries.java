@@ -10,6 +10,14 @@ import at.dms.kjc.sir.*;
  */
 public class MarkFilterBoundaries extends EmptyStreamVisitor {
     /**
+     * Whether or not to track fine-grained information on filters.
+     * If fine-grained is true, each instance of a filter gets its own
+     * profile report.  If false, all instances of a given filter type
+     * are combined in the profile report.
+     */
+    private static boolean FINE_GRAINED = false;
+    
+    /**
      * Marks filter boundaries for all filters in <str>.
      */
     public static void doit(SIRStream str) {
@@ -28,14 +36,21 @@ public class MarkFilterBoundaries extends EmptyStreamVisitor {
 	// for example: "SIRSplitter"
 	String shortClass = longClass.substring(1+longClass.lastIndexOf("."));
 
-	// for example: "DCT__100"
-	String longIdent = op.getIdent();
-	// for example: "DCT"
 	String shortIdent;
-	if (longIdent.indexOf("__") > 0) {
-	    shortIdent = longIdent.substring(0, longIdent.lastIndexOf("__"));
-	}  else {
-	    shortIdent = longIdent;
+	if (FINE_GRAINED) {
+	    // for example: "DCT__100_10_45"
+	    shortIdent = op.getName();
+	    // also output the enclosing stream to uniquely identify anonymous streams
+	    shortIdent += " parent= " + op.getParent().getIdent();
+	} else {
+	    // for example: "DCT__100"
+	    String longIdent = op.getIdent();
+	    // for example: "DCT"
+	    if (longIdent.indexOf("__") > 0) {
+		shortIdent = longIdent.substring(0, longIdent.lastIndexOf("__"));
+	    }  else {
+		shortIdent = longIdent;
+	    }
 	}
 
 	// for example: "SIRFilter DCT"

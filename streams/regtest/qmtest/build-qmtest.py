@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.10 2005-10-26 22:44:53 dimock Exp $
+# $Id: build-qmtest.py,v 1.11 2006-01-25 01:15:02 dimock Exp $
 #
 
 import os
@@ -364,7 +364,8 @@ def GetRunDOM(target, fileset, extras):
     'testname' should contain the basename of this set of tests"""
 
     # Only deal with the uniprocessor, RAW, and cluster paths.
-    if not (target == 'uni' or target == 'raw4' or target == 'cluster'):
+    # 
+    if target == 'library':
         return None
     impl = xml.dom.minidom.getDOMImplementation()
     doc = impl.createDocument(None, 'extension', None)

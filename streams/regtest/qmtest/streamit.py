@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.16 2006-01-24 15:40:33 dimock Exp $
+# $Id: streamit.py,v 1.17 2006-01-25 01:15:02 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -206,7 +206,8 @@ class RunStrcTest(qm.test.test.Test):
           e = qm.executable.RedirectedExecutable(self.timeout)
           # make with no optimization.  'CCFLAGS=""' will not work because
           # of quoting problems...
-          e.Run(['make', 'CCFLAGS=-O0', '-f', 'Makefile.cluster'], dir=test_home_dir)
+          #e.Run(['make', 'CCFLAGS=-O0', '-f', 'Makefile.cluster'], dir=test_home_dir)
+          e.Run(['make', '-f', 'Makefile.cluster'], dir=test_home_dir)
           result['RunStrcTest.stdout_makefile'] = e.stdout
           result['RunStrcTest.stderr_makefile'] = e.stderr
           makestatus = 1
@@ -300,7 +301,7 @@ class RunProgramTest(qm.test.test.Test):
         test_home_dir = context_to_dir(context)
 
         path = os.path.join('.', filename)
-        arguments = ['time ', path, '-i ' + str(self.runopts[1])]
+        arguments = [path, '-i ' + str(self.runopts[1])]
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
         status = e.Run(arguments, dir=test_home_dir, path=path)

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JQualifiedAnonymousCreation.java,v 1.11 2006-01-25 17:01:23 thies Exp $
+ * $Id: JQualifiedAnonymousCreation.java,v 1.12 2006-01-25 17:23:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -226,8 +226,8 @@ public class JQualifiedAnonymousCreation extends JExpression {
 
         constructor = cstr.getMethod();
         /* JLS 15.9.1 It is a compile-time error if Identifier is 
-           not the simple name (§6.2) of an accessible (§6.6) non-abstract 
-           inner class (§8.1.2) */
+           not the simple name (Sec 6.2) of an accessible (Sec. 6) non-abstract 
+           inner class (Sec 8.1.2) */
         check(context,
               constructor.getOwner().isNested() 
               && !constructor.getOwner().isStatic() 

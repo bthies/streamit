@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JQualifiedInstanceCreation.java,v 1.10 2006-01-25 17:01:23 thies Exp $
+ * $Id: JQualifiedInstanceCreation.java,v 1.11 2006-01-25 17:23:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -143,8 +143,8 @@ public class JQualifiedInstanceCreation extends JExpression {
         // check access
         local = context.getClassContext().getCClass();
         /* JLS 15.9.1 It is a compile-time error if Identifier is 
-           not the simple name (§6.2) of an accessible (§6.6) non-abstract 
-           inner class (§8.1.2) */
+           not the simple name (Sec. 6.2) of an accessible (Sec. 6.6) non-abstract 
+           inner class (Sec. 8.1.2) */
         check(context, constructor.isAccessible(local), KjcMessages.CONSTRUCTOR_NOACCESS, type);
         check(context,
               constructor.getOwner().isNested() 

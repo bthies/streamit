@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.13 2006-01-25 17:01:23 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.14 2006-01-25 17:23:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -493,15 +493,15 @@ public class JClassDeclaration extends JTypeDeclaration {
 
         if (owner.isPublic()) {
             /* JLS 8.8.7 : If the class is declared public, then the default constructor 
-               is implicitly given the access modifier public (§6.6); */
+               is implicitly given the access modifier public (Sec. 6); */
             modifier = ACC_PUBLIC;
         } else if (owner.isProtected()) {
             /* JLS 8.8.7 : If the class is declared protected, then the default 
-               constructor is implicitly given the access modifier protected (§6.6); */
+               constructor is implicitly given the access modifier protected (Sec. 6.6); */
             modifier = ACC_PROTECTED;
         } else if (owner.isPrivate()) {
             /* JLS 8.8.7 : If the class is declared private, then the default constructor is 
-               implicitly given the access modifier private (§6.6);*/
+               implicitly given the access modifier private (Sec. 6);*/
             modifier = ACC_PRIVATE;
         } else {
             /* JLS 8.8.7 : otherwise, the default constructor has the default 

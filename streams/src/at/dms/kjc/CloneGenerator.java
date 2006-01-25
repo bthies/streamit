@@ -27,9 +27,9 @@ import java.io.IOException;
 public class CloneGenerator {
 
     /** header for cloning methods in files */
-    private static final String HEADER = "/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String HEADER = "    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
     /** footer for cloning methods in files */
-    private static final String FOOTER = "/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String FOOTER = "    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
 
     // disable access control when this class is running
     static {
@@ -78,21 +78,21 @@ public class CloneGenerator {
     private static String generateClone(Class c) {
         String className = c.getName();
         StringBuffer sb = new StringBuffer();
-        sb.append("/** Returns a deep clone of this object. */\n");
+        sb.append("    /** Returns a deep clone of this object. */\n");
         if (Modifier.isAbstract(c.getModifiers())) {
             // if this is an abstract class, then deepClone method
             // should be empty.  Don't make it abstract because we
             // might not want all the children to have to implement if
             // (if there are no references to them.)
-            sb.append("public Object deepClone() { at.dms.util.Utils.fail(\"Error in auto-generated cloning methods - deepClone was called on an abstract class.\"); return null; }\n");
+            sb.append("    public Object deepClone() { at.dms.util.Utils.fail(\"Error in auto-generated cloning methods - deepClone was called on an abstract class.\"); return null; }\n");
         } else {
             // otherwise, should define contents of class
-            sb.append("public Object deepClone() {\n");
-            sb.append("  " + className + " other = new " + className + "();\n");
-            sb.append("  at.dms.kjc.AutoCloner.register(this, other);\n");
-            sb.append("  deepCloneInto(other);\n");
-            sb.append("  return other;\n");
-            sb.append("}\n");
+            sb.append("    public Object deepClone() {\n");
+            sb.append("        " + className + " other = new " + className + "();\n");
+            sb.append("        at.dms.kjc.AutoCloner.register(this, other);\n");
+            sb.append("        deepCloneInto(other);\n");
+            sb.append("        return other;\n");
+            sb.append("    }\n");
         }
         return sb.toString();
     }
@@ -108,15 +108,15 @@ public class CloneGenerator {
             sb.append("INTERFACE - ABORTING\n");
             return sb.toString();
         }
-        sb.append("/** Clones all fields of this into <other> */\n");
-        sb.append("protected void deepCloneInto(" + c.getName() + " other) {\n");
+        sb.append("    /** Clones all fields of this into <other> */\n");
+        sb.append("    protected void deepCloneInto(" + c.getName() + " other) {\n");
         // if there's a superclass, then call deepClone on super.
         if (c.getSuperclass()!=null && !c.getSuperclass().getName().equals("java.lang.Object")) {
             if (!inTargetClasses(c.getSuperclass().getName())) {
                 System.err.println("WARNING:  Generating call to undefined method " + c.getSuperclass().getName() + ".deepCloneInto as super of " + c.getName() +
                                    "\n  This is because " + c.getSuperclass().getName() + " is not in target classes.");
             }
-            sb.append("  super.deepCloneInto(other);\n");
+            sb.append("        super.deepCloneInto(other);\n");
         }
         // get list of fields that should NOT be cloned (as specified
         // by DO_NOT_CLONE_THESE_FIELDS array in class).
@@ -141,13 +141,13 @@ public class CloneGenerator {
                        name.equals("parent") && c.getName().equals("at.dms.kjc.sir.SIROperator") ||
                        // ignore fields that we should not not clone
                        doNotClone.contains(name)) {
-                sb.append("  other." + name + " = this." + name + ";\n");
+                sb.append("        other." + name + " = this." + name + ";\n");
             } else {
                 // otherwise call toplevel cloning method
-                sb.append("  other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
+                sb.append("        other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
             }
         }
-        sb.append("}\n");
+        sb.append("    }\n");
         return sb.toString();
     }
 

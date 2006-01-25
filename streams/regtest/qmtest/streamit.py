@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.17 2006-01-25 01:15:02 dimock Exp $
+# $Id: streamit.py,v 1.18 2006-01-25 16:34:56 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -376,6 +376,13 @@ class CompareResultsTest(qm.test.test.Test):
         actual = f.readlines()
         f.close()
 
+        # Optimizations may change the meaning of "n steady-state iterations"
+        # So we accept actual results with length different from expected
+        # The one thing we don't allow is no actual output whre some output
+        # is expected
+        if len(actual) == 0 and len(expected) > 0:
+            fail = 1
+            
         # For the RAW backend, cook 'actual'.
         if self.backend == 'raw4':
             actual = map(lambda s: re.subn(r'^\[(.+:) (.+)\]: (.*)$',

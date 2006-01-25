@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedAnonymousCreation.java,v 1.12 2006-01-25 17:01:23 thies Exp $
+ * $Id: JUnqualifiedAnonymousCreation.java,v 1.13 2006-01-25 17:25:58 thies Exp $
  */
 
 package at.dms.kjc;
@@ -120,7 +120,7 @@ public class JUnqualifiedAnonymousCreation extends JExpression {
 
 
         /* JLS 15.9.2: If the class instance creation expression occurs 
-           in a static context (§8.1.2), then i has no immediately enclosing 
+           in a static context (Sec. 8.1.2), then i has no immediately enclosing 
            instance. Otherwise, the immediately enclosing instance of i is this. */
         decl.generateInterface(owner,
                                owner.getQualifiedName() + "$" + context.getClassContext().getNextSyntheticIndex() + "$");

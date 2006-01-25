@@ -519,7 +519,7 @@ public abstract class Stream extends Operator
     //  --> intended for running streams as toplevel class.
     /*************************************************************/
 
-    int numExecutions = 0;
+    int numSteadyStates = 0;
     boolean marksteady = false;
     boolean printsched = false;
     boolean printreps = false;
@@ -578,12 +578,12 @@ public abstract class Stream extends Operator
     {
         if (schedule instanceof Operator)
         {
-            numExecutions++;
-            if (numExecutions == 10000)
+            numSteadyStates++;
+            if (numSteadyStates == 10000)
             {
                 if (marksteady)
                     System.out.print(".");
-                numExecutions = 0;
+                numSteadyStates = 0;
             }
             Operator oper = (Operator)schedule;
             int filterPop, filterPush;

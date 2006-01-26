@@ -23,6 +23,8 @@ import at.dms.kjc.common.CommonUtils;
 
 public abstract class ToCCommon extends SLIREmptyVisitor {
     
+    static public boolean alternatePrintsForTiming = true;
+
     /**
      *  Controls visitPrintStatement. Can override for a backend by writing
      *  to this variable. initialized by a static block.  Can be
@@ -762,6 +764,23 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         statementContext = true;
 
         List exps = splitForPrint(expr);
+
+        // for timing runs we want an easily recognized bit of code 
+        // that can not be optimized away by gcc
+        // produced in an easliy recognisable comment.
+        if (ToCCommon.alternatePrintsForTiming) {
+            p.newline();
+            p.print("// TIMER_PRINT_CODE: ");
+            for (Iterator i = exps.iterator(); i.hasNext();) {
+                JExpression exp = ((JExpression)i.next());
+                p.print("__print_sink__ += (int)(");
+                exp.accept(this);
+                p.print("); ");
+            }
+            p.newline();
+        }
+        
+        // now print for real...
         boolean printedOK = true;
         for (Iterator i = exps.iterator(); i.hasNext();) {
             JExpression exp = ((JExpression)i.next());
@@ -784,7 +803,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                 String printPostfix = 
                     (String)(printPostfixMap.get(typeString));
                 if (printPostfix == null) {
-                    printPostfix = ");";
+                    printPostfix = "); ";
                 }
                 p.print(printPostfix);
             }

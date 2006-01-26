@@ -2,7 +2,7 @@
 #
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.4 2004-01-30 19:17:12 dmaze Exp $
+# $Id: build-javadoc,v 1.5 2006-01-26 02:11:53 dimock Exp $
 
 rm -rf $STREAMIT_HOME/javadoc
 mkdir $STREAMIT_HOME/javadoc
@@ -24,15 +24,25 @@ done
 #  -link http://dev.eclipse.org/help21/topic/org.eclipse.platform.doc.isv/reference/api/ \
 #  -link http://dev.eclipse.org/help21/topic/org.eclipse.jdt.doc.isv/reference/api/ \
 
-javadoc -J-Xmx128M -source 1.4 -use -version -author \
+
+/usr/uns/bin/javadoc -J-Xmx128M -source 1.4 -use -version -author \
   -link http://java.sun.com/j2se/1.4.1/docs/api/ \
   -link http://www.antlr.org/javadoc/ \
   -doctitle 'StreamIt Compiler Documentation' \
   -d $STREAMIT_HOME/javadoc \
-  -group 'StreamIt Compiler Packages' 'at.dms.kjc*:streamit.iriter' \
-  -group 'StreamIt Library Packages' 'streamit.library*:streamit.misc' \
-  -group 'StreamIt Scheduler Packages' 'streamit.scheduler*' \
   -group 'StreamIt Front End Packages' 'streamit.frontend*' \
+  -group 'StreamIt Library Packages' 'streamit.library*:streamit.misc' \
+  -group 'Streamit SIR representation' 'at.dms.kjc.sir' \
+  -group 'StreamIt LIR Rep and Uni code generator' 'at.dms.kjc.lir' \
+  -group 'Kopi Rep with StreamitChanges' 'at.dms.kjc.kjc' \
+  -group 'StreamIt Uni and general compiler passes' 'at.dms.kjc.sir.lowering* ' \
+  -group 'StreamIt Cluster compiler' 'at.dms.kjc.cluster*' \
+  -group 'StreamIt Rstream compiler' 'at.dms.kjc.rstream*' \
+  -group 'Streamit Raw space compiler' 'at.dms.kjc.raw*' \
+  -group 'Streamit Raw spacetime compiler' 'at.dms.kjc.spacetime*' \
+  -group 'Streamit Raw spacedynamic compiler' 'at.dms.kjc.spacedynamic*' \
+  -group 'Other StreamIt Compiler Packages' 'at.dms.kjc*:streamit.iriter' \
+  -group 'StreamIt Scheduler Packages' 'streamit.scheduler*' \
   -group 'Eclipse Integration' 'grapheditor*:texteditor*:launcher*' \
   -group 'Other Kopi Packages' 'at.dms.*' \
   -group 'Third-Party Packages' '3rdparty.*' \

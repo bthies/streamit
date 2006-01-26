@@ -303,12 +303,21 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     
     /**
      * prints a name expression
+     *
+     * There should be no surviving JNameExpression's from the front end.
+     * We use them in the backend for two purposes when coding in SIR
+     * but wanting to know that a C / C++ code generator will produce.
+     * <p>
+     * (1) Name with no prefix -- used to print an untyped string:
+     *     such as a symbolic constant 'PI'.
+     *
+     * (2) Name with a prefix:  The uniprocessor backend co-opted this 
+     *     to print 'prefix->string'
+     *     TODO:  It seems that they should have used a BinaryExpression
      */
-    public void visitNameExpression(JNameExpression self,
-                                    JExpression prefix,
-                                    String ident) {
-        Utils.fail("Name Expression:" + self);
-    
+    public void visitNameExpression(JNameExpression self, JExpression prefix,
+            String ident) {
+
         boolean oldStatementContext = statementContext;
         statementContext = false;
         p.print("(");
@@ -355,19 +364,21 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             statementContext = oldStatementContext;
             return;
         }
-        int     index = ident.indexOf("_$");
+        int index = ident.indexOf("_$");
         if (index != -1) {
             p.print(ident.substring(0, index));      // local var
         } else {
             p.print("(");
             left.accept(this);
-            if (!(left instanceof JThisExpression))
+            if (!(left instanceof JThisExpression)) {
                 p.print(".");
+            }
             p.print(ident);
             p.print(")");
         }
         statementContext = oldStatementContext;
     }
+
 
     /**
      * prints a bitwise expression

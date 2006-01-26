@@ -832,6 +832,18 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     }
 
     /**
+     * Print a class Name.
+     *
+     * @param self    a JClassExpression
+     * @param type    s CType, presumably a CCLassNameType....
+     */
+
+    public void visitClassExpression(JClassExpression self,
+				     CType type) {
+	printType(type);	// should be instance of CClassNameType
+    }
+
+    /**
      * Print a CType.
      *
      * @param s    a CType to be printed.

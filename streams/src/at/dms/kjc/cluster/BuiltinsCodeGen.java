@@ -37,7 +37,7 @@ class BuiltinsCodeGen {
             genFileWriterWork((SIRFileWriter)filter,selfID,p);
             // SIRIdentity
         } else if (filter instanceof SIRIdentity) {
-            p.println("  return " + ClusterUtils.pushName(selfID) + "("
+            p.println("  " + ClusterUtils.pushName(selfID) + "("
                       + ClusterUtils.popName(selfID) + "());");
 
         } else if (filter instanceof SIRDummySink

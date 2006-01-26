@@ -52,5 +52,12 @@ public class Names
     public static String addressof = "&";
     // } RMR
     public static String fprintf = "fprintf";
+    // AD { add for timing calls
+    //       need some of #include <sys/time.h> #include <sys/times.h>
+    //       #include <sys/types.h> #include <unistd.h>
+    public static String times = "times";
+    public static String sysconf = "sysconf";
+    public static String _SC_CLK_TCK = "_SC_CLK_TCK";
+    // } AD
 }
 

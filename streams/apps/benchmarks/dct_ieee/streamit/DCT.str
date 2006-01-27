@@ -115,7 +115,8 @@ int->int pipeline iDCT_2D_reference_fine(int size) {
  *         domain, ordered by row and then column.
  */
 int->int pipeline iDCT8x8_2D_fast_fine() {
-    add iDCT8x8_1D_X_fast_fine();
+    add iDCT8x8_1D_row_fast_fine(); 
+    //add iDCT8x8_1D_X_fast_fine();
     add iDCT8x8_1D_Y_fast_fine();
 }
 

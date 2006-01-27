@@ -1643,21 +1643,9 @@ public class FlatIRToCluster extends InsertTimers implements
      * prints a parenthesized expression
      */
 
-    /**
+    /*
      * prints a name expression
      */
-    public void visitNameExpression(JNameExpression self, JExpression prefix,
-                                    String ident) {
-        Utils.fail("Name Expression " + self);
-
-        p.print("(");
-        if (prefix != null) {
-            prefix.accept(this);
-            p.print("->");
-        }
-        p.print(ident);
-        p.print(")");
-    }
 
     /*
      * prints an binary expression visitBinaryExpression (TOC)

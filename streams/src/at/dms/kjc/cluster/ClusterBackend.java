@@ -391,6 +391,12 @@ public class ClusterBackend implements FlatVisitor {
             System.out.println("// END str before Cluster-specific code");
         }
 
+        // if going to standalone without fusion, expand the main
+        // method names to include the filter name, so we can identify them
+        if (KjcOptions.standalone && !KjcOptions.fusion) {
+            RenameAll.expandFunctionNames(str);
+        }
+
         ////////////////////////////////////////////////
         // the cluster specific code begins here
 

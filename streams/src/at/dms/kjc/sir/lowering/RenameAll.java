@@ -82,6 +82,36 @@ public class RenameAll extends SLIRReplacingVisitor
     }
 
     /**
+     * For all init, initWork, and work functions in all filters of
+     * <str>, appends the filter's name to the function to uniquely
+     * identify that function in the standalone version.  (We could
+     * rename other functions as well, but do not bother because it is
+     * less useful).
+     */
+    public static void expandFunctionNames(SIRStream str) {
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    // name to append to methods
+                    String filterName = self.getName();
+
+                    // rename init
+                    JMethodDeclaration init = self.getInit();
+                    init.setName("init_" + filterName);
+
+                    // rename work
+                    JMethodDeclaration work = self.getWork();
+                    work.setName("work_" + filterName);
+
+                    // rename initWork
+                    if (self instanceof SIRTwoStageFilter) {
+                        JMethodDeclaration initWork = ((SIRTwoStageFilter)self).getInitWork();
+                        initWork.setName("initWork_" + filterName);
+                    }
+                }});
+    }
+
+    /**
      * Renames the contents of <f1> but does not change the identity
      * of the filter itself.
      */

@@ -28,6 +28,16 @@ import at.dms.kjc.raw.*;
 public class FlatIRToCluster extends InsertTimers implements
                                                       StreamVisitor, CodeGenerator {
 
+    /**
+     * Set to true to print comments on code generation.
+     * 
+     * Currently just used for 'for' statment.
+     * 
+     * should move definition to ToCCommon...
+     */
+    
+    static public boolean printCodegenComments = false;
+
     //  override ToC with info that we generate 'bool' for 'boolean', not 'int'
     protected boolean hasBoolType = true;
 
@@ -94,7 +104,7 @@ public class FlatIRToCluster extends InsertTimers implements
         // make sure SIRPopExpression's only pop one element
         // code generation doesn't handle generating multiple pops
         // from a single SIRPopExpression
-        RemoveMultiPops.doit(contentsAsFilter);
+        //RemoveMultiPops.doit(contentsAsFilter);
         
         FlatIRToCluster toC = new FlatIRToCluster(contentsAsFilter);
         // the code below only deals with user-defined filters.
@@ -908,8 +918,12 @@ public class FlatIRToCluster extends InsertTimers implements
                                                  selfID, p);
         } else {
 
-            block.addStatement(new JForStatement(null, init, cond, decr, work
-                                                 .getBody(), null));
+            block.addStatement(new JForStatement(null, init, cond, decr, 
+                    work.getBody(),
+                    new JavaStyleComment[] {
+                        new JavaStyleComment("FlatIRToCluster work function", true,
+                                false, false)
+                    }));
 
             // __counter_X = __counter_X + ____n;
 
@@ -1461,22 +1475,22 @@ public class FlatIRToCluster extends InsertTimers implements
     /*
      * declareInitializedArray Inherited from ToC
      */
-
+    
     /**
      * prints a for statement
      */
     public void visitForStatement(JForStatement self, JStatement init,
                                   JExpression cond, JStatement incr, JStatement body) {
-        // debugging:
-        //        JavaStyleComment [] comments = self.getComments();
-        //        if (comments != null && comments.length > 0) {
-        //            p.println("/*");
-        //            for (int i = 0; i < comments.length; i++) {
-        //                p.println(comments[i].getText());
-        //            }
-        //            p.println("*/");
-        //        }
-
+        if (printCodegenComments) {
+            JavaStyleComment[] comments = self.getComments();
+            if (comments != null && comments.length > 0) {
+                p.println("/*");
+                for (int i = 0; i < comments.length; i++) {
+                    p.println(comments[i].getText());
+                }
+                p.println("*/");
+            }
+        }
         
         // be careful, if you return prematurely, decrement me
         forLoopHeader++;
@@ -2158,6 +2172,7 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitPopExpression(SIRPopExpression self, CType tapeType) {
 
         NetStream in = RegisterStreams.getFilterInStream(filter);
+	if (self.getNumPop() != 1) System.err.println("FlatIRToCluster.visitPopExpression: " + self.getNumPop());
         //p.print(in.consumer_name()+".pop()");
         for (int i = 0; i < self.getNumPop(); i++) {
             p.print("__pop__" + selfID + "()");

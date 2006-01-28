@@ -15,12 +15,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.28 2006-01-25 17:02:47 thies Exp $
+ * $Id: Utils.java,v 1.29 2006-01-28 00:32:27 dimock Exp $
  */
 
 package at.dms.util;
 
 import java.io.*;
+
+import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -449,6 +451,15 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
+     * Set to true to get a stack trace of callers inserted as a comment.
+     * 
+     * Limitation: only provides info for loops taht are created as loops: 
+     * i.e. those with trip count > 1. 
+     */
+
+    public static boolean getForLoopCallers = false;
+    
+    /**
      * Returns a block with a loop counter declaration and a for loop
      * that executes <body> for <count> number of times.  If the
      * count is just one, then return the body instead of a loop.
@@ -531,6 +542,26 @@ public abstract class Utils implements Serializable, DeepCloneable {
                                                             OPE_POSTINC,
                                                             new JLocalVariableExpression(null, loopIndex)),
                                      null);
+
+        JavaStyleComment comments[] = null;
+        
+        // debugging: print caller, and insert caller as comment on returned for loop
+        if (getForLoopCallers) {
+            String caller;
+            {
+                Throwable tracer = new Throwable();
+                tracer.fillInStackTrace();
+                caller = "ClusterExecution.makeForLoop(" + count + "): "
+                        + tracer.getStackTrace()[1].toString();
+            }
+            JavaStyleComment comment = new JavaStyleComment(caller, true, false, false);
+            comments = new JavaStyleComment[] {comment};
+
+            // should have separate flag for this...
+            System.err.println(caller);
+
+        }
+        
         // make the for statement
         JStatement forStatement = 
             new JForStatement(/* tokref */ null,
@@ -540,7 +571,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
                               cond,
                               incr,
                               body,
-                              /* comments */ null);
+                              comments);
         // return the block
         JStatement[] statements = {varDecl, forStatement};
         //return just the for statement for rstream
@@ -596,6 +627,27 @@ public abstract class Utils implements Serializable, DeepCloneable {
                                                             OPE_POSTDEC,
                                                             new JLocalVariableExpression(null, loopIndex)),
                                      null);
+
+        JavaStyleComment comments[] = null;
+        
+        // debugging: print caller, and insert caller as comment on returned for loop
+        if (getForLoopCallers) {
+            String caller;
+            {
+                Throwable tracer = new Throwable();
+                tracer.fillInStackTrace();
+                caller = "ClusterExecution.makeForLoop(" + count + "): "
+                        + tracer.getStackTrace()[1].toString();
+            }
+            JavaStyleComment comment = new JavaStyleComment(caller, true, false, false);
+            comments = new JavaStyleComment[] {comment};
+
+            // should have separate flag for this...
+            System.err.println(caller);
+
+        }
+        
+
         // make the for statement
         JStatement forStatement = 
             new JForStatement(/* tokref */ null,
@@ -603,7 +655,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
                               cond,
                               incr,
                               body,
-                              /* comments */ null);
+                              comments);
         // return the block
         JStatement[] statements = {varDecl, forStatement};
         return new JBlock(null, statements, null);

@@ -476,18 +476,16 @@ public class Unroller extends SLIRReplacingVisitor {
             newStatements[i]=cloneIncr;
             result=incrementCounter(result,info);
         }
-        JForStatement newFor=new JForStatement(null,
-                                               new JExpressionStatement(null,
-                                                                        new JAssignmentExpression(null,
-                                                                                                  new JLocalVariableExpression(null,
-                                                                                                                               info.var),
-                                                                                                  new JIntLiteral(result)),
-                                                                        null),
-                           
-                                               self.getCondition(),
-                                               makeIncr(info,unrollLimit*info.incrVal),
-                                               body,
-                                               null);
+        JForStatement newFor = new JForStatement(null,
+                new JExpressionStatement(null, new JAssignmentExpression(null,
+                        new JLocalVariableExpression(null, info.var),
+                        new JIntLiteral(result)), null),
+
+                self.getCondition(),
+                makeIncr(info, unrollLimit * info.incrVal), body,
+                new JavaStyleComment[] {
+                    new JavaStyleComment("Unroller", true,
+                            false, false)});
         newFor.setUnrolled(true);
         newStatements[newStatements.length-1]=newFor;
         // mark that we've unrolled

@@ -1246,7 +1246,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             incr= (JStatement)incr.accept(this);    
         else 
             incr = new JEmptyStatement(null, null);
-        return new JForStatement(null, init, cond, incr, body, null);
+        return new JForStatement(null, init, cond, incr, body, 
+                self.getComments());
     }
 
     /**

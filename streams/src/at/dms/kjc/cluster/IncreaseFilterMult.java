@@ -5,6 +5,7 @@ import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
+import at.dms.compiler.JavaStyleComment; // for debugging
 
 class IncreaseFilterMult implements StreamVisitor {
 
@@ -13,19 +14,26 @@ class IncreaseFilterMult implements StreamVisitor {
         public int push, pop, peek, multiple;   
     }
 
-    private int mult;
+//    private int mult;
     private int sj_counter;
-    private boolean start_of_pipeline;
+//    private boolean start_of_pipeline;
 
     // SIRStream -> WorkInfo
     private static HashMap previous_work = new HashMap(); 
     
     private int CODE_CACHE_SIZE;
 
+    /**
+     * Constructor
+     * 
+     * @param mult                  Odd: never referenced in code!
+     * @param code_cache_size
+     */
+    
     public IncreaseFilterMult(int mult, int code_cache_size) {
-        this.mult = mult;
+//        this.mult = mult;
         this.sj_counter = 0;
-        this.start_of_pipeline = false;
+//        this.start_of_pipeline = false;
         this.CODE_CACHE_SIZE = code_cache_size;
     }
 
@@ -58,7 +66,7 @@ class IncreaseFilterMult implements StreamVisitor {
             if (i1 == null && i2 == null) continue;
 
             if (previous_work.containsKey(oper)) {
-                SIRFilter f = (SIRFilter)oper;
+                //SIRFilter f = (SIRFilter)oper;
                 WorkInfo info = (WorkInfo)previous_work.get(oper);
                 i2[0] *= info.multiple;
             }
@@ -76,13 +84,13 @@ class IncreaseFilterMult implements StreamVisitor {
 
     public void preVisitPipeline(SIRPipeline self, 
                                  SIRPipelineIter iter) {
-        start_of_pipeline = true;
+//        start_of_pipeline = true;
     }
 
     public void preVisitSplitJoin(SIRSplitJoin self,
                                   SIRSplitJoinIter iter) {
         sj_counter++;
-        start_of_pipeline = true;
+//        start_of_pipeline = true;
     }
 
     public void postVisitSplitJoin(SIRSplitJoin self,
@@ -287,13 +295,13 @@ class IncreaseFilterMult implements StreamVisitor {
                                       new JLocalVariableExpression(null,counter),
                                       new JIntLiteral(_mult));
     
-        JMethodCallExpression callExpr = 
-            new JMethodCallExpression(null, 
-                                      new JThisExpression(null), 
-                                      work.getName()+"__2", 
-                                      new JExpression[0]);
+//        JMethodCallExpression callExpr = 
+//            new JMethodCallExpression(null, 
+//                                      new JThisExpression(null), 
+//                                      work.getName()+"__2", 
+//                                      new JExpression[0]);
 
-        JStatement call = new JExpressionStatement(null, callExpr, null);
+        //JStatement call = new JExpressionStatement(null, callExpr, null);
 
         //JBlock do_block = new JBlock(null, new JStatement[0], null);
         //do_block.addStatement(call);
@@ -308,7 +316,12 @@ class IncreaseFilterMult implements StreamVisitor {
         //for_block.addStatement(call);
         for_block.addAllStatements(work.getBody());
 
-        JForStatement for_stmt = new JForStatement(null, init, cond, incr, for_block, null);
+        JForStatement for_stmt = new JForStatement(null, init, cond, incr,
+                for_block, 
+                new JavaStyleComment[] {
+                new JavaStyleComment("IncreaseFilterMult", true,
+                        false, false)
+        });
 
 
         // allow unrolling only if multiplicity increase 

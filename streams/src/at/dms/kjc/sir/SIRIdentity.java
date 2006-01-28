@@ -5,6 +5,7 @@ import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
 import at.dms.util.*;
+import at.dms.compiler.JavaStyleComment; // for debugging
 
 /**
  * This represents a StreaMIT filter that just reads <N> item and sends it along.
@@ -113,8 +114,11 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
                                                                            new JIntLiteral(1)),
                                          null);
             work1body[0] = new JForStatement(null,
-                                             new JVariableDeclarationStatement(null, induction, null),
-                                             cond, increment, pushPop, null);       
+                    new JVariableDeclarationStatement(null, induction, null),
+                    cond, increment, pushPop, 
+                    new JavaStyleComment[] {
+                    new JavaStyleComment("IncreaseFilterMult", true,
+                            false, false)});       
         
         }
     

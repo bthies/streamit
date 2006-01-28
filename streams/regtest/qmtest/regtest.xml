@@ -1,5 +1,6 @@
 <regtest>
   <test root="apps"/>
+  <option target="cluster">-standalone</option>
   <option target="library"/>
   <option target="cluster"></option>
   <option target="uni"/>

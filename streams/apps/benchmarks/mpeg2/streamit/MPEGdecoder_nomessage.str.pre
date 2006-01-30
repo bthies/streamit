@@ -356,7 +356,7 @@ int->int filter MPEGStreamParser_InternalBuffering(int width,
         push(macroblock_motion_backward);
     }
     
-    work pop 19529 push (1320*(b_per_m*64+19)) {
+    work pop 19539 push (1320*(b_per_m*64+19)) {
         while (ran < 2) {
     
             println("Parsing M2V File...");

@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.21 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearReplacer.java,v 1.22 2006-01-30 18:15:53 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, only make a replacement if we're
@@ -85,8 +85,8 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 
 
     /** Returns the type to use for buffers. In this case float[]. **/
-    public static CType getArrayType() {
-        return new CArrayType(CStdType.Float, 1);
+    public static CType getArrayType(int length) {
+        return new CArrayType(CStdType.Float, 1, new JExpression[] {new JIntLiteral(length)});
     }
     
     /** Appends two arrays of field declarations and returns the result. **/
@@ -112,17 +112,6 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
                                             false,  /* space before */
                                             false); /* space after */
         return container;
-    }
-
-    /**
-     * Create an array allocation expression. Allocates a one dimensional array of floats
-     * for the field of name fieldName of fieldSize.
-     **/
-    public static JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
-        JExpression fieldExpr = makeFieldAccessExpression(fieldName);
-        JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
-        JavaStyleComment[] comment = makeComment(commentString); 
-        return new JExpressionStatement(null, fieldAssign, comment);
     }
 
     /**
@@ -167,17 +156,6 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
         return new JExpressionStatement(null, fieldAssign, comment);
     }
 
-    /** make a JNewArrayStatement that allocates size elements of a float array. */
-    public static JNewArrayExpression getNewArrayExpression(int size) {
-        /* make the size array. */
-        JExpression[] arrayDims = new JExpression[1];
-        arrayDims[0] = new JIntLiteral(size);
-        return new JNewArrayExpression(null,           /* token reference */
-                                       getArrayType(), /* type */
-                                       arrayDims,      /* size */
-                                       null);          /* initializer */
-    }
-
     /* Makes a field array access expression of the form this.arrField[index]. */
     public static JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
         return makeArrayFieldAccessExpr(arrField, new JIntLiteral(index));
@@ -196,10 +174,8 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
                                                      new JThisExpression(null),
                                                      arrField.getIdent());
         JExpression fieldArrayAccessExpr;
-        fieldArrayAccessExpr = new JArrayAccessExpression(null,
-                                                          fieldAccessExpr,
-                                                          index,
-                                                          arrField.getType());
+        fieldArrayAccessExpr = new JArrayAccessExpression(fieldAccessExpr,
+                                                          index);
     
         return fieldArrayAccessExpr;
     }
@@ -208,8 +184,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     public static JExpression makeArrayFieldAccessExpr(String arrFieldName, int index) {
         JExpression fieldAccessExpr = makeFieldAccessExpression(arrFieldName);
         JExpression arrayIndex = new JIntLiteral(index);
-        JExpression arrayAccessExpression = new JArrayAccessExpression(null,
-                                                                       fieldAccessExpr,
+        JExpression arrayAccessExpression = new JArrayAccessExpression(fieldAccessExpr,
                                                                        arrayIndex);
         return arrayAccessExpression;
     }

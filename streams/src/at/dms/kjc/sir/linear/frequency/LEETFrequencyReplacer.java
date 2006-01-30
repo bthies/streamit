@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.<br>
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.23 2006-01-25 17:01:59 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.24 2006-01-30 18:15:55 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -159,7 +159,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
            of the next right most column, etc. */
         JVariableDefinition[] weightFields = new JVariableDefinition[numWeightFields];
         for (int i=0; i<numWeightFields; i++) {
-            weightFields[i] = makeWeightField(FILTER_WEIGHTS_PREFIX + "_" + i);
+            /*
+            The weight fields are all of the filter size (because we will store the frequency
+            representation in half complex array form (the output of FFTW). **/
+            weightFields[i] = makeWeightField(FILTER_WEIGHTS_PREFIX + "_" + i, filterSize);
             newFields = appendFieldDeclaration(newFields, weightFields[i]);
         }
     
@@ -168,21 +171,21 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
            to the same column as does the weight fields. */
         JVariableDefinition[] partialFields = new JVariableDefinition[numWeightFields];
         for (int i=0; i<numWeightFields; i++) {
-            partialFields[i] = makeWeightField(PARTIAL_BUFFER_PREFIX + "_" + i);
+            partialFields[i] = makeWeightField(PARTIAL_BUFFER_PREFIX + "_" + i, x-1);
             newFields = appendFieldDeclaration(newFields, partialFields[i]);
         }
 
         /* make the input and temp buffer fields. */
-        JVariableDefinition inputBufferField  = makeWeightField(INPUT_BUFFER_NAME);
+        JVariableDefinition inputBufferField  = makeWeightField(INPUT_BUFFER_NAME, filterSize);
         newFields = appendFieldDeclaration(newFields, inputBufferField);
-        JVariableDefinition tempBufferField  = makeWeightField(TEMP_BUFFER_NAME);
+        JVariableDefinition tempBufferField  = makeWeightField(TEMP_BUFFER_NAME, filterSize);
         newFields = appendFieldDeclaration(newFields, tempBufferField);
  
         /** make enough output buffers to hold the appropriate outputs. We can't reuse
          * the output buffer fields because we need to interleave the values at the end. **/
         JVariableDefinition outputBufferFields[] = new JVariableDefinition[numWeightFields];
         for (int i=0; i<numWeightFields; i++) {
-            outputBufferFields[i] = makeWeightField(OUTPUT_BUFFER_NAME + "_" + i);
+            outputBufferFields[i] = makeWeightField(OUTPUT_BUFFER_NAME + "_" + i, filterSize);
             newFields = appendFieldDeclaration(newFields, outputBufferFields[i]);
         }
 
@@ -313,10 +316,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
      * The field is an array of floats, and we will have one array for the real part of the
      * repsonse and one array for the imaginary part of the response.
      */
-    public JVariableDefinition makeWeightField(String name) {
+    public JVariableDefinition makeWeightField(String name, int arrayLength) {
         return new JVariableDefinition(null, /* token reference */
                                        ACC_FINAL, /* modifiers */
-                                       getArrayType(), /* type */
+                                       getArrayType(arrayLength), /* type */
                                        name, /* identity */
                                        null); /* initializer */
     }
@@ -342,35 +345,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
         // the number of FIR filters that are embodied by this filter (ie push count)
         int numFIRs = weightFields.length;
     
-        /** add statements to allocate space for the weight fields, partial results
-            fields, input buffer field, and output buffer field.
-            The weight fields are all of the filter size (because we will store the frequency
-            representation in half complex array form (the output of FFTW). **/
-        for (int i=0; i<numFIRs; i++) {
-            body.addStatement(makeFieldAllocation(weightFields[i].getIdent(), filterSize,
-                                                  "field to store the frequency response (" +
-                                                  i + ") of the filter."));
-        }
-        for (int i=0; i<numFIRs; i++) {
-            body.addStatement(makeFieldAllocation(partialFields[i].getIdent(), x-1,
-                                                  "field to store the partial results (" +
-                                                  i + ") across filter firings."));
-        }
-    
-        /** allocate space for the input data on each execution. **/
-        body.addStatement(makeFieldAllocation(inputBufferField.getIdent(), filterSize,
-                                              "field to store the input each execution."));
-        /** allocate space for the temp data on each execution (eg Y[k]). **/
-        body.addStatement(makeFieldAllocation(tempBufferField.getIdent(), filterSize,
-                                              "field to store the temp product on each execution."));
-
-        /** Allocate space for each of the output buffers. **/
-        for (int i=0; i<numFIRs; i++) {
-            body.addStatement(makeFieldAllocation(outputBufferFields[i].getIdent(), filterSize,
-                                                  "field to store the output of each execution (" +
-                                                  i + ")."));
-        }
-        
         /** copy the values of the time responses into the weight field (afterwards we will
             run convert_to_freq on the buffer to convert the real values to their (complex)
             frequency form.) **/
@@ -462,10 +436,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
                                                    field.getIdent()); /* field name */
         /* make the array access expression (eg this.field[index]*/
         JArrayAccessExpression arrAccessExpr;
-        arrAccessExpr = new JArrayAccessExpression(null,                    /* token reference */
-                                                   fldAccessExpr,           /* prefix */
-                                                   index,
-                                                   field.getType()); /* accessor */
+        arrAccessExpr = new JArrayAccessExpression(fldAccessExpr,           /* prefix */
+                                                   index); /* accessor */
         /* now, make the assignment expression */
         JAssignmentExpression assignExpr;
         assignExpr = new JAssignmentExpression(null,          /* token reference */

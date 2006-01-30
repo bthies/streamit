@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * This replacer works by calling the matrix multiply routines in the
  * ATLAS package, which it assumes are installed in $ATLAS_HOME.<br>
  *
- * $Id: LinearAtlasReplacer.java,v 1.5 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearAtlasReplacer.java,v 1.6 2006-01-30 18:15:53 thies Exp $
  **/
 public class LinearAtlasReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -85,38 +85,27 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
      * fields of this.
      */
     private void makeFields(LinearFilterRepresentation linearRep) {
-        this.aField = new JFieldDeclaration(null,
-                                            new JVariableDefinition(null,
-                                                                    0,
-                                                                    new CArrayType(CStdType.Float, 1),
-                                                                    NAME_A,
-                                                                    null),
-                                            null,
-                                            null);
-        this.xField = new JFieldDeclaration(null,
-                                            new JVariableDefinition(null,
-                                                                    0,
-                                                                    new CArrayType(CStdType.Float, 1),
-                                                                    NAME_X,
-                                                                    null),
-                                            null,
-                                            null);
-        this.bField = new JFieldDeclaration(null,
-                                            new JVariableDefinition(null,
-                                                                    0,
-                                                                    new CArrayType(CStdType.Float, 1),
-                                                                    NAME_B,
-                                                                    null),
-                                            null,
-                                            null);
-        this.yField = new JFieldDeclaration(null,
-                                            new JVariableDefinition(null,
-                                                                    0,
-                                                                    new CArrayType(CStdType.Float, 1),
-                                                                    NAME_Y,
-                                                                    null),
-                                            null,
-                                            null);
+        FilterMatrix A = linearRep.getA();
+        FilterVector b = linearRep.getb();
+
+        // get bound of each array
+        JExpression[] dims1 = { new JIntLiteral(A.getRows()*A.getCols()) };
+        JExpression[] dims2 = { new JIntLiteral(A.getRows()) };
+        JExpression[] dims3 = { new JIntLiteral(A.getCols()) };
+        JExpression[] dims4 = { new JIntLiteral(A.getCols()) };
+
+        // make declarations
+        this.aField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Float, 1, dims1),
+                                                                    NAME_A));
+
+        this.xField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Float, 1, dims2),
+                                                                    NAME_X));
+
+        this.bField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Float, 1, dims3),
+                                                                    NAME_B));
+
+        this.yField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Float, 1, dims4),
+                                                                    NAME_Y));
     }
 
     /**
@@ -126,22 +115,6 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
         JBlock block = init.getBody();
         FilterMatrix A = linearRep.getA();
         FilterVector b = linearRep.getb();
-        // allocate A
-        JExpression[] dims1 = { new JIntLiteral(A.getRows()*A.getCols()) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
-                                                   new JNewArrayExpression(null, CStdType.Float, dims1, null)));
-        // allocate x
-        JExpression[] dims2 = { new JIntLiteral(A.getRows()) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_X),
-                                                   new JNewArrayExpression(null, CStdType.Float, dims2, null)));
-        // allocate b
-        JExpression[] dims3 = { new JIntLiteral(A.getCols()) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
-                                                   new JNewArrayExpression(null, CStdType.Float, dims3, null)));
-        // allocate y
-        JExpression[] dims4 = { new JIntLiteral(A.getCols()) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_Y),
-                                                   new JNewArrayExpression(null, CStdType.Float, dims4, null)));
 
         // initialize the entries of A.  Do this on TRANSPOSE of A,
         // since we're doing A*b instead of b*A.

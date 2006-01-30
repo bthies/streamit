@@ -17,7 +17,7 @@ import at.dms.compiler.*;
  * upper-triangular mtatrices.) This replacer was inspired by the
  * Radar (CoarseSerializedBeamFormer) benchmark. <br>
  *
- * $Id: LinearDiagonalReplacer.java,v 1.5 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearDiagonalReplacer.java,v 1.6 2006-01-30 18:15:53 thies Exp $
  **/
 public class LinearDiagonalReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -80,8 +80,10 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
         assert linearRep.getA().isReal() && linearRep.getb().isReal():
             "Don't support linear replacement of " +
             "complex coefficients for now.";
+        // compute basic info for diagonal implementation
+        DiagonalInfo info = calcDiagonalInfo(linearRep);
         // make coefficient and index fields
-        makeFields(linearRep);
+        makeFields(linearRep, info);
         // make actual filter
         SIRFilter result = super.makeEfficientImplementation(oldStream, linearRep);
         // set fields
@@ -91,66 +93,18 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
                                        this.lengthField };
         result.setFields(fields);
         // add initialization of fields to init function 
-        addInitialization(result.getInit(), linearRep);
+        addInitialization(result.getInit(), linearRep, info);
         return result;
     }
 
     /**
-     * Builds field declarations for generated filter, storing them in
-     * fields of this.
+     * Calculates basic parameters for diagonal implementation.
      */
-    private void makeFields(LinearFilterRepresentation linearRep) {
-        CClassType arrayType;
-        this.sparseABaseType = linearRep.getA().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
-        // for some reason we need to set the class of 2-dimensional
-        // arrays to a plain object, since Kopi isn't analyzing them
-        // for us
-        arrayType = new CArrayType(sparseABaseType, 2);
-        arrayType.setClass(CStdType.Object.getCClass());
-        this.sparseAField = new JFieldDeclaration(null,
-                                                  new JVariableDefinition(null,
-                                                                          0,
-                                                                          arrayType,
-                                                                          NAME_A, 
-                                                                          null),
-                                                  null,
-                                                  null);
-        this.bBaseType = linearRep.getb().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
-        this.bField = new JFieldDeclaration(null,
-                                            new JVariableDefinition(null,
-                                                                    0,
-                                                                    new CArrayType(bBaseType, 1),
-                                                                    NAME_B, 
-                                                                    null),
-                                            null,
-                                            null);
-        this.startField = new JFieldDeclaration(null,
-                                                new JVariableDefinition(null,
-                                                                        0,
-                                                                        new CArrayType(CStdType.Integer, 1),
-                                                                        NAME_START, 
-                                                                        null),
-                                                null,
-                                                null);
-        this.lengthField = new JFieldDeclaration(null,
-                                                 new JVariableDefinition(null,
-                                                                         0,
-                                                                         new CArrayType(CStdType.Integer, 1),
-                                                                         NAME_LENGTH, 
-                                                                         null),
-                                                 null,
-                                                 null);
-    }
-
-    /**
-     * Adds field initialization functions to init function "init".
-     */
-    private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep) {
-        JBlock block = init.getBody();
+    private DiagonalInfo calcDiagonalInfo(LinearFilterRepresentation linearRep) {
         FilterMatrix A = linearRep.getA();
         int rows = A.getRows();
         int cols = A.getCols();
-        // first build start, end arrays.
+        // build start, end arrays.
         int[] start = new int[cols];
         int[] length = new int[cols];
         // keep track of max length
@@ -179,20 +133,53 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
             }
         }
         LinearPrinter.println("Found " + zeros + " / " + (rows*cols) + " zeros in sparse matrix.");
-        // allocate sparseA
-        JExpression[] dims = { new JIntLiteral(maxLength), new JIntLiteral(cols) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
-                                                   new JNewArrayExpression(null, sparseABaseType, dims, null)));
-        // allocate b
+
+        return new DiagonalInfo(start, length, maxLength);
+    }
+
+    /**
+     * Builds field declarations for generated filter, storing them in
+     * fields of this.
+     */
+    private void makeFields(LinearFilterRepresentation linearRep, DiagonalInfo info) {
+        // construct array bounds
+        FilterMatrix A = linearRep.getA();
+        int rows = A.getRows();
+        int cols = A.getCols();
+        JExpression[] dims1 = { new JIntLiteral(info.maxLength), new JIntLiteral(cols) };
         JExpression[] dims2 = { new JIntLiteral(cols) };
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
-                                                   new JNewArrayExpression(null, bBaseType, dims2, null)));
-        // allocate start
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_START),
-                                                   new JNewArrayExpression(null, CStdType.Integer, dims2, null)));
-        // allocate length
-        block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
-                                                   new JNewArrayExpression(null, CStdType.Integer, dims2, null)));
+
+        // declare fields
+        CClassType arrayType;
+        this.sparseABaseType = linearRep.getA().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
+        // for some reason we need to set the class of 2-dimensional
+        // arrays to a plain object, since Kopi isn't analyzing them
+        // for us
+        arrayType = new CArrayType(sparseABaseType, 2, dims1);
+        arrayType.setClass(CStdType.Object.getCClass());
+        this.sparseAField = new JFieldDeclaration(new JVariableDefinition(arrayType,
+                                                                          NAME_A));
+
+        this.bBaseType = linearRep.getb().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
+        this.bField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(bBaseType, 1, dims2),
+                                                                    NAME_B));
+
+        this.startField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Integer, 1, dims2),
+                                                                        NAME_START));
+
+        this.lengthField = new JFieldDeclaration(new JVariableDefinition(new CArrayType(CStdType.Integer, 1, dims2),
+                                                                         NAME_LENGTH));
+    }
+
+    /**
+     * Adds field initialization functions to init function "init".
+     */
+    private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep, DiagonalInfo info) {
+        JBlock block = init.getBody();
+
+        FilterMatrix A = linearRep.getA();
+        int rows = A.getRows();
+        int cols = A.getCols();
 
         // initialize the entries.  Note that here we are substituting
         // "cols-j-1" for "cols" in the LHS of each assignment that is
@@ -201,14 +188,13 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
         // increasing order in the work function.
         for (int j=0; j<cols; j++) {
             JExpression rhs;
-            for (int i=0; i<length[j]; i++) {
+            for (int i=0; i<info.length[j]; i++) {
                 // "sparseA"[i][j] = A.getElement(rows-start[j]-i-i, j)
                 rhs = ( sparseAField.getVariable().getType()==CStdType.Integer ? 
-                        (JExpression)new JIntLiteral((int)A.getElement(rows-start[j]-i-1, j).getReal()) :
-                        (JExpression)new JFloatLiteral((float)A.getElement(rows-start[j]-i-1, j).getReal()) );
+                        (JExpression)new JIntLiteral((int)A.getElement(rows-info.start[j]-i-1, j).getReal()) :
+                        (JExpression)new JFloatLiteral((float)A.getElement(rows-info.start[j]-i-1, j).getReal()) );
 
-                block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(null,
-                                                                                      makeArrayFieldAccessExpr(sparseAField.getVariable(), i),
+                block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(makeArrayFieldAccessExpr(sparseAField.getVariable(), i),
                                                                                       new JIntLiteral(cols-j-1)),
                                                            rhs));
             }
@@ -218,9 +204,9 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
                     (JExpression)new JFloatLiteral((float)linearRep.getb().getElement(j).getReal()) );
             block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(bField.getVariable(), cols-j-1), rhs));
             // "start"[j] = start[j]
-            block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(startField.getVariable(), cols-j-1), new JIntLiteral(start[j])));
+            block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(startField.getVariable(), cols-j-1), new JIntLiteral(info.start[j])));
             // "length"[j] = length[j]
-            block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(lengthField.getVariable(), cols-j-1), new JIntLiteral(length[j])));
+            block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(lengthField.getVariable(), cols-j-1), new JIntLiteral(info.length[j])));
         }
     }
 
@@ -283,13 +269,11 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
                                                        new JIntLiteral(0)));
         // count = start[j]
         outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, countVar), 
-                                                       new JArrayAccessExpression(null,
-                                                                                  new JFieldAccessExpression(null, new JThisExpression(null), NAME_START),
+                                                       new JArrayAccessExpression(new JFieldAccessExpression(null, new JThisExpression(null), NAME_START),
                                                                                   new JLocalVariableExpression(null, jVar))));
         // iters = length[j]
         outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, itersVar), 
-                                                       new JArrayAccessExpression(null,
-                                                                                  new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
+                                                       new JArrayAccessExpression(new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
                                                                                   new JLocalVariableExpression(null, jVar))));
         // add the inner for loop
         outerLoop.addStatement(Utils.makeForLoop(innerLoop, new JLocalVariableExpression(null, itersVar), iVar));
@@ -298,16 +282,14 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
         outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, sumVar),
                                                        new JAddExpression(null,
                                                                           new JLocalVariableExpression(null, sumVar),
-                                                                          new JArrayAccessExpression(null,
-                                                                                                     new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
+                                                                          new JArrayAccessExpression(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
                                                                                                      new JLocalVariableExpression(null, jVar)))));
         // push (sum)
         outerLoop.addStatement(new JExpressionStatement(null, new SIRPushExpression(new JLocalVariableExpression(null, sumVar), outputType), null));
 
         // now build up the inner loop...
         // sum += sparseA[i][j] * peek(count);
-        JExpression sparseAij = new JArrayAccessExpression(null,
-                                                           makeArrayFieldAccessExpr(sparseAField.getVariable(),
+        JExpression sparseAij = new JArrayAccessExpression(makeArrayFieldAccessExpr(sparseAField.getVariable(),
                                                                                     new JLocalVariableExpression(null, iVar)),
                                                            new JLocalVariableExpression(null, jVar));
         JLocalVariableExpression countRef = new JLocalVariableExpression(null, countVar);
@@ -330,4 +312,21 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
                                                         null));
         return result;
     }
+
+    // just a data structure of useful fields for the codegen
+    class DiagonalInfo {
+        // index of starting non-zero entry for given column
+        public int[] start;
+        // length of non-zero stretch for given column
+        public int[] length;
+        // maximum length of non-zero stretch across all columns
+        public int maxLength;
+
+        public DiagonalInfo(int[] start, int[] length, int maxLength) {
+            this.start = start;
+            this.length = length;
+            this.maxLength = maxLength;
+        }
+    }
 }
+

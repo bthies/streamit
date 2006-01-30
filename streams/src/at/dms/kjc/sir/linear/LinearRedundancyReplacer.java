@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * requirements. Refer to the documentation in LinearRedundancy
  * for more information.<br>
  *
- * $Id: LinearRedundancyReplacer.java,v 1.15 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.16 2006-01-30 18:15:53 thies Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -116,7 +116,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         JFieldDeclaration[] newFields = appendFieldDeclarations(makeFields(tupleData), self.getFields());
 
         // now, make the new init, initWork and work functions
-        JMethodDeclaration init     = makeInit(tupleData);
+        JMethodDeclaration init     = SIRStream.makeEmptyInit();
         JMethodDeclaration initWork = makeWork(INITWORK, linearRep, tupleData);
         JMethodDeclaration work     = makeWork(WORK,     linearRep, tupleData);
 
@@ -161,12 +161,14 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             String stateFieldName = tupleData.getName(tuple);
             if (stateFieldName == null) {throw new RuntimeException("null name in name map!");}
             String indexFieldName = stateFieldName + INDEX_POSTFIX;
-        
+            // get size of state array
+            LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+            int stateLength = tupleData.getMaxUse(t) + 1;
 
             // make the variable definition for the state field
             JVariableDefinition stateDef = new JVariableDefinition(null, /* token reference */
                                                                    ACC_FINAL, /* modifiers */
-                                                                   getArrayType(), /* type */
+                                                                   getArrayType(stateLength), /* type */
                                                                    stateFieldName, /* identity */
                                                                    null); /* initializer */
             // make the variable definition for the index field
@@ -189,40 +191,6 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             currentIndex++;
         }
         return newFields;
-    }
-
-    
-    /** Make a new init method that allocates the state fields and zeros the index fields. **/
-    public JMethodDeclaration makeInit(RedundancyReplacerData tupleData) {
-        // The new body of the init function.
-        JBlock body = new JBlock();
-
-        // the only thing that the init function has to do is to
-        // allocate space for all of the state fields. Note that the
-        // space that is necessary is equal to the size of a float times
-        // the max use of the tuple.
-        Iterator tupleIter = tupleData.reused.iterator();
-        while(tupleIter.hasNext()) {
-
-            LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
-            String fieldName = tupleData.getName(t);
-            String indexName = fieldName + INDEX_POSTFIX;
-            int    fieldSize = tupleData.getMaxUse(t) + 1;
-            // make a field allocation for fieldName of size maxUse
-            body.addStatement(makeFieldAllocation(fieldName, fieldSize, "state for " + t));
-            body.addStatement(makeFieldInitialization(indexName, 0, "index for " + t));
-        }
-
-        return new JMethodDeclaration(null,                  /* token reference */
-                                      ACC_PUBLIC,            /* modifiers */
-                                      CStdType.Void,         /* return type */
-                                      "init",                /* identifier */
-                                      JFormalParameter.EMPTY,/* paramters */
-                                      CClassType.EMPTY,      /* exceptions */
-                                      body,                  /* body */
-                                      null,                  /* java doc */
-                                      null);                 /* java style comment */
-    
     }
 
     /**
@@ -285,8 +253,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
             JExpression arrayIndex = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
             // this expression is state_field[state_field_index]
-            JExpression arrayAccessExpression = new JArrayAccessExpression(null,
-                                                                           fieldAccessExpr,
+            JExpression arrayAccessExpression = new JArrayAccessExpression(fieldAccessExpr,
                                                                            arrayIndex);
             // generate the appropriate computation expression for this tuple
             // note that no effective indexes need to be computed
@@ -448,7 +415,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         JExpression maxUseExpr= new JIntLiteral(tupleData.getMaxUse(origTuple)+1);
         JExpression modExpr   = new JModuloExpression(null, addExpr, maxUseExpr);
         // now, finally make the array access expression
-        return new JArrayAccessExpression(null, fieldExpr, modExpr);
+        return new JArrayAccessExpression(fieldExpr, modExpr);
     }
 
     /**

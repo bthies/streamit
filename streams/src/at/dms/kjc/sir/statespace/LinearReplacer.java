@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.3 2006-01-25 17:02:30 thies Exp $
+ * $Id: LinearReplacer.java,v 1.4 2006-01-30 18:15:57 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // set of containers that were replaced
@@ -153,17 +153,6 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /**
-     * Create an array allocation expression. Allocates a one dimensional array of floats
-     * for the field of name fieldName of fieldSize.
-     **/
-    public static JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
-        JExpression fieldExpr = makeFieldAccessExpression(fieldName);
-        JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
-        JavaStyleComment[] comment = makeComment(commentString); 
-        return new JExpressionStatement(null, fieldAssign, comment);
-    }
-
-    /**
      * Create a field access expression for the field named "name"
      **/
     public static JExpression makeFieldAccessExpression(String name) {
@@ -203,17 +192,6 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
                                                             new JIntLiteral(null,initValue));
         JavaStyleComment[] comment = makeComment(commentString); 
         return new JExpressionStatement(null, fieldAssign, comment);
-    }
-
-    /** make a JNewArrayStatement that allocates size elements of a float array. */
-    public static JNewArrayExpression getNewArrayExpression(int size) {
-        /* make the size array. */
-        JExpression[] arrayDims = new JExpression[1];
-        arrayDims[0] = new JIntLiteral(size);
-        return new JNewArrayExpression(null,           /* token reference */
-                                       getArrayType(), /* type */
-                                       arrayDims,      /* size */
-                                       null);          /* initializer */
     }
 
     /* Makes a field array access expression of the form this.arrField[index]. */

@@ -1,0 +1,13 @@
+ # IMPACT Public Release (www.crhc.uiuc.edu/IMPACT)            Version 2.33  #
+ # IMPACT Trimaran Release (www.trimaran.org)                  July 12, 1999 #
+###############################################################################
+#  Run 'read_compile_info --help | more' for documentation.
+#
+#  Revision history for this file:
+#     6/99  Created by John C. Gyllenhaal (www.crhc.uiuc.edu/IMPACT)
+###############################################################################
+
+# No parameters must be set in order to get valid code for this benchmark.
+# Use the baseline parameter file for all the parameter settings
+(* $BASELINE_PARMS_FILE$
+end)

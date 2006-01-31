@@ -1,0 +1,94 @@
+# Benchmark 'exec_info' module version 2.0 (2/15/99)
+# Covered by the license and copyright(s) in impact/scripts/read_exec_info.
+#
+# Used directly by impact/scripts/read_exec_info and indirectly by many others.
+# Use impact/scripts/test_bench_info to test validity of settings.
+# See impact/tutorials/bench_info_tutorial for complete usage information.
+#
+# Source of this file's input, comparison file, etcetera:
+#   The IMPACT team (based on contents of print_training_info)
+#
+# Revision history for this file:
+#   2/15/99  Initial port by John C. Gyllenhaal (www.crhc.uiuc.edu/IMPACT) 
+#
+# Predefined variables (defined by read_exec_info for use by this info module):
+#
+#   BASE_DIR="location of this module (e.g., impact/benchmarks/wc)"
+#   RESULT_FILE="file containing stdout/stderr (e.g., wc t1 >& $RESULT_FILE)"
+#   HOST_PLATFORM="host platform for profiling/emulation (e.g., hp)"
+#   HOST_COMPILER="host compiler for libraries/header files (e.g., cc)" 
+#
+# IMPORTANT NOTES ABOUT USAGE (see bench_info_tutorial for details):
+#
+#   1) Do not do *ANYTHING* in this info module except define the following
+#      /bin/sh variables:
+#
+#      SETUP, PREFIX, ARGS, CHECK, CLEANUP, SKIP 
+#
+#      If necessary, you may set these variables based on the values of
+#      HOST_COMPILER and HOST_PLATFORM.  For example:
+#
+#         if [ $HOST_PLATFORM = "hp" ]; then 
+#            ARGS="< input1_big_endian.IN"; 
+#         else 
+#            ...
+#
+#      This file will be executed using sh's ". (this_file)".  It is fragile!
+#      You may, of course, add comments. 
+#
+#   2) Here is the basic template for the usage of these variables:
+# 
+#      cd (target_dir)      # Some scripts use temporary directory 
+#      ...                  # May build/copy/link in executable, etc. into dir
+#      /bin/sh -c "$SETUP"
+#      # Execute the benchmark with the provided prefix and args
+#      /bin/sh -c "($PREFIX ./(executable_name) $ARGS) > $RESULT_FILE 2>&1"
+#      CHECK_FILE=(execution_description).check
+#      echo "> RESULT CHECK BEGIN FOR (benchmark)";
+#      /bin/sh -c "($CHECK) > $CHECK_FILE 2>&1"
+#      # Flag failure if $CHECK_FILE not empty and print out first 30 lines!
+#      if [ -s $CHECK_FILE ]; then
+#          (Print check error header, flag error, etc.)
+#          head -n 30 $CHECK_FILE
+#      fi
+#      echo "> RESULT CHECK END FOR (benchmark)";
+#      /bin/rm -f $CHECK_FILE  # Some scripts save if $CHECK_FILE is not empty
+#      /bin/rm -f $RESULT_FILE # Some scripts save if $CHECK_FILE is not empty
+#      /bin/sh -c "$CLEANUP"
+#
+#      When calling Lsim, '-Fskip=$SKIP' is added to arguments.
+#
+#   3) As shown, the commands will be executed using "/bin/sh".  
+#      Commands specific to "/bin/csh" like "setenv" and ">& file" are not 
+#      supported!  Use "set", "export", and "> file 2>&1" if necessary.
+#
+#   4) Use BASE_DIR (defined by read_exec_info) to locate inputs and outputs.
+# 
+#   5) Use SETUP to link all inputs into '.' to remove path variances 
+#      from output file(s).  
+#
+#   6) ARGS should not explicitly redirect the output using '>' or '2>&1'.
+#
+#   7) CHECK should produce no output on correct execution.
+#      Use 'spiff' to eliminate spurious output caused by rounding differences.
+#      If diffing *huge* files, use '| head -100' to limit output on errors!
+#
+#   8) Use CLEANUP to remove input links and outputs (but not $RESULT_FILE).
+#      Use specific file names, not wildcards, when deleting files!
+#
+#   9) Set SKIP to "WHO_KNOWS" if you have not calculated its proper value!
+#      See bench_info_tutorial for instructions on how to calculate SKIP.
+#
+
+
+### EXEC INFO MODULE FOR: mpeg2dec input 1
+
+# input1 is from 
+SETUP="ln -s $BASE_DIR/input1/mei16v2.m2v .";
+PREFIX="";
+ARGS="-b mei16v2.m2v -r -f -oO rec%d";
+CHECK="diff $BASE_DIR/output1/rec0.Y rec0.Y ; diff $BASE_DIR/output1/rec0.U rec0.U ; diff $BASE_DIR/output1/rec0.V rec0.V ; diff $BASE_DIR/output1/rec1.Y rec1.Y ; diff $BASE_DIR/output1/rec1.U rec1.U ; diff $BASE_DIR/output1/rec1.V rec1.V ; diff $BASE_DIR/output1/rec2.Y rec2.Y ; diff $BASE_DIR/output1/rec2.U rec2.U ; diff $BASE_DIR/output1/rec2.V rec2.V ; diff $BASE_DIR/output1/rec3.Y rec3.Y ; diff $BASE_DIR/output1/rec3.U rec3.U ; diff $BASE_DIR/output1/rec3.V rec3.V ";
+CLEANUP="rm -f rec?.? mei16v2.m2v";
+SKIP="0";
+
+

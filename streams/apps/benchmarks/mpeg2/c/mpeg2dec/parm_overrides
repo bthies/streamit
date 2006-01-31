@@ -1,0 +1,76 @@
+# Benchmark parameter override file, version 2.0 (2/15/99)
+# Covered by the license and copyright(s) in impact/scripts/read_compile_info.
+#
+# Used to override selected parameters for a specific benchmark.
+# Return by the query 'read_compile_info (benchmark) -parm_override_file'
+# See impact/tutorials/bench_info_tutorial for complete usage information.
+#
+# Source of benchmark's parameter override information:
+#   The IMPACT team (based on regression testing scripts)
+#
+# Revision history for this file:
+#   2/15/99 Initial port by John C. Gyllenhaal (www.crhc.uiuc.edu/IMPACT)
+#
+# Predefined variables:
+#
+# BENCHMARK_BASELINE_PARMS="baseline_parms (i.e., .../STD_PARMS.compile_bench)"
+#
+# IMPORTANT NOTES ABOUT USAGE (see bench_info_tutorial for details):
+#
+# 1) This parameter override file requires features added to the parameter
+#    file facility on 10/16/98.  See parms_tutorial for details.
+#
+# 2) Below is the basic template for the usage of this override file:
+#      ************* COMPILING USING IMPACT/TRIMARAN ****************
+#      # For IMPACT/Trimaran, set STD_PARMS_FILE to the parameters to use.
+#      # Use parm facility features to allow PARM_OVERRIDE_FILE (if defined)
+#      # to override the USER_PARMS_FILE for the specified parm values and
+#      # use USER_PARMS_FILE settings for the rest of the parameters.
+#      PARM_OVERRIDE_FILE="`read_compile_info (benchmark) -parm_override_file`"
+#    
+#      # If PARM_OVERRIDE_FILE specified, use as the top-level parm file.
+#      if [ "$PARM_OVERRIDE_FILE" != "" ]; then
+#          # Set STD_PARMS_FILE to benchmark's specific override file.
+#          STD_PARMS_FILE="$PARM_OVERRIDE_FILE";
+#          export STD_PARMS_FILE;
+#
+#          # Set BENCHMARK_BASELINE_PARMS to user-specified file which will be
+#          # used to set all the parameters that PARM_OVERRIDE_FILE doesn't 
+#          # specify.  PARM_OVERRIDE_FILE must be set up properly to do this!
+#          BENCHMARK_BASELINE_PARMS="$USER_PARMS_FILE";
+#          export BENCHMARK_BASELINE_PARMS;
+# 
+#      # Otherwise, use user-specified parms file directly
+#      else
+#          # Set STD_PARMS_FILE to user-specified parms file.
+#          STD_PARMS_FILE="$USER_PARMS_FILE";
+#          export STD_PARMS_FILE;
+#      fi
+#
+# 3) The example below overrides three "(Lsuperscalar" parameters and uses
+#    the baseline parameters for everything else (including the remaining
+#    Lsuperscalar parameters):
+#
+#      # Turn off some aggressive ILP optimizations to reduce compile time
+#      # at the cost of some performance
+#      (Lsuperscalar $BENCHMARK_BASELINE_PARMS$
+#        allow_backedge_exp=no;
+#        allow_expansion_of_loops=no
+#        allow_extra_unrolling_for_small_loops=no
+#      end)
+#      
+#      # For everything else, use parms specified by $BENCHMARK_BASELINE_PARMS$
+#      (* $BENCHMARK_BASELINE_PARMS$
+#      end)
+#
+# 4) See impact/parms/STD_PARMS.MODIFIABLE.2_0 for a description of
+#    parameters that might be useful to override
+
+#
+# Place your parm overrides here as described above
+#
+
+# For everything else, use parms specified by $BENCHMARK_BASELINE_PARMS$
+(* $BENCHMARK_BASELINE_PARMS$
+end)
+

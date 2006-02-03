@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.29 2006-01-28 00:32:27 dimock Exp $
+ * $Id: Utils.java,v 1.30 2006-02-03 00:52:58 thies Exp $
  */
 
 package at.dms.util;
@@ -448,6 +448,120 @@ public abstract class Utils implements Serializable, DeepCloneable {
         result.addStatement(last[0]);
 
         return result;
+    }
+
+    /**
+     * Returns a version of <stmt> with all standalone pops (i.e.,
+     * pop() as a statement rather than as an expression) removed.
+     */
+    public static JStatement removeUnusedPops(JStatement stmt) {
+        return (JStatement)stmt.accept(new SLIRReplacingVisitor() {
+                public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+                    if (expr instanceof SIRPopExpression) {
+                        return new JEmptyStatement();
+                    } else {
+                        return super.visitExpressionStatement(self, expr);
+                    }
+                }
+            });
+    }
+
+    /**
+     * Returns whether or not there are any pop expressions before
+     * peek expressions in the dynamic execution of <stmt>.
+     */
+    public static boolean popBeforePeek(JStatement stmt) {
+        // there are two ways that a dynamic pop can come before a
+        // peek:
+        // 1. the pop statement comes first in the static code listing
+        // 2. a pop and peek statement are in the same loop
+
+        // CHECK CONDITION 1
+        final boolean popBeforePeek1[] = { false };
+        {
+        final boolean seenPop1[] = { false };
+        stmt.accept(new SLIREmptyVisitor() {
+                public void visitPopExpression(SIRPopExpression self,
+                                               CType tapeType) {
+                    seenPop1[0] = true;
+                }
+                public void visitPeekExpression(SIRPeekExpression self,
+                                                CType tapeType,
+                                                JExpression arg) {
+                    super.visitPeekExpression(self, tapeType, arg);
+                    if (seenPop1[0]) {
+                        popBeforePeek1[0] = true;
+                    }
+                }
+            });
+        }
+
+        // CHECK CONDITION 2
+        final boolean popBeforePeek2[] = { false };
+        {
+        // count of loop nesting
+        final int numLoops[] = { 0 };
+        // whether or not we have seen pop or peek in outermost loop
+        final boolean seenPop2[] = { false };
+        final boolean seenPeek2[] = { false };
+        stmt.accept(new SLIREmptyVisitor() {
+                public void visitForStatement(JForStatement self,
+                                              JStatement init,
+                                              JExpression cond,
+                                              JStatement incr,
+                                              JStatement body) {
+                    clearStats();
+                    numLoops[0]++;
+                    super.visitForStatement(self, init, cond, incr, body);
+                    numLoops[0]--;
+                    updateStats();
+                }
+
+                public void visitWhileStatement(JWhileStatement self,
+                                                JExpression cond,
+                                                JStatement body) {
+                    clearStats();
+                    numLoops[0]++;
+                    super.visitWhileStatement(self, cond, body);
+                    numLoops[0]--;
+                    updateStats();
+                }
+
+                // if we just left outer-most loop, check if there is
+                // both pop and peek in the loop
+                private void updateStats() {
+                    if (numLoops[0] == 0) {
+                        if (seenPop2[0] && seenPeek2[0]) {
+                            popBeforePeek2[0] = true;
+                        }
+                        clearStats();
+                    }
+                }
+                
+                // clear counts for next loop
+                private void clearStats() {
+                    if (numLoops[0] == 0) {
+                        seenPop2[0] = false;
+                        seenPeek2[0] = false;
+                    }
+                }
+
+
+                public void visitPopExpression(SIRPopExpression self,
+                                               CType tapeType) {
+                    seenPop2[0] = true;
+                }
+                public void visitPeekExpression(SIRPeekExpression self,
+                                                CType tapeType,
+                                                JExpression arg) {
+                    super.visitPeekExpression(self, tapeType, arg);
+                    seenPeek2[0] = true;
+                }
+            });
+        }
+
+        // return true if either condition found pop before peek
+        return popBeforePeek1[0] || popBeforePeek2[0];
     }
 
     /**

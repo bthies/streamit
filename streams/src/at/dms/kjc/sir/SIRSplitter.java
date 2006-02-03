@@ -131,6 +131,8 @@ public class SIRSplitter extends SIROperator {
      * 1.
      */
     public boolean isUnaryRoundRobin() {
+        // must be round-robin type
+        if (!type.isRoundRobin()) return false;
         // must have unary weights
         for (int i=0; i<weights.length; i++) {
             boolean unary = (weights[i] instanceof JIntLiteral &&

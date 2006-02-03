@@ -155,6 +155,8 @@ public class FuseSplit {
         if (!isFusable(sj)) {
             return sj;
         }
+        
+        //FuseSimpleSplit.printStats(sj);
 
         // get copy of child streams and rename them
         List children = sj.getParallelStreams();

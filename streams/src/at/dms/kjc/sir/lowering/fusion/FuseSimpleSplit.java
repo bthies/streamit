@@ -27,6 +27,8 @@ public class FuseSimpleSplit {
             //System.err.println("Fusing " + (sj.size()) + " SplitJoin filters.");
         }
 
+        //printStats(sj);
+
         // get copy of child streams
         List children = sj.getParallelStreams();
         // rename components
@@ -62,6 +64,41 @@ public class FuseSimpleSplit {
     }
 
     /**
+     * Prints out statitistics about the I/O rates of the splitter,
+     * joiner, and filters in <sj>.
+     */
+    static void printStats(SIRSplitJoin sj) {
+        System.err.println();
+        System.err.println("Splitjoin: " + sj.getIdent());
+        System.err.print("Splitter: " + sj.getSplitter().getType() + "(");
+        int[] weights = sj.getSplitter().getWeights();
+        for (int i=0; i<weights.length; i++) {
+            System.err.print(weights[i]);
+            if (i!=weights.length-1) {
+                System.err.print(", ");
+            }
+        }
+        System.err.println(")");
+        for (int i=0; i<sj.size();i++) {
+            System.err.print(sj.get(i).getIdent());
+            System.err.print(" push " + ((SIRFilter)sj.get(i)).getPushInt());
+            System.err.print(" pop " + ((SIRFilter)sj.get(i)).getPopInt());
+            System.err.print(" peek " + ((SIRFilter)sj.get(i)).getPeekInt());
+            System.err.println();
+        }
+        System.err.print("Joiner: " + sj.getJoiner().getType() + "(");
+        weights = sj.getJoiner().getWeights();
+        for (int i=0; i<weights.length; i++) {
+            System.err.print(weights[i]);
+            if (i!=weights.length-1) {
+                System.err.print(", ");
+            }
+        }
+        System.err.println(")");
+        System.err.println();
+    }
+
+    /**
      * Create a pipelin containing prelude and postlude (and new
      * filter) to represent the fused splitjoin.
      */
@@ -73,10 +110,14 @@ public class FuseSimpleSplit {
         // make a dummy init function
         pipe.setInit(SIRStream.makeEmptyInit());
 
-        // make a splitFilter only if it's not a duplicate and it's
-        // not a null split
-        if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE &&
-            rep.splitter!=0) {
+        // do not make a filter for a splitter if:
+        //  - it's a duplicate
+        //  - it's a roundrobin(1,1,...,1)
+        //  - it's a null split
+        if (!(sj.getSplitter().getType()==SIRSplitType.DUPLICATE ||
+              sj.getSplitter().isUnaryRoundRobin() ||
+              rep.splitter==0
+              )) {
             pipe.add(makeFilter(pipe,
                                 "Pre_" + sj.getIdent(),
                                 makeSplitFilterBody(sj.getSplitter(),
@@ -503,6 +544,9 @@ public class FuseSimpleSplit {
                                                        SRepInfo rep) {
         // see whether or not we have a duplicate
         boolean isDup = sj.getSplitter().getType()==SIRSplitType.DUPLICATE;
+        // see whether or not we have a RR with unary weights (Unary RR)
+        boolean isURR = sj.getSplitter().isUnaryRoundRobin();
+
         // Build the new work function; add the list of statements
         // from each of the component filters.
         JBlock newStatements = new JBlock(null, new LinkedList(), null);
@@ -521,10 +565,19 @@ public class FuseSimpleSplit {
                 // Make a for loop that repeats these statements according
                 // to reps
                 JStatement loop = Utils.makeForLoop(statements, rep.child[i]);
+                // test the original statements (rather than the loop,
+                // since it cascades pops and peeks) for whether or
+                // not there are pops before peeks
+                boolean popBeforePeek = Utils.popBeforePeek(statements);
                 // if we have a duplicating splitter, we need to make
                 // pops into peeks
                 if (isDup) {
-                    loop = popToPeek(loop);
+                    loop = popToPeek(loop, popBeforePeek, 0, 1);
+                } 
+                // if we have unary round-robin, multiply all indices
+                // to tapes by the number of children
+                if (isURR) {
+                    loop = popToPeek(loop, popBeforePeek, i, sj.size());
                 }
                 // add the loop to the new work function
                 newStatements.addStatement(Utils.peelMarkers(loop));
@@ -533,7 +586,7 @@ public class FuseSimpleSplit {
 
         // add a pop loop to statements that pops the right number of
         // times for the splitjoin
-        if (isDup && rep.splitter > 0) {
+        if ((isDup || isURR) && rep.splitter > 0) {
             newStatements.addStatement(
                                        new JExpressionStatement(
                                                                 new SIRPopExpression(sj.getInputType(),rep.splitter)));
@@ -566,10 +619,23 @@ public class FuseSimpleSplit {
     /**
      * Replace pops in <orig> with peeks to a local counter that keeps
      * track of the current index.  Also adjust peeks accordingly.
+     * 
+     * The index starts at <offset>, and is multiplied by <scaling>.
+     *
+     * For example, with offset=10, scaling=2, transformation is:
+     *
+     * orig:  x = pop(); x = peek(5);
+     * new:   x = peek(10+counter++); x = peek(10+(counter+5)*2);
      */
-    private static JStatement popToPeek(JStatement orig) {
-        // define a variable to be our counter of pop position
-        final JVariableDefinition var =
+    private static JStatement popToPeek(JStatement orig, final boolean popBeforePeek, final int offset, final int scaling) {
+        // remove unused pop statements from <orig>.  they will be
+        // replaced by an automatic assignment to the pop counter
+        orig = Utils.removeUnusedPops(orig);
+        
+        // if there is popping before peeking, then we need to keep
+        // track of the pop index.  define a variable to be our
+        // counter of this pop position
+        final JVariableDefinition var = 
             new JVariableDefinition(/* where */ null,
                                     /* modifiers */ 0,
                                     /* type */ CStdType.Integer,
@@ -577,9 +643,6 @@ public class FuseSimpleSplit {
                                     LoweringConstants.getUniqueVarName(),
                                     /* initializer */
                                     new JIntLiteral(0));
-        // make a declaration statement for our new variable
-        JVariableDeclarationStatement varDecl =
-            new JVariableDeclarationStatement(null, var, null);
 
         // adjust the contents of <orig> to be relative to <var>
         orig.accept(new SLIRReplacingVisitor() {
@@ -606,23 +669,23 @@ public class FuseSimpleSplit {
                     int ntimes = self.getNumPop();
 
                     if (inExpressionStatement) {
-                        JExpression lhs = new JLocalVariableExpression(null, var);
-                        JExpression rhs = new JAddExpression(
-                                                             new JLocalVariableExpression(null, var),
-                                                             new JIntLiteral(ntimes)
-                                                             );
+                        JExpression lhs = new JLocalVariableExpression(var);
+                        JExpression rhs = new JAddExpression(new JLocalVariableExpression(var),
+                                                             new JIntLiteral(ntimes));
                         return new JAssignmentExpression(lhs,rhs);
                     }
                     // if assertion fires, need code to bump past numPop-1 items
                     // then peek
                     // the final popped item.
-                    assert ntimes == 1 : "Need code here to handle multiple pop";
+                    assert ntimes == 1 : "Need code here to handle multiple pop (ntimes=" + ntimes + ")";
                     // reference our var
-                    JLocalVariableExpression ref = new JLocalVariableExpression(
-                                                                                null, var);
-                    // Return new peek expression.
-                    return new SIRPeekExpression(new JPostfixExpression(null,
-                                                                        OPE_POSTINC, ref), oldTapeType);
+                    JLocalVariableExpression ref = new JLocalVariableExpression(var);
+
+                    // "peek(offset+counter*scaling);
+                    return new SIRPeekExpression(new JAddExpression(new JIntLiteral(offset),
+                                                                    doScaling(new JPostfixExpression(OPE_POSTINC, ref), 
+                                                                              scaling)),
+                                                 oldTapeType);
                 }
             
                 public Object visitPeekExpression(SIRPeekExpression oldSelf,
@@ -634,17 +697,40 @@ public class FuseSimpleSplit {
                                                   oldTapeType,
                                                   arg);
                     // reference our var
-                    JLocalVariableExpression ref = new JLocalVariableExpression(null,
-                                                                                var);
-                    // Return new peek expression.
-                    return new SIRPeekExpression(new JAddExpression(null, ref, arg),
-                                                 oldTapeType);
+                    JLocalVariableExpression ref = new JLocalVariableExpression(var);
+ 
+                    // if pop before peeking, add the index to the pop
+                    // counter.  otherwise add it to the offset.
+                   if (popBeforePeek) {
+                        // "peek(offset+(counter+arg)*scaling)"
+                        return new SIRPeekExpression(new JAddExpression(new JIntLiteral(offset),
+                                                                        doScaling(new JAddExpression(ref, arg), scaling)),
+                                                     oldTapeType);
+                    } else {
+                        // "peek(offset + arg*scaling)"
+                        return new SIRPeekExpression(new JAddExpression(new JIntLiteral(offset), 
+                                                                        doScaling(arg, scaling)),
+                                                     oldTapeType);
+                    }
                 }
             });
 
+        // assign pop count to 
+
         // return the block
-        JStatement[] statements = {varDecl, orig};
-        return new JBlock(null, statements, null);
+        JStatement[] statements = {new JVariableDeclarationStatement(var), orig};
+        return new JBlock(statements);
+    }
+
+    /**
+     * If scaling>1, returns a multiply expression <orig>*<scaling>.
+     */
+    private static JExpression doScaling(JExpression orig, int scaling) {
+        if (scaling > 1) {
+            return new JMultExpression(orig, new JIntLiteral(scaling));
+        } else {
+            return orig;
+        }
     }
 
     private static JFieldDeclaration[] makeFields(SIRSplitJoin sj,

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMultExpression.java,v 1.6 2006-01-25 17:01:23 thies Exp $
+ * $Id: JMultExpression.java,v 1.7 2006-02-03 00:50:56 thies Exp $
  */
 
 package at.dms.kjc;
@@ -48,6 +48,17 @@ public class JMultExpression extends JBinaryArithmeticExpression {
                            JExpression right)
     {
         super(where, left, right);
+    }
+
+    /**
+     * Construct a multiply expression.
+     * @param   left        the left operand
+     * @param   right       the right operand
+     */
+    public JMultExpression(JExpression left,
+                           JExpression right)
+    {
+        this(null, left, right);
     }
 
     public String toString() {

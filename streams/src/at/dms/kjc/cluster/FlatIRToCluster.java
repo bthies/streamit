@@ -649,6 +649,24 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("  }\n");
             p.newLine();
 
+            // pop from fusion buffer with argument
+
+            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
+                    + " __pop__" + selfID + "(int n) {\n");
+
+            p.print("    " + ClusterUtils.CTypeToString(input_type)
+                    + " res=BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
+                    + "];\n");
+            p.print("    TAIL_" + s + "_" + d + "+=n;\n");
+            p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
+            p.print("    TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
+                    + d + ";\n");
+            p.print("    #endif\n");
+            p.print("    return res;\n");
+
+            p.print("  }\n");
+            p.newLine();
+
             // peek from fusion buffer
 
             p.print("  inline " + ClusterUtils.CTypeToString(input_type) + " "
@@ -664,7 +682,7 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("  }\n");
             p.newLine();
 
-            // the source is not fused
+            // pop (the source is not fused)
 
             p.print("#else //!__FUSED_" + s + "_" + d + "\n");
             p.newLine();
@@ -680,6 +698,31 @@ public class FlatIRToCluster extends InsertTimers implements
                         + " res=__pop_buf__" + selfID + "[__tail__" + selfID
                         + "];");
                 p.print("__tail__" + selfID + "++;");
+                p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
+                        + ";\n");
+                p.print("    return res;\n");
+            }
+
+            // p.print(" return
+            // __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
+            p.print("  }\n");
+            p.newLine();
+
+            // pop with argument (the source is not fused)
+
+            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
+                    + " __pop__" + selfID + "(int n) {\n");
+
+            if (peek_n <= pop_n) {
+                p.print("    " + ClusterUtils.CTypeToString(input_type) + " result = __pop_buf__" + selfID + "[__tail__"
+                        + selfID + "];\n");
+                p.print("    __tail__" + selfID + "+=n;\n");
+                p.print("    return result;\n");
+            } else {
+                p.print("    " + ClusterUtils.CTypeToString(input_type)
+                        + " res=__pop_buf__" + selfID + "[__tail__" + selfID
+                        + "];");
+                p.print("__tail__" + selfID + "+=n;");
                 p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
                         + ";\n");
                 p.print("    return res;\n");
@@ -2172,13 +2215,11 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitPopExpression(SIRPopExpression self, CType tapeType) {
 
         NetStream in = RegisterStreams.getFilterInStream(filter);
-	if (self.getNumPop() != 1) System.err.println("FlatIRToCluster.visitPopExpression: " + self.getNumPop());
-        //p.print(in.consumer_name()+".pop()");
-        for (int i = 0; i < self.getNumPop(); i++) {
+	if (self.getNumPop() == 1)  {
             p.print("__pop__" + selfID + "()");
+        } else {
+            p.print("__pop__" + selfID + "(" + self.getNumPop() + ")");
         }
-
-        //Utils.fail("FlatIRToCluster should see no pop expressions");
     }
 
     //    public void visitPrintStatement: in superclass ToCCommon

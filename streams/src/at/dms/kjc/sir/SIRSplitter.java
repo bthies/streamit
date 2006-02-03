@@ -127,6 +127,20 @@ public class SIRSplitter extends SIROperator {
     }
 
     /**
+     * Returns whether this is a round-robin with all weights equal to
+     * 1.
+     */
+    public boolean isUnaryRoundRobin() {
+        // must have unary weights
+        for (int i=0; i<weights.length; i++) {
+            boolean unary = (weights[i] instanceof JIntLiteral &&
+                             ((JIntLiteral)weights[i]).intValue()==1);
+            if (!unary) return false;
+        }
+        return true;
+    }
+
+    /**
      * Tests whether or not this has the same type and the same
      * weights as obj.  This can return true for splitters with
      * different numbers of outputs if the type is not a weighted

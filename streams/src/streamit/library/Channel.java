@@ -33,7 +33,6 @@ public class Channel extends streamit.misc.DestroyedClass
 {
     Class type;
     Operator source = null, sink = null;
-    boolean declaredFull = false;
 
     LinkedList queue;
 
@@ -51,6 +50,9 @@ public class Channel extends streamit.misc.DestroyedClass
     WrappableGrowableQueue_boolean wgqueue_boolean;
     WrappableGrowableQueue_short wgqueue_short;
     WrappableGrowableQueue_char wgqueue_char;
+    WrappableGrowableQueue_obj wgqueue_obj;
+
+    WrappableGrowableQueue myqueue;
 
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
@@ -60,20 +62,28 @@ public class Channel extends streamit.misc.DestroyedClass
         type = channelType;
         if (type == Integer.TYPE) {
             wgqueue_int =  new WrappableGrowableQueue_int();
+            myqueue = wgqueue_int;
         } else if (type == Float.TYPE) {
             wgqueue_float = new WrappableGrowableQueue_float(); 
+            myqueue = wgqueue_float;
         } else if (type == Double.TYPE) {
             wgqueue_double = new WrappableGrowableQueue_double();
+            myqueue = wgqueue_double;
         } else if (type == Boolean.TYPE) {
             wgqueue_boolean = new WrappableGrowableQueue_boolean();
+            myqueue = wgqueue_boolean;
         } else if (type == Short.TYPE) {
             wgqueue_short = new WrappableGrowableQueue_short();
+            myqueue = wgqueue_short;
         } else if (type == Character.TYPE) {
             wgqueue_char = new WrappableGrowableQueue_char();
+            myqueue = wgqueue_char;
         } else if (type == Bit.TYPE) {
             wgqueue_bit = new WrappableGrowableQueue_int();
+            myqueue = wgqueue_bit;
         } else {
-            queue = new LinkedList ();
+            wgqueue_obj = new WrappableGrowableQueue_obj();
+            myqueue = wgqueue_obj;
         }
     }
     
@@ -139,20 +149,28 @@ public class Channel extends streamit.misc.DestroyedClass
 
         if (type == Integer.TYPE) {
             wgqueue_int = new WrappableGrowableQueue_int();
+            myqueue = wgqueue_int;
         } else if (type == Float.TYPE) {
             wgqueue_float = new WrappableGrowableQueue_float(); 
+            myqueue = wgqueue_float;
         } else if (type == Double.TYPE) {
             wgqueue_double = new WrappableGrowableQueue_double();
+            myqueue = wgqueue_double;
         } else if (type == Boolean.TYPE) {
             wgqueue_boolean = new WrappableGrowableQueue_boolean();
+            myqueue = wgqueue_boolean;
         } else if (type == Short.TYPE) {
             wgqueue_short = new WrappableGrowableQueue_short();
+            myqueue = wgqueue_short;
         } else if (type == Character.TYPE) {
             wgqueue_char = new WrappableGrowableQueue_char();
+            myqueue = wgqueue_char;
         } else if (type == Bit.TYPE) {
             wgqueue_bit = new WrappableGrowableQueue_int();
+            myqueue = wgqueue_bit;
         } else {
-            queue = new LinkedList ();
+            wgqueue_obj = new WrappableGrowableQueue_obj();
+            myqueue = wgqueue_obj;
         }
 
         // copy pop/push/peek values
@@ -162,24 +180,8 @@ public class Channel extends streamit.misc.DestroyedClass
 
     void ensureData (int amount)
     {
-        boolean tempval;
-        if (type == Float.TYPE) {
-            tempval = (wgqueue_float.size() < amount);
-        } else if (type == Integer.TYPE) {
-            tempval = (wgqueue_int.size() < amount);
-        } else if (type == Double.TYPE) {
-            tempval = (wgqueue_double.size() < amount);
-        } else if (type == Boolean.TYPE) {
-            tempval = (wgqueue_boolean.size() < amount);
-        } else if (type == Short.TYPE) {
-            tempval = (wgqueue_short.size() < amount);
-        } else if (type == Character.TYPE) {
-            tempval = (wgqueue_char.size() < amount);
-        } else if (type == Bit.TYPE) {
-            tempval = (wgqueue_bit.size() < amount);
-        } else {
-            tempval = (queue.size() < amount);
-        }
+        boolean tempval = myqueue.size() < amount;
+
         while (tempval)
             {
                 assert source != null;
@@ -200,23 +202,7 @@ public class Channel extends streamit.misc.DestroyedClass
                 }
 
                 source.doWork();
-                if (type == Float.TYPE) {
-                    tempval = (wgqueue_float.size() < amount);
-                } else if (type == Integer.TYPE) {
-                    tempval = (wgqueue_int.size() < amount);
-                } else if (type == Double.TYPE) {
-                    tempval = (wgqueue_double.size() < amount);
-                } else if (type == Boolean.TYPE) {
-                    tempval = (wgqueue_boolean.size() < amount);
-                } else if (type == Short.TYPE) {
-                    tempval = (wgqueue_short.size() < amount);
-                } else if (type == Character.TYPE) {
-                    tempval = (wgqueue_char.size() < amount);
-                } else if (type == Bit.TYPE) {
-                    tempval = (wgqueue_bit.size() < amount);
-                } else {
-                    tempval = (queue.size() < amount);
-                }
+                tempval = myqueue.size() < amount;
             }
     }
 
@@ -290,25 +276,9 @@ public class Channel extends streamit.misc.DestroyedClass
 
     private void enqueue (Object o)
     {
-        queue.addLast (o);
-        
+        wgqueue_obj.enqueue(o);
         totalItemsPushed++;
         source.registerPush();
-
-        // overflow at 50 chars in the queue
-        if (queue.size () > 100 && !declaredFull)
-            {
-                source.addFullChannel (this);
-                declaredFull = true;
-            }
-
-        // make sure that the channel isn't overflowing
-        //if (queue.size () == maxSize) System.out.print ("*");
-        assert queue.size () <= maxSize || maxSize == -1:
-            "Expecting queue.size () <= maxSize || maxSize == -1,\n" +
-            "   but queue.size()==" + queue.size() + " and maxSize==" + 
-            maxSize;
-        
         if (passThrough) {
             sink.doWork();
         }
@@ -356,18 +326,10 @@ public class Channel extends streamit.misc.DestroyedClass
         return wgqueue_bit.dequeue();
     }
 
-    private Object dequeue ()
-    {
-        if (queue.size () < 50 && declaredFull)
-            {
-                source.removeFullChannel (this);
-                declaredFull = false;
-            }
-
+    private Object dequeue () {
         totalItemsPopped++;
         sink.registerPop();
-
-        return queue.removeFirst ();
+        return wgqueue_obj.dequeue();
     }
 
 

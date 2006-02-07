@@ -1066,8 +1066,10 @@ public class Operator extends DestroyedClass
      */
     int getSourceExecs() {
         int sourceExecs = 0;
-        for (Iterator i = allSources.listIterator(); i.hasNext(); ) {
-            sourceExecs += ((Operator)i.next()).numExecutions;
+        // can't use iterator here for performance reasons -- it is
+        // the inner loop when the sinks are filewriters
+        for (int i=0; i<allSources.size(); i++) {
+            sourceExecs += ((Operator)allSources.get(i)).numExecutions;
         }
         return sourceExecs;
     }

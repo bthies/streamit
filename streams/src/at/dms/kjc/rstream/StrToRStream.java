@@ -134,10 +134,15 @@ public class StrToRStream {
         //sirfilters, not predefined filters
         ConvertFileFilters.doit(str);
 
-        StreamItDot.printGraph(str, "before-synch.dot");
+        if (KjcOptions.print_partitioned_source) {
+            StreamItDot.printGraph(str, "before-synch.dot");
+        }
 
         Lifter.liftAggressiveSync(str);
-        StreamItDot.printGraph(str, "before-partition.dot");
+
+        if (KjcOptions.print_partitioned_source) {
+            StreamItDot.printGraph(str, "before-partition.dot");
+        }
 
         //mgordon: I don't know, I could forsee the linear analysis 
         //and the statespace analysis being useful to Reservoir in the 
@@ -150,9 +155,11 @@ public class StrToRStream {
             SJToPipe.doit(str);
         }
 
-        SIRPrinter printer1 = new SIRPrinter("entry.sir");
-        IterFactory.createFactory().createIter(str).accept(printer1);
-        printer1.close();
+        if (KjcOptions.debug) {
+            SIRPrinter printer1 = new SIRPrinter("entry.sir");
+            IterFactory.createFactory().createIter(str).accept(printer1);
+            printer1.close();
+        }
 
         //VarDecl Raise to move array assignments up
         new VarDeclRaiser().raiseVars(str);
@@ -170,6 +177,17 @@ public class StrToRStream {
         System.out.println("Flattener Begin...");
         executionCounts = SIRScheduler.getExecutionCounts(str);
     
+        /* RMR { scale multiplicity of all streams */
+        if (KjcOptions.steadymult > 1) {
+            for (Iterator it = executionCounts[1].keySet().iterator(); it.hasNext(); ){
+                SIROperator obj = (SIROperator)it.next();
+                int val = KjcOptions.steadymult * ((int[])executionCounts[1].get(obj))[0];
+                int[] wrapper = { val };
+                executionCounts[1].put(obj, wrapper);
+            }
+        }
+        /* } RMR */
+
         //flatten the "graph"
         GraphFlattener graphFlattener = new GraphFlattener(str);
         System.out.println("Flattener End.");

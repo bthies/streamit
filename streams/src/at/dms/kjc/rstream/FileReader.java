@@ -27,8 +27,9 @@ public class FileReader extends SIRFilter
         String fileVar = "__file__" + uniqueID++;
     
         //set I/O rates
+        int  pushrate = 1;
         this.setParent(sirFR.getParent());
-        this.setPush(1);
+        this.setPush(pushrate);
         this.setPeek(0);
         this.setPop(0);
         this.setIdent("FileReader" + uniqueID);
@@ -49,14 +50,11 @@ public class FileReader extends SIRFilter
         //create init function
         JBlock initBlock = new JBlock(null, new JStatement[0], null);
         //create the file open command
-        JExpression[] params = 
-            {
-                new JStringLiteral(null, sirFR.getFileName()),
-                new JStringLiteral(null, "r")
-            };
-    
-    
-    
+        JExpression[] params = {
+            new JStringLiteral(null, sirFR.getFileName()),
+            new JStringLiteral(null, "r")
+        };
+        
         JMethodCallExpression fopen = 
             new JMethodCallExpression(null, new JThisExpression(null),
                                       "fopen", params);
@@ -103,18 +101,17 @@ public class FileReader extends SIRFilter
          JExpression[] fscanfParams = new JExpression[3];
          //create the params for fscanf
          fscanfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
-         file.getVariable().getIdent());
+                                                      file.getVariable().getIdent());
          fscanfParams[1] = new JStringLiteral(null,
-         sirFR.getOutputType().isFloatingPoint() ?
-         "%f\\n" : "%d\\n");
+                                              sirFR.getOutputType().isFloatingPoint() ?
+                                              "%f\\n" : "%d\\n");
          fscanfParams[2] = new JLocalVariableExpression(null, value);
-    
-    
+
          //fscanf call
          JMethodCallExpression fread = 
-         new JMethodCallExpression(null, new JThisExpression(null),
-         Names.fscanf,
-         fscanfParams);
+             new JMethodCallExpression(null, new JThisExpression(null),
+                                       Names.fscanf,
+                                       fscanfParams);        
          *
          *
          * new code follows
@@ -151,7 +148,7 @@ public class FileReader extends SIRFilter
         freadParams[1] = sizeofCall;
     
         // the third parameter: read one element at a time
-        freadParams[2] = new JIntLiteral(1);
+        freadParams[2] = new JIntLiteral(pushrate);
     
         // the last parameter: the file pointer
         freadParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
@@ -166,13 +163,12 @@ public class FileReader extends SIRFilter
     
         workBlock.addStatement(new JExpressionStatement(null, fread, null));
     
-        SIRPushExpression pexp = 
+        SIRPushExpression push = 
             new SIRPushExpression(new JLocalVariableExpression(null, value), 
                                   sirFR.getOutputType());
-    
-    
-        workBlock.addStatement(new JExpressionStatement(null, pexp, null));
-    
+        
+        workBlock.addStatement(new JExpressionStatement(null, push, null));
+
         this.setWork(new JMethodDeclaration(null,
                                             at.dms.kjc.Constants.ACC_PUBLIC,
                                             CStdType.Void,

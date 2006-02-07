@@ -3,6 +3,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
+import at.dms.util.Utils;
 import java.util.*;
 //import at.dms.kjc.JMethodDeclaration;
 
@@ -26,8 +27,6 @@ class BuiltinsCodeGen {
         p.newLine();
         p.indent();
         //        p.println("// predefinedFilterWork " + filter.getName());
-        p.println("for (; 0 < ____n; ____n--) {");
-        p.indent();
 
         // SIRFileReader
         if (filter instanceof SIRFileReader) {
@@ -37,9 +36,12 @@ class BuiltinsCodeGen {
             genFileWriterWork((SIRFileWriter)filter,selfID,p);
             // SIRIdentity
         } else if (filter instanceof SIRIdentity) {
+            p.println("for (; 0 < ____n; ____n--) {");
+            p.indent();
             p.println("  " + ClusterUtils.pushName(selfID) + "("
                       + ClusterUtils.popName(selfID) + "());");
-
+            p.outdent();
+            p.print("}"); // end of for loop.
         } else if (filter instanceof SIRDummySink
                    || filter instanceof SIRDummySource) {
             // DummySource and SummySink do not appear in any of our
@@ -51,8 +53,6 @@ class BuiltinsCodeGen {
             // TODO: get right unchecked exception for unextended code...
             throw new Error("Unknown predefined filter " + filter.getName());
         }
-        p.outdent();
-        p.print("}"); // end of for loop.
         p.newLine();
         p.outdent(); // end of method body
         p.outdent(); // end of method definition
@@ -160,14 +160,95 @@ class BuiltinsCodeGen {
     private static final String bits_type = "unsigned char";
     
     /*
-     * File reader code currently works by using fread -- check on buffering 
-     * efficiency...
+     * File reader code currently works by using fread.
      * 
      * The File* is declared outside any function / method.
      * 
      * This code follows the model in the library of stalling (not pushing)
      * at end of file (detected by fread returning 0).
      * 
+     */
+    private static void genFileReaderWork(SIRFileReader filter, 
+                                          int selfID,
+                                          CodegenPrintWriter p) {
+
+        String theType = "" + filter.getOutputType();
+        // dispatch to special routine for bit type
+        if (theType.equals("bit")) {
+            genFileReaderWorkBit(filter, selfID, p);
+            return;
+        }
+
+        // get source and destination of incoming stream
+        NetStream out = RegisterStreams.getFilterOutStream(filter);
+        int s = out.getSource();
+        int d = out.getDest();
+
+        // template code to generate, using symbolic free vars above.
+        String template = 
+            "  #ifdef FUSED" + "\n" +
+            "    #ifdef NOMOD" + "\n" +
+            "      // read directly into buffer" + "\n" +
+            "      if (fread(&(BUFFER[HEAD]), sizeof(BUFFER[HEAD]), ____n, FILEREADER)) {" + "\n" +
+            "        HEAD+=____n;" + "\n" +
+            "      }" + "\n" +
+            "    #else" + "\n" +
+            "      // wraparound buffer, might have to read in two pieces (but never" + "\n" +
+            "      // more, since we would overwrote what we already wrote on this call)" + "\n" +
+            "      if (HEAD+____n <= __BUF_SIZE_MASK) {" + "\n" +
+            "          // no overflow" + "\n" +
+            "          if (fread(&(BUFFER[HEAD]), sizeof(BUFFER[HEAD]), ____n, FILEREADER)) {" + "\n" +
+            "             HEAD+=____n;" + "\n" +
+            "          }" + "\n" +
+            "      } else {" + "\n" +
+            "          // overflow, need two pieces" + "\n" +
+            "          int piece1 = __BUF_SIZE_MASK - HEAD;" + "\n" +
+            "          int piece2 = ____n - piece1;" + "\n" +
+            "          if (fread(&(BUFFER[HEAD]), sizeof(BUFFER[HEAD]), piece1, FILEREADER)) {" + "\n" +
+            "              if (fread(&(BUFFER[0]), sizeof(BUFFER[HEAD]), piece2, FILEREADER)) {" + "\n" +
+            "                HEAD+=____n;" + "\n" +
+            "                HEAD&=__BUF_SIZE_MASK;" + "\n" +
+            "              }" + "\n" +
+            "          }" + "\n" +
+            "      }" + "\n" +
+            "     #endif" + "\n" +
+            "  #else" + "\n" +
+            "    // read as a block" + "\n" +
+            "    TYPE __buffer[____n];" + "\n" +
+            "    int __index;" + "\n" +
+            "    if (fread(__buffer, sizeof(__buffer[0]), ____n, FILEREADER)) {" + "\n" +
+            "      for (__index=0; __index < ____n; __index++) {" + "\n" +
+            "       // should move push out of loop, but not clear if mult-push implemented yet" + "\n" +
+            "       PUSH(__buffer[__index]);" + "\n" +
+            "      }" + "\n" +
+            "    }" + "\n" +
+            "  #endif";
+
+        // set values of free variables
+        String TYPE = theType;
+        String FILEREADER = fpName(filter);
+        String FUSED = "__FUSED_" + s + "_" + d;
+        String NOMOD = "__NOMOD_" + s + "_" + d;
+        String BUFFER = "BUFFER_" + s + "_" + d;
+        String HEAD = "HEAD_" + s + "_" + d;
+        String BUF_SIZE_MASK = "__BUF_SIZE_MASK_" + s + "_" + d;
+        String PUSH = "__push__" + selfID;
+
+        // replace templates with correct values
+        template = Utils.replaceAll(template, "TYPE", TYPE);
+        template = Utils.replaceAll(template, "FILEREADER", FILEREADER);
+        template = Utils.replaceAll(template, "FUSED", FUSED);
+        template = Utils.replaceAll(template, "NOMOD", NOMOD);
+        template = Utils.replaceAll(template, "BUFFER", BUFFER);
+        template = Utils.replaceAll(template, "HEAD", HEAD);
+        template = Utils.replaceAll(template, "BUF_SIZE_MASK", BUF_SIZE_MASK);
+        template = Utils.replaceAll(template, "PUSH", PUSH);
+
+        // output code
+        p.println(template);
+    }
+
+    /*
      * There is special case code for FileReader<bit> since individual
      * bits can not be read in by any system routine that I know.
      * 
@@ -188,59 +269,61 @@ class BuiltinsCodeGen {
      * file lengths in bytes, this will involve some extra code for not writing
      * an excessive number of bytes on the last write, causing the file lengths
      * to be dependent on the size of 'bits_type'.
-     * 
-     */
-    private static void genFileReaderWork(SIRFileReader filter, 
-                                          int selfID,
-                                          CodegenPrintWriter p) {
+     **/
+    private static void genFileReaderWorkBit(SIRFileReader filter, 
+                                             int selfID,
+                                             CodegenPrintWriter p) {
+
+        // haven't bothered to do buffered file input on top of the
+        // bit input (it is possible but seems a little complicated)
+        System.err.println("PERFORMANCE WARNING:  FileReader<bit> reads only 1 byte" +
+                           "  at a time; faster to use FileWriter<int>, which is buffered.");
+
         String theType = "" + filter.getOutputType();
-        if (theType.equals("bit")) {
-            // the bit type is special since you can not just read or
-            // write a bit.  It requires bufferring in some larger
-            // integer type.
-            String bits_to_go = bitsToGoName(filter);
-            String the_bits = theBitsName(filter);
+        // wrap in loop
+        p.println("for (; 0 < ____n; ____n--) {");
+        p.indent();
+        
+        // the bit type is special since you can not just read or
+        // write a bit.  It requires bufferring in some larger
+        // integer type.
+        String bits_to_go = bitsToGoName(filter);
+        String the_bits = theBitsName(filter);
             
-            p.println("static " + bits_type + " " + the_bits + " = 0;");
-            p.println("static int " + bits_to_go + " = 0;");
-            p.newline();
-            p.println("if (" + bits_to_go + " == 0) {");
-            p.indent();
-            p.println("if (fread(" + "&"+ the_bits + ", " 
-                      + "sizeof(" + the_bits + "),"
-                      + " " + "1, " 
-                      + fpName(filter) + ")) {");
-            p.indent();
-            p.println(bits_to_go + " = 8 * sizeof("+ the_bits + ");");
-            // identical to code fragment below ///////////////////////
-            p.println(ClusterUtils.pushName(selfID) 
-                      + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
-            p.println(the_bits + " <<= 1;");
-            p.println(bits_to_go + "--;");
-            // end identical to code fragment below ////////////////////
-            p.outdent();
-            p.println("}");
-            p.outdent();
-            p.println("} else {");
-            p.indent();
-            // identical to code fragment above /////////////////////////
-            p.println(ClusterUtils.pushName(selfID) 
-                      + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
-            p.println(the_bits + " <<= 1;");
-            p.println(bits_to_go + "--;");
-            // end identical to code fragment above /////////////////////
-            p.outdent();
-            p.println("}");
-        } else {
-            // push into a location.
-            p.println(theType + " v;");
-            p.println("if (fread(" + "&v, " + "sizeof(v), " + "1, " 
-                      + fpName(filter) + ")) {");
-            p.indent();
-            p.println(ClusterUtils.pushName(selfID) + "(v);");
-            p.outdent();
-            p.println("}");
-        }
+        p.println("static " + bits_type + " " + the_bits + " = 0;");
+        p.println("static int " + bits_to_go + " = 0;");
+        p.newline();
+        p.println("if (" + bits_to_go + " == 0) {");
+        p.indent();
+        p.println("if (fread(" + "&"+ the_bits + ", " 
+                  + "sizeof(" + the_bits + "),"
+                  + " " + "1, " 
+                  + fpName(filter) + ")) {");
+        p.indent();
+        p.println(bits_to_go + " = 8 * sizeof("+ the_bits + ");");
+        // identical to code fragment below ///////////////////////
+        p.println(ClusterUtils.pushName(selfID) 
+                  + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+        p.println(the_bits + " <<= 1;");
+        p.println(bits_to_go + "--;");
+        // end identical to code fragment below ////////////////////
+        p.outdent();
+        p.println("}");
+        p.outdent();
+        p.println("} else {");
+        p.indent();
+        // identical to code fragment above /////////////////////////
+        p.println(ClusterUtils.pushName(selfID) 
+                  + "((" + the_bits +" & (1 << (sizeof(" + the_bits + ") * 8 - 1))) ? 1 : 0);");
+        p.println(the_bits + " <<= 1;");
+        p.println(bits_to_go + "--;");
+        // end identical to code fragment above /////////////////////
+        p.outdent();
+        p.println("}");
+
+        // close loop
+        p.outdent();
+        p.print("}"); // end of for loop.
     }
     
     /*
@@ -276,8 +359,7 @@ class BuiltinsCodeGen {
     
 
     /*
-     * File writer code currently works by using fread -- check on buffering 
-     * efficiency...
+     * File writer code currently works by using fwrite.
      * 
      * The File* is declared outside any function / method.
      * 
@@ -286,7 +368,6 @@ class BuiltinsCodeGen {
      * The current bits and the count of unprocessed bits are created
      * outside of 
      */
-    
     private static void genFileWriterWork(SIRFileWriter fw, int selfID,
                                           CodegenPrintWriter p) {
         String theType = "" + fw.getInputType();
@@ -297,25 +378,54 @@ class BuiltinsCodeGen {
             String bits_to_go = bitsToGoName(fw);
             String the_bits = theBitsName(fw);
             
+            p.println("unsigned char __buffer[____n/8+1];");
+            p.println("int __index = 0;");
+            p.println("for (; 0 < ____n; ____n--) {");
+            p.indent();
+
             p.println(the_bits + " = (" + bits_type + ") ((" + the_bits 
                       + " << 1) | (" + ClusterUtils.popName(selfID) 
                       + "() & 1));");
             p.println(bits_to_go + "--;");
             p.println("if (" + bits_to_go + " == 0) {");
             p.indent();
-            p.println("fwrite(" + "&" + the_bits + ", " 
-                      + "sizeof(" + the_bits +"), " + "1, " + fpName(fw)
-                      + ");");
+            p.println("__buffer[__index++] = FileWriter__5_4__the_bits;");
             p.println(the_bits + " = 0;");
             p.println(bits_to_go + " = 8 * sizeof(" + the_bits + ");");
             p.outdent();
             p.println("}");
-        } else {
-            // pop into a location.
-            p.println(theType + " v = (" + theType + ")("
-                      + ClusterUtils.popName(selfID) + "());");
-            p.println("fwrite(" + "&v, " + "sizeof(v), " + "1, " + fpName(fw)
+            p.outdent();
+            p.println("}");
+            p.println("fwrite(__buffer, "
+                      + "sizeof(" + the_bits +"), " + "__index, " + fpName(fw)
                       + ");");
+        } else {
+            // not a bit type.  write directly to file without needing to buffer bits.
+
+            NetStream in = RegisterStreams.getFilterInStream(fw);
+            // source and destination of incoming stream
+            int s = in.getSource();
+            int d = in.getDest();
+            
+            p.println("#ifdef __FUSED_" + s + "_" + d);
+            p.indent(); 
+            {
+                p.println("fwrite(&(BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d + "]), " + 
+                          "sizeof(BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d + "]), " +
+                          "____n, " + fpName(fw) + ");");
+                p.println("TAIL_" + s + "_" + d + "+=____n;");
+            }
+            p.outdent();
+            p.println("#else");
+            p.indent();
+            {
+                p.println("fwrite(&(__pop_buf__" + selfID + "[__tail__" + selfID + "]), " +
+                          "sizeof(__pop_buf__" + selfID + "[__tail__" + selfID + "]), " +
+                          "____n, " + fpName(fw) + ");");
+                p.println("__tail__" + selfID + "+=____n;");
+            }
+            p.outdent();
+            p.println("#endif");
         }
     }
     

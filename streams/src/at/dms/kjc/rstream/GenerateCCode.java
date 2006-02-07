@@ -264,8 +264,6 @@ public class GenerateCCode {
 
     /** convert all fields to locals of main function **/
     private void convertFieldsToLocals() {
-        /* RMR { do not zero-out arrays using memset, it is too expensive
-         *
         //find the first position in the main block that is not a var def, so we can
         //add array zeroing code there...
         int afterDecls;
@@ -307,8 +305,6 @@ public class GenerateCCode {
                 main.addStatement(afterDecls, zeroArray);
             }
         }
-        *
-        * } RMR */
 
         //add all fields to the main method as locals
         for (int i = 0; i < fields.size(); i++) {

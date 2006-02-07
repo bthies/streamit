@@ -34,23 +34,31 @@ import java.nio.BufferUnderflowException;
  * using those precisely to avoid their Object counterparts.
  */
 
-public class WrappableGrowableQueue_float implements WrappableGrowableQueue {
+public class WrappableGrowableQueue_obj implements WrappableGrowableQueue {
 
     int sizeof_buffer;
-    float[] buffer;
+    Object[] buffer;
     int head;
     int tail;
     int sizeof_queue;
 
-    public WrappableGrowableQueue_float() {
+    /**
+     * Constructs a WrappableGrowableQueue object
+     * @return A new wrappable growable queue.
+     */
+    public WrappableGrowableQueue_obj() {
         sizeof_buffer = 2;
-        buffer = new float[2];
+        buffer = new Object[2];
         head = 0;
         tail = 0;
         sizeof_queue = 0;
     }
 
-    public void enqueue(float i) {
+    /**
+     * Adds an item to the beginning of the queue.
+     * @param i The item to be added.
+     */
+    public void enqueue(Object i) {
         if (sizeof_queue == sizeof_buffer) {
             this.grow(sizeof_buffer*2);
         } 
@@ -59,18 +67,32 @@ public class WrappableGrowableQueue_float implements WrappableGrowableQueue {
         sizeof_queue++;
     }
 
-    public float dequeue() {
+    /**
+     * Removes an item from the end of the queue.
+     * @return The object at the end of the queue
+     * @throws BufferUnderflowException If the queue is already empty.
+     */
+    public Object dequeue() {
         if (sizeof_queue == 0) {
             throw new BufferUnderflowException();
         } else {
-            float return_val = buffer[tail];
+            Object return_val = buffer[tail];
             tail = (tail + 1) % sizeof_buffer;
             sizeof_queue--;
             return return_val;
         }
     }
 
-    public float elem(int index) {
+    /**
+     * Returns an element at a specified position in the
+     * queue without removing it from the queue.
+     * @param index The position of an element from the end of the queue: 
+     *              0 is the element at the end of the queue.
+     * @return The element at the index'th position in the queue. This element
+     *         is not removed from the queue itself.
+     * @throws BufferUnderflowException If index refers to an element not in the queue.
+     */
+    public Object elem(int index) {
         if (index >= sizeof_queue) {
             throw new BufferUnderflowException();
         } else {
@@ -78,17 +100,22 @@ public class WrappableGrowableQueue_float implements WrappableGrowableQueue {
         }
     }
 
+    /**
+     * Returns the number of elements currently stored in the queue.
+     * @return The number of elements in the queue.
+     */
     public int size() {
         return sizeof_queue;
     }
 
+    // Grow changes the size of the circular buffer, without affecting any of the
+    // actual data in the queue or the number of elements in the queue. Note - 
+    // Grow does NOT check to make sure that size is appropriate. Anything that calls
+    // grow should do its own checking to make sure you aren't trying to grow an array
+    // to a size that won't hold what is currently in the array. */
     private void grow(int size) {
-        /* Note - Grow does NOT check to make sure that size is appropriate
-           anything that calls grow should do its own checking to make sure you
-           aren't trying to grow an array to a size that won't hold what
-           is currently in the array. */
         int new_sizeof_buffer = size;
-        float[] new_buffer = new float[size];
+        Object[] new_buffer = new Object[size];
         int new_head = 0;
         int new_tail = 0;
         int new_sizeof_queue = 0;
@@ -106,6 +133,15 @@ public class WrappableGrowableQueue_float implements WrappableGrowableQueue {
         sizeof_queue = new_sizeof_queue;
     }
 
+    /** 
+     * Changes the size of the buffer used to hold the queue. This is the only function
+     * which somewhat exposes the internal workings of the object, and it is there as a
+     * performance measure so that objects which know they need a queue of a certain size
+     * can grow it to that size beforehand.
+     * @param size The number of elements the buffer should be able to hold.
+     * @throws IllegalArgumentException If one tries to set the buffer size to a value 
+     *                                  smaller than the current number of elements in the queue.
+     */
     public void setBufferSize(int size) {
         if (sizeof_queue > size) {
             throw new IllegalArgumentException("sizeof_queue " + sizeof_queue + " size " + size);
@@ -114,6 +150,10 @@ public class WrappableGrowableQueue_float implements WrappableGrowableQueue {
     }
 
 }
+
+
+
+
 
 
 

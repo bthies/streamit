@@ -34,7 +34,7 @@ import java.nio.BufferUnderflowException;
  * using those precisely to avoid their Object counterparts.
  */
 
-public class WrappableGrowableQueue_boolean {
+public class WrappableGrowableQueue_boolean implements WrappableGrowableQueue {
 
     int sizeof_buffer;
     boolean[] buffer;

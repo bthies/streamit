@@ -28,7 +28,6 @@ public class FileWriter extends Filter
 {
     Class fileType;
     File outputFile;
-    java.io.FileOutputStream fileOutputStream;
     DataOutputStream outputStream;
     boolean closed = true;
     /**
@@ -48,8 +47,8 @@ public class FileWriter extends Filter
         try
             {
                 outputFile = new File(fileName);
-                fileOutputStream = new java.io.FileOutputStream (outputFile);
-                outputStream = new DataOutputStream (fileOutputStream);
+                FileOutputStream fileOutputStream = new java.io.FileOutputStream (outputFile);
+                outputStream = new DataOutputStream (new BufferedOutputStream(fileOutputStream));
                 closed = false;
             }
         catch(Throwable e)
@@ -154,6 +153,7 @@ public class FileWriter extends Filter
                     outputStream.writeByte(the_bits);
                     bits_to_go = 8;
                 }
+                outputStream.flush();
                 outputStream.close();
             } catch (Throwable e) {
                 ERROR(e);

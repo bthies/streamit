@@ -27,7 +27,6 @@ public class FileReader extends Filter
     Class fileType;
     File inputFile;
     String fileName;
-    java.io.FileInputStream fileInputStream;
     DataInputStream inputStream;
 
     public FileReader (String fileName, Class type, boolean TREAT_AS_BITS)
@@ -48,7 +47,7 @@ public class FileReader extends Filter
 
     private void closeFile() {
         try {
-            fileInputStream.close();
+            inputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -58,8 +57,8 @@ public class FileReader extends Filter
         try
             {
                 inputFile = new File(fileName);
-                fileInputStream = new java.io.FileInputStream (inputFile);
-                inputStream = new DataInputStream (fileInputStream);
+                FileInputStream fileInputStream = new java.io.FileInputStream (inputFile);
+                inputStream = new DataInputStream (new BufferedInputStream(fileInputStream));
             }
         catch(Throwable e)
             {

@@ -58,7 +58,7 @@ public class GenerateCCode {
     private JBlock init;
 
     /** map string (variable name) to JVariableDefinition for fields, 
-     set up in convertFieldsToLocals()**/
+        set up in convertFieldsToLocals()**/
     HashMap stringVarDef = new HashMap();
 
     /** the c converter we are using **/
@@ -111,16 +111,17 @@ public class GenerateCCode {
     }
 
     /** rename the fields, locals, and methods of each filter
-     so there are unique across filters **/
+        so there are unique across filters **/
     private void renameFilterContents(FlatNode top) {
-        top.accept(new FlatVisitor() {
-            public void visitNode(FlatNode node) {
-                if (node.isFilter()) {
-                    RenameAll.renameFilterContents((SIRFilter) node.contents);
-                }
-
-            }
-        }, null, true);
+        top.accept(
+                   new FlatVisitor() {
+                       public void visitNode(FlatNode node) {
+                           if (node.isFilter()) {
+                               RenameAll.renameFilterContents((SIRFilter) node.contents);
+                           }
+                       }
+                   }, 
+                   null, true);
     }
 
     /** Concatenate everything into a main method and some helper functions **/
@@ -132,60 +133,63 @@ public class GenerateCCode {
         JExpression[] args = new JExpression[2];
 
         JVariableDefinition argc = new JVariableDefinition(null, 0,
-                CStdType.Integer, MAINMETHOD_ARGC, null);
+                                                           CStdType.Integer, MAINMETHOD_ARGC, null);
 
         JExpression[] argv_dims = { new JIntLiteral(null, 0),
-                new JIntLiteral(null, 0) };
+                                    new JIntLiteral(null, 0) };
 
         JVariableDefinition argv = new JVariableDefinition(null, 0,
-                new CArrayType(CStdType.Char, 2, argv_dims), MAINMETHOD_ARGV,
-                null);
+                                                           new CArrayType(CStdType.Char, 2, argv_dims), 
+                                                           MAINMETHOD_ARGV,
+                                                           null);
 
         args[0] = new JLocalVariableExpression(null, argc);
         args[1] = new JLocalVariableExpression(null, argv);
 
-        JMethodCallExpression iterationCounterInitializer = new JMethodCallExpression(
-                null, ARGHELPER_COUNTER, args);
+        JMethodCallExpression iterationCounterInitializer = 
+            new JMethodCallExpression(null, ARGHELPER_COUNTER, args);
+        
+        JVariableDefinition iterationCounter =
+            new JVariableDefinition(null, 0,
+                                    CStdType.Integer, MAINMETHOD_COUNTER,
+                                    iterationCounterInitializer);
 
-        JVariableDefinition iterationCounter = new JVariableDefinition(null, 0,
-                CStdType.Integer, MAINMETHOD_COUNTER,
-                iterationCounterInitializer);
-
-        main.addStatement(new JVariableDeclarationStatement(null,
-                iterationCounter, null));
+        main.addStatement(new JVariableDeclarationStatement(null, iterationCounter, null));
         /* } RMR */
-
+        
         TimerCode timerCode = new TimerCode("proc_timer");
         if (generateTimingCode) {
-            JVariableDeclarationStatement[] timerDecls = timerCode
-                    .timerDeclarations();
+            JVariableDeclarationStatement[] timerDecls = timerCode.timerDeclarations();
             for (int i = 0; i < timerDecls.length; i++) {
                 main.addStatement(timerDecls[i]);
             }
         }
 
-        // for C must be after all declarations, so may miss time to do 
-        // array initializations.
+        //insert timer harnes; note for C, must be after all
+        //declarations, so may miss time to do  array initializations
         if (generateTimingCode) {
             JStatement[] timerStartCode = timerCode.timerStart();
             for (int i = 0; i < timerStartCode.length; i++) {
                 main.addStatement(timerStartCode[i]);
             }
         }
-
+        
         //place any field (that are converted to locals of main) 
         //array inits into assignment statements and place them at the beginning
         //of main
         placeFieldArrayInits();
 
         //add comments to the blocks
-        JavaStyleComment[] comment1 = { new JavaStyleComment(
-                "SIR: Init Schedule", true, false, false) };
+        JavaStyleComment[] comment1 = { 
+            new JavaStyleComment("SIR: Init Schedule", true, false, false) 
+        };
         init.addStatementFirst(new JEmptyStatement(null, comment1));
-        JavaStyleComment[] comment2 = { new JavaStyleComment(
-                "SIR: Steady-State Schedule", true, false, false) };
-        steady.addStatementFirst(new JEmptyStatement(null, comment2));
 
+        JavaStyleComment[] comment2 = { 
+            new JavaStyleComment("SIR: Steady-State Schedule", true, false, false) 
+        };
+        steady.addStatementFirst(new JEmptyStatement(null, comment2));
+        
         //add the initfunction calls
         main.addStatement(initFunctionCalls);
 
@@ -194,33 +198,32 @@ public class GenerateCCode {
 
         /* RMR { create expression to decrement the iteration counter for top level driver */
         JExpression mainLoopCounter = new JPostfixExpression(null,
-                Constants.OPE_POSTDEC, new JLocalVariableExpression(null,
-                        iterationCounter));
+                                                             Constants.OPE_POSTDEC, 
+                                                             new JLocalVariableExpression(null, iterationCounter));
         /* } RMR */
 
         //add the steady state
         if (KjcOptions.absarray || KjcOptions.doloops) {
             //nest inside of an rstream_pr if we are generating absarray or doloops
-            Jrstream_pr rstream_pr = new Jrstream_pr(null, steady
-                    .getStatementArray(), null);
+            Jrstream_pr rstream_pr = new Jrstream_pr(null, steady.getStatementArray(), null);
             JBlock whileBlock = new JBlock(null, new JStatement[0], null);
             whileBlock.addStatement(rstream_pr);
             main.addStatement(new JWhileStatement(null,
-            /* RMR { use a counted while loop instead of infinite loop */
-            // new JBooleanLiteral(null, true),
-                    mainLoopCounter,
-                    /* } RMR */
-                    whileBlock, null));
+                                                  /* RMR { use a counted while loop instead of infinite loop */
+                                                  // new JBooleanLiteral(null, true),
+                                                  mainLoopCounter,
+                                                  /* } RMR */
+                                                  whileBlock, null));
         } else {
             //add the steady schedule
             main.addStatement(new JWhileStatement(null,
-            /* RMR { use a counted while loop instead of infinite loop */
-            // new JBooleanLiteral(null, true),
-                    mainLoopCounter,
-                    /* } RMR */
-                    steady, null));
+                                                  /* RMR { use a counted while loop instead of infinite loop */
+                                                  // new JBooleanLiteral(null, true),
+                                                  mainLoopCounter,
+                                                  /* } RMR */
+                                                  steady, null));
         }
-
+        
         if (generateTimingCode) {
             JStatement[] timerEndCode = timerCode.timerEnd();
             for (int i = 0; i < timerEndCode.length; i++) {
@@ -234,32 +237,35 @@ public class GenerateCCode {
 
         //add the return statement
         main.addStatement(new JReturnStatement(null, new JIntLiteral(0), null));
-
+        
         //convert all fields to locals of main function
         convertFieldsToLocals();
 
         /* RMR { declare parameters to main() */
         JFormalParameter[] mainParams = new JFormalParameter[2];
-
+        
         mainParams[0] = new JFormalParameter(null, 0, CStdType.Integer,
-                MAINMETHOD_ARGC, true);
-
-        mainParams[1] = new JFormalParameter(null, 0, new CArrayType(
-                CStdType.Char, 2, argv_dims), MAINMETHOD_ARGV, true);
+                                             MAINMETHOD_ARGC, true);
+        
+        mainParams[1] = new JFormalParameter(null, 0, 
+                                             new CArrayType(CStdType.Char, 2, argv_dims), 
+                                             MAINMETHOD_ARGV, true);
         /* } RMR */
 
         //construct the main driver method of the app
         mainMethod = new JMethodDeclaration(null, 0, CStdType.Integer,
-                MAINMETHOD,
-                /* RMR { use mainParms (argc, argv) for main */
-                // new JFormalParameter[0],
-                mainParams,
-                /* } RMR */
-                new CClassType[0], main, null, null);
+                                            MAINMETHOD,
+                                            /* RMR { use mainParms (argc, argv) for main */
+                                            // new JFormalParameter[0],
+                                            mainParams,
+                                            /* } RMR */
+                                            new CClassType[0], main, null, null);
     }
 
     /** convert all fields to locals of main function **/
     private void convertFieldsToLocals() {
+        /* RMR { do not zero-out arrays using memset, it is too expensive
+         *
         //find the first position in the main block that is not a var def, so we can
         //add array zeroing code there...
         int afterDecls;
@@ -273,65 +279,71 @@ public class GenerateCCode {
                 JVariableDefinition def = field.getVariable();
                 //use memset to zero the array, need to calculate size, use sizeof()
                 JExpression[] args = new JExpression[3];
-
+                
                 args[0] = new JLocalVariableExpression(null, def);
-
+                
                 //set up the size of arg, just the array name...
                 JExpression[] sizeofArgs = new JExpression[1];
                 sizeofArgs[0] = new JLocalVariableExpression(null, def);
-
+                
                 args[1] = new JIntLiteral(0);
-
-                args[2] = new JMethodCallExpression(null, new JThisExpression(
-                        null), "sizeof", sizeofArgs);
-
+                
+                args[2] = new JMethodCallExpression(null, new JThisExpression(null), "sizeof", sizeofArgs);
+                
                 JExpressionStatement memset = new JExpressionStatement(null,
-                        new JMethodCallExpression(null, new JThisExpression(
-                                null), "memset", args), null);
-                JEqualityExpression isZero = new JEqualityExpression(null,
-                        false, new JLocalVariableExpression(null, def),
-                        new JIntLiteral(0));
+                                                                       new JMethodCallExpression(null, 
+                                                                                                 new JThisExpression(null), 
+                                                                                                 "memset", args),
+                                                                       null);
 
+                JEqualityExpression isZero = new JEqualityExpression(null,
+                                                                     false, 
+                                                                     new JLocalVariableExpression(null, def),
+                                                                     new JIntLiteral(0));
+                
                 JIfStatement zeroArray = new JIfStatement(null, isZero, memset,
-                        new JEmptyStatement(null, null), null);
+                                                          new JEmptyStatement(null, null), null);
                 //add memset call to place where we calculated the decls ended
                 main.addStatement(afterDecls, zeroArray);
             }
         }
+        *
+        * } RMR */
 
         //add all fields to the main method as locals
         for (int i = 0; i < fields.size(); i++) {
             JFieldDeclaration field = (JFieldDeclaration) fields.get(i);
             main.addStatementFirst(new JVariableDeclarationStatement(null,
-                    field.getVariable(), null));
+                                                                     field.getVariable(), null));
             //remember the vardef for the visiter down below
             //this works because we renamed everything!
-            stringVarDef.put(field.getVariable().getIdent(), field
-                    .getVariable());
+            stringVarDef.put(field.getVariable().getIdent(), field.getVariable());
         }
 
         //convert all field accesses to local accesses
         main.accept(new SLIRReplacingVisitor() {
-            public Object visitFieldExpression(JFieldAccessExpression self,
-                    JExpression left, String ident) {
-                //if not a this expression, then we have a field access of a 
-                //variable that is a structure.  So just visit the expression
-                //and construct a new field access
-                if (!(left instanceof JThisExpression))
-                    return new JFieldAccessExpression(null, (JExpression) left
-                            .accept(this), ident, null);
+                public Object visitFieldExpression(JFieldAccessExpression self,
+                                                   JExpression left, String ident) {
+                    //if not a this expression, then we have a field access of a 
+                    //variable that is a structure.  So just visit the expression
+                    //and construct a new field access
+                    if (!(left instanceof JThisExpression))
+                        return new JFieldAccessExpression(null, (JExpression) left.accept(this), ident, null);
 
-                assert (stringVarDef.containsKey(ident))
-                        && (stringVarDef.get(ident) instanceof JVariableDefinition) : "Error converting fields to locals, name not found";
-                //return a local variable expression
-                return new JLocalVariableExpression(null,
-                        ((JVariableDefinition) stringVarDef.get(ident)));
-            }
-        });
+                    assert 
+                        (stringVarDef.containsKey(ident)) && 
+                        (stringVarDef.get(ident) instanceof JVariableDefinition) 
+                        : "Error converting fields to locals, name not found";
+
+                    //return a local variable expression
+                    return new JLocalVariableExpression(null,
+                                                        ((JVariableDefinition) stringVarDef.get(ident)));
+                }
+            });
     }
 
     /** Now, the main method has been constructed, so convert the SIR 
-     for the application to C code. **/
+        for the application to C code. **/
     private void writeCompleteFile() {
         StringBuffer str = new StringBuffer();
 
@@ -350,8 +362,7 @@ public class GenerateCCode {
         str.append("#include <unistd.h>\n\n");
 
         str.append("/* retrieve iteration count for top level driver */\n");
-        str.append("static int " + ARGHELPER_COUNTER
-                + "(int argc, char** argv) {\n");
+        str.append("static int " + ARGHELPER_COUNTER + "(int argc, char** argv) {\n");
         str.append("    int flag;\n");
         str.append("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
         str.append("       if (flag == \'i\') return atoi(optarg);\n");
@@ -388,11 +399,10 @@ public class GenerateCCode {
         str.append(toRS.getPrinter().getString());
 
         System.out.println("Static doloops/doloop: " + toRS.staticDoLoops
-                + " / " + toRS.doLoops);
+                           + " / " + toRS.doLoops);
 
-	// dupplicate code excised here
+        // dupplicate code excised here
 
-        System.out.println("Code for application written to str.c");
         try {
             FileWriter fw = new FileWriter("str.c");
             fw.write(str.toString());
@@ -400,12 +410,13 @@ public class GenerateCCode {
         } catch (Exception e) {
             System.err.println("Unable to write application code.");
         }
+        System.out.println("Code for application written to str.c");
     }
 
     /** visit each node in the flat graph generating the SIR imperative code 
-     necesary for its execution in the init (*isInit* == true) or steady
-     *isInit == false*.
-     **/
+        necesary for its execution in the init (*isInit* == true) or steady
+        *isInit == false*.
+        **/
     private void visitGraph(FlatNode top, boolean isInit) {
         //get a data-flow ordered traversal for the graph, i.e. a node 
         //can only fire if its upstream filters have fired
@@ -420,8 +431,8 @@ public class GenerateCCode {
     }
 
     /** for each node in the graph visited by *visitGraph()*, 
-     create the SIR code for its imperative execution, placing the
-     code in the correct container **/
+        create the SIR code for its imperative execution, placing the
+        code in the correct container **/
     private void generateCode(FlatNode node, boolean isInit) {
         //get the fusion state for this node
         FusionState me = FusionState.getFusionState(node);
@@ -442,19 +453,19 @@ public class GenerateCCode {
     }
 
     /** for now, just print all the common math functions as
-     external functions **/
+        external functions **/
     protected String getExterns() {
         StringBuffer buf = new StringBuffer();
 
         buf.append("#define EXTERNC \n\n");
         /* RMR { added 'const' to avoid prototype conflicts, also added fread */
         /* AD: took these out and use <stdio.h> instead
-         buf.append("extern EXTERNC int printf(const char[], ...);\n");
-         buf.append("extern EXTERNC int fprintf(int, const char[], ...);\n");
-         buf.append("extern EXTERNC int fopen(const char[], const char[]);\n");
-         buf.append("extern EXTERNC int fscanf(int, const char[], ...);\n");
-         buf.append("extern EXTERNC int fread(int, int, int, int);\n");
-         AD */
+           buf.append("extern EXTERNC int printf(const char[], ...);\n");
+           buf.append("extern EXTERNC int fprintf(int, const char[], ...);\n");
+           buf.append("extern EXTERNC int fopen(const char[], const char[]);\n");
+           buf.append("extern EXTERNC int fscanf(int, const char[], ...);\n");
+           buf.append("extern EXTERNC int fread(int, int, int, int);\n");
+           AD */
         /* } RMR */
         buf.append("extern EXTERNC float acosf(float);\n");
         buf.append("extern EXTERNC float asinf(float);\n");
@@ -487,7 +498,7 @@ public class GenerateCCode {
      * is non-positive, just returns an empty statement.
      */
     public static JStatement makeForLoop(JStatement body, JLocalVariable var,
-            JExpression count) {
+                                         JExpression count) {
         // if count==0, just return empty statement
         if (count instanceof JIntLiteral) {
             int intCount = ((JIntLiteral) count).intValue();
@@ -503,13 +514,20 @@ public class GenerateCCode {
         // an expression list statement to follow the convention of
         // other for loops and to get the codegen right.
         JExpression initExpr[] = { new JAssignmentExpression(null,
-                new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
+                                                             new JLocalVariableExpression(null, var), 
+                                                             new JIntLiteral(0)) };
         JStatement init = new JExpressionListStatement(null, initExpr, null);
+
         // make conditional - test if *var* less than *count*
-        JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
-                new JLocalVariableExpression(null, var), count);
+        JExpression cond = new JRelationalExpression(null, 
+                                                     Constants.OPE_LT,
+                                                     new JLocalVariableExpression(null, var), 
+                                                     count);
+
         JExpression incrExpr = new JPostfixExpression(null,
-                Constants.OPE_POSTINC, new JLocalVariableExpression(null, var));
+                                                      Constants.OPE_POSTINC, 
+                                                      new JLocalVariableExpression(null, var));
+
         JStatement incr = new JExpressionStatement(null, incrExpr, null);
 
         return new JForStatement(null, init, cond, incr, body, null);
@@ -521,10 +539,10 @@ public class GenerateCCode {
      * is non-positive, just returns an empty statement.
      */
     public static JStatement makeDoLoop(JStatement body, JLocalVariable var,
-            JIntLiteral count) {
+                                        JIntLiteral count) {
         return new JDoLoopStatement(var, new JIntLiteral(0), count,
-                new JIntLiteral(1), body, true, //count up
-                true); //zero increment
+                                    new JIntLiteral(1), body, true, //count up
+                                    true); //zero increment
     }
 
     /**
@@ -532,13 +550,14 @@ public class GenerateCCode {
      * *prefix* + *uniqueID*, that is initialized to *initVal*.
      **/
     public static JVariableDefinition newIntLocal(String prefix, int uniqueID,
-            int initVal) {
-        return new JVariableDefinition(null, 0, CStdType.Integer, prefix
-                + uniqueID, new JIntLiteral(initVal));
+                                                  int initVal) {
+        return new JVariableDefinition(null, 0, CStdType.Integer, 
+                                       prefix + uniqueID, 
+                                       new JIntLiteral(initVal));
     }
 
     /** call some magic for each filter to optimize it: unroller if 
-     enabled, flattener, const prop, etc. **/
+        enabled, flattener, const prop, etc. **/
     private void optimizeFilter(SIRFilter filter) {
         ArrayDestroyer arrayDest = new ArrayDestroyer();
 
@@ -589,14 +608,14 @@ public class GenerateCCode {
     }
 
     /** given a block *block*, add Statement array *stms* to the
-     end of the block, if stms is empty,  do nothing **/
+        end of the block, if stms is empty,  do nothing **/
     public static void addStmtArray(JBlock block, JStatement[] stms) {
         for (int i = 0; i < stms.length; i++)
             block.addStatement(stms[i]);
     }
 
     /** given a block *block*, add Statement array *stms* to the
-     beginning of the block, if stms is empty,  do nothing **/
+        beginning of the block, if stms is empty,  do nothing **/
     public static void addStmtArrayFirst(JBlock block, JStatement[] stms) {
         int index = 0;
         for (int i = 0; i < stms.length; i++)
@@ -604,7 +623,7 @@ public class GenerateCCode {
     }
 
     /** place the array initializer blocks in the main method after
-     any array local variable declaration **/
+        any array local variable declaration **/
     private void placeFieldArrayInits() {
         Iterator blocks = arrayInits.fields.iterator();
         while (blocks.hasNext()) {

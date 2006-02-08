@@ -179,6 +179,7 @@ public class GenerateCCode {
         //of main
         placeFieldArrayInits();
 
+
         //add comments to the blocks
         JavaStyleComment[] comment1 = { 
             new JavaStyleComment("SIR: Init Schedule", true, false, false) 
@@ -548,8 +549,12 @@ public class GenerateCCode {
         //remove unused variables...
         RemoveUnusedVars.doit(filter);
 
-        //remove array initializers and remember feilds for placement later...
-        arrayInits.convertFilter(filter);
+        // only generate array init code if targetting actual
+        // R-Stream; otherwise results in redundant assignments
+        if (KjcOptions.absarray) {
+            //remove array initializers and remember feilds for placement later...
+            arrayInits.convertFilter(filter);
+        }
 
         //find all do loops, 
         /* RMR { replaced the following by compiler command line switch */
@@ -579,9 +584,13 @@ public class GenerateCCode {
     /** place the array initializer blocks in the main method after
         any array local variable declaration **/
     private void placeFieldArrayInits() {
-        Iterator blocks = arrayInits.fields.iterator();
-        while (blocks.hasNext()) {
-            main.addStatement(((JBlock) blocks.next()));
+        // only generate array init code if targetting actual
+        // R-Stream; otherwise results in redundant assignments
+        if (KjcOptions.absarray) {
+            Iterator blocks = arrayInits.fields.iterator();
+            while (blocks.hasNext()) {
+                main.addStatement(((JBlock) blocks.next()));
+            }
         }
     }
 

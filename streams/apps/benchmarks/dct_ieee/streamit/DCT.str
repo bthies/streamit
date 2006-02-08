@@ -105,7 +105,7 @@ int->int pipeline iDCT_2D_reference_fine(int size) {
     add iDCT_1D_X_reference_fine(size);
     add float->int filter {
         work pop 1 push 1 {
-            push((int) floor(pop() + 0.5);
+            push((int) floor(pop() + 0.5));
         }
     }
 }

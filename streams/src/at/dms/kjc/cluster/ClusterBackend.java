@@ -224,9 +224,8 @@ public class ClusterBackend implements FlatVisitor {
 
         // Increasing filter Multiplicity
         //if ( doCacheOptimization && KjcOptions.peekratio < 1024) {
-        //if (!(KjcOptions.peekratio >= 256)) {
 
-        if (doCacheOptimization && KjcOptions.peekratio < 256) {
+	if (!(KjcOptions.peekratio >= 256)) {
             IncreaseFilterMult.inc(str, 1, code_cache);
         }
 
@@ -447,7 +446,7 @@ public class ClusterBackend implements FlatVisitor {
         ClusterCode.setPartitionMap(partitionMap);
         ClusterCode.generateCode(graphFlattener.top);
 
-        FusionCode.generateFusionHeader(str);
+        FusionCode.generateFusionHeader(str, doCacheOptimization);
         FusionCode.generateFusionFile(d_sched, implicit_mult);
 
         ClusterCode.generateGlobal(global, helpers);

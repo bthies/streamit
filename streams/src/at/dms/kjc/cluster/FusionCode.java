@@ -91,7 +91,7 @@ class FusionCode {
         return min_mult;
     }
 
-    public static void generateFusionHeader(SIRStream top_stream) {
+    public static void generateFusionHeader(SIRStream top_stream, boolean inc_mult) {
 
         //WorkEstimate work_est = WorkEstimate.getWorkEstimate(top_stream);
 
@@ -114,7 +114,7 @@ class FusionCode {
         //int mult = bestMult(16000,65000,work_est); // estimating best multiplicity 
         int mult = bestMult(8500,65000); // estimating best multiplicity 
 
-        if (KjcOptions.nomult) mult = 1;
+        if (KjcOptions.nomult || !inc_mult) mult = 1;
 
         p.print("#define __MULT "+mult+"\n");
         p.newLine();

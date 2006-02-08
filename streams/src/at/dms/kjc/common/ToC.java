@@ -699,7 +699,9 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
-        p.newLine();
+        // RMR { do not insert a new line before array initialization
+    	// p.newLine();
+    	// } RMR
         p.print("{");
         for (int i = 0; i < elems.length; i++) {
             if (i != 0) {

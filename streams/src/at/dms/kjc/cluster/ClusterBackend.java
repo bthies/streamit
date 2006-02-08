@@ -224,8 +224,9 @@ public class ClusterBackend implements FlatVisitor {
 
         // Increasing filter Multiplicity
         //if ( doCacheOptimization && KjcOptions.peekratio < 1024) {
+        //if (!(KjcOptions.peekratio >= 256)) {
 
-        if (!(KjcOptions.peekratio >= 256)) {
+        if (doCacheOptimization && KjcOptions.peekratio < 256) {
             IncreaseFilterMult.inc(str, 1, code_cache);
         }
 

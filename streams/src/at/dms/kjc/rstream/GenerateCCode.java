@@ -264,48 +264,6 @@ public class GenerateCCode {
 
     /** convert all fields to locals of main function **/
     private void convertFieldsToLocals() {
-        //find the first position in the main block that is not a var def, so we can
-        //add array zeroing code there...
-        int afterDecls;
-        for (afterDecls = 0; afterDecls < main.getStatementArray().length; afterDecls++)
-            if (!(main.getStatementArray()[afterDecls] instanceof JVariableDeclarationStatement))
-                break;
-        //now for each array, call memset to zero the array
-        for (int i = 0; i < fields.size(); i++) {
-            JFieldDeclaration field = (JFieldDeclaration) fields.get(i);
-            if (field.getType().isArrayType()) {
-                JVariableDefinition def = field.getVariable();
-                //use memset to zero the array, need to calculate size, use sizeof()
-                JExpression[] args = new JExpression[3];
-                
-                args[0] = new JLocalVariableExpression(null, def);
-                
-                //set up the size of arg, just the array name...
-                JExpression[] sizeofArgs = new JExpression[1];
-                sizeofArgs[0] = new JLocalVariableExpression(null, def);
-                
-                args[1] = new JIntLiteral(0);
-                
-                args[2] = new JMethodCallExpression(null, new JThisExpression(null), "sizeof", sizeofArgs);
-                
-                JExpressionStatement memset = new JExpressionStatement(null,
-                                                                       new JMethodCallExpression(null, 
-                                                                                                 new JThisExpression(null), 
-                                                                                                 "memset", args),
-                                                                       null);
-
-                JEqualityExpression isZero = new JEqualityExpression(null,
-                                                                     false, 
-                                                                     new JLocalVariableExpression(null, def),
-                                                                     new JIntLiteral(0));
-                
-                JIfStatement zeroArray = new JIfStatement(null, isZero, memset,
-                                                          new JEmptyStatement(null, null), null);
-                //add memset call to place where we calculated the decls ended
-                main.addStatement(afterDecls, zeroArray);
-            }
-        }
-
         //add all fields to the main method as locals
         for (int i = 0; i < fields.size(); i++) {
             JFieldDeclaration field = (JFieldDeclaration) fields.get(i);

@@ -170,18 +170,11 @@ public class FlatIRToRS extends ToC
           }*/
     
         //we have an array declaration
-        if (type.isArrayType()) {
-            if (KjcOptions.absarray) {
+        if (type.isArrayType() && KjcOptions.absarray) {
                 handleArrayDecl(ident, (CArrayType)type); 
-            } else {
-                printDecl(type, ident);
-            }
-        }
-        else {
-            printType(type);
+        } else {
+            printDecl(type, ident);
         
-            p.print(" ");
-            p.print(ident);
             if (expr != null) {
                 p.print(" = ");
                 expr.accept(this);

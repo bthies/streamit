@@ -47,7 +47,7 @@ public class Operator extends DestroyedClass
      * function.  Incremented only AFTER the work function has
      * completely finished.
      */
-    int numExecutions = 0;
+    private int workExecutions = 0;
     /**
      * The queue of Message objects to be delivered in this, sorted by
      * increasing order of delivery time.  Everything in this list has
@@ -92,8 +92,14 @@ public class Operator extends DestroyedClass
      * execution.
      */
     private void deliverMessages() {
-        // deliver before the next execution
-        while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==numExecutions+1) {
+        if (messageQueue.size()>0) {
+            System.err.println("numWork=" + getWorkExecutions() + " numPhase=" + getPhaseExecutions() + " delivery time of front=" + ((Message)messageQueue.get(0)).getDeliveryTime());
+        }
+        // deliver before the next execution.  (Deliver with respect
+        // to work executions rather than phase executions because we
+        // don't always know the ordering of phases in the receiver,
+        // so can't pass them on to SDEP.)
+        while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==workExecutions+1) {
             Message m = (Message)messageQueue.removeFirst();
             m.deliver(this);
         }
@@ -110,10 +116,7 @@ public class Operator extends DestroyedClass
             throw new NoPushPopException(this.toString() + " did not push or pop anything.");
         }
 
-        // for phased filters, executions are incremented at phase boundaries
-        if (!(this instanceof PhasedFilter)) {
-            numExecutions++;
-        }
+        workExecutions++;
     }
     /**
      * Register a pop, push, or peek.
@@ -134,14 +137,23 @@ public class Operator extends DestroyedClass
     public void registerPeek(int i) {
         currentMaxPeek = currentPopped + i;
     }
+
     /**
      * Returns the number of times this has executed a work or prework
-     * function (or a phase, in the case of containers).  Only counts
-     * completely finished executions of work or prework (not
-     * executions that are in progress.)
+     * function.  Only counts completely finished executions of work
+     * or prework (not executions that are in progress.)
      */
-    public int getNumExecutions() {
-        return numExecutions;
+    public int getWorkExecutions() {
+        return workExecutions;
+    }
+    /**
+     * Returns the number of times this has executed a phase.  Only
+     * counts completely finished phases (not phases that are in
+     * progress.)  For non-phased filters, this will return the same
+     * value as getWorkExecutions().
+     */
+    public int getPhaseExecutions() {
+        return getWorkExecutions();
     }
     
     public Operator(float x1, float y1, int z1)
@@ -1069,7 +1081,7 @@ public class Operator extends DestroyedClass
         // can't use iterator here for performance reasons -- it is
         // the inner loop when the sinks are filewriters
         for (int i=0; i<allSources.size(); i++) {
-            sourceExecs += ((Operator)allSources.get(i)).numExecutions;
+            sourceExecs += ((Operator)allSources.get(i)).getPhaseExecutions();
         }
         return sourceExecs;
     }

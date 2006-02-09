@@ -30,6 +30,12 @@ import streamit.scheduler2.Scheduler;
 
 public abstract class PhasedFilter extends Filter implements Runnable
 {
+    /**
+     * The number of times that this has executed a phase.
+     * Incremented only AFTER a given phase has completely finished.
+     */
+    private int phaseExecutions = 0;
+
     public PhasedFilter() { super(); }
     public PhasedFilter(int a) { super(a); }
 
@@ -98,13 +104,23 @@ public abstract class PhasedFilter extends Filter implements Runnable
     protected void contextSwitch() {
         synchronized (this) {
             try {
-                numExecutions++;
+                phaseExecutions++;
                 notify();
                 wait();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Returns the number of times this has executed a phase.  Only
+     * counts completely finished phases (not phases that are in
+     * progress.)  For non-phased filters, this will return the same
+     * value as getWorkExecutions().
+     */
+    public int getPhaseExecutions() {
+        return phaseExecutions;
     }
 
     /**

@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.62 2006-01-12 00:03:23 dimock Exp $
+ * $Id: StreamItParserFE.g,v 1.63 2006-02-09 19:50:42 thies Exp $
  */
 
 header {
@@ -369,10 +369,10 @@ stream_creator returns [StreamCreator sc] { sc = null; }
 	| sc=named_stream SEMI
 	;
 
-portal_spec returns [List p] { p = null; Expression pn; }
-	:	TK_to id:ID
-			{ pn = new ExprVar(getContext(id), id.getText());
-			  p = Collections.singletonList(pn); }
+portal_spec returns [List p] { p = new ArrayList(); Expression pn; }
+	:	TK_to 
+        id:ID { p.add(new ExprVar(getContext(id), id.getText())); }
+        (COMMA id2:ID { p.add(new ExprVar(getContext(id2), id2.getText())); })*
 	;
 
 anonymous_stream returns [StreamCreator sc]

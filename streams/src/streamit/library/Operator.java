@@ -92,9 +92,6 @@ public class Operator extends DestroyedClass
      * execution.
      */
     private void deliverMessages() {
-        if (messageQueue.size()>0) {
-            System.err.println("numWork=" + getWorkExecutions() + " numPhase=" + getPhaseExecutions() + " delivery time of front=" + ((Message)messageQueue.get(0)).getDeliveryTime());
-        }
         // deliver before the next execution.  (Deliver with respect
         // to work executions rather than phase executions because we
         // don't always know the ordering of phases in the receiver,

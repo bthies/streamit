@@ -31,7 +31,7 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.14 2006-02-09 19:36:35 thies Exp $
+ * @version $Id: Portal.java,v 1.15 2006-02-09 20:29:24 thies Exp $
  */
 public abstract class Portal
 {
@@ -119,7 +119,6 @@ public abstract class Portal
             Message m;
             if (sdep.isDownstream[i]) {
                 // schedule downstream messages using DstPhase4Src.
-                System.err.println("Sending from " + sender.getPhaseExecutions() + " (" + (sender.getPhaseExecutions()+maxLat+1) + ") to " + sdep.data[i].getDstPhase4SrcPhase(sender.getPhaseExecutions()+maxLat+1));
                 m = new Message(sdep.data[i].getDstPhase4SrcPhase(sender.getPhaseExecutions()+maxLat+1),
                                 handlerName, args);
             } else {

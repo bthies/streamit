@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.19 2006-02-09 00:01:55 dimock Exp $
+# $Id: streamit.py,v 1.20 2006-02-09 15:36:38 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -19,7 +19,7 @@ import qm.test.test
 import re
 import socket
 import shutil
-import time
+from time import sleep
 
 TIMEOUT = 20 * 60
 

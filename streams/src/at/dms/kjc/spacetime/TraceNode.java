@@ -1,18 +1,19 @@
 package at.dms.kjc.spacetime;
 
-/** 
- *
- **/
-abstract public class TraceNode  
-{
+/**
+ * 
+ */
+abstract public class TraceNode {
     private TraceNode next;
+
     private TraceNode previous;
+
     private Trace parent;
 
     public TraceNode getNext() {
         return next;
     }
-    
+
     public TraceNode getPrevious() {
         return previous;
     }
@@ -24,29 +25,24 @@ abstract public class TraceNode
     public void setNext(TraceNode next) {
         this.next = next;
     }
-    
-    public boolean isInputTrace() 
-    {
+
+    public boolean isInputTrace() {
         return this instanceof InputTraceNode;
     }
-    
-    public boolean isFilterTrace() 
-    {
+
+    public boolean isFilterTrace() {
         return this instanceof FilterTraceNode;
     }
-    
-    public boolean isOutputTrace() 
-    {
+
+    public boolean isOutputTrace() {
         return this instanceof OutputTraceNode;
     }
-    
-    public void setParent(Trace par) 
-    {
+
+    public void setParent(Trace par) {
         parent = par;
     }
-    
-    public Trace getParent() 
-    {
+
+    public Trace getParent() {
         assert parent != null : "parent not set for trace node";
         return parent;
     }

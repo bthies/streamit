@@ -2,84 +2,105 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+/**
+ * This class represents the space/time schedule for the application, 
+ * including both the steady state and the initialization stage.
+ * It is operated on by other classes the generate these schedules.
+ * 
+ * @author mgordon
+ *
+ */
 public class SpaceTimeSchedule {
-    private ArrayList[][] tiles;
-    private HashMap trace2loc; //Trace -> int[]{row,col,pos}
-    private int rows;
-    private int cols;
-    private Trace[][][] sched; //Cached matrix representation of schedule
-
-    public SpaceTimeSchedule(int row,int col) {
-        tiles=new ArrayList[row][col];
-        for(int i=0;i<row;i++)
-            for(int j=0;j<col;j++)
-                tiles[i][j]=new ArrayList();
-        trace2loc=new HashMap();
-        rows=row;
-        cols=col;
-    }
-
-    public void addHead(Trace trace,int row,int col) {
-        ArrayList list=tiles[row][col];
-        /*ArrayList positions=(ArrayList)trace2loc.get(trace);
-          if(positions==null) {
-          positions=new ArrayList();
-          trace2loc.put(trace,positions);
-          }
-          positions.add(new int[]{row,col,list.size()});*/
-        trace2loc.put(trace,new int[]{row,col,list.size()});
-        list.add(trace);
-    }
-
-    public void add(Trace trace,int row,int col) {
-        ArrayList list=tiles[row][col];
-        list.add(trace);
-    }
-
-    /*public void add(Trace trace,int[] row,int[] col) {
-      int len=row.length;
-      assert len>0&&len==col.length:"Bad Input To add(Trace trace,int[] row,int[] col)";
-      ArrayList positions=(ArrayList)trace2loc.get(trace);
-      if(positions==null) {
-      positions=new ArrayList();
-      trace2loc.put(trace,positions);
-      }
-      for(int i=0;i<len;i++) {
-      int curRow=row[i];
-      int curCol=col[i];
-      ArrayList list=tiles[curRow][curCol];
-      positions.add(new int[]{curRow,curCol,list.size()});
-      list.add(trace);
-      }
-      }*/
-
-    public Trace[] getTraces(int row,int col) {
-        ArrayList temp=tiles[row][col];
-        Trace[] out=new Trace[temp.size()];
-        temp.toArray(out);
-        return out;
-    }
-
-    public int[] getPosition(Trace trace) {
-        //return Collections.unmodifiableList((ArrayList)trace2loc.get(trace));
-        /*ArrayList temp=(ArrayList)trace2loc.get(trace);
-          int[][] out=new int[temp.size()][];
-          temp.toArray(out);
-          return out;*/
-        return (int[])trace2loc.get(trace);
-    }
-
-    public Trace[][][] getSchedule() {
-        if(sched==null) {
-            sched=new Trace[rows][cols][];
-            for(int i=0;i<rows;i++)
-                for(int j=0;j<cols;j++) {
-                    ArrayList list=tiles[i][j];
-                    Trace[] array=new Trace[list.size()];
-                    list.toArray(array);
-                    sched[i][j]=array;
-                }
+    //the slice partitioner used
+    public Partitioner partitioner;
+    //a list of the execution order of slices    
+    private Trace[] schedule;
+    //the raw chip that we are compiling to
+    private RawChip rawChip;
+    //true if the tile reads from a file
+    private boolean[] readsFile;
+    //true if the tile writes a file
+    private boolean[] writesFile;
+    //the initialization schedule
+    private Trace[] initSchedule;
+    //the preloop schedule!
+    private Trace[][] primePumpSchedule; 
+    
+    public SpaceTimeSchedule(Partitioner p, RawChip r) {
+        rawChip = r;
+        partitioner = p;
+        readsFile = new boolean[rawChip.getTotalTiles()];
+        writesFile = new boolean[rawChip.getTotalTiles()];
+        for (int i = 0; i < rawChip.getTotalTiles(); i++) {
+            readsFile[i] = false;
+            writesFile[i] = false;
         }
-        return sched;
+    }
+     
+    /**
+     * @return Returns the rawChip.
+     */
+    public RawChip getRawChip() {
+        return rawChip;
+    }
+    
+    /**
+     * @param initSchedule The initSchedule to set.
+     */
+    public void setInitSchedule(LinkedList is) {
+        this.initSchedule = (Trace[])is.toArray(new Trace[0]);
+    }
+
+    /**
+     * @return Returns the initSchedule.
+     */
+    public Trace[] getInitSchedule() {
+        return initSchedule;
+    }
+
+    /**
+     * @return Returns the steady state schedule.
+     */
+    public Trace[] getSchedule() {
+        return schedule;
+    }
+
+    /**
+     * @param schedule The steady-state schedule to set.
+     */
+    public void setSchedule(LinkedList schedule) {
+        this.schedule = (Trace[])schedule.toArray(new Trace[0]);
+    }
+    
+    
+    /**
+     * @return Returns the primePumpSchedule.
+     */
+    public Trace[][] getPrimePumpSchedule() {
+        return primePumpSchedule;
+    }
+
+    /**
+     * @param primePumpSchedule The primePumpSchedule to set.
+     */
+    public void setPrimePumpSchedule(LinkedList preLoopSchedule) {
+        //      convert into an array for easier access...
+        primePumpSchedule = new Trace[preLoopSchedule.size()][];
+        for (int i = 0; i < preLoopSchedule.size(); i++ ) {
+            LinkedList schStep = (LinkedList)preLoopSchedule.get(i);
+            primePumpSchedule[i] = new Trace[schStep.size()];
+            for (int j = 0; j < schStep.size(); j++) 
+                primePumpSchedule[i][j] = (Trace)schStep.get(i);
+        }
+    }
+
+    public void setWritesFile(int tileNum) {
+        assert rawChip.isValidTileNumber(tileNum);
+        writesFile[tileNum] = true;
+    }
+    
+    public void setReadsFile(int tileNum) {
+        assert rawChip.isValidTileNumber(tileNum);
+        readsFile[tileNum] = true;
     }
 }

@@ -8,58 +8,52 @@ import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
 
-public class InterTraceBuffer extends OffChipBuffer 
-{    
-    //the edge
+public class InterTraceBuffer extends OffChipBuffer {
+    // the edge
     protected Edge edge;
 
-    protected InterTraceBuffer(Edge edge) 
-    {
+    protected InterTraceBuffer(Edge edge) {
         super(edge.getSrc(), edge.getDest());
         this.edge = edge;
         calculateSize();
     }
-    
-    public static InterTraceBuffer getBuffer(Edge edge) 
-    {
+
+    public static InterTraceBuffer getBuffer(Edge edge) {
         if (!bufferStore.containsKey(edge)) {
             bufferStore.put(edge, new InterTraceBuffer(edge));
         }
-        return (InterTraceBuffer)bufferStore.get(edge);
+        return (InterTraceBuffer) bufferStore.get(edge);
     }
-    
-    public boolean redundant() 
-    {
-        return unnecessary((OutputTraceNode)source);
+
+    public boolean redundant() {
+        return unnecessary((OutputTraceNode) source);
     }
-    
-    public OffChipBuffer getNonRedundant() 
-    {
+
+    public OffChipBuffer getNonRedundant() {
         if (redundant()) {
-            return IntraTraceBuffer.getBuffer((FilterTraceNode)source.getPrevious(), 
-                                              (OutputTraceNode)source).getNonRedundant();
+            return IntraTraceBuffer.getBuffer(
+                                              (FilterTraceNode) source.getPrevious(),
+                                              (OutputTraceNode) source).getNonRedundant();
         }
         return this;
     }
 
-    protected void setType()
-    {
-        type = ((OutputTraceNode)source).getType(); 
+    protected void setType() {
+        type = ((OutputTraceNode) source).getType();
     }
 
-    protected void calculateSize() 
-    {
-        //max of the buffer size in the various stages...
-        int maxItems =Math.max(Util.initBufferSize(edge),
-                               Util.primePumpBufferSize(edge));
+    protected void calculateSize() {
+        // max of the buffer size in the various stages...
+        int maxItems = Math.max(Util.initBufferSize(edge), Util
+                                .primePumpBufferSize(edge));
         sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
         //
-        sizeSteady = (Address.ZERO.add(Util.steadyBufferSize(edge))).add32Byte(0);  
+        sizeSteady = (Address.ZERO.add(Util.steadyBufferSize(edge)))
+            .add32Byte(0);
     }
 
-    public Edge getEdge() 
-    {
+    public Edge getEdge() {
         return edge;
     }
-    
+
 }

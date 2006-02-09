@@ -30,7 +30,7 @@ public class BCFile
     public void doit() 
     {
         buf = new StringBuffer();
-    
+        
         if (KjcOptions.magic_net) 
             buf.append("gTurnOffNativeCompilation = 1;\n");
 
@@ -38,7 +38,7 @@ public class BCFile
 
         //workaround for magic instruction support...
         buf.append("include(\"<dev/magic_instruction.bc>\");\n");
-    
+        
         //let the simulation know how many tiles are mapped to 
         //filters or joiners
         buf.append("global gMHz = 250;\n");
@@ -54,19 +54,19 @@ public class BCFile
         if (numbers) {
             numberGathering();
         }
-    
+        
 
         //include the file reader/writer devices
         buf.append("sprintf(to_file_path, \"%s%s\", streamit_home, \"/include/to_file.bc\");\n"); 
         buf.append("sprintf(from_file_path, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n"); 
         buf.append("include(to_file_path);\n"); 
         buf.append("include(from_file_path);\n"); 
-    
+        
         buf.append("fn quit_sim()\n{\n");
         buf.append("\tgInterrupted = 1;\n");
         buf.append("\texit_now(0);\n");
         buf.append("}\n");
-    
+        
         files();
 
         if (KjcOptions.decoupled)
@@ -120,7 +120,7 @@ public class BCFile
         //install the event handlers
         buf.append("\n  install_event_handlers();\n");
         buf.append("}\n");
-    
+        
     }
     
 
@@ -142,7 +142,7 @@ public class BCFile
                 }
             }
         }
-    
+        
         for (int i = 0; i < rawChip.getXSize(); i++) {
             for (int j = 0; j < rawChip.getYSize(); j++) {
                 RawTile tile = rawChip.getTile(i, j);
@@ -164,7 +164,7 @@ public class BCFile
                                            ", \"");
                             else 
                                 buf.append("  dev_to_file(\"");
-                
+                            
                             buf.append(dram.getFileWriter().getFileName() +
                                        "\", slavePort" + dram.getPort() + 
                                        (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
@@ -182,7 +182,7 @@ public class BCFile
     private void setupFunction() 
     {
         buf.append("\n{\n");    
-    
+        
         if (KjcOptions.magic_net)
             buf.append("  addMagicNetwork();\n");
 
@@ -211,14 +211,14 @@ public class BCFile
              "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\n\",\n" +
              "         gAUTOFLOPS, (250*gAUTOFLOPS)/steps);\n" +
              "}\n" +
-             "\n"); 
+             "\n");     
     }
     
 
     private void magicNet() 
     {
         buf.append("include(\"magic_schedules.bc\");\n");
-     
+         
         buf.append("fn addMagicNetwork() {\n");
         buf.append("  local magicpath = malloc(strlen(streamit_home) + 30);\n");
         buf.append("  sprintf(magicpath, \"%s%s\", streamit_home, \"/include/magic_net.bc\");\n");
@@ -279,7 +279,7 @@ public class BCFile
     {
         buf.append("global gStreamItFilterTiles = " + rawChip.computingTiles() + ";\n");
         buf.append("global gFilterNames;\n");
-     
+         
         buf.append("{\n");
         buf.append("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
         buf.append("  gFilterNames = listi_new();\n");
@@ -306,7 +306,7 @@ public class BCFile
     {
         try {
             FileWriter fw = new FileWriter(BCFILE_NAME);
-        
+            
             fw.write(buf.toString());
             fw.close();
         }

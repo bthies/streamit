@@ -31,6 +31,16 @@ Someone want to write a detailed description?
       <file class="source">Test5.str</file>
       <file class="output">Test5.out</file>
     </impl>
+    <impl lang="StreamIt" id="test6">
+      <desc>Someone want to write a description of this test?</desc>
+      <file class="source">Test6.str</file>
+      <file class="output">Test6.out</file>
+    </impl>
+    <impl lang="StreamIt" id="test7">
+      <desc>Tests multiple portals to same filter.</desc>
+      <file class="source">Test7.str</file>
+      <file class="output">Test7.out</file>
+    </impl>
     <impl lang="StreamIt" id="test_upstream">
       <desc>Someone want to write a description of this test?</desc>
       <file class="source">Test_Upstream.str</file>

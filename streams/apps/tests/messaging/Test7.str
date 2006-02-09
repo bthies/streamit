@@ -1,0 +1,120 @@
+void->void pipeline Test7 {
+    portal<Counter> p1, p2;
+    add Source(p1);
+    add PassThrough(p2);
+    add Counter to p1, p2;
+    add Output;
+}
+
+void->int filter Source(portal<Counter> p) {
+    int i=100;
+    work push 1 {
+	i++;
+	push(i);
+	if (i==110) {
+	    i = 100;
+	    p.incVal() [0:0];
+	}
+    }
+}
+
+int->int filter PassThrough(portal<Counter> p) {
+    int i=100;
+    work push 1 pop 1 {
+        i++;
+        push(pop());
+	if (i==110) {
+            i = 100;
+            p.incVal() [0:0];
+        }
+    }
+}
+
+int->int filter Counter {
+    int val = 0;
+    
+    work push 2 pop 1 {
+	push(pop());
+	push(val);
+    }
+
+    handler incVal() {
+	val++;
+    }
+}
+
+int->void filter Output {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/* OUTPUT
+cagfarm-44 % strc -library Test7.str | & more
+101
+0
+102
+0
+103
+0
+104
+0
+105
+0
+106
+0
+107
+0
+108
+0
+109
+0
+Message delivery
+Message delivery
+110
+2
+101
+2
+102
+2
+103
+2
+104
+2
+105
+2
+106
+2
+107
+2
+108
+2
+109
+2
+Message delivery
+Message delivery
+110
+4
+101
+4
+102
+4
+103
+4
+104
+4
+105
+4
+106
+4
+107
+4
+108
+4
+109
+4
+Message delivery
+Message delivery
+110
+6
+*/

@@ -1027,9 +1027,9 @@ public class FlatIRToCluster extends InsertTimers implements
 
         SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
-        /* there should be only one portal or none */
-
-        if (portals.length == 1) {
+        // this block will need to be adjusted to receive from
+        // multiple portals of different types (different interfaces)
+        if (portals.length > 0) {
 
             CClass pclass = portals[0].getPortalType().getCClass();
 
@@ -1130,9 +1130,9 @@ public class FlatIRToCluster extends InsertTimers implements
 
         // SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
-        /* there should be only one portal or none */
-
-        if (portals.length == 1) {
+        // this block will need to be adjusted to receive from
+        // multiple portals of different types (different interfaces)
+        if (portals.length > 0) {
 
             CClass pclass = portals[0].getPortalType().getCClass();
 

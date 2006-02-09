@@ -777,12 +777,10 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
         SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
-        /* there should be only one portal or none */
+        // this block will need to be adjusted to receive from
+        // multiple portals of different types (different interfaces)
+        if (portals.length > 0) {
 
-        assert (portals.length <= 1);
-
-        if (portals.length == 1) 
-            {       
                 CClass pclass = portals[0].getPortalType().getCClass();
 
                 CMethod pmethods[] = pclass.getMethods();
@@ -1118,9 +1116,9 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
         //SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
-        /* there should be only one portal or none */
-
-        if (portals.length == 1) {
+        // this block will need to be adjusted to receive from
+        // multiple portals of different types (different interfaces)
+        if (portals.length > 0) {
         
             CClass pclass = portals[0].getPortalType().getCClass();
 
@@ -1213,9 +1211,9 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
         //SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
-        /* there should be only one portal or none */
-
-        if (portals.length == 1) {
+        // this block will need to be adjusted to receive from
+        // multiple portals of different types (different interfaces)
+        if (portals.length > 0) {
         
             CClass pclass = portals[0].getPortalType().getCClass();
 

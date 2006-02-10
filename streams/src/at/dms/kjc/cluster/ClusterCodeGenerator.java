@@ -168,6 +168,12 @@ class ClusterCodeGenerator {
         p.println("extern int __frequency_of_chkpts;");
         p.println("extern volatile int __vol;");
         p.println("message *__msg_stack_"+id+";");
+
+        for (Iterator i = msg_to.iterator(); i.hasNext();) {
+            int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+            p.println("extern message *__msg_stack_"+dst+";");   
+        }
+
         p.println("int __number_of_iterations_"+id+";");
         p.println("int __counter_"+id+" = 0;");
         p.println("int __steady_"+id+" = 0;");
@@ -691,9 +697,11 @@ class ClusterCodeGenerator {
             }
             r.add("      "+work_function+"(1);\n");
             if (oper instanceof SIRFilter) {
+		/*
                 if (msg_to.size() > 0 || msg_from.size() > 0) {
                     r.add("      __counter_"+id+"++;"); 
                 }
+		*/
                 if (msg_to.size() > 0) {
                     r.add("      send_credits__"+id+"();\n");
                 }
@@ -723,9 +731,11 @@ class ClusterCodeGenerator {
         }
         r.add("      "+work_function+"(1);\n");
         if (oper instanceof SIRFilter) {
+	    /*
             if (msg_to.size() > 0 || msg_from.size() > 0) {
                 r.add("      __counter_"+id+"++;\n"); 
             }
+	    */
             if (msg_to.size() > 0) {
                 r.add("      send_credits__"+id+"();\n");
             }
@@ -744,15 +754,10 @@ class ClusterCodeGenerator {
         r.add("}\n");
         r.add("\n");
 
-        //  +=============================+
-        //  | Run Function                |
-        //  +=============================+
 
-        r.add("void run_"+id+"() {\n");
-
-        r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
-
-        for (Iterator i = msg_to.iterator(); i.hasNext(); ) {
+        r.add("void __init_sdep_"+id+"() {\n");
+	
+	for (Iterator i = msg_to.iterator(); i.hasNext(); ) {
     
             SIRFilter sender = (SIRFilter)oper;
             SIRFilter receiver = (SIRFilter)i.next();
@@ -837,6 +842,19 @@ class ClusterCodeGenerator {
                 r.add("  }\n");
             }
         }
+
+        r.add("}\n");
+        r.add("\n");
+
+        //  +=============================+
+        //  | Run Function                |
+        //  +=============================+
+
+        r.add("void run_"+id+"() {\n");
+
+        r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
+
+        r.add("  __init_sdep_"+id+"();\n");
 
         //r.add("  __steady_"+id+" = __init_iter;\n");
         r.add("  __init_state_"+id+"();\n");

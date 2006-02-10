@@ -951,7 +951,19 @@ public class FlatIRToCluster extends InsertTimers implements
                                                       Constants.OPE_POSTDEC, new JLocalVariableExpression(null,
                                                                                                           counter));
 
+
+        JExpression incrExpr = new JPostfixExpression(null,
+                                                      Constants.OPE_POSTINC, new JLocalVariableExpression(null,
+                                                                                                          iter_counter));
+
         JStatement decr = new JExpressionStatement(null, decrExpr, null);
+        //JStatement incr = new JExpressionStatement(null, incrExpr, null);
+
+	JExpression arr[] = new JExpression[2];
+	arr[0] = decrExpr;
+	arr[1] = incrExpr;
+
+	JExpressionListStatement list = new JExpressionListStatement(null, arr, null);
 
         JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
                                                      new JIntLiteral(0), new JLocalVariableExpression(null, counter));
@@ -959,9 +971,10 @@ public class FlatIRToCluster extends InsertTimers implements
         if (self instanceof SIRPredefinedFilter) {
             BuiltinsCodeGen.predefinedFilterWork((SIRPredefinedFilter) self,
                                                  selfID, p);
-        } else {
+        } else {	    
 
-            block.addStatement(new JForStatement(null, init, cond, decr, 
+            block.addStatement(new JForStatement(null, init, cond, 
+						 (outgoing.length + incoming.length == 0 ? decr : list), 
                     work.getBody(),
                     new JavaStyleComment[] {
                         new JavaStyleComment("FlatIRToCluster work function", true,
@@ -1005,6 +1018,8 @@ public class FlatIRToCluster extends InsertTimers implements
                     + ") {\n");
         }
 
+	p.print("#ifndef __CLUSTER_STANDALONE\n");
+
         {
             Iterator i = receives_from.iterator();
             while (i.hasNext()) {
@@ -1015,6 +1030,8 @@ public class FlatIRToCluster extends InsertTimers implements
                         + "in);\n  } // if\n");
             }
         }
+
+	p.print("#endif\n");
 
         if (restrictedExecution) {
             p.print("  } // while \n");
@@ -2112,10 +2129,63 @@ public class FlatIRToCluster extends InsertTimers implements
                   }
                 */
 
-                p.print("__msg_sock_" + selfID + "_" + dst + "out->write_int("
+		p.print("\n#ifdef __CLUSTER_STANDALONE\n\n");
+
+		p.print("  message *__msg = new message("+size+", "+index+", ");
+
+                if (latency instanceof SIRLatencyMax) {
+
+                    int max = ((SIRLatencyMax) latency).getMax();
+
+                    SIRFilter sender = (SIRFilter) NodeEnumerator
+                        .getOperator(selfID);
+                    SIRFilter receiver = (SIRFilter) NodeEnumerator
+                        .getOperator(dst);
+
+                    if (LatencyConstraints.isMessageDirectionDownstream(sender,
+                                                                        receiver)) {
+
+                        p.print("sdep_" + selfID + "_" + dst
+                                + "->getDstPhase4SrcPhase(__counter_" + selfID
+                                + "+" + max + "+1)-1);\n");
+
+                    } else {
+
+                        p.print("sdep_" + selfID + "_" + dst
+                                + "->getSrcPhase4DstPhase(__counter_" + selfID
+                                + "+" + max + "+1)-1);\n");
+
+                    }
+
+                } else {
+                    p.print("-1);\n");
+                }
+
+		p.print("  __msg->alloc_params("+num_params*4+");\n");
+
+		if (params != null) {
+                    for (int t = 0; t < method_params.length; t++) {
+
+                        String method_params_string = method_params[t].toString();
+
+                        p.print("  __msg->push_" + method_params_string + "(");
+                        params[t].accept(this);
+
+                        //if (t < method_params.length - 1) { p.print(", "); }
+                        
+                        p.print(");\n");
+                    }
+                }
+
+
+		p.print("  __msg_stack_"+dst+" = __msg->push_on_stack(__msg_stack_"+dst+");\n");
+
+		p.print("\n#else\n\n");
+
+                p.print("  __msg_sock_" + selfID + "_" + dst + "out->write_int("
                         + size + ");\n");
 
-                p.print("__msg_sock_" + selfID + "_" + dst + "out->write_int("
+                p.print("  __msg_sock_" + selfID + "_" + dst + "out->write_int("
                         + index + ");\n");
 
                 if (latency instanceof SIRLatencyMax) {
@@ -2132,14 +2202,14 @@ public class FlatIRToCluster extends InsertTimers implements
                     if (LatencyConstraints.isMessageDirectionDownstream(sender,
                                                                         receiver)) {
 
-                        p.print("__msg_sock_" + selfID + "_" + dst
+                        p.print("  __msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getDstPhase4SrcPhase(__counter_" + selfID
                                 + "+" + max + "+1)-1);\n");
 
                     } else {
 
-                        p.print("__msg_sock_" + selfID + "_" + dst
+                        p.print("  __msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getSrcPhase4DstPhase(__counter_" + selfID
                                 + "+" + max + "+1)-1);\n");
@@ -2147,7 +2217,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     }
 
                 } else {
-                    p.print("__msg_sock_" + selfID + "_" + dst
+                    p.print("  __msg_sock_" + selfID + "_" + dst
                             + "out->write_int(-1);\n");
                 }
 
@@ -2161,7 +2231,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
                         String method_params_string = method_params[t]
                             .toString();
-                        p.print("__msg_sock_" + selfID + "_" + dst
+                        p.print("  __msg_sock_" + selfID + "_" + dst
                                 + "out->write_");
                         if (method_params_string == "int"
                             || method_params_string == "float") {
@@ -2187,6 +2257,8 @@ public class FlatIRToCluster extends InsertTimers implements
                         p.print(");\n");
                     }
                 }
+
+		p.print("\n#endif\n\n");
 
             }
         }

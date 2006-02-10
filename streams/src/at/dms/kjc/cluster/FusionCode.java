@@ -126,6 +126,8 @@ class FusionCode {
 
         }
 
+	p.print("#define __CLUSTER_STANDALONE\n");
+
         for (int t = 0; t < threadCount; t++) {
         
             SIROperator oper = NodeEnumerator.getOperator(t);
@@ -404,10 +406,11 @@ class FusionCode {
                 //p.print(type+" PEEK_BUFFER_"+src+"_"+dst+"[__PEEK_BUF_SIZE_"+src+"_"+dst+"];\n");
                 p.print("int HEAD_"+src+"_"+dst+" = 0;\n");
                 p.print("int TAIL_"+src+"_"+dst+" = 0;\n");
+
+		p.newLine();
             }
+
         }
-    
-        p.newLine();
 
         for (int i = 0; i < threadNumber; i++) {
             FlatNode node = NodeEnumerator.getFlatNode(i);
@@ -427,6 +430,8 @@ class FusionCode {
                 p.print("extern void "+initWork+"();\n");
             }
 
+            p.print("extern void __init_sdep_"+id+"();\n");
+            p.print("extern void check_messages__"+id+"();\n");
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
 
             /*
@@ -539,6 +544,7 @@ class FusionCode {
                             //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); "); else p.print("  ");
                             p.print("  ");
                             p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"(); ");
+			    p.print("  __init_sdep_"+id+"();");
                 
                         } else {
                             p.print("  ");
@@ -569,6 +575,8 @@ class FusionCode {
                             //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); ");
                             p.print("  ");
                             p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"();");
+			    p.print("  __init_sdep_"+id+"();");
+
                             p.newLine();
                         }
                     }
@@ -596,6 +604,13 @@ class FusionCode {
                 SIROperator oper = (SIROperator)iter.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
+
+		boolean rcv_msg = false;
+		if (oper instanceof SIRFilter) {
+		    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
+			rcv_msg = true;
+		    }
+		}
 
                 Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
                 int init_int = 0;
@@ -640,7 +655,8 @@ class FusionCode {
                         p.print("    }\n");
                         */
                     }
-            
+
+		    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
                 }
 
@@ -664,6 +680,13 @@ class FusionCode {
                 SIROperator oper = (SIROperator)iter.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
+
+		boolean rcv_msg = false;
+		if (oper instanceof SIRFilter) {
+		    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
+			rcv_msg = true;
+		    }
+		}
 
                 Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
                 int init_int = 0;
@@ -709,6 +732,7 @@ class FusionCode {
                         */
                     }
             
+		    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
                 }
 

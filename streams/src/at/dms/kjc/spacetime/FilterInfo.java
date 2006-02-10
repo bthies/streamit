@@ -29,13 +29,6 @@ public class FilterInfo {
 
     public int pop;
 
-    // so here primepump is the number of times
-    // the filter executes in the primepump stage
-    public int primePump;
-
-    // the primepump in terms of steady
-    public int primePumpTrue;
-
     public int peek;
 
     private boolean linear;
@@ -80,8 +73,6 @@ public class FilterInfo {
         // multiply the primepump number by the
         // steady state multiplicity to get the true
         // primepump multiplicity
-        this.primePumpTrue = traceNode.getParent().getPrimePump();
-        this.primePump = primePumpTrue * this.steadyMult;
         prePeek = 0;
         prePush = 0;
         prePop = 0;
@@ -114,7 +105,7 @@ public class FilterInfo {
             direct = DirectCommunication.testDC(this);
         }
     }
-
+    
     public boolean isTwoStage() {
         return filter.isTwoStage();
     }
@@ -204,35 +195,6 @@ public class FilterInfo {
         return false;
     }
 
-    // calculate the number of items produced in the primepump stage but
-    // consumed in the steady state of the down stream filters...
-    public int primePumpItemsNotConsumed() {
-        // assert traceNode.getNext() instanceof OutputTraceNode :
-        // "Need to call primePumpItemsNotConsumed() on last filter of trace";
-
-        if (!(traceNode.getNext() instanceof OutputTraceNode) || push == 0)
-            return 0;
-
-        OutputTraceNode out = (OutputTraceNode) traceNode.getNext();
-
-        // if there is a downstream, true outputtrace node, let it deal
-        // with the primepump items not consumed
-        if (!OffChipBuffer.unnecessary(out))
-            return 0;
-
-        int itemsSent = primePump * push;
-        InputTraceNode input = out.getSingleEdge().getDest();
-        FilterInfo downstream = FilterInfo.getFilterInfo(input.getNextFilter());
-        int itemsConsumed = (int) ((double) downstream.totalItemsReceived(
-                                                                          false, true) * ((double) (input.getWeight(out.getSingleEdge()) / (double) input
-                                                                                                    .totalWeights())));
-
-        assert (itemsSent - itemsConsumed >= 0) : "negative primepump items not consumed";
-
-        assert ((itemsSent - itemsConsumed) % push == 0) : "primepump items not consumed is not multiple of push!";
-        return itemsSent - itemsConsumed;
-    }
-
     // return the number of items produced in the init stage
     public int initItemsSent() {
         int items = push * initMult;
@@ -278,6 +240,17 @@ public class FilterInfo {
         return upStreamItems;
     }
 
+
+    /**
+     * get the total number of items received during the execution of the stage
+     * we are in (based on <init> and <primepump>.  For primepump, this is just
+     * for one firing of the parent trace in the primepump stage, the trace may fire
+     * many times in the prime pump schedule to fill the rotating buffers.
+     * 
+     * @param init
+     * @param primepump
+     * @return
+     */
     public int totalItemsReceived(boolean init, boolean primepump) {
         assert !((init) && (init && primepump)) : "incorrect usage";
         int items = 0;
@@ -285,25 +258,54 @@ public class FilterInfo {
         if (init)
             items = initItemsReceived();
         else if (primepump)
-            items = primePump * pop;
+            items = steadyMult * pop;
         else
             items = steadyMult * pop;
 
         return items;
     }
 
+    /**
+     * get the total number of itmes sent during the execution of the stage
+     * we are in (based on <init> and <primepump>.  For primepump, this is just
+     * for one firing of the parent trace in the primepump stage, the trace may fire
+     * many times in the prime pump schedule to fill the rotating buffers.
+     * 
+     * @param init
+     * @param primepump
+     * @return
+     */
     public int totalItemsSent(boolean init, boolean primepump) {
         assert !((init) && (init && primepump)) : "incorrect usage";
         int items = 0;
         if (init)
             items = initItemsSent();
         else if (primepump)
-            items = primePump * push;
+            items = steadyMult * push;
         else
             items = steadyMult * push;
         return items;
     }
 
+    /**
+     * @param init
+     * @param primepump
+     * @return The multiplicity of the filter in the given stage, return
+     * the steady mult for the primepump stage.
+     */
+    public int getMult(boolean init, boolean primepump) {
+        assert !((init) && (init && primepump)) : "incorrect usage";
+        if (init)
+            return initMult;
+        else 
+            return steadyMult; 
+    }
+    
+    /**
+     * @param exeCount The iteration we are querying. 
+     * @param init Init stage?
+     * @return The number of items this filter will produce.
+     */
     public int itemsFiring(int exeCount, boolean init) {
         int items = push;
 
@@ -313,6 +315,12 @@ public class FilterInfo {
         return items;
     }
 
+    /**
+     * @param exeCount The current execution we are querying of the filter.
+     * @param init Is this the init stage?
+     * @return The number of items needed for fire this filter in the given stage at 
+     * at the given iteration.
+     */
     public int itemsNeededToFire(int exeCount, boolean init) {
         int items = pop;
 

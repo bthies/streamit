@@ -166,27 +166,10 @@ public class Util {
         return edge.initItems() * getTypeSize(edge.getType());
     }
 
-    // the size of the buffer between in / out for the prime pump stage
-    public static int primePumpBufferSize(Edge edge) {
-        // items received into buffer
-        int itemsReceived;
-        InputTraceNode in = edge.getDest();
-        OutputTraceNode out = edge.getSrc();
-        // calculate the items the output trace sends, because
-        // the downstream filter may not receive them all
-        FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode) out
-                                                   .getPrevious());
-        itemsReceived = (int) ((prev.primePump * prev.push) * ((double) out
-                                                               .getWeight(edge) / out.totalWeights()));
-
-        return itemsReceived * getTypeSize(prev.filter.getOutputType());
-    }
-
     public static int magicBufferSize(Edge edge) {
         // i don't remember why I have the + down there,
         // but i am not going to change
-        return Math.max(steadyBufferSize(edge), initBufferSize(edge))
-            + primePumpBufferSize(edge);
+        return Math.max(steadyBufferSize(edge), initBufferSize(edge));
     }
 
     public static String getFileVar(PredefinedContent content) {

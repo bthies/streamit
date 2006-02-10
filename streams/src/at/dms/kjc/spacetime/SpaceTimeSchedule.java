@@ -84,6 +84,20 @@ public class SpaceTimeSchedule {
         return primePumpSchedule;
     }
 
+    /** 
+     * @return A flat (one-dimensional) array of the primepump schedule.
+     */
+    public Trace[] getPrimePumpScheduleFlat() {
+        LinkedList pp = new LinkedList();
+        
+        for (int i = 0; i < primePumpSchedule.length; i++) 
+            for (int j = 0; j < primePumpSchedule[i].length; j++) 
+                pp.add(primePumpSchedule[i][j]);
+        
+        
+        return (Trace[])pp.toArray(new Trace[0]);
+    }
+    
     /**
      * @param primePumpSchedule The primePumpSchedule to set.
      */
@@ -106,6 +120,16 @@ public class SpaceTimeSchedule {
         }
     }
 
+    /**
+     * @param f
+     * @return The total number of times this filter fires in the prime pump stage
+     * so this accounts for the number number of times that a trace if called in the
+     * prime pump stage to fill the rotating buffers.
+     */
+    public int getPrimePumpTotalMult(FilterInfo f) {
+        return getPrimePumpMult(f.traceNode.getParent()) * f.steadyMult;
+    }
+    
     /** 
      * @param trace
      * @return Return the number of times this trace fires in the prime pump schedule.

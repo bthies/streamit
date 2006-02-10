@@ -96,7 +96,7 @@ public class IntraTraceBuffer extends OffChipBuffer {
             // the init size is the max of the multiplicities for init and pp
             // times the push rate
             FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode) source);
-            int maxItems = Math.max(fi.initMult, fi.primePump);
+            int maxItems = fi.initMult;
             maxItems *= fi.push;
             // account for the initpush
             if (fi.push < fi.prePush)
@@ -107,7 +107,7 @@ public class IntraTraceBuffer extends OffChipBuffer {
         } else if (dest.isFilterTrace()) {
             // this is not a perfect estimation but who cares
             FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode) dest);
-            int maxItems = Math.max(fi.initMult, fi.primePump);
+            int maxItems = fi.initMult;
             maxItems *= fi.pop;
             // now account for initpop, initpeek, peek
             maxItems += (fi.prePeek + fi.prePop + fi.prePeek);

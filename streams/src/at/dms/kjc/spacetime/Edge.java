@@ -117,21 +117,16 @@ public class Edge {
         return itemsSent;
     }
 
-    // total items sent over this edge in the primepump stage
+   /**
+    * The number of items sent over this link in one call of the link in the prime
+    * pump stage, the link might be used many times in the prime pump stage conceptually 
+    * using the rotating buffers.
+    * 
+    * @return
+    */
     public int primePumpItems() {
         return (int) ((double) FilterInfo.getFilterInfo(src.getPrevFilter())
                       .totalItemsSent(false, true) * src.ratio(this));
-    }
-
-    // return the number of items sent to the init buffer for a edge
-    // in the primepump stage
-    public int primePumpInitItems() {
-        FilterInfo dst = FilterInfo.getFilterInfo(getDest().getNextFilter());
-
-        int totalPPItemsRec = dst.totalItemsReceived(false, true);
-
-        // I'm Rick James.
-        return (int) ((double) totalPPItemsRec * dest.ratio(this));
     }
 
 }

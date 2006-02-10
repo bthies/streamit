@@ -66,8 +66,6 @@ public class Linear extends BufferedCommunication implements Constants {
         System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
         assert filterInfo.initMult < 1 :
             "Still need to create init function: "+filterInfo.initMult;
-        assert filterInfo.primePump < 1 :
-            "Still need to create primePump: "+filterInfo.primePump;
         System.out.println("STEADYSTATE: "+filterInfo.steadyMult);
         FilterContent content = filterInfo.filter;
         array = content.getArray();

@@ -19,8 +19,7 @@ public class MultiplySteadyState {
         while (traceNodes.hasNext()) {
             TraceNode traceNode = (TraceNode) traceNodes.next();
             if (traceNode.isFilterTrace()) {
-                ((FilterTraceNode) traceNode).getFilter().multSteadyMult(
-                                                                         KjcOptions.steadymult);
+                ((FilterTraceNode) traceNode).getFilter().multSteadyMult(KjcOptions.steadymult);
             }
         }
 

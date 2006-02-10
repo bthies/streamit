@@ -3,9 +3,22 @@ package at.dms.kjc.spacetime;
 import java.io.FileWriter;
 import java.util.Vector;
 
+/**
+ * This class generates a dot graph of the layout and for each tile the
+ * schedule of filters that the tile runs.
+ * 
+ * @author mgordon
+ *
+ */
 public class LayoutDot 
 {
-    public static void dumpLayout(RawChip rawChip, String fileName) 
+    /**
+     * Generate the dot graph of the layout.
+     * 
+     * @param rawChip
+     * @param fileName
+     */
+    public static void dumpLayout(SpaceTimeSchedule spaceTime, RawChip rawChip, String fileName) 
     {
         try {
             FileWriter fw = new FileWriter(fileName);
@@ -42,7 +55,7 @@ public class LayoutDot
                             FilterInfo.getFilterInfo((FilterTraceNode)tile.getFilters(false, true).get(t));
             
                         fw.write(fi.filter.toString() + "(" + 
-                                 fi.primePump + ")\\n");
+                                 spaceTime.getPrimePumpTotalMult(fi) + ")\\n");
                     }
             
                     fw.write("Steady:\\n");

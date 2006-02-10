@@ -233,7 +233,31 @@ public class SpaceTimeBackend {
         if (!KjcOptions.magicdram) {
             CommunicateAddrs.doit(rawChip, spaceTimeSchedule);
         }
-        //create raw code
+ 
+        //create the raw execution code and switch code for the initialization
+        // phase and the primepump stage and the steady state
+        System.out.println("Creating Raw Code...");
+        Rawify.run(spaceTimeSchedule, rawChip); 
+        
+//      dump the layout
+        LayoutDot.dumpLayout(spaceTimeSchedule, rawChip, "layout.dot");
+        
+        // generate the switch code assembly files...
+        GenerateSwitchCode.run(rawChip);
+        // generate the compute code from the SIR
+        GenerateComputeCode.run(rawChip);
+        // generate the magic dram code if enabled
+        if (KjcOptions.magicdram) {
+            MagicDram.GenerateCode(rawChip);
+        }
+          
+        Makefile.generate(rawChip);
+        
+        // generate the bc file depending on if we have number gathering enabled
+        if (KjcOptions.numbers > 0)
+            BCFile.generate(rawChip, NumberGathering.doit(rawChip, partitioner.io));
+        else
+            BCFile.generate(rawChip, null);
         
         System.exit(1);
         
@@ -270,32 +294,8 @@ public class SpaceTimeBackend {
           "inittraces.dot", true, rawChip, partitioner);
           TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io,
           "steadyforrest.dot", true, rawChip, partitioner);
-          // create the raw execution code and switch code for the initialization
-          // phase
-          System.out.println("Creating Initialization Stage");
-          Rawify.run(scheduler, rawChip, true);
-          // create the raw execution code and switch for the steady-state
-          System.out.println("Creating Steady-State Stage");
-          Rawify.run(scheduler, rawChip, false);
-          // dump the layout
-          LayoutDot.dumpLayout(rawChip, "layout.dot");
-          // generate the switch code assembly files...
-          GenerateSwitchCode.run(rawChip);
-          // generate the compute code from the SIR
-          GenerateComputeCode.run(rawChip);
-        
-          // generate the magic dram code if enabled
-          if (KjcOptions.magicdram) {
-          MagicDram.GenerateCode(rawChip);
-          }
-            
-          Makefile.generate(rawChip);
-          // generate the bc file depending on if we have number gathering enabled
-          if (KjcOptions.numbers > 0)
-          BCFile.generate(rawChip, NumberGathering.doit(rawChip,
-          partitioner.io));
-          else
-          BCFile.generate(rawChip, null);
+    
+       
         */
     }
     

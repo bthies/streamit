@@ -129,7 +129,7 @@ public class DirectCommunication extends RawExecutionCode
         FilterContent filter = filterInfo.filter;
     
         //add the calls to the work function in the prime pump stage
-        statements.addStatement(getWorkFunctionBlock(false, filterInfo.primePump)); 
+        statements.addStatement(getWorkFunctionBlock(false, filterInfo.steadyMult)); 
 
         return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,

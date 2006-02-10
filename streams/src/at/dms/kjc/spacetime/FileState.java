@@ -32,27 +32,6 @@ public class FileState
             return ((FileOutputContent)file).isFP();
     }
     
-
-    public void setVisited(boolean init, boolean primepump) 
-    {
-        if (init)
-            visitedInit = true;
-        else if (primepump)
-            visitedPP = true;
-        else
-            visitedSteady = true;
-    }
-    
-    public boolean isVisited(boolean init, boolean primepump) 
-    {
-        if (init)
-            return visitedInit;
-        else if (primepump)
-            return visitedPP;
-        else 
-            return visitedSteady;
-    }
-    
     public boolean isReader() 
     {
         return (file instanceof FileInputContent);

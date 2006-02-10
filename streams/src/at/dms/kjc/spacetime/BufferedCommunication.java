@@ -329,7 +329,7 @@ public class BufferedCommunication extends RawExecutionCode
         FilterContent filter = filterInfo.filter;
 
         //add the calls to the work function for the priming of the pipeline
-        statements.addStatement(getWorkFunctionBlock(false, filterInfo.primePump));
+        statements.addStatement(getWorkFunctionBlock(false, filterInfo.steadyMult));
         //return the method
         return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,

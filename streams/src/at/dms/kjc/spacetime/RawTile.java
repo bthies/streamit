@@ -5,13 +5,20 @@ import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * This class represents a raw tile on the raw chip with its compute
+ * processor and its switch processor and the code that runs on each. 
+ *
+ * @author mgordon
+ *
+ */
 public class RawTile extends ComputeNode {
     private int tileNumber;
 
-    // true if this tile has switch code
+    /** true if this tile has switch code */
     private boolean switches;
 
-    // true if this tile has compute code
+    /** true if this tile has compute code */
     private boolean computes;
 
     // true if a filter has been mapped to it

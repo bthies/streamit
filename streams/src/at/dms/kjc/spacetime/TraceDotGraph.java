@@ -96,8 +96,8 @@ public class TraceDotGraph {
                         fw.write("\\nWork: "
                                  + partitioner
                                  .getFilterWork((FilterTraceNode) node));
-                        fw.write("\\nMult: (" + filter.initMult + ", "
-                                 + filter.primePump + ", " + filter.steadyMult
+                        fw.write("\\nMult:(" + filter.initMult + ", "
+                                 + spaceTime.getPrimePumpTotalMult(filter) + ", " + filter.steadyMult
                                  + ")");
                         fw.write("\\nPre-peek, pop, push: (" + filter.prePeek
                                  + ", " + filter.prePop + ", " + filter.prePush

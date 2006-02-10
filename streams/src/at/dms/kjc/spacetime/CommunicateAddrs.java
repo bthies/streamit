@@ -4,7 +4,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
-
+/**
+ * This class will generate code to allocate the off chip buffers on the necessary
+ * tiles and then communicate each buffer's global address to the tiles that need
+ * to know the address.  It also sets the rotation length for the buffers based on the 
+ * primepump schedule.
+ * 
+ * @author mgordon
+ *
+ */
 public class CommunicateAddrs 
 {
     public static String functName = "__snd_rvc_addrs__";
@@ -15,7 +23,8 @@ public class CommunicateAddrs
     private HashMap freeFunctions;
     private HashMap fields;
     private static Random rand;
-
+    private SpaceTimeSchedule spaceTimeSchedule;         
+    
     static 
     {
         rand = new Random(17);
@@ -27,12 +36,13 @@ public class CommunicateAddrs
         return ((StringBuffer)commAddrs.fields.get(tile)).toString();
     }
 
-    public CommunicateAddrs(RawChip chip)
+    public CommunicateAddrs(RawChip chip, SpaceTimeSchedule stSchedule)
     {
         this.chip = chip;
         fields = new HashMap();
         functions = new HashMap();
         freeFunctions = new HashMap();
+        spaceTimeSchedule = stSchedule;
     
         //add the StringBuffer for each tile
         for (int x = 0; x < chip.getXSize(); x++) {
@@ -50,6 +60,10 @@ public class CommunicateAddrs
         //the dram it is assigned to
         while (buffers.hasNext()) {
             OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            //set the rotation length for the buffer
+            if (buffer instanceof InterTraceBuffer)
+                setRotationLength((InterTraceBuffer)buffer);
+            
             //do nothing for redundant buffers
             if (buffer.redundant())
                 continue;
@@ -75,91 +89,62 @@ public class CommunicateAddrs
             if (allocatingTile == null) {
                 allocatingTile = dramTiles[rand.nextInt(dramTiles.length)];
             }
-        
+            
+            int rotationLength = buffer.getRotationLength();
+                    
             //set the allocating tile to have compute code
             allocatingTile.setComputes();
-
-            //allocate the init buffer on the allocating tile
-            ((StringBuffer)fields.get(allocatingTile)).append
+            
+            for (int i = 0; i < rotationLength; i++) {
+                //allocate the steady buffer on the allocating tile
+                ((StringBuffer)fields.get(allocatingTile)).append
                 (buffer.getType().toString() + "* " + 
-                 buffer.getIdent(true) + ";\n");
-
-            //allocate the steady buffer on the allocating tile
-            ((StringBuffer)fields.get(allocatingTile)).append
-                (buffer.getType().toString() + "* " + 
-                 buffer.getIdent(false) + ";\n");
-
-            //malloc the init buffer
-            ((StringBuffer)functions.get(allocatingTile)).append
-                ("  " + buffer.getIdent(true) + " = (" + buffer.getType() + 
-                 "*) malloc(32 + (" + buffer.getSize(true).toString() + " * sizeof(" +
-                 buffer.getType() + ")));\n");
-            //align the buffer
-            ((StringBuffer)functions.get(allocatingTile)).append
-                ("  " + buffer.getIdent(true) + " = ((u_int32_t)((char*)" + buffer.getIdent(true) +
-                 ") + 31) & 0xffffffe0;\n");
-            //generate the free statement for the free function
-            ((StringBuffer)freeFunctions.get(allocatingTile)).append
-                ("  free(" + buffer.getIdent(true) + ");\n");
-
-            //malloc the steady buffer
-            ((StringBuffer)functions.get(allocatingTile)).append
-                ("  " + buffer.getIdent(false) + " = (" + buffer.getType() + 
-                 "*) malloc(32 + (" + buffer.getSize(false).toString() + " * sizeof(" +
-                 buffer.getType() + ")));\n");
-            //align the buffer
-            ((StringBuffer)functions.get(allocatingTile)).append
-                ("  " + buffer.getIdent(false) + " = ((u_int32_t)((char*)" + buffer.getIdent(false) +
-                 ") + 31) & 0xffffffe0;\n");
-
-            //if allocator != neighbor, create declaration of 
-            //pointer on neighbor and communicate the address for both init and steady...
-            if (allocatingTile != dram.getNeighboringTile()) {
-                dram.getNeighboringTile().setComputes();
-                SpaceTimeBackend.println("Need to communicate buffer address from " + 
-                                         allocatingTile + " to " + dram.getNeighboringTile());
-                //generate the switch code to send the addresses
-                RawTile[] dest = {dram.getNeighboringTile()};
-                //first for the init
-                SwitchCodeStore.generateSwitchCode(allocatingTile, 
-                                                   dest, 0);
-                //now for the steady
-                SwitchCodeStore.generateSwitchCode(allocatingTile, 
-                                                   dest, 0);
-                //add the code to the owner to send the address to the
-                //static net for the init
+                        buffer.getIdent(i) + ";\n");
+                
+                //malloc the steady buffer
                 ((StringBuffer)functions.get(allocatingTile)).append
-                    ("  " + Util.staticNetworkSendPrefix(CStdType.Integer) + 
-                     buffer.getIdent(true) + 
-                     Util.staticNetworkSendSuffix() + ";\n");
-
-                //add the code to the owner to send the address to the
-                //static net for the steady
+                ("  " + buffer.getIdent(i) + " = (" + buffer.getType() + 
+                        "*) malloc(32 + (" + buffer.getSize().toString() + " * sizeof(" +
+                        buffer.getType() + ")));\n");
+                //align the buffer
                 ((StringBuffer)functions.get(allocatingTile)).append
+                ("  " + buffer.getIdent(i) + " = ((u_int32_t)((char*)" + buffer.getIdent(i) +
+                ") + 31) & 0xffffffe0;\n");
+                
+                //if allocator != neighbor, create declaration of 
+                //pointer on neighbor and communicate the address for both init and steady...
+                if (allocatingTile != dram.getNeighboringTile()) {
+                    dram.getNeighboringTile().setComputes();
+                    SpaceTimeBackend.println("Need to communicate buffer address from " + 
+                            allocatingTile + " to " + dram.getNeighboringTile());
+                    //generate the switch code to send the addresses
+                    RawTile[] dest = {dram.getNeighboringTile()};
+                    
+                    //now for the steady
+                    SwitchCodeStore.generateSwitchCode(allocatingTile, 
+                            dest, 0);
+                    
+                    
+                    //add the code to the owner to send the address to the
+                    //static net for the steady
+                    ((StringBuffer)functions.get(allocatingTile)).append
                     ("  " + Util.staticNetworkSendPrefix(CStdType.Integer) + 
-                     buffer.getIdent(false) + 
-                     Util.staticNetworkSendSuffix() + ";\n");
-
-                //add declaration of pointer to neighbor (init)
-                ((StringBuffer)fields.get(dram.getNeighboringTile())).append
+                            buffer.getIdent(i) + 
+                            Util.staticNetworkSendSuffix() + ";\n");
+                    
+                    
+                    //add declaration of pointer to neighbor (steady)
+                    ((StringBuffer)fields.get(dram.getNeighboringTile())).append
                     (buffer.getType().toString() + "* " + 
-                     buffer.getIdent(true) + ";\n");
-
-                //add declaration of pointer to neighbor (steady)
-                ((StringBuffer)fields.get(dram.getNeighboringTile())).append
-                    (buffer.getType().toString() + "* " + 
-                     buffer.getIdent(false) + ";\n");
-
-                //add the code to receive the address into the pointer (init)
-                ((StringBuffer)functions.get(dram.getNeighboringTile())).append
+                            buffer.getIdent(i) + ";\n");
+                    
+                    
+                    //add the code to receive the address into the pointer (steady)
+                    ((StringBuffer)functions.get(dram.getNeighboringTile())).append
                     ("  " + Util.staticNetworkReceivePrefix() + 
-                     buffer.getIdent(true) + 
-                     Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
-                //add the code to receive the address into the pointer (steady)
-                ((StringBuffer)functions.get(dram.getNeighboringTile())).append
-                    ("  " + Util.staticNetworkReceivePrefix() + 
-                     buffer.getIdent(false) + 
-                     Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
+                            buffer.getIdent(i) + 
+                            Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
+                }
             }
         }
     }
@@ -189,8 +174,25 @@ public class CommunicateAddrs
         return buf.toString();
     }   
     
-    public static void doit(RawChip chip) 
+    /**
+     * Set the rotation length of the buffer based on the multiplicities 
+     * of the source trace and the dest trace in the prime pump schedule and add one
+     * so we can double buffer also!
+     * 
+     * @param buffer
+     */
+    private void setRotationLength(InterTraceBuffer buffer) {
+        int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
+        int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
+        int length =  0;
+        if (sourceMult != 0 && destMult != 0)
+            length = sourceMult - destMult + 1; 
+      
+        buffer.setRotationLength(length);
+    }
+    
+    public static void doit(RawChip chip, SpaceTimeSchedule stSchedule) 
     {
-        commAddrs = new CommunicateAddrs(chip);
+        commAddrs = new CommunicateAddrs(chip, stSchedule);
     }
 }

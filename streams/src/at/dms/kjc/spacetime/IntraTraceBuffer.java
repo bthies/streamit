@@ -8,6 +8,14 @@ import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
 
+/**
+ * This class represents the buffer between the sink filter of a trace
+ * and outputtracenode or between the inputtracenode and the source filter of a
+ * trace. 
+ * 
+ * @author mgordon
+ *
+ */
 public class IntraTraceBuffer extends OffChipBuffer {
     public static IntraTraceBuffer getBuffer(FilterTraceNode src,
                                              OutputTraceNode dst) {
@@ -82,6 +90,7 @@ public class IntraTraceBuffer extends OffChipBuffer {
     }
 
     protected void calculateSize() {
+        setRotationLength(1);
         // we'll make it 32 byte aligned
         if (source.isFilterTrace()) {
             // the init size is the max of the multiplicities for init and pp
@@ -92,10 +101,9 @@ public class IntraTraceBuffer extends OffChipBuffer {
             // account for the initpush
             if (fi.push < fi.prePush)
                 maxItems += (fi.prePush - fi.push);
-            sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
+            maxItems = Math.max(maxItems, fi.push*fi.steadyMult);
             // steady is just pop * mult
-            sizeSteady = (Address.ZERO.add(fi.push * fi.steadyMult))
-                .add32Byte(0);
+            sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
         } else if (dest.isFilterTrace()) {
             // this is not a perfect estimation but who cares
             FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode) dest);
@@ -103,11 +111,9 @@ public class IntraTraceBuffer extends OffChipBuffer {
             maxItems *= fi.pop;
             // now account for initpop, initpeek, peek
             maxItems += (fi.prePeek + fi.prePop + fi.prePeek);
-            sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
+            maxItems = Math.max(maxItems, fi.pop* fi.steadyMult);
             // steady is just pop * mult
-            sizeSteady = (Address.ZERO.add(fi.pop * fi.steadyMult))
-                .add32Byte(0);
-
+            sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
         }
     }
 

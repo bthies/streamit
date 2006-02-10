@@ -68,7 +68,7 @@ public class ComputeCodeStore {
         parent.setMapped();
         String functName = "raw_streaming_dram_request_bypass_"
             + (read ? "read" : "write");
-        String bufferName = buffer.getIdent(init);
+        String bufferName = buffer.getIdent();
 
         JExpression[] args = {
             new JFieldAccessExpression(null, new JThisExpression(null),
@@ -98,9 +98,9 @@ public class ComputeCodeStore {
 
         String bufferName;
         if (stage < 2)
-            bufferName = buffer.getIdent(true);
+            bufferName = buffer.getIdent();
         else
-            bufferName = buffer.getIdent(false);
+            bufferName = buffer.getIdent();
 
         // the args for the streaming dram command
 

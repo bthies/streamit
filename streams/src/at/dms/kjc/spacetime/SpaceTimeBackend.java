@@ -228,7 +228,11 @@ public class SpaceTimeBackend {
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
                                 "steadyTraces.dot", true);
         
-        
+        //communicate the addresses for the off-chip buffers && set up
+        // the rotating buffers based on the preloopschedule for software pipelining
+        if (!KjcOptions.magicdram) {
+            CommunicateAddrs.doit(rawChip, spaceTimeSchedule);
+        }
         //create raw code
         
         System.exit(1);

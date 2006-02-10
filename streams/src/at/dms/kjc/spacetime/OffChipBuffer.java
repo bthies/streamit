@@ -11,7 +11,7 @@ import at.dms.kjc.*;
 /**
  * This abstract class represents a buffer in the partitioner slice graph.  A 
  * buffer appears between slices and inside slices between the input node and the first
- * filter and between the last filter and the output node.
+ * filter and between the last filter and the output node.  
  * 
  * @author mgordon
  *
@@ -24,8 +24,6 @@ public abstract class OffChipBuffer {
     protected static int unique_id;
     /** the store for all OffChipBuffers, indexed by src, dest */
     protected static HashMap bufferStore;
-    /** the size of the buffer in the init stage */
-    protected Address sizeInit;
     /** the size of the buffer in the steady stage */ 
     protected Address sizeSteady;
     /** the type of the buffer */ 
@@ -38,6 +36,8 @@ public abstract class OffChipBuffer {
     protected TraceNode dest;
     /** true if this buffer uses static net */
     protected boolean staticNet;
+    /** the rotation length of this buffer for software pipelining **/
+    protected int rotationLength;
     
     static {
         unique_id = 0;
@@ -68,8 +68,8 @@ public abstract class OffChipBuffer {
         this.staticNet = staticNet;
     }
 
-
-
+  
+    
     public abstract boolean redundant();
 
     /**
@@ -123,9 +123,22 @@ public abstract class OffChipBuffer {
         return dram;
     }
 
-    public String getIdent(boolean init) {
+    /** 
+     * @param i
+     * @return The string for the InterTraceBuffer of rotation i.  
+     * It just return getIdent() for IntraTraceBuffers.
+     */
+    public String getIdent(int i) {
         assert !redundant() : this.toString() + " is redundant";
-        return ident + (init ? "_init__" : "_steady__");
+        if (this instanceof InterTraceBuffer)
+            return ident + "_" + i;
+        else 
+            return ident;
+    }
+    
+    public String getIdent() {
+        assert !redundant() : this.toString() + " is redundant";
+        return ident;
     }
 
     public String getIdentPrefix() {
@@ -149,13 +162,22 @@ public abstract class OffChipBuffer {
         return set;
     }
 
-    public Address getSize(boolean init) {
-        if (init)
-            return sizeInit;
-        else
-            return sizeSteady;
+    public Address getSize() {
+        return sizeSteady;
+    }
+    
+    public int getRotationLength() {
+        return rotationLength;
     }
 
+    /** 
+     * @param rl Set the rotation length to rl, if rl is zero, it means this buffer is never
+     * allocated off chip memory (a buffer from a file reader or to a file writer).
+     */
+    public void setRotationLength(int rl) {
+        rotationLength = rl;
+    }
+    
     abstract protected void calculateSize();
 
     /**

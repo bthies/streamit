@@ -8,10 +8,19 @@ import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
 
+/**
+ * This class represents a buffer between two traces. The rotating register abstraction 
+ * is implemented by have rotating buffers, so we can actually have many physical buffers 
+ * for each buffer.  
+ * 
+ * @author mgordon
+ *
+ */
 public class InterTraceBuffer extends OffChipBuffer {
     // the edge
     protected Edge edge;
-
+   
+    
     protected InterTraceBuffer(Edge edge) {
         super(edge.getSrc(), edge.getDest());
         this.edge = edge;
@@ -25,6 +34,7 @@ public class InterTraceBuffer extends OffChipBuffer {
         return (InterTraceBuffer) bufferStore.get(edge);
     }
 
+   
     public boolean redundant() {
         return unnecessary((OutputTraceNode) source);
     }
@@ -46,10 +56,9 @@ public class InterTraceBuffer extends OffChipBuffer {
         // max of the buffer size in the various stages...
         int maxItems = Math.max(Util.initBufferSize(edge), Util
                                 .primePumpBufferSize(edge));
-        sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
-        //
-        sizeSteady = (Address.ZERO.add(Util.steadyBufferSize(edge)))
-            .add32Byte(0);
+        maxItems = Math.max(Util.steadyBufferSize(edge), maxItems);
+        
+        sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
     }
 
     public Edge getEdge() {

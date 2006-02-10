@@ -25,12 +25,16 @@ public class SpaceTimeSchedule {
     private Trace[] initSchedule;
     //the preloop schedule!
     private Trace[][] primePumpSchedule; 
+    //the multiplicities of the traces in the primepump
+    //Trace->Integer
+    private HashMap primePumpMult;
     
     public SpaceTimeSchedule(Partitioner p, RawChip r) {
         rawChip = r;
         partitioner = p;
         readsFile = new boolean[rawChip.getTotalTiles()];
         writesFile = new boolean[rawChip.getTotalTiles()];
+        primePumpMult = new HashMap();
         for (int i = 0; i < rawChip.getTotalTiles(); i++) {
             readsFile[i] = false;
             writesFile[i] = false;
@@ -89,11 +93,29 @@ public class SpaceTimeSchedule {
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
             LinkedList schStep = (LinkedList)preLoopSchedule.get(i);
             primePumpSchedule[i] = new Trace[schStep.size()];
-            for (int j = 0; j < schStep.size(); j++) 
-                primePumpSchedule[i][j] = (Trace)schStep.get(i);
+            for (int j = 0; j < schStep.size(); j++) {
+                Trace current = (Trace)schStep.get(i);
+                primePumpSchedule[i][j] = current;
+                //generate the prime pump multiplicity map
+                if (!primePumpMult.containsKey(current))
+                    primePumpMult.put(current, new Integer(1));
+                else 
+                    primePumpMult.put(current, 
+                            new Integer(((Integer)primePumpMult.get(current)).intValue() + 1));
+            }
         }
     }
 
+    /** 
+     * @param trace
+     * @return Return the number of times this trace fires in the prime pump schedule.
+     */
+    public int getPrimePumpMult(Trace trace) {
+        if (!primePumpMult.containsKey(trace))
+            return 0;
+        return ((Integer)primePumpMult.get(trace)).intValue();
+    }
+    
     public void setWritesFile(int tileNum) {
         assert rawChip.isValidTileNumber(tileNum);
         writesFile[tileNum] = true;

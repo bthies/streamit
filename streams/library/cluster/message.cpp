@@ -18,6 +18,20 @@ void message::read_params(netsocket *sock, int head_size) {
   sock->read_chunk((char*)params, param_size);
 }
 
+void message::alloc_params(int param_size) {
+  params = (int*)malloc(param_size);
+  current = params;
+  write_ptr = params;
+}
+
+void message::push_int(int a) {
+  *(int*)(write_ptr++) = a;
+}
+
+void message::push_float(float f) {
+  *(float*)(write_ptr++) = f;
+}
+
 int message::get_int_param() {
   return *((int*)(current++));
 }
@@ -55,3 +69,4 @@ message *message::remove_from_stack(message *stack_top) {
   }
   */
 }
+

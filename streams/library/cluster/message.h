@@ -8,6 +8,7 @@ class message {
 
   int *params;
   int *current;
+  int *write_ptr;
 
 public:
 
@@ -23,6 +24,10 @@ public:
 
   void read_params(netsocket *sock) { read_params(sock, 12); }
   void read_params(netsocket *sock, int head_size);
+
+  void alloc_params(int param_size);
+  void push_int(int a);
+  void push_float(float f);
 
   int get_int_param(); // advances current
   float get_float_param(); // advances current

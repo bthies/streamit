@@ -22,12 +22,14 @@ public class PipelineIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.PipelineIter
 {
-    PipelineIter(Pipeline _pipeline)
+    PipelineIter(Pipeline _pipeline, IterFactory _factory)
     {
         pipeline = _pipeline;
+        factory = _factory;
     }
 
     Pipeline pipeline;
+    IterFactory factory;
     
     public Object getObject ()
     {
@@ -36,7 +38,7 @@ public class PipelineIter
     
     public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
-        return new Iterator(pipeline);
+        return new Iterator(pipeline, factory);
     }
     
     public int getNumChildren ()
@@ -46,7 +48,7 @@ public class PipelineIter
     
     public streamit.scheduler2.iriter.Iterator getChild (int n)
     {
-        return new Iterator (pipeline.getChildN (n));
+        return new Iterator (pipeline.getChildN (n), factory);
     }
     
     public boolean equals(Object other)

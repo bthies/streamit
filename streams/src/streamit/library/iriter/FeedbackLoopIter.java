@@ -24,14 +24,16 @@ public class FeedbackLoopIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.FeedbackLoopIter
 {
-    FeedbackLoopIter (FeedbackLoop _feedback)
+    FeedbackLoopIter (FeedbackLoop _feedback, IterFactory _factory)
     {
         feedback = _feedback;
+        factory = _factory;
         feedback.getSplitter().useFL(this);
         feedback.getJoiner().useFL(this);
     }
 
     FeedbackLoop feedback;
+    IterFactory factory;
     
     public Object getObject ()
     {
@@ -40,7 +42,7 @@ public class FeedbackLoopIter
     
     public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
-        return new Iterator(feedback);
+        return new Iterator(feedback, factory);
     }
     
     public int getDelaySize()
@@ -50,12 +52,12 @@ public class FeedbackLoopIter
     
     public streamit.scheduler2.iriter.Iterator getBodyChild ()
     {
-        return new Iterator (feedback.getBody ());
+        return new Iterator (feedback.getBody (), factory);
     }
 
     public streamit.scheduler2.iriter.Iterator getLoopChild ()
     {
-        return new Iterator (feedback.getLoop ());
+        return new Iterator (feedback.getLoop (), factory);
     }
 
     public int getFanOut () { return 2; }

@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.12 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: InsertIODecls.java,v 1.13 2006-02-11 03:05:20 thies Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -130,11 +130,8 @@ public class InsertIODecls extends InitMunger
                     newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
                 }
             }
-        // Also add the work function as a phase.  Except in the
-        // library, for now (which only evaluates work() in phased
-        // filters in -nosched mode, as of 8/05.  This should change.)
-        if (!libraryFormat || phaseList.size()==0) {
-            newStmts.add(new StmtAddPhase(work.getContext(), init, work));
-        }
+        // Also add the work function as a phase.  Be sure to add it
+        // last (library relies on this).
+        newStmts.add(new StmtAddPhase(work.getContext(), init, work));
     }
 }

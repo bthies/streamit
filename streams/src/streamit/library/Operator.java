@@ -36,6 +36,11 @@ public class Operator extends DestroyedClass
      */
     int currentPopped = 0, currentPushed = 0;
     /**
+     * The total number of items pushed and popped so far.  Only
+     * maintained for splitters, joiners, filters (not containers).
+     */
+    int totalPopped = 0, totalPushed = 0;
+    /**
      * The maximum peek index referenced by the filter during the
      * execution of its current work function.  For example, this will
      * be "2" after the sequence "pop(); peek(1);" -- it counts the
@@ -91,14 +96,25 @@ public class Operator extends DestroyedClass
      * Delivers all messages that should be processed before the next
      * execution.
      */
-    private void deliverMessages() {
-        // deliver before the next execution.  (Deliver with respect
-        // to work executions rather than phase executions because we
-        // don't always know the ordering of phases in the receiver,
-        // so can't pass them on to SDEP.)
-        while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==workExecutions+1) {
-            Message m = (Message)messageQueue.removeFirst();
-            m.deliver(this);
+    protected void deliverMessages() {
+        while (messageQueue.size()>0) {
+            Message m = (Message)messageQueue.get(0);
+            // deliver before the next execution
+            int currentTime = 1+getSDEPExecutions(true, m.isDownstream());
+            int deliveryTime = m.getDeliveryTime();
+
+            if (deliveryTime==currentTime) {
+                messageQueue.removeFirst();
+                m.deliver(this);
+            } else if (deliveryTime < currentTime) {
+                // if we missed deadline, throw error
+                throw new RuntimeException("Missed a message delivery deadline to " + this + ".  Your " +
+                                           "program has a message latency that is too tight to be satisfied " + 
+                                           "under the default schedule.  Might require constrained scheduling, " +
+                                           "or might represent an invalid (impossibly tight) message constraint.");
+            } else {
+                break;
+            }
         }
     }
     
@@ -121,6 +137,7 @@ public class Operator extends DestroyedClass
     public void registerPop() {
         Profiler.registerPop();
         currentPopped++;
+        totalPopped++;
         // update peek index in case we've popped items without
         // peeking them.
         if (currentPopped-1>currentMaxPeek) {
@@ -130,6 +147,7 @@ public class Operator extends DestroyedClass
     public void registerPush() {
         Profiler.registerPush();
         currentPushed++;
+        totalPushed++;
     }
     public void registerPeek(int i) {
         currentMaxPeek = currentPopped + i;
@@ -150,6 +168,21 @@ public class Operator extends DestroyedClass
      * value as getWorkExecutions().
      */
     public int getPhaseExecutions() {
+        return getWorkExecutions();
+    }
+    
+    /**
+     * Returns the number of times that this has executed with regards
+     * to the SDEP timing of a message.  That is, returns the number
+     * of "ticks" this filter has done with regards to messaging.
+     *
+     * @param   receiver   Whether or not this is receiving the message.
+     *                     (If false, this was the sender of message).
+     * @param   downstream Whether or not message sent downstream.
+     *                     (If false, message was sent upstream).
+     */
+    public int getSDEPExecutions(boolean receiver, boolean downstream) {
+        // for plain filters, return number of work executions
         return getWorkExecutions();
     }
     

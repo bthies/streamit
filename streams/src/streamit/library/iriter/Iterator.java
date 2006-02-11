@@ -24,13 +24,33 @@ import streamit.library.Stream;
 
 public class Iterator implements streamit.scheduler2.iriter.Iterator
 {
+    /**
+     * Stream we are iterating over.
+     */
+    Stream stream;
+    /**
+     * Factory used to create child iterators.
+     */
+    IterFactory factory;
+    
+    /**
+     * Construct an iterator for the given stream, with the default
+     * factory.
+     */
     public Iterator(Stream _stream)
     {
-        stream = _stream;
+        this(_stream, new BasicIterFactory());
     }
 
-    Stream stream;
-    
+    /**
+     * Construct an iterator for the given stream, using the given
+     * factory to create new iterators.
+     */
+    public Iterator(Stream _stream, IterFactory _factory) {
+        this.stream = _stream;
+        this.factory = _factory;
+    }
+
     public Object getObject ()
     {
         return stream;
@@ -41,28 +61,28 @@ public class Iterator implements streamit.scheduler2.iriter.Iterator
     public streamit.scheduler2.iriter.FilterIter isFilter()
     {
         if (stream instanceof Filter)
-            return new streamit.library.iriter.FilterIter((Filter) stream);
+            return factory.newFrom((Filter)stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.PipelineIter isPipeline()
     {
         if (stream instanceof Pipeline)
-            return new streamit.library.iriter.PipelineIter((Pipeline) stream);
+            return factory.newFrom((Pipeline)stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.SplitJoinIter isSplitJoin()
     {
         if (stream instanceof SplitJoin)
-            return new streamit.library.iriter.SplitJoinIter((SplitJoin) stream);
+            return factory.newFrom((SplitJoin)stream);
         return null;
     }
 
     public streamit.scheduler2.iriter.FeedbackLoopIter isFeedbackLoop()
     {
         if (stream instanceof FeedbackLoop)
-            return new streamit.library.iriter.FeedbackLoopIter((FeedbackLoop) stream);
+            return factory.newFrom((FeedbackLoop)stream);
         return null;
     }
     

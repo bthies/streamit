@@ -27,7 +27,7 @@ import java.lang.reflect.*;
  *
  * There is a distinct message for every receiver object.
  *
- * @version $Id: Message.java,v 1.3 2006-01-25 17:04:32 thies Exp $
+ * @version $Id: Message.java,v 1.4 2006-02-11 03:05:29 thies Exp $
  */
 public class Message {
     /**
@@ -37,6 +37,10 @@ public class Message {
      */
     private int deliveryTime;
     /**
+     * Whether or not the message travels downstream.
+     */
+    private boolean downstream;
+    /**
      * The name of the message handler to be invoked.
      */
     private String methodName;
@@ -45,8 +49,9 @@ public class Message {
      */
     private Object[] args;
     
-    public Message(int _deliveryTime, String _methodName, Object[] _args) {
+    public Message(int _deliveryTime, boolean _downstream, String _methodName, Object[] _args) {
         this.deliveryTime = _deliveryTime;
+        this.downstream = _downstream;
         this.methodName = _methodName;
         this.args = _args;
     }
@@ -57,6 +62,13 @@ public class Message {
      */
     public int getDeliveryTime() {
         return deliveryTime;
+    }
+
+    /**
+     * Returns whether or not the message travels downstream.
+     */
+    public boolean isDownstream() {
+        return downstream;
     }
 
     /**

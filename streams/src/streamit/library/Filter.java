@@ -406,8 +406,26 @@ public abstract class Filter extends Stream
         }
     }
 
+    /**
+     * List of initialization phases (i.e., for prework function).
+     * Only populated in the case of a phased filter.
+     */
     Vector initPhases = new Vector();
+    /**
+     * Summary of init phases.  This corresponds to the declared I/O
+     * rates on the prework function.
+     */
+    PhaseInfo initPhasesSummary;
+    /**
+     * List of steady phases (i.e., for work function).  Only
+     * populated in the case of a phased filter.
+     */
     Vector steadyPhases = new Vector();
+    /**
+     * Summary of steady phases.  This corresponds to the declared I/O
+     * rates on the work function.
+     */
+    PhaseInfo steadyPhasesSummary;
 
     Class inType, outType;
 
@@ -433,8 +451,22 @@ public abstract class Filter extends Stream
             Stream.ensureUnscheduled();
         }
 
-        // use max rates in case they are dynamic
-        steadyPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
+        // construct phase.  use max rates in case they are dynamic
+        PhaseInfo phase = new PhaseInfo(e.max, o.max, u.max, name);
+
+        // if it is the work function, store it as a summary rather
+        // than a phase
+        if (name.equals("work")) {
+            steadyPhasesSummary = phase;
+            // also add it to steady phases if there were no previous
+            // phases
+            if (steadyPhases.size()==0) {
+                steadyPhases.add(phase);
+            }
+        } else {
+            steadyPhases.add(phase);
+        }
+
         multiPhaseStyle = true;
     }
     /**
@@ -475,7 +507,19 @@ public abstract class Filter extends Stream
         }
 
         // use max rates in case they are dynamic
-        initPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
+        PhaseInfo phase = new PhaseInfo(e.max, o.max, u.max, name);
+
+        if (name.equals("prework")) {
+            initPhasesSummary = phase;
+            // also add it to steady phases if there were no previous
+            // phases
+            if (initPhases.size()==0) {
+                initPhases.add(phase);
+            }
+        } else {
+            initPhases.add(phase);
+        }
+
         multiPhaseStyle = true;
     }
     /**
@@ -512,6 +556,30 @@ public abstract class Filter extends Stream
         return initPhases.size();
     }
 
+    public int getInitPeekSummary()
+    {
+        assert initPhasesSummary != null;
+        return initPhasesSummary.e;
+    }
+
+    public int getInitPopSummary()
+    {
+        assert initPhasesSummary != null;
+        return initPhasesSummary.o;
+    }
+
+    public int getInitPushSummary()
+    {
+        assert initPhasesSummary != null;
+        return initPhasesSummary.u;
+    }
+
+    public String getInitNameSummary()
+    {
+        assert initPhasesSummary != null;
+        return initPhasesSummary.name;
+    }
+
     public int getInitPeekStage(int stage)
     {
         assert initPhases.size() > stage;
@@ -530,7 +598,7 @@ public abstract class Filter extends Stream
         return ((PhaseInfo) initPhases.get(stage)).u;
     }
 
-    public String getInitFunctionStageName(int stage)
+    public String getInitNameStage(int stage)
     {
         assert initPhases.size() > stage;
         return ((PhaseInfo) initPhases.get(stage)).name;
@@ -539,6 +607,30 @@ public abstract class Filter extends Stream
     public int getNumSteadyPhases()
     {
         return steadyPhases.size();
+    }
+
+    public int getSteadyPeekSummary()
+    {
+        assert steadyPhasesSummary != null;
+        return steadyPhasesSummary.e;
+    }
+
+    public int getSteadyPopSummary()
+    {
+        assert steadyPhasesSummary != null;
+        return steadyPhasesSummary.o;
+    }
+
+    public int getSteadyPushSummary()
+    {
+        assert steadyPhasesSummary != null;
+        return steadyPhasesSummary.u;
+    }
+
+    public String getSteadyNameSummary()
+    {
+        assert steadyPhasesSummary != null;
+        return steadyPhasesSummary.name;
     }
 
     public int getSteadyPeekPhase(int stage)
@@ -555,11 +647,11 @@ public abstract class Filter extends Stream
 
     public int getSteadyPushPhase(int stage)
     {
-        assert steadyPhases.size() > stage;
+        assert steadyPhases.size() > stage : "Requesting stage " + stage + "/" + steadyPhases.size() + " in " + this;
         return ((PhaseInfo) steadyPhases.get(stage)).u;
     }
 
-    public String getSteadyFunctionPhaseName(int stage)
+    public String getSteadyNamePhase(int stage)
     {
         assert steadyPhases.size() > stage;
         return ((PhaseInfo) steadyPhases.get(stage)).name;

@@ -29,9 +29,10 @@ public class SplitJoinIter
 
     final boolean splitterFineGrained;
 
-    SplitJoinIter(SplitJoin _splitjoin)
+    SplitJoinIter(SplitJoin _splitjoin, IterFactory _factory)
     {
         splitjoin = _splitjoin;
+        factory = _factory;
 
         if (splitjoin.getSplitter()
             instanceof streamit.library.DuplicateSplitter)
@@ -48,6 +49,7 @@ public class SplitJoinIter
     }
 
     SplitJoin splitjoin;
+    IterFactory factory;
     Pair[] splitWorks = null;
     Pair[] joinWorks = null;
 
@@ -58,7 +60,7 @@ public class SplitJoinIter
 
     public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
-        return new Iterator(splitjoin);
+        return new Iterator(splitjoin, factory);
     }
 
     public int getNumChildren()
@@ -68,7 +70,7 @@ public class SplitJoinIter
 
     public streamit.scheduler2.iriter.Iterator getChild(int n)
     {
-        return new Iterator(splitjoin.getChildN(n));
+        return new Iterator(splitjoin.getChildN(n), factory);
     }
 
     public int getFanOut()

@@ -35,7 +35,22 @@ public abstract class PhasedFilter extends Filter implements Runnable
      * Incremented only AFTER a given phase has completely finished.
      */
     private int phaseExecutions = 0;
-
+    /**
+     * The number of times this has executed a phase that popped at
+     * least one item.
+     */
+    private int popPhaseExecutions = 0;
+    /**
+     * The number of times this has executed a phase that pushed at
+     * least one item.
+     */
+    private int pushPhaseExecutions = 0;
+    /**
+     * Whether or not we have context-switched on the current
+     * execution of work.
+     */
+    private boolean contextSwitched;
+    
     public PhasedFilter() { super(); }
     public PhasedFilter(int a) { super(a); }
 
@@ -78,7 +93,14 @@ public abstract class PhasedFilter extends Filter implements Runnable
         while (true) {
             try {
                 prepareToWork();
+                contextSwitched = false;
                 work();
+                if (!contextSwitched) {
+                    // in the very degenerate case that no phases are
+                    // called from work(), yield control here to avoid
+                    // infinite loop
+                    contextSwitch();
+                }
                 cleanupWork();
             } catch (NoPushPopException e) {
                 // the exception is caught by the other thread, so
@@ -102,11 +124,20 @@ public abstract class PhasedFilter extends Filter implements Runnable
      * and end a work cycle.
      */
     protected void contextSwitch() {
+        // remember we were here
+        contextSwitched = true;
+
         synchronized (this) {
             try {
-                phaseExecutions++;
+                // analog of cleanup work -- count execution we just finished
+                countPhases();
+
+                // pause
                 notify();
                 wait();
+
+                // analog of begin work -- deliver messages for next phase
+                deliverMessages();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -114,13 +145,52 @@ public abstract class PhasedFilter extends Filter implements Runnable
     }
 
     /**
+     * Does bookkeping to count appropriate phases at boundaries.
+     */
+    int oldPopped = 0;
+    int oldPushed = 0;
+    private void countPhases() {
+        // count all phases
+        phaseExecutions++;
+        // count pop or push phase if appropriate
+        if (totalPopped > oldPopped) popPhaseExecutions++;
+        if (totalPushed > oldPushed) pushPhaseExecutions++;
+
+        // reset pop/push counters for next phase
+        oldPopped = totalPopped;
+        oldPushed = totalPushed;
+    }
+
+    /**
      * Returns the number of times this has executed a phase.  Only
      * counts completely finished phases (not phases that are in
-     * progress.)  For non-phased filters, this will return the same
-     * value as getWorkExecutions().
+     * progress.)
      */
     public int getPhaseExecutions() {
         return phaseExecutions;
+    }
+
+    /**
+     * Returns the number of times that this has executed with regards
+     * to the SDEP timing of a message.  That is, returns the number
+     * of "ticks" this filter has done with regards to messaging.
+     *
+     * @param   receiver   Whether or not this is receiving the message.
+     *                     (If false, this was the sender of message).
+     * @param   downstream Whether or not message sent downstream.
+     *                     (If false, message was sent upstream).
+     */
+    public int getSDEPExecutions(boolean receiver, boolean downstream) {
+        // use the I/O count of this filter that is in the direction
+        // of the message
+        if (receiver && downstream ||
+            !receiver && !downstream) {
+            // receiving downstream, sending upstream:  use pop count
+            return popPhaseExecutions;
+        } else {
+            // receiving upstream, sending downstream:  use push count
+            return pushPhaseExecutions;
+        }
     }
 
     /**
@@ -129,6 +199,3 @@ public abstract class PhasedFilter extends Filter implements Runnable
     public void phase(WorkFunction f) {
     }
 }
-
-
-

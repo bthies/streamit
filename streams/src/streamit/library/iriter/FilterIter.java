@@ -22,12 +22,14 @@ public class FilterIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.FilterIter
 {
-    FilterIter(Filter _filter)
+    FilterIter(Filter _filter, IterFactory _factory)
     {
         filter = _filter;
+        factory = _factory;
     }
 
     Filter filter;
+    IterFactory factory;
     final String workName = "work";
     
     public Object getObject ()
@@ -37,7 +39,7 @@ public class FilterIter
 
     public streamit.scheduler2.iriter.Iterator getUnspecializedIter()
     {
-        return new Iterator(filter);
+        return new Iterator(filter, factory);
     }
     
     public int getNumInitStages ()
@@ -72,7 +74,7 @@ public class FilterIter
     public Object getInitFunctionStage (int stage)
     {
         assert filter.isMultiPhaseStyle();
-        return filter.getInitFunctionStageName (stage);
+        return filter.getInitNameStage (stage);
     }
     
     public int getNumWorkPhases ()
@@ -126,7 +128,7 @@ public class FilterIter
     {
         if (filter.isMultiPhaseStyle())
             {
-                return filter.getSteadyFunctionPhaseName(phase);
+                return filter.getSteadyNamePhase(phase);
             } else {
                 // if not using the multi-phase style, must have exactly one phase!
                 assert phase == 0;

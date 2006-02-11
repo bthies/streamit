@@ -1,0 +1,87 @@
+/**
+ * A test of messaging with dynamic rates and phases.
+ *
+ * Correct output:
+ *
+ * strc -library -nosched Test8.str
+ *
+ * got the message 0
+ * value: 0
+ * value: 1
+ * value: 2
+ * value: 3
+ * got the message 1
+ * value: 7
+ * value: 6
+ * value: 5
+ * value: 4
+ * got the message 2
+ * value: 11
+ * value: 10
+ * value: 9
+ * value: 8
+ * got the message 0
+ * value: 12
+ * value: 13
+ * value: 14
+ * value: 15
+ * got the message 1
+ * value: 19
+ * value: 18
+ * value: 17
+ * value: 16
+ */
+
+void->void pipeline Test8 {
+   portal<SomeReceiver> thePortal;
+
+   add void->int filter {
+       int count = 0;
+       work push 4 {
+           thePortal.getTheMessage(count % 3);
+           if (count < 20)
+               for (int i = 0; i < 4; i++) {
+                   push(count++);
+               }
+       }
+   }
+
+   add SomeReceiver() to thePortal;
+}
+
+int->void filter Printer() {
+    work pop 1 {
+        println("value: " + pop());
+    }
+}
+
+int->void filter SomeReceiver  {
+   int message_value;
+   int[4] temp;
+   work pop 4 {
+       if (message_value == 0)
+           popPhase();
+       else
+           popPhase2();
+       for (int i = 0; i < 4; i++) {
+           println(temp[i]);
+       }
+   }
+
+   phase popPhase pop 4 {
+       for (int i = 0; i < 4; i++) {
+           temp[i] = pop();
+       }
+   }
+
+   phase popPhase2 pop 4 {
+       for (int i = 0; i < 4; i++) {
+           temp[3-i] = pop();
+       }
+   }
+
+   handler getTheMessage(int val) {
+       println("got the message " + val);
+       message_value = val;
+   }
+}

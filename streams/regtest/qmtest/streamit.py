@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.20 2006-02-09 15:36:38 dimock Exp $
+# $Id: streamit.py,v 1.21 2006-02-13 19:00:31 dimock Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -19,7 +19,7 @@ import qm.test.test
 import re
 import socket
 import shutil
-from time import sleep
+#from time import sleep
 
 TIMEOUT = 20 * 60
 
@@ -271,10 +271,6 @@ class RunProgramTest(qm.test.test.Test):
     def Run(self, context, result):
       """Actually run the target program."""
 
-      # make sure there is no timing glitch on compile that causes
-      # run to be early.
-      sleep(0.5)
-
 #      print "Run: runopts[1]: ", str(self.runopts[1]), "\n"
 #      print "timeout: ", str(self.timeout), "\n"
       if self.backend == 'raw4':
@@ -361,12 +357,6 @@ class CompareResultsTest(qm.test.test.Test):
 
     def Run(self, context, result):
       """Actually do the comparison."""
-
-      # make sure there is no glitch on run that makes
-      # verify happen too early:  there were some rstream
-      # files where verify failed to find output file
-      # but output file existed when looked for later.
-      sleep(0.5)
 
       test_home_dir = context_to_dir(context)
 

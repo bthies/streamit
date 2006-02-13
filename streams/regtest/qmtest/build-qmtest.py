@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.11 2006-01-25 01:15:02 dimock Exp $
+# $Id: build-qmtest.py,v 1.12 2006-02-13 19:00:31 dimock Exp $
 #
 
 import os
@@ -363,7 +363,8 @@ def GetRunDOM(target, fileset, extras):
     'extras' -- Mapping describing additional parameters available.
     'testname' should contain the basename of this set of tests"""
 
-    # Only deal with the uniprocessor, RAW, and cluster paths.
+    # Not relevant for 'library' which combines its run stage into its compile
+    # stage.
     # 
     if target == 'library':
         return None
@@ -436,10 +437,10 @@ def GetVerifyDOM(target, fileset, extras):
     # What's the actual name of the prereq?  Library doesn't have a
     # "run" stage.
     prereq = extras['testname']
-    if target == 'uni' or target == 'raw4' or target == 'cluster':
-        prereq = prereq + '.run'
-    else:
+    if target == 'library':
         prereq = prereq + '.compile'
+    else:
+        prereq = prereq + '.run'
     CreateTextElement(doc, tuple, 'text', prereq)
     CreateTextElement(doc, tuple, 'enumeral', 'PASS')
 
@@ -510,7 +511,7 @@ def MakeOptionName(target, opts):
     QMTest test name.
 
     'target' -- Name of the compiler backend target, should be one
-    of 'library', 'uni', 'cluster', or 'raw4'.
+    of 'library', 'uni', 'cluster', 'rstream', or 'raw4'.
 
     'opts' -- Additional options to pass to strc."""
 

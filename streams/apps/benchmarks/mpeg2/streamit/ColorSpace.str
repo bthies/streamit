@@ -26,7 +26,7 @@
 
 int->int pipeline ColorSpaceConversion_YCbCrtoRGB {
   add YCbCrtoRGB;
-  add BoundedSaturation(0, 255, -384, 639); 
+  add BestSaturation(0, 255, -384, 639); 
   // See mpeg2dec in the reference implementation, Clip[]
 }
 

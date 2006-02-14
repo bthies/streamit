@@ -1236,10 +1236,10 @@ int->int pipeline BlockDecode() {
     // Assumes no alternate_scan TODO
     // Output of this corresponds to QF[v][u], (cite 1, P. 67)
     add InverseQuantization();
-    add BoundedSaturation(-2048, 2047, -2050, 2050);
+    add BestSaturation(-2048, 2047, -2050, 2050);
     add MismatchControl();
     add iDCT8x8_ieee(2); // 0 = reference coarse, 1 = reference fine, 2 = fast, fine,  
-    add BoundedSaturation(-256, 255, -260, 260);
+    add BestSaturation(-256, 255, -260, 260);
 }
 
 /**

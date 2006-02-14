@@ -24,6 +24,35 @@
  * @version 1.0
  */
 
+/*
+ * Saturates a stream of integers known to lie within some larger
+ * range, forcing them to lie within a specified range. Values greater
+ * than the maximum are saturated to have the max value, and values
+ * less than the minimum are saturated to have the minimum value. If a
+ * value lies outside of the great range behavior is undefined.
+ *
+ * Depending on the size of the range, dispatches to either the
+ * general saturation procedure or the array-lookup saturation.
+ *
+ * @param min The minimum value any integer in the stream is allowed to assume.
+ * @param max The maximum value any integer in the stream is allowed to assume.
+ * @param worst_input_min The absolute minimum value any input could ever take on.
+ * @param worst_input_max The absolute maximum value any input could ever take on.
+ * @input A stream of integers.
+ * @output A stream of integers lying between min and max, inclusive.
+ */
+int->int pipeline BestSaturation(int min, int max, int worst_input_min, int worst_input_max) {
+    // we know:
+    //  - range of <= 521  does better with bounded saturation
+    //  - range of >= 1024 does better with plain saturation
+    int range = worst_input_max - worst_input_min + 1;
+    if (range < 600) {
+        add BoundedSaturation(min, max, worst_input_min, worst_input_max);
+    } else {
+        add Saturation(min, max);
+    }
+}
+
 /**
  * Saturates a stream of integers, forcing them to lie within a specified range. Values
  * greater than the maximum are saturated to have the max value, and values less than the
@@ -51,8 +80,7 @@ int->int filter Saturation(int min, int max) {
  * forcing them to lie within a specified range. Values
  * greater than the maximum are saturated to have the max value, and values less than 
  * the minimum are saturated to have the minimum value. If a value lies outside
- * of the great range behavior is undefined. The BoundedSaturation, without the
- * initialization cost, is roughly twice as fast as the regular Saturation.
+ * of the great range behavior is undefined.
  * @param min The minimum value any integer in the stream is allowed to assume.
  * @param max The maximum value any integer in the stream is allowed to assume.
  * @param worst_input_min The absolute minimum value any input could ever take on.

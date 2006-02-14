@@ -19,12 +19,15 @@ import java.math.BigInteger;
 import at.dms.kjc.flatgraph2.FilterContent;
 import at.dms.util.SIRPrinter;
 
-//if 
-//not 2 stage
-//peek == pop
-//no peek expression 
-//all pops before pushe
-
+/**
+ * If we can, this class will generate filter code that does not use a 
+ * peek buffer, so just read the values from the static network and write them to the 
+ * static network.  It will only work if the code does not peek and if it has all pops 
+ * before pushes.
+ * 
+ * @author mgordon
+ *
+ */
 public class DirectCommunication extends RawExecutionCode 
     implements Constants 
 { 

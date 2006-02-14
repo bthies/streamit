@@ -16,7 +16,10 @@ import at.dms.kjc.flatgraph2.*;
 
 /**
  * This class will rawify the SIR code and it creates the switch code. It does
- * not rawify the compute code in place.
+ * not rawify the compute code in place.  This class will create the code necessary to 
+ * execute the init schedule, the prime pump schedule, and the steady state schedule.
+ * It will cycle over the schedules and generate the code necessary.
+ * 
  */
 public class Rawify {
     // if true try to compress the switch code by creating loops

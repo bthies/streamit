@@ -19,6 +19,15 @@ import java.util.Hashtable;
 import java.math.BigInteger;
 import at.dms.kjc.flatgraph2.FilterContent;
 
+/**
+ * This class implements filter communication with a peek buffer.  The peek buffer can 
+ * either be circular with and'ing or linear with reseting of indices.  This class
+ * will check to see if we can generate a "simple" buffer (linear) and if not 
+ * then generate a circular buffer.
+ *  
+ * @author mgordon
+ *
+ */
 public class BufferedCommunication extends RawExecutionCode
     implements Constants
 {

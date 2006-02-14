@@ -325,20 +325,24 @@ public class BufferedCommunication extends RawExecutionCode
 
     public JMethodDeclaration getPrimePumpMethod() 
     {
+        if (primePumpMethod != null)
+            return primePumpMethod;
+        
         JBlock statements = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
 
         //add the calls to the work function for the priming of the pipeline
         statements.addStatement(getWorkFunctionBlock(false, filterInfo.steadyMult));
         //return the method
-        return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+        primePumpMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,
                                       primePumpStage + uniqueID,
                                       JFormalParameter.EMPTY,
                                       CClassType.EMPTY,
                                       statements,
                                       null,
-                                      null); 
+                                      null);
+        return primePumpMethod;
     }
     
 

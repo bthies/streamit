@@ -135,9 +135,11 @@ public class TraceIRtoC extends ToC
     private void generateHeader() 
     {
         p.print("#include <raw.h>\n");
+        p.print("#include \"/home/bits6/mgordon/streams/include/raw_streaming_gdn.h\"\n");
         p.print("#include <stdlib.h>\n");
         p.print("#include <math.h>\n\n");
-
+        
+        
         //if we are number gathering and this is the sink, generate the dummy
         //vars for the assignment of the print expression.
         /*

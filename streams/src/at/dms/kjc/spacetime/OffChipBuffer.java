@@ -125,23 +125,33 @@ public abstract class OffChipBuffer {
     }
 
     /** 
+     * @param node 
      * @param i
-     * @return The string for the InterTraceBuffer of rotation i.  
-     * It just return getIdent() for IntraTraceBuffers.
-     */
+     * @return The string for the rotation structure for <node> 
+     *  
+     **/
     public String getIdent(int i) {
         assert !redundant() : this.toString() + " is redundant";
         assert i < rotationLength : "Trying to use a buffer rotation length that is too large";
-        return ident + "_" + i;
+        return getIdent() + "_" + i;
     }
     
+    
+    
+    /** 
+     * @param reat
+     * @return return the rotating buffer structure name that is used for either reading
+     * or writing.  Reading and writing have separate rotation structures.
+     */
+    public String getIdent(boolean read) {
+        assert !redundant() : this.toString() + " is redundant";
+        String post = (read ? "0" : "1"); 
+        return ident + post;
+    }
+    
+    /** return the prefix buffer name for this buffer **/
     public String getIdent() {
         assert !redundant() : this.toString() + " is redundant";
-        return ident;
-    }
-
-    public String getIdentPrefix() {
-        assert !redundant();
         return ident;
     }
 

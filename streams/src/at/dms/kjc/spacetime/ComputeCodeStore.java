@@ -72,10 +72,15 @@ public class ComputeCodeStore {
                                OffChipBuffer buffer) {
         assert words > 0 : "trying to generate a file dram command of size 0";
 
+        assert buffer.getRotationLength() == 1 : 
+            "The buffer connected to a file reader / writer cannot rotate!";
         parent.setMapped();
-        String functName = "raw_streaming_dram_request_bypass_"
-            + (read ? "read" : "write");
-        String bufferName = buffer.getIdent();
+        String functName = "raw_streaming_dram" + 
+            (buffer.isStaticNet() ? "" : "_gdn") + 
+            "_request_bypass_" +
+            (read ? "read" : "write");
+        
+        String bufferName = buffer.getIdent(0);
 
         JExpression[] args = {
             new JFieldAccessExpression(null, new JThisExpression(null),
@@ -96,31 +101,28 @@ public class ComputeCodeStore {
     // stage 0 = init, 1 = primepump init buffers, 2 = primepump steady buffers
     // 3 = steady
     public void addDRAMCommand(boolean read, int stage, int bytes,
-                               OffChipBuffer buffer, boolean presynched) {
+                               OffChipBuffer buffer, TraceNode node, boolean presynched) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
-        assert buffer.isStaticNet() : "Support for dynamic net is not operational yet.";       
-        
+               
         parent.setMapped();
-        String functName = "raw_streaming_dram_request_"
-            + (read ? "read" : "write") + (presynched ? "_presynched" : "");
-
-        String bufferName;
-        if (stage < 2)
-            bufferName = buffer.getIdent();
-        else
-            bufferName = buffer.getIdent();
-
+        String functName = "raw_streaming_dram" + (!buffer.isStaticNet() ? "_gdn" : "") + 
+            "_request_" +
+            (read ? "read" : "write") + (presynched ? "_presynched" : "");
+        
+        //the name of the rotation struction we are using...
+        String rotStructName = buffer.getIdent(read);
+ 
         // the args for the streaming dram command
 
         // cachelines that are needed
         assert bytes % RawChip.cacheLineBytes == 0 : "transfer size for dram must be a multiple of cache line size";
 
         int cacheLines = bytes / RawChip.cacheLineBytes;
-        JExpression[] args = {
-            new JFieldAccessExpression(null, new JThisExpression(null),
-                                       bufferName), new JIntLiteral(1),
-            new JIntLiteral(cacheLines) };
-
+                JExpression[] args = {
+                new JNameExpression(null, null, rotStructName + "->buffer"), 
+                new JIntLiteral(1),
+                new JIntLiteral(cacheLines) };
+        
         // the dram command
         JMethodCallExpression call = new JMethodCallExpression(null, functName,
                                                                args);
@@ -129,12 +131,16 @@ public class ComputeCodeStore {
         JFieldAccessExpression dynNetSend = new JFieldAccessExpression(null,
                                                                        new JThisExpression(null), Util.CGNOINTVAR);
 
-        JFieldAccessExpression bufAccess = new JFieldAccessExpression(null,
-                                                                      new JThisExpression(null), bufferName);
+        JNameExpression bufAccess = new JNameExpression(null, null, 
+                rotStructName + "->buffer");
 
         JAssignmentExpression assExp = new JAssignmentExpression(null,
                                                                  dynNetSend, bufAccess);
-
+        JAssignmentExpression rotExp = new JAssignmentExpression(null,
+                new JFieldAccessExpression(null, new JThisExpression(null), rotStructName),
+                new JNameExpression(null, null, rotStructName + "->next"));
+        
+        
         SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
@@ -142,10 +148,16 @@ public class ComputeCodeStore {
             initBlock.addStatement(new JExpressionStatement(null, call, null));
             initBlock
                 .addStatement(new JExpressionStatement(null, assExp, null));
+            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
         } else {
-            steadyLoop.addStatement(new JExpressionStatement(null, call, null));
+            steadyLoop.addStatement(new JExpressionStatement(null, 
+                    (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));
             steadyLoop
-                .addStatement(new JExpressionStatement(null, assExp, null));
+            .addStatement(new JExpressionStatement(null, 
+                    (JAssignmentExpression)ObjectDeepCloner.deepCopy(assExp), null));
+            steadyLoop
+            .addStatement(new JExpressionStatement(null, 
+                    (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
         }
     }
 
@@ -219,7 +231,8 @@ public class ComputeCodeStore {
     public void addTracePrimePump(FilterInfo filterInfo) {
         parent.setMapped();
         RawExecutionCode exeCode;
-
+        JMethodDeclaration primePump;
+        
         // check to see if we have seen this filter already
         if (rawCode.containsKey(filterInfo.filter)) {
             exeCode = (RawExecutionCode) rawCode.get(filterInfo.filter);
@@ -234,12 +247,12 @@ public class ComputeCodeStore {
                 exeCode = new BufferedCommunication(filterInfo);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
-        JMethodDeclaration primePump = exeCode.getPrimePumpMethod();
-        if (primePump != null) {
-            if (CODE)
-                addMethod(primePump);
-
-        }
+        
+        primePump = exeCode.getPrimePumpMethod();
+        if (primePump != null && !hasMethod(primePump) && CODE) {
+            addMethod(primePump);
+        }   
+       
         // now add a call to the init stage in main at the appropiate index
         // and increment the index
         initBlock.addStatement(new JExpressionStatement(null,
@@ -368,6 +381,18 @@ public class ComputeCodeStore {
         this.methods = newMethods;
     }
 
+    /**
+     * @param meth
+     * @return Return true if this compute code store already has the
+     * declaration of <meth> in its method array.
+     */
+    public boolean hasMethod(JMethodDeclaration meth) {
+        for (int i = 0; i < methods.length; i++)
+            if (meth == methods[i])
+                return true;
+        return false;
+    }
+    
     public JMethodDeclaration[] getMethods() {
         return methods;
     }

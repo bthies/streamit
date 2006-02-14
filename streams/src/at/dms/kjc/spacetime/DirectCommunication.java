@@ -125,13 +125,16 @@ public class DirectCommunication extends RawExecutionCode
 
     public JMethodDeclaration getPrimePumpMethod() 
     {
+        if (primePumpMethod != null)
+            return primePumpMethod;
+        
         JBlock statements = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
     
         //add the calls to the work function in the prime pump stage
         statements.addStatement(getWorkFunctionBlock(false, filterInfo.steadyMult)); 
 
-        return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+        primePumpMethod = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,
                                       primePumpStage + uniqueID,
                                       JFormalParameter.EMPTY,
@@ -139,6 +142,7 @@ public class DirectCommunication extends RawExecutionCode
                                       statements,
                                       null,
                                       null);
+        return primePumpMethod;
     }
     
     

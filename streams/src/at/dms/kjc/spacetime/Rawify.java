@@ -285,7 +285,8 @@ public class Rawify {
                                                                      init || primepump, readWords, srcBuffer);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
-                                                                     stage, Util.cacheLineDiv(readWords * 4), srcBuffer,
+                                                                     stage, Util.cacheLineDiv(readWords * 4), 
+                                                                     srcBuffer, input,
                                                                      true);
         }
 
@@ -297,7 +298,9 @@ public class Rawify {
                                                                   init || primepump, writeWords, destBuffer);
         else
             destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
-                                                                  Util.cacheLineDiv(writeWords * 4), destBuffer, false);
+                                                                  Util.cacheLineDiv(writeWords * 4), 
+                                                                  destBuffer, input, 
+                                                                  false);
     }
 
     /**
@@ -342,8 +345,9 @@ public class Rawify {
                                                                      init || primepump, readWords, srcBuffer);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
-                                                                     (stage < 3 ? 0 : 3), Util.cacheLineDiv(readWords * 4),
-                                                                     srcBuffer, true);
+                                                                     (stage < 3 ? 0 : 3), 
+                                                                     Util.cacheLineDiv(readWords * 4),
+                                                                     srcBuffer, output, true);
         }
 
         // now generate the store drm command
@@ -368,9 +372,9 @@ public class Rawify {
                     destBuffer.getOwner().getComputeCode().addFileCommand(
                                                                           false, init || primepump, writeWords, destBuffer);
                 else
-                    destBuffer.getOwner().getComputeCode().addDRAMCommand(
-                                                                          false, stage, Util.cacheLineDiv(writeWords * 4),
-                                                                          destBuffer, false);
+                    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage, 
+                                Util.cacheLineDiv(writeWords * 4),
+                                destBuffer, output, false);
             }
         }
     }
@@ -429,7 +433,8 @@ public class Rawify {
                                                      words, buffer);
             else
                 tile.getComputeCode().addDRAMCommand(true, stage,
-                                                     Util.cacheLineDiv(words * 4), buffer, true);
+                        Util.cacheLineDiv(words * 4), 
+                        buffer, buffer.getSource(), true);
         }
     }
 
@@ -481,7 +486,8 @@ public class Rawify {
                                                     .getOutputType()) + " and " + words
                                  + " words");
                     tile.getComputeCode().addDRAMCommand(false, stage,
-                                                         Util.cacheLineDiv(words * 4), buffer, false);
+                            Util.cacheLineDiv(words * 4), 
+                            buffer, filterNode, false);
                 }
             }
         }
@@ -1665,7 +1671,7 @@ public class Rawify {
                                                    boolean primePump, RawTile tile, RawChip rawChip) {
         assert mult < 65535;
 
-        assert !init && !primePump;
+        assert !init;
 
         // the items this filter is receiving for this iteration
         int itemsReceiving = filterInfo.itemsNeededToFire(0, init);

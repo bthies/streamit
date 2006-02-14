@@ -137,7 +137,7 @@ public class TraceDotGraph {
                 fw.write("\", style=dashed");
             else
                 fw.write(buffer.getSize()
-                         + "(" + buffer.getIdentPrefix() + ")\", style=bold");
+                         + "(" + buffer.getIdent() + ")\", style=bold");
         }
         fw.write("];\n");
     }

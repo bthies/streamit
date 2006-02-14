@@ -66,12 +66,15 @@ public abstract class RawExecutionCode
 
     protected GeneratedVariables generatedVariables;
     protected FilterInfo filterInfo;
-
+    /** the method that executes each stage of the prime pump schedule */
+    protected JMethodDeclaration primePumpMethod;
+    
     public RawExecutionCode(FilterInfo filterInfo) 
     {
         this.filterInfo = filterInfo;
         generatedVariables = new GeneratedVariables();
         uniqueID = getUniqueID();
+        primePumpMethod = null;
     }
     
 

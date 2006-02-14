@@ -201,39 +201,54 @@ public class CommunicateAddrs
         String rotType = rotTypeDefPrefix + buffer.getType().toString();
         
         
-        //add the declaration of the buffer of the appriopriate rotation type
+//      add the declaration of the source rotation buffer of the appriopriate rotation type
         ((StringBuffer)fields.get(tile)).append(rotTypeDefPrefix + 
-                buffer.getType().toString() + " " + buffer.getIdent() + ";\n");    
+                buffer.getType().toString() + " *" + buffer.getIdent(true) + ";\n");
         
-        buf.append("{\n");
-        //create a temp var
-        buf.append("\t" + rotType + " *" + temp + ";\n");
+//      add the declaration of the dest rotation buffer of the appriopriate rotation type
+        ((StringBuffer)fields.get(tile)).append(rotTypeDefPrefix + 
+                buffer.getType().toString() + " *" + buffer.getIdent(false) + ";\n");
         
-        //create the modify the first entry
-        buf.append("\t" + buffer.getIdent() + ".buffer = " + buffer.getIdent(0) + 
-                ";\n");
-        if (buffer.getRotationLength() == 1) 
-            buf.append("\t" + buffer.getIdent() + ".next = &" + buffer.getIdent() + 
-                    ";\n");
-        else {
-            buf.append("\t" + temp + " = (" + rotType+ "*)" + "malloc(sizeof("
-                    + rotType + "));\n");    
-                    
-            buf.append("\t" + buffer.getIdent() + ".next = " + 
-                    temp + ";\n");
-                        
-            buf.append("\t" + temp + "->buffer = " + buffer.getIdent(1) + ";\n");
+        boolean[] vals = {true, false};
         
-            for (int i = 2; i < buffer.getRotationLength(); i++) {
-                buf.append("\t" + temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+        //now generate the rotating buffer for both the source and the dest 
+        for (int n = 0; n < 2; n++) {
+            boolean read = vals[n];
+            
+            buf.append("{\n");
+            //create a temp var
+            buf.append("\t" + rotType + " *" + temp + ";\n");
+            
+            //create the first entry!!
+            buf.append("\t" + buffer.getIdent(read) + " =  (" + rotType+ "*)" + "malloc(sizeof("
                     + rotType + "));\n");
-                buf.append("\t" + temp + " = " + temp + "->next;\n");
-                buf.append("\t" + temp + "->buffer = " + buffer.getIdent(i) + ";\n");
+            
+            //modify the first entry
+            buf.append("\t" + buffer.getIdent(read) + "->buffer = " + buffer.getIdent(0) + 
+            ";\n");
+            if (buffer.getRotationLength() == 1) 
+                buf.append("\t" + buffer.getIdent(read) + "->next = " + buffer.getIdent(read) + 
+                ";\n");
+            else {
+                buf.append("\t" + temp + " = (" + rotType+ "*)" + "malloc(sizeof("
+                        + rotType + "));\n");    
+                
+                buf.append("\t" + buffer.getIdent(read) + "->next = " + 
+                        temp + ";\n");
+                
+                buf.append("\t" + temp + "->buffer = " + buffer.getIdent(1) + ";\n");
+                
+                for (int i = 2; i < buffer.getRotationLength(); i++) {
+                    buf.append("\t" + temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+                            + rotType + "));\n");
+                    buf.append("\t" + temp + " = " + temp + "->next;\n");
+                    buf.append("\t" + temp + "->buffer = " + buffer.getIdent(i) + ";\n");
+                }
+                
+                buf.append("\t" + temp + "->next = " + buffer.getIdent(read) + ";\n");
             }
-                        
-            buf.append("\t" + temp + "->next = &" + buffer.getIdent() + ";\n");
+            buf.append("}\n");
         }
-        buf.append("}\n");
         return buf.toString();
     }
     

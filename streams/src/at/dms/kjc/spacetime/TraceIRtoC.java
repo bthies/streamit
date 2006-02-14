@@ -59,6 +59,8 @@ public class TraceIRtoC extends ToC
         if (!KjcOptions.magicdram)
             p.print(CommunicateAddrs.getFields(tile));
 
+        
+        
         //visit methods of tile, print the declaration first
         setDeclOnly(true);
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++)
@@ -73,10 +75,12 @@ public class TraceIRtoC extends ToC
                 method.accept(this);
         }
         
-        //print the method that sends/recvs block addresses
+
         if (!KjcOptions.magicdram) {
+            //print the method that sends/recvs block addresses
             p.print(CommunicateAddrs.getFunction(tile));
-            //print(CommunicateAddrs.getFreeFunction(tile));
+            //print the method that sets up the rotation for the buffers
+            p.print(CommunicateAddrs.getRotSetupFunct(tile));
         }
         
         //generate the entry function for the simulator
@@ -92,9 +96,10 @@ public class TraceIRtoC extends ToC
             //print("  raw_init2();\n");
         }
 
-        if (!KjcOptions.magicdram) 
+        if (!KjcOptions.magicdram) { 
             p.print("  " + CommunicateAddrs.functName + "();\n");
-        
+            p.print("  " + CommunicateAddrs.rotationSetupFunction + "();\n");
+        }
         //print(tile.getComputeCode().getMainFunction().getName() + "();\n");
         method = mainMethod;
         mainMethod.getBody().accept(this); //Inline Main method
@@ -142,6 +147,11 @@ public class TraceIRtoC extends ToC
           p.print("float dummyFloat;\n");
           }
         */
+        
+//      print the typedefs for the rotating buffers
+        if (!KjcOptions.magicdram) {
+            p.print(CommunicateAddrs.getRotationTypes());
+        }
         
         if (KjcOptions.altcodegen && !KjcOptions.decoupled){
             p.print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");

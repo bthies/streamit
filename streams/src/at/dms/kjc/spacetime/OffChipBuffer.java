@@ -45,6 +45,7 @@ public abstract class OffChipBuffer {
     }
 
     protected OffChipBuffer(TraceNode src, TraceNode dst) {
+        rotationLength = 1;
         source = src;
         dest = dst;
 
@@ -130,10 +131,8 @@ public abstract class OffChipBuffer {
      */
     public String getIdent(int i) {
         assert !redundant() : this.toString() + " is redundant";
-        if (this instanceof InterTraceBuffer)
-            return ident + "_" + i;
-        else 
-            return ident;
+        assert i < rotationLength : "Trying to use a buffer rotation length that is too large";
+        return ident + "_" + i;
     }
     
     public String getIdent() {
@@ -169,14 +168,6 @@ public abstract class OffChipBuffer {
     public int getRotationLength() {
         return rotationLength;
     }
-
-    /** 
-     * @param rl Set the rotation length to rl, if rl is zero, it means this buffer is never
-     * allocated off chip memory (a buffer from a file reader or to a file writer).
-     */
-    public void setRotationLength(int rl) {
-        rotationLength = rl;
-    }
     
     abstract protected void calculateSize();
 
@@ -207,5 +198,59 @@ public abstract class OffChipBuffer {
     public boolean isInterTrace() {
         return (this instanceof InterTraceBuffer);
     }
-
+    
+    /**
+     * Iterate over all the buffers and set the rotation length of each buffer
+     * based on the prime pump schedule and the multiplicity difference between the source node
+     * and the dest node.
+     * 
+     * @param spaceTime The SpaceTimeSchedule
+     */
+    public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
+        Iterator buffers = getBuffers().iterator();
+        //iterate over the buffers and communicate each buffer
+        //address from its declaring tile to the tile neighboring
+        //the dram it is assigned to
+        while (buffers.hasNext()) {
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            //set the rotation length for the buffer
+            if (buffer.isInterTrace())
+                setRotationLength(spaceTime, (InterTraceBuffer)buffer);
+        }
+    }
+    
+    /**
+     * Set the rotation length of the buffer based on the multiplicities 
+     * of the source trace and the dest trace in the prime pump schedule and add one
+     * so we can double buffer also!
+     * 
+     * @param buffer
+     */
+    private static void setRotationLength(SpaceTimeSchedule spaceTimeSchedule, InterTraceBuffer buffer) {
+        int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
+        int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
+        //fix for file readers and writers!!!!
+        
+        int length = 0;
+        
+        //if we have either of these cases we are not rotating this buffer
+        //and it a probably a buffer that will never be generated because it is
+        //a connected to a file reader or a file writer...
+        if (sourceMult < destMult || sourceMult == destMult)
+            length = 0;
+        else 
+            length = sourceMult - destMult + 1; 
+      
+        buffer.rotationLength = length;
+        
+        //this is buffer is redundant, meaning it is just a copy of its its upstream 
+        //output trace node, then we have to set the rotation for its upstream
+        //output trace node!!
+        if (length > 1 && buffer.redundant()) {
+            System.out.println("Setting upstream rotation length " + length);
+            IntraTraceBuffer upstream = IntraTraceBuffer.getBuffer((FilterTraceNode)buffer.source.getPrevious(), 
+                    (OutputTraceNode)buffer.source);
+            upstream.rotationLength = length;
+        }
+    }
 }

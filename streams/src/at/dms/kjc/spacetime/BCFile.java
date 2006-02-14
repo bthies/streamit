@@ -5,6 +5,14 @@ import at.dms.kjc.*;
 import java.io.FileWriter;
 import at.dms.kjc.flatgraph2.*;
 
+/**
+ * This class create the btl machine file for the application.  It defines some 
+ * number gathering stuff and some file i/o stuff and some use functions while debugging
+ * in the simulator.
+ * 
+ * @author mgordon
+ *
+ */
 public class BCFile 
 {
     private RawChip rawChip;
@@ -41,7 +49,7 @@ public class BCFile
         
         //let the simulation know how many tiles are mapped to 
         //filters or joiners
-        buf.append("global gMHz = 250;\n");
+        buf.append("global gMHz = 450;\n");
         buf.append("global gStreamItTilesUsed = " + rawChip.computingTiles() + ";\n");
         buf.append("global gStreamItTiles = " + rawChip.getXSize() * rawChip.getYSize() +
                    ";\n");

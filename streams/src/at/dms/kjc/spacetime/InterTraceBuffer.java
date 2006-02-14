@@ -35,6 +35,10 @@ public class InterTraceBuffer extends OffChipBuffer {
     }
 
    
+    /**
+     * @return True of this buffer is not used because the output intrattracebuffer
+     * of the source trace performs its function.
+     */
     public boolean redundant() {
         return unnecessary((OutputTraceNode) source);
     }

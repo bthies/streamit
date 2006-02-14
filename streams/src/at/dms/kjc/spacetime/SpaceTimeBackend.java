@@ -228,6 +228,9 @@ public class SpaceTimeBackend {
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
                                 "steadyTraces.dot", true);
         
+        //set the rotation lengths of the buffers
+        OffChipBuffer.setRotationLengths(spaceTimeSchedule);
+        
         //communicate the addresses for the off-chip buffers && set up
         // the rotating buffers based on the preloopschedule for software pipelining
         if (!KjcOptions.magicdram) {

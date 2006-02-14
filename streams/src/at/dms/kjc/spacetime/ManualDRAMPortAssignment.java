@@ -41,7 +41,7 @@ public class ManualDRAMPortAssignment {
                                                                System.in));
         // take care of the file readers and writes
         // assign the reader->output buffer and the input->writer buffer
-        //fileStuff(files, chip);
+        fileStuff(files, chip);
         
         Iterator traceNodeTrav = Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
         while (traceNodeTrav.hasNext()) {
@@ -241,8 +241,7 @@ public class ManualDRAMPortAssignment {
                 assert dram != null : "Could not find a dram to attach the file Reader to";
 
                 buf.setDRAM(dram);
-                IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(
-                                                                               dram);
+                IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(dram);
                 dram.setFileReader(fileIC);
             } else
                 assert false : "File trace is neither reader or writer";

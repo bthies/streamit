@@ -6,6 +6,13 @@ import at.dms.kjc.sir.*;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * ww
+ * 
+ * 
+ * @author mgordon
+ *
+ */
 public class ComputeCodeStore {
     public static String main = "__RAWMAIN__";
 
@@ -91,7 +98,8 @@ public class ComputeCodeStore {
     public void addDRAMCommand(boolean read, int stage, int bytes,
                                OffChipBuffer buffer, boolean presynched) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
-
+        assert buffer.isStaticNet() : "Support for dynamic net is not operational yet.";       
+        
         parent.setMapped();
         String functName = "raw_streaming_dram_request_"
             + (read ? "read" : "write") + (presynched ? "_presynched" : "");

@@ -90,7 +90,6 @@ public class IntraTraceBuffer extends OffChipBuffer {
     }
 
     protected void calculateSize() {
-        setRotationLength(1);
         // we'll make it 32 byte aligned
         if (source.isFilterTrace()) {
             // the init size is the max of the multiplicities for init and pp

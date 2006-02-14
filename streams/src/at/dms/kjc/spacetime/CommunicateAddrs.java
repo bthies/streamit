@@ -7,16 +7,22 @@ import at.dms.kjc.*;
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
  * tiles and then communicate each buffer's global address to the tiles that need
- * to know the address.  It also sets the rotation length for the buffers based on the 
- * primepump schedule.
+ * to know the address.   It will also generate the typedefs for the rotating buffers
+ * and the functions that will set up the structs for rotation (a circular linked list of 
+ * buffers).
+ *
+ * It also sets the rotation length for the buffers based on the 
+ * primepump schedule.  
  * 
  * @author mgordon
  *
  */
 public class CommunicateAddrs 
 {
+    public static String rotationSetupFunction = "__setup_rotations__";
     public static String functName = "__snd_rvc_addrs__";
     public static String freeFunctName = "__free_init_bufs__";
+    public static String rotTypeDefPrefix = "__rotating_buffer_";
     private static CommunicateAddrs commAddrs;
     private RawChip chip;
     private HashMap functions;
@@ -24,26 +30,42 @@ public class CommunicateAddrs
     private HashMap fields;
     private static Random rand;
     private SpaceTimeSchedule spaceTimeSchedule;         
+    private HashMap rotationFunctions;
+    /** The type defs for the rotating buffer structs for all the types used in
+     * the program.
+     */
+    private static HashMap typedefs;
     
     static 
     {
         rand = new Random(17);
     }
     
-    
+    /**
+     * @param tile
+     * @return For <tile> return the fields that represent the buffers.
+     */
     public static String getFields(RawTile tile) 
     {
         return ((StringBuffer)commAddrs.fields.get(tile)).toString();
     }
 
+    /**
+     * See class comments. 
+     * 
+     * @param chip
+     * @param stSchedule
+     */
     public CommunicateAddrs(RawChip chip, SpaceTimeSchedule stSchedule)
     {
         this.chip = chip;
         fields = new HashMap();
         functions = new HashMap();
+        rotationFunctions = new HashMap();
         freeFunctions = new HashMap();
         spaceTimeSchedule = stSchedule;
-    
+        typedefs = new HashMap(); 
+        
         //add the StringBuffer for each tile
         for (int x = 0; x < chip.getXSize(); x++) {
             for (int y = 0; y < chip.getYSize(); y++) {
@@ -51,6 +73,7 @@ public class CommunicateAddrs
                 functions.put(tile, new StringBuffer());
                 freeFunctions.put(tile, new StringBuffer());
                 fields.put(tile, new StringBuffer());
+                rotationFunctions.put(tile, new StringBuffer());
             }
         }
     
@@ -60,14 +83,25 @@ public class CommunicateAddrs
         //the dram it is assigned to
         while (buffers.hasNext()) {
             OffChipBuffer buffer = (OffChipBuffer)buffers.next();
-            //set the rotation length for the buffer
-            if (buffer instanceof InterTraceBuffer)
-                setRotationLength((InterTraceBuffer)buffer);
-            
             //do nothing for redundant buffers
             if (buffer.redundant())
                 continue;
         
+            //generate a typedef for the the rotating buffer of this type
+            //if we have not seen this type before
+            if (!typedefs.containsKey(buffer.getType())) {
+                StringBuffer buf = new StringBuffer();
+                buf.append("typedef struct __rotating_struct_" +
+                        buffer.getType().toString() + "__" + 
+                        " *__rot_ptr_" + buffer.getType().toString() + "__;\n");
+                buf.append("typedef struct __rotating_struct_" + buffer.getType().toString() + "__ {\n");
+                buf.append("\t" + buffer.getType().toString() + " *buffer;\n");
+                buf.append("\t__rot_ptr_" + buffer.getType().toString() + "__ next;\n");
+                buf.append("} " + rotTypeDefPrefix + buffer.getType().toString() + ";\n");
+                
+                typedefs.put(buffer.getType(), buf);
+            }
+            
             //the dram this buffer is mapped to
             StreamingDram dram = buffer.getDRAM();
             //the tiles that are mapped to this dram
@@ -95,7 +129,14 @@ public class CommunicateAddrs
             //set the allocating tile to have compute code
             allocatingTile.setComputes();
             
+            //add the code necessary to set up the structure for rotation for this
+            //rotating buffer 
+            ((StringBuffer)rotationFunctions.get(dram.getNeighboringTile())).append
+            (setupRotation(buffer, dram.getNeighboringTile()));
+            
             for (int i = 0; i < rotationLength; i++) {
+               
+                
                 //allocate the steady buffer on the allocating tile
                 ((StringBuffer)fields.get(allocatingTile)).append
                 (buffer.getType().toString() + "* " + 
@@ -145,10 +186,69 @@ public class CommunicateAddrs
                             buffer.getIdent(i) + 
                             Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
                 }
+                
+                
             }
         }
     }
     
+    private String setupRotation(OffChipBuffer buffer, RawTile tile) {
+        StringBuffer buf = new StringBuffer();
+        String temp = "__temp__";
+        
+        assert buffer.getRotationLength() > 0;
+        
+        String rotType = rotTypeDefPrefix + buffer.getType().toString();
+        
+        
+        //add the declaration of the buffer of the appriopriate rotation type
+        ((StringBuffer)fields.get(tile)).append(rotTypeDefPrefix + 
+                buffer.getType().toString() + " " + buffer.getIdent() + ";\n");    
+        
+        buf.append("{\n");
+        //create a temp var
+        buf.append("\t" + rotType + " *" + temp + ";\n");
+        
+        //create the modify the first entry
+        buf.append("\t" + buffer.getIdent() + ".buffer = " + buffer.getIdent(0) + 
+                ";\n");
+        if (buffer.getRotationLength() == 1) 
+            buf.append("\t" + buffer.getIdent() + ".next = &" + buffer.getIdent() + 
+                    ";\n");
+        else {
+            buf.append("\t" + temp + " = (" + rotType+ "*)" + "malloc(sizeof("
+                    + rotType + "));\n");    
+                    
+            buf.append("\t" + buffer.getIdent() + ".next = " + 
+                    temp + ";\n");
+                        
+            buf.append("\t" + temp + "->buffer = " + buffer.getIdent(1) + ";\n");
+        
+            for (int i = 2; i < buffer.getRotationLength(); i++) {
+                buf.append("\t" + temp + "->next =  (" + rotType+ "*)" + "malloc(sizeof("
+                    + rotType + "));\n");
+                buf.append("\t" + temp + " = " + temp + "->next;\n");
+                buf.append("\t" + temp + "->buffer = " + buffer.getIdent(i) + ";\n");
+            }
+                        
+            buf.append("\t" + temp + "->next = &" + buffer.getIdent() + ";\n");
+        }
+        buf.append("}\n");
+        return buf.toString();
+    }
+    
+    public static String getRotSetupFunct(RawTile tile) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("\nvoid " + rotationSetupFunction + "() {\n");
+        buf.append((StringBuffer)commAddrs.rotationFunctions.get(tile));
+        buf.append("}\n");
+        return buf.toString();
+    }
+    
+    /**
+     * @param tile
+     * @return For <tile> return a function that will free the buffer memory.
+     */
     public static String getFreeFunction(RawTile tile) 
     {
         StringBuffer buf = new StringBuffer();
@@ -162,6 +262,11 @@ public class CommunicateAddrs
     }
     
 
+    /** 
+     * @param tile
+     * @return For <tile> return the function that will allocate the buffers or 
+     * get the addresses from the static network.
+     */
     public static String getFunction(RawTile tile) 
     {
         StringBuffer buf = new StringBuffer();
@@ -174,21 +279,18 @@ public class CommunicateAddrs
         return buf.toString();
     }   
     
-    /**
-     * Set the rotation length of the buffer based on the multiplicities 
-     * of the source trace and the dest trace in the prime pump schedule and add one
-     * so we can double buffer also!
-     * 
-     * @param buffer
+    /** 
+     * @return A string that has c code for the type defs for the
+     * rotating buffer types. 
      */
-    private void setRotationLength(InterTraceBuffer buffer) {
-        int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
-        int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
-        int length =  0;
-        if (sourceMult != 0 && destMult != 0)
-            length = sourceMult - destMult + 1; 
-      
-        buffer.setRotationLength(length);
+    public static String getRotationTypes() {
+        StringBuffer aggreg = new StringBuffer();
+        Iterator types = typedefs.values().iterator();
+        while (types.hasNext()) {
+            StringBuffer buf = (StringBuffer)types.next();
+            aggreg.append(buf);
+        }
+        return aggreg.toString();
     }
     
     public static void doit(RawChip chip, SpaceTimeSchedule stSchedule) 

@@ -145,6 +145,58 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     }
 
     /**
+     * Returns whether or not this graph has a cycle, contained within
+     * <ancestor>.
+     */
+    private boolean hasCycle(StreamInterface ancestor) {
+        // do a depth-first search; if we find a back-edge, report
+        // cycle
+        OSet visiting = new OSet();  // currently being visited
+        OSet done = new OSet();      // done being visited
+        
+        LatencyNode top = ancestor.getTopLatencyNode();
+
+        return hasCycleHelper(top, visiting, done);
+    }
+    /**
+     * Visits <node> and all its children in the depth-first
+     * search for cycles.  Returns whether or not it found a cycle.
+     */
+    private boolean hasCycleHelper(LatencyNode node, OSet visiting, OSet done) {
+        if (!visiting.find(node).equals(visiting.end())) {
+            // if we are already visiting <node>, then report cycle
+            return true;
+        } else if (!done.find(node).equals(done.end())) {
+            // if we already visited <node>, then no cycle here
+            return false;
+        }
+
+        // otherwise, start visiting node
+        visiting.insert(node);
+
+        // visit all children of <node> and return true if any of them
+        // lead to a cycle
+        DLList_const downstreamEdges = node.getDependants();
+        DLListIterator edgeIter = downstreamEdges.begin();
+        DLListIterator lastEdgeIter = downstreamEdges.end();
+        for (; !edgeIter.equals(lastEdgeIter); edgeIter.next()) {
+            LatencyEdge edge = (LatencyEdge)edgeIter.get();
+            assert edge.getSrc() == node;
+            
+            LatencyNode downstreamNode = edge.getDst();
+            if (hasCycleHelper(downstreamNode, visiting, done)) {
+                return true;
+            }
+        }
+
+        // mark as done
+        visiting.erase(node);
+        done.insert(node);
+
+        return false;
+    }
+
+    /**
      * Returns edges between two nodes, assuming one is upstream and
      * other is downstream.
      */
@@ -199,7 +251,9 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             // between upstreamNode and downstreamNode
         }
 
+        // if there are any loops in the graph within <ancestor>,
         // remove the backward pointing edges:
+        if (hasCycle(ancestor))
         {
             OSet backwardPointingEdges =
                 findBackPointingEdges(upstreamNode, ancestor);
@@ -211,7 +265,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 {
                     result.erase(backEdgeIter.get());
                 }
-        }
+        } 
 
         return result;
     }

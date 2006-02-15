@@ -268,7 +268,8 @@ public class FlattenGraph {
             //System.err.println("MULT: "+initMult+" "+steadyMult);
             if(linrep!=null) {
                 final int cols=linrep.getA().getCols();
-                if(cols==1) { 
+                System.out.println("** Cols = " + cols + ", rows =  " + linrep.getA().getRows());
+                if(cols==1) {
                     filter.initMult=initMult;
                     filter.steadyMult=steadyMult;
                     filter.array=getArray(linrep,0);

@@ -26,117 +26,141 @@ public class FilterContent {
     private boolean is2stage;
     private JFieldDeclaration[] fields;
     //LinearRepresentation
+    /** if the filter is linear, then array stores the A in Ax + b **/
     private double[] array;
+    /** if the filter is linear, then constant holds the b in Ax + b **/
     private double constant;
+    /** For all filters, the pop count **/
     private int popCount;
+    /** For all filters, the peek count **/
     private int peek;
+    /** true if the filter is linear **/
     private boolean linear;
+    /** true if this filter is linear and it is the first filter of
+        the fissed filters representing an original linear filter **/
     private boolean begin;
+    /** true if this filter is linear and it is the last filter of the
+        fissed filters representing an original linear filter **/
     private boolean end;
+    /** if this filter is linear, the position of the filter in the pipeline
+        of fissed filters that were generated from the original linear filter **/
     private int pos;
+    /** if this filter is linear, the total number of filters in the pipeline of 
+        fissed filters that were generated from the original linear filter **/
     private int total;
+    
+    private static int unique_ID = 0;
 
+    /**
+     * Using this constructor will essentially make a copy of <content>
+     **/
     public FilterContent(FilterContent content) {
-        name=content.name;
-        init=content.init;
-        steady=content.steady;
-        inputType=content.inputType;
-        outputType=content.outputType;
-        initMult=content.initMult;
-        steadyMult=content.steadyMult;
-        methods=content.methods;
-        paramList=content.paramList;
-        initFunction=content.initFunction;
-        is2stage=content.is2stage;
-        fields=content.fields;
-        array=content.array;
-        constant=content.constant;
-        popCount=content.popCount;
-        peek=content.peek;
-        linear=content.linear;
-        begin=content.begin;
-        end=content.end;
-        pos=content.pos;
-        total=content.total;
+        name = content.name + unique_ID++;
+        init = content.init;
+        steady  =  content.steady;
+        inputType = content.inputType;
+        outputType = content.outputType;
+        initMult = content.initMult;
+        steadyMult = content.steadyMult;
+        methods = content.methods;
+        paramList = content.paramList;
+        initFunction = content.initFunction;
+        is2stage = content.is2stage;
+        fields = content.fields;
+        array = content.array;
+        constant = content.constant;
+        popCount = content.popCount;
+        peek = content.peek;
+        linear = content.linear;
+        begin = content.begin;
+        end = content.end;
+        pos = content.pos;
+        total = content.total;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
-        name=filter.getName();
-        init=filter.getInitPhases();
-        steady=filter.getPhases();
-        inputType=filter.getInputType();
-        outputType=filter.getOutputType();
-        methods=filter.getMethods();
-        fields = filter.getFields();
-        paramList=filter.getParams();
-        initFunction = filter.getInit();
-        assert init.length < 1 && steady.length == 1;
+        name = filter.getName();
+        init = filter.getInitPhases();
+        steady = filter.getPhases();
+        inputType = filter.getInputType();
+        outputType = filter.getOutputType();
+        methods = filter.getMethods();
+        fields  =  filter.getFields();
+        paramList = filter.getParams();
+        initFunction  =  filter.getInit();
+        assert init.length < 2 && steady.length == 1;
         //if this filter is two stage, then it has the 
         //init work function as the only member of the init phases
         is2stage = init.length == 1;
         //is2stage = steady.length > 1;
-        linear=false;
+        linear = false;
         //total=1;
     }
 
     public FilterContent(UnflatFilter unflat) {
-        SIRFilter filter=unflat.filter;
-        name=filter.getName();
-        inputType=filter.getInputType();
-        outputType=filter.getOutputType();
-        initMult=unflat.initMult;
-        steadyMult=unflat.steadyMult;
-        array=unflat.array;
-        if(array!=null&&initMult<1) {
-            int reg=20-array.length/unflat.popCount-1;
-            if(array.length<=reg) {
-                linear=true;
-                constant=unflat.constant;
-                popCount=unflat.popCount;
-                assert popCount>0:"SDFSDFSDF";
-                peek=array.length;
-                int mod=array.length%popCount;
-                if(mod!=0) {
-                    final int len=array.length+popCount-mod;
-                    double[] temp=new double[len];
-                    System.arraycopy(array,0,temp,0,array.length);
-                    array=temp;
-                }
-                begin=true;
-                end=true;
-                pos=0;
-                total=1;
-                //methods=filter.getMethods(); //Keep nonlinear rep
-                //steady=filter.getPhases(); //Keep nonlinear rep
-                //fields=filter.getFields(); //Keep nonlinear rep
-                //paramList = filter.getParams(); //Keep nonlinear rep
-                //initFunction=filter.getInit(); //Keep nonlinear rep
-                //init=filter.getInitPhases(); //Keep nonlinear rep
-            } else {
-                linear=false;
-                init=filter.getInitPhases();
-                steady=filter.getPhases();
-                methods=filter.getMethods();
-                fields = filter.getFields();
-                paramList=filter.getParams();
-                initFunction = filter.getInit();
-        
-                assert init.length < 1 && steady.length == 1;
-                //if this filter is two stage, then it has the 
-                //init work function as the only member of the init phases
-                is2stage = init.length == 1;
-        
-                //      is2stage = steady.length > 1;
+        SIRFilter filter = unflat.filter;
+        name = filter.getName();
+        inputType = filter.getInputType();
+        outputType = filter.getOutputType();
+        initMult = unflat.initMult;
+        steadyMult = unflat.steadyMult;
+        array = unflat.array;
+        //we have found a linear filter if it has an array
+        if (array != null) { 
+            //removed by Mgordon
+            //int reg=20-array.length/unflat.popCount-1;
+            //if(array.length<=reg) {
+            for (int i = 0; i < array.length; i++)
+                System.out.println("A[" + i + "] = " + array[i]);
+
+            linear = true;
+            constant = unflat.constant;
+            popCount = unflat.popCount;
+            assert popCount>0 :"Pop count on linear filter is not > 0";
+            peek = array.length;
+            int mod = array.length%popCount;
+            if(mod!=0) {
+                final int len = array.length+popCount-mod;
+                double[] temp = new double[len];
+                System.arraycopy(array,0,temp,0,array.length);
+                array = temp;
             }
+            begin = true;
+            end = true;
+            pos = 0;
+            total = 1;
+            //methods=filter.getMethods(); //Keep nonlinear rep
+            //steady=filter.getPhases(); //Keep nonlinear rep
+            //fields=filter.getFields(); //Keep nonlinear rep
+            //paramList = filter.getParams(); //Keep nonlinear rep
+            //initFunction=filter.getInit(); //Keep nonlinear rep
+            //init=filter.getInitPhases(); //Keep nonlinear rep
+            /*}  Mgordon: Commenting out some weird stuff!
+              else {
+              linear=false;
+              init=filter.getInitPhases();
+              steady=filter.getPhases();
+              methods=filter.getMethods();
+              fields = filter.getFields();
+              paramList=filter.getParams();
+              initFunction = filter.getInit();
+        
+              assert init.length < 2 && steady.length == 1;
+              //if this filter is two stage, then it has the 
+              //init work function as the only member of the init phases
+              is2stage = init.length == 1;
+        
+              //        is2stage = steady.length > 1;
+              }*/
         } else {
-            linear=false;
-            init=filter.getInitPhases();
-            steady=filter.getPhases();
-            methods=filter.getMethods();
+            linear = false;
+            init = filter.getInitPhases();
+            steady = filter.getPhases();
+            methods = filter.getMethods();
             fields = filter.getFields();
-            paramList=filter.getParams();
+            paramList = filter.getParams();
             initFunction = filter.getInit();
-            assert init.length < 1 && steady.length == 1;
+            assert init.length < 2 && steady.length == 1;
             //if this filter is two stage, then it has the 
             //init work function as the only member of the init phases
             is2stage = init.length == 1;

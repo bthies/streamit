@@ -172,11 +172,11 @@ public class ComputeCodeStore {
             // otherwise create the raw ir code
             // if we can run linear or direct communication, run it
             if (filterInfo.isLinear())
-                exeCode = new Linear(filterInfo);
-            else if (filterInfo.isDirect())
-                exeCode = new DirectCommunication(filterInfo);
+                exeCode = new Linear(parent, filterInfo);
+            else if (DirectCommunication.testDC(filterInfo))
+                exeCode = new DirectCommunication(parent, filterInfo);
             else
-                exeCode = new BufferedCommunication(filterInfo);
+                exeCode = new BufferedCommunication(parent, filterInfo);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
         // add the steady state
@@ -240,11 +240,11 @@ public class ComputeCodeStore {
             // otherwise create the raw ir code
             // if we can run linear or direct communication, run it
             if (filterInfo.isLinear())
-                exeCode = new Linear(filterInfo);
-            else if (filterInfo.isDirect())
-                exeCode = new DirectCommunication(filterInfo);
+                exeCode = new Linear(parent, filterInfo);
+            else if (DirectCommunication.testDC(filterInfo))
+                exeCode = new DirectCommunication(parent, filterInfo);
             else
-                exeCode = new BufferedCommunication(filterInfo);
+                exeCode = new BufferedCommunication(parent, filterInfo);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
         
@@ -266,11 +266,11 @@ public class ComputeCodeStore {
 
         // if we can run direct communication, run it
         if (filterInfo.isLinear())
-            exeCode = new Linear(filterInfo);
-        else if (filterInfo.isDirect())
-            exeCode = new DirectCommunication(filterInfo);
+            exeCode = new Linear(parent, filterInfo);
+        else if (DirectCommunication.testDC(filterInfo))
+            exeCode = new DirectCommunication(parent, filterInfo);
         else
-            exeCode = new BufferedCommunication(filterInfo);
+            exeCode = new BufferedCommunication(parent, filterInfo);
 
         // add this raw IR code to the rawCode hashmap
         // if the steady-state is on the same tile, don't

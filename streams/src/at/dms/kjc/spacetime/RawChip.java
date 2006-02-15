@@ -4,6 +4,13 @@ import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.spacetime.switchIR.*;
 
+/**
+ * This class represents the raw chip to which we are compiling.  It has tiles and 
+ * offchip devices and ports, etc.  
+ * 
+ * @author mgordon
+ *
+ */
 public class RawChip {
     // the indices are x, y
     private RawTile[][] tiles;
@@ -18,6 +25,10 @@ public class RawChip {
 
     public static final int cacheLineWords = 8;
 
+    /** the name of the function that constructs dynamic headers in raw.h */
+    public static final String ConstructDynHdr = "construct_dyn_hdr";
+    
+    
     public RawChip(int xSize, int ySize) {
         gXSize = xSize;
         gYSize = ySize;

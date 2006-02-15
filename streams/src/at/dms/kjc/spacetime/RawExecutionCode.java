@@ -19,8 +19,26 @@ import java.util.Hashtable;
 import java.math.BigInteger;
 import at.dms.kjc.flatgraph2.FilterContent;
 
+/**
+ * This abstract class defines an interface for filter code generators.  
+ * These generator add code necessary to execute the filter on raw, generating
+ * SIR code.
+ * 
+ * @author mgordon
+ *
+ */
 public abstract class RawExecutionCode 
 {
+    /** the prefix for the c method to receive structs over a network */
+    public static String structReceivePrefix = "__popPointer";
+    
+    /** the c method that is used to receive structs over the static net */
+    public static String structReceivePrefixStatic = structReceivePrefix
+        + "Static";
+    /** the c method that is used to receive structs over the gdn */
+    public static String structReceivePrefixDynamic = structReceivePrefix
+        + "Dynamic";
+
     //if true, inline the work function in the init and steady-state
     protected static final boolean INLINE_WORK = true;
     
@@ -50,7 +68,10 @@ public abstract class RawExecutionCode
     public static String initSchedFunction = "__RAWINITSCHED__";
     public static String steadySchedFunction = "__RAWSTEADYSCHED__";
     
-    public static String receiveMethod = "static_receive_to_mem";
+    public static String staticReceiveMethod = "static_receive_to_mem";
+    public static String gdnReceiveMethod = "gdn_receive_to_mem";
+    public static String staticSendMethod = "static_send";
+    public static String gdnSendMethod = "gdn_send";
     public static String structReceiveMethodPrefix = "__popPointer";
     public static String arrayReceiveMethod = "__array_receive__";
 
@@ -68,13 +89,40 @@ public abstract class RawExecutionCode
     protected FilterInfo filterInfo;
     /** the method that executes each stage of the prime pump schedule */
     protected JMethodDeclaration primePumpMethod;
+    /** true if this filter has dynamic network input, this will only 
+     * happen when the filters is connected to a inputtracenode and on the dynamic 
+     * net
+     */
+    protected boolean gdnInput;
+    /** true if this filter has dynamic network output, this will only happen
+     * if hte filter is connected to an outputtrcenode allocated to the gdn
+     */
+    protected boolean gdnOutput;
     
-    public RawExecutionCode(FilterInfo filterInfo) 
+    protected RawTile tile;
+    
+    public RawExecutionCode(RawTile tile, FilterInfo filterInfo) 
     {
+        this.tile = tile;
         this.filterInfo = filterInfo;
         generatedVariables = new GeneratedVariables();
         uniqueID = getUniqueID();
         primePumpMethod = null;
+        //see if we have gdn input
+        gdnInput = false;
+        if (filterInfo.traceNode.getPrevious().isInputTrace()) {
+            if (!IntraTraceBuffer.getBuffer(
+                    (InputTraceNode)filterInfo.traceNode.getPrevious(),
+                    filterInfo.traceNode).isStaticNet())
+                gdnInput = true;
+        }
+        //see if we have gdn output
+        gdnOutput = false;
+        if (filterInfo.traceNode.getNext().isOutputTrace()) {
+            if (!IntraTraceBuffer.getBuffer(filterInfo.traceNode,
+                    (OutputTraceNode)filterInfo.traceNode.getNext()).isStaticNet())
+                gdnOutput = true;
+        }
     }
     
 
@@ -152,6 +200,52 @@ public abstract class RawExecutionCode
     public static JStatement boundToSwitchStmt(int constant)  
     {
         return constToSwitchStmt(constant - 1);
+    }
+ 
+    /** 
+     * @return The SIR code necessary to set the dynamic message header used 
+     * when we send data over the gdn.
+     */
+    public JStatement setDynMsgHeader() {
+       
+        assert filterInfo.traceNode.getNext().isOutputTrace();
+        //get the buffer
+        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filterInfo.traceNode,
+                (OutputTraceNode)filterInfo.traceNode.getNext());
+        assert !buf.isStaticNet();
+        //get the type size
+        int size = Util.getTypeSize(filterInfo.filter.getOutputType());
+        assert size < 31 : "Type size too large to fit in single dynamic network packet";
+
+        JBlock block = new JBlock(null, new JStatement[0], null);
+        //construct the args for the dyn header construction function
+        
+        //get the neigboring tile for the dram we are sending to...
+        RawTile neighboringTile = buf.getDRAM().getNeighboringTile();
+        
+        //now calculated the final route, once the packet gets to the destination (neighboring) tile
+        //it will be routed off the chip by 
+        // 2 = west, 3 = south, 4 = east, 5 = north
+        int finalRoute = buf.getDRAM().getDirectionFromTile();
+        
+        
+        JExpression[] args = {new JIntLiteral(finalRoute),
+                new JIntLiteral(size), 
+                new JIntLiteral(0) /* user */, 
+                new JIntLiteral(tile.getY()), new JIntLiteral(tile.getX()),
+                new JIntLiteral(neighboringTile.getY()),
+                new JIntLiteral(neighboringTile.getX())
+        };
+        
+        JMethodCallExpression conDynHdr = 
+            new JMethodCallExpression(RawChip.ConstructDynHdr, args);
+        
+        JAssignmentExpression ass = 
+            new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DYNMSGHEADER),
+                    conDynHdr);
+        block.addStatement(new JExpressionStatement(ass));
+        
+        return block;
     }
     
 }

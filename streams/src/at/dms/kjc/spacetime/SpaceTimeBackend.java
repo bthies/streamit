@@ -213,16 +213,16 @@ public class SpaceTimeBackend {
         
         System.out.println("\nMultiplying Steady-State...");
         MultiplySteadyState.doit(spaceTimeSchedule);
-
-        // we can now use filter infos, everything is set
+ 
+        //we can now use filter infos, everything is set
         FilterInfo.canUse();
         
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
-                                "preDRAMsteady.dot", false);
-                    
-        System.out.println("Assigning Buffers to DRAMs...");
+        System.out.println("Assigning Buffers to DRAMs...");        
         ManualDRAMPortAssignment.run(spaceTimeSchedule);
+  
         
+        
+        //dump some dot graphs!
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
                                 "initTraces.dot", true);
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 

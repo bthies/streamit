@@ -78,4 +78,22 @@ public abstract class IODevice extends ComputeNode
         return null;
     }
     
+    /**
+     * Get the direction from the neighboring tile to this 
+     * 
+     * @return 2 = west, 3 = south, 4 = east, 5 = north
+     */
+    public int getDirectionFromTile() {
+        if (Y == -1)
+            return 5;
+        if (X == -1)
+            return 2;
+        if (X == rawChip.getXSize())
+            return 4;
+        if (Y == rawChip.getYSize())
+            return 3;
+        assert false : "invalid x, y coordinate for streaming dram";
+        return -1;
+    }
+    
 }

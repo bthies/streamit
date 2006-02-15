@@ -8,7 +8,8 @@ import java.util.Iterator;
 import java.util.HashMap;
 
 /**
- * A class to hold all the various information for a filter
+ * A class to hold all the various information for a filter.
+ * 
  */
 public class FilterInfo {
     public int prePeek;
@@ -33,12 +34,11 @@ public class FilterInfo {
 
     private boolean linear;
 
-    private boolean direct;
-
     public FilterTraceNode traceNode;
 
     public FilterContent filter;
 
+    /** HashMap of all the filter infos FilterTraceNode -> FilterInfo */
     private static HashMap filterInfos;
 
     // true if everything is set and we can use this class
@@ -51,6 +51,12 @@ public class FilterInfo {
         canuse = false;
     }
 
+    /** 
+     * Call this when it is safe to use filter infos, meaning all the 
+     * information that they collect has been calculated so the information
+     * can be presented.
+     *
+     */
     public static void canUse() {
         canuse = true;
     }
@@ -102,7 +108,6 @@ public class FilterInfo {
                 prePop = filter.getInitPop();
             }
             calculateRemaining();
-            direct = DirectCommunication.testDC(this);
         }
     }
     
@@ -169,12 +174,6 @@ public class FilterInfo {
 
     public boolean isLinear() {
         return linear;
-    }
-
-    // returns true if this filter does not need a receive buffer
-    // but it does receive items
-    public boolean isDirect() {
-        return direct;
     }
 
     // does this filter require a receive buffer during code

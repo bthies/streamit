@@ -23,16 +23,30 @@ import at.dms.util.SIRPrinter;
  * If we can, this class will generate filter code that does not use a 
  * peek buffer, so just read the values from the static network and write them to the 
  * static network.  It will only work if the code does not peek and if it has all pops 
- * before pushes.
+ * before 
+ * pushes.
  * 
  * @author mgordon
  *
  */
+
 public class DirectCommunication extends RawExecutionCode 
-    implements Constants 
 { 
+    /**
+     * @param fi
+     * @return True if we can generate direct communication code (no peek buffer) for 
+     * the filter.
+     */
     public static boolean testDC(FilterInfo fi) 
     {
+        boolean dynamicInput = false;
+        if (fi.traceNode.getPrevious().isInputTrace()) {
+            if (!IntraTraceBuffer.getBuffer(
+                    (InputTraceNode)fi.traceNode.getPrevious(),
+                    fi.traceNode).isStaticNet())
+                dynamicInput = true;
+        }
+        
         FilterContent filter = fi.filter;
         //runs some tests to see if we can 
         //generate code direct commmunication code
@@ -57,8 +71,14 @@ public class DirectCommunication extends RawExecutionCode
             SpaceTimeBackend.println(filter + " can't use direct comm: Peek Statement");
             return false;
         }
-    
-        if (PushBeforePop.check(filter.getWork())) {
+        
+        if (!dynamicInput && at.dms.kjc.common.PeekPopPushInHelper.check(fi.filter))
+            return false;
+        
+        // for a filter with dynamic input we don't care if the pushes and
+        // pops are intermixed, because the pops will use the dynamic network
+        // and the switch will only be used for the pushes...
+        if (!dynamicInput && PushBeforePop.check(filter.getWork())) {
             SpaceTimeBackend.println(filter + " can't use direct comm: Push before pop");
             return false;
         }
@@ -81,9 +101,9 @@ public class DirectCommunication extends RawExecutionCode
         return true;
     }
 
-    public DirectCommunication(FilterInfo filterInfo) 
+    public DirectCommunication(RawTile tile, FilterInfo filterInfo) 
     {
-        super(filterInfo);
+        super(tile, filterInfo);
         FilterTraceNode node=filterInfo.traceNode;
         System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Direct Comm.");
     }
@@ -119,10 +139,11 @@ public class DirectCommunication extends RawExecutionCode
         generatedVariables.exeIndex1 = exeIndex1Var;
         decls.add(new JFieldDeclaration(null, exeIndex1Var, null, null));
 
-        //convert the communication
-        //all the communication is in the work function
-        filter.getWork().accept(new DirectConvertCommunication());
-
+        //all the pop statements in the work function to function calls
+        filter.getWork().accept(new DirectConvertCommunication(gdnInput));
+        //conver all the push statements into method calls
+        ConvertPushesToMethCall.doit(filterInfo, gdnInput);
+        
         return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
     }
 
@@ -167,6 +188,12 @@ public class DirectCommunication extends RawExecutionCode
         JBlock statements = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
 
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            statements.addStatement(setDynMsgHeader());
+        }
+        
         //add the calls for the work function in the initialization stage
         statements.addStatement(generateInitWorkLoop(filter));
     
@@ -210,7 +237,13 @@ public class DirectCommunication extends RawExecutionCode
     {
         JBlock block = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
-    
+        
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            block.addStatement(setDynMsgHeader());
+        }
+        
         //inline the work function in a while loop
         JBlock workBlock = new JBlock(null, new JStatement[0], null);
         workBlock.addStatement(getWorkFunctionCall(filter));
@@ -388,113 +421,88 @@ public class DirectCommunication extends RawExecutionCode
             cond.accept(this);
         }
     }
-    static class DirectConvertCommunication extends SLIRReplacingVisitor 
-    {
+    
+    static class DirectConvertCommunication extends SLIRReplacingVisitor {
+        private boolean dynamic;
+
+        public DirectConvertCommunication(boolean dynamicInput) {
+            dynamic = dynamicInput;
+        }
+
         public Object visitAssignmentExpression(JAssignmentExpression oldself,
-                                                JExpression oldleft,
-                                                JExpression oldright) 
-        {
-            //a little optimization, use the pointer version of the 
-            //structure's pop in struct.h to avoid copying      
-            if (oldright instanceof JCastExpression && 
-                (((JCastExpression)oldright).getExpr() instanceof SIRPopExpression)) {
-                SIRPopExpression pop = (SIRPopExpression)((JCastExpression)oldright).getExpr();
-        
+                                                JExpression oldleft, JExpression oldright) {
+            // a little optimization, use the pointer version of the
+            // structure's pop in struct.h to avoid copying
+            if (oldright instanceof JCastExpression
+                && (((JCastExpression) oldright).getExpr() instanceof SIRPopExpression)) {
+                SIRPopExpression pop = (SIRPopExpression) ((JCastExpression) oldright)
+                    .getExpr();
+
                 if (pop.getType().isClassType()) {
-                    JExpression left = (JExpression)oldleft.accept(this);
-        
-                    JExpression[] arg = 
-                        {left};
-        
-                    return new JMethodCallExpression(null, new JThisExpression(null), 
-                                                     structReceiveMethodPrefix + 
-                                                     pop.getType(),
-                                                     arg);
-                } 
+                    assert false : "structs over tapes is probably broken!";
+                    JExpression left = (JExpression) oldleft.accept(this);
+
+                    JExpression[] arg = { left };
+
+                    JMethodCallExpression receive = new JMethodCallExpression(
+                                                                              null, new JThisExpression(null),
+                                                                              RawExecutionCode.structReceivePrefix
+                                                                              + (dynamic ? "Dynamic" : "Static")
+                                                                              + pop.getType(), arg);
+                    receive.setTapeType(pop.getType());
+                    return receive;
+                }
                 if (pop.getType().isArrayType()) {
                     return null;
                 }
             }
 
-            //otherwise do the normal thing
-            JExpression self = (JExpression)super.visitAssignmentExpression(oldself,
-                                                                            oldleft, 
-                                                                            oldright);
+            // otherwise do the normal thing
+            JExpression self = 
+                (JExpression) super.visitAssignmentExpression(oldself, oldleft, oldright);
             return self;
         }
-    
 
         public Object visitPopExpression(SIRPopExpression oldSelf,
                                          CType oldTapeType) {
-    
+
             // do the super
-            SIRPopExpression self = 
-                (SIRPopExpression)
-                super.visitPopExpression(oldSelf, oldTapeType);  
+            SIRPopExpression self = (SIRPopExpression) super
+                .visitPopExpression(oldSelf, oldTapeType);
 
-            //if this is a struct, use the struct's pop method, generated in struct.h
+            // if this is a struct, use the struct's pop method, generated in
+            // struct.h
             if (self.getType().isClassType()) {
-                return new JMethodCallExpression(null, new JThisExpression(null), 
-                                                 "pop" + self.getType(), 
+                assert false : "Structs over tapes unimplemented!";
+                return new JMethodCallExpression(null,
+                                                 new JThisExpression(null), "pop" + self.getType(),
                                                  new JExpression[0]);
-            }
-            else if (self.getType().isArrayType()) {
+            } else if (self.getType().isArrayType()) {
                 return null;
+            } else {
+                JMethodCallExpression receive = 
+                    new JMethodCallExpression(null,
+                            new JThisExpression(null),
+                            (dynamic ? RawExecutionCode.gdnReceiveMethod : 
+                                RawExecutionCode.staticReceiveMethod),
+                            new JExpression[0]);
+                receive.setTapeType(self.getType());
+                return receive;
             }
-            else {
-                //I am keeping it the was it is because we should use static_receive
-                //instead of receiving to memory as in the code in Util
-                if (KjcOptions.altcodegen || KjcOptions.decoupled) 
-                    return altCodeGen(self);
-                else
-                    return normalCodeGen(self);
-            }
-        }
-    
-    
-        private Object altCodeGen(SIRPopExpression self) {
-            //direct communcation is only generated if the input/output types are scalar
-            if (self.getType().isFloatingPoint())
-                return 
-                    new JLocalVariableExpression(null,
-                                                 new JGeneratedLocalVariable(null, 0, 
-                                                                             CStdType.Float, 
-                                                                             Util.CSTIFPVAR,
-                                                                             null));
-            else 
-                return 
-                    new JLocalVariableExpression(null,
-                                                 new JGeneratedLocalVariable(null, 0, 
-                                                                             CStdType.Integer,
-                                                                             Util.CSTIINTVAR,
-                                                                             null));
-        }
-    
-        private Object normalCodeGen(SIRPopExpression self) {
-            String floatSuffix;
-    
-            floatSuffix = "";
-
-            //append the _f if this pop expression pops floats
-            if (self.getType().isFloatingPoint())
-                floatSuffix = "_f";
-    
-            //create the method call for static_receive()
-            JMethodCallExpression static_receive = 
-                new JMethodCallExpression(null, new JThisExpression(null),
-                                          "static_receive" + floatSuffix, 
-                                          new JExpression[0]);
-            //store the type in a var that I added to methoddeclaration
-            static_receive.setTapeType(self.getType());
-    
-            return static_receive;
+            /*
+             * else { if (self.getType().isFloatingPoint()) return new
+             * JLocalVariableExpression (null, new JGeneratedLocalVariable(null,
+             * 0, CStdType.Float, dynamic ? Util.CGNIFPVAR : Util.CSTIFPVAR,
+             * null)); else return new JLocalVariableExpression (null, new
+             * JGeneratedLocalVariable(null, 0, CStdType.Integer, dynamic ?
+             * Util.CGNIINTVAR : Util.CSTIINTVAR, null)); }
+             */
         }
 
         public Object visitPeekExpression(SIRPeekExpression oldSelf,
-                                          CType oldTapeType,
-                                          JExpression oldArg) {
-            Utils.fail("Should not see a peek expression when generating " +
-                       "direct communication");
+                                          CType oldTapeType, JExpression oldArg) {
+            Utils.fail("Should not see a peek expression when generating "
+                       + "direct communication");
             return null;
         }
     }

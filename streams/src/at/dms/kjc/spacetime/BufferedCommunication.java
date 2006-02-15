@@ -38,9 +38,9 @@ public class BufferedCommunication extends RawExecutionCode
     //add one to the init multiplicity of the filter 
     private int initFire;
 
-    public BufferedCommunication(FilterInfo filterInfo) 
+    public BufferedCommunication(RawTile tile, FilterInfo filterInfo) 
     {
-        super(filterInfo);
+        super(tile, filterInfo);
         FilterTraceNode node=filterInfo.traceNode;
         System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Buffered Comm.");
     
@@ -62,6 +62,8 @@ public class BufferedCommunication extends RawExecutionCode
     {
         SLIRReplacingVisitor convert;
     
+        ConvertPushesToMethCall.doit(filterInfo, gdnOutput);
+        
         if (filterInfo.isSimple()) {
             convert = 
                 new ConvertCommunicationSimple(generatedVariables, filterInfo);
@@ -340,6 +342,12 @@ public class BufferedCommunication extends RawExecutionCode
         JBlock statements = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
 
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            statements.addStatement(setDynMsgHeader());
+        }
+        
         //add the calls to the work function for the priming of the pipeline
         statements.addStatement(getWorkFunctionBlock(false, filterInfo.steadyMult));
         //return the method
@@ -359,7 +367,13 @@ public class BufferedCommunication extends RawExecutionCode
     {
         JBlock statements = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
-    
+
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            statements.addStatement(setDynMsgHeader());
+        }
+
         //add the call to initWork
         if (filterInfo.isTwoStage()) {
             //FilterContent two = filter;
@@ -456,6 +470,13 @@ public class BufferedCommunication extends RawExecutionCode
     {
         JBlock block = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
+      
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            block.addStatement(setDynMsgHeader());
+        }
+        
         //get the upsteam filter assuming that it does not pass thru another trace
         //this is only here for compatablility with the intra-tile, inter-trace
         //implementation
@@ -770,7 +791,7 @@ public class BufferedCommunication extends RawExecutionCode
 
         //the name of the method we are calling, this will
         //depend on type of the pop, by default set it to be the scalar receive
-        String receiveMethodName = receiveMethod;
+        String receiveMethodName = (gdnInput ? gdnReceiveMethod : staticReceiveMethod);
 
         JBlock statements = new JBlock(null, new JStatement[0], null);
     

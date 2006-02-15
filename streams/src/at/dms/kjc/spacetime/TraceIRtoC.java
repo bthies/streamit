@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.spacedynamic.Util;
+
 import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
 //import at.dms.compiler.*;
@@ -22,6 +24,10 @@ import at.dms.util.SIRPrinter;
  */
 public class TraceIRtoC extends ToC
 {
+    
+    /** the name of the var that holds the dynamic message header */
+    public static final String DYNMSGHEADER = "__DYNMSGHEADER__";
+    
     //the raw tile we are generating code for
     private RawTile tile;
     
@@ -156,11 +162,7 @@ public class TraceIRtoC extends ToC
         }
         
         if (KjcOptions.altcodegen && !KjcOptions.decoupled){
-            p.print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
-            p.print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
-            p.print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
-            p.print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
-            p.print("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
+            p.print(getNetRegsDecls());
         }
         
         if (KjcOptions.decoupled) {
@@ -194,7 +196,23 @@ public class TraceIRtoC extends ToC
         }
     }
 
-
+    public static String getNetRegsDecls() 
+    {
+        StringBuffer buf = new StringBuffer();
+ 
+        buf.append("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
+        buf.append("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
+        buf.append("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
+        buf.append("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+        buf.append("register float " + Util.CGNOFPVAR + " asm(\"$cgno\");\n");
+        buf.append("register float " + Util.CGNIFPVAR + " asm(\"$cgni\");\n");
+        buf.append("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
+        buf.append("register int " + Util.CGNIINTVAR + " asm(\"$cgni\");\n");
+        buf.append("unsigned " + DYNMSGHEADER + ";\n");
+        
+        return buf.toString();
+    }
+    
     /**
      * prints a for statement
      */
@@ -348,33 +366,6 @@ public class TraceIRtoC extends ToC
     // ----------------------------------------------------------------------
 
 
-    /**
-     * Generates code to receive an array type into the buffer
-     **/
-    public void popArray(JExpression arg, CArrayType type) 
-    {
-        String dims[] = Util.makeString(type.getDims());
-        
-        //print the array indices
-        for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                    RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                    RawExecutionCode.ARRAY_INDEX + i + "++)\n");
-        }
-        
-        p.print("{");
-        //print out the receive assembly
-        p.print(Util.staticNetworkReceivePrefix());
-        //print out the buffer variable and the index
-        arg.accept(this);
-        //now append the remaining dimensions
-        for (int i = 0; i < dims.length; i++) {
-            p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-        }
-        //finish up the receive assembly
-        p.print(Util.staticNetworkReceiveSuffix(type.getBaseType()));
-        p.print("}");
-    }
     
     //for rate matching, we want to store the value of the item pushed  
     //into the output buffer and increment the sendbufferindex
@@ -492,18 +483,38 @@ public class TraceIRtoC extends ToC
           }
         */
 
+        if (ident.equals(RawExecutionCode.gdnSendMethod) || 
+                ident.equals(RawExecutionCode.staticSendMethod)) {
+            handleSendMethod(self);
+            return;
+        }
+            
+        
         //generate the inline asm instruction to execute the 
         //receive if this is a receive instruction
-        if (ident.equals(RawExecutionCode.receiveMethod)) {
-            p.print(Util.staticNetworkReceivePrefix());
-            visitArgs(args,0);
-            p.print(Util.staticNetworkReceiveSuffix(self.getType()));
+        if (ident.equals(RawExecutionCode.gdnReceiveMethod) ||
+                ident.equals(RawExecutionCode.staticReceiveMethod)) {
+            //is this receive from the gdn
+            boolean dynamicInput = ident.equals(RawExecutionCode.gdnReceiveMethod);
+            
+            if (args.length > 0) {
+                visitArgs(args,0);
+                p.print(" = ");
+                p.print(Util.networkReceive
+                        (dynamicInput, Util.getBaseType(self.getType())));
+                
+            }
+            else {
+                p.print(Util.networkReceive
+                        (dynamicInput, Util.getBaseType(self.getType())));
+            }
+                        
             return;  
         }
         
         //we are receiving an array type, call the popArray method
         if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
-            popArray(args[0], (CArrayType)self.getType());
+            assert false : "Arrays over tapes not implemented!";
             return;
         }
         
@@ -627,20 +638,46 @@ public class TraceIRtoC extends ToC
             }
     }
     
-    private void pushScalar(SIRPushExpression self,
-                            CType tapeType,
-                            JExpression val) 
+    private void pushScalar(boolean dynamicOutput,
+            CType tapeType,
+            JExpression val) 
     {
-        p.print(Util.staticNetworkSendPrefix(tapeType));
+
+        //if this filter is the sink of a ssg, then we have to produce
+        //dynamic network code!!!, check this by using some util methods.
+        
+        if (dynamicOutput) {
+            p.print(Util.CGNOINTVAR + " = " + DYNMSGHEADER + ";");
+            if (tapeType.isFloatingPoint())
+                p.print(Util.CGNOFPVAR);
+            else
+                p.print(Util.CGNOINTVAR);
+            p.print(" = (" + tapeType + ")");
+            if (tapeType != val.getType())
+                p.print("(" + tapeType + ")");
+            val.accept(this);
+            return;
+        }
+        
+        p.print(Util.networkSendPrefix(dynamicOutput, tapeType));
+        //if the type of the argument to the push statement does not 
+        //match the filter output type, print a cast.
+        if (tapeType != val.getType())
+            p.print("(" + tapeType + ")");
         val.accept(this);
-        p.print(Util.staticNetworkSendSuffix());
+        p.print(Util.networkSendSuffix(dynamicOutput));
+        //useful if debugging...!
+        /*print(";\n");
+          p.print("raw_test_pass_reg(");
+          val.accept(this);
+          p.print(")");*/
     }
 
     
-    public void pushClass(SIRPushExpression self, 
-                          CType tapeType,
-                          JExpression val) 
+    public void pushClass(CType tapeType,
+                JExpression val) 
     {
+        assert false : "Structs over tapes unimplemented.";
         //turn the push statement into a call of
         //the structure's push method
         p.print("push" + tapeType + "(&");
@@ -649,10 +686,10 @@ public class TraceIRtoC extends ToC
     }
     
 
-    private void pushArray(SIRPushExpression self, 
-                           CType tapeType,
+    private void pushArray(CType tapeType,
                            JExpression val) 
     {
+        assert false : "Arrays over tapes unimplemented.";
         CType baseType = ((CArrayType)tapeType).getBaseType();
         String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
         
@@ -685,12 +722,25 @@ public class TraceIRtoC extends ToC
                                     CType tapeType,
                                     JExpression val)
     {
-        if (tapeType.isArrayType())
-            pushArray(self, tapeType, val);
-        else if (tapeType.isClassType())
-            pushClass(self, tapeType, val);
-        else 
-            pushScalar(self, tapeType, val);
+        assert false : "TraceIRToC should not see any SIRPushExpression.";
+    }
+    
+    private void handleSendMethod(JMethodCallExpression methCall)
+    {
+        assert methCall.getArgs().length == 1 : "Malformed send method encountered.";
+        
+        if (methCall.getType().isArrayType())
+            pushArray(methCall.getType(), methCall.getArgs()[0]);
+        else if (methCall.getType().isClassType())
+            pushClass(methCall.getType(), methCall.getArgs()[0]);
+        else  {
+            //otherwise call push scalar 
+            //we know based on the method name if it is over the gdn or static
+            pushScalar((methCall.getIdent().equals(RawExecutionCode.gdnSendMethod) ? 
+                        true : false), 
+                    methCall.getType(), 
+                    methCall.getArgs()[0]);
+        }
     }
     
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,

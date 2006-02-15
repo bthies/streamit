@@ -59,8 +59,8 @@ public class Linear extends BufferedCommunication implements Constants {
     /** The position in the pipeline of fissed filters from front **/
     private int index;
 
-    public Linear(FilterInfo filterInfo) {
-        super(filterInfo);
+    public Linear(RawTile tile, FilterInfo filterInfo) {
+        super(tile, filterInfo);
         //assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
         FilterTraceNode node = filterInfo.traceNode;
         System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");

@@ -27,7 +27,13 @@ public class Util {
 
     public static String CSTIINTVAR = "__csti_integer__";
 
-    public static String CGNOINTVAR = "__slgcc_cgno_integer__";
+    public static String CGNOINTVAR = "__cgno_integer__";
+
+    public static String CGNOFPVAR = "__cgno_float__";
+
+    public static String CGNIFPVAR = "__cgni_float__";
+
+    public static String CGNIINTVAR = "__cgni_integer__"; 
 
     // unique ID for each file reader/writer used to
     // generate var names...
@@ -106,54 +112,43 @@ public class Util {
         }
         return ret;
     }
-
-    public static String staticNetworkReceivePrefix() {
-        if (KjcOptions.altcodegen || KjcOptions.decoupled)
-            return "";
-        else
-            return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
-    }
-
-    public static String staticNetworkReceiveSuffix(CType tapeType) {
-        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+    public static String networkReceive(boolean dynamic, CType tapeType) {
+        assert KjcOptions.altcodegen;
+        if (dynamic) {
             if (tapeType.isFloatingPoint())
-                return "= " + CSTIFPVAR + ";";
+                return CGNIFPVAR;
             else
-                return "= " + CSTIINTVAR + ";";
-        } else
-            return "));";
+                return CGNIINTVAR;
+        } else {
+            if (tapeType.isFloatingPoint())
+                return CSTIFPVAR;
+            else
+                return CSTIINTVAR;
+        }
     }
 
-    public static String staticNetworkSendPrefix(CType tapeType) {
+    public static String networkSendPrefix(boolean dynamic, CType tapeType) {
+        assert KjcOptions.altcodegen;
         StringBuffer buf = new StringBuffer();
-
-        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+        if (dynamic) {
+            if (tapeType.isFloatingPoint())
+                buf.append(CGNOFPVAR);
+            else
+                buf.append(CGNOINTVAR);
+        } else {
             if (tapeType.isFloatingPoint())
                 buf.append(CSTOFPVAR);
             else
                 buf.append(CSTOINTVAR);
-            // temporary fix for type changing filters
-            buf.append(" = (" + tapeType + ")");
-        } else {
-            buf.append("(");
-            if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
-                if (tapeType.isFloatingPoint())
-                    buf.append("static_send_print_f");
-                else
-                    buf.append("static_send_print");
-            } else
-                buf.append("static_send");
-            buf.append("(");
-
         }
+
+        buf.append(" = (" + tapeType + ")");
         return buf.toString();
     }
 
-    public static String staticNetworkSendSuffix() {
-        if (KjcOptions.altcodegen || KjcOptions.decoupled)
-            return "";
-        else
-            return "))";
+    public static String networkSendSuffix(boolean dynamic) {
+        assert KjcOptions.altcodegen;
+        return "";
     }
 
     // the size of the buffer between in, out for the steady state

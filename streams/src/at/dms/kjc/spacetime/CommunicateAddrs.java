@@ -169,9 +169,9 @@ public class CommunicateAddrs
                     //add the code to the owner to send the address to the
                     //static net for the steady
                     ((StringBuffer)functions.get(allocatingTile)).append
-                    ("  " + Util.staticNetworkSendPrefix(CStdType.Integer) + 
+                    ("  " + Util.networkSendPrefix(false, CStdType.Integer) + 
                             buffer.getIdent(i) + 
-                            Util.staticNetworkSendSuffix() + ";\n");
+                            Util.networkSendSuffix(false) + ";\n");
                     
                     
                     //add declaration of pointer to neighbor (steady)
@@ -182,9 +182,8 @@ public class CommunicateAddrs
                     
                     //add the code to receive the address into the pointer (steady)
                     ((StringBuffer)functions.get(dram.getNeighboringTile())).append
-                    ("  " + Util.staticNetworkReceivePrefix() + 
-                            buffer.getIdent(i) + 
-                            Util.staticNetworkReceiveSuffix(CStdType.Integer) + ";\n");
+                    ("  " + buffer.getIdent(i) + " = " +  
+                            Util.networkReceive(false, CStdType.Integer) + ";\n");
                 }
                 
                 

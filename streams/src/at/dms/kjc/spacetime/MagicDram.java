@@ -176,26 +176,26 @@ public class MagicDram extends IODevice {
     public static String getBufferIdent(OutputTraceNode out, InputTraceNode in) {
         return out.getIdent() + "_" + in.getIdent();
     }
-}
 
-class Buffer {
-    public InputTraceNode in;
+    static class Buffer {
+        public InputTraceNode in;
 
-    public OutputTraceNode out;
+        public OutputTraceNode out;
 
-    public Buffer(InputTraceNode i, OutputTraceNode o) {
-        in = i;
-        out = o;
-    }
+        public Buffer(InputTraceNode i, OutputTraceNode o) {
+            in = i;
+            out = o;
+        }
 
-    public boolean equals(Object buf) {
-        if (!(buf instanceof Buffer))
+        public boolean equals(Object buf) {
+            if (!(buf instanceof Buffer))
+                return false;
+
+            Buffer b = (Buffer) buf;
+
+            if (this.in == b.in && this.out == b.out)
+                return true;
             return false;
-
-        Buffer b = (Buffer) buf;
-
-        if (this.in == b.in && this.out == b.out)
-            return true;
-        return false;
+        }
     }
 }

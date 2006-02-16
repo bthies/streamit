@@ -105,9 +105,10 @@ public class Rawify {
                      * createSwitchCodeLinear(filterNode,
                      * trace,filterInfo,init,primepump,tile,rawChip); } else {
                      */
-
-                    createSwitchCode(filterNode, trace, filterInfo, init,
-                                     primepump, filterInfo.isLinear(), tile, rawChip);
+                    createCommunicationCode(filterNode, trace, filterInfo, init,
+                        primepump, filterInfo.isLinear(), tile, rawChip);
+                    
+                    
                     // }
 
                     // used for debugging, nothing more
@@ -276,8 +277,8 @@ public class Rawify {
         // for each input to the input trace node
         for (int i = 0; i < input.getSources().length; i++) {
             // get the first non-redundant buffer
-            OffChipBuffer srcBuffer = InterTraceBuffer.getBuffer(
-                                                                 input.getSources()[i]).getNonRedundant();
+            OffChipBuffer srcBuffer = 
+                InterTraceBuffer.getBuffer(input.getSources()[i]).getNonRedundant();
             SpaceTimeBackend.println("Generate the DRAM read command for "
                                      + srcBuffer);
             int readWords = iterations * typeSize
@@ -408,9 +409,9 @@ public class Rawify {
             && filterNode.getPrevious().isInputTrace()) {
 
             // get this buffer or this first upstream non-redundant buffer
-            OffChipBuffer buffer = IntraTraceBuffer.getBuffer(
-                                                              (InputTraceNode) filterNode.getPrevious(), filterNode)
-                .getNonRedundant();
+            OffChipBuffer buffer = 
+                IntraTraceBuffer.getBuffer((InputTraceNode) filterNode.getPrevious(), 
+                        filterNode).getNonRedundant();
 
             if (buffer == null)
                 return;
@@ -430,8 +431,7 @@ public class Rawify {
             int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                   .getInputType()));
 
-            if (buffer.getDest() instanceof OutputTraceNode
-                && ((OutputTraceNode) buffer.getDest()).isFileReader())
+            if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
                 tile.getComputeCode().addFileCommand(true, init || primepump,
                                                      words, buffer);
             else
@@ -457,16 +457,6 @@ public class Rawify {
             if (buffer == null)
                 return;
 
-            // set to true if the only destination is a file, and
-            // everything in between is unnecessary
-            boolean fileDest = false;
-            if (output.oneOutput()
-                && OffChipBuffer.unnecessary(output)
-                && output.getSingleEdge().getDest().isFileWriter()
-                && OffChipBuffer.unnecessary(output.getSingleEdge()
-                                             .getDest()))
-                fileDest = true;
-
             int stage = 0;
             if (!init && !primepump)
                 stage = 3;
@@ -477,7 +467,7 @@ public class Rawify {
             if (items > 0) {
                 int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                       .getOutputType()));
-                if (fileDest)
+                if (output.onlyWritingToAFile())
                     tile.getComputeCode().addFileCommand(false,
                                                          init || primepump, words, buffer);
                 else {
@@ -496,11 +486,21 @@ public class Rawify {
         }
     }
 
-    // see if the switch for the filter needs disregard some of the input
-    // because
-    // it is not a multiple of the cacheline
-    private static void handleUnneededInput(FilterTraceNode traceNode,
-                                            boolean init, boolean primepump, int items) {
+    /**
+     * see if the switch for the filter needs disregard some of the input because 
+     * the data that we have received is not a multiple of the cacheline.   
+     * We are using the static network, the switch just disregards the data. 
+     * 
+     * @param rawChip
+     * @param traceNode
+     * @param init
+     * @param primepump
+     * @param items The number of items we sent in this stage.
+     * @param staticNet true if we are using the static network.
+     */
+    
+    private static void handleUnneededInputStatic(RawChip rawChip, FilterTraceNode traceNode,
+            boolean init, boolean primepump, int items) {
         InputTraceNode in = (InputTraceNode) traceNode.getPrevious();
 
         FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
@@ -511,24 +511,32 @@ public class Rawify {
 
         // see if it is a mulitple of the cache line
         if ((items * typeSize) % RawChip.cacheLineWords != 0) {
-            int dummyItems = RawChip.cacheLineWords
+            int dummyWords = RawChip.cacheLineWords
                 - ((items * typeSize) % RawChip.cacheLineWords);
             SpaceTimeBackend.println("Received items (" + (items * typeSize)
-                                     + ") not divisible by cache line, disregard " + dummyItems);
+                                     + ") not divisible by cache line, disregard " + dummyWords);
+            
             SwitchCodeStore.disregardIncoming(IntraTraceBuffer.getBuffer(in,
-                                                                         traceNode).getDRAM(), dummyItems, init || primepump);
+                    traceNode).getDRAM(), dummyWords, init || primepump);
         }
     }
 
-    // see if the switch needs to generate dummy values to fill a cache line in
-    // the streaming
-    // dram
-    private static void fillCacheLine(FilterTraceNode traceNode, boolean init,
+    /**
+     * See if the we need to generate dummy values to fill a cache line in 
+     * the streaming dram. This is necessary because all transfers must cache-line 
+     * aligned.  We are using the static network, so the switch will send the
+     * dummy values.
+     * 
+     * @param rawChip
+     * @param traceNode
+     * @param init
+     * @param primepump
+     * @param items
+     */
+    private static void fillCacheLineStatic(RawChip rawChip, FilterTraceNode traceNode, boolean init,
                                       boolean primepump, int items) {
-
         OutputTraceNode out = (OutputTraceNode) traceNode.getNext();
-        FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
-
+     
         // get the number of items sent
         // int items = filterInfo.totalItemsSent(init, primepump), typeSize;
         int typeSize;
@@ -536,16 +544,17 @@ public class Rawify {
         typeSize = Util.getTypeSize(traceNode.getFilter().getOutputType());
         // see if a multiple of cache line, if not generate dummy values...
         if ((items * typeSize) % RawChip.cacheLineWords != 0) {
-            int dummyItems = RawChip.cacheLineWords
+            int dummyWords = RawChip.cacheLineWords
                 - ((items * typeSize) % RawChip.cacheLineWords);
             SpaceTimeBackend.println("Sent items (" + (items * typeSize)
-                                     + ") not divisible by cache line, add " + dummyItems);
-
-            SwitchCodeStore.dummyOutgoing(IntraTraceBuffer.getBuffer(traceNode,
-                                                                     out).getDRAM(), dummyItems, init || primepump);
+                                     + ") not divisible by cache line, add " + dummyWords);
+            
+            SwitchCodeStore.dummyOutgoing
+            (IntraTraceBuffer.getBuffer(traceNode,
+                    out).getDRAM(), dummyWords, init || primepump);
         }
     }
-
+    
     /**
      * Generate the switch code necessary to perform joining
      * of a inputtracenode's input.  At this point all the inputs are in located at their
@@ -1547,8 +1556,12 @@ public class Rawify {
         }
     }
 
+    
     /**
-     * Create the intra-trace switch code for the filter trace node.
+     * Create the intra-trace communication code for the filter trace node.  
+     * This function will create code for either the gdn or the static network
+     * depending on the network desired.  It will also keep transfers cache-line
+     * sized when necessary.
      *  
      * @param node
      * @param parent
@@ -1559,38 +1572,53 @@ public class Rawify {
      * @param tile
      * @param rawChip
      */
-    private static void createSwitchCode(FilterTraceNode node, Trace parent,
-                                         FilterInfo filterInfo, boolean init, boolean primePump,
-                                         boolean linear, RawTile tile, RawChip rawChip) {
+    private static void createCommunicationCode(FilterTraceNode node, Trace parent,
+                                             FilterInfo filterInfo, boolean init, boolean primePump,
+                                             boolean linear, RawTile tile, RawChip rawChip) {
         int mult, sentItems = 0;
 
         // don't cache align if the only source is a file reader
         boolean cacheAlignSource = true;
+        // should we generate switch receive code
+        boolean switchReceiveCode = true;
         if (node.getPrevious() instanceof InputTraceNode) {
-            OffChipBuffer buf = IntraTraceBuffer.getBuffer(
-                                                           (InputTraceNode) node.getPrevious(), node)
-                .getNonRedundant();
-            if (buf != null && buf.getDest() instanceof OutputTraceNode
-                && ((OutputTraceNode) buf.getDest()).isFileReader())
+            OffChipBuffer buf = 
+                IntraTraceBuffer.getBuffer((InputTraceNode) node.getPrevious(), node);
+
+            //don't worry about handling non-cache-sized transfers if the
+            //source is a file reader, use the upstream non-redundant buffer
+            //for this because it is the one that is connect to the file reader
+            if (((InputTraceNode)node.getPrevious()).onlyFileInput())
                 cacheAlignSource = false;
+            
+            //don't generate switch code for receiving if this filter is the
+            //first in a trace and it gets its input from the dynamic network
+            if (buf != null && !buf.isStaticNet())
+                switchReceiveCode = false;
         }
 
-        // don't cache align the dest if the true dest is a file writer
+        //should we generate switch send code??
+        boolean switchSendCode = true;
+        //shoud we cache align the sending code       
         boolean cacheAlignDest = true;
         if (node.getNext() instanceof OutputTraceNode) {
             OutputTraceNode output = (OutputTraceNode) node.getNext();
-            if (output.oneOutput()
-                && OffChipBuffer.unnecessary(output)
-                && output.getSingleEdge().getDest().isFileWriter()
-                && OffChipBuffer.unnecessary(output.getSingleEdge()
-                                             .getDest()))
+            //don't cache align the dest if the true dest is a file writer
+            //that is not split
+            if (output.onlyWritingToAFile())
                 cacheAlignDest = false;
+            
+            //don't generate switch code for sending if the buffer is 
+            //allocated to use the gdn
+            if (!IntraTraceBuffer.getBuffer(node, output).isStaticNet())
+                switchSendCode = false;
         }
 
-       mult = filterInfo.getMult(init, primePump);
+        
+        mult = filterInfo.getMult(init, primePump);
 
 
-        // switch Compression only in steady state!!!
+        // should we compress the switch code??
         boolean switchCompression = SWITCH_COMP && mult > SC_THRESHOLD && !init;
 
         if (!(init || primePump || !linear)) { // Linear switch code in
@@ -1616,25 +1644,26 @@ public class Rawify {
             sentItems = filterInfo.push * mult;
 
             filterSwitchCodeCompressed(mult, node, filterInfo, init, primePump,
-                                       tile, rawChip);
+                                       tile, rawChip, switchSendCode, switchReceiveCode);
         } else {
             for (int i = 0; i < mult; i++) {
-                // append the receive code
-                createReceiveCode(i, node, filterInfo, init, primePump, tile,
-                                  rawChip, false);
-                // append the send code
-                sentItems += createSendCode(i, node, filterInfo, init,
+                // append the receive code but only if we are using the static net                
+                if (switchReceiveCode)
+                    createReceiveCode(i, node, filterInfo, init, primePump, tile,
+                            rawChip, false);
+                // append the send code, but only if we are using the static net
+                if (switchSendCode)
+                    sentItems += createSendCode(i, node, filterInfo, init,
                                             primePump, tile, rawChip, false);
             }
         }
-
-        // now we must take care of the remaining items on the input tape
-        // after the initialization phase if the upstream filter produces more
-        // than
-        // we consume in init
+        
         if (init)
             System.out.println("REMAINING ITEMS: " + filterInfo.remaining);
-        if (init && filterInfo.remaining > 0) {
+        // now we must take care of the generating switch code for the remaining items 
+        // on the input tape after the initialization phase if the upstream filter 
+        // produces more than we consume in init 
+        if (init && filterInfo.remaining > 0 && switchReceiveCode) {
             appendReceiveInstructions(node, filterInfo.remaining
                                       * Util.getTypeSize(node.getFilter().getInputType()),
                                       filterInfo, init, false, tile, rawChip);
@@ -1646,16 +1675,21 @@ public class Rawify {
         
         // generate code to fill the remainder of the cache line
         if (!KjcOptions.magicdram && node.getNext().isOutputTrace()
-            && cacheAlignDest)
-            fillCacheLine(node, init, primePump, sentItems);
-
+            && cacheAlignDest && switchSendCode) {
+            //perform the filling in the switch if we are using the static net
+            fillCacheLineStatic(rawChip, node, init, primePump, sentItems);
+        }
+        
         // because all dram transfers must be multiples of cacheline
         // generate code to disregard the remainder of the transfer
         if (!KjcOptions.magicdram && node.getPrevious().isInputTrace()
-            && cacheAlignSource)
-            handleUnneededInput(node, init, primePump, filterInfo
-                                .totalItemsReceived(init, primePump));
-
+            && cacheAlignSource && switchReceiveCode) {
+            //perform the disregarding in the switch if we are static
+            handleUnneededInputStatic(rawChip, node, init, primePump, 
+                    filterInfo.totalItemsReceived(init, primePump)); 
+                    
+          
+        }
     }
 
     /**
@@ -1668,23 +1702,32 @@ public class Rawify {
      * @param primePump
      * @param tile
      * @param rawChip
+     * @param switchSendCode true if we are using the static net to for sending
+     * @param switchReceiveCode true if we are using the static net to for receiving
      */
     private static void filterSwitchCodeCompressed(int mult,
-                                                   FilterTraceNode node, FilterInfo filterInfo, boolean init,
-                                                   boolean primePump, RawTile tile, RawChip rawChip) {
+            FilterTraceNode node, FilterInfo filterInfo, boolean init,
+            boolean primePump, RawTile tile, RawChip rawChip, 
+            boolean switchSendCode, boolean switchReceiveCode) {
+        
         assert mult < 65535;
-
         assert !init;
 
-        // the items this filter is receiving for this iteration
-        int itemsReceiving = filterInfo.itemsNeededToFire(0, init);
+        //if there is nothing to do, just leave, this filter uses the gdn for both i/o
+        if (!switchSendCode && !switchReceiveCode)
+            return;
+        
+        // the items this filter is receiving for this iteration, if we are using the gdn
+        // then set to 0
+        int itemsReceiving = switchReceiveCode ? filterInfo.itemsNeededToFire(0, init) : 0; 
         // get the number of items sending on this iteration, only matters
         // if init and if twostage
-        int itemsSending = filterInfo.itemsFiring(0, init);
+        int itemsSending = switchSendCode ? filterInfo.itemsFiring(0, init) : 0;
 
         // are we going to compress the individual send and receive
         // instructions?
-        boolean sendCompression = (itemsSending > SC_INS_THRESH), receiveCompression = (itemsReceiving > SC_INS_THRESH);
+        boolean sendCompression = (itemsSending > SC_INS_THRESH), 
+            receiveCompression = (itemsReceiving > SC_INS_THRESH);
 
         Label receiveLabel = new Label(), sendLabel = new Label(), multLabel = new Label();
 
@@ -1710,9 +1753,11 @@ public class Rawify {
             tile.getSwitchCode().appendIns(receiveLabel, (init || primePump));
 
         // append the receive code for 1 item if receive compression or pop
-        // items if not
-        createReceiveCode(0, node, filterInfo, init, primePump, tile, rawChip,
-                          receiveCompression);
+        // items if not, don't generate any code if there are no items to receive
+        // over static net
+        if (itemsReceiving > 0)
+            createReceiveCode(0, node, filterInfo, init, primePump, tile, rawChip,
+                    receiveCompression);
 
         // generate the loop back for the receive
         if (receiveCompression)
@@ -1724,9 +1769,10 @@ public class Rawify {
             tile.getSwitchCode().appendIns(sendLabel, (init || primePump));
 
         // append the send ins for 1 item if send compression or push items if
-        // not
-        createSendCode(0, node, filterInfo, init, primePump, tile, rawChip,
-                       sendCompression);
+        // not, don't generate any items if there are no items to send over static
+        if (itemsSending > 0)
+            createSendCode(0, node, filterInfo, init, primePump, tile, rawChip,
+                    sendCompression);
 
         // generate the loop back for the send
         if (sendCompression)

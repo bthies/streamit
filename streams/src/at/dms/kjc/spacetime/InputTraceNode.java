@@ -154,8 +154,20 @@ public class InputTraceNode extends TraceNode {
         return false;
     }
 
+    /**         
+     * @return true if this input trace node reads from a single source
+     * and the source is a file device.
+     */
     public boolean onlyFileInput() {
-        return (oneInput() && sources[0].getSrc().isFileReader());
+        // get this buffer or this first upstream non-redundant buffer
+        OffChipBuffer buffer = 
+            IntraTraceBuffer.getBuffer(this, getNextFilter()).getNonRedundant();
+        //if not a file reader, then we might have to align the dest
+        if (buffer.getDest() instanceof OutputTraceNode
+                && ((OutputTraceNode) buffer.getDest()).isFileReader())
+            return true;
+        
+        return false;
     }
 
     public CType getType() {

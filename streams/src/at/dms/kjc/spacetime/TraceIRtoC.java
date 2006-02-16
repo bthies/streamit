@@ -27,6 +27,11 @@ public class TraceIRtoC extends ToC
     
     /** the name of the var that holds the dynamic message header */
     public static final String DYNMSGHEADER = "__DYNMSGHEADER__";
+    /** a var name used to receive data from the dram on the compute proc 
+     * over the gdn that is not needed but only generated because we have
+     * cache-line sized transfers from drams.
+     */ 
+    public static final String DUMMY_VOLATILE = "__dummy_volatile";
     
     //the raw tile we are generating code for
     private RawTile tile;
@@ -146,6 +151,7 @@ public class TraceIRtoC extends ToC
         p.print("#include <math.h>\n\n");
         
         
+        
         //if we are number gathering and this is the sink, generate the dummy
         //vars for the assignment of the print expression.
         /*
@@ -171,6 +177,11 @@ public class TraceIRtoC extends ToC
             p.print("int " + Util.CSTOINTVAR + ";\n");
             p.print("int " + Util.CSTIINTVAR + ";\n");
         }
+        
+        //print the declaration for the var used to receive 
+        //words that are sent over from the dram but not used.  Due to 
+        //cache-line multiple transfers.
+        p.print("volatile int " + DUMMY_VOLATILE + ";\n");
         
         //if there are structures in the code, include
         //the structure definition header files

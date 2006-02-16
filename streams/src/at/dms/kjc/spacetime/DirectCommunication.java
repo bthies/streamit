@@ -142,7 +142,7 @@ public class DirectCommunication extends RawExecutionCode
         //all the pop statements in the work function to function calls
         filter.getWork().accept(new DirectConvertCommunication(gdnInput));
         //conver all the push statements into method calls
-        ConvertPushesToMethCall.doit(filterInfo, gdnInput);
+        ConvertPushesToMethCall.doit(filterInfo, gdnOutput);
         
         return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
     }
@@ -196,7 +196,9 @@ public class DirectCommunication extends RawExecutionCode
         
         //add the calls for the work function in the initialization stage
         statements.addStatement(generateInitWorkLoop(filter));
-    
+        //add the necessary handling of dram cache alignment over the gdn
+        statements.addStatement(gdnCacheAlign(true));
+        
         return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
                                       CStdType.Void,
                                       initStage + uniqueID,
@@ -237,30 +239,13 @@ public class DirectCommunication extends RawExecutionCode
     {
         JBlock block = new JBlock(null, new JStatement[0], null);
         FilterContent filter = filterInfo.filter;
-        
-        //if we have gdn output then we have to set up the gdn packet header for
-        //each gdn send
-        if (gdnOutput) {
-            block.addStatement(setDynMsgHeader());
-        }
-        
-        //inline the work function in a while loop
         JBlock workBlock = new JBlock(null, new JStatement[0], null);
+        
+        //if we are compressing the switch code, then send the rates to the switch
+        sendRatesToSwitch(filterInfo, workBlock);
+        
         workBlock.addStatement(getWorkFunctionCall(filter));
-    
-        //if we are compressing the sends and receives on the switch for this
-        //filter, we must send them now
-        if (steady && Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
-            //if we are compressing the receives, send the trip count to the switch
-            if (filterInfo.itemsNeededToFire(0, false) > Rawify.SC_INS_THRESH) {
-                workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsNeededToFire(0, false)));
-            }
-            //if we are compressing the sends, send the trip count to the switch
-            if (filterInfo.itemsFiring(0, false) > Rawify.SC_INS_THRESH) {
-                workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsFiring(0, false)));
-            }
-        }
-
+            
         //create the for loop that will execute the work function
         //local variable for the work loop
         JVariableDefinition loopCounter = new JVariableDefinition(null,
@@ -268,16 +253,22 @@ public class DirectCommunication extends RawExecutionCode
                                                                   CStdType.Integer,
                                                                   workCounter,
                                                                   null);
-    
-    
-
         JStatement loop = 
             makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
     
         block.addStatement(new JVariableDeclarationStatement(null,
                                                              loopCounter,
                                                              null));
+        
+        //if we have gdn output then we have to set up the gdn packet header for
+        //each gdn send
+        if (gdnOutput) {
+            block.addStatement(setDynMsgHeader());
+        }
+        
         block.addStatement(loop);
+        //add the necessary handling of dram cache alignment over the gdn
+        block.addStatement(gdnCacheAlign(false));
         /*
           return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
           CStdType.Void,

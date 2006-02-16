@@ -226,6 +226,22 @@ public class OutputTraceNode extends TraceNode {
         return fileOutputs;
     }
 
+    /**
+     * @return True if this output trace node has only one output and
+     * that output is directly writing to a file reader with no non-redundant
+     * buffers in between.
+     */
+    public boolean onlyWritingToAFile() {
+        if (oneOutput()
+                && OffChipBuffer.unnecessary(this)
+                && getSingleEdge().getDest().isFileWriter()
+                && OffChipBuffer.unnecessary(getSingleEdge()
+                                     .getDest()))
+            return true;
+        return false;
+                                   
+    }
+    
     /*
      * public int itemsReceived(boolean init, boolean primepump) { return
      * FilterInfo.getFilterInfo(getPrevFilter()).totalItemsSent(init,

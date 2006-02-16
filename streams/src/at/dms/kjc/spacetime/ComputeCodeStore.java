@@ -96,6 +96,72 @@ public class ComputeCodeStore {
             steadyLoop.addStatement(new JExpressionStatement(null, call, null));
     }
 
+    /**
+     * Generate code on the compute process to send over <words> words of data
+     * using a header that was already set previously.
+     * 
+     * @param dev
+     * @param words The number of dummy words to send
+     * @param init
+     */
+    public void dummyOutgoing(IODevice dev, int words, boolean init) {
+        JBlock block = new JBlock();
+
+        for (int i = 0; i < words; i++) {
+            //send the header
+            JStatement sendHeader = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JFieldAccessExpression(TraceIRtoC.DYNMSGHEADER)));
+            block.addStatement(sendHeader);
+            //send over the opcode 13 to tell the dram that this is a data packet
+            JStatement sendDataOpcode = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JIntLiteral(RawChip.DRAM_GDN_DATA_OPCODE)));
+            block.addStatement(sendDataOpcode);
+            //send over negative one as the dummy value
+            JStatement sendMinusOne = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JIntLiteral(-1)));
+            block.addStatement(sendMinusOne);
+        }
+        
+        //append the statements to the appropriate code schedule
+        if (init)
+            initBlock.addStatement(block);
+        else 
+            steadyLoop.addStatement(block);
+    }
+    
+    /**
+     * Generate code to receive <words> words into a dummy volatile variable on 
+     * the compute processor from gdn.
+     * 
+     * @param dev
+     * @param words The number of words to disregard
+     * @param init Which schedule should be append this code to?
+     */
+    public void disregardIncoming(IODevice dev, int words, boolean init) {
+        JBlock block = new JBlock();
+
+        for (int i = 0; i < words; i++) {
+            //receive the word into the dummy volatile variable
+            JStatement receiveDummy = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
+                                new JFieldAccessExpression(Util.CGNIINTVAR)));
+            block.addStatement(receiveDummy);
+        }
+        
+        //append the statements to the appropriate code schedule
+        if (init)
+            initBlock.addStatement(block);
+        else 
+            steadyLoop.addStatement(block);
+    }
+    
     // add a dram command to the compute code at the current time
     // if read is false, then it is a write
     // stage 0 = init, 1 = primepump init buffers, 2 = primepump steady buffers

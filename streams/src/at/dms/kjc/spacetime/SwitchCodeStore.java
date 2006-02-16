@@ -205,26 +205,41 @@ public class SwitchCodeStore {
             }
         }
     }
-
-    public static void disregardIncoming(IODevice dev, int items, boolean init) 
+    
+    /**
+     * Generate code on the switch neigboring <dev> to disregard the input from
+     * the dev for <words> words.
+     * 
+     * @param dev
+     * @param words
+     * @param init
+     */
+    public static void disregardIncoming(IODevice dev, int words, boolean init) 
     {
         //get the neighboring tile 
         RawTile neighbor = dev.getNeighboringTile();
         //generate instructions to disregard the items and place 
         //them in the right vector
-        for (int i = 0; i < items; i++) {
+        for (int i = 0; i < words; i++) {
             MoveIns ins = new MoveIns(SwitchReg.R1,
                                       SwitchIPort.getIPort(neighbor.getRawChip().getDirection(neighbor, dev)));
             neighbor.getSwitchCode().appendIns(ins, init);
         }
     }
     
-
-    public static void dummyOutgoing(IODevice dev, int items, boolean init) 
+    /**
+     * Generate code on the switch neighboring <dev> to send dummy values to <dev> for
+     * <words> words. 
+     * 
+     * @param dev
+     * @param words
+     * @param init
+     */
+    public static void dummyOutgoing(IODevice dev, int words, boolean init) 
     {
         //get the neighboring tile 
         RawTile neighbor = dev.getNeighboringTile();
-        for (int i = 0; i < items; i++) {
+        for (int i = 0; i < words; i++) {
             RouteIns route = new RouteIns(neighbor);
             route.addRoute(SwitchReg.R1 , dev);
             neighbor.getSwitchCode().appendIns(route, init);

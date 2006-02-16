@@ -133,8 +133,18 @@ public abstract class RawExecutionCode
     
     public abstract JFieldDeclaration[] getVarDecls();
     public abstract JMethodDeclaration[] getHelperMethods();
+    /** 
+     * @return the method we should call to execute the init stage.
+     */
     public abstract JMethodDeclaration getInitStageMethod();
+    /**
+     * @return The block we should inline to execute the steady-state
+     */
     public abstract JBlock getSteadyBlock();
+    /**
+     * @return The method to call for one execution of the filter in the
+     * prime pump stage.
+     */
     public abstract JMethodDeclaration getPrimePumpMethod();
     
     /**
@@ -252,6 +262,141 @@ public abstract class RawExecutionCode
         block.addStatement(new JExpressionStatement(ass));
         
         return block;
+    }
+    
+    /**
+     * If we are in the prime pump or the steady state, we may be compressing
+     * the switch code and if so, we need to send the push rate and the pop rate
+     * to the switch for loop bounds.  This function will decide if we need to do that
+     * and if so, do it (append the ins to <workBlock>).
+     * 
+     * @param filterInfo
+     * @param workBlock
+     */
+    protected void sendRatesToSwitch(FilterInfo filterInfo, JBlock workBlock) {
+        //if we are compressing the sends and receives on the switch for this
+        //filter, we must send them now
+        if (Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
+            //if we are compressing the receives, send the trip count to the switch
+            //don't do this if are using the gdn
+            if (filterInfo.itemsNeededToFire(0, false) > Rawify.SC_INS_THRESH &&
+                    !gdnInput) {
+                workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsNeededToFire(0, false)));
+            }
+            //if we are compressing the sends, send the trip count to the switch
+            //don't do this if we are using the gdn
+            if (filterInfo.itemsFiring(0, false) > Rawify.SC_INS_THRESH &&
+                    !gdnOutput) {
+                workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsFiring(0, false)));
+            }
+        }
+    }
+    
+    /**
+     * @param words
+     * @return Return code to receive <words> words into a dummy variable defined in 
+     * traceIRToC over the gdn.
+     */
+    public JBlock gdnDisregardIncoming(int words) {
+        JBlock block = new JBlock();
+
+        for (int i = 0; i < words; i++) {
+            //receive the word into the dummy volatile variable
+            JStatement receiveDummy = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
+                                new JFieldAccessExpression(Util.CGNIINTVAR)));
+            block.addStatement(receiveDummy);
+        }
+        return block;
+    }
+    
+    /**
+     * @param words
+     * @return Return code to send <words> words over the gdn using a predefined
+     * header. 
+     */
+    public JBlock gdnDummyOutgoing(int words) {
+        JBlock block = new JBlock();
+
+        for (int i = 0; i < words; i++) {
+            //send the header
+            JStatement sendHeader = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JFieldAccessExpression(TraceIRtoC.DYNMSGHEADER)));
+            block.addStatement(sendHeader);
+            //send over the opcode 13 to tell the dram that this is a data packet
+            JStatement sendDataOpcode = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JIntLiteral(RawChip.DRAM_GDN_DATA_OPCODE)));
+            block.addStatement(sendDataOpcode);
+            //send over negative one as the dummy value
+            JStatement sendMinusOne = 
+                new JExpressionStatement(
+                        new JAssignmentExpression(new JFieldAccessExpression(Util.CGNOINTVAR),
+                                new JIntLiteral(-1)));
+            block.addStatement(sendMinusOne);
+        }
+        return block;
+    }
+    
+    /**
+     * Generate code to complete the dram transactions because we have to align
+     * dram transfers to cache-line sized transfers.  Only do this if we are 
+     * sending or receiving over the gdn. 
+     * 
+     * @param wordsSent The number of words sent during the execution of the stage.
+     * @param wordsReceived The number of words received during the execution of the
+     * stage.
+     * 
+     * @param init Are we in the init stage?  Used to calculate the number of items we
+     * generate and receive.
+     * 
+     * @return
+     * 
+     */
+    protected JBlock gdnCacheAlign(boolean init) {
+        JBlock block = new JBlock();
+        
+        if (gdnInput) {
+            int wordsReceived = filterInfo.totalItemsReceived(init, false) * 
+                Util.getTypeSize(filterInfo.filter.getInputType());
+            //first make sure that we are not receiving code from a file
+            //reader, because we do not align file readers
+            InputTraceNode input = (InputTraceNode)filterInfo.traceNode.getPrevious();            
+            //if not a file reader, then we might have to align the dest
+            if (!input.onlyFileInput() && wordsReceived > 0) {
+                //calculate the number of words that we have to send and receive in 
+                //order to complete the dram transactions
+                int recAlignWords = RawChip.cacheLineWords
+                - ((wordsReceived) % RawChip.cacheLineWords);
+                
+                //generate the code to disregard incoming data
+                block.addStatement(gdnDisregardIncoming(recAlignWords));
+            }
+        }
+        
+        if (gdnOutput) {
+            int wordsSent = Util.getTypeSize(filterInfo.filter.getOutputType()) *
+                filterInfo.totalItemsSent(init, false);
+            
+            OutputTraceNode output = (OutputTraceNode)filterInfo.traceNode.getNext();
+            
+            //first make sure that we are not writing eventually to a file writer
+            //file writers don't need to be aligned
+            if (!output.onlyWritingToAFile() && wordsSent > 0) {
+                int sendAlignWords = RawChip.cacheLineWords - 
+                ((wordsSent) % RawChip.cacheLineWords);
+
+                //genereate the code to send dummy values 
+                block.addStatement(gdnDummyOutgoing(sendAlignWords));
+            }
+        }
+        
+        return block;
+        
     }
     
 }

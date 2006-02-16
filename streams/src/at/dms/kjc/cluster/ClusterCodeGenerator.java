@@ -255,11 +255,11 @@ class ClusterCodeGenerator {
         //  | Read / Write Thread         |
         //  +=============================+
 
-
         p.println("void save_peek_buffer__"+id+"(object_write_buffer *buf);");
         p.println("void load_peek_buffer__"+id+"(object_write_buffer *buf);");
         p.println("");
 
+	p.println("#ifndef __CLUSTER_STANDALONE\n");
         p.println("void __write_thread__"+id+"(object_write_buffer *buf) {");
 
         for (Iterator i = data_in.iterator(); i.hasNext();) {
@@ -610,6 +610,9 @@ class ClusterCodeGenerator {
         }
 
         p.println("}");
+
+	p.println("#endif // __CLUSTER_STANDALONE\n");
+
         p.println("");
 
         return;
@@ -637,6 +640,7 @@ class ClusterCodeGenerator {
             }
         }
         
+	r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void __init_state_"+id+"() {\n");
 
         if (!isEliminated) {
@@ -655,6 +659,7 @@ class ClusterCodeGenerator {
         //r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
 
         r.add("}\n");
+	r.add("#endif // __CLUSTER_STANDALONE\n");
         r.add("\n");
 
         //  +=============================+
@@ -850,6 +855,7 @@ class ClusterCodeGenerator {
         //  | Run Function                |
         //  +=============================+
 
+	r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void run_"+id+"() {\n");
 
         r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
@@ -897,6 +903,7 @@ class ClusterCodeGenerator {
         r.add("  pthread_exit(NULL);\n");
 
         r.add("}\n");
+	r.add("#endif // __CLUSTER_STANDALONE\n");
 
         return r;
     }

@@ -17,7 +17,11 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.kjc.spacetime.switchIR.*;
 
-/** A class with useful functions that span classes * */
+/**
+ *  A class with useful functions that span classes. 
+ * 
+ * 
+**/
 public class Util {
     public static String CSTOINTVAR = "__csto_integer__";
 
@@ -112,6 +116,13 @@ public class Util {
         }
         return ret;
     }
+    
+    /**
+     * @param dynamic
+     * @param tapeType
+     * @return The code to receive a item from either the dynamic network 
+     * or the static network based on the type.
+     */
     public static String networkReceive(boolean dynamic, CType tapeType) {
         assert KjcOptions.altcodegen;
         if (dynamic) {
@@ -127,6 +138,14 @@ public class Util {
         }
     }
 
+    /**
+     * 
+     * @param dynamic
+     * @param tapeType
+     * @return The prefix for sending an item over either the dynamic network or
+     * the static network of the given type.  Should be used before the value to send
+     * over the network is generated.
+     */
     public static String networkSendPrefix(boolean dynamic, CType tapeType) {
         assert KjcOptions.altcodegen;
         StringBuffer buf = new StringBuffer();
@@ -146,6 +165,11 @@ public class Util {
         return buf.toString();
     }
 
+    /**
+     * @param dynamic
+     * @return The suffix to append after the value is generated for 
+     * a network send.
+     */
     public static String networkSendSuffix(boolean dynamic) {
         assert KjcOptions.altcodegen;
         return "";

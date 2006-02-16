@@ -643,20 +643,14 @@ public class TraceIRtoC extends ToC
             JExpression val) 
     {
 
-        //if this filter is the sink of a ssg, then we have to produce
-        //dynamic network code!!!, check this by using some util methods.
-        
+        //if this send is over the dynamic network, send the header
+        //also send over opcode 13 to inform the dram that this is 
+        //a data packet
         if (dynamicOutput) {
             p.print(Util.CGNOINTVAR + " = " + DYNMSGHEADER + ";");
-            if (tapeType.isFloatingPoint())
-                p.print(Util.CGNOFPVAR);
-            else
-                p.print(Util.CGNOINTVAR);
-            p.print(" = (" + tapeType + ")");
-            if (tapeType != val.getType())
-                p.print("(" + tapeType + ")");
-            val.accept(this);
-            return;
+            p.print(Util.networkSendPrefix(true, CStdType.Integer));
+            p.print(RawChip.DRAM_GDN_DATA_OPCODE);
+            p.print(Util.networkSendSuffix(true) + ";");
         }
         
         p.print(Util.networkSendPrefix(dynamicOutput, tapeType));

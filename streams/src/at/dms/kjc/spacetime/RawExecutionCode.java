@@ -215,8 +215,14 @@ public abstract class RawExecutionCode
         assert !buf.isStaticNet();
         //get the type size
         int size = Util.getTypeSize(filterInfo.filter.getOutputType());
-        assert size < 31 : "Type size too large to fit in single dynamic network packet";
-
+        
+        //add one to the size because we need to send over the opcode 13 
+        //with each pkt to inform the dram that this is a data payload
+        size += 1;
+        
+        //make sure that each element can fit in a gdn pkt         
+        assert size <= RawChip.MAX_GDN_PKT_SIZE : "Type size too large to fit in single dynamic network packet";
+        
         JBlock block = new JBlock(null, new JStatement[0], null);
         //construct the args for the dyn header construction function
         

@@ -27,8 +27,17 @@ public class RawChip {
 
     /** the name of the function that constructs dynamic headers in raw.h */
     public static final String ConstructDynHdr = "construct_dyn_hdr";
+    /** the maximum packet size of a gdn packet (not including the header) */
+    public static final int MAX_GDN_PKT_SIZE = 31;
+    /** the opcode that for a packet of data for the dram send over the gdn */
+    public static final int DRAM_GDN_DATA_OPCODE = 13;
     
-    
+    /**
+     * Initialize a <xsize> x <ysize> raw chip.
+     *   
+     * @param xSize
+     * @param ySize
+     */
     public RawChip(int xSize, int ySize) {
         gXSize = xSize;
         gYSize = ySize;

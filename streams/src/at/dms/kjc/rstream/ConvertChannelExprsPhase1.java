@@ -298,8 +298,8 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
         //completed...
         topLevelPop.put(self, new Integer(currentTopLevelPop));
         //add 1 to the pop count for both the loop and the top level
-        currentTopLevelPop += 1;
-        currentLoopPop += 1;
+        currentTopLevelPop += self.getNumPop();
+        currentLoopPop += self.getNumPop();
     }
     
     /**

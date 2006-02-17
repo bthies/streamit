@@ -182,7 +182,7 @@ class CConfigSplitJoin extends CConfigContainer {
                 int pop = childConfig(i).getFusionInfo().getPopInt();
                 int split_weight = split_join.getSplitter().getWeight(i);
                 int m = pop / gcd(split_weight, pop); // multiple for splitter
-                mult = mult * m / gcd(mult, m);
+                mult = (mult / gcd(mult, m)) * m;
             }
 
             for (int i = 0; i < cont.size(); i++) {
@@ -205,8 +205,9 @@ class CConfigSplitJoin extends CConfigContainer {
             for (int i = 0; i < cont.size(); i++) {
                 int push = childConfig(i).getFusionInfo().getPushInt();
                 int join_weight = split_join.getJoiner().getWeight(i);
-                int m = push / gcd(join_weight, push); // multiple for joiner
-                mult = mult * m / gcd(mult, m);
+		
+		int m = push / gcd(join_weight, push); // multiple for joiner
+                mult = (mult / gcd(mult, m)) * m;
             }
 
             for (int i = 0; i < cont.size(); i++) {
@@ -231,7 +232,7 @@ class CConfigSplitJoin extends CConfigContainer {
                     // from branch 1
                     int items = pop * fmult[j];
 
-                    int lcd = items * splitter_weight / gcd(items, splitter_weight);
+                    int lcd = (items / gcd(items, splitter_weight)) * splitter_weight;
         
                     s_mult = lcd / splitter_weight; 
 

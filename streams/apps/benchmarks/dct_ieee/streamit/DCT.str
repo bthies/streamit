@@ -264,7 +264,7 @@ int->int filter iDCT_2D_reference_coarse(int size) {
                 for (k = 0; k < size; k++) {
                     block_y += coeff[k][i] * block_x[k][j];
                 }
-                block_y = floor(block_y[i][j] + 0.5);
+                block_y = floor(block_y + 0.5);
                 push((int) block_y);
             }
     }
@@ -309,7 +309,7 @@ int->int filter DCT_2D_reference_coarse(int size) {
                 for (k = 0; k < size; k++) {	
                     block_y += coeff[i][k] * block_x[k][j];
                 }
-                block_y = floor(block_y[i][j] + 0.5);
+                block_y = floor(block_y + 0.5);
                 push((int) block_y);                
             }
     }

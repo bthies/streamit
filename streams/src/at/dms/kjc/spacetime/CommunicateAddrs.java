@@ -195,7 +195,7 @@ public class CommunicateAddrs
         StringBuffer buf = new StringBuffer();
         String temp = "__temp__";
         
-        assert buffer.getRotationLength() > 0;
+        assert buffer.getRotationLength() > 0 : buffer;
         
         String rotType = rotTypeDefPrefix + buffer.getType().toString();
         

@@ -253,6 +253,8 @@ public abstract class OffChipBuffer {
       
         buffer.rotationLength = length;
         
+        System.out.println("Setting rotation length: " + buffer + " " + length);
+        
         //this is buffer is redundant, meaning it is just a copy of its its upstream 
         //output trace node, then we have to set the rotation for its upstream
         //output trace node!!

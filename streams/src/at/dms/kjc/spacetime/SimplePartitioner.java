@@ -25,7 +25,7 @@ public class SimplePartitioner extends Partitioner {
     // (TRASHOLD)
     private static final boolean IGNORE_WORK_EST = false;
     //if true, then each filter occupies its own trace, useful for debugging...
-    private static final boolean ONE_FILTER_TRACES = true;
+    private static final boolean ONE_FILTER_TRACES = false;
     
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
                              LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {

@@ -213,7 +213,7 @@ public class ManualDRAMPortAssignment {
                         break;
                     }
                 }
-                assert dram != null : "Could not find a dram to attach file writer to";
+                assert dram != null : "Could not find a dram to attach file writer to " + tile;
 
                 // set the port for the buffer
                 buf.setDRAM(dram);

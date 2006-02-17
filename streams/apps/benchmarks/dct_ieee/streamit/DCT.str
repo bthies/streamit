@@ -260,7 +260,7 @@ int->int filter iDCT_2D_reference_coarse(int size) {
 
         for (i = 0; i < size; i++) {
             for (j = 0; j < size; j++)
-                float block_y = 0;
+                float block_y = 0.0;
                 for (k = 0; k < size; k++) {
                     block_y += coeff[k][i] * block_x[k][j];
                 }

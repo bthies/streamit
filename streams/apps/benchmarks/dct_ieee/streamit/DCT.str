@@ -260,14 +260,16 @@ int->int filter iDCT_2D_reference_coarse(int size) {
 
         for (i = 0; i < size; i++) {
             for (j = 0; j < size; j++) {
-	        float block_y = 0.0;
+                float block_y = 0.0;
                 for (k = 0; k < size; k++) {
                     block_y += coeff[k][i] * block_x[k][j];
                 }
                 block_y = floor(block_y + 0.5);
                 push((int) block_y);
             }
-	}
+        }
+
+        for (i = 0; i < size*size; i++) pop();
     }
 }
 
@@ -296,24 +298,27 @@ int->int filter DCT_2D_reference_coarse(int size) {
         float[size][size] block_x;
         int i, j, k;
 
+
         for (i = 0; i < size; i++)
             for (j = 0; j < size; j++) {
                 block_x[i][j] = 0.0;
-                for (k = 0; k < size; k++) {	
-                    block_x[i][j] += coeff[j][k] * peek(8*i + k);
+                for (k = 0; k < size; k++) {
+                    block_x[i][j] += coeff[j][k] * peek(size*i + k);
                 }
             }
-	  
+
         for (i = 0; i < size; i++) {
             for (j = 0; j < size; j++) {
-		float block_y = 0.0;
-                for (k = 0; k < size; k++) {	
+                float block_y = 0.0;
+                for (k = 0; k < size; k++) {
                     block_y += coeff[i][k] * block_x[k][j];
                 }
                 block_y = floor(block_y + 0.5);
-                push((int) block_y);                
+                push((int) block_y);
             }
-	}
+        }
+
+        for (i = 0; i < size*size; i++) pop();
     }
 }
 
@@ -392,7 +397,7 @@ int->int filter iDCT8x8_1D_row_fast() {
         else {
             /* for proper rounding in the fourth stage */
             x0 = (x0 << 11) + 128; 
-		
+
             /* first stage */
             x8 = W7 * (x4 + x5);
             x4 = x8 + (W1 - W7) * x4;
@@ -400,7 +405,7 @@ int->int filter iDCT8x8_1D_row_fast() {
             x8 = W3 * (x6 + x7);
             x6 = x8 - (W3 - W5) * x6;
             x7 = x8 - (W3 + W5) * x7;
-		
+
             /* second stage */
             x8 = x0 + x1;
             x0 = x0 - x1;
@@ -411,7 +416,7 @@ int->int filter iDCT8x8_1D_row_fast() {
             x4 = x4 - x6;
             x6 = x5 + x7;
             x5 = x5 - x7;
-		
+
             /* third stage */
             x7 = x8 + x3;
             x8 = x8 - x3;
@@ -419,7 +424,7 @@ int->int filter iDCT8x8_1D_row_fast() {
             x0 = x0 - x2;
             x2 = (181 * (x4 + x5) + 128) >> 8;
             x4 = (181 * (x4 - x5) + 128) >> 8;
-		
+
             /* fourth stage */
             push((x7 + x1) >> 8);
             push((x3 + x2) >> 8);
@@ -566,7 +571,7 @@ int->int filter iDCT8x8_1D_col_fast_fine() {
         else {
             /* for proper rounding in the fourth stage */
             x0 = (x0 << 8) + 8192; 
-		
+
             /* first stage */
             x8 = W7 * (x4 + x5) + 4;
             x4 = (x8 + (W1 - W7) * x4) >> 3;
@@ -574,7 +579,7 @@ int->int filter iDCT8x8_1D_col_fast_fine() {
             x8 = W3 * (x6 + x7) + 4;
             x6 = (x8 - (W3 - W5) * x6) >> 3;
             x7 = (x8 - (W3 + W5) * x7) >> 3;
-		
+
             /* second stage */
             x8 = x0 + x1;
             x0 = x0 - x1;
@@ -585,7 +590,7 @@ int->int filter iDCT8x8_1D_col_fast_fine() {
             x4 = x4 - x6;
             x6 = x5 + x7;
             x5 = x5 - x7;
-		
+
             /* third stage */
             x7 = x8 + x3;
             x8 = x8 - x3;
@@ -593,7 +598,7 @@ int->int filter iDCT8x8_1D_col_fast_fine() {
             x0 = x0 - x2;
             x2 = (181 * (x4 + x5) + 128) >> 8;
             x4 = (181 * (x4 - x5) + 128) >> 8;
-		
+
             /* fourth stage */
             push((x7 + x1) >> 14);
             push((x3 + x2) >> 14);
@@ -643,38 +648,3 @@ float->float filter DCT_1D_reference_fine(int size) {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

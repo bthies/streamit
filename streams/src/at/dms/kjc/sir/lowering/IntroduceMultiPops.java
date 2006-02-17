@@ -1,6 +1,3 @@
-/**
- * FIXME: NOT YET DEBUGGED. DO NOT USE YET
- */
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
@@ -12,20 +9,33 @@ import at.dms.compiler.JavaStyleComment;
 /**
  * Introduce multi-pops.
  * 
- * A single SIRPopExpression may represent multiple pops.
- *
+ * <p>A single SIRPopExpression may represent multiple pops.<br/>
  * This pass takes sequences of 'pop' expressions for which the result is not used
- * and forms a single SIRPopExpression containing the pop count.
+ * and forms a single SIRPopExpression containing the pop count.</p>
  * 
  * 
- * @author dimock
+ * @author Allyn Dimock
  *
  */
+
+// This pass will is supposed to take sequences of pop() statements
+// and counted loops containing only pop statements and combine
+// all logically adjacent pop() statements into a single pop(N)
+// statement.
+//
+// To do this, we have to keep track of non-pop statements.
+// wen we find a non-pop statement we stop updating the previous
+// pop statement (if any) and wait for another pop statement
+// to occur in our scan of the code.
 
 public class IntroduceMultiPops extends SLIRReplacingVisitor {
  
     private IntroduceMultiPops() { }
 
+    /** 
+     * Set to true to print program before and after this pass.
+     */
+    public static boolean debug = false;
 
     /**
      * Walk stream structure and replace multiple pops from single SIRPopExpression.
@@ -34,7 +44,18 @@ public class IntroduceMultiPops extends SLIRReplacingVisitor {
      */
     
     public static void doit(SIRStream str) {
+        if (debug) {
+            System.err.println("Program before IntroduceMultiPops");
+            SIRToStreamIt.run(str,new JInterfaceDeclaration[]{},new SIRInterfaceTable[]{},new SIRStructure[]{});
+            System.err.println("End of program before IntroduceMultiPops");
+        }
         new IntroduceMultiPops().introduceMultiProps(str);
+        if (debug) {
+            System.err.println("Program after IntroduceMultiPops");
+            SIRToStreamIt.run(str,new JInterfaceDeclaration[]{},new SIRInterfaceTable[]{},new SIRStructure[]{});
+            System.err.println("End of program after IntroduceMultiPops");
+        }
+        
     }
     
     // The following structure appears all over the place.  It needs to be abstracted somehow.
@@ -68,83 +89,31 @@ public class IntroduceMultiPops extends SLIRReplacingVisitor {
         }
     }
 
-
-    // fields for visitor
-    private boolean inFor = false;
-    private int forCount = 0;
-    private boolean inExpressionStatement = false;
-    // a SIRPop expression that we generated from the previously looked at code.
-    // nested for scopes.
-
-    // need stack of these for scope entry / exit.
-    
-    private SIRPopExpression prevPop = null;
-
-    // an expression statment that consists only of a pop statement is
-    // a candidate for combining pops.
-    public Object visitExpressionStatement(JExpressionStatement self, 
-                                           JExpression expr) {
-        boolean oldInExpressionStatement = inExpressionStatement;
-        
-        if (expr instanceof SIRPopExpression) {inExpressionStatement = true;}
-        Object newExpr = super.visitExpressionStatement(self,expr); 
-        inExpressionStatement = oldInExpressionStatement;
-        
-        if (newExpr instanceof SIRPopExpression) {
-            SIRPopExpression popExpr = (SIRPopExpression)newExpr;
-            int numPops = popExpr.getNumPop();
-            if (prevPop != null) {
-                prevPop.setNumPop(numPops + prevPop.getNumPop());
-                return new JEmptyStatement();
-            } else {
-                prevPop = popExpr;
-                
-                return newExpr;
-            }
-        } else {
-            if (newExpr == expr) {
-                return self;
-            } else {
-                return new JExpressionStatement((JExpression)newExpr);
+    // When processing a JBlock, we can simplify it to something else
+    // so restore JBlock if needed before reconstructing the method declaration.
+    public Object visitMethodDeclaration(JMethodDeclaration self,
+            int modifiers, CType returnType, String ident,
+            JFormalParameter[] parameters, CClassType[] exceptions,
+            JBlock body) {
+        if (body != null) {
+            JStatement newBody = (JStatement)body.accept(this);
+            if (newBody != body) {
+                if (!(newBody instanceof JBlock)) {
+                    JBlock newBlock = new JBlock();
+                    newBlock.addStatement(newBody);
+                    newBody = newBlock;
+                }
+                self.setBody((JBlock)newBody);
             }
         }
-    }
-
-    // a pop that is an expression stops the accumulation of pops in statements.
-    public Object visitSIRPopExpression(SIRPopExpression self,
-            CType tapeType) {
-        if (!inExpressionStatement) { prevPop = null; }
         return self;
     }
-    
-    // don't manipulate prevPop for other statements other than for, block.
-    public Object visitLabeledStatement(JLabeledStatement self,
-            String label,
-            JStatement stmt) {
-        SIRPopExpression oldPrevPop = prevPop;
-        prevPop = null;
-        
-        Object newSelf = super.visitLabeledStatement(self,label,stmt);
-        prevPop = oldPrevPop;
-        return newSelf;
-    }
-    
-    // assume any pop statment in if issued an undetermined number of times
-    // could still include ifs not containing pops or non-local transfers 
-    // of control 
-    public Object visitIfStatement(JIfStatement self,
-            JExpression cond,
-            JStatement thenClause,
-            JStatement elseClause) {
-        prevPop = null;
-        
-        Object newSelf = super.visitIfStatement(self,cond,thenClause,elseClause);
-        return newSelf;
-    }
 
+    // assume that a CompoundStatement is the equivalent of a Block
+    // as its documentation states, and mung it to be processed as a Block
     public Object visitCompoundStatement(JCompoundStatement self,
             JStatement[] body) {
-        // assumes that Comppound statement really is just block without parentheses
+        // assumes that Compound statement really is just block without parentheses
         JBlock b = new JBlock(body);
         JStatement newS = (JStatement)visitBlockStatement(b,b.getComments());
         
@@ -156,40 +125,43 @@ public class IntroduceMultiPops extends SLIRReplacingVisitor {
         }
     }
     
-    // assume any pop statment in loop issued an undetermined number of times
-    // could still include do loops not containing pops or non-local transfers 
-    // of control
-    public Object visitDoStatement(JDoStatement self,
-            JExpression cond,
-            JStatement body) {
-        prevPop = null;
-        
-        Object newSelf = super.visitDoStatement(self,cond,body);
-        return newSelf;
-    }
 
-
-    public Object visitBlockStatement(JBlock self,
+    // A block may be transformed into a block, or into a single pop
+    // statement -- that my be combinable in an outer scope, or
+    // a single statement (non-pop) which may have to become a block
+    // again in some outer contexts.
+    //
+    // recurr to process any sub-blocks, then walk the block 
+    // combining adjacent pop statements and for loops consisting
+    // only of a pop statement.
+    public Object visitBlockStatement(JBlock oldBlock,
             JavaStyleComment[] comments) {
-        SIRPopExpression oldPrevPop = prevPop;
-        prevPop = null;
+        //SIRPopExpression oldPrevPop = prevPop;
+        // non-null when combining a sequence of pop statements.
+        SIRPopExpression prevPop = null;
         
-        JBlock newBlock = (JBlock)super.visitBlockStatement(self,comments);
+        JBlock newBlock = (JBlock)super.visitBlockStatement(oldBlock,comments);
         
         List /*<JStatement>*/ oldStatements = newBlock.getStatements();
         List /*<JStatement>*/ simplifiedStatements = new LinkedList();
-        int numDecls = 0;
         for (Iterator i = oldStatements.iterator(); i.hasNext();) {
             Object o = i.next();
+	    // null statments (which may not exist, just following others here)
+	    // and EmptyStatements do not go into the list of returned 
+	    // statements.
             if (o != null && !(o instanceof JEmptyStatement)) {
-                if ((o instanceof JExpressionStatement) &&
-                    ((JExpressionStatement)(o)).getExpression() instanceof 
-                    SIRPopExpression) {
-                    // found a pop.  
-                    SIRPopExpression popExpr = (SIRPopExpression)((JExpressionStatement)o).getExpression();
-                    if (prevPop != null) {
-                        //combine with immediately previous pop if any 
-                        prevPop.setNumPop(popExpr.getNumPop() + prevPop.getNumPop());
+	        // getting a pop statment, which may have been a sequence
+	        // of pop statements in newBlock which could have been 
+	        // sequence of pop statments in self.
+                if ((o instanceof JExpressionStatement)
+                        && ((JExpressionStatement) (o)).getExpression() instanceof SIRPopExpression) {
+                    // found a pop.
+                    SIRPopExpression popExpr = (SIRPopExpression) ((JExpressionStatement) o)
+                            .getExpression();
+                    if (prevPop != null && prevPop.getType().equals(popExpr.getType())) {
+                        // combine with immediately previous pop if any and elide
+                        prevPop.setNumPop(popExpr.getNumPop()
+                                + prevPop.getNumPop());
                         continue;
                     } else {
                         // no immediately previous pop in block, but this
@@ -198,130 +170,85 @@ public class IntroduceMultiPops extends SLIRReplacingVisitor {
                         simplifiedStatements.add(o);
                         continue;
                     } // assert false : "execution does not get here";
-                } 
-                prevPop = null;
-                simplifiedStatements.add(o);
-                if (o instanceof JVariableDeclarationStatement) {
-                numDecls++;
+                } else { 
+                    LoopIterInfo forLoopInfo = null;
+                    SIRPopExpression popExpr = null;
+                    // determine if for loop with constant number of iterations
+                    // the body of which if a single pop statment.  If so
+                    // forLoopInfo will be set non-null, else it will remain null.
+                    if (o instanceof JForStatement) {
+                        JForStatement forStmt = (JForStatement)o;
+                        JStatement body = forStmt.getBody();
+                        if ((body instanceof JExpressionStatement)
+                                && ((JExpressionStatement)body).getExpression() instanceof SIRPopExpression) {
+                            popExpr = (SIRPopExpression) ((JExpressionStatement)body).getExpression();
+                            forLoopInfo = LoopIterInfo.getLoopInfo(forStmt.getInit(),
+                                                                   forStmt.getCondition(),
+                                                                   forStmt.getIncrement(),
+                                                                   forStmt.getBody(),
+                                                                   new HashMap(),new HashMap());
+                        }
+                        // for loop that we are not going to process:
+                        // make sure body is a block, otherwise some code generators
+                        // (at least rstream) generate incorrect code.
+                        if (forLoopInfo == null && ! (body instanceof JBlock)) {
+                            JBlock block = new JBlock();
+                            block.addStatement(body);
+                            forStmt.setBody(block);
+                        }
+                    }
+                    if (forLoopInfo != null) {
+                        int popCount = popExpr.getNumPop() * LoopIterInfo.getNumIterations(forLoopInfo);
+                        if (popCount > 0) {   // don't do anything of for loop executes 0 times.
+                            if (prevPop != null && prevPop.getType().equals(popExpr.getType())) {
+                                prevPop.setNumPop(prevPop.getNumPop()+popCount);
+                            } else {
+                                popExpr.setNumPop(popCount);
+                                prevPop = popExpr;
+                                simplifiedStatements.add(new JExpressionStatement(popExpr));
+                            }
+                        }
+                    } else {
+                        prevPop = null;    // don't combine pops across this statement
+                        simplifiedStatements.add(o);
+                    }
                 }
             }
         }
-        // restore previous pop outside of block
-        prevPop = oldPrevPop;
         // empty block becomes empty statement for surrounding block to elide
         int newLen = simplifiedStatements.size();
 
-        if (newLen - numDecls == 0) {
-            // nothing except declarations which should have no effect outside block
+        if (newLen == 0) {
             return new JEmptyStatement();
         }
         if (newLen == 1) {
-            // single statment (not declation)
+            // single statement
+            // so an outer block can see a pop statement if
+            // the block reduces to one.
             return simplifiedStatements.get(0);
-        } else if (newLen == oldStatements.size()) {
-            // same length: this loop only deletes never changes
-            return newBlock;
-        }
+        } 
+        // Return processed block
         return new JBlock(newBlock.getTokenReference(),
                 simplifiedStatements,newBlock.getComments());
     }
 
-    // could allow switch statements so long as no branch contained a pop or
-    // non-local control flow.
-    public Object visitSwitchStatement(JSwitchStatement self,
-            JExpression expr,
-            JSwitchGroup[] body) {
-        prevPop = null;
-
-        Object newSelf = super.visitSwitchStatement(self,expr,body);
-        return newSelf;
-           }
- 
-    // could allow switch groupd so long as no branch contained a pop or
-    // non-local control flow.
-    public Object visitSwitchGroup(JSwitchGroup self,
-            JSwitchLabel[] labels,
-            JStatement[] stmts) {
-        prevPop = null;
-
-        Object newSelf = super.visitSwitchGroup(self,labels,stmts);
-        return newSelf;
-    }
-
-    
-    // we are very interested in handling a for expression where
-    // (1) the body reduces to a SIRPopExpression
+    // We are very interested in handling a for statement where
+    // (1) the body reduces to a pop statement
     // (2) the trip count can be resolved to an integer.
+    // Since all real work is done at the block level, make
+    // sure the for statement body is a block before processing
+    // the for statement.
     public Object visitForStatement(JForStatement self,
             JStatement init,
             JExpression cond,
             JStatement incr,
             JStatement body) {
-        SIRPopExpression oldPrevPop = prevPop;
-        prevPop = null;
         
-        JForStatement newSelf = (JForStatement)super.visitForStatement(self,init,cond,incr,body);
-
-        JStatement newBody = newSelf.getBody();
-        if (newBody instanceof JExpressionStatement) {
-            JExpressionStatement expStmt = (JExpressionStatement)newBody;
-            if (expStmt.getExpression() instanceof SIRPopExpression) {
-                System.err.println("Got a possible for statement.");
-                self.accept(new IRPrinter());
-            }
+        if (!(body instanceof JBlock)) {
+            JBlock newBlock = new JBlock();
+            newBlock.addStatement(body);
+            self.setBody(newBlock);
         }
-        
-        prevPop = oldPrevPop;
-        return newSelf;
-    }
-
-    // assume can't determine number of executions of while.
-    // if caontains any pops, then can't count them.
-    public Object visitWhileStatement(JWhileStatement self,
-            JExpression cond,
-            JStatement body) {
-        prevPop = null;
-        
-        Object newSelf = super.visitWhileStatement(self,cond,body);
-        return newSelf;
-    }
-    
-    // visitFieldDeclarationStatement -- none inside a method.
-    // visitVariableDeclarationStatement -- can't contain SIRPopExpression
-    // throw and synchronized:  not in StreamIt
-    
-    // return: pops after return should not be added to pops before...
-    public Object visitReturnStatement(JReturnStatement self,
-            JExpression expr) {
-        prevPop = null;
-        return super.visitReturnStatement(self,expr);
-    }
-    
-    // we don't handle visitExpressionListStatement, but should.
-    public Object visitExpressionListStatement(JExpressionListStatement self,
-            JExpression[] expr) { 
-        prevPop = null;
-        return super.visitExpressionListStatement(self,expr);
-    }
-    
-    // JContinueStatement -- not handled by replacing visitor, presumably not in StreamIt
-    // JBreakStatement -- not in replacingVisitor, presumably not in Streamit.
-    // similarly, think we do not have catch, throw, finally, 
-    // SIRPhaseInvocation -- presumably removed before this pass.
-    
-    // RegReceiver probably only at top level, but couldn't update pops past it
-    // if not at top level.
-    public Object visitRegReceiverStatement(SIRRegReceiverStatement self,
-            JExpression portal, SIRStream receiver, JMethodDeclaration[] methods) {
-        prevPop = null;
-        return super.visitRegReceiverStatement(self,portal,receiver,methods);
-    }
-    
-    public Object visitMethodCallExpression(JMethodCallExpression self,
-            JExpression prefix,
-            String ident,
-            JExpression[] args) {
-        prevPop = null;
-        return super.visitMethodCallExpression(self,prefix,ident,args);  
+        return super.visitForStatement(self,init,cond,incr,body);
     }
 }

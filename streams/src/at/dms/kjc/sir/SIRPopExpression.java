@@ -39,7 +39,7 @@ public class SIRPopExpression extends JExpression {
     {
         super(null);
         this.tapeType = tapeType;
-        assert N >= 0: "Can not pop fewer than 1 element";
+        assert N > 0: "Can not pop fewer than 1 element";
         this.numPop = N;
     }
 

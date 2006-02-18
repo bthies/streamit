@@ -67,6 +67,29 @@ public abstract class OffChipBuffer {
      */
     public void setStaticNet(boolean staticNet) {
         this.staticNet = staticNet;
+        //perform some sanity checks
+        if (!staticNet) {
+            if (isIntraTrace()) {
+                if (this.getSource().isInputTrace()) {
+                    assert ((InputTraceNode)this.getSource()).oneInput() ||
+                        ((InputTraceNode)this.getSource()).noInputs() : 
+                            this.toString() + " cannot use gdn (must be singleton).";
+                }
+                if (this.getSource().isFilterTrace()) {
+                    assert ((OutputTraceNode) this.getDest()).oneOutput() ||
+                        ((OutputTraceNode) this.getDest()).noOutputs() :
+                            this.toString() + " cannot use gdn (must be a singleton.)"; 
+                }
+                
+            }
+            else { //intratracebuffefr
+                OutputTraceNode output = (OutputTraceNode)this.getDest();
+                InputTraceNode input = (InputTraceNode)this.getSource();
+                assert (output.oneOutput() || output.noOutputs()) &&
+                    (input.noInputs() || input.oneInput()) : 
+                        this.toString() + " cannot use the gdn unless it is a singleton.";
+            }
+        }
     }
 
   

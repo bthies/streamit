@@ -1,4 +1,4 @@
-/**
+ /**
  * 
  */
 package at.dms.kjc.spacetime;
@@ -39,9 +39,7 @@ public class ManualDRAMPortAssignment {
         files = spaceTime.partitioner.io;
         inputBuffer = new BufferedReader(new InputStreamReader(
                                                                System.in));
-        // take care of the file readers and writes
-        // assign the reader->output buffer and the input->writer buffer
-        fileStuff(files, chip);
+      
         
         Iterator traceNodeTrav = Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
         while (traceNodeTrav.hasNext()) {
@@ -60,6 +58,9 @@ public class ManualDRAMPortAssignment {
             
             
         }
+        // take care of the file readers and writes
+        // assign the reader->output buffer and the input->writer buffer
+        fileStuff(files, chip);
     }
 
     
@@ -200,47 +201,22 @@ public class ManualDRAMPortAssignment {
                 assert files[i].getHead().oneInput() : "buffer assignment of a joined file writer not implemented ";
                 FileOutputContent fileOC = (FileOutputContent) filter
                     .getFilter();
-                RawTile tile = chip.getTile(filter.getX(), filter.getY());
+                
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i]
                                                                   .getHead(), filter);
                 // the dram of the tile where we want to add the file writer
-                StreamingDram dram = null;
-                // get the correct port if there are two connected
-                for (int j = 0; j < tile.getIODevices().length; j++) {
-                    if (!((StreamingDram) tile.getIODevices()[j])
-                        .isFileWriter()) {
-                        dram = (StreamingDram) tile.getIODevices()[j];
-                        break;
-                    }
-                }
-                assert dram != null : "Could not find a dram to attach file writer to " + tile;
-
-                // set the port for the buffer
-                buf.setDRAM(dram);
+                StreamingDram dram = buf.getDRAM();          
                 // assign the other buffer to the same port
                 // this should not affect anything
-                IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(
-                                                                               dram);
+                IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
                 // attach the file writer to the port
                 dram.setFileWriter(fileOC);
             } else if (files[i].getTail().isFileReader()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
-                RawTile tile = chip.getTile(files[i].getHead().getNextFilter()
-                                            .getX(), files[i].getHead().getNextFilter().getY());
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,
                                                                   files[i].getTail());
-                StreamingDram dram = null;
-                for (int j = 0; j < tile.getIODevices().length; j++) {
-                    if (!((StreamingDram) tile.getIODevices()[j])
-                        .isFileReader()) {
-                        dram = (StreamingDram) tile.getIODevices()[j];
-                        break;
-                    }
-                }
-                assert dram != null : "Could not find a dram to attach the file Reader to";
-
-                buf.setDRAM(dram);
+                StreamingDram dram = buf.getDRAM();
                 IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(dram);
                 dram.setFileReader(fileIC);
             } else

@@ -300,6 +300,8 @@ public abstract class RawExecutionCode
     public JBlock gdnDisregardIncoming(int words) {
         JBlock block = new JBlock();
 
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
+        
         for (int i = 0; i < words; i++) {
             //receive the word into the dummy volatile variable
             JStatement receiveDummy = 
@@ -319,6 +321,8 @@ public abstract class RawExecutionCode
     public JBlock gdnDummyOutgoing(int words) {
         JBlock block = new JBlock();
 
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
+        
         for (int i = 0; i < words; i++) {
             //send the header
             JStatement sendHeader = 
@@ -367,7 +371,8 @@ public abstract class RawExecutionCode
             //reader, because we do not align file readers
             InputTraceNode input = (InputTraceNode)filterInfo.traceNode.getPrevious();            
             //if not a file reader, then we might have to align the dest
-            if (!input.onlyFileInput() && wordsReceived > 0) {
+            if (!input.onlyFileInput() && wordsReceived > 0 &&
+                    wordsReceived % RawChip.cacheLineWords != 0) {
                 //calculate the number of words that we have to send and receive in 
                 //order to complete the dram transactions
                 int recAlignWords = RawChip.cacheLineWords
@@ -386,7 +391,8 @@ public abstract class RawExecutionCode
             
             //first make sure that we are not writing eventually to a file writer
             //file writers don't need to be aligned
-            if (!output.onlyWritingToAFile() && wordsSent > 0) {
+            if (!output.onlyWritingToAFile() && wordsSent > 0 &&
+                    wordsSent % RawChip.cacheLineWords != 0) {
                 int sendAlignWords = RawChip.cacheLineWords - 
                 ((wordsSent) % RawChip.cacheLineWords);
 

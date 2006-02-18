@@ -9,8 +9,8 @@ import java.util.HashMap;
 
 
 /**
- * @author mgordon Given a trace, ask the user where he/she wants it placed on
- *         the raw chip.
+ * Given a trace, ask the user where he/she wants it placed on
+ *              the raw chip.
  */
 public class ManualTraceLayout {
 
@@ -31,9 +31,11 @@ public class ManualTraceLayout {
         String str = "";
         RawTile tile;
         
+        System.out.println("Enter layout for trace: " + trace);
+        
         while (node instanceof FilterTraceNode) {
             while (true) {
-                System.out.print("Enter tile number for " + trace + ": ");
+                System.out.print("Enter tile number for " + node + ": ");
 
                 try {
                     str = inputBuffer.readLine();

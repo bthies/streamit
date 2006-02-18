@@ -68,15 +68,25 @@ public class ComputeCodeStore {
         addMethod(rawMain);
     }
 
+    /**
+     * Generate a command to read or write from a file daisy-chained to a i/o
+     * port.  
+     * 
+     * @param read True if load, false store
+     * @param init true if we want to append command to init stage, false steady
+     * @param words the number of words to x-fer
+     * @param buffer Used to get the port
+     * @param staticNet True if static net, false gdn
+     */
     public void addFileCommand(boolean read, boolean init, int words,
-                               OffChipBuffer buffer) {
+                               OffChipBuffer buffer, boolean staticNet) {
         assert words > 0 : "trying to generate a file dram command of size 0";
 
         assert buffer.getRotationLength() == 1 : 
             "The buffer connected to a file reader / writer cannot rotate!";
         parent.setMapped();
         String functName = "raw_streaming_dram" + 
-            (buffer.isStaticNet() ? "" : "_gdn") + 
+            (staticNet ? "" : "_gdn") + 
             "_request_bypass_" +
             (read ? "read" : "write");
         
@@ -107,6 +117,8 @@ public class ComputeCodeStore {
     public void dummyOutgoing(IODevice dev, int words, boolean init) {
         JBlock block = new JBlock();
 
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
+        
         for (int i = 0; i < words; i++) {
             //send the header
             JStatement sendHeader = 
@@ -146,6 +158,8 @@ public class ComputeCodeStore {
     public void disregardIncoming(IODevice dev, int words, boolean init) {
         JBlock block = new JBlock();
 
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
+        
         for (int i = 0; i < words; i++) {
             //receive the word into the dummy volatile variable
             JStatement receiveDummy = 
@@ -162,16 +176,25 @@ public class ComputeCodeStore {
             steadyLoop.addStatement(block);
     }
     
-    // add a dram command to the compute code at the current time
-    // if read is false, then it is a write
-    // stage 0 = init, 1 = primepump init buffers, 2 = primepump steady buffers
-    // 3 = steady
+    /**
+     * Add a dram command at the current position of this code compute code 
+     * for either the init stage (including primepump) or the steady state.  
+     * 
+     * @param read True if we want to issue a read, false if write
+     * @param stage true if init
+     * @param bytes The number of bytes
+     * @param buffer The address to load/store
+     * @param presynched True if we want all other dram commands to finish before this
+     * one is issued
+     * @param staticNet True if we want to use the static network, false if gdn
+     */    
     public void addDRAMCommand(boolean read, int stage, int bytes,
-                               OffChipBuffer buffer, TraceNode node, boolean presynched) {
+                               OffChipBuffer buffer, boolean presynched,
+                               boolean staticNet) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
                
         parent.setMapped();
-        String functName = "raw_streaming_dram" + (!buffer.isStaticNet() ? "_gdn" : "") + 
+        String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
             "_request_" +
             (read ? "read" : "write") + (presynched ? "_presynched" : "");
         
@@ -322,8 +345,8 @@ public class ComputeCodeStore {
         // now add a call to the init stage in main at the appropiate index
         // and increment the index
         initBlock.addStatement(new JExpressionStatement(null,
-                                                        new JMethodCallExpression(null, new JThisExpression(null),
-                                                                                  primePump.getName(), new JExpression[0]), null));
+                new JMethodCallExpression(null, new JThisExpression(null),
+                        primePump.getName(), new JExpression[0]), null));
     }
 
     public void addTraceInit(FilterInfo filterInfo) {

@@ -216,6 +216,7 @@ public class SwitchCodeStore {
      */
     public static void disregardIncoming(IODevice dev, int words, boolean init) 
     {
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size";
         //get the neighboring tile 
         RawTile neighbor = dev.getNeighboringTile();
         //generate instructions to disregard the items and place 
@@ -237,6 +238,7 @@ public class SwitchCodeStore {
      */
     public static void dummyOutgoing(IODevice dev, int words, boolean init) 
     {
+        assert words < RawChip.cacheLineWords : "Should not align more than cache-line size";
         //get the neighboring tile 
         RawTile neighbor = dev.getNeighboringTile();
         for (int i = 0; i < words; i++) {

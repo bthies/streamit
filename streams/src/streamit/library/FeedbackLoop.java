@@ -361,6 +361,7 @@ public class FeedbackLoop extends Stream
     {
         assert joiner == null && type != null;
         joiner = type.getJoiner ();
+        joiner.setParent(this);
         joinType = type;
     }
 
@@ -369,6 +370,7 @@ public class FeedbackLoop extends Stream
     {
         assert this.body == null && body != null;
         this.body = body;
+        body.setParent(this);
     }
 
     // specifies the splitter
@@ -376,6 +378,7 @@ public class FeedbackLoop extends Stream
     {
         assert splitter == null && type != null;
         splitter = type.getSplitter ();
+        splitter.setParent(this);
         splitType = type;
     }
 
@@ -384,6 +387,7 @@ public class FeedbackLoop extends Stream
     {
         assert this.loop == null && loop != null;
         this.loop = loop;
+        loop.setParent(this);
     }
     
     public Stream getBody () { return body; }

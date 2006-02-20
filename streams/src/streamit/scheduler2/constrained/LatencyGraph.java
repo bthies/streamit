@@ -231,22 +231,6 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return result;
     }
 
-    /**
-     * Returns true iff there is a downstream path from <node1> to <node2>.
-     */
-    public boolean isDownstreamPath(LatencyNode node1, LatencyNode node2) {
-        HashSet edges = getEdgesBetween(node1, node2);
-        return !edges.isEmpty();
-    }
-
-    /**
-     * Returns true iff there is an upstream path from <node1> to <node2>.
-     */
-    public boolean isUpstreamPath(LatencyNode node1, LatencyNode node2) {
-        HashSet edges = getEdgesBetween(node2, node1);
-        return !edges.isEmpty();
-    }
-
     public SDEPData computeSDEP(
                                 LatencyNode upstreamNode,
                                 LatencyNode downstreamNode)

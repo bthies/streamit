@@ -605,6 +605,7 @@ public class SplitJoin extends Stream
     {
         assert splitter == null && type != null;
         splitter = type.getSplitter();
+        splitter.setParent(this);
 
         splitType = type;
     }
@@ -615,6 +616,7 @@ public class SplitJoin extends Stream
     {
         assert joiner == null && type != null;
         joiner = type.getJoiner();
+        joiner.setParent(this);
 
         ListIterator iter;
         iter = childrenStreams.listIterator();
@@ -646,6 +648,7 @@ public class SplitJoin extends Stream
                 childrenStreams = new LinkedList();
             }
         childrenStreams.add(s);
+        s.setParent(this);
     }
 
     public void connectGraph()

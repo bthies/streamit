@@ -84,30 +84,6 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         return graph.computeSDEP(srcNode, dstNode);
     }
 
-    /**
-     * Returns true iff there is a downstream path from <src> to <dst>.
-     */
-    public boolean isDownstreamPath(Iterator src, Iterator dst) {
-        LatencyGraph graph = factory.getLatencyGraph();
-        LatencyNode srcNode =
-            ((Filter)factory.newFrom(src, null)).getLatencyNode();
-        LatencyNode dstNode =
-            ((Filter)factory.newFrom(dst, null)).getLatencyNode();
-        return graph.isDownstreamPath(srcNode, dstNode);
-    }
-
-    /**
-     * Returns true iff there is an upstream path from <src> to <dst>.
-     */
-    public boolean isUpstreamPath(Iterator src, Iterator dst) {
-        LatencyGraph graph = factory.getLatencyGraph();
-        LatencyNode srcNode =
-            ((Filter)factory.newFrom(src, null)).getLatencyNode();
-        LatencyNode dstNode =
-            ((Filter)factory.newFrom(dst, null)).getLatencyNode();
-        return graph.isUpstreamPath(srcNode, dstNode);
-    }
-
     public void addDownstreamConstraint(
                                         Iterator src,
                                         Iterator dst,

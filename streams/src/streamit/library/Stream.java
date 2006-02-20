@@ -476,6 +476,7 @@ public abstract class Stream extends Operator
         if (s == null)
             throw new IllegalArgumentException();
         streamElements.add(s);
+        s.setParent(this);
     }
 
     // get my input.

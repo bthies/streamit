@@ -60,6 +60,11 @@ public class Operator extends DestroyedClass
      */
     private LinkedList messageQueue = new LinkedList();
     /**
+     * The parent of this in the stream hierarchy (null for toplevel
+     * stream).
+     */
+    private Stream parent;
+    /**
      * The following methods relate to maintaining the
      * currentPopped/Pushed/MaxPeek described above...
      */
@@ -100,7 +105,7 @@ public class Operator extends DestroyedClass
         while (messageQueue.size()>0) {
             Message m = (Message)messageQueue.get(0);
             // deliver before the next execution
-            int currentTime = 1+getSDEPExecutions(true, m.isDownstream());
+            int currentTime = (m.isDownstream()?1:0)+getSDEPExecutions(true, m.isDownstream());
             int deliveryTime = m.getDeliveryTime();
 
             if (deliveryTime==currentTime) {
@@ -184,6 +189,152 @@ public class Operator extends DestroyedClass
     public int getSDEPExecutions(boolean receiver, boolean downstream) {
         // for plain filters, return number of work executions
         return getWorkExecutions();
+    }
+    
+    /**
+     * Set parent.
+     */
+    public void setParent(Stream str) {
+        this.parent = str;
+    }
+    /**
+     * Get parent.
+     */
+    public Stream getParent() {
+        return parent;
+    }
+
+    /**
+     * Returns whether this is downstream of <op>.  An operator can be
+     * either upstream, downstream, or in parallel to another.  If
+     * this contains <op> or vice-versa, result is undefined.
+     */
+    public boolean isDownstreamOf(Operator op) {
+        return compareStreamPosition(this, op) == 1;
+    }
+
+    /**
+     * Returns whether this is upstream of <op>.  An operator can be
+     * either upstream, downstream, or in parallel to another.  If
+     * this contains <op> or vice-versa, result is undefined.
+     */
+    public boolean isUpstreamOf(Operator op) {
+        return compareStreamPosition(this, op) == -1;
+    }
+
+    /**
+     * Returns whether this is in parallel to <op> -- that is, whether
+     * there does NOT exist a directed path in the stream graph
+     * between these two ops, within the least-common-ancestor of the
+     * two ops.  An operator can be either upstream, downstream, or in
+     * parallel to another.  If this contains <op> or vice-versa,
+     * result is undefined.
+     */
+    public boolean isParallelTo(Operator op) {
+        return compareStreamPosition(this, op) == 0;
+    }
+
+    /**
+     * Compares the stream position of <op1> and <op2>, determining
+     * which one is upstream of the other (or if they are in
+     * parallel).  The stream position is only considered within the
+     * least common ancestor of the two ops.  For example, if two ops
+     * are in parallel branches of a splitjoin, they are considered to
+     * be in parallel even if that splitjoin is wrapped in a
+     * feedbackloop.  If the ops are in the body and loop of feedback
+     * loop, then the body stream is considered upstream.  Result is
+     * undefined if either op contains the other.
+     *
+     * @return -1  if <op1> is downstream of <op2>
+     * @return 0   if <op1> is in parallel with <op2>
+     * @return 1   if <op1> is upstream of <op2>
+     */
+    public static int compareStreamPosition(Operator op1, Operator op2) {
+        // make lists of parents.  Higher-level parents at front
+        // of list.
+        LinkedList[] parents = { new LinkedList(), new LinkedList() };
+        Operator[] base = { op1, op2 };
+        for (int i=0; i<parents.length; i++) {
+            // include base in parents list for convenience
+            parents[i].add(base[i]);
+            Stream parent = base[i].getParent();
+            // don't deal with streams that contain each other
+            assert parent != op1 && parent != op2;
+            while (parent!=null) {
+                parents[i].addFirst(parent);
+                parent = parent.getParent();
+            }
+        }
+
+        // trace down lists to find common parent
+        Stream leastCommonAncestor = null;
+        while (parents[0].size()>0 && parents[1].size()>0) {
+            if (parents[0].get(0)==parents[1].get(0)) {
+                leastCommonAncestor = (Stream)parents[0].get(0);
+                parents[0].remove(0);
+                parents[1].remove(0);
+            } else {
+                break;
+            }
+        }
+        assert leastCommonAncestor != null : "Two ops do not share a common ancestor.";
+        
+        // now decide upstream/downstream by container
+        if (leastCommonAncestor instanceof Pipeline) {
+            // the upstream op is the one whos next parent appears
+            // first in the pipeline
+            for (int i=0; i<((Pipeline)leastCommonAncestor).getNumChildren(); i++) {
+                Stream child = ((Pipeline)leastCommonAncestor).getChild(i);
+                if (child==parents[0].get(0)) {
+                    // op1 is upstream
+                    return 1;
+                }
+                if (child==parents[1].get(0)) {
+                    // op2 is upstream
+                    return -1;
+                }
+            }
+            assert false : "Expected to find a stream's parent in pipeline.";
+        }
+
+        if (leastCommonAncestor instanceof SplitJoin) {
+            // if either op is the splitter or joiner, then they are
+            // upstream or downstream.  Otherwise streams are in parallel.
+            if (op1==((SplitJoin)leastCommonAncestor).getSplitter() ||
+                op2==((SplitJoin)leastCommonAncestor).getJoiner()) {
+                // op1 is upstream
+                return 1;
+            }
+            if (op2==((SplitJoin)leastCommonAncestor).getSplitter() ||
+                op1==((SplitJoin)leastCommonAncestor).getJoiner()) {
+                // op2 is upstream
+                return -1;
+            }
+            // otherwise, streams are in parallel
+            return 0;
+        }
+
+        if (leastCommonAncestor instanceof FeedbackLoop) {
+            FeedbackLoop loop = (FeedbackLoop)leastCommonAncestor;
+            // order of checking
+            Operator[] order = { loop.getJoiner(), loop.getBody(), loop.getSplitter(), loop.getLoop() };
+            // next parents for op1 and op2
+            Operator[] next = { (Operator)parents[0].get(0), (Operator)parents[1].get(0) };
+            // the result if a given op is upstream
+            int[] result = { 1, -1};
+            // return the first upstream parent
+            for (int i=0; i<order.length; i++) {
+                for (int j=0; j<next.length; j++) {
+                    if (order[i]==next[j]) {
+                        return result[j];
+                    }
+                }
+            }
+            assert false : "Could not find next parent in feedbackloop";
+        }
+
+        assert false : "Unrecognized stream type " + leastCommonAncestor.getClass();
+        return 0;
     }
     
     public Operator(float x1, float y1, int z1)

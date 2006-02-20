@@ -33,7 +33,7 @@ import java.util.HashMap;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.16 2006-02-11 03:05:29 thies Exp $
+ * @version $Id: Portal.java,v 1.17 2006-02-20 22:32:17 thies Exp $
  */
 public abstract class Portal
 {
@@ -154,14 +154,20 @@ public abstract class Portal
             boolean[] downstream = new boolean[receivers.size()];
             for (int i=0; i<receivers.size(); i++) {
                 Stream receiver = (Stream)receivers.get(i);
-                if (upDownScheduler.isDownstreamPath(new Iterator(sender), new Iterator(receiver))) {
-                    downstream[i] = true;
-                } else if (upDownScheduler.isUpstreamPath(new Iterator(sender), new Iterator(receiver))) {
+                switch (Operator.compareStreamPosition(sender, receiver)) {
+                case -1: // receiver -> ... -> sender
                     downstream[i] = false;
-                } else {
-                    // otherwise, fail -- no path between sender and receiver
+                    break;
+                case 0:  // receiver | sender
+                    // fail -- no path between sender and receiver
                     new RuntimeException("No path between message sender and receiver in stream graph.")
                         .printStackTrace();
+                    break;
+                case 1:  // sender -> ... -> receiver
+                    downstream[i] = true;
+                    break;
+                default:
+                    assert false : "Unexpected comparison value.";
                 }
             }
 

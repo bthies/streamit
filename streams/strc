@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.69 2006-01-26 02:16:35 dimock Exp $
+# $Id: strc,v 1.70 2006-02-21 22:26:19 dxzhang Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -224,6 +224,7 @@ Options specific to Java library backend:
   --marksteady        Print * after each steady-state execution
   --printreps         Print number of times filters execute in schedule
   --printsched        Print the full program schedule
+  --jcc               Use the JCC library
 EOT
     $text =~ s/^\*/ /mg if $more >= 2;
     $text =~ s/^\+/ /mg if $more >= 1;
@@ -328,7 +329,8 @@ sub get_options
 			    "nomult!",
 			    "rename1!",
 			    "rename2!",
-			    "peekratio=i");
+			    "peekratio=i",
+			    "jcc");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
     $opts{partition} = "greedier" if $opts{'partition-greedier'};
@@ -640,5 +642,6 @@ sub get_lib_opts
     $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");
     $opts{printreps} && ($libopts .= " -printreps");
+    $opts{jcc} && ($libopts .= " -jcc");
     return $libopts;
   }

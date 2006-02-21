@@ -451,7 +451,7 @@ int->int filter iDCT8x8_1D_row_fast() {
  */
 int->int filter iDCT8x8_1D_col_fast() {
     int size = 8;
-    int[size*size] buffer;
+    int[8*8] buffer;
 
     int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
     int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */

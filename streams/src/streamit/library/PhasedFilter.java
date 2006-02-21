@@ -63,6 +63,8 @@ public abstract class PhasedFilter extends Filter implements Runnable
      */
     private RuntimeException pendingException = null;
 
+    static boolean jccLibrary = false;
+
     public void doWork() {
         synchronized (this) {
             try {
@@ -124,6 +126,10 @@ public abstract class PhasedFilter extends Filter implements Runnable
      * and end a work cycle.
      */
     protected void contextSwitch() {
+        if (jccLibrary) {
+            return;
+        }
+
         // remember we were here
         contextSwitched = true;
 

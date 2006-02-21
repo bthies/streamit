@@ -31,7 +31,7 @@ import streamit.misc.*;
 
 public class Channel extends streamit.misc.DestroyedClass
 {
-    Class type;
+    protected Class type;
     Operator source = null, sink = null;
 
     LinkedList queue;
@@ -44,15 +44,15 @@ public class Channel extends streamit.misc.DestroyedClass
     
     int totalItemsPushed = 0, totalItemsPopped = 0;
 
-    WrappableGrowableQueue_int wgqueue_int, wgqueue_bit;
-    WrappableGrowableQueue_float wgqueue_float;
-    WrappableGrowableQueue_double wgqueue_double;
-    WrappableGrowableQueue_boolean wgqueue_boolean;
-    WrappableGrowableQueue_short wgqueue_short;
-    WrappableGrowableQueue_char wgqueue_char;
-    WrappableGrowableQueue_obj wgqueue_obj;
+    protected WrappableGrowableQueue_int wgqueue_int, wgqueue_bit;
+    protected WrappableGrowableQueue_float wgqueue_float;
+    protected WrappableGrowableQueue_double wgqueue_double;
+    protected WrappableGrowableQueue_boolean wgqueue_boolean;
+    protected WrappableGrowableQueue_short wgqueue_short;
+    protected WrappableGrowableQueue_char wgqueue_char;
+    protected WrappableGrowableQueue_obj wgqueue_obj;
 
-    WrappableGrowableQueue myqueue;
+    protected WrappableGrowableQueue myqueue;
 
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
@@ -667,7 +667,7 @@ public class Channel extends streamit.misc.DestroyedClass
     //                  syntax checking functions
     // ------------------------------------------------------------------
 
-    Class getType () { return type; }
+    public Class getType () { return type; }
 
     // ------------------------------------------------------------------
     //                  graph keeping functions

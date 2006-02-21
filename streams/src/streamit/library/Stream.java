@@ -17,6 +17,7 @@
 package streamit.library;
 
 import java.util.*;
+import streamit.library.jcc.StreamItToJcc;
 import streamit.misc.Pair;
 import streamit.scheduler2.iriter.Iterator;
 import streamit.scheduler2.print.PrintGraph;
@@ -680,6 +681,7 @@ public abstract class Stream extends Operator
         boolean printSDEP = false;
         String sdepTOPString = null, sdepBOTTOMString = null;
         int nIters = -1;
+        boolean useJcc = false;
 
         // we're running this as the toplevel stream
         toplevel = this;
@@ -736,6 +738,10 @@ public abstract class Stream extends Operator
                                     sdepBOTTOMString = args[index + 2];
                                     index += 2;
                                 }
+                            else if (args[index].equals("-jcc"))
+                                {
+                                    useJcc = true;
+                                }
                             else
                                 {
                                     ERROR("Unrecognized argument: " + args[index] + ".");
@@ -766,6 +772,14 @@ public abstract class Stream extends Operator
                 {
                     Iterator selfIter = new streamit.library.iriter.Iterator(this);
                     new PrintGraph().printProgram(selfIter);
+                }
+
+            if (useJcc)
+                {
+					scheduledRun = false;
+                    PhasedFilter.jccLibrary = true;
+                    new StreamItToJcc().convertAndRun(this, nIters);
+                    return;
                 }
 
             // compute latency from top to bottom

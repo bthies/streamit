@@ -257,6 +257,9 @@ public class Unroller extends SLIRReplacingVisitor {
             if (unrollOuterLoops || !childHasUnrolled || inContainerInit) {
                 // check for loop induction variable
                 LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,values,constants);
+                // Unroller doesn't deal with loops that have declarations in the
+                // init portion of the loop
+                if (info != null && info.getIsDeclaredInInit()) info = null;
                 // see if we can unroll...
                 if(shouldUnroll(info, body, currentModified)) {
                     // Set modified

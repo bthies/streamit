@@ -118,6 +118,10 @@ public class ClusterBackend implements FlatVisitor {
         //this must be run now, FlatIRToC relies on it!!!
         RenameAll.renameAllFilters(str);
 
+        // Introduce Multiple Pops where programmer
+        // didn't take advantage of them
+        IntroduceMultiPops.doit(str);
+        
         // Perform propagation on fields from 'static' sections.
         Set statics = new HashSet();
         if (global != null)
@@ -214,7 +218,8 @@ public class ClusterBackend implements FlatVisitor {
         // apps/benchmarks/mpeg2/input/momessage.m2v in bits rounded
         // up to a multiple of 32.
         SIRDynamicRateManager.pushConstantPolicy(1000000);
-
+        //SIRDynamicRateManager.pushIdentityPolicy();
+        
         // Calculate SIRSchedule before increasing multiplicity
         StreamItDot.printGraph(str, "before-peekmult.dot");
         exec_counts1 = SIRScheduler.getExecutionCounts(str);

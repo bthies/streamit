@@ -364,6 +364,9 @@ public class Unroller extends SLIRReplacingVisitor {
                                        JStatement incr,
                                        JStatement body) {
         LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,new Hashtable(),new Hashtable());
+        // Make sure has old behavior: no executions of loop that still has declaration
+        // in init.
+        if (info != null && info.getIsDeclaredInInit()) info = null;
         return LoopIterInfo.getNumIterations(info);
     }
 

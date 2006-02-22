@@ -149,6 +149,12 @@ public class SpaceTimeBackend {
         // from a single SIRPopExpression
         RemoveMultiPops.doit(str);
 
+        // make sure that push expressions do not contains pop expressions
+        // because if they do and we use the gdn, we will generate the header 
+        // for the pop expression before the push expression and that may cause 
+        // deadlock...
+        at.dms.kjc.common.SeparatePushPop.doit(str);
+        
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
         // flatten the graph by running (super?) synch removal

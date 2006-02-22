@@ -358,7 +358,11 @@ public class DirectCommunication extends RawExecutionCode
         public void visitPushExpression(SIRPushExpression self,
                                         CType tapeType,
                                         JExpression arg) {
+            // I guess this should be reversed, but it will flag more
+            // problems this way (I don't like to see push(pop())
+            // see at.dms.kjc.common.SeparatePushPop
             sawPush = true;
+            arg.accept(this);
         }
     
         //for all loops, visit the cond and body twice to make sure that 

@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * This class represents the space/time schedule for the application, 
  * including both the steady state and the initialization stage.
- * It is operated on by other classes the generate these schedules.
+ * It is operated on by other classes to generate these schedules.
  * 
  * @author mgordon
  *

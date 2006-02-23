@@ -429,27 +429,30 @@ public class SimplePartitioner extends Partitioner {
     // return a string with all of the names of the filtertracenodes
     // and blue if linear
     private String traceName(Trace trace) {
-        TraceNode node = trace.getHead().getNext();
+        TraceNode node = trace.getHead();
 
-        StringBuffer out = null;
+        StringBuffer out = new StringBuffer();
 
-        if (((FilterTraceNode) node).getFilter().getArray() != null)
-            out = new StringBuffer(
-                                   "color=cornflowerblue, style=filled, label=\""
-                                   + node.toString());
-        else
-            out = new StringBuffer("label=\"" + node.toString());
-        out.append("{" + getWorkEstimate(((FilterTraceNode) node).getFilter())
-                   + "}");
+        //do something fancy for linear traces!!!
+        if (((FilterTraceNode)node.getNext()).getFilter().getArray() != null)
+            out.append("color=cornflowerblue, style=filled, ");
+        
+        out.append("label=\"" + node.toString());
+                
         node = node.getNext();
         int i = 0;
-        while (node != null && node instanceof FilterTraceNode) {
+        while (node != null ) {
             // too many filters, just break
             if (i++ > 15)
                 break;
-            out.append("\\n" + node.toString() + "{"
-                       + getWorkEstimate(((FilterTraceNode) node).getFilter())
-                       + "}");
+            if (node.isFilterTrace()) {
+                out.append("\\n" + node.toString() + "{"
+                        + getWorkEstimate(((FilterTraceNode) node).getFilter())
+                        + "}");
+            }
+            else {
+                out.append("\\n" + node.toString());
+            }
             node = node.getNext();
         }
         return out.toString();

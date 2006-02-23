@@ -132,7 +132,7 @@ public class TraceDotGraph {
         fw.write(buffer.getSource().hashCode() + " -> "
                  + buffer.getDest().hashCode() + "[label=\""
                  + (DRAM ? buffer.getDRAM().toString() : "not assigned\""));
-        if (!buffer.isStaticNet())
+        if (buffer.isIntraTrace() && !((IntraTraceBuffer)buffer).isStaticNet())
             fw.write(",gdn,");
         
         if (DRAM) {

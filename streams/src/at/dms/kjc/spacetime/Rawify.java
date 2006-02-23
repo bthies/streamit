@@ -22,6 +22,12 @@ import at.dms.kjc.flatgraph2.*;
  * 
  */
 public class Rawify {
+    
+    /** if true, then when generating the code for the steady state, 
+     * iterate over the splitters and joiners first, so there will 
+     * be a data-redistribution stage before each steady-state firing.
+     */
+    public static boolean SPLIT_JOIN_FIRST = true;
     // if true try to compress the switch code by creating loops
     public static boolean SWITCH_COMP = true;
 
@@ -55,25 +61,64 @@ public class Rawify {
 
         //the initialization stage!!
         traces = schedule.getInitSchedule();
-        iterate(traces, true, false, rawChip);
+        iterateInorder(traces, true, false, rawChip);
         //the prime pump stage!!
         traces = schedule.getPrimePumpScheduleFlat();
-        iterate(traces, false, true, rawChip);
+        iterateInorder(traces, false, true, rawChip);
         //the steady-state!!
         traces = schedule.getSchedule();
-        iterate(traces, false, false, rawChip);
+        if (SPLIT_JOIN_FIRST)
+            iterateSplitJoinFirst(traces, false, false, rawChip);
+        else
+            iterateInorder(traces, false, false, rawChip);
     }
 
     /**
      * Iterate over the schedule of traces and over each node of each trace and 
-     * generate the code necessary to fire the schedule.
+     * generate the code necessary to fire the schedule.  Generate splitters and 
+     * joiners first so that they will data will be redistributed before the filters
+     * execute.
      * 
      * @param traces The schedule to execute.
      * @param init True if the init stage.
      * @param primepump True if the primepump stage
      * @param rawChip The raw chip
      */
-    private static void iterate(Trace traces[], boolean init,
+    private static void iterateSplitJoinFirst(Trace traces[], boolean init,
+                                boolean primepump, RawChip rawChip) {
+        Trace trace;
+
+        for (int i = 0; i < traces.length; i++) {
+            trace = (Trace) traces[i];
+            //create code for joining input to the trace
+            processInputTraceNode((InputTraceNode)trace.getHead(),
+                    init, primepump, rawChip);
+            //create communication code for splitting the output
+            processOutputTraceNode((OutputTraceNode)trace.getTail(),
+                    init, primepump, rawChip);
+            
+        }
+        for (int i = 0; i < traces.length; i++) {
+            trace = (Trace) traces[i];
+            //create the compute code and the communication code for the
+            //filters of the trace
+            processFilterTraces(trace, init, primepump, rawChip);
+        }
+    }
+    
+    
+    
+    /**
+     * Iterate over the schedule of traces and over each node of each trace and 
+     * generate the code necessary to fire the schedule.  Generate splitters and 
+     * joiners intermixed with the trace execution...
+     * 
+     * @param traces The schedule to execute.
+     * @param init True if the init stage.
+     * @param primepump True if the primepump stage
+     * @param rawChip The raw chip
+     */
+    private static void iterateInorder(Trace traces[], boolean init,
                                 boolean primepump, RawChip rawChip) {
         Trace trace;
 
@@ -109,7 +154,7 @@ public class Rawify {
         //trace
         if (trace.getHead().getNext().isFilterTrace())
             generateInputFilterDRAMCommand(trace.getHead().getNextFilter(), 
-                    init, primepump);
+                    init, primepump, rawChip);
         if (trace.getTail().getPrevious().isFilterTrace())
             generateFilterOutputDRAMCommand(trace.getTail().getPrevFilter(), 
                     init, primepump);
@@ -147,7 +192,7 @@ public class Rawify {
                
                 // }
                 
-                // used for debugging, nothing more
+                // tell the tile was is mapped to it!!
                 tile.addFilterTrace(init, primepump, filterNode);
                 // this must come after createswitch code because of
                 // compression
@@ -169,11 +214,10 @@ public class Rawify {
      */
     private static void processOutputTraceNode(OutputTraceNode traceNode, boolean init,
         boolean primepump, RawChip rawChip) {
-        if (!KjcOptions.magicdram)
+        if (KjcOptions.magicdram)
             return;
         
-        assert StreamingDram
-        .differentDRAMs(traceNode) : 
+        assert StreamingDram.differentDRAMs(traceNode) : 
             "outputs for a single OutputTraceNode going to same DRAM";
         handleFileOutput(traceNode, init,
                 primepump, rawChip);
@@ -200,7 +244,7 @@ public class Rawify {
      */
     private static void processInputTraceNode(InputTraceNode traceNode, boolean init,
             boolean primepump, RawChip rawChip) {
-        if (!KjcOptions.magicdram) 
+        if (KjcOptions.magicdram) 
             return; 
         assert StreamingDram.differentDRAMs(traceNode) : 
             "inputs for a single InputTraceNode coming from same DRAM";
@@ -317,8 +361,8 @@ public class Rawify {
                                                   boolean init, boolean primepump) {
         FilterTraceNode filter = (FilterTraceNode) input.getNext();
 
-        // don't do anything for redundant buffers
-        if (IntraTraceBuffer.getBuffer(input, filter).redundant())
+        // do not generate the code if it is not necessary
+        if (OffChipBuffer.unnecessary(input))
             return;
 
         // number of total items that are being joined
@@ -329,10 +373,8 @@ public class Rawify {
             return;
 
         // add to the init code with the init buffers except in steady
-        int stage = 0;
-        if (!init && !primepump)
-            stage = 3;
-
+        boolean stage = init || primepump;
+        
         assert items % input.totalWeights() == 0 : "weights on input trace node does not divide evenly with items received";
         // iterations of "joiner"
         int iterations = items / input.totalWeights();
@@ -341,12 +383,9 @@ public class Rawify {
         // generate the commands to read from the o/i temp buffer
         // for each input to the input trace node
         for (int i = 0; i < input.getSources().length; i++) {
-            // get the first non-redundant buffer
-            
+            // get the first non-redundant buffer         
             OffChipBuffer srcBuffer = 
-                InterTraceBuffer.getBuffer(input.getSources()[i]);
-            //make sure that we formed everything correctly
-            assert srcBuffer == srcBuffer.getNonRedundant();
+                InterTraceBuffer.getBuffer(input.getSources()[i]).getNonRedundant();
             
             SpaceTimeBackend.println("Generate the DRAM read command for "
                                      + srcBuffer);
@@ -355,11 +394,11 @@ public class Rawify {
             if (srcBuffer.getDest() instanceof OutputTraceNode
                 && ((OutputTraceNode) srcBuffer.getDest()).isFileReader())
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
-                        init || primepump, readWords, srcBuffer, srcBuffer.isStaticNet());
+                        init || primepump, readWords, srcBuffer, true);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
                         stage, Util.cacheLineDiv(readWords * 4), 
-                        srcBuffer, true, srcBuffer.isStaticNet());
+                        srcBuffer, true, true);
         }
 
         // generate the command to write to the dest of the input trace node
@@ -367,11 +406,11 @@ public class Rawify {
         int writeWords = items * typeSize;
         if (input.isFileWriter() && OffChipBuffer.unnecessary(input))
             destBuffer.getOwner().getComputeCode().addFileCommand(false,
-                    init || primepump, writeWords, destBuffer, destBuffer.isStaticNet());
+                    init || primepump, writeWords, destBuffer, true);
         else
             destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
                     Util.cacheLineDiv(writeWords * 4), 
-                    destBuffer, false, destBuffer.isStaticNet());
+                    destBuffer, false, true);
     }
 
     /**
@@ -384,21 +423,16 @@ public class Rawify {
      */
     private static void outputDRAMCommands(OutputTraceNode output,
                                            boolean init, boolean primepump) {
+        assert !(init && primepump);
         FilterTraceNode filter = (FilterTraceNode) output.getPrevious();
  
         // don't do anything for a redundant buffer
         if (OffChipBuffer.unnecessary(output))
             return;
 
-        // if we are in the init set to zero, 1 to primepump
-        // if steady set to 3, used for addDRAMCommand(...)
-        int stage;
-        if (init)
-            stage = 0;
-        else if (primepump)
-            stage = 1;
-        else //steady
-            stage = 3;
+        //  true if in init or primepump and add code to the init stage
+        boolean stage = init || primepump;
+        
 
         OffChipBuffer srcBuffer = IntraTraceBuffer.getBuffer(filter, output);
         int readWords = FilterInfo.getFilterInfo(filter).totalItemsSent(init,
@@ -413,12 +447,12 @@ public class Rawify {
             // never use stage 2 for reads
             if (output.isFileReader() && OffChipBuffer.unnecessary(output))
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
-                        init || primepump, readWords, srcBuffer, srcBuffer.isStaticNet());
+                        stage, readWords, srcBuffer, true);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
-                        (stage < 3 ? 0 : 3), 
+                        stage, 
                         Util.cacheLineDiv(readWords * 4),
-                        srcBuffer, true, srcBuffer.isStaticNet());
+                        srcBuffer, true, true);
         }
 
         // now generate the store drm command
@@ -429,9 +463,9 @@ public class Rawify {
             int typeSize = Util.getTypeSize(edge.getType());
             int writeWords = typeSize;
             // do steady-state
-            if (stage == 3)
+            if (!stage)
                 writeWords *= edge.steadyItems();
-            else if (stage == 0)
+            else if (init)
                 writeWords *= edge.initItems();
             else
                 writeWords *= edge.primePumpItems();
@@ -441,11 +475,11 @@ public class Rawify {
                     && OffChipBuffer.unnecessary(destBuffer.getEdge()
                                                  .getDest()))
                     destBuffer.getOwner().getComputeCode().addFileCommand(false, 
-                            init || primepump, writeWords, destBuffer, destBuffer.isStaticNet());
+                            stage, writeWords, destBuffer, true);
                 else
                     destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage, 
                                 Util.cacheLineDiv(writeWords * 4),
-                                destBuffer, false, destBuffer.isStaticNet());
+                                destBuffer, false, true);
             }
         }
     }
@@ -457,13 +491,13 @@ public class Rawify {
      * it is joined into the proper dram.
      */
     private static void generateInputFilterDRAMCommand(FilterTraceNode filterNode, 
-            boolean init, boolean primepump) {
+            boolean init, boolean primepump, RawChip rawChip) {
         // only generate a DRAM command for filters connected to input or output
         // trace nodes
         if (filterNode.getPrevious() != null
             && filterNode.getPrevious().isInputTrace()) {
             //get the buffer, and use it to decide which network to use
-            OffChipBuffer buffer = 
+            IntraTraceBuffer buffer = 
                 IntraTraceBuffer.getBuffer((InputTraceNode) filterNode.getPrevious(), 
                         filterNode);
             
@@ -482,21 +516,40 @@ public class Rawify {
             if (items == 0)
                 return;
 
-            int stage = 0;
-            if (!init && !primepump)
-                stage = 3;
+            //true if we want to append to the init stage
+            boolean stage = init || primepump;
 
             // the transfer size rounded up to by divisible by a cacheline
             int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                   .getInputType()));
 
-            if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
-                nonRedBuffer.getOwner().getComputeCode().addFileCommand(true, init || primepump,
-                        words, nonRedBuffer, buffer.isStaticNet());
-            else
-                nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
-                        Util.cacheLineDiv(words * 4), 
-                        nonRedBuffer, true, buffer.isStaticNet());
+            // in the case of a gdn load that has a different destination 
+            // than the owning tile, we must use a special dram command
+            if (nonRedBuffer.getOwner() != rawChip.getTile(filterNode.getX(),
+                    filterNode.getY())) {
+                assert !buffer.isStaticNet();
+                if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
+                    nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
+                    (stage, words, nonRedBuffer, rawChip.getTile(filterNode.getX(),
+                            filterNode.getY()));
+                else
+                    nonRedBuffer.getOwner().getComputeCode().addDRAMGDNReadCommand(stage,
+                            Util.cacheLineDiv(words * 4), 
+                            nonRedBuffer, true, rawChip.getTile(filterNode.getX(),
+                                    filterNode.getY()));
+            }
+            else {
+                //generate commands to get the input for the filter from a dram or from 
+                //a file, use the non-redundant upstream buffer for the address, but
+                //this buffer's network assignment
+                if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
+                    nonRedBuffer.getOwner().getComputeCode().addFileCommand(true, stage,
+                            words, nonRedBuffer, buffer.isStaticNet());
+                else
+                    nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
+                            Util.cacheLineDiv(words * 4), 
+                            nonRedBuffer, true, buffer.isStaticNet());
+            }
         }
     }
 
@@ -511,26 +564,29 @@ public class Rawify {
             // get this buffer or null if there are no inputs and use it 
             // to decide if we should use the gdn or the static network
             OutputTraceNode output = (OutputTraceNode) filterNode.getNext();
-            OffChipBuffer buffer = IntraTraceBuffer.getBuffer(filterNode,
+            IntraTraceBuffer buffer = IntraTraceBuffer.getBuffer(filterNode,
                                                               output);
             //get the non redundant buffer for the buffer address that we should write into
             OffChipBuffer nonRedBuffer = buffer.getNonRedundant();
             if (nonRedBuffer == null)
                 return;
 
-            int stage = 0;
-            if (!init && !primepump)
-                stage = 3;
-
+            //true if we want to add code to the init stage
+            boolean stage = init || primepump;
+            
             // get the number of items sent
             int items = FilterInfo.getFilterInfo(filterNode).totalItemsSent(init, primepump);
 
+            //generate the commands to store the outpout of the last
+            //filter of the trace to a dram or filter
+            //use the non-redundant buffer's address, but this buffer's
+            //network assignemnt
             if (items > 0) {
                 int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                       .getOutputType()));
                 if (output.onlyWritingToAFile())
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(false,
-                            init || primepump, words, nonRedBuffer, buffer.isStaticNet());
+                            stage, words, nonRedBuffer, buffer.isStaticNet());
                 else {
                     SpaceTimeBackend
                         .println("Generating DRAM store command with "
@@ -1643,7 +1699,7 @@ public class Rawify {
         // should we generate switch receive code
         boolean switchReceiveCode = true;
         if (node.getPrevious() instanceof InputTraceNode) {
-            OffChipBuffer buf = 
+            IntraTraceBuffer buf = 
                 IntraTraceBuffer.getBuffer((InputTraceNode) node.getPrevious(), node);
 
             //don't worry about handling non-cache-sized transfers if the

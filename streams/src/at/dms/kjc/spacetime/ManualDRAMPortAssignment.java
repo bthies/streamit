@@ -74,10 +74,8 @@ public class ManualDRAMPortAssignment {
             String query = output + " -> " + edge.getDest();
             
             int port = getPortNumberFromUser("Assignment for: " + query, chip);
-            boolean staticNet = getNetworkFromUser("Static net? " + query);
-            
+          
             InterTraceBuffer.getBuffer(edge).setDRAM((StreamingDram)chip.getDevices()[port]);
-            InterTraceBuffer.getBuffer(edge).setStaticNet(staticNet);
         }  
     }
     

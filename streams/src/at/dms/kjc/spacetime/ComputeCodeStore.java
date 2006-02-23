@@ -80,6 +80,7 @@ public class ComputeCodeStore {
      */
     public void addFileCommand(boolean read, boolean init, int words,
                                OffChipBuffer buffer, boolean staticNet) {
+        assert !buffer.redundant() : "trying to generate a file command for a redundant buffer.";
         assert words > 0 : "trying to generate a file dram command of size 0";
 
         assert buffer.getRotationLength() == 1 : 
@@ -106,6 +107,45 @@ public class ComputeCodeStore {
             steadyLoop.addStatement(new JExpressionStatement(null, call, null));
     }
 
+    /**
+     * Generate a command to read from a file daisy-chained to a i/o
+     * port on the gdn and send the data to <dest>
+     * 
+     * @param init true if we want to append command to init stage, false steady
+     * @param words the number of words to x-fer
+     * @param buffer Used to get the port
+     * @param dest The tile to which to send the data.
+     */
+    public void addFileGDNReadCommand(boolean init, int words,
+                               OffChipBuffer buffer, RawTile dest) {
+        assert !buffer.redundant() : "trying to generate a file command for a redundant buffer.";
+        assert words > 0 : "trying to generate a file dram command of size 0";
+        
+        assert buffer.getRotationLength() == 1 : 
+            "The buffer connected to a file reader / writer cannot rotate!";
+        parent.setMapped();
+        String functName = "raw_streaming_dram_gdn_request_bypass_read_dest";
+        
+        String bufferName = buffer.getIdent(0);
+
+        JExpression[] args = 
+        {
+                new JFieldAccessExpression(null, new JThisExpression(null),bufferName), 
+                new JIntLiteral(words),
+                new JIntLiteral(dest.getY()),
+                new JIntLiteral(dest.getX())
+                };
+
+        // the dram command
+        JMethodCallExpression call = new JMethodCallExpression(null, functName,
+                                                               args);
+        if (init)
+            initBlock.addStatement(new JExpressionStatement(null, call, null));
+        else
+            steadyLoop.addStatement(new JExpressionStatement(null, call, null));
+    }
+
+    
     /**
      * Generate code on the compute process to send over <words> words of data
      * using a header that was already set previously.
@@ -181,18 +221,19 @@ public class ComputeCodeStore {
      * for either the init stage (including primepump) or the steady state.  
      * 
      * @param read True if we want to issue a read, false if write
-     * @param stage true if init
+     * @param init true if init or primepump stage
      * @param bytes The number of bytes
      * @param buffer The address to load/store
      * @param presynched True if we want all other dram commands to finish before this
      * one is issued
      * @param staticNet True if we want to use the static network, false if gdn
      */    
-    public void addDRAMCommand(boolean read, int stage, int bytes,
-                               OffChipBuffer buffer, boolean presynched,
+    public void addDRAMCommand(boolean read, boolean init, int bytes,
+                              OffChipBuffer buffer, boolean presynched,
                                boolean staticNet) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
-               
+        assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
+                        
         parent.setMapped();
         String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
             "_request_" +
@@ -207,7 +248,7 @@ public class ComputeCodeStore {
         assert bytes % RawChip.cacheLineBytes == 0 : "transfer size for dram must be a multiple of cache line size";
 
         int cacheLines = bytes / RawChip.cacheLineBytes;
-                JExpression[] args = {
+        JExpression[] args = {
                 new JNameExpression(null, null, rotStructName + "->buffer"), 
                 new JIntLiteral(1),
                 new JIntLiteral(cacheLines) };
@@ -233,7 +274,7 @@ public class ComputeCodeStore {
         SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
-        if (stage < 3) {
+        if (init) {
             initBlock.addStatement(new JExpressionStatement(null, call, null));
             initBlock
                 .addStatement(new JExpressionStatement(null, assExp, null));
@@ -250,6 +291,80 @@ public class ComputeCodeStore {
         }
     }
 
+    /**
+     * Add a dram read command at the current position of this code compute code 
+     * for either the init stage (including primepump) or the steady state over the
+     * gdn and send it to the <dest> tile.  
+     * 
+     * @param init true if init or primepump stage
+     * @param bytes The number of bytes
+     * @param buffer The address to load/store
+     * @param presynched True if we want all other dram commands to finish before this
+     * one is issued
+     * @param dest The read's destination. 
+     */    
+    public void addDRAMGDNReadCommand(boolean init, int bytes,
+            OffChipBuffer buffer, boolean presynched, RawTile dest) {
+        assert bytes > 0 : "trying to generate a dram command of size 0";
+        assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
+        
+        parent.setMapped();
+        String functName = "raw_streaming_dram_gdn_request_read" + 
+        (presynched ? "_presynched" : "") + "_dest";
+        
+        //the name of the rotation struction we are using...
+        String rotStructName = buffer.getIdent(true);
+ 
+        // the args for the streaming dram command
+
+        // cachelines that are needed
+        assert bytes % RawChip.cacheLineBytes == 0 : "transfer size for dram must be a multiple of cache line size";
+
+        int cacheLines = bytes / RawChip.cacheLineBytes;
+        JExpression[] args = {
+                new JNameExpression(null, null, rotStructName + "->buffer"), 
+                new JIntLiteral(1),
+                new JIntLiteral(cacheLines), 
+                new JIntLiteral(dest.getY()),
+                new JIntLiteral(dest.getX())};
+        
+        // the dram command
+        JMethodCallExpression call = new JMethodCallExpression(null, functName,
+                                                               args);
+
+        // send over the address
+        JFieldAccessExpression dynNetSend = new JFieldAccessExpression(null,
+                                                                       new JThisExpression(null), Util.CGNOINTVAR);
+
+        JNameExpression bufAccess = new JNameExpression(null, null, 
+                rotStructName + "->buffer");
+
+        JAssignmentExpression assExp = new JAssignmentExpression(null,
+                                                                 dynNetSend, bufAccess);
+        JAssignmentExpression rotExp = new JAssignmentExpression(null,
+                new JFieldAccessExpression(null, new JThisExpression(null), rotStructName),
+                new JNameExpression(null, null, rotStructName + "->next"));
+        
+        
+        SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
+                                 + buffer + " " + cacheLines);
+        // add the statements to the appropriate stage
+        if (init) {
+            initBlock.addStatement(new JExpressionStatement(null, call, null));
+            initBlock
+                .addStatement(new JExpressionStatement(null, assExp, null));
+            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
+        } else {
+            steadyLoop.addStatement(new JExpressionStatement(null, 
+                    (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));
+            steadyLoop
+            .addStatement(new JExpressionStatement(null, 
+                    (JAssignmentExpression)ObjectDeepCloner.deepCopy(assExp), null));
+            steadyLoop
+            .addStatement(new JExpressionStatement(null, 
+                    (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
+        }
+    }   
     public void addTraceSteady(FilterInfo filterInfo) {
         parent.setMapped();
         RawExecutionCode exeCode;

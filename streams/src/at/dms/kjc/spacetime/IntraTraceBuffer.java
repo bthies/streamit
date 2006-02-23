@@ -17,6 +17,9 @@ import at.dms.kjc.*;
  *
  */
 public class IntraTraceBuffer extends OffChipBuffer {
+    /** true if this buffer uses static net */
+    protected boolean staticNet;
+    
     public static IntraTraceBuffer getBuffer(FilterTraceNode src,
                                              OutputTraceNode dst) {
         if (!bufferStore.containsKey(src)) {
@@ -48,6 +51,31 @@ public class IntraTraceBuffer extends OffChipBuffer {
         calculateSize();
     }
 
+    /**
+     * @return Returns true if this buffer uses staticNet.
+     */
+    public boolean isStaticNet() {
+        return staticNet;
+    }
+
+    /**
+     * @param staticNet The staticNet to set.
+     */
+    public void setStaticNet(boolean staticNet) {
+        this.staticNet = staticNet;
+        //perform some sanity checks
+        if (!staticNet) {
+            if (isInterTrace()) {
+                OutputTraceNode output = (OutputTraceNode)this.getDest();
+                InputTraceNode input = (InputTraceNode)this.getSource();
+                assert (output.oneOutput() || output.noOutputs()) &&
+                    (input.noInputs() || input.oneInput()) : 
+                        this.toString() + " cannot use the gdn unless it is a singleton.";
+            }
+        }
+    }
+
+  
     public boolean redundant() {
         // if there are no outputs for the output trace
         // then redundant

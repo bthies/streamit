@@ -34,8 +34,6 @@ public abstract class OffChipBuffer {
     protected TraceNode source;
     /** the destination slice (trace) */
     protected TraceNode dest;
-    /** true if this buffer uses static net */
-    protected boolean staticNet;
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
     
@@ -54,45 +52,7 @@ public abstract class OffChipBuffer {
         unique_id++;
         setType();
     }
-    
-    /**
-     * @return Returns true if this buffer uses staticNet.
-     */
-    public boolean isStaticNet() {
-        return staticNet;
-    }
 
-    /**
-     * @param staticNet The staticNet to set.
-     */
-    public void setStaticNet(boolean staticNet) {
-        this.staticNet = staticNet;
-        //perform some sanity checks
-        if (!staticNet) {
-            if (isIntraTrace()) {
-                if (this.getSource().isInputTrace()) {
-                    assert ((InputTraceNode)this.getSource()).oneInput() ||
-                        ((InputTraceNode)this.getSource()).noInputs() : 
-                            this.toString() + " cannot use gdn (must be singleton).";
-                }
-                if (this.getSource().isFilterTrace()) {
-                    assert ((OutputTraceNode) this.getDest()).oneOutput() ||
-                        ((OutputTraceNode) this.getDest()).noOutputs() :
-                            this.toString() + " cannot use gdn (must be a singleton.)"; 
-                }
-                
-            }
-            else { //intratracebuffefr
-                OutputTraceNode output = (OutputTraceNode)this.getDest();
-                InputTraceNode input = (InputTraceNode)this.getSource();
-                assert (output.oneOutput() || output.noOutputs()) &&
-                    (input.noInputs() || input.oneInput()) : 
-                        this.toString() + " cannot use the gdn unless it is a singleton.";
-            }
-        }
-    }
-
-  
     
     public abstract boolean redundant();
 

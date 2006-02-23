@@ -16,6 +16,8 @@
 
 package streamit.scheduler2.constrained;
 
+import streamit.scheduler2.iriter.Iterator;
+
 import streamit.misc.DLList;
 import streamit.misc.DLList_const;
 import streamit.misc.DLListIterator;
@@ -36,6 +38,12 @@ public class LatencyNode extends streamit.misc.Misc
      * This is a list of StreamInterfaces, root is first, parent is last
      */
     final DLList ancestors;
+
+    /**
+     * Original stream interface for the stream that is held within
+     * this latency node.
+     */
+    streamit.scheduler2.hierarchical.StreamInterface streamInterface;
 
     /*
      * Store the steady and init phases of the unerlying node
@@ -85,6 +93,7 @@ public class LatencyNode extends streamit.misc.Misc
 
     LatencyNode(Filter filter, DLList _ancestors)
     {
+        streamInterface = filter;
         ancestors = _ancestors;
 
         {
@@ -155,6 +164,7 @@ public class LatencyNode extends streamit.misc.Misc
                 boolean isSplitter,
                 DLList _ancestors)
     {
+        streamInterface = sj;
         ancestors = _ancestors;
 
         if (isSplitter)
@@ -246,6 +256,11 @@ public class LatencyNode extends streamit.misc.Misc
     public DLList_const getAncestors()
     {
         return ancestors;
+    }
+
+    public streamit.scheduler2.hierarchical.StreamInterface getStreamInterface()
+    {
+        return streamInterface;
     }
 
     public int getNumInputChannels()

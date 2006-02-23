@@ -39,8 +39,8 @@ public class SDEPFilterIter extends FilterIter
      * considered for visibility.
      */
     private boolean phasesVisible() {
-        return (filter == sdepFactory.getSender() ||
-                filter == sdepFactory.getReceiver());
+        return (sdepFactory.containsSender(filter) ||
+                sdepFactory.containsReceiver(filter));
     }
 
     /**
@@ -64,8 +64,8 @@ public class SDEPFilterIter extends FilterIter
         }
 
         // figure out if we should count pushes or pops as stages
-        boolean countPop = (filter == sdepFactory.getReceiver() && sdepFactory.isDownstream() ||
-                            filter == sdepFactory.getSender() && !sdepFactory.isDownstream());
+        boolean countPop = (sdepFactory.containsReceiver(filter) && sdepFactory.isDownstream() ||
+                            sdepFactory.containsSender(filter) && !sdepFactory.isDownstream());
 
         // count how many stages are eligible
         int count = 0;
@@ -100,8 +100,8 @@ public class SDEPFilterIter extends FilterIter
         }
 
         // figure out if we should count pushes or pops as phases
-        boolean countPop = (filter == sdepFactory.getReceiver() && sdepFactory.isDownstream() ||
-                            filter == sdepFactory.getSender() && !sdepFactory.isDownstream());
+        boolean countPop = (sdepFactory.containsReceiver(filter) && sdepFactory.isDownstream() ||
+                            sdepFactory.containsSender(filter) && !sdepFactory.isDownstream());
 
         // count how many phases are eligible
         numWorkPhases = 0;
@@ -123,8 +123,8 @@ public class SDEPFilterIter extends FilterIter
      */
     private int visibleInitStage(int target) {
         // figure out if we should count pushes or pops as stages
-        boolean countPop = (filter == sdepFactory.getReceiver() && sdepFactory.isDownstream() ||
-                            filter == sdepFactory.getSender() && !sdepFactory.isDownstream());
+        boolean countPop = (sdepFactory.containsReceiver(filter) && sdepFactory.isDownstream() ||
+                            sdepFactory.containsSender(filter) && !sdepFactory.isDownstream());
 
         // count of visible stage we have found
         int count = -1; 
@@ -150,8 +150,8 @@ public class SDEPFilterIter extends FilterIter
      */
     private int visibleWorkPhase(int target) {
         // figure out if we should count pushes or pops as phases
-        boolean countPop = (filter == sdepFactory.getReceiver() && sdepFactory.isDownstream() ||
-                            filter == sdepFactory.getSender() && !sdepFactory.isDownstream());
+        boolean countPop = (sdepFactory.containsReceiver(filter) && sdepFactory.isDownstream() ||
+                            sdepFactory.containsSender(filter) && !sdepFactory.isDownstream());
 
         // count of visible phases we have found
         int count = -1; 

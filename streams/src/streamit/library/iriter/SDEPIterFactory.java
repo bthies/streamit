@@ -22,6 +22,9 @@ import streamit.library.Pipeline;
 import streamit.library.SplitJoin;
 import streamit.library.Stream;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 /**
  * This is an iterator factory that views the stream graph as needed
  * for SDEP computations.  Currently this view is as follows:
@@ -53,9 +56,9 @@ public class SDEPIterFactory implements IterFactory {
      */
     private Filter sender;
     /**
-     * Receiver of the message for the SDEP calculation.
+     * Receivers (Streams) of the message for the SDEP calculation.
      */
-    private Filter receiver;
+    private HashSet receivers;
     /**
      * Whether or not the receiver is downstream of the sender in the
      * stream graph.
@@ -64,30 +67,40 @@ public class SDEPIterFactory implements IterFactory {
     
     /**
      * Construct a factory for an SDEP calculation between <sender>
-     * and <receiver> (of a given message).
+     * and <receivers>, which should be Streams, of a given message.
      */
-    public SDEPIterFactory(Stream sender, Stream receiver, boolean downstream) {
+    public SDEPIterFactory(Stream sender, HashSet receivers, boolean downstream) {
         // currently only support messages between filters
         assert sender instanceof Filter;
-        assert receiver instanceof Filter;
 
         this.sender = (Filter)sender;
-        this.receiver = (Filter)receiver;
+        this.receivers = receivers;
         this.downstream = downstream;
     }
 
     /**
-     * Returns sender.
+     * Construct a factory for an SDEP calculation between <sender>
+     * and <receiver> (of a given message).
      */
-    public Filter getSender() {
-        return sender;
+    public SDEPIterFactory(Stream sender, Stream receiver, boolean downstream) {
+        this(sender, new HashSet(Arrays.asList(new Stream[] { receiver })), downstream);
+        // currently only support messages between filters
+        assert sender instanceof Filter;
+        assert receiver instanceof Filter;
     }
 
     /**
-     * Returns receiver.
+     * Returns whether or not <sender> is one of the senders of this.
      */
-    public Filter getReceiver() {
-        return receiver;
+    public boolean containsSender(Filter sender) {
+        return this.sender == sender;
+    }
+
+    /**
+     * Returns whether or not <receiver> is one of the receivers of this.
+     */
+    public boolean containsReceiver(Filter receiver) {
+        return receivers.contains(receiver);
     }
 
     /**

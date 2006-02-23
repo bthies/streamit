@@ -23,6 +23,9 @@ import streamit.scheduler2.Schedule;
 import streamit.misc.OMap;
 import streamit.misc.OMapIterator;
 
+import java.util.HashSet;
+import java.util.HashMap;
+
 public class Scheduler extends streamit.scheduler2.Scheduler
 {
     final StreamInterface rootStream;
@@ -82,6 +85,38 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         LatencyNode dstNode =
             ((Filter)factory.newFrom(dst, null)).getLatencyNode();
         return graph.computeSDEP(srcNode, dstNode);
+    }
+
+    /**
+     * Computes SDEP from <src> to each Iterator in <dst>.  Returns
+     * all SDEPData's in a map that is keyed on the members of <dst>.
+     */
+    public HashMap computeSDEP(Iterator src, HashSet dst)
+        throws NoPathException
+    {
+        LatencyGraph graph = factory.getLatencyGraph();
+        LatencyNode srcNode =
+            ((Filter)factory.newFrom(src, null)).getLatencyNode();
+
+        // translate <dst> into a new HashSet of LatencyNodes rather
+        // than Iterators
+        HashSet dstNodes = new HashSet();
+        for (java.util.Iterator i = dst.iterator(); i.hasNext(); ) {
+            Iterator dstNode = (Iterator)i.next();
+            dstNodes.add(((Filter)factory.newFrom(dstNode, null)).getLatencyNode());
+        }
+            
+        // compute LatencyNode -> SDEPData
+        HashMap map = graph.computeSDEP(srcNode, dstNodes);
+
+        // translate to Iterator -> SDEPData
+        HashMap result = new HashMap();
+        for (java.util.Iterator i = map.keySet().iterator(); i.hasNext(); ) {
+            LatencyNode node = (LatencyNode)i.next();
+            result.put(node.getStreamInterface().getStreamIter(), map.get(node));
+        }
+
+        return result;
     }
 
     public void addDownstreamConstraint(

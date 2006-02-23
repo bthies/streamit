@@ -1,0 +1,172 @@
+
+
+for( i = 1; i < 17; i = i + 1){
+
+  Restructure[E, Identity, filter(2), Ident2, Merge[splitjoin, "TLsj", TLsj, P] ]
+	( DES.filter(i).filter(1).filter(1)  );
+  
+  Unroll[48](DES.filter(i).filter(1).filter(1).Identity);
+  Unroll[48](DES.filter(i).filter(1).filter(1).Ident2);
+  
+  K = 32;
+  
+  PermutFactor[ [shift(0:5 by ?),
+		 shift(12:17 by 4),
+		 shift(24:29 by 8),
+		 shift(36:41 by 12),
+		 shift(6:11 by 4 - K),
+		 shift(18:23 by 8 - K ),
+		 shift(30:35 by 12 - K ),
+		 shift(42:47 by 16 - K)
+		 ],
+		[pos(0 to 0)]
+		]
+    (DES.filter(i).filter(1).filter(1).Identity);
+
+
+  PermutFactor[ [shift(0:5 by ?),
+		 shift(12:17 by 4),
+		 shift(24:29 by 8),
+		 shift(36:41 by 12),
+		 shift(6:11 by 4 - K),
+		 shift(18:23 by 8 - K ),
+		 shift(30:35 by 12 - K ),
+		 shift(42:47 by 16 - K)
+		 ],
+		[pos(0 to 0)]
+		]
+    (DES.filter(i).filter(1).filter(1).Ident2);
+
+
+  PrintMatrix["PreIdent.mat"](DES.filter(i).filter(1).filter(1).Identity);
+
+  
+  Restructure[Merge[matrix, "newE", E, Identity.Identity_0], 
+	      Merge[splitjoin, "newKeyGen", Identity.Identity_1, filter(2), Ident2.Ident2_0],
+	      Merge[splitjoin, "TLsj", Ident2.Ident2_1, TLsj] ]
+    (DES.filter(i).filter(1).filter(1));
+
+  //  RowSplit(DES.filter(i).filter(1).filter(1).newE);
+
+  //Unroll[32](DES.filter(i).filter(1).filter(1).newKeyGen.Identity.Identity.Identity);
+
+  PrintMatrix["Ident1.mat"](DES.filter(i).filter(1).filter(1).newE);
+
+  Restructure[
+	      Merge[matrix, "IncIdentity", Identity.Identity_1,  
+		    Identity.Identity, Ident2_0 ]
+	      ](DES.filter(i).filter(1).filter(1).newKeyGen.Identity);
+
+  Restructure[Ident2_0, PARAMETER] (DES.filter(i).filter(1).filter(1).newKeyGen.PARAMETER);
+
+  PrintMatrix["Ident2.mat"](DES.filter(i).filter(1).filter(1).newKeyGen);
+  
+
+  Print["Test.dot", 6]( DES.filter(i).filter(1).filter(1) );
+}
+
+
+i=0;
+//Optimisation for IP.
+
+
+
+
+
+//ColSplit[8,8,8,8,8,8,8,8](DES.IPm1);
+
+DES.IP = PermutFactor[[shift(0:2:30 by -33), shift(0:63 by 0 || 33 || -33), shift(33:2:63 by 33)],
+			[]](DES.IP);
+
+DiagSplit(DES.IP.IP_1);
+
+DES.IPm1 = PermutFactor[[],
+				 [shift(0:3 by -33), 				  
+				  shift(8:8+3 by -33), 				  
+				  shift(16:16+3 by -33), 				  
+				  shift(24:24+3 by -33),      
+				  shift(36:39 by 33),				  
+				  shift(8+36:8+39 by 33),				 
+				  shift(16+36:16+39 by 33),				  
+				  shift(24+36:24+39 by 33),
+				  shift(0:63 by 0 || 33 || -33)
+				  ]
+				 ](DES.IPm1);
+
+DiagSplit(DES.IPm1.IPm1_0);
+
+
+
+Restructure[
+	    //Merge[matrix, "IP", 
+	    IP,
+	    F_1___.F_P1 , F_1___.F_P2_1___ , Merge[matrix, "P_31", F_1___.F_P3,
+	    F_2___.F_P1] , F_2___.F_P2_2___ , Merge[matrix, "P_31", F_2___.F_P3,
+	    F_3___.F_P1] , F_3___.F_P2_3___ , Merge[matrix, "P_31", F_3___.F_P3,
+	    F_4___.F_P1] , F_4___.F_P2_4___ , Merge[matrix, "P_31", F_4___.F_P3,
+	    F_5___.F_P1] , F_5___.F_P2_5___ , Merge[matrix, "P_31", F_5___.F_P3,
+	    F_6___.F_P1] , F_6___.F_P2_6___ , Merge[matrix, "P_31", F_6___.F_P3,
+	    F_7___.F_P1] , F_7___.F_P2_7___ , Merge[matrix, "P_31", F_7___.F_P3,
+	    F_8___.F_P1] , F_8___.F_P2_8___ , Merge[matrix, "P_31", F_8___.F_P3,
+	    F_9___.F_P1] , F_9___.F_P2_9___ , Merge[matrix, "P_31", F_9___.F_P3,
+	    F_10___.F_P1] , F_10___.F_P2_10___ , Merge[matrix, "P_31", F_10___.F_P3,
+	    F_11___.F_P1] , F_11___.F_P2_11___ , Merge[matrix, "P_31", F_11___.F_P3, 
+	    F_12___.F_P1] , F_12___.F_P2_12___ , Merge[matrix, "P_31", F_12___.F_P3,
+	    F_13___.F_P1] , F_13___.F_P2_13___ , Merge[matrix, "P_31", F_13___.F_P3,
+	    F_14___.F_P1] , F_14___.F_P2_14___ , Merge[matrix, "P_31", F_14___.F_P3,
+	    F_15___.F_P1] , F_15___.F_P2_15___ , Merge[matrix, "P_31", F_15___.F_P3,
+	    F_16___.F_P1] , F_16___.F_P2_16___ , Merge[matrix, "P_31", F_16___.F_P3,
+	    Rev],
+	    IPm1
+	    ](DES);
+
+
+
+ColSplit[8,8,8,8](DES.IP.IP_1.IP_1_1);
+ColSplit[8,8,8,8](DES.IP.IP_1.IP_1_0);
+SRRtoDUP(DES.IP.IP_1.IP_1_1);
+SRRtoDUP(DES.IP.IP_1.IP_1_0);
+
+
+for(i=0; i < 4; i = i+1){
+  MakeTable( DES.IP.IP_1.IP_1_1.filter(i) );
+  MakeTable( DES.IP.IP_1.IP_1_0.filter(i) );
+}
+
+
+
+
+// // Print["Test2.dot", 6]( DES.IP );
+
+
+ColSplit[8,8,8,8](DES.IPm1.IPm1_0.IPm1_0_1);
+ColSplit[8,8,8,8](DES.IPm1.IPm1_0.IPm1_0_0);
+SRRtoDUP(DES.IPm1.IPm1_0.IPm1_0_1);
+SRRtoDUP(DES.IPm1.IPm1_0.IPm1_0_0);
+
+
+for(i=0; i < 4; i = i+1){
+  MakeTable( DES.IPm1.IPm1_0.IPm1_0_1.filter(i) );
+  MakeTable( DES.IPm1.IPm1_0.IPm1_0_0.filter(i) );
+}
+
+// Print["Test3.dot", 6]( DES.IPm1 );
+
+//  ColSplit[8,8,8,8,8,8,8,8](DES.IPm1);
+//  SRRtoDUP(DES.IPm1);
+//  Print["Test2.dot", 6]( DES.IPm1 );
+
+//  for(i=0; i < 8; i = i+1){
+//    MakeTable( DES.IPm1.filter(i) );
+//  }
+
+//  ColSplit[8,8,8,8,8,8,8,8](DES.IP);
+//  SRRtoDUP(DES.IP);
+
+//  for(i=0; i < 8; i = i+1){
+//    MakeTable( DES.IP.filter(i) );
+//  }
+
+
+Print["Test.dot", 6]( DES );
+

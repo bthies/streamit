@@ -23,13 +23,13 @@ LIBDCT = ${DCT_HOME}/DCT.str
 # where one must use the FileReader<int>
 
 # General Purpose Streams Used By Both the Encoders and Decoders
-LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ${LIBDCT}
+LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LIBDCT}
 
 # Streams Used By the Decoders
 LIBMPEG2_DECODE = MPEGdecoder.str Parser.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE} 
 
 # Streams Used By the Encoders
-
+LIBMPEG2_ENCODE = MPEGencoder.str
 
 default: player
 
@@ -59,8 +59,8 @@ player:	MPEGplayer.str ${LIBMPEG2_DECODE} ${LIBMPEG2}
 mpeg2bmp:	MPEGtoBMP.str ${LIBMPEG2_DECODE} ${LIBMPEG2} BMP.str 
 	strc MPEGtoBMP.str ${LIBMPEG2_DECODE} ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
 
-bmp2mpeg: BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str 
-	strc BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
+bmp2mpeg: BMPtoMPEG.str ${LIBMPEG2_ENCODE} ${LIBMPEG2} BMP.str 
+	strc BMPtoMPEG.str ${LIBMPEG2_ENCODE} ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
 
 nomessage: MPEGdecoder_nomessage.str ${LIBMPEG2}
 	strc MPEGdecoder_nomessage.str ${LIBMPEG2} ${STRC_OPTIONS}

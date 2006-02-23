@@ -1224,28 +1224,6 @@ int->int filter Quantisation(int[64] intra_quantiser_matrix,
 /**
  * @internal
  */
-int->int filter ZigZagOrdering {
-    int[64] Ordering = {00, 01, 08, 16, 09, 02, 03, 10,
-                        17, 24, 32, 25, 18, 11, 04, 05,
-                        12, 19, 26, 33, 40, 48, 41, 34,
-                        27, 20, 13, 06, 07, 14, 21, 28,
-                        35, 42, 49, 56, 57, 50, 43, 36,
-                        29, 22, 15, 23, 30, 37, 44, 51,
-                        58, 59, 52, 45, 38, 31, 39, 46,
-                        53, 60, 61, 54, 47, 55, 62, 63};
-    work pop 64 push 64 {
-        for (int i = 0; i < 64; i++) {
-            push(peek(Ordering[i]));
-        }
-        for (int i = 0; i < 64; i++) {
-            pop();
-        }
-    }
-}
-
-/**
- * @internal
- */
 int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
                                     int[64] intra_quantiser_matrix,
                                     int[64] non_intra_quantiser_matrix,

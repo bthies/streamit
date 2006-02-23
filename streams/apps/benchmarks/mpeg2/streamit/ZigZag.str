@@ -1,0 +1,74 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file ZigZag.str
+ * @version 1.0
+ */
+
+/**
+ * @internal
+ */
+int->int filter ZigZagUnordering {
+    int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
+                        02, 04, 07, 13, 16, 26, 29, 42,
+                        03, 08, 12, 17, 25, 30, 41, 43,
+                        09, 11, 18, 24, 31, 40, 44, 53,
+                        10, 19, 23, 32, 39, 45, 52, 54,
+                        20, 22, 33, 38, 46, 51, 55, 60,
+                        21, 34, 37, 47, 50, 56, 59, 61,
+                        35, 36, 48, 49, 57, 58, 62, 63};
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+            push(peek(Ordering[i]));
+        }
+        for (int i = 0; i < 64; i++) {
+            pop();
+        }
+    }
+}
+
+/**
+ * @internal
+ */
+int->int filter ZigZagOrdering {
+    int[64] Ordering = {00, 01, 08, 16, 09, 02, 03, 10,
+                        17, 24, 32, 25, 18, 11, 04, 05,
+                        12, 19, 26, 33, 40, 48, 41, 34,
+                        27, 20, 13, 06, 07, 14, 21, 28,
+                        35, 42, 49, 56, 57, 50, 43, 36,
+                        29, 22, 15, 23, 30, 37, 44, 51,
+                        58, 59, 52, 45, 38, 31, 39, 46,
+                        53, 60, 61, 54, 47, 55, 62, 63};
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+            push(peek(Ordering[i]));
+        }
+        for (int i = 0; i < 64; i++) {
+            pop();
+        }
+    }
+}

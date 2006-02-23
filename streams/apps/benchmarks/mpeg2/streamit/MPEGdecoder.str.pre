@@ -130,28 +130,6 @@ int->int pipeline BlockDecode(portal<InverseQuantization_AC_Coeff> UpdatePortal_
 /**
  * @internal
  */
-int->int filter ZigZagUnordering {
-    int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
-                        02, 04, 07, 13, 16, 26, 29, 42,
-                        03, 08, 12, 17, 25, 30, 41, 43,
-                        09, 11, 18, 24, 31, 40, 44, 53,
-                        10, 19, 23, 32, 39, 45, 52, 54,
-                        20, 22, 33, 38, 46, 51, 55, 60,
-                        21, 34, 37, 47, 50, 56, 59, 61,
-                        35, 36, 48, 49, 57, 58, 62, 63};
-    work pop 64 push 64 {
-        for (int i = 0; i < 64; i++) {
-            push(peek(Ordering[i]));
-        }
-        for (int i = 0; i < 64; i++) {
-            pop();
-        }
-    }
-}
-
-/**
- * @internal
- */
 int->int pipeline InverseQuantization(  
                                       portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
                                       portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,

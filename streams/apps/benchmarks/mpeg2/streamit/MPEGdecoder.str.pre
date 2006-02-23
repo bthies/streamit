@@ -91,30 +91,7 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
 
     // Each output channel is ordered left to right, top to bottom
 
-    // the following split within if drives a bug in Kopi2SIR
-    //add int->int splitjoin {
-    //  if (the_chroma_format == 1) {
-    //    split roundrobin(4*75, 2*75);
-    //  } else {
-    //    split roundrobin(4*75, 4*75);
-    //  }
-    //  add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-    //  add int->int splitjoin {
-    //    split roundrobin(75);
-    //    add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
-    //    add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);  
-    //    join roundrobin(1, 1);
-    //  }
-    //  join roundrobin(1, 2);
-    //}
-
-    // replacement code: wrap if around adds of separately-defined splitjoin's
-    if (the_chroma_format == 1) {
-        add LumChromFormatOne(width,height,UpdatePortal_picture_type,the_chroma_format);
-    } else {
-        add LumChromFormatOther(width,height,UpdatePortal_picture_type,the_chroma_format);
-    }
- 
+    add ColorChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
 
     // FEATURETODO This next component should also use the UpdatePortal_picture_type
     // but it doesn't because of messaging limitations.
@@ -127,48 +104,6 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
     // Recommendation ITU-R BT.709 for transformations.
     add ColorSpaceConversion_YCbCrtoRGB;
 
-}
-
-// splitjoin pulled out above
-int->int splitjoin LumChromFormatOne(int width, int height, 
-                                     portal<MotionPrediction> UpdatePortal_picture_type,
-                                     int the_chroma_format) {
-    split roundrobin(4*75, 2*75);
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-    add int->int splitjoin {
-        split roundrobin(75);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        join roundrobin(1, 1);
-    }
-    join roundrobin(1, 2);
-}
-
-// splitjoin pulled out above
-int->int splitjoin LumChromFormatOther(int width, int height, 
-                                       portal<MotionPrediction> UpdatePortal_picture_type,
-                                       int the_chroma_format) {
-    split roundrobin(4*75, 4*75);
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-    add int->int splitjoin {
-        split roundrobin(75);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        join roundrobin(1, 1);
-    }
-    join roundrobin(1, 2);
-}
-
-int->int splitjoin ReorderCrCbBlocks(int blocks_per_macroblock) {
-    split roundrobin(75*4, 75*(blocks_per_macroblock-4));
-    add Identity<int>;
-    add int->int splitjoin {
-        split roundrobin(75);
-        add Identity<int>;
-        add Identity<int>;
-        join roundrobin(75*((blocks_per_macroblock-4)/2));
-    } 
-    join roundrobin(75*4, 75*(blocks_per_macroblock-4));
 }
 
 /**
@@ -560,58 +495,6 @@ int->int splitjoin MacroBlockDescrambler(int width, int block_data_size, int hor
         add Identity<int>;
     }
     join roundrobin((width/8)*block_data_size);
-}
-
-/**
- * @internal
- */
-int->int pipeline DescrambleAndMotionCompensate(int width, 
-                                                int height, 
-                                                int vertical_upsample_factor,
-                                                int horizontal_upsample_factor,
-                                                portal<MotionPrediction> UpdatePortal_picture_type,
-                                                int temp,
-                                                int the_chroma_format) {
-    int datasize = (width/horizontal_upsample_factor)*(height/vertical_upsample_factor);
-
-    // this filter is a hand-fused version of the splitjoin below
-    add int->int filter {
-        work push 75 pop 75 {
-            for (int i=0; i<64; i++) {
-                push(pop());
-            }
-            // vectorp->vector (cite 1, P.82) 
-            for (int i=0; i<4; i++) {
-                push(pop()/horizontal_upsample_factor);
-                push(pop()/vertical_upsample_factor);
-            }
-            push(pop());
-            push(pop());
-            push(pop());
-        }
-    }
-
-    /*
-      add int->int splitjoin {
-      split roundrobin(64, 8, 1, 1, 1);
-      //add BlockDescrambler(width/horizontal_upsample_factor);
-      add Identity<int>;
-      add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
-      split roundrobin(1, 1); 
-      add DivideBy(horizontal_upsample_factor);
-      add DivideBy(vertical_upsample_factor);
-      join roundrobin(1, 1);
-      }
-      add Identity<int>;
-      add Identity<int>;
-      add Identity<int>;
-      //    join roundrobin(datasize, (datasize/64)*8, datasize/64, datasize/64, datasize/64); 
-      join roundrobin(64, 8, 1, 1, 1);
-      }  
-    */
-
-    add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor) 
-        to UpdatePortal_picture_type;
 }
 
 int->int filter SendBackReferenceFrame(int width, int height,

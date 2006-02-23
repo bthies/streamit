@@ -25,7 +25,7 @@
  * MPEG implementation written in C, available at [www.mpeg.org].
  *
  * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
- * @file MPEGparser.str.pre
+ * @file Parser.str.pre
  * @version 1.0
  */
 

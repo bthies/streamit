@@ -1,3 +1,17 @@
+# --------------------------------------------------------------------
+# Performance / Modes / Options Variables
+# --------------------------------------------------------------------
+
+COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
+# COLOR_CHANNEL_PROCESSING = ColorChannelProcessing_opt_splitjoin.str
+
+DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate.str
+# DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate_opt_handfused.str
+
+# --------------------------------------------------------------------
+# Make and Compilation Variables
+# --------------------------------------------------------------------
+
 PREPROCESS = ${STREAMIT_HOME}/misc/scripts/preprocess.perl
 STREAMITDOC = ${STREAMIT_HOME}/misc/scripts/streamitdoc
 STRC_OPTIONS = -library -nosched
@@ -8,9 +22,20 @@ LIBDCT = ${DCT_HOME}/DCT.str
 # NOTE: BinaryFile.str is actually only needed for compiling outside the library
 # where one must use the FileReader<int>
 
-LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str
+# General Purpose Streams Used By Both the Encoders and Decoders
+LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ${LIBDCT}
+
+# Streams Used By the Decoders
+LIBMPEG2_DECODE = MPEGdecoder.str Parser.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE} 
+
+# Streams Used By the Encoders
+
 
 default: player
+
+# --------------------------------------------------------------------
+# User Executed Targets
+# --------------------------------------------------------------------
 
 clean:	
 	rm -f MPEGdecoder.str
@@ -28,23 +53,17 @@ clean:
 	rm -f *.m2v
 	rm -f *.int
 
-player:	MPEGplayer.str MPEGdecoder.str Parser.str ${LIBMPEG2} ${LIBDCT}
-	strc MPEGplayer.str MPEGdecoder.str Parser.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}
+player:	MPEGplayer.str ${LIBMPEG2_DECODE} ${LIBMPEG2}
+	strc MPEGplayer.str ${LIBMPEG2_DECODE} ${LIBMPEG2} ${STRC_OPTIONS}
 
-nomessage: MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT)
-	strc MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT) $(STRC_OPTIONS)
+mpeg2bmp:	MPEGtoBMP.str ${LIBMPEG2_DECODE} ${LIBMPEG2} BMP.str 
+	strc MPEGtoBMP.str ${LIBMPEG2_DECODE} ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
 
-mpeg2bmp:	MPEGtoBMP.str MPEGdecoder.str Parser.str ${LIBMPEG2} BMP.str ${LIBDCT}
-	strc MPEGtoBMP.str MPEGdecoder.str Parser.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+bmp2mpeg: BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str 
+	strc BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
 
-bmp2mpeg: BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
-	strc BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
-
-${LIBDCT}:
-	pushd ${DCT_HOME} && make && popd
-
-%.str: %.str.pre ${PREPROCESS}
-	${PREPROCESS} $@.pre -o $@
+nomessage: MPEGdecoder_nomessage.str ${LIBMPEG2}
+	strc MPEGdecoder_nomessage.str ${LIBMPEG2} ${STRC_OPTIONS}
 
 docs:	${STREAMITDOC}
 	${STREAMITDOC} BinaryFile.str.pre -o BinaryFile.str.pre.html
@@ -56,6 +75,16 @@ docs:	${STREAMITDOC}
 	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
 	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
 	${STREAMITDOC} Parser.str.pre -o Parser.str.pre.html
+
+# --------------------------------------------------------------------
+# Make Executed Targets
+# --------------------------------------------------------------------
+
+${LIBDCT}:
+	pushd ${DCT_HOME} && make && popd
+
+%.str: %.str.pre ${PREPROCESS}
+	${PREPROCESS} $@.pre -o $@
 
 
 

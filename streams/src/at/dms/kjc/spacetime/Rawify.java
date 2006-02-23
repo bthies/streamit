@@ -24,10 +24,11 @@ import at.dms.kjc.flatgraph2.*;
 public class Rawify {
     
     /** if true, then when generating the code for the steady state, 
-     * iterate over the splitters and joiners first, so there will 
-     * be a data-redistribution stage before each steady-state firing.
+     * iterate over the joiners first, then the filters then the splitter, 
+     * so, conceptually, there will be a data-redistribution phase before
+     * the filter firings...
      */
-    public static boolean SPLIT_JOIN_FIRST = true;
+    public static boolean JOIN_FILTERS_SPLIT = true;
     // if true try to compress the switch code by creating loops
     public static boolean SWITCH_COMP = true;
 
@@ -67,8 +68,8 @@ public class Rawify {
         iterateInorder(traces, false, true, rawChip);
         //the steady-state!!
         traces = schedule.getSchedule();
-        if (SPLIT_JOIN_FIRST)
-            iterateSplitJoinFirst(traces, false, false, rawChip);
+        if (JOIN_FILTERS_SPLIT)
+            iterateJoinFiltersSplit(traces, false, false, rawChip);
         else
             iterateInorder(traces, false, false, rawChip);
     }
@@ -84,7 +85,7 @@ public class Rawify {
      * @param primepump True if the primepump stage
      * @param rawChip The raw chip
      */
-    private static void iterateSplitJoinFirst(Trace traces[], boolean init,
+    private static void iterateJoinFiltersSplit(Trace traces[], boolean init,
                                 boolean primepump, RawChip rawChip) {
         Trace trace;
 
@@ -93,16 +94,18 @@ public class Rawify {
             //create code for joining input to the trace
             processInputTraceNode((InputTraceNode)trace.getHead(),
                     init, primepump, rawChip);
-            //create communication code for splitting the output
-            processOutputTraceNode((OutputTraceNode)trace.getTail(),
-                    init, primepump, rawChip);
-            
         }
         for (int i = 0; i < traces.length; i++) {
             trace = (Trace) traces[i];
             //create the compute code and the communication code for the
             //filters of the trace
             processFilterTraces(trace, init, primepump, rawChip);
+        }
+        for (int i = 0; i < traces.length; i++) {
+            trace = (Trace) traces[i];
+            //create communication code for splitting the output
+            processOutputTraceNode((OutputTraceNode)trace.getTail(),
+                    init, primepump, rawChip);
         }
     }
     
@@ -527,7 +530,7 @@ public class Rawify {
             // than the owning tile, we must use a special dram command
             if (nonRedBuffer.getOwner() != rawChip.getTile(filterNode.getX(),
                     filterNode.getY())) {
-                assert !buffer.isStaticNet();
+                assert !buffer.isStaticNet() : "For InputTraceNode: Filter must neighbor input DRAM or use GDN!";
                 if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
                     nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
                     (stage, words, nonRedBuffer, rawChip.getTile(filterNode.getX(),
@@ -1991,8 +1994,9 @@ public class Rawify {
     }
 
     /**
-     * Create the switch code necessary to fire a filter.  So get the item from the
-     * switch processor and then route it to a neighboring tile. 
+     * Create the switch code necessary to "push" items after a filter fires.
+     * So send the items from the compute processor to the neighboring iodevice.
+     *  
      * 
      * @param iteration
      * @param node

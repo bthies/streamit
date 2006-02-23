@@ -135,6 +135,8 @@ public class TraceDotGraph {
         if (buffer.isIntraTrace() && !((IntraTraceBuffer)buffer).isStaticNet())
             fw.write(",gdn,");
         
+        fw.write(buffer.getRotationLength() + ", ");
+
         if (DRAM) {
             if (buffer.redundant())
                 fw.write("\", style=dashed");

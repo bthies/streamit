@@ -225,14 +225,6 @@ public class SpaceTimeBackend {
         
         System.out.println("Assigning Buffers to DRAMs...");        
         ManualDRAMPortAssignment.run(spaceTimeSchedule);
-  
-        
-        
-        //dump some dot graphs!
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
-                                "initTraces.dot", true);
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
-                                "steadyTraces.dot", true);
         
         //set the rotation lengths of the buffers
         OffChipBuffer.setRotationLengths(spaceTimeSchedule);
@@ -243,6 +235,12 @@ public class SpaceTimeBackend {
             CommunicateAddrs.doit(rawChip, spaceTimeSchedule);
         }
  
+        //dump some dot graphs!
+        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
+                                "initTraces.dot", true);
+        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
+                                "steadyTraces.dot", true);
+        
         //create the raw execution code and switch code for the initialization
         // phase and the primepump stage and the steady state
         System.out.println("Creating Raw Code...");

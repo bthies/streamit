@@ -19,6 +19,7 @@ clean:
 	rm -f BinaryFile.str
 	rm -f MPEGdecoder_nomessage.str
 	rm -f BMP.str
+	rm -f Parser.str
 	rm -f *.java
 	rm -f *.class
 	rm -f *.dot
@@ -27,14 +28,14 @@ clean:
 	rm -f *.m2v
 	rm -f *.int
 
-player:	MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT}
-	strc MPEGplayer.str MPEGdecoder.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}
+player:	MPEGplayer.str MPEGdecoder.str Parser.str ${LIBMPEG2} ${LIBDCT}
+	strc MPEGplayer.str MPEGdecoder.str Parser.str ${LIBMPEG2} ${LIBDCT} ${STRC_OPTIONS}
 
 nomessage: MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT)
 	strc MPEGdecoder_nomessage.str $(LIBMPEG2) $(LIBDCT) $(STRC_OPTIONS)
 
-mpeg2bmp:	MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
-	strc MPEGtoBMP.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
+mpeg2bmp:	MPEGtoBMP.str MPEGdecoder.str Parser.str ${LIBMPEG2} BMP.str ${LIBDCT}
+	strc MPEGtoBMP.str MPEGdecoder.str Parser.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
 
 bmp2mpeg: BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT}
 	strc BMPtoMPEG.str MPEGencoder.str MPEGdecoder.str ${LIBMPEG2} BMP.str ${LIBDCT} ${STRC_OPTIONS}
@@ -54,6 +55,7 @@ docs:	${STREAMITDOC}
 	${STREAMITDOC} MPEGencoder.str.pre -o MPEGencoder.str.pre.html
 	${STREAMITDOC} MPEGplayer.str -o MPEGplayer.str.html
 	${STREAMITDOC} MPEGtoBMP.str -o MPEGtoBMP.str.html
+	${STREAMITDOC} Parser.str.pre -o Parser.str.pre.html
 
 
 

@@ -1,0 +1,312 @@
+
+
+for(i=0; i<31; i = i+1){
+
+Rfil = Serpent.filter(i+1);
+
+UnMakeTable( Rfil.filter(1).filter(0) );
+
+Restructure[ filter(0), filter(1).filter(0).XORpart,
+		filter(1).filter(0).ANDpart, 
+		filter(1).filter(0).ORpart,
+		rawL ](Rfil);
+		
+NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.XORpart);
+
+ NPSketch[32*8, [],
+	      [ pos(0:8:32*8-1 to  0:31),
+		pos(1:8:32*8-1 to 32*1:(32*(1+1)-1)),
+		pos(2:8:32*8-1 to 32*2:(32*(2+1)-1)),
+		pos(3:8:32*8-1 to 32*3:(32*(3+1)-1)),
+		pos(4:8:32*8-1 to 32*4:(32*(4+1)-1)), 
+		pos(5:8:32*8-1 to 32*5:(32*(5+1)-1)), 
+		pos(6:8:32*8-1 to 32*6:(32*(6+1)-1)), 
+		pos(7:8:32*8-1 to 32*7:(32*(7+1)-1))
+		] 
+	](Rfil.ANDpart);
+
+ NPSketch[ 32*16, [],
+	      [ 
+pos(0:16:32*16-1 to 32*0:(32*(0+1)-1)),
+pos(1:16:32*16-1 to 32*1:(32*(1+1)-1)),
+pos(2:16:32*16-1 to 32*2:(32*(2+1)-1)),
+pos(3:16:32*16-1 to 32*3:(32*(3+1)-1)),
+pos(4:16:32*16-1 to 32*4:(32*(4+1)-1)),
+pos(5:16:32*16-1 to 32*5:(32*(5+1)-1)),
+pos(6:16:32*16-1 to 32*6:(32*(6+1)-1)),
+pos(7:16:32*16-1 to 32*7:(32*(7+1)-1)),
+pos(8:16:32*16-1 to 32*8:(32*(8+1)-1)),
+pos(9:16:32*16-1 to 32*9:(32*(9+1)-1)),
+pos(10:16:32*16-1 to 32*10:(32*(10+1)-1)),
+pos(11:16:32*16-1 to 32*11:(32*(11+1)-1)),
+pos(12:16:32*16-1 to 32*12:(32*(12+1)-1)),
+pos(13:16:32*16-1 to 32*13:(32*(13+1)-1)),
+pos(14:16:32*16-1 to 32*14:(32*(14+1)-1)),
+pos(15:16:32*16-1 to 32*15:(32*(15+1)-1))
+		] 
+	](Rfil.ORpart);
+
+
+
+NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.rawL);
+ 
+
+Restructure[ filter(0), XORpart.XORpart_0, 
+		Merge[matrix, "XORAND", 
+			XORpart.XORpart_1, ANDpart.ANDpart_0
+		]
+	     , 
+		Merge[matrix, "ANDOR", 
+			ANDpart.ANDpart_1, ORpart.ORpart_0
+		     ]
+	      , 
+		Merge[matrix, "ORrawL",
+			ORpart.ORpart_1, rawL.rawL_0], 
+		rawL.rawL_1 ](Rfil);
+
+
+Restructure[ Merge[splitjoin, "InKey",	
+		   filter(0), XORpart_0],
+		XORAND, ANDOR, ORrawL, rawL_1](Rfil);
+
+Print["InKeyBef.dot"](Rfil.InKey);		   
+		
+ NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.InKey);
+
+
+
+
+
+Restructure[Merge[matrix, "Identity", InKey_1, 
+		Identity.Identity, 
+		Identity.XORpart_0]  ](Rfil.InKey.InKey_1.Identity);
+
+
+Restructure[    XORpart_0, filter(0).PARAMETER  ](Rfil.InKey.InKey_1.filter(1));
+
+
+Print["InKey.dot", 10](Rfil.InKey);
+
+ Serpent.filter(i+1) = Rfil;
+
+
+}
+
+i = 31;
+
+
+Rfil = Serpent.filter(i+1);
+
+UnMakeTable( Rfil.filter(1).filter(0) );
+
+Restructure[ filter(0), filter(1).filter(0).XORpart,
+		filter(1).filter(0).ANDpart, 
+		filter(1).filter(0).ORpart,
+		filter(2) ](Rfil);
+		
+NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.XORpart);
+
+ NPSketch[32*8, [],
+	      [ pos(0:8:32*8-1 to  0:31),
+		pos(1:8:32*8-1 to 32*1:(32*(1+1)-1)),
+		pos(2:8:32*8-1 to 32*2:(32*(2+1)-1)),
+		pos(3:8:32*8-1 to 32*3:(32*(3+1)-1)),
+		pos(4:8:32*8-1 to 32*4:(32*(4+1)-1)), 
+		pos(5:8:32*8-1 to 32*5:(32*(5+1)-1)), 
+		pos(6:8:32*8-1 to 32*6:(32*(6+1)-1)), 
+		pos(7:8:32*8-1 to 32*7:(32*(7+1)-1)) 
+		] 
+	](Rfil.ANDpart);
+
+ NPSketch[ 32*16, [],
+	      [ 
+pos(0:16:32*16-1 to 32*0:(32*(0+1)-1)),
+pos(1:16:32*16-1 to 32*1:(32*(1+1)-1)),
+pos(2:16:32*16-1 to 32*2:(32*(2+1)-1)),
+pos(3:16:32*16-1 to 32*3:(32*(3+1)-1)),
+pos(4:16:32*16-1 to 32*4:(32*(4+1)-1)),
+pos(5:16:32*16-1 to 32*5:(32*(5+1)-1)),
+pos(6:16:32*16-1 to 32*6:(32*(6+1)-1)),
+pos(7:16:32*16-1 to 32*7:(32*(7+1)-1)),
+pos(8:16:32*16-1 to 32*8:(32*(8+1)-1)),
+pos(9:16:32*16-1 to 32*9:(32*(9+1)-1)),
+pos(10:16:32*16-1 to 32*10:(32*(10+1)-1)),
+pos(11:16:32*16-1 to 32*11:(32*(11+1)-1)),
+pos(12:16:32*16-1 to 32*12:(32*(12+1)-1)),
+pos(13:16:32*16-1 to 32*13:(32*(13+1)-1)),
+pos(14:16:32*16-1 to 32*14:(32*(14+1)-1)),
+pos(15:16:32*16-1 to 32*15:(32*(15+1)-1))
+		] 
+	](Rfil.ORpart);
+
+
+
+NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.filter(4));
+ 
+
+Restructure[ Merge[splitjoin, "InKey",	filter(0), XORpart.XORpart_0] , 
+		Merge[matrix, "LastXORAND", 
+			XORpart.XORpart_1, ANDpart.ANDpart_0
+		]
+	     , 
+		Merge[matrix, "LastANDOR", 
+			ANDpart.ANDpart_1, ORpart.ORpart_0
+		     ]
+	      , 
+		Merge[matrix, "LastORrawL",
+			ORpart.ORpart_1, filter(4).filter(0)], 
+		filter(4).filter(1) ](Rfil);
+
+
+
+Print["InKeyBef.dot"](Rfil.InKey);		   
+		
+ NPSketch[ 32*4, [],
+	      [ pos(0:4:32*4-1 to  0:31),
+		pos(1:4:32*4-1 to 32*1:(32*(1+1)-1)),
+		pos(2:4:32*4-1 to 32*2:(32*(2+1)-1)),
+		pos(3:4:32*4-1 to 32*3:(32*(3+1)-1)) 
+		] 
+	](Rfil.InKey);
+
+
+
+
+
+Restructure[Merge[matrix, "Identity", InKey_1, 
+		Identity.Identity, 
+		Identity.XORpart_0]  ](Rfil.InKey.InKey_1.Identity);
+
+
+Restructure[    XORpart_0, filter(0).PARAMETER  ](Rfil.InKey.InKey_1.filter(1));
+
+
+Print["InKey.dot", 10](Rfil.InKey);
+
+ Serpent.filter(i+1) = Rfil;
+
+
+
+
+
+
+
+Print["SerpentBef.dot",4](Serpent);
+Print["SerpentF32.dot",4](Serpent.filter(32));
+
+
+Restructure[ 
+ Merge[matrix, IP, filter(1).InKey.InKey_0] , 
+	filter(1).InKey.InKey_1, filter(1).XORAND, filter(1).ANDOR, filter(1).ORrawL, 
+ Merge[matrix, "rawL", filter(1).rawL_1,
+ filter(2).InKey.InKey_0], filter(2).InKey.InKey_1, filter(2).XORAND, filter(2).ANDOR, filter(2).ORrawL, 
+ Merge[matrix, "rawL", filter(2).rawL_1,
+ filter(3).InKey.InKey_0], filter(3).InKey.InKey_1, filter(3).XORAND, filter(3).ANDOR, filter(3).ORrawL, 
+ Merge[matrix, "rawL", filter(3).rawL_1,
+ filter(4).InKey.InKey_0], filter(4).InKey.InKey_1, filter(4).XORAND, filter(4).ANDOR, filter(4).ORrawL, 
+ Merge[matrix, "rawL",  filter(4).rawL_1,
+ filter(5).InKey.InKey_0], filter(5).InKey.InKey_1, filter(5).XORAND, filter(5).ANDOR, filter(5).ORrawL, 
+ Merge[matrix, "rawL",  filter(5).rawL_1,
+ filter(6).InKey.InKey_0], filter(6).InKey.InKey_1, filter(6).XORAND, filter(6).ANDOR, filter(6).ORrawL, 
+ Merge[matrix, "rawL",  filter(6).rawL_1,
+ filter(7).InKey.InKey_0], filter(7).InKey.InKey_1, filter(7).XORAND, filter(7).ANDOR, filter(7).ORrawL, 
+ Merge[matrix, "rawL",  filter(7).rawL_1,
+ filter(8).InKey.InKey_0], filter(8).InKey.InKey_1, filter(8).XORAND, filter(8).ANDOR, filter(8).ORrawL, 
+ Merge[matrix, "rawL",  filter(8).rawL_1,
+ filter(9).InKey.InKey_0], filter(9).InKey.InKey_1, filter(9).XORAND, filter(9).ANDOR, filter(9).ORrawL, 
+ Merge[matrix, "rawL",  filter(9).rawL_1,
+ filter(10).InKey.InKey_0], filter(10).InKey.InKey_1, filter(10).XORAND, filter(10).ANDOR, filter(10).ORrawL, 
+ Merge[matrix, "rawL",  filter(10).rawL_1,
+ filter(11).InKey.InKey_0], filter(11).InKey.InKey_1, filter(11).XORAND, filter(11).ANDOR, filter(11).ORrawL, 
+ Merge[matrix, "rawL",  filter(11).rawL_1,
+ filter(12).InKey.InKey_0], filter(12).InKey.InKey_1, filter(12).XORAND, filter(12).ANDOR, filter(12).ORrawL, 
+ Merge[matrix, "rawL",  filter(12).rawL_1,
+ filter(13).InKey.InKey_0], filter(13).InKey.InKey_1, filter(13).XORAND, filter(13).ANDOR, filter(13).ORrawL, 
+ Merge[matrix, "rawL",  filter(13).rawL_1,
+ filter(14).InKey.InKey_0], filter(14).InKey.InKey_1, filter(14).XORAND, filter(14).ANDOR, filter(14).ORrawL, 
+ Merge[matrix, "rawL",  filter(14).rawL_1,
+ filter(15).InKey.InKey_0], filter(15).InKey.InKey_1, filter(15).XORAND, filter(15).ANDOR, filter(15).ORrawL, 
+ Merge[matrix, "rawL",  filter(15).rawL_1,
+ filter(16).InKey.InKey_0], filter(16).InKey.InKey_1, filter(16).XORAND, filter(16).ANDOR, filter(16).ORrawL, 
+ Merge[matrix, "rawL",  filter(16).rawL_1,
+ filter(17).InKey.InKey_0], filter(17).InKey.InKey_1, filter(17).XORAND, filter(17).ANDOR, filter(17).ORrawL, 
+ Merge[matrix, "rawL",  filter(17).rawL_1,
+ filter(18).InKey.InKey_0], filter(18).InKey.InKey_1, filter(18).XORAND, filter(18).ANDOR, filter(18).ORrawL, 
+ Merge[matrix, "rawL",  filter(18).rawL_1,
+ filter(19).InKey.InKey_0], filter(19).InKey.InKey_1, filter(19).XORAND, filter(19).ANDOR, filter(19).ORrawL, 
+ Merge[matrix, "rawL",  filter(19).rawL_1,
+ filter(20).InKey.InKey_0], filter(20).InKey.InKey_1, filter(20).XORAND, filter(20).ANDOR, filter(20).ORrawL, 
+ Merge[matrix, "rawL",  filter(20).rawL_1,
+ filter(21).InKey.InKey_0], filter(21).InKey.InKey_1, filter(21).XORAND, filter(21).ANDOR, filter(21).ORrawL, 
+ Merge[matrix, "rawL",  filter(21).rawL_1,
+ filter(22).InKey.InKey_0], filter(22).InKey.InKey_1, filter(22).XORAND, filter(22).ANDOR, filter(22).ORrawL, 
+ Merge[matrix, "rawL",  filter(22).rawL_1,
+ filter(23).InKey.InKey_0], filter(23).InKey.InKey_1, filter(23).XORAND, filter(23).ANDOR, filter(23).ORrawL, 
+ Merge[matrix, "rawL",  filter(23).rawL_1,
+ filter(24).InKey.InKey_0], filter(24).InKey.InKey_1, filter(24).XORAND, filter(24).ANDOR, filter(24).ORrawL, 
+ Merge[matrix, "rawL",  filter(24).rawL_1,
+ filter(25).InKey.InKey_0], filter(25).InKey.InKey_1, filter(25).XORAND, filter(25).ANDOR, filter(25).ORrawL, 
+ Merge[matrix, "rawL",  filter(25).rawL_1,
+ filter(26).InKey.InKey_0], filter(26).InKey.InKey_1, filter(26).XORAND, filter(26).ANDOR, filter(26).ORrawL, 
+ Merge[matrix, "rawL",  filter(26).rawL_1,
+ filter(27).InKey.InKey_0], filter(27).InKey.InKey_1, filter(27).XORAND, filter(27).ANDOR, filter(27).ORrawL, 
+ Merge[matrix, "rawL",  filter(27).rawL_1,
+ filter(28).InKey.InKey_0], filter(28).InKey.InKey_1, filter(28).XORAND, filter(28).ANDOR, filter(28).ORrawL, 
+ Merge[matrix, "rawL",  filter(28).rawL_1,
+ filter(29).InKey.InKey_0], filter(29).InKey.InKey_1, filter(29).XORAND, filter(29).ANDOR, filter(29).ORrawL, 
+ Merge[matrix, "rawL",  filter(29).rawL_1,
+ filter(30).InKey.InKey_0], filter(30).InKey.InKey_1, filter(30).XORAND, filter(30).ANDOR, filter(30).ORrawL, 
+ Merge[matrix, "rawL",  filter(30).rawL_1,
+ filter(31).InKey.InKey_0], filter(31).InKey.InKey_1, filter(31).XORAND, filter(31).ANDOR, filter(31).ORrawL,
+ Merge[matrix, "rawL",  filter(31).rawL_1,
+ filter(32).InKey.InKey_0] , filter(32).InKey.InKey_1, filter(32).LastXORAND, filter(32).LastANDOR, 
+ filter(32).LastORrawL,  Merge[splitjoin, "LastKey", filter(32).ANONYMOUS_1,
+ FP] ](Serpent);
+
+
+Restructure[ Merge[matrix, "Identity",
+	Identity.ANONYMOUS_1, Identity.Identity, FP]
+	  ](Serpent.LastKey.Identity);
+
+Restructure[ FP, Key_32___.PARAMETER](Serpent.LastKey.Key_32___);
+	      
+
+Print["Serpent.dot",4](Serpent);
+PrintMatrix["First.mat"](Serpent.filter(0));
+PrintMatrix["First2.mat"](Serpent.filter(2));
+PrintMatrix["First3.mat"](Serpent.filter(3));
+PrintMatrix["First4.mat"](Serpent.filter(4));
+PrintMatrix["First5.mat"](Serpent.filter(5));
+PrintMatrix["Last.mat"](Serpent.LastKey.Identity);
+PrintMatrix["Bad.mat"](Serpent.LastXORAND);
+

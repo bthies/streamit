@@ -1,0 +1,404 @@
+bit->bit filter rawL(){  
+  work push 128 pop 128{
+    push(peek(16)^ peek(52)^peek(56)^peek(70)^peek(83)^peek(94)^peek(105));
+    push(peek(72)^peek(114)^peek(125));
+    push(peek(2)^peek(9)^peek(15)^peek(30)^peek(76)^peek(84)^peek(126) );
+    push(peek(36)^peek(90)^peek(103));
+    push(peek(20)^peek(56)^peek(60)^peek(74)^peek(87)^peek(98)^peek(109) );
+    push(peek(1)^peek(76)^peek(118) );
+    push(peek(2)^peek(6)^peek(13)^peek(19)^peek(34)^peek(80)^peek(88) );
+    push(peek(40)^peek(94)^peek(107));
+    push(peek(24)^peek(60)^peek(64)^peek(78)^peek(91)^peek(102)^peek(113) );
+    push(peek(5)^peek(80)^peek(122) );
+    push(peek(6)^peek(10)^peek(17)^peek(23)^peek(38)^peek(84)^peek(92) );
+    push(peek(44)^peek(98)^peek(111));
+    push(peek(28)^peek(64)^peek(68)^peek(82)^peek(95)^peek(106)^peek(117) );
+    push(peek(9)^peek(84)^peek(126) );
+    push(peek(10)^peek(14)^peek(21)^peek(27)^peek(42)^peek(88)^peek(96) );
+    push(peek(48)^peek(102)^peek(115));
+    push(peek(32)^peek(68)^peek(72)^peek(86)^peek(99)^peek(110)^peek(121) );
+    push(peek(2)^peek(13)^peek(88) );
+    push(peek(14)^peek(18)^peek(25)^peek(31)^peek(46)^peek(92)^peek(100) );
+    push(peek(52)^peek(106)^peek(119));
+    push(peek(36)^peek(72)^peek(76)^peek(90)^peek(103)^peek(114)^peek(125) );
+    push(peek(6)^peek(17)^peek(92) );
+    push(peek(18)^peek(22)^peek(29)^peek(35)^peek(50)^peek(96)^peek(104) );
+    push(peek(56)^peek(110)^peek(123));
+    push(peek(1)^peek(40)^peek(76)^peek(80)^peek(94)^peek(107)^peek(118) );
+    push(peek(10)^peek(21)^peek(96) );
+    push(peek(22)^peek(26)^peek(33)^peek(39)^peek(54)^peek(100)^peek(108) );
+    push(peek(60)^peek(114)^peek(127));
+    push(peek(5)^peek(44)^peek(80)^peek(84)^peek(98)^peek(111)^peek(122) );
+    push(peek(14)^peek(25)^peek(100) );
+    push(peek(26)^peek(30)^peek(37)^peek(43)^peek(58)^peek(104)^peek(112) );
+    push(peek(3)^peek(118));
+    push(peek(9)^peek(48)^peek(84)^peek(88)^peek(102)^peek(115)^peek(126) );
+    push(peek(18)^peek(29)^peek(104) );
+    push(peek(30)^peek(34)^peek(41)^peek(47)^peek(62)^peek(108)^peek(116) );
+    push(peek(7)^peek(122));
+    push(peek(2)^peek(13)^peek(52)^peek(88)^peek(92)^peek(106)^peek(119) );
+    push(peek(22)^peek(33)^peek(108) );
+    push(peek(34)^peek(38)^peek(45)^peek(51)^peek(66)^peek(112)^peek(120) );
+    push(peek(11)^peek(126));
+    push(peek(6)^peek(17)^peek(56)^peek(92)^peek(96)^peek(110)^peek(123));
+    push(peek(26)^peek(37)^peek(112));
+    push(peek(38)^peek(42)^peek(49)^peek(55)^peek(70)^peek(116)^peek(124));
+    push(peek(2)^peek(15)^peek(76));
+    push(peek(10)^peek(21)^peek(60)^peek(96)^peek(100)^peek(114)^peek(127));
+    push(peek(30)^peek(41)^peek(116));
+    push(peek(0)^peek(42)^peek(46)^peek(53)^peek(59)^peek(74)^peek(120));
+    push(peek(6)^peek(19)^peek(80));
+    push(peek(3)^peek(14)^peek(25)^peek(100)^peek(104)^peek(118));
+    push(peek(34)^peek(45)^peek(120));
+    push(peek(4)^peek(46)^peek(50)^peek(57)^peek(63)^peek(78)^peek(124));
+    push(peek(10)^peek(23)^peek(84));
+    push(peek(7)^peek(18)^peek(29)^peek(104)^peek(108)^peek(122));
+    push(peek(38)^peek(49)^peek(124));
+    push(peek(0)^peek(8)^peek(50)^peek(54)^peek(61)^peek(67)^peek(82));
+    push(peek(14)^peek(27)^peek(88));
+    push(peek(11)^peek(22)^peek(33)^peek(108)^peek(112)^peek(126));
+    push(peek(0)^peek(42)^peek(53));
+    push(peek(4)^peek(12)^peek(54)^peek(58)^peek(65)^peek(71)^peek(86));
+    push(peek(18)^peek(31)^peek(92));
+    push(peek(2)^peek(15)^peek(26)^peek(37)^peek(76)^peek(112)^peek(116));
+    push(peek(4)^peek(46)^peek(57));
+    push(peek(8)^peek(16)^peek(58)^peek(62)^peek(69)^peek(75)^peek(90));
+    push(peek(22)^peek(35)^peek(96));
+    push(peek(6)^peek(19)^peek(30)^peek(41)^peek(80)^peek(116)^peek(120));
+    push(peek(8)^peek(50)^peek(61));
+    push(peek(12)^peek(20)^peek(62)^peek(66)^peek(73)^peek(79)^peek(94));
+    push(peek(26)^peek(39)^peek(100));
+    push(peek(10)^peek(23)^peek(34)^peek(45)^peek(84)^peek(120)^peek(124));
+    push(peek(12)^peek(54)^peek(65));
+    push(peek(16)^peek(24)^peek(66)^peek(70)^peek(77)^peek(83)^peek(98));
+    push(peek(30)^peek(43)^peek(104));
+    push(peek(0)^peek(14)^peek(27)^peek(38)^peek(49)^peek(88)^peek(124));
+    push(peek(16)^peek(58)^peek(69));
+    push(peek(20)^peek(28)^peek(70)^peek(74)^peek(81)^peek(87)^peek(102));
+    push(peek(34)^peek(47)^peek(108));
+    push(peek(0)^peek(4)^peek(18)^peek(31)^peek(42)^peek(53)^peek(92));
+    push(peek(20)^peek(62)^peek(73));
+    push(peek(24)^peek(32)^peek(74)^peek(78)^peek(85)^peek(91)^peek(106));
+    push(peek(38)^peek(51)^peek(112));
+    push(peek(4)^peek(8)^peek(22)^peek(35)^peek(46)^peek(57)^peek(96));
+    push(peek(24)^peek(66)^peek(77));
+    push(peek(28)^peek(36)^peek(78)^peek(82)^peek(89)^peek(95)^peek(110));
+    push(peek(42)^peek(55)^peek(116));
+    push(peek(8)^peek(12)^peek(26)^peek(39)^peek(50)^peek(61)^peek(100));
+    push(peek(28)^peek(70)^peek(81));
+    push(peek(32)^peek(40)^peek(82)^peek(86)^peek(93)^peek(99)^peek(114));
+    push(peek(46)^peek(59)^peek(120));
+    push(peek(12)^peek(16)^peek(30)^peek(43)^peek(54)^peek(65)^peek(104));
+    push(peek(32)^peek(74)^peek(85));
+    push(peek(36)^peek(90)^peek(103)^peek(118));
+    push(peek(50)^peek(63)^peek(124));
+    push(peek(16)^peek(20)^peek(34)^peek(47)^peek(58)^peek(69)^peek(108));
+    push(peek(36)^peek(78)^peek(89));
+    push(peek(40)^peek(94)^peek(107)^peek(122));
+    push(peek(0)^peek(54)^peek(67));
+    push(peek(20)^peek(24)^peek(38)^peek(51)^peek(62)^peek(73)^peek(112));
+    push(peek(40)^peek(82)^peek(93));
+    push(peek(44)^peek(98)^peek(111)^peek(126));
+    push(peek(4)^peek(58)^peek(71));
+    push(peek(24)^peek(28)^peek(42)^peek(55)^peek(66)^peek(77)^peek(116));
+    push(peek(44)^peek(86)^peek(97));
+    push(peek(2)^peek(48)^peek(102)^peek(115));
+    push(peek(8)^peek(62)^peek(75));
+    push(peek(28)^peek(32)^peek(46)^peek(59)^peek(70)^peek(81)^peek(120));
+    push(peek(48)^peek(90)^peek(101));
+    push(peek(6)^peek(52)^peek(106)^peek(119));
+    push(peek(12)^peek(66)^peek(79));
+    push(peek(32)^peek(36)^peek(50)^peek(63)^peek(74)^peek(85)^peek(124));
+    push(peek(52)^peek(94)^peek(105));
+    push(peek(10)^peek(56)^peek(110)^peek(123));
+    push(peek(16)^peek(70)^peek(83));
+    push(peek(0)^peek(36)^peek(40)^peek(54)^peek(67)^peek(78)^peek(89));
+    push(peek(56)^peek(98)^peek(109));
+    push(peek(14)^peek(60)^peek(114)^peek(127));
+    push(peek(20)^peek(74)^peek(87));
+    push(peek(4)^peek(40)^peek(44)^peek(58)^peek(71)^peek(82)^peek(93));
+    push(peek(60)^peek(102)^peek(113));
+    push(peek(3)^peek(18)^peek(72)^peek(114)^peek(118)^peek(125));
+    push(peek(24)^peek(78)^peek(91));
+    push(peek(8)^peek(44)^peek(48)^peek(62)^peek(75)^peek(86)^peek(97));
+    push(peek(64)^peek(106)^peek(117));
+    push(peek(1)^peek(7)^peek(22)^peek(76)^peek(118)^peek(122));
+    push(peek(28)^peek(82)^peek(95));
+    push(peek(12)^peek(48)^peek(52)^peek(66)^peek(79)^peek(90)^peek(101));
+    push(peek(68)^peek(110)^peek(121));
+    push(peek(5)^peek(11)^peek(26)^peek(80)^peek(122)^peek(126));
+    push(peek(32)^peek(86)^peek(99));
+    for (int i = 0; i < 128; i++) {
+      pop();
+    }
+  }
+}
+
+// output N-bit key for each round; assumes N = 128
+void->bit pipeline Key(int round)
+{
+  add Parameter();
+}
+
+// perform initial permutation; assumes N = 128
+bit->bit filter IP()
+{
+  int[128] permutation = {0, 32, 64, 96, 1, 33, 65, 97, 2, 34, 66, 98, 3, 35, 67, 99,
+			  4, 36, 68, 100, 5, 37, 69, 101, 6, 38, 70, 102, 7, 39, 71, 103,
+			  8, 40, 72, 104, 9, 41, 73, 105, 10, 42, 74, 106, 11, 43, 75, 107,
+			  12, 44, 76, 108, 13, 45, 77, 109, 14, 46, 78, 110, 15, 47, 79, 111,
+			  16, 48, 80, 112, 17, 49, 81, 113, 18, 50, 82, 114, 19, 51, 83, 115,
+			  20, 52, 84, 116, 21, 53, 85, 117, 22, 54, 86, 118, 23, 55, 87, 119,
+			  24, 56, 88, 120, 25, 57, 89, 121, 26, 58, 90, 122, 27, 59, 91, 123,
+			  28, 60, 92, 124, 29, 61, 93, 125, 30, 62, 94, 126, 31, 63, 95, 127};
+
+  work push 128 pop 128 {
+    for (int i = 0; i < 128; i++) {
+      push(peek(permutation[i]));
+    }
+    for (int i = 0; i < 128; i++) {
+      pop();
+    }
+  }
+}
+
+
+// perform final permutation; assumes N = 128
+bit->bit filter FP()
+{
+  int[128] permutation = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60,
+			  64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124,
+			  1, 5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57, 61,
+			  65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 117, 121, 125,
+			  2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62,
+			  66, 70, 74, 78, 82, 86, 90, 94, 98, 102, 106, 110, 114, 118, 122, 126,
+			  3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63,
+			  67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107, 111, 115, 119, 123, 127};
+    
+  work push 128 pop 128 {
+    for (int i = 0; i < 128; i++) {
+      push(peek(permutation[i]));
+    }
+    for (int i = 0; i < 128; i++) {
+      pop();
+    }
+  }
+
+}
+
+
+bit->bit sbox Sbox0(){
+  int [16] X = {3, 8, 15, 1, 10, 6, 5, 11, 14, 13, 4, 2, 7, 0, 9, 12};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox1(){
+  int [16] X = {15, 12, 2, 7, 9, 0, 5, 10, 1, 11, 14, 8, 6, 13, 3, 4};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox2(){
+  int [16] X = {8, 6, 7, 9, 3, 12, 10, 15, 13, 1, 14, 4, 0, 11, 5, 2};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox3(){
+  int [16] X = {0, 15, 11, 8, 12, 9, 6, 3, 13, 1, 2, 4, 10, 7, 5, 14};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox4(){
+  int [16] X = {1, 15, 8, 3, 12, 0, 11, 6, 2, 5, 4, 10, 9, 14, 7, 13};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox5(){
+  int [16] X = {15, 5, 2, 11, 4, 10, 9, 12, 0, 3, 14, 8, 13, 6, 7, 1};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox6(){
+  int [16] X = {7, 2, 12, 5, 8, 4, 6, 11, 14, 9, 1, 15, 13, 3, 10, 0};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+bit->bit sbox Sbox7(){
+  int [16] X = {1, 13, 15, 0, 14, 8, 2, 11, 7, 4, 12, 10, 9, 3, 5, 6};
+  int input_RATE=4;
+  int output_RATE=4;
+}
+
+bit->bit pipeline SboxI(int i){
+  if(i==0){ add Sbox0();}
+  if(i==1){ add Sbox1();}
+  if(i==2){ add Sbox2();}
+  if(i==3){ add Sbox3();}
+  if(i==4){ add Sbox4();}
+  if(i==5){ add Sbox5();}
+  if(i==6){ add Sbox6();}
+  if(i==7){ add Sbox7();}
+}
+
+
+
+// take N-bit stream (must be multiple of 4) and apply S-box in parallel
+// on 4-bit chunks of the stream
+bit->bit splitjoin Sbox(int N, int round)
+{
+    split roundrobin(4);
+
+    for (int i = 0; i < N / 4; i++) {
+	  // apply substitution box transformation
+      add SboxI(round);
+    }
+
+    join roundrobin(4);
+}
+
+
+bit->bit pipeline R(int N, int round)
+{
+  add bit->bit splitjoin {
+    split roundrobin(N, 0);
+    add Identity<int>;
+    add Key(round);
+    join xor();
+  }
+
+  add Sbox(N, round % 8);
+
+  if (round < 31) {
+    add rawL();
+  } else {
+    add bit->bit splitjoin {
+      split roundrobin(N, 0);
+      add Identity<int>;
+      add Key(round + 1);
+      join xor();
+    }
+  }
+}
+
+bit->bit pipeline Serpent
+{
+  int N = 128;
+
+
+  add IP();  // perform initial permutation
+
+  for (int i = 0; i < 31; i++) {
+    add R(N, i);  // perform round i
+  }
+
+  add R(N, 31); // perform last round
+  add FP();  // perform final permutation
+}
+
+void->int filter Parameter{
+  work push 1{
+    push ( 0xFFFFFFFF );
+  }
+
+}
+
+bit->bit filter Zero(){
+  work push 1 pop 1{ pop(); push(0);}
+}
+
+void->bit filter pushPhi(){ 
+    work pop 0 push 32{
+      bit [32] x = {1,0,0,1,1,1,1,0,0,0,1,1,0,1,1,1,0,1,1,1,1,0,0,1,1,0,1,1,1,0,0,1};
+      for(int i=0; i<32; ++i) push(x[i]);
+    }
+  }
+
+
+bit->bit splitjoin MixKeygen(int rnd){
+  split roundrobin(32,32,32,32,32,32,32,32,0,0);
+  add Identity<bit>(); //1
+  add Zero(); //2
+  add Identity<bit>(); //3
+  add Zero(); //4
+  add Identity<bit>();//5;
+  add Zero(); //6
+  add Zero(); //7;
+  add Identity<bit>(); //8;
+  add pushPhi();
+  add void->int filter {
+    work pop 0 push 1{ push(rnd); }
+  }
+  join xor();  
+}
+
+bit->bit filter Rotate(int sz, int rot){
+  work push sz pop sz{
+    for(int i=0; i<sz; ++i){
+      push(  peek(  ( i + rot ) % sz ) );
+    }
+  }
+}
+
+bit->bit filter dropFirst32(){
+    work push 32*8 pop 32*9{
+      for(int i=0; i<32; ++i){ pop(); }
+      for(int i=0; i<32*8; ++i){
+	push(pop());
+      }
+    }
+  }
+
+bit->bit pipeline KeyBlock(int rnd){
+  add bit->bit splitjoin{
+    split duplicate();
+    add Identity<bit>();
+    add bit->bit pipeline{
+      add MixKeygen(rnd);
+      add Rotate(32, 11);
+    }
+    join roundrobin(32*8, 32);
+  }
+  add dropFirst32();
+}
+
+  bit->bit filter getLast32{
+    work push 32 pop 32*8{
+      for(int i=0; i<32*7; ++i){ pop(); }
+      for(int i=0; i<32; ++i){
+	push(pop());
+      }
+    }
+  }
+
+bit->bit pipeline KeyRnd(int rnd){
+  for(int i=0; i<=rnd; ++i){
+    add KeyBlock(i);
+  }
+  add getLast32();
+}
+
+
+
+bit->bit pipeline KeySched(){
+  add bit->bit splitjoin{
+    split duplicate();
+    add Identity<bit>();
+    add bit->bit splitjoin{
+      split duplicate();
+      for(int i=0; i< 124; ++i){
+	add KeyRnd(i);
+      }
+      join roundrobin(32);
+    }
+    join roundrobin(32*8, 32*124);  
+  }
+  add bit->bit splitjoin{
+    split roundrobin(32*4);
+    for(int i=0; i< (2 + 31); i+=1){
+      add Sbox(32*4, (3-i + 8*1024) % 8);
+    }
+    join roundrobin(32*4);
+  }
+  add IP();
+}
+
+

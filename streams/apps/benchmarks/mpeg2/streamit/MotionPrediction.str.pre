@@ -1,0 +1,301 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file MotionPrediction.str.pre
+ * @version 1.0
+ */
+
+int->int pipeline MotionPrediction_wrapper(int width, 
+                                           int height, 
+                                           portal<MotionPrediction> UpdatePortal_picture_type) {
+    add MotionPrediction(width, height) to UpdatePortal_picture_type;
+}
+
+/**
+ * @internal
+ */
+int->int filter MotionPrediction(int width, int height) {
+    int count;
+
+    int lastSeenFrame;
+
+    int datarate = (width*height/64*(64+8+1+1+1));
+    int pushrate = width*height;
+  
+    int[width][height] prev_picture;
+    int[width][height] next_picture;
+
+    int next_picture_type;
+
+    init {
+        next_picture_type = -1;
+        count = 0;
+    }
+
+    work pop datarate push pushrate {
+        if (next_picture_type == -1) {
+            println("Error - Should have received a picture type message before motion prediction can process");
+        } 
+        if (next_picture_type == 1 || next_picture_type == 2) {
+            prev_picture = next_picture;
+            if (next_picture_type == 1) {
+                readIPicture();
+            } else {
+                readPPicture();
+            }
+        } else {
+            readBPicture();
+        }
+        count++;
+    }
+
+    phase readIPicture pop datarate push pushrate {
+        lastSeenFrame = 1;
+        int[width][height] temp_picture;
+ 
+        for (int blocky = 0; blocky < (height/8); blocky++) {
+            for (int blockx = 0; blockx < (width/8); blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int i = 0; i < 8; i++) {
+                    pop();
+                }
+                pop();
+                pop();
+                pop();
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                next_picture[x][y] = temp_picture[x][y];
+                push(temp_picture[x][y]);
+            }
+        }
+    }
+
+    phase readPPicture pop datarate push pushrate {
+        lastSeenFrame = 2;
+        int[width][height] temp_picture;
+        int[width/8][height/8][2][2][2] vector;
+        int[width/8][height/8] macroblock_intra;
+
+        for (int blocky = 0; blocky < height/8; blocky++) {
+            for (int blockx = 0; blockx < width/8; blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int r = 0; r < 2; r++) {
+                    for (int s = 0; s < 2; s++) {
+                        for (int t = 0; t < 2; t++) {
+                            vector[blockx][blocky][r][s][t] = pop();
+                        }
+                    }
+                }
+                macroblock_intra[blockx][blocky] = pop();
+                pop();
+                pop();
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pixel;
+                if (macroblock_intra[x/8][y/8] == 0) {
+                    int sample_data;
+                    sample_data = predictMotionPixel(prev_picture, vector, 0, x, y);
+                    pixel = sample_data;
+                } else {
+                    pixel = 0;
+                }
+                next_picture[x][y] = temp_picture[x][y] + pixel;
+                push(next_picture[x][y]);
+                if (next_picture[x][y] > 127) {
+                    next_picture[x][y] = 127;
+                } else if (next_picture[x][y] < -128) {
+                    next_picture[x][y] = -128;
+                }
+            }
+        }
+    }
+
+    phase readBPicture pop datarate push pushrate {
+        lastSeenFrame = 3;
+        int[width][height] temp_picture;
+        int[width/8][height/8][2][2][2] vector;
+        int[width/8][height/8] macroblock_intra;
+        int[width/8][height/8] macroblock_motion_forward;
+        int[width/8][height/8] macroblock_motion_backward;
+
+        for (int blocky = 0; blocky < height/8; blocky++) {
+            for (int blockx = 0; blockx < width/8; blockx++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        temp_picture[x+blockx*8][y+blocky*8] = pop();
+                    }
+                }
+                for (int r = 0; r < 2; r++) {
+                    for (int s = 0; s < 2; s++) {
+                        for (int t = 0; t < 2; t++) {
+                            vector[blockx][blocky][r][s][t] = pop();
+                        }
+                    }
+                }
+                macroblock_intra[blockx][blocky] = pop();
+                macroblock_motion_forward[blockx][blocky] = pop();
+                macroblock_motion_backward[blockx][blocky] = pop();
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pushval;
+                int permsample = 0;
+                if (macroblock_intra[x/8][y/8] == 0) {
+                    int[2] sample_data;
+                    if (macroblock_motion_forward[x/8][y/8] == 1) {
+                        sample_data[0] = predictMotionPixel(prev_picture, vector, 0, x, y);
+                    }
+                    if (macroblock_motion_backward[x/8][y/8] == 1) {
+                        sample_data[1] = predictMotionPixel(next_picture, vector, 1, x, y);
+                    }
+                    if (macroblock_motion_forward[x/8][y/8] == 1) {
+                        if (macroblock_motion_backward[x/8][y/8] == 1) {
+                            permsample = (1+sample_data[0]+sample_data[1]+256)/2-128;
+                        } else {
+                            permsample = sample_data[0];  
+                        }
+                    } else {
+                        if (macroblock_motion_backward[x/8][y/8] == 1) {
+                            permsample = sample_data[1];
+                        } else {
+                            // TODO - this should be the previous frame's macroblock, not the previous reference frame's macroblock
+                            permsample = prev_picture[x][y];
+                        }
+                    }
+                } else {
+                    permsample = 0;
+                }
+                pushval = temp_picture[x][y] + permsample;
+                push(pushval);
+            }
+        }
+    }
+
+    handler setPictureType(int picture_coding_type) {
+        next_picture_type = picture_coding_type;
+    }
+
+    int predictPixelHorizHalfPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector-1)/2][(vert_vector+1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector+1)/2]);
+        sample_data += 128*4;
+        if (sample_data > 0) {
+            sample_data += 2;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 4;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizHalfPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][vert_vector/2] +
+                       predict_pic[(horiz_vector+1)/2][vert_vector/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) { 
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[horiz_vector/2][(vert_vector-1)/2] +
+                       predict_pic[horiz_vector/2][(vert_vector+1)/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = predict_pic[horiz_vector/2][vert_vector/2];
+        return sample_data;
+    }
+
+    int predictMotionPixel(int[width][height] predict_pic, int[width/8][height/8][2][2][2] vector, 
+                           int whichvect, int x, int y) {
+        // whichvect = 0 for forward motion prediction
+        // whichvect = 1 for backward motion prediction
+        int horiz_vector = vector[x/8][y/8][0][whichvect][0] + (x*2);
+        int vert_vector = vector[x/8][y/8][0][whichvect][1] + (y*2);
+        int sample_data;
+        if (vert_vector < 0 || vert_vector >= (height*2-1) || 
+            horiz_vector < 0 || horiz_vector >= (width*2-1)) {
+            sample_data = 0;
+        } else if ((horiz_vector & 0x1) == 1) {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizHalfPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizHalfPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        } else {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizFullPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizFullPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        }
+        if (sample_data > 127)
+            sample_data = 127;
+        else if (sample_data < -128)
+            sample_data = -128;
+        return sample_data;
+    }
+
+}

@@ -25,43 +25,36 @@
  * MPEG implementation written in C, available at [www.mpeg.org].
  *
  * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
- * @file DescrambleAndMotionCompensate.str
+ * @file BlockDescrambler_opt_handfused_nopeek.str
  * @version 1.0
  */
 
 /**
  * @internal
+ *
+ * This is a filter version of the block descrambler that should avoid
+ * some fusion overhead.  This version uses a buffer so that no peek
+ * statements are needed.  It is probably slower than
+ * BlockDescramblerFilter1, but including for future experiments.
  */
-int->int pipeline DescrambleAndMotionCompensate(int width, 
-                                                int height, 
-                                                int vertical_upsample_factor,
-                                                int horizontal_upsample_factor,
-                                                portal<MotionPrediction> UpdatePortal_picture_type,
-                                                int temp,
-                                                int the_chroma_format) {
-    add int->int splitjoin {
-        split roundrobin(64, 8, 1, 1, 1);
-        add Identity<int>;
-        add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
-            split roundrobin(1, 1); 
-            add DivideBy(horizontal_upsample_factor);
-            add DivideBy(vertical_upsample_factor);
-            join roundrobin(1, 1);
+int->int filter BlockDescrambler(int width) {
+    work push 8*width pop 8*width {
+        int[8*width] buffer;
+        for (int i=0; i<width; i+=8) {
+            for (int j=0; j<8; j++) {
+                int k = j*width+i;
+                buffer[k] = pop();
+                buffer[k+1] = pop();
+                buffer[k+2] = pop();
+                buffer[k+3] = pop();
+                buffer[k+4] = pop();
+                buffer[k+5] = pop();
+                buffer[k+6] = pop();
+                buffer[k+7] = pop();
+            }
         }
-        add Identity<int>;
-        add Identity<int>;
-        add Identity<int>;
-        join roundrobin(64, 8, 1, 1, 1);
-    }  
-      
-    add MotionPrediction_wrapper(width/horizontal_upsample_factor, 
-                                 height/vertical_upsample_factor,
-                                 UpdatePortal_picture_type);
+        for (int i=0; i<8*width; i++) {
+            push(buffer[i]);
+        }
+    }
 }
-
-
-
-
-
-
-

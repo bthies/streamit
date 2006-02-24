@@ -56,6 +56,7 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
         }
     }
 
-    add MotionPrediction(width/horizontal_upsample_factor, height/vertical_upsample_factor) 
-        to UpdatePortal_picture_type;
+    add MotionPrediction_wrapper(width/horizontal_upsample_factor, 
+                                 height/vertical_upsample_factor,
+                                 UpdatePortal_picture_type);
 }

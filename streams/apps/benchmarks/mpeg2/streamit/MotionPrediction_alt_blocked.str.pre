@@ -1,0 +1,283 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file MotionPrediction.str.pre
+ * @version 1.0
+ */
+
+// MPEG Decoder with Blocked Motion Compensation
+// The Motion Compensation filter has been modified to process
+// everything in blocks. This is a major first step in parallelizing 
+// motion compensation.
+
+int->int pipeline MotionPrediction_wrapper(int width, 
+                                           int height, 
+                                           portal<MotionPrediction> UpdatePortal_picture_type) {
+    add MotionPrediction(width, height) to UpdatePortal_picture_type;
+    add BlockDescrambler(width);
+}
+
+/**
+ * @internal
+ */
+int->int filter MotionPrediction(int width, int height) {
+    int lastSeenFrame;
+
+    int datarate = (width*height/64*(64+8+1+1+1));
+    int pushrate = width*height;
+  
+    int[width][height] prev_picture;
+    int[width][height] next_picture;
+
+    int next_picture_type;
+
+    int state_blocky;
+    int state_blockx;
+
+    int[width][height] push_picture;
+
+    init {
+        next_picture_type = -1;
+        state_blocky = 0;
+        state_blockx = 0;
+    }
+
+    work pop datarate push pushrate {
+        for (state_blocky = 0; state_blocky < (height/8); state_blocky++) {
+            for (state_blockx = 0; state_blockx < (width/8); state_blockx++) {
+                if (next_picture_type == -1) {
+                    println("Error - Should have received a picture type message before motion prediction can process");
+                } 
+
+                if (next_picture_type == 1) {         
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            int temp_picture = pop();
+                            next_picture[x+state_blockx*8][y+state_blocky*8] = temp_picture;
+                            push_picture[x+state_blockx*8][y+state_blocky*8] = temp_picture;
+                        }
+                    }
+                    deadpop(11);
+                } else if (next_picture_type == 2) {
+                    int[2][2][2] vector;
+                    int macroblock_intra;
+                    int[8][8] temp_picture;
+      
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            temp_picture[x][y] = pop();
+                        }
+                    }
+                    for (int r = 0; r < 2; r++) {
+                        for (int s = 0; s < 2; s++) {
+                            for (int t = 0; t < 2; t++) {
+                                vector[r][s][t] = pop();
+                            }
+                        }
+                    }
+      
+                    macroblock_intra = pop();
+                    deadpop(2);
+      
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+              
+                            int a_x = x+state_blockx*8;
+                            int a_y = y+state_blocky*8;
+              
+                            if (macroblock_intra == 0) {
+                                int sample_data;
+                                sample_data = predictMotionPixel(prev_picture, vector, 0, a_x, a_y);
+                                next_picture[a_x][a_y] = temp_picture[x][y] + sample_data;
+                            } else {
+                                next_picture[a_x][a_y] = temp_picture[x][y];
+                            }
+                            push_picture[a_x][a_y] = next_picture[a_x][a_y];
+                            if (next_picture[a_x][a_y] > 127) {
+                                next_picture[a_x][a_y] = 127;
+                            } else if (next_picture[a_x][a_y] < -128) {
+                                next_picture[a_x][a_y] = -128;
+                            }
+                        }
+                    }
+                } else {
+                    int[2][2][2] vector;
+                    int macroblock_intra;
+                    int macroblock_motion_forward;
+                    int macroblock_motion_backward;
+                    int[8][8] permsample;
+                    int[8][8] temp_picture;
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            temp_picture[x][y] = pop();
+                        }
+                    }
+                    for (int r = 0; r < 2; r++) {
+                        for (int s = 0; s < 2; s++) {
+                            for (int t = 0; t < 2; t++) {
+                                vector[r][s][t] = pop();
+                            }
+                        }
+                    }
+                    macroblock_intra = pop();
+                    macroblock_motion_forward = pop();
+                    macroblock_motion_backward = pop();
+      
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            int a_x = x+state_blockx*8;
+                            int a_y = y+state_blocky*8;
+              
+                            if (macroblock_intra == 0) {
+                                int[2] sample_data;
+                                if (macroblock_motion_forward == 1) {
+                                    sample_data[0] = predictMotionPixel(prev_picture, vector, 0, a_x, a_y);
+                                }
+                                if (macroblock_motion_backward == 1) {
+                                    sample_data[1] = predictMotionPixel(next_picture, vector, 1, a_x, a_y);
+                                }
+                                if (macroblock_motion_forward == 1) {
+                                    if (macroblock_motion_backward == 1) {
+                                        permsample[x][y] = (1+sample_data[0]+sample_data[1]+256)/2-128;
+                                    } else {
+                                        permsample[x][y] = sample_data[0];  
+                                    }
+                                } else {
+                                    permsample[x][y] = sample_data[1];
+                                }
+                            } else {
+                                permsample[x][y] = 0;
+                            }
+                            push_picture[a_x][a_y] = temp_picture[x][y] + permsample[x][y];
+                        }
+                    }
+                }
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        push(push_picture[state_blockx*8+x][state_blocky*8+y]);
+                    } 
+                }         
+            }
+        }
+    }
+
+    handler setPictureType(int picture_coding_type) {
+        next_picture_type = picture_coding_type;
+        if (next_picture_type == 1 || next_picture_type == 2) {
+            prev_picture = next_picture;
+        }
+        lastSeenFrame = next_picture_type;
+    }
+
+    int predictPixelHorizHalfPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector-1)/2][(vert_vector+1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector-1)/2] +
+                       predict_pic[(horiz_vector+1)/2][(vert_vector+1)/2]);
+        sample_data += 128*4;
+        if (sample_data > 0) {
+            sample_data += 2;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 4;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizHalfPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[(horiz_vector-1)/2][vert_vector/2] +
+                       predict_pic[(horiz_vector+1)/2][vert_vector/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) { 
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertHalfPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = (predict_pic[horiz_vector/2][(vert_vector-1)/2] +
+                       predict_pic[horiz_vector/2][(vert_vector+1)/2]);
+        sample_data += 128*2;
+        if (sample_data > 0) {
+            sample_data += 1;
+        } else if (sample_data < 0) {
+            println("Error - Shouldn't be less than zero " + sample_data);
+        }
+        sample_data = sample_data / 2;
+        sample_data -= 128;
+        return sample_data;
+    }
+
+    int predictPixelHorizFullPelVertFullPel(int[width][height] predict_pic, int horiz_vector, int vert_vector) {
+        int sample_data;
+        sample_data = predict_pic[horiz_vector/2][vert_vector/2];
+        return sample_data;
+    }
+
+    int predictMotionPixel(int[width][height] predict_pic, int[2][2][2] vector, 
+                           int whichvect, int x, int y) {
+        // whichvect = 0 for forward motion prediction
+        // whichvect = 1 for backward motion prediction
+        int horiz_vector = vector[0][whichvect][0] + (x*2);
+        int vert_vector = vector[0][whichvect][1] + (y*2);
+        int sample_data;
+        if (vert_vector < 0 || vert_vector >= (height*2-1) || 
+            horiz_vector < 0 || horiz_vector >= (width*2-1)) {
+            sample_data = 0;
+        } else if ((horiz_vector & 0x1) == 1) {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizHalfPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizHalfPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        } else {
+            if ((vert_vector & 0x1) == 1) {
+                sample_data = predictPixelHorizFullPelVertHalfPel(predict_pic, horiz_vector, vert_vector);
+            } else {
+                sample_data = predictPixelHorizFullPelVertFullPel(predict_pic, horiz_vector, vert_vector);
+            }
+        }
+        if (sample_data > 127)
+            sample_data = 127;
+        else if (sample_data < -128)
+            sample_data = -128;
+        return sample_data;
+    }
+
+}
+
+
+
+

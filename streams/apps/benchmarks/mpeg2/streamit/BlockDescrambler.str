@@ -25,43 +25,17 @@
  * MPEG implementation written in C, available at [www.mpeg.org].
  *
  * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
- * @file DescrambleAndMotionCompensate.str
+ * @file BlockDescrambler.str
  * @version 1.0
  */
 
 /**
  * @internal
  */
-int->int pipeline DescrambleAndMotionCompensate(int width, 
-                                                int height, 
-                                                int vertical_upsample_factor,
-                                                int horizontal_upsample_factor,
-                                                portal<MotionPrediction> UpdatePortal_picture_type,
-                                                int temp,
-                                                int the_chroma_format) {
-    add int->int splitjoin {
-        split roundrobin(64, 8, 1, 1, 1);
+int->int splitjoin BlockDescrambler(int width) {
+    split roundrobin(8);
+    for (int i = 0; i < 8; i++) {
         add Identity<int>;
-        add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
-            split roundrobin(1, 1); 
-            add DivideBy(horizontal_upsample_factor);
-            add DivideBy(vertical_upsample_factor);
-            join roundrobin(1, 1);
-        }
-        add Identity<int>;
-        add Identity<int>;
-        add Identity<int>;
-        join roundrobin(64, 8, 1, 1, 1);
-    }  
-      
-    add MotionPrediction_wrapper(width/horizontal_upsample_factor, 
-                                 height/vertical_upsample_factor,
-                                 UpdatePortal_picture_type);
+    }
+    join roundrobin(width);
 }
-
-
-
-
-
-
-

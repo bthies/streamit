@@ -36,7 +36,8 @@
 
 int->int pipeline MotionPrediction_wrapper(int width, 
                                            int height, 
-                                           portal<MotionPrediction> UpdatePortal_picture_type) {
+                                           portal<MotionPrediction> UpdatePortal_picture_type,
+                                           portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     add MotionPrediction(width, height) to UpdatePortal_picture_type;
     add BlockDescrambler(width);
 }
@@ -167,7 +168,12 @@ int->int filter MotionPrediction(int width, int height) {
                                         permsample[x][y] = sample_data[0];  
                                     }
                                 } else {
-                                    permsample[x][y] = sample_data[1];
+                                    if (macroblock_motion_backward == 1) {
+                                        permsample[x][y] = sample_data[1];
+                                    } else {
+                                        // TODO - this should be the previous frame's macroblock, not the previous reference frame's macroblock
+                                        permsample = prev_picture[x][y];
+                                    }
                                 }
                             } else {
                                 permsample[x][y] = 0;
@@ -203,7 +209,7 @@ int->int filter MotionPrediction(int width, int height) {
         if (sample_data > 0) {
             sample_data += 2;
         } else if (sample_data < 0) {
-            println("Error - Shouldn't be less than zero " + sample_data);
+            // println("Error - Shouldn't be less than zero " + sample_data);
         }
         sample_data = sample_data / 4;
         sample_data -= 128;
@@ -218,7 +224,7 @@ int->int filter MotionPrediction(int width, int height) {
         if (sample_data > 0) {
             sample_data += 1;
         } else if (sample_data < 0) { 
-            println("Error - Shouldn't be less than zero " + sample_data);
+            // println("Error - Shouldn't be less than zero " + sample_data);
         }
         sample_data = sample_data / 2;
         sample_data -= 128;
@@ -233,7 +239,7 @@ int->int filter MotionPrediction(int width, int height) {
         if (sample_data > 0) {
             sample_data += 1;
         } else if (sample_data < 0) {
-            println("Error - Shouldn't be less than zero " + sample_data);
+            // println("Error - Shouldn't be less than zero " + sample_data);
         }
         sample_data = sample_data / 2;
         sample_data -= 128;
@@ -278,6 +284,13 @@ int->int filter MotionPrediction(int width, int height) {
 
 }
 
-
-
-
+// TODO - hack, because we need this filter for one of the optimized versions
+// so we need a dummy defined somewhere so that we can have the rest of the files
+// reference this portal. (FEATURETODO - this will not be needed once hierarchical
+// messaging works
+int->int filter SendBackReferenceFrame() {
+    handler setPictureType(int picture_type) {}
+    work pop 1 push 1 {
+        push(pop());
+    }
+}

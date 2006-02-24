@@ -33,39 +33,76 @@
 int->int pipeline ColorChannelProcessing(int width, 
                                          int height, 
                                          portal<MotionPrediction> UpdatePortal_picture_type, 
-                                         int the_chroma_format) {
+                                         int the_chroma_format,
+                                         portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     if (the_chroma_format == 1) {
-        add LumChromFormatOne(width, height, UpdatePortal_picture_type, the_chroma_format);
+        add LumChromFormatOne(width, 
+                              height, 
+                              UpdatePortal_picture_type, 
+                              the_chroma_format, 
+                              UpdatePortal_picture_type3);
     } else {
-        add LumChromFormatOther(width, height, UpdatePortal_picture_type, the_chroma_format);
+        add LumChromFormatOther(width, 
+                                height, 
+                                UpdatePortal_picture_type, 
+                                the_chroma_format, 
+                                UpdatePortal_picture_type3);
     }
 }
 
 // splitjoin pulled out above
-int->int splitjoin LumChromFormatOne(int width, int height, 
+int->int splitjoin LumChromFormatOne(int width, 
+                                     int height, 
                                      portal<MotionPrediction> UpdatePortal_picture_type,
-                                     int the_chroma_format) {
+                                     int the_chroma_format,
+                                     portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     split roundrobin(4*75, 2*75);
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add LuminanceChannelProcessing(width, 
+                                   height, 
+                                   UpdatePortal_picture_type, 
+                                   the_chroma_format, 
+                                   UpdatePortal_picture_type3);
     add int->int splitjoin {
         split roundrobin(75);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+        add ChrominanceChannelProcessing(width, 
+                                         height, 
+                                         UpdatePortal_picture_type, 
+                                         the_chroma_format, 
+                                         UpdatePortal_picture_type3);
+        add ChrominanceChannelProcessing(width, 
+                                         height, 
+                                         UpdatePortal_picture_type, 
+                                         the_chroma_format, 
+                                         UpdatePortal_picture_type3);
         join roundrobin(1, 1);
     }
     join roundrobin(1, 2);
 }
 
 // splitjoin pulled out above
-int->int splitjoin LumChromFormatOther(int width, int height, 
+int->int splitjoin LumChromFormatOther(int width, 
+                                       int height, 
                                        portal<MotionPrediction> UpdatePortal_picture_type,
-                                       int the_chroma_format) {
+                                       int the_chroma_format,
+                                       portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     split roundrobin(4*75, 4*75);
-    add LuminanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add LuminanceChannelProcessing(width, 
+                                   height, 
+                                   UpdatePortal_picture_type, 
+                                   the_chroma_format, 
+                                   UpdatePortal_picture_type3);
     add int->int splitjoin {
         split roundrobin(75);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
-        add ChrominanceChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+        add ChrominanceChannelProcessing(width, 
+                                         height, 
+                                         UpdatePortal_picture_type, 
+                                         the_chroma_format, 
+                                         UpdatePortal_picture_type3);
+        add ChrominanceChannelProcessing(width, 
+                                         height, 
+                                         UpdatePortal_picture_type, 
+                                         the_chroma_format, 
+                                         UpdatePortal_picture_type3);
         join roundrobin(1, 1);
     }
     join roundrobin(1, 2);

@@ -64,6 +64,7 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
     portal<MotionPrediction> UpdatePortal_picture_type;
     portal<MotionVectorDecode> UpdatePortal_mvd;
     portal<PictureReorder> UpdatePortal_picture_type2;
+    portal<SendBackReferenceFrame> UpdatePortal_picture_type3;
  
     add MPEGStreamParser(UpdatePortal_quantiser_data_ac,
                          UpdatePortal_quantiser_data_dc,
@@ -71,6 +72,7 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
                          UpdatePortal_picture_type,
                          UpdatePortal_mvd,
                          UpdatePortal_picture_type2,
+                         UpdatePortal_picture_type3,
                          width,
                          height,
                          the_chroma_format
@@ -91,7 +93,11 @@ bit->int pipeline MPEGStream_to_rawImageStream(int width, int height,
 
     // Each output channel is ordered left to right, top to bottom
 
-    add ColorChannelProcessing(width, height, UpdatePortal_picture_type, the_chroma_format);
+    add ColorChannelProcessing(width, 
+                               height, 
+                               UpdatePortal_picture_type, 
+                               the_chroma_format,
+                               UpdatePortal_picture_type3);
 
     // FEATURETODO This next component should also use the UpdatePortal_picture_type
     // but it doesn't because of messaging limitations.
@@ -433,9 +439,17 @@ int->int filter MotionVectorDecode() {
 int->int pipeline LuminanceChannelProcessing(int width, 
                                              int height,
                                              portal<MotionPrediction> UpdatePortal_picture_type,
-                                             int the_chroma_format) {
+                                             int the_chroma_format,
+                                             portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     add MacroBlockDescrambler(width, 64+11, 2);
-    add DescrambleAndMotionCompensate(width, height, 1, 1, UpdatePortal_picture_type, 1, the_chroma_format);
+    add DescrambleAndMotionCompensate(width, 
+                                      height, 
+                                      1, 
+                                      1, 
+                                      UpdatePortal_picture_type, 
+                                      1, 
+                                      the_chroma_format, 
+                                      UpdatePortal_picture_type3);
 }
 
 /**
@@ -444,7 +458,8 @@ int->int pipeline LuminanceChannelProcessing(int width,
 int->int pipeline ChrominanceChannelProcessing(int width, 
                                                int height,
                                                portal<MotionPrediction> UpdatePortal_picture_type,
-                                               int the_chroma_format) {
+                                               int the_chroma_format,
+                                               portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     // Assumes 4:2:0 to 4:4:4 or 4:2:2 to 4:4:4
     // Adding 4:4:4 support requires some additional block reordering.
     if (the_chroma_format == 2) {
@@ -456,7 +471,14 @@ int->int pipeline ChrominanceChannelProcessing(int width,
     } else {
         vertical_upsample_factor = 1;
     }
-    add DescrambleAndMotionCompensate(width, height, vertical_upsample_factor, 2, UpdatePortal_picture_type, 0, the_chroma_format);
+    add DescrambleAndMotionCompensate(width, 
+                                      height, 
+                                      vertical_upsample_factor, 
+                                      2, 
+                                      UpdatePortal_picture_type, 
+                                      0, 
+                                      the_chroma_format,
+                                      UpdatePortal_picture_type3);
     if (the_chroma_format == 1) {
         add ChannelUpsample_Vert_and_Horz(width/2, height/2);
     } else {
@@ -473,20 +495,6 @@ int->int splitjoin MacroBlockDescrambler(int width, int block_data_size, int hor
         add Identity<int>;
     }
     join roundrobin((width/8)*block_data_size);
-}
-
-int->int filter SendBackReferenceFrame(int width, int height,
-                                       portal<MotionPrediction> UpdatePortal_reference_frame) {
-    work pop (width*height) push (width*height) {
-        int[width][height] picture;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                push(peek(0));
-                picture[x][y] = pop();
-            }
-        }
-        UpdatePortal_reference_frame.referenceFrame(picture) [1:1];    
-    }
 }
 
 // Note: We assume we are going from 4:2:0 to 4:4:4

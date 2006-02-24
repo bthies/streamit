@@ -38,7 +38,8 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
                                                 int horizontal_upsample_factor,
                                                 portal<MotionPrediction> UpdatePortal_picture_type,
                                                 int temp,
-                                                int the_chroma_format) {
+                                                int the_chroma_format,
+                                                portal<SendBackReferenceFrame> UpdatePortal_picture_type3) {
     // this filter is a hand-fused version of the alternative splitjoin in the other file
     add int->int filter {
         work push 75 pop 75 {
@@ -58,5 +59,6 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
 
     add MotionPrediction_wrapper(width/horizontal_upsample_factor, 
                                  height/vertical_upsample_factor,
-                                 UpdatePortal_picture_type);
+                                 UpdatePortal_picture_type,
+                                 UpdatePortal_picture_type3);
 }

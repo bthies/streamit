@@ -8,8 +8,9 @@ COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
 DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate.str
 # DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate_opt_handfused.str
 
-# MOTION_PREDICTION = MotionPrediction.str
-MOTION_PREDICTION = MotionPrediction_alt_blocked.str
+MOTION_PREDICTION = MotionPrediction.str
+# MOTION_PREDICTION = MotionPrediction_alt_blocked.str
+# MOTION_PREDICTION = MotionPrediction_alt_blocked_parallel.str
 
 BLOCK_DESCRAMBLER = BlockDescrambler.str
 # BLOCK_DESCRAMBLER = BlockDescrambler_opt_handfused_nopeek.str
@@ -53,6 +54,7 @@ clean:
 	rm -f Parser.str
 	rm -f MotionPrediction.str
 	rm -f MotionPrediction_alt_blocked.str
+	rm -f MotionPrediction_alt_blocked_parallel.str
 	rm -f *.java
 	rm -f *.class
 	rm -f *.dot

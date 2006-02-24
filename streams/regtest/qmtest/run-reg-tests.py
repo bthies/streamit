@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.28 2006-01-10 18:50:30 dimock Exp $
+# $Id: run-reg-tests.py,v 1.29 2006-02-24 21:35:15 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -71,7 +71,8 @@ class RunRegTests:
         # Vaguely overcomplicated assembly of the CLASSPATH.
         # WIBNI we could read this from dot-bashrc?
         class_path = ['src', '3rdparty', '3rdparty/cplex/cplex.jar',
-                      '3rdparty/jgraph/jgraph.jar','3rdparty/JFlex/jflex.jar']
+                      '3rdparty/jgraph/jgraph.jar','3rdparty/JFlex/jflex.jar',
+                      '3rdparty/jcc/jcc.jar']
         class_path = map(lambda p: os.path.join(self.streamit_home, p),
                          class_path)
         class_path = ['.',

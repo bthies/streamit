@@ -8,6 +8,12 @@ COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
 DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate.str
 # DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate_opt_handfused.str
 
+# MOTION_PREDICTION = MotionPrediction.str
+MOTION_PREDICTION = MotionPrediction_alt_blocked.str
+
+BLOCK_DESCRAMBLER = BlockDescrambler.str
+# BLOCK_DESCRAMBLER = BlockDescrambler_opt_handfused_nopeek.str
+
 # --------------------------------------------------------------------
 # Make and Compilation Variables
 # --------------------------------------------------------------------
@@ -26,7 +32,7 @@ LIBDCT = ${DCT_HOME}/DCT.str
 LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LIBDCT}
 
 # Streams Used By the Decoders
-LIBMPEG2_DECODE = MPEGdecoder.str Parser.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE} 
+LIBMPEG2_DECODE = MPEGdecoder.str Parser.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE} ${MOTION_PREDICTION} ${BLOCK_DESCRAMBLER}
 
 # Streams Used By the Encoders
 LIBMPEG2_ENCODE = MPEGencoder.str
@@ -45,6 +51,8 @@ clean:
 	rm -f MPEGdecoder_nomessage.str
 	rm -f BMP.str
 	rm -f Parser.str
+	rm -f MotionPrediction.str
+	rm -f MotionPrediction_alt_blocked.str
 	rm -f *.java
 	rm -f *.class
 	rm -f *.dot

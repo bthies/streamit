@@ -29,42 +29,69 @@ import java.util.*;
 
 public class ClusterBackend implements FlatVisitor {
 
-    //given a flatnode map to the execution count
-    //public static HashMap initExecutionCounts;
-    //public static HashMap steadyExecutionCounts;
-    //the simulator to be run
-
     //public static Simulator simulator;
     // get the execution counts from the scheduler
 
-    static boolean debugPrint = false;
+    /**
+     * Print out some debugging info if true.
+     */
+    public static boolean debugPrint = false;
 
-    //given a flatnode map to the execution count
+    /**
+     * Given a flatnode, map to the init execution count.
+     */
     public static HashMap initExecutionCounts;
+    /**
+     * Given a flatnode, map to steady-state execution count.
+     *
+     * <br/> Also read in several other modules.
+     */
     public static HashMap steadyExecutionCounts;
 
+    /**
+     * Map filters (also presumably splitters and joiners) to FlatNodes.
+     * 
+     * <br/> Also read by ClusterExecutionCode
+     */
     public static HashMap filter2Node;
 
-    public static HashMap[] executionCounts;
+    /**
+     * Result of call to SIRScheduler.getExecutionCounts.
+     */
+    private static HashMap[] executionCounts;
     
-    public static SIRStructure[] structures;
+    /**
+     * Holds passed structures until they can be handeed off to StructureIncludeFile.
+     */
+    private static SIRStructure[] structures;
 
     
-    //if true have each filter print out each value it is pushing
-    //onto its output tape
+    /**
+     * If true have each filter print out each value it is pushing
+     *onto its output tape.
+     */
     public static boolean FILTER_DEBUG_MODE = false;
 
+    /**
+     * Used to iterate over str structure ignoring flattening.
+     * <br/> Also used in ClusterCodeGenerator and FlatIrToCluster2
+     */
     public static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
+    /**
+     * visitor used to set up filter2Node field.
+     */
     public void visitNode(FlatNode node) 
     {
         filter2Node.put(node.contents, node);
     }
 
 
-    // this provides a way for cache partitioner to access filter execution counts!!
+    /**
+     * This provides a way for cache partitioner to access filter execution counts.
+     */
 
-    static HashMap filter_steady_counts;
+    private static HashMap filter_steady_counts;
 
     public static int getExecCounts(SIROperator oper) {
         int c[] = (int[])filter_steady_counts.get(oper);

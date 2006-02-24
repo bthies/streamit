@@ -1,0 +1,50 @@
+/**
+ * Tests sending to multiple receivers in a pipeline.
+ *
+ *  cagfarm-50 % strc -library -i 10 Test9.str
+ *  0
+ *  10
+ *  20
+ *  30
+ *  40
+ *  50
+ *  60
+ *  70
+ *  80
+ *  90
+ *
+ */
+
+void->void pipeline Test9 {
+    portal<Receiver> p;
+    add Sender(p);
+    for (int i=0; i<10; i++) {
+        add Receiver() to p;
+    }
+    add Sink;
+}
+
+void->int filter Sender(portal<Receiver> p) {
+    work push 1 {
+        p.increment() [1:1];
+        push(0);
+    }
+}
+
+int->int filter Receiver {
+    int val = 0;
+    work push 1 pop 1 {
+        push(val+pop());
+    }
+    handler increment() {
+        val++;
+    }
+}
+
+int->void filter Sink() {
+    work pop 1 {
+        int val = pop();
+        println(val);
+    }
+}
+

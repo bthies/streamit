@@ -11,138 +11,181 @@ import java.util.Set;
 import java.util.Random;
 import at.dms.kjc.flatgraph2.*;
 
+/**
+ * This class will assign the offchip-rotating buffers to DRAM banks of the
+ * raw chip.  It uses a heuristic approach that is executed in stages.  See the
+ * code for details.
+ * 
+ * @author mgordon
+ *
+ */
 public class BufferDRAMAssignment {
-    private static Random rand;
 
-    static {
-        rand = new Random(17);
-    }
+    private RawChip rawChip;
 
     /**
      * Assign the buffers to ports
      */
-    public static void run(List steadyList, RawChip chip, Trace[] files) {
+    public void run(SpaceTimeSchedule spaceTime) {
+        rawChip = spaceTime.getRawChip();
+        TraceNode[] traceNodes = Util.traceNodeArray(spaceTime.partitioner.getTraceGraph());
+            
+        //setup the assignment of tiles to ports and networks...
+        setupTileDRAMMapping();
+        
         // take care of the file readers and writes
         // assign the reader->output buffer and the input->writer buffer
-        fileStuff(files, chip);
+        fileStuff(spaceTime.partitioner.io);
 
-        // go thru the traversal and assign
-        // input->filter and filter->output buffers to drams
-        // based on placement
-        Iterator traceNodeTrav = Util.traceNodeTraversal(steadyList);
-        while (traceNodeTrav.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodeTrav.next();
-            // assign the buffer between inputtracenode and the filter
-            // to a dram
-            if (traceNode.isInputTrace())
-                inputFilterAssignment((InputTraceNode) traceNode, chip);
-            // assign the buffer between the output trace node and the filter
-            if (traceNode.isOutputTrace())
-                filterOutputAssignment((OutputTraceNode) traceNode, chip);
-            traceNode = traceNode.getNext();
+        // assign the buffer between inputtracenode and the filter
+        // to the filter's home device
+        for (int i = 0; i < traceNodes.length; i++) {
+            if (traceNodes[i].isInputTrace())
+                inputFilterAssignment((InputTraceNode) traceNodes[i]);
         }
-
-        // assign all the outputnodes with one output first
-        traceNodeTrav = Util.traceNodeTraversal(steadyList);
-        while (traceNodeTrav.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodeTrav.next();
-
-            if (traceNode.isOutputTrace()
-                && ((OutputTraceNode) traceNode).oneOutput()) {
-                performAssignment((OutputTraceNode) traceNode, chip);
-            }
+            
+        //Assign filter->output and output->input buffers where there is
+        //a single output to an input trace
+        for (int i = 0; i < traceNodes.length; i++) {
+            if (traceNodes[i].isOutputTrace() &&
+                    traceNodes[i].getAsOutput().oneOutput())
+                singleOutputAssignment(traceNodes[i].getAsOutput());
         }
-
-        // assign all the output nodes of file readers with one output
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].getTail().isFileReader()
-                && files[i].getTail().oneOutput())
-                performAssignment(files[i].getTail(), chip);
+        
+        //assign filter->output intratracebuffers for split output traces
+        for (int i = 0; i < traceNodes.length; i++) {
+            if (traceNodes[i].isOutputTrace() &&
+                    !traceNodes[i].getAsOutput().oneOutput())
+                splitOutputAssignment(traceNodes[i].getAsOutput());
         }
-
-        // cycle thru the steady state trav...
-        // when we hit an output trace node
-        // assign its output buffers to
-        traceNodeTrav = Util.traceNodeTraversal(steadyList);
-        while (traceNodeTrav.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodeTrav.next();
-            // for each output trace node get assign
-            // its output buffers to ports
-            // based on the ordering given by assignment order
-            // assign buffers in descending order of items sent to
-            // the buffer
-
-            // do not assign one output outputTracenodes
-            // perform assign will not assign anything that has
-            // an assignment already
-            if (traceNode.isOutputTrace()) {
-                performAssignment((OutputTraceNode) traceNode, chip);
-            }
+      
+        //assign intertracebuffer that end at a trace with one input.
+        for (int i = 0; i < traceNodes.length; i++) {
+            if (traceNodes[i].isInputTrace() && 
+                    traceNodes[i].getAsInput().oneInput())
+                singleInputAssignment(traceNodes[i].getAsInput());
         }
-
-        // assign remaining file readers
-        for (int i = 0; i < files.length; i++) {
-            if (files[i].getTail().isFileReader()
-                && !files[i].getTail().oneOutput())
-                performAssignment(files[i].getTail(), chip);
+        
+        //now go through the remaining inter trace buffer's and 
+        //assign them according to distance from their source, dest
+        for (int i = 0; i < traceNodes.length; i++) {
+            if (traceNodes[i].isOutputTrace())
+                assignRemaining(traceNodes[i].getAsOutput());
         }
+        
+        //make sure that everything is assigned!!!
+        assert OffChipBuffer.areAllAssigned() :
+            "Some buffers remain unassigned after BufferDRAMAssignment.";
     }
 
-    private static void fileStuff(Trace[] files, RawChip chip) {
-        // first go thru the file, reader and writers and assign their
-        // input->file and file->output buffers
+    /** map of RawTile -> StreamingDRAM, the "home-base" dram for a tile */ 
+    private HashMap tileDRAMMap;
+    /** set of tiles who must use the gdn (non-border tiles); **/
+    private HashSet mustUseGDN;
+    
+   
+    private StreamingDram getHomeDevice(RawTile tile) {
+        return (StreamingDram)tileDRAMMap.get(tile);
+    }
+    
+    /**
+     * Set up the home base dram for each tile, this is where the tile
+     * will get its input from and also set the tiles that need to use
+     * the gdn for input because they are not border tiles.
+     *  
+     * @param rawChip
+     */
+    private  void setupTileDRAMMapping() {
+        assert rawChip.getTotalTiles() == 16 : 
+            "We only support 16 tile raw configs in dram assignment.";
+        
+        tileDRAMMap = new HashMap();
+        mustUseGDN = new HashSet();
+        
+        tileDRAMMap.put(rawChip.getTile(0), (StreamingDram)rawChip.getDevices()[15]);
+        tileDRAMMap.put(rawChip.getTile(1), (StreamingDram)rawChip.getDevices()[1]);
+        tileDRAMMap.put(rawChip.getTile(2), (StreamingDram)rawChip.getDevices()[2]);
+        tileDRAMMap.put(rawChip.getTile(3), (StreamingDram)rawChip.getDevices()[3]);
+        tileDRAMMap.put(rawChip.getTile(4), (StreamingDram)rawChip.getDevices()[14]);
+        tileDRAMMap.put(rawChip.getTile(5), (StreamingDram)rawChip.getDevices()[0]);
+        tileDRAMMap.put(rawChip.getTile(6), (StreamingDram)rawChip.getDevices()[4]);
+        tileDRAMMap.put(rawChip.getTile(7), (StreamingDram)rawChip.getDevices()[5]);
+        tileDRAMMap.put(rawChip.getTile(8), (StreamingDram)rawChip.getDevices()[13]);
+        tileDRAMMap.put(rawChip.getTile(9), (StreamingDram)rawChip.getDevices()[12]);
+        tileDRAMMap.put(rawChip.getTile(10), (StreamingDram)rawChip.getDevices()[8]);
+        tileDRAMMap.put(rawChip.getTile(11), (StreamingDram)rawChip.getDevices()[6]);
+        tileDRAMMap.put(rawChip.getTile(12), (StreamingDram)rawChip.getDevices()[11]);
+        tileDRAMMap.put(rawChip.getTile(13), (StreamingDram)rawChip.getDevices()[10]);
+        tileDRAMMap.put(rawChip.getTile(14), (StreamingDram)rawChip.getDevices()[9]);
+        tileDRAMMap.put(rawChip.getTile(15), (StreamingDram)rawChip.getDevices()[7]);
+        
+        mustUseGDN.add(rawChip.getTile(5));
+        mustUseGDN.add(rawChip.getTile(6));
+        mustUseGDN.add(rawChip.getTile(9));
+        mustUseGDN.add(rawChip.getTile(10));
+    }
+    
+    private RawTile getFilterTile(FilterTraceNode node) {
+        return rawChip.getTile(node.getX(), node.getY());
+    }
+            
+    /**
+     * first go thru the file, reader and writers and assign their 
+     * input->file and file->output buffers to reside in the dram 
+     * attached to the output port.
+     * 
+     * @param files
+     * @param chip
+     */
+    private  void fileStuff(Trace[] files) {
+        // 
         for (int i = 0; i < files.length; i++) {
             // these traces should have only one filter, make sure
-            assert files[i].getHead().getNext().getNext() == files[i].getTail() : "File Trace incorrectly generated";
+            assert files[i].getHead().getNext().getNext() == files[i].getTail() : 
+                "File Trace incorrectly generated";
             FilterTraceNode filter = (FilterTraceNode) files[i].getHead()
                 .getNext();
 
             if (files[i].getHead().isFileWriter()) {
-                assert files[i].getHead().oneInput() : "buffer assignment of a joined file writer not implemented ";
-                FileOutputContent fileOC = (FileOutputContent) filter
-                    .getFilter();
-                RawTile tile = chip.getTile(files[i].getHead().getNextFilter()
-                                            .getX(), files[i].getHead().getNextFilter().getY());
+                assert files[i].getHead().oneInput() : 
+                    "buffer assignment of a joined file writer not implemented ";
+                //get the tile assigned to the file writer by the layout stage?
+                
+                RawTile tile = getFilterTile(files[i].getHead().getNextFilter());
+                
+                //check that the tile assignment for this file writer is correct
+                assert tile == 
+                    getFilterTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i]
                                                                   .getHead(), filter);
                 // the dram of the tile where we want to add the file writer
-                StreamingDram dram = null;
-                // get the correct port if there are two connected
-                for (int j = 0; j < tile.getIODevices().length; j++) {
-                    if (!((StreamingDram) tile.getIODevices()[j])
-                        .isFileWriter()) {
-                        dram = (StreamingDram) tile.getIODevices()[j];
-                        break;
-                    }
-                }
-                assert dram != null : "Could not find a dram to attach file writer to";
-
+                StreamingDram dram = getHomeDevice(tile);
                 // set the port for the buffer
                 buf.setDRAM(dram);
+                // use the static net if we can
+                buf.setStaticNet(!mustUseGDN.contains(tile));
                 // assign the other buffer to the same port
                 // this should not affect anything
-                IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(
-                                                                               dram);
+                IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
                 // attach the file writer to the port
-                dram.setFileWriter(fileOC);
+                dram.setFileWriter((FileOutputContent)filter.getFilter());
             } else if (files[i].getTail().isFileReader()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
-                RawTile tile = chip.getTile(files[i].getHead().getNextFilter()
-                                            .getX(), files[i].getHead().getNextFilter().getY());
+                //get the tile assigned to the next
+                RawTile tile = getFilterTile(files[i].getHead().getNextFilter());
+                //make sure the tile assignment for this writer is the same as the upstream
+                //filter that creates the data
+                assert tile == 
+                    getFilterTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,
                                                                   files[i].getTail());
-                StreamingDram dram = null;
-                for (int j = 0; j < tile.getIODevices().length; j++) {
-                    if (!((StreamingDram) tile.getIODevices()[j])
-                        .isFileReader()) {
-                        dram = (StreamingDram) tile.getIODevices()[j];
-                        break;
-                    }
-                }
-                assert dram != null : "Could not find a dram to attach the file Reader to";
+                StreamingDram dram = getHomeDevice(tile);
 
                 buf.setDRAM(dram);
+                buf.setStaticNet(!mustUseGDN.contains(tile));
                 IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(
                                                                                dram);
                 dram.setFileReader(fileIC);
@@ -150,200 +193,193 @@ public class BufferDRAMAssignment {
                 assert false : "File trace is neither reader or writer";
         }
     }
-
-    // get the assignment and set the assignment in OffChipBuffer
-    // perform assign will not assign anything that has
-    // an assignment already
-    private static void performAssignment(OutputTraceNode traceNode,
-                                          RawChip chip) {
-        // get the assignment for each input trace node
-        HashMap ass = assignment((OutputTraceNode) traceNode, chip);
-        Iterator edges = ass.keySet().iterator();
-
-        SpaceTimeBackend.println("Assigning Output Buffers for: " + traceNode
-                                 + " " + traceNode.getDestSet().size());
-
-        // commit the assignment
-        while (edges.hasNext()) {
-            Edge edge = (Edge) edges.next();
-            SpaceTimeBackend.println("  " + edge + " ...");
-            // if already assigned do nothing
-            if (InterTraceBuffer.getBuffer(edge).isAssigned())
-                continue;
-            SpaceTimeBackend.println("  Assigning (" + edge + ") to "
-                                     + ass.get(edge));
-
-            InterTraceBuffer.getBuffer(edge).setDRAM(
-                                                     (StreamingDram) ass.get(edge));
-        }
-    }
-
-    private static void inputFilterAssignment(InputTraceNode input, RawChip chip) {
-        FilterTraceNode filter = input.getNextFilter();
-
-        RawTile tile = chip.getTile(filter.getX(), filter.getY());
-        // the neighboring dram of the tile we are assigning this buffer to
-        int index = -1;
-        // if there is more than one neighboring dram, randomly pick one
-        if (tile.getIODevices().length > 1) {
-            // do something smarter if we need to
-            // if this input trace has one input, assign this port to the same
-            // port as the upstream file->output buffer, if assigned to same
-            // tile
-            if (input.oneInput()
-                && IntraTraceBuffer.getBuffer(
-                                              input.getSingleEdge().getSrc().getPrevFilter(),
-                                              input.getSingleEdge().getSrc()).isAssigned()) {
-                StreamingDram dram = IntraTraceBuffer.getBuffer(
-                                                                input.getSingleEdge().getSrc().getPrevFilter(),
-                                                                input.getSingleEdge().getSrc()).getDRAM();
-                if (tile.isAttached(dram))
-                    index = tile.getIOIndex(dram);
-                else
-                    // otherwise choose randomly
-                    index = rand.nextInt(tile.getIODevices().length);
-            } else
-                index = rand.nextInt(tile.getIODevices().length);
-        } else
-            // use the only streaming dram
-            index = 0;  
-        // assign the buffer to the dram
-        SpaceTimeBackend.println("Assigning (" + input + "->" + input.getNext()
-                                 + " to " + tile.getIODevices()[index] + ")");
-        IntraTraceBuffer.getBuffer(input, filter).setDRAM(
-                                                          (StreamingDram) tile.getIODevices()[index]);
-    }
-
-    private static void filterOutputAssignment(OutputTraceNode output,
-                                               RawChip chip) {
-        FilterTraceNode filter = output.getPrevFilter();
-
-        RawTile tile = chip.getTile(filter.getX(), filter.getY());
-        // the neighboring dram of the tile we are assigning this buffer to
-        int index = 0;
-        // if there is more than one neighboring dram, randomly pick one
-        if (tile.getIODevices().length > 1) {
-            if (output.oneOutput()
-                && IntraTraceBuffer.getBuffer(
-                                              output.getSingleEdge().getDest(),
-                                              output.getSingleEdge().getDest().getNextFilter())
-                .isAssigned()) {
-                StreamingDram dram = IntraTraceBuffer.getBuffer(
-                                                                output.getSingleEdge().getDest(),
-                                                                output.getSingleEdge().getDest().getNextFilter())
-                    .getDRAM();
-                if (tile.isAttached(dram))
-                    index = tile.getIOIndex(dram);
-                else
-                    index = rand.nextInt(tile.getIODevices().length);
-            } else
-                index = rand.nextInt(tile.getIODevices().length);
-        }
-        // assign the buffer to the dram
-        SpaceTimeBackend.println("Assigning (" + output.getPrevious() + "->"
-                                 + output + " to " + tile.getIODevices()[index] + ")");
-        IntraTraceBuffer.getBuffer(filter, output).setDRAM(
-                                                           (StreamingDram) tile.getIODevices()[index]);
+    
+    /**
+     * Assign the filter->output intratracebuffer of a split trace
+     * to the upstream filter's homebase.
+     * 
+     * @param output
+     */
+    private void splitOutputAssignment(OutputTraceNode output) {
+        if (output.oneOutput() || output.noOutputs()) 
+            return;
+        
+        //if we are splitting this output then assign the intratracebuffer
+        //to the home base of the dest filter
+        RawTile tile = getFilterTile(output.getPrevFilter());
+        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(output.getPrevFilter(), output);
+        buf.setDRAM(getHomeDevice(tile));
+        buf.setStaticNet(tile == getHomeDevice(tile).getNeighboringTile());
     }
 
     /**
-     * given an <output> tracenode, this method returns a hashmap that assigns
-     * the downstream edges to streaming drams, so one can assign the IO buffers
-     * to drams based on the hashmap, make sure that the buffer for the
-     * filter->outputtracenode and the buffers for the inputtracenode->filter
-     * are assigned (it can always be reset) to ports before calling this...
+     * Assign output-filter buffer of an output trace node that has a single
+     * output (not split). Also, assign the intertracebuffer to the single output
+     * to make it redundant if possible.  
+     * 
+     * @param output
      */
-    public static HashMap assignment(OutputTraceNode output, RawChip chip) {
-        HashMap assign = new HashMap();
-        Iterator edges = output.getSortedOutputs().iterator();
-        // the edges that have more than one input
-        // and were not initially assigned
-        HashSet needToAssign = new HashSet();
-        HashSet unassignedPorts = new HashSet();
-
-        // if this outputtracenode has one output try to assign it
-        // to the same dram as its previous buffer
-        if (output.oneOutput()) {
-            StreamingDram wanted = IntraTraceBuffer.getBuffer(
-                                                              output.getPrevFilter(), output).getDRAM();
-            // if the dram is not being used by another buffer connected to
-            // the input trace, then assign it, otherwise let the below crap
-            // handle it.
-            if (!assignedInputDRAMs(output.getSingleEdge().getDest()).contains(
-                                                                               wanted)) {
-                assign.put(output.getSingleEdge(), wanted);
-                // exit because we have assigned the only edge
-                return assign;
-            } else { // it might be added below also, but this is fine...
-                needToAssign.add(output.getSingleEdge());
-            }
-
+    private void singleOutputAssignment(OutputTraceNode output) {
+        assert output.oneOutput();
+        //get the upstream tile
+        RawTile upTile = getFilterTile(output.getPrevFilter());
+        //the downstream trace is a single input trace
+        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(output.getPrevFilter(), 
+                output);
+        //if the dest has one input (not joined) then set the output to write to
+        //the dest's home device...
+        if (output.getSingleEdge().getDest().oneInput()) {
+          
+            //get the tile that the downstream filter is assigned to
+            RawTile dsTile = getFilterTile(output.getSingleEdge().getDest().getNextFilter());   
+            buf.setDRAM(getHomeDevice(dsTile));
+            
+            //should we use the dynamic network
+            //if we are a border tile then yes, or if we are not the same tile as
+            //the downstream tile
+            buf.setStaticNet(getHomeDevice(dsTile).getNeighboringTile() == 
+                upTile);
+            
+            //now set the intertracebuffer between the two
+            InterTraceBuffer interBuf = InterTraceBuffer.getBuffer(output.getSingleEdge());
+            interBuf.setDRAM(getHomeDevice(dsTile));
         }
-
-        // populate the unassigned ports set
-        for (int i = 0; i < chip.getDevices().length; i++)
-            unassignedPorts.add(chip.getDevices()[i]);
-
-        // try to assign input trace nodes with one input
-        // first to make them redundant
+        else {
+            //joined downstream trace
+            InputTraceNode input = output.getSingleEdge().getDest();
+            StreamingDram assignment = null;
+            //we would like to assign this output to the home base of 
+            //the upstream tile, but it might have been assigned already
+            //to another input of the join, check to see if it is
+            StreamingDram wanted = getHomeDevice(upTile);
+            
+            if (!assignedInputDRAMs(input).contains(wanted)) 
+                assignment = wanted;
+            else {
+                // we cannot use our home dram, so we have to use another one...
+                assert false;
+                return;
+            }
+            //set the assignment and the network to use
+            buf.setDRAM(assignment);
+            buf.setStaticNet(assignment.getNeighboringTile() == upTile);
+        }
+    }
+         
+    /**
+     * Try to assign InterTraceBuffers that originate from a trace with multiple
+     * outputs and end at a trace a single input.  Try to assign the 
+     * inter trace buffer to the downstream trace's input->filter buffer dram.
+     * 
+     * @param input
+     */
+    private void singleInputAssignment(InputTraceNode input) {
+        assert input.oneInput();
+        
+        OutputTraceNode output = input.getSingleEdge().getSrc();
+        
+        //get the single input we are interested in
+        InterTraceBuffer buffer = 
+            InterTraceBuffer.getBuffer(input.getSingleEdge());
+        
+        //we have already assigned this dram
+        if (buffer.isAssigned())
+            return;
+        //this is the dram we would like, the home dram from the first filter
+        //of the downstream trace
+        StreamingDram wanted = getHomeDevice(getFilterTile(input.getNextFilter()));
+        //if it is not assigned yet to an intertracebuffer of the output,
+        //then assign it, otherwise, do nothing...
+        if (!assignedOutputDRAMs(output).contains(wanted)) {
+            buffer.setDRAM(wanted);
+        }
+    }
+    
+    /**
+     * Now, take the remaining InterTraceBuffers that were not assigned in 
+     * previous passes and assign them.  To do this we look at all the edges for 
+     * the OutputtraceNode and if any are unassigned, we build a list of drams
+     * in ascending distance from the src port of the filter->outputtrace and the
+     * dest port of the inputtrace->filter and try to assign it to the buffer one at a time.
+     * We will not be able to assign a buffer to a port if the port has already been used
+     * for the outputtracenode or the inputtracenode.
+     *
+     * 
+     * @param traceNode
+     */
+    private void assignRemaining(OutputTraceNode traceNode) {
+        //get all the edges of this output trace node
+        Iterator edges = traceNode.getDestSet().iterator();
         while (edges.hasNext()) {
-            Edge edge = (Edge) edges.next();
-            if (edge.getDest().oneInput()) {
-                StreamingDram wanted = IntraTraceBuffer.getBuffer(
-                                                                  edge.getDest(), edge.getDest().getNextFilter())
-                    .getDRAM();
-                if (unassignedPorts.contains(wanted)) {
-                    unassignedPorts.remove(wanted);
-                    assign.put(edge, wanted);
-                } else
-                    // we could not assign it, the port was already assigned to
-                    // a one input
-                    needToAssign.add(edge);
-            } else {
-                // otherwise we need to assign it below
-                needToAssign.add(edge);
+            Edge edge = (Edge)edges.next();
+            InputTraceNode input = edge.getDest();
+            //get the buffer that represents this edge
+            InterTraceBuffer buffer = InterTraceBuffer.getBuffer(edge);
+            //if it is already assigned, do nothing...
+            if (buffer.isAssigned())
+                continue;
+            
+            //get the order of ports in ascending order of distance from
+            //the src port + the dest port
+            Iterator order = assignmentOrder(edge);
+            StreamingDram dramToAssign = null;
+            while (order.hasNext()) {
+                StreamingDram current = ((PortDistance) order.next()).dram;
+                if (assignedInputDRAMs(input).contains(current) || 
+                        assignedOutputDRAMs(traceNode).contains(current)) 
+                    continue;
+                dramToAssign = current;
+                break;
             }
+            assert dramToAssign != null : "Could not find a dram to assign to " +
+                  buffer + " during dram assignment.";
+            buffer.setDRAM(dramToAssign);
+        }
+    }
+    
 
-        }
-        // assign the rest
-        SpaceTimeBackend.println("  Need to assign (normally): "
-                                 + needToAssign.size());
-        edges = needToAssign.iterator();
-        while (edges.hasNext()) {
-            Edge edge = (Edge) edges.next();
-            SpaceTimeBackend.println("    Getting assignment for " + edge);
-            // now assign the buffer to the first available port that show up
-            // in the iterator
-            Iterator portOrder = assignmentOrder(edge, chip);
-            boolean assigned = false;
-            // SpaceTimeBackend.println("Assigning " + output + "->" + inputT +
-            // ": ");
-            while (portOrder.hasNext()) {
-                StreamingDram current = ((PortDistance) portOrder.next()).dest;
-                // SpaceTimeBackend.println(" Trying " + current);
-                // assign the current dram to this input trace node
-                // and exit the inner loop if the port has not
-                // been used by this output trace and the corresponding input
-                // trace
-                if (unassignedPorts.contains(current)
-                    && !assignedInputDRAMs(edge.getDest())
-                    .contains(current)) {
-                    unassignedPorts.remove(current);
-                    assign.put(edge, current);
-                    assigned = true;
-                    // SpaceTimeBackend.println(" Assigned to " + current);
-                    break;
-                }
-            }
-            assert assigned : "Split/join width exceeds number of ports on the chip";
-        }
-        return assign;
+    /**
+     * Assign the intra trace buffer between an inputtracenode and a filter
+     * based on where the filter is placed.
+     * 
+     * @param input
+     * @param chip
+     */
+    private void inputFilterAssignment(InputTraceNode input) {
+        FilterTraceNode filter = input.getNextFilter();
+
+        RawTile tile = getFilterTile(filter);
+        // the neighboring dram of the tile we are assigning this buffer to
+        StreamingDram dram = getHomeDevice(tile);
+        // assign the buffer to the dram
+        SpaceTimeBackend.println("Assigning (" + input + "->" + input.getNext()
+                                 + " to " + dram + ")");
+        IntraTraceBuffer.getBuffer(input, filter).setDRAM(dram);
+        IntraTraceBuffer.getBuffer(input, filter).setStaticNet(!mustUseGDN.contains(tile));
     }
 
-    // return the set of drams already assigned to incoming buffers of this
-    // input
-    // trace node.
-    private static Set assignedInputDRAMs(InputTraceNode input) {
+    /**
+     * @param output
+     * @return A hashet of StreamingDrams that are already assigned to the
+     * outgoing edges of <output> at the current time.  
+     */
+    private Set assignedOutputDRAMs(OutputTraceNode output) {
+        HashSet set = new HashSet();
+        Iterator dests = output.getDestSet().iterator();
+        while (dests.hasNext()) {
+            Edge edge = (Edge)dests.next();
+            if (InterTraceBuffer.getBuffer(edge).isAssigned())
+                set.add(InterTraceBuffer.getBuffer(edge).getDRAM());
+        }
+        return set;
+    }
+    
+    /**
+     * @param input
+     * @return A hashset of StreamingDrams that are already assigned to the incoming
+     * buffers of <input> at the current time.
+     */
+    private Set assignedInputDRAMs(InputTraceNode input) {
         HashSet set = new HashSet();
         for (int i = 0; i < input.getSources().length; i++) {
             if (InterTraceBuffer.getBuffer(input.getSources()[i]).isAssigned())
@@ -358,7 +394,7 @@ public class BufferDRAMAssignment {
      * streaming drams return the tiles that are needed to route this assignment
      * on the chip
      */
-    public static Set tilesOccupiedSplit(OutputTraceNode output,
+    public Set tilesOccupiedSplit(OutputTraceNode output,
                                          HashMap assignment) {
         HashSet tiles = new HashSet();
         Iterator edges = assignment.keySet().iterator();
@@ -373,7 +409,7 @@ public class BufferDRAMAssignment {
         return tiles;
     }
 
-    public static Set tilesOccupiedJoin(InputTraceNode input) {
+    public Set tilesOccupiedJoin(InputTraceNode input) {
         HashSet tiles = new HashSet();
         StreamingDram dest = IntraTraceBuffer.getBuffer(input,
                                                         input.getNextFilter()).getDRAM();
@@ -384,7 +420,14 @@ public class BufferDRAMAssignment {
         return tiles;
     }
 
-    private static Iterator assignmentOrder(Edge edge, RawChip chip) {
+    /**
+     * @param edge
+     * @param chip
+     * @return An iterator over a list of PortDistance ordered in ascending 
+     * order of the distance from both the dram assigned to the source of 
+     * <edge> and the dram assigned to the dest of <edge>. 
+     */
+    private Iterator assignmentOrder(Edge edge) {
         // the streaming DRAM implementation can do both a
         // read and a write on the same cycle, so it does not
         // matter if the port is assigned to reading the outputtracenode
@@ -392,55 +435,93 @@ public class BufferDRAMAssignment {
         // so just assign to ports based on the distance from the output
         // tracenode's port and to the input of the inputracenode
         TreeSet sorted = new TreeSet();
-        StreamingDram src = IntraTraceBuffer.getBuffer(
-                                                       edge.getSrc().getPrevFilter(), edge.getSrc()).getDRAM();
-        // System.out.println(IntraTraceBuffer.getBuffer(edge.getDest(),
-        // edge.getDest().getNextFilter()));
+        StreamingDram src = 
+            IntraTraceBuffer.getBuffer(edge.getSrc().getPrevFilter(), edge.getSrc()).getDRAM();
+
         StreamingDram dst = IntraTraceBuffer.getBuffer(edge.getDest(),
                                                        edge.getDest().getNextFilter()).getDRAM();
-        // System.out.println("Order for: " +
-        // OffChipBuffer.getBuffer(output,input) + ", " +
-        // src + " to " + dst);
-        for (int i = 0; i < chip.getDevices().length; i++) {
-            // System.out.println(" " + (StreamingDram)chip.getDevices()[i] + "
-            // = " +
-            // (Router.distance(src, chip.getDevices()[i]) +
-            // Router.distance(chip.getDevices()[i], dst)));
-
-            sorted.add(new PortDistance((StreamingDram) chip.getDevices()[i],
-                                        Router.distance(src, chip.getDevices()[i])
-                                        + Router.distance(chip.getDevices()[i], dst)));
+        
+        for (int i = 0; i < rawChip.getDevices().length; i++) {
+            //add to the sorted tree set, the current dram device and sort on its
+            //distance from the both the source and destination,
+            sorted.add(new PortDistance(edge, (StreamingDram)rawChip.getDevices()[i], src, dst));
         }
 
         return sorted.iterator();
     }
 }
 
+/**
+ * This class encapsulates the port plus the distance of this port to the
+ * source and dest of the edge in question (see assignmentOrder).  It 
+ * implements comparable so that the TreeSet can sort it based on the
+ * distance field.
+ * 
+ * @author mgordon
+ *
+ */
 class PortDistance implements Comparable {
-    public StreamingDram dest;
-
-    public int distance;
-
+    public StreamingDram dram;
+    private Edge edge;
+    
+    private StreamingDram src;
+    private StreamingDram dst;
+    
+    private int distance;
+    
     // put this crap in so it sorts correctly with duplicate distances...
     private static int index;
 
     public int id;
-
-    public PortDistance(StreamingDram dst, int dist) {
-        this.dest = dst;
-        this.distance = dist;
+    
+    public PortDistance(Edge edge, StreamingDram dram, 
+            StreamingDram src, StreamingDram dst) {
+        this.dram = dram;
+        this.edge = edge;
+        this.src = src;
+        this.dst = dst;
+        distance = computeDistance();
         id = index++;
     }
 
+    /**
+     * @return a distance metric for this dram from its src and dest.
+     */
+    private int computeDistance() {
+        //if the src of this edge has only one output,
+        //then weight the port already assigned to its output very low (good)
+        if (edge.getSrc().oneOutput() && 
+                src == dram)
+            return 0;
+        //if the des has only one input, then weight the port already assigned 
+        //to its input very low (good)...
+        if (edge.getDest().oneInput() && 
+                dst == dram)
+            return 0;
+        
+        //now compute the manhattan distance from the source and from the
+        //dest
+        int srcDist = Math.abs(src.getNeighboringTile().getX() - 
+                dram.getNeighboringTile().getX()) + 
+                Math.abs(src.getNeighboringTile().getY() - 
+                        dram.getNeighboringTile().getY());
+        int dstDist = Math.abs(dst.getNeighboringTile().getX() -
+                dram.getNeighboringTile().getX()) +
+                Math.abs(dst.getNeighboringTile().getY() - 
+                        dram.getNeighboringTile().getY());
+        //add one because we for the final hop of the route.
+        return srcDist + dstDist + 1;
+    }
+    
     public boolean equals(PortDistance pd) {
-        return (this.distance == pd.distance && dest == pd.dest);
+        return (this.distance == pd.distance && dram == pd.dram);
     }
 
     public int compareTo(Object pd) {
         assert pd instanceof PortDistance;
         PortDistance portd = (PortDistance) pd;
         if (portd.distance == this.distance) {
-            if (dest == portd.dest)
+            if (dram == portd.dram)
                 return 0;
             if (id < portd.id)
                 return -1;

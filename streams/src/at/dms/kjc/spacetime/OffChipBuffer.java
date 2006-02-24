@@ -5,6 +5,7 @@ import java.util.Vector;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
 
@@ -22,7 +23,8 @@ public abstract class OffChipBuffer {
     /** unique ident for the buffer */
     protected String ident;
     protected static int unique_id;
-    /** the store for all OffChipBuffers, indexed by src, dest */
+    /** the store for all OffChipBuffers, indexed by src for intratrace buffers 
+     * or Edge for IntertraceBuffers */
     protected static HashMap bufferStore;
     /** the size of the buffer in the steady stage */ 
     protected Address sizeSteady;
@@ -91,11 +93,14 @@ public abstract class OffChipBuffer {
     public void setDRAM(StreamingDram DRAM) {
         // assert !redundant() : "calling setDRAM() on redundant buffer";
         this.dram = DRAM;
-        if (source.isOutputTrace() && dest.isInputTrace() && redundant())
-            SpaceTimeBackend.println("*Redundant: " + this.toString());
+        
+        SpaceTimeBackend.println("Assign " + this.toString() + " to " + DRAM);
 
     }
 
+    /** 
+     * @return true if we have assigned a dram to this buffer. 
+     */
     public boolean isAssigned() {
         return dram != null;
     }
@@ -145,13 +150,8 @@ public abstract class OffChipBuffer {
     protected abstract void setType();
 
     // return of the buffers of this stream program
-    public static Set getBuffers() {
-        HashSet set = new HashSet();
-        Iterator sources = bufferStore.keySet().iterator();
-        while (sources.hasNext()) {
-            set.add(bufferStore.get(sources.next()));
-        }
-        return set;
+    public static Collection getBuffers() {
+        return bufferStore.values();
     }
 
     public Address getSize() {
@@ -247,5 +247,18 @@ public abstract class OffChipBuffer {
                     (OutputTraceNode)buffer.source);
             upstream.rotationLength = length;
         }
+    }
+    
+    /**
+     * @return True if all of the buffers of this program are 
+     * assigned to drams.
+     */
+    public static boolean areAllAssigned() {
+        Iterator buffers = getBuffers().iterator();
+        while (buffers.hasNext()) {
+            if (!((OffChipBuffer)buffers.next()).isAssigned())
+                return false;
+        }
+        return true;
     }
 }

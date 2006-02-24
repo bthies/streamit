@@ -38,6 +38,18 @@ abstract public class TraceNode {
         return this instanceof OutputTraceNode;
     }
 
+    public InputTraceNode getAsInput() {
+        return (InputTraceNode)this;
+    }
+    
+    public OutputTraceNode getAsOutput() {
+        return (OutputTraceNode)this;
+    }
+    
+    public FilterTraceNode getAsFilter() {
+        return (FilterTraceNode) this;
+    }
+    
     public void setParent(Trace par) {
         parent = par;
     }

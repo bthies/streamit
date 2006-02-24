@@ -251,6 +251,26 @@ public class Util {
     }
 
     /**
+     * @param traces
+     * @return An array of all the TraceNode in the <traces> array 
+     * dictated by the order that the traces appear in <traces>. 
+     */
+    public static TraceNode[] traceNodeArray(Trace[] traces) {
+        LinkedList trav = new LinkedList();
+
+        for (int i = 0; i < traces.length; i++) {
+            TraceNode traceNode = traces[i].getHead();
+            while (traceNode != null) {
+                trav.add(traceNode);
+                traceNode = traceNode.getNext();
+            }
+
+        }
+        
+        return (TraceNode[])trav.toArray(new TraceNode[0]);
+    }
+    
+    /**
      * Get a traversal (linked list) that includes all the trace nodes of the
      * given trace traversal.
      * 

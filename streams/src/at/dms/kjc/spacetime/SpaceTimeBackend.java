@@ -223,8 +223,9 @@ public class SpaceTimeBackend {
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
         
-        System.out.println("Assigning Buffers to DRAMs...");        
-        ManualDRAMPortAssignment.run(spaceTimeSchedule);
+        System.out.println("Assigning Buffers to DRAMs...");
+        new BufferDRAMAssignment().run(spaceTimeSchedule);
+        //ManualDRAMPortAssignment.run(spaceTimeSchedule);
         
         //set the rotation lengths of the buffers
         OffChipBuffer.setRotationLengths(spaceTimeSchedule);

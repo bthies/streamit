@@ -38,6 +38,7 @@ public abstract class OffChipBuffer {
     protected TraceNode dest;
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
+   
     
     static {
         unique_id = 0;
@@ -165,11 +166,12 @@ public abstract class OffChipBuffer {
     abstract protected void calculateSize();
 
     /**
-     * return the neighboring tile of the dram this buffer is assigned to
+     * return the owner tile of the dram this buffer is assigned to,
+     * this is set in the static section of this class.
      */
     public RawTile getOwner() {
-        assert (dram != null) : "owner not set yet";
-        return dram.getNeighboringTile();
+        assert (dram != null) : "dram not set yet";
+        return LogicalDramTileMapping.getOwnerTile(dram);
     }
 
     public String toString() {

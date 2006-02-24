@@ -52,7 +52,7 @@ public abstract class IODevice extends ComputeNode
     /**
      * return the tile(s) associated with this iodevice
      * so for a streaming dram it is the tiles that are mapped 
-     * to this dram
+     * to this dram by the hardware
      **/
     public RawTile[] getTiles() 
     {

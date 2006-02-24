@@ -530,7 +530,8 @@ public class Rawify {
             // than the owning tile, we must use a special dram command
             if (nonRedBuffer.getOwner() != rawChip.getTile(filterNode.getX(),
                     filterNode.getY())) {
-                assert !buffer.isStaticNet() : "For InputTraceNode: Filter must neighbor input DRAM or use GDN!";
+                assert false : "For InputTraceNode: end filter must be at home time of DRAM or use GDN!";
+            
                 if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
                     nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
                     (stage, words, nonRedBuffer, rawChip.getTile(filterNode.getX(),
@@ -714,10 +715,9 @@ public class Rawify {
 
         StreamingDram[] dest = { IntraTraceBuffer.getBuffer(traceNode, filter)
                                  .getDRAM() };
-
+                
         // generate comments to make the code easier to read when debugging
-        dest[0].getNeighboringTile().getSwitchCode().appendComment(
-                                                                   init || primepump,
+        dest[0].getNeighboringTile().getSwitchCode().appendComment(init || primepump,
                                                                    "Start join: This is the dest (" + filter.toString() + ")");
 
         Iterator sources = traceNode.getSourceSet().iterator();

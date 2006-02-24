@@ -30,6 +30,7 @@ public class SpaceTimeBackend {
     final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
     final private static boolean REAL=true; //The Real Stuff
     
+    private static RawChip rawChip;
     
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
@@ -53,7 +54,7 @@ public class SpaceTimeBackend {
             rawColumns = KjcOptions.raw;
 
         //create the RawChip
-        RawChip rawChip = new RawChip(rawColumns, rawRows);
+        rawChip = new RawChip(rawColumns, rawRows);
 
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
@@ -307,6 +308,9 @@ public class SpaceTimeBackend {
         */
     }
     
+    public static RawChip getRawChip() {
+        return rawChip;
+    }
     
     public static void println(String s) {
         if (KjcOptions.debug)

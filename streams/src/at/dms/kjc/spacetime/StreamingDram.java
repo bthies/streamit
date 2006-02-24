@@ -97,8 +97,13 @@ public class StreamingDram extends IODevice
         index = index.add(size);
     }
 
-    //call this after setBounds and setSize
-    //a bunch of this code was ripped from four-sides.bc
+    /**
+     * Set the tile(s) that is(are) mapped by the hardware to this dram.
+     * Note that we use a different mapping in our compiler so we must communicate
+     * some address between allocating tiles and logical owner tiles.
+     *
+     * @param chip
+     */
     public static void setTiles(RawChip chip)
     {
         int dimY = chip.getYSize();

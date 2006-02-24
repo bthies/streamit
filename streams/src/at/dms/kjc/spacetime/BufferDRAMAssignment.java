@@ -29,9 +29,6 @@ public class BufferDRAMAssignment {
     public void run(SpaceTimeSchedule spaceTime) {
         rawChip = spaceTime.getRawChip();
         TraceNode[] traceNodes = Util.traceNodeArray(spaceTime.partitioner.getTraceGraph());
-            
-        //setup the assignment of tiles to ports and networks...
-        setupTileDRAMMapping();
         
         // take care of the file readers and writes
         // assign the reader->output buffer and the input->writer buffer
@@ -78,53 +75,12 @@ public class BufferDRAMAssignment {
             "Some buffers remain unassigned after BufferDRAMAssignment.";
     }
 
-    /** map of RawTile -> StreamingDRAM, the "home-base" dram for a tile */ 
-    private HashMap tileDRAMMap;
-    /** set of tiles who must use the gdn (non-border tiles); **/
-    private HashSet mustUseGDN;
-    
    
     private StreamingDram getHomeDevice(RawTile tile) {
-        return (StreamingDram)tileDRAMMap.get(tile);
+        return LogicalDramTileMapping.getHomeDram(tile);
     }
     
-    /**
-     * Set up the home base dram for each tile, this is where the tile
-     * will get its input from and also set the tiles that need to use
-     * the gdn for input because they are not border tiles.
-     *  
-     * @param rawChip
-     */
-    private  void setupTileDRAMMapping() {
-        assert rawChip.getTotalTiles() == 16 : 
-            "We only support 16 tile raw configs in dram assignment.";
-        
-        tileDRAMMap = new HashMap();
-        mustUseGDN = new HashSet();
-        
-        tileDRAMMap.put(rawChip.getTile(0), (StreamingDram)rawChip.getDevices()[15]);
-        tileDRAMMap.put(rawChip.getTile(1), (StreamingDram)rawChip.getDevices()[1]);
-        tileDRAMMap.put(rawChip.getTile(2), (StreamingDram)rawChip.getDevices()[2]);
-        tileDRAMMap.put(rawChip.getTile(3), (StreamingDram)rawChip.getDevices()[3]);
-        tileDRAMMap.put(rawChip.getTile(4), (StreamingDram)rawChip.getDevices()[14]);
-        tileDRAMMap.put(rawChip.getTile(5), (StreamingDram)rawChip.getDevices()[0]);
-        tileDRAMMap.put(rawChip.getTile(6), (StreamingDram)rawChip.getDevices()[4]);
-        tileDRAMMap.put(rawChip.getTile(7), (StreamingDram)rawChip.getDevices()[5]);
-        tileDRAMMap.put(rawChip.getTile(8), (StreamingDram)rawChip.getDevices()[13]);
-        tileDRAMMap.put(rawChip.getTile(9), (StreamingDram)rawChip.getDevices()[12]);
-        tileDRAMMap.put(rawChip.getTile(10), (StreamingDram)rawChip.getDevices()[8]);
-        tileDRAMMap.put(rawChip.getTile(11), (StreamingDram)rawChip.getDevices()[6]);
-        tileDRAMMap.put(rawChip.getTile(12), (StreamingDram)rawChip.getDevices()[11]);
-        tileDRAMMap.put(rawChip.getTile(13), (StreamingDram)rawChip.getDevices()[10]);
-        tileDRAMMap.put(rawChip.getTile(14), (StreamingDram)rawChip.getDevices()[9]);
-        tileDRAMMap.put(rawChip.getTile(15), (StreamingDram)rawChip.getDevices()[7]);
-        
-        mustUseGDN.add(rawChip.getTile(5));
-        mustUseGDN.add(rawChip.getTile(6));
-        mustUseGDN.add(rawChip.getTile(9));
-        mustUseGDN.add(rawChip.getTile(10));
-    }
-    
+   
     private RawTile getFilterTile(FilterTraceNode node) {
         return rawChip.getTile(node.getX(), node.getY());
     }
@@ -164,7 +120,7 @@ public class BufferDRAMAssignment {
                 // set the port for the buffer
                 buf.setDRAM(dram);
                 // use the static net if we can
-                buf.setStaticNet(!mustUseGDN.contains(tile));
+                buf.setStaticNet(!LogicalDramTileMapping.mustUseGdn(tile));
                 // assign the other buffer to the same port
                 // this should not affect anything
                 IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
@@ -185,7 +141,7 @@ public class BufferDRAMAssignment {
                 StreamingDram dram = getHomeDevice(tile);
 
                 buf.setDRAM(dram);
-                buf.setStaticNet(!mustUseGDN.contains(tile));
+                buf.setStaticNet(!LogicalDramTileMapping.mustUseGdn(tile));
                 IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(
                                                                                dram);
                 dram.setFileReader(fileIC);
@@ -355,7 +311,8 @@ public class BufferDRAMAssignment {
         SpaceTimeBackend.println("Assigning (" + input + "->" + input.getNext()
                                  + " to " + dram + ")");
         IntraTraceBuffer.getBuffer(input, filter).setDRAM(dram);
-        IntraTraceBuffer.getBuffer(input, filter).setStaticNet(!mustUseGDN.contains(tile));
+        IntraTraceBuffer.getBuffer(input, filter).
+           setStaticNet(!LogicalDramTileMapping.mustUseGdn(tile));
     }
 
     /**

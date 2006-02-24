@@ -440,11 +440,7 @@ public class SimplePartitioner extends Partitioner {
         out.append("label=\"" + node.toString());
                 
         node = node.getNext();
-        int i = 0;
         while (node != null ) {
-            // too many filters, just break
-            if (i++ > 15)
-                break;
             if (node.isFilterTrace()) {
                 out.append("\\n" + node.toString() + "{"
                         + getWorkEstimate(((FilterTraceNode) node).getFilter())

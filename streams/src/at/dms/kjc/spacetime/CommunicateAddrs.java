@@ -79,7 +79,7 @@ public class CommunicateAddrs
     
         Iterator buffers = OffChipBuffer.getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
-        //address from its declaring tile to the tile neighboring
+        //address from its declaring tile to the tile logically mapped to it
         //the dram it is assigned to
         while (buffers.hasNext()) {
             OffChipBuffer buffer = (OffChipBuffer)buffers.next();
@@ -104,21 +104,23 @@ public class CommunicateAddrs
             
             //the dram this buffer is mapped to
             StreamingDram dram = buffer.getDRAM();
-            //the tiles that are mapped to this dram
+            //the tile we are logically mapping this dram to
+            RawTile homeTile = LogicalDramTileMapping.getOwnerTile(dram);
+            //the tiles that are mapped to this dram by the hardware
             RawTile[] dramTiles = dram.getTiles();
             //the tile we are going to allocate this buffer on
             RawTile allocatingTile = null; 
-            //if the neighboring tile is part of dramTiles
+            //if the owner tile is part of dramTiles
             //choose it for the allocating tile so we do not have
             //to communicate the address
             for (int i = 0; i < dramTiles.length; i++) {
-                if (dramTiles[i] == dram.getNeighboringTile()) {
+                if (dramTiles[i] == homeTile) {
                     allocatingTile = dramTiles[i];
                     break;
                 }   
             }
         
-            //we could not allocate the buffer on the neighbor 
+            //we could not allocate the buffer on the home tile 
             //randomly pick a tile to allocate the buffer on
             if (allocatingTile == null) {
                 allocatingTile = dramTiles[rand.nextInt(dramTiles.length)];
@@ -131,8 +133,8 @@ public class CommunicateAddrs
             
             //add the code necessary to set up the structure for rotation for this
             //rotating buffer 
-            ((StringBuffer)rotationFunctions.get(dram.getNeighboringTile())).append
-            (setupRotation(buffer, dram.getNeighboringTile()));
+            ((StringBuffer)rotationFunctions.get(homeTile)).append
+            (setupRotation(buffer, homeTile));
             
             for (int i = 0; i < rotationLength; i++) {
                
@@ -152,14 +154,14 @@ public class CommunicateAddrs
                 ("  " + buffer.getIdent(i) + " = ((u_int32_t)((char*)" + buffer.getIdent(i) +
                 ") + 31) & 0xffffffe0;\n");
                 
-                //if allocator != neighbor, create declaration of 
-                //pointer on neighbor and communicate the address for both init and steady...
-                if (allocatingTile != dram.getNeighboringTile()) {
-                    dram.getNeighboringTile().setComputes();
+                //if allocator != homeTile, create declaration of 
+                //pointer on homeTile and communicate the address for both init and steady...
+                if (allocatingTile != homeTile) {
+                    homeTile.setComputes();
                     SpaceTimeBackend.println("Need to communicate buffer address from " + 
-                            allocatingTile + " to " + dram.getNeighboringTile());
+                            allocatingTile + " to " + homeTile);
                     //generate the switch code to send the addresses
-                    RawTile[] dest = {dram.getNeighboringTile()};
+                    RawTile[] dest = {homeTile};
                     
                     //now for the steady
                     SwitchCodeStore.generateSwitchCode(allocatingTile, 
@@ -174,14 +176,14 @@ public class CommunicateAddrs
                             Util.networkSendSuffix(false) + ";\n");
                     
                     
-                    //add declaration of pointer to neighbor (steady)
-                    ((StringBuffer)fields.get(dram.getNeighboringTile())).append
+                    //add declaration of pointer to hometile(steady)
+                    ((StringBuffer)fields.get(homeTile)).append
                     (buffer.getType().toString() + "* " + 
                             buffer.getIdent(i) + ";\n");
                     
                     
                     //add the code to receive the address into the pointer (steady)
-                    ((StringBuffer)functions.get(dram.getNeighboringTile())).append
+                    ((StringBuffer)functions.get(homeTile)).append
                     ("  " + buffer.getIdent(i) + " = " +  
                             Util.networkReceive(false, CStdType.Integer) + ";\n");
                 }

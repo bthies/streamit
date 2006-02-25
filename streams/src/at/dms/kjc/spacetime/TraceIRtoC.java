@@ -182,7 +182,7 @@ public class TraceIRtoC extends ToC
         //words that are sent over from the dram but not used.  Due to 
         //cache-line multiple transfers.
         p.print("volatile int " + DUMMY_VOLATILE + ";\n");
-        
+                
         //if there are structures in the code, include
         //the structure definition header files
         //      if (SpaceTimeBackend.structures.length > 0) 

@@ -366,7 +366,7 @@ public class BufferedCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            statements.addStatement(setDynMsgHeader());
+            statements.addStatement(setupGDNStore(true, false));
         }
 
         //add the call to initWork
@@ -538,7 +538,7 @@ public class BufferedCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            block.addStatementFirst(setDynMsgHeader());
+            block.addStatementFirst(setupGDNStore(false, !steady));
         }
         
         //now we must make sure that 

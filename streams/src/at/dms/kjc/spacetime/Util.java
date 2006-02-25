@@ -139,6 +139,27 @@ public class Util {
     }
 
     /**
+     * @param trace
+     * @param tile
+     * @return True if <trace> has a filter that is mapped to <tile>.
+     */
+    public static boolean doesTraceUseTile(Trace trace, 
+            RawTile tile) {
+        TraceNode node = trace.getHead().getNext();
+        //cycle thru the nodes and see if we can find a match 
+        //of the coordinates for the tile and a filter trace
+        while (node.isFilterTrace()) {
+            if (node.getAsFilter().getX() == tile.getX() &&
+                    node.getAsFilter().getY() == tile.getY())
+                return true;
+            node = node.getNext();
+        }
+        
+        return false;
+    }
+    
+    
+    /**
      * 
      * @param dynamic
      * @param tapeType

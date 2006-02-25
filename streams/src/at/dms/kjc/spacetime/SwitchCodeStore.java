@@ -145,15 +145,19 @@ public class SwitchCodeStore {
     }
     
 
+    
+    
     /**
-       give a source and an array of dests, generate the code to 
-       route an item from the sourc to the dests and place the
-       place the switch instruction in the appropriate stage's instruction
-       vector based on the <stage> argument:
-       0: commaddr
-       1: init / prime pump
-       2: steady stage
-    **/
+     * Given a source and an array of dests, generate the code to 
+     * route an item from the source to the dests and place the
+     * place the switch instruction in the appropriate stage's instruction
+     * vector based on the <stage> argument.
+     * 
+     * @param source 
+     * @param dests the dests for this item, if multiple, duplicate
+     * @param stage 0 is communicate address stage, 1 is init or primepump,
+     * 2 is steady-state
+     */
     public static void generateSwitchCode(ComputeNode source, ComputeNode[] dests,
                                           int stage)
     {

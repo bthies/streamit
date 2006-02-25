@@ -575,6 +575,23 @@ public class Rawify {
             if (items > 0) {
                 int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                       .getOutputType()));
+
+                //if we are using the dynamic network and the trace
+                //does not occupy the owner tile of this buffer, 
+                //then we have to synch the command with the store of the data
+                //so we have to issue a command and send a word over the 
+                //static network from the issuing tile (owner) to the storing
+                //tile
+                if (!buffer.isStaticNet() && 
+                        !Util.doesTraceUseTile(filterNode.getParent(),
+                                nonRedBuffer.getOwner())) {
+                    gdnStoreCommandWithSynch(init, primepump, output.onlyWritingToAFile(),
+                            words, nonRedBuffer);
+                    return;
+                }
+                    
+                //otherwise, the is a normal dram command that does not
+                //need to be synchronized
                 if (output.onlyWritingToAFile())
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(false,
                             init || primepump, words, nonRedBuffer, buffer.isStaticNet());
@@ -595,6 +612,51 @@ public class Rawify {
         }
     }
 
+    /**
+     * If we have a gdn store command that is issued from the
+     * owner tile but the data is written to the dram (or file) from another
+     * tile and there is no synchronization between the two, we must
+     * send a word from the owner to the generating tile to tell it that
+     * the dram is ready to receive data for the store.  
+     * 
+     * This function will generate the dram or file store command over the gdn
+     * and inject the synch word onto the static network and route the word
+     * to the dest, generating tile.  
+     * 
+     * The generating tile will wait for the word before executing the
+     * filter that writes the data (see RawExecutionCode, setupGDNStore()
+     *  
+     * @param init
+     * @param primepump
+     * @param fileCommand
+     * @param words
+     * @param buffer
+     */
+    private static void gdnStoreCommandWithSynch(boolean init, 
+            boolean primepump, boolean fileCommand, int words,
+            OffChipBuffer buffer) {
+        //issue the command for storing using either the memory or a file
+        //this method will also inject the word on
+        if (fileCommand)
+            buffer.getOwner().getComputeCode().addGDNFileStoreCommandWithSynch(
+                    init || primepump, words, buffer);
+        else 
+            buffer.getOwner().getComputeCode().addGDNStoreCommandWithSynch(init,
+                    primepump, Util.cacheLineDiv(words * 4), buffer);
+        
+        //now we need to create the switch code to route the synch word from 
+        //source to dest!!
+        Trace srcTrace = buffer.getSource().getParent();
+        //get the raw chip that is write the data (sending it over the gdn)...
+        RawTile srcTile = buffer.getOwner().rawChip.getTile
+               (srcTrace.getTail().getPrevFilter().getX(),
+                srcTrace.getTail().getPrevFilter().getY());
+        //generate the switch code to send the item from the owner 
+        //to the srcTile of the data
+        SwitchCodeStore.generateSwitchCode(buffer.getOwner(), 
+                new ComputeNode[]{srcTile}, ((init || primepump) ? 1 : 2));
+    }
+    
     /**
      * see if the switch for the filter needs disregard some of the input because 
      * the data that we have received is not a multiple of the cacheline.   

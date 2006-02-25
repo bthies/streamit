@@ -147,6 +147,66 @@ public class ComputeCodeStore {
 
     
     /**
+     * If we are generating a DRAM command for a store
+     * over the gdn and the tile that is writing the data is different from the
+     * home tile, and we cannot use any other synchronization, we must send 
+     * a word over the static network to the tile writing the data for the store
+     * from this tile to tell it that we have sent the dram command and it
+     * can begin the store.
+     * 
+     *  This function will generate the gdn store command and also inject
+     *  the synch word to the static network.
+     * 
+     * @param init
+     * @param buffer
+     */
+    public void addGDNStoreCommandWithSynch(boolean init, boolean primepump, 
+            int bytes, OffChipBuffer buffer) {
+        
+        addDRAMCommand(false, init, primepump, bytes, buffer, false, false);
+        
+        JAssignmentExpression ass = 
+            new JAssignmentExpression(new JFieldAccessExpression(Util.CSTOINTVAR), 
+                    new JIntLiteral(-1));
+        JStatement statement = new JExpressionStatement(ass);
+        
+        if (init || primepump)
+            initBlock.addStatement(statement);
+        else 
+            steadyLoop.addStatement(statement);
+    }
+    
+    /**
+     * If we are generating a file command  for a store
+     * over the gdn and the tile that is writing the data is different from the
+     * home tile, and we cannot use any other synchronization, we must send 
+     * a word over the static network to the tile writing the data for the store
+     * from this tile to tell it that we have sent the dram command and it
+     * can begin the store.
+     * 
+     *  This function will generate the gdn file store command and also inject
+     *  the synch word to the static network.
+     *  
+     * @param init
+     * @param words
+     * @param buffer
+     */
+    public void addGDNFileStoreCommandWithSynch(boolean init, int words,
+            OffChipBuffer buffer) {
+        addFileCommand(false, init, words, buffer, false);
+        
+        JAssignmentExpression ass = 
+            new JAssignmentExpression(new JFieldAccessExpression(Util.CSTOINTVAR), 
+                    new JIntLiteral(-1));
+        JStatement statement = new JExpressionStatement(ass);
+        
+        if (init)
+            initBlock.addStatement(statement);
+        else 
+            steadyLoop.addStatement(statement); 
+    }
+    
+    /**
      * Generate code on the compute process to send over <words> words of data
      * using a header that was already set previously.
      * 

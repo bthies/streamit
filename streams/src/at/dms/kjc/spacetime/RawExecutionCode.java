@@ -98,7 +98,7 @@ public abstract class RawExecutionCode
      * if hte filter is connected to an outputtrcenode allocated to the gdn
      */
     protected boolean gdnOutput;
-    
+    /** the tile this filter is mapped to */
     protected RawTile tile;
     
     public RawExecutionCode(RawTile tile, FilterInfo filterInfo) 
@@ -211,10 +211,63 @@ public abstract class RawExecutionCode
     {
         return constToSwitchStmt(constant - 1);
     }
- 
+    
     /** 
      * @return The SIR code necessary to set the dynamic message header used 
-     * when we send data over the gdn.
+     * when we send data over the gdn.  Also, if we are sending data to a dram
+     * that we are not the owner of and no other filter in our trace is allocated 
+     * to the owner tile, we have to wait until we receive a word over
+     * that static network (it will be from the owner), this will tell us that
+     * the owner of the dram has issued the store command to the dram and we 
+     * can proceed with writing data to the dram.
+     *
+     * @param init true if init
+     * @param primepump true if primepump
+     */
+    
+    protected JStatement setupGDNStore(boolean init, boolean primepump) {
+        //if we are not sending anything, don't do anything...
+        if (filterInfo.totalItemsSent(init, primepump) == 0)
+            return new JEmptyStatement();
+        
+        JBlock block = new JBlock();
+        
+        block.addStatement(setDynMsgHeader());
+        
+        //get the buffer
+        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filterInfo.traceNode,
+                (OutputTraceNode)filterInfo.traceNode.getNext());
+        
+        //now see if this tile is not the owner of the dram
+        //and a previous filter of the trace is not allocated on the
+        //tile that owns the dram we want to store into
+        //we need to wait until the owner has issued a store command,
+        //after the owner has done that, it will send a word to us over the
+        //static network
+        if (!Util.doesTraceUseTile(filterInfo.traceNode.getParent(),
+                buf.getOwner())) {
+            block.addStatement(gdnReceive(true, 
+                    new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE)));
+        }
+        
+        return block;
+    }
+    
+    /**
+     * @param integer if true use csti_integer, false use csti_fp
+     * @param recvInto The expression to receive into
+     * @return A statement to receive into <recvInto> from the static network.
+     */
+    public JStatement gdnReceive(boolean integer, JExpression recvInto) {
+        JAssignmentExpression ass = 
+            new JAssignmentExpression(recvInto, 
+                    new JFieldAccessExpression(integer ? Util.CSTIINTVAR : Util.CSTIFPVAR));
+        return new JExpressionStatement(ass);
+    }
+    
+    /** 
+     * @return The SIR code necessary to set the dynamic message header used 
+     * when we send data over the gdn.  
      */
     public JStatement setDynMsgHeader() {
        

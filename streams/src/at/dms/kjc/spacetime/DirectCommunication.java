@@ -191,7 +191,7 @@ public class DirectCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            statements.addStatement(setDynMsgHeader());
+            statements.addStatement(setupGDNStore(true, false));
         }
         
         //add the calls for the work function in the initialization stage
@@ -263,7 +263,7 @@ public class DirectCommunication extends RawExecutionCode
         //if we have gdn output then we have to set up the gdn packet header for
         //each gdn send
         if (gdnOutput) {
-            block.addStatement(setDynMsgHeader());
+            block.addStatement(setupGDNStore(false, !steady));
         }
         
         block.addStatement(loop);

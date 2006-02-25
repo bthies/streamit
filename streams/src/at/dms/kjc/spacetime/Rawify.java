@@ -374,10 +374,7 @@ public class Rawify {
         // do nothing if there is nothing to do
         if (items == 0)
             return;
-
-        // add to the init code with the init buffers except in steady
-        boolean stage = init || primepump;
-        
+    
         assert items % input.totalWeights() == 0 : "weights on input trace node does not divide evenly with items received";
         // iterations of "joiner"
         int iterations = items / input.totalWeights();
@@ -400,7 +397,7 @@ public class Rawify {
                         init || primepump, readWords, srcBuffer, true);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
-                        stage, Util.cacheLineDiv(readWords * 4), 
+                        init, primepump, Util.cacheLineDiv(readWords * 4), 
                         srcBuffer, true, true);
         }
 
@@ -411,8 +408,8 @@ public class Rawify {
             destBuffer.getOwner().getComputeCode().addFileCommand(false,
                     init || primepump, writeWords, destBuffer, true);
         else
-            destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
-                    Util.cacheLineDiv(writeWords * 4), 
+            destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init,
+                    primepump, Util.cacheLineDiv(writeWords * 4), 
                     destBuffer, false, true);
     }
 
@@ -433,10 +430,6 @@ public class Rawify {
         if (OffChipBuffer.unnecessary(output))
             return;
 
-        //  true if in init or primepump and add code to the init stage
-        boolean stage = init || primepump;
-        
-
         OffChipBuffer srcBuffer = IntraTraceBuffer.getBuffer(filter, output);
         int readWords = FilterInfo.getFilterInfo(filter).totalItemsSent(init,
                                                                         primepump)
@@ -450,10 +443,10 @@ public class Rawify {
             // never use stage 2 for reads
             if (output.isFileReader() && OffChipBuffer.unnecessary(output))
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
-                        stage, readWords, srcBuffer, true);
+                        init || primepump, readWords, srcBuffer, true);
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
-                        stage, 
+                        init, primepump, 
                         Util.cacheLineDiv(readWords * 4),
                         srcBuffer, true, true);
         }
@@ -466,7 +459,7 @@ public class Rawify {
             int typeSize = Util.getTypeSize(edge.getType());
             int writeWords = typeSize;
             // do steady-state
-            if (!stage)
+            if(!(init || primepump))
                 writeWords *= edge.steadyItems();
             else if (init)
                 writeWords *= edge.initItems();
@@ -478,10 +471,10 @@ public class Rawify {
                     && OffChipBuffer.unnecessary(destBuffer.getEdge()
                                                  .getDest()))
                     destBuffer.getOwner().getComputeCode().addFileCommand(false, 
-                            stage, writeWords, destBuffer, true);
+                            init || primepump, writeWords, destBuffer, true);
                 else
-                    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage, 
-                                Util.cacheLineDiv(writeWords * 4),
+                    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init, 
+                                primepump, Util.cacheLineDiv(writeWords * 4),
                                 destBuffer, false, true);
             }
         }
@@ -519,9 +512,6 @@ public class Rawify {
             if (items == 0)
                 return;
 
-            //true if we want to append to the init stage
-            boolean stage = init || primepump;
-
             // the transfer size rounded up to by divisible by a cacheline
             int words = (items * Util.getTypeSize(filterNode.getFilter()
                                                   .getInputType()));
@@ -534,11 +524,11 @@ public class Rawify {
             
                 if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
                     nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
-                    (stage, words, nonRedBuffer, rawChip.getTile(filterNode.getX(),
-                            filterNode.getY()));
+                    (init || primepump, words, nonRedBuffer, 
+                            rawChip.getTile(filterNode.getX(),filterNode.getY()));
                 else
-                    nonRedBuffer.getOwner().getComputeCode().addDRAMGDNReadCommand(stage,
-                            Util.cacheLineDiv(words * 4), 
+                    nonRedBuffer.getOwner().getComputeCode().addDRAMGDNReadCommand(init,
+                            primepump, Util.cacheLineDiv(words * 4), 
                             nonRedBuffer, true, rawChip.getTile(filterNode.getX(),
                                     filterNode.getY()));
             }
@@ -547,11 +537,11 @@ public class Rawify {
                 //a file, use the non-redundant upstream buffer for the address, but
                 //this buffer's network assignment
                 if (((InputTraceNode)filterNode.getPrevious()).onlyFileInput())
-                    nonRedBuffer.getOwner().getComputeCode().addFileCommand(true, stage,
-                            words, nonRedBuffer, buffer.isStaticNet());
+                    nonRedBuffer.getOwner().getComputeCode().addFileCommand(true, 
+                            init || primepump, words, nonRedBuffer, buffer.isStaticNet());
                 else
-                    nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
-                            Util.cacheLineDiv(words * 4), 
+                    nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(true, 
+                            init, primepump, Util.cacheLineDiv(words * 4), 
                             nonRedBuffer, true, buffer.isStaticNet());
             }
         }
@@ -575,9 +565,6 @@ public class Rawify {
             if (nonRedBuffer == null)
                 return;
 
-            //true if we want to add code to the init stage
-            boolean stage = init || primepump;
-            
             // get the number of items sent
             int items = FilterInfo.getFilterInfo(filterNode).totalItemsSent(init, primepump);
 
@@ -590,7 +577,7 @@ public class Rawify {
                                                       .getOutputType()));
                 if (output.onlyWritingToAFile())
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(false,
-                            stage, words, nonRedBuffer, buffer.isStaticNet());
+                            init || primepump, words, nonRedBuffer, buffer.isStaticNet());
                 else {
                     SpaceTimeBackend
                         .println("Generating DRAM store command with "
@@ -599,7 +586,8 @@ public class Rawify {
                                  + Util.getTypeSize(filterNode.getFilter()
                                                     .getOutputType()) + " and " + words
                                  + " words");
-                    nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
+                    nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(false, 
+                            init, primepump,
                             Util.cacheLineDiv(words * 4), 
                             nonRedBuffer, false, buffer.isStaticNet());
                 }

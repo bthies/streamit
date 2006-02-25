@@ -218,19 +218,22 @@ public class ComputeCodeStore {
     
     /**
      * Add a dram command at the current position of this code compute code 
-     * for either the init stage (including primepump) or the steady state.  
+     * for either the init stage (including primepump) or the steady state.
+     * If in the init stage, don't rotate buffers.  If in init or primepump,
+     * add the code to the init stage.  
      * 
      * @param read True if we want to issue a read, false if write
-     * @param init true if init or primepump stage
+     * @param init true if init
+     * @param primepump true if primepump
      * @param bytes The number of bytes
      * @param buffer The address to load/store
      * @param presynched True if we want all other dram commands to finish before this
      * one is issued
      * @param staticNet True if we want to use the static network, false if gdn
      */    
-    public void addDRAMCommand(boolean read, boolean init, int bytes,
-                              OffChipBuffer buffer, boolean presynched,
-                               boolean staticNet) {
+    public void addDRAMCommand(boolean read, boolean init, boolean primepump, int bytes,
+            OffChipBuffer buffer, boolean presynched,
+            boolean staticNet) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
                         
@@ -258,14 +261,16 @@ public class ComputeCodeStore {
                                                                args);
 
         // send over the address
-        JFieldAccessExpression dynNetSend = new JFieldAccessExpression(null,
-                                                                       new JThisExpression(null), Util.CGNOINTVAR);
+        JFieldAccessExpression dynNetSend = 
+            new JFieldAccessExpression(null,
+                    new JThisExpression(null), Util.CGNOINTVAR);
 
         JNameExpression bufAccess = new JNameExpression(null, null, 
                 rotStructName + "->buffer");
-
+        //the assignment that will perform the dynamic network send...
         JAssignmentExpression assExp = new JAssignmentExpression(null,
                                                                  dynNetSend, bufAccess);
+        //The rotation expression
         JAssignmentExpression rotExp = new JAssignmentExpression(null,
                 new JFieldAccessExpression(null, new JThisExpression(null), rotStructName),
                 new JNameExpression(null, null, rotStructName + "->next"));
@@ -274,11 +279,13 @@ public class ComputeCodeStore {
         SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
-        if (init) {
+        if (init || primepump) {
             initBlock.addStatement(new JExpressionStatement(null, call, null));
             initBlock
                 .addStatement(new JExpressionStatement(null, assExp, null));
-            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
+            //only rotate in init during primepump
+            if (primepump)
+                initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
         } else {
             steadyLoop.addStatement(new JExpressionStatement(null, 
                     (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));
@@ -294,16 +301,18 @@ public class ComputeCodeStore {
     /**
      * Add a dram read command at the current position of this code compute code 
      * for either the init stage (including primepump) or the steady state over the
-     * gdn and send it to the <dest> tile.  
+     * gdn and send it to the <dest> tile.  Don't rotate the buffer we are in the init
+     * stage.  
      * 
-     * @param init true if init or primepump stage
+     * @param init true if init 
+     * @param primepump true if primepump stage
      * @param bytes The number of bytes
      * @param buffer The address to load/store
      * @param presynched True if we want all other dram commands to finish before this
      * one is issued
      * @param dest The read's destination. 
      */    
-    public void addDRAMGDNReadCommand(boolean init, int bytes,
+    public void addDRAMGDNReadCommand(boolean init, boolean primepump, int bytes,
             OffChipBuffer buffer, boolean presynched, RawTile dest) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
@@ -349,11 +358,13 @@ public class ComputeCodeStore {
         SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
-        if (init) {
+        if (init || primepump) {
             initBlock.addStatement(new JExpressionStatement(null, call, null));
             initBlock
                 .addStatement(new JExpressionStatement(null, assExp, null));
-            initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
+            //only rotate the buffer in the primepump stage
+            if (primepump)
+                initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
         } else {
             steadyLoop.addStatement(new JExpressionStatement(null, 
                     (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));

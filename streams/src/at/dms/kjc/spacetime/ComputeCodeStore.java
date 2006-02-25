@@ -35,7 +35,7 @@ public class ComputeCodeStore {
 
     // the block that executes each tracenode's init schedule
     protected JBlock initBlock;
-
+        
     // this hash map holds RawExecutionCode that was generated
     // so when we see the filter for the first time in the init
     // and if we see the same filter again, we do not have to

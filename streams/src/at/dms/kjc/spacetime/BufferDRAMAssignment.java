@@ -70,11 +70,47 @@ public class BufferDRAMAssignment {
                 assignRemaining(traceNodes[i].getAsOutput());
         }
         
+        //this is overly strong right now, but lets see if it gets tripped!
+        //we see if some dependency chain exists between the stores...
+        assert !gdnStoreSamePortDifferentTile(spaceTime.getSchedule()) :
+            "We cannot have two different tiles attempt to store to the same dram using the gdn (race condition)";
+        
         //make sure that everything is assigned!!!
         assert OffChipBuffer.areAllAssigned() :
             "Some buffers remain unassigned after BufferDRAMAssignment.";
     }
 
+    /**
+     * @param traceNode
+     * @return True if two or more different tiles issue a store command to the same 
+     * dram using the gdn, this is bad, it could lead to a race condition.  But right
+     * now we are being overly conservative, there could exist other dependencies to 
+     * prevent the race.
+     */
+    private boolean gdnStoreSamePortDifferentTile(Trace[] traces) {
+        //this hashset stores a mapping from drams to a tile that
+        //has already issued a store on the gdn to the dram
+        HashMap dramToTile = new HashMap();
+        for (int i = 0; i < traces.length; i++) {
+            OutputTraceNode output = traces[i].getTail();
+            IntraTraceBuffer buffer = IntraTraceBuffer.getBuffer(output.getPrevFilter(),
+                    output);
+            if (!buffer.isStaticNet()) {
+                if (dramToTile.containsKey(buffer.getDRAM())) {
+                    //we have already seen this dram
+
+                    //if this tile is different from the tile we have already 
+                    //issued a gdn store command from, then we might have a race condition.
+                    if (dramToTile.get(buffer.getDRAM()) != getFilterTile(output.getPrevFilter()))
+                        return true;
+                }
+                else //otherwise put the tile in the hashmap to remember that we issued a store from it 
+                    dramToTile.put(buffer.getDRAM(), getFilterTile(output.getPrevFilter()));
+            }
+            
+        }
+        return false;
+    }
    
     private StreamingDram getHomeDevice(RawTile tile) {
         return LogicalDramTileMapping.getHomeDram(tile);

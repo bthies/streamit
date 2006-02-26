@@ -398,7 +398,7 @@ public class Rawify {
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
                         init, primepump, Util.cacheLineDiv(readWords * 4), 
-                        srcBuffer, true, true);
+                        srcBuffer, true);
         }
 
         // generate the command to write to the dest of the input trace node
@@ -410,7 +410,7 @@ public class Rawify {
         else
             destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init,
                     primepump, Util.cacheLineDiv(writeWords * 4), 
-                    destBuffer, false, true);
+                    destBuffer, true);
     }
 
     /**
@@ -448,7 +448,7 @@ public class Rawify {
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
                         init, primepump, 
                         Util.cacheLineDiv(readWords * 4),
-                        srcBuffer, true, true);
+                        srcBuffer, true);
         }
 
         // now generate the store drm command
@@ -475,7 +475,7 @@ public class Rawify {
                 else
                     destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init, 
                                 primepump, Util.cacheLineDiv(writeWords * 4),
-                                destBuffer, false, true);
+                                destBuffer, true);
             }
         }
     }
@@ -542,7 +542,7 @@ public class Rawify {
                 else
                     nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(true, 
                             init, primepump, Util.cacheLineDiv(words * 4), 
-                            nonRedBuffer, true, buffer.isStaticNet());
+                            nonRedBuffer, buffer.isStaticNet());
             }
         }
     }
@@ -606,7 +606,7 @@ public class Rawify {
                     nonRedBuffer.getOwner().getComputeCode().addDRAMCommand(false, 
                             init, primepump,
                             Util.cacheLineDiv(words * 4), 
-                            nonRedBuffer, false, buffer.isStaticNet());
+                            nonRedBuffer, buffer.isStaticNet());
                 }
             }
         }

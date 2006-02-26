@@ -7,13 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * ww
+ * 
  * 
  * 
  * @author mgordon
  *
  */
 public class ComputeCodeStore {
+    public static final boolean GEN_PRESYNCH = true;
+    
     public static String main = "__RAWMAIN__";
 
     // set to false if you do not want to generate
@@ -163,7 +165,7 @@ public class ComputeCodeStore {
     public void addGDNStoreCommandWithSynch(boolean init, boolean primepump, 
             int bytes, OffChipBuffer buffer) {
         
-        addDRAMCommand(false, init, primepump, bytes, buffer, false, false);
+        addDRAMCommand(false, init, primepump, bytes, buffer, false);
         
         JAssignmentExpression ass = 
             new JAssignmentExpression(new JFieldAccessExpression(Util.CSTOINTVAR), 
@@ -287,20 +289,29 @@ public class ComputeCodeStore {
      * @param primepump true if primepump
      * @param bytes The number of bytes
      * @param buffer The address to load/store
-     * @param presynched True if we want all other dram commands to finish before this
-     * one is issued
      * @param staticNet True if we want to use the static network, false if gdn
      */    
     public void addDRAMCommand(boolean read, boolean init, boolean primepump, int bytes,
-            OffChipBuffer buffer, boolean presynched,
-            boolean staticNet) {
+            OffChipBuffer buffer, boolean staticNet) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
                         
+        
+        //always presynch reads in the init or primepump stage
+        boolean shouldPreSynch = read && (init || primepump);
+        
+        //for the steady state presynch reads from input nodes that are 
+        //necessary
+        if (read && !(init || primepump) && buffer.isIntraTrace() &&
+                buffer.getSource().isInputTrace() && 
+                !OffChipBuffer.unnecessary(buffer.getSource().getAsInput())) {
+            shouldPreSynch = true;
+        }
+        
         parent.setMapped();
         String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
             "_request_" +
-            (read ? "read" : "write") + (presynched ? "_presynched" : "");
+            (read ? "read" : "write") + (shouldPreSynch ? "_presynched" : "");
         
         //the name of the rotation struction we are using...
         String rotStructName = buffer.getIdent(read);
@@ -376,10 +387,12 @@ public class ComputeCodeStore {
             OffChipBuffer buffer, boolean presynched, RawTile dest) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
+         
+        boolean shouldPreSynch = presynched && GEN_PRESYNCH && (init || primepump);
         
         parent.setMapped();
         String functName = "raw_streaming_dram_gdn_request_read" + 
-        (presynched ? "_presynched" : "") + "_dest";
+        (shouldPreSynch ? "_presynched" : "") + "_dest";
         
         //the name of the rotation struction we are using...
         String rotStructName = buffer.getIdent(true);

@@ -1,0 +1,78 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file BlockDecode.str
+ * @version 1.0
+ */
+
+/**
+ * @internal
+ */
+int->int pipeline BlockDecode(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
+                              portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
+                              portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc
+                              ) {
+    add ZigZagUnordering;
+    // Assumes no alternate_scan TODO
+    // Output of this corresponds to QF[v][u], (cite 1, P. 67)
+    add InverseQuantization(UpdatePortal_quantiser_data_ac,
+                            UpdatePortal_quantiser_data_dc,
+                            UpdatePortal_macroblock_intra);
+    // Extreme bounds for both saturations are a best guess about how far off
+    // any invalid data could ever get.
+    add BestSaturation(-2048, 2047, -2050, 2050);
+    add MismatchControl();
+    add iDCT8x8_ieee(2); // fast iDCT
+    add BestSaturation(-256, 255, -260, 260);
+}
+
+/**
+ * @internal
+ */
+int->int filter MismatchControl() {
+    // (cite 1, P.71)
+    work pop 64 push 64 {
+        int sum, val;
+        sum = 0;
+        for (int i = 0; i < 63; i++) {
+            val = pop();
+            sum += val;
+            push(val);
+        }
+        val = pop();
+        sum += val;
+        if ((sum & 0x1) == 0x1) {
+            push(val);
+        } else {
+            if ((val * 0x1) == 0x1) {
+                push(val-1);
+            } else {
+                push(val+1);
+            }
+        }
+    }
+}

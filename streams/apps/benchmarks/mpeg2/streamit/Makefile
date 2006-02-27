@@ -4,6 +4,8 @@
 
 COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
 # COLOR_CHANNEL_PROCESSING = ColorChannelProcessing_opt_splitjoin.str
+# COLOR_CHANNEL_PROCESSING = 
+# Note - this last (null) option is for the alternate decoder
 
 DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate.str
 # DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate_opt_handfused.str
@@ -14,6 +16,12 @@ MOTION_PREDICTION = MotionPrediction.str
 
 BLOCK_DESCRAMBLER = BlockDescrambler.str
 # BLOCK_DESCRAMBLER = BlockDescrambler_opt_handfused_nopeek.str
+
+DECODER_PIPELINE = MPEGdecoder.str
+# DECODER_PIPELINE = MPEGdecoder_alt_parallel.str
+# NOTE: Using _alt_parallel pipeline requires that:
+#       MOTION_PREDICTION use alt_blocked_parallel
+#       COLOR_CHANNEL_PROCESSING use (null)
 
 # --------------------------------------------------------------------
 # Make and Compilation Variables
@@ -26,14 +34,14 @@ STRC_OPTIONS = -library -nosched
 DCT_HOME = ${STREAMIT_HOME}/apps/benchmarks/dct_ieee/streamit
 LIBDCT = ${DCT_HOME}/DCT.str
 
-# NOTE: BinaryFile.str is actually only needed for compiling outside the library
-# where one must use the FileReader<int>
+MACROBLOCK_DESCRAMBLER = MacroBlockDescrambler.str
+DATA_REORDERING = ${BLOCK_DESCRAMBLER} ${MACROBLOCK_DESCRAMBLER}
 
 # General Purpose Streams Used By Both the Encoders and Decoders
 LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LIBDCT}
 
 # Streams Used By the Decoders
-LIBMPEG2_DECODE = MPEGdecoder.str Parser.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE} ${MOTION_PREDICTION} ${BLOCK_DESCRAMBLER}
+LIBMPEG2_DECODE = ${DECODER_PIPELINE} Parser.str ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
 
 # Streams Used By the Encoders
 LIBMPEG2_ENCODE = MPEGencoder.str
@@ -46,6 +54,7 @@ default: player
 
 clean:	
 	rm -f MPEGdecoder.str
+	rm -f MPEGdecoder_alt_parallel.str
 	rm -f MPEGencoder.str
 	rm -f MPEGglobal.str
 	rm -f BinaryFile.str
@@ -55,6 +64,7 @@ clean:
 	rm -f MotionPrediction.str
 	rm -f MotionPrediction_alt_blocked.str
 	rm -f MotionPrediction_alt_blocked_parallel.str
+	rm -f InverseQuantization.str
 	rm -f *.java
 	rm -f *.class
 	rm -f *.dot

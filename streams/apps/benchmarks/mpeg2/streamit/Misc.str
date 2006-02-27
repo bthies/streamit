@@ -153,3 +153,15 @@ int->int filter DivideBy(int div) {
     push(pop()/div);
   }
 }
+
+/**
+ * @internal
+ */
+int->int filter Add(int num) {
+    work pop num push 1 {
+        int sum = 0;
+        for (int i = 0; i < num; i++)
+            sum += pop();
+        push(sum);
+    }
+}

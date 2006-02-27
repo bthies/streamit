@@ -1,0 +1,206 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file InverseQuantization.str.pre
+ * @version 1.0
+ */
+
+/**
+ * @internal
+ */
+int->int pipeline InverseQuantization(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
+                                      portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
+                                      portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra) {
+
+    // The handling of the intra DC coefficient is described on (cite 1, P.69)
+    add int->int splitjoin {
+        split duplicate;
+        // Intra Coded Macroblocks
+        add int->int splitjoin {
+            split roundrobin(1, 63); 
+            add InverseQuantization_DC_Intra_Coeff to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
+            add InverseQuantization_AC_Coeff(1) to UpdatePortal_quantiser_data_ac;
+            join roundrobin(1, 63); 
+        }
+        // Non Intra Coded Macroblocks
+        add InverseQuantization_AC_Coeff(0) to UpdatePortal_quantiser_data_ac;
+        join roundrobin(64, 64);  
+    }
+  
+    // Selects which stream - FEATURETODO eventually programmable splitjoin and only one of the two
+    // above branches gets taken instead of both.
+ 
+    add InverseQuantizationJoinerSubstitute() to UpdatePortal_macroblock_intra;
+}
+
+/**
+ * @internal
+ */
+int->int filter InverseQuantizationJoinerSubstitute {
+    int macroblock_intra;
+ 
+    init {
+        macroblock_intra = -1;
+    }
+  
+    handler setMacroblockIntra(int new_macroblock_intra) {
+        macroblock_intra = new_macroblock_intra;
+    }
+  
+    work pop (128) push 64 {
+        if (macroblock_intra == -1) {
+            println("  Error: macroblock_intra should not be -1, should have recieved update message");
+        } else if (macroblock_intra == 1) {
+            // It was Intra Coded
+            for (int i = 0; i < 64; i++) {
+                push(pop());
+            }
+            for (int i = 0; i < 64; i++) {
+                pop();
+            }
+        } else {
+            // It was Non Intra Coded
+            for (int i = 0; i < 64; i++) {
+                pop();
+            }
+            for (int i = 0; i < 64; i++) {
+                push(pop());
+            }
+        }
+    
+    } 
+
+}
+
+
+/**
+ * @internal
+ */
+int->int filter InverseQuantization_DC_Intra_Coeff() {
+    // (cite 1, P.69)
+    int[4] intra_dc_mult;
+    int intra_dc_precision;
+
+    init {
+        intra_dc_mult[0] = 8;
+        intra_dc_mult[1] = 4;
+        intra_dc_mult[2] = 2;
+        intra_dc_mult[3] = 1;
+        intra_dc_precision = -1; // In case no message is received, error
+    }
+
+    work pop 1 push 1 {
+        push(intra_dc_mult[intra_dc_precision] * pop());
+    }
+
+    handler setIntraDCPrecision(int new_intra_dc_precision) {
+        intra_dc_precision = new_intra_dc_precision;
+    }
+}
+
+/**
+ * @internal
+ */
+int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
+    // Assumes 4:2:0 data
+    // (cite 1, P.69)
+    // intra = 1: This is dequantizing the non-DC part of an intra coded block
+    // intra = 0: This is dequantizing the DC and AC part of a non-intra coded block
+
+    // These are all assigned by messages and MUST be assigned before the first 
+    // call to work()
+    int quantiser_scale_code;
+    int q_scale_type;
+    int[64] intra_quantiser_matrix;
+    int[64] non_intra_quantiser_matrix;
+
+    // (cite 1, P.70 Table 7-6)
+    int[2][32] quantiser_scale =
+        // Note that quantiser_scale[x][0] is a Forbidden Value
+        {{ 0,  2,  4,  6,  8, 10, 12, 14,
+           16, 18, 20, 22, 24, 26, 28, 30,
+           32, 34, 36, 38, 40, 42, 44, 46,
+           48, 50, 52, 54, 56, 58, 60, 62},
+         { 0,  1,  2,  3,  4,  5,  6,  7,
+           8, 10, 12, 14, 16, 18, 20, 22,
+           24, 28, 32, 36, 40, 44, 48, 52, 
+           56, 64, 72, 80, 88, 96, 104, 112}};
+
+    init {
+        quantiser_scale_code = 0; // Guarantees that this throws an error
+        // if it doesn't get a quantiser message
+        // before getting some data.
+        q_scale_type = -1; // Another nice error if no message received in time.
+    }
+
+    work pop (64-macroblock_intra) push (64-macroblock_intra) {
+        if (quantiser_scale_code == 0)
+            println("Error - quantiser_scale_code not allowed to be 0 " + macroblock_intra);
+        for (int i = macroblock_intra; i < 64; i++) {
+            int QF = pop();
+            // (cite 1, P.71)
+            int k = 0;
+            if (macroblock_intra == 1) {
+                k = 0;
+            } else {
+                // TODO - I think I'm interpreting this part of the spec correctly, check though.
+                if (QF > 0) {
+                    k = 1;
+                } else if (QF < 0) {
+                    k = -1;
+                } else {
+                    k = 0;
+                }          
+            }
+            int W = 0;
+            if (macroblock_intra == 1) {
+                W = intra_quantiser_matrix[i];
+            } else {
+                W = non_intra_quantiser_matrix[i];
+            }
+            int F = (2 * QF + k) * W * 
+                quantiser_scale[q_scale_type][quantiser_scale_code] / 32;
+            push(F);
+        }
+    }
+
+    handler setQuantiserScaleCode(int new_quantiser_scale_code) {
+        quantiser_scale_code = new_quantiser_scale_code;
+    }
+
+    handler setQuantiserMatrices(int[64] new_intra_quantiser_matrix, 
+                                 int[64] new_non_intra_quantiser_matrix) {
+        for (int i = 0; i < 64; i++) {
+            intra_quantiser_matrix[i] = new_intra_quantiser_matrix[i];
+            non_intra_quantiser_matrix[i] = new_non_intra_quantiser_matrix[i];
+        }
+    }
+
+    handler setQScaleType(int new_q_scale_type) {
+        q_scale_type = new_q_scale_type;
+    }
+} 

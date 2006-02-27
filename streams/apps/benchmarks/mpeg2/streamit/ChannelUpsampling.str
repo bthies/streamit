@@ -1,0 +1,93 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file ChannelUpsampling.str
+ * @version 1.0
+ */
+
+// Note: We assume we are going from 4:2:0 to 4:4:4
+// Otherwise this won't work.
+// Check out store.c in the mpeg reference implementation
+// It has a more complicated, probably more accurate
+// implementation. Only implement if needed.
+/**
+ * @internal
+ */
+int->int pipeline ChannelUpsample_Vert_and_Horz(int sourcewidth, int sourceheight) {
+    add ChannelUpsample_Vertical(sourcewidth, sourceheight);
+    add ChannelUpsample_Horizontal(sourcewidth, sourceheight);
+}
+
+int->int splitjoin ChannelUpsample_Vertical(int sourcewidth, int sourceheight) {
+    split roundrobin(1);
+    for (int i = 0; i < sourcewidth; i++) {
+        add ChannelUpsample_1D(sourceheight, 0.75, 0.25);
+    }
+    join roundrobin(1);
+}
+
+int->int splitjoin ChannelUpsample_Horizontal(int sourcewidth, int sourceheight) {
+    split roundrobin(sourcewidth);
+    for (int i = 0; i < sourceheight; i++) {
+        add ChannelUpsample_1D(sourcewidth, 0.5, 0.5);
+    }
+    join roundrobin(sourcewidth*2);
+}
+
+/**
+ * @internal
+ */
+int->int filter ChannelUpsample_1D(int sourcelen, 
+                                   float weight1, 
+                                   float weight2) {
+    work pop sourcelen push sourcelen*2 {
+        int val1 = 0, val2 = 0;
+        // keep track of product of weights to avoid extra multiplies
+        float w1val1, w1val2; // weight1 * val1, weight1 * val2
+        float w2val1, w2val2; // weight2 * val1, weight2 * val2
+
+        val1 = pop();
+        w1val1 = weight1*val1;
+        w2val1 = weight2*val1;
+
+        push(val1);
+        for (int i = 0; i < sourcelen-1; i++) {
+            val2 = pop();
+            w1val2 = weight1*val2;
+            w2val2 = weight2*val2;
+
+            float outval = (w1val1+w2val2);
+            push((int) round(outval));
+            outval = (w2val1+w1val2);
+            push((int) round(outval));
+
+            w1val1 = w1val2;
+            w2val1 = w2val2;
+        }
+        push(val2);
+    }    
+}

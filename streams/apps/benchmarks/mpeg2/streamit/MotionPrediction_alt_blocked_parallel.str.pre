@@ -44,11 +44,19 @@ int->int pipeline MotionPrediction_wrapper(int width,
         split roundrobin(64+11);
         for (int blocky = 0; blocky < height/8; blocky++) {
             for (int blockx = 0; blockx < width/8; blockx++) {
-                add MotionPrediction(width, 
-                                     height,
-                                     blocky,
-                                     blockx)
-                    to UpdatePortal_reference_frame, UpdatePortal_picture_type;
+                add pipeline {
+                    add splitjoin {
+                        split roundrobin(64, 11);
+                        add Identity<int>;
+                        add MotionPrediction(width, 
+                                             height,
+                                             blocky,
+                                             blockx)
+                            to UpdatePortal_reference_frame, UpdatePortal_picture_type;
+                        join roundrobin(1, 1);
+                    }
+                    add Add(2);
+                }
             }
         }
         join roundrobin(64);
@@ -82,31 +90,22 @@ int->int filter MotionPrediction(int width,
         next_picture_type = -1;
     }
 
-    work pop 64+11 push 64 {
+    work pop 11 push 64 {
         if (next_picture_type == -1) {
             println("Error - Should have received a picture type message before motion prediction can process");
         } 
-
-        // MotionPredictionForBlock();
-        
+ 
         if (next_picture_type == 1) {         
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
-                    int temp_picture = pop();
-                    push_picture[x+state_blockx*8][y+state_blocky*8] = temp_picture;
+                    push_picture[x+state_blockx*8][y+state_blocky*8] = 0;
                 }
             }
             deadpop(11);
         } else if (next_picture_type == 2) {
             int[2][2][2] vector;
             int macroblock_intra;
-            int[8][8] temp_picture;
-                      
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    temp_picture[x][y] = pop();
-                }
-            }
+
             for (int r = 0; r < 2; r++) {
                 for (int s = 0; s < 2; s++) {
                     for (int t = 0; t < 2; t++) {
@@ -128,9 +127,9 @@ int->int filter MotionPrediction(int width,
                     if (macroblock_intra == 0) {
                         int sample_data;
                         sample_data = predictMotionPixel(prev_picture, vector, 0, a_x, a_y);
-                        pixel = temp_picture[x][y] + sample_data;
+                        pixel = sample_data;
                     } else {
-                        pixel = temp_picture[x][y];
+                        pixel = 0;
                     }
                     push_picture[a_x][a_y] = pixel;
                 }
@@ -141,12 +140,7 @@ int->int filter MotionPrediction(int width,
             int macroblock_motion_forward;
             int macroblock_motion_backward;
             int[8][8] permsample;
-            int[8][8] temp_picture;
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) {
-                    temp_picture[x][y] = pop();
-                }
-            }
+
             for (int r = 0; r < 2; r++) {
                 for (int s = 0; s < 2; s++) {
                     for (int t = 0; t < 2; t++) {
@@ -188,7 +182,7 @@ int->int filter MotionPrediction(int width,
                     } else {
                         permsample[x][y] = 0;
                     }
-                    push_picture[a_x][a_y] = temp_picture[x][y] + permsample[x][y];
+                    push_picture[a_x][a_y] = permsample[x][y];
                 }
             }
         }

@@ -1,0 +1,65 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file PictureReorder.str
+ * @version 1.0
+ */
+
+/**
+ * @internal
+ */
+int->int filter PictureReorder(int width, int height) {
+    int datarate = (width*height*3);
+    int[(width*height*3)] databuffer;
+    int next_picture_type;
+
+    prework pop datarate {
+        for (int i = 0; i < datarate; i++) {
+            databuffer[i] = pop();
+        }
+    }
+
+    work pop datarate push datarate {
+        if (next_picture_type == 3) {
+            for (int i = 0; i < datarate; i++) {
+                push(pop());
+            }
+        } else {
+            for (int i = 0; i < datarate; i++) {
+                push(databuffer[i]);
+                databuffer[i] = pop();
+            }
+        }     
+    }
+
+    handler setPictureType(int picture_coding_type) {
+        next_picture_type = picture_coding_type;
+    }
+}
+
+
+

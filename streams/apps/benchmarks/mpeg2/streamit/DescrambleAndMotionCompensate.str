@@ -43,12 +43,8 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
     add int->int splitjoin {
         split roundrobin(64, 8, 1, 1, 1);
         add Identity<int>;
-        add int->int splitjoin { // vectorp->vector (cite 1, P.82) 
-            split roundrobin(1, 1); 
-            add DivideBy(horizontal_upsample_factor);
-            add DivideBy(vertical_upsample_factor);
-            join roundrobin(1, 1);
-        }
+        add MotionVectorChannelDownscale(horizontal_upsample_factor,
+                                         vertical_upsample_factor);
         add Identity<int>;
         add Identity<int>;
         add Identity<int>;
@@ -61,9 +57,11 @@ int->int pipeline DescrambleAndMotionCompensate(int width,
                                  UpdatePortal_picture_type3);
 }
 
-
-
-
-
-
+int->int splitjoin MotionVectorChannelDownscale(int horizontal_upsample_factor,
+                                                int vertical_upsample_factor) {
+    split roundrobin(1);
+    add DivideBy(horizontal_upsample_factor);
+    add DivideBy(vertical_upsample_factor);
+    join roundrobin(1);
+}
 

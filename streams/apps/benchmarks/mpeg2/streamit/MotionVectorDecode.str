@@ -1,0 +1,126 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to decode MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file MPEGdecoder_alt_parallel.str.pre
+ * @version 1.0
+ */
+
+/**
+ * @internal
+ */
+int->int filter MotionVectorDecode() {
+    // Note - at first glance, this filter looks like it OUGHT to handle only a single motion vector instead
+    // of all 8, and then it would be wrapped inside an 8 way splitjoin. This is only because of currently
+    // existing limitations in this code, however. More general MPEG-2 bitstreams allow for concealment
+    // motion vectors (to help in the case of errors introduced during transmission of the bitstream), and
+    // when concealment motion vectors are introduced, then dependencies are introduced between the 
+    // vectors. These dependencies will make it hard to use an 8-way splitjoin approach without a 
+    // message passing scheme that allows for across splitjoin messaging. 
+
+    // Section 7.6.3.1 covers this. (cite 1, P.77)
+    int[2][2][2] PMV;
+    int[2][2] f_code;
+
+    int mv_format; // HACKED TODO - MESSAGING
+    int picture_structure; // HACKED TODO - MESSAGING
+
+    init {
+        mv_format = 1; // HACKD TODO MESSAGING
+        picture_structure = 1; // HACKED TODO - MESSAGING
+    }
+
+    work pop 16 push 8 {
+        int[2][2][2] motion_code;
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    motion_code[r][s][t] = pop();
+                }
+        int[2][2][2] motion_residual;
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    motion_residual[r][s][t] = pop();
+                }
+        int[2][2][2] vectorp;
+        for (int r = 0; r < 1; r++) {
+            // NOTE TODO - Hacked right now, don't know when we need the second motion vector.
+            for (int s = 0; s < 2; s++) {
+                for (int t = 0; t < 2; t++) {
+                    int r_size = f_code[s][t]-1;
+                    int f = 1 << r_size;
+                    int high = (16*f)-1;
+                    int low = ((-16)*f);
+                    int range = (32*f);
+                    int delta;
+                    if ((f == 1) || (motion_code[r][s][t] == 0)) {
+                        delta = motion_code[r][s][t];
+                    } else {
+                        delta = ((int) (abs(motion_code[r][s][t])-1)*f) + 
+                            motion_residual[r][s][t]+1;
+                        if (motion_code[r][s][t]<0)
+                            delta = -delta;
+                    }
+                    int prediction = PMV[r][s][t];
+                    if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
+                        println("Error - Program Limitation: May not be correct in decoding motion vectors");
+                    vectorp[r][s][t] = prediction + delta;
+                    if (vectorp[r][s][t] < low)
+                        vectorp[r][s][t] = vectorp[r][s][t] + range;
+                    if (vectorp[r][s][t] > high)
+                        vectorp[r][s][t] = vectorp[r][s][t] - range;
+                    if ((mv_format == 0) && (t == 1) && (picture_structure == 3))
+                        println("Error - Program Limitation: May not be correct in decoding motion vectors");
+                    else 
+                        PMV[r][s][t] = vectorp[r][s][t];
+                    // TODO handle updating missed motion_vectors
+                    // section 7.6.3.3 
+                }
+            }
+        } 
+        for (int r = 0; r < 2; r++)
+            for (int s = 0; s < 2; s++) 
+                for (int t = 0; t < 2; t++) {
+                    push(vectorp[r][s][t]);
+                }
+    }
+  
+    handler resetPredictors() {
+        for (int i = 0; i < 2; i++)
+            for (int j = 0; j < 2; j++)
+                for (int k = 0; k < 2; k++) {
+                    PMV[i][j][k] = 0;
+                }
+    }
+ 
+    handler setFCode(int[2][2] new_f_code) {
+        for (int s = 0; s < 2; s++) 
+            for (int t = 0; t < 2; t++) 
+                f_code[s][t] = new_f_code[s][t];
+    }
+
+}

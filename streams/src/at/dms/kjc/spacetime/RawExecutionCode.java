@@ -350,7 +350,8 @@ public abstract class RawExecutionCode
      * @return Return code to receive <words> words into a dummy variable defined in 
      * traceIRToC over the gdn.
      */
-    public JBlock gdnDisregardIncoming(int words) {
+    public static JBlock gdnDisregardIncoming(int words) {
+        /* TODO:  move these functions to some static class with utils on drams */
         JBlock block = new JBlock();
 
         assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";
@@ -371,7 +372,7 @@ public abstract class RawExecutionCode
      * @return Return code to send <words> words over the gdn using a predefined
      * header. 
      */
-    public JBlock gdnDummyOutgoing(int words) {
+    public static JBlock gdnDummyOutgoing(int words) {
         JBlock block = new JBlock();
 
         assert words < RawChip.cacheLineWords : "Should not align more than cache-line size.";

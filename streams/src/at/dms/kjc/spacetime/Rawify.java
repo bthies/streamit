@@ -23,12 +23,7 @@ import at.dms.kjc.flatgraph2.*;
  */
 public class Rawify {
     
-    /** if true, then when generating the code for the steady state, 
-     * iterate over the joiners first, then the filters then the splitter, 
-     * so, conceptually, there will be a data-redistribution phase before
-     * the filter firings...
-     */
-    public static boolean JOIN_FILTERS_SPLIT = true;
+   
     // if true try to compress the switch code by creating loops
     public static boolean SWITCH_COMP = true;
 
@@ -63,15 +58,19 @@ public class Rawify {
         //the initialization stage!!
         traces = schedule.getInitSchedule();
         iterateInorder(traces, true, false, rawChip);
+//      make sure all the dram command are completed before moving on
+        ComputeCodeStore.presynchAllDramsInInit();
         //the prime pump stage!!
         traces = schedule.getPrimePumpScheduleFlat();
         iterateInorder(traces, false, true, rawChip);
+//      make sure all the dram command are completed before moving on
+        ComputeCodeStore.presynchAllDramsInInit();
         //the steady-state!!
         traces = schedule.getSchedule();
-        if (JOIN_FILTERS_SPLIT)
-            iterateJoinFiltersSplit(traces, false, false, rawChip);
-        else
-            iterateInorder(traces, false, false, rawChip);
+        //iterate over the joiners then the filters then 
+        //the splitter, this will create a data-redistribution 
+        //stage between the iterations that will improve performance 
+        iterateJoinFiltersSplit(traces, false, false, rawChip);
     }
 
     /**

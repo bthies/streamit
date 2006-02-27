@@ -44,8 +44,9 @@ public class BufferDRAMAssignment {
         //Assign filter->output and output->input buffers where there is
         //a single output to an input trace
         for (int i = 0; i < traceNodes.length; i++) {
-            if (traceNodes[i].isOutputTrace() &&
-                    traceNodes[i].getAsOutput().oneOutput())
+            if (traceNodes[i].isOutputTrace() && 
+                    (traceNodes[i].getAsOutput().oneOutput() ||
+                            traceNodes[i].getAsOutput().noOutputs()))
                 singleOutputAssignment(traceNodes[i].getAsOutput());
         }
         
@@ -212,12 +213,21 @@ public class BufferDRAMAssignment {
      * @param output
      */
     private void singleOutputAssignment(OutputTraceNode output) {
-        assert output.oneOutput();
+
         //get the upstream tile
         RawTile upTile = getFilterTile(output.getPrevFilter());
         //the downstream trace is a single input trace
         IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(output.getPrevFilter(), 
                 output);
+        
+        //if we have no outputs, then just assign to the home device
+        if (output.noOutputs()) {
+            buf.setDRAM(getHomeDevice(upTile));
+            return;
+        }
+        
+        assert output.oneOutput();
+        
         //if the dest has one input (not joined) then set the output to write to
         //the dest's home device...
         if (output.getSingleEdge().getDest().oneInput()) {

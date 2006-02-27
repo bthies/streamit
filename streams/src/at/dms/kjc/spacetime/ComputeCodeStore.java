@@ -1,9 +1,12 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -44,8 +47,14 @@ public class ComputeCodeStore {
     // add the functions again...
     HashMap rawCode;
 
+    //this will be true with the first dram read of the steady state 
+    //has been presynched, meaning that we have already seen a read
+    //and presynched the first read of the steady-state
+    private boolean firstLoadPresynchedInSteady;
+    
     public ComputeCodeStore(RawTile parent) {
         this.parent = parent;
+        firstLoadPresynchedInSteady = false;
         rawCode = new HashMap();
         methods = new JMethodDeclaration[0];
         fields = new JFieldDeclaration[0];
@@ -279,7 +288,61 @@ public class ComputeCodeStore {
     }
     
     /**
-     * Add a dram command at the current position of this code compute code 
+     * Decide if a dram command should be presynched at the given time based on 
+     * the command and the buffer.
+     * 
+     * @param read
+     * @param init
+     * @param primepump
+     * @param buffer
+     * @return True if we should presynch, false if not.
+     */
+    public boolean shouldPresynch(boolean read, boolean init, boolean 
+            primepump, OffChipBuffer buffer) {
+        
+        //never presynch a write, double buffering and the execution
+        //order assures that writes will always occurs after the data is read
+        if (!read)
+            return false;
+        
+        //now it is a read
+        
+        //always presynch in the primepump stage!
+        if (init || primepump) 
+            return true;
+        
+        //now in steady
+        
+        //for the steady state presynch reads from input nodes that are 
+        //necessary because intrabuffers are not rotated
+        if (buffer.isIntraTrace() &&
+                buffer.getSource().isInputTrace() && 
+                !OffChipBuffer.unnecessary(buffer.getSource().getAsInput())) {
+            return true;
+        }
+        
+        // presynch reads from the filter->outputtrace buffers because they
+        // are not double buffered, but only if they are going to be split
+        // so the outputtracenode is actually necessary
+        if (buffer.isIntraTrace() &&
+                buffer.getDest().isOutputTrace() &&
+                !OffChipBuffer.unnecessary((buffer.getDest().getAsOutput())))
+            return true;
+        
+        //we have to presynch the first read in the steady-state to make
+        //sure that the last iteration of the loop finished writing everything...
+        if (!firstLoadPresynchedInSteady) {
+            firstLoadPresynchedInSteady = true;
+            return true;
+        }
+        
+        //no need to presynch
+        return false;
+    }
+    
+    /**
+     * Add a dram command and possibly a rotation of the buffer 
+     * at the current position of this code compute code 
      * for either the init stage (including primepump) or the steady state.
      * If in the init stage, don't rotate buffers.  If in init or primepump,
      * add the code to the init stage.  
@@ -295,23 +358,10 @@ public class ComputeCodeStore {
             OffChipBuffer buffer, boolean staticNet) {
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
-                        
-        
-        //always presynch reads in the init or primepump stage
-        boolean shouldPreSynch = read && (init || primepump);
-        
-        //for the steady state presynch reads from input nodes that are 
-        //necessary
-        if (read && !(init || primepump) && buffer.isIntraTrace() &&
-                buffer.getSource().isInputTrace() && 
-                !OffChipBuffer.unnecessary(buffer.getSource().getAsInput())) {
-            shouldPreSynch = true;
-        }
+                
+        boolean shouldPreSynch = shouldPresynch(read, init, primepump, buffer);
         
         parent.setMapped();
-        String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
-            "_request_" +
-            (read ? "read" : "write") + (shouldPreSynch ? "_presynched" : "");
         
         //the name of the rotation struction we are using...
         String rotStructName = buffer.getIdent(read);
@@ -322,53 +372,84 @@ public class ComputeCodeStore {
         assert bytes % RawChip.cacheLineBytes == 0 : "transfer size for dram must be a multiple of cache line size";
 
         int cacheLines = bytes / RawChip.cacheLineBytes;
-        JExpression[] args = {
-                new JNameExpression(null, null, rotStructName + "->buffer"), 
-                new JIntLiteral(1),
-                new JIntLiteral(cacheLines) };
         
-        // the dram command
-        JMethodCallExpression call = new JMethodCallExpression(null, functName,
-                                                               args);
-
-        // send over the address
-        JFieldAccessExpression dynNetSend = 
-            new JFieldAccessExpression(null,
-                    new JThisExpression(null), Util.CGNOINTVAR);
-
-        JNameExpression bufAccess = new JNameExpression(null, null, 
-                rotStructName + "->buffer");
-        //the assignment that will perform the dynamic network send...
-        JAssignmentExpression assExp = new JAssignmentExpression(null,
-                                                                 dynNetSend, bufAccess);
+        //generate the dram command and send the address of the x-fer
+        JStatement dramCommand = 
+            sirDramCommand(read, cacheLines, 
+                    new JNameExpression(null, null, rotStructName + "->buffer"),
+                    staticNet, shouldPreSynch, 
+                    new JNameExpression(null, null, rotStructName + "->buffer"));
+        
+   
         //The rotation expression
         JAssignmentExpression rotExp = new JAssignmentExpression(null,
                 new JFieldAccessExpression(null, new JThisExpression(null), rotStructName),
                 new JNameExpression(null, null, rotStructName + "->next"));
         
-        
         SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
+        
         // add the statements to the appropriate stage
         if (init || primepump) {
-            initBlock.addStatement(new JExpressionStatement(null, call, null));
-            initBlock
-                .addStatement(new JExpressionStatement(null, assExp, null));
+            initBlock.addStatement(dramCommand);
             //only rotate in init during primepump
             if (primepump)
                 initBlock.addStatement(new JExpressionStatement(null, rotExp, null));
         } else {
-            steadyLoop.addStatement(new JExpressionStatement(null, 
-                    (JMethodCallExpression)ObjectDeepCloner.deepCopy(call), null));
-            steadyLoop
-            .addStatement(new JExpressionStatement(null, 
-                    (JAssignmentExpression)ObjectDeepCloner.deepCopy(assExp), null));
+            steadyLoop.addStatement((JStatement)ObjectDeepCloner.deepCopy(dramCommand));
+            //always rotate in the steady state
             steadyLoop
             .addStatement(new JExpressionStatement(null, 
                     (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
         }
     }
 
+    /**
+     * Return sir code that will call the macro for a dram command to transfer
+     * <cacheLines> cache-lines from a single address <address> using <sampleAddress>
+     * to send the command to the correct dram port.
+     * 
+     * @param read True then load, false then store
+     * @param cacheLines
+     * @param sampleAddress An address that resides on the drams
+     * @param staticNet If true, use static net, otherwise gdn
+     * @param shouldPreSynch If true, generate a presynched command
+     * @param address The address for the xfer
+     * @return
+     */
+    public static JStatement sirDramCommand(boolean read, int cacheLines, JExpression sampleAddress,
+            boolean staticNet, boolean shouldPreSynch, JExpression address) {
+        JBlock block = new JBlock();
+        
+        String functName = "raw_streaming_dram" + (!staticNet ? "_gdn" : "") + 
+        "_request_" +
+        (read ? "read" : "write") + (shouldPreSynch ? "_presynched" : "");
+        
+        JExpression[] args = {
+                sampleAddress, 
+                new JIntLiteral(1),
+                new JIntLiteral(cacheLines) };
+     
+        // the dram command
+        JMethodCallExpression call = new JMethodCallExpression(null, functName,
+                                                               args);
+        
+        // send over the address
+        JFieldAccessExpression dynNetSend = 
+            new JFieldAccessExpression(null,
+                    new JThisExpression(null), Util.CGNOINTVAR);
+        
+
+        //the assignment that will perform the dynamic network send...
+        JAssignmentExpression assExp = new JAssignmentExpression(null,
+                                                                 dynNetSend, address);
+        
+        block.addStatement(new JExpressionStatement(call));
+        block.addStatement(new JExpressionStatement(assExp));
+        
+        return block;
+    }
+    
     /**
      * Add a dram read command at the current position of this code compute code 
      * for either the init stage (including primepump) or the steady state over the
@@ -449,6 +530,8 @@ public class ComputeCodeStore {
                     (JAssignmentExpression)ObjectDeepCloner.deepCopy(rotExp), null));
         }
     }   
+    
+    
     public void addTraceSteady(FilterInfo filterInfo) {
         parent.setMapped();
         RawExecutionCode exeCode;
@@ -583,6 +666,59 @@ public class ComputeCodeStore {
         }
     }
 
+    /**
+     * This function will create a presynch read command for every dram that is
+     * used in the program and add it to the current position in the init
+     * block.  It will make sure that all dram write commands are finished
+     * before anything else can be issued.  
+     *
+     */
+    public static void presynchAllDramsInInit() {
+        Iterator buffers = OffChipBuffer.getBuffers().iterator();
+        HashSet visitedTiles = new HashSet();
+        
+        while (buffers.hasNext()) {
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            if (buffer.redundant())
+                continue;
+            if (!visitedTiles.contains(buffer.getOwner())) {
+                //remember that we have already presynched this tile
+                visitedTiles.add(buffer.getOwner());
+             
+                //need sample address and address
+                JExpression sampleAddress = 
+                    new JNameExpression(null, null, 
+                            buffer.getIdent(true) + "->buffer");
+                    
+                JExpression address =  new JNameExpression(null, null, 
+                        buffer.getIdent(true) + "->buffer");
+                
+                //the dram command to send over, use the gdn
+                JStatement dramCommand = ComputeCodeStore.sirDramCommand(true, 1, 
+                        sampleAddress, false, true, address);
+                /*
+                //add a comment to the command
+                JavaStyleComment comment = new JavaStyleComment("Stage Presynch Command", true, false, false);
+                dramCommand.setComments(new JavaStyleComment[]{comment});
+                */
+                
+                //now add the presynch command which is just 
+                //a presynched read of length 1
+                buffer.getOwner().getComputeCode().initBlock.addStatement
+                (dramCommand);
+                
+                //now disregard the incoming data from the dram...
+                //do this in two statement because there is an assert inside 
+                //of gdnDisregardIncoming() that prevents you from disregarding
+                //an entire cacheline and I like it there...
+                buffer.getOwner().getComputeCode().initBlock.addStatement
+                (RawExecutionCode.gdnDisregardIncoming(RawChip.cacheLineWords - 1));
+                buffer.getOwner().getComputeCode().initBlock.addStatement
+                (RawExecutionCode.gdnDisregardIncoming(1));
+            }
+        }
+    }
+    
     public void sendConstToSwitch(int constant, boolean init) {
         JStatement send = RawExecutionCode.constToSwitchStmt(constant);
 

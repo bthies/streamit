@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.23 2006-01-25 17:01:23 thies Exp $
+ * $Id: Main.java,v 1.24 2006-02-27 18:32:54 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -23,7 +23,8 @@ package at.dms.kjc;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Vector;
+import java.util.*;
+import java.lang.reflect.*;
 
 import at.dms.classfile.ClassPath;
 import at.dms.classfile.ClassFileFormatException;
@@ -207,9 +208,120 @@ public class Main extends Compiler {
             return false;
         }
         infiles = Utils.toVector(options.nonOptions);
+        if (KjcOptions.backendvalues != null) {
+            return processBackendValues(KjcOptions.backendvalues);
+        }
         return true;
     }
 
+    /**
+     * Set arbitrary values into static fields using reflection.
+     * <br/>
+     * --backendvalues="at.dms.kjc.common.CodegenPrintWriter.defaultDebug true 
+     *   at.dms.kjc.common.CodegenPrintWriter.defaultDebugDepth 2"
+     * <br/>
+     * So far, we handle setting boolean fields to "true" or "false"
+     * and int fields to numbers.
+     * <br/>
+     * Since we are dealing with user input, there is a lot of checking
+     * for valid input.
+     * <br/>
+     * There is an interaction with the security manager:
+     * If ReflectPermission is not "supressAccessChecks" then
+     * we can only set public static fields of non-abstract classes
+     * rather than any (int or boolean) static field.
+     */
+    
+    private boolean processBackendValues(String fieldValuePairs) {
+        StringTokenizer st = new StringTokenizer(fieldValuePairs);
+        String fieldname;
+        String fieldvalue;
+        boolean hasErrors = false;
+        while (st.hasMoreTokens()) {
+            fieldname = st.nextToken();
+            if (! st.hasMoreTokens()) {
+                System.err.println("No value for field " + fieldname);
+                hasErrors = true;
+                break;
+            }
+            fieldvalue = st.nextToken();
+            int fieldpos = fieldname.lastIndexOf(".");
+            if (fieldpos == -1) {
+                System.err.println("Cannot split " + fieldname + " into class and field name");
+                hasErrors = true;
+                continue;
+            }
+            String clazz = fieldname.substring(0,fieldpos);
+            String fieldinclass = fieldname.substring(fieldpos+1);
+            Class cls;
+            try {
+                cls = Class.forName(clazz);
+            } catch (Throwable e) {
+                System.err.println("Error finding fully qualified class name '" + clazz + "' : " + e);
+                hasErrors = true;
+                continue;
+            }
+            Field fld;
+            try {
+                fld = cls.getDeclaredField(fieldinclass);
+            } catch (Throwable e) {
+                System.err.println("Error finding field '" + fieldinclass + "' in class '" + clazz + "' : " + e);
+                hasErrors = true;
+                continue;
+            }
+            boolean isAccessible = false;
+            try {
+                fld.setAccessible(true);
+                isAccessible = true;
+            } catch (Throwable e) {
+                // didn't have ReflectPermission of 'supressAccessChecks': 
+                // will probably only be able to set public fields of non-abstract
+                // classes -- a nuisance when a debug flag is declared in an
+                // abstract class.
+            }
+            if (! (isAccessible 
+                    || (Modifier.isStatic(fld.getModifiers()) 
+                            && Modifier.isPublic(fld.getModifiers())))) {
+                System.err.println("Field '" + fieldname + "' is not public static");
+                hasErrors = true;
+                continue;
+            }
+            String fieldtype = fld.getType().toString();
+            if (fieldtype.equals("boolean")) {
+                boolean bval;
+                if (fieldvalue.equals("true")) {
+                    bval = true;
+                } else if (fieldvalue.equals("false")) {
+                    bval = false;
+                } else {
+                    System.err.println("Not a boolean value for " + fieldname + ": '" + fieldvalue + "'");
+                    hasErrors = true;
+                    continue;
+                }
+                try {
+                    fld.setBoolean(null,bval);
+                } catch (Throwable e) {
+                    System.err.println("Error setting '" + fieldname + "' to boolean value '" + fieldvalue + "': " + e);
+                    System.err.println("possibly because " + cls + " is " + Modifier.toString(cls.getModifiers()) + ".");
+                    if (! isAccessible) {System.err.println("ReflectPremission is not 'supressAccessChecks'.");}
+                    hasErrors = true;
+                    continue;
+               }
+            } else if (fieldtype.equals("int")) {
+                int ival;
+                try {
+                    ival = Integer.decode(fieldvalue).intValue();
+                    fld.setInt(null,ival); 
+                } catch (Throwable e) {
+                    System.err.println("Error setting '" + fieldname + "' to int value '" + fieldvalue + "': " + e);
+                    hasErrors = true;
+                    continue;
+               }
+            }
+        }
+        return ! hasErrors;
+    }
+    
     /**
      * Generates the code from an array of compilation unit and
      * a destination

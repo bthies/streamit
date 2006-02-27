@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.70 2006-01-22 06:20:11 thies Exp $
+ * $Id: KjcOptions.opt,v 1.71 2006-02-27 18:32:54 dimock Exp $
  */
 
 prefix Kjc
@@ -502,4 +502,10 @@ longname 		"devassignfile"
 	default		"null"
 	requireArgument
 	help		"For the space-dynamic backend, specify a file that assigns devices to ports (a new-line separated list of tiles)."
+		
+longname 		"backendvalues"
+	type		String
+	default		"null"
+	requireArgument
+	help		"For debugging, specify class with package:value for static variable"
 	

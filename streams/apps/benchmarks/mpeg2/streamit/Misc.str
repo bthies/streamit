@@ -63,16 +63,16 @@ int->int pipeline BestSaturation(int min, int max, int worst_input_min, int wors
  * @output A stream of integers lying between min and max, inclusive.
  */
 int->int filter Saturation(int min, int max) {
-  work pop 1 push 1 {
-    int val = pop();
-    if (val > max) {
-      push(max); 
-    } else if (val < min) {
-      push(min);
-    } else {
-      push(val);
+    work pop 1 push 1 {
+        int val = pop();
+        if (val > max) {
+            push(max); 
+        } else if (val < min) {
+            push(min);
+        } else {
+            push(val);
+        }
     }
-  }
 }
 
 /**
@@ -89,24 +89,24 @@ int->int filter Saturation(int min, int max) {
  * @output A stream of integers lying between min and max, inclusive.
  */
 int->int filter BoundedSaturation(int min, int max, int worst_input_min, int worst_input_max) {
-  int range;
-  int[2*(worst_input_max - worst_input_min + 1)] saturate; // TODO - fix static variables propogating in library
-  init {
-      range = worst_input_max - worst_input_min + 1; // Should come earlier but range not set correctly
-      for (int i = 0; i < range*2; i++) {
-          int val = i + worst_input_min;
-          if (val < min) {
-              saturate[i] = min;
-          } else if (val > max) {
-              saturate[i] = max;
-          } else {
-              saturate[i] = val;
-          }
-      }   
-  }
-  work pop 1 push 1 {
-      push(saturate[pop()-worst_input_min]);
-  }
+    int range;
+    int[2*(worst_input_max - worst_input_min + 1)] saturate; // TODO - fix static variables propogating in library
+    init {
+        range = worst_input_max - worst_input_min + 1; // Should come earlier but range not set correctly
+        for (int i = 0; i < range*2; i++) {
+            int val = i + worst_input_min;
+            if (val < min) {
+                saturate[i] = min;
+            } else if (val > max) {
+                saturate[i] = max;
+            } else {
+                saturate[i] = val;
+            }
+        }   
+    }
+    work pop 1 push 1 {
+        push(saturate[pop()-worst_input_min]);
+    }
 }
 
 /** 
@@ -128,15 +128,15 @@ int->int splitjoin Repeat(int numitems, int numtimes) {
 int->int filter Repeat(int numitems, int numtimes) {
 
     work pop numitems push numitems * numtimes {
-	int[numitems] dataArray;
-	for (int i = 0; i < numitems; i++) {
-	    dataArray[i] = pop();
-	}
-	for (int j = 0; j < numtimes; j++) {
-	    for (int i = 0; i < numitems; i++) {
-		push(dataArray[i]);
-	    }
-	}
+        int[numitems] dataArray;
+        for (int i = 0; i < numitems; i++) {
+            dataArray[i] = pop();
+        }
+        for (int j = 0; j < numtimes; j++) {
+            for (int i = 0; i < numitems; i++) {
+                push(dataArray[i]);
+            }
+        }
     }
 }
 
@@ -149,9 +149,9 @@ int->int filter Repeat(int numitems, int numtimes) {
  * @output An integer related to the input by output = floor(input / div)
  */
 int->int filter DivideBy(int div) {
-  work pop 1 push 1 {
-    push(pop()/div);
-  }
+    work pop 1 push 1 {
+        push(pop()/div);
+    }
 }
 
 /**

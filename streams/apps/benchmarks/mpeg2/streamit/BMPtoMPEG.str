@@ -16,28 +16,27 @@
 
 void->void pipeline BMPtoMPEG() {
 
-  int width=352; 
-  int height=240;
-  int numpictures = 30;
+    int width=352; 
+    int height=240;
+    int numpictures = 30;
 
-  add void->int splitjoin {
-    split roundrobin(0);
-    for (int i = 1; i <= numpictures; i++) {
-      add void->int pipeline {
-        if (i < 10) {
-          add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/0000000" + i + ".bmp");
-        } else if (i < 100) {
-          add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/000000" + i + ".bmp");
-        } else {
-          add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/00000" + i + ".bmp");
+    add void->int splitjoin {
+        split roundrobin(0);
+        for (int i = 1; i <= numpictures; i++) {
+            add void->int pipeline {
+                if (i < 10) {
+                    add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/0000000" + i + ".bmp");
+                } else if (i < 100) {
+                    add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/000000" + i + ".bmp");
+                } else {
+                    add FileReader<bit>("/home/streamit/compiler-static/mpeg2/cact_015_bmp/00000" + i + ".bmp");
+                }
+                add BMPStream_to_rawImageStream(width, height);
+            }
         }
-
-        add BMPStream_to_rawImageStream(width, height);
-      }
+        join roundrobin(width*height*3);
     }
-    join roundrobin(width*height*3);
-  }
 
-  add rawImageStream_to_MPEGStream(width, height, numpictures);
-  add FileWriter<bit>("./output.m2v");
+    add rawImageStream_to_MPEGStream(width, height, numpictures);
+    add FileWriter<bit>("./output.m2v");
 }

@@ -25,13 +25,13 @@
  */
 
 int->int pipeline ColorSpaceConversion_YCbCrtoRGB {
-  add YCbCrtoRGB;
-  add BestSaturation(0, 255, -384, 639); 
-  // See mpeg2dec in the reference implementation, Clip[]
+    add YCbCrtoRGB;
+    add BestSaturation(0, 255, -384, 639);
+    // See mpeg2dec in the reference implementation, Clip[]
 }
 
 int->int pipeline ColorSpaceConversion_RGBtoYCbCr {
-  add RGBtoYCbCr;
+    add RGBtoYCbCr;
 }         
 
 
@@ -44,30 +44,30 @@ int->int pipeline ColorSpaceConversion_RGBtoYCbCr {
  * @output Three integers in YCbCr color space and order.
  */
 int->int filter RGBtoYCbCr {
-  work pop 3 push 3 {
-    int R = pop();
-    int G = pop();
-    int B = pop();
+    work pop 3 push 3 {
+        int R = pop();
+        int G = pop();
+        int B = pop();
 
-    float ER = ((float) R)/256.0;
-    float EG = ((float) G)/256.0;
-    float EB = ((float) B)/256.0;
+        float ER = ((float) R)/256.0;
+        float EG = ((float) G)/256.0;
+        float EB = ((float) B)/256.0;
 
-    float Ey =   0.715400*EG + 0.072100*EB + 0.212500*ER;
-    float Epb = -0.386000*EG + 0.500000*EB - 0.115000*ER;
-    float Epr = -0.454000*EG - 0.046000*EB + 0.500000*ER;
+        float Ey =   0.715400*EG + 0.072100*EB + 0.212500*ER;
+        float Epb = -0.386000*EG + 0.500000*EB - 0.115000*ER;
+        float Epr = -0.454000*EG - 0.046000*EB + 0.500000*ER;
 
-    int Y = (int) round((219*Ey) + 16);
-    int Cb = (int) round((224*Epb) + 128);
-    int Cr = (int) round((224*Epr) + 128);
+        int Y = (int) round((219*Ey) + 16);
+        int Cb = (int) round((224*Epb) + 128);
+        int Cr = (int) round((224*Epr) + 128);
 
-    // My values are centered between +/- 128 and it outputs values in the
-    // 0 to 255 range, so we compute and then subtract.
+        // My values are centered between +/- 128 and it outputs values in the
+        // 0 to 255 range, so we compute and then subtract.
 
-    push(Y-128);
-    push(Cb-128);
-    push(Cr-128);
-  }
+        push(Y-128);
+        push(Cb-128);
+        push(Cr-128);
+    }
 }
 
 /**
@@ -81,22 +81,22 @@ int->int filter RGBtoYCbCr {
  * @output Three integers in RGB color space and order.
  */
 int->int filter YCbCrtoRGB {
-  // My values are centered between +/- 128, and it expects values in the 
-  // 0 to 255 range, so we add first and then compute.
-  // Saturation of the output is performed downstream.
+    // My values are centered between +/- 128, and it expects values in the 
+    // 0 to 255 range, so we add first and then compute.
+    // Saturation of the output is performed downstream.
 
-  work pop 3 push 3 {
+    work pop 3 push 3 {
 
-    int Y = 76309 * (pop() + 112);
-    int U = pop();
-    int V = pop();
-    int R = (Y + 117504*V + 32768)>>16;
-    int G = (Y - 13954*U - 34903*V + 32768)>>16;
-    int B = (Y + 138453*U + 32786)>>16;
+        int Y = 76309 * (pop() + 112);
+        int U = pop();
+        int V = pop();
+        int R = (Y + 117504*V + 32768)>>16;
+        int G = (Y - 13954*U - 34903*V + 32768)>>16;
+        int B = (Y + 138453*U + 32786)>>16;
 
-    push(R);
-    push(G);
-    push(B);
+        push(R);
+        push(G);
+        push(B);
 
-  }
+    }
 }

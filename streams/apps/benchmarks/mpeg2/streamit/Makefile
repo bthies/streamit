@@ -44,7 +44,7 @@ LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LI
 LIBMPEG2_DECODE = ${DECODER_PIPELINE} Parser.str ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
 
 # Streams Used By the Encoders
-LIBMPEG2_ENCODE = MPEGencoder.str
+LIBMPEG2_ENCODE = MPEGencoder.str Generator.str
 
 default: player
 
@@ -65,6 +65,7 @@ clean:
 	rm -f MotionPrediction_alt_blocked.str
 	rm -f MotionPrediction_alt_blocked_parallel.str
 	rm -f InverseQuantization.str
+	rm -f Generator.str
 	rm -f *.java
 	rm -f *.class
 	rm -f *.dot

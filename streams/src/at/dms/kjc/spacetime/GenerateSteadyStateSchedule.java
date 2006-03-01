@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import at.dms.kjc.KjcOptions;
 
 /**
  * @author mgordon
@@ -25,8 +26,23 @@ public class GenerateSteadyStateSchedule {
     private RawChip rawChip;
     //the schedule we are building
     private LinkedList schedule;
+    /** the layout we are using from annealedlayout, it could be null
+     * if we are --noanneal, if so the we can manual layout.
+     */
+    private HashMap layout;
     
-    public GenerateSteadyStateSchedule(SpaceTimeSchedule sts) {
+    /**
+     * 
+     * @param sts
+     * @param layout The layout of filterTraceNode->RawTile, this could
+     * be null if we are --noanneal. 
+     */
+    public GenerateSteadyStateSchedule(SpaceTimeSchedule sts,
+            HashMap layout) {
+        if (layout == null)
+            assert KjcOptions.noanneal;
+        this.layout = layout;
+        
         spaceTime = sts;
         rawChip = spaceTime.getRawChip();
         schedule = new LinkedList();
@@ -75,8 +91,11 @@ public class GenerateSteadyStateSchedule {
         while (!sortedTraces.isEmpty()) {
             //remove the first trace, the trace with the most work
             Trace trace = (Trace)sortedTraces.removeFirst();
-            //get the layout 
-            HashMap layout = layoutTrace(trace);
+            
+            if (KjcOptions.noanneal) {
+                //get the layout 
+                layout = layoutTrace(trace);
+            }
             //schedule the trace...
             scheduleTrace(layout, trace, sortedTraces);
         }

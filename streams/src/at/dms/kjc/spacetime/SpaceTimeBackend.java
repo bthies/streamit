@@ -206,11 +206,16 @@ public class SpaceTimeBackend {
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
         
         //create the layout for each stage of the execution using simulated annealing
-        new AnnealedLayout(spaceTimeSchedule).run();
+        AnnealedLayout annealedLayout = null;
+        if (!KjcOptions.noanneal) {
+            annealedLayout = new AnnealedLayout(spaceTimeSchedule);
+            annealedLayout.run();
+        }
         
         System.out.println("\nSpace/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
-            new GenerateSteadyStateSchedule(spaceTimeSchedule);
+            new GenerateSteadyStateSchedule(spaceTimeSchedule,
+                    (KjcOptions.noanneal ? null : annealedLayout.assignment));
         spaceTimeScheduler.schedule();
   
         //calculate preloop and initialization code

@@ -22,8 +22,9 @@ public class ManualTraceLayout {
      */
     public static HashMap layout(RawChip rawChip, Trace trace) {
         HashMap layout = new HashMap();
-        BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(
-                                                                              System.in));
+        BufferedReader inputBuffer = 
+            new BufferedReader(new InputStreamReader(
+                    System.in));
         // the current node we are getting the tile assignment for
         TraceNode node = trace.getHead().getNext();
         // the tile number we are assigning

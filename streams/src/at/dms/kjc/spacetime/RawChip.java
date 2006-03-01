@@ -314,6 +314,25 @@ public class RawChip {
         devices[14] = new MagicDram(this, 14, tiles[0][1]);
     }
 
+    /**
+     * @param tile1
+     * @param tile2
+     * @return True if <tile1> neighbors <tile2>.
+     */
+    public boolean areNeighbors(ComputeNode tile1, ComputeNode tile2) {
+        if (tile1 == tile2)
+            return false;
+        if (tile1.getY() == tile2.getY())
+            if (Math.abs(tile1.getX() - tile2.getX()) == 1)
+                return true;
+        if (tile1.getX() == tile2.getX())
+            if (Math.abs(tile1.getY() - tile2.getY()) == 1)
+                return true;
+        // not conntected
+        return false;
+    }
+
+    
     public void printChip() {
         if (!KjcOptions.magicdram) {
             StreamingDram.printSetup(this);

@@ -386,6 +386,8 @@ public class Rawify {
             OffChipBuffer srcBuffer = 
                 InterTraceBuffer.getBuffer(input.getSources()[i]).getNonRedundant();
             
+            assert srcBuffer != null;
+            
             SpaceTimeBackend.println("Generate the DRAM read command for "
                                      + srcBuffer);
             int readWords = iterations * typeSize
@@ -2011,6 +2013,8 @@ public class Rawify {
         // the source of the data, either a device or another raw tile
         ComputeNode sourceNode = null;
 
+        assert itemsReceiving > 0;
+        
         if (node.getPrevious().isFilterTrace())
             sourceNode = rawChip.getTile(((FilterTraceNode) node.getPrevious())
                                          .getX(), ((FilterTraceNode) node.getPrevious()).getY());
@@ -2078,7 +2082,7 @@ public class Rawify {
                 destNode = tile.getIODevice();
             else {
                 destNode = IntraTraceBuffer.getBuffer(node,
-                                                      (OutputTraceNode) node.getNext()).getNonRedundant()
+                        (OutputTraceNode) node.getNext()).getNonRedundant()
                     .getDRAM();
             }
 

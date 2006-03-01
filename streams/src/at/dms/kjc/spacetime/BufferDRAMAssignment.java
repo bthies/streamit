@@ -20,7 +20,10 @@ import at.dms.kjc.flatgraph2.*;
  *
  */
 public class BufferDRAMAssignment {
-
+    /** if this is true, then just assign intra-slice buffers 
+     * to the home base of the endpoint tiles.
+     */
+    private final boolean ALWAYS_ASSIGN_INTRA_HOME_BASE = true;
     private RawChip rawChip;
 
     /**
@@ -41,20 +44,31 @@ public class BufferDRAMAssignment {
                 inputFilterAssignment((InputTraceNode) traceNodes[i]);
         }
             
-        //Assign filter->output and output->input buffers where there is
-        //a single output to an input trace
-        for (int i = 0; i < traceNodes.length; i++) {
-            if (traceNodes[i].isOutputTrace() && 
-                    (traceNodes[i].getAsOutput().oneOutput() ||
-                            traceNodes[i].getAsOutput().noOutputs()))
-                singleOutputAssignment(traceNodes[i].getAsOutput());
+        if (!ALWAYS_ASSIGN_INTRA_HOME_BASE) {
+            //Assign filter->output and output->input buffers where there is
+            //a single output to an input trace
+            for (int i = 0; i < traceNodes.length; i++) {
+                if (traceNodes[i].isOutputTrace() && 
+                        (traceNodes[i].getAsOutput().oneOutput() ||
+                                traceNodes[i].getAsOutput().noOutputs()))
+                    singleOutputAssignment(traceNodes[i].getAsOutput());
+            }
+            
+            //assign filter->output intratracebuffers for split output traces
+            for (int i = 0; i < traceNodes.length; i++) {
+                if (traceNodes[i].isOutputTrace() &&
+                        !traceNodes[i].getAsOutput().oneOutput())
+                    splitOutputAssignment(traceNodes[i].getAsOutput());
+            }
         }
-        
-        //assign filter->output intratracebuffers for split output traces
-        for (int i = 0; i < traceNodes.length; i++) {
-            if (traceNodes[i].isOutputTrace() &&
-                    !traceNodes[i].getAsOutput().oneOutput())
-                splitOutputAssignment(traceNodes[i].getAsOutput());
+        else {
+            for (int i = 0; i < traceNodes.length; i++) {
+                //we want to always use the home base for filter output
+                //so just call splitoutputassignment, it will do the 
+                //right thing
+                if (traceNodes[i].isOutputTrace())
+                    splitOutputAssignment(traceNodes[i].getAsOutput());
+            }
         }
       
         //assign intertracebuffer that end at a trace with one input.
@@ -102,8 +116,11 @@ public class BufferDRAMAssignment {
 
                     //if this tile is different from the tile we have already 
                     //issued a gdn store command from, then we might have a race condition.
-                    if (dramToTile.get(buffer.getDRAM()) != getFilterTile(output.getPrevFilter()))
+                    if (dramToTile.get(buffer.getDRAM()) != getFilterTile(output.getPrevFilter())) {
+                        System.out.println(dramToTile.get(buffer.getDRAM()) + " and " +
+                                getFilterTile(output.getPrevFilter()));
                         return true;
+                    }
                 }
                 else //otherwise put the tile in the hashmap to remember that we issued a store from it 
                     dramToTile.put(buffer.getDRAM(), getFilterTile(output.getPrevFilter()));
@@ -194,7 +211,8 @@ public class BufferDRAMAssignment {
      * @param output
      */
     private void splitOutputAssignment(OutputTraceNode output) {
-        if (output.oneOutput() || output.noOutputs()) 
+        if ((output.oneOutput() || output.noOutputs()) && 
+                !ALWAYS_ASSIGN_INTRA_HOME_BASE) 
             return;
         
         //if we are splitting this output then assign the intratracebuffer

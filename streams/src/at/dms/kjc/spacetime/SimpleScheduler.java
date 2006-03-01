@@ -9,6 +9,14 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.*;
 
+/**
+ * Schedule the partitioned graph in both space and time.  Right now,
+ * build a sorted list of traces, and schedule them in order of the
+ * list (list schedule). 
+ * 
+ * @author mgordon
+ *
+ */
 public class SimpleScheduler {
     public Partitioner partitioner;
 

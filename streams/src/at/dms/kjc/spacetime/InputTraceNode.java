@@ -162,6 +162,10 @@ public class InputTraceNode extends TraceNode {
         // get this buffer or this first upstream non-redundant buffer
         OffChipBuffer buffer = 
             IntraTraceBuffer.getBuffer(this, getNextFilter()).getNonRedundant();
+        
+        if (buffer == null)
+            return false;
+        
         //if not a file reader, then we might have to align the dest
         if (buffer.getDest() instanceof OutputTraceNode
                 && ((OutputTraceNode) buffer.getDest()).isFileReader())

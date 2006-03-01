@@ -205,6 +205,9 @@ public class SpaceTimeBackend {
         //create the space/time schedule object to be filled in by the passes 
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
         
+        //create the layout for each stage of the execution using simulated annealing
+        new AnnealedLayout(spaceTimeSchedule).run();
+        
         System.out.println("\nSpace/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
             new GenerateSteadyStateSchedule(spaceTimeSchedule);

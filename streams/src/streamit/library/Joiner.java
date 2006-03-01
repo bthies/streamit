@@ -130,7 +130,11 @@ abstract public class Joiner extends Operator
                  ? sjIter.getJoinPopWeights(nWork)
                  : flIter.getJoinPopWeights(nWork));
             for (int i=0; i<input.length; i++) {
-                input[i].ensureData(throughput[i]);
+                // input will be null for RR joiners that don't read
+                // in one direction
+                if (input[i]!=null) {
+                    input[i].ensureData(throughput[i]);
+                }
             }
         }
         super.prepareToWork();

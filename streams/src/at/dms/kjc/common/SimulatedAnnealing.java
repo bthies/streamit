@@ -28,6 +28,10 @@ public abstract class SimulatedAnnealing {
     
     /** the assignment that we arrive at and use during execution */
     public HashMap assignment;
+
+    protected SimulatedAnnealing() {
+        assignment = new HashMap();
+    }
     
     /**
      * Called by perturbConfiguration() to perturb the configuration.

@@ -451,6 +451,13 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 		    if (withinStream != null
 			&& !downstreamNode.hasAncestor(withinStream))
 			continue;
+
+                    // if there is no data transferred across this
+                    // edge (for example, splitter/joiner weights of
+                    // 0) then don't visit 
+                    if (edge.getNumSrcSteadyPhases()==0 ||
+                        edge.getNumDstSteadyPhases()==0)
+                        continue;
 		    
 		    // visit the edge
                     result.add(edge);
@@ -483,6 +490,13 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 			&& !upstreamNode.hasAncestor(withinStream))
 			continue;
 		    
+                    // if there is no data transferred across this
+                    // edge (for example, splitter/joiner weights of
+                    // 0) then don't visit 
+                    if (edge.getNumSrcSteadyPhases()==0 ||
+                        edge.getNumDstSteadyPhases()==0)
+                        continue;
+
 		    // visit the edge
                     result.add(edge);
 		    

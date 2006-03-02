@@ -198,7 +198,7 @@ void->complex pipeline header_and_data(int data_rate, int length, int modulation
 }
 
 
-void->bit pipeline encoded_header(int data_rate, int len) {
+void->complex pipeline encoded_header(int data_rate, int len) {
 
   add generate_header(data_rate,len);
   add conv_code(0);
@@ -271,7 +271,7 @@ void->bit filter generate_header(int data_rate, int len) {
 }
 
 
-void->bit pipeline encoded_data(int data_rate, int len, int modulation, int coding_rate, int bits_per_sub, int bits_per_sym, int data_bits_per_sym) {
+bit->complex pipeline encoded_data(int data_rate, int len, int modulation, int coding_rate, int bits_per_sub, int bits_per_sym, int data_bits_per_sym) {
 
   int subtotal = len*8 + 22;  // 22 zeros added, 16 to front, 6 to back
   int rem = subtotal % data_bits_per_sym;
@@ -905,8 +905,9 @@ complex->complex filter fftshift_1d(int N) {
 complex->complex filter halve() {
 
   work push 1 pop 1 {
-
-    push(pop()/2);
+    complex numerator = pop(); // 20060302 type of pop was null
+    complex denominator = (2.0 + 0.0i);
+    push(numerator / denominator);
   }
 }
 
@@ -914,8 +915,9 @@ complex->complex filter halve() {
 complex->complex filter halve_and_combine() {
 
   work push 1 pop 2 {
-
-    push((pop() + pop())/2);
+    complex numerator = pop() + pop();
+    complex denominator = (2.0 + 0.0i);
+    push(numerator / denominator);
   }
 }
 

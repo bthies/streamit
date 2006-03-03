@@ -27,7 +27,7 @@ import java.lang.reflect.*;
  *
  * There is a distinct message for every receiver object.
  *
- * @version $Id: Message.java,v 1.4 2006-02-11 03:05:29 thies Exp $
+ * @version $Id: Message.java,v 1.5 2006-03-03 04:46:15 thies Exp $
  */
 public class Message {
     /**
@@ -61,7 +61,7 @@ public class Message {
      * should be delivered.
      */
     public int getDeliveryTime() {
-        return deliveryTime;
+        return deliveryTime - (isDownstream()?1:0);
     }
 
     /**

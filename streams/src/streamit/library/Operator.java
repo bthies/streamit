@@ -85,11 +85,23 @@ public class Operator extends DestroyedClass
      * Enqueues <message> for delivery to this.
      */
     public void enqueueMessage(Message m) {
+        int currentTime = getSDEPExecutions(true, m.isDownstream());
+        int deliveryTime = m.getDeliveryTime();
+
+        // if we missed deadline, throw error
+        if (deliveryTime < currentTime) {
+            throw new RuntimeException("Missed a message delivery deadline to " + this + ".  Your " + "\n" +
+                                       "program has a message latency that is too tight to be satisfied " + "\n" +
+                                       "under the default schedule.  Might require constrained scheduling, " + "\n" +
+                                       "or might represent an invalid (impossibly tight) message constraint." + "\n" +
+                                       "DELIVERY TIME = " + deliveryTime + "\n" +
+                                       "CURRENT TIME  = " + currentTime);
+        }
+
         // maintain messageQueue by order of delivery time
-        int time = m.getDeliveryTime();
         for (int i=0; i<messageQueue.size(); i++) {
             int other = ((Message)messageQueue.get(i)).getDeliveryTime();
-            if (other > time) {
+            if (other > deliveryTime) {
                 messageQueue.add(i, m);
                 return;
             }
@@ -105,18 +117,15 @@ public class Operator extends DestroyedClass
         while (messageQueue.size()>0) {
             Message m = (Message)messageQueue.get(0);
             // deliver before the next execution
-            int currentTime = (m.isDownstream()?1:0)+getSDEPExecutions(true, m.isDownstream());
+            int currentTime = getSDEPExecutions(true, m.isDownstream());
             int deliveryTime = m.getDeliveryTime();
 
             if (deliveryTime==currentTime) {
                 messageQueue.removeFirst();
                 m.deliver(this);
             } else if (deliveryTime < currentTime) {
-                // if we missed deadline, throw error
-                throw new RuntimeException("Missed a message delivery deadline to " + this + ".  Your " +
-                                           "program has a message latency that is too tight to be satisfied " + 
-                                           "under the default schedule.  Might require constrained scheduling, " +
-                                           "or might represent an invalid (impossibly tight) message constraint.");
+                // we check for this in enqueMessage
+                assert false : "Message missed delivery deadline and should have been reported earlier.";
             } else {
                 break;
             }

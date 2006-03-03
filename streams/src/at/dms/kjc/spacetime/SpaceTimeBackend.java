@@ -15,6 +15,7 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.SIRPrinter;
+//import at.dms.kjc.sir.SIRToStreamIt;
 
 /**
  * The entry to the space time backend for raw.
@@ -150,6 +151,14 @@ public class SpaceTimeBackend {
         // from a single SIRPopExpression
         RemoveMultiPops.doit(str);
 
+        // We require that no FileReader directly precede a splitter and
+        // no joiner directly precede a FileWriter.
+	//        System.err.println("Before SafeFileReaderWriterPositions"); 
+	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
+        SafeFileReaderWriterPositions.doit(str);
+	//        System.err.println("After SafeFileReaderWriterPositions");
+	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
+        
         // make sure that push expressions do not contains pop expressions
         // because if they do and we use the gdn, we will generate the header 
         // for the pop expression before the push expression and that may cause 

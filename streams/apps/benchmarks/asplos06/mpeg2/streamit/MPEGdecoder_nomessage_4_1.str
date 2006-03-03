@@ -133,7 +133,7 @@ void->void pipeline MPEGdecoder_nomessage_4_1() {
             }
         }
         add BlockDecode();
-        add FileWriter<int>("./dec_nm_blockdecode.int");
+        add FileWriter<int>("./dec_nm_blockdecode_1.int");
     } else if (parse_or_process == 5) {
         add FileReader<int>("../input/dec_nm_parsed.int");
         add int->int splitjoin {

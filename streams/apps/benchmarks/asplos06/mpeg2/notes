@@ -25,11 +25,13 @@ MPEGdecoder_nomessage_5_2  21
 MPEGdecoder_nomessage_5_3  39
 
 MPEGdecoder_nomessage_4_J will read ../input/dec_nm_parsed.int 
-                          will write ./dec_nm_blockdecode.int
+                          will write ./dec_nm_blockdecode_J.int
                           compare to ../output/dec_nm_blockdecode_J.int
 MPEGdecoder_nomessage_5_J will read ../input/dec_nm_parsed.int
-                          will write ./dec_nm_color_channels_input.int
+                          will write ./dec_nm_color_channels_input_J.int
                           compare to ../output/dec_nm_color_channels_input_J.int
+In all cases, running with -i 1320 should consume the entire input file. 
+
 Different versions of DCT round slightly differently.  The output
 files were build using -library so there may be some further
 differences since java seemed to round differently from C / C++.

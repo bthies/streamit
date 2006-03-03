@@ -1,0 +1,20 @@
+The FMRadio.str code is identical to the code at 
+benchmarks/fm/streamit/FMRadio.str
+
+the versions differ in the value of eqBands defined at line 132 (which affects
+the number of filters, and the value of numberOfTaps defined at line 125 used 
+for the LowPassFilter added at line 152 and the Equalizer added at line 154
+which affects the amount of work performed, but not the number of filters.
+
+
+               eqBands     numberOfTaps         filters
+FMRadio.str       11            64                 67
+FMRadio1.str       5            64                 31
+FMRadio2.str       7            64                 43
+FMRadio3.str       9            64                 55
+FMRadio4.str       5           128                 31
+FMRadio5.str       7           128                 43
+FMRadio6.str       9           128                 55
+
+The output of FMRadioX.str is sent to FMRadioX.out and the output directory
+contains library reference output for 100 iterations.

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.28 2006-02-17 21:10:50 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.29 2006-03-03 00:24:47 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -1284,12 +1284,12 @@ public class SIRToStreamIt
                         for (int i = 0; i < cont.size(); i++)
                             {
                                 SIRStream child = cont.get(i);
-                                List params = cont.getParams(i);
+                                //List params = cont.getParams(i);
                                 // synthesize an SIRInitStatement, then visit
                                 // it to print an add/body/loop statement and
                                 // enqueue the stream's code to be printed.
                                 p.newLine();
-                                new SIRInitStatement(params, child).accept(this);
+                                new SIRInitStatement(/*params*/new LinkedList(), child).accept(this);
                             }
                     }
             }

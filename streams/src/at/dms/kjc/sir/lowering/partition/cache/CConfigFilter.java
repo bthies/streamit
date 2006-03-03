@@ -33,7 +33,15 @@ class CConfigFilter extends CConfig {
         int data_size = DataEstimate.estimateDWS(filter);
         int input = DataEstimate.getTypeSize(filter.getInputType());
         int output = DataEstimate.getTypeSize(filter.getInputType());
-        fusion_info = new FusionInfo(work_estimate, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);  
+
+	int penalty = 0;
+
+	if (filter instanceof SIRFileReader ||
+	    filter instanceof SIRFileWriter) {
+	    penalty += 100;
+	}
+	
+        fusion_info = new FusionInfo(work_estimate+penalty, work_estimate, code_size, data_size, filter.getPopInt(), filter.getPeekInt(), filter.getPushInt(), input, output);  
     }
 
     public boolean getPeek() {

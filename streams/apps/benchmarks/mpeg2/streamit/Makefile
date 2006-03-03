@@ -39,6 +39,7 @@ DATA_REORDERING = ${BLOCK_DESCRAMBLER} ${MACROBLOCK_DESCRAMBLER}
 
 # General Purpose Streams Used By Both the Encoders and Decoders
 LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LIBDCT}
+LIBMPEG2_NOMESSAGE = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ${LIBDCT}
 
 # Streams Used By the Decoders
 LIBMPEG2_DECODE = ${DECODER_PIPELINE} Parser.str ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
@@ -83,8 +84,8 @@ mpeg2bmp:	MPEGtoBMP.str ${LIBMPEG2_DECODE} ${LIBMPEG2} BMP.str
 bmp2mpeg: BMPtoMPEG.str ${LIBMPEG2_ENCODE} ${LIBMPEG2} BMP.str 
 	strc BMPtoMPEG.str ${LIBMPEG2_ENCODE} ${LIBMPEG2} BMP.str ${STRC_OPTIONS}
 
-nomessage: MPEGdecoder_nomessage.str ${LIBMPEG2}
-	strc MPEGdecoder_nomessage.str ${LIBMPEG2} ${STRC_OPTIONS}
+nomessage: MPEGdecoder_nomessage.str ${LIBMPEG2_NOMESSAGE}
+	strc MPEGdecoder_nomessage.str ${LIBMPEG2_NOMESSAGE} ${STRC_OPTIONS}
 
 docs:	${STREAMITDOC}
 	${STREAMITDOC} BinaryFile.str.pre -o BinaryFile.str.pre.html

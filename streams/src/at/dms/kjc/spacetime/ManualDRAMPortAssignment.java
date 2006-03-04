@@ -195,7 +195,7 @@ public class ManualDRAMPortAssignment {
             FilterTraceNode filter = (FilterTraceNode) files[i].getHead()
                 .getNext();
 
-            if (files[i].getHead().isFileWriter()) {
+            if (files[i].getHead().isFileOutput()) {
                 assert files[i].getHead().oneInput() : "buffer assignment of a joined file writer not implemented ";
                 FileOutputContent fileOC = (FileOutputContent) filter
                     .getFilter();
@@ -209,7 +209,7 @@ public class ManualDRAMPortAssignment {
                 IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
                 // attach the file writer to the port
                 dram.setFileWriter(fileOC);
-            } else if (files[i].getTail().isFileReader()) {
+            } else if (files[i].getTail().isFileInput()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,

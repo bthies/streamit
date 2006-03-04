@@ -19,7 +19,7 @@ import at.dms.kjc.sir.lowering.partition.*;
  */
 public class SimplePartitioner extends Partitioner {
     // trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.5;
+    private static final double TRASHOLD = 0.02;
 
     // if true, make traces as long as possible ignoring the work balancing
     // (TRASHOLD)

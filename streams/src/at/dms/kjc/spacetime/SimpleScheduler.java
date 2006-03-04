@@ -79,14 +79,14 @@ public class SimpleScheduler {
 
         if (partitioner.isIO(t1)) {
             // assume that file readers come before everything
-            if (t1.getTail().isFileReader())
+            if (t1.getTail().isFileInput())
                 return true;
-            if (t2.getTail().isFileReader())
+            if (t2.getTail().isFileInput())
                 return false;
             // assume file writes come after everything
-            if (t1.getHead().isFileWriter())
+            if (t1.getHead().isFileOutput())
                 return false;
-            if (t2.getHead().isFileWriter())
+            if (t2.getHead().isFileOutput())
                 return true;
         }
 

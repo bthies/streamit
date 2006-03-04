@@ -155,6 +155,7 @@ public abstract class Partitioner {
                   myLag;
                 
                 //record the startup cost
+                System.out.println("StartupCost: " + node + " " + startupCost);
                 filterStartupCost.put(node, new Integer(startupCost));
                 
                 //reset the prev node and the prev startup cost...

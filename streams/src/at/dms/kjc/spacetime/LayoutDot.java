@@ -2,6 +2,8 @@ package at.dms.kjc.spacetime;
 
 import java.io.FileWriter;
 import java.util.Vector;
+import java.util.Iterator;
+import at.dms.kjc.common.*;
 
 /**
  * This class generates a dot graph of the layout and for each tile the
@@ -12,6 +14,30 @@ import java.util.Vector;
  */
 public class LayoutDot 
 {
+    /**
+     * Print the final cost of the layout according to the cost function
+     * of <anneal>.
+     *  
+     * @param spaceTime
+     * @param anneal
+     */
+    public static void printLayoutCost(SpaceTimeSchedule spaceTime, 
+            SimulatedAnnealing anneal) {
+        anneal.initialize();
+         Iterator nodes  = 
+             Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        while (nodes.hasNext()) {
+            TraceNode node = (TraceNode)nodes.next();
+            if (node.isFilterTrace()) {
+                RawTile tile = 
+                    spaceTime.partitioner.rawChip.getTile(node.getAsFilter().getX(),
+                            node.getAsFilter().getY());
+                anneal.assignment.put(node, tile);
+            }
+        }
+        anneal.printLayoutStats();
+    }
+    
     /**
      * Generate the dot graph of the layout.
      * 

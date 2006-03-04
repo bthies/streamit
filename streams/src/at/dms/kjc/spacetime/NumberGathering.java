@@ -23,7 +23,7 @@ public class NumberGathering
         //get all the file writers
         Vector fw = new Vector();
         for (int i = 0; i < files.length; i++) 
-            if (files[i].getHead().isFileWriter())
+            if (files[i].getHead().isFileOutput())
                 fw.add(files[i]);
 
         fileWriters = (Trace[])fw.toArray(new Trace[0]);

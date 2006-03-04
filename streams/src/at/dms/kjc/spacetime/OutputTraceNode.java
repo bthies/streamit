@@ -202,14 +202,11 @@ public class OutputTraceNode extends TraceNode {
         return buf.toString();
     }
 
-    public boolean isFileReader() {
-        return getPrevFilter().getFilter() instanceof FileInputContent;
-    }
 
     public boolean hasFileOutput() {
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
-            if (((Edge) dests.next()).getDest().isFileWriter())
+            if (((Edge) dests.next()).getDest().isFileOutput())
                 return true;
         }
         return false;
@@ -220,7 +217,7 @@ public class OutputTraceNode extends TraceNode {
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
             Edge edge = (Edge) dests.next();
-            if (edge.getDest().isFileWriter())
+            if (edge.getDest().isFileOutput())
                 fileOutputs.add(edge.getDest());
         }
         return fileOutputs;
@@ -234,7 +231,7 @@ public class OutputTraceNode extends TraceNode {
     public boolean onlyWritingToAFile() {
         if (oneOutput()
                 && OffChipBuffer.unnecessary(this)
-                && getSingleEdge().getDest().isFileWriter()
+                && getSingleEdge().getDest().isFileOutput()
                 && OffChipBuffer.unnecessary(getSingleEdge()
                                      .getDest()))
             return true;

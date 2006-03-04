@@ -97,6 +97,10 @@ public class Edge {
         return itemsSent;
     }
 
+    /**
+     * @return The amount of items (not counting typesize) that flows 
+     * over this edge in the steady state.
+     */
     public int steadyItems() {
         int itemsReceived, itemsSent;
 

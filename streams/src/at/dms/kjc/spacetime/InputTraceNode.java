@@ -142,13 +142,9 @@ public class InputTraceNode extends TraceNode {
         return buf.toString();
     }
 
-    public boolean isFileWriter() {
-        return getNextFilter().getFilter() instanceof FileOutputContent;
-    }
-
     public boolean hasFileInput() {
         for (int i = 0; i < sources.length; i++) {
-            if (sources[i].getSrc().isFileReader())
+            if (sources[i].getSrc().isFileInput())
                 return true;
         }
         return false;
@@ -168,7 +164,7 @@ public class InputTraceNode extends TraceNode {
         
         //if not a file reader, then we might have to align the dest
         if (buffer.getDest() instanceof OutputTraceNode
-                && ((OutputTraceNode) buffer.getDest()).isFileReader())
+                && ((OutputTraceNode) buffer.getDest()).isFileInput())
             return true;
         
         return false;

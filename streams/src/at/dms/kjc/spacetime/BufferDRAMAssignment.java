@@ -156,7 +156,7 @@ public class BufferDRAMAssignment {
             FilterTraceNode filter = (FilterTraceNode) files[i].getHead()
                 .getNext();
 
-            if (files[i].getHead().isFileWriter()) {
+            if (files[i].getHead().isFileOutput()) {
                 assert files[i].getHead().oneInput() : 
                     "buffer assignment of a joined file writer not implemented ";
                 //get the tile assigned to the file writer by the layout stage?
@@ -178,9 +178,13 @@ public class BufferDRAMAssignment {
                 // assign the other buffer to the same port
                 // this should not affect anything
                 IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
+                System.out.println("Assigning " + filter.getFilter() + " to " + 
+                        dram + " written by " + 
+                        files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                
                 // attach the file writer to the port
                 dram.setFileWriter((FileOutputContent)filter.getFilter());
-            } else if (files[i].getTail().isFileReader()) {
+            } else if (files[i].getTail().isFileInput()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
                 //get the tile assigned to the next

@@ -331,7 +331,55 @@ public class RawChip {
         // not conntected
         return false;
     }
-
+ 
+    
+    /**
+     * Get the tile that is at the specified <dir> from <tile>.
+     * 
+     * @param tile
+     * @param dir 'N', 'S', 'W', 'E'
+     * @return
+     */
+    public RawTile getTile(RawTile tile, char dir) {
+        int dirX = 0;
+        int dirY = 0;
+        if (dir == 'N')
+            dirY = -1;
+        else if (dir == 'S')
+            dirY = 1;
+        else if (dir == 'E')
+            dirX = 1;
+        else if (dir == 'W')
+            dirX = -1;
+        else
+            assert false : "Calling getTile() with a bad direction char.";
+        
+        //get the node in the specified direction...        
+        ComputeNode node =  
+            getComputeNode(tile.getX() + dirX , tile.getY() + dirY);
+        
+        //now if it is a tile, return it, otherwise return null
+        if (node instanceof RawTile)
+            return (RawTile)node;
+        else
+            return null;
+    }
+    
+    /** 
+     * @param n1
+     * @param n2
+     * @return The hops between <n1> and <n2>.
+     */
+    public int manhattanDistance(ComputeNode n1, 
+            ComputeNode n2) {
+        //now compute the manhattan distance from the source and from the
+        //dest
+        int dist = Math.abs(n1.getX() - n2.getX()) + 
+                Math.abs(n1.getY() - n2.getY());
+    
+        return dist;
+        //add one because we for the final hop of the route.
+    }
     
     public void printChip() {
         if (!KjcOptions.magicdram) {

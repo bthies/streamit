@@ -215,9 +215,8 @@ public class SpaceTimeBackend {
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
         
         //create the layout for each stage of the execution using simulated annealing
-        AnnealedLayout annealedLayout = null;
+        AnnealedLayout annealedLayout = new AnnealedLayout(spaceTimeSchedule);
         if (!KjcOptions.noanneal) {
-            annealedLayout = new AnnealedLayout(spaceTimeSchedule);
             annealedLayout.run();
         }
         
@@ -227,6 +226,9 @@ public class SpaceTimeBackend {
                     (KjcOptions.noanneal ? null : annealedLayout.assignment));
         spaceTimeScheduler.schedule();
   
+        if (KjcOptions.noanneal) 
+            LayoutDot.printLayoutCost(spaceTimeSchedule, annealedLayout);
+        
         //calculate preloop and initialization code
         System.out.println("\nCreating Initialization Schedule...");
         spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph()));

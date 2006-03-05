@@ -380,7 +380,6 @@ public class RawChip {
                 Math.abs(n1.getY() - n2.getY());
     
         return dist;
-        //add one because we for the final hop of the route.
     }
     
     public void printChip() {

@@ -4,6 +4,8 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.common.SimulatedAnnealing;
+
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -46,6 +48,9 @@ public class AnnealedLayout extends SimulatedAnnealing {
     
     private HashSet fileWriters;
     private HashSet fileReaders;
+    /** The order the traces will be scheduled, so sorted by bottleneck work */
+    private Trace[] scheduleOrder;
+    
     
     public AnnealedLayout(SpaceTimeSchedule spaceTime) {
         super();
@@ -56,6 +61,9 @@ public class AnnealedLayout extends SimulatedAnnealing {
         tiles = new RawTile[numTiles];
         for (int i = 0; i < numTiles; i++) 
             tiles[i] = rawChip.getTile(i);
+        //get the schedule order of the graph!
+        scheduleOrder = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
+        Arrays.sort(scheduleOrder, new CompareTraceBNWork(spaceTime.partitioner));
     }
 
     public void run() {
@@ -67,6 +75,8 @@ public class AnnealedLayout extends SimulatedAnnealing {
     
     public void printLayoutStats() {
         int[] tileCosts = getTileWorks();
+        
+        System.out.println("Placement cost: " + placementCost(false));
         
         System.out.println("Max Work Tile of layout is " + maxWorkTile + 
                 ", it has work: " + maxTileWork(tileCosts));
@@ -325,7 +335,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
         double cost = workOfBottleNeckTile //+ standardDeviation(tileCosts)  
-                   + (double)bigWorkersCommEstimate(tileCosts);
+                   + 100.0 * (double)bigWorkersCommEstimate(tileCosts);
         
         /*
         if (!isLegalLayout())
@@ -386,7 +396,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
                 RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
                 //we only care about the tiles that do a bunch of work!
                 if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
-                   
+                    //System.out.println("Accouting for comm over big worker.");
                     IODevice srcPort = 
                         LogicalDramTileMapping.getHomeDram
                         (srcTile);
@@ -395,7 +405,13 @@ public class AnnealedLayout extends SimulatedAnnealing {
                         LogicalDramTileMapping.getHomeDram
                         (dstTile);
                     
-                    estimate += (rawChip.manhattanDistance(srcPort, dstPort));
+                    //now get the neighboring tiles of the dram ram's and find the
+                    //distance between them, because we send everthing over the 
+                    //static network...
+                    RawTile srcNeighbor = srcPort.getNeighboringTile();
+                    RawTile dstNeighbor = dstPort.getNeighboringTile();
+                    
+                    estimate += (rawChip.manhattanDistance(srcNeighbor, dstNeighbor) + 1);
                 }
             }
         }
@@ -423,42 +439,70 @@ public class AnnealedLayout extends SimulatedAnnealing {
         return max;
     }
         
-    /**
-     * @return The work estimation of each tile.
-     */
     private int[] getTileWorks() {
         int[] tileCosts = new int[rawChip.getTotalTiles()];
         
-        Iterator filterNodes = assignment.keySet().iterator();
-        while (filterNodes.hasNext()) {
-            FilterTraceNode filterNode = (FilterTraceNode)filterNodes.next();
-            //get the cost of a filter as its total work plus the pipeline lag
-            //(startupcost)
-            int filterCost = partitioner.getFilterWorkSteadyMult(filterNode) +
-            partitioner.getFilterStartupCost(filterNode);
-            
-            //if this filter is an trace endpoint, account for the cost
-            //of issuing its dram command... 
-            if (filterNode.getNext().isOutputTrace())
-                filterCost += DRAM_ISSUE_COST;
-            if (filterNode.getPrevious().isInputTrace())
-                filterCost += DRAM_ISSUE_COST;
+        for (int i = 0; i < scheduleOrder.length; i++) {
+            FilterTraceNode node = scheduleOrder[i].getFilterNodes()[0];
+            RawTile tile = (RawTile)assignment.get(node);
+            //the cost of the previous node, not used for first filter 
+            int prevStart = tileCosts[tile.getTileNumber()];
+                    
+            //the first filter does not have to account for startup lag
+            tileCosts[tile.getTileNumber()] += 
+                partitioner.getFilterWorkSteadyMult(node);
 
-            RawTile tile = (RawTile)assignment.get(filterNode);
-            //if the filter outputs to the gdn, add some fixed cost per item pushed
-            //in the steady
-            if (filterNode.getNext().isOutputTrace() && 
-                    LogicalDramTileMapping.mustUseGdn(tile)) {
-                filterCost += (filterNode.getFilter().getPushInt() * 
-                        filterNode.getFilter().getSteadyMult() * 
+            //now cycle thru the rest of the nodes...
+            for (int f = 1; f < scheduleOrder[i].getFilterNodes().length; f++) {
+                node = scheduleOrder[i].getFilterNodes()[f];
+                //get this node's assignment;
+                tile = (RawTile)assignment.get(node);
+                //accounting for pipeling lag, when is the earliest I can start?
+                
+                //offset is the offset between the last filter's start time
+                //and this tile's current work load, if it is positive,
+                //this tile is free after the last time, so we should,
+                //account for this time in the pipeline lag
+                //if negative, this tile is free before the last tile was free
+                //so it does not help, so set to zero
+                int offSet = tileCosts[tile.getTileNumber()] - 
+                   prevStart;
+                
+                offSet = Math.max(0, offSet);
+                
+                //now when is the earliest I can start in relation to the last tile
+                //and the work of this tile
+                int pipeLag = 
+                    Math.max((partitioner.getFilterStartupCost(node) - offSet),
+                            0);
+                
+                //set the prev start to when I started, for the next iteration
+                prevStart = tileCosts[tile.getTileNumber()];
+                //the new work for this tile, is my work + my startup cost...
+                tileCosts[tile.getTileNumber()] += (pipeLag + 
+                    partitioner.getFilterWorkSteadyMult(node));
+
+               
+            }
+            //account for the cost of issuing its load dram commands 
+            RawTile inputTile = 
+                (RawTile)assignment.get(scheduleOrder[i].getHead().getNextFilter());
+            tileCosts[inputTile.getTileNumber()]+= DRAM_ISSUE_COST;
+                        
+            //account for the
+            //cost of sending an item over the gdn if it uses it...
+            RawTile outputTile = 
+                (RawTile)assignment.get(scheduleOrder[i].getTail().getPrevFilter());
+            if (LogicalDramTileMapping.mustUseGdn(outputTile)) {
+                tileCosts[outputTile.getTileNumber()] += (node.getFilter().getPushInt() * 
+                        node.getFilter().getSteadyMult() * 
                         partitioner.steadyMult * GDN_PUSH_COST);
             }
-                
             
-            //add it to the tile costs...
-            tileCosts[tile.getTileNumber()] += 
-                filterCost;
+            //account for the cost of issuing its store dram command
+            tileCosts[outputTile.getTileNumber()]+= DRAM_ISSUE_COST;
         }
+         
         return tileCosts;
     }
     

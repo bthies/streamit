@@ -63,7 +63,8 @@ public class Rawify {
         steadyDRAMCommands = new DRAMCommandDist(schedule.getSchedule(), 
                 rawChip);
         steadyDRAMCommands.calcDRAMDist();
-                
+        steadyDRAMCommands.printDramCommands();
+        
         //the initialization stage!!
         traces = schedule.getInitSchedule();
         iterateInorder(traces, true, false, rawChip);

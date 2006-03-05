@@ -17,6 +17,7 @@ public class Trace {
     private int len;
     //This should be deleted, not used anymore!
     private int primePump;
+    private FilterTraceNode[] filterNodes;
     
     /*
      * public Trace (Trace[] edges, Trace[] depends, InputTraceNode head) { if
@@ -48,7 +49,11 @@ public class Trace {
         len = -1;
     }
 
-    // Finishes creating Trace
+    /**
+     * Finishes creating Trace
+     *  
+     * @return The number of FilterTraceNodes.
+     */
     public int finish() {
         int size = 0;
         TraceNode node = head;
@@ -72,6 +77,14 @@ public class Trace {
             tail.setPrevious(end);
         }
         tail.setParent(this);
+        //set the filterNodes array
+        filterNodes = new FilterTraceNode[size];
+        int i = 0;
+        node = getHead().getNext();
+        while (node.isFilterTrace()) {
+            filterNodes[i++] = node.getAsFilter();
+            node = node.getNext();
+        }
         return size;
     }
 
@@ -135,6 +148,13 @@ public class Trace {
         return ret;
     }
 
+    /** 
+     * @return The array of just the filter trace nodes, in data flow order.
+     */
+    public FilterTraceNode[] getFilterNodes() {
+        return filterNodes;
+    }
+    
     /**
      * @return The intratracebuffer between the inputtracenode 
      * and the first filtertracenode

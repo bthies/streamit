@@ -135,4 +135,19 @@ public class Trace {
         return ret;
     }
 
+    /**
+     * @return The intratracebuffer between the inputtracenode 
+     * and the first filtertracenode
+     */
+    public IntraTraceBuffer getSrcIntraBuf() {
+        return IntraTraceBuffer.getBuffer(getHead(), getHead().getNextFilter());
+    }
+    
+    /**
+     * @return The intratraceBuffer between the last filter and the outputtracenode
+     */
+    public IntraTraceBuffer getDstIntraBuf() {
+        return IntraTraceBuffer.getBuffer(getTail().getPrevFilter(), getTail());
+    }
 }
+

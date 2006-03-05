@@ -44,6 +44,8 @@ public class Rawify {
 
     private static SwitchReg PP_STEADY_LOOP_REG = SwitchReg.R3;
 
+    private static DRAMCommandDist steadyDRAMCommands;
+    
     /**
      *  The entry of the rawify pass.  This function iterates over the 
      *  schedules for the 3 phases (init, priming, steady) and generates the
@@ -55,6 +57,13 @@ public class Rawify {
     public static void run(SpaceTimeSchedule schedule, RawChip rawChip) {
         Trace traces[];
 
+        //determine the number of dram reads and writes to each port in
+        //the steady state, this is necessary to throttle the issuing
+        //tile during data-redistribution
+        steadyDRAMCommands = new DRAMCommandDist(schedule.getSchedule(), 
+                rawChip);
+        steadyDRAMCommands.calcDRAMDist();
+                
         //the initialization stage!!
         traces = schedule.getInitSchedule();
         iterateInorder(traces, true, false, rawChip);

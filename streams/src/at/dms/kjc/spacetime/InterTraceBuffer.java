@@ -20,6 +20,12 @@ public class InterTraceBuffer extends OffChipBuffer {
     // the edge
     protected Edge edge;
    
+    /** 
+     * A map of StreamingDrams to the number of InterTraceBuffers
+     * mapped to it.  StreamingDram->Integer
+     */
+    protected static HashMap dramsToBuffers;
+    
     
     protected InterTraceBuffer(Edge edge) {
         super(edge.getSrc(), edge.getDest());
@@ -67,4 +73,15 @@ public class InterTraceBuffer extends OffChipBuffer {
         return edge;
     }
 
+    /**
+     * @param dram
+     * @return The number of intertracebuffer's mapped to <dram>.
+     * Used because each dram can at handle at most 
+     * StreamingDram.STREAMING_QUEUE_SIZE number of reads and writes.
+     */
+    public int getNumInterTraceBuffers(StreamingDram dram) {
+        assert dramsToBuffers.containsKey(dram);
+        return ((Integer)dramsToBuffers.get(dram)).intValue();
+    }
+    
 }

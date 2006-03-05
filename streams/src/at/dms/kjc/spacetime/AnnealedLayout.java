@@ -14,6 +14,12 @@ import java.util.HashSet;
  *
  */
 public class AnnealedLayout extends SimulatedAnnealing {
+    /** if a tile does at least <BIG_WORKER> percentage of the bottle neck tile,
+     * communication to and from it are included in the communication cost component
+     * of the cost function.
+     */
+    private static final double BIG_WORKER = 0.9;
+    
     private static final int ILLEGAL_COST = 1000000;
     /** the cost of outputing one item using the gdn versus using the static net
      for the final filter of a Trace */
@@ -316,8 +322,10 @@ public class AnnealedLayout extends SimulatedAnnealing {
     public double placementCost(boolean debug) {
         int[] tileCosts = getTileWorks();
         
-        double cost = (10.0 * (double)maxTileWork(tileCosts)) + standardDeviation(tileCosts)  
-                   + (double)communicationEstimate();
+        double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
+        
+        double cost = workOfBottleNeckTile //+ standardDeviation(tileCosts)  
+                   + (double)bigWorkersCommEstimate(tileCosts);
         
         /*
         if (!isLegalLayout())
@@ -353,9 +361,18 @@ public class AnnealedLayout extends SimulatedAnnealing {
     /**
      * @return An estimate of the cost of communication for this layout.
      */
-    private int communicationEstimate() {
+    private int bigWorkersCommEstimate(int tileCosts[]) {
         int estimate = 0;
         Trace[] traces = partitioner.getTraceGraph();
+        HashSet bigWorkers = new HashSet();
+        
+        //create a hashset of tiles that do a bunch of work...
+        for (int i = 0; i < tileCosts.length; i++) {
+            if ((double)tileCosts[i] / (double)tileCosts[maxWorkTile] >= 
+                BIG_WORKER) {
+                bigWorkers.add(rawChip.getTile(i));
+            }
+        }
         
         //guess at the initial communication latency for 
         //edges between slices...
@@ -365,15 +382,21 @@ public class AnnealedLayout extends SimulatedAnnealing {
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
                 //get the port that source is writing to
-                IODevice srcPort = 
-                    LogicalDramTileMapping.getHomeDram
-                    ((RawTile)assignment.get(edge.getSrc().getPrevFilter()));
-                //get the por that the dest is reading from
-                IODevice dstPort = 
-                    LogicalDramTileMapping.getHomeDram
-                    ((RawTile)assignment.get(edge.getDest().getNextFilter()));
-                
-                estimate += rawChip.manhattanDistance(srcPort, dstPort);
+                RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
+                RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
+                //we only care about the tiles that do a bunch of work!
+                if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
+                   
+                    IODevice srcPort = 
+                        LogicalDramTileMapping.getHomeDram
+                        (srcTile);
+                    //get the por that the dest is reading from
+                    IODevice dstPort = 
+                        LogicalDramTileMapping.getHomeDram
+                        (dstTile);
+                    
+                    estimate += (rawChip.manhattanDistance(srcPort, dstPort));
+                }
             }
         }
         return estimate;

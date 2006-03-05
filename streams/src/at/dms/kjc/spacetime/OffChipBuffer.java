@@ -38,8 +38,7 @@ public abstract class OffChipBuffer {
     protected TraceNode dest;
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
-   
-    
+           
     static {
         unique_id = 0;
         bufferStore = new HashMap();
@@ -199,18 +198,35 @@ public abstract class OffChipBuffer {
      * based on the prime pump schedule and the multiplicity difference between the source node
      * and the dest node.
      * 
+     * This method also counts the number of intertracebuffers that are assigned
+     * to each dram and stores it in the dramToBuffer's hashmap in intertracebuffer.
+     * 
      * @param spaceTime The SpaceTimeSchedule
      */
     public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
+        InterTraceBuffer.dramsToBuffers = new HashMap();
         Iterator buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile neighboring
         //the dram it is assigned to
         while (buffers.hasNext()) {
             OffChipBuffer buffer = (OffChipBuffer)buffers.next();
-            //set the rotation length for the buffer
-            if (buffer.isInterTrace())
+            if (buffer.isInterTrace()) {
+                //set the rotation length for the buffer
                 setRotationLength(spaceTime, (InterTraceBuffer)buffer);
+                //record that this dram has buffer mapped to it
+                if (InterTraceBuffer.dramsToBuffers.containsKey(buffer.getDRAM())) {
+                    //we have seen this buffer before, so just 
+                    //add one to its count...
+                    InterTraceBuffer.dramsToBuffers.put(buffer.getDRAM(),
+                            new Integer
+                            (((Integer)InterTraceBuffer.dramsToBuffers.
+                                    get(buffer.getDRAM())).intValue() + 1));
+                }
+                else //haven't seen dram before so just put 1
+                    InterTraceBuffer.dramsToBuffers 
+                    .put(buffer.getDRAM(), new Integer(1));
+            }
         }
     }
     

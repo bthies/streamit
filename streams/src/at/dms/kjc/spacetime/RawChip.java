@@ -25,6 +25,8 @@ public class RawChip {
 
     public static final int cacheLineWords = 8;
 
+    
+    
     /** the name of the function that constructs dynamic headers in raw.h */
     public static final String ConstructDynHdr = "construct_dyn_hdr";
     /** the maximum packet size of a gdn packet (not including the header) */

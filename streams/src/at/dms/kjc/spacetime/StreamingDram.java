@@ -5,8 +5,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.flatgraph2.*;
 
+/**
+ * This class represents a streaming dram (SDRAM) that can be attached
+ * to a port of the raw chip.   
+ * @author mgordon
+ *
+ */
 public class StreamingDram extends IODevice 
 {
+    /** the max number of read or write instructions that can be issued to 
+     * a the streaming dram.
+     */
+    public static final int STREAMING_QUEUE_SIZE = 8;
     //the upper and lower memory bound
     //the lower being inclusive and the upper being exclusive
     private Address ub;

@@ -462,12 +462,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             StreamingDram src, StreamingDram dst) {
         int items = 0;
         Iterator route = Router.getRoute(src, dst).iterator();
+        HashSet accountedFor = new HashSet();
         while (route.hasNext()) {
             ComputeNode hop = (ComputeNode)route.next();
             if (hop instanceof RawTile && 
                     bigWorker.contains(hop) &&  
                     !LogicalDramTileMapping.mustUseGdn((RawTile)hop)) {
                 items +=  edge.steadyItems();
+                accountedFor.add(hop);
             }
         }
         //now we if the src or dst owner tiles is a big worker and 
@@ -475,12 +477,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //because the dram command will have to wait until it is completed
         RawTile srcIssuer = LogicalDramTileMapping.getOwnerTile(src);
         if (bigWorker.contains(srcIssuer) &&
-                LogicalDramTileMapping.mustUseGdn(srcIssuer))
+                LogicalDramTileMapping.mustUseGdn(srcIssuer)
+                && !accountedFor.contains(srcIssuer))
             items += edge.steadyItems();
         
         RawTile dstIssuer = LogicalDramTileMapping.getOwnerTile(dst);
         if (bigWorker.contains(dstIssuer) &&
-                LogicalDramTileMapping.mustUseGdn(dstIssuer))
+                LogicalDramTileMapping.mustUseGdn(dstIssuer) &&
+                !accountedFor.contains(dstIssuer))
             items += edge.steadyItems();
         
         

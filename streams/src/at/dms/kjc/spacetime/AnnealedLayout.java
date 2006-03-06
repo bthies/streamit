@@ -22,6 +22,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     private static final double BIG_WORKER = 0.9;
     
+    /** the added weight of the latency of a intertracebuffer that 
+     * is connected to a big worker tile.
+     */
+    private static final int BIG_WORKER_COMM_LATENCY_WEIGHT = 10;
+    
     private static final int ILLEGAL_COST = 1000000;
     /** the cost of outputing one item using the gdn versus using the static net
      for the final filter of a Trace */
@@ -320,7 +325,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
         double cost = workOfBottleNeckTile //+ standardDeviation(tileCosts)  
-                   + (double)bigWorkersCommEstimate(tileCosts);
+                   + (double)commEstimate(tileCosts);
         
         /*
         if (!isLegalLayout())
@@ -360,39 +365,38 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * of the intertracebuffer by calculating the manhattan distance of hte
      * edge.
      */
-    private int bigWorkerDistanceLatency(HashSet bigWorkers, Edge edge) {
+    private int distanceLatency(HashSet bigWorkers, Edge edge) {
         
         //get the port that source is writing to
         RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
         RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
+        int multipler = 1;
         //we only care about the tiles that do a bunch of work!
         if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
-            //System.out.println("Accouting for comm over big worker.");
-            IODevice srcPort = 
-                LogicalDramTileMapping.getHomeDram
-                (srcTile);
-            //get the por that the dest is reading from
-            IODevice dstPort = 
-                LogicalDramTileMapping.getHomeDram
-                (dstTile);
-            
-            //now get the neighboring tiles of the dram ram's and find the
-            //distance between them, because we send everthing over the 
-            //static network...
-            RawTile srcNeighbor = srcPort.getNeighboringTile();
-            RawTile dstNeighbor = dstPort.getNeighboringTile();
-            
-            return (rawChip.manhattanDistance(srcNeighbor, dstNeighbor) + 1);
-         
+            multipler = BIG_WORKER_COMM_LATENCY_WEIGHT;
         }
+        //System.out.println("Accouting for comm over big worker.");
+        IODevice srcPort = 
+            LogicalDramTileMapping.getHomeDram
+            (srcTile);
+        //get the por that the dest is reading from
+        IODevice dstPort = 
+            LogicalDramTileMapping.getHomeDram
+            (dstTile);
         
-        return 0;
+        //now get the neighboring tiles of the dram ram's and find the
+        //distance between them, because we send everthing over the 
+        //static network...
+        RawTile srcNeighbor = srcPort.getNeighboringTile();
+        RawTile dstNeighbor = dstPort.getNeighboringTile();
+        
+        return (rawChip.manhattanDistance(srcNeighbor, dstNeighbor) + 1) * multipler; 
     }    
     
     /**
      * @return An estimate of the cost of communication for this layout.
      */
-    private int bigWorkersCommEstimate(int tileCosts[]) {
+    private int commEstimate(int tileCosts[]) {
         int estimate = 0;
         Trace[] traces = partitioner.getTraceGraph();
         HashSet bigWorkers = new HashSet();
@@ -418,7 +422,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 InputTraceNode input = edge.getDest();
                 //account for the distance of the connected to/from a
                 //big worker
-                estimate += bigWorkerDistanceLatency(bigWorkers, edge);
+                estimate += distanceLatency(bigWorkers, edge);
                 
 //              if the off chip buffer does something then count its 
                 //communicate if it goes through a bigWorker
@@ -516,6 +520,89 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         int[] tileCosts = new int[rawChip.getTotalTiles()];
         
         for (int i = 0; i < scheduleOrder.length; i++) {
+            
+            //don't do anything for predefined filters...
+            if (scheduleOrder[i].getHead().getNextFilter().isPredefined()) 
+                continue;
+            //find the bottleneck filter based on the filter work estimates
+            //and the tile avail for each filter
+            FilterTraceNode bottleNeck = null;
+            int maxAvail = -1;
+            int prevStart = 0;
+            
+            for (int f = 0; f < scheduleOrder[i].getFilterNodes().length; f++) {
+                FilterTraceNode current = scheduleOrder[i].getFilterNodes()[f];
+                RawTile tile = getTile(current);
+                int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
+                        prevStart + partitioner.getFilterStartupCost(current));
+                int tileAvail = partitioner.getFilterWorkSteadyMult(current) +
+                   currentStart;
+                if (tileAvail > maxAvail) {
+                    maxAvail = tileAvail;
+                    bottleNeck = current;
+                }
+                prevStart = currentStart;
+            }
+                
+            assert bottleNeck != null : "Could not find bottleneck for " + scheduleOrder[i] ;
+                
+            RawTile bottleNeckTile = getTile(bottleNeck);
+            
+            
+            if (bottleNeck.getPrevious().isInputTrace()) {
+                tileCosts[bottleNeckTile.getTileNumber()]+= DRAM_ISSUE_COST;
+            }
+            if (bottleNeck.getNext().isOutputTrace()) {
+                //account for the
+                //cost of sending an item over the gdn if it uses it...
+                if (LogicalDramTileMapping.mustUseGdn(bottleNeckTile)) {
+                    tileCosts[bottleNeckTile.getTileNumber()] += (bottleNeck.getFilter().getPushInt() * 
+                            bottleNeck.getFilter().getSteadyMult() * 
+                            GDN_PUSH_COST);
+                }
+            }
+            
+            //calculate when the bottle neck tile will finish, 
+            //and base everything off of that, traversing backward and 
+            //foward in the trace
+            tileCosts[bottleNeckTile.getTileNumber()] += 
+                (partitioner.getFilterStartupCost(bottleNeck) +
+                        partitioner.getFilterWorkSteadyMult(bottleNeck));
+            
+            int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
+            int next1Iter = partitioner.getWorkEstOneFiring(bottleNeck);
+            TraceNode current = bottleNeck.getPrevious();
+
+            //traverse backwards and set the finish times of the traces...
+            while (current.isFilterTrace()) {
+                RawTile tile = getTile(current.getAsFilter());
+                tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
+                //get ready for next iteration
+                nextFinish = tileCosts[tile.getTileNumber()];
+                next1Iter = partitioner.getWorkEstOneFiring(current.getAsFilter());
+                current = current.getPrevious();
+            }
+            
+            //traverse forwards and set the finish times of the traces
+            current = bottleNeck.getNext();
+            int prevFinish = tileCosts[bottleNeckTile.getTileNumber()];
+            
+            while (current.isFilterTrace()) {
+                RawTile tile = getTile(current.getAsFilter());
+                tileCosts[tile.getTileNumber()] = 
+                    (prevFinish + partitioner.getWorkEstOneFiring(current.getAsFilter()));
+                prevFinish = tileCosts[tile.getTileNumber()];
+                current = current.getNext();
+            }
+        }
+ 
+        return tileCosts;
+    }
+    
+    private int[] getTileWorksOld() {
+        int[] tileCosts = new int[rawChip.getTotalTiles()];
+        
+        for (int i = 0; i < scheduleOrder.length; i++) {
             FilterTraceNode node = scheduleOrder[i].getFilterNodes()[0];
             RawTile tile = (RawTile)assignment.get(node);
             //the cost of the previous node, not used for first filter 
@@ -584,7 +671,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public void initialize() {
         //generate the startup cost of each filter...         
-        partitioner.calculateStartupCosts();
+        partitioner.calculateWorkStats();
         
         //create the filter list
         filterList = new LinkedList();
@@ -596,8 +683,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             //but don't add file readers/writers... they will
             //"occupy" the tile of their neighbor stream...
             if (node.isFilterTrace() && 
-                    !(node.getAsFilter().isFileInput() ||
-                            node.getAsFilter().isFileOutput()))  {
+                    !(node.getAsFilter().isPredefined()))  {
                 filterList.add(node);
             }
         }

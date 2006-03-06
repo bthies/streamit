@@ -39,6 +39,11 @@ public abstract class Partitioner {
 
     protected Trace[] topTraces;
 
+    /** This hashmap maps a Trace to the FilterTraceNode that
+     * has the most work;
+     */ 
+    protected HashMap bottleNeckFilter;
+    
     public Trace[] io;
 
     // filtercontent -> work estimation
@@ -57,6 +62,7 @@ public abstract class Partitioner {
         traceBNWork = new HashMap();
         steadyMult = KjcOptions.steadymult;
         filterStartupCost = new HashMap();
+        bottleNeckFilter = new HashMap();
     }
 
     /**
@@ -115,6 +121,15 @@ public abstract class Partitioner {
     }
     
     /**
+     * @param trace
+     * @return Return the filter of trace that does the most work. 
+     */
+    public FilterTraceNode getTraceBNFilter(Trace trace) {
+        assert bottleNeckFilter.containsKey(trace);
+        return (FilterTraceNode)bottleNeckFilter.get(trace);
+    }
+    
+    /**
      * For each filtertracenode of the slice graph, calculate the startup
      * cost.  This is essentially the time it takes to first start the filter,
      * accounting for pipeline lag.  It is calculated for a trace of 
@@ -127,17 +142,27 @@ public abstract class Partitioner {
      * where work(fi) returns the work estimation of 1 firing of the filter.
      *
      */
-    public void calculateStartupCosts() {
+    public void calculateWorkStats() {
         Trace[] traces = getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
+            int maxWork;
+            FilterTraceNode maxFilter;
             //get the first filter
             FilterTraceNode node = traces[i].getHead().getNextFilter();
             filterStartupCost.put(node, new Integer(0));
             int prevStartupCost = 0;
             FilterTraceNode prevNode = node;
+            //init maxes
+            maxWork = getFilterWorkSteadyMult(node);
+            maxFilter = node;
             
             while (node.getNext().isFilterTrace()) {
                 node = node.getNext().getAsFilter();
+                
+                if (getFilterWorkSteadyMult(node) > maxWork) {
+                    maxWork = getFilterWorkSteadyMult(node);
+                    maxFilter = node;
+                }
                 
                 double prevPush = 
                     node.getPrevious().getAsFilter().getFilter().getPushInt();
@@ -162,6 +187,8 @@ public abstract class Partitioner {
                 prevNode = node;
                 prevStartupCost = startupCost;
             }
+            //remember the bottle neck filter
+            bottleNeckFilter.put(traces[i], maxFilter);
             //on to the next trace
         }
     }
@@ -171,7 +198,7 @@ public abstract class Partitioner {
      * @return The cost of 1 firing of the filter.
      */
     public int getWorkEstOneFiring(FilterTraceNode node) {
-        return getFilterWork(node) / node.getFilter().getSteadyMult() * steadyMult;
+        return (getFilterWork(node) / node.getFilter().getSteadyMult()) * steadyMult;
     }
     
     /**

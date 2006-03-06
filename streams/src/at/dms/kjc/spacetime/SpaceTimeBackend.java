@@ -223,11 +223,13 @@ public class SpaceTimeBackend {
         //create the layout for each stage of the execution using simulated annealing
          
         if (KjcOptions.noanneal) {
-            assert false;
+            layout = new ManualTraceLayout(spaceTimeSchedule);
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
-            layout.run();
         }
+        layout.run();
+                
+      
         
         System.out.println("\nSpace/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
@@ -269,9 +271,6 @@ public class SpaceTimeBackend {
         System.out.println("Creating Raw Code...");
         Rawify.run(spaceTimeSchedule, rawChip, layout); 
         
-//      dump the layout
-        LayoutDot.dumpLayout(spaceTimeSchedule, rawChip, "layout.dot");
-        
         // generate the switch code assembly files...
         GenerateSwitchCode.run(rawChip);
         // generate the compute code from the SIR
@@ -280,7 +279,9 @@ public class SpaceTimeBackend {
         if (KjcOptions.magicdram) {
             MagicDram.GenerateCode(rawChip);
         }
-          
+        //dump the layout
+        LayoutDot.dumpLayout(spaceTimeSchedule, rawChip, "layout.dot");
+        
         Makefile.generate(rawChip);
         
         // generate the bc file depending on if we have number gathering enabled

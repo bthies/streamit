@@ -85,6 +85,7 @@ public class Trace {
             filterNodes[i++] = node.getAsFilter();
             node = node.getNext();
         }
+        assert i == size;
         return size;
     }
 

@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import java.io.FileWriter;
 import java.util.Vector;
 import java.util.Iterator;
+import java.util.HashMap;
 import at.dms.kjc.common.*;
 
 /**
@@ -22,19 +23,21 @@ public class LayoutDot
      * @param anneal
      */
     public static void printLayoutCost(SpaceTimeSchedule spaceTime, 
-            SimulatedAnnealing anneal) {
+            Layout layout) {
+        AnnealedLayout anneal = new AnnealedLayout(spaceTime);
         anneal.initialize();
-         Iterator nodes  = 
-             Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        Iterator nodes  = 
+            Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        HashMap assignment = new HashMap();
         while (nodes.hasNext()) {
             TraceNode node = (TraceNode)nodes.next();
             if (node.isFilterTrace()) {
                 RawTile tile = 
-                    spaceTime.partitioner.rawChip.getTile(node.getAsFilter().getX(),
-                            node.getAsFilter().getY());
-                anneal.assignment.put(node, tile);
+                    layout.getTile(node.getAsFilter());
+                assignment.put(node, tile);
             }
         }
+        anneal.setAssignment(assignment);
         anneal.printLayoutStats();
     }
     

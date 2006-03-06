@@ -60,10 +60,11 @@ public class Linear extends BufferedCommunication implements Constants {
     private int index;
 
     public Linear(RawTile tile, FilterInfo filterInfo) {
-        super(tile, filterInfo);
+        super(tile, filterInfo, null);
+        assert false;
         //assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
         FilterTraceNode node = filterInfo.traceNode;
-        System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
+        System.out.println(" Generating code for " + filterInfo.filter + " using Linear.");
         assert filterInfo.initMult < 1 :
             "Still need to create init function: "+filterInfo.initMult;
         System.out.println("STEADYSTATE: "+filterInfo.steadyMult);

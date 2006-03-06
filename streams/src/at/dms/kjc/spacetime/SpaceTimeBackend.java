@@ -211,24 +211,30 @@ public class SpaceTimeBackend {
         
         CommCompRatio.ratio(partitioner);
         
+        System.out.println("\nMultiplying Steady-State...");
+        MultiplySteadyState.doit(partitioner.getTraceGraph());
+     
+        //we can now use filter infos, everything is set
+        FilterInfo.canUse();
+        
         //create the space/time schedule object to be filled in by the passes 
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
-        
+        Layout layout = null;
         //create the layout for each stage of the execution using simulated annealing
-        AnnealedLayout annealedLayout = new AnnealedLayout(spaceTimeSchedule);
-        if (!KjcOptions.noanneal) {
-            annealedLayout.run();
+         
+        if (KjcOptions.noanneal) {
+            assert false;
+        } else {
+            layout = new AnnealedLayout(spaceTimeSchedule);
+            layout.run();
         }
         
         System.out.println("\nSpace/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
-            new GenerateSteadyStateSchedule(spaceTimeSchedule,
-                    (KjcOptions.noanneal ? null : annealedLayout.assignment));
+            new GenerateSteadyStateSchedule(spaceTimeSchedule, layout);
         spaceTimeScheduler.schedule();
   
-        if (KjcOptions.noanneal) 
-            LayoutDot.printLayoutCost(spaceTimeSchedule, annealedLayout);
-        
+                
         //calculate preloop and initialization code
         System.out.println("\nCreating Initialization Schedule...");
         spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph()));
@@ -237,14 +243,10 @@ public class SpaceTimeBackend {
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);
         preLoopSched.schedule();
         
-        System.out.println("\nMultiplying Steady-State...");
-        MultiplySteadyState.doit(spaceTimeSchedule);
- 
-        //we can now use filter infos, everything is set
-        FilterInfo.canUse();
+       
         
-        System.out.println("Assigning Buffers to DRAMs...");
-        new BufferDRAMAssignment().run(spaceTimeSchedule);
+        //System.out.println("Assigning Buffers to DRAMs...");
+        //new BufferDRAMAssignment().run(spaceTimeSchedule);
         //ManualDRAMPortAssignment.run(spaceTimeSchedule);
         
         //set the rotation lengths of the buffers
@@ -265,7 +267,7 @@ public class SpaceTimeBackend {
         //create the raw execution code and switch code for the initialization
         // phase and the primepump stage and the steady state
         System.out.println("Creating Raw Code...");
-        Rawify.run(spaceTimeSchedule, rawChip); 
+        Rawify.run(spaceTimeSchedule, rawChip, layout); 
         
 //      dump the layout
         LayoutDot.dumpLayout(spaceTimeSchedule, rawChip, "layout.dot");

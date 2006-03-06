@@ -34,22 +34,6 @@ public class FilterTraceNode extends TraceNode
         return predefined;
     }
 
-    public void setXY(int x,int y) {
-        laidout = true;
-        this.x=x;
-        this.y=y;
-    }
-    
-    public int getX() {
-        assert laidout;
-        return x;
-    }    
-    
-    public int getY() {
-        assert laidout;
-        return y;
-    }
-
     public boolean isAssignedTile() 
     {
         return laidout;

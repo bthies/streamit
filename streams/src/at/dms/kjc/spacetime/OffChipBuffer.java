@@ -95,7 +95,7 @@ public abstract class OffChipBuffer {
         this.dram = DRAM;
         
         SpaceTimeBackend.println("Assign " + this.toString() + " to " + DRAM);
-
+        //System.out.println("Assign " + this.toString() + " to " + DRAM);
     }
 
     /** 
@@ -154,6 +154,18 @@ public abstract class OffChipBuffer {
         return bufferStore.values();
     }
 
+    /** 
+     * Reset all the dram assignments of the buffers to null.
+     *
+     */
+    public static void resetDRAMAssignment() {
+        Iterator buffers = getBuffers().iterator();
+        while (buffers.hasNext()) {
+            OffChipBuffer buf = (OffChipBuffer)buffers.next();
+            buf.setDRAM(null);
+        }
+    }
+    
     public Address getSize() {
         return sizeSteady;
     }
@@ -248,7 +260,7 @@ public abstract class OffChipBuffer {
         //and it a probably a buffer that will never be generated because it is
         //a connected to a file reader or a file writer...
         if (sourceMult < destMult || sourceMult == destMult)
-            length = 0;
+            length = 1;
         else 
             length = sourceMult - destMult + 1; 
       

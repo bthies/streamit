@@ -38,11 +38,11 @@ public class BufferedCommunication extends RawExecutionCode
     //add one to the init multiplicity of the filter 
     private int initFire;
 
-    public BufferedCommunication(RawTile tile, FilterInfo filterInfo) 
+    public BufferedCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
-        super(tile, filterInfo);
+        super(tile, filterInfo, layout);
         FilterTraceNode node=filterInfo.traceNode;
-        System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Buffered Comm.");
+        System.out.println(tile + "Generating code for " + filterInfo.filter + " using Buffered Comm.");
     
         //set the unique id to append to each variable name
         //treat all the filters as two stages, i.e.

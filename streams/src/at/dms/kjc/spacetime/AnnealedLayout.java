@@ -15,7 +15,7 @@ import java.util.HashSet;
  * @author mgordon
  *
  */
-public class AnnealedLayout extends SimulatedAnnealing {
+public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /** if a tile does at least <BIG_WORKER> percentage of the bottle neck tile,
      * communication to and from it are included in the communication cost component
      * of the cost function.
@@ -50,7 +50,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
     private HashSet fileReaders;
     /** The order the traces will be scheduled, so sorted by bottleneck work */
     private Trace[] scheduleOrder;
-    
+    private BufferDRAMAssignment assignBuffers;
     
     public AnnealedLayout(SpaceTimeSchedule spaceTime) {
         super();
@@ -64,13 +64,30 @@ public class AnnealedLayout extends SimulatedAnnealing {
         //get the schedule order of the graph!
         scheduleOrder = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
         Arrays.sort(scheduleOrder, new CompareTraceBNWork(spaceTime.partitioner));
+        //init the buffer to dram assignment pass
+        assignBuffers = new BufferDRAMAssignment();
     }
 
     public void run() {
         //run the simulated annealing with 2 iterations, 
         //100 attempts per iteration
-        simAnnealAssign(2, 1000);
+        simAnnealAssign(2, 100);
         printLayoutStats();
+        for (int i = 0; i < filterList.size(); i++) 
+            System.out.println(filterList.get(i) + " is assigned to " + 
+                    assignment.get(filterList.get(i)));
+    }
+    
+    public RawTile getTile(FilterTraceNode filter) {
+        assert assignment.containsKey(filter) : 
+            "AnnealedLayout does have a mapping for " + filter;
+        return (RawTile)assignment.get(filter);
+    }
+        
+    public void setAssignment(HashMap newAssignment) {
+        assignment = newAssignment;
+//      reassign buffers.
+        assignBuffers.run(spaceTime, this);
     }
     
     public void printLayoutStats() {
@@ -97,7 +114,10 @@ public class AnnealedLayout extends SimulatedAnnealing {
      */
     public void swapAssignment() {
         //swapAssignmentIllegal();
+        //swap filters...
         swapAssignmentLegal();
+        //reassign buffers.
+        assignBuffers.run(spaceTime, this);
     }
     
     /** 
@@ -108,40 +128,11 @@ public class AnnealedLayout extends SimulatedAnnealing {
         Trace[] traces = partitioner.getTraceGraph();
         Trace reassignMe = traces[getRandom(traces.length)];
         
-        assert newTraceAssignment(assignment, 
-				  reassignMe.getHead().getNextFilter()) :
+        assert newTraceAssignment(reassignMe.getHead().getNextFilter()) :
             "Error: could not find a legal layout for " + reassignMe + " during layout";
     }
    
     
-    /**
-     * Perturb the configuration by choosing a new assignment for a
-     * single filter.  This could lead to an illegal layout because
-     * we use only near-neighbor communication...
-     */
-    public void swapAssignmentIllegal() {
-        //randomly find a filter
-        FilterTraceNode filter = 
-            (FilterTraceNode)filterList.get(getRandom(filterList.size()));
-        
-        //swap it to a random tile
-        RawTile oldTile = (RawTile)assignment.get(filter);
-        RawTile newTile = null;
-        
-        //find a new tile to swap it to...
-        while (true) {
-            newTile = 
-                tiles[getRandom(rawChip.getTotalTiles())];
-            if (newTile == oldTile)
-                continue;
-            else
-                break;
-        }
-        //commit the new assignment
-        assignment.remove(filter);
-        assignment.put(filter, newTile);
-    }
-
     /**
      *  
      */
@@ -149,6 +140,12 @@ public class AnnealedLayout extends SimulatedAnnealing {
        //try a random layout! nope
         //randomInitialPlacement();
         legalInitialPlacement();
+        //assign buffers...
+        assignBuffers.run(spaceTime, this);
+    }
+    
+    public void setTile(FilterTraceNode node, RawTile tile) {
+        assignment.put(node, tile);
     }
     
     /**
@@ -158,8 +155,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
      * @return true if we successfully laid out the trace, 
      * it should alway return true when finished recursing. 
      */
-    private boolean newTraceAssignment(HashMap newAssign, 
-            TraceNode node) {
+    private boolean newTraceAssignment(TraceNode node) {
         //we are finished
         if (node.isOutputTrace()) {
 	    //check the assignment of the previous filter 
@@ -172,7 +168,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
 	    if (fileWriters.contains(node.getPrevious()) &&
 		!legalFileWriterTile
 		(node.getPrevious().getAsFilter(), 
-		 (RawTile)newAssign.get(node.getPrevious())))
+		 (RawTile)assignment.get(node.getPrevious())))
 		return false;;       
             return true;
 	}
@@ -196,8 +192,8 @@ public class AnnealedLayout extends SimulatedAnnealing {
                         !legalFileReaderTile(filter, tile))
                     continue;
 		
-		newAssign.put(node, tile);
-		if (newTraceAssignment(newAssign, node.getNext()))
+		setTile(filter, tile);
+		if (newTraceAssignment(node.getNext()))
 		    return true;
 	    }
 	    //if we get here, we have failed to find a layout.
@@ -205,7 +201,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
         }
         else {
             //we are not the first tile so choose some
-            RawTile prevTile = (RawTile)newAssign.get(node.getPrevious());
+            RawTile prevTile = (RawTile)assignment.get(node.getPrevious());
             int dirVec = getRandom(24);
             for (int i = 0; i < 4; i++) {
                 //get the next direction to try...
@@ -218,8 +214,8 @@ public class AnnealedLayout extends SimulatedAnnealing {
                 //tile if so continue
                 boolean prevMap = false;
                 TraceNode prevNode = filter.getPrevious();
-                while (newAssign.containsKey(prevNode)) {
-                    if (tile == newAssign.get(prevNode)){
+                while (assignment.containsKey(prevNode)) {
+                    if (tile == assignment.get(prevNode)){
                         prevMap = true;
                         break;
                     }
@@ -231,9 +227,9 @@ public class AnnealedLayout extends SimulatedAnnealing {
                     continue;
                                        
                 //assign this filter to the tile in this direction
-                newAssign.put(filter, tile);
+                setTile(filter, tile);
                 //try the assignment to the tile in this direction
-                if (newTraceAssignment(newAssign, node.getNext()))
+                if (newTraceAssignment(node.getNext()))
                     return true; //if it worked return!
                 else
                     continue; //if not, try another direction if there are more
@@ -291,8 +287,10 @@ public class AnnealedLayout extends SimulatedAnnealing {
 	    if (occupied == null)
 		continue;
 	    //if so, see if it mapped to the tile we want, if so return false
-	    if (occupied == tile)
+	    if (occupied == tile) {
+                //System.out.print(tile +  " has two file writers!");
 		return false;
+            }
 	}
 	//no file writer mapped to tile, return true
 	return true;
@@ -305,22 +303,8 @@ public class AnnealedLayout extends SimulatedAnnealing {
     private void legalInitialPlacement() {
         Trace[] traces = partitioner.getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
-            assert newTraceAssignment(assignment, traces[i].getHead().getNextFilter()) :
+            assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
                 "Error: could not find a legal layout for " + traces[i] + " during initial layout";
-        }
-    }
-    
-    /** 
-     * The initial layout is random and probably illegal! 
-     */
-    private void randomInitialPlacement() {
-        Iterator filters = filterList.iterator();
-        
-        while (filters.hasNext()) {
-            FilterTraceNode filter = (FilterTraceNode)filters.next();
-            
-            assignment.put(filter, 
-                    rawChip.getTile(getRandom(rawChip.getTotalTiles())));
         }
     }
     
@@ -330,12 +314,13 @@ public class AnnealedLayout extends SimulatedAnnealing {
      *  
      */
     public double placementCost(boolean debug) {
+   
         int[] tileCosts = getTileWorks();
         
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
         double cost = workOfBottleNeckTile //+ standardDeviation(tileCosts)  
-                   + 100.0 * (double)bigWorkersCommEstimate(tileCosts);
+                   + (double)bigWorkersCommEstimate(tileCosts);
         
         /*
         if (!isLegalLayout())
@@ -368,6 +353,42 @@ public class AnnealedLayout extends SimulatedAnnealing {
         return true;
     }
     
+    /** 
+     * @param bigWorkers
+     * @param edge
+     * @return If the edge is between bigworkers, then estimate the initial latency
+     * of the intertracebuffer by calculating the manhattan distance of hte
+     * edge.
+     */
+    private int bigWorkerDistanceLatency(HashSet bigWorkers, Edge edge) {
+        
+        //get the port that source is writing to
+        RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
+        RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
+        //we only care about the tiles that do a bunch of work!
+        if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
+            //System.out.println("Accouting for comm over big worker.");
+            IODevice srcPort = 
+                LogicalDramTileMapping.getHomeDram
+                (srcTile);
+            //get the por that the dest is reading from
+            IODevice dstPort = 
+                LogicalDramTileMapping.getHomeDram
+                (dstTile);
+            
+            //now get the neighboring tiles of the dram ram's and find the
+            //distance between them, because we send everthing over the 
+            //static network...
+            RawTile srcNeighbor = srcPort.getNeighboringTile();
+            RawTile dstNeighbor = dstPort.getNeighboringTile();
+            
+            return (rawChip.manhattanDistance(srcNeighbor, dstNeighbor) + 1);
+         
+        }
+        
+        return 0;
+    }    
+    
     /**
      * @return An estimate of the cost of communication for this layout.
      */
@@ -384,38 +405,86 @@ public class AnnealedLayout extends SimulatedAnnealing {
             }
         }
         
-        //guess at the initial communication latency for 
-        //edges between slices...
+        //buffer edges are assigned drams by the buffer dram assignment,
+        //so we can get a fairly accurate picture of the communication
+        //of the graph...
         for (int i = 0; i < traces.length; i++) {
             Trace trace = traces[i];
             Iterator edges = trace.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
-                //get the port that source is writing to
-                RawTile srcTile = (RawTile)assignment.get(edge.getSrc().getPrevFilter());
-                RawTile dstTile = (RawTile)assignment.get(edge.getDest().getNextFilter());
-                //we only care about the tiles that do a bunch of work!
-                if (bigWorkers.contains(srcTile) || bigWorkers.contains(dstTile)) {
-                    //System.out.println("Accouting for comm over big worker.");
-                    IODevice srcPort = 
-                        LogicalDramTileMapping.getHomeDram
-                        (srcTile);
-                    //get the por that the dest is reading from
-                    IODevice dstPort = 
-                        LogicalDramTileMapping.getHomeDram
-                        (dstTile);
+                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
+                OutputTraceNode output = edge.getSrc();
+                InputTraceNode input = edge.getDest();
+                //account for the distance of the connected to/from a
+                //big worker
+                estimate += bigWorkerDistanceLatency(bigWorkers, edge);
+                
+//              if the off chip buffer does something then count its 
+                //communicate if it goes through a bigWorker
+                if (!OffChipBuffer.unnecessary(output)) {
+                    StreamingDram srcDRAM = 
+                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), 
+                                output).getDRAM();
+                    StreamingDram dstDRAM = 
+                        buf.getDRAM();
+                    estimate += itemsThroughBigWorkers(bigWorkers, edge,
+                            srcDRAM, dstDRAM);
                     
-                    //now get the neighboring tiles of the dram ram's and find the
-                    //distance between them, because we send everthing over the 
-                    //static network...
-                    RawTile srcNeighbor = srcPort.getNeighboringTile();
-                    RawTile dstNeighbor = dstPort.getNeighboringTile();
+                }
+//              if the off chip buffer does something then count its 
+                //communicate if it goes through a bigWorker
+                if (!OffChipBuffer.unnecessary(input)) {
+                    StreamingDram srcDRAM = buf.getDRAM();
+                    StreamingDram dstDRAM = 
+                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                    estimate += itemsThroughBigWorkers(bigWorkers, edge,
+                            srcDRAM, dstDRAM);
                     
-                    estimate += (rawChip.manhattanDistance(srcNeighbor, dstNeighbor) + 1);
                 }
             }
         }
         return estimate;
+    }
+    
+    /**
+     * @param bigWorkers
+     * @param edge
+     * @param src
+     * @param dst
+     * @return The number of items that travel over inter-trace-buffer
+     * edge with src dram and dst dram 
+     * and the pass through a tile in the <bigWorkers> tile set,
+     * but you don't care about this if the tile must use the gdn for 
+     * input and output intra trace.
+     */
+    private int itemsThroughBigWorkers(HashSet bigWorker, Edge edge, 
+            StreamingDram src, StreamingDram dst) {
+        int items = 0;
+        Iterator route = Router.getRoute(src, dst).iterator();
+        while (route.hasNext()) {
+            ComputeNode hop = (ComputeNode)route.next();
+            if (hop instanceof RawTile && 
+                    bigWorker.contains(hop) &&  
+                    !LogicalDramTileMapping.mustUseGdn((RawTile)hop)) {
+                items +=  edge.steadyItems();
+            }
+        }
+        //now we if the src or dst owner tiles is a big worker and 
+        //it is gdn, we should account for the total time of the edge also
+        //because the dram command will have to wait until it is completed
+        RawTile srcIssuer = LogicalDramTileMapping.getOwnerTile(src);
+        if (bigWorker.contains(srcIssuer) &&
+                LogicalDramTileMapping.mustUseGdn(srcIssuer))
+            items += edge.steadyItems();
+        
+        RawTile dstIssuer = LogicalDramTileMapping.getOwnerTile(dst);
+        if (bigWorker.contains(dstIssuer) &&
+                LogicalDramTileMapping.mustUseGdn(dstIssuer))
+            items += edge.steadyItems();
+        
+        
+        return items;
     }
     
     /**
@@ -496,7 +565,7 @@ public class AnnealedLayout extends SimulatedAnnealing {
             if (LogicalDramTileMapping.mustUseGdn(outputTile)) {
                 tileCosts[outputTile.getTileNumber()] += (node.getFilter().getPushInt() * 
                         node.getFilter().getSteadyMult() * 
-                        partitioner.steadyMult * GDN_PUSH_COST);
+                        GDN_PUSH_COST);
             }
             
             //account for the cost of issuing its store dram command
@@ -519,8 +588,12 @@ public class AnnealedLayout extends SimulatedAnnealing {
             Util.traceNodeTraversal(partitioner.getTraceGraph());
         while (traceNodes.hasNext()) {
             TraceNode node = (TraceNode)traceNodes.next();
-                        
-            if (node.isFilterTrace()) {
+            //add filters to the list of things to assign to tiles,
+            //but don't add file readers/writers... they will
+            //"occupy" the tile of their neighbor stream...
+            if (node.isFilterTrace() && 
+                    !(node.getAsFilter().isFileInput() ||
+                            node.getAsFilter().isFileOutput()))  {
                 filterList.add(node);
             }
         }

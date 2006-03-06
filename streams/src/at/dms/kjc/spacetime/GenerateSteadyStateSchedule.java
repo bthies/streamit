@@ -26,10 +26,7 @@ public class GenerateSteadyStateSchedule {
     private RawChip rawChip;
     //the schedule we are building
     private LinkedList schedule;
-    /** the layout we are using from annealedlayout, it could be null
-     * if we are --noanneal, if so the we can manual layout.
-     */
-    private HashMap layout;
+    private Layout layout;
     
     /**
      * 
@@ -37,12 +34,9 @@ public class GenerateSteadyStateSchedule {
      * @param layout The layout of filterTraceNode->RawTile, this could
      * be null if we are --noanneal. 
      */
-    public GenerateSteadyStateSchedule(SpaceTimeSchedule sts,
-            HashMap layout) {
-        if (layout == null)
-            assert KjcOptions.noanneal;
+    public GenerateSteadyStateSchedule(SpaceTimeSchedule sts, Layout layout) {
+      
         this.layout = layout;
-        
         spaceTime = sts;
         rawChip = spaceTime.getRawChip();
         schedule = new LinkedList();
@@ -91,13 +85,8 @@ public class GenerateSteadyStateSchedule {
         while (!sortedTraces.isEmpty()) {
             //remove the first trace, the trace with the most work
             Trace trace = (Trace)sortedTraces.removeFirst();
-            
-            if (KjcOptions.noanneal) {
-                //get the layout 
-                layout = layoutTrace(trace);
-            }
-            //schedule the trace...
-            scheduleTrace(layout, trace, sortedTraces);
+          
+            scheduleTrace(trace, sortedTraces);
         }
     }
     
@@ -124,9 +113,9 @@ public class GenerateSteadyStateSchedule {
      * @param trace The Trace that is going to be scheduled for execution
      * @param sortedList The list of Traces that need to be scheduled
      */
-    private void scheduleTrace(HashMap layout, Trace trace,
+    private void scheduleTrace(Trace trace,
                                LinkedList sortedList) {
-        assert layout != null && trace != null;
+        assert trace != null;
         System.out.println("Scheduling Trace: " + trace + " at time "
                            + currentTime);
         // remove this trace from the list of traces to schedule
@@ -139,9 +128,8 @@ public class GenerateSteadyStateSchedule {
         TraceNode node = trace.getHead().getNext();
 
         while (node instanceof FilterTraceNode) {
-            assert layout.containsKey(node) && layout.get(node) != null;
-            RawTile tile = (RawTile) layout.get(node);
-            ((FilterTraceNode) node).setXY(tile.getX(), tile.getY());
+            
+            RawTile tile = layout.getTile(node.getAsFilter());
 
             // add to the avail time for the tile, use either the current time
             // or the tile's avail
@@ -170,9 +158,7 @@ public class GenerateSteadyStateSchedule {
                     spaceTime.setReadsFile(tile.getTileNumber());
                     assert in.getSingleEdge().getSrc().getPrevFilter()
                         .isPredefined();
-                    // set the tile for the file reader to tbe this tile
-                    in.getSingleEdge().getSrc().getPrevFilter().setXY(
-                                                                      tile.getX(), tile.getY());
+                    assert layout.getTile(in.getSingleEdge().getSrc().getPrevFilter()) == tile;
                 }
             }
 
@@ -185,8 +171,9 @@ public class GenerateSteadyStateSchedule {
                     assert out.getSingleEdge().getDest().getNextFilter()
                         .isPredefined();
                     // set the tile
-                    out.getSingleEdge().getDest().getNextFilter().setXY(
-                                                                        tile.getX(), tile.getY());
+                    assert layout.getTile(out.getSingleEdge().getDest().getNextFilter()) == 
+                        tile; 
+                    
                 }
             }
 
@@ -218,20 +205,6 @@ public class GenerateSteadyStateSchedule {
         }
     } 
    
-    /**
-     * Layout the trace on the RawChip.
-     * @param trace The trace to be assigned tiles
-     * @return HashMap of FilterTraceNode->RawTile
-     */
-    private HashMap layoutTrace(Trace trace) {
-        /*if (getAvailTiles() < trace.getNumFilters())
-          return null;*/
-        HashMap layout = null;
-        
-        layout = ManualTraceLayout.layout(rawChip, trace);
-        
-        return layout;
-    }
 
     private void printSchedule() {
         Iterator sch = schedule.iterator();

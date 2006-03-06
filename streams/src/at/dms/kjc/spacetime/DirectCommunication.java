@@ -101,11 +101,11 @@ public class DirectCommunication extends RawExecutionCode
         return true;
     }
 
-    public DirectCommunication(RawTile tile, FilterInfo filterInfo) 
+    public DirectCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
-        super(tile, filterInfo);
+        super(tile, filterInfo, layout);
         FilterTraceNode node=filterInfo.traceNode;
-        System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Direct Comm.");
+        System.out.println(tile +  " Generating code for " + filterInfo.filter + " using Direct Comm.");
     }
 
     public JFieldDeclaration[] getVarDecls() 

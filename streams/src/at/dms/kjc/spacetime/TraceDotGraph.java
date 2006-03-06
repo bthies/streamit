@@ -95,7 +95,7 @@ public class TraceDotGraph {
                             .getFilterInfo((FilterTraceNode) node);
                         fw.write("\\nWork: "
                                  + partitioner
-                                 .getFilterWork((FilterTraceNode) node));
+                                 .getFilterWorkSteadyMult((FilterTraceNode) node));
                         fw.write("\\nMult:(" + filter.initMult + ", "
                                  + spaceTime.getPrimePumpTotalMult(filter) + ", " + filter.steadyMult
                                  + ")");

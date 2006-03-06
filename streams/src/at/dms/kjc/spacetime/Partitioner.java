@@ -90,7 +90,7 @@ public abstract class Partitioner {
      * @return The work estimation for the filter trace node for one steady-state
      * mult of the filter.
      */
-    public int getFilterWork(FilterTraceNode node) {
+    protected int getFilterWork(FilterTraceNode node) {
         return ((Integer) workEstimation.get(node.getFilter())).intValue();
     }
 
@@ -107,11 +107,11 @@ public abstract class Partitioner {
     /**
      * @param trace
      * @return The work estimation for the trace (the estimation for the filter that does the
-     * most work for one steady-state mult of the filter.
+     * most work for one steady-state mult of the filter multipled by the steady state multiplier.
      */
     public int getTraceBNWork(Trace trace) {
         assert traceBNWork.containsKey(trace);
-        return ((Integer) traceBNWork.get(trace)).intValue();
+        return ((Integer) traceBNWork.get(trace)).intValue() * steadyMult;
     }
     
     /**
@@ -171,7 +171,7 @@ public abstract class Partitioner {
      * @return The cost of 1 firing of the filter.
      */
     public int getWorkEstOneFiring(FilterTraceNode node) {
-        return getFilterWork(node) / node.getFilter().getSteadyMult();
+        return getFilterWork(node) / node.getFilter().getSteadyMult() * steadyMult;
     }
     
     /**

@@ -12,15 +12,27 @@ import java.util.HashMap;
  * Given a trace, ask the user where he/she wants it placed on
  *              the raw chip.
  */
-public class ManualTraceLayout {
-
+public class ManualTraceLayout implements Layout {
+    private HashMap assignment;
+    
+    public RawTile getTile(FilterTraceNode node) {
+        return null;
+    }
+    public void setTile(FilterTraceNode node, RawTile tile) {
+        
+    }
+    
+    public void run() {
+        //call layout on traces!
+    }
+    
     /**
      * Ask the user to lay out the trace on the raw chip.
      * @param rawChip The Raw Chip 
      * @param trace The Trace we would want to layout out on <rawChip>
      * @return HashMap of FilterTracesNode->RawTile 
      */
-    public static HashMap layout(RawChip rawChip, Trace trace) {
+    public HashMap layout(RawChip rawChip, Trace trace) {
         HashMap layout = new HashMap();
         BufferedReader inputBuffer = 
             new BufferedReader(new InputStreamReader(

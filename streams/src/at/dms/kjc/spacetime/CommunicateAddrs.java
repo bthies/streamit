@@ -194,6 +194,7 @@ public class CommunicateAddrs
     }
     
     private String setupRotation(OffChipBuffer buffer, RawTile tile) {
+                
         StringBuffer buf = new StringBuffer();
         String temp = "__temp__";
         

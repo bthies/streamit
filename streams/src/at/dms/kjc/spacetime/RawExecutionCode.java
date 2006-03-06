@@ -101,8 +101,11 @@ public abstract class RawExecutionCode
     /** the tile this filter is mapped to */
     protected RawTile tile;
     
-    public RawExecutionCode(RawTile tile, FilterInfo filterInfo) 
+    protected Layout layout;
+    
+    public RawExecutionCode(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
+        this.layout = layout;
         this.tile = tile;
         this.filterInfo = filterInfo;
         generatedVariables = new GeneratedVariables();
@@ -245,7 +248,7 @@ public abstract class RawExecutionCode
         //after the owner has done that, it will send a word to us over the
         //static network
         if (!Util.doesTraceUseTile(filterInfo.traceNode.getParent(),
-                buf.getOwner())) {
+                buf.getOwner(), layout)) {
             block.addStatement(gdnReceive(true, 
                     new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE)));
         }

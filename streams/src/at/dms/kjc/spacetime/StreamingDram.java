@@ -281,15 +281,21 @@ public class StreamingDram extends IODevice
         return  "StreamingDRAM (" + port + ")";
     }
 
+    public void resetFileAssignments() {
+        fileReader = null;
+        fileWriter = null;
+    }
+    
     public void setFileReader(FileInputContent file) 
     {
-        assert fileReader == null: this.toString() + " already reads a file";
+        assert fileReader == null: this.toString() + " already reads a file " ;
         fileReader = new FileState(file, this);
     }
 
     public void setFileWriter(FileOutputContent file) 
     {
-        assert fileWriter == null: this.toString() + " already writes a file";
+        assert fileWriter == null: this.toString() + " already writes a file, old: "
+        + fileWriter.getFileName() + ", new: " + file.getFileName();
         fileWriter = new FileState(file, this);
     }
     

@@ -25,11 +25,18 @@ public class BufferDRAMAssignment {
      */
     private final boolean ALWAYS_ASSIGN_INTRA_HOME_BASE = true;
     private RawChip rawChip;
-
+    /** the layout we are using */
+    private Layout layout;
+    
     /**
      * Assign the buffers to ports
+     * @param assignment A hash map of filtertraceNode->RawTile
      */
-    public void run(SpaceTimeSchedule spaceTime) {
+    public void run(SpaceTimeSchedule spaceTime, Layout layout) {
+        OffChipBuffer.resetDRAMAssignment();
+        
+        this.layout = layout;
+        
         rawChip = spaceTime.getRawChip();
         TraceNode[] traceNodes = Util.traceNodeArray(spaceTime.partitioner.getTraceGraph());
         
@@ -87,7 +94,7 @@ public class BufferDRAMAssignment {
         
         //this is overly strong right now, but lets see if it gets tripped!
         //we see if some dependency chain exists between the stores...
-        assert !gdnStoreSamePortDifferentTile(spaceTime.getSchedule()) :
+        assert !gdnStoreSamePortDifferentTile(spaceTime.partitioner.getTraceGraph()) :
             "We cannot have two different tiles attempt to store to the same dram using the gdn (race condition)";
         
         //make sure that everything is assigned!!!
@@ -116,14 +123,14 @@ public class BufferDRAMAssignment {
 
                     //if this tile is different from the tile we have already 
                     //issued a gdn store command from, then we might have a race condition.
-                    if (dramToTile.get(buffer.getDRAM()) != getFilterTile(output.getPrevFilter())) {
+                    if (dramToTile.get(buffer.getDRAM()) != layout.getTile(output.getPrevFilter())) {
                         System.out.println(dramToTile.get(buffer.getDRAM()) + " and " +
-                                getFilterTile(output.getPrevFilter()));
+                                layout.getTile(output.getPrevFilter()));
                         return true;
                     }
                 }
                 else //otherwise put the tile in the hashmap to remember that we issued a store from it 
-                    dramToTile.put(buffer.getDRAM(), getFilterTile(output.getPrevFilter()));
+                    dramToTile.put(buffer.getDRAM(), layout.getTile(output.getPrevFilter()));
             }
             
         }
@@ -134,11 +141,6 @@ public class BufferDRAMAssignment {
         return LogicalDramTileMapping.getHomeDram(tile);
     }
     
-   
-    private RawTile getFilterTile(FilterTraceNode node) {
-        return rawChip.getTile(node.getX(), node.getY());
-    }
-            
     /**
      * first go thru the file, reader and writers and assign their 
      * input->file and file->output buffers to reside in the dram 
@@ -148,7 +150,13 @@ public class BufferDRAMAssignment {
      * @param chip
      */
     private  void fileStuff(Trace[] files) {
-        // 
+        // go through the drams and reset the file readers and writers 
+        //associated with them...
+        for (int i = 0; i < rawChip.getDevices().length; i++) {
+            StreamingDram dram = (StreamingDram)rawChip.getDevices()[i];
+            dram.resetFileAssignments();
+        }
+        
         for (int i = 0; i < files.length; i++) {
             // these traces should have only one filter, make sure
             assert files[i].getHead().getNext().getNext() == files[i].getTail() : 
@@ -161,11 +169,10 @@ public class BufferDRAMAssignment {
                     "buffer assignment of a joined file writer not implemented ";
                 //get the tile assigned to the file writer by the layout stage?
                 
-                RawTile tile = getFilterTile(files[i].getHead().getNextFilter());
-                
-                //check that the tile assignment for this file writer is correct
-                assert tile == 
-                    getFilterTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                RawTile tile = 
+                    layout.getTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                //set the filter tile to be the tile of the upstream tile
+                layout.setTile(files[i].getHead().getNextFilter(), tile);
                 
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i]
                                                                   .getHead(), filter);
@@ -178,21 +185,23 @@ public class BufferDRAMAssignment {
                 // assign the other buffer to the same port
                 // this should not affect anything
                 IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
-                System.out.println("Assigning " + filter.getFilter() + " to " + 
+                /*System.out.println("Assigning " + filter.getFilter() + " to " + 
                         dram + " written by " + 
                         files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
-                
+                */
                 // attach the file writer to the port
+                /*System.out.println("FileWriter Upstream " + 
+                        files[i].getHead().getSingleEdge().getSrc().getPrevFilter() + " " + tile
+                        + " " + dram);*/
                 dram.setFileWriter((FileOutputContent)filter.getFilter());
             } else if (files[i].getTail().isFileInput()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
                 //get the tile assigned to the next
-                RawTile tile = getFilterTile(files[i].getHead().getNextFilter());
-                //make sure the tile assignment for this writer is the same as the upstream
-                //filter that creates the data
-                assert tile == 
-                    getFilterTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                RawTile tile = 
+                    layout.getTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                
+                layout.setTile(files[i].getHead().getNextFilter(), tile);
                 
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,
                                                                   files[i].getTail());
@@ -221,7 +230,7 @@ public class BufferDRAMAssignment {
         
         //if we are splitting this output then assign the intratracebuffer
         //to the home base of the dest filter
-        RawTile tile = getFilterTile(output.getPrevFilter());
+        RawTile tile = layout.getTile(output.getPrevFilter());
         IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(output.getPrevFilter(), output);
         buf.setDRAM(getHomeDevice(tile));
         buf.setStaticNet(tile == getHomeDevice(tile).getNeighboringTile());
@@ -237,7 +246,7 @@ public class BufferDRAMAssignment {
     private void singleOutputAssignment(OutputTraceNode output) {
 
         //get the upstream tile
-        RawTile upTile = getFilterTile(output.getPrevFilter());
+        RawTile upTile = layout.getTile(output.getPrevFilter());
         //the downstream trace is a single input trace
         IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(output.getPrevFilter(), 
                 output);
@@ -255,7 +264,7 @@ public class BufferDRAMAssignment {
         if (output.getSingleEdge().getDest().oneInput()) {
           
             //get the tile that the downstream filter is assigned to
-            RawTile dsTile = getFilterTile(output.getSingleEdge().getDest().getNextFilter());   
+            RawTile dsTile = layout.getTile(output.getSingleEdge().getDest().getNextFilter());   
             buf.setDRAM(getHomeDevice(dsTile));
             
             //should we use the dynamic network
@@ -311,7 +320,7 @@ public class BufferDRAMAssignment {
             return;
         //this is the dram we would like, the home dram from the first filter
         //of the downstream trace
-        StreamingDram wanted = getHomeDevice(getFilterTile(input.getNextFilter()));
+        StreamingDram wanted = getHomeDevice(layout.getTile(input.getNextFilter()));
         //if it is not assigned yet to an intertracebuffer of the output,
         //then assign it, otherwise, do nothing...
         if (!assignedOutputDRAMs(output).contains(wanted)) {
@@ -371,11 +380,12 @@ public class BufferDRAMAssignment {
      */
     private void inputFilterAssignment(InputTraceNode input) {
         FilterTraceNode filter = input.getNextFilter();
-
-        RawTile tile = getFilterTile(filter);
+        
+        RawTile tile = layout.getTile(filter);
         // the neighboring dram of the tile we are assigning this buffer to
         StreamingDram dram = getHomeDevice(tile);
         // assign the buffer to the dram
+        
         SpaceTimeBackend.println("Assigning (" + input + "->" + input.getNext()
                                  + " to " + dram + ")");
         IntraTraceBuffer.getBuffer(input, filter).setDRAM(dram);

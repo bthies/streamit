@@ -532,7 +532,7 @@ public class ComputeCodeStore {
     }   
     
     
-    public void addTraceSteady(FilterInfo filterInfo) {
+    public void addTraceSteady(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
 
@@ -545,9 +545,9 @@ public class ComputeCodeStore {
             if (filterInfo.isLinear())
                 exeCode = new Linear(parent, filterInfo);
             else if (DirectCommunication.testDC(filterInfo))
-                exeCode = new DirectCommunication(parent, filterInfo);
+                exeCode = new DirectCommunication(parent, filterInfo, layout);
             else
-                exeCode = new BufferedCommunication(parent, filterInfo);
+                exeCode = new BufferedCommunication(parent, filterInfo, layout);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
         // add the steady state
@@ -599,7 +599,7 @@ public class ComputeCodeStore {
 
     }
 
-    public void addTracePrimePump(FilterInfo filterInfo) {
+    public void addTracePrimePump(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
         JMethodDeclaration primePump;
@@ -613,9 +613,9 @@ public class ComputeCodeStore {
             if (filterInfo.isLinear())
                 exeCode = new Linear(parent, filterInfo);
             else if (DirectCommunication.testDC(filterInfo))
-                exeCode = new DirectCommunication(parent, filterInfo);
+                exeCode = new DirectCommunication(parent, filterInfo, layout);
             else
-                exeCode = new BufferedCommunication(parent, filterInfo);
+                exeCode = new BufferedCommunication(parent, filterInfo, layout);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
         
@@ -631,7 +631,7 @@ public class ComputeCodeStore {
                         primePump.getName(), new JExpression[0]), null));
     }
 
-    public void addTraceInit(FilterInfo filterInfo) {
+    public void addTraceInit(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
 
@@ -639,9 +639,9 @@ public class ComputeCodeStore {
         if (filterInfo.isLinear())
             exeCode = new Linear(parent, filterInfo);
         else if (DirectCommunication.testDC(filterInfo))
-            exeCode = new DirectCommunication(parent, filterInfo);
+            exeCode = new DirectCommunication(parent, filterInfo, layout);
         else
-            exeCode = new BufferedCommunication(parent, filterInfo);
+            exeCode = new BufferedCommunication(parent, filterInfo, layout);
 
         // add this raw IR code to the rawCode hashmap
         // if the steady-state is on the same tile, don't

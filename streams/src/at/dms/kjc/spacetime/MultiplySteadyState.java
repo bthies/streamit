@@ -7,15 +7,16 @@ import java.util.HashSet;
 import at.dms.kjc.*;
 
 public class MultiplySteadyState {
-    public static void doit(SpaceTimeSchedule schedule) {
+    public static void doit(Trace[] traces) {
         
         assert KjcOptions.steadymult > 0 : "Illegal steadymult argument";
+       /*
         for (int i = 0; i < schedule.partitioner.io.length; i++) {
             schedule.partitioner.io[i].getHead().getNextFilter().getFilter()
                 .multSteadyMult(KjcOptions.steadymult);
         }
-        
-        Iterator traceNodes = Util.traceNodeTraversal(schedule.getSchedule());
+        */
+        Iterator traceNodes = Util.traceNodeTraversal(traces);
         while (traceNodes.hasNext()) {
             TraceNode traceNode = (TraceNode) traceNodes.next();
             if (traceNode.isFilterTrace()) {

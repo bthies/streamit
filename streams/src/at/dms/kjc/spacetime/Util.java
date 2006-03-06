@@ -144,14 +144,14 @@ public class Util {
      * @return True if <trace> has a filter that is mapped to <tile>.
      */
     public static boolean doesTraceUseTile(Trace trace, 
-            RawTile tile) {
+            RawTile tile, Layout layout) {
         TraceNode node = trace.getHead().getNext();
         //cycle thru the nodes and see if we can find a match 
         //of the coordinates for the tile and a filter trace
         while (node.isFilterTrace()) {
-            if (node.getAsFilter().getX() == tile.getX() &&
-                    node.getAsFilter().getY() == tile.getY())
+            if (tile == layout.getTile(node.getAsFilter()))
                 return true;
+            
             node = node.getNext();
         }
         

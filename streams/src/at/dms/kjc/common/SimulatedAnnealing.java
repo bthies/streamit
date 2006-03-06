@@ -27,11 +27,26 @@ public abstract class SimulatedAnnealing {
     public static double TFACTR = 0.9;
     
     /** the assignment that we arrive at and use during execution */
-    public HashMap assignment;
+    protected HashMap assignment;
 
     protected SimulatedAnnealing() {
         assignment = new HashMap();
     }
+    
+    /**
+     * Use this method to print stats for the layout...
+     *
+     */
+    public  void printLayoutStats() {
+        
+    }
+    
+    /** 
+     * Use this function to reassign the assignment to <newAssign>, update
+     * anything that needs to be updated on a new assignment.
+     * @param newAssign
+     */
+    public abstract void setAssignment(HashMap newAssign);
     
     /**
      * Called by perturbConfiguration() to perturb the configuration.
@@ -134,15 +149,15 @@ public abstract class SimulatedAnnealing {
                         boolean accepted = perturbConfiguration(t);
                         currentCost = placementCost(false);
                         // the layout should always be legal
-                        assert currentCost >= 0.0;
+                        assert currentCost >= 0.0 : currentCost;
 
                         if (accepted) {
                             nsucc++;
                         }
-
+                        
                         if (configuration % 500 == 0)
                             System.out.print(".");
-
+                          
                         // keep the layout with the minimum cost
                         if (currentCost < minCost) {
                             minCost = currentCost;
@@ -173,7 +188,7 @@ public abstract class SimulatedAnnealing {
             System.out.println("\nFinal Cost: " + currentCost + " Min Cost : "
                                + minCost + " in  " + j + " iterations.");
             if (minCost < currentCost) {
-                assignment = assignMin;
+                setAssignment(assignMin);
                 currentCost = minCost;
             }
         } catch (Exception e) {

@@ -1,0 +1,17 @@
+BeamFormer.str from beamformer/streamit/BeamFormer.str
+
+
+                numBeams numChannels numSamples  filters
+BeamFormer.str    4         12         1024       57
+BeamFormer1.str   4         12          256       57
+BeamFormer2.str   4          8         1024       45
+BeamFormer3.str   4          8          256       45
+BeamFormer4.str   2         12         1024       49
+BeamFormer5.str   2         12          256       49
+BeamFormer6.str   2          8         1024       37
+BeamFormer7.str   2          8          256       37
+BeamFormer8.str   8         24         1024      109
+BeamFormer9.str   6         20         1024       89
+
+output of BeamFormerX.str goes to BeamFormerX.out.
+compare with files in ../output (from -library -i 100).

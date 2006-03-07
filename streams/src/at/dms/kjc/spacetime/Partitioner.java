@@ -135,7 +135,7 @@ public abstract class Partitioner {
      * accounting for pipeline lag.  It is calculated for a trace of 
      * filters: F0->F1->...->Fi->...->Fn
      * 
-     * 
+     * startupCost(F0) = 0;
      * startupCost(Fi) = 
      *      ceil(fi_pop / fi-1_push * work(fi-1)
      *      

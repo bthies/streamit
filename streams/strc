@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.71 2006-02-27 18:32:54 dimock Exp $
+# $Id: strc,v 1.72 2006-03-07 21:53:49 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -197,7 +197,8 @@ Options specific to Raw backend:
 * --dynamicnet        Use dynamic network for communication for space multplexing raw backend
 * --magicdram         Use magic DRAMs in the space-tile partitioner
   --wbs               Use work-based simulator for communication code
-* --steadymul n       For the SpaceTime Raw backend, multiply the steady-state multiplicities by n
+* --steadymult n      For the SpaceTime Raw backend, multiply the steady-state multiplicities by n
+* --slicethresh n     For the SpaceTime backend use n% for the slice work threshold
 * --forceplacement    For the SpaceTime Raw backend, try to minimize communication in layout
 * --scheduler         For the SpaceTime Raw backend, either work, dep, or comm
 * --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
@@ -318,6 +319,7 @@ sub get_options
 			    "wbs!",
 			    "cluster=i",
 			    "steadymult=i",
+			    "slicethresh=i",
 			    "forceplacement!",
 			    "malloczeros!",
 			    "nopartition!",
@@ -628,6 +630,7 @@ sub get_kjc_opts
     $opts{malloczeros} && ($kjcopts .= " --malloczeros");
     $opts{nopartition} && ($kjcopts .= " --nopartition");
     $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
+    $opts{slicethresh} && ($kjcopts .= " --slicethresh ". $opts{slicethresh});
     $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});
     $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});

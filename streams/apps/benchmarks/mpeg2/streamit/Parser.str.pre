@@ -155,24 +155,9 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                 println("        correct mpeg2enc parameter: 0         /* constrained_parameters_flag */");
             }
             // Default Values for the quantiser_matrices
-            int[64] intra_quantiser_matrix = 
-            { 8, 16, 19, 22, 26, 27, 29, 34,
-              16, 16, 22, 24, 27, 29, 34, 37,
-              19, 22, 26, 27, 29, 34, 34, 38,
-              22, 22, 26, 27, 29, 34, 37, 40,
-              22, 26, 27, 29, 32, 35, 40, 48,
-              26, 27, 29, 32, 35, 40, 48, 58,
-              26, 27, 29, 34, 38, 46, 56, 69,
-              27, 29, 35, 38, 46, 56, 69, 83};
-            int[64] non_intra_quantiser_matrix =
-            {16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16,
-             16, 16, 16, 16, 16, 16, 16, 16};
+            int[64] intra_quantiser_matrix;
+            int[64] non_intra_quantiser_matrix;
+
             // Assumes no alternate_scan TODO
             int[64] Ordering = {00, 01, 05, 06, 14, 15, 27, 28,
                                 02, 04, 07, 13, 16, 26, 29, 42,
@@ -195,7 +180,9 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                 }
             } else {
                 // println("  Using Default Intra Quantiser Matrix");
-                // Default Values Previously Loaded
+                for (int i = 0; i < 64; i++) {
+                    intra_quantiser_matrix[i] = default_intra_quantiser_matrix[i];
+                }
             }
             pops(1,load_non_intra_quantiser_matrix);
             if (load_non_intra_quantiser_matrix == 1) {
@@ -210,7 +197,9 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                 }
             } else {
                 // println("  Using Default Non Intra Quantiser Matrix");
-                // Default Values Previously Loaded
+                for (int i = 0; i < 64; i++) {
+                    non_intra_quantiser_matrix[i] = default_non_intra_quantiser_matrix[i];
+                }                
             }
             UpdatePortal_quantiser_data_ac.setQuantiserMatrices(intra_quantiser_matrix,
                                                                 non_intra_quantiser_matrix) [0:0]; 
@@ -535,9 +524,9 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                                 if (picture_coding_type == 2) { // [cite 1, P. 80]
                                     //                      UpdatePortal_mvd.resetPredictors() [0:0];
                                 }
-                                push(0);
-                                push(0);
-                                push(0);
+                                macroblock_intra = 0;
+                                macroblock_motion_forward = 0;
+                                macroblock_motion_backward = 0;
                                 for (int i = 0; i < num_skipped_macroblocks; i++) {
                                     PushMacroblock();     
                                 }
@@ -1007,9 +996,9 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                     for (int t = 0; t < 2; t++) {
                         motion_residual[r][s][t] = 0;
                     }
-            push(1);
-            push(0);
-            push(0);
+            macroblock_intra = 1;
+            macroblock_motion_forward = 0;
+            macroblock_motion_backward = 0;
             for (int i = 0; i < (width/16); i++) {
                 for (int j = 0; j < (height/16); j++) {
                     PushMacroblock();     

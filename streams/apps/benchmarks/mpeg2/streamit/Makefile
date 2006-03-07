@@ -2,6 +2,9 @@
 # Performance / Modes / Options Variables
 # --------------------------------------------------------------------
 
+# PARSER = Parser.str
+PARSER = Parser_alt_preserved_state.str
+
 COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
 # COLOR_CHANNEL_PROCESSING = ColorChannelProcessing_opt_splitjoin.str
 # COLOR_CHANNEL_PROCESSING = 
@@ -42,7 +45,7 @@ LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LI
 LIBMPEG2_NOMESSAGE = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ${LIBDCT}
 
 # Streams Used By the Decoders
-LIBMPEG2_DECODE = ${DECODER_PIPELINE} Parser.str ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
+LIBMPEG2_DECODE = ${DECODER_PIPELINE} ${PARSER} ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
 
 # Streams Used By the Encoders
 LIBMPEG2_ENCODE = MPEGencoder.str Generator.str
@@ -62,6 +65,7 @@ clean:
 	rm -f MPEGdecoder_nomessage.str
 	rm -f BMP.str
 	rm -f Parser.str
+	rm -f Parser_alt_preserved_state.str
 	rm -f MotionPrediction.str
 	rm -f MotionPrediction_alt_blocked.str
 	rm -f MotionPrediction_alt_blocked_parallel.str

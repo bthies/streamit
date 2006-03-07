@@ -40,6 +40,11 @@ struct vlc_dct_table_entry { // See P. 135
 }
 
 static {
+    int[64] default_intra_quantiser_matrix;
+    int[64] default_non_intra_quantiser_matrix;
+    int[64] ZigZagUnorder;
+    int[64] ZigZagOrder;
+
     int[4] blocks_per_macroblock; // Index is the chroma format
                                 // as defined in the MPEG-2 bitstream
                                 // 1 = 4:2:0, 2 = 4:2:2, 3 = 4:4:4
@@ -89,6 +94,231 @@ static {
     vlc_dct_table_entry[1] const_dct_coefficients_table_zero_len3; 
 
     init {
+        /*
+          int[64] default_intra_quantiser_matrix = 
+          { 8, 16, 19, 22, 26, 27, 29, 34,
+          16, 16, 22, 24, 27, 29, 34, 37,
+          19, 22, 26, 27, 29, 34, 34, 38,
+          22, 22, 26, 27, 29, 34, 37, 40,
+          22, 26, 27, 29, 32, 35, 40, 48,
+          26, 27, 29, 32, 35, 40, 48, 58,
+          26, 27, 29, 34, 38, 46, 56, 69,
+          27, 29, 35, 38, 46, 56, 69, 83};
+        */
+        default_intra_quantiser_matrix[0] = 8;
+        default_intra_quantiser_matrix[1] = 16;
+        default_intra_quantiser_matrix[2] = 19;
+        default_intra_quantiser_matrix[3] = 22;
+        default_intra_quantiser_matrix[4] = 26;
+        default_intra_quantiser_matrix[5] = 27;
+        default_intra_quantiser_matrix[6] = 29;
+        default_intra_quantiser_matrix[7] = 34;
+        default_intra_quantiser_matrix[8] = 16;
+        default_intra_quantiser_matrix[9] = 16;
+        default_intra_quantiser_matrix[10] = 22;
+        default_intra_quantiser_matrix[11] = 24;
+        default_intra_quantiser_matrix[12] = 27;
+        default_intra_quantiser_matrix[13] = 29;
+        default_intra_quantiser_matrix[14] = 34;
+        default_intra_quantiser_matrix[15] = 37;
+        default_intra_quantiser_matrix[16] = 19;
+        default_intra_quantiser_matrix[17] = 22;
+        default_intra_quantiser_matrix[18] = 26;
+        default_intra_quantiser_matrix[19] = 27;
+        default_intra_quantiser_matrix[20] = 29;
+        default_intra_quantiser_matrix[21] = 34;
+        default_intra_quantiser_matrix[22] = 34;
+        default_intra_quantiser_matrix[23] = 38;
+        default_intra_quantiser_matrix[24] = 22;
+        default_intra_quantiser_matrix[25] = 22;
+        default_intra_quantiser_matrix[26] = 26;
+        default_intra_quantiser_matrix[27] = 27;
+        default_intra_quantiser_matrix[28] = 29;
+        default_intra_quantiser_matrix[29] = 34;
+        default_intra_quantiser_matrix[30] = 37;
+        default_intra_quantiser_matrix[31] = 40;
+        default_intra_quantiser_matrix[32] = 22;
+        default_intra_quantiser_matrix[33] = 26;
+        default_intra_quantiser_matrix[34] = 27;
+        default_intra_quantiser_matrix[35] = 29;
+        default_intra_quantiser_matrix[36] = 32;
+        default_intra_quantiser_matrix[37] = 35;
+        default_intra_quantiser_matrix[38] = 40;
+        default_intra_quantiser_matrix[39] = 48;
+        default_intra_quantiser_matrix[40] = 26;
+        default_intra_quantiser_matrix[41] = 27;
+        default_intra_quantiser_matrix[42] = 29;
+        default_intra_quantiser_matrix[43] = 32;
+        default_intra_quantiser_matrix[44] = 35;
+        default_intra_quantiser_matrix[45] = 40;
+        default_intra_quantiser_matrix[46] = 48;
+        default_intra_quantiser_matrix[47] = 58;
+        default_intra_quantiser_matrix[48] = 26;
+        default_intra_quantiser_matrix[49] = 27;
+        default_intra_quantiser_matrix[50] = 29;
+        default_intra_quantiser_matrix[51] = 34;
+        default_intra_quantiser_matrix[52] = 38;
+        default_intra_quantiser_matrix[53] = 46;
+        default_intra_quantiser_matrix[54] = 56;
+        default_intra_quantiser_matrix[55] = 69;
+        default_intra_quantiser_matrix[56] = 27;
+        default_intra_quantiser_matrix[57] = 29;
+        default_intra_quantiser_matrix[58] = 35;
+        default_intra_quantiser_matrix[59] = 38;
+        default_intra_quantiser_matrix[60] = 46;
+        default_intra_quantiser_matrix[61] = 56;
+        default_intra_quantiser_matrix[62] = 69;
+        default_intra_quantiser_matrix[63] = 83;
+
+        /*
+          int[64] default_non_intra_quantiser_matrix =
+          {16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16,
+          16, 16, 16, 16, 16, 16, 16, 16};
+        */
+        default_non_intra_quantiser_matrix[0] = 16;
+        default_non_intra_quantiser_matrix[1] = 16;
+        default_non_intra_quantiser_matrix[2] = 16;
+        default_non_intra_quantiser_matrix[3] = 16;
+        default_non_intra_quantiser_matrix[4] = 16;
+        default_non_intra_quantiser_matrix[5] = 16;
+        default_non_intra_quantiser_matrix[6] = 16;
+        default_non_intra_quantiser_matrix[7] = 16;
+        default_non_intra_quantiser_matrix[8] = 16;
+        default_non_intra_quantiser_matrix[9] = 16;
+        default_non_intra_quantiser_matrix[10] = 16;
+        default_non_intra_quantiser_matrix[11] = 16;
+        default_non_intra_quantiser_matrix[12] = 16;
+        default_non_intra_quantiser_matrix[13] = 16;
+        default_non_intra_quantiser_matrix[14] = 16;
+        default_non_intra_quantiser_matrix[15] = 16;
+        default_non_intra_quantiser_matrix[16] = 16;
+        default_non_intra_quantiser_matrix[17] = 16;
+        default_non_intra_quantiser_matrix[18] = 16;
+        default_non_intra_quantiser_matrix[19] = 16;
+        default_non_intra_quantiser_matrix[20] = 16;
+        default_non_intra_quantiser_matrix[21] = 16;
+        default_non_intra_quantiser_matrix[22] = 16;
+        default_non_intra_quantiser_matrix[23] = 16;
+        default_non_intra_quantiser_matrix[24] = 16;
+        default_non_intra_quantiser_matrix[25] = 16;
+        default_non_intra_quantiser_matrix[26] = 16;
+        default_non_intra_quantiser_matrix[27] = 16;
+        default_non_intra_quantiser_matrix[28] = 16;
+        default_non_intra_quantiser_matrix[29] = 16;
+        default_non_intra_quantiser_matrix[30] = 16;
+        default_non_intra_quantiser_matrix[31] = 16;
+        default_non_intra_quantiser_matrix[32] = 16;
+        default_non_intra_quantiser_matrix[33] = 16;
+        default_non_intra_quantiser_matrix[34] = 16;
+        default_non_intra_quantiser_matrix[35] = 16;
+        default_non_intra_quantiser_matrix[36] = 16;
+        default_non_intra_quantiser_matrix[37] = 16;
+        default_non_intra_quantiser_matrix[38] = 16;
+        default_non_intra_quantiser_matrix[39] = 16;
+        default_non_intra_quantiser_matrix[40] = 16;
+        default_non_intra_quantiser_matrix[41] = 16;
+        default_non_intra_quantiser_matrix[42] = 16;
+        default_non_intra_quantiser_matrix[43] = 16;
+        default_non_intra_quantiser_matrix[44] = 16;
+        default_non_intra_quantiser_matrix[45] = 16;
+        default_non_intra_quantiser_matrix[46] = 16;
+        default_non_intra_quantiser_matrix[47] = 16;
+        default_non_intra_quantiser_matrix[48] = 16;
+        default_non_intra_quantiser_matrix[49] = 16;
+        default_non_intra_quantiser_matrix[50] = 16;
+        default_non_intra_quantiser_matrix[51] = 16;
+        default_non_intra_quantiser_matrix[52] = 16;
+        default_non_intra_quantiser_matrix[53] = 16;
+        default_non_intra_quantiser_matrix[54] = 16;
+        default_non_intra_quantiser_matrix[55] = 16;
+        default_non_intra_quantiser_matrix[56] = 16;
+        default_non_intra_quantiser_matrix[57] = 16;
+        default_non_intra_quantiser_matrix[58] = 16;
+        default_non_intra_quantiser_matrix[59] = 16;
+        default_non_intra_quantiser_matrix[60] = 16;
+        default_non_intra_quantiser_matrix[61] = 16;
+        default_non_intra_quantiser_matrix[62] = 16;
+        default_non_intra_quantiser_matrix[63] = 16;
+
+        /* int[64] ZigZagUnorder = {00, 01, 05, 06, 14, 15, 27, 28,
+                                 02, 04, 07, 13, 16, 26, 29, 42,
+                                 03, 08, 12, 17, 25, 30, 41, 43,
+                                 09, 11, 18, 24, 31, 40, 44, 53,
+                                 10, 19, 23, 32, 39, 45, 52, 54,
+                                 20, 22, 33, 38, 46, 51, 55, 60,
+                                 21, 34, 37, 47, 50, 56, 59, 61,
+                                 35, 36, 48, 49, 57, 58, 62, 63}; */
+        ZigZagUnorder[0] = 0;
+        ZigZagUnorder[1] = 1;
+        ZigZagUnorder[2] = 5;
+        ZigZagUnorder[3] = 6;
+        ZigZagUnorder[4] = 14;
+        ZigZagUnorder[5] = 15;
+        ZigZagUnorder[6] = 27;
+        ZigZagUnorder[7] = 28;
+        ZigZagUnorder[8] = 2;
+        ZigZagUnorder[9] = 4;
+        ZigZagUnorder[10] = 7;
+        ZigZagUnorder[11] = 13;
+        ZigZagUnorder[12] = 16;
+        ZigZagUnorder[13] = 26;
+        ZigZagUnorder[14] = 29;
+        ZigZagUnorder[15] = 42;
+        ZigZagUnorder[16] = 3;
+        ZigZagUnorder[17] = 8;
+        ZigZagUnorder[18] = 12;
+        ZigZagUnorder[19] = 17;
+        ZigZagUnorder[20] = 25;
+        ZigZagUnorder[21] = 30;
+        ZigZagUnorder[22] = 41;
+        ZigZagUnorder[23] = 43;
+        ZigZagUnorder[24] = 9;
+        ZigZagUnorder[25] = 11;
+        ZigZagUnorder[26] = 18;
+        ZigZagUnorder[27] = 24;
+        ZigZagUnorder[28] = 31;
+        ZigZagUnorder[29] = 40;
+        ZigZagUnorder[30] = 44;
+        ZigZagUnorder[31] = 53;
+        ZigZagUnorder[32] = 10;
+        ZigZagUnorder[33] = 19;
+        ZigZagUnorder[34] = 23;
+        ZigZagUnorder[35] = 32;
+        ZigZagUnorder[36] = 39;
+        ZigZagUnorder[37] = 45;
+        ZigZagUnorder[38] = 52;
+        ZigZagUnorder[39] = 54;
+        ZigZagUnorder[40] = 20;
+        ZigZagUnorder[41] = 22;
+        ZigZagUnorder[42] = 33;
+        ZigZagUnorder[43] = 38;
+        ZigZagUnorder[44] = 46;
+        ZigZagUnorder[45] = 51;
+        ZigZagUnorder[46] = 55;
+        ZigZagUnorder[47] = 60;
+        ZigZagUnorder[48] = 21;
+        ZigZagUnorder[49] = 34;
+        ZigZagUnorder[50] = 37;
+        ZigZagUnorder[51] = 47;
+        ZigZagUnorder[52] = 50;
+        ZigZagUnorder[53] = 56;
+        ZigZagUnorder[54] = 59;
+        ZigZagUnorder[55] = 61;
+        ZigZagUnorder[56] = 35;
+        ZigZagUnorder[57] = 36;
+        ZigZagUnorder[58] = 48;
+        ZigZagUnorder[59] = 49;
+        ZigZagUnorder[60] = 57;
+        ZigZagUnorder[61] = 58;
+        ZigZagUnorder[62] = 62;
+        ZigZagUnorder[63] = 63;
+
         blocks_per_macroblock[0] = 0; // ERROR - you must have set it incorrectly
         blocks_per_macroblock[1] = 6;
         blocks_per_macroblock[2] = 8;

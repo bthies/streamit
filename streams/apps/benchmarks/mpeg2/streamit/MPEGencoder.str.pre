@@ -57,81 +57,59 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
 
     portal<MotionEstimation> portal_fwdMotion;
     portal<MotionEstimation> portal_bckMotion;
+    portal<GeneratorMessageReceiver> portal_picture_number;
+    portal<GeneratorMessageReceiver> portal_picture_type;
+    portal<SendBackReferenceFrameEncoder> portal_picture_type2;
+    portal<MotionPredictionDecision> portal_picture_type3;
 
     int actual_intra_dc_precision = 8;  
-    int chroma_format = 1;
-    int blocks_per_macroblock;
-    int downsampled_data_per_image;
-    if (chroma_format == 1) {
-        blocks_per_macroblock = 6;
-        downsampled_data_per_image = (width*height*3)/2;
-    } else {
-        // don't really support this
-        blocks_per_macroblock = 10000;
-        downsampled_data_per_image = 1;
-    }
-
-    int pixeldata_per_macroblock = blocks_per_macroblock*64;
-
-    // Default Values for the quantiser_matrices
-    int[64] default_intra_quantiser_matrix = 
-    { 8, 16, 19, 22, 26, 27, 29, 34,
-      16, 16, 22, 24, 27, 29, 34, 37,
-      19, 22, 26, 27, 29, 34, 34, 38,
-      22, 22, 26, 27, 29, 34, 37, 40,
-      22, 26, 27, 29, 32, 35, 40, 48,
-      26, 27, 29, 32, 35, 40, 48, 58,
-      26, 27, 29, 34, 38, 46, 56, 69,
-      27, 29, 35, 38, 46, 56, 69, 83};
-    int[64] default_non_intra_quantiser_matrix =
-    {16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16,
-     16, 16, 16, 16, 16, 16, 16, 16};
+    int blocks_per_macroblock = 6;
     int q_scale_type = 0;
 
-    add PicturePreprocessing(width, height, numpictures, downsampled_data_per_image);
+    add PicturePreprocessing(width, height, numpictures);
     // Eventually Wrap in Programmable Splitjoin for Group of Pictures
 
-    add ReorderPictures(downsampled_data_per_image);
+    add ReorderPictures(width, height);
     // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
 
-    add splitjoin {
-        split roundrobin(2, downsampled_data_per_image);
-        add Identity<int>;
-        add int->int splitjoin {
-            split duplicate;
-            add IntraMotionPrediction(pixeldata_per_macroblock);
-            add MotionEstimation(width, height, 0, pixeldata_per_macroblock, 32) to portal_fwdMotion;
-            add MotionEstimation(width, height, 1, pixeldata_per_macroblock, 32) to portal_bckMotion;
-            join roundrobin(pixeldata_per_macroblock+5);
+    // Temp TODO
+    add int->int filter {
+        int picture_data_size = (width*height*3)/2;
+        work pop 2+picture_data_size push picture_data_size {
+            portal_picture_number.setPictureNumber(peek(0)) [0:0];
+            portal_picture_type.setPictureType(peek(1)) [0:0];
+            portal_picture_type2.setPictureType(peek(1)) [0:0];
+            portal_picture_type3.setPictureType(peek(1)) [0:0];
+            deadpop(2);
+            pushpop(picture_data_size);
         }
-        join roundrobin(2, 3*(downsampled_data_per_image*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock));
+    }
+
+    int downsampled_data_per_image = (width*height*3)/2;
+    int pixeldata_per_macroblock = blocks_per_macroblock*64;
+
+    add int->int splitjoin {
+        split duplicate;
+        add IntraMotionPrediction(pixeldata_per_macroblock);
+        add MotionEstimation(width, height, 0, blocks_per_macroblock, 32) to portal_fwdMotion;
+        add MotionEstimation(width, height, 1, blocks_per_macroblock, 32) to portal_bckMotion;
+        join roundrobin(pixeldata_per_macroblock+5);
     }
 
     add MotionPredictionDecision(width, 
                                  height, 
-                                 downsampled_data_per_image, 
-                                 pixeldata_per_macroblock);
+                                 pixeldata_per_macroblock)
+        to portal_picture_type3;
 
-    add int->int splitjoin {
-        split roundrobin(2, (downsampled_data_per_image*(pixeldata_per_macroblock+6)/pixeldata_per_macroblock));
-        add Identity<int>;
-        add splitjoin {
-            split roundrobin(pixeldata_per_macroblock+1, 5);
-            add MacroBlockEncode(default_intra_quantiser_matrix, 
-                                 default_non_intra_quantiser_matrix,
-                                 actual_intra_dc_precision - 8, 
-                                 q_scale_type,
-                                 pixeldata_per_macroblock);       
-            add MotionVectorEncode(width/16);
-            join roundrobin(pixeldata_per_macroblock+5, 8+1);
-        }
-        join roundrobin(2, downsampled_data_per_image*(pixeldata_per_macroblock+14)/pixeldata_per_macroblock);
+    add splitjoin {
+        split roundrobin(pixeldata_per_macroblock+1, 5);
+        add MacroBlockEncode(default_intra_quantiser_matrix, 
+                             default_non_intra_quantiser_matrix,
+                             actual_intra_dc_precision - 8, 
+                             q_scale_type,
+                             pixeldata_per_macroblock);       
+        add MotionVectorEncode(width/16);
+        join roundrobin(pixeldata_per_macroblock+5, 8+1);
     }
 
     add ReferenceFrameHandler(default_intra_quantiser_matrix, 
@@ -143,7 +121,10 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                               portal_fwdMotion,
                               portal_bckMotion,
                               downsampled_data_per_image,
-                              pixeldata_per_macroblock);
+                              pixeldata_per_macroblock,
+                              portal_picture_type2);
+
+    add GeneratorMessageReceiver(width/16, height/16) to portal_picture_type, portal_picture_number;
 
     add MPEGStreamGenerator(width, 
                             height, 
@@ -155,6 +136,40 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
 
     add BitAlignStartCodes();
 }
+
+int->int filter GeneratorMessageReceiver(int macroblock_width, int macroblock_height) {
+    int block_count = 6;
+    int numpop = (5+block_count*64+8+1)*macroblock_width*macroblock_height;
+
+    int temporal_reference = -1;
+    int picture_coding_type = -1;
+
+    handler setPictureType(int picture_type) {
+        picture_coding_type = picture_type;
+    }
+
+    handler setPictureNumber(int new_temporal_reference) {
+        temporal_reference = new_temporal_reference;
+    }
+
+    work pop numpop push (numpop+2) {
+        push(temporal_reference);
+        push(picture_coding_type);
+        for (int j = 0; j < macroblock_width*macroblock_height; j++) {
+            push(pop()); // tempval = 3278
+            push(pop()); // quantiser_scale_code
+            push(pop()); // macroblock_motion_forward
+            push(pop()); // macroblock_motion_backward
+            push(pop()); // macroblock_intra
+            for (int i = 0; i < block_count; i++) {
+                pushpop(64); // the block
+            }
+            pushpop(8); // motion vectors
+            push(pop()); // macroblock_decision_data
+        }
+    }
+}
+
 
 /**
  * @internal
@@ -168,11 +183,12 @@ int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
                                         portal<MotionEstimation> portal_fwdMotion,
                                         portal<MotionEstimation> portal_bckMotion,
                                         int downsampled_data_per_image,
-                                        int pixeldata_per_macroblock) {
+                                        int pixeldata_per_macroblock,
+                                        portal<SendBackReferenceFrameEncoder> portal_picture_type) {
 
     int macroblock_output_data_size = downsampled_data_per_image*(pixeldata_per_macroblock+14)/pixeldata_per_macroblock;
 
-    add int->int splitjoin {
+    add splitjoin {
         // FEATURETODO - Some kind of message should ignore the right branch if its a B frame
         split duplicate;
         add Identity<int>;
@@ -185,15 +201,14 @@ int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
                                             portal_fwdMotion,
                                             portal_bckMotion,
                                             downsampled_data_per_image,
-                                            pixeldata_per_macroblock);
-        join roundrobin(2+macroblock_output_data_size, 1);
+                                            pixeldata_per_macroblock,
+                                            portal_picture_type);
+        join roundrobin(macroblock_output_data_size, 1);
     }
     add int->int filter {
-        int a = 2+macroblock_output_data_size;
-        work pop a+1 push a {
-            pushpop(a);
-            if (pop() != 1999) 
-                println("Error - Streams missaligned somehow!");
+        work pop macroblock_output_data_size + 1 push macroblock_output_data_size {
+            pushpop(macroblock_output_data_size);
+            pop();
         }
     }
 }                                        
@@ -353,105 +368,103 @@ int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
  */
 int->int filter MotionPredictionDecision(int width, 
                                          int height,
-                                         int downsampled_data_per_image,
                                          int pixeldata_per_macroblock) {
-    int mp_data_size = (downsampled_data_per_image*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock);
-    int mpd_data_size = (downsampled_data_per_image*(pixeldata_per_macroblock+6)/pixeldata_per_macroblock);
+    int picture_type = -1;
 
-    work pop 2+3*mp_data_size push 2+mpd_data_size {
-        pushpop(1);
+    int a = pixeldata_per_macroblock+4;
+
+    handler setPictureType(int new_picture_type) {
+        picture_type = new_picture_type;
+    }
+
+    work pop 3*(a+1) push a+2 {
         // TODO - Could have intra coded blocks in P or B frames
-        int picture_type = peek(0);
-        pushpop(1);
-        int a = pixeldata_per_macroblock+4;
-        for (int macroblock = 0; macroblock < (mp_data_size/a); macroblock++) {
-            if (picture_type == 1) { // I picture              
-                push(1); // macroblock_intra - TODO change to messaging
-                pushpop(a);
-                deadpop(1);
-                deadpop(a);
-                deadpop(1);
-                deadpop(a);
-                deadpop(1);
-                push(1);
-            } else if (picture_type == 2) { // P picture
-                push(0); // macroblock_intra
-                deadpop(a);
-                deadpop(1);
-                pushpop(a);
-                deadpop(1);
-                deadpop(a);
-                deadpop(1);
-                push(2);
-            } else { // B picture
-                push(0); // macroblock_intra
-                deadpop(a);
-                deadpop(1);
-                int error_backward = peek(a);
-                int error_forward = peek(2*a+1);
-                // Determine if the combination of the forward and backward
-                // vectors has lower error than either one seperately.
-                float[pixeldata_per_macroblock] combo_data;
-                float error_combo = 0;
-                for (int i = 0; i < pixeldata_per_macroblock; i++) {
-                    combo_data[i] = 0.5*(peek(i) + peek(pixeldata_per_macroblock+5+i));
-                    error_combo += combo_data[i];
-                }
-
-                int encode_decision; // 2 = P, 3 = B, 4 = P and B
-                if (((int) error_combo) < error_backward &&
-                    ((int) error_combo) < error_forward) {
-                    encode_decision = 4;
-                } else if (error_backward <= error_forward) {
-                    encode_decision = 3;
-                } else {
-                    encode_decision = 2;
-                }
-
-                if (encode_decision == 4) {
-                    // Encode with P and B vectors
-                    for (int i = 0; i < pixeldata_per_macroblock; i++) {
-                        push((int) (round(combo_data[i])));                      
-                    }
-                    int b = pixeldata_per_macroblock;
-                    deadpop(b);
-                    push(peek(5+b));
-                    push(peek(5+b+1));
-                    pushpop(2);
-                    deadpop(2);
-                    deadpop(1);
-                    deadpop(a);
-                    deadpop(1);
-                    push(encode_decision);
-                } else if (encode_decision == 3) { // Encode with B vectors
-                    int b = pixeldata_per_macroblock;
-                    pushpop(b);
-                    push(peek(2));
-                    push(peek(3));
-                    push(peek(0));
-                    push(peek(1));
-                    pop(); 
-                    pop(); 
-                    pop(); 
-                    pop();
-                    deadpop(1);
-                    deadpop(a);
-                    deadpop(1);
-                    push(encode_decision);
-                } else if (encode_decision == 2) { // Encode with P vectors
-                    deadpop(a);
-                    deadpop(1);
-                    int b = pixeldata_per_macroblock;
-                    pushpop(a); // Reorder
-                    deadpop(1);
-                    push(encode_decision);
-                } else {
-                    println("ERROR ERROR - encode_decision must be 2, 3, or 4");
-                }
+        if (picture_type == 1) { // I picture              
+            push(1); // macroblock_intra - TODO change to messaging
+            pushpop(a);
+            deadpop(1);
+            deadpop(a);
+            deadpop(1);
+            deadpop(a);
+            deadpop(1);
+            push(1);
+        } else if (picture_type == 2) { // P picture
+            push(0); // macroblock_intra
+            deadpop(a);
+            deadpop(1);
+            pushpop(a);
+            deadpop(1);
+            deadpop(a);
+            deadpop(1);
+            push(2);
+        } else { // B picture
+            push(0); // macroblock_intra
+            deadpop(a);
+            deadpop(1);
+            int error_backward = peek(a);
+            int error_forward = peek(2*a+1);
+            // Determine if the combination of the forward and backward
+            // vectors has lower error than either one seperately.
+            float[pixeldata_per_macroblock] combo_data;
+            float error_combo = 0;
+            for (int i = 0; i < pixeldata_per_macroblock; i++) {
+                combo_data[i] = 0.5*(peek(i) + peek(pixeldata_per_macroblock+5+i));
+                error_combo += combo_data[i];
             }
-            // the final value pushed follows this convention:
-            // 1 = intra, 2 = forward, 3 = backward, 4 = both
+
+            int encode_decision; // 2 = P, 3 = B, 4 = P and B
+            if (((int) error_combo) < error_backward &&
+                ((int) error_combo) < error_forward) {
+                encode_decision = 4;
+            } else if (error_backward <= error_forward) {
+                encode_decision = 3;
+            } else {
+                encode_decision = 2;
+            }
+
+            if (encode_decision == 4) {
+                // Encode with P and B vectors
+                for (int i = 0; i < pixeldata_per_macroblock; i++) {
+                    push((int) (round(combo_data[i])));                      
+                }
+                int b = pixeldata_per_macroblock;
+                deadpop(b);
+                push(peek(5+b));
+                push(peek(5+b+1));
+                pushpop(2);
+                deadpop(2);
+                deadpop(1);
+                deadpop(a);
+                deadpop(1);
+                push(encode_decision);
+            } else if (encode_decision == 3) { // Encode with B vectors
+                int b = pixeldata_per_macroblock;
+                pushpop(b);
+                push(peek(2));
+                push(peek(3));
+                push(peek(0));
+                push(peek(1));
+                pop(); 
+                pop(); 
+                pop(); 
+                pop();
+                deadpop(1);
+                deadpop(a);
+                deadpop(1);
+                push(encode_decision);
+            } else if (encode_decision == 2) { // Encode with P vectors
+                deadpop(a);
+                deadpop(1);
+                int b = pixeldata_per_macroblock;
+                pushpop(a); // Reorder
+                deadpop(1);
+                push(encode_decision);
+            } else {
+                println("ERROR - encode_decision must be 2, 3, or 4");
+            }
         }
+        // the final value pushed follows this convention:
+        // 1 = intra, 2 = forward, 3 = backward, 4 = both
     }
 }
 
@@ -473,122 +486,134 @@ int->int filter IntraMotionPrediction(int pixeldata_per_macroblock) {
 /**
  * @internal
  */
-int->int filter MotionEstimation(int width, int height, int delay, int pixeldata_per_macroblock, int window) {
+int->int filter MotionEstimation(int width, 
+                                 int height, 
+                                 int delay, 
+                                 int blocks_per_macroblock, 
+                                 int window) {
     // The window size determines how many pixels on either side of the specified block that are checked for
     // possible motion estimation matching.
     int macroblock_count = (width/16)*(height/16);
-    int block_output_data_size = pixeldata_per_macroblock+5;
 
     int[width][height] lum;
     int[width/2][height/2] cb;
     int[width/2][height/2] cr;
 
+    int blockx;
+    int blocky;
 
-    work pop macroblock_count*pixeldata_per_macroblock push macroblock_count*block_output_data_size {
-        for (int blocky = 0; blocky < (height/16); blocky++) {
-            for (int blockx = 0; blockx < (width/16); blockx++) {
-                int[16][16] curblock_lum;
-                int[8][8] curblock_cb;
-                int[8][8] curblock_cr;
-                for (int lum_count = 0; lum_count < 4; lum_count++) {
-                    for (int y = 0; y < 8; y++) {
-                        for (int x = 0; x < 8; x++) {
-                            int input_val = pop();
-                            curblock_lum[x+8*(lum_count % 2)][y+8*(lum_count / 2)] = input_val;
-                        }
-                    }
+    init {
+        blockx = 0;
+        blocky = 0;
+    }
+
+    work pop blocks_per_macroblock*64 push blocks_per_macroblock*64+5 {
+        int[16][16] curblock_lum;
+        int[8][8] curblock_cb;
+        int[8][8] curblock_cr;
+        for (int lum_count = 0; lum_count < 4; lum_count++) {
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    int input_val = pop();
+                    curblock_lum[x+8*(lum_count % 2)][y+8*(lum_count / 2)] = input_val;
                 }
-                for (int y = 0; y < 8; y++) {
-                    for (int x = 0; x < 8; x++) {
-                        int input_val = pop();
-                        curblock_cb[x][y] = input_val;
-                    }
-                }
-                for (int y = 0; y < 8; y++) {
-                    for (int x = 0; x < 8; x++) {
-                        int input_val = pop();
-                        curblock_cr[x][y] = input_val;
-                    }
-                }
- 
-                int best_motionx = 0;
-                int best_motiony = 0;
-                int best_error = 256*8*8*4*3; // todo - hacked for now to have a limited window size
-                                                
-                int windowxleft = blockx*32-window;
-                if (windowxleft < 0)
-                    windowxleft = 0;
-                int windowxright = blockx*32+32+window;
-                if (windowxright > width*2)
-                    windowxright = width*2;
-                int windowytop = blocky*32-window;
-                if (windowytop < 0) 
-                    windowytop = 0;
-                int windowybottom = blocky*32+32+window;
-                if (windowybottom > height*2)
-                    windowybottom = height*2;
-                // For now we don't try half-pixel motion vectors TODO;
-                for (int window_x = windowxleft; window_x <= windowxright - 32; window_x = window_x + 2) {
-                    for (int window_y = windowytop; window_y <= windowybottom - 32; window_y = window_y + 2) {
-                        // Try this window and see how well it does.
-                        int local_error = 0;
-                        for (int y = 0; y < 16; y++) {
-                            for (int x = 0; x < 16; x++) {
-                                local_error += (int) abs(curblock_lum[x][y] - lum[(window_x/2)+x][(window_y/2)+y]);
-                            }
-                        }
-                        for (int y = 0; y < 8; y++) {
-                            for (int x = 0; x < 8; x++) {
-                                int temp  = ((int) abs(curblock_cb[x][y] - cb[(window_x/4)+x][(window_y/4)+y]));
-                                local_error += 4 * temp;
-                                int temp2 = ((int) abs(curblock_cr[x][y] - cr[(window_x/4)+x][(window_y/4)+y]));
-                                local_error += 4 * temp2;
-                            }
-                        }
-                        if (local_error < best_error) {
-                            best_error = local_error;
-                            best_motionx = window_x - blockx*32;
-                            best_motiony = window_y - blocky*32;
-                        }
-                    }
-                }
-                             
-                for (int lum_count = 0; lum_count < 4; lum_count++) {
-                    for (int y = 0; y < 8; y++) {
-                        for (int x = 0; x < 8; x++) {
-                            int output_val;
-                            int temp1 = x+8*(lum_count % 2);
-                            int temp2 = y+8*(lum_count / 2);
-                            int temp3 = blockx*16+(lum_count % 2)*8+x+best_motionx/2;
-                            int temp4 = blocky*16+(lum_count / 2)*8+y+best_motiony/2;
-                            int new_val = curblock_lum[temp1][temp2];
-                            int ref_val = lum[temp3][temp4];
-                            output_val =  new_val - ref_val;
-                            push(output_val); 
-                        }
-                    }
-                }
-                for (int y = 0; y < 8; y++) {
-                    for (int x = 0; x < 8; x++) {
-                        int output_val;
-                        output_val = curblock_cb[x][y] - cb[blockx*8+x+best_motionx/4][blocky*8+y+best_motiony/4];
-                        push(output_val);
-                    }
-                }
-                for (int y = 0; y < 8; y++) {
-                    for (int x = 0; x < 8; x++) {
-                        int output_val;
-                        output_val = curblock_cr[x][y] - cr[blockx*8+x+best_motionx/4][blocky*8+y+best_motiony/4];
-                        push(output_val);
-                    }
-                }
-                push(best_motionx);
-                push(best_motiony);
-                push(0);
-                push(0);
-                push(best_error);
             }
         }
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int input_val = pop();
+                curblock_cb[x][y] = input_val;
+            }
+        }
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int input_val = pop();
+                curblock_cr[x][y] = input_val;
+            }
+        }
+ 
+        int best_motionx = 0;
+        int best_motiony = 0;
+        int best_error = 256*8*8*4*3; // todo - hacked for now to have a limited window size
+                                                
+        int windowxleft = blockx*32-window;
+        if (windowxleft < 0)
+            windowxleft = 0;
+        int windowxright = blockx*32+32+window;
+        if (windowxright > width*2)
+            windowxright = width*2;
+        int windowytop = blocky*32-window;
+        if (windowytop < 0) 
+            windowytop = 0;
+        int windowybottom = blocky*32+32+window;
+        if (windowybottom > height*2)
+            windowybottom = height*2;
+        // For now we don't try half-pixel motion vectors TODO;
+        for (int window_x = windowxleft; window_x <= windowxright - 32; window_x = window_x + 2) {
+            for (int window_y = windowytop; window_y <= windowybottom - 32; window_y = window_y + 2) {
+                // Try this window and see how well it does.
+                int local_error = 0;
+                for (int y = 0; y < 16; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        local_error += (int) abs(curblock_lum[x][y] - lum[(window_x/2)+x][(window_y/2)+y]);
+                    }
+                }
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
+                        int temp  = ((int) abs(curblock_cb[x][y] - cb[(window_x/4)+x][(window_y/4)+y]));
+                        local_error += 4 * temp;
+                        int temp2 = ((int) abs(curblock_cr[x][y] - cr[(window_x/4)+x][(window_y/4)+y]));
+                        local_error += 4 * temp2;
+                    }
+                }
+                if (local_error < best_error) {
+                    best_error = local_error;
+                    best_motionx = window_x - blockx*32;
+                    best_motiony = window_y - blocky*32;
+                }
+            }
+        }
+                             
+        for (int lum_count = 0; lum_count < 4; lum_count++) {
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    int output_val;
+                    int temp1 = x+8*(lum_count % 2);
+                    int temp2 = y+8*(lum_count / 2);
+                    int temp3 = blockx*16+(lum_count % 2)*8+x+best_motionx/2;
+                    int temp4 = blocky*16+(lum_count / 2)*8+y+best_motiony/2;
+                    int new_val = curblock_lum[temp1][temp2];
+                    int ref_val = lum[temp3][temp4];
+                    output_val =  new_val - ref_val;
+                    push(output_val); 
+                }
+            }
+        }
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int output_val;
+                output_val = curblock_cb[x][y] - cb[blockx*8+x+best_motionx/4][blocky*8+y+best_motiony/4];
+                push(output_val);
+            }
+        }
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                int output_val;
+                output_val = curblock_cr[x][y] - cr[blockx*8+x+best_motionx/4][blocky*8+y+best_motiony/4];
+                push(output_val);
+            }
+        }
+        push(best_motionx);
+        push(best_motiony);
+        push(0);
+        push(0);
+        push(best_error);
+
+        blockx++;
+        if (blockx == (width/16)) {
+            blockx = 0;
+            blocky = (blocky + 1) % (height/16);
+        } 
     }
 
     handler referencePic(int[width][height] new_lum, 
@@ -596,7 +621,6 @@ int->int filter MotionEstimation(int width, int height, int delay, int pixeldata
                          int[width/2][height/2] new_cr, 
                          int[width/16][height/16][4] motion_vectors,
                          int picture_type) {
-
         int[width][height] old_lum;
         int[width/2][height/2] old_cb;
         int[width/2][height/2] old_cr;
@@ -784,7 +808,11 @@ int->int filter AssignPictureType(int width, int height, int numpictures) {
 /**
  * @internal
  */
-int->int splitjoin PicturePreprocessing(int width, int height, int numpictures, int downsampled_data_per_image) {
+int->int splitjoin PicturePreprocessing(int width, 
+                                        int height, 
+                                        int numpictures) {
+    int downsampled_data_per_image = (width*height*3)/2;
+    
     split duplicate;
     add AssignPictureType(width, height, numpictures);
     add TransformPicture(width, height);
@@ -794,8 +822,8 @@ int->int splitjoin PicturePreprocessing(int width, int height, int numpictures, 
 /**
  * @internal
  */
-int->int filter ReorderPictures(int downsampled_data_per_image) {
-    int picture_data_size = 2+downsampled_data_per_image;
+int->int filter ReorderPictures(int width, int height) {
+    int picture_data_size = 2+(width*height*3)/2;
     // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
     // and its implementation - in particular the vbv buffer concept might come into play here, but
     // I'll worry about that later TODO.
@@ -836,13 +864,14 @@ int->int filter ReorderPictures(int downsampled_data_per_image) {
         }
     }
 
-    phase PopFrameOff pop picture_data_size {
-        deadpop(picture_data_size);
-    }
-
     phase PushFrameThrough push picture_data_size pop picture_data_size {
         pushpop(picture_data_size);
     }
+
+   phase PopFrameOff pop picture_data_size {
+       deadpop(picture_data_size);
+   }
+
 }
 
 /**
@@ -914,40 +943,37 @@ int->int pipeline DecodeAndSendBackReferenceFrame(int[64] default_intra_quantise
                                                   portal<MotionEstimation> portal_fwdMotion,
                                                   portal<MotionEstimation> portal_bckMotion,
                                                   int downsampled_data_per_image,
-                                                  int pixeldata_per_macroblock) {
+                                                  int pixeldata_per_macroblock,
+                                                  portal<SendBackReferenceFrameEncoder> portal_picture_type) {
 
     int macroblock_output_data_size = downsampled_data_per_image*(pixeldata_per_macroblock+5+8+1)/pixeldata_per_macroblock;
-
     int downsample_data_size = downsampled_data_per_image;
     int extended_data_size = downsample_data_size*(pixeldata_per_macroblock+5)/pixeldata_per_macroblock;
-    add int->int splitjoin { 
-        split roundrobin(2, macroblock_output_data_size);
-        add Identity<int>;
-        add MacroBlockAndMotionVectorDecode(default_intra_quantiser_matrix,
-                                            default_non_intra_quantiser_matrix,
-                                            intra_dc_precision,
-                                            q_scale_type,
-                                            width,
-                                            height,
-                                            pixeldata_per_macroblock);
-        join roundrobin(2, extended_data_size);
-    }
+
+    add MacroBlockAndMotionVectorDecode(default_intra_quantiser_matrix,
+                                        default_non_intra_quantiser_matrix,
+                                        intra_dc_precision,
+                                        q_scale_type,
+                                        width,
+                                        height,
+                                        pixeldata_per_macroblock);
     
     add SendBackReferenceFrameEncoder(width, 
                                       height, 
                                       extended_data_size, 
                                       portal_fwdMotion, 
-                                      portal_bckMotion);
+                                      portal_bckMotion)
+        to portal_picture_type;
 }
 
 /**
  * @internal
  */
 int->int filter SendBackReferenceFrameEncoder(int width, 
-                                              int height, 
-                                              int extended_data_size,
-                                              portal<MotionEstimation> portal_fwdMotion,
-                                              portal<MotionEstimation> portal_bckMotion) {
+                                               int height, 
+                                               int extended_data_size,
+                                               portal<MotionEstimation> portal_fwdMotion,
+                                               portal<MotionEstimation> portal_bckMotion) {
     // The word "Encoder" is at the end to avoid namespace conflicts with the SendBackReferenceFrame
     // filter in the decoder, which is similar.
     int[width][height] backward_y_data;
@@ -956,6 +982,7 @@ int->int filter SendBackReferenceFrameEncoder(int width,
     int[width/16][height/16][4] backward_motion_vectors;
     int backward_frametype;
     boolean skipframe; // skip sending the first frame backwards
+    int frametype;
     
     init {
         skipframe = true;
@@ -980,15 +1007,16 @@ int->int filter SendBackReferenceFrameEncoder(int width,
         }
     }
 
-    work pop extended_data_size+2 push 1 {
+    handler setPictureType(int new_frametype) {
+        frametype = new_frametype;
+    }
+
+    work pop extended_data_size push 1 {
         int[width][height] y_data;
         int[width/2][height/2] cb_data;
         int[width/2][height/2] cr_data;
         int[width/16][height/16][4] motion_vectors;
-        
-        int frameno = pop();
-        int frametype = pop();
-        
+               
         if (frametype < 3) {               
             for (int macroblocky = 0; macroblocky < height/16; macroblocky++) {
                 for (int macroblockx = 0; macroblockx < width/16; macroblockx++) {
@@ -1053,7 +1081,7 @@ int->int filter SendBackReferenceFrameEncoder(int width,
         } else {
             deadpop(extended_data_size);
         }
-        push(1999);
+        push(1);
     }
 }
 

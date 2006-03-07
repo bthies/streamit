@@ -1,0 +1,1163 @@
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that allow one to parse MPEG-2 compliant video. 
+ * The code is based on the MPEG-2 specification (ISO/IEC 13818-2). The MPEG-2 decoding
+ * is a work in progress, although it works within a limited test range. Throughout the 
+ * source code, citations are made in cases where an understanding of the code would be
+ * helped by looking at an outside source. The format I have chosen is 
+ * (cite NUM#, LOOKUP_INFO). NUM=1 refers to ISO/IEC: 13818-2, and NUM=2 refers to the reference
+ * MPEG implementation written in C, available at [www.mpeg.org].
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @file Parser.str.pre
+ * @version 1.0
+ */
+
+/**
+ * Performs variable length decoding on an MPEG-2 compliant bit stream in accordance
+ * with the IEEE MPEG-2 specification.
+ * @param UpdatePortal_quantiser_data_ac The portal that recieves AC quantiser coefficient table data
+ * @param UpdatePortal_quantiser_data_dc The portal that recieves DC quantiser coefficient table data
+ * @param UpdatePortal_macroblock_intra The portal that receives intra macroblock information
+ * @param UpdatePortal_picture_type The portal that receives picture type information
+ * @param UpdatePortal_mvd The portal that needs to be notified about motion vector resets
+ * @param UpdatePortal_picture_type2 The portal that receives picture type information
+ * @input An MPEG-2 variable length encoded bitstream
+ * @output A series of variable length decoded macroblocks with associated motion vectors
+ *         and messages interleaved on parser phase boundaries with updates to the state of
+ *         the decoded data.
+ */
+bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
+                                 portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
+                                 portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
+                                 portal<MotionPrediction> UpdatePortal_picture_type,
+                                 portal<MotionVectorDecode> UpdatePortal_mvd,
+                                 portal<PictureReorder> UpdatePortal_picture_type2,
+                                 portal<SendBackReferenceFrame> UpdatePortal_picture_type3,
+                                 int width,
+                                 int height,
+                                 int the_chroma_format) {
+    // FEATURETODO
+    // When phases can take parameters, get rid of this definition and
+    // uncomment the definition in the filter work function, and change
+    // the phase PushMacroblock() to use the parameter. 
+    int b_per_m = blocks_per_macroblock[the_chroma_format];
+    int[12][64] QFS; // Should be b_per_m, but b_per_m gets assigned later for some reason.
+    int picture_coding_type;
+    int macroblock_intra;
+    int macroblock_motion_forward;
+    int macroblock_motion_backward;
+    int[2][2][2] motion_code;
+    int[2][2][2] motion_residual;
+
+    int next_cfg_node;
+
+    int extension_start_code_identifier;
+    int chroma_format;
+    int block_count;
+    int mb_width;
+    int vertical_size;
+    boolean sequence_end_code_not_found;
+    boolean picture_or_group_start_code_found;
+    int[2][2] f_code;
+    int frame_pred_frame_dct;
+    int picture_structure;
+    int concealment_motion_vectors;
+    int intra_vlc_format;
+    boolean slice_start_code_follows;
+    int previous_macroblock_address;
+    int quantiser_scale_code;
+    int[3] dc_dct_pred; // (cite 1, P.64-65)
+    boolean macroblock_next;
+    int macroblock_address_increment;
+    int num_skipped_macroblocks;
+    int i;
+    int j;
+    int k;
+
+    init {
+        next_cfg_node = 0;
+    } 
+
+    phase PushMacroblock push (b_per_m*64+19) {
+        for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
+            for (int j = 0; j < 64; j++) {
+                push(QFS[i][j]);
+            }
+        }
+        for (int r = 0; r < 2; r++) 
+            for (int s = 0; s < 2; s++)
+                for (int t = 0; t < 2; t++) {
+                    push(motion_code[r][s][t]);
+                }
+        for (int r = 0; r < 2; r++) 
+            for (int s = 0; s < 2; s++)
+                for (int t = 0; t < 2; t++) {
+                    push(motion_residual[r][s][t]);
+                }
+        push(macroblock_intra);
+        push(macroblock_motion_forward);
+        push(macroblock_motion_backward);
+    }
+
+
+    work pop * push (b_per_m*64+19) {  // Actually unknown pop/push rate
+        int tempval = 0;
+
+        boolean pushedMacroblock = false;
+
+        while (pushedMacroblock == false) {
+
+            if (next_cfg_node == 0) {
+                println("Parsing M2V File...");
+                // video_sequence() (cite 1, P. 25)
+
+                next_start_code();
+
+                // sequence_header() (cite 1, P. 26)
+
+                pops(32,tempval);
+                if (tempval != 0x000001B3)
+                    println("Error - Expected Video Sequence Start Code, Found " + tempval);
+
+                // Reading Sequence Header
+
+                int horizontal_size_value;
+                int vertical_size_value;
+                int aspect_ratio_information;
+                int frame_rate_code;
+                int bit_rate_value;
+                int vbv_buffer_size_value;
+                int constrained_parameters_flag;
+                int load_intra_quantiser_matrix;
+                int load_non_intra_quantiser_matrix;
+                float frame_rate_value;
+                int[64] intra_quantiser_matrix;
+                int[64] non_intra_quantiser_matrix;
+            
+                // (cite 1, P.55)
+                pops(12,horizontal_size_value);
+                pops(12,vertical_size_value);
+                pops(4,aspect_ratio_information);
+                // (cite 1, P.41 Table 6-3)
+                if (aspect_ratio_information == 0)
+                    println("Error - Forbidden Aspect Ratio");
+                else if (aspect_ratio_information == 1) {
+                    // aspect_ratio_information == 1 -> aspect ratio is 1:1, this case is handled
+                } else {
+                    println("Error - Program Limitation: Don't Know How to Handle Other Aspect Ratios");
+                    println("        correct mpeg2enc parameter: 1         /* aspect_ratio_information 1=square pel, 2=4:3, 3=16:9, 4=2.11:1 */");
+                }
+                pops(4,frame_rate_code);
+                // (cite 1, P.41-42 Table 6-4)
+                frame_rate_value = 0;
+                if (frame_rate_code == 0)
+                    println("Error - Forbidden Frame Rate Code");
+                else if (frame_rate_code == 4) {
+                    // frame_rate_code 4
+                    frame_rate_value = 30000.0/1001.0;
+                }
+                else {
+                    println("Error - Program Limitation: Don't Know How to Handle Other Frame Rate Codes");
+                    println("        correct mpeg2enc parameter: 4         /* frame_rate_code 1=23.976, 2=24, 3=25, 4=29.97, 5=30 frames/sec. */");
+                }
+                pops(18,bit_rate_value);
+                marker_bit();
+
+                pops(10,vbv_buffer_size_value);
+                pops(1,constrained_parameters_flag);
+                // (cite 1, P. 43)
+                if (constrained_parameters_flag != 0) {
+                    println("Error - Expected Constrained Parameters Flag To Be 0");
+                    println("        correct mpeg2enc parameter: 0         /* constrained_parameters_flag */");
+                }
+                // Default Values for the quantiser_matrices
+            
+                // Assumes no alternate_scan TODO
+                pops(1,load_intra_quantiser_matrix);
+                if (load_intra_quantiser_matrix == 1) {
+                    // println("  Loading Intra Quantiser Matrix from File");    
+                    int[64] tempOrder;
+                    for (int i = 0; i < 64; i++) {
+                        pops(8,tempOrder[i]);
+                    }
+                    for (int i = 0; i < 64; i++) {
+                        // Assumes no alternate_scan TODO
+                        intra_quantiser_matrix[i] = tempOrder[ZigZagUnorder[i]];
+                    }
+                } else {
+                    // println("  Using Default Intra Quantiser Matrix");
+                    for (int i = 0; i < 64; i++) {
+                        intra_quantiser_matrix[i] = default_intra_quantiser_matrix[i];
+                    }
+                }
+                pops(1,load_non_intra_quantiser_matrix);
+                if (load_non_intra_quantiser_matrix == 1) {
+                    // println("  Loading Non Intra Quantiser Matrix from File");
+                    int[64] tempOrder;
+                    for (int i = 0; i < 64; i++) {
+                        pops(8,tempOrder[i]);
+                    }
+                    for (int i = 0; i < 64; i++) {
+                        // Assumes no alternate_scan
+                        non_intra_quantiser_matrix[i] = tempOrder[ZigZagUnorder[i]];
+                    }
+                } else {
+                    // println("  Using Default Non Intra Quantiser Matrix");
+                    for (int i = 0; i < 64; i++) {
+                        non_intra_quantiser_matrix[i] = default_non_intra_quantiser_matrix[i];
+                    }                
+                }
+                UpdatePortal_quantiser_data_ac.setQuantiserMatrices(intra_quantiser_matrix,
+                                                                    non_intra_quantiser_matrix) [0:0]; 
+                next_start_code();
+
+                // sequence_extension() (cite 1, P. 28)
+
+                pops(32,tempval);
+                if (tempval != 0x000001B5) {
+                    println("Error - Expected Extension Start Code, File is MPEG-1, not MPEG-2 ");
+                    println("        correct mpeg2enc parameter: 0         /* ISO/IEC 11172-2 stream */");
+                }
+
+                pops(4,extension_start_code_identifier);
+                if (extension_start_code_identifier != 0x1)
+                    println("Error - Expected Sequence Extension Identifier " + extension_start_code_identifier);
+
+                int profile_and_level_indication;
+                pops(8,profile_and_level_indication);
+                // We don't really care about the profile_and_level indicator - this matters if this implementation
+                // were fully MPEG2 compliant to some profile/level, but it isn't.
+
+                int progressive_sequence;
+
+                pops(1,progressive_sequence);
+                if (progressive_sequence == 1) {
+                    // progressive_sequence 1: allows only progressive frames
+                } else {
+                    // progressive_sequence 0: allows interlaced and progressive frames
+                    println("Error - Program Limitation: Don't handle interlaced frames");
+                    println("        correct mpeg2enc parameter: 1         /* progressive_sequence */");
+                }
+                pops(2,chroma_format);
+                block_count = blocks_per_macroblock[the_chroma_format]; // (cite 1, P. 62)
+                if (chroma_format != the_chroma_format) {
+                    println("Error - Program specified with chroma " + the_chroma_format);
+                    println("        File has chroma " + chroma_format);
+                }
+
+                int horizontal_size_extension;
+                int vertical_size_extension;
+                int bit_rate_extension;
+                int vbv_buffer_size_extension;
+                int low_delay;
+                int bit_rate;
+                int vbv_buffer_size;
+                float frame_rate;
+                int mb_height;
+                int horizontal_size;
+
+                pops(2,horizontal_size_extension);
+                horizontal_size = horizontal_size_value + (horizontal_size_extension << 12);
+                mb_width = (horizontal_size + 15) / 16;
+                pops(2,vertical_size_extension);
+                vertical_size = vertical_size_value +  (vertical_size_extension << 12);
+                mb_height = (vertical_size + 15) / 16;
+                pops(12,bit_rate_extension);
+                // (cite 1, P.42)
+                bit_rate = 400 * (bit_rate_value + (bit_rate_extension << 18));
+                marker_bit();
+                pops(8,vbv_buffer_size_extension);
+                vbv_buffer_size = vbv_buffer_size_value + (vbv_buffer_size_extension << 10);
+                pops(1,low_delay);
+                if (low_delay == 1) {
+                    // low_delay 1 indicates that sequence contains no B-pictures
+                    println("Error - Program Limitation: Can't Handle This Case Yet");
+                    println("        correct mpeg2enc parameter: 0         /* low_delay  */");
+                } else {
+                    // low_delay 0 indicates that sequence is allowed to contain B-pictures
+                }
+
+                int frame_rate_extension_n;
+                int frame_rate_extension_d;
+
+                pops(2,frame_rate_extension_n);
+                pops(5,frame_rate_extension_d);
+                // (cite 1, P. P.41)
+                frame_rate = frame_rate_value * 
+                    ((float) (frame_rate_extension_n + 1)) / ((float) (frame_rate_extension_d + 1));
+                next_start_code();
+                sequence_end_code_not_found = true;
+                next_cfg_node = 1;
+            } 
+
+            else if (next_cfg_node == 1) {
+                // assert: sequence_end_code_not_found == true
+                // extension_and_user_data(0) (cite 1, P.26)
+                peeks(32,tempval);
+                while (tempval == 0x000001B5 || tempval == 0x000001B2) {
+                    pops(32,tempval);
+                    if (tempval == 0x000001B5) {
+                        // extension_data(0) (cite 1, P.27)
+                        peeks(4, tempval); 
+                        if (tempval == 2) { // extension_start_code_identifier
+                            int video_format;
+                            int color_description;
+                            int color_primaries;
+                            int transfer_characteristics;
+                            int matrix_coefficients;
+                            int display_horizontal_size;
+                            int display_vertical_size;
+
+                            pops(4, tempval);                           
+                            pops(3, video_format);
+                            pops(1, color_description);
+                            if (color_description == 1) {
+                                pops(8, color_primaries);
+                                pops(8, transfer_characteristics);
+                                pops(8, matrix_coefficients);
+                            }
+                            pops(14, display_horizontal_size);
+                            marker_bit();
+                            pops(14, display_vertical_size);
+                            // TODO - we don't do anything with this extra data we get out. Eventually we should.
+                            next_start_code();
+                        } else {
+                            println("Error - Program Limitation: Not Yet Support for Sequence Scalable Extension()");
+                        }
+                    } else { // user_data() (cite 1, P.27)      
+                        if (tempval != 0x000001B2) {
+                            println("Error - Program Limitation: Not Yet Support for User_Data()");
+                        } 
+                        peeks(24, tempval);
+                        while (tempval != 0x000001) {
+                            int user_data;
+                            pops(8, user_data);
+                            // TODO we should probably do something with this data
+                            peeks(24, tempval);
+                        }
+                        next_start_code();
+                    }
+                    peeks(32,tempval);
+                }
+                picture_or_group_start_code_found = true;
+                next_cfg_node = 3;
+            } 
+       
+            else if (next_cfg_node == 3) {
+                // assert: picture_or_group_start_code_found == true
+                peeks(32,tempval);
+                if (tempval == 0x000001B8) {
+                    // group_of_pictures_header() (cite 1, P.29)
+                    pops(32,tempval);
+               
+                    // -- Time Code - Not Used in Decoding Process --
+                    // (cite 1, P.49)
+                    int drop_frame_flag;
+                    int time_code_hours;
+                    int time_code_minutes;
+                    int time_code_seconds;
+                    int time_code_pictures;
+                    int closed_gop;
+                    int broken_link;               
+
+                    pops(1,drop_frame_flag);
+                    pops(5,time_code_hours);
+                    pops(6,time_code_minutes);
+                    marker_bit();
+                    pops(6,time_code_seconds);
+                    pops(6,time_code_pictures);
+                    // -- End of Time Code
+     
+                    pops(1,closed_gop);
+                    pops(1,broken_link);
+                    if (broken_link == 1)
+                        println("Error - Program Limitation: broken_link = 1");
+                    next_start_code();
+                    // extension_and_user_data(1) (cite 1, P.26)
+                    peeks(32,tempval);
+                    if (tempval == 0x000001B5 || tempval == 0x000001B2)
+                        println("Error - Program Limitation: Not Yet Support for extension_and_user_data(1)");
+                }
+ 
+                // picture_header() (cite 1, P.30)
+                pops(32,tempval);
+                if (tempval != 0x00000100) {
+                    println("Error - Picture Start Code Expected, " + tempval);
+                }
+
+                // (cite 1, P.50) for interpretation of the following fields
+                int temporal_reference;
+                pops(10,temporal_reference);
+                pops(3,picture_coding_type);
+                if (picture_coding_type == 1) {
+                    // picture_coding_type = I-picture
+                } else if (picture_coding_type == 2) {
+                    // picture_coding_type = P-picture
+                } else if (picture_coding_type == 3) {
+                    // picture_coding_type = B-picture
+                } else {
+                    println("  Error: Forbidden picture_coding_type " + picture_coding_type);
+                }
+                UpdatePortal_picture_type.setPictureType(picture_coding_type) [0:0];
+                UpdatePortal_picture_type2.setPictureType(picture_coding_type) [0:0];
+                UpdatePortal_picture_type3.setPictureType(picture_coding_type) [0:0];
+ 
+                int vbv_delay;
+                pops(16,vbv_delay);
+                int full_pel_forward_vector;
+                int forward_f_code;
+                int full_pel_backward_vector;
+                int backward_f_code;
+                // TODO unknown interpretation for vbv_delay, (cite 1, P.50)
+                // The following is not used by the MPEG-2 specification (cite 1, P.51)
+                // Supposed to have certain values, but not guaranteed for most files.
+                if (picture_coding_type == 2 || picture_coding_type == 3) {
+                    pops(1,full_pel_forward_vector);
+                    pops(3,forward_f_code);
+                } 
+                if (picture_coding_type == 3) {
+                    pops(1,full_pel_backward_vector);
+                    pops(3,backward_f_code);
+                }
+                pops(1,tempval);
+                if (tempval == 1)
+                    println("Error: File conforms to some superset of the MPEG-2 specification");
+                next_start_code();
+            
+                // picture_coding_extension() (cite 1, P.30)
+                pops(32,tempval);
+                if (tempval != 0x000001B5)
+                    println("Error - Expecting extension start code " + tempval);
+                pops(4,extension_start_code_identifier);
+                if (extension_start_code_identifier != 0x8)
+                    println("Error - Expecting picture coding extension ID " + extension_start_code_identifier);
+                pops(4,f_code[0][0]);
+                pops(4,f_code[0][1]);
+                pops(4,f_code[1][0]);
+                pops(4,f_code[1][1]);
+                UpdatePortal_mvd.setFCode(f_code) [0:0];
+                // (cite 1, P.51)
+                for (int i = 0; i < 2; i++) {
+                    for (int j = 0; j < 2; j++) {
+                        if (f_code[i][j] == 0 || (f_code[i][j] >= 10 && f_code[i][j] <= 14))
+                            println("Error - Invalid f_code");
+                        if (picture_coding_type == 1 && f_code[i][j] != 0xF)
+                            println("Error - Program Limitation: I-frame has motion prediction");
+                        if (picture_coding_type == 2 && f_code[1][j] != 0xF)
+                            println("Error - Program Limitation: P-frame has backward motion prediction");
+                    }
+                }
+
+                int intra_dc_precision;
+                int top_field_first;
+                int q_scale_type;
+                int alternate_scan;
+                int repeat_first_field;
+                int chroma_420_type;
+                int progressive_frame;
+                int composite_display_flag;
+                int actual_intra_dc_precision;
+                pops(2,intra_dc_precision);
+                UpdatePortal_quantiser_data_dc.setIntraDCPrecision(intra_dc_precision);
+                actual_intra_dc_precision = intra_dc_precision + 8;
+                pops(2,picture_structure);
+                if (picture_structure != 3)
+                    println("Error - Program Limitation: Interlaced or bad picture structure");
+                pops(1,top_field_first); // Interpreted Later
+                pops(1,frame_pred_frame_dct);
+                if (frame_pred_frame_dct != 1) 
+                    println("Error - Program Limitation or Bad Syntax: frame_pred_frame_dct must be 1");
+                pops(1,concealment_motion_vectors);
+                pops(1,q_scale_type);
+                UpdatePortal_quantiser_data_ac.setQScaleType(q_scale_type) [0:0];
+                pops(1,intra_vlc_format);
+                pops(1,alternate_scan);
+                if (alternate_scan == 1)
+                    println("Error - Program Limitation - Doesn't handle alternate_scan right now");
+                pops(1,repeat_first_field);
+                // TODO Assumes progressive_sequence = 1
+                if (repeat_first_field == 0) {
+                    //  repeat_first_field = 0, one frame output
+                }
+                else {
+                    if (top_field_first == 0)
+                        println("  repeat_first_field = 1, top_field_first = 0, two frames output");
+                    else
+                        println("  repeat_first_field = 1, top_field_first = 1, three frames output");
+                }
+                pops(1,chroma_420_type);
+                // We don't really care about this, although it should be 1 for 4:2:0 chroma.
+                // (cite 1, P.53)
+                pops(1,progressive_frame);
+                // Again, I don't think we care too much about this value, since we assume only a
+                // base stream exists.
+                pops(1,composite_display_flag);
+                if (composite_display_flag == 1) {
+                    println("Error - Program Limitation: Assumes no composite display information");
+                } else {
+                    // composite_display_flag - not present
+                }
+                next_start_code();
+         
+                // extension_and_user_data(2)
+                peeks(32,tempval);
+                if (tempval == 0x000001B5 || tempval == 0x000001B2)
+                    println("Error - Program Limitation: Not Yet Support for extension_and_user_data(2)");
+                // picture_data() (cite 1, P.34)
+                slice_start_code_follows = true;
+                previous_macroblock_address = -1;
+                next_cfg_node = 5;
+            }
+
+            else if (next_cfg_node == 5) {
+                // assert: slice_start_code_follows == true
+                // slice() (cite 1, P.34)
+                // Reset motion vector predictors, (cite 1, P.77-80)
+                UpdatePortal_mvd.resetPredictors() [0:0];
+                pops(24,tempval);
+                if (tempval != 0x000001) 
+                    println("Error - Expecting slice_start_code " + tempval);
+                int slice_vertical_position;
+                pops(8,slice_vertical_position);
+                if (slice_vertical_position < 0x01 || slice_vertical_position > 0xAF)
+                    println("Error - Invalid slice_vertical_position" + slice_vertical_position);
+                if (vertical_size > 2800)
+                    println("Error - Program Limitation: Doesn't handle vertical_sizes > 2800");
+                int mb_row;
+                mb_row = slice_vertical_position - 1;
+                previous_macroblock_address = (mb_row * mb_width) - 1;
+                pops(5,quantiser_scale_code);
+                UpdatePortal_quantiser_data_ac.setQuantiserScaleCode(quantiser_scale_code) [0:0];
+                peeks(1,tempval);
+                if (tempval == 1)
+                    println("Error - Program Limitation: Doesn't handle intra_slice_flag");
+                pops(1,tempval);
+                if (tempval == 1)
+                    println("Error - Extra_bit_slice must be 0");
+                                // I'm not sure about this - see P. 64 and getpic.c Line 1180
+                                // they disagree TODO
+                dc_dct_pred[0] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+                dc_dct_pred[1] = 0; // (int) pow(2,actual_intra_dc_precision - 1);
+                dc_dct_pred[2] = 0; // (int) pow(2,actual_intra_dc_precision - 1);    
+                macroblock_next = true;
+                next_cfg_node = 7;
+            }
+
+            else if (next_cfg_node == 7) {
+                                // assert: macroblock_next == true
+                // macroblock() (cite 1, P.35)
+                int macroblock_escape;
+                macroblock_escape = 0;
+                peeks(11,tempval);
+                while (tempval == 8) {
+                    pops(11,tempval);
+                    macroblock_escape += 33;
+                    peeks(11,tempval);
+                }
+              
+                variable_length_code(tempval,const_macroblock_address_inc);
+                macroblock_address_increment = tempval + macroblock_escape;
+                if (macroblock_address_increment > 1)
+                    next_cfg_node = 8;
+                else
+                    next_cfg_node = 12;
+            }
+
+            else if (next_cfg_node == 8) {
+                num_skipped_macroblocks = macroblock_address_increment - 1;
+                for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
+                    for (int j = 0; j < 64; j++) {
+                        QFS[i][j] = 0;
+                    }
+                }
+                for (int r = 0; r < 2; r++) 
+                    for (int s = 0; s < 2; s++)
+                        for (int t = 0; t < 2; t++) {
+                            motion_code[r][s][t] = 0;
+                        }
+                for (int r = 0; r < 2; r++) 
+                    for (int s = 0; s < 2; s++)
+                        for (int t = 0; t < 2; t++) {
+                            motion_residual[r][s][t] = 0;
+                              
+                        }
+                if (picture_coding_type == 2) { // [cite 1, P. 80]
+                    //                      UpdatePortal_mvd.resetPredictors() [0:0];
+                }
+                macroblock_intra = 0;
+                macroblock_motion_forward = 0;
+                macroblock_motion_backward = 0;
+                k = 0;
+                next_cfg_node = 9;
+            }
+           
+            else if (next_cfg_node == 9) {
+                // assert: k < num_skipped_macroblocks
+                PushMacroblock();
+                pushedMacroblock = true;
+                k++;
+                if (k < num_skipped_macroblocks)
+                    next_cfg_node = 9;
+                else
+                    next_cfg_node = 12;
+            }
+
+            else if (next_cfg_node == 12) {
+                int macroblock_address;
+                macroblock_address = previous_macroblock_address + macroblock_address_increment;
+                previous_macroblock_address = macroblock_address;
+                int mb_column;
+                mb_column = macroblock_address % mb_width;
+                // TODO - Don't actually check to make sure that macroblocks are skipped which aren't
+                // allowed to be skipped - this should be done, the rules are on (cite 1, P.60)
+                // macroblock_modes, (cite 1, P.36)
+                // TODO - If a sequence_scalable_extension present in bitstream, then may possibly
+                // need to use tables B5,6,7,8 as well.
+
+                if (picture_coding_type == 1) { // I-picture
+                    variable_length_code(tempval,const_macroblock_type_Ipictures);
+                } else if (picture_coding_type == 2) { // P-picture
+                    variable_length_code(tempval,const_macroblock_type_Ppictures);
+                } else if (picture_coding_type == 3) { // B-picture
+                    variable_length_code(tempval,const_macroblock_type_Bpictures);
+                }
+
+                int spatial_temporal_weight_code_flag;
+                int macroblock_quant;
+                int macroblock_pattern;
+
+                spatial_temporal_weight_code_flag = tempval & 0x01;
+                tempval >>= 1;
+                macroblock_intra = tempval & 0x01;
+                UpdatePortal_macroblock_intra.setMacroblockIntra(macroblock_intra) [0:0];
+                tempval >>= 1;
+                macroblock_pattern = tempval & 0x01;
+                tempval >>= 1;
+                macroblock_motion_backward = tempval & 0x01;
+                tempval >>= 1;
+                macroblock_motion_forward = tempval & 0x01;
+                tempval >>= 1;
+                macroblock_quant = tempval & 0x01;
+
+                if (spatial_temporal_weight_code_flag == 1)
+                    println("Error - Program Limitation - Expects spatial_temporal_weight_code_flag to be 0");
+                // (cite 1, P.60, Table 6-17)
+                int prediction_type;
+                prediction_type = 0; // 0 = reserved, 1 = field-based, 2=frame-based, 3=dual-prime
+                int motion_vector_count;
+                motion_vector_count = 0;
+                int mv_format;
+                mv_format = 0; // 0 = field, 1 = frame
+                int dmv;
+                dmv = 0; 
+                if (frame_pred_frame_dct == 1) {
+                                // See comments on P.60 regarding what happens if frame_motion_type
+                                // is omitted.
+                    prediction_type = 2;
+                    motion_vector_count = 1;
+                    mv_format = 1;
+                    dmv = 0;
+                }
+                if (macroblock_motion_forward == 1 || macroblock_motion_backward == 1) {
+                    if (picture_structure == 3) {
+                        if (frame_pred_frame_dct == 0) {
+                            // (cite 1, P.60, Table 6-17)
+                            pops(2,tempval);
+                            if (tempval == 0) {
+                                println("Error - Invalid frame_motion_type code");
+                            } else if (tempval == 1) {
+                                if (spatial_temporal_weight_code_flag < 2) {
+                                    println("Error - Don't handle this case of frame_motion_type");
+                                } else {
+                                    println("Error - Don't handle this case of frame_motion_type");
+                                }
+                            } else if (tempval == 2) {
+                                prediction_type = 2;
+                                motion_vector_count = 1;
+                                mv_format = 1;
+                                dmv = 0;
+                            } else if (tempval == 3) {
+                                prediction_type = 3;
+                                motion_vector_count = 1;
+                                mv_format = 0;
+                                dmv = 1;
+                            }
+                            if (prediction_type == 0)
+                                println("Error - Invalid prediction_type");
+                            else if (prediction_type == 1)
+                                println("  prediction_type field-based");
+                            else if (prediction_type == 2)
+                                println("  prediction_type frame-based");
+                            else if (prediction_type == 3)
+                                println("  prediction_type dual-prime");
+                            println("  motion_vector_count " + motion_vector_count);
+                            if (mv_format == 0)
+                                println("  mv_format field");
+                            else
+                                println("  mv_format frame");
+                            println("  dmv " + dmv);
+                        }
+                    } else {
+                        println("Error - Program Limitation: Doesn't handle this case");
+                    }
+                }
+                if ((picture_structure == 3) && (frame_pred_frame_dct == 0) && ((macroblock_intra == 1) || (macroblock_pattern == 1)))
+                    println("Error - Program Limitation, Doesn't Handle This Particular Case");
+
+                if (macroblock_quant == 1) {
+                    pops(5,quantiser_scale_code);
+                    UpdatePortal_quantiser_data_ac.setQuantiserScaleCode(quantiser_scale_code) [0:0];
+                }
+
+                /*            int[2][2][2] motion_code;
+                              int[2][2][2] motion_residual; FEATURETODO */
+                for (int i = 0; i < 2; i++)
+                    for (int j = 0; j < 2; j++)
+                        for (int k = 0; k < 2; k++) {
+                            motion_code[i][j][k] = 0;
+                            motion_residual[i][j][k] = 0;
+                        }
+
+                // Motion Vector Predictor Reset, (cite 1, P.80)
+                if ((macroblock_intra == 1 && concealment_motion_vectors == 0) ||
+                    (macroblock_intra == 0 && macroblock_motion_forward == 0 && 
+                     picture_coding_type == 2)) {
+                    UpdatePortal_mvd.resetPredictors() [0:0];  
+                }
+
+                if (macroblock_motion_forward == 1 || 
+                    (macroblock_intra == 1 && concealment_motion_vectors == 1)) {
+                                // motion_vectors(0); (cite 1, P.36, 61)
+                    if (motion_vector_count == 1) {
+                        if ((mv_format == 0) && (dmv != 1)) {
+                            println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
+                            println("mv_format " + mv_format + " dmv " + dmv);
+                        }
+                        // motion_vector(0,0);
+                        // (cite 1, P.61)
+                        for (int t = 0; t < 2; t++) {
+                            variable_length_code(motion_code[0][0][t],const_motion_code);
+                            if ((f_code[0][t] != 1) && (motion_code[0][0][t] != 0)) {
+                                int r_size = f_code[0][t]-1;
+                                pops(r_size,motion_residual[0][0][t]);
+                            }
+                            if (dmv == 1) {
+                                println("Error - Program Limitation: Don't handle case of dmv = 1");
+                            }
+                        } 
+                
+                    } else {
+                        println("Error - Program Limitation: Don't handle field motion vectors");
+                    }
+                }
+                if (macroblock_motion_backward == 1) {
+                
+                                // motion_vectors(1); (cite 1, P.36, 61)
+                    if (motion_vector_count == 1) {
+                        if ((mv_format == 0) && (dmv != 1)) {
+                            println("Error - Program Limitation: Don't handle this case with mv_format and dmv.");
+                            println("mv_format " + mv_format + " dmv " + dmv);
+                        }
+                        // motion_vector(0,1);
+                        // (cite 1, P.61)
+                        for (int t = 0; t < 2; t++) {
+                            variable_length_code(motion_code[0][1][t],const_motion_code);
+                            if ((f_code[1][t] != 1) && (motion_code[0][1][t] != 0)) {
+                                int r_size = f_code[1][t]-1;
+                                pops(r_size,motion_residual[0][1][t]);
+                            }
+                            if (dmv == 1) {
+                                println("Error - Program Limitation: Don't handle the case of dmv = 1");
+                            }
+                        }
+                    }
+                }
+
+                if (macroblock_intra == 1 && concealment_motion_vectors == 1) {
+                    marker_bit();
+                }
+
+                // The meaning of pattern_code is defined somewhat poorly
+                // on (cite 1, P.62) in the code block
+                int[12] pattern_code;
+                for (int i = 0; i < 12; i++) {
+                    if (macroblock_intra == 1) {
+                        pattern_code[i] = 1;
+                    } else {
+                        pattern_code[i] = 0;
+                    }
+                }
+                if (macroblock_pattern == 1) {
+                                // coded_block_pattern() (cite 1, P.37, 62)
+                    int cbp;
+                    variable_length_code(cbp,const_coded_block_patterns);
+                    for (int i = 0; i < 6; i++) {
+                        if ((cbp & (1 << (5-i))) > 0)
+                            pattern_code[i] = 1;
+                    }
+                    if (chroma_format == 1 && cbp == 0) {
+                        println("Error - cbp not allowed to be zero in 4:2:0 format");
+                    }
+                    if (chroma_format == 2) {
+                        int coded_block_pattern_1;
+                        pops(2, coded_block_pattern_1);
+                        for (int i = 6; i < 8; i++) {
+                            if ((coded_block_pattern_1 & (1<< (7-i))) > 0)
+                                pattern_code[i] = 1;
+                        }
+                    }
+                    if (chroma_format == 3) {
+                        println("Error - Program Limitation: Doesn't handle 4:4:4 format");
+                    }
+                }
+
+                for (int i = 0; i < block_count; i++) {
+                    int QFS_current;
+                    QFS_current = 0;
+                    for (int j = 0; j < 64; j++) {
+                        QFS[i][j] = 0;
+                    } 
+
+                                // block(i) (cite 1, P.38)
+                                // if macroblocks are skipped, predictor is reset
+                    if (pattern_code[i] == 1) {
+                        if (macroblock_intra == 1) {
+                            int dct_diff; 
+                            int half_range;
+                            if (i < 4) {
+                                int dc_dct_size_luminance;
+                                int dc_dct_differential_luminance;
+                                int dc_dct_luminance;
+                                variable_length_code(dc_dct_size_luminance,const_dct_dc_size_luminance);
+                                // This next section from (cite 1, P.65)
+                                if (dc_dct_size_luminance == 0) {
+                                    dct_diff = 0;
+                                } else {
+                                    pops(dc_dct_size_luminance,dc_dct_differential_luminance);
+                                    half_range = (int) pow(2,dc_dct_size_luminance-1);
+                                    if (dc_dct_differential_luminance >= half_range) {
+                                        dct_diff = dc_dct_differential_luminance;
+                                    } else {
+                                        dct_diff = (dc_dct_differential_luminance + 1) - (2*half_range);
+                                    }
+                                }
+                                dc_dct_luminance = dc_dct_pred[0] + dct_diff;
+                                dc_dct_pred[0] = dc_dct_luminance;
+                                QFS[i][0] = dc_dct_luminance;
+                                QFS_current = 1;
+                            } else {
+                                int dc_dct_size_chrominance;
+                                int dc_dct_differential_chrominance;
+                                int dc_dct_chrominance;
+                                // Other ones 
+                                variable_length_code(dc_dct_size_chrominance,const_dct_dc_size_chrominance);
+                                if (dc_dct_size_chrominance == 0) {
+                                    dct_diff = 0;
+                                } else {
+                                    pops(dc_dct_size_chrominance,dc_dct_differential_chrominance);
+                                    half_range = (int) pow(2,dc_dct_size_chrominance-1);
+                                    if (dc_dct_differential_chrominance >= half_range) {
+                                        dct_diff = dc_dct_differential_chrominance;
+                                    } else {
+                                        dct_diff = (dc_dct_differential_chrominance + 1) - (2*half_range);
+                                    }
+                                }
+                                // Blocks 4, 6, 8, and 10 go into [1]
+                                // Blocks 5, 7, 9, 11 go into [2]
+                                int temp_index;
+                                temp_index = (i % 2) + 1;
+                                dc_dct_chrominance = dc_dct_pred[temp_index] + dct_diff;
+                                dc_dct_pred[temp_index] = dc_dct_chrominance;
+                                QFS[i][0] = dc_dct_chrominance;
+                                QFS_current = 1;
+                            }
+                        } else {
+                            // I don't think we really need to do anything here... if we let this just
+                            // fall through it should get handled in the next section, right?
+                            // Reset predictors, (cite 1, P. 64)
+                            dc_dct_pred[0] = 0;
+                            dc_dct_pred[1] = 0;
+                            dc_dct_pred[2] = 0;  
+                        }
+                        if (intra_vlc_format == 1 && macroblock_intra == 1)
+                            println("Error - Program Limitation: Need to use B15 to decode DCT coefficients instead of B14");
+                        while (QFS_current < 64) {
+                            if (macroblock_intra == 0 && QFS_current == 0) {
+                                // This section here from end of Table B.14 and 7.2.2.2 (cite 1, P.66)
+                                peeks(1,tempval);
+                                if (tempval == 1) {
+                                    pops(1,tempval);
+                                    pops(1,tempval);
+                                    if (tempval == 0)
+                                        QFS[i][0] = 1;
+                                    else 
+                                        QFS[i][0] = -1;
+                                    QFS_current += 1;
+                                }
+                            } 
+                            peeks(2,tempval);
+                            if (tempval == 2) {
+                                pops(2,tempval);
+                                QFS_current = 64;
+                            } else {
+                                int signed_level;
+                                int run;
+                                int level;
+                                int sign;
+                                signed_level = 0;
+                                run = 0;
+                                peeks(6,tempval);
+                                if (tempval == 1) { 
+                                    // Escape Code
+                                    pops(6,tempval);
+                                    level = 0;
+                                    sign = 0;
+                                    pops(6,run);
+                                    pops(1,sign);
+                                    pops(11,level);
+                                    if (sign == 0) {
+                                        signed_level = level;
+                                    } else {
+                                        signed_level = level - 2048;
+                                    }
+                                } else {
+                                    // Regular Code
+                                    level = 0;
+                                    sign = 0;
+                                    // The old. inefficient way: v ariable_length_code_dct(run,level,const_dct_coefficients_table_zero);
+                                    // begin variable length code
+                                    peeks(16, tempval);
+                                    // if (tempval >= 49152 && tempval <= 65535) { // 2
+                                    if (tempval >= 49152) {
+                                        pops(2, tempval);
+                                        run = const_dct_coefficients_table_zero_len2[0].run;
+                                        level = const_dct_coefficients_table_zero_len2[0].level; 
+                                        // } else if (tempval >= 24576 && tempval <= 32767) { // 3
+                                    } else if (tempval >= 24576) {
+                                        pops(3, tempval);
+                                        run = const_dct_coefficients_table_zero_len3[0].run;
+                                        level = const_dct_coefficients_table_zero_len3[0].level; 
+                                        // } else if (tempval >= 16384 && tempval <= 24575) { // 4
+                                    } else if (tempval >= 16384) {
+                                        pops(4, tempval);
+                                        run = const_dct_coefficients_table_zero_len4[tempval-4].run;
+                                        level = const_dct_coefficients_table_zero_len4[tempval-4].level; 
+                                        // } else if (tempval >= 10240 && tempval <= 16383) { // 5
+                                    } else if (tempval >= 10240) {
+                                        pops(5, tempval);
+                                        run = const_dct_coefficients_table_zero_len5[tempval-5].run;
+                                        level = const_dct_coefficients_table_zero_len5[tempval-5].level; 
+                                        // } else if (tempval >= 8192 && tempval <= 10239) { // 8
+                                    } else if ( tempval >= 8192) {
+                                        pops(8, tempval);
+                                        run = const_dct_coefficients_table_zero_len8[tempval-32].run;
+                                        level = const_dct_coefficients_table_zero_len8[tempval-32].level; 
+                                        // } else if (tempval >= 4096 && tempval <= 8191) { // 6
+                                    } else if (tempval >= 4096) {
+                                        pops(6, tempval);
+                                        run = const_dct_coefficients_table_zero_len6[tempval-4].run;
+                                        level = const_dct_coefficients_table_zero_len6[tempval-4].level; 
+                                        // } else if (tempval >= 2048 && tempval <= 4095) { // 7
+                                    } else if (tempval >= 2048) {
+                                        pops(7, tempval);
+                                        run = const_dct_coefficients_table_zero_len7[tempval-4].run;
+                                        level = const_dct_coefficients_table_zero_len7[tempval-4].level; 
+                                        // } else if (tempval >= 512 && tempval <= 1023) { // 10
+                                    } else if (tempval >= 512) {
+                                        pops(10, tempval);
+                                        run = const_dct_coefficients_table_zero_len10[tempval-8].run;
+                                        level = const_dct_coefficients_table_zero_len10[tempval-8].level; 
+                                        // } else if (tempval >= 256 && tempval <= 511) { // 12
+                                    } else if (tempval >= 256) {
+                                        pops(12, tempval); 
+                                        run = const_dct_coefficients_table_zero_len12[tempval-16].run;
+                                        level = const_dct_coefficients_table_zero_len12[tempval-16].level; 
+                                        // } else if (tempval >= 128 && tempval <= 255) { // 13
+                                    } else if (tempval >= 128) {
+                                        pops(13, tempval); 
+                                        run = const_dct_coefficients_table_zero_len13[tempval-16].run;
+                                        level = const_dct_coefficients_table_zero_len13[tempval-16].level; 
+                                        // } else if (tempval >= 64 && tempval <= 127) { // 14
+                                    } else if (tempval >= 64) {
+                                        pops(14, tempval); 
+                                        run = const_dct_coefficients_table_zero_len14[tempval-16].run;
+                                        level = const_dct_coefficients_table_zero_len14[tempval-16].level; 
+                                        // } else if (tempval >= 32 && tempval <= 63) { // 15
+                                    } else if (tempval >= 32) {
+                                        pops(15, tempval); 
+                                        run = const_dct_coefficients_table_zero_len15[tempval-16].run;
+                                        level = const_dct_coefficients_table_zero_len15[tempval-16].level; 
+                                        // } else if (tempval >= 16 && tempval <= 31) { // 16
+                                    } else if (tempval >= 16) {
+                                        pops(16, tempval);
+                                        run = const_dct_coefficients_table_zero_len16[tempval-16].run;
+                                        level = const_dct_coefficients_table_zero_len16[tempval-16].level; 
+                                    }  else {
+                                        print("Error - Unknown Huffman Symbol");
+                                    }
+                                    // end variable length code
+
+                                    pops(1,sign);
+                                    if (sign == 0) {
+                                        signed_level = level;
+                                    } else {
+                                        signed_level = -level;
+                                    }
+                                }
+                                QFS_current += run;
+                                if (QFS_current == 63) {
+                                    pops(2,tempval);
+                                    if (tempval != 2) {
+                                        println("Error - Reached End of Block, Expecting End of Block Code");
+                                    }
+                                }
+                                QFS[i][QFS_current] = signed_level;
+                                QFS_current++;
+                            }
+                            if (QFS_current > 64)
+                                println("Error - QFS_current > 64 " + QFS_current);
+                        }
+                    } else {
+                        // Skipped block
+                        // This indicates a skipped block, but not a skipped macroblock. 
+                        for (int index = 0; index < 64; index++) {
+                            QFS[i][index] = 0;
+                        }
+                    }
+                }
+                PushMacroblock();
+                pushedMacroblock = true;
+                peeks(23,tempval);
+                if (tempval == 0) {
+                    macroblock_next = false;
+                    next_cfg_node = 13;
+                } else {
+                    macroblock_next = true;
+                    next_cfg_node = 7;
+                }
+            }
+
+            else if (next_cfg_node == 13) {
+                next_start_code();
+                peeks(32,tempval);
+                if (tempval > 0x000001AF || tempval < 0x00000101) {
+                    slice_start_code_follows = false;
+                    next_cfg_node = 15;
+                } else {
+                    slice_start_code_follows = true;   
+                    next_cfg_node = 5;
+                }
+            }
+
+            else if (next_cfg_node == 15) {
+                next_start_code();
+                peeks(32,tempval);
+                if (tempval == 0x00000100 || tempval == 0x000001B8) {
+                    picture_or_group_start_code_found = true;
+                    next_cfg_node = 3;
+                } else {
+                    picture_or_group_start_code_found = false;
+                    next_cfg_node = 17;
+                }
+            }
+
+            else if (next_cfg_node == 17) {
+                peeks(32,tempval);
+                if (tempval != 0x000001B7) {
+                    println("Error - Program Limitation: Don't handle repeated sequence headers and sequence extensions");
+                }
+            
+                if (tempval != 0x000001B7) {
+                    sequence_end_code_not_found = true;
+                    next_cfg_node = 1;
+                } else {
+                    sequence_end_code_not_found = false;
+                    next_cfg_node = 18;
+                }            
+            }
+
+            else if (next_cfg_node == 18) {
+                println("Done Parsing M2V File...");
+                println("Generating fake last frame to push out last real frame of video.");
+                UpdatePortal_picture_type.setPictureType(1) [0:0];
+                UpdatePortal_picture_type2.setPictureType(1) [0:0];
+                UpdatePortal_picture_type3.setPictureType(1) [0:0];
+                UpdatePortal_macroblock_intra.setMacroblockIntra(1);
+                for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
+                    for (int j = 0; j < 64; j++) {
+                        QFS[i][j] = 0;
+                    }
+                }
+                for (int r = 0; r < 2; r++) 
+                    for (int s = 0; s < 2; s++)
+                        for (int t = 0; t < 2; t++) {
+                            motion_code[r][s][t] = 0;
+                        }
+                for (int r = 0; r < 2; r++) 
+                    for (int s = 0; s < 2; s++)
+                        for (int t = 0; t < 2; t++) {
+                            motion_residual[r][s][t] = 0;
+                        }
+                macroblock_intra = 1;
+                macroblock_motion_forward = 0;
+                macroblock_motion_backward = 0;
+                int i = 0;
+                next_cfg_node = 21;
+            } 
+       
+            else if (next_cfg_node == 21) {
+                // assert: i < width/16
+                int j = 0;
+                next_cfg_node = 22;
+            }
+
+            else if (next_cfg_node == 22) {
+                // assert: j < height/16
+                PushMacroblock();
+                pushedMacroblock = true;
+                j++;
+                if (j < height/16)
+                    next_cfg_node = 22;
+                else
+                    next_cfg_node = 27;
+            }
+
+            else if (next_cfg_node == 27) {
+                i++;
+                if (i < width/16)
+                    next_cfg_node = 21;
+                else
+                    next_cfg_node = 29;
+            }
+                 
+            else if (next_cfg_node == 29) {
+                println("Done generating fake frame");
+                next_cfg_node = 30;
+            } 
+
+            else if (next_cfg_node == 30) {
+                //      println("Error - Trying to parse M2V file for a second time...");
+                pushedMacroblock = true;
+            }
+        }
+    }
+}
+
+

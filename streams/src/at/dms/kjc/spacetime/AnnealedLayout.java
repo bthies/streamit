@@ -102,7 +102,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     public void printLayoutStats() {
-        int[] tileCosts = getTileWorks();
+        int[] tileCosts = getTileWorks(false);
         
         System.out.println("Placement cost: " + placementCost(false));
         
@@ -331,13 +331,18 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public double placementCost(boolean debug) {
    
-        int[] tileCosts = getTileWorks();
+        int[] tileCosts = getTileWorks(true);
         
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
         double cost = workOfBottleNeckTile; //standardDeviation(tileCosts);  
                    //+ (COMM_MULTIPLIER * (double)commEstimate(tileCosts));
         
+        
+        //int wastedWork = Util.sum(tileCosts) - totalWork;
+        
+        //cost += (double)wastedWork / rawChip.getTotalTiles(); 
+            
         /*
         if (!isLegalLayout())
             cost += ILLEGAL_COST;
@@ -536,7 +541,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return max;
     }
         
-    private int[] getTileWorks() {
+    private int[] getTileWorks(boolean bias) {
         int[] tileCosts = new int[rawChip.getTotalTiles()];
         
         for (int i = 0; i < scheduleOrder.length; i++) {
@@ -629,6 +634,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             }
         }
  
+        
+        if (bias)
+            return biasCosts(tileCosts);
+        else 
+            return tileCosts;
+    }
+    
+    private int[] biasCosts(int[] tileCosts) {
+        int maxWork = maxTileWork(tileCosts);
+        for (int i = 0; i < tileCosts.length; i++) {
+            if (tileCosts[i] < maxWork)
+                tileCosts[i] = (int)((double)tileCosts[i] * 1.1);
+        }
+            
         return tileCosts;
     }
     

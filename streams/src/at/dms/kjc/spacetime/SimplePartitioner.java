@@ -2,6 +2,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 import java.io.FileWriter;
+
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
@@ -19,18 +21,20 @@ import at.dms.kjc.sir.lowering.partition.*;
  */
 public class SimplePartitioner extends Partitioner {
     // trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.02;
-
+    private static double TRASHOLD;
+    //if true, then each filter occupies its own trace, useful for debugging...
+    private static final boolean ONE_FILTER_TRACES = false;
+    
     // if true, make traces as long as possible ignoring the work balancing
     // (TRASHOLD)
     private static final boolean IGNORE_WORK_EST = false;
-    //if true, then each filter occupies its own trace, useful for debugging...
-    private static final boolean ONE_FILTER_TRACES = false;
+   
     
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
                              LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
         super(topFilters, exeCounts, lfa, work, rawChip);
         workEstimation = new HashMap();
+        TRASHOLD = (double)KjcOptions.slicethresh / (double)100.0;
     }
 
     public Trace[] partition() {

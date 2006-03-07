@@ -24,7 +24,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private static final double BIG_WORKER = 0.9;
     
     /** multiply the communication estimate of the layout by this */
-    private static double COMM_MULTIPLIER = 20.0;
+    private static double COMM_MULTIPLIER = 1.0;
     
     /** the added weight of the latency of a intertracebuffer that 
      * is connected to a big worker tile.
@@ -337,11 +337,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public double placementCost(boolean debug) {
    
-        int[] tileCosts = getTileWorks(false);
+        int[] tileCosts = getTileWorks(true);
         
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
-        double cost = workOfBottleNeckTile; //standardDeviation(tileCosts);  
+        double cost = workOfBottleNeckTile;//standardDeviation(tileCosts);  
                    //+ (COMM_MULTIPLIER * (double)commEstimate(tileCosts));
         
         
@@ -664,9 +664,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     private int[] biasCosts(int[] tileCosts) {
-        double maxWork = (double)maxTileWork(tileCosts);
+        int maxWork = maxTileWork(tileCosts);
         for (int i = 0; i < tileCosts.length; i++) {
-            if ((double)tileCosts[i] / maxWork < .95)
+            if (tileCosts[i] < maxWork) 
                 tileCosts[i] = (int)((double)tileCosts[i] * 1.20);
         }
             

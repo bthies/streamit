@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.71 2006-02-27 18:32:54 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.72 2006-03-07 21:54:10 mgordon Exp $
  */
 
 prefix Kjc
@@ -509,3 +509,9 @@ longname 		"backendvalues"
 	requireArgument
 	help		"For debugging, specify class with package:value for static variable"
 	
+
+longname 		"slicethresh"
+	type 		int
+	default		"5"
+	requireArgument
+	help 		"For the spacetime backend, set the slice threshold to be <int> percent."

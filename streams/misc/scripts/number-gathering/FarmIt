@@ -117,14 +117,14 @@ for ((low=$3;$low<=$4;low+=1)); do
     mach=""
     #try to log on to the machine, if we cannot, do not add it to the list of
     #machines...
-    if ssh "cagfarm-$low.lcs.mit.edu" "date"; then
-	mach="cagfarm-$low.lcs.mit.edu"
+    if ssh "cagfarm-$low.csail.mit.edu" "date"; then
+	mach="cagfarm-$low.csail.mit.edu"
     else
 	echo -en "\033[1m\e[31;40mCannot log on to cagfarm-$low, removing it from the machine list.\033[0m\n"; tput sgr0
     fi
 
     if [ -n "$mach" ]; then 
-	machines[$current]="cagfarm-$low.lcs.mit.edu"	
+	machines[$current]="cagfarm-$low.csail.mit.edu"	
 	current=$current+1
     fi
 done

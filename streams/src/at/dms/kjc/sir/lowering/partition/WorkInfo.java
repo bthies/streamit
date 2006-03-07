@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering.partition;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.raw.*;
+import at.dms.kjc.spacedynamic.*;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 import java.util.*;
@@ -48,8 +49,11 @@ class WorkInfo {
         } else {
             // otherwise, calculate exact work
             if (KjcOptions.simulatework) {
-                // if simulation is enabled, then call raw simluator
-                result.workExact = RawWorkEstimator.estimateWork(filter); 
+                // if simulation is enabled, then call raw simluator, call the correct work estimation pass
+                if (KjcOptions.spacedynamic)
+                    result.workExact = at.dms.kjc.spacedynamic.RawWorkEstimator.estimateWork(filter); 
+                else
+                    result.workExact = at.dms.kjc.raw.RawWorkEstimator.estimateWork(filter); 
             } else {
                 // otherwise, just take workEstimate to be exact
                 result.workExact = workEstimate;

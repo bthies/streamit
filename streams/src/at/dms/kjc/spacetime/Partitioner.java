@@ -135,8 +135,8 @@ public abstract class Partitioner {
      * accounting for pipeline lag.  It is calculated for a trace of 
      * filters: F0->F1->...->Fi->...->Fn
      * 
-     * startupCost(F0) = 0;
-     * startupCost(Fi) = startupCost(Fi-1) + 
+     * 
+     * startupCost(Fi) = 
      *      ceil(fi_pop / fi-1_push * work(fi-1)
      *      
      * where work(fi) returns the work estimation of 1 firing of the filter.
@@ -175,17 +175,13 @@ public abstract class Partitioner {
                             (double) getWorkEstOneFiring(prevNode)); 
                            
                 
-                //add the upstream's startup cost to my lag to get my startup cost
-                int startupCost = prevStartupCost + 
-                  myLag;
-                
                 //record the startup cost
-                System.out.println("StartupCost: " + node + " " + startupCost);
-                filterStartupCost.put(node, new Integer(startupCost));
+                System.out.println("StartupCost: " + node + " " + myLag);
+                filterStartupCost.put(node, new Integer(myLag));
                 
                 //reset the prev node and the prev startup cost...
                 prevNode = node;
-                prevStartupCost = startupCost;
+                
             }
             //remember the bottle neck filter
             bottleNeckFilter.put(traces[i], maxFilter);

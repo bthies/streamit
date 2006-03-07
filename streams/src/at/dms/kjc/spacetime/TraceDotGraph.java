@@ -26,7 +26,7 @@ public class TraceDotGraph {
      * @param DRAM True if DRAM port assignment is complete
      */
     public static void dumpGraph(SpaceTimeSchedule spaceTime, Trace[] schedule, String fileName,
-                                 boolean DRAM) {
+                                 Layout layout, boolean DRAM) {
         
         Trace[] io = spaceTime.partitioner.io;
         List steadyTrav = Arrays.asList(schedule);
@@ -90,7 +90,7 @@ public class TraceDotGraph {
 
                     if (node.isFilterTrace()) {
                         fw.write("  " + node.hashCode() + "[ label=\""
-                                 + ((FilterTraceNode) node).toString(rawChip));
+                                 + ((FilterTraceNode) node).toString(layout));
                         FilterInfo filter = FilterInfo
                             .getFilterInfo((FilterTraceNode) node);
                         fw.write("\\nWork: "

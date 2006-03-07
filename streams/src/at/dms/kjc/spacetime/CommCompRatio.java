@@ -2,8 +2,16 @@ package at.dms.kjc.spacetime;
 
 import java.util.Iterator;
 
+/**
+ * Calculate the computation to communication ratio.  Poorly named class.
+ * 
+ * @author mgordon
+ *
+ */
 public class CommCompRatio {
-    // returns computation / communication ratio
+    /**
+     * @return computation / communication ratio
+     */ 
     public static double ratio(Partitioner partitioner) {
         int comp = 0, comm = 0;
         // get the trace node travesal

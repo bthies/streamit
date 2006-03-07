@@ -8,24 +8,13 @@ import at.dms.kjc.flatgraph2.*;
 public class FilterTraceNode extends TraceNode
 {
     private FilterContent filter;
-    //private int initMult;
-    //private int steadyMult;
-    private int x, y;
+   
     private boolean predefined;
     private boolean laidout;
 
-    public FilterTraceNode(FilterContent filter,
-                           int x, int y) {
-        predefined = (filter instanceof PredefinedContent);
-        this.filter = filter;
-        this.x = x;
-        this.y = y;
-        laidout = false;
-    }
-
     public FilterTraceNode(FilterContent filter) {
         predefined = (filter instanceof PredefinedContent);
-        this.filter=filter;
+        this.filter = filter;
         laidout = false;
     }
     
@@ -44,13 +33,12 @@ public class FilterTraceNode extends TraceNode
     }
 
     public String toString() {
-        return filter.toString() + " [" + x + ", " + y + "]";   
+        return filter.toString();   
     }
     
-    public String toString(RawChip chip) 
+    public String toString(Layout layout) 
     {
-        return filter.toString() + " [" + x + ", " + y + "]" + 
-            "(" + chip.getTile(x, y).getTileNumber() + ")";   
+        return filter.toString() + " " + layout.getTile(this);   
     }
     
     

@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.io.*;
 import at.dms.kjc.spacetime.switchIR.*;
+import java.util.Arrays;
 
 /**
  *  A class with useful functions that span classes. 
@@ -158,6 +159,37 @@ public class Util {
         return false;
     }
     
+    
+    /**
+     * @param array
+     * @return The median element of <array>.
+     */
+    public static int median(int[] array) {
+        int[] sortMe = (int[])array.clone();
+        Arrays.sort(sortMe);
+        return sortMe[sortMe.length / 2];
+    }
+    
+    /**
+     * 
+     * @param array
+     * @return The mean of the elements of <array>.
+     */
+    public static double mean(int[] array) {
+        return (double)sum(array) / (double)array.length;
+    }
+    
+    /**
+     * @param array
+     * @return the sum of the elements of array.
+     */
+    public static int sum(int[] array) {
+        int sum = 0;
+        for (int i = 0; i < array.length; i++) {
+            sum += array[i];
+        }
+        return sum;
+    }
     
     /**
      * 

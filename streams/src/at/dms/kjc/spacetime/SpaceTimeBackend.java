@@ -33,6 +33,8 @@ public class SpaceTimeBackend {
     
     private static RawChip rawChip;
     
+    public static double COMP_COMM_RATIO;
+    
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
                            SIRInterfaceTable[] interfaceTables,
@@ -209,7 +211,7 @@ public class SpaceTimeBackend {
         // Violators Will Be Garbage Collected
 
         
-        CommCompRatio.ratio(partitioner);
+        COMP_COMM_RATIO = CommCompRatio.ratio(partitioner);
         
         System.out.println("\nMultiplying Steady-State...");
         MultiplySteadyState.doit(partitioner.getTraceGraph());
@@ -262,9 +264,9 @@ public class SpaceTimeBackend {
  
         //dump some dot graphs!
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
-                                "initTraces.dot", true);
+                                "initTraces.dot", layout, true);
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
-                                "steadyTraces.dot", true);
+                                "steadyTraces.dot", layout, true);
         
         //create the raw execution code and switch code for the initialization
         // phase and the primepump stage and the steady state

@@ -22,10 +22,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     private static final double BIG_WORKER = 0.9;
     
+    /** multiply the communication estimate of the layout by this */
+    private static double COMM_MULTIPLIER = 20.0;
+    
     /** the added weight of the latency of a intertracebuffer that 
      * is connected to a big worker tile.
      */
-    private static final int BIG_WORKER_COMM_LATENCY_WEIGHT = 10;
+    private static final int BIG_WORKER_COMM_LATENCY_WEIGHT = 100;
     
     private static final int ILLEGAL_COST = 1000000;
     /** the cost of outputing one item using the gdn versus using the static net
@@ -57,6 +60,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private Trace[] scheduleOrder;
     private BufferDRAMAssignment assignBuffers;
     
+    private int totalWork;
+    
     public AnnealedLayout(SpaceTimeSchedule spaceTime) {
         super();
         this.spaceTime = spaceTime;
@@ -71,6 +76,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         Arrays.sort(scheduleOrder, new CompareTraceBNWork(spaceTime.partitioner));
         //init the buffer to dram assignment pass
         assignBuffers = new BufferDRAMAssignment();
+        //COMM_MULTIPLIER = COMP_COMM_RATIO / 
     }
 
     public void run() {
@@ -108,6 +114,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             System.out.println("Tile " + i + " has work " + tileCosts[i]);
         
         System.out.println("Std Dev of work: " + standardDeviation(tileCosts));
+        System.out.println("Avg work: " + Util.mean(tileCosts));
+        System.out.println("Median work: " + Util.median(tileCosts));
+        System.out.println("Total Work: " + totalWork);
+        System.out.println("Sum of tile work: " + Util.sum(tileCosts));
+        System.out.println("Wasted work: " + (Util.sum(tileCosts) - totalWork));
         
         assert isLegalLayout() : 
             "Simulated annealing arrived at an illegal layout.";
@@ -324,8 +335,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
-        double cost = workOfBottleNeckTile //+ standardDeviation(tileCosts)  
-                   + (double)commEstimate(tileCosts);
+        double cost = workOfBottleNeckTile; //standardDeviation(tileCosts);  
+                   //+ (COMM_MULTIPLIER * (double)commEstimate(tileCosts));
         
         /*
         if (!isLegalLayout())
@@ -464,7 +475,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     private int itemsThroughBigWorkers(HashSet bigWorker, Edge edge, 
             StreamingDram src, StreamingDram dst) {
-        int items = 0;
+        int estimate = 0;
+        int items = edge.steadyItems();
+        
+        //the estimate will be based on the src and dst tiles for this edge
+        //int work = 
+        //    Math.max(spaceTime.partitioner.getTraceBNWork(edge.getSrc().getParent()),
+        //            spaceTime.partitioner.getTraceBNWork(edge.getDest().getParent()));
+        
         Iterator route = Router.getRoute(src, dst).iterator();
         HashSet accountedFor = new HashSet();
         while (route.hasNext()) {
@@ -472,7 +490,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             if (hop instanceof RawTile && 
                     bigWorker.contains(hop) &&  
                     !LogicalDramTileMapping.mustUseGdn((RawTile)hop)) {
-                items +=  edge.steadyItems();
+                estimate +=  items; //work;
                 accountedFor.add(hop);
             }
         }
@@ -482,17 +500,19 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         RawTile srcIssuer = LogicalDramTileMapping.getOwnerTile(src);
         if (bigWorker.contains(srcIssuer) &&
                 LogicalDramTileMapping.mustUseGdn(srcIssuer)
-                && !accountedFor.contains(srcIssuer))
-            items += edge.steadyItems();
+                && !accountedFor.contains(srcIssuer)) {
+            accountedFor.add(srcIssuer);
+            estimate += items; //work;
+        }
         
         RawTile dstIssuer = LogicalDramTileMapping.getOwnerTile(dst);
         if (bigWorker.contains(dstIssuer) &&
                 LogicalDramTileMapping.mustUseGdn(dstIssuer) &&
                 !accountedFor.contains(dstIssuer))
-            items += edge.steadyItems();
+            estimate += items;//work;
         
         
-        return items;
+        return estimate;
     }
     
     /**
@@ -529,6 +549,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             FilterTraceNode bottleNeck = null;
             int maxAvail = -1;
             int prevStart = 0;
+            int bottleNeckStart = 0;
             
             for (int f = 0; f < scheduleOrder[i].getFilterNodes().length; f++) {
                 FilterTraceNode current = scheduleOrder[i].getFilterNodes()[f];
@@ -537,9 +558,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                         prevStart + partitioner.getFilterStartupCost(current));
                 int tileAvail = partitioner.getFilterWorkSteadyMult(current) +
                    currentStart;
+                //System.out.println("Checking start of " + current + " on " + tile + 
+                //        "start: " + currentStart + ", tile avail: " + tileAvail);
                 if (tileAvail > maxAvail) {
                     maxAvail = tileAvail;
                     bottleNeck = current;
+                    bottleNeckStart = currentStart;
                 }
                 prevStart = currentStart;
             }
@@ -562,12 +586,17 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 }
             }
             
+           
+            
             //calculate when the bottle neck tile will finish, 
             //and base everything off of that, traversing backward and 
             //foward in the trace
-            tileCosts[bottleNeckTile.getTileNumber()] += 
-                (partitioner.getFilterStartupCost(bottleNeck) +
-                        partitioner.getFilterWorkSteadyMult(bottleNeck));
+            tileCosts[bottleNeckTile.getTileNumber()] = 
+                (bottleNeckStart +
+                partitioner.getFilterWorkSteadyMult(bottleNeck));
+            
+            //System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
+            //        tileCosts[bottleNeckTile.getTileNumber()]);
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
             int next1Iter = partitioner.getWorkEstOneFiring(bottleNeck);
@@ -578,6 +607,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 RawTile tile = getTile(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
                 //get ready for next iteration
+                //System.out.println("Setting " + tile + " " + current + " to " + 
+                //        tileCosts[tile.getTileNumber()]);
                 nextFinish = tileCosts[tile.getTileNumber()];
                 next1Iter = partitioner.getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
@@ -591,6 +622,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 RawTile tile = getTile(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = 
                     (prevFinish + partitioner.getWorkEstOneFiring(current.getAsFilter()));
+                //System.out.println("Setting " + tile + " " + current + " to " + 
+                //        tileCosts[tile.getTileNumber()]);
                 prevFinish = tileCosts[tile.getTileNumber()];
                 current = current.getNext();
             }
@@ -672,6 +705,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public void initialize() {
         //generate the startup cost of each filter...         
         partitioner.calculateWorkStats();
+        totalWork = 0;
         
         //create the filter list
         filterList = new LinkedList();
@@ -684,6 +718,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             //"occupy" the tile of their neighbor stream...
             if (node.isFilterTrace() && 
                     !(node.getAsFilter().isPredefined()))  {
+                totalWork += partitioner.getFilterWorkSteadyMult(node.getAsFilter());
                 filterList.add(node);
             }
         }

@@ -266,7 +266,7 @@ public abstract class SimulatedAnnealing {
 
             if (e_new < 0.0) {
                 // illegal tile assignment so revert the assignment
-                assignment = oldAssignment;
+                setAssignment(oldAssignment);
                 continue;
             } else
                 // found a successful new layout
@@ -284,7 +284,7 @@ public abstract class SimulatedAnnealing {
         } else {
             //don't accept the new state,
             //revert..
-            assignment = oldAssignment;
+            setAssignment(oldAssignment);
             return false;
         }
     }

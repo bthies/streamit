@@ -211,14 +211,14 @@ fn NG_update() {
       printf("%d;%d;%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
 	     gWorkCountTotal, gStreamItTiles * gTotalDif, (250*gFpuCountTotal)/gTotalDif);
       //only exit here if you don't want a blood graph
-      //gInterrupted = 1;
+      gInterrupted = 1;
       //this will exit the thread
-//      exit_now(0);
+      exit_now(0);
       
       //we are done getting the numbers, deregister the handler.
-      EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
+      //EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
       //now get the blood graph for one steady state...
-      setup_bloodgraph("bloodgraph.ppm", gTotalDif/gTotalSS);
+      //setup_bloodgraph("bloodgraph.ppm", gTotalDif/gTotalSS);
     }
 
 

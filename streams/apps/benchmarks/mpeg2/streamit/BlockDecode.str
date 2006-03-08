@@ -34,14 +34,13 @@
  */
 int->int pipeline BlockDecode(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
                               portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
-                              portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc
-                              ) {
+                              portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc) {
     add ZigZagUnordering;
     // Assumes no alternate_scan TODO
     // Output of this corresponds to QF[v][u], (cite 1, P. 67)
-    add InverseQuantization(UpdatePortal_quantiser_data_ac,
-                            UpdatePortal_quantiser_data_dc,
-                            UpdatePortal_macroblock_intra);
+    add InverseQuantization_NoDefaultValues(UpdatePortal_quantiser_data_ac,
+                                            UpdatePortal_quantiser_data_dc,
+                                            UpdatePortal_macroblock_intra);
     // Extreme bounds for both saturations are a best guess about how far off
     // any invalid data could ever get.
     add BestSaturation(-2048, 2047, -2050, 2050);

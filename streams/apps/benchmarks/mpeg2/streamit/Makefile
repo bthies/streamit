@@ -41,11 +41,11 @@ MACROBLOCK_DESCRAMBLER = MacroBlockDescrambler.str
 DATA_REORDERING = ${BLOCK_DESCRAMBLER} ${MACROBLOCK_DESCRAMBLER}
 
 # General Purpose Streams Used By Both the Encoders and Decoders
-LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str ${LIBDCT}
+LIBMPEG2 = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str InverseQuantization.str  ${LIBDCT}
 LIBMPEG2_NOMESSAGE = MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ${LIBDCT}
 
 # Streams Used By the Decoders
-LIBMPEG2_DECODE = ${DECODER_PIPELINE} ${PARSER} ChannelUpsampling.str MotionVectorDecode.str InverseQuantization.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
+LIBMPEG2_DECODE = ${DECODER_PIPELINE} ${PARSER} ChannelUpsampling.str MotionVectorDecode.str PictureReorder.str  BlockDecode.str ${COLOR_CHANNEL_PROCESSING} ${DESCRAMBLE_AND_MOTION_COMPENSATE}  ${MOTION_PREDICTION} ${DATA_REORDERING}
 
 # Streams Used By the Encoders
 LIBMPEG2_ENCODE = MPEGencoder.str Generator.str

@@ -32,7 +32,9 @@
 /**
  * @internal
  */
-int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
+int->bit filter MPEGStreamGenerator(int width, 
+                                    int height, 
+                                    int numpictures,
                                     int[64] intra_quantiser_matrix,
                                     int[64] non_intra_quantiser_matrix,
                                     int intra_dc_precision,
@@ -48,6 +50,7 @@ int->bit filter MPEGStreamGenerator(int width, int height, int numpictures,
         if (!ran) {
             println("Writing M2V File...");
             ran = true;
+
             int tempval;
 
             // video_sequence() (cite 1, P.25)

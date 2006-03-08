@@ -29,12 +29,30 @@
  * @version 1.0
  */
 
+// FEATURETODO: This should really just be another constructor to the next filter somehow
+int->int pipeline InverseQuantization_NoDefaultValues(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
+                                                      portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
+                                                      portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra) {
+    int[64] empty_matrix;
+    add InverseQuantization(UpdatePortal_quantiser_data_ac,
+                            UpdatePortal_quantiser_data_dc,
+                            UpdatePortal_macroblock_intra,
+                            -1,
+                            empty_matrix,
+                            empty_matrix,
+                            -1);
+}
+
 /**
  * @internal
  */
 int->int pipeline InverseQuantization(portal<InverseQuantization_AC_Coeff> UpdatePortal_quantiser_data_ac,
                                       portal<InverseQuantization_DC_Intra_Coeff> UpdatePortal_quantiser_data_dc,
-                                      portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra) {
+                                      portal<InverseQuantizationJoinerSubstitute> UpdatePortal_macroblock_intra,
+                                      int default_intra_dc_precision,
+                                      int[64] default_intra_quantiser_matrix, 
+                                      int[64] default_non_intra_quantiser_matrix,
+                                      int default_q_scale_type) {
 
     // The handling of the intra DC coefficient is described on (cite 1, P.69)
     add int->int splitjoin {
@@ -42,12 +60,12 @@ int->int pipeline InverseQuantization(portal<InverseQuantization_AC_Coeff> Updat
         // Intra Coded Macroblocks
         add int->int splitjoin {
             split roundrobin(1, 63); 
-            add InverseQuantization_DC_Intra_Coeff to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
-            add InverseQuantization_AC_Coeff(1) to UpdatePortal_quantiser_data_ac;
+            add InverseQuantization_DC_Intra_Coeff(default_intra_dc_precision) to UpdatePortal_quantiser_data_dc; // (cite 1, P.69)
+            add InverseQuantization_AC_Coeff(1, default_intra_quantiser_matrix, default_non_intra_quantiser_matrix, default_q_scale_type) to UpdatePortal_quantiser_data_ac;
             join roundrobin(1, 63); 
         }
         // Non Intra Coded Macroblocks
-        add InverseQuantization_AC_Coeff(0) to UpdatePortal_quantiser_data_ac;
+        add InverseQuantization_AC_Coeff(0, default_intra_quantiser_matrix, default_non_intra_quantiser_matrix, default_q_scale_type) to UpdatePortal_quantiser_data_ac;
         join roundrobin(64, 64);  
     }
   
@@ -96,11 +114,10 @@ int->int filter InverseQuantizationJoinerSubstitute {
 
 }
 
-
 /**
  * @internal
  */
-int->int filter InverseQuantization_DC_Intra_Coeff() {
+int->int filter InverseQuantization_DC_Intra_Coeff(int default_intra_dc_precision) {
     // (cite 1, P.69)
     int[4] intra_dc_mult;
     int intra_dc_precision;
@@ -110,7 +127,7 @@ int->int filter InverseQuantization_DC_Intra_Coeff() {
         intra_dc_mult[1] = 4;
         intra_dc_mult[2] = 2;
         intra_dc_mult[3] = 1;
-        intra_dc_precision = -1; // In case no message is received, error
+        intra_dc_precision = default_intra_dc_precision; 
     }
 
     work pop 1 push 1 {
@@ -125,7 +142,10 @@ int->int filter InverseQuantization_DC_Intra_Coeff() {
 /**
  * @internal
  */
-int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
+int->int filter InverseQuantization_AC_Coeff(int macroblock_intra,
+                                             int[64] default_intra_quantiser_matrix, 
+                                             int[64] default_non_intra_quantiser_matrix,
+                                             int default_q_scale_type) {
     // Assumes 4:2:0 data
     // (cite 1, P.69)
     // intra = 1: This is dequantizing the non-DC part of an intra coded block
@@ -154,7 +174,9 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
         quantiser_scale_code = 0; // Guarantees that this throws an error
         // if it doesn't get a quantiser message
         // before getting some data.
-        q_scale_type = -1; // Another nice error if no message received in time.
+        intra_quantiser_matrix = default_intra_quantiser_matrix;
+        non_intra_quantiser_matrix = default_non_intra_quantiser_matrix;
+        q_scale_type = default_q_scale_type;
     }
 
     work pop (64-macroblock_intra) push (64-macroblock_intra) {
@@ -194,10 +216,8 @@ int->int filter InverseQuantization_AC_Coeff(int macroblock_intra) {
 
     handler setQuantiserMatrices(int[64] new_intra_quantiser_matrix, 
                                  int[64] new_non_intra_quantiser_matrix) {
-        for (int i = 0; i < 64; i++) {
-            intra_quantiser_matrix[i] = new_intra_quantiser_matrix[i];
-            non_intra_quantiser_matrix[i] = new_non_intra_quantiser_matrix[i];
-        }
+        intra_quantiser_matrix = new_intra_quantiser_matrix;
+        non_intra_quantiser_matrix = new_non_intra_quantiser_matrix;
     }
 
     handler setQScaleType(int new_q_scale_type) {

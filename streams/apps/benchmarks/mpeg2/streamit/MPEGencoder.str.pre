@@ -69,37 +69,28 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
     add PicturePreprocessing(width, height, numpictures);
     // Eventually Wrap in Programmable Splitjoin for Group of Pictures
 
-    add ReorderPictures(width, height);
+    add ReorderPictures(width, 
+                        height, 
+                        portal_picture_number, 
+                        portal_picture_type, 
+                        portal_picture_type2, 
+                        portal_picture_type3);
     // Eventually Wrap in Programmable Splitjoin for Slices - Also need to communicate frame type.
-
-    // Temp TODO
-    add int->int filter {
-        int picture_data_size = (width*height*3)/2;
-        work pop 2+picture_data_size push picture_data_size {
-            portal_picture_number.setPictureNumber(peek(0)) [0:0];
-            portal_picture_type.setPictureType(peek(1)) [0:0];
-            portal_picture_type2.setPictureType(peek(1)) [0:0];
-            portal_picture_type3.setPictureType(peek(1)) [0:0];
-            deadpop(2);
-            pushpop(picture_data_size);
-        }
-    }
-
-    int downsampled_data_per_image = (width*height*3)/2;
-    int pixeldata_per_macroblock = blocks_per_macroblock*64;
 
     add int->int splitjoin {
         split duplicate;
-        add IntraMotionPrediction(pixeldata_per_macroblock);
+        add IntraMotionPrediction(blocks_per_macroblock);
         add MotionEstimation(width, height, 0, blocks_per_macroblock, 32) to portal_fwdMotion;
         add MotionEstimation(width, height, 1, blocks_per_macroblock, 32) to portal_bckMotion;
-        join roundrobin(pixeldata_per_macroblock+5);
+        join roundrobin((64*blocks_per_macroblock)+5);
     }
 
     add MotionPredictionDecision(width, 
                                  height, 
-                                 pixeldata_per_macroblock)
+                                 blocks_per_macroblock)
         to portal_picture_type3;
+
+    int pixeldata_per_macroblock = blocks_per_macroblock*64;
 
     add splitjoin {
         split roundrobin(pixeldata_per_macroblock+1, 5);
@@ -120,7 +111,6 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numpic
                               height,
                               portal_fwdMotion,
                               portal_bckMotion,
-                              downsampled_data_per_image,
                               pixeldata_per_macroblock,
                               portal_picture_type2);
 
@@ -182,10 +172,10 @@ int->int pipeline ReferenceFrameHandler(int[64] intra_quantiser_matrix,
                                         int height,
                                         portal<MotionEstimation> portal_fwdMotion,
                                         portal<MotionEstimation> portal_bckMotion,
-                                        int downsampled_data_per_image,
                                         int pixeldata_per_macroblock,
                                         portal<SendBackReferenceFrameEncoder> portal_picture_type) {
 
+    int downsampled_data_per_image = (width*height*3)/2;
     int macroblock_output_data_size = downsampled_data_per_image*(pixeldata_per_macroblock+14)/pixeldata_per_macroblock;
 
     add splitjoin {
@@ -368,7 +358,8 @@ int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
  */
 int->int filter MotionPredictionDecision(int width, 
                                          int height,
-                                         int pixeldata_per_macroblock) {
+                                         int blocks_per_macroblock) {
+    int pixeldata_per_macroblock = blocks_per_macroblock*64;
     int picture_type = -1;
 
     int a = pixeldata_per_macroblock+4;
@@ -471,7 +462,8 @@ int->int filter MotionPredictionDecision(int width,
 /**
  * @internal
  */
-int->int filter IntraMotionPrediction(int pixeldata_per_macroblock) {
+int->int filter IntraMotionPrediction(int blocks_per_macroblock) {
+    int pixeldata_per_macroblock = 64*blocks_per_macroblock;
     work pop pixeldata_per_macroblock push pixeldata_per_macroblock+5 {
         pushpop(pixeldata_per_macroblock);
         push(0);
@@ -822,55 +814,78 @@ int->int splitjoin PicturePreprocessing(int width,
 /**
  * @internal
  */
-int->int filter ReorderPictures(int width, int height) {
-    int picture_data_size = 2+(width*height*3)/2;
-    // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
-    // and its implementation - in particular the vbv buffer concept might come into play here, but
-    // I'll worry about that later TODO.
-    boolean ran;
-    // FEATURETODO - change when phases can take parameters
-    int PushAheadFrameThrough_nextIPframe;
+int->int pipeline ReorderPictures(int width, 
+                                  int height, 
+                                  portal<GeneratorMessageReceiver> portal_picture_number,
+                                  portal<GeneratorMessageReceiver> portal_picture_type,
+                                  portal<SendBackReferenceFrameEncoder> portal_picture_type2,
+                                  portal<MotionPredictionDecision> portal_picture_type3) {
 
-    init {
-        ran = false;
-    }
+    int picture_data_size = (width*height*3)/2;
 
-    work pop * push * {
-        // How this works: On the first execution this filter pushes an I-frame through. On subsequent
-        // executions it pushes an I or P frame through, immediately followed by all B frames that
-        // refer to the past two I/P frames.
-        if (!ran) {
-            ran = true;
-            PushFrameThrough();   
-        } else {
-            int nextIPframe = 0;
-            // Find the next I frame
-            while (peek(nextIPframe*picture_data_size+1) == 3) {
-                nextIPframe++;
+    add int->int filter {
+        // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
+        // and its implementation - in particular the vbv buffer concept might come into play here, but
+        // I'll worry about that later TODO.
+        boolean ran;
+        // FEATURETODO - change when phases can take parameters
+        int PushAheadFrameThrough_nextIPframe;
+        
+        int picture_data_size_temp = picture_data_size+2; // TODO temp
+
+        init {
+            ran = false;
+        }
+
+        work pop * push * {
+            // How this works: On the first execution this filter pushes an I-frame through. On subsequent
+            // executions it pushes an I or P frame through, immediately followed by all B frames that
+            // refer to the past two I/P frames.
+            if (!ran) {
+                ran = true;
+                PushFrameThrough();   
+            } else {
+                int nextIPframe = 0;
+                // Find the next I frame
+                while (peek(nextIPframe*picture_data_size_temp+1) == 3) {
+                    nextIPframe++;
+                }
+                // Push that frame through
+                PushAheadFrameThrough_nextIPframe = nextIPframe;
+                PushAheadFrameThrough();
+                while (peek(1) == 3) {
+                    PushFrameThrough();
+                }
+                PopFrameOff();
             }
-            // Push that frame through
-            PushAheadFrameThrough_nextIPframe = nextIPframe;
-            PushAheadFrameThrough();
-            while (peek(1) == 3) {
-                PushFrameThrough();
+        }
+
+        phase PushAheadFrameThrough push picture_data_size_temp pop * {
+            for (int i = 0; i < picture_data_size_temp; i++) {
+                push(peek(PushAheadFrameThrough_nextIPframe*picture_data_size_temp+i));
             }
-            PopFrameOff();
+        }
+
+        phase PushFrameThrough push picture_data_size_temp pop picture_data_size_temp {
+            pushpop(picture_data_size_temp);
+        }
+
+        phase PopFrameOff pop picture_data_size_temp {
+            deadpop(picture_data_size_temp);
         }
     }
 
-    phase PushAheadFrameThrough push picture_data_size pop * {
-        for (int i = 0; i < picture_data_size; i++) {
-            push(peek(PushAheadFrameThrough_nextIPframe*picture_data_size+i));
+    // Temp TODO - combine with previous filter when bug fixed
+    add int->int filter {
+        work pop 2+picture_data_size push picture_data_size {
+            portal_picture_number.setPictureNumber(peek(0)) [0:0];
+            portal_picture_type.setPictureType(peek(1)) [0:0];
+            portal_picture_type2.setPictureType(peek(1)) [0:0];
+            portal_picture_type3.setPictureType(peek(1)) [0:0];
+            deadpop(2);
+            pushpop(picture_data_size);
         }
     }
-
-    phase PushFrameThrough push picture_data_size pop picture_data_size {
-        pushpop(picture_data_size);
-    }
-
-   phase PopFrameOff pop picture_data_size {
-       deadpop(picture_data_size);
-   }
 
 }
 
@@ -911,19 +926,35 @@ int->int splitjoin MacroBlockAndMotionVectorDecode(int[64] default_intra_quantis
                                                    int width,
                                                    int height,
                                                    int pixeldata_per_macroblock) {
+    portal<InverseQuantizationJoinerSubstitute> portal_macroblock_intra;
+    portal<InverseQuantization_AC_Coeff> portal_quantiser_data_ac; // DO WE EVEN NEED THESE?
+    portal<InverseQuantization_DC_Intra_Coeff> portal_quantiser_data_dc; // DO WE EVEN NEED THESE?
     split roundrobin(pixeldata_per_macroblock+5, 8, 1);
     add pipeline {
-        add int->int splitjoin {
-            split roundrobin(5, pixeldata_per_macroblock);
-            add Identity<int>;
-            add ZigZagUnordering;
-            join roundrobin(5, pixeldata_per_macroblock);
+        add int->int filter {
+            work pop 5+pixeldata_per_macroblock push pixeldata_per_macroblock {
+                int a = pop();
+                if (a != 3278) {
+                    println("Error - Bitstream must be missaligned" + a);
+                }
+                int quantiser_scale_code;
+                quantiser_scale_code = pop();
+                portal_quantiser_data_ac.setQuantiserScaleCode(quantiser_scale_code) [0:0];
+                deadpop(2);
+                int macroblock_intra;
+                macroblock_intra = pop();
+                portal_macroblock_intra.setMacroblockIntra(macroblock_intra) [0:0];
+                pushpop(pixeldata_per_macroblock);                
+            }
         }
-        add undoQuantisation(default_intra_quantiser_matrix, 
-                             default_non_intra_quantiser_matrix,
-                             intra_dc_precision, 
-                             q_scale_type,
-                             pixeldata_per_macroblock);
+        add ZigZagUnordering;
+        add InverseQuantization(portal_quantiser_data_ac,
+                                portal_quantiser_data_dc,
+                                portal_macroblock_intra,
+                                intra_dc_precision,
+                                default_intra_quantiser_matrix,
+                                default_non_intra_quantiser_matrix,
+                                q_scale_type);
         add iDCT8x8_ieee(2); // fast iDCT
     }
     add MotionVectorDecodeNoMessage(width/16);
@@ -1088,75 +1119,6 @@ int->int filter SendBackReferenceFrameEncoder(int width,
 /**
  * @internal
  */
-int->int filter undoQuantisation(int[64] intra_quantiser_matrix, 
-                                 int[64] non_intra_quantiser_matrix,
-                                 int intra_dc_precision, 
-                                 int q_scale_type,
-                                 int pixeldata_per_macroblock) {
-    // FEATURETODO - Move to globals when globals working properly - also out of decoder
-    // (cite 1, P. 70 Table 7-6)
-    int[2][32] quantiser_scale =
-        // Note that quantiser_scale[x][0] is a Forbidden Value
-    {{ 0,  2,  4,  6,  8, 10, 12, 14,
-       16, 18, 20, 22, 24, 26, 28, 30,
-       32, 34, 36, 38, 40, 42, 44, 46,
-       48, 50, 52, 54, 56, 58, 60, 62},
-     { 0,  1,  2,  3,  4,  5,  6,  7,
-       8, 10, 12, 14, 16, 18, 20, 22,
-       24, 28, 32, 36, 40, 44, 48, 52, 
-       56, 64, 72, 80, 88, 96, 104, 112}};
-    int[4] intra_dc_mult;
-
-    init {
-        intra_dc_mult[0] = 8;
-        intra_dc_mult[1] = 4;
-        intra_dc_mult[2] = 2;
-        intra_dc_mult[3] = 1;
-    }
-
-    work pop (pixeldata_per_macroblock+5) push pixeldata_per_macroblock {
-        int a = pop();
-        if (a != 3278) {
-            println("Error - Bitstream must be missaligned" + a);
-        }
-        int quantiser_scale_code = pop();
-        int motion_forward = pop();
-        int motion_backward = pop();
-        int macroblock_intra = pop();
-        // See (cite 1, P. 71) for more details.
-        int k = 0;
-        int W = 0;
-        for (int block = 0; block < 6; block++) { 
-            for (int count = 0; count < 64; count++) {
-                int QF = pop();
-                if (macroblock_intra == 1) {
-                    k = 0;
-                    W = intra_quantiser_matrix[count];
-                } else {
-                    if (QF > 0) {
-                        k = 1;
-                    } else if (QF < 0) {
-                        k = -1;
-                    } else {
-                        k = 0;
-                    }
-                    W = non_intra_quantiser_matrix[count];
-                }
-                int F;
-                if (count == 0 && macroblock_intra == 1) {
-                    F = QF * intra_dc_mult[intra_dc_precision];
-                } else {
-                    F = (2*QF+k)*(W*quantiser_scale[q_scale_type][quantiser_scale_code])/32;
-                }
-                push(F);
-            }
-        }
-    }
-} 
-
-/**
- * @internal
- */
 int->int filter Quantisation(int[64] intra_quantiser_matrix, 
                              int[64] non_intra_quantiser_matrix,
                              int intra_dc_precision, 
@@ -1224,8 +1186,3 @@ int->int filter Quantisation(int[64] intra_quantiser_matrix,
         }
     }
 }
-
-
-
-
-

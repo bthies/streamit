@@ -1,0 +1,50 @@
+#!/usr/uns/bin/perl
+
+##############################################################################
+#
+# This script is meant to be run weekly from crontab to keep the disk space
+# used by old regression tests from becoming excessive.
+#
+# It finds the subdirectories of /home/bits8/streamit/regtest.  It ignores
+# the 9 most recent directories (generally 8 real directories and a symlink)
+#
+# Regression test directories more ancient than the 8 most recent are removed.
+# Before a directory is removed, the file streams/results.xml is compressed
+# and stored in /home/bits8/streamit/old_regtest_results.  Our summary report
+# and RT data can be (mostly) rebuilt from these files.
+#
+# So rather than having several GB of regression test data, we have circa 2MB
+# stored as /home/bits8/streamit/old_regtest_results/results.xml.DATE.bz2.
+#
+# /home/bits8/streamit/old_regtest_results will eventually require some 
+# cleanup, which is not yet done in this file.
+#
+##############################################################################
+
+
+use Shell;
+use strict;
+use warnings;
+
+# one line for total number of files, then files sorted in
+# most recent first.
+
+my $baser = "/home/bits8/streamit";
+my $base = "$baser/regtest";
+my $attic = "$baser/old_regtest_results";
+my @dirs = ls('-lt', $base);
+
+my $i = 0;
+
+foreach my $dir (@dirs)
+{
+    chomp($dir);
+    my ($p, $x, $u, $g, $s, $m, $d, $t, $f) = split(/ +/, $dir);
+    if ($i > 8) {
+	system("bzip2 -c $base/$f/streams/results.xml > $attic/results.xml.$f.bz2") && print "error during bzip $!";
+	print "deleting $f\n";
+	system "rm -rf $base/$f";
+    }
+    $i++;
+}
+

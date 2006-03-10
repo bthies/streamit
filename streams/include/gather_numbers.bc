@@ -139,8 +139,8 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	gAdminCountTotal += gAdminCount;
 	gAluCountTotal += gAluCount;
 	
-	printf("Cycles: %d,  MFLOPS: %d, Outputs: %d\n", dif, (250*gFpuCount)/dif, gThisSteadyStatePrints);
-	fprintf(outputFile, "%d %d %d\n", dif, (250*gFpuCount)/dif, gWorkCount);
+	printf("Cycles: %d,  MFLOPS: %d, Outputs: %d\n", dif, (450*gFpuCount)/dif, gThisSteadyStatePrints);
+	fprintf(outputFile, "%d %d %d\n", dif, (450*gFpuCount)/dif, gWorkCount);
       }	  
       //set the last steady state time
       lastSteadyStartCycle = time_lo;
@@ -194,7 +194,7 @@ fn print_summary_stats() {
 	  gWorkCountTotal,
 	  //- ((gNumProc - gStreamItTilesUsed) * totalCycles)),
 	  gStreamItTiles*totalCycles);
-  fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	   
+  fprintf(outputFile, "Avg MFLOPS: %d\n", (450*gFpuCountTotal)/totalCycles);	   
   fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
   fprintf(outputFile, "  for *assigned* tiles in the configuration.\n");
   fprintf(outputFile, "  The denominator is the total number of cycles\n");
@@ -214,7 +214,7 @@ fn print_summary_stats() {
 	  (gLastFiveCycles/5), 
 	  calculatedPrintsPerSteady,
 	  ((100000) / (totalCycles/gSteadyStatePrints)),
-	  (250*gFpuCountTotal)/totalCycles,
+	  (450*gFpuCountTotal)/totalCycles,
 	  gWorkCountTotal, // - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
 	  gFpuCountTotal, gMemCountTotal, 
 	  gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles),

@@ -207,9 +207,9 @@ fn NG_update() {
       printf("tiles ; tiles assigned ; cycles/output ; Work Cycles ; Total Cycles ; mflops\n");
 
       fprintf(outputFile,"%d;%d;%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
-	      gWorkCountTotal, gStreamItTiles * gTotalDif, (250*gFpuCountTotal)/gTotalDif);
+	      gWorkCountTotal, gStreamItTiles * gTotalDif, (450*gFpuCountTotal)/gTotalDif);
       printf("%d;%d;%d;%d;%d;%d\n", gStreamItTiles, gMappedTiles, gTotalDif / gTotalOutputs, 
-	     gWorkCountTotal, gStreamItTiles * gTotalDif, (250*gFpuCountTotal)/gTotalDif);
+	     gWorkCountTotal, gStreamItTiles * gTotalDif, (450*gFpuCountTotal)/gTotalDif);
       //only exit here if you don't want a blood graph
       gInterrupted = 1;
       //this will exit the thread

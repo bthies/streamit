@@ -217,7 +217,7 @@ public class BCFile
              "  gAUTOFLOPS = 0;\n" +
              "  step(steps);\n" +
              "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\n\",\n" +
-             "         gAUTOFLOPS, (250*gAUTOFLOPS)/steps);\n" +
+             "         gAUTOFLOPS, (450*gAUTOFLOPS)/steps);\n" +
              "}\n" +
              "\n");     
     }

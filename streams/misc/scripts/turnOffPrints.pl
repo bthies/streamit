@@ -8,10 +8,19 @@
 #
 # result:
 #    your old foo.cpp will be overwritten by a file that has all
-#    printf statements commented out and replaced by calls to z___print
-#    and a definition of z___print is put at the top of the file.
+#    printf statements commented out and replaced by writes to 
+#    volatile variable __print_sink__.  
+#    __print_sink__ is defined to be extern unless that file name being
+#   processed is str.c, fusion.cpp, or global.cpp
 #
-# The function z___print mught be simpler, but 
+# works with help of the print routine in at.dms.kjc.common.ToCCommon which
+# flags the prints for easy removal.
+#
+#
+# For use in the current regression test directory:
+# find . -name "cluster_fusion_standalone.qms" | xargs -iDIR find DIR -name "*.cpp" -exec $STREAMIT_HOME/misc/scripts/turnOffPrints.pl {} \;
+# similarly for other backends crating multiple .c or .cpp files.
+# rstream can be recognized by just searching for "str.c"
 #
 # With inspiration and some stolen code from Andrew Lamb
 ###############################################################################
@@ -22,7 +31,16 @@ use warnings;
 # replaces all occurences of printf with //printf in the specified file
 sub remove_prints {
     my $pathAndName = $_[0] || die ("need a file name (with path)");
-    open (my $fileHandle, "+< $pathAndName") || die "Cannot open $pathAndName $!";
+    print "$pathAndName\n";
+##########
+# for in-place update without backup.
+#    open (my $fileHandle, "+< $pathAndName") || die "Cannot open $pathAndName $!";
+##########
+##########
+# for backing up old file.
+    rename ($pathAndName, $pathAndName . ".bak") || die "Cannot move $pathAndName $!";
+    open (my $fileHandle, "< $pathAndName.bak") || die "Cannot open $pathAndName .bak $!";
+##########
     # read in the c file
     my $contents = read_file($fileHandle);
     # replace printf with //printf
@@ -30,9 +48,23 @@ sub remove_prints {
     # remove // TIMER_PRINT_CODE:
     $contents =~ s/\/\/ TIMER_PRINT_CODE: //g;
     # write the changes back to disk
-    seek $fileHandle, 0, 0;
-    truncate $fileHandle, 0;
-    print $fileHandle 'volatile int __print_sink__;', "\n";
+##########
+# for in-place update without backup.
+#    seek $fileHandle, 0, 0;
+#    truncate $fileHandle, 0;
+##########
+##########
+# for backing up old file.
+    close($fileHandle);
+    open ($fileHandle, "> $pathAndName") || die "Cannot open $pathAndName $!";
+##########
+    my @cfilename = split (/\//, $pathAndName);
+    my $cfilename = pop(@cfilename);
+    if ($cfilename eq "str.c" || $cfilename eq "master.cpp" || $cfilename eq "fusion.cpp") {
+	print $fileHandle 'volatile int __print_sink__;', "\n";
+    } else {
+	print $fileHandle 'extern volatile int __print_sink__;', "\n";
+    }
     write_file($contents, $fileHandle);
     close($fileHandle);
 }

@@ -12,7 +12,7 @@
 
 use strict;
 use warnings;
-
+ 
 foreach (<>) {
     chomp();
     # this line performs the replacing

@@ -266,7 +266,10 @@ public class SpaceTimeBackend {
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
                                 "initTraces.dot", layout, true);
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
-                                "steadyTraces.dot", layout, true);
+                "steadyTraces.dot", layout, true);
+        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
+                "steadyTraces.nolabel.dot", layout, true, false);
+        
         
         //create the raw execution code and switch code for the initialization
         // phase and the primepump stage and the steady state

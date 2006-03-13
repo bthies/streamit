@@ -26,7 +26,20 @@ public class TraceDotGraph {
      * @param DRAM True if DRAM port assignment is complete
      */
     public static void dumpGraph(SpaceTimeSchedule spaceTime, Trace[] schedule, String fileName,
-                                 Layout layout, boolean DRAM) {
+            Layout layout, boolean DRAM) {
+        dumpGraph(spaceTime, schedule, fileName, layout, DRAM, true);
+    }
+    
+    /**
+     * Create a dot graph representation of the slice graph.
+     * 
+     * @param spaceTime The SpaceTime schedule
+     * @param fileName The file to dump the dot graph
+     * @param DRAM True if DRAM port assignment is complete
+     * @param label if true generate labels for filters and slices with stats
+     */
+    public static void dumpGraph(SpaceTimeSchedule spaceTime, Trace[] schedule, String fileName,
+                                 Layout layout, boolean DRAM, boolean label) {
         
         Trace[] io = spaceTime.partitioner.io;
         List steadyTrav = Arrays.asList(schedule);
@@ -54,8 +67,10 @@ public class TraceDotGraph {
                 TraceNode node = trace.getHead();
                 fw.write("subgraph cluster" + trace.hashCode() + " {\n");
                 fw.write("  color=blue;\n");
-                fw.write("  label = \"Exe Order: " + order++ + ",BN Work: "
+                if (label) {
+                    fw.write("  label = \"Exe Order: " + order++ + ",BN Work: "
                          + partitioner.getTraceBNWork(trace) + "\";\n");
+                }
                 while (node != null) {
                     if (node.isFilterTrace() && !node.getNext().isOutputTrace())
                         fw.write("  " + node.hashCode() + " -> "
@@ -63,32 +78,39 @@ public class TraceDotGraph {
                     if (node.isInputTrace()) {
                         bufferArc(IntraTraceBuffer.getBuffer(
                                                              (InputTraceNode) node, (FilterTraceNode) node
-                                                             .getNext()), fw, DRAM);
-                        fw.write("  " + node.hashCode() + "[ label=\"");
-                        if (((InputTraceNode) node).oneInput()
-                            || ((InputTraceNode) node).noInputs())
-                            fw.write(node.toString());
-                        else {
-                            fw.write(((InputTraceNode) node).debugString(true));
+                                                             .getNext()), fw, DRAM, label);
+                        
+                        if (label) {
+                            fw.write("  " + node.hashCode());
+                            fw.write("[ label=\"");
+                            if (((InputTraceNode) node).oneInput()
+                                    || ((InputTraceNode) node).noInputs())
+                                fw.write(node.toString());
+                            else {
+                                fw.write(((InputTraceNode) node).debugString(true));
+                            }
                         }
-
                     }
 
                     if (node.isOutputTrace()) {
                         bufferArc(IntraTraceBuffer.getBuffer(
                                                              (FilterTraceNode) node.getPrevious(),
-                                                             (OutputTraceNode) node), fw, DRAM);
-                        fw.write("  " + node.hashCode() + "[ label=\"");
-                        if (((OutputTraceNode) node).oneOutput()
-                            || ((OutputTraceNode) node).noOutputs())
-                            fw.write(node.toString());
-                        else
-                            fw
+                                                             (OutputTraceNode) node), fw, DRAM, label);
+                      
+                        if (label) {
+                            fw.write("  " + node.hashCode());
+                            fw.write("[ label=\"");
+                            if (((OutputTraceNode) node).oneOutput()
+                                    || ((OutputTraceNode) node).noOutputs())
+                                fw.write(node.toString());
+                            else
+                                fw
                                 .write(((OutputTraceNode) node)
-                                       .debugString(true));
+                                        .debugString(true));
+                        }
                     }
 
-                    if (node.isFilterTrace()) {
+                    if (label && node.isFilterTrace()) {
                         fw.write("  " + node.hashCode() + "[ label=\""
                                  + ((FilterTraceNode) node).toString(layout));
                         FilterInfo filter = FilterInfo
@@ -105,8 +127,15 @@ public class TraceDotGraph {
                         fw.write("\\npeek, pop, push: (" + filter.peek + ", "
                                  + filter.pop + ", " + filter.push + ")");
                     }
-                    fw.write("\"");
-                    fw.write("];\n");
+                    if (label) {
+                        fw.write("\"");
+                        fw.write("]");
+                        fw.write(";\n");
+                    }
+                    else {
+                        fw.write(nodeNoLabel(node));
+                        fw.write(nodeShape(node));
+                    }
                     node = node.getNext();
                 }
                 fw.write("}\n");
@@ -117,7 +146,7 @@ public class TraceDotGraph {
                 OffChipBuffer buffer = (OffChipBuffer) buffers.next();
                 if (buffer.isIntraTrace())
                     continue;
-                bufferArc(buffer, fw, DRAM);
+                bufferArc(buffer, fw, DRAM, label);
             }
             fw.write("}\n");
             fw.close();
@@ -127,24 +156,56 @@ public class TraceDotGraph {
         SpaceTimeBackend.println("Finished Creating Trace Dot Graph");
     }
 
-    private static void bufferArc(OffChipBuffer buffer, FileWriter fw,
-                                  boolean DRAM) throws Exception {
-        fw.write(buffer.getSource().hashCode() + " -> "
-                 + buffer.getDest().hashCode() + "[label=\""
-                 + (DRAM ? buffer.getDRAM().toString() : "not assigned\""));
-        if (buffer.isIntraTrace() && !((IntraTraceBuffer)buffer).isStaticNet())
-            fw.write(",gdn,");
-        
-        fw.write(buffer.getRotationLength() + ", ");
-
-        if (DRAM) {
-            if (buffer.redundant())
-                fw.write("\", style=dashed");
-            else
-                fw.write(buffer.getSize()
-                         + "(" + buffer.getIdent() + ")\", style=bold");
+    private static String nodeNoLabel(TraceNode node) {
+        String label = node.hashCode() + "[label=\""; 
+        if (node.isFilterTrace()) {
+            label += (node.toString().substring(0, node.toString().indexOf("_")));  
         }
-        fw.write("];\n");
+        else if (node.isOutputTrace())
+            label += "Output";
+        else
+            label += "Input";
+        
+        return label + "\"];\n";
+        
+        
+    }
+        
+    private static String nodeShape(TraceNode node) {
+        String shape = node.hashCode() + "[shape="; 
+        if (node.isFilterTrace()) 
+            shape += "circle";
+            else if (node.isOutputTrace())
+                shape += "invtriangle";
+            else
+                shape += "triangle";
+            
+        return shape + "];\n";
+    }
+    private static void bufferArc(OffChipBuffer buffer, FileWriter fw,
+                                  boolean DRAM, boolean label) throws Exception {
+        fw.write(buffer.getSource().hashCode() + " -> "
+                 + buffer.getDest().hashCode()); 
+        if (label)
+        {
+            fw.write("[label=\""
+                    + (DRAM ? buffer.getDRAM().toString() : "not assigned\""));
+            if (buffer.isIntraTrace() && !((IntraTraceBuffer)buffer).isStaticNet())
+                fw.write(",gdn,");
+            
+            fw.write(buffer.getRotationLength() + ", ");
+            
+            if (DRAM) {
+                if (buffer.redundant())
+                    fw.write("\", style=dashed");
+                else
+                    fw.write(buffer.getSize()
+                            + "(" + buffer.getIdent() + ")\", style=bold");
+            }
+            fw.write("]");
+        }
+        fw.write(";\n");
+
     }
 
 }

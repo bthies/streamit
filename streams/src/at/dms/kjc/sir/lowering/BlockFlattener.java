@@ -15,8 +15,16 @@ import at.dms.kjc.flatgraph.FlatVisitor;
 
 
 /**
- * This class flattens blocks which makes it easier for some optimizations
- * Necessary for BranchAnalyzer
+ * This class flattens nested blocks in methods.
+ * 
+ * <p>Having single flat blocks for the bodies of methods, and
+ * the branches of ifs, and bodies of fors makes some optimizations
+ * more effective.<br/>
+ * {@link BranchAnalyzer} assumes / requires that blocks have been flattenned.<br/>
+ * N.B. BlockFlattener does not raise declarations.
+ * BlockFlattener loses scope information -- that is its purpose --
+ * so (like almost all optimization passes) it should not be run before 
+ * variables have been renamed to unique names.</p>
  */
 public class BlockFlattener extends SLIRReplacingVisitor implements FlatVisitor {
     public BlockFlattener() {

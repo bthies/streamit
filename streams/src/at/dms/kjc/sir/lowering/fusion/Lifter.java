@@ -16,6 +16,17 @@ import at.dms.kjc.sir.lowering.partition.*;
 //import java.util.LinkedList;
 //import java.util.ListIterator;
 
+/**
+ * Canonicalize stream structure eliminating some redundancies.
+ * 
+ * <p>There are several different ways of processing join followed by split.
+ * <br/>liftPreservingSync does not attempt to eliminate joins that match a following split.
+ * <br/>lift will remove joins that exactly match a following split.
+ * <br/>liftAggressiveSync will rewrite split-joins if possible so that it can
+ * match a joint to a following split; this may increase code size.
+ * </p>
+ * @see RefactorSplitJoin
+ */
 public class Lifter implements StreamVisitor {
     /**
      * Constants for how much sync. to remove.

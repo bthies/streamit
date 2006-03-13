@@ -361,6 +361,7 @@ class FusionCode {
         p.print("#include <read_setup.h>\n");
         p.print("#include <timer.h>\n");
         p.print("#include \"fusion.h\"\n");
+        p.println("#include \"structs.h\"");
         if (KjcOptions.countops) {
             p.println("#include \"profiler.h\"");
         }

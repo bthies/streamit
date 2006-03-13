@@ -118,7 +118,7 @@ native RaytracerUtil
 }
 
 
-global {
+static {
     int numtris = 840;
     
     Triangle9[2048] tris9;
@@ -127,18 +127,6 @@ global {
     //triangle data 
     Triangle[2048] tris;    
     ShadingInfo[2048] shadinf;
-
-    for(int ii=0; ii < numtris; ii++){
-        tris[ii].v0 = float3(tris9[ii].v0.x, tris9[ii].v0.y, tris9[ii].v0.z);
-        tris[ii].v1 = float3(tris9[ii].v1.x, tris9[ii].v1.y, tris9[ii].v1.z);
-        tris[ii].v2 = float3(tris9[ii].v2.x, tris9[ii].v2.y, tris9[ii].v2.z);
-        shadinf[ii].n0 = float3(tris9[ii].n0.x, tris9[ii].n0.y, tris9[ii].n0.z);
-        shadinf[ii].n1 = float3(tris9[ii].n1.x, tris9[ii].n1.y, tris9[ii].n1.z);
-        shadinf[ii].n2 = float3(tris9[ii].n2.x, tris9[ii].n2.y, tris9[ii].n2.z);
-        shadinf[ii].c0 = float3(tris9[ii].c0.x, tris9[ii].c0.y, tris9[ii].c0.z);
-        shadinf[ii].c1 = float3(tris9[ii].c1.x, tris9[ii].c1.y, tris9[ii].c1.z);
-        shadinf[ii].c2 = float3(tris9[ii].c2.x, tris9[ii].c2.y, tris9[ii].c2.z);
-    }
 
     int W = 640;
     int H = 640;
@@ -169,7 +157,19 @@ global {
     float2 txty = float2(tx, ty);
     float2 txty2 = txty * 2.0f;
 
-
+    init {
+    for(int ii=0; ii < numtris; ii++){
+        tris[ii].v0 = float3(tris9[ii].v0.x, tris9[ii].v0.y, tris9[ii].v0.z);
+        tris[ii].v1 = float3(tris9[ii].v1.x, tris9[ii].v1.y, tris9[ii].v1.z);
+        tris[ii].v2 = float3(tris9[ii].v2.x, tris9[ii].v2.y, tris9[ii].v2.z);
+        shadinf[ii].n0 = float3(tris9[ii].n0.x, tris9[ii].n0.y, tris9[ii].n0.z);
+        shadinf[ii].n1 = float3(tris9[ii].n1.x, tris9[ii].n1.y, tris9[ii].n1.z);
+        shadinf[ii].n2 = float3(tris9[ii].n2.x, tris9[ii].n2.y, tris9[ii].n2.z);
+        shadinf[ii].c0 = float3(tris9[ii].c0.x, tris9[ii].c0.y, tris9[ii].c0.z);
+        shadinf[ii].c1 = float3(tris9[ii].c1.x, tris9[ii].c1.y, tris9[ii].c1.z);
+        shadinf[ii].c2 = float3(tris9[ii].c2.x, tris9[ii].c2.y, tris9[ii].c2.z);
+    }
+    }
 }
 
 void->void pipeline Raytracer()

@@ -34,15 +34,20 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     private static int MAX_ID = 0;
     // identifier of this stream (used for hashcode)
     private int id = MAX_ID++;
-    // turn on debugrates for printing out rates
-    protected static boolean debugrates = false;
-    // turn on debugsplitjoin for printing out splitjoin proportions 
-    protected static boolean debugsplitjoin = false;
-    // turn on librarydebug as well for debugging in library
-    // (library and compiler backends use different data
-    //  so having librarydebug set wrong will produce 
-    //  ClassCastException).
-    protected static boolean librarydebug = false;
+    /**
+     * Turn on <code>debugrates</code> for printing out rates.
+     */
+    public static boolean debugrates = false;
+    /** Turn on <code>debugsplitjoin</code> for printing out splitjoin proportions.
+     */
+        public static boolean debugsplitjoin = false;
+    /** Turn on <code>librarydebug</code> as well for debugging in library.
+     * <br/>
+     * (library and compiler backends use different data
+     *  so having librarydebug set wrong will produce 
+     *  ClassCastException).
+     */
+    public static boolean librarydebug = false;
 
     
     final private Iterator streamIter;

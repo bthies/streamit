@@ -76,6 +76,15 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         steadySchedule = removeMsgs(steadySchedule);
     }
 
+    /**
+     * Compute SDEPData given a pair of iterators.
+     * 
+     * @param src Iterator for upstream node.
+     * @param dst Iterator for downstream node.
+     * @return SDEPData
+     * @throws NoPathException
+     * @see LatencyGraph.computeSDEP
+     */
     public SDEPData computeSDEP(Iterator src, Iterator dst)
         throws NoPathException
     {

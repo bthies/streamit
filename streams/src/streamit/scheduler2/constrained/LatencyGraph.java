@@ -404,6 +404,14 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return result;
     }
 
+    /**
+     * Compute SDEPData for a pair of LatencyNode's.
+     * 
+     * @param upstreamNode
+     * @param downstreamNode
+     * @return SDEPData
+     * @throws NoPathException
+     */
     public SDEPData computeSDEP(LatencyNode upstreamNode,
                                 LatencyNode downstreamNode)
         throws NoPathException

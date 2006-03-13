@@ -23,7 +23,8 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
 
 # the current version of starsearch we're using
-setenv TOPDIR ${STREAMIT_HOME}/misc/raw
+#setenv TOPDIR ${STREAMIT_HOME}/misc/raw
+setenv TOPDIR /home/bits6/mgordon/starsearch
 
 # the path to ATLAS
 setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS

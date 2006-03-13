@@ -7,6 +7,11 @@ import at.dms.kjc.sir.*;
 import java.lang.*;
 import java.util.HashMap;
 
+
+/**
+ * Estimate the code size and size of local variables for a single filter.
+ *
+ */
 public class CodeEstimate extends SLIREmptyVisitor {
 
     private static HashMap saved_locals = new HashMap();

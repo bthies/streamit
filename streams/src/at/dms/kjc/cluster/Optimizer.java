@@ -15,6 +15,26 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 //import java.io.*;
 
+/**
+ * A StreamVisitor that perfoms a sequence of optimizations.
+ * 
+ * <p>Currently only acts on non-phase filters.  All other constructs
+ * are ignored.</p>
+ * <p>For filters, it always flattens blocks, raises variable declarations
+ * and eliminates dead code.
+ * 
+ * If the <code>nofieldprop</code> flag does not preclude propagation,
+ * filters are also optimized by alternately unrolling and propagating until
+ * the unroller reaches the limit of what it will unroll.</p>
+ * 
+ * <p>The name Optimizer may be a misnomer since this is nowhere near the 
+ * complete suite of standard optimizations.</p>
+ * @see Unroller
+ * @see Propagator
+ * @see BlockFlattener
+ * @see VarDeclRaiser
+ * @see DeadCodeElimination
+ */
 class Optimizer implements StreamVisitor {
 
     public Optimizer() {}

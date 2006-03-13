@@ -6,6 +6,12 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
 
+
+/**
+ * Estimate size of code and local variables for entire program.
+ * @see CodeEstimate
+ *
+ */
 class Estimator implements StreamVisitor {
 
     public Estimator() {}

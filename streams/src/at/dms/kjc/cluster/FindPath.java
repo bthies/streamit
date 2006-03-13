@@ -4,6 +4,7 @@ package at.dms.kjc.cluster;
 import java.lang.*;
 import java.util.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.KjcOptions;
 
 /*
  * Attempts to find a path between two stream nodes.
@@ -36,11 +37,18 @@ public class FindPath {
                 { System.out.print(" [splitter]"); }
         
             Vector v = RegisterStreams.getNodeOutStreams(oper);
+            try {
             for (int y = 0; y < v.size(); y++) {
                 NetStream n =(NetStream)v.get(y);
                 list.addLast(new Integer(n.getDest()));
             }
-
+            } catch (NullPointerException e) {
+                if (KjcOptions.fusion) {
+                    assert false : "-cluster -fusion does not support messaging. Try -cluster -standalone instead.";
+                } else {
+                    throw e;
+                }
+            }
             list.removeFirst();
 
             System.out.println();

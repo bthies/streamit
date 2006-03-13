@@ -25,7 +25,7 @@ import streamit.scheduler2.*;
 import streamit.scheduler2.iriter.*;
 
 /**
- *
+ * Looks like printing some debugging info about SDEP schedules.
  */
 
 public class DoSchedules {
@@ -47,7 +47,7 @@ public class DoSchedules {
         
         if (nodeIter.equals(firstNode)) return;
     
-        System.out.println("DoSchedule Visiting node: "+str);
+        System.err.println("DoSchedule Visiting node: "+str);
     
         try {
 
@@ -55,8 +55,8 @@ public class DoSchedules {
                 streamit.scheduler2.constrained.Scheduler.createForSDEP(selfIter);
 
             streamit.scheduler2.SDEPData sdep = scheduler.computeSDEP(firstNode, nodeIter);
-            System.out.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());
-            System.out.println("  Destn. Init & Steady Phases: "+sdep.getNumDstInitPhases()+", "+sdep.getNumDstSteadyPhases());
+            System.err.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());
+            System.err.println("  Destn. Init & Steady Phases: "+sdep.getNumDstInitPhases()+", "+sdep.getNumDstSteadyPhases());
         
         } catch (Exception ex) {
             //System.out.println("!!!Exception: "+ex);

@@ -1,26 +1,28 @@
 package at.dms.kjc.raw;
 
-import at.dms.util.IRPrinter;
-import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
-import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.lir.*;
 import java.util.*;
 import java.io.*;
-import at.dms.util.Utils;
 import at.dms.kjc.flatgraph.*;
+//import at.dms.util.IRPrinter;
+//import at.dms.util.SIRPrinter;
 
+/**
+ * Create structs.h and its contents.
+ *  
+ * @author Janis
+ *
+ */
 public class StructureIncludeFile implements FlatVisitor
 {
     private HashSet passedTypes;
     
     /**
      * Create structures include file in current directory.
+     * 
+     * If standalone switch is not set, also creates push and pop
+     * routines for using structure fields.
      */
     public static void doit(SIRStructure[] structs, FlatNode toplevel) 
     {
@@ -29,8 +31,11 @@ public class StructureIncludeFile implements FlatVisitor
 
     /**
      * Create structures include file in directory <dir>.
+     * 
+     * If standalone switch is not set, also creates push and pop
+     * routines for using structure fields.
      */
-    public static void doit(SIRStructure[] structs, FlatNode toplevel, String dir) 
+    private static void doit(SIRStructure[] structs, FlatNode toplevel, String dir) 
     {
         if (structs.length == 0) 
             return;
@@ -38,7 +43,7 @@ public class StructureIncludeFile implements FlatVisitor
         new StructureIncludeFile(structs, toplevel, dir);
     }
 
-    public StructureIncludeFile(SIRStructure[] structs, FlatNode toplevel, String dir) 
+    private StructureIncludeFile(SIRStructure[] structs, FlatNode toplevel, String dir) 
     {
         try {
             FileWriter fw = new FileWriter(dir + "/structs.h");
@@ -58,13 +63,22 @@ public class StructureIncludeFile implements FlatVisitor
         }
     }
     
+    /**
+     * Don't even think of it!
+     * 
+     * Only public to avoid using an inner class.
+     */
     public void visitNode(FlatNode node) 
     {
         if (node.isFilter()) {
-            passedTypes.add(((SIRFilter)node.contents).getOutputType());
-            System.out.println(((SIRFilter)node.contents).getOutputType());
-            passedTypes.add(((SIRFilter)node.contents).getInputType());
-            System.out.println(((SIRFilter)node.contents).getInputType());
+            SIRFilter fnode = (SIRFilter)node.contents;
+            // Rewrote so I didn't just get random types printed.
+            // Why is this not debugging only?
+            System.err.println(this.getClass().getName() + " processing filter " 
+                    + fnode.getName() + ": " 
+                    +  fnode.getInputType() + "->" + fnode.getOutputType());
+            passedTypes.add(fnode.getOutputType());
+            passedTypes.add(fnode.getInputType());
         }
     }
     
@@ -168,7 +182,7 @@ public class StructureIncludeFile implements FlatVisitor
             for (int j = 0; j < current.getFields().length; j++) {
                 //if this field is a struct type, use its method to push the field
                 if (current.getFields()[j].getType().isArrayType()) {
-                    System.out.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
+                    System.err.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
                     assert false;
                 }
                 else if (current.getFields()[j].getType().isClassType()) {

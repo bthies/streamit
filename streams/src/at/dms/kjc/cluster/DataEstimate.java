@@ -31,6 +31,17 @@ public class DataEstimate {
         if (type.getTypeID() == CType.TID_BOOLEAN) return 1;
         if (type.getTypeID() == CType.TID_BIT) return 1;
 
+        if (type.isArrayType()) {
+            CArrayType aty = (CArrayType)type;
+            JExpression[] dims = aty.getDims();
+            int numelts = 1;
+            for (int i = 0; i < dims.length; i++) {
+                assert dims[i] instanceof JIntLiteral : "Can not calculate indeger array dimension for" + dims[i].toString();
+                numelts *= ((JIntLiteral)dims[i]).intValue();
+            }
+            return numelts * getTypeSize(aty.getBaseType());
+        }
+        
         if (type.isClassType()) {
             CClass c = ((CClassType)type).getCClass();
             CField f[] = c.getFields();
@@ -40,15 +51,12 @@ public class DataEstimate {
                 size += getTypeSize(f[y].getType());
             }
 
-            //System.out.println("Class type: ["+type+"] size: "+size);
+            //System.err.println("Class type: ["+type+"] size: "+size);
         
             return size;
         }
 
-        System.out.println("DataEstimate: unknown type ["+type+" TID: "+type.getTypeID()+" stack_size: "+type.getSize()+"]");
-
-        assert (1 == 0);
-
+        assert false : "DataEstimate: unknown type ["+type+" TID: "+type.getTypeID()+" stack_size: "+type.getSize()+"]";
         return 0;
     }
 

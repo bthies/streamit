@@ -35,7 +35,7 @@ public class StructureIncludeFile implements FlatVisitor
      * If standalone switch is not set, also creates push and pop
      * routines for using structure fields.
      */
-    private static void doit(SIRStructure[] structs, FlatNode toplevel, String dir) 
+    public static void doit(SIRStructure[] structs, FlatNode toplevel, String dir) 
     {
         if (structs.length == 0) 
             return;

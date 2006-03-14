@@ -1,0 +1,45 @@
+package at.dms.kjc.cluster;
+
+import java.io.FileWriter;
+
+import at.dms.kjc.common.CodegenPrintWriter;
+
+/**
+ * Generate file cluster.h
+ * 
+ * <p>Probably legacy code since the generated file
+ * contains a single line of code and that is commented out.</p>
+ * 
+ * @author Janis
+ *
+ */
+
+public class GenerateClusterDotH {
+
+    /**
+     * Generate file cluster.h
+     *
+     */
+    public static void generateClusterDotH() {
+
+        CodegenPrintWriter p = new CodegenPrintWriter();
+
+        p.newLine();
+        p.newLine();
+
+        p.print("//#define __CHECKPOINT_FREQ 10000");
+        p.newLine();
+        p.newLine();
+
+        try {
+            FileWriter fw = new FileWriter("cluster.h");
+            fw.write(p.getString());
+            fw.close();
+        }
+        catch (Exception e) {
+            System.err.println("Unable to write cluster.h");
+        }   
+    }
+
+
+}

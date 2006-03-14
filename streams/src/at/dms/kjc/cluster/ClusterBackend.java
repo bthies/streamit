@@ -127,9 +127,9 @@ public class ClusterBackend implements FlatVisitor {
                 globals = new SIRGlobal[1];
                 globals[0] = global;
             } else globals = new SIRGlobal[0];
-            System.out.println("// str on entry to Cluster backend");
+            System.err.println("// str on entry to Cluster backend");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
-            System.out.println("// END str on entry to Cluster backend");
+            System.err.println("// END str on entry to Cluster backend");
         }
         structures = structs;
     
@@ -170,7 +170,7 @@ public class ClusterBackend implements FlatVisitor {
         }
 
         // propagate constants and unroll loop
-        System.out.print("Running Constant Prop and Unroll...");
+        System.err.print("Running Constant Prop and Unroll...");
 
         // Constant propagate and unroll.
         // Set unrolling factor to <= 4 for loops that don't involve
@@ -180,7 +180,7 @@ public class ClusterBackend implements FlatVisitor {
         ConstantProp.propagateAndUnroll(str);
 
         // do constant propagation on fields
-        System.out.print("Running Constant Field Propagation...");
+        System.err.print("Running Constant Field Propagation...");
         ConstantProp.propagateAndUnroll(str, true);
         if (debugPrint) {
             System.err.println("// str after ConstantProp");
@@ -207,9 +207,9 @@ public class ClusterBackend implements FlatVisitor {
 
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
-        System.out.println(" done.");
+        System.err.println(" done.");
 
-        //System.out.println("Analyzing Branches..");
+        //System.err.println("Analyzing Branches..");
         //new BlockFlattener().flattenBlocks(str);
         //new BranchAnalyzer().analyzeBranches(str);
 
@@ -307,7 +307,7 @@ public class ClusterBackend implements FlatVisitor {
 
         MarkFilterBoundaries.doit(str);
 
-        System.out.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
+        System.err.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
 
 
         System.err.println("Running Partitioning... target number of threads: "+threads);
@@ -387,7 +387,7 @@ public class ClusterBackend implements FlatVisitor {
 
         //run constrained scheduler
 
-        System.out.print("Constrained Scheduler Begin...");
+        System.err.print("Constrained Scheduler Begin...");
 
         topStreamIter = IterFactory.createFactory().createIter(str);
         //topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
@@ -398,16 +398,16 @@ public class ClusterBackend implements FlatVisitor {
             debugOutput(str);
         }
 
-        System.out.println(" done.");
+        System.err.println(" done.");
 
         // end constrained scheduler
 
-        System.out.println("Flattener Begin...");
+        System.err.println("Flattener Begin...");
         executionCounts = SIRScheduler.getExecutionCounts(str);
         PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
         GraphFlattener graphFlattener = new GraphFlattener(str);
         //graphFlattener.dumpGraph("flatgraph.dot");
-        System.out.println("Flattener End.");
+        System.err.println("Flattener End.");
 
         //create the execution counts for other passes
         createExecutionCounts(str, graphFlattener);
@@ -418,9 +418,9 @@ public class ClusterBackend implements FlatVisitor {
                 globals = new SIRGlobal[1];
                 globals[0] = global;
             } else globals = new SIRGlobal[0];
-            System.out.println("// str before Cluster-specific code");
+            System.err.println("// str before Cluster-specific code");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
-            System.out.println("// END str before Cluster-specific code");
+            System.err.println("// END str before Cluster-specific code");
         }
 
         // if going to standalone without fusion, expand the main
@@ -468,29 +468,29 @@ public class ClusterBackend implements FlatVisitor {
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(graphFlattener.top);
 
-        System.out.println("Cluster Code begin...");
+        System.err.println("Cluster Code begin...");
 
         ClusterFusion.setPartitionMap(partitionMap);
         if (KjcOptions.fusion) {
             graphFlattener.top.accept(new ClusterFusion(), new HashSet(), true);
         }
 
-        ClusterCode.setPartitionMap(partitionMap);
+        //ClusterCode.setPartitionMap(partitionMap);   // legacy code now no-op
         ClusterCode.generateCode(graphFlattener.top);
 
         FusionCode.generateFusionHeader(str, doCacheOptimization);
         FusionCode.generateFusionFile(d_sched, implicit_mult);
 
-        ClusterCode.generateGlobal(global, helpers);
+        GenerateGlobal.generateGlobal(global, helpers); // global.h, global.cpp
 
-        ClusterCode.generateMasterFile();
-        ClusterCode.generateClusterHeader();
+        GenerateMasterDotCpp.generateMasterDotCpp();    // master.cpp
+        GenerateClusterDotH.generateClusterDotH();      // master.h
 
-        ClusterCode.generateMakeFile(helpers);
-        ClusterCode.generateConfigFile();
-        ClusterCode.generateSetupFile();
+        GenerateMakefile.generateMakefile(helpers);     // Makefile.cluster
+        GenerateConfigFile.generateConfigFile();        // cluster-config.txt
+        GenerateSetupFile.generateSetupFile();          // cluster-setup.txt
 
-        System.out.println("Cluster Code End.");    
+        System.err.println("Cluster Code End.");    
 
         /*
         //generate the makefiles

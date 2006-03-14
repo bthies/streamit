@@ -434,10 +434,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         //  | Splitter Pop                |
         //  +=============================+
 
-        for (int ch = 0; ch < splitter.getWays(); ch++) {
+        int split_ways = splitter.getWays();
+        for (int ch = 0; ch < split_ways; ch++) {
 
-            NetStream _out = (NetStream)out.elementAt(ch);
             int weight = splitter.getWeight(ch);
+            if (weight == 0) { // this deals with the odd case of a 0 weight 
+                ch--;          // which will have no coresponding output edge
+                split_ways--;  // in the graph.
+                continue;
+            }
+            NetStream _out = (NetStream)out.elementAt(ch);
 
             p.print(baseType.toString()+" "+_out.pop_buffer()+"["+weight+"];\n");
             p.print("int "+_out.pop_index()+" = "+weight+";\n");
@@ -977,8 +983,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         p.print("  if ("+out.pop_index()+" == "+sum_of_weights+") {\n");
         int _offs = 0;
+        
+        int ways = joiner.getWays();
         for (int i = 0; i < in.size(); i++) {
             int num = joiner.getWeight(i);
+            
             NetStream s = (NetStream)in.elementAt(i);
             FlatNode source = NodeEnumerator.getFlatNode(s.getSource());
 

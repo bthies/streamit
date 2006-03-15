@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.72 2006-03-07 21:53:49 mgordon Exp $
+# $Id: strc,v 1.73 2006-03-15 18:20:16 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -133,7 +133,7 @@ Options:
   --standalone, -S    Generate C file without library dependencies
   --rstream, -R       Generate C file to be compiled by RStream compiler 
 * --streamit          Output of the compiler is a StreamIt program
-+ --cluster n         Compile for a networked cluster with n nodes
+  --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
 * --backend class     Explicitly specify the backend class
   --library           Run in the Java library instead of compiling
@@ -205,6 +205,9 @@ Options specific to Raw backend:
 * --nopartition       For spacedynamic, do not attempt to partition each static subgraph
 * --layoutfile        For spacedynamic, specify a layout file (a new-line separated list of tiles)
 * --devassignfile     For spacedynamic, specify a device-to-port assignment file (a new-line separated list of tiles)
+
+Options specific to cluster backend:
+* --noverbose         Do not generate ifdef s for configurations other than those specified in the switches 
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -280,6 +283,7 @@ sub get_options
 			    "noexecutable",
 			    "norun",
 			    "nosched",
+			    "noverbose",
 			    "numbers|N=i",
 			    "partition|p",
 			    "partition-dp|pdp",
@@ -635,6 +639,7 @@ sub get_kjc_opts
     $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});
     $opts{backendvalues} && ($kjcopts .= " --backendvalues \"". $opts{backendvalues}. "\"");
+    $opts{noverbose} && ($kjcopts .= " --noverbose");
     return $kjcopts;
 }
 

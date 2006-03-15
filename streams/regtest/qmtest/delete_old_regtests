@@ -17,7 +17,9 @@
 # stored as /home/bits8/streamit/old_regtest_results/results.xml.DATE.bz2.
 #
 # /home/bits8/streamit/old_regtest_results will eventually require some 
-# cleanup, which is not yet done in this file.
+# cleanup.  If the size grows beyong 100M (circa 50 old results) then 
+# every other result in /home/bits8/streamit/old_regtest_results will be
+# deleted.  
 #
 ##############################################################################
 
@@ -34,8 +36,32 @@ my $base = "$baser/regtest";
 my $attic = "$baser/old_regtest_results";
 my @dirs = ls('-lt', $base);
 
-my $i = 0;
 
+#
+# if attic size > 100M, delete every other results.xml... file in attic
+#
+my ($sizedu) = `du -sk $attic` =~ /^([0-9]+)/;
+if ($sizedu > 100000) {
+    print "$sizedu K used in $attic: deleting some files\n";
+    opendir(ATTIC, $attic) || die "Cannot open $attic: $!";
+    my @files = sort readdir(ATTIC);
+    @files = grep { /^results\.xml/ } @files;
+    closedir(ATTIC);
+    my $n = 0;
+    foreach (@files) {
+	if ($n == 1) {
+	    print "removing old result $_\n";
+	    unlink("$attic/$_") || die "Cannot unlink $attic/$_: $!";
+	}
+	$n = 1 - $n;		# alternate value of $n between 1 and 0
+    }
+}
+
+#
+# delete all but 8 latest regrest directories and summaarize the results of the
+# deleted directoried in the attic.
+# 
+my $i = 0;
 foreach my $dir (@dirs)
 {
     chomp($dir);

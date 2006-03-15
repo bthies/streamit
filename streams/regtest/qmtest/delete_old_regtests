@@ -34,8 +34,6 @@ use warnings;
 my $baser = "/home/bits8/streamit";
 my $base = "$baser/regtest";
 my $attic = "$baser/old_regtest_results";
-my @dirs = ls('-lt', $base);
-
 
 #
 # if attic size > 100M, delete every other results.xml... file in attic
@@ -58,19 +56,28 @@ if ($sizedu > 100000) {
 }
 
 #
-# delete all but 8 latest regrest directories and summaarize the results of the
+# delete all but 8 latest regtest directories and summaarize the results of the
 # deleted directoried in the attic.
 # 
-my $i = 0;
-foreach my $dir (@dirs)
-{
-    chomp($dir);
-    my ($p, $x, $u, $g, $s, $m, $d, $t, $f) = split(/ +/, $dir);
-    if ($i > 8) {
-	system("bzip2 -c $base/$f/streams/results.xml > $attic/results.xml.$f.bz2") && print "error during bzip $!";
-	print "deleting $f\n";
-	system "rm -rf $base/$f";
-    }
-    $i++;
+
+#my @dirs = ls('-lt', $base);   unreliable if touched directories!!!
+
+# get all directories, regtest directories by name, which should
+# be cronological order of creation.  reverse list of names and remove
+# 0..7 to leave all but the 8 most recent regtest directories in the list.
+opendir(BASE, $base) || die "Cannot open $base: $!";
+my @dirs = sort readdir(BASE);
+@dirs = grep { /^2[0-9]+\.[0-9]+\.[MTWFS][a-z][a-z]/ } @dirs;
+closedir(BASE);
+@dirs=reverse(@dirs);
+@dirs = @dirs[8..$#dirs];
+
+# remove summarize results into attic and remove regtest directories
+# remaining in the list @dirs.
+foreach (@dirs) {
+    print "Summarizing $_. ";
+    system("bzip2 -c $base/$_/streams/results.xml > $attic/results.xml.$_.bz2") && print "error during bzip $!";
+    print "Deleting $_\n";
+    system "rm -rf $base/$_";	# not 'unlink' since recursive removal
 }
 

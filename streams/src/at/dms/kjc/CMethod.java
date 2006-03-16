@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethod.java,v 1.7 2006-01-25 17:01:22 thies Exp $
+ * $Id: CMethod.java,v 1.8 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -110,12 +110,12 @@ public abstract class CMethod extends CMember {
      */
     public void setThrowables(Hashtable throwables) {
         if (throwables != null) {
-            Enumeration enum = throwables.elements();
+            Enumeration eNum = throwables.elements();
             int     count = 0;
 
             exceptions = new CClassType[throwables.size()];
-            while (enum.hasMoreElements()) {
-                exceptions[count++] = ((CThrowableInfo)enum).getThrowable();
+            while (eNum.hasMoreElements()) {
+                exceptions[count++] = ((CThrowableInfo)eNum).getThrowable();
             }
         }
     }

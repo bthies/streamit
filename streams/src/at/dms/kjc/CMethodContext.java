@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethodContext.java,v 1.7 2006-01-25 17:01:22 thies Exp $
+ * $Id: CMethodContext.java,v 1.8 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -62,13 +62,13 @@ public class CMethodContext extends CContext {
      * @exception   UnpositionedError   this error will be positioned soon
      */
     public void close(TokenReference ref) throws PositionedError {
-        Enumeration     enum = throwables.elements();
+        Enumeration     eNum = throwables.elements();
         CClassType[]    checked = self.getThrowables();
         boolean[]       used = new boolean[checked.length];
 
         loop:
-        while (enum.hasMoreElements()) {
-            CThrowableInfo  thrown = (CThrowableInfo)enum.nextElement();
+        while (eNum.hasMoreElements()) {
+            CThrowableInfo  thrown = (CThrowableInfo)eNum.nextElement();
             CClassType  type = thrown.getThrowable();
 
             // only checked exceptions need to be checked

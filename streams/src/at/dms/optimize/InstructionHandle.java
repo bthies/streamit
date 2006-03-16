@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InstructionHandle.java,v 1.2 2006-01-25 17:02:45 thies Exp $
+ * $Id: InstructionHandle.java,v 1.3 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.optimize;
@@ -82,8 +82,8 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
      */
     public void addLineNumberInfo(Vector lineNumberInfo) {
         if (lineNumbers != null) {
-            for (Enumeration enum = lineNumbers.elements(); enum.hasMoreElements(); ) {
-                int line = ((Integer)enum.nextElement()).intValue();
+            for (Enumeration eNum = lineNumbers.elements(); eNum.hasMoreElements(); ) {
+                int line = ((Integer)eNum.nextElement()).intValue();
 
                 lineNumberInfo.addElement(new LineNumberInfo((short)line, this));
             }

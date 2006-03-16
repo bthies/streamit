@@ -428,9 +428,9 @@ public class Propagator extends SLIRReplacingVisitor {
                 for(int i=1;i<propagators.length;i++) {
                     Propagator prop=propagators[i];
                     LinkedList remove=new LinkedList();
-                    Enumeration enum=newConstants.keys();
-                    while(enum.hasMoreElements()) {
-                        Object key=enum.nextElement();
+                    Enumeration eNum=newConstants.keys();
+                    while(eNum.hasMoreElements()) {
+                        Object key=eNum.nextElement();
                         if(!(prop.constants.get(key).equals(newConstants.get(key))))
                             remove.add(key);
                         if((prop.constants.get(key) instanceof Object[])&&(newConstants.get(key) instanceof Object[])) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.11 2006-01-25 17:01:22 thies Exp $
+ * $Id: CSourceClass.java,v 1.12 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -90,7 +90,7 @@ public class CSourceClass extends CClass {
             return params;
         } else {
             CType[]     ret = new CType[size];
-            Enumeration enum = outers == null ? null : outers.keys();
+            Enumeration eNum = outers == null ? null : outers.keys();
             int     pos = 0;
 
             /* 15.9.5.1 The first formal parameter of the constructor of C 
@@ -104,9 +104,9 @@ public class CSourceClass extends CClass {
                 ret[pos] = params[i];
             }
 
-            if (enum != null) {
-                while (enum.hasMoreElements()) {
-                    ret[pos++] = ((JLocalVariable)enum.nextElement()).getType();
+            if (eNum != null) {
+                while (eNum.hasMoreElements()) {
+                    ret[pos++] = ((JLocalVariable)eNum.nextElement()).getType();
                 }
             }
 
@@ -122,9 +122,9 @@ public class CSourceClass extends CClass {
         //       code.plantLoadThis();
         //     }
         if (outers != null) {
-            Enumeration enum = outers.keys();
-            while (enum.hasMoreElements()) {
-                JLocalVariable  var = (JLocalVariable)enum.nextElement();
+            Enumeration eNum = outers.keys();
+            while (eNum.hasMoreElements()) {
+                JLocalVariable  var = (JLocalVariable)eNum.nextElement();
 
                 new JLocalVariableExpression(TokenReference.NO_REF, var).genCode(code, false);
             }
@@ -207,9 +207,9 @@ public class CSourceClass extends CClass {
                                               getOwner().getType().getSignature());
             }
             if (outers != null) {
-                Enumeration enum = outers.keys();
-                while (enum.hasMoreElements()) {
-                    JLocalVariable  ovar = (JLocalVariable)enum.nextElement();
+                Enumeration eNum = outers.keys();
+                while (eNum.hasMoreElements()) {
+                    JLocalVariable  ovar = (JLocalVariable)eNum.nextElement();
                     var = new JGeneratedLocalVariable(null, 0, ovar.getType(), ovar.getIdent(), null);
                     var.setPosition(countLocals);
                     countLocals += var.getType().getSize();

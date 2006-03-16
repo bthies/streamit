@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBodyContext.java,v 1.7 2006-01-25 17:01:22 thies Exp $
+ * $Id: CBodyContext.java,v 1.8 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -477,10 +477,10 @@ public abstract class CBodyContext extends CContext {
      *
      */
     public void mergeThrowables(CBodyContext source) {
-        Enumeration     enum = source.getThrowables().elements();
+        Enumeration     eNum = source.getThrowables().elements();
 
-        while (enum.hasMoreElements()) {
-            addThrowable((CThrowableInfo)enum.nextElement());
+        while (eNum.hasMoreElements()) {
+            addThrowable((CThrowableInfo)eNum.nextElement());
         }
     }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTryCatchStatement.java,v 1.8 2006-01-25 17:01:23 thies Exp $
+ * $Id: JTryCatchStatement.java,v 1.9 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -141,9 +141,9 @@ public class JTryCatchStatement extends JStatement {
          */
         boolean[]   catchReachable = new boolean[catchClauses.length];
 
-        Enumeration enum = tryContext.getThrowables().elements();
-        while (enum.hasMoreElements()) {
-            CThrowableInfo  info = (CThrowableInfo)enum.nextElement();
+        Enumeration eNum = tryContext.getThrowables().elements();
+        while (eNum.hasMoreElements()) {
+            CThrowableInfo  info = (CThrowableInfo)eNum.nextElement();
             CClassType  type = info.getThrowable();
             boolean     consumed = false;
 

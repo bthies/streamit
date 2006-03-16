@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InstructionIO.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: InstructionIO.java,v 1.3 2006-03-16 16:41:19 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -521,8 +521,8 @@ public class InstructionIO implements Constants {
                 }
             };
 
-        for (Enumeration enum = forwards.elements(); enum.hasMoreElements(); ) {
-            AccessorContainer       insn = (AccessorContainer)enum.nextElement();
+        for (Enumeration eNum = forwards.elements(); eNum.hasMoreElements(); ) {
+            AccessorContainer       insn = (AccessorContainer)eNum.nextElement();
 
             try {
                 insn.transformAccessors(transformer);

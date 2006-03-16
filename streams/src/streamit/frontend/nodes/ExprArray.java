@@ -22,7 +22,7 @@ package streamit.frontend.nodes;
  * offset expresion (the "n").
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprArray.java,v 1.4 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprArray.java,v 1.5 2006-03-16 21:16:51 madrake Exp $
  */
 public class ExprArray extends Expression
 {
@@ -38,6 +38,14 @@ public class ExprArray extends Expression
     
     /** Returns the base expression of this. */
     public Expression getBase() { return base; }
+
+    /** Returns the component expression of this. */
+    public ExprVar getComponent() {
+        Expression comp = this;
+        while (comp instanceof ExprArray)
+            comp = ((ExprArray) comp).getBase();
+        return (ExprVar) comp;
+    }
 
     /** Returns the offset expression of this. */
     public Expression getOffset() { return offset; }

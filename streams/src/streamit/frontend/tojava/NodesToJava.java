@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.121 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.122 2006-03-16 21:18:35 madrake Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -580,7 +580,9 @@ public class NodesToJava implements FEVisitor
         }
         // look for print and println statements; assume everything
         // else is a math function
-        else if (name.equals("print")) {
+        else if (name.equals("ArrayMemoizer.initArray")) {
+            result = "ArrayMemoizer.initArray(";
+        } else if (name.equals("print")) {
             result = "System.out.print(";
         } else if (name.equals("println")) {
             result = "System.out.println(";

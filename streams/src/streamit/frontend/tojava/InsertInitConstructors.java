@@ -17,40 +17,54 @@
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
+import streamit.frontend.passes.*;
 
-import java.util.Iterator;
-import java.util.List;
-
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.21 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.22 2006-03-16 21:18:35 madrake Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
     private TempVarGen varGen;
     private boolean libraryFormat;
-    
+    private DetectImmutable immutableDetector;
+
+    private String activeStreamName = null;
+    private boolean special_global = false;
+
     /**
      * Create a new pass to insert constructors.
      *
      * @param varGen         global object to generate variable names
      * @param libraryFormat  whether or not we are generating code for Java library
+     * @param immutableDetector the output of another pass recording which variables are 
+     *                          immutable
      */
-    public InsertInitConstructors(TempVarGen varGen, boolean libraryFormat)
+    public InsertInitConstructors(TempVarGen varGen, 
+                                  boolean libraryFormat, 
+                                  DetectImmutable immutableDetector)
     {
         this.varGen = varGen;
         this.libraryFormat = libraryFormat;
+        this.immutableDetector = immutableDetector;
+    }
+    public InsertInitConstructors(TempVarGen varGen,
+                                  boolean libraryFormat) 
+    {
+        this(varGen, libraryFormat, new DetectImmutable());
     }
     
     /**
      * Returns true if this type needs a constructor generated.
      * This happens if the type is complex, or if it is not a
      * primitive type.  (Complex primitive types use the Java
-     * 'Complex' class.)
+     * 'Complex' class.) Arrays which are immutable should not
+     * get constructors, although this is only checked in the 
+     * library for now.
      *
      * Call the version with the initializer when possible; if no
      * initializer available, will assume to be null.
@@ -59,7 +73,8 @@ public class InsertInitConstructors extends InitMunger
     {
         return needsConstructor(type, null);
     }
-    private boolean needsConstructor(Type type, Expression initializer) {
+    private boolean needsConstructor(Type type, Expression initializer) 
+    {
         return (type.isComplex() || 
                 type.isComposite() || 
                 (!(type instanceof TypePrimitive) && 
@@ -85,19 +100,80 @@ public class InsertInitConstructors extends InitMunger
      *              arrays
      */
     private List stmtsForConstructor(FEContext ctx, Expression name,
-                                     Type type, Expression init, boolean arrayConstructor)
+                                     Type type, Expression init, 
+                                     boolean arrayConstructor)
     {
         List result = new java.util.ArrayList();
 
         // If the type doesn't involve a constructor, there are no
         // generated statements.
+        
+        String field_name = null;
+        if (name instanceof ExprVar)
+            field_name = ((ExprVar) name).getName();
+
         if (!needsConstructor(type, init))
             return result;
 
         // No; generate the constructor.
-        if (!libraryFormat || (arrayConstructor || !(type instanceof TypeArray)))
-            result.add(new StmtAssign(ctx, name,
-                                      new ExprJavaConstructor(ctx, type)));
+        if (!libraryFormat || (arrayConstructor || !(type instanceof TypeArray))) 
+            {
+                // Instead of constructing here, as in new int[][],
+                // it should just assign the variable to reference
+                // a global copy initialized to zero.
+                if (libraryFormat && 
+                    !special_global && 
+                    type instanceof TypeArray && 
+                    field_name != null &&  
+                    activeStreamName != null && 
+                    immutableDetector.isImmutable(activeStreamName, field_name))
+                    {
+                        String tempVar = varGen.nextVar();
+                        Expression varExp = new ExprVar(ctx, tempVar);
+                        List elements = new ArrayList();
+                        Type base = type;
+                        while (base instanceof TypeArray) 
+                        {
+                            elements.add(0, 
+                                         ((TypeArray) base).getLength()
+                                );
+                            base = ((TypeArray) base).getBase();
+                        }
+                        result.add(
+                            new StmtVarDecl(
+                                ctx,
+                                new TypeArray(new TypePrimitive(TypePrimitive.TYPE_INT),
+                                              new ExprConstInt(elements.size())),
+                                tempVar,
+                                new ExprArrayInit(ctx,
+                                                  elements))
+                            );
+                        result.add(
+                            new StmtAssign(
+                                ctx,
+                                name,
+                                new ExprTypeCast(
+                                    ctx,
+                                    type,
+                                    new ExprFunCall(
+                                        ctx,
+                                        "ArrayMemoizer.initArray",
+                                        new ExprJavaConstructor(
+                                            ctx,
+                                            new TypeArray(((TypeArray) type).getComponent(), new ExprConstInt(0))
+                                            ),
+                                        varExp
+                                        )
+                                    )
+                                )
+                            );
+                    }
+                else
+                    {
+                        result.add(new StmtAssign(ctx, name,
+                                                  new ExprJavaConstructor(ctx, type)));
+                    }
+            }
 
         // Now, if this is a structure type, we might need to
         // recursively generate constructors for the structure
@@ -120,9 +196,10 @@ public class InsertInitConstructors extends InitMunger
             }
         // Or, if this is an array of structures, we might need to
         // recursively generate constructors.
+
         if (libraryFormat && (type instanceof TypeArray))
             {
-                TypeArray ta = (TypeArray)type;
+                TypeArray ta = (TypeArray) type;
                 Type base = ta.getBase();
                 if (needsConstructor(base))
                     {
@@ -160,6 +237,16 @@ public class InsertInitConstructors extends InitMunger
     
     public Object visitStreamSpec(StreamSpec spec)
     {
+        // Set the active stream name so when we visit an array we know which
+        // stream with which to associate it.
+        activeStreamName = spec.getName();
+        special_global = (spec.getType() == StreamSpec.STREAM_GLOBAL);
+
+        if (activeStreamName == null)
+            throw new RuntimeException("Anonymous or improperly named stream. " +
+                                       "This pass must run after all anonymous " +
+                                       "streams have been given unique names.");
+       
         spec = (StreamSpec)super.visitStreamSpec(spec);
 
         // Stop if there are no fields.
@@ -177,6 +264,7 @@ public class InsertInitConstructors extends InitMunger
                     {
                         Type type = field.getType(i);
                         Expression init = field.getInit(i);
+                        String field_name = field.getName(i);
                         if (needsConstructor(type, init))
                             {
                                 FEContext ctx = field.getContext();
@@ -212,7 +300,8 @@ public class InsertInitConstructors extends InitMunger
         // the initializer.)
         boolean needed = false;
         for (int i = 0; i < decl.getNumVars(); i++)
-            if (needsConstructor(decl.getType(i), decl.getInit(i)))
+            if (needsConstructor(decl.getType(i), 
+                                 decl.getInit(i)))
                 needed = true;
         if (!needed)
             return decl;
@@ -232,7 +321,8 @@ public class InsertInitConstructors extends InitMunger
                     {
                         FEContext ctx = decl.getContext();
                         Expression lhs = new ExprVar(ctx, decl.getName(i));
-                        addStatements(stmtsForConstructor(ctx, lhs, type, init, true));
+                        addStatements(stmtsForConstructor(ctx, lhs, type, init, 
+                                                          true));
                     }
             }
 

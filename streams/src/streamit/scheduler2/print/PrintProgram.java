@@ -33,8 +33,6 @@ public class PrintProgram extends streamit.misc.AssertedClass
 {
     public void printProgram(Iterator iter)
     {
-        assert iter.isPipeline() != null;
-
         File outputFile;
         FileOutputStream fileOutputStream;
         DataOutputStream outputStream;
@@ -56,7 +54,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
                 outputStream.writeBytes("    new " + getName(iter) + " ().run (args);\n");
                 outputStream.writeBytes("  }\n");
 
-                printPipe(iter.isPipeline(), outputStream);
+                printStreamSelector(iter, outputStream);
 
                 outputStream.writeBytes("}\n");
             }
@@ -64,6 +62,25 @@ public class PrintProgram extends streamit.misc.AssertedClass
             {
                 ERROR(e);
             }
+    }
+
+    private void printStreamSelector(Iterator iter, DataOutputStream outputStream) {
+        if (iter.isFilter() != null)
+        {
+            printFilter(iter.isFilter(), outputStream);
+        } else if (iter.isPipeline() != null)
+        {
+            printPipe(iter.isPipeline(), outputStream);
+        } else if (iter.isSplitJoin() != null)
+        {
+            printSJ(iter.isSplitJoin(), outputStream);
+        } else if (iter.isFeedbackLoop() != null)
+        {
+            printFL(iter.isFeedbackLoop(), outputStream);
+        } else {
+            assert false : "Iterator not yet supported: " + iter.getClass().getName();
+        }
+    
     }
 
     public void printStream(Iterator iter)
@@ -110,24 +127,8 @@ public class PrintProgram extends streamit.misc.AssertedClass
                                         + iterType
                                         + "\n");
                 outputStream.writeBytes("{\n");
-
-                if (iter.isFilter() != null)
-                    {
-                        printFilter(iter.isFilter(), outputStream);
-                    }
-                if (iter.isPipeline() != null)
-                    {
-                        printPipe(iter.isPipeline(), outputStream);
-                    }
-                if (iter.isSplitJoin() != null)
-                    {
-                        printSJ(iter.isSplitJoin(), outputStream);
-                    }
-                if (iter.isFeedbackLoop() != null)
-                    {
-                        printFL(iter.isFeedbackLoop(), outputStream);
-                    }
-
+                
+                printStreamSelector(iter,outputStream);
                 outputStream.writeBytes("}\n");
             }
         catch (Throwable e)

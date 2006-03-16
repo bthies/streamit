@@ -16,6 +16,7 @@
 
 package streamit.frontend.passes;
 
+import streamit.frontend.tojava.*;
 import streamit.frontend.nodes.*;
 import java.util.*;
 
@@ -28,21 +29,32 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.15 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: GenerateCopies.java,v 1.16 2006-03-16 21:17:26 madrake Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
     private TempVarGen varGen;
-   
+    private boolean libraryFormat;
+    private DetectImmutable immutableDetector;
+
+    private String activeStreamName = null;
+
     /**
      * Create a new copy generator.
      *
      * @param varGen  global temporary variable generator
+     * @param libraryFormat  whether or not we are generating code for Java library
+     * @param immutableDetector the output of another pass recording which variables
+     *                          are immutable.
      */
-    public GenerateCopies(TempVarGen varGen)
+    public GenerateCopies(TempVarGen varGen,
+                          boolean libraryFormat,
+                          DetectImmutable immutableDetector)
     {
         super(null);
         this.varGen = varGen;
+        this.libraryFormat = libraryFormat;
+        this.immutableDetector = immutableDetector;
     }
 
     /**
@@ -147,6 +159,12 @@ public class GenerateCopies extends SymbolTableVisitor
 
     private void makeCopyArray(Expression from, Expression to, TypeArray type)
     {
+        if (libraryFormat)
+            addStatement(new StmtAssign(to.getContext(), 
+                                        to,
+                                        new ExprJavaConstructor(to.getContext(), 
+                                                                type)));
+
         // We need to generate a for loop, since from our point of
         // view, the array bounds may not be constant.
         String indexName = varGen.nextVar();
@@ -176,6 +194,7 @@ public class GenerateCopies extends SymbolTableVisitor
         body = (Statement)body.accept(this);
 
         // Now generate the loop, we have all the parts.
+
         addStatement(new StmtFor(null, init, cond, incr, body));
     }
 
@@ -307,10 +326,20 @@ public class GenerateCopies extends SymbolTableVisitor
                 //System.out.println("GenCopies::visitStmtAssign take2 "+
                 //             " lhs: "+getType(stmt.getLHS())+
                 //             " rhs: "+getType(stmt.getRHS())+
-                //             " needs-copy: "+needsCopy(stmt.getRHS())+" \n");
+                //             " Needs-copy: "+needsCopy(stmt.getRHS())+" \n");
 
                 Expression rhs = stmt.getRHS();
-
+                Expression lhs = stmt.getLHS();
+                
+                if (libraryFormat && 
+                    lhs instanceof ExprVar &&
+                    rhs instanceof ExprVar && 
+                    immutableDetector.isImmutable(activeStreamName, 
+                                                  ((ExprVar) lhs).getName()) &&
+                    immutableDetector.isImmutable(activeStreamName,
+                                                  ((ExprVar) rhs).getName())) {
+                    return result;
+                }
                 if (needsCopy(rhs))
                     {
 
@@ -360,5 +389,19 @@ public class GenerateCopies extends SymbolTableVisitor
         if (needsCopy(value))
             value = assignToTemp(value, true);
         return new StmtPush(expr.getContext(), value);
+    }
+
+    public Object visitStreamSpec(StreamSpec spec)
+    {
+        // Set the active stream name so when we visit an array we know which
+        // stream with which to associate it.
+        activeStreamName = spec.getName();
+
+        if (activeStreamName == null)
+            throw new RuntimeException("Anonymous or improperly named stream. " +
+                                       "This pass must run after all anonymous " +
+                                       "streams have been given unique names.");
+
+        return super.visitStreamSpec(spec);
     }
 }

@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.74 2006-01-25 17:04:21 thies Exp $
+ * @version $Id: ToJava.java,v 1.75 2006-03-16 21:15:50 madrake Exp $
  */
 public class ToJava
 {
@@ -247,9 +247,18 @@ public class ToJava
         prog = (Program)prog.accept(new RenameGlobals(libraryFormat));
         prog = (Program)prog.accept(new SeparateFieldInitializers(libraryFormat));
 
+        DetectImmutable immutableDetector = new DetectImmutable(); 
+        prog = (Program)prog.accept(immutableDetector);
+
         // janiss: moved GenerateCopies and InsInitConstructors down
-        prog = (Program)prog.accept(new GenerateCopies(varGen)); 
-        prog = (Program)prog.accept(new InsertInitConstructors(varGen, libraryFormat));
+        prog = (Program)prog.accept(new GenerateCopies(varGen,
+                                                       libraryFormat,
+                                                       immutableDetector)); 
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen, 
+                                                               libraryFormat,
+                                                               immutableDetector)); 
+        //        prog = (Program)prog.accept(new InsertInitConstructors2(varGen, 
+        //                                                      libraryFormat));
 
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());

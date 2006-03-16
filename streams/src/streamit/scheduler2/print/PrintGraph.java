@@ -37,7 +37,11 @@ public class PrintGraph extends streamit.misc.AssertedClass
 
     public void printProgram(Iterator iter)
     {
-        assert iter.isPipeline() != null;
+        // commented out following assertion A.D.
+        // it is false for a number of programs since the outermost
+        // level is NOT guaranteed to be a pipeine and we have examples
+        // of outer levels that are SplitJoins or FeedbackLoops.
+        //assert iter.isPipeline() != null;
 
         File outputFile;
         FileOutputStream fileOutputStream;

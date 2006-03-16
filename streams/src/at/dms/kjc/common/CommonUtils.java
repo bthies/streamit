@@ -27,6 +27,11 @@ public class CommonUtils {
      */
     public static String CTypeToString(CType s, boolean hasBoolType) {
         if (s instanceof CArrayType){
+            // if multi-dimensional arrays in C, then why not getBaseType?
+            // getElementType() assumes that multi-dimensional arrays are 
+            // arrays of arrays and is going to give one '*' per dimension.
+            // For some reason the uni backend POP_DEFAULTB macro gives an
+            // error if a 2-d array is float* rather than float** 
             return CTypeToString(((CArrayType)s).getElementType(), hasBoolType)  + "*";
         } else if (s.getTypeID() == CType.TID_BOOLEAN) {
             return hasBoolType ? "bool" : "int";

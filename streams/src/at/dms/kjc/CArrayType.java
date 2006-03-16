@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.14 2006-03-14 22:21:12 dimock Exp $
+ * $Id: CArrayType.java,v 1.15 2006-03-16 21:57:56 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -58,21 +58,20 @@ public class CArrayType extends CClassType {
         assert baseType != null;
         assert arrayBound > 0;
 
+        if (dims==null) {
+            dims = new JExpression[arrayBound];
+        }
+        this.dims = dims;
+        
         if (baseType.isArrayType()) {
+            System.err.println("CArrayType Warning: creating a " + arrayBound + "-d array of " + ((CArrayType)baseType).arrayBound + "-d arrays");
             this.arrayBound = arrayBound + ((CArrayType)baseType).arrayBound;
             this.baseType = ((CArrayType)baseType).baseType;
+            
         } else {
             this.arrayBound = arrayBound;
             this.baseType = baseType;
         }
-
-        // only need this for raw backend until it supports static array
-        // dimensions
-        if (dims==null) {
-            dims = new JExpression[0];
-        }
-
-        this.dims = dims;
     }
 
     // ----------------------------------------------------------------------
@@ -84,8 +83,13 @@ public class CArrayType extends CClassType {
      * @return  the ksm form of this type
      */
     public String toString() {
-        String  res = baseType.toString();
-        for (int i = 0; i < arrayBound; i++) {
+        String res;
+        if (baseType.isArrayType()) {
+            res = "(" + baseType.toString() + ")";
+        } else {
+            res = baseType.toString();
+        }
+        for (int i = 0; i < dims.length; i++) {
             //res += "*";
             if (dims[i] == null) {
                 res += "[]";
@@ -169,6 +173,9 @@ public class CArrayType extends CClassType {
 
     /**
      * Returns the type of the elements of an array of this type.
+     * 
+     * Warning: treats multi-dimensional arrays in java style: as arrays of arrays.
+     * If trying to get a type for a C Code generator, you probably want {@link #getBaseType()}.
      */
     public CType getElementType() {
         assert baseType != null;
@@ -321,15 +328,31 @@ public class CArrayType extends CClassType {
 
 
     /**
-     *dims is only set as part of a channel declaration
-     * so the input output type of a filter has dims set
-     * but all other CArrayType's do not
-     **/
+     * Get dimensions of array.
+     * 
+     *  @return  JExpression[] -- by reference for updating visitors.
+     *  Each expression should have integer type and evaluate (eventually)
+     *  to the size of the n'th dimension of this array.
+     *  
+     *  Be very careful not to assign a different length JExpression[]
+     *  to the returned value!
+     */
     public JExpression[] getDims() {
         return dims;
     }
 
+    /**
+     * Set array dimensions.
+     * 
+     * Do not attempt to set to null.
+     * Do not attempt to alter number of dimensions.
+     * 
+     * @param d array of JExpressions indicating dimentsions of array.
+     */
     public void setDims(JExpression[] d){
+        // if (dims == null) { dims = new JExpression[arrayBound]; }  doesn't work if array of arrays...
+        assert d != null;
+        assert d.length ==  dims.length;
         dims = d;
     }
 

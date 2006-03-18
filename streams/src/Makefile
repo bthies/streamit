@@ -1,6 +1,23 @@
-include $(STREAMIT_HOME)/misc/Makefile.vars
 
-JAVAC = jikes
+JAVAC           = jikes
+DEBUG_OPT       = -g
+JAVA_VERSION    = -target 1.5
+JAVA_OPT        = -nowarn +F $(JAVA_VERSION) 
+JAVAC_FLAGS     = $(JAVA_OPT) $(DEBUG_OPT)
+JIKES_DEP_FLAGS	= +M -nowrite -nowarn $(JAVA_VERSION)
+MAKEFILE_DEPEND	= makefile.deps
+CAT		= cat
+RM              = rm -f
+SED		= sed
+FIND            = find
+XARGS		= xargs
+
+.PHONY: all clean depend jar
+
+###############################################################################
+# Top level parts of the compiler: initially attempted to make from top down
+# based on fact the Java compilers will recompile used code as needed.
+###############################################################################
 
 KOPI_SRCS = \
   at/dms/kjc/Main.java 
@@ -99,14 +116,117 @@ JAVA_SRCS = \
   $(STREAMIT_GENERATED) \
   streamit/library/StreamIt.java
 
-DEBUG_OPT = -g
+all: $(MAKEFILE_DEPEND) $(JAVA_TARGET)
 
-JAVA_OPT = -nowarn +F -source 1.4
+###############################################################################
+# Attempt at a simple dependencies file
+###############################################################################
 
-MAKEFILE_DEPS = \
-  $(JAVA_SRCS)
+# Packages we will compile because they contribute to compiler code
+# and contain .java files.
+# These are listed explicitly because they are searched for .u files
+# to generate $(MAKEFILE_DEPEND)
 
-include $(STREAMIT_HOME)/misc/Makefile.std
+PACKAGES = \
+	streamit.scheduler2.base \
+	streamit.library.iriter \
+	at.dms.kjc.sir.linear.transform \
+	at.dms.kjc.lir \
+	streamit.scheduler2.iriter \
+	at.dms.kjc.sir.lowering.fission \
+	at.dms.compiler.getopt \
+	streamit.library \
+	streamit.scheduler2.minlatency \
+	streamit.frontend.controlflow \
+	at.dms.compiler.tools.optgen \
+	streamit.frontend.passes \
+	at.dms.kjc.sir \
+	at.dms.compiler.tools.msggen \
+	streamit.frontend.nodes \
+	at.dms.compiler \
+	at.dms.kjc.rstream \
+	streamit.scheduler2.singleappearance \
+	at.dms.compiler.antlr.extra \
+	streamit.scheduler1.simple \
+	streamit.misc \
+	at.dms.compiler.antlr.runtime \
+	streamit.library.jcc \
+	at.dms.compiler.tools.antlr.extra \
+	streamit.library.io \
+	at.dms.compiler.tools.antlr.runtime \
+	at.dms.kjc.linprog \
+	at.dms.kjc.sir.lowering.partition \
+	streamit.frontend \
+	at.dms.kjc.spacetime.switchIR \
+	at.dms.kjc.sir.lowering.fusion \
+	at.dms.kjc.sir.stats \
+	at.dms.compiler.tools.common \
+	streamit.scheduler2.print \
+	at.dms.kjc \
+	at.dms.kjc.cluster \
+	streamit.scheduler2 \
+	at.dms.optimize \
+	at.dms.kjc.sir.lowering.partition.dynamicprog \
+	at.dms.kjc.raw \
+	at.dms.kjc.sir.statespace \
+	at.dms.kjc.sir.lowering.partition.linear \
+	streamit.frontend.tojava \
+	streamit.scheduler1 \
+	at.dms.classfile \
+	at.dms.kjc.iterator \
+	at.dms.kjc.sir.linear \
+	at.dms.kjc.sir.lowering \
+	at.dms.kjc.sir.statespace.transform \
+	at.dms.compiler.tools.jperf \
+	at.dms.backend \
+	at.dms.kjc.common \
+	at.dms.util \
+	streamit.scheduler2.hierarchical \
+	at.dms.compiler.tools.include \
+	at.dms.kjc.flatgraph \
+	at.dms.kjc.sir.lowering.reordering \
+	at.dms.kjc.spacetime \
+	at.dms.compiler.tools.lexgen \
+	at.dms.kjc.sir.linear.frequency \
+	at.dms.kjc.spacedynamic \
+	streamit.scheduler2.constrained \
+	at.dms.kjc.flatgraph2 \
+	at.dms.compiler.tools.antlr.compiler \
+	at.dms.kjc.sir.lowering.partition.cache
+
+
+# A marker variable for the top level directory
+TOPLEVEL	:= .
+
+# Subdirectories with java files:
+PACKAGE_DIRS	:= $(subst .,/,$(PACKAGES)) $(TOPLEVEL)
+
+%.class: %.java
+	$(JAVAC) $(JAVAC_FLAGS) $<
+
+%.u: %.java
+	$(JAVAC) $(JIKES_DEP_FLAGS) $<
+
+$(MAKEFILE_DEPEND): $(JAVA_SRCS) $(JAVA_TARGET:%.class=%.u)
+	 (for d in $(PACKAGE_DIRS); \
+	   do $(FIND) $$d -maxdepth 1 -name "*.u"; \
+	 done | $(XARGS)  $(SED) -e '/\.class$$/d' \
+	  -e '/.*$$.*/d' \
+	  -e '/.*-[0-9]*\.java$$/d' ) > $(MAKEFILE_DEPEND)
+
+#
+# target to specicfically re-make dependencies file
+#
+depend:
+	rm -f $(MAKEFILE_DEPEND)
+	$(FIND) -name "*.u" | $(XARGS) $(RM)
+	$(MAKE) $(MAKEFILE_DEPEND)
+
+
+
+###############################################################################
+# Additional targets, not attempted for a while. 
+###############################################################################
 
 jar:
 	rm -f streamit.jar streamit-lib.jar
@@ -149,21 +269,57 @@ streamit-lib.jar: $(JAVA_TARGET)
 	jar cf $@ -C classes .
 	rm -rf classes
 
-at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex  ../3rdparty/java_cup/runtime/Scanner.class   ../3rdparty/java_cup/runtime/lr_parser.class
+###############################################################################
+# Created java files: 
+###############################################################################
+
+at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared \
+	at/dms/kjc/Kjc.flex  \
+	../3rdparty/java_cup/runtime/Scanner.class \
+	../3rdparty/java_cup/runtime/lr_parser.class
+	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcScanner.java
 	java JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex
 
 at/dms/kjc/KjcTokenTypes.java : at/dms/kjc/Kjc.t $(KOPI_LEXGEN_TARGET)
+	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcTokenTypes.java
 	cd $(dir $<) && \
 	java at.dms.compiler.tools.lexgen.Main -ditf $(notdir $<)
 
 at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOPI_ANTLR_TARGET)
+	@# may need to remove old version before rebuilding
 	@rm -f at/dms/kjc/KjcParser.java
 	cd $(dir $<) && \
 	java -mx64m at.dms.compiler.tools.antlr.compiler.Main $(notdir $<)
+
+
+###############################################################################
+# Additional dependencies
+###############################################################################
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 
 streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
 	streamit/frontend/StreamItParserFE.java
+
+###############################################################################
+# The usual targets...
+###############################################################################
+
+clean:
+	$(FIND) . \( -name '*~' -o -name '*.class' \) -print | \
+	$(XARGS) $(RM) 
+	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
+
+
+###############################################################################
+# Finally dependencies file to make sure everything gets compiled
+# dependencies file generated in this file!
+###############################################################################
+
+DEPEND	= $(wildcard $(MAKEFILE_DEPEND))
+ifneq ($(DEPEND),)
+	include $(MAKEFILE_DEPEND)
+endif
+

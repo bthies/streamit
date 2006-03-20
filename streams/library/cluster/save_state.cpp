@@ -76,7 +76,7 @@ int save_state::load_from_file(int thread,
   char fname[256];
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
   
-  fprintf(stderr,"thread: %d file: %s\n", thread, fname);
+  //fprintf(stderr,"thread: %d file: %s\n", thread, fname);
   
   int fd = open(fname, O_RDONLY);
   

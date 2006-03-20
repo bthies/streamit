@@ -45,7 +45,8 @@
 #           (b) into makefile.deps.
 #   (2) Has jikes re-build out-of-date .class files in JAVA_TARGETS
 #   (3) Has jikes re-build out-of-date .class files with dependencies
-#       specified in makefile.deps. 
+#       on .java files specified in makefile.deps. (Is this redundant
+#	with using the +F switch?) 
 #
 # Credits:
 #   (1) Original Makefile / Makefile.std by Mikal Karczmarek with many updates
@@ -59,7 +60,7 @@ DEBUG_OPT       = -g
 JAVA_VERSION    = -target 1.5
 JAVA_OPT        = -nowarn +F $(JAVA_VERSION) 
 JAVAC_FLAGS     = $(JAVA_OPT) $(DEBUG_OPT)
-JIKES_DEP_FLAGS	= +M -nowrite -nowarn $(JAVA_VERSION)
+JIKES_DEP_FLAGS	= +M +F -nowarn $(JAVA_VERSION)
 MAKEFILE_DEPEND	= makefile.deps
 CAT		= cat
 RM              = rm -f
@@ -67,7 +68,19 @@ SED		= sed
 FIND            = find
 XARGS		= xargs
 
+
+###############################################################################
+# The usual targets...
+###############################################################################
+
 .PHONY: all clean depend jar
+
+all: $(MAKEFILE_DEPEND) $(JAVA_TARGET)
+
+clean:
+	$(FIND) . -name '*.class' -print | $(XARGS) $(RM) 
+	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
+
 
 ###############################################################################
 # Top level parts of the compiler: initially attempted to make from top down
@@ -170,8 +183,6 @@ JAVA_SRCS = \
   $(KOPI_TOOL_SRCS) \
   $(STREAMIT_GENERATED) \
   streamit/library/StreamIt.java
-
-all: $(MAKEFILE_DEPEND) $(JAVA_TARGET)
 
 ###############################################################################
 # Attempt at a simple dependencies file
@@ -371,16 +382,6 @@ streamit/frontend/StreamItParserFE.java : streamit/frontend/StreamItLexTokenType
 
 streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
 	streamit/frontend/StreamItParserFE.java
-
-
-###############################################################################
-# The usual targets...
-###############################################################################
-
-clean:
-	$(FIND) . -name '*.class' -print | $(XARGS) $(RM) 
-	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
-
 
 ###############################################################################
 # Finally dependencies file to make sure everything gets compiled

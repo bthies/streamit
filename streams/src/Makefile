@@ -1,3 +1,58 @@
+###############################################################################
+# Revised Makefile for the java code in the compiler: packages that are 
+# sub-directories of src.
+#
+# Using Makefile.  In directory src:
+#   make           To make sure your .class files are up to date,
+#                  and the .java files that are built from other files
+#                  (lexers, parsers, KjcOptions.java)
+#   make all       Same as "make"
+#   make clean     To remove all .class and .u (dependence) files in
+#                   src and its subdirectories.
+#   make depend    To remove and rebuild makefile.deps.  Shouldn't need to
+#                  do, but something to try if a build seems screwed up.
+#   make jar       Make jar files for StreamIt compiler and library.
+#                  Not tested recently.
+#
+#   As opposed to previous version of Makefile, make -jN now works so you can
+#   compile in parallel on a multiprocessor.
+#
+#   The jikes options set up to target a Java 5 virtual machine.  If you are
+#   going to target a Java 1.4 VM (our code does not run on older because of 
+#   use of asserts) then:
+#   make JAVA_VERSION='-source 1.4'
+#   However, now that we are targeting Java 5, we will probably start to
+#   introduce code that will not compile under '-source 1.4'
+#
+# Maintaining Makefile
+#   If you have a new .java file that is built by a tool, put it into 
+#   STREAMIT_GENERATED and add commands to built it in the "created java files"
+#   section.
+#
+#   If you have a new backend, add the top-level .class file name to 
+#   STREAMIT_BACKENDS  (Similarly for any other file that is included in the
+#   compiler by reflection rather than as a direct dependence.)
+#
+#   If you add a new package that contains code used to build the compiler,
+#   put the package name in PACKAGES.
+#
+# What a Make all does:
+#   (1) First updates makefile.deps if necessary by
+#       (a) making sure that all .java files in JAVA_SRCS are up-to-date.
+#       (b) having jikes perform a dependency check for all .class files
+#           in JAVA_TARGETS
+#       (c) combining all .u files in PACKAGES, presumably created in sub-step 
+#           (b) into makefile.deps.
+#   (2) Has jikes re-build out-of-date .class files in JAVA_TARGETS
+#   (3) Has jikes re-build out-of-date .class files with dependencies
+#       specified in makefile.deps. 
+#
+# Credits:
+#   (1) Original Makefile / Makefile.std by Mikal Karczmarek with many updates
+#        by Andrew, Dave , and Bill.
+#   (2) The author of mmake (Jan-Henrik Haukeland) for his simple handling of 
+#        dependencies.
+###############################################################################
 
 JAVAC           = jikes
 DEBUG_OPT       = -g
@@ -308,8 +363,7 @@ streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
 ###############################################################################
 
 clean:
-	$(FIND) . \( -name '*~' -o -name '*.class' \) -print | \
-	$(XARGS) $(RM) 
+	$(FIND) . -name '*.class' -print | $(XARGS) $(RM) 
 	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
 
 

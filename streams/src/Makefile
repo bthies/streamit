@@ -355,8 +355,23 @@ at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOP
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 
+
+%.java : %.opt
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java at.dms.compiler.tools.optgen.Main $(notdir $<)
+
+%.java %TokenTypes.txt: %.g
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java antlr.Tool $(notdir $<)
+
+
+streamit/frontend/StreamItParserFE.java : streamit/frontend/StreamItLexTokenTypes.txt
+
 streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
 	streamit/frontend/StreamItParserFE.java
+
 
 ###############################################################################
 # The usual targets...

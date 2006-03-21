@@ -14,8 +14,14 @@
 #   make jar       Make jar files for StreamIt compiler and library.
 #                  Not tested recently.
 #
-#   As opposed to previous version of Makefile, make -jN now works so you can
-#   compile in parallel on a multiprocessor.
+#   make -jN generally does not work for N more that about 4 and may not work
+#   for N > 1 since the multiple copies of jikes dependence analysis running
+#   simultaneously may try to access the same output files.  Using
+#   make J=N allows the part of the make process that is driven off the
+#   pre-computed dependencies to be run in parallel.  Even there, I see
+#   occasional clashes, but it may be worth running make J=20 a few times
+#   rather than waiting for make to complete: jikes seeps to spend a lot of
+#   time doing I/O so running multiple copies speeds up the build.
 #
 #   The jikes options set up to target a Java 5 virtual machine.  If you are
 #   going to target a Java 1.4 VM (our code does not run on older because of 
@@ -48,6 +54,18 @@
 #       on .java files specified in makefile.deps. (Is this redundant
 #	with using the +F switch?) 
 #
+# Known Bugs:
+#  (o) For some reason, after a make clean, at/dms/kjc/KjcTokenTypes.java,
+#  at/dms/kjc/KjcOptions.java and at/KjcParser.java are built on both the
+#  first make after the clean and the second make after the clean (but not
+#  on subsequent makes unless a prerequisite changes).  This is annoying
+#  not so much for the time taken for the second build of the .java files
+#  but for the time needed to recreate makefile.deps because of the 
+#  rebuilt .java files.
+#  (o) As of latest version, changing a .java file seems to result in too
+#  much recompilation.  Problem seems to be dependences through inheritance
+#  hierarchy...
+#
 # Credits:
 #   (1) Original Makefile / Makefile.std by Mikal Karczmarek with many updates
 #        by Andrew, Dave , and Bill.
@@ -58,28 +76,55 @@
 JAVAC           = jikes
 DEBUG_OPT       = -g
 JAVA_VERSION    = -target 1.5
-JAVA_OPT        = -nowarn +F $(JAVA_VERSION) 
+JAVA_OPT        = -nowarn $(JAVA_VERSION) 
 JAVAC_FLAGS     = $(JAVA_OPT) $(DEBUG_OPT)
-JIKES_DEP_FLAGS	= +M +F -nowarn $(JAVA_VERSION)
+JIKES_DEP_FLAGS	= +M +F $(JAVAC_FLAGS)
 MAKEFILE_DEPEND	= makefile.deps
 CAT		= cat
 RM              = rm -f
 SED		= sed
 FIND            = find
 XARGS		= xargs
-
+J               = 1
 
 ###############################################################################
 # The usual targets...
 ###############################################################################
 
-.PHONY: all clean depend jar
+#.PHONY: all clean makedeps depend jar
 
-all: $(MAKEFILE_DEPEND) $(JAVA_TARGET)
+all: $(MAKEFILE_DEPEND)
+	@# I don't know why I have to use the following form.
+	@# If I don't then I get errors on making a fine in $(MAKEFILE_DEPEND)"
+	@# make[1]: execvp: FOO.java: Permission denied
+	@# I do not get these errors when running makefile.deps directly
+	@# from the command line.
+	@sh -c "/usr/uns/bin/make -j$(J) -f $(MAKEFILE_DEPEND)"
 
-clean:
-	$(FIND) . -name '*.class' -print | $(XARGS) $(RM) 
-	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
+# for compiling a .class
+
+%.class: %.java
+	$(JAVAC) $(JAVAC_FLAGS) $<
+
+# for creating a .u
+# There is not a -nowrite option so .class files should be created
+# There is a +F option so all .class files needed by the .class file
+# corresponding to the .u target shoulf ve created, also subsidiary
+# .u files should be created.
+
+%.u: %.java
+	$(JAVAC) $(JIKES_DEP_FLAGS) $<
+
+
+%.java : %.opt
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java at.dms.compiler.tools.optgen.Main $(notdir $<)
+
+%.java %TokenTypes.txt: %.g
+	@rm -f $*.java
+	cd $(dir $<) && \
+	java antlr.Tool $(notdir $<)
 
 
 ###############################################################################
@@ -99,16 +144,22 @@ KOPI_GENERATED = \
   at/dms/kjc/KjcScanner.java \
   at/dms/kjc/KjcParser.java
 
+# for tool targets, make prerequisite be .u file rathe than .class file
+# the .class will be built as a side effect of the .u rule
+# but .u is not build as a side effect of the .class rule
+# Why do this?  If making a makefile.deps file we do not want to 
+# build the tools both before and after the makefile.deps file.
+
 KOPI_ANTLR_TARGET = \
-  at/dms/compiler/tools/antlr/compiler/Main.class
+  at/dms/compiler/tools/antlr/compiler/Main.u
 
 KOPI_OPTGEN_TARGET = \
-  at/dms/compiler/tools/optgen/Main.class \
-  at/dms/compiler/tools/antlr/runtime/CommonToken.class
+  at/dms/compiler/tools/optgen/Main.u \
+  at/dms/compiler/tools/antlr/runtime/CommonToken.u
 
 KOPI_LEXGEN_TARGET = \
-  at/dms/compiler/tools/lexgen/Main.class \
-  at/dms/compiler/tools/antlr/runtime/CommonToken.class
+  at/dms/compiler/tools/lexgen/Main.u \
+  at/dms/compiler/tools/antlr/runtime/CommonToken.u
 
 KOPI_TOOL_TARGET = \
   $(KOPI_ANTLR_TARGET) \
@@ -262,23 +313,17 @@ PACKAGES = \
 
 
 # A marker variable for the top level directory
-TOPLEVEL	:= .
+TOPLEVEL	= .
 
 # Subdirectories with java files:
-PACKAGE_DIRS	:= $(subst .,/,$(PACKAGES)) $(TOPLEVEL)
+PACKAGE_DIRS	= $(subst .,/,$(PACKAGES)) $(TOPLEVEL)
 
-%.class: %.java
-	$(JAVAC) $(JAVAC_FLAGS) $<
-
-%.u: %.java
-	$(JAVAC) $(JIKES_DEP_FLAGS) $<
+# needed by ../misc/makefile.deps.perl
+export PACKAGE_DIRS JAVAC JAVAC_FLAGS MAKEFILE_DEPEND
 
 $(MAKEFILE_DEPEND): $(JAVA_SRCS) $(JAVA_TARGET:%.class=%.u)
-	 (for d in $(PACKAGE_DIRS); \
-	   do $(FIND) $$d -maxdepth 1 -name "*.u"; \
-	 done | $(XARGS)  $(SED) -e '/\.class$$/d' \
-	  -e '/.*$$.*/d' \
-	  -e '/.*-[0-9]*\.java$$/d' ) > $(MAKEFILE_DEPEND)
+	@#echo (re)making $(MAKEFILE_DEPEND)
+	../misc/makefile.deps.perl
 
 #
 # target to specicfically re-make dependencies file
@@ -293,6 +338,10 @@ depend:
 ###############################################################################
 # Additional targets, not attempted for a while. 
 ###############################################################################
+
+clean:
+	$(FIND) . -name '*.class' -print | $(XARGS) $(RM) 
+	$(FIND) . -name '*.u' -print | $(XARGS) $(RM)
 
 jar:
 	rm -f streamit.jar streamit-lib.jar
@@ -366,30 +415,8 @@ at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOP
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 
-
-%.java : %.opt
-	@rm -f $*.java
-	cd $(dir $<) && \
-	java at.dms.compiler.tools.optgen.Main $(notdir $<)
-
-%.java %TokenTypes.txt: %.g
-	@rm -f $*.java
-	cd $(dir $<) && \
-	java antlr.Tool $(notdir $<)
-
-
 streamit/frontend/StreamItParserFE.java : streamit/frontend/StreamItLexTokenTypes.txt
 
 streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
 	streamit/frontend/StreamItParserFE.java
-
-###############################################################################
-# Finally dependencies file to make sure everything gets compiled
-# dependencies file generated in this file!
-###############################################################################
-
-DEPEND	= $(wildcard $(MAKEFILE_DEPEND))
-ifneq ($(DEPEND),)
-	include $(MAKEFILE_DEPEND)
-endif
 

@@ -351,6 +351,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         int sum_of_weights = splitter.getSumOfWeights();
 
+	if (! KjcOptions.noverbose || ! KjcOptions.standalone) { 
+
 	p.print("#ifndef __CLUSTER_STANDALONE\n");
 
         p.print(baseType.toString()+" "+in.push_buffer()+"["+sum_of_weights+"];\n");
@@ -458,6 +460,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         }
     
 	p.print("#endif // __CLUSTER_STANDALONE\n");
+	}
 
         //  +=============================+
         //  | Splitter Work               |
@@ -950,7 +953,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p.print("  if ("+out.pop_index()+" == "+sum_of_weights+") {\n");
         int _offs = 0;
         
-        int ways = joiner.getWays();
+        //int ways = joiner.getWays();
         for (int i = 0; i < in.size(); i++) {
             int num = joiner.getWeight(i);
             

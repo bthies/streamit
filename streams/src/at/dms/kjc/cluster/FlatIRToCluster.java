@@ -1018,6 +1018,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     + ") {\n");
         }
 
+	if (! KjcOptions.noverbose || ! KjcOptions.standalone) { 
 	p.print("#ifndef __CLUSTER_STANDALONE\n");
 
         {
@@ -1032,7 +1033,7 @@ public class FlatIRToCluster extends InsertTimers implements
         }
 
 	p.print("#endif\n");
-
+	}
         if (restrictedExecution) {
             p.print("  } // while \n");
         }

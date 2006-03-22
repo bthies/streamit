@@ -1,15 +1,12 @@
 package at.dms.kjc.cluster;
 
 import java.io.*;
-//import java.lang.*;
 import java.util.*;
-import at.dms.compiler.TabbedPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.cluster.ClusterUtils;
 import at.dms.kjc.common.CodegenPrintWriter;
-//import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 class FusionCode {
 
@@ -119,6 +116,7 @@ class FusionCode {
         p.print("#define __MULT "+mult+"\n");
         p.newLine();
 
+        if (KjcOptions.standalone || !  KjcOptions.noverbose) {
         if (!KjcOptions.standalone) {
 
             // if not standalone then comment out the fusion variables
@@ -126,8 +124,8 @@ class FusionCode {
 
         }
 
-	p.print("#define __CLUSTER_STANDALONE\n");
-
+        p.print("#define __CLUSTER_STANDALONE\n");
+        // WTF?  what does threadcount refer to in standalone mode?
         for (int t = 0; t < threadCount; t++) {
         
             SIROperator oper = NodeEnumerator.getOperator(t);
@@ -321,7 +319,8 @@ class FusionCode {
         }
 
         p.print("#endif\n");
-
+        }
+        
         try {
             FileWriter fw = new FileWriter("fusion.h");
             fw.write(p.getString());

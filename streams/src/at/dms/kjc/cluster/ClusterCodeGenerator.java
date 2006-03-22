@@ -259,6 +259,7 @@ class ClusterCodeGenerator {
         p.println("void load_peek_buffer__"+id+"(object_write_buffer *buf);");
         p.println("");
 
+	if (! KjcOptions.noverbose || ! KjcOptions.standalone) {
 	p.println("#ifndef __CLUSTER_STANDALONE\n");
         p.println("void __write_thread__"+id+"(object_write_buffer *buf) {");
 
@@ -614,7 +615,7 @@ class ClusterCodeGenerator {
 	p.println("#endif // __CLUSTER_STANDALONE\n");
 
         p.println("");
-
+	}
         return;
     }
 
@@ -640,6 +641,7 @@ class ClusterCodeGenerator {
             }
         }
         
+	if (! KjcOptions.noverbose || ! KjcOptions.standalone) {
 	r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void __init_state_"+id+"() {\n");
 
@@ -661,6 +663,7 @@ class ClusterCodeGenerator {
         r.add("}\n");
 	r.add("#endif // __CLUSTER_STANDALONE\n");
         r.add("\n");
+	}
 
         //  +=============================+
         //  | Main Function               |

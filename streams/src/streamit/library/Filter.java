@@ -759,9 +759,9 @@ public abstract class Filter extends Stream
                     cleanupWork();
                 } else {
                     prepareToWork();
-                    Method m = getClass().getMethod(phase.name, null);
+                    Method m = getClass().getMethod(phase.name, (Class[])null);
                     m.setAccessible(true);
-                    m.invoke(this, null);
+                    m.invoke(this, (Object[])null);
                     cleanupWork();
                 }
             }

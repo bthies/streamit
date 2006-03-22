@@ -81,10 +81,10 @@ public class DestroyedClass extends Misc
 
                 try
                     {
-                        deleteMethod = objectClass.getDeclaredMethod ("DELETE", null);
+                        deleteMethod = objectClass.getDeclaredMethod ("DELETE", (Class[])null);
                         assert deleteMethod != null;
 
-                        deleteMethod.invoke (this, null);
+                        deleteMethod.invoke (this, (Object[])null);
                     }
                 catch (NoSuchMethodException error)
                     {

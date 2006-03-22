@@ -352,10 +352,11 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
         // BUGBUG hack the DecoderFeedback with fine grained scheduling
         try {
-            if (getStreamObject ().getClass ().getMethod ("getName", null) != null) {
+            if (getStreamObject ().getClass ().getMethod ("getName", (java.lang.Class[])null) != null) {
                 // if we're coming from the compiler, get the name of the
                 // SIR object
-                name = (String) getStreamObject ().getClass ().getMethod ("getName", null).invoke (getStreamObject (), null);
+                name = (String) getStreamObject ().getClass ().getMethod ("getName", (java.lang.Class[])null).invoke 
+                    (getStreamObject (), (java.lang.Object[])null);
             }
         } catch (Throwable e)
             { }

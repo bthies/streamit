@@ -2,51 +2,82 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
-import at.dms.kjc.*;
-import at.dms.kjc.cluster.*;
+//mport at.dms.kjc.*;
+//import at.dms.kjc.cluster.*;
 import at.dms.kjc.sir.*;
-import at.dms.util.Utils;
-import java.util.Vector;
-import java.util.List;
-import at.dms.compiler.TabbedPrintWriter;
-import at.dms.kjc.raw.Util;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.util.Utils;
+//import java.util.Vector;
+//import java.util.List;
+//import at.dms.compiler.TabbedPrintWriter;
+//import at.dms.kjc.raw.Util;
+//import at.dms.kjc.sir.lowering.*;
 import java.util.*;
-import java.io.*;
-import java.lang.*;
+//import java.io.*;
+//import java.lang.*;
 
 /**
- * the class finds splitters / joiners that need to be fused 
- * with filters
+ * the class finds splitters / joiners that need to be fused with filters.
+ * 
+ * (Not exactly: AD.  allows manual fusing, also has something to do with 
+ * creating partition numbers a.k.a. threads.)
  */
 
 public class ClusterFusion
     extends at.dms.util.Utils implements FlatVisitor {
 
-    private static HashMap partitionMap;
+    /**
+     * Maps SIROperator to int.  that's all I know AD.
+     * Seems to be used to pass in info about nodes already in partitions
+     * to prevent further fusing.
+     */
+    private static Map partitionMap;
 
-    // FlatNode (slave) -> FlatNode (node master)
-    // Each fused node has a single master node and possibly multiple slave nodes
-    private static HashMap nodeMaster = new HashMap();
+    /** FlatNode (slave) -> FlatNode (node master).
+     * 
+     * Each fused node has a single master node and possibly multiple slave nodes
+     */
+    private static Map nodeMaster = new HashMap();
 
-    // FlatNode (slave) -> FlatNode (local master)
-    // each fused node has a local master this way it knows who is driving the execution
-    private static HashMap localMaster = new HashMap();
+    /** FlatNode (slave) -> FlatNode (local master).
+     * 
+     * each fused node has a local master this way it knows who is driving the execution
+     */
+    private static Map localMaster = new HashMap();
 
-    // a set of all slave nodes
-    private static HashSet eliminatedNodes = new HashSet();
+    /** a set of all slave nodes (second parameter's to calls to "fuseTo'). */
+    private static Set eliminatedNodes = new HashSet();
 
+
+    /**
+     * Clobber 'partitionmap'. 
+     * 
+     * Seems to be used in {@link ClusterBackend} to record results og cachopts.
+     * 
+     * @param pmap  a map from SIROperators to numbers.  (Help Janis!)
+     */
+    
     public static void setPartitionMap(HashMap pmap) {
         partitionMap = pmap;
     }
 
+    /**
+     * Record fusing a "slave" node into a partition represented by a "master" node (or it's master but not transitive).
+     *
+     * @param master_node
+     * @param slave_node
+     */
+    // slave node is "eliminated"
+    // slave node's "loaclMaster" is recorded as passed master.
+    // slave node's "nodeMaster" is recorded (as passed master or passed master's master)
+    // "NodeMaster" is updated for nodes fusedWith slave node.
     private static void fuseTo(FlatNode master_node, FlatNode slave_node) {
 
-        System.out.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
+        System.err.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
         localMaster.put(slave_node, master_node);
 
         if (isEliminated(master_node)) { master_node = (FlatNode)nodeMaster.get(master_node); } 
-        assert !isEliminated(slave_node); 
+        assert !isEliminated(master_node);  // why not "while" above instead of "if"? so added assert AD.
+        assert !isEliminated(slave_node) : "Attempting to fuse already-fused node as slave";
     
         Set inherited_slaves = fusedWith(slave_node);
         Iterator i = inherited_slaves.iterator();
@@ -59,11 +90,23 @@ public class ClusterFusion
     }
 
 
+    /**
+     * Has passed node been eliminated in favor of some other representativue of fused region?
+     * 
+     * @param node  a FlatNode
+     * @return true if this node has been fused to another node (by being second argument to 'fuseTo')
+     */
     public static boolean isEliminated(FlatNode node) {
 
         return eliminatedNodes.contains(node);
     }
 
+    /**
+     * Pass a Flatnode and get back a set of nodes that the passed node is fused with. 
+     * 
+     * @param node f FlatNode
+     * @return Set of all nodes passed node is fused with, not including passed node.A
+     */
     public static Set fusedWith(FlatNode node) {
 
         HashSet res = new HashSet();
@@ -90,15 +133,37 @@ public class ClusterFusion
     }
 
 
+    /**
+     * Get node that the passed node was fused to.
+     * 
+     * (this is the original result of fusion, the returned node may not
+     * be the representative node of a fused section if it has itself been fused
+     * into yet another node).
+     * 
+     * @param node
+     * @return a FlatNode or null if the passed node was never fused.
+     */
+    
     public static FlatNode getLocalMaster(FlatNode node) {
     
         if (!localMaster.containsKey(node)) return null;
         return (FlatNode)localMaster.get(node);
     }
-    
 
-
-
+    /**
+     *   Cluster partitioning.
+     *   
+     *   Does nothing if partitionMap already assigns a node to a partition.
+     *   Otherwise:
+     *    (1) If splitter -- with somOfWeights != 0 -- is preceeded by filter, fuse it to filter.
+     *    (2) If joiner -- with somOfWeights != 0 -- is followed by filter, splitter or joiner,
+     *       fuse it to the following filter splitter or joiner.
+     * 
+     *   if (KjcOptions.fusion) {
+     *       ClusterFusion.setPartitionMap(partitionMap);
+     *       graphFlattener.top.accept(new ClusterFusion(), new HashSet(), true);
+     *   }
+     */
 
     public void visitNode(FlatNode node) 
     {
@@ -109,16 +174,9 @@ public class ClusterFusion
 
             // filter
 
-
-            /*
-              if (node.edges[0] != null && node.edges[0].contents instanceof SIRJoiner) {
-        
-              fuseTo(node.edges[0], node);
-        
-              }
-            */
-
-
+//            if (node.edges[0] != null && node.edges[0].contents instanceof SIRJoiner) {
+//                fuseTo(node.edges[0], node);
+//            }
         }
 
         if (node.contents instanceof SIRSplitter) {
@@ -167,6 +225,19 @@ public class ClusterFusion
 
     /**
      * Returns partition that <thread> should execute on.
+     * 
+     * WTF?  what is this thread referred to?  Line above would indicate that thread
+     * is the parameter which is a Flatnode, but threads elsewhere are numbers, and this
+     * method returns strings...
+     *
+     * Algorithm:
+     *  If fused with anything else, return partition of its 'nodeMaster' else
+     *  If a filter, return partition number for it + 1 as string.
+     *  If a joiner followed by a filter, return the filter's partition.
+     *    else do something with preceeding operators to get partition... (Janis?)
+     *  If a splitter and at top of progrm, return "1"
+     *    else if a splitter preceeded by a filter, return partition of filter.
+     *    else do something with following operators to get partition... (Janis?)
      */
     public static String getPartition(FlatNode node) {
 

@@ -70,7 +70,7 @@ public class LinearPartitioner {
      */
     private final SIRStream str;
     /**
-     * Execution counts for <str> (given original factoring of containers).
+     * Execution counts for <pre>str</pre> (given original factoring of containers).
      */
     private HashMap[] counts;
     
@@ -120,7 +120,7 @@ public class LinearPartitioner {
 
     /**
      * Returns a stream transform that will perform the partitioning
-     * for <str>.
+     * for <pre>str</pre>.
      */
     private StreamTransform calcPartitions() {
         // build stream config
@@ -168,7 +168,7 @@ public class LinearPartitioner {
     }
 
     /**
-     * Returns a LDPConfig for <str>
+     * Returns a LDPConfig for <pre>str</pre>
      */
     private LDPConfig createConfig(SIRStream str) {
         if (str instanceof SIRFilter) {

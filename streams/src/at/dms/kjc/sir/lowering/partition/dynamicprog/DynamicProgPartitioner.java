@@ -95,13 +95,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private HashSet noHorizFuse;
     
     /**
-     * <joinersNeedTiles> indicates whether or not joiners in the graph
+     * <pre>joinersNeedTiles</pre> indicates whether or not joiners in the graph
      * require a tile in the allocation.  If false, joiners will be
      * counted as free.  If true, a tile will be allocated to each
      * joiner, though adjacent joiners will be considered as collapsed
      * into one.
      *
-     * <limitICode> indicates whether or not we are considering an
+     * <pre>limitICode</pre> indicates whether or not we are considering an
      * instruction code size limit, and factoring that into the work
      * function.
      */
@@ -114,7 +114,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         this.noHorizFuse = noHorizFuse;
     }
     /**
-     * As above, without <noHorizFuse>.
+     * As above, without <pre>noHorizFuse</pre>.
      */
     public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode) {
         this(str, work, numTiles, joinersNeedTiles, limitICode, new HashSet());
@@ -122,7 +122,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     
 
     /**
-     * Collect scaling statistics for all partitions 1...<maxTiles>,
+     * Collect scaling statistics for all partitions 1...<pre>maxTiles</pre>,
      * assuming joiners need tiles.
      */
     public static void saveScalingStatistics(SIRStream str, WorkEstimate work, int maxTiles) {
@@ -165,11 +165,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
     /**
      * Returns a stream transform that will perform the partitioning
-     * for <str>.  <partitions> must be a non-null linked list; it is
+     * for <pre>str</pre>.  <pre>partitions</pre> must be a non-null linked list; it is
      * cleared and then filled with PartitionRecords representing the
-     * partitions.  If <doTransform> is true, then the result of
+     * partitions.  If <pre>doTransform</pre> is true, then the result of
      * partitioning the stream is returned; otherwise the stream is
-     * left alone and only <partitions> are filled up.
+     * left alone and only <pre>partitions</pre> are filled up.
      */
     private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
         if (COLLAPSE_IDENTITIES) {
@@ -404,7 +404,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
 
     /**
-     * Returns a DPConfig for <str>
+     * Returns a DPConfig for <pre>str</pre>
      */
     private DPConfig createConfig(SIRStream str) {
         if (str instanceof SIRFilter) {

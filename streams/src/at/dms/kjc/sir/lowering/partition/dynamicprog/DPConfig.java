@@ -23,16 +23,16 @@ abstract class DPConfig implements Cloneable {
     }
 
     /**
-     * Return the bottleneck work if this config is fit on <tileLimit>
-     * tiles.  <nextToJoiner> is 1 iff this is next to a downstream
+     * Return the bottleneck work if this config is fit on <pre>tileLimit</pre>
+     * tiles.  <pre>nextToJoiner</pre> is 1 iff this is next to a downstream
      * joiner under the current arrangement.
      */
     abstract protected DPCost get(int tileLimit, int nextToJoiner);
 
     /**
      * Traceback through a pre-computed optimal solution, keeping
-     * track of new partitions in <partitions> and adding to current
-     * partition <curPartition>, and returning new stream.
+     * track of new partitions in <pre>partitions</pre> and adding to current
+     * partition <pre>curPartition</pre>, and returning new stream.
      */
     abstract public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str);
 
@@ -43,7 +43,7 @@ abstract class DPConfig implements Cloneable {
 
     /**
      * Returns a copy of this with the same A matrix as this
-     * (object identity is the same), but with <str> as the
+     * (object identity is the same), but with <pre>str</pre> as the
      * stream.
      */
     public DPConfig copyWithStream(SIRStream str) {
@@ -60,7 +60,7 @@ abstract class DPConfig implements Cloneable {
     }
 
     /**
-     * Sets this to wrap <str>.
+     * Sets this to wrap <pre>str</pre>.
      */
     protected abstract void setStream(SIRStream str);
 }

@@ -34,7 +34,7 @@ abstract class LDPConfig implements Cloneable {
     }
 
     /**
-     * Return the savings given collapse policy <collapsed>.
+     * Return the savings given collapse policy <pre>collapsed</pre>.
      */
     abstract protected long get(int collapse);
 
@@ -50,7 +50,7 @@ abstract class LDPConfig implements Cloneable {
 
     /**
      * Returns a copy of this with the same A matrix as this
-     * (object identity is the same), but with <str> as the
+     * (object identity is the same), but with <pre>str</pre> as the
      * stream.
      */
     public LDPConfig copyWithStream(SIRStream str) {
@@ -67,15 +67,15 @@ abstract class LDPConfig implements Cloneable {
     }
 
     /**
-     * Sets this to wrap <str>.
+     * Sets this to wrap <pre>str</pre>.
      */
     protected abstract void setStream(SIRStream str);
 
     /**
-     * Given that <l> is a linear representation for <str>, returns
-     * how many times <l> should be executed to produce the same
+     * Given that <pre>l</pre> is a linear representation for <pre>str</pre>, returns
+     * how many times <pre>l</pre> should be executed to produce the same
      * number of items that are produced in a steady-state execution
-     * of <str>.
+     * of <pre>str</pre>.
      */
     protected int getScalingFactor(LinearFilterRepresentation l, SIRStream str) {
         int strPush = str.getPushForSchedule(partitioner.getExecutionCounts());

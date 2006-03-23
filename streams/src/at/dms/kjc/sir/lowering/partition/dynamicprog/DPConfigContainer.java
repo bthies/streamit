@@ -15,9 +15,9 @@ import at.dms.kjc.sir.lowering.partition.*;
 abstract class DPConfigContainer extends DPConfig {
     /**  
      * A_s[x1][x2][y1][y2][n][j] holds minimum cost of assigning
-     * children (x1..x2, y1..y2) of stream s to n tiles.  <j> is 1 if
+     * children (x1..x2, y1..y2) of stream s to n tiles.  <pre>j</pre> is 1 if
      * these children are next to a downstream joiner in the current
-     * configuration; <j> is zero otherwise.  If this corresponds to a
+     * configuration; <pre>j</pre> is zero otherwise.  If this corresponds to a
      * filter's config, then A is null.
      */
     private int[][][][][][] A;
@@ -58,16 +58,16 @@ abstract class DPConfigContainer extends DPConfig {
      */
     boolean[] uniform;
     /**
-     * Max width from i to j, for i<=j.
+     * Max width from i to j, for i&lt;=j.
      */
     int maxWidth[][];
     /**
-     * Whether or not there is the same width from i to j, for i<=j.
+     * Whether or not there is the same width from i to j, for i&lt;=j.
      */
     boolean sameWidth[][];
     
     /**
-     * <width> and <height> represent the dimensions of the stream.
+     * <pre>width</pre> and <pre>height</pre> represent the dimensions of the stream.
      */
     protected DPConfigContainer(SIRContainer cont, DynamicProgPartitioner partitioner, 
                                 int[] width, int height) {
@@ -126,7 +126,7 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Initialize <uniform> array and introduce aliasing into [A] and [B] accordingly.
+     * Initialize <pre>uniform</pre> array and introduce aliasing into [A] and [B] accordingly.
      */
     private void initUniform() {
         // find the uniform rows
@@ -268,7 +268,7 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Requires <str> is a container.
+     * Requires <pre>str</pre> is a container.
      */
     protected void setStream(SIRStream str) {
         assert str instanceof SIRContainer;
@@ -559,8 +559,8 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Returns TOTAL cost for having icode size of <iCode> if the
-     * original cost is <cost>.  That is, should do the sum of <cost>
+     * Returns TOTAL cost for having icode size of <pre>iCode</pre> if the
+     * original cost is <pre>cost</pre>.  That is, should do the sum of <pre>cost</pre>
      * and the extra cost due to icode (it's organized this way to
      * make it easier to deal with overflow conditions.)
      */
@@ -616,7 +616,7 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Returns whether or not it is okay to fuse <filter> with others.
+     * Returns whether or not it is okay to fuse <pre>filter</pre> with others.
      */
     private boolean isFusable(SIRFilter filter) {
         return FusePipe.isFusable(filter);
@@ -920,7 +920,7 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Returns config for child at index <x, y>
+     * Returns config for child at index &lt;x, y&gt;
      */
     protected abstract DPConfig childConfig(int x, int y);
 }

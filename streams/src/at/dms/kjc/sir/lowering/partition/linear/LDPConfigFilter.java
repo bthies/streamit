@@ -147,7 +147,7 @@ class LDPConfigFilter extends LDPConfig {
     }
 
     /**
-     * Requires <str> is a filter.
+     * Requires <pre>str</pre> is a filter.
      */
     protected void setStream(SIRStream str) {
         assert str instanceof SIRFilter;

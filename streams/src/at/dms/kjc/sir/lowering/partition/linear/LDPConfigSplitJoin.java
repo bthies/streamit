@@ -21,7 +21,7 @@ class LDPConfigSplitJoin extends LDPConfigContainer {
     }
     
     /**
-     * Wraps <i> in a 1-element array
+     * Wraps <pre>i</pre> in a 1-element array
      */
     private static int[] wrapInArray(int i) {
         int[] result = { i };

@@ -25,7 +25,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     protected LinearPartitioner partitioner;
     /**  
      * A_s[x1][x2][y1][y2][c] holds savings if children (x1..x2,
-     * y1..y2) of stream s given collapse policy <c>.
+     * y1..y2) of stream s given collapse policy <pre>c</pre>.
      */
     private long[][][][][] A;
     /**  
@@ -46,7 +46,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     boolean[] uniform;
     
     /**
-     * <width>[] and <height> represent the dimensions of the stream.
+     * <pre>width</pre>[] and <pre>height</pre> represent the dimensions of the stream.
      * Requires that width.length==height; width[i] specifies the
      * width of the i'th component of this and is internalized in
      * representation of this.
@@ -73,7 +73,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     }
 
     /**
-     * Initialize <uniform> array.
+     * Initialize <pre>uniform</pre> array.
      */
     private void initUniform() {
         // find linear parts
@@ -163,7 +163,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     }
     
     /**
-     * Requires <str> is a container.
+     * Requires <pre>str</pre> is a container.
      */
     protected void setStream(SIRStream str) {
         assert str instanceof SIRContainer;
@@ -192,7 +192,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     private static long elapsed = 0;
     private static long starttime = 0;
     /**
-     * <str> is a stream object representing the current sub-segment that we're operating on
+     * <pre>str</pre> is a stream object representing the current sub-segment that we're operating on
      */
     protected long get(int x1, int x2, int y1, int y2, int collapse, SIRStream _str) {
         indent++;
@@ -717,7 +717,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     }
 
     /**
-     * Returns config for child at index <x, y>
+     * Returns config for child at index &lt;x, y&gt;
      */
     protected abstract LDPConfig childConfig(int x, int y);
 

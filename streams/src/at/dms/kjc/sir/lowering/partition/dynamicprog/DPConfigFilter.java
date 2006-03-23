@@ -18,7 +18,7 @@ class DPConfigFilter extends DPConfig {
      */
     private SIRFilter filter;
     /**
-     * Whether or not <filter> is stateless.
+     * Whether or not <pre>filter</pre> is stateless.
      */
     private boolean isFissable;
     
@@ -84,7 +84,7 @@ class DPConfigFilter extends DPConfig {
     }
 
     /**
-     * Requires <str> is a filter.
+     * Requires <pre>str</pre> is a filter.
      */
     protected void setStream(SIRStream str) {
         assert str instanceof SIRFilter;

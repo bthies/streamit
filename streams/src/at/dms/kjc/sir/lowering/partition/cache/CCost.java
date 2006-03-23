@@ -24,14 +24,14 @@ class CCost {
     }
 
     /**
-     * Returns whether or not this is greather than <other>.
+     * Returns whether or not this is greather than <pre>other</pre>.
      */
     public boolean greaterThan(CCost other) {
         return this.cost > other.cost;
     }
 
     /**
-     * Returns the combined cost of <cost1> and <cost2>, if they are
+     * Returns the combined cost of <pre>cost1</pre> and <pre>cost2</pre>, if they are
      * running in different partitions (that is, running in parallel
      * partitions, either in a splitjoin or pipeline).
      */
@@ -47,7 +47,7 @@ class CCost {
     }
 
     /**
-     * Returns the sum of <cost1> and <cost2>, for the case in which
+     * Returns the sum of <pre>cost1</pre> and <pre>cost2</pre>, for the case in which
      * they are running in the same partition.  Includes a cost of
      * some fusion overhead.
      */

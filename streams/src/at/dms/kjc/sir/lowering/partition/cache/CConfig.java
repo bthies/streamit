@@ -35,16 +35,16 @@ abstract class CConfig implements Cloneable {
     abstract protected int numberOfTiles();
 
     /**
-     * Return the bottleneck work if this config is fit on <tileLimit>
-     * tiles.  <nextToJoiner> is 1 iff this is next to a downstream
+     * Return the bottleneck work if this config is fit on <pre>tileLimit</pre>
+     * tiles.  <pre>nextToJoiner</pre> is 1 iff this is next to a downstream
      * joiner under the current arrangement.
      */
     abstract protected CCost get(int tileLimit);
 
     /**
      * Traceback through a pre-computed optimal solution, keeping
-     * track of new partitions in <partitions> and adding to current
-     * partition <curPartition>, and returning new stream.
+     * track of new partitions in <pre>partitions</pre> and adding to current
+     * partition <pre>curPartition</pre>, and returning new stream.
      */
     abstract public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, SIRStream str);
 

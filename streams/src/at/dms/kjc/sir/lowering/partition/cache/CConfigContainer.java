@@ -19,7 +19,7 @@ abstract class CConfigContainer extends CConfig {
     protected SIRContainer cont;
     /**
      * C[n][x1][x2] is best cost if children x1..x2 are assigned to
-     * <n> tiles.
+     * <pre>n</pre> tiles.
      */
     private CCost[][][] C; // cost for n tiles
     
@@ -44,7 +44,7 @@ abstract class CConfigContainer extends CConfig {
     }
     
     /**
-     * Return the bottleneck work if this config is fit on <tileLimit>
+     * Return the bottleneck work if this config is fit on <pre>tileLimit</pre>
      * tiles.
      */
     protected CCost get(int tileLimit) {
@@ -56,7 +56,7 @@ abstract class CConfigContainer extends CConfig {
 
     /**
      * Returns best cost for range of children x1..x2, inclusive, when
-     * assigned to <tileLimit> tiles.
+     * assigned to <pre>tileLimit</pre> tiles.
      */
     protected CCost get(int x1, int x2, int tileLimit) {
         //System.err.println("get(" + x1 + ", " + x2 + ", " + tileLimit + ")");
@@ -250,7 +250,7 @@ abstract class CConfigContainer extends CConfig {
 
     /**
      * Returns whether or not this has an unfusable filter as a child
-     * between range of positions <p1>, <p2>.  
+     * between range of positions <pre>p1</pre>, <pre>p2</pre>.  
      */
     private boolean unfusableFilter(int p1, int p2) {
         // if just one child, nothing to fuse with.
@@ -268,7 +268,7 @@ abstract class CConfigContainer extends CConfig {
     }
 
     /**
-     * Returns whether or not it is okay to fuse <filter> with others.
+     * Returns whether or not it is okay to fuse <pre>filter</pre> with others.
      */
     private boolean isFusable(SIRFilter filter) {
         return FusePipe.isFusable(filter);

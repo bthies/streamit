@@ -1157,7 +1157,7 @@ public class Getopt extends Object
             } // if (longopts)
 
         // Look at and handle the next short option-character */
-        int c = nextchar.charAt(0); //**** Do we need to check for empty str?
+        int c = nextchar.charAt(0); // Do we need to check for empty str?
         if (nextchar.length() > 1)
             nextchar = nextchar.substring(1);
         else

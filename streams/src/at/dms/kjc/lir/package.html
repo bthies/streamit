@@ -1,0 +1,43 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.lir</title>
+</head>
+<body>
+
+<p>
+Provides a set of low-level stubs (LIR stands for Low-level IR) for
+compiling to the original (and mostly obsolete) uniprocessor backend.
+This uniprocessor backend links against a C library implementation,
+where each LIR node roughly corresponds to a library call.  The
+library stores the information transmitted through the calls so that
+it knows how to properly execute the stream graph.
+
+<p>
+The LIR nodes are meaningless outside the context of the original
+uniprocessor backend.  The main file for this backend is {@link
+at.dms.kjc.lir.LIRToC}.
+
+<p>
+@see at.dms.kjc.sir.lowering.LowerWorkFunctions
+@see at.dms.kjc.sir.lowering.LowerInitFunctions
+
+</body>
+</html>

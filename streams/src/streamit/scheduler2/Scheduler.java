@@ -210,7 +210,7 @@ abstract public class Scheduler extends AssertedClass
 
     /**
      * Returns a two-dimensional array HashMap's that map each
-     * splitter, joiner, & filter in <str> to a 1-dimensional int
+     * splitter, joiner, &amp; filter in &lt;str&gt; to a 1-dimensional int
      * array containing the count for how many times that operator
      * executes:
      *

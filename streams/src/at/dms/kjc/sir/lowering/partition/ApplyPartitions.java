@@ -42,7 +42,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
     // local methods for the ILPFuser
 
     /**
-     * Visits/replaces the children of <cont>
+     * Visits/replaces the children of 'cont'
      */
     private void replaceChildren(SIRContainer cont) {
         // visit children
@@ -119,7 +119,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
     /******************************************************************/
 
     /**
-     * Returns int partition for <str>
+     * Returns int partition for 'str'.
      */
     private int getPartition(Object str) {
         assert partitions.containsKey(str) : "No partition recorded for: " + str;

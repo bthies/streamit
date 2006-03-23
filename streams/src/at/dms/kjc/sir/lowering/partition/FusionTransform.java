@@ -15,7 +15,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 public final class FusionTransform extends StreamTransform {
     /**
      * Integers denoting the sorted positions of the partitions in
-     * this.  That is, if <partitions> holds <3, 1, 0, 7> then
+     * this.  That is, if 'partitions' holds &lt;3, 1, 0, 7&gt; then
      * children 0-1, 2-3, and 4-7 should each be fused (for a total of
      * 3 partitions).  Note that it includes the endpoints.
      */
@@ -69,7 +69,7 @@ public final class FusionTransform extends StreamTransform {
     }
 
     /**
-     * Add a partition AFTER child <i> to the list, where <i> is
+     * Add a partition AFTER child 'i' to the list, where 'i' is
      * 1-indexed.  (So to fuse all children, add partitions at 0 and
      * size()).
      */

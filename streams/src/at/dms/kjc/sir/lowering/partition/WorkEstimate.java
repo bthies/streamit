@@ -30,7 +30,7 @@ public class WorkEstimate {
     }
 
     /**
-     * Returns a work estimate of <str>
+     * Returns a work estimate of <pre>str</pre>
      */
     public static WorkEstimate getWorkEstimate(SIRStream str) {
         WorkEstimate result = new WorkEstimate();
@@ -49,7 +49,7 @@ public class WorkEstimate {
     }
 
     /**
-     * Builds a worklist out of <map>
+     * Builds a worklist out of <pre>map</pre>
      */
     private WorkList buildWorkList(final HashMap map) {
         // first make a treemap to do the sorting for us
@@ -126,8 +126,8 @@ public class WorkEstimate {
     }
 
     /**
-     * Returns the work estimate for filter <obj>.  Requires that
-     * <obj> was present in the original graph used to construct this.
+     * Returns the work estimate for filter <pre>obj</pre>.  Requires that
+     * <pre>obj</pre> was present in the original graph used to construct this.
      */
     public int getWork(SIRFilter obj) {
         assert workMap.containsKey(obj): "Don't have work for " + obj;
@@ -135,7 +135,7 @@ public class WorkEstimate {
     }
 
     /**
-     * Returns estimate of instruction code for <filter>
+     * Returns estimate of instruction code for <pre>filter</pre>
      */
     public int getICodeSize(SIRFilter filter) {
 
@@ -152,8 +152,8 @@ public class WorkEstimate {
     }
 
     /**
-     * Returns the number of times that filter <obj> executes in this
-     * estimate.  Requires that <obj> was present in the original
+     * Returns the number of times that filter <pre>obj</pre> executes in this
+     * estimate.  Requires that <pre>obj</pre> was present in the original
      * graph used to construct this.
      */
     public int getReps(SIRFilter obj) {
@@ -193,17 +193,17 @@ public class WorkEstimate {
     }
 
     /**
-     * Prints dot graph of work estimates for <str> to <filename>.
+     * Prints dot graph of work estimates for <pre>str</pre> to <pre>filename</pre>.
      */
     public void printGraph(SIRStream str, String filename) {
         PartitionDot.printWorkGraph(str, filename, workMap);
     }
 
     /**
-     * Estimates the work in <str>
+     * Estimates the work in <pre>str</pre>
      */
     private void doit(SIRStream str) {
-        // get execution counts for filters in <str>
+        // get execution counts for filters in <pre>str</pre>
         HashMap executionCounts = SIRScheduler.getExecutionCounts(str)[1];
         // for each filter, build a work count
         for (Iterator it = executionCounts.keySet().iterator();
@@ -236,7 +236,7 @@ public class WorkEstimate {
         }
 
         /**
-         * Returns estimate of work function in <filter>
+         * Returns estimate of work function in <pre>filter</pre>
          */
         public static int getWork(SIRFilter filter) {
             // if no work function (e.g., identity filters?) return 0
@@ -251,7 +251,7 @@ public class WorkEstimate {
         }
 
         /**
-         * Returns estimate of work in <node> of <filter>.
+         * Returns estimate of work in <pre>node</pre> of <pre>filter</pre>.
          */
         private static int getWork(SIRFilter filter, JPhylum node) {
             WorkVisitor visitor = new WorkVisitor(filter);
@@ -454,7 +454,7 @@ public class WorkEstimate {
 
         /**
          * Adds to work estimate an amount for an arithmetic op of type
-         * expr.  Assumes <expr> is integral unless the type is explicitly
+         * expr.  Assumes <pre>expr</pre> is integral unless the type is explicitly
          * float or double.
          */
         private void countArithOp(JExpression expr) {

@@ -19,7 +19,7 @@ public final class IdentityTransform extends IdempotentTransform {
     }
 
     /**
-     * Perform the transform on <str> and return new stream.
+     * Perform the transform on 'str' and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
         return str;

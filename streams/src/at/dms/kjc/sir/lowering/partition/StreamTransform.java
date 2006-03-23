@@ -41,7 +41,7 @@ public abstract class StreamTransform {
     protected abstract SIRStream doMyTransform(SIRStream str);
 
     /**
-     * Perform the transform on <str> and return new stream.
+     * Perform the transform on <pre>str</pre> and return new stream.
      */
     public final SIRStream doTransform(SIRStream str) {
         //System.err.println("performing " + this + " on " + str.getName());
@@ -105,22 +105,22 @@ public abstract class StreamTransform {
     /*****************************************************************/
 
     /**
-     * Do all the predecessor transformations on <cont>.
+     * Do all the predecessor transformations on <pre>cont</pre>.
      */
     private void doPredTransforms(SIRContainer str) {
         doChildTransforms(str, pred);
     }
 
     /**
-     * Do all the successor transformations on <cont>.
+     * Do all the successor transformations on <pre>cont</pre>.
      */
     private void doSuccTransforms(SIRContainer str) {
         doChildTransforms(str, succ);
     }
 
     /**
-     * Transforms the children of <cont> according to child
-     * <transforms>, replacing each child in <str> with the new
+     * Transforms the children of <pre>cont</pre> according to child
+     * <pre>transforms</pre>, replacing each child in <pre>str</pre> with the new
      * stream.
      */
     private void doChildTransforms(SIRContainer cont, List transforms) {
@@ -144,7 +144,7 @@ public abstract class StreamTransform {
 
         // try lifting pipelines as post-pass so as not to mess up
         // counters above note that this will mutate the children
-        // array and the init function of <self>
+        // array and the init function of <pre>self</pre>
         for (int i=0; i<cont.size(); i++) {
             if (cont.get(i) instanceof SIRPipeline) {
                 int size = ((SIRPipeline)cont.get(i)).size();
@@ -155,7 +155,7 @@ public abstract class StreamTransform {
     }
 
     /**
-     * Prints hierarchy of stream transforms rooted at <st>.
+     * Prints hierarchy of stream transforms rooted at <pre>st</pre>.
      */
     public void printHierarchy() {
         printHierarchy(0);

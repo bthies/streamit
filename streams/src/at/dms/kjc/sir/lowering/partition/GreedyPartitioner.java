@@ -126,7 +126,7 @@ public class GreedyPartitioner {
     }
     
     /**
-     * Returns whether or not it's legal to fiss <candidates>
+     * Returns whether or not it's legal to fiss candidates.
      */
     private boolean canFiss(LinkedList candidates, GraphFlattener flattener) {
         // count the number of new tiles required
@@ -148,7 +148,7 @@ public class GreedyPartitioner {
     
     /**
      * Returns the number of NEW tiles that will be required under the
-     * current configuration of <str> if <filter> is split into <ways>
+     * current configuration of 'str' if 'filter' is split into 'ways'
      * copies.
      */
     private int tilesForFission(SIRFilter filter, GraphFlattener flattener, int ways) {
@@ -169,7 +169,7 @@ public class GreedyPartitioner {
     }
 
     /**
-     * Split everyone in <candidates> two ways.
+     * Split everyone in 'candidates' two ways.
      */
     private void doFission(LinkedList candidates) {
         for (int i=0; i<candidates.size(); i++) {

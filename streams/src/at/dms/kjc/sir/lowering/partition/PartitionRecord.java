@@ -31,8 +31,8 @@ public class PartitionRecord {
     }
 
     /**
-     * Add operator <op> with work amount <k> to this partition.
-     * Requires that this does not already contain <op>.
+     * Add operator <pre>op</pre> with work amount <pre>k</pre> to this partition.
+     * Requires that this does not already contain <pre>op</pre>.
      */
     public void add(SIROperator op, int k) {
         assert !this.contains(op);
@@ -41,8 +41,8 @@ public class PartitionRecord {
     }
 
     /**
-     * Add container <cont> to this. Requires that this does not
-     * already contain <cont>.
+     * Add container <pre>cont</pre> to this. Requires that this does not
+     * already contain <pre>cont</pre>.
      */
     public void add(SIRContainer cont) {
         assert !this.contains(cont);
@@ -64,14 +64,14 @@ public class PartitionRecord {
     }
 
     /**
-     * Returns whether or not this partition contains <op>.
+     * Returns whether or not this partition contains <pre>pre</pre>op</pre>.
      */
     public boolean contains(SIROperator op) {
         return contents.contains(op);
     }
 
     /**
-     * Given that <partitions> is a list of PartitionRecords, returns
+     * Given that <pre>partitions</pre> is a list of PartitionRecords, returns
      * a hashmap in which each SIROperator that's in one of the
      * partitions is mapped to a STRING representing the list of
      * partitions it's assigned to.
@@ -92,7 +92,7 @@ public class PartitionRecord {
     }
 
     /**
-     * Given that <partitions> is a list of PartitionRecords, returns
+     * Given that <pre>partitions</pre> is a list of PartitionRecords, returns
      * a hashmap in which each SIROperator that's in one of the
      * partitions is mapped to an Integer representing the list of
      * partitions it's assigned to.  

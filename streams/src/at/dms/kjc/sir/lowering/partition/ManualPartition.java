@@ -48,23 +48,23 @@ public class ManualPartition {
     }
 
     /**
-     * Outputs numbered dot graph for <str>, by name of
-     * <filename>.dot.
+     * Outputs numbered dot graph for 'str', by name of
+     * 'filename'.dot.
      */
     public static void printGraph(SIRStream str, String filename) {
         NumberDot.printGraph(str, filename);
     }
 
     /**
-     * Returns stream contained within <str> that has unique id number
-     * <num>.  This is the ID number that appears in numbered graphs.
+     * Returns stream contained within 'str' that has unique id number
+     * 'num'.  This is the ID number that appears in numbered graphs.
      */
     public static SIRStream getStream(SIRStream str, int num) {
         return str.getStreamWithNumber(num);
     }
 
     /**
-     * Returns set of all child streams of <str> (including <str>,
+     * Returns set of all child streams of 'str' (including 'str',
      * possibly) that have a name beginning with a given prefix.
      */
     public static SIRStream[] getStreams(SIRStream str, final String prefix) {
@@ -81,7 +81,7 @@ public class ManualPartition {
     }
 
     /**
-     * Returns stream by given <name> that is deep child of <str>.
+     * Returns stream by given <name> that is deep child of 'str'.
      * Returns null if no such stream exists.
      */
     public static SIRStream getStream(SIRStream str, final String name) {
@@ -103,23 +103,23 @@ public class ManualPartition {
     }
 
     /**
-     * Runs dynamic programming partitioner on <str>, aiming to reduce
-     * the number of tiles needed to <targetTiles>.
+     * Runs dynamic programming partitioner on 'str', aiming to reduce
+     * the number of tiles needed to 'targetTiles'.
      */
     public static SIRStream partition(SIRStream str, int targetTiles) {
         return internalPartition(str, targetTiles, true);
     }
 
     /**
-     * Runs greedy partitioner on <str>, aiming to reduce the number
-     * of tiles needed to <targetTiles>.
+     * Runs greedy partitioner on 'str', aiming to reduce the number
+     * of tiles needed to 'targetTiles'.
      */
     public static SIRStream partitionGreedy(SIRStream str, int targetTiles) {
         return internalPartition(str, targetTiles, false);
     }
 
     /**
-     * Internal partitioning routine.  If <dp> is true, runs dynamic
+     * Internal partitioning routine.  If 'dp' is true, runs dynamic
      * programming partitioner; otherwise runs greedy partitioner.
      */
     private static SIRStream internalPartition(SIRStream str, int targetTiles, boolean dp) {
@@ -166,7 +166,7 @@ public class ManualPartition {
     }
 
     /**
-     * Fuses all of <str> into a single filter.
+     * Fuses all of 'str' into a single filter.
      */
     public static SIRStream fuse(SIRStream str) {
         checkNull(str);
@@ -175,7 +175,7 @@ public class ManualPartition {
 
     /**
      * Fuses some components of a pipeline together.  The components
-     * are specified according to a PartitionGroup, <partitions>.
+     * are specified according to a PartitionGroup, 'partitions'.
      */
     public static SIRStream fuse(SIRPipeline pipeline, PartitionGroup partitions) {
         checkNull(pipeline);
@@ -184,7 +184,7 @@ public class ManualPartition {
 
     /**
      * Fuses some components of a splitjoin together.  The components
-     * are specified according to a PartitionGroup, <partitions>.
+     * are specified according to a PartitionGroup, 'partitions'.
      */
     public static SIRStream fuse(SIRSplitJoin splitjoin, PartitionGroup partitions) {
         checkNull(splitjoin);
@@ -192,7 +192,7 @@ public class ManualPartition {
     }
 
     /**
-     * Returns whether or not <filter> is fissable by the StreamIt
+     * Returns whether or not 'filter' is fissable by the StreamIt
      * compiler.  Currently, we can fiss only "stateless" filters that
      * have no internal fields.
      */
@@ -202,9 +202,9 @@ public class ManualPartition {
     }
 
     /**
-     * Splits <filter> into a <reps>-way splitjoin.  This is
-     * essentially converting <filter> to operate in a data-parallel
-     * form.  Requires that isFissable(<filter>) is true.
+     * Splits 'filter' into a 'reps'-way splitjoin.  This is
+     * essentially converting 'filter' to operate in a data-parallel
+     * form.  Requires that isFissable('filter') is true.
      */
     public static SIRSplitJoin fission(SIRFilter filter, int reps) {
         checkNull(filter);
@@ -212,7 +212,7 @@ public class ManualPartition {
     }
     
     /**
-     * Returns a new pipeline that is like <pipe> but replaces
+     * Returns a new pipeline that is like 'pipe' but replaces
      * children at indices first...last with a pipeline that contains
      * those children.
      */
@@ -222,7 +222,7 @@ public class ManualPartition {
     }
 
     /**
-     * Given a pipeline <pipe> and a partitioning <partition> of its
+     * Given a pipeline 'pipe' and a partitioning 'partition' of its
      * children, returns a new pipeline that has all the elements of
      * each partition factored into their own pipelines.
      */
@@ -232,7 +232,7 @@ public class ManualPartition {
     }
 
     /**
-     * Given a splitjoin <sj> and a partitioning <partition> of its
+     * Given a splitjoin 'sj' and a partitioning 'partition' of its
      * children, returns a new splitjoin with each partition factored
      * into its own child splitjoin.
      */
@@ -247,16 +247,16 @@ public class ManualPartition {
     }
 
     /**
-     * Given that all of the children of <sj> are pipelines and that
-     * <partition> describes a partitioning for such a pipeline,
-     * re-arrange <sj> into a pipeline of several splitjoins, each of
-     * which has children corresponding to a segment of <partition>:
+     * Given that all of the children of 'sj' are pipelines and that
+     * 'partition' describes a partitioning for such a pipeline,
+     * re-arrange 'sj' into a pipeline of several splitjoins, each of
+     * which has children corresponding to a segment of 'partition':
      *
      *      |                          |
      *      .                          .
      *    / | \                      / | \ 
      *   |  |  |                     | | |
-     *   |  |  |         ===>        \ | /
+     *   |  |  |         ===&gt;        \ | /
      *   |  |  |                       .
      *    \ | /                      / | \
      *      .                        | | |
@@ -275,7 +275,7 @@ public class ManualPartition {
 
     /**
      * Removes all synchronization points between child splitjoins in
-     * <pipe>.  Note that this might INCREASE the tile count because
+     * 'pipe'.  Note that this might INCREASE the tile count because
      * more joiners are introduced into the graph.  If this is not
      * desired, use only removeMatchingSyncPoints (below).
      *
@@ -287,11 +287,11 @@ public class ManualPartition {
     }
 
     /**
-     * Does the opposite transformation of <addSyncPoints> above.  If
-     * any two adjacent children in <pipe> are splitjoins where the
+     * Does the opposite transformation of 'addSyncPoints' above.  If
+     * any two adjacent children in 'pipe' are splitjoins where the
      * weights of the upstream joiner exactly match the weights of the
      * downstream joiner, then the splitjoins can be combined into a
-     * single splitjoin.  If this is the case, then <pipe> is mutated.
+     * single splitjoin.  If this is the case, then 'pipe' is mutated.
      *
      * This is intended only as a reverse routine for the above
      * sync. addition.  In particular, it doesn't deal with duplicate
@@ -312,10 +312,10 @@ public class ManualPartition {
     }
 
     /**
-     * Raises as many children of <sj> as it can into <sj>.  That is,
-     * if <sj> contains some children that are also splitjoins, tries
+     * Raises as many children of 'sj' as it can into 'sj'.  That is,
+     * if 'sj' contains some children that are also splitjoins, tries
      * to promote the children's children into direct children of
-     * <sj>.  Attempts both duplicate splitters and roundrobin
+     * 'sj'.  Attempts both duplicate splitters and roundrobin
      * splitters.
      *
      * Note that this method MUTATES its argument.
@@ -326,7 +326,7 @@ public class ManualPartition {
     }
 
     /**
-     * Exits with nice error if <str> is null.
+     * Exits with nice error if 'str' is null.
      */
     private static void checkNull(SIRStream str) {
         if (str==null) {
@@ -337,8 +337,8 @@ public class ManualPartition {
     }
 
     /**
-     * Performs loop unrolling up to <limit> in all methods of all
-     * deep children within <str>.
+     * Performs loop unrolling up to 'limit' in all methods of all
+     * deep children within 'str'.
      */
     public static void unroll(SIRStream str, int limit) {
         // switch unroll limit
@@ -386,7 +386,7 @@ public class ManualPartition {
     }
 
     /**
-     * Attempts to break down arrays in all children of <str> into
+     * Attempts to break down arrays in all children of 'str' into
      * local variables, and to remove array declarations that are
      * unneeded.
      */

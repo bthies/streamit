@@ -13,8 +13,8 @@ import java.util.HashMap;
 public class RefactorSplitJoin {
 
     /**
-     * Converts <sj> to a pipeline, where the left-most children of
-     * the <sj> are the top-most elements of the pipeline.  Initial
+     * Converts <pre>sj</pre> to a pipeline, where the left-most children of
+     * the <pre>sj</pre> are the top-most elements of the pipeline.  Initial
      * input is passed through so that lower stages of the pipe can
      * operate on it.
      *
@@ -22,9 +22,9 @@ public class RefactorSplitJoin {
      * these filters have an integral pop/push ratio (this could
      * possibly be lifted with more clever scheduling) and that have
      * the same input and output type.  Otherwise this returns the
-     * original <sj>.
+     * original <pre>sj</pre>.
      *
-     * Note that this is an immutable method -- does not modify <sj>
+     * Note that this is an immutable method -- does not modify <pre>sj</pre>
      * or its parent.
      */
     public static SIRStream convertToPipeline(SIRSplitJoin sj) {
@@ -47,7 +47,7 @@ public class RefactorSplitJoin {
         SIRPipeline pipe = new SIRPipeline(sj.getParent(),
                                            sj.getIdent() +"_ToPipe");
         pipe.setInit(SIRStream.makeEmptyInit());
-        // clone the children <size> times.  Then, in the i'th child
+        // clone the children <pre>size</pre> times.  Then, in the i'th child
         // of the resulting pipeline, replace all elements except the
         // i'th child of the splitjoin with an identity.  Set the
         // split weights of children 0..i-1 (inclusive) to the join
@@ -65,7 +65,7 @@ public class RefactorSplitJoin {
             JExpression[] jw = new JExpression[sj.size()];
             JExpression[] sw = new JExpression[sj.size()];
             // in first splitjoin, do computation of left-most child,
-            // and expand the other children by the <popPushRati>
+            // and expand the other children by the <pre>popPushRati</pre>
             // factor that they need to compute their join weights
             // later
             int popPushRatio = ((SIRFilter)sj.get(i)).getPopInt() / ((SIRFilter)sj.get(i)).getPushInt();
@@ -98,7 +98,7 @@ public class RefactorSplitJoin {
                     jw[j] = new JIntLiteral(popPushRatio * ((JIntLiteral)jwOrig[j]).intValue());
                 }
             }
-            // set splitter, joiner... if <sj>'s splitter is
+            // set splitter, joiner... if <pre>sj</pre>'s splitter is
             // duplicate, then the first child splitter needs to be
             // duplicate.  But all subsequent children start with RR.
             if (i==0 && sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
@@ -119,11 +119,11 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Given a splitjoin <sj> and a partitioning <partition> of its
+     * Given a splitjoin <pre>sj</pre> and a partitioning <pre>partition</pre> of its
      * children, returns a new splitjoin with each partition factored
      * into its own child splitjoin.
      *
-     * Note that this is an immutable method -- does not modify <sj>
+     * Note that this is an immutable method -- does not modify <pre>sj</pre>
      * or its parent.
      */
     public static SIRSplitJoin addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
@@ -170,7 +170,7 @@ public class RefactorSplitJoin {
                     childJoin[k]=new JIntLiteral(oldJoin[l]);
                     childSplitJoin.add((SIRStream)children.get(l), (List)params.get(l));
                 }
-                // in the case of a duplicate splitter, <create>
+                // in the case of a duplicate splitter, <pre>create</pre>
                 // disregards the weights array and makes them all 1
                 childSplitJoin.setSplitter(SIRSplitter.create(childSplitJoin,sj.getSplitter().getType(),childSplit));
                 childSplitJoin.setJoiner(SIRJoiner.create(childSplitJoin,sj.getJoiner().getType(),childJoin));
@@ -190,9 +190,9 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Returns new version of <str> into one in which all splitjoins
+     * Returns new version of <pre>str</pre> into one in which all splitjoins
      * contained in any children are made rectangular and have
-     * synchronization after each child.  Also mutates <str>.
+     * synchronization after each child.  Also mutates <pre>str</pre>.
      */
     public static SIRStream addDeepRectangularSyncPoints(SIRStream str) {
         // make a wrapper, so that we can deal with splitjoins on the
@@ -208,7 +208,7 @@ public class RefactorSplitJoin {
                 }
                 public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
                     super.postVisitSplitJoin(self, iter);
-                    // don't need to do anything if only one level in <self>
+                    // don't need to do anything if only one level in <pre>self</pre>
                     if (self.getRectangularHeight()>1) {
                         // make partition group, putting each child in its own group
                         SIRPipeline synced = addSyncPoints(self, PartitionGroup.createUniformPartition(self.getRectangularHeight()));
@@ -223,23 +223,23 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Given that all of the children of <sj> are pipelines and that
-     * <partition> describes a partitioning for such a pipeline,
-     * re-arrange <sj> into a pipeline of several splitjoins, each of
-     * which has children corresponding to a segment of <partition>:
+     * Given that all of the children of <pre>sj</pre> are pipelines and that
+     * <pre>partition</pre> describes a partitioning for such a pipeline,
+     * re-arrange <pre>sj</pre> into a pipeline of several splitjoins, each of
+     * which has children corresponding to a segment of <pre>partition</pre>:
      *
      *      |                          |
      *      .                          .
      *    / | \                      / | \ 
      *   |  |  |                     | | |
-     *   |  |  |         ===>        \ | /
+     *   |  |  |         ===&gt;        \ | /
      *   |  |  |                       .
      *    \ | /                      / | \
      *      .                        | | |
      *      |                        \ | /
      *      |                          .
      *
-     * Note that this is an immutable method -- does not modify <sj>
+     * Note that this is an immutable method -- does not modify <pre>sj</pre>
      * or its parent.
      */
     public static SIRPipeline addSyncPoints(SIRSplitJoin sj, PartitionGroup partition) {
@@ -247,7 +247,7 @@ public class RefactorSplitJoin {
         checkSymmetry(sj);
         assert partition.getNumChildren()==((SIRPipeline)sj.get(0)).size();
 
-        // get execution counts for <sj>
+        // get execution counts for <pre>sj</pre>
         HashMap[] sched = SIRScheduler.getExecutionCounts(sj);
 
         // make result pipeline
@@ -256,7 +256,7 @@ public class RefactorSplitJoin {
         result.setInit(SIRStream.makeEmptyInit());
 
         for (int i=0; i<partition.size(); i++) {
-            // new i'th splitjoin.  Replace init function in <sj>
+            // new i'th splitjoin.  Replace init function in <pre>sj</pre>
             // before we clone the methods
             SIRSplitJoin newSJ = new SIRSplitJoin(result, 
                                                   sj.getIdent()+"_"+i);
@@ -280,8 +280,8 @@ public class RefactorSplitJoin {
                 Lifter.eliminatePipe(pipe);
             }
 
-            // make the splitter and joiner for <newSJ>.  In the end
-            // cases, this is the same as for <sj>; otherwise it's
+            // make the splitter and joiner for <pre>newSJ</pre>.  In the end
+            // cases, this is the same as for <pre>sj</pre>; otherwise it's
             // round robin's according to the steady-state rates of components
             SIRSplitter split;
             if (i==0) {
@@ -317,7 +317,7 @@ public class RefactorSplitJoin {
 
     /**
      * Removes all sync points that it can in a structued way in
-     * <pipe>.  Note that this might INCREASE the tile count because
+     * <pre>pipe</pre>.  Note that this might INCREASE the tile count because
      * more joiners are introduced into the graph.  If this is not
      * desired, use only removeMatchingSyncPoints (below).
      *
@@ -400,11 +400,11 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Does the opposite transformation of <addSyncPoints> above.  If
-     * any two adjacent children in <pipe> are splitjoins where the
+     * Does the opposite transformation of <pre>addSyncPoints</pre> above.  If
+     * any two adjacent children in <pre>pipe</pre> are splitjoins where the
      * weights of the upstream joiner exactly match the weights of the
      * downstream joiner, then the splitjoins can be combined into a
-     * single splitjoin.  If this is the case, then <pipe> is mutated.
+     * single splitjoin.  If this is the case, then <pre>pipe</pre> is mutated.
      *
      * This is intended only as a reverse routine for the above
      * sync. addition.  In particular, it doesn't deal with duplicate
@@ -511,7 +511,7 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Checks that <sj> has symmetrical pipeline children.
+     * Checks that <pre>sj</pre> has symmetrical pipeline children.
      */
     private static void checkSymmetry(SIRSplitJoin sj) {
         SIRStream child_0 = sj.get(0);
@@ -526,7 +526,7 @@ public class RefactorSplitJoin {
     }
 
     /**
-     * Raises as many children of <sj> as it can into <sj>, using
+     * Raises as many children of <pre>sj</pre> as it can into <pre>sj</pre>, using
      * helper functions below.
      *
      * Note that this method MUTATES its argument.
@@ -552,7 +552,7 @@ public class RefactorSplitJoin {
      *      /   \               |
      *   DUP     \             DUP
      *  /   \     |          /  |  \
-     * A1   A2    B   -->  A1   A2  B
+     * A1   A2    B   --&gt;  A1   A2  B
      *  \   /     |          \  |  /
      *  RR(1)    /         WRR(1,1,2)
      *      \   /               |
@@ -651,10 +651,10 @@ public class RefactorSplitJoin {
     /**
      * In the case of round-robin splitters, performs the opposite
      * transformation as addHierarchicalChildren above.  Lifts a child
-     * splitjoin <child_i> of <sj> into sj if the sum of <child_i>'s
-     * split weights equals the i'th split weight in <sj>, and if the
+     * splitjoin <child_i> of <pre>sj</pre> into sj if the sum of <child_i>'s
+     * split weights equals the i'th split weight in <pre>sj</pre>, and if the
      * sum of <child_i>'s join weights equals the i'th join weight in
-     * <sj>.
+     * <pre>sj</pre>.
      *
      * Note that this method MUTATES its argument.
      */

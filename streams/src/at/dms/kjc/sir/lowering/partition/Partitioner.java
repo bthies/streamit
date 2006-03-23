@@ -15,9 +15,9 @@ import at.dms.kjc.flatgraph.*;
 
 public class Partitioner {
     /**
-     * Tries to adjust <str> into <targetCount> pieces of equal work,
+     * Tries to adjust 'str' into 'targetCount' pieces of equal work,
      * and return new stream. Indicate whether or not
-     * <joinersNeedTiles> in the graph, or if they count for free.
+     * 'joinersNeedTiles' in the graph, or if they count for free.
      */
     public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
         // detect number of tiles we have
@@ -25,8 +25,8 @@ public class Partitioner {
         return doit(str, curCount, targetCount, joinersNeedTiles, limitICode);
     }
     /**
-     * As above, with <curCount> indicating the number of tiles that
-     * <str> currently requires.
+     * As above, with 'curCount' indicating the number of tiles that
+     * 'str' currently requires.
      */
     public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
         return doit(str, curCount, targetCount, joinersNeedTiles, limitICode, new HashSet());
@@ -115,7 +115,7 @@ public class Partitioner {
     }
 
     /**
-     * Return number of tiles needed for <str>.
+     * Return number of tiles needed for 'str'.
      */
     static int countTilesNeeded(SIRStream str, boolean joinersNeedTiles) {
         if (joinersNeedTiles) {
@@ -128,8 +128,8 @@ public class Partitioner {
     }
 
     /**
-     * Return number of tiles needed for <str>, when you already have
-     * a <flattener> handy.
+     * Return number of tiles needed for 'str', when you already have
+     * a 'flattener' handy.
      */
     static int countTilesNeeded(SIRStream str, GraphFlattener flattener, boolean joinersNeedTiles) {
         if (joinersNeedTiles) {
@@ -142,7 +142,7 @@ public class Partitioner {
     }
 
     /**
-     * Returns how many unfusable filters are in <str>.
+     * Returns how many unfusable filters are in 'str'.
      */
     static int countUnfusableFilters(SIRStream str) {
         // Should this count identity filters or not?  Unclear,

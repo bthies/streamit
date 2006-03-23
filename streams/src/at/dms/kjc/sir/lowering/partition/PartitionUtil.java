@@ -31,7 +31,7 @@ public class PartitionUtil {
 
 
     /**
-     * Gets max work out of <partitions>.
+     * Gets max work out of <pre>partitions</pre>.
      */
     public static int getMaxWork(LinkedList partitions) {
         int maxWork = -1;
@@ -46,7 +46,7 @@ public class PartitionUtil {
 
     /**
      * Estimates total utilization (as fraction, e.g. 0.5023) for
-     * <partitions> running on <numTiles>.  (Not just running on the
+     * <pre>partitions</pre> running on <pre>numTiles</pre>.  (Not just running on the
      * number of occupied tiles!  That is, empty tiles hurt the
      * utilization.)
      */

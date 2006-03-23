@@ -22,7 +22,7 @@ import java.util.List;
 public class RefactorPipeline {
 
     /**
-     * Returns a new pipeline that is like <pipe> but replaces
+     * Returns a new pipeline that is like <pre>pipe</pre> but replaces
      * children at indices first...last with a pipeline that contains
      * those children.
      */
@@ -41,7 +41,7 @@ public class RefactorPipeline {
     }
 
     /**
-     * Given a pipeline <pipe> and a partitioning <partition> of its
+     * Given a pipeline <pre>pipe</pre> and a partitioning <pre>partition</pre> of its
      * children, returns a new pipeline that has all the elements of
      * each partition factored into their own pipelines.
      */

@@ -50,7 +50,7 @@ public class ILPPartitioner extends ListPartitioner {
     }
 
     /**
-     * Returns a mapping from every stream structure in <str> to an
+     * Returns a mapping from every stream structure in 'str' to an
      * integer partition number, from -1...(numTiles-1).  If a stream
      * structure is entirely contained on a given tile, then it has
      * that tile number.  If it is split across multiple tiles, then
@@ -63,7 +63,7 @@ public class ILPPartitioner extends ListPartitioner {
     }
 
     /**
-     * Returns whether or not <val1> and <val2> are separated by less
+     * Returns whether or not 'val1' and 'val2' are separated by less
      * than TOLERANCE.
      */
     private static final double TOLERANCE = 0.001;
@@ -73,7 +73,7 @@ public class ILPPartitioner extends ListPartitioner {
 
     /**
      * Given a solution to the LP, build a hashmap from stream
-     * structure to partition number meeting specification of <doit>.
+     * structure to partition number meeting specification of 'doit'.
      */
     private HashMap buildPartitionMap(double[] sol) {
         HashMap result = new HashMap();
@@ -493,7 +493,7 @@ public class ILPPartitioner extends ListPartitioner {
     /**
      * Adds to <lp> a constraint that guarantees the following:
      *
-     *  var[<lhs1>] = var[<lhs2>] = 1 ==> var[rhs] = 1
+     *  var[<lhs1>] = var[<lhs2>] = 1 ==&gt; var[rhs] = 1
      *
      * Requires that var[<lhs1>], var[<lhs2>], and var[<rhs>] are
      * elsewhere constrainted to be zero-one vars in <lp>.
@@ -510,7 +510,7 @@ public class ILPPartitioner extends ListPartitioner {
     /**
      * Adds to <lp> a constraint that guarantees the following:
      *
-     *  var[<lhs1>] != var[<lhs2>] ==> var[rhs] = 0
+     *  var[<lhs1>] != var[<lhs2>] ==&gt; var[rhs] = 0
      *
      * Requires that var[<lhs1>], var[<lhs2>], and var[<rhs>] are
      * elsewhere constrainted to be zero-one vars in <lp>.

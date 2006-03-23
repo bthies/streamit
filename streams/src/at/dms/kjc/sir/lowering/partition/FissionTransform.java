@@ -19,7 +19,7 @@ public class FissionTransform extends StreamTransform {
     private int reps;
 
     /**
-     * <reps> must be > 1 or you should be using an Identity
+     * <reps> must be &gt; 1 or you should be using an Identity
      * transform.
      */
     public FissionTransform(int reps) {

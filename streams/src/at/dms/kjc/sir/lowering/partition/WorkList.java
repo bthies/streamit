@@ -17,28 +17,28 @@ public class WorkList extends java.util.LinkedList {
     }
 
     /**
-     * Gets total work at position <i>.
+     * Gets total work at position <pre>i</pre>.
      */
     public int getWork(int i) {
         return ((WorkInfo)((Map.Entry)super.get(i)).getValue()).getTotalWork();
     }
 
     /**
-     * Gets filter at position <i>.
+     * Gets filter at position <pre>i</pre>.
      */
     public SIRFilter getFilter(int i) {
         return (SIRFilter)((Map.Entry)super.get(i)).getKey();
     }
 
     /**
-     * Gets container at position <i>.
+     * Gets container at position <pre>i</pre>.
      */
     public SIRContainer getContainer(int i) {
         return (SIRContainer)((Map.Entry)super.get(i)).getKey();
     }
 
     /**
-     * Write the contents of this to filename <filename>.
+     * Write the contents of this to filename <pre>filename</pre>.
      */
     public void writeToFile(String filename) {
         PrintStream out = null;

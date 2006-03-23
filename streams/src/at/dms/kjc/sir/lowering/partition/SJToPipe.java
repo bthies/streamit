@@ -21,7 +21,7 @@ public class SJToPipe implements StreamVisitor {
     private SJToPipe() {}
 
     /**
-     * Lift everything we can in <str> and its children
+     * Lift everything we can in <pre>str</pre> and its children
      */
     public static void doit(SIRStream str) {
         IterFactory.createFactory().createIter(str).accept(new SJToPipe());

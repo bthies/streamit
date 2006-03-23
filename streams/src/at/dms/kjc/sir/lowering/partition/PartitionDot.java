@@ -71,7 +71,7 @@ public class PartitionDot extends StreamItDot {
     }
 
     /**
-     * Given original node label <origLabel>, makes a label suitable
+     * Given original node label 'origLabel', makes a label suitable
      * for the partitioning labeling.
      */
     private String makePartitionLabel(SIROperator op, String origLabel) {
@@ -159,7 +159,7 @@ public class PartitionDot extends StreamItDot {
     }
 
     /**
-     * Prints dot graph of <str> to <filename>.
+     * Prints dot graph of 'str' to 'filename'.
      */
     public static void printPartitionGraph(SIRStream str, 
                                            String filename,
@@ -175,7 +175,7 @@ public class PartitionDot extends StreamItDot {
     }
 
     /**
-     * For printing execution counts.  here <execCounts> is in the
+     * For printing execution counts.  here 'execCounts' is in the
      * format returned by SIRScheduler.getExecutionCounts
      */
     public static void printScheduleGraph(SIRStream str,

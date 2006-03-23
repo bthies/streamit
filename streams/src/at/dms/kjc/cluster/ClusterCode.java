@@ -59,7 +59,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
 
-    public static void generateSplitter2(FlatNode node) {
+    /**
+     *  Generate and emit code for a splitter using new codegen
+     */
+    
+     public static void generateSplitter2(FlatNode node) {
         
         SIRSplitter splitter = (SIRSplitter)node.contents;
 
@@ -189,6 +193,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 
 
+    /**
+     *  Generate and emit code for a joiner using new codegen
+     */
+
     public static void generateJoiner2(FlatNode node) {
         
         SIRJoiner joiner = (SIRJoiner)node.contents;
@@ -299,6 +307,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     }
 
+    /**
+     *  Generate and emit code for a splitter
+     */
 
     public static void generateSplitter(FlatNode node) {
         
@@ -891,6 +902,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     }
 
+
+    /**
+     *  Generate and emit code for a joiner
+     */
 
     public static void generateJoiner(FlatNode node) {
         

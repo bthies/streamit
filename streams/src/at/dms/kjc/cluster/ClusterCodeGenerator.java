@@ -16,6 +16,12 @@ import at.dms.kjc.common.CodegenPrintWriter;
 //import at.dms.kjc.sir.lowering.*;
 //import at.dms.util.Utils;
 
+
+/**
+ * A class that generates part of the threadX.cpp files that is shared
+ * among splitters, joiners and filters.
+ */
+
 class ClusterCodeGenerator {
 
     private SIROperator oper;
@@ -42,6 +48,13 @@ class ClusterCodeGenerator {
     private int init_counts;
     private int steady_counts;
     private String work_function;
+
+    /*
+     * A constructor
+     *
+     * @param oper a {@link SIROperator}
+     * @param fileds an array of (@link JFieldDeclaration}s
+     */
 
     public ClusterCodeGenerator(SIROperator oper, 
                                 JFieldDeclaration fields[]) {
@@ -125,6 +138,17 @@ class ClusterCodeGenerator {
         }
     }
 
+
+    /*
+     * Generates preamble of threadX.cpp file. This includes headers,
+     * thread internal variables, communication variables, operator fields. 
+     * And following functions: read/write thread, check thread status, 
+     * init/get thread_info, declare_sockets, init_sockets, flush_sockets 
+     * and peek_sockets.
+     *
+     * @param f2c a reference to {@link FlatIRToClutser} class
+     * @param p print writer
+     */
 
     public void generatePreamble(FlatIRToCluster f2c, CodegenPrintWriter p) {
 
@@ -618,6 +642,16 @@ class ClusterCodeGenerator {
 	}
         return;
     }
+
+    /*
+     * Generates the end of threadX.cpp file. This includes functions:
+     * init_state, main, init_sdep and run.
+     *
+     * @param init_f name of the init function
+     * @param main_f not used!
+     * @param cleanupCode list of strings representing cleanup code
+     * @return a vector of strings representing the generated code
+     */
 
 
     public Vector generateRunFunction(String init_f, String main_f,

@@ -106,7 +106,10 @@ void node_server::run_server(netsocket *sock) {
 
     case ALIVE_COMMAND:
 
-      resp.push_back(find_latest_checkpoint());
+      int __n = find_latest_checkpoint();
+
+      fprintf(stderr,"ALIVE reply is: %d\n", __n);
+      resp.push_back(__n);
       break;
 
     case CLUSTER_CONFIG:

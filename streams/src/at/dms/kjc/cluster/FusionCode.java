@@ -8,7 +8,21 @@ import at.dms.kjc.KjcOptions;
 import at.dms.kjc.cluster.ClusterUtils;
 import at.dms.kjc.common.CodegenPrintWriter;
 
+/**
+ * A class that generates code for the --cluster --standalone, where
+ * there is just a single thread that invokes work functions of the
+ * stream operators. The class generates files: fusion.h and fusion.cpp
+ */
+
 class FusionCode {
+
+    /**
+     * estimates a multiplicity for execution scaling using cache sizes
+     * 
+     * @param data_cache1 L1 data cache size
+     * @param data_cache2 L2 data cache size
+     * @return the multiplicity
+     */
 
     public static int bestMult(int data_cache1, 
                                int data_cache2) {
@@ -19,6 +33,8 @@ class FusionCode {
         int min_mult;// = cache_size;
 
         int histogram[] = new int[threadCount];
+
+	// create a histogram of multipicities for individual operators
 
         for (int t = 0; t < threadCount; t++) {
         
@@ -88,6 +104,13 @@ class FusionCode {
         return min_mult;
     }
 
+    /**
+     * creates the fusion.h file
+     * 
+     * @param top_stream the top stream (not used)
+     * @param inc_mult specifies whether to use execution scaling
+     */
+
     public static void generateFusionHeader(SIRStream top_stream, boolean inc_mult) {
 
         //WorkEstimate work_est = WorkEstimate.getWorkEstimate(top_stream);
@@ -125,7 +148,7 @@ class FusionCode {
         }
 
         p.print("#define __CLUSTER_STANDALONE\n");
-        // WTF?  what does threadcount refer to in standalone mode?
+        // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
         
             SIROperator oper = NodeEnumerator.getOperator(t);
@@ -333,6 +356,13 @@ class FusionCode {
 
     // implicit_mult - how much schedule has been scaled up due to
     // peek optimization
+
+    /**
+     * creates the fusion.cpp file
+     * 
+     * @param d_schedule reference to {@link DiscoverSchedule} with a schedule
+     * @param implicit_mult an implicit multiplicity increase due to peek_scaling
+     */
 
     public static void generateFusionFile(DiscoverSchedule d_sched, int implicit_mult) {
     

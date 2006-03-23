@@ -21,7 +21,12 @@ import java.util.Vector;
 import at.dms.kjc.raw.*;
 
 /**
+ * Constructs a set of fields that are modified by a method other
+ * that the init function. This is needed to know which fields should
+ * be written to a checkpoint and which can be reconstructed by
+ * simply invoking the init function.
  */
+
 public class DetectConst extends SLIREmptyVisitor {
 
     private static HashMap instances = new HashMap();

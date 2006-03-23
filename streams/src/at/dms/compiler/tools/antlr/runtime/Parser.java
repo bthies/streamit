@@ -15,13 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Parser.java,v 1.2 2006-01-25 17:00:55 thies Exp $
+ * $Id: Parser.java,v 1.3 2006-03-23 18:53:36 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
 
 /**
- * A generic ANTLR parser (LL(k) for k>=1) containing a bunch of
+ * A generic ANTLR parser (LL(k) for k&gt;=1) containing a bunch of
  * utility routines useful at any lookahead depth.  We distinguish between
  * the LL(1) and LL(k) parsers because of efficiency.  This may not be
  * necessary in the near future.

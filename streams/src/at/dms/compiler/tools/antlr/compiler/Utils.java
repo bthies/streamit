@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.3 2006-01-25 17:00:50 thies Exp $
+ * $Id: Utils.java,v 1.4 2006-03-23 18:53:36 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -79,7 +79,7 @@ public class Utils extends at.dms.compiler.tools.common.Utils {
     /**
      * This example is from the book _Java in a Nutshell_ by David
      * Flanagan.  Written by David Flanagan.  Copyright (c) 1996
-     * O'Reilly & Associates.  You may study, use, modify, and
+     * O'Reilly &amp; Associates.  You may study, use, modify, and
      * distribute this example for any purpose.  This example is
      * provided WITHOUT WARRANTY either expressed or implied.  */
     public static void copyFile(String sourceName, String destName)

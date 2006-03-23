@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Node.java,v 1.2 2006-01-25 17:01:10 thies Exp $
+ * $Id: Node.java,v 1.3 2006-03-23 18:56:44 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -157,7 +157,7 @@ class Node {
     /**
      * Adjancency list of the node.
      * All adjacent nodes with correspondent edges are stored in this list.
-     * For any undirected graph, if A<->B, then A appears in B's
+     * For any undirected graph, if A&lt;-&gt;B, then A appears in B's
      * adjacency list while B is in A's adjacency list.
      */
 

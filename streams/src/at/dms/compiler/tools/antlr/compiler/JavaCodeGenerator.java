@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaCodeGenerator.java,v 1.3 2006-01-25 17:00:49 thies Exp $
+ * $Id: JavaCodeGenerator.java,v 1.4 2006-03-23 18:53:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -2515,7 +2515,7 @@ public class JavaCodeGenerator {
 
     /**
      * Generate a lookahead test expression for an alternate.  This
-     * will be a series of tests joined by '&&' and enclosed by '()',
+     * will be a series of tests joined by '&amp;&amp;' and enclosed by '()',
      * the number of such tests being determined by the depth of the lookahead.
      */
     private String getLookaheadTestExpression(Alternative alt, int maxDepth) {
@@ -2562,7 +2562,7 @@ public class JavaCodeGenerator {
      * Generate a depth==1 lookahead test expression given the BitSet.
      * This may be one of:
      * 1) a series of 'x==X||' tests
-     * 2) a range test using >= && <= where possible,
+     * 2) a range test using &gt;= &amp;&amp; &lt;= where possible,
      * 3) a bitset membership test for complex comparisons
      * @param k The lookahead level
      * @param p The lookahead set for level k

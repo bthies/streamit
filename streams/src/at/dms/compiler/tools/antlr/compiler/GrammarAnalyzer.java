@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: GrammarAnalyzer.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: GrammarAnalyzer.java,v 1.3 2006-03-23 18:53:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -28,10 +28,10 @@ package at.dms.compiler.tools.antlr.compiler;
  * To access the RuleBlock for a rule name, the grammar symbol table
  * is consulted.
  *
- * There should be no distinction between static & dynamic analysis.
+ * There should be no distinction between static &amp; dynamic analysis.
  * In other words, some of the easy analysis can be done statically
  * and then the part that is hard statically can be deferred to
- * parse-time.  Interestingly, computing LL(k) for k>1 lookahead
+ * parse-time.  Interestingly, computing LL(k) for k&gt;1 lookahead
  * statically is O(|T|^k) where T is the grammar vocabulary, but,
  * is O(k) at run-time (ignoring the large constant associated with
  * the size of the grammar).  In English, the difference can be

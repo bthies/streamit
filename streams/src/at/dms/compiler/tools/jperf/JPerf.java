@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPerf.java,v 1.2 2006-01-25 17:01:10 thies Exp $
+ * $Id: JPerf.java,v 1.3 2006-03-23 18:56:44 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -107,7 +107,7 @@ public class JPerf {
     }
 
     /**
-     * Adds a `key -> value' pair.
+     * Adds a `key -&gt; value' pair.
      *
      * @return  true iff the graph is still acyclic
      */

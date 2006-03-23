@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: LLkAnalyzer.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: LLkAnalyzer.java,v 1.3 2006-03-23 18:53:36 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -909,10 +909,10 @@ public class LLkAnalyzer implements LLkGrammarAnalyzer {
     }
 
     /**
-     * The lookahead of a (...)=> block is the lookahead of
+     * The lookahead of a (...)=&gt; block is the lookahead of
      * what follows the block.  By definition, the syntactic
      * predicate block defies static analysis (you want to try it
-     * out at run-time).  The LOOK of (a)=>A B is A for LL(1)
+     * out at run-time).  The LOOK of (a)=&gt;A B is A for LL(1)
      * ### is this even called?
      */
     public Lookahead look(int k, SynPredBlock blk) {

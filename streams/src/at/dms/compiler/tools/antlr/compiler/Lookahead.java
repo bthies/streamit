@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Lookahead.java,v 1.3 2006-01-25 17:00:49 thies Exp $
+ * $Id: Lookahead.java,v 1.4 2006-03-23 18:53:36 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -58,7 +58,7 @@ import at.dms.compiler.tools.common.InconsistencyException;
  *      a : b A B E F G;
  *      b : C ;
  * </pre>
- * LOOK(5, ref-to(b)) is {<EPSILON>} with depth = 4, which
+ * LOOK(5, ref-to(b)) is {&lt;EPSILON&gt;} with depth = 4, which
  * indicates that at 2 (5-4+1) tokens ahead, end of rule was reached.
  * Therefore, the token at 4=5-(5-4) past rule ref b must be
  * included in the set == F.

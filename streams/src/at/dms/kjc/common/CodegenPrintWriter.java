@@ -13,7 +13,7 @@ import java.io.StringWriter;
  * and for String.  Printing of Object (as its toString()) is deliberately 
  * missing from this implementation since it was causing bugs in the printing 
  * of CType's.
- * To print a CType see {@see at.dms.kjc.common.ToCCommon#printType}.
+ * To print a CType see {@link at.dms.kjc.common.ToCCommon#printType}.
  * <br/>
  * Includes an optional debugging feature to dump the caller's line number and 
  * test to be printed on a print, println, or printnl.
@@ -85,7 +85,7 @@ public final class CodegenPrintWriter {
      * Construct with a StringWriter
      * 
      * The contents of the string writer can be accessed with 
-     * {@see #getString()}
+     * {@link #getString()}
      *
      */
 
@@ -121,8 +121,8 @@ public final class CodegenPrintWriter {
 
     /**
      * Set current amount of indentation.
-     * You almost never want to use this, use {@see #indent()} and
-     * {@see #outdent()} instead.
+     * You almost never want to use this, use {@link #indent()} and
+     * {@link #outdent()} instead.
      * 
      * @param pos number of spaces to use for indentation
      */
@@ -132,8 +132,8 @@ public final class CodegenPrintWriter {
 
     /**
      * Set tab size to some number of spaces (if you don't like the default).
-     * @param tabSize number of spaces added per {@see #indent()} and removed 
-     *                per {@see #outdent()}
+     * @param tabSize number of spaces added per {@link #indent()} and removed 
+     *                per {@link #outdent()}
      */
     public void setTabSize(int tabSize) {
         this.tabSize = tabSize;
@@ -143,7 +143,7 @@ public final class CodegenPrintWriter {
     //    public void setWidth(int width)     { this.width = width; }
 
     /**
-     * Get string if you used constructor {@see #CodegenPrintWriter()}.
+     * Get string if you used constructor {@link #CodegenPrintWriter()}.
      * 
      * @return  string from string writer or null
      */
@@ -188,7 +188,7 @@ public final class CodegenPrintWriter {
 
     /**
      * Close underlying Writer, 
-     * (and StringWriter if used {@see #CodegenPrintWriter()}.
+     * (and StringWriter if used {@link #CodegenPrintWriter()}.
      */
     public void close() {
         p.close();
@@ -203,7 +203,7 @@ public final class CodegenPrintWriter {
     }
 
     /**
-     * Synonym for {@see #newLine()}.
+     * Synonym for {@link #newLine()}.
      */
     public void newline() {
         p.println();
@@ -269,7 +269,7 @@ public final class CodegenPrintWriter {
      * @param s String to print.
      * 
      * Also overloaded at base types boolean, int, char, float, double. 
-     * println() acts identically to {@see #newLine()}.
+     * println() acts identically to {@link #newLine()}.
      */
     // println duplicates print functionality so that it doesn't have to
     // manipulate debugDepth, which is presumably infrequently used.

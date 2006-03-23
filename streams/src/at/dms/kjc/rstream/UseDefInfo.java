@@ -22,7 +22,7 @@ public class UseDefInfo extends SLIREmptyVisitor
     private HashMap uses;
 
     /**
-     * Given a method, return a hashmap from local vars -> HashSet, 
+     * Given a method, return a hashmap from local vars -&gt; HashSet, 
      * where the hashset holds all the access of the local variable in 
      * the method.
      *

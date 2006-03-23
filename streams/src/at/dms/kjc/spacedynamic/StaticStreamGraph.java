@@ -765,7 +765,7 @@ public class StaticStreamGraph {
                 int val = ((int[]) executionCounts[i].get(obj))[0];
                 // System.err.println("execution count for " + obj + ": " +
                 // val);
-                /**
+                /*
                  * This bug doesn't show up in the new version of FM Radio - but
                  * leaving the comment here in case we need to special case any
                  * other scheduler bugsx.

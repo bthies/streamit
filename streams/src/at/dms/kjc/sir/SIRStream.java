@@ -246,7 +246,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * splitters / joiners.)
      *
      * The intent of this method is that <counts> can be calculated
-     * once for a stream graph, then the splitjoins & pipelines of the
+     * once for a stream graph, then the splitjoins &amp; pipelines of the
      * graph can be refactored, and one can still call this to get the
      * push count of new constructs without re-invoking the scheduler.
      */

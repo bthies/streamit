@@ -11,7 +11,7 @@ import at.dms.kjc.raw.ArrayCopy;
  * This class propagates constants and unrolls loops.  Currently only
  * works for init functions.
  * 
- * (Bill Thies & Allyn Dimock: 2005-12-22  now works for all SIRStreams.)
+ * (Bill Thies &amp; Allyn Dimock: 2005-12-22  now works for all SIRStreams.)
  */
 public class ConstantProp {
 

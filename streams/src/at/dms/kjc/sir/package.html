@@ -1,0 +1,90 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir</title>
+</head>
+<body>
+
+<p>
+Contains the heart of the StreamIt Intermediate Representation, or SIR
+for short.  This intermediate representation exists at two levels:
+<ul>
+
+<li> The stream graph level, which captures the hierarchy and
+connectivity of filters (for example, {@link at.dms.kjc.sir.SIRPipeline}.
+
+<li> The statement level, which extends Kopi's IR with statements and
+expressions for StreamIt keywords.
+
+</ul>
+
+The stream graph is encapsulated in a structured hierarchy of
+single-input, single-output modules.  At the base of this hierarchy is
+{@link at.dms.kjc.sir.SIRFilter}, which represents the basic StreamIt
+filter.  Filters are composed into hierarchical graphs using the
+{@link at.dms.kjc.sir.SIRPipeline}, {@link
+at.dms.kjc.sir.SIRSplitJoin}, and {@link
+at.dms.kjc.sir.SIRFeedbackLoop} classes.  There are also special kinds
+of pre-defined filters, such as {@link at.dms.kjc.sir.SIRFileReader}, {@link
+at.dms.kjc.sir.SIRFileWriter}, and {@link at.dms.kjc.sir.SIRIdentity}.
+
+<p>
+For statement-level StreamIt IR constructs, this package contains
+classes such as {@link at.dms.kjc.sir.SIRPushExpression}, {@link
+at.dms.kjc.sir.SIRPopExpression}, and {@link
+at.dms.kjc.sir.SIRPeekExpression} that reflect uses of those
+expressions from within a filter's
+<tt>work</tt> function.  There also exist some SIR statements that are
+only for internal use by the compiler, and do not directly correspond
+to a keyword in the language (such as {@link
+at.dms.kjc.sir.SIRBeginMarker}, which tracks the beginning of a
+filter's code through fusion events).
+
+<p>
+The other important component of the SIR are the stream-level
+visitors.  These visitors descend through the hierarchical stream
+graph and can be extended to perform an operation on each filter,
+pipeline, etc.  The {@link at.dms.kjc.sir.StreamVisitor} interface
+(implemented by {@link at.dms.kjc.sir.EmptyAttributeStreamVisitor})
+performs the recursion automatically and has a return type of void
+from each visit, while the {@link
+at.dms.kjc.sir.AttributeStreamVisitor} interface (implemented by
+{@link at.dms.kjc.sir.EmptyAttributeVisitor}) uses user-defined
+recursion with return types from visits.
+
+<p>
+The hierarchical structure of the SIR is utilized by many optimization
+passes (notably, all of those packages under the "sir" directory of
+the source tree).  For certain backends (such as {@link
+at.dms.kjc.raw.RawBackend} and {@link
+at.dms.kjc.cluster.ClusterBackend}) the hierarchy of the stream graph
+is eventaully eliminated to form a <em>flat</em> graph representation.
+
+<p>
+The rationale behind the hierarchy of the SIR is described in the
+research paper, <a
+href="http://cag.lcs.mit.edu/commit/papers/02/streamit-cc.pdf">StreamIt:
+A Language for Streaming Applications</a>.
+
+<p>
+@see at.dms.kjc.flatgraph
+
+</body>
+</html>

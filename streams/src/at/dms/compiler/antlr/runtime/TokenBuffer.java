@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenBuffer.java,v 1.3 2006-01-25 17:00:46 thies Exp $
+ * $Id: TokenBuffer.java,v 1.4 2006-03-23 18:30:50 dimock Exp $
  */
 
 package at.dms.compiler.antlr.runtime;
@@ -26,7 +26,7 @@ package at.dms.compiler.antlr.runtime;
  * <p>
  * A dynamic array is used to buffer up all the input tokens.  Normally,
  * "k" tokens are stored in the buffer.  More tokens may be stored during
- * guess mode (testing syntactic predicate), or when LT(i>k) is referenced.
+ * guess mode (testing syntactic predicate), or when LT(i&gt;k) is referenced.
  * Consumption of tokens is deferred.  In other words, reading the next
  * token is not done by conume(), but deferred until needed by LA or LT.
  * <p>

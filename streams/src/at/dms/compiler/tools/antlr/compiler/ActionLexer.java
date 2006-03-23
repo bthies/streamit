@@ -13,11 +13,11 @@ import java.io.StringReader;
 
 Text related translations
 
-$append(x)      -> text.append(x)
-$setText(x)     -> text.setLength(_begin); text.append(x)
-$getText        -> new String(text.getBuffer(),_begin,text.length()-_begin)
-$setToken(x)    -> _token = x
-$setType(x)     -> _ttype = x
+$append(x)      -&gt; text.append(x)
+$setText(x)     -&gt; text.setLength(_begin); text.append(x)
+$getText        -&gt; new String(text.getBuffer(),_begin,text.length()-_begin)
+$setToken(x)    -&gt; _token = x
+$setType(x)     -&gt; _ttype = x
 */
 public class ActionLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner implements ActionLexerTokenTypes, TokenStream
 {

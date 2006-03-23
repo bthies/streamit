@@ -11,16 +11,35 @@ import java.util.*;
 
 
 /**
- * Convert the FlatGraph back to an SIR representation
+ * This class will convert the FlatGraph back to an SIR representation.  
+ * It will create the necessary SIR containers to represent the flat graph.  
+ * This assume that the Flat graph is amenable to this conversion.  For example, 
+ * it will not work if filter nodes have multiple input/output.   
+ * 
+ * Note that this does not work in the presence of a feedbackloop; it does not 
+ * work if there are backedges in the graph. 
+ * 
+ * @author mgordon
  */
-
 public class FlatGraphToSIR extends at.dms.util.Utils
 {
+    /** The toplevel FlatNode of the flatgraph, the entry point */
     private FlatNode toplevel;
+    /** The toplevel SIRPipeline for the SIR representation of the Flat graph */
     private SIRPipeline toplevelSIR;
+    /** int used to name new containers when converting */
     private int id;
+    /** unique int used to identity the toplevel pipeline*/
     private static int globalID;
 
+    /**
+     * Create a new FlatGraphToSIR with top as the entry-point
+     * to the FlatGraph and construct an SIR graph from the flat graph.
+     * 
+     * Note: This will not work if there are back edges in the flat graph.
+     * 
+     * @param top The entry point to the Flat graph.
+     */
     public FlatGraphToSIR(FlatNode top) 
     {
         toplevel = top;
@@ -29,12 +48,29 @@ public class FlatGraphToSIR extends at.dms.util.Utils
         reSIR(toplevelSIR, toplevel, new HashSet());
     }
 
+    /**
+     * Return the toplevel pipeline for the constructed SIR graph.
+     * 
+     * @return the toplevel pipeline for the constructed SIR graph.
+     */
     public SIRPipeline getTopLevelSIR() 
     {
         assert toplevelSIR != null;
+       
         return toplevelSIR;
     }
-    //this does not work for feedbackloops!!!
+    
+    
+    /**
+     * This recursive function will convert the flat graph into an 
+     * SIR graph, creating the necessary conatiners along the way.
+     * 
+     * Note: This will not work if there are back edges in the graph.
+     * 
+     * @param parent The current container.
+     * @param current The node that we are about to work on.
+     * @param visited The set of FlatNode we have already added to the SIR graph.
+     */
     private void reSIR(SIRContainer parent, FlatNode current, HashSet visited) 
     {
         if (current.isFilter()) {
@@ -111,8 +147,6 @@ public class FlatGraphToSIR extends at.dms.util.Utils
         
             assert splitJoin != null;
         
-        
-
             if (!visited.contains(current)) {
                 //make sure we have not seen this Joiner
                 assert !(visited.contains(current)) : "FlatGraph -> SIR does not support Feedbackloops";

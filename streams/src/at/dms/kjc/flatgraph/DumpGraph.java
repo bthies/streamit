@@ -9,18 +9,31 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Dump the flat graph to a dot file.
+ * Dump a representation of the flat graph to a dot file to be 
+ * used with dot (or dotty).
+ * 
+ * @author mgordon
  */
-
 public class DumpGraph implements FlatVisitor
 {
+    /** The dotty code as we create it */
     private StringBuffer buf;
+    /** HashMaps from SIROperator -> Integer for multiplicities */
     private HashMap initMults,
         steadyMults;
     
-    /** 
-     * creates the dot file representing the flattened graph 
-     * must be called after createExecutionCounts in 
+    /**
+     * Creates the dot file representing the flattened graph and stores it in
+     * filename.  
+     *  
+     * This function must be called after 
+     * {@link RawBackend#createExecutionCounts} because execution multiplicities 
+     * need to be set.
+     * 
+     * @param toplevel The starting node of the FlatNode graph.
+     * @param filename The file to write the dot graph to.
+     * @param initExeCounts The multiplicities in the init stage.
+     * @param steadyExeCounts The multiplicities in the steady-state stage.
      */
     public void dumpGraph(FlatNode toplevel, String filename, HashMap initExeCounts,
                           HashMap steadyExeCounts) 
@@ -42,14 +55,22 @@ public class DumpGraph implements FlatVisitor
         }
     
     }
-    
-    /* appends the dot file code representing the given node */
+
+    /**
+     * This function should not be called by the outside world.  It is used
+     * by this class to visit each node of the FlatNode graph and create the dot
+     * code for connectivity and for the node label. 
+     * 
+     * @param node The current node we are visiting.
+     */
     public void visitNode(FlatNode node) 
     {
         if (node.contents instanceof SIRFilter) {
+            //we are visiting a filter
             SIRFilter filter = (SIRFilter)node.contents;
             assert buf!=null;
         
+            //print the name and multiplicities and some other crap
             buf.append(node.getName() + "[ label = \"" +
                        node.getName() + "\\n");
             buf.append("init Mult: " + GraphFlattener.getMult(node, true,
@@ -80,6 +101,7 @@ public class DumpGraph implements FlatVisitor
             buf.append("\"];");
         }
         
+        //if we have a joiner, print the weights on the incoming edges
         if (node.contents instanceof SIRJoiner) {
             for (int i = 0; i < node.inputs; i++) {
                 //joiners may have null upstream neighbors
@@ -91,6 +113,7 @@ public class DumpGraph implements FlatVisitor
             }
         
         }
+        //create the arcs for the outgoing edges
         for (int i = 0; i < node.ways; i++) {
             if (node.edges[i] == null)
                 continue;

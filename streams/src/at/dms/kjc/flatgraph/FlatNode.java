@@ -337,17 +337,8 @@ public class FlatNode {
     }
 
     /**
-     * Override the hashcode so that it is deterministic with each run, so that
-     * layouts can be deterministic.
-     */
-
-    /*
-     * public int hashCode() { return inputs * ways * (edges==null ? 1 :
-     * edges.length) * (incoming==null ? 1 : incoming.length); }
-     */
-
-    /**
-     * Now uses uin to implement deterministic hashcode system It has the added
+     * Now uses {@link FlatNode#uin} to implement deterministic hashcode system.
+     * It has the added
      * benefit that a FlatNode's identity isn't tied to it's inputs, ways, etc
      * not changing ie now hashcode is synched with equals() and equality
      * doesn't change just because ones ways, etc changes

@@ -5,12 +5,30 @@ import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * This class calculates a traversal of the graph where that guarantees
+ * that for each node n in the traversal, we have visited every node
+ * upstream of n.  For feedbackloops it will visit the feedback path after 
+ * the non-feedback path.  This traversal also guarantees that each node
+ * appears only once in the traversal.  
+ *
+ * @author mgordon
+ */
 public class DataFlowTraversal 
 {
+    /** The traversal we are currently calculating */
     private static LinkedList traversal;
     
-    //returns a linked listed with a breadth first traversal 
-    //of the stream graph starting at top
+    /**
+     * Starting at top, return a  traversal of the graph where that guarantees
+     * that for each node n in the traversal, we have visited every node
+     * upstream of n.  For feedbackloops it will visit the feedback path after 
+     * the non-feedback path.  This traversal also guarantees that each node
+     * appears only once in the traversal.  
+     * 
+     * @param top The starting node of the traversal.
+     * @return The traversal, a LinkedList of FlatNode.
+     */
     public static LinkedList getTraversal(FlatNode top) 
     {
         traversal = new LinkedList();

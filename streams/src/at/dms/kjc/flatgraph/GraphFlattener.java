@@ -9,34 +9,55 @@ import java.io.*;
 import java.util.*;
 
 /**
- * This class flattens the stream graph
+ * This class will create a graph of {@link at.dms.kjc.flatgraph.FlatNode} 
+ * that represents the underlying SIR graph of the application.  It is basically
+ * the SIR graph without containers.
+ * <p>
+ * The constructed graph of FlatNodes, the Flat graph, will have one 
+ * node for each SIROperator in the SIR graph (except when --sync is enabled), 
+ * but there will exist no containers, FlatNodes directly connect to/from their
+ * downstream/upstream nodes.
+ * <p>
+ * Each SIROperator will be converted to a FlatNode: SIRFilter into a FlatNode with 
+ * at most one input/one output, SIRSplitter into a multiple output/one input, 
+ * SIRJoiner into multiple input/one output. 
+ * <p>
+ * If --sync is enabled, it will attempt to coalesce multiple splitters
+ * or joiners into a single FlatNode.
+ *   
+ * @author mgordon
  */
-
 public class GraphFlattener extends at.dms.util.Utils 
 {
-    private FlatNode currentNode;
-    //this hashset stores the splitters of feedbackloops
-    //so the edges can be swapped after createGraph()
-    //see the note in the create graph algorithm
+    /** When creating the flat graph, this is really the previous 
+     * node we created.  When we are creating a node we connect 
+     * previousNode to it.
+     */
+    private FlatNode previousNode;
+    /** Hashset stores the splitters of feedbackloops
+     * so the edges can be swapped after createGraph()
+     * see the note in the create graph algorithm */
     private HashSet feedbackSplitters;
-    
+    /** the toplevel, entry, FlatNode of the constructed Flat graph */
     public FlatNode top;
-    
-    private int unique_id;
-
-    //maps sir operators to their corresponding flatnode
+    /** maps SIROperator to their corresponding FlatNode */
     private HashMap SIRMap;
-
+    /** Used by --sync (synch removal) to reschedule the flat graph */
     public static LinkedList needsToBeSched=new LinkedList();;
 
     /**
-     * Creates a new flattener based on <toplevel>
+     * Create a graph of FlatNodes that represents the SIR graph 
+     * of the application rooted at toplevel.
+     * 
+     * If --sync is enabled, then try to coalesce multiple splitters 
+     * or joiners into a single FlatNode.
+     * 
+     * @param toplevel The toplevel SIR container of the application.
      */
     public GraphFlattener(SIROperator toplevel) 
     {
         this.SIRMap = new HashMap();
         feedbackSplitters = new HashSet();
-        unique_id = 0;
 
         //create the flat graph
         createGraph(toplevel);
@@ -45,7 +66,6 @@ public class GraphFlattener extends at.dms.util.Utils
         Iterator it = feedbackSplitters.iterator();
         while(it.hasNext()) {
             ((FlatNode)it.next()).swapSplitterEdges();
-        
         }
     }
 
@@ -53,6 +73,11 @@ public class GraphFlattener extends at.dms.util.Utils
      * Returns the number of tiles that would be needed to execute
      * this graph.  That is, just counts the filters, plus any joiners
      * whose output is not connected to another joiner.
+     * 
+     * This is used only for the SpaceDynamic and the original 
+     * at.dms.kjc.raw backends.
+     * 
+     * @return The number of tiles needed to map this graph to raw.
      */
     public int getNumTiles() {
         int count = 0;
@@ -91,39 +116,54 @@ public class GraphFlattener extends at.dms.util.Utils
         return count;
     }
     
+    /**
+     * Recursive method that is used to create the Flat graph.  
+     * 
+     * @param current the SIROperator we are visiting currently in the
+     * application's SIR graph and that needs to be added to the 
+     * FlatGraph.
+     */
     private void createGraph(SIROperator current) 
     {
         if (current instanceof SIRFilter) {
+            //create the flat node
             FlatNode node = addFlatNode(current);
+            //is first node we have visited, if so, set it as the top level
             if (top == null) {
-                currentNode = node;
+                previousNode = node;
                 top = node;
             }
-            currentNode.addEdges(node);
-            currentNode = node;
+            //add an edge from the previous flatnode (previousNode) to this new node
+            previousNode.addEdges(node);
+            previousNode = node;
         }
         if (current instanceof SIRPipeline){
             SIRPipeline pipeline = (SIRPipeline) current;
-        
+            //for a pipeline, visit each stream of the pipeline
             for (int i=0; i<pipeline.size(); i++) {
                 createGraph(pipeline.get(i));
             }
         }
         if (current instanceof SIRSplitJoin) {
             SIRSplitJoin sj = (SIRSplitJoin) current;
+            //create a node for the spliiter
             FlatNode splitterNode = addFlatNode (sj.getSplitter());
             if (top == null) {
-                currentNode = splitterNode;
+                //it is toplevel if we have not seen anything yet..
+                previousNode = splitterNode;
                 top = splitterNode;
             }
-        
+            //create the node for the joiner right now
             FlatNode joinerNode = addFlatNode (sj.getJoiner());
                 
-            currentNode.addEdges(splitterNode);
+            previousNode.addEdges(splitterNode);
             for (int i = 0; i < sj.size(); i++) {
-                currentNode = splitterNode;
+                //for each parellel stream the previous node is the splitter 
+                //at the beginning
+                previousNode = splitterNode;
                 createGraph(sj.get(i));
-                currentNode.addEdges(joinerNode);
+                //for the last node the previous node is the joiner
+                previousNode.addEdges(joinerNode);
             }
         
             //Save Weight of Joiner
@@ -669,7 +709,7 @@ public class GraphFlattener extends at.dms.util.Utils
                 }
             }
         
-            currentNode = joinerNode;       
+            previousNode = joinerNode;       
         }
         //HACK!!
         //note:  this algorithm incorrectly connects the splitter of a 
@@ -681,32 +721,32 @@ public class GraphFlattener extends at.dms.util.Utils
             SIRFeedbackLoop loop = (SIRFeedbackLoop)current;
             FlatNode joinerNode = addFlatNode (loop.getJoiner());
             if (top == null) {
-                //currentNode = joinerNode;
+                //previousNode = joinerNode;
                 top = joinerNode;
             }
             FlatNode splitterNode = addFlatNode (loop.getSplitter());
         
-            FlatNode.addEdges(currentNode, joinerNode);
+            FlatNode.addEdges(previousNode, joinerNode);
         
-            currentNode = joinerNode;
+            previousNode = joinerNode;
             createGraph(loop.getBody());
 
 
-            FlatNode.addEdges(currentNode, splitterNode);
+            FlatNode.addEdges(previousNode, splitterNode);
         
             //here is the hack!
             swapEdgesLater(splitterNode);
         
-            currentNode = splitterNode;
+            previousNode = splitterNode;
             createGraph(loop.getLoop());
-            FlatNode.addEdges(currentNode, joinerNode);
+            FlatNode.addEdges(previousNode, joinerNode);
             /*
             //Add dummy identity on the output splitter so splitters are always followed by a filter (making analysis simple)
             FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(splitterNode.edges[0])));
             FlatNode.addEdges(splitterNode, ident);
-            currentNode = ident;
+            previousNode = ident;
             */
-            currentNode = splitterNode;
+            previousNode = splitterNode;
 
             //Save Weight of Joiner
             int sumWeights=0;
@@ -717,9 +757,15 @@ public class GraphFlattener extends at.dms.util.Utils
         }
     }
 
-    /*add the splitter of a feedback loop to a hashset 
-      so we can swap the edges after createGraph() has run
-    */
+    /**
+     * Add the splitter of a feedback loop to a HashSet 
+     * so we can swap the edges after createGraph() has run.
+     * 
+     * @see FlatNode#swapSplitterEdges
+     * @see GraphFlattener#createGraph
+     * 
+     * @param splitter The node that represents the splitter of the feedbackloop.
+     */
     private void swapEdgesLater(FlatNode splitter) 
     {
         if (feedbackSplitters.contains(splitter))
@@ -729,15 +775,27 @@ public class GraphFlattener extends at.dms.util.Utils
     }
     
 
-    /**
-     * Adds a flat node for the given SIROperator, and return it.
-     */
+   /**
+    * Adds a flat node for the given SIROperator, and return it.
+    * Also add the association to the SIRMap HashMap.
+    * 
+    * @param op the SIROperator for which to create a new FlatNode
+    * @return The new FlatNode.
+    */
     private FlatNode addFlatNode(SIROperator op) {
         FlatNode node = new FlatNode(op);
         SIRMap.put(op, node);
         return node;
     }
 
+    /**
+     * Given an SIROperator, key, return the FlatNode that 
+     * was created to represent key, or null if one was not created.
+     * 
+     * @param key 
+     * @return the FlatNode that 
+     * was created to represent key, or null if one was not created.
+     */
     public FlatNode getFlatNode(SIROperator key) {
         FlatNode node = (FlatNode)SIRMap.get(key);
         //  if (node == null)
@@ -745,6 +803,13 @@ public class GraphFlattener extends at.dms.util.Utils
         return node;
     }
 
+    /**
+     * Return the output type of the FlatNode node.
+     * 
+     * @param node The FlatNode in question.
+     * 
+     * @return node's output type.
+     */
     public static CType getOutputType(FlatNode node) {
         if (node.contents instanceof SIRFilter)
             return ((SIRFilter)node.contents).getOutputType();
@@ -758,7 +823,15 @@ public class GraphFlattener extends at.dms.util.Utils
         }
     }
 
-    //returns true if this filter is mapped
+    /**
+     * Return true if this filter should be mapped to a tile, 
+     * meaning it is not a predefined filter.
+     * 
+     * @param filter The SIRFilter is question.
+     *  
+     * @return true if this filter should be mapped to a tile, 
+     * meaning it is not a predefined filter.
+     */
     public static boolean countMe(SIRFilter filter) {
         return !(filter instanceof SIRIdentity ||
                  filter instanceof SIRFileWriter ||
@@ -766,8 +839,14 @@ public class GraphFlattener extends at.dms.util.Utils
                  filter instanceof SIRPredefinedFilter);
     }
     
+    /**
+     * Return the data type of items that flow through joiner.
+     *  
+     * @param joiner The joiner
+     * @return The CType of items that flow through joiner.
+     */
     public static CType getJoinerType(FlatNode joiner) 
-    {
+    {        
         boolean found;
         //search backward until we find the first filter
         while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
@@ -781,12 +860,26 @@ public class GraphFlattener extends at.dms.util.Utils
             if (!found)
                 Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());
         }
+        //now get the first filter's type and return it
         if (joiner != null) 
             return ((SIRFilter)joiner.contents).getOutputType();
         else 
             return CStdType.Void;
     }
 
+    /**
+     * Return the multiplicity of node in the schedule determined by init.
+     * 
+     * If node does not appear in the schedule, return 0;
+     * 
+     * @param node 
+     * @param init If true use initExecutionCounts, else use steadyExecutionCounts
+     * @param initExecutionCounts HashMap of FlatNode->Integer for init multiplicities
+     * @param steadyExecutionCounts HashMap of FlatNode->Integer for steadyx multiplicities
+     * @return The multiplicity of node in init if init == true or steady of init == false, 
+     * or -1 if the corresponding HashMap is null, or 0 if the node does not appear
+     * in the schedule for the stage.
+     */
     public static int getMult(FlatNode node, boolean init, 
                               HashMap initExecutionCounts, HashMap steadyExecutionCounts)
     {

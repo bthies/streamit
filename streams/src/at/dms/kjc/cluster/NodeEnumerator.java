@@ -4,28 +4,52 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
-import java.lang.*;
+//import java.lang.*;
 import java.util.*;
 
+/**
+ * Maintain mappings from Flatnode / SIROperator to number, and number to SIROperator / FlatNode.
+ * 
+ * ?? These numbers are used elsewhere to generate names for variables. ??
+ * 
+ * A Flatnode and the SIROperator that is its contents should have the same number
+ * but for some reason, there is are separate maps from number to  SIROperator and number to FlatNode. 
+ * Why??
+ * 
+ * Also provides the service of getting an estimate of the stack size needed to execute a given node.
+ * 
+ * @author Janis
+ *
+ */
 public class NodeEnumerator implements FlatVisitor {
 
     static int counter = 0;
     
-    static HashMap nodeIds; // SIROperator --> int
-    static HashMap idToOperator; // int --> SIROperator
-    static HashMap idToFlatNode; // int --> SIROperator
+    static HashMap<SIROperator,Integer> nodeIds; // SIROperator --> int
+    static HashMap<Integer,SIROperator> idToOperator; // int --> SIROperator
+    static HashMap<Integer,FlatNode> idToFlatNode; // int --> FlatNode
 
     public static void reset() {
         counter = 0;
-        nodeIds = new HashMap();
-        idToFlatNode = new HashMap();
-        idToOperator = new HashMap();
+        nodeIds = new HashMap<SIROperator,Integer>();
+        idToFlatNode = new HashMap<Integer,FlatNode>();
+        idToOperator = new HashMap<Integer,SIROperator>();
     }
 
+    /**
+     * 
+     * @return number of nodes visited by visitNode
+     */
     public static int getNumberOfNodes() {
         return counter;
     }
 
+   /**
+    * Get the number for a FlatNode.
+    * 
+    * @param node  a FlatNode
+    * @return      number for node or -1 if node has no association
+    */ 
     public static int getNodeId(FlatNode node) {
     
         return getSIROperatorId(node.contents);
@@ -88,24 +112,47 @@ public class NodeEnumerator implements FlatVisitor {
         }
     }
     
+    /**
+     * WTF?
+     * 
+     * Sometimes used to get the SIROperator associated with a thread id.
+     * 
+     * @param nodeID  (thread id?)
+     * @return  SIROperator associated with (WTF?)
+     */
+
     public static SIROperator getOperator(int nodeID) {
-    
-        return (SIROperator)idToOperator.get(new Integer(nodeID));
+        return idToOperator.get(nodeID);  //implicit case to Integer
     }
+
+    /**
+     * Get the FlatNode associated with a number.
+     * 
+     * @param nodeID  number.
+     * @return        associated FlatNode
+     */
 
     public static FlatNode getFlatNode(int nodeID) {
-    
-        return (FlatNode)idToFlatNode.get(new Integer(nodeID));
+        return idToFlatNode.get(nodeID);
     }
 
+    /**
+     * Used in at least one place to provide a numeric thread id.
+     * 
+     * @param f
+     * @return  number associated with f, or -1 if f has no association
+     */
     public static int getSIROperatorId(SIROperator f) {
     
-        Integer i = (Integer)nodeIds.get(f);
+        Integer i = nodeIds.get(f);
         if (i == null) return -1;
         return i.intValue();
     }
         
 
+    /**
+     * Needs to have root FlatNode of graph accept a NodeEnumerator to set up numbers to nodes associations.
+     */
     public void visitNode(FlatNode node) {
 
         /*

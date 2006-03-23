@@ -6,18 +6,36 @@ import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.CType;
-import java.lang.*;
+//import java.lang.*;
 import java.util.*;
 
+/**
+ * WTF?
+ * 
+ * Only static data structures / methods, so better not try it on more than one
+ * program (fragment) at a time.
+ * 
+ * Since no constructor, probably need to have this visit a FlatGraph to set up data.
+ * 
+ * @author Janis
+ *
+ */
 public class RegisterStreams implements FlatVisitor {
 
-    static HashMap filterInStreams = new HashMap(); 
+    static HashMap<SIROperator,Vector<NetStream>> filterInStreams = 
+        new HashMap<SIROperator,Vector<NetStream>>(); 
     // SIROperator -> Vector of NetStream
 
-    static HashMap filterOutStreams = new HashMap();
+    static HashMap<SIROperator,Vector<NetStream>> filterOutStreams = 
+        new HashMap<SIROperator,Vector<NetStream>>();
     // SIROperator -> Vector of NetStream
 
 
+    /**
+     * Sets up some internal data static structures for use by static methods in this class.
+     *
+     * (Would normally not call visitnode from outside, but no other way to set up.)
+     */
     public void visitNode(FlatNode node) {
 
         /*
@@ -52,10 +70,8 @@ public class RegisterStreams implements FlatVisitor {
             output_t = stream.getOutputType();
         }
 
-        Vector v;
+        Vector<NetStream> v = new Vector<NetStream>();
         int i;
-
-        v = new Vector();
 
         if (node.incoming != null) {
 
@@ -76,7 +92,7 @@ public class RegisterStreams implements FlatVisitor {
 
         filterInStreams.put(node.contents, v);
 
-        v = new Vector();
+        v = new Vector<NetStream>();
 
         if (node.edges != null) {
 
@@ -97,25 +113,53 @@ public class RegisterStreams implements FlatVisitor {
         filterOutStreams.put(node.contents, v);
     }
 
+    /**
+     * WTF?
+     * 
+     * @param filter a SIRFilter
+     * @return The FlatGraph input to <filter> in NetStream format, or null if no input
+     * @see NetStream 
+     */
     public static NetStream getFilterInStream(SIRFilter filter) {
-        Vector v = (Vector)filterInStreams.get(filter);
-        if (v.size() == 0) return null; else return (NetStream)v.elementAt(0);
+        Vector<NetStream> v = filterInStreams.get(filter);
+        if (v.size() == 0) return null; else return v.elementAt(0);
     }
 
-    public static NetStream getFilterOutStream(SIRFilter filter) {
-        Vector v = (Vector)filterOutStreams.get(filter);
-        if (v.size() == 0) return null; else return (NetStream)v.elementAt(0);
+    /**
+     * WTF?
+     * 
+     * @param filter a SIRFilter
+     * @return The FlatGraph output of <filter> in NetStream format, or null if no output
+     * @see NetStream 
+     */
+     public static NetStream getFilterOutStream(SIRFilter filter) {
+        Vector<NetStream> v = filterOutStreams.get(filter);
+        if (v.size() == 0) return null; else return v.elementAt(0);
     }
 
 
-    public static Vector getNodeInStreams(SIROperator op) {
+    /**
+     * WTF?
+     * 
+     * @param op a SIROperator
+     * @return Vector of FlatGraph inputs to <op> in NetStream format
+     * @see NetStream 
+     */
+    public static Vector<NetStream> getNodeInStreams(SIROperator op) {
     
-        return (Vector)filterInStreams.get(op);
+        return filterInStreams.get(op);
     }
 
-    public static Vector getNodeOutStreams(SIROperator op) {
+    /**
+     * WTF?
+     * 
+     * @param op a SIROperator
+     * @return Vector of FlatGraph outputs from <op> in NetStream format
+     * @see NetStream 
+     */
+    public static Vector<NetStream> getNodeOutStreams(SIROperator op) {
     
-        return (Vector)filterOutStreams.get(op);
+        return filterOutStreams.get(op);
     }
 }
 

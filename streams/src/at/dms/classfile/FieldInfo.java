@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: FieldInfo.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: FieldInfo.java,v 1.3 2006-03-23 18:18:41 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -30,7 +30,7 @@ import java.io.DataOutput;
  * Each field is described by this structure.
  *
  * Used to make up new field entries. Fields for a class can have
- * an additional "ConstantValue" attribute associated them,
+ * an additional 'ConstantValue' attribute associated them,
  * which the java compiler uses to represent things like
  * static final int blah = foo;
  */

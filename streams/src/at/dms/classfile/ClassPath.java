@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ClassPath.java,v 1.3 2006-01-25 17:00:38 thies Exp $
+ * $Id: ClassPath.java,v 1.4 2006-03-23 18:18:41 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -204,7 +204,7 @@ public class ClassPath {
     /**
      * This class represents a conceptual directory which may hold
      * Java class files. Since Java can use archived class files found in
-     * a compressed ("zip") file, this entity may or may not correspond to
+     * a compressed ('zip') file, this entity may or may not correspond to
      * an actual directory on disk.
      */
     abstract static class ClassDirectory {

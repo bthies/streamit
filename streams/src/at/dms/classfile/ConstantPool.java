@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ConstantPool.java,v 1.3 2006-01-25 17:00:38 thies Exp $
+ * $Id: ConstantPool.java,v 1.4 2006-03-23 18:18:41 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -141,7 +141,7 @@ public class ConstantPool implements Constants {
 
     /**
      * This is the method to add items to a class. Items for
-     * a class are "uniquefied". Ie, if you add an item whose
+     * a class are 'uniquefied'. Ie, if you add an item whose
      * contents already exist in the class, only one entry is finally
      * written out when the class is written.
      *

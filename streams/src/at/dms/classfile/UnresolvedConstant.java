@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: UnresolvedConstant.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: UnresolvedConstant.java,v 1.3 2006-03-23 18:18:41 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -98,7 +98,7 @@ public class UnresolvedConstant extends PooledConstant {
 
     /**
      * hashCode (a fast comparison)
-     * CONVENTION: return XXXXXXXXXXXX << 4 + Y
+     * CONVENTION: return XXXXXXXXXXXX &lt;&lt; 4 + Y
      * with Y = ident of the type of the pooled constant
      */
     public final int hashCode() {
@@ -107,7 +107,7 @@ public class UnresolvedConstant extends PooledConstant {
 
     /**
      * equals (an exact comparison)
-     * ASSERT: this.hashCode == o.hashCode ===> cast
+     * ASSERT: this.hashCode == o.hashCode ===&gt; cast
      */
     public final boolean equals(Object o) {
         throw new InconsistencyException("method should not be called");

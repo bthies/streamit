@@ -560,8 +560,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils implements
     /**
      * Set to true to get a stack trace of callers inserted as a comment.
      * 
-     * Limitation: only provides info for loops taht are created as loops: i.e.
-     * those with trip count > 1.
+     * Limitation: only provides info for loops that are created as loops: i.e.
+     * those with trip count &gt; 1.
      */
 
     public static boolean getForLoopCallers = false;

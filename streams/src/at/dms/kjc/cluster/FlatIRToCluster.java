@@ -70,7 +70,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
     public boolean isInit = false;
 
-    /** > 0 if in a for loop header during visit * */
+    /** &gt; 0 if in a for loop header during visit * */
     private int forLoopHeader = 0;
 
     // fields for all of the vars names we introduce in the c code

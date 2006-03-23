@@ -32,13 +32,13 @@ public class ClusterFusion
      */
     private static Map partitionMap;
 
-    /** FlatNode (slave) -> FlatNode (node master).
+    /** FlatNode (slave) -&gt; FlatNode (node master).
      * 
      * Each fused node has a single master node and possibly multiple slave nodes
      */
     private static Map nodeMaster = new HashMap();
 
-    /** FlatNode (slave) -> FlatNode (local master).
+    /** FlatNode (slave) -&gt; FlatNode (local master).
      * 
      * each fused node has a local master this way it knows who is driving the execution
      */

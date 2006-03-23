@@ -21,7 +21,7 @@ public class InsertTimers extends InsertCounters implements Constants {
      */
     private static int MAX_ID = 0;
     /**
-     * Map of names for code regions to associated ID. (String -> Integer)
+     * Map of names for code regions to associated ID. (String -&gt; Integer)
      */
     private static HashMap nameToId = new HashMap();
     /**

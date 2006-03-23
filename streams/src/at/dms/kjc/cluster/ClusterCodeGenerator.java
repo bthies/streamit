@@ -49,7 +49,7 @@ class ClusterCodeGenerator {
     private int steady_counts;
     private String work_function;
 
-    /*
+    /**
      * A constructor
      *
      * @param oper a {@link SIROperator}
@@ -139,7 +139,7 @@ class ClusterCodeGenerator {
     }
 
 
-    /*
+    /**
      * Generates preamble of threadX.cpp file. This includes headers,
      * thread internal variables, communication variables, operator fields. 
      * And following functions: read/write thread, check thread status, 
@@ -643,7 +643,7 @@ class ClusterCodeGenerator {
         return;
     }
 
-    /*
+    /**
      * Generates the end of threadX.cpp file. This includes functions:
      * init_state, main, init_sdep and run.
      *

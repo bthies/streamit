@@ -2,7 +2,7 @@
 #
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.5 2006-01-26 02:11:53 dimock Exp $
+# $Id: build-javadoc,v 1.6 2006-03-23 21:04:38 dimock Exp $
 
 rm -rf $STREAMIT_HOME/javadoc
 mkdir $STREAMIT_HOME/javadoc
@@ -14,19 +14,34 @@ for i in $DIRS; do
   SOURCEPATHS="$SOURCEPATHS:$STREAMIT_HOME/$i"
 done
 
+# Our package list:
+# all subdirectories of $DIRS transitively, with leading '/'
+# removed and internal '/' changed to '.'
 for i in $DIRS; do
   NEWPACKAGES=`cd $STREAMIT_HOME/$i; find . -follow -type f -name '*.java' -not -name CVS -print | sed -e 's@/[^/]*$@@' -e 's@/@.@g' -e 's@^\.*@@' | sort -u`
-  PACKAGES="$PACKAGES $NEWPACKAGES"
+  PREPACKAGES="$PACKAGES $NEWPACKAGES"
 done
+
+
+for PKG in $PREPACKAGES; do
+ if [[ `expr match "$PKG" 'streamit\.eclipse'` -ne `expr length "streamit.eclipse"` ]]; 
+ then
+  PACKAGES="$PACKAGES $PKG"
+ fi
+done
+
+echo $PACKAGES
 
 # We seem to have some "debug" Eclipse packages, so adding these -links
 # doesn't actually help matters any.
 #  -link http://dev.eclipse.org/help21/topic/org.eclipse.platform.doc.isv/reference/api/ \
 #  -link http://dev.eclipse.org/help21/topic/org.eclipse.jdt.doc.isv/reference/api/ \
 
+#/usr/uns/bin/javadoc -J-Xmx128M -source 1.4 -use -version -author \
+#  -link http://java.sun.com/j2se/1.4.1/docs/api/ \
 
-/usr/uns/bin/javadoc -J-Xmx128M -source 1.4 -use -version -author \
-  -link http://java.sun.com/j2se/1.4.1/docs/api/ \
+/usr/uns/jdk1.5.0_01/bin/javadoc -J-Xmx128M -source 1.5 -use -version -author \
+  -link http://java.sun.com/j2se/1.5.0/docs/api/ \
   -link http://www.antlr.org/javadoc/ \
   -doctitle 'StreamIt Compiler Documentation' \
   -d $STREAMIT_HOME/javadoc \

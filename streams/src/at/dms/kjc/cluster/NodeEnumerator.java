@@ -8,13 +8,9 @@ import at.dms.kjc.*;
 import java.util.*;
 
 /**
- * Maintain mappings from Flatnode / SIROperator to number, and number to SIROperator / FlatNode.
- * 
- * ?? These numbers are used elsewhere to generate names for variables. ??
- * 
- * A Flatnode and the SIROperator that is its contents should have the same number
- * but for some reason, there is are separate maps from number to  SIROperator and number to FlatNode. 
- * Why??
+ * Maintain mappings from stream operator to number. These numbers 
+ * are used in NetStream objects and also in code generation to enumerate 
+ * the threads from 0..(N-1)
  * 
  * Also provides the service of getting an estimate of the stack size needed to execute a given node.
  * 
@@ -113,12 +109,10 @@ public class NodeEnumerator implements FlatVisitor {
     }
     
     /**
-     * WTF?
+     * Used to get the SIROperator associated with a thread id.
      * 
-     * Sometimes used to get the SIROperator associated with a thread id.
-     * 
-     * @param nodeID  (thread id?)
-     * @return  SIROperator associated with (WTF?)
+     * @param nodeID (thread id)
+     * @return  SIROperator associated with the id
      */
 
     public static SIROperator getOperator(int nodeID) {
@@ -137,7 +131,7 @@ public class NodeEnumerator implements FlatVisitor {
     }
 
     /**
-     * Used in at least one place to provide a numeric thread id.
+     * Used to provide number assigned to SIROperator
      * 
      * @param f
      * @return  number associated with f, or -1 if f has no association

@@ -10,12 +10,8 @@ import at.dms.kjc.CType;
 import java.util.*;
 
 /**
- * WTF?
- * 
- * Only static data structures / methods, so better not try it on more than one
- * program (fragment) at a time.
- * 
- * Since no constructor, probably need to have this visit a FlatGraph to set up data.
+ * Constructs a list of input and output tapes for each stream operator.
+ * Stores this information in static fields and provides static access methods.
  * 
  * @author Janis
  *
@@ -24,19 +20,20 @@ public class RegisterStreams implements FlatVisitor {
 
     static HashMap<SIROperator,Vector<NetStream>> filterInStreams = 
         new HashMap<SIROperator,Vector<NetStream>>(); 
-    // SIROperator -> Vector of NetStream
+    // input tapes coresponding to an operator
 
     static HashMap<SIROperator,Vector<NetStream>> filterOutStreams = 
         new HashMap<SIROperator,Vector<NetStream>>();
-    // SIROperator -> Vector of NetStream
-
+    // output tapes coresponding to an operator
 
     /**
      * Sets up some internal data static structures for use by static methods in this class.
+     * Must create instance of RegisterStreams and pass it to the top level stream.
      *
-     * (Would normally not call visitnode from outside, but no other way to set up.)
      */
     public void visitNode(FlatNode node) {
+
+	// visit a flat node that coresponds to an operator
 
         /*
           System.out.print("RegisterStreams: Visiting node name:" + 
@@ -49,6 +46,8 @@ public class RegisterStreams implements FlatVisitor {
         CType input_t = null, output_t = null;
 
         SIROperator operator = node.contents;
+
+	// get the input and output types of the operator
 
         try {
             if (operator instanceof SIRJoiner) {
@@ -69,6 +68,8 @@ public class RegisterStreams implements FlatVisitor {
             input_t = stream.getInputType();
             output_t = stream.getOutputType();
         }
+
+	// create a vector of input tapes
 
         Vector<NetStream> v = new Vector<NetStream>();
         int i;
@@ -92,6 +93,8 @@ public class RegisterStreams implements FlatVisitor {
 
         filterInStreams.put(node.contents, v);
 
+	// create a vector of output tapes
+
         v = new Vector<NetStream>();
 
         if (node.edges != null) {
@@ -114,7 +117,7 @@ public class RegisterStreams implements FlatVisitor {
     }
 
     /**
-     * WTF?
+     * Return a NetStream that represents input tape for a filter
      * 
      * @param filter a SIRFilter
      * @return The FlatGraph input to <filter> in NetStream format, or null if no input
@@ -126,7 +129,7 @@ public class RegisterStreams implements FlatVisitor {
     }
 
     /**
-     * WTF?
+     * Return a NetStream that represents output tape for a filter
      * 
      * @param filter a SIRFilter
      * @return The FlatGraph output of <filter> in NetStream format, or null if no output
@@ -139,7 +142,7 @@ public class RegisterStreams implements FlatVisitor {
 
 
     /**
-     * WTF?
+     * Return a Vector containing input tapes as NetStream objects
      * 
      * @param op a SIROperator
      * @return Vector of FlatGraph inputs to <op> in NetStream format
@@ -151,7 +154,7 @@ public class RegisterStreams implements FlatVisitor {
     }
 
     /**
-     * WTF?
+     * Return a Vector containing output tapes as NetStream objects
      * 
      * @param op a SIROperator
      * @return Vector of FlatGraph outputs from <op> in NetStream format

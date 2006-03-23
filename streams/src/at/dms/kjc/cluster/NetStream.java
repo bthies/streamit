@@ -5,10 +5,9 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.CType;
 
 /**
- * WTF?
- * 
- * I (AD) think that this represents a tape between two operators as a source operator number,
- * destination operator number, and type carried by the tape.
+ * A class that represents a tape with input and output operators and object type.
+ * The input and output operators are identified by numbers. The mapping between
+ * numbers and nodes is maintained by NodeEnumerator.
  * 
  * @author Janis
  *
@@ -21,9 +20,9 @@ public class NetStream {
     /**
      * Constructor.
      * 
-     * @param source  a number (representing a SIROperator?)
-     * @param dest    a number (representing a SIROperator?)
-     * @param type    a CType (representing type of data communicated between the operators?)
+     * @param source  a number representing input operator
+     * @param dest    a number representing output operator
+     * @param type    a CType representing type of data communicated between the operators
      */
     public NetStream(int source, int dest, CType type) {
         this.source = source;
@@ -31,13 +30,31 @@ public class NetStream {
         this.type = type;
     }
 
+    /** 
+     * Get number representing the input operator
+     *
+     * @return The number representing the input operator
+     */
+    
     public int getSource() {
         return source;
     }
 
+    /** 
+     * Get number representing the output operator
+     *
+     * @return The number representing the output operator
+     */
+
     public int getDest() {
         return dest;
     }
+
+    /** 
+     * Get type of objects communicated over the tape
+     *
+     * @return The type of objects communicated over the tape
+     */
 
     public CType getType() {
         return type;

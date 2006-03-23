@@ -559,6 +559,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             int _s1 = in.getSource();
             int _d1 = in.getDest();
 
+	    // depending on the weight unroll fully or by some constant factor
+
             if (sum > 128) {
 
                 // big weight do not unroll everything!!
@@ -1100,7 +1102,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
                 int _s2 = out.getSource();
                 int _d2 = out.getDest();
 
+		// depending on the weight unroll fully or by some constant factor
+
 		if (sum < 128) {
+
+		    // unroll fully!
 
 		    for (int i = 0; i < in.size(); i++) {
 			int num = joiner.getWeight(i);
@@ -1169,6 +1175,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    p.print("  #endif\n");
 
 		} else {
+
+		    // do not unroll fully weight >= 128
 
 		    for (int i = 0; i < in.size(); i++) {
 			int num = joiner.getWeight(i);

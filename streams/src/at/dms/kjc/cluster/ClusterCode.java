@@ -1209,8 +1209,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			    offs++;
 			}
 
-			p.println("  }\n");
-			
 			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 			p.print("    TAIL_"+_s1+"_"+_d1+" += "+step+";\n");
 			p.print("    #ifndef __NOMOD_"+_s1+"_"+_d1+"\n");
@@ -1225,6 +1223,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
 			p.print("    #endif\n");
 			p.print("  #endif\n");
+
+			p.println("  }\n");			
 
 			int rem = num % step;
 

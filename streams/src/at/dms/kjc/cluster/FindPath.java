@@ -6,8 +6,11 @@ import java.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
 
-/*
- * Attempts to find a path between two stream nodes.
+/**
+ * Attempts to find a path between two stream nodes. Uses informtaion 
+ * about output tapes maintained by RegisterStreams. The search
+ * starts at the source operator and performs breadth first search. 
+ *
  */
 
 public class FindPath {

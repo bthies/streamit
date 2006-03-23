@@ -13,7 +13,7 @@ import java.util.*;
 
 public class StatisticsGathering {
     /**
-     * Gather statistics for <str>.
+     * Gather statistics for <pre>str</pre>.
      */
     public static void doit(SIRStream str) {
         // count push statements
@@ -149,7 +149,7 @@ public class StatisticsGathering {
         protected SIRFilter filter;
 
         /**
-         * Visit all filters in <str>
+         * Visit all filters in <pre>str</pre>
          */
         public void doit(SIRStream str) {
             final FilterWorkVisitor me = this;

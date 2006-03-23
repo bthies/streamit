@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.8 2006-01-25 17:02:47 thies Exp $
+ * $Id: Message.java,v 1.9 2006-03-23 23:05:01 dimock Exp $
  */
 
 package at.dms.util;
@@ -118,7 +118,7 @@ public class Message implements at.dms.kjc.DeepCloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.util.Message other) {
         other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description);
         other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);

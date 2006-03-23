@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.17 2006-01-25 17:02:30 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.18 2006-03-23 23:05:02 dimock Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -114,7 +114,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
     /**
-     * Writes <rep> to files, names of <key>_A, <key>_B, <key>_C, <key>_D
+     * Writes <pre>rep</pre> to files, names of <pre>key</pre>_A, <pre>key</pre>_B, <pre>key</pre>_C, <pre>key</pre>_D
      */
     private void writeToFile(SIRStream key, LinearFilterRepresentation rep) {
         String base = key.getName().replace(' ','_');
@@ -163,7 +163,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
     
     /**
-     * Same as above, but specifies an existing <lfa> to use instead
+     * Same as above, but specifies an existing <pre>lfa</pre> to use instead
      * of creating a fresh one.
      **/
     public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, LinearAnalyzer lfa) {

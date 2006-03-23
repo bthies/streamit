@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.21 2006-01-25 17:02:30 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.22 2006-03-23 23:05:02 dimock Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -263,7 +263,7 @@ public class LinearFilterRepresentation {
 
        Now, the filter should use its first newStoredInputs variables to represent peek(0),peek(1),...,peek(newStoredInputs-1), and use its first pop-(newStoredInputs-oldStored) inputs to represent peek(newStoredInputs),peek(newStoredInputs+1),...,peek(oldStoredInputs+pop-1). The remaining inputs should be used to update the extraVars variables.
 
-       We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? addVars = n*newPush1 < newPeek2 <= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = addVars + newPop1 >= newPeek2, so addVars >= newPeek2-newPop1.
+       We know that addVars &gt;= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? addVars = n*newPush1 &lt; newPeek2 &lt;= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = addVars + newPop1 >= newPeek2, so addVars &gt;= newPeek2-newPop1.
     */
 
 

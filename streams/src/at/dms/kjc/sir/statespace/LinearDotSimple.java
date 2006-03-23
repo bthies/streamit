@@ -73,7 +73,7 @@ public class LinearDotSimple extends LinearDot {
     }
 
     /**
-     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa
+     * Prints dot graph of <pre>str</pre> to <pre>filename</pre>, using LinearAnalyzer lfa
      * and LinearRedundancyAnalyzer lra.
      */
     public static void printGraph(SIRStream str, String filename,

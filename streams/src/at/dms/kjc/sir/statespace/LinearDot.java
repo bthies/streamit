@@ -166,7 +166,7 @@ public class LinearDot extends StreamItDot {
     }
 
     /**
-     * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa.
+     * Prints dot graph of <pre>str</pre> to <pre>filename</pre>, using LinearAnalyzer lfa.
      */
     public static void printGraph(SIRStream str, String filename, LinearAnalyzer lfa){
         printGraph(str, filename, lfa, null);

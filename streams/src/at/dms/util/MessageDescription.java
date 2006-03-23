@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDescription.java,v 1.9 2006-01-25 17:02:47 thies Exp $
+ * $Id: MessageDescription.java,v 1.10 2006-03-23 23:05:01 dimock Exp $
  */
 
 package at.dms.util;
@@ -150,7 +150,7 @@ public class MessageDescription implements at.dms.kjc.DeepCloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.util.MessageDescription other) {
         other.format = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.format);
         other.reference = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.reference);

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.30 2006-02-03 00:52:58 thies Exp $
+ * $Id: Utils.java,v 1.31 2006-03-23 23:05:01 dimock Exp $
  */
 
 package at.dms.util;
@@ -72,7 +72,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     
     /**
-     * Returns the contents of <fileName> as a string buffer.
+     * Returns the contents of <pre>fileName</pre> as a string buffer.
      */
     public static StringBuffer readFile(String fileName)
         throws IOException
@@ -92,7 +92,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Writes <str> to <filename>, overwriting it if it's already
+     * Writes <pre>str</pre> to <pre>filename</pre>, overwriting it if it's already
      * there.
      */
     public static void writeFile(String filename, String str) throws IOException {
@@ -176,7 +176,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
     
     /**
-     * Returns <val> as a percentage with maximum of 4 digits
+     * Returns <pre>val</pre> as a percentage with maximum of 4 digits
      */
     public static String asPercent(double val) {
         String result = "" + (100*val);
@@ -184,7 +184,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Returns a power of 2 that is greater than or equal to <val>.
+     * Returns a power of 2 that is greater than or equal to <pre>val</pre>.
      */
     public static int nextPow2(int val) {
         if (val==0) { return val; }
@@ -194,7 +194,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Returns a list of Integers containing same elements as <arr>
+     * Returns a list of Integers containing same elements as <pre>arr</pre>
      */
     public static List intArrayToList(int[] arr) {
         LinkedList result = new LinkedList();
@@ -333,7 +333,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * @param orig The statement
      *
      *
-     * @return null if <orig> does not contain an expression or
+     * @return null if <pre>orig</pre> does not contain an expression or
      * the expression if it does.
      */
     public static JExpression getExpression(JStatement orig)
@@ -353,7 +353,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Return the first non-parentheses expressions contained in <orig> 
+     * Return the first non-parentheses expressions contained in <pre>orig</pre> 
      **/
     public static JExpression passThruParens(JExpression orig) 
     {
@@ -400,9 +400,9 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
 
     /**
-     * If the first and last SIRMarker's in <stmt> mark the beginning
+     * If the first and last SIRMarker's in <pre>stmt</pre> mark the beginning
      * and end of the same segment, then move those markers to the
-     * outermost edges of <stmt>.  The purpose of this routine is to
+     * outermost edges of <pre>stmt</pre>.  The purpose of this routine is to
      * lift markers of filter boundaries out of loops.
      */
     public static JStatement peelMarkers(JStatement stmt) {
@@ -451,7 +451,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Returns a version of <stmt> with all standalone pops (i.e.,
+     * Returns a version of <pre>stmt</pre> with all standalone pops (i.e.,
      * pop() as a statement rather than as an expression) removed.
      */
     public static JStatement removeUnusedPops(JStatement stmt) {
@@ -468,7 +468,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns whether or not there are any pop expressions before
-     * peek expressions in the dynamic execution of <stmt>.
+     * peek expressions in the dynamic execution of <pre>stmt</pre>.
      */
     public static boolean popBeforePeek(JStatement stmt) {
         // there are two ways that a dynamic pop can come before a
@@ -575,7 +575,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <body> for <count> number of times.  If the
+     * that executes <pre>body</pre> for <pre>count</pre> number of times.  If the
      * count is just one, then return the body instead of a loop.
      */
     public static JStatement makeForLoop(JStatement body, int count) {
@@ -584,7 +584,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <body> for <count> number of times.
+     * that executes <pre>body</pre> for <pre>count</pre> number of times.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count) {
         if (count instanceof JIntLiteral) {
@@ -609,11 +609,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <body> for <count> number of times.  Executes in
+     * that executes <pre>body</pre> for <pre>count</pre> number of times.  Executes in
      * the forward direction, counting up from 0 to count-1 with
-     * <loopIndex> as the loop counter.
+     * <pre>loopIndex</pre> as the loop counter.
      *
-     * Note that <loopIndex> should not appear in a different variable
+     * Note that <pre>loopIndex</pre> should not appear in a different variable
      * decl; it will get one in this routine.
      */
     public static JStatement makeForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
@@ -642,13 +642,13 @@ public abstract class Utils implements Serializable, DeepCloneable {
             }
         }
 
-        // make a test if our variable is less than <count>
+        // make a test if our variable is less than <pre>count</pre>
         JExpression cond = 
             new JRelationalExpression(null,
                                       Constants.OPE_LT,
                                       new JLocalVariableExpression(null, loopIndex),
                                       count);
-        // make an increment for <var>
+        // make an increment for <pre>var</pre>
         JStatement incr = 
             new JExpressionStatement(null,
                                      new JPostfixExpression(null,
@@ -694,11 +694,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <body> for <count> number of times.  Executes in
+     * that executes <pre>body</pre> for <pre>count</pre> number of times.  Executes in
      * the backwards direction, counting down from count-1 to zero
-     * with <loopIndex> as the loop counter.  
+     * with <pre>loopIndex</pre> as the loop counter.  
      *
-     * Note that <loopIndex> should not appear in a different variable
+     * Note that <pre>loopIndex</pre> should not appear in a different variable
      * decl; it will get one in this routine.
      */
     public static JStatement makeCountdownForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
@@ -727,13 +727,13 @@ public abstract class Utils implements Serializable, DeepCloneable {
             }
         }
 
-        // make a test if our variable is less than <count>
+        // make a test if our variable is less than <pre>count</pre>
         JExpression cond = 
             new JRelationalExpression(null,
                                       Constants.OPE_GE,
                                       new JLocalVariableExpression(null, loopIndex),
                                       new JIntLiteral(0));
-        // make a decrement for <var>
+        // make a decrement for <pre>var</pre>
         JStatement incr = 
             new JExpressionStatement(null,
                                      new JPostfixExpression(null,
@@ -776,8 +776,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * If <type> is void, then return <int> type; otherwise return
-     * <type>.  This is a hack to get around the disallowance of void
+     * If <pre>type</pre> is void, then return <pre>int</pre> type; otherwise return
+     * <pre>type</pre>.  This is a hack to get around the disallowance of void
      * arrays in C--should fix this better post-asplos.
      */
     public static CType voidToInt(CType type) {
@@ -785,7 +785,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-     * Returns value of environment variable named <var>, or null if
+     * Returns value of environment variable named <pre>var</pre>, or null if
      * the variable is undefined.
      */
     public static String getEnvironmentVariable(String var) {
@@ -823,7 +823,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.util.Utils other) {
     }
 

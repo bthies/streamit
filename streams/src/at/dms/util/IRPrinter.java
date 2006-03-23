@@ -1,6 +1,6 @@
 /*
  * IRPrinter.java: Print Kopi IR
- * David Maze <dmaze@cag.lcs.mit.edu>
+ * David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
  */
 
 package at.dms.util;

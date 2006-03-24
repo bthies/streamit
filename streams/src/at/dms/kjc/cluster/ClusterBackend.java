@@ -437,8 +437,7 @@ public class ClusterBackend implements FlatVisitor {
         graphFlattener.top.accept(new RegisterStreams(), new HashSet(), true);
 
         DiscoverSchedule d_sched = new DiscoverSchedule();
-        graphFlattener.top.accept(d_sched, new HashSet(), true);
-        d_sched.findPhases();
+        d_sched.findPhases(graphFlattener.top.contents);
 
         /*
         // Remove globals pass is broken in cluster !!!

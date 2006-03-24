@@ -8,7 +8,18 @@ import at.dms.kjc.CType;
 import java.lang.*;
 import java.util.*;
 
-class DiscoverSchedule implements FlatVisitor {
+/**
+ * A class that finds an execution schedule for a stream graph
+ * using breadth first search. Usage:
+ *   DiscoverSchedule d = new DiscoverSchedule();
+ *   d.findPhases(graphFlattener.top.contents);
+ * Note that this will not work if there are feedback loops.
+ * The result is a set of phases, where an operator from
+ * phase a should be executed before operator from phase b if a<b.
+ */
+
+class DiscoverSchedule /*implements FlatVisitor*/ 
+{
 
     HashMap phases = new HashMap();          // SIROperator -> Integer
 
@@ -17,6 +28,7 @@ class DiscoverSchedule implements FlatVisitor {
 
     int number_of_phases = 0;
 
+    /*
     public void visitNode(FlatNode node) {
 
         SIROperator oper = node.contents;
@@ -30,10 +42,21 @@ class DiscoverSchedule implements FlatVisitor {
 
         }
     }
+    */
+
+    /**
+     * Returns the number of phases found
+     * @return the number of phases found
+     */
 
     public int getNumberOfPhases() {
         return number_of_phases;
     }
+
+    /**
+     * Returns all operators in a given phase
+     * @return all operators in a given phase
+     */
 
     public HashSet getAllOperatorsInPhase(int phase) {
         HashSet res = new HashSet();
@@ -52,7 +75,15 @@ class DiscoverSchedule implements FlatVisitor {
     }
     
 
-    public void findPhases() {
+    /**
+     * Finds all phases associated with a stream program
+     * @param top operator
+     */
+
+    public void findPhases(SIROperator top) {
+
+	phases.put(top, new Integer(0));
+	current_ops.add(top);
     
         do {
 
@@ -65,6 +96,10 @@ class DiscoverSchedule implements FlatVisitor {
         } while (current_ops.size() != 0);
     
     }
+
+    /**
+     * Finds the next phase
+     */
 
     private void findNextPhase() {
 

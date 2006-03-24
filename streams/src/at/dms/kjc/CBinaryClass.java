@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBinaryClass.java,v 1.7 2006-03-24 15:36:02 dimock Exp $
+ * $Id: CBinaryClass.java,v 1.8 2006-03-24 15:39:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -131,7 +131,7 @@ public class CBinaryClass extends CClass {
         return other;
     }
 
-    /** Clones all fields of this into <pre>other</pre> */
+    /** Clones all fields of this into <other> */
     protected void deepCloneInto(at.dms.kjc.CBinaryClass other) {
         super.deepCloneInto(other);
     }

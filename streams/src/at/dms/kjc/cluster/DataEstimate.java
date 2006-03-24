@@ -9,10 +9,22 @@ import at.dms.kjc.raw.Util;
 import java.lang.*;
 import java.util.HashMap;
 
+/**
+ * Estimates the data working set of an operator. Currently
+ * returns a magic number for splitters and joiners. For filters
+ * add the size of globals with the size of locals.
+ */
+
 public class DataEstimate {
 
     // SIRFilter -> Integer (size of global fields)
     private static HashMap saved_globals = new HashMap();
+
+    /**
+     * Returns the size of a variable with given type.
+     * @param type type of the variable
+     * @return size of the variable
+     */
 
     public static int getTypeSize(CType type) {
 
@@ -60,6 +72,11 @@ public class DataEstimate {
         return 0;
     }
 
+    /**
+     * Estimates data working set for a {@link SIROperator}
+     * @param oper the operator
+     * @return estimated size of data working set
+     */
 
     public static int estimateDWS(SIROperator oper) {
 
@@ -95,6 +112,13 @@ public class DataEstimate {
 
         return 0;
     }
+
+    /**
+     * Estimates the size of data buffers needed to store input and
+     * output for a single execution of a {@link SIROperator}
+     * @param oper the operator
+     * @return estimated size of data buffers
+     */
 
     public static int estimateIOSize(SIROperator oper) {
         int id = NodeEnumerator.getSIROperatorId(oper);
@@ -133,6 +157,14 @@ public class DataEstimate {
     }
 
 
+    /**
+     * Returns the size of globals for a {@link SIRFilter}. 
+     * Also implements a cache, so that if size of globals has 
+     * been calculated we just look up the value in the cache.
+     * @param filter the filter
+     * @return size of globals (possibly cached)
+     */
+
     public static int filterGlobalsSize(SIRFilter filter) {
 
         if (saved_globals.containsKey(filter)) {
@@ -143,6 +175,12 @@ public class DataEstimate {
         saved_globals.put(filter, new Integer(data_size));
         return data_size;
     }
+
+    /**
+     * Computes the size of globals for a {@link SIRFilter}. 
+     * @param filter the filter
+     * @return computed size of globals
+     */
 
     public static int computeFilterGlobalsSize(SIRFilter filter) {
 

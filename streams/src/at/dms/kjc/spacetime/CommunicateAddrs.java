@@ -4,13 +4,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
+
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
  * tiles and then communicate each buffer's global address to the tiles that need
  * to know the address.   It will also generate the typedefs for the rotating buffers
  * and the functions that will set up the structs for rotation (a circular linked list of 
- * buffers).
- *
+ * buffers). The structure is a circular linked list that has length equal to 
+ * the rotation length of the buffer, where each entry in the list points
+ * to a component (buffer) of the rotated buffer.
+ * <p>
  * It also sets the rotation length for the buffers based on the 
  * primepump schedule.  
  * 
@@ -19,18 +22,30 @@ import at.dms.kjc.*;
  */
 public class CommunicateAddrs 
 {
+    /** name of the function that initializes the rotation structures */
     public static String rotationSetupFunction = "__setup_rotations__";
+    /** name of the function that communicates the addresses on each tile */
     public static String functName = "__snd_rvc_addrs__";
+    /** name of the function that de-allocates the rotation buffers */
     public static String freeFunctName = "__free_init_bufs__";
+    /** prefix of the variable name for hte rotating buffers */
     public static String rotTypeDefPrefix = "__rotating_buffer_";
+    /** The Address Communication pass for the application of this compile */ 
     private static CommunicateAddrs commAddrs;
+    /** the raw chip */
     private RawChip chip;
+    /** functions that we are creating, RawTile to StringBuffer */
     private HashMap functions;
+    /** de-allocate functions that we are creating, RawTile to StringBuffer */
     private HashMap freeFunctions;
+    /** fields we are creating in this pass, RawTile to StringBuffer */ 
     private HashMap fields;
+    /** random generator */
     private static Random rand;
-    private SpaceTimeSchedule spaceTimeSchedule;         
-    private HashMap rotationFunctions;
+    /** our space time scheduler with the schedules */
+    private SpaceTimeSchedule spaceTimeSchedule;      
+    /** functions for setup of the rotation structure for each tile, RawTile to StringBuffer*/
+    private HashMap<RawTile, StringBuffer> rotationFunctions;
     /** The type defs for the rotating buffer structs for all the types used in
      * the program.
      */
@@ -42,8 +57,12 @@ public class CommunicateAddrs
     }
     
     /**
-     * @param tile
-     * @return For <pre>tile</pre> return the fields that represent the buffers.
+     * Return a string of C variable declarations that we create for the given
+     * tile.
+     * 
+     * @param tile The raw tile.
+     * @return For <pre>tile</pre> return the fields that represent the buffers as 
+     * C variable declarations.
      */
     public static String getFields(RawTile tile) 
     {
@@ -51,17 +70,24 @@ public class CommunicateAddrs
     }
 
     /**
-     * See class comments. 
+     * Generate code to allocate the off chip buffers on the necessary
+     * tiles and then communicate each buffer's global address to the tiles that need
+     * to know the address.   It will also generate the typedefs for the rotating buffers
+     * and the functions that will set up the structs for rotation (a circular linked list of 
+     * buffers).
+     *
+     * It also sets the rotation length for the buffers based on the 
+     * primepump schedule.  
      * 
-     * @param chip
-     * @param stSchedule
+     * @param chip The raw chip.
+     * @param stSchedule The space time schedule for the app.
      */
-    public CommunicateAddrs(RawChip chip, SpaceTimeSchedule stSchedule)
+    private CommunicateAddrs(RawChip chip, SpaceTimeSchedule stSchedule)
     {
         this.chip = chip;
         fields = new HashMap();
         functions = new HashMap();
-        rotationFunctions = new HashMap();
+        rotationFunctions = new HashMap<RawTile, StringBuffer>();
         freeFunctions = new HashMap();
         spaceTimeSchedule = stSchedule;
         typedefs = new HashMap(); 
@@ -133,8 +159,7 @@ public class CommunicateAddrs
             
             //add the code necessary to set up the structure for rotation for this
             //rotating buffer 
-            ((StringBuffer)rotationFunctions.get(homeTile)).append
-            (setupRotation(buffer, homeTile));
+            rotationFunctions.get(homeTile).append(setupRotation(buffer, homeTile));
             
             for (int i = 0; i < rotationLength; i++) {
                
@@ -193,6 +218,17 @@ public class CommunicateAddrs
         }
     }
     
+    /**
+     * Generate the c code that will setup the rotation structure for buffer
+     * assign to tile.  It creates a circular linked list that has length equal to 
+     * the rotation length of the buffer, where each entry in the list is points
+     * to a component of the rotated buffer.
+     * 
+     * @param buffer The buffer.
+     * @param tile  The tile.
+     * @return the c code that will setup the rotation structure for buffer
+     * assign to tile. 
+     */
     private String setupRotation(OffChipBuffer buffer, RawTile tile) {
                 
         StringBuffer buf = new StringBuffer();
@@ -254,16 +290,26 @@ public class CommunicateAddrs
         return buf.toString();
     }
     
+    /**
+     * Given a tile return C function declaration for the function that
+     * will setup the rotation structure for the buffers mapped to this tile.
+     * 
+     * @param tile The tile
+     * @return The c function.
+     */
     public static String getRotSetupFunct(RawTile tile) {
         StringBuffer buf = new StringBuffer();
         buf.append("\nvoid " + rotationSetupFunction + "() {\n");
-        buf.append((StringBuffer)commAddrs.rotationFunctions.get(tile));
+        buf.append(commAddrs.rotationFunctions.get(tile));
         buf.append("}\n");
         return buf.toString();
     }
     
     /**
-     * @param tile
+     * Return for <pre>tile</pre> return a function that will free the buffer memory.
+     * 
+     * @param tile The tile.
+     * 
      * @return For <pre>tile</pre> return a function that will free the buffer memory.
      */
     public static String getFreeFunction(RawTile tile) 
@@ -280,7 +326,12 @@ public class CommunicateAddrs
     
 
     /** 
-     * @param tile
+     * For <pre>tile</pre> return the function that will allocate the buffers or 
+     * get the addresses from the static network, this function will not perform the
+     * setup of the rotation structures.
+     * 
+     * @param tile The tile. 
+     * 
      * @return For <pre>tile</pre> return the function that will allocate the buffers or 
      * get the addresses from the static network.
      */
@@ -297,6 +348,9 @@ public class CommunicateAddrs
     }   
     
     /** 
+     * Generate a string that has c code for the type defs for the
+     * rotating buffer types. 
+     * 
      * @return A string that has c code for the type defs for the
      * rotating buffer types. 
      */
@@ -310,6 +364,19 @@ public class CommunicateAddrs
         return aggreg.toString();
     }
     
+    /**
+     * Generate code to allocate the off chip buffers on the necessary
+     * tiles and then communicate each buffer's global address to the tiles that need
+     * to know the address.   It will also generate the typedefs for the rotating buffers
+     * and the functions that will set up the structs for rotation (a circular linked list of 
+     * buffers).
+     *
+     * It also sets the rotation length for the buffers based on the 
+     * primepump schedule.  
+     * 
+     * @param chip The raw chip.
+     * @param stSchedule The space time schedule for the app.
+     */
     public static void doit(RawChip chip, SpaceTimeSchedule stSchedule) 
     {
         commAddrs = new CommunicateAddrs(chip, stSchedule);

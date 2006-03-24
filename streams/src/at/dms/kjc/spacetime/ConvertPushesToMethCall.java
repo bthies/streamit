@@ -15,9 +15,15 @@ import at.dms.kjc.sir.SIRPushExpression;
 
 
 /**
- * This class will convert all of the pushes into function calles.  It will
+ * This class will convert all of the pushes into function calls.  It will
  * generate different function calls depending on whether the filter writes
  * its output to the gdn or the static network.
+ * <p>
+ * It is used by all subclasses of  
+ * {@link at.dms.kjc.spacetime.RawExecutionCode} to convert push statements.
+ * <p>
+ * The method is then recognized by later passes and converted to the
+ * correct generated code.
  * 
  * @author mgordon
  *
@@ -53,6 +59,11 @@ public class ConvertPushesToMethCall extends SLIRReplacingVisitor {
             }
     }
     
+    /**
+     * Create a new converted for either the gdn or the static network.
+     * 
+     * @param dynamic if true create a converter for the gdn.
+     */
     private ConvertPushesToMethCall(boolean dynamic) {
         this.dynamic = dynamic;
     }

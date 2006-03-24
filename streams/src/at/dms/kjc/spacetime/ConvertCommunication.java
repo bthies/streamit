@@ -15,11 +15,36 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
 
-class ConvertCommunication extends SLIRReplacingVisitor 
+/**
+ * 
+ * This class will convert peek and pop statements into reads from a
+ * buffer (an array).  This class is used by 
+ * {@link at.dms.kjc.spacetime.BufferedCommunication} to convert 
+ * the peek's and pop's.   
+ * 
+ * It uses a circular buffer from which to read the values.
+ * 
+ * @author mgordon
+ *
+ */
+public class ConvertCommunication extends SLIRReplacingVisitor 
 {
+    /** The generated var that were created by BufferedCommunication
+     * and will be used in the conversion.
+     */
     GeneratedVariables generatedVariables;
+    /**
+     * The filter whose input communication we are converting.
+     */
     FilterInfo filterInfo;
     
+    /**
+     * Create a new object that will convert filterInfo's input communication
+     * using the variables generateds.
+     * 
+     * @param generateds The compiler generated vars.
+     * @param fitlerInfo The filter.
+     */
     public ConvertCommunication(GeneratedVariables generateds,
                                 FilterInfo fitlerInfo) 
     {
@@ -27,8 +52,15 @@ class ConvertCommunication extends SLIRReplacingVisitor
         this.filterInfo = filterInfo;
     }
     
-    //for pop expressions convert to the form
-    // (recvBuffer[++recvBufferIndex % recvBufferSize])
+    /**
+     * Visit a pop expressions convert to the form:
+     * (recvBuffer[++recvBufferIndex % recvBufferSize])
+     * 
+     * Where the variables are defined in 
+     * {@link ConvertCommunication#generatedVariables}.
+     * 
+     * @return the new expression as a buffer access.
+     */
     public Object visitPopExpression(SIRPopExpression self,
                                      CType tapeType) {
       
@@ -69,8 +101,15 @@ class ConvertCommunication extends SLIRReplacingVisitor
                                           bufferAccess);
     }
     
-    //convert peek exps into:
-    // (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize])
+    /**
+     * Convert peek exps into:
+     * (recvBuffer[(recvBufferIndex + (arg) + 1) mod recvBufferSize])
+     * 
+     * Where the variables are defined in 
+     * {@link ConvertCommunication#generatedVariables}.
+     * 
+     * @return The converted expression that will use a buffer access.
+     */
     public Object visitPeekExpression(SIRPeekExpression oldSelf,
                                       CType oldTapeType,
                                       JExpression oldArg) {

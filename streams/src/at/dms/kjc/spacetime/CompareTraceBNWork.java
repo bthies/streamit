@@ -17,6 +17,11 @@ public class CompareTraceBNWork implements Comparator {
     /** The partition we used */
     private Partitioner partitioner;
     
+    /**
+     * Create a new object that uses the work estimates of partitioner.
+     * 
+     * @param partitioner
+     */
     public CompareTraceBNWork(Partitioner partitioner) {
         this.partitioner = partitioner;
     }

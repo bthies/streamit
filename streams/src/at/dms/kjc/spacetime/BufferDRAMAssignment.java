@@ -13,10 +13,13 @@ import at.dms.kjc.flatgraph2.*;
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the
- * raw chip.  It uses a heuristic approach that is executed in stages.  See the
- * code for details.
- * 
- * @author mgordon
+ * raw chip.
+ * <p>
+ * The assignment is stored in the {@link at.dms.kjc.spacetime.OffChipBuffer} 
+ * class for the {@link at.dms.kjc.spacetime.InterTraceBuffer} and 
+ * {@link at.dms.kjc.spacetime.IntraTraceBuffer}.
+ *
+ *@author mgordon
  *
  */
 public class BufferDRAMAssignment {
@@ -24,13 +27,16 @@ public class BufferDRAMAssignment {
      * to the home base of the endpoint tiles.
      */
     private final boolean ALWAYS_ASSIGN_INTRA_HOME_BASE = true;
+    /** The raw chip we are compiling to */
     private RawChip rawChip;
     /** the layout we are using */
     private Layout layout;
     
     /**
-     * Assign the buffers to ports
-     * @param assignment A hash map of filtertraceNode-&gt;RawTile
+     * Assign the buffers to DRAM ports.
+     * 
+     * @param spaceTime The space time schedule.
+     * @param layout The layout object that assigns FilterTraceNode to Tiles.
      */
     public void run(SpaceTimeSchedule spaceTime, Layout layout) {
         OffChipBuffer.resetDRAMAssignment();
@@ -103,7 +109,13 @@ public class BufferDRAMAssignment {
     }
 
     /**
-     * @param traceNode
+     * Return True if two or more different tiles issue a store command to the same 
+     * dram using the gdn, this is bad, it could lead to a race condition.  But right
+     * now we are being overly conservative, there could exist other dependencies to 
+     * prevent the race.
+     * 
+     * @param traces The traces of the application.
+     * 
      * @return True if two or more different tiles issue a store command to the same 
      * dram using the gdn, this is bad, it could lead to a race condition.  But right
      * now we are being overly conservative, there could exist other dependencies to 
@@ -137,17 +149,22 @@ public class BufferDRAMAssignment {
         return false;
     }
    
+    /**
+     * Return the home DRAM that is controlled by tile.
+     * 
+     * @param tile The raw tile.
+     * @return the home DRAM that is controlled by tile.
+     */
     private StreamingDram getHomeDevice(RawTile tile) {
         return LogicalDramTileMapping.getHomeDram(tile);
     }
     
     /**
-     * first go thru the file, reader and writers and assign their 
+     * First go thru the file, reader and writers and assign their 
      * input-&gt;file and file-&gt;output buffers to reside in the dram 
      * attached to the output port.
      * 
-     * @param files
-     * @param chip
+     * @param files The traces that read or write files.
      */
     private  void fileStuff(Trace[] files) {
         // go through the drams and reset the file readers and writers 
@@ -221,7 +238,7 @@ public class BufferDRAMAssignment {
      * Assign the filter-&gt;output intratracebuffer of a split trace
      * to the upstream filter's homebase.
      * 
-     * @param output
+     * @param output The output trace node.
      */
     private void splitOutputAssignment(OutputTraceNode output) {
         if ((output.oneOutput() || output.noOutputs()) && 
@@ -241,7 +258,7 @@ public class BufferDRAMAssignment {
      * output (not split). Also, assign the intertracebuffer to the single output
      * to make it redundant if possible.  
      * 
-     * @param output
+     * @param output The output trace node
      */
     private void singleOutputAssignment(OutputTraceNode output) {
 
@@ -304,7 +321,7 @@ public class BufferDRAMAssignment {
      * outputs and end at a trace a single input.  Try to assign the 
      * inter trace buffer to the downstream trace's input-&gt;filter buffer dram.
      * 
-     * @param input
+     * @param input The input trace node.
      */
     private void singleInputAssignment(InputTraceNode input) {
         assert input.oneInput();
@@ -394,6 +411,9 @@ public class BufferDRAMAssignment {
     }
 
     /**
+     * Return a hashet of StreamingDrams that are already assigned to the
+     * outgoing edges of <pre>output</pre> at the current time.  
+     * 
      * @param output
      * @return A hashet of StreamingDrams that are already assigned to the
      * outgoing edges of <pre>output</pre> at the current time.  
@@ -410,6 +430,9 @@ public class BufferDRAMAssignment {
     }
     
     /**
+     * Return a hashset of StreamingDrams that are already assigned to the incoming
+     * buffers of <pre>input</pre> at the current time.
+     * 
      * @param input
      * @return A hashset of StreamingDrams that are already assigned to the incoming
      * buffers of <pre>input</pre> at the current time.
@@ -425,12 +448,17 @@ public class BufferDRAMAssignment {
     }
 
     /**
-     * given an output trace node and an assignment of inputtracenodes to
+     * Given an output trace node and an assignment of inputtracenodes to
      * streaming drams return the tiles that are needed to route this assignment
-     * on the chip
+     * on the chip.
+     * 
+     * @param output The output trace node that splits
+     * @param assigmnent The assignment of filterTraceNodes to Tiles. 
+     * 
+     * @return A set of tiles that this splitter, output, occupies.
      */
     public Set tilesOccupiedSplit(OutputTraceNode output,
-                                         HashMap assignment) {
+            HashMap assignment) {
         HashSet tiles = new HashSet();
         Iterator edges = assignment.keySet().iterator();
         StreamingDram src = IntraTraceBuffer.getBuffer(output.getPrevFilter(),
@@ -444,6 +472,16 @@ public class BufferDRAMAssignment {
         return tiles;
     }
 
+    /**
+     * Not used currently. 
+     * 
+     * Returns the tiles used to implement the joining of the input
+     * trace node. 
+     * 
+     * @param input The input trace node in question.
+     * 
+     * @return A set of RawTiles.
+     */
     public Set tilesOccupiedJoin(InputTraceNode input) {
         HashSet tiles = new HashSet();
         StreamingDram dest = IntraTraceBuffer.getBuffer(input,
@@ -456,8 +494,13 @@ public class BufferDRAMAssignment {
     }
 
     /**
-     * @param edge
-     * @param chip
+     * Given a Edge, edge, return an order iterator of PortDistances
+     * that is ordered in increase cost of communication for assigning 
+     * edge to the DRAM in the PortDistance. 
+     * 
+     * @param edge The Edge in question.
+     * @param chip The raw chip.
+     * 
      * @return An iterator over a list of PortDistance ordered in ascending 
      * order of the distance from both the dram assigned to the source of 
      * <pre>edge</pre> and the dram assigned to the dest of <pre>edge</pre>. 

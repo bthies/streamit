@@ -8,12 +8,18 @@ import at.dms.util.Utils;
 
 /**
  * This class generates a data flow schedule of the trace graph.
+ * More specifically, in the traversal, all ancestors of a node are 
+ * guaranteed to appear before the node.
+ * 
+ * @author mgordon 
  */
-
 public class DataFlowOrder {
+    
     /**
      * Generate a list of traces in data-flow order (don't add I/O traces to the traversal).
+     * 
      * @param topTraces The trace forrest.
+     * 
      * @return A LinkedList of traces in data-flow order
      */
     public static LinkedList getTraversal(Trace[] topTraces) {

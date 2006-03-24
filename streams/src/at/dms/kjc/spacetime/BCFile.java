@@ -15,19 +15,37 @@ import at.dms.kjc.flatgraph2.*;
  */
 public class BCFile 
 {
+    /** the raw chip we are compiling to */
     private RawChip rawChip;
+    /** the string that stores the current btl code for the machine file */
     private StringBuffer buf;
+    /** The number gathering structure for this application */
     private NumberGathering ng;
+    /** Should we generate numbers gathering code */
     private boolean numbers;
-
+    /** The name of file we are generating */
     public static final String BCFILE_NAME = "setup.bc";
 
+    /**
+     * Generate the btl machine file that describes the application 
+     * configuration, the file readers and writers (the external devices) 
+     * and the number gathering code.  
+     *  
+     * @param rc The RawChip.
+     * @param gn The NumberGathering structure.
+     */
     public static void generate(RawChip rc, NumberGathering gn) 
     {
         (new BCFile(rc, gn)).doit();
     }
     
-    public BCFile(RawChip rc, NumberGathering g) 
+    /**
+     * Create a new BCFile object that will generate the btl machine file.
+     * 
+     * @param rc The rawchip,
+     * @param g The number gathering structures.
+     */
+    private BCFile(RawChip rc, NumberGathering g) 
     {
         rawChip = rc;
         ng = g;
@@ -35,7 +53,12 @@ public class BCFile
         numbers = (ng != null);
     }
     
-    public void doit() 
+    /**
+     * Actually generate the bc code that describes the machine
+     * configuration and any helper functions.
+     *
+     */
+    private void doit() 
     {
         buf = new StringBuffer();
         
@@ -92,6 +115,11 @@ public class BCFile
         writeFile();
     }
     
+    /**
+     * If we are number gathering, then generate bc code
+     * to use the number gathering file output device and 
+     * generate the state of the number gathering variables.
+     */
     private void numberGathering() 
     {
         //include the device
@@ -131,7 +159,11 @@ public class BCFile
         
     }
     
-
+    /**
+     * If this application performs file i/o, attach the
+     * file reading and file writing devices to the appropriate 
+     * DRAMs.  Use the number gathering file writer if we gather numbers.
+     */
     private void files()
     {
         buf.append("\n{\n");    
@@ -186,7 +218,11 @@ public class BCFile
     }
     
     
-    //create the function that sets everything up in the simulator
+    /**
+     * If we are using the magic net, then call the magic net
+     * setup function.  Otherwise do nothing.
+     *
+     */
     private void setupFunction() 
     {
         buf.append("\n{\n");    
@@ -197,6 +233,10 @@ public class BCFile
         buf.append("\n}\n");
     }
 
+    /**
+     * Create the code for the flops counter.
+     *
+     */
     private void flopsCount() 
     {
         buf.append
@@ -222,7 +262,9 @@ public class BCFile
              "\n");     
     }
     
-
+    /**
+     * Create the code that will initialize the magic net schedules.
+     */
     private void magicNet() 
     {
         buf.append("include(\"magic_schedules.bc\");\n");
@@ -238,7 +280,10 @@ public class BCFile
         buf.append("}\n");
     }
 
-    //create the function to tell the simulator what tiles are mapped
+    /**
+     * Create the function to tell the simulator what tiles are mapped, 
+     * so should be counted in the statistics gathering.
+     */
     private void mappedFunction() 
     {
         buf.append("fn mapped_tile(tileNumber) {\n");
@@ -260,6 +305,10 @@ public class BCFile
         buf.append("}\n");
     }
 
+    /**
+     * Create code to load all the schedules for the magic drams.
+     *
+     */
     private void magicDram() 
     {
         buf.append("{\n");
@@ -283,6 +332,10 @@ public class BCFile
     }
     
 
+    /**
+     * If we are in decoupled mode, generate bc code to install the print service
+     * and measure the work of the tile.
+     */
     private void decoupled() 
     {
         buf.append("global gStreamItFilterTiles = " + rawChip.computingTiles() + ";\n");
@@ -310,6 +363,10 @@ public class BCFile
         buf.append("}\n");
     }
 
+    /**
+     * Dump the stringbuffer to a file.
+     *
+     */
     private void writeFile() 
     {
         try {

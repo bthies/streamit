@@ -3,15 +3,24 @@ package at.dms.kjc.spacetime;
 import java.util.Iterator;
 
 /**
- * Calculate the computation to communication ratio.  Poorly named class.
+ * Calculate the computation to communication ratio.  Poorly named class,
+ * the name should be CompCommRatio. 
  * 
  * @author mgordon
  *
  */
 public class CommCompRatio {
+    
     /**
-     * @return computation / communication ratio
-     */ 
+     * Calculate the computation to communication ratio of the 
+     * application.  Where the computation is total work of all the filters
+     * in the steady-state and the communication is the 
+     * number of items sent between slices.
+     * 
+     * @param partitioner The partitioner we used to slice the graph.
+     * 
+     * @return The computation to communication ratio.
+     */
     public static double ratio(Partitioner partitioner) {
         int comp = 0, comm = 0;
         // get the trace node travesal

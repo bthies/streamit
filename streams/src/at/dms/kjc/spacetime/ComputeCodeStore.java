@@ -8,54 +8,67 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import at.dms.kjc.flatgraph2.FilterContent;
 
 /**
  * 
- * 
+ * Repository for the compute code (SIR code that is converted to C
+ * and mapped to the compute processor) for a tile.  This class is 
+ * used by {@link at.dms.kjc.spacetime.Rawify} as it visits the schedules 
+ * to generate the code that will implement the schedules. 
+ * This class includes methods to add code to the 3 different schedules 
+ * (init, primepump, steady) that are executed at each tile.
+ * This class is then used by {@link at.dms.kjc.spacetime.TraceIRtoC} to 
+ * convert the sir code for each tile to C code for each tile.
  * 
  * @author mgordon
  *
  */
 public class ComputeCodeStore {
+    /** If true, generate presynched dram commands when needed */
     public static final boolean GEN_PRESYNCH = true;
-    
+    /** the name of the main function for each tile */
     public static String main = "__RAWMAIN__";
-
-    // set to false if you do not want to generate
-    // the work functions calls or inline them
-    // useful for debugging
+    /** set to false if you do not want to generate
+     * the work functions calls or inline them
+     * useful for debugging 
+     */
     private static final boolean CODE = true;
-
+    /** The fields of the tile */
     protected JFieldDeclaration[] fields;
-
+    /** the methods of this tile */
     protected JMethodDeclaration[] methods;
-
-    // this method calls all the initialization routines
-    // and the steady state routines...
+    /** this method calls all the initialization routines
+     * and the steady state routines
+     */
     protected JMethodDeclaration rawMain;
-
+    /** The raw tile this compute code will be place on */
     protected RawTile parent;
-
+    /** block for the steady-state, as calculated currently */
     protected JBlock steadyLoop;
-
-    // the block that executes each tracenode's init schedule
-    protected JBlock initBlock;
-        
-    // this hash map holds RawExecutionCode that was generated
-    // so when we see the filter for the first time in the init
-    // and if we see the same filter again, we do not have to
-    // add the functions again...
-    HashMap rawCode;
-
-    //this will be true with the first dram read of the steady state 
-    //has been presynched, meaning that we have already seen a read
-    //and presynched the first read of the steady-state
+    /** the block that executes each tracenode's init schedule, as calculated currently */
+    protected JBlock initBlock;        
+    /** this hash map holds RawExecutionCode that was generated
+     * so when we see the filter for the first time in the init
+     * and if we see the same filter again, we do not have to
+     * add the functions again
+     */
+    protected HashMap<FilterContent, RawExecutionCode> rawCode;
+    /** this will be true with the first dram read of the steady state 
+     * has been presynched, meaning that we have already seen a read
+     * and presynched the first read of the steady-state, cough. 
+     */
     private boolean firstLoadPresynchedInSteady;
     
+    /**
+     * Create a store for the compute code of tile.  
+     * 
+     * @param parent
+     */
     public ComputeCodeStore(RawTile parent) {
         this.parent = parent;
         firstLoadPresynchedInSteady = false;
-        rawCode = new HashMap();
+        rawCode = new HashMap<FilterContent, RawExecutionCode>();
         methods = new JMethodDeclaration[0];
         fields = new JFieldDeclaration[0];
         rawMain = new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
@@ -165,8 +178,8 @@ public class ComputeCodeStore {
      * from this tile to tell it that we have sent the dram command and it
      * can begin the store.
      * 
-     *  This function will generate the gdn store command and also inject
-     *  the synch word to the static network.
+     * This function will generate the gdn store command and also inject
+     * the synch word to the static network.
      * 
      * @param init
      * @param buffer
@@ -532,13 +545,21 @@ public class ComputeCodeStore {
     }   
     
     
+    /**
+     * Add the code necessary to execution the filter of filterInfo
+     * at the current position in the steady-state code of this store, 
+     * given the layout. 
+     * 
+     * @param filterInfo The filter to add to the steady-state schedule.
+     * @param layout The layout of the application.
+     */
     public void addTraceSteady(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
 
         // check to see if we have seen this filter already
         if (rawCode.containsKey(filterInfo.filter)) {
-            exeCode = (RawExecutionCode) rawCode.get(filterInfo.filter);
+            exeCode = rawCode.get(filterInfo.filter);
         } else {
             // otherwise create the raw ir code
             // if we can run linear or direct communication, run it
@@ -568,6 +589,13 @@ public class ComputeCodeStore {
          */
     }
 
+    /**
+     * Called to add filterInfo's fields, helper methods, and init function call
+     * as calculated by exeCode to the compute code store for this tile.  
+     * 
+     * @param exeCode The code to add.
+     * @param filterInfo The filter.
+     */
     private void addTraceFieldsAndMethods(RawExecutionCode exeCode,
                                           FilterInfo filterInfo) {
         // add the fields of the trace
@@ -578,6 +606,12 @@ public class ComputeCodeStore {
         addInitFunctionCall(filterInfo);
     }
 
+    /**
+     * Add the call the init function as the first statement in the
+     * init stage.
+     * 
+     * @param filterInfo The filter.
+     */
     private void addInitFunctionCall(FilterInfo filterInfo) {
         // create the params list, for some reason
         // calling toArray() on the list breaks a later pass
@@ -599,6 +633,13 @@ public class ComputeCodeStore {
 
     }
 
+    /**
+     * Add filterInfo's prime pump block to the current position of the
+     * primepump code for this tile.
+     * 
+     * @param filterInfo The filter.
+     * @param layout The layout of the application.
+     */
     public void addTracePrimePump(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
@@ -606,7 +647,7 @@ public class ComputeCodeStore {
         
         // check to see if we have seen this filter already
         if (rawCode.containsKey(filterInfo.filter)) {
-            exeCode = (RawExecutionCode) rawCode.get(filterInfo.filter);
+            exeCode = rawCode.get(filterInfo.filter);
         } else {
             // otherwise create the raw ir code
             // if we can run linear or direct communication, run it
@@ -631,6 +672,13 @@ public class ComputeCodeStore {
                         primePump.getName(), new JExpression[0]), null));
     }
 
+    /**
+     * Add filterInfo's init stage block at the current position of the init
+     * stage for this code store.
+     * 
+     * @param filterInfo The filter.
+     * @param layout The layout of the application.
+     */
     public void addTraceInit(FilterInfo filterInfo, Layout layout) {
         parent.setMapped();
         RawExecutionCode exeCode;
@@ -719,6 +767,16 @@ public class ComputeCodeStore {
         }
     }
     
+    /**
+     * Create code on the compute processor to send constant to 
+     * the switch.  If init then append the code to the init schedule, 
+     * otherwise steady-schedule.
+     * <p>
+     * It does nothing on the switch, that is left for somewhere else.
+     * 
+     * @param constant The number to send.
+     * @param init if true add to init stage, otherwise add to steady.
+     */
     public void sendConstToSwitch(int constant, boolean init) {
         JStatement send = RawExecutionCode.constToSwitchStmt(constant);
 
@@ -817,14 +875,30 @@ public class ComputeCodeStore {
         return false;
     }
     
+    /**
+     * Return the methods of this store.
+     * 
+     * @return the methods of this store.
+     */
     public JMethodDeclaration[] getMethods() {
         return methods;
     }
 
+    /**
+     * Return the fields of this store.  
+     * 
+     * @return the fields of this store.  
+     */
     public JFieldDeclaration[] getFields() {
         return fields;
     }
 
+    /**
+     * Return the main function of this store that 
+     * will execute the init, primepump, and loop the steady-schedule.
+     * 
+     * @return the main function.
+     */
     public JMethodDeclaration getMainFunction() {
         return rawMain;
     }

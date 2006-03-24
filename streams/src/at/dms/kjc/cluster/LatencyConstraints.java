@@ -27,7 +27,12 @@ import streamit.scheduler2.*;
 import streamit.scheduler2.iriter.*;
 
 /**
- *
+ * A class that detects and stores pairwise latency constraints 
+ * between message senders and receivers. A latency constraint
+ * only exists if a downstream message is sent at negative latency
+ * or an upstream message is being sent (latency must be positive).
+ * Note that current implementation assumes that each filter that 
+ * receives credits receives them from only one filter.
  */
 
 public class LatencyConstraints {
@@ -36,7 +41,7 @@ public class LatencyConstraints {
     public static HashSet restrictedExecutionFilters = new HashSet();
 
     // consists of SIRFilter -> Integer
-    public static HashMap initCredit = new HashMap();
+    //public static HashMap initCredit = new HashMap();
 
     // consists of SIRFilter(s) -> HashSet of LatencyConstraint(s)
     public static HashMap outgoingLatencyConstraints = new HashMap();
@@ -44,10 +49,16 @@ public class LatencyConstraints {
     // Vector of SIRFilter(s) (sender, receiver) -> Boolean;
     public static HashMap messageDirectionDownstream = new HashMap();
 
+    /**
+     * Returns true if a {@link SIRFilter} needs to receive credit
+     * messages and limit its execution accordingly.
+     */
+
     public static boolean isRestricted(SIRFilter filter) {
         return restrictedExecutionFilters.contains(filter);
     }
 
+    /*
     public static int getInitCredit(SIRFilter filter) {
         return ((Integer)initCredit.get(filter)).intValue();
     }
@@ -58,6 +69,15 @@ public class LatencyConstraints {
             initCredit.put(filter, new Integer(val));
         }
     }
+    */
+
+    /**
+     * Returns a set of outgoing constraints for a {@link SIRFilter}
+     * this represents a set of filters to which an execution
+     * credit messages will have to be sent.
+     * @param filter the filter
+     * @return a set of filters that need to receive credit messages
+     */
 
     public static HashSet getOutgoingConstraints(SIRFilter filter) {
 
@@ -69,6 +89,12 @@ public class LatencyConstraints {
             return tmp;
         }
     }
+
+    /**
+     * Returns maximum latency associatew with a {@link SIRLatency} object
+     * @param latency the latency object
+     * @return the maximum latency as integer
+     */
 
     private static int MaxLatency(SIRLatency latency) {
     
@@ -99,6 +125,11 @@ public class LatencyConstraints {
         return 0;
     }
 
+    /**
+     * Checks if the message direction between sender and receiver is
+     * downstream
+     */
+
     public static boolean isMessageDirectionDownstream(SIRFilter sender,
                                                        SIRFilter receiver) {
         Vector v = new Vector();
@@ -115,6 +146,13 @@ public class LatencyConstraints {
 
         return b.booleanValue();
     }
+
+    /**
+     * Given a top stream iterator and an array of portals detecta and
+     * register all pairwise latency constraints.
+     * @param topStreamIter top stream iterator
+     * @param portals an array of all portals
+     */
 
     public static void detectConstraints(
                                          streamit.scheduler2.iriter.Iterator topStreamIter,
@@ -388,7 +426,7 @@ public class LatencyConstraints {
                         init_credit = 
                             sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
 
-                        setInitCredit((SIRFilter)receiver, init_credit);
+                        //setInitCredit((SIRFilter)receiver, init_credit);
 
                         System.out.println("Init credit: "+init_credit);
 

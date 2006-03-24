@@ -1,5 +1,7 @@
 package streamit.stair.core;
 
+import java.util.List;
+
 /**
  * A composite type containing heterogeneous child types, as in a C
  * structure.  This is an ordered listing of pairs of names and types,
@@ -10,7 +12,7 @@ package streamit.stair.core;
  * or a C union type is represented by a {@link TypeLaidOut} instead.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStruct.java,v 1.2 2006-01-25 17:05:05 thies Exp $
+ * @version $Id: TypeStruct.java,v 1.3 2006-03-24 17:23:55 dimock Exp $
  */
 public class TypeStruct extends Type
 {

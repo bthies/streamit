@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TraceInferenceGraph.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: TraceInferenceGraph.java,v 1.3 2006-03-24 18:26:08 dimock Exp $
  */
 
 package at.dms.backend;
@@ -35,10 +35,7 @@ public class TraceInferenceGraph extends Trace {
 
     /**
      * Creates a new instruction handle.
-     *
-     * @param   insn        the instruction
-     * @param   prev        the handle of the next instruction
-     *              in textual order
+     * (Probably buggy description from cut and paste -- deleted references to wrong parameters)
      */
     public TraceInferenceGraph(InferenceNode[] nodes) {
         super("infer.vcg");

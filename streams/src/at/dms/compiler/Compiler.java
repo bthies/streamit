@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.10 2006-03-24 15:54:46 dimock Exp $
+ * $Id: Compiler.java,v 1.11 2006-03-24 18:32:18 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -111,7 +111,7 @@ public abstract class Compiler implements at.dms.kjc.DeepCloneable {
 
     /**
      * Takes a vector of file names an checks that each exists.
-     * @param   files           a vector of names
+     * @param   names           a vector of names
      * @return  a vector of files known to exist
      * @exception   UnpositionedError   at least one file does not exist
      */
@@ -198,7 +198,7 @@ public abstract class Compiler implements at.dms.kjc.DeepCloneable {
 
     /**
      * Write a message to the diagnostic output.
-     * @param   message     the formatted message
+     * @param   error     the formatted message
      */
     public void inform(UnpositionedError error) {
         inform(error.getMessage());
@@ -206,7 +206,7 @@ public abstract class Compiler implements at.dms.kjc.DeepCloneable {
 
     /**
      * Write a message to the diagnostic output.
-     * @param   message     the formatted message
+     * @param   error     the formatted message
      */
     public void inform(PositionedError error) {
         inform(error.getMessage());

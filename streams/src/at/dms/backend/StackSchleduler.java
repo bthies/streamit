@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StackSchleduler.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: StackSchleduler.java,v 1.3 2006-03-24 18:26:08 dimock Exp $
  */
 
 package at.dms.backend;
@@ -34,10 +34,7 @@ public class StackSchleduler extends TreeWalker {
 
     /**
      * Creates a new instruction handle.
-     *
-     * @param   insn        the instruction
-     * @param   prev        the handle of the next instruction
-     *              in textual order
+     * (Probably buggy description from cut and paste -- deleted references to wrong parameters)
      */
     public StackSchleduler(BasicBlock[] bblocks, BasicBlock[] eblocks) {
         super(bblocks, eblocks);
@@ -87,32 +84,32 @@ public class StackSchleduler extends TreeWalker {
         }
     }
 
-    /**
-     * Processes the node
-     *
-     * @param   node        the node to be processed
-     *
-     protected void processNode(QNode node) {
-     QTemporary[]   uses = node.getUses();
+//     /**
+//      * Processes the node
+//      *
+//      * @param   node        the node to be processed
+//      *
+//      protected void processNode(QNode node) {
+//      QTemporary[]   uses = node.getUses();
 
-     for (int i = 0; i < uses.length; i++) {
-     QTemporary temp = uses[i];
+//      for (int i = 0; i < uses.length; i++) {
+//      QTemporary temp = uses[i];
 
-     if (!isInList(temp, node.getLiveout()) && defs.containsKey(temp)) {
-     QQuadruple defNode = (QQuadruple)defs.get(temp);
+//      if (!isInList(temp, node.getLiveout()) && defs.containsKey(temp)) {
+//      QQuadruple defNode = (QQuadruple)defs.get(temp);
 
-     removeNode(defNode);
-     //node.setParameter(temp, defNode);
-     System.out.println("YOU'VE GOT IT " + defNode);
-     }
-     }
+//      removeNode(defNode);
+//      //node.setParameter(temp, defNode);
+//      System.out.println("YOU'VE GOT IT " + defNode);
+//      }
+//      }
 
-     if (node.isStore()) {
-     QTemporary def = node.getDef();
+//      if (node.isStore()) {
+//      QTemporary def = node.getDef();
 
-     defs.put(def, node);
-     }
-     }
+//      defs.put(def, node);
+//      }
+//      }
 
      /**
      * Called when a branch is reached

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.12 2006-03-24 15:54:46 dimock Exp $
+ * $Id: JavaStyleComment.java,v 1.13 2006-03-24 18:32:18 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -36,7 +36,7 @@ public class JavaStyleComment implements Serializable, at.dms.kjc.DeepCloneable 
     /**
      * Construct a node in the parsing tree
      * @param   text        the string representation of this comment
-     * @param   !!! COMPLETE
+     *    !!! COMPLETE params
      */
     public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
         this.text = text;

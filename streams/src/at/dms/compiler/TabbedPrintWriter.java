@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.11 2006-03-24 15:54:46 dimock Exp $
+ * $Id: TabbedPrintWriter.java,v 1.12 2006-03-24 18:32:18 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -36,7 +36,7 @@ public class TabbedPrintWriter implements at.dms.kjc.DeepCloneable {
 
     /**
      * construct a pretty printer object for java code
-     * @param   fileName        the file into the code is generated
+     * @param   writer      underlying Writer into which the code is generated
      */
     public TabbedPrintWriter(Writer writer) {
         p =  new PrintWriter(writer);

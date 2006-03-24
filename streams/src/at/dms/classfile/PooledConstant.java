@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: PooledConstant.java,v 1.3 2006-03-23 18:18:41 dimock Exp $
+ * $Id: PooledConstant.java,v 1.4 2006-03-24 18:27:21 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -35,8 +35,6 @@ public abstract class PooledConstant implements Constants {
 
     /**
      * Constructs a new pooled constant.
-     *
-     * @param   uniq        a string that identifies this constant.
      */
     public PooledConstant() {}
 

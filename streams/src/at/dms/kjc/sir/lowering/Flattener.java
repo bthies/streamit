@@ -4,7 +4,6 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.partition.linear.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.sir.lowering.reordering.*;
 import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.linear.frequency.*; 
@@ -128,12 +127,6 @@ public class Flattener {
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);
         }
-
-        /* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
-        /* StreamItDot.printGraph(str, "before-syncremov.dot");
-           SIRPipeline parentPipe = (SIRPipeline)str; 
-           SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)parentPipe.get(1), (SIRSplitJoin)parentPipe.get(2)); 
-           StreamItDot.printGraph(str, "after-syncremov.dot"); */ 
 
         /*
           SIRFilter toDuplicate = ((SIRFilter)

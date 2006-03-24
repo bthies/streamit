@@ -7,24 +7,26 @@ import java.util.*;
 import at.dms.kjc.sir.linear.*;
 
 /**
- * Intended to reflect all the content of a filter needed by a backend
- * After these are constructed the old SIRFilters can be garbage collected
- * Will migrate methods from SIRFilter and SIRTwoStageFilter as needed
- * Unifies the representation of SIRFilter and SIRTwoStageFilter
- * Information is transferred from SIRFilter at construction time
- * FilterContent is immutable and a more compact representation
- * Truly flat. No pointers back to any previously existing structure.
+ * Intended to reflect all the content of a filter needed by a
+ * backend. After these are constructed the old SIRFilters can be
+ * garbage collected. Can migrate methods from SIRFilter and
+ * SIRTwoStageFilter as needed. Unifies the representation of
+ * SIRFilter and SIRTwoStageFilter. Information is transferred from
+ * SIRFilter at construction time. FilterContent is immutable and a
+ * more compact representation. Truly flat. No pointers back to any
+ * previously existing structure.
+ * @author jasperln
  */
 public class FilterContent {
-    private String name;
-    private JMethodDeclaration[] init,steady;
-    private CType inputType,outputType;
-    private int initMult, steadyMult;
-    private JMethodDeclaration[] methods;
-    private List paramList;
-    private JMethodDeclaration initFunction;
-    private boolean is2stage;
-    private JFieldDeclaration[] fields;
+    private String name; //Filter name
+    private JMethodDeclaration[] init,steady; //Init and steady method declarations
+    private CType inputType,outputType; //Input and output types
+    private int initMult, steadyMult; //Multiplicities from scheduler
+    private JMethodDeclaration[] methods; //Other method declarations
+    private List paramList; //List of parameters
+    private JMethodDeclaration initFunction; //Init function for two-stage filters
+    private boolean is2stage; //Is true when two-stage filter
+    private JFieldDeclaration[] fields; //Field declarations
     //LinearRepresentation
     /** if the filter is linear, then array stores the A in Ax + b **/
     private double[] array;
@@ -49,11 +51,12 @@ public class FilterContent {
         fissed filters that were generated from the original linear filter **/
     private int total;
     
-    private static int unique_ID = 0;
+    private static int unique_ID = 0; //Unique id for this FilterContent
 
     /**
-     * Using this constructor will essentially make a copy of <content>
-     **/
+     * Copy constructor for FilterContent
+     * @param content The FilterContent to copy.
+     */
     public FilterContent(FilterContent content) {
         name = content.name + unique_ID++;
         init = content.init;
@@ -78,6 +81,10 @@ public class FilterContent {
         total = content.total;
     }
 
+    /**
+     * Constructor FilterContent from SIRPhasedFilter.
+     * @param filter SIRPhasedFilter to construct from.
+     */
     public FilterContent(SIRPhasedFilter filter) {
         name = filter.getName();
         init = filter.getInitPhases();
@@ -97,6 +104,10 @@ public class FilterContent {
         //total=1;
     }
 
+    /**
+     * Constructor FilterContent from UnflatFilter.
+     * @param unflat UnflatFilter to construct from.
+     */
     public FilterContent(UnflatFilter unflat) {
         SIRFilter filter = unflat.filter;
         name = filter.getName();
@@ -169,10 +180,17 @@ public class FilterContent {
         }
     }
     
+    /**
+     * Return if filter is linear.
+     */
     public boolean isLinear() {
         return linear;
     }
 
+    /**
+     * Set array for linear filters. The A in Ax+b.
+     * @param array The array to set.
+     */
     public void setArray(double[] array) {
         //this.array=array;
         int mod=array.length%popCount;
@@ -185,59 +203,121 @@ public class FilterContent {
             this.array=array;
     }
 
+    /**
+     * Set begin for linear filters. True if this filter is the first
+     * filter of the fissed filters representing the original linear
+     * filter.
+     * @param begin The boolean to set for begin.
+     */
     public void setBegin(boolean begin) {
         this.begin=begin;
     }
 
+    /**
+     * Returns true if this filter is the first filter of the fissed
+     * filters representing the original linear filter.
+     */
     public boolean getBegin() {
         return begin;
     }
 
+    /**
+     * Set end for linear filters. True if this filter is the last
+     * filter of the fissed filters representing the original linear
+     * filter.
+     * @param end The boolean to set for end.
+     */
     public void setEnd(boolean end) {
         this.end=end;
     }
 
+    /**
+     * Returns true if this filter is the last filter of the fissed
+     * filters representing the original linear filter.
+     */
     public boolean getEnd() {
         return end;
     }
 
+    /**
+     * Set position for linear filters. The position of the filter in
+     * the pipeline of fissed filters that were generated from the
+     * original linear filter.
+     * @param pos The int to set for pos.
+     */
     public void setPos(int pos) {
         this.pos=pos;
     }
 
+    /**
+     * Return the position of the linear filter in the pipeline of
+     * fissed filters that were generated from the original linear
+     * filter.
+     */
     public int getPos() {
         return pos;
     }
 
+    /**
+     * Set total number for linear filters. The total number of
+     * filters in the pipeline of fissed filters that were generated
+     * from the original linear filter.
+     * @param total The int to set for total.
+     */
     public void setTotal(int total) {
         this.total=total;
     }
 
+    /**
+     * Return the total number of linear filters in the pipeline of
+     * fissed filters that were generated from the original linear
+     * filter.
+     */
     public int getTotal() {
         return total;
     }
 
+    /**
+     * For linear filters, returns the array A in Ax+b that represents
+     * the filter.
+     */
     public double[] getArray() {
         return array;
     }
 
+    /**
+     * For linear filters, returns the constant b in Ax+b that
+     * represents the filter.
+     */
     public double getConstant() {
         return constant;
     }
 
+    /**
+     * Returns the pop count of this filter.
+     */
     public int getPopCount() {
         return popCount;
     }
 
+    /**
+     * Returns the peek amount of this filter.
+     */
     public int getPeek() {
         return peek;
     }
 
+    /**
+     * Returns if this filter is two-stage or not.
+     */
     public boolean isTwoStage() 
     {
         return is2stage;
     }
     
+    /**
+     * Returns string representation of this FilterContent.
+     */
     public String toString() {
         if(array==null)
             return name;
@@ -271,26 +351,44 @@ public class FilterContent {
         }
     }
 
+    /**
+     * Returns filter name of this FilterContent.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Returns input type of this FilterContent.
+     */
     public CType getInputType() {
         return inputType;
     }
 
+    /**
+     * Returns output type of this FilterContent.
+     */
     public CType getOutputType () {
         return outputType;
     }
 
+    /**
+     * Returns list of steady state method declarations.
+     */
     public JMethodDeclaration[] getSteadyList() {
         return steady;
     }
     
+    /**
+     * Returns list of initialization state methods.
+     */
     public JMethodDeclaration[] getInitList() {
         return init;
     }
 
+    /**
+     * Returns work function.
+     */
     public JMethodDeclaration getWork() {
         if(steady!=null)
             return steady[0];
@@ -298,64 +396,107 @@ public class FilterContent {
             return null;
     }
 
+    /**
+     * Returns init function.
+     */
     public JMethodDeclaration getInit() {
         return initFunction;
     }
 
+    /**
+     * Returns multiplicity of init schedule.
+     */
     public int getInitMult() {
         return initMult;
     }
     
+    /**
+     * Multiplies the steady state schedule by mult amount.
+     * @param mult The number of times to multiply the steady state schedule by.
+     */
     public void multSteadyMult(int mult) 
     {
         steadyMult *= mult;
     }
     
+    /**
+     * Returns the multiplicity of steady state schedule.
+     */
     public int getSteadyMult() {
         return steadyMult;
     }
 
+    /**
+     * Returns push amount.
+     */
     public int getPushInt() {
         if(linear)
             return 1;
         return steady[0].getPushInt();
     }
 
+    /**
+     * Returns pop amount.
+     */
     public int getPopInt() {
         if(linear)
             return getPopCount();
         return steady[0].getPopInt();
     }
 
+    /**
+     * Returns peek amount.
+     */
     public int getPeekInt() {
         return steady[0].getPeekInt();
     }
 
+    /**
+     * Returns push amount of init stage.
+     */
     public int getInitPush() {
         return init[0].getPushInt();
     }
 
+    /**
+     * Returns pop amount of init stage.
+     */
     public int getInitPop() {
         return init[0].getPopInt();
     }
 
+    /**
+     * Returns peek amount of init stage.
+     */
     public int getInitPeek() {
         return init[0].getPeekInt();
     }
 
+    /**
+     * Returns method declarations.
+     */
     public JMethodDeclaration[] getMethods() {
         return methods;
     }
     
+    /**
+     * Returns field declarations.
+     */
     public JFieldDeclaration[] getFields() 
     {
         return fields;
     }
     
+    /**
+     * Returns init-work method declaration.
+     */
     public JMethodDeclaration getInitWork() {
         return init[0];
     }
     
+    /**
+     * Returns list of paramters.
+     */
     public List getParams() {
         return paramList;
     }

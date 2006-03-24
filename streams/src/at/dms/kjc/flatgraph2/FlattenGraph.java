@@ -8,24 +8,32 @@ import at.dms.kjc.spacetime.*;
 import at.dms.kjc.sir.linear.*;
 
 /**
- * Flatten with new synch removal
+ * Flatten graph with new synch removal. Removes structure and reveals
+ * inherit graph of data flow.
+ * @author jasperln
  */
 public class FlattenGraph {
-    //private static int filterCount=0;
-    private static ArrayList topLevelNodes=new ArrayList();
-    private static HashMap nodes=new HashMap();
+    private static ArrayList topLevelNodes=new ArrayList(); //List of top level nodes
+    private static HashMap nodes=new HashMap(); //Set of all nodes (value is null)
+    //Set of simple null filters (regular splitters and joiners)
     private static HashMap simpleNull=new HashMap();
+    //Set of complex null filters
+    //(split/join point with number of incoming and outgoing edges greater than one)
     private static HashMap complexNull=new HashMap();
-    private static LinearAnalyzer lfa;
-    private static HashMap[] execCounts;
+    private static LinearAnalyzer lfa; //LinearAnalyzer for creating linear representation
+    private static HashMap[] execCounts; //Execution counts from scheduler
     
+    /**
+     * Returns number of filters in graph
+     */
     public static int getFilterCount() {
-        //if(nodes!=null)
         return nodes.size();
-        //return filterCount;
     }
     
-    //Don't call unless not using this anymore
+    /**
+     * Clean up data structures used in flattening.
+     * Only call after done flattening.
+     */
     public static void clear() {
         topLevelNodes.clear();
         topLevelNodes=null;
@@ -39,6 +47,9 @@ public class FlattenGraph {
         execCounts=null;
     }
 
+    /**
+     * Returns list of all top level nodes.
+     */
     public static UnflatFilter[] getTopLevelNodes() {
         final int len=topLevelNodes.size();
         UnflatFilter[] out=new UnflatFilter[len];
@@ -48,15 +59,21 @@ public class FlattenGraph {
         return out;
     }
     
+    /**
+     * Main entry point to FlattenGraph.
+     * @param graph The toplevel SIRStream for the graph
+     * @param lfa The LinearAnalyzer to use for linear representation
+     * @param execCounts Execution counts from scheduler
+     */
     public static void flattenGraph(SIRStream graph,LinearAnalyzer lfa,HashMap[] execCounts) {
         System.out.println("Flattening Graph..");
         FlattenGraph.lfa=lfa;
         FlattenGraph.execCounts=execCounts;
-        if(graph instanceof SIRFilter) {
+        if(graph instanceof SIRFilter) { //Simple filter (make toplevel node)
             UnflatFilter filter=new UnflatFilter(graph);
             topLevelNodes.add(filter);
             nodes.put(filter,null);
-        } else if(((SIRContainer)graph).size()>0) {
+        } else if(((SIRContainer)graph).size()>0) { //Container so can multiple toplevel nodes
             UnflatEdge[] top=flatten(graph);
             UnflatEdge node=top[0];
             UnflatEdge bottom=top[1];
@@ -67,18 +84,19 @@ public class FlattenGraph {
             if(!(node==null||topLevelNodes.contains(node.dest)))
                 topLevelNodes.add(node.dest);
         }
-        //System.out.println("INPUT: "+lfa+" "+execCounts);
-        //if(lfa!=null&&execCounts!=null)
-        extractLinear();
+        extractLinear(); //Create linear rep
         dumpGraph("newbefore.dot");
         System.out.println("Done Flattening, Starting Sync Removal..");
-        syncRemove();
+        syncRemove(); //Run sync removal
         System.out.println("Done Sync Removal..");
         dumpGraph("newafter.dot");
     }
-    
+
+    /**
+     * Recursively generate flatgraph
+     */
     private static UnflatEdge[] flatten(SIRStream graph) {
-        if(graph instanceof SIRFilter) {
+        if(graph instanceof SIRFilter) { //Leaf of graph
             UnflatEdge in=new UnflatEdge();
             UnflatEdge out=new UnflatEdge();
             UnflatFilter inFilter;
@@ -91,7 +109,7 @@ public class FlattenGraph {
                 nodes.put(inFilter,null);
             }
             return new UnflatEdge[] {in,out};
-        } else if(graph instanceof SIRFeedbackLoop) {
+        } else if(graph instanceof SIRFeedbackLoop) { //Visit children of feedbackloop
             UnflatEdge in=new UnflatEdge();
             UnflatEdge out=new UnflatEdge();
             UnflatEdge[] body=flatten(((SIRFeedbackLoop)graph).getBody());
@@ -111,13 +129,13 @@ public class FlattenGraph {
             UnflatFilter splitter=new UnflatFilter(null,new int[]{1},splitWeights,splitIn,splitOut);
             simpleNull.put(splitter,null);
             return new UnflatEdge[]{in,out};
-        } else if(((SIRContainer)graph).size()<1) {
+        } else if(((SIRContainer)graph).size()<1) { //Empty container
             UnflatEdge in=new UnflatEdge();
             UnflatEdge out=new UnflatEdge();
             UnflatFilter filter=new UnflatFilter(null,in,out);
             simpleNull.put(filter,null);
             return new UnflatEdge[] {in,out};
-        } else if(graph instanceof SIRPipeline) {
+        } else if(graph instanceof SIRPipeline) { //Visit children of pipeline
             UnflatEdge[] firstEdges=flatten(((SIRPipeline)graph).get(0));
             UnflatEdge in=firstEdges[0];
             UnflatEdge out=firstEdges[1];
@@ -127,7 +145,7 @@ public class FlattenGraph {
                 out=nextEdges[1];
             }
             return new UnflatEdge[] {in,out};
-        } else if(graph instanceof SIRSplitJoin) {
+        } else if(graph instanceof SIRSplitJoin) { //Visit children of splitjoin
             final int size=((SIRSplitJoin)graph).size();
             UnflatEdge in=null;
             int[] weights=null;
@@ -135,6 +153,7 @@ public class FlattenGraph {
             UnflatFilter splitter=null;
             for(int i=0;i<size;i++)
                 splitterOut[i]=new UnflatEdge();
+	    //Chance weights into flatgraph representation of weights
             if(((SIRSplitJoin)graph).getSplitter().getType().isRoundRobin()) {
                 weights=((SIRSplitJoin)graph).getSplitter().getWeights();
                 int[] trimWeights;
@@ -171,6 +190,7 @@ public class FlattenGraph {
                     weights[i]=1;
             } else if(!((SIRSplitJoin)graph).getSplitter().getType().isNull())
                 Utils.fail("Unknown Split Type: "+((SIRSplitJoin)graph).getSplitter().getType());
+	    //Now fix up connections
             UnflatEdge[] joinerIn=new UnflatEdge[size];
             UnflatFilter joiner=null;
             UnflatEdge out=null;
@@ -249,11 +269,14 @@ public class FlattenGraph {
         return null;
     }
 
+    /**
+     * Annotate filters with linear representation for linear filters.
+     */
     private static void extractLinear() {
         Object[] filters=nodes.keySet().toArray();
         for(int i=0;i<filters.length;i++) {
+	    //Invoke LinearAnalyzer
             UnflatFilter filter=(UnflatFilter)filters[i];
-            //System.out.println("VISITING: "+filter);
             LinearFilterRepresentation linrep=null;
             if(lfa!=null)
                 linrep=lfa.getLinearRepresentation(filter.filter);
@@ -265,7 +288,7 @@ public class FlattenGraph {
             ans=(int[])execCounts[1].get(filter.filter);
             if(ans!=null)
                 steadyMult=ans[0];
-            //System.err.println("MULT: "+initMult+" "+steadyMult);
+	    //Interpret output from LinearAnalyzer
             if(linrep!=null) {
                 final int cols=linrep.getA().getCols();
                 System.out.println("** Cols = " + cols + ", rows =  " + linrep.getA().getRows());
@@ -275,7 +298,7 @@ public class FlattenGraph {
                     filter.array=getArray(linrep,0);
                     filter.constant=getConst(linrep,0);
                     filter.popCount=linrep.getPopCount();
-                    assert filter.popCount>0:"SDSDFD";
+                    assert filter.popCount>0:"Bad popcount: "+filter;
                 } else {
                     nodes.remove(filter);
                     System.out.println("Splitting: "+filter);
@@ -301,7 +324,7 @@ public class FlattenGraph {
                         newFilt.array=getArray(linrep,j);
                         newFilt.constant=getConst(linrep,j);
                         newFilt.popCount=linrep.getPopCount();
-                        assert newFilt.popCount>0:"SDSDFDsdfdsf";
+                        assert newFilt.popCount>0:"Bad popcount: "+newFilt;
                         nodes.put(newFilt,null);
                     }
                 }
@@ -312,6 +335,9 @@ public class FlattenGraph {
         }
     }
     
+    /**
+     * Helper function to get array representation (Array A) from LinearFilterRepresentation
+     */
     private static double[] getArray(LinearFilterRepresentation linRep,int col) {
         FilterMatrix a=linRep.getA();
         final int rows=a.getRows();
@@ -320,33 +346,42 @@ public class FlattenGraph {
             out[i]=a.getElement(rows-i-1,col).getReal();
         return out;
     }
-    
+
+    /**
+     * Helper function to get array representation (Vector b) from LinearFilterRepresentation
+     */
     private static double getConst(LinearFilterRepresentation linRep,int col) {
         return linRep.getb().getElement(col).getReal();
     }
     
+    //Track to see if there were changes in current iteration
     private static boolean change=false;
-    private static boolean first=true;
+    //private static boolean first=true;
 
     private static void syncRemove() {
+	//First attempt to remove simple null filters until convergence
         removeSimple();
         while(change) {
             change=false;
             removeSimple();
         }
         dumpGraph("newmiddle.dot");
+	//Then attempt complex null filters
         removeComplex();
         dumpGraph("newmiddle2.dot");
         //change=true;
         //while(change) {
         //change=false;
         //first=false;
-        removeSimple();
+        removeSimple(); //Remove any new simple null filters created
         //}
         //dumpGraph("newmiddle3.dot");
         //coalesce();
     }
-    
+
+    /**
+     * Helper function for finding Lowest Common Multiplier of a and b.
+     */
     private static int[] lcm(int a,int b) {
         int mulA=1,mulB=1;
         int accumA=a,accumB=b;
@@ -361,6 +396,9 @@ public class FlattenGraph {
         return new int[]{accumA,mulA,mulB};
     }
     
+    /**
+     * Helper function for finding sum of array.
+     */
     private static int sum(int[] array) {
         int out=0;
         for(int i=0;i<array.length;i++)
@@ -368,6 +406,12 @@ public class FlattenGraph {
         return out;
     }
     
+    /**
+     * Helper function for coalescing the weights of adjacent splitters and joiners.
+     * @param src Weights of src splitter/joiner.
+     * @param splice Weights to splice in.
+     * @param target Target edge to perform the splicing into.
+     */
     private static UnflatEdge[] splice(UnflatEdge[] src,UnflatEdge[] splice,UnflatEdge target) {
         int len=0;
         boolean change=false;
@@ -397,6 +441,13 @@ public class FlattenGraph {
       return false;
       }*/
     
+    /**
+     * Attempt to remove simple null filters. May need several
+     * iterations to converge. Simple null filters are ones that only
+     * have one incoming edge or one outgoing edge. After null filter
+     * is remove the filters that used to be connected to it are
+     * connected directly.
+     */
     private static void removeSimple() {
         Object[] nulls=simpleNull.keySet().toArray();
         for(int i=0;i<nulls.length;i++) {
@@ -405,7 +456,7 @@ public class FlattenGraph {
             int[] outW=filter.outWeights;
             UnflatEdge[] in=filter.in;
             UnflatEdge[][] out=filter.out;
-            if(inW.length==1&&outW.length==1&&out[0].length==1) {
+            if(inW.length==1&&outW.length==1&&out[0].length==1) { //Simplest case
                 UnflatEdge[][] prevOut=in[0].src.out;
                 for(int j=0;j<prevOut.length;j++)
                     prevOut[j]=splice(prevOut[j],out[0],in[0]);
@@ -413,7 +464,7 @@ public class FlattenGraph {
                     out[0][j].src=in[0].src;
                 simpleNull.remove(filter);
                 change=true;
-            } else if(inW.length==1) {
+            } else if(inW.length==1) { //Number of incoming edges is 1
                 UnflatFilter prevFilter=in[0].src;
                 int[] prevW=prevFilter.outWeights;
                 UnflatEdge[][] prevOut=prevFilter.out;
@@ -641,12 +692,10 @@ public class FlattenGraph {
                     simpleNull.remove(filter);
                     change=true;
                 }
-            } else if(outW.length==1) {
+            } else if(outW.length==1) { //Number of outgoing edges is 1
                 if(out.length!=1)
                     Utils.fail("Mismatch: "+outW.length+" "+out.length);
                 UnflatEdge[] nextEdges=out[0];
-                //if(nextEdges.length!=1)
-                //System.out.println("NextEdges:"+nextEdges.length);
                 {
                     UnflatEdge[][] incomingEdges=new UnflatEdge[inW.length][nextEdges.length];
                     HashMap createdEdges=new HashMap();
@@ -776,13 +825,18 @@ public class FlattenGraph {
                     simpleNull.remove(filter);
                     change=true;
                 }
-            } else {
+            } else { //Both incoming and outgoing edges greater than 1 so treat as complex null filter
                 complexNull.put(filter,null);
                 simpleNull.remove(filter);
             }
         }
     }
     
+    /**
+     * Helper function for removeComplex(). Breaks up outgoing edges
+     * into their own simple null filter. Helps deal with repeat
+     * filters on different outgoing edges.
+     */
     private static void breakEdgeTo(UnflatFilter from,UnflatFilter to,UnflatEdge edge) {
         EdgeList edges=new EdgeList(null);
         IntList weights=new IntList(0);
@@ -819,6 +873,11 @@ public class FlattenGraph {
         simpleNull.put(newFilter,null);
     }
 
+    /**
+     * Helper function for removeComplex(). Breaks up incoming edges
+     * into their own simple null filter. Helps deal with repeat
+     * filters on different incoming edges.
+     */
     private static void breakEdgeFrom(UnflatFilter from,UnflatFilter to,UnflatEdge edge) {
         EdgeList edges=new EdgeList(null);
         IntList weights=new IntList(0);
@@ -851,7 +910,15 @@ public class FlattenGraph {
         UnflatFilter newFilter=new UnflatFilter(null,new int[]{1},outW,new UnflatEdge[]{edge},out);
         simpleNull.put(newFilter,null);
     }
-
+    
+    /**
+     * Attempt to remove complex null filters. May need several
+     * iterations to converge. Complex null filters are ones that have
+     * greater than one incoming or outgoing edge. After complex null
+     * filters are removed there are usually several new simple null
+     * filters generated so another pass of removeSimple() should be
+     * run.
+     */
     private static void removeComplex() {
         Object[] nulls=complexNull.keySet().toArray();
         for(int i=0;i<nulls.length;i++) {
@@ -860,6 +927,7 @@ public class FlattenGraph {
             UnflatEdge[] in=filter.in;
             UnflatEdge[][] out=filter.out;
             {
+		//Break up incoming edges
                 HashMap visited=new HashMap();
                 for(int j=0;j<in.length;j++)
                     if(!visited.containsKey(in[j])) {
@@ -868,6 +936,7 @@ public class FlattenGraph {
                     }
             }
             {
+		//Break up outgoing edges
                 HashMap visited=new HashMap();
                 for(int j=0;j<out.length;j++) {
                     UnflatEdge[] inner=out[j];
@@ -878,6 +947,11 @@ public class FlattenGraph {
                         }
                 }
             }
+	    /* Main part of sync removal algorithm. Incoming weights
+	     * and outgoing weights repeated for LCM their sum of
+	     * weights. This way the incoming and outgoing edges and
+	     * be aligned perfectly and the complex null filter can be
+	     * decomposed into several simple null filters.*/
             int inSum=0,outSum=0;
             for(int j=0;j<inW.length;j++)
                 inSum+=inW[j];
@@ -996,6 +1070,7 @@ public class FlattenGraph {
                 }
             }
             complexNull.remove(filter);
+	    //Now that analysis is done fix up edge connections.
             for(int j=0;j<inW.length;j++) {
                 IntList weights=incomingWeights[j].next;
                 EdgeArrayList edges=incomingOut[j].next;
@@ -1110,6 +1185,10 @@ public class FlattenGraph {
       }
       }*/
     
+    /**
+     * Prints out dotgraph representation of current flatgraph.
+     * @param filename Filename to store dotgraph into.
+     */
     public static void dumpGraph(String filename) {
         StringBuffer buf=new StringBuffer();
         buf.append("digraph Flattend {\n");
@@ -1210,6 +1289,9 @@ public class FlattenGraph {
         }
     }
 
+    /**
+     * Helper function for dumpGraph(). Pretty prints arrays.
+     */
     private static String arrayPrint(int[] array) {
         StringBuffer out=new StringBuffer("[");
         if(array.length>0) {
@@ -1221,6 +1303,10 @@ public class FlattenGraph {
         return out.toString();
     }
     
+    /**
+     * Helper function for dumpGraph(). Pretty prints the src of
+     * UnflatEdge for use in the edge label.
+     */
     private static String printPrev(UnflatEdge edge) {
         IntList ints=null;
         IntList cur=null;
@@ -1249,7 +1335,10 @@ public class FlattenGraph {
         } else
             return "";
     }
-    
+    /**
+     * Helper function for dumpGraph(). Pretty prints the dest of
+     * UnflatEdge for use in the edge label.
+     */
     private static String printNext(UnflatEdge edge) {
         IntList ints=null;
         IntList cur=null;

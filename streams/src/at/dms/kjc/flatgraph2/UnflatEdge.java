@@ -4,26 +4,48 @@ import at.dms.util.Utils;
 import java.util.LinkedList;
 
 /**
- * Intermediate file used in (super) synch removal
+ * Intermediate file used in (super) synch removal. Connect two
+ * UnflatFilter together.
+ * @author jasperln
  */
 public class UnflatEdge {
+    /**
+     * The src UnflatFilter.
+     */
     public UnflatFilter src;
+    /**
+     * The dest UnflatFilter.
+     */
     public UnflatFilter dest;
+    /**
+     * Internal list of things to clear.
+     */
     private static LinkedList toClear=new LinkedList();
     //int virtualPort;
 
+    /**
+     * Contruct new UnflatEdge without any connections.
+     */
     UnflatEdge() {
         //virtualPort=0;
         toClear.add(this);
     }
 
+    /**
+     * Contruct new UnflatEdge connecting src to dest.
+     * @param src The source UnflatFilter.
+     * @param dest The destination UnflatFilter.
+     */
     UnflatEdge(UnflatFilter src,UnflatFilter dest) {
         this.src=src;
         this.dest=dest;
         toClear.add(this);
     }
     
-    //Do not use unless you want to garbage collect graph
+    /**
+     * Garbage collect UnflatEdge. Do not use until ready to garbage
+     * collect whole graph.
+     */
     public static void clear() {
         while(toClear.size()>0) {
             UnflatEdge edge=(UnflatEdge)toClear.removeFirst();
@@ -39,6 +61,10 @@ public class UnflatEdge {
         toClear=null;
     }
 
+    /**
+     * Helper function to connect together two UnflatEdge edges.
+     * @param newDest The destination UnflatEdge to connect to.
+     */
     void connect(UnflatEdge newDest) {
         dest=newDest.dest;
         //virtualPort=newDest.virtualPort;
@@ -48,6 +74,9 @@ public class UnflatEdge {
                 in[i]=this;
     }
 
+    /**
+     * Returns if two UnflatEdge[] are equal.
+     */
     public static boolean equal(UnflatEdge[] e1,UnflatEdge[] e2) {
         if(e1.length!=e2.length)
             return false;
@@ -56,7 +85,10 @@ public class UnflatEdge {
                 return false;
         return true;
     }
-    
+
+    /**
+     * Returns string representation of UnflatEdge.
+     */
     public String toString() {
         return src+"->"+dest+" "+super.toString();
     }

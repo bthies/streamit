@@ -4,23 +4,71 @@ import at.dms.kjc.sir.*;
 import java.util.HashMap;
 
 /**
- * Intermediate file used in (super) synch removal
+ * Intermediate file used in (super) synch removal. Represents filter
+ * or splitter/joiner (null filters) in original graph. Basically any
+ * join point in graph. When all null filters are removed and filters
+ * connect directly to each other then sych removal is done.
+ * @author jasperln
  */
 public class UnflatFilter {
+    /**
+     * Original filter this UnflatFilter is representing (if any)
+     */
     public SIRFilter filter;
-    public int[] inWeights,outWeights;
-    //IntList inWeights,outWeights;
+    /**
+     * Weights on incoming edges.
+     */
+    public int[] inWeights;
+    /**
+     * Weights on outgoing edges.
+     */
+    public int[] outWeights;
+    /**
+     * Incoming UnflatEdge.
+     */
     public UnflatEdge[] in;
+    /**
+     * Outgoing UnflatEdge. Each out[i] represents the list of filters
+     * that should be sent the data corresponding to outWeights[i].
+     */
     public UnflatEdge[][] out;
+    /**
+     * Keep track of number of null filters. Used for autonaming them.
+     */
     private static int nullNum=0;
+    /**
+     * Name of filter.
+     */
     private String name;
-    private static HashMap names=new HashMap(); //Set of all names taken (String->null)
+    /**
+     * Set of all names (maps String->null) to prevent name collisions
+     */
+    private static HashMap names=new HashMap();
+    /**
+     * For linear filters, the A in its Ax+b representation.
+     */
     public double[] array;
+    /**
+     * For linear filters, the b in its Ax+b representation.
+     */
     public double constant;
+    /**
+     * The pop count of this filter.
+     */
     public int popCount;
-    public int initMult, steadyMult;
+    /**
+     * The initialization multiplicity of this filter.
+     */
+    public int initMult;
+    /**
+     * The steady state multiplicity of this filter.
+     */
+    public int steadyMult;
     
-    //Do not call unless not using this anymore
+    /**
+     * Garbage collect this UnflatFilter. Do not call until ready to
+     * garbage collect whole graph.
+     */
     public void clear() {
         filter=null;
         inWeights=null;
@@ -44,6 +92,14 @@ public class UnflatFilter {
         name=null;
     }
 
+    /**
+     * Construct new UnflatFilter from filter.
+     * @param filter The SIRStream used to construct this UnflatFilter.
+     * @param inWeights The incoming weights.
+     * @param outWeights The outgoing weights.
+     * @param in The incoming edges.
+     * @param out The outgoing edges.
+     */
     UnflatFilter(SIRStream filter,int[] inWeights,int[] outWeights,UnflatEdge[] in,UnflatEdge[][] out) {
         this.filter=(SIRFilter)filter;
         this.inWeights=inWeights;
@@ -82,19 +138,36 @@ public class UnflatFilter {
       this(filter,newInWeights,outWeights,in,out);
       }*/
 
+    /**
+     * Construct new UnflatFilter from filter without doing any
+     * connections.
+     * @param filter The SIRStream used to construct this UnflatFilter.
+     */
     UnflatFilter(SIRStream filter) {
         this(filter,null,null,new UnflatEdge[0],new UnflatEdge[0][0]);
     }
 
+    /**
+     * Construct new UnflatFilter from filter that connects in to out.UnflatEdge
+     * @param filter The SIRStream used to construct this UnflatFilter.
+     * @param in The UnflatEdge to connect from.
+     * @param out The UnflatEdge to connect to.
+     */
     UnflatFilter(SIRStream filter,UnflatEdge in,UnflatEdge out) {
         this(filter,new int[]{1},new int[]{1},new UnflatEdge[]{in},new UnflatEdge[][]{new UnflatEdge[]{out}});
     }
 
+    /**
+     * Returns if UnflatFilter is linear.
+     */
     public boolean isLinear() 
     {
         return array != null;
     }
 
+    /**
+     * Returns name of UnflatFilter.
+     */
     public String toString() {
         return name;
     }

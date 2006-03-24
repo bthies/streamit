@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StatementQueueVisitor.java,v 1.2 2006-01-25 17:01:24 thies Exp $
+ * $Id: StatementQueueVisitor.java,v 1.3 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -84,7 +84,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
      */
 
     /**
-     * Returns JBlock with all pending statements coming after <old>.
+     * Returns JBlock with all pending statements coming after <pre>old</pre>.
      */
     private JStatement appendPending(JStatement old) {
         if (pendingStatements.size()>0) {
@@ -106,7 +106,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
     public Object visitWhileStatement(JWhileStatement self,
                                       JExpression cond,
                                       JStatement body) {
-        // pending statements from <cond> go both at top of <body> and
+        // pending statements from <pre>cond</pre> go both at top of <pre>body</pre> and
         // after body altogether (since we have to cover both the case
         // when cond is true, and when cond is false).
 
@@ -134,7 +134,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
             // add self as beginning of result block
             ((JBlock)result).addStatementFirst(self);
         } else {
-            // set result directly to <self> to avoid introducing
+            // set result directly to <pre>self</pre> to avoid introducing
             // extra JBlocks
             result = self;
         }
@@ -157,7 +157,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
     public Object visitSwitchStatement(JSwitchStatement self,
                                        JExpression expr,
                                        JSwitchGroup[] body) {
-        // do not bother supporting in <expr>
+        // do not bother supporting in <pre>expr</pre>
         boolean oldSupported = supported;
         supported = false;
 
@@ -184,7 +184,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
         }
 
         if (pendingStatements.size() > 0) {
-            // add pending statements to top of BOTH <thenClause> and <elseClause>
+            // add pending statements to top of BOTH <pre>thenClause</pre> and <pre>elseClause</pre>
             // -- then clause:
             JStatement oldThen = thenClause;
             thenClause = new JBlock();

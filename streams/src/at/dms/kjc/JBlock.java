@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.22 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JBlock.java,v 1.23 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -52,7 +52,7 @@ public class JBlock extends JStatement {
     {
         super(where, comments);
 
-        // fill list with elements of <body>
+        // fill list with elements of <pre>body</pre>
         this.body = new LinkedList();
         for (int i=0; i<body.length; i++) {
             this.body.add(body[i]);
@@ -74,7 +74,7 @@ public class JBlock extends JStatement {
                   JavaStyleComment[] comments)
     {
         super(where, comments);
-        // make a copy of <body>
+        // make a copy of <pre>body</pre>
         this.body = new LinkedList(body);
     }
 
@@ -111,21 +111,21 @@ public class JBlock extends JStatement {
     }
 
     /**
-     * Adds <statement> to this.
+     * Adds <pre>statement</pre> to this.
      */
     public void addStatement(JStatement statement) {
         body.add(statement);
     }
 
     /**
-     * Adds <statement> to front of this.
+     * Adds <pre>statement</pre> to front of this.
      */
     public void addStatementFirst(JStatement statement) {
         body.addFirst(statement);
     }
 
     /**
-     * Adds <statement> to front of this.
+     * Adds <pre>statement</pre> to front of this.
      */
     public void addAllStatementsFirst(List lst) {
         for (int i=0; i<lst.size(); i++) {
@@ -141,21 +141,21 @@ public class JBlock extends JStatement {
     }
 
     /**
-     * Adds all statements in <lst> to this, at the specified position.
+     * Adds all statements in <pre>lst</pre> to this, at the specified position.
      */
     public void addAllStatements(int pos, List lst) {
         body.addAll(pos, lst);
     }
 
     /**
-     * Adds all statements in <lst> to end of this.
+     * Adds all statements in <pre>lst</pre> to end of this.
      */
     public void addAllStatements(List lst) {
         body.addAll(lst);
     }
 
     /**
-     * Adds all statements in <blk> to end of this.
+     * Adds all statements in <pre>blk</pre> to end of this.
      */
     public void addAllStatements(JBlock b) {
         body.addAll(b.getStatements());
@@ -263,7 +263,7 @@ public class JBlock extends JStatement {
         body.set(i, statement);
     }
 
-    // <body> containts JStatements
+    // <pre>body</pre> containts JStatements
     protected LinkedList    body;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

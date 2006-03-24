@@ -17,14 +17,14 @@ public class SimpleDot extends StreamItDot
     }
 
     /**
-     * Prints dot graph of <str> to System.out
+     * Prints dot graph of <pre>str</pre> to System.out
      */
     public static void printGraph(SIRStream str) {
         str.accept(new SimpleDot(System.out));
     }
 
     /**
-     * Prints dot graph of <str> to <filename>
+     * Prints dot graph of <pre>str</pre> to <pre>filename</pre>
      */
     public static void printGraph(SIRStream str, String filename) {
         try {

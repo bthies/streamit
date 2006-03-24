@@ -213,7 +213,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     }
 
     /**
-     * Searches for <className> and returns associated op.  Does not
+     * Searches for <pre>className</pre> and returns associated op.  Does not
      * worry about anything recursive--should call getVisitedOp in the
      * general case.
      */
@@ -254,7 +254,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     }
 
     /**
-     * Returns true if there is a function of the given name in <clazz>.
+     * Returns true if there is a function of the given name in <pre>clazz</pre>.
      */
     private boolean hasMethod(JClassDeclaration clazz, String methodName) {
         JMethodDeclaration[] methods = clazz.getMethods();
@@ -2228,7 +2228,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         //with the correct number of splitting streams ( in postVisit() )
         if (splitterType.getIdent().equals("ROUND_ROBIN")) {
             // here we're supporting the syntax where
-            // round_robin(<weight>) will create a uniform weighted
+            // round_robin(<pre>weight</pre>) will create a uniform weighted
             // round robin that is extended across the width of the
             // stream
             JExpression[] weightArgs = splitterType.getArgs();
@@ -2267,7 +2267,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
         if (joiner.getIdent().equals("ROUND_ROBIN")) {
             // here we're supporting the syntax where
-            // round_robin(<weight>) will create a uniform weighted
+            // round_robin(<pre>weight</pre>) will create a uniform weighted
             // round robin that is extended across the width of the
             // stream
             JExpression[] weightArgs = joiner.getArgs();

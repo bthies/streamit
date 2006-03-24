@@ -73,7 +73,7 @@ public class CloneGenerator {
     }
 
     /**
-     * Generates a suitable deepClone() method for class <c>
+     * Generates a suitable deepClone() method for class <pre>c</pre>
      */
     private static String generateClone(Class c) {
         String className = c.getName();
@@ -99,7 +99,7 @@ public class CloneGenerator {
 
     /**
      * Generates a suitable deepCloneInto(<c.getName> other) method
-     * for class <className>, which copies all the fields over.
+     * for class <pre>className</pre>, which copies all the fields over.
      */
     private static String generateCloneInto(Class c) {
         StringBuffer sb = new StringBuffer();
@@ -108,7 +108,7 @@ public class CloneGenerator {
             sb.append("INTERFACE - ABORTING\n");
             return sb.toString();
         }
-        sb.append("    /** Clones all fields of this into <pre>other</pre> */\n");
+        sb.append("    /** Clones all fields of this into <pre>pre</pre>other</pre> */\n");
         sb.append("    protected void deepCloneInto(" + c.getName() + " other) {\n");
         // if there's a superclass, then call deepClone on super.
         if (c.getSuperclass()!=null && !c.getSuperclass().getName().equals("java.lang.Object")) {
@@ -122,7 +122,7 @@ public class CloneGenerator {
         // by DO_NOT_CLONE_THESE_FIELDS array in class).
         HashSet doNotClone = getProhibitedFields(c);
         // copy all fields over, calling clone on them only if they
-        // are DeepCloneable and not a member of <doNotClone>
+        // are DeepCloneable and not a member of <pre>doNotClone</pre>
         Field[] field = c.getDeclaredFields();
         for (int i=0; i<field.length; i++) {
             // get the value for the field
@@ -152,9 +152,9 @@ public class CloneGenerator {
     }
 
     /**
-     * Returns a hashset of string names of any fields in <c> that
+     * Returns a hashset of string names of any fields in <pre>c</pre> that
      * should NOT be cloned (they should be directly copied instead).
-     * The set is constructed from the following field of <c>:
+     * The set is constructed from the following field of <pre>c</pre>:
      * 
      *   public static final String[] DO_NOT_CLONE_THESE_FIELDS
      *
@@ -197,7 +197,7 @@ public class CloneGenerator {
     }
 
     /**
-     * Returns the name of the type of <c> in a format that you would
+     * Returns the name of the type of <pre>c</pre> in a format that you would
      * find in source code, e.g. int[][] or at.dms.kjc.Main[].
      */
     private static String printSourceType(Class c) {
@@ -319,7 +319,7 @@ public class CloneGenerator {
     };
 
     /**
-     * Whether or not <className> is a class we're generating cloning code for.
+     * Whether or not <pre>className</pre> is a class we're generating cloning code for.
      */
     public static boolean inTargetClasses(String className) {
         for (int i=0; i<classes.length; i++) {

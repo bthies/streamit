@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.16 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JFieldAccessExpression.java,v 1.17 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -169,7 +169,7 @@ public class JFieldAccessExpression extends JExpression {
     
     /**
      * (bft: I think...) Returns whether or not this field access is on
-     * the <this> object.  Will only work after semantic analysis has
+     * the <pre>this</pre> object.  Will only work after semantic analysis has
      * been done.
      */
     public boolean isThisAccess() {
@@ -177,7 +177,7 @@ public class JFieldAccessExpression extends JExpression {
     }
 
     /**
-     * Sets the prefix expression of this to <exp>.
+     * Sets the prefix expression of this to <pre>exp</pre>.
      */
     public void setPrefix(JExpression exp) {
         this.prefix = exp;

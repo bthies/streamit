@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIntLiteral.java,v 1.11 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JIntLiteral.java,v 1.12 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -254,7 +254,7 @@ public class JIntLiteral extends JLiteral {
     }
 
     /**
-     * Returns whether or <o> this represents a literal with the same
+     * Returns whether or <pre>o</pre> this represents a literal with the same
      * value as this.
      */
     public boolean equals(Object o) {

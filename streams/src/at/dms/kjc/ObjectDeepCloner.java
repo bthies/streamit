@@ -103,7 +103,7 @@ public class ObjectDeepCloner
      * child streams.  This means that the LIST of children is copied,
      * but the children themselves are not duplicated.  Splitters and
      * joiners are not considered as children - only SIRStreams.  If
-     * <oldObj> is not an SIRContainer, then this has the same effect
+     * <pre>oldObj</pre> is not an SIRContainer, then this has the same effect
      * as deepCopy.  
      *
      * This is only intended for use from the iterator package, and
@@ -118,7 +118,7 @@ public class ObjectDeepCloner
      CloningVisitor visitor = new CloningVisitor();
      IterFactory.createFactory().createIter(parent).accept(visitor);
      toBeCloned = visitor.getToBeCloned();
-     // subtract the list of <parent>'s children from the
+     // subtract the list of <pre>parent</pre>'s children from the
      // toBeCloned list.
      for (ListIterator it=parent.getChildren().listIterator(); it.hasNext(); ) {
      Object o = it.next();
@@ -131,7 +131,7 @@ public class ObjectDeepCloner
     */
 
     /**
-     * Return a handle for <oldInstance> that it can store to protect
+     * Return a handle for <pre>oldInstance</pre> that it can store to protect
      * its identity across a serialization operation.
      */
     static public Object getHandle(Object oldInstance) {
@@ -145,9 +145,9 @@ public class ObjectDeepCloner
     }
 
     /**
-     * Given that <newInstance> finds itself being unserialized, this
+     * Given that <pre>newInstance</pre> finds itself being unserialized, this
      * method returns what its new representation should be given that
-     * it was handed <handle> prior to the serialization.
+     * it was handed <pre>handle</pre> prior to the serialization.
      */
     static public Object getInstance(Object handle, Object newInstance) {
         assert handle instanceof Integer:
@@ -172,7 +172,7 @@ public class ObjectDeepCloner
     }
 
     /**
-     * Returns the deep clone of an object, if <cloneVars> is true
+     * Returns the deep clone of an object, if <pre>cloneVars</pre> is true
      * then clone vars also...
      */ 
     static private Object doCopy(Object oldObj)

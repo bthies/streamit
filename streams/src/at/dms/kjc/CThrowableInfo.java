@@ -15,13 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CThrowableInfo.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CThrowableInfo.java,v 1.10 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
 
 /**
- * This class represents a throw <throwable> information during check
+ * This class represents a throw <pre>throwable</pre> information during check
  */
 public class CThrowableInfo extends at.dms.util.Utils {
 

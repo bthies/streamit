@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.32 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JMethodDeclaration.java,v 1.33 2006-03-24 16:10:59 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -127,7 +127,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
     }
 
     /**
-     * Set method name to <name>
+     * Set method name to <pre>name</pre>
      */
     public void setName(String str) {
         this.ident = str;
@@ -148,7 +148,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
     }
 
     /**
-     * Inserts <param> as the first parameter of this.
+     * Inserts <pre>param</pre> as the first parameter of this.
      */
     public void addParameter(JFormalParameter param) {
         // make new parameter list
@@ -164,28 +164,28 @@ public class JMethodDeclaration extends JMemberDeclaration {
     }
 
     /**
-     * Adds <statement> to the end of the statements in this.
+     * Adds <pre>statement</pre> to the end of the statements in this.
      */
     public void addStatement(JStatement statement) {
         body.addStatement(statement);
     }
 
     /**
-     * Adds <statement> to the end of the statements in this.
+     * Adds <pre>statement</pre> to the end of the statements in this.
      */
     public void addStatementFirst(JStatement statement) {
         body.addStatementFirst(statement);
     }
    
     /**
-     * Adds all statements in <lst> to this, at the specified position.
+     * Adds all statements in <pre>lst</pre> to this, at the specified position.
      */
     public void addAllStatements(int pos, List lst) {
         body.addAllStatements(pos, lst);
     }
 
     /**
-     * Adds all statements in <lst> to end of this.
+     * Adds all statements in <pre>lst</pre> to end of this.
      */
     public void addAllStatements(List lst) {
         body.addAllStatements(lst);

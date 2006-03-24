@@ -6,9 +6,9 @@ import java.io.FileWriter;
 import at.dms.kjc.flatgraph2.*;
 
 /**
- * This class create the btl machine file for the application.  It defines some 
- * number gathering stuff and some file i/o stuff and some use functions while debugging
- * in the simulator.
+ * This class create the btl machine file for the application.  
+ * It defines some number gathering stuff and some file i/o stuff 
+ * and some useful functions while debugging in the simulator.
  * 
  * @author mgordon
  *

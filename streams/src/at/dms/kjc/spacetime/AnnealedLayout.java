@@ -1,6 +1,3 @@
-/**
- * 
- */
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.common.SimulatedAnnealing;
@@ -13,6 +10,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
+ * This class calculates the assignment of filters of slices to tiles of 
+ * the Raw chip by using simulated annealing.  At each annealing step, it
+ * selects a random slice and finds a new random tile assignment for 
+ * the filters of the slice.  The cost function is still in development and
+ * is changing frequently.  
+ * 
+ * See the asplos submission for more details.
+ * 
  * @author mgordon
  *
  */
@@ -39,10 +44,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * to trace enpoints for each trace.
      */
     private static final int DRAM_ISSUE_COST = 5;
-    
+    /** the rawchip we are compiling to */
     private RawChip rawChip;
+    /** the space time schedule object, with different schedules */
     private SpaceTimeSchedule spaceTime;
+    /** A list of filters that need to be assigned to tiles */
     private LinkedList filterList;
+    /** The partitioner we used to partitioner the SIR graph into slices */
     private Partitioner partitioner;
     /** the number of tiles in the raw chip */
     private int numTiles;
@@ -54,15 +62,29 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private static String[] dirStrings;
     /** the tile that has the max work at the current step */ 
     private int maxWorkTile;
-    
+    /** Set of FilterTraceNodes of the Filters that write to slice that are file writers
+     * This is not the file writers themselves, but the last filter of the slice upstream 
+     * of the file writer slice. 
+     * */
     private HashSet fileWriters;
+    /** Set of FilterTraceNodes of the Filters that read from slice that are file readers
+     * This is not the file readers themselves, but the first filter of the slice downstream 
+     * of the file reader slice. 
+     * */
     private HashSet fileReaders;
     /** The order the traces will be scheduled, so sorted by bottleneck work */
     private LinkedList scheduleOrder;
+    /** The class that performs the buffer to DRAM assignment */
     private BufferDRAMAssignment assignBuffers;
-    
+    /** the total work all the tiles for the current layout */
     private int totalWork;
     
+    /**
+     * Create a new Annealed layout object that will assign filters of 
+     * the slices of the slice graph of spaceTime to tiles of the Raw Chip.
+     * 
+     * @param spaceTime The spaceTime compilation up till now.
+     */
     public AnnealedLayout(SpaceTimeSchedule spaceTime) {
         super();
         this.spaceTime = spaceTime;
@@ -77,7 +99,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
         scheduleOrder = new LinkedList(Arrays.asList(tempArray));
 
-        // reverse the list
+        // reverse the list, we want the list in descending order!
         Collections.reverse(scheduleOrder);
         
         //init the buffer to dram assignment pass
@@ -85,6 +107,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //COMM_MULTIPLIER = COMP_COMM_RATIO / 
     }
 
+    /**
+     * Calculate the assignment of filters of slices to tiles. 
+     */
     public void run() {
         //run the simulated annealing with 2 iterations, 
         //100 attempts per iteration
@@ -95,18 +120,32 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     assignment.get(filterList.get(i)));
     }
     
+    /**
+     * Get the raw tile that was assigned to filter in the layout.
+     * 
+     * Must call {@link AnnealedLayout#run} first.
+     */
     public RawTile getTile(FilterTraceNode filter) {
         assert assignment.containsKey(filter) : 
             "AnnealedLayout does have a mapping for " + filter;
         return (RawTile)assignment.get(filter);
     }
         
+    /**
+     * Set the underlying assigment of FilterTraceNode's -> RawTiles
+     * to the newAssignment HashMap.
+     * 
+     * @param newAssignment The assignment to use.
+     */
     public void setAssignment(HashMap newAssignment) {
         assignment = newAssignment;
 //      reassign buffers.
         assignBuffers.run(spaceTime, this);
     }
     
+    /**
+     * Print some statistics to the screen for the layout.
+     */
     public void printLayoutStats() {
         int[] tileCosts = getTileWorks(false);
         
@@ -132,7 +171,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     /**
      * This function will perturb the configuration by moving
-     * something around
+     * something around.
      */
     public void swapAssignment() {
         //swapAssignmentIllegal();
@@ -143,7 +182,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /** 
-     * perturb the configuration by finding a new layout for a single trace
+     * perturb the configuration by finding a new layout for a single trace.
      *
      */
     public void swapAssignmentLegal() {
@@ -156,7 +195,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
    
     
     /**
-     *  
+     * Create the initial assignment of filters of slices to tiles. 
      */
     public void initialPlacement() {
        //try a random layout! nope
@@ -166,11 +205,24 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         assignBuffers.run(spaceTime, this);
     }
     
+    /**
+     * Set the assignment of node to tile in the layout.
+     * 
+     * @param node The node that will be assigned to tile.
+     * @param tile The tile to assign node to.
+     */
     public void setTile(FilterTraceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
     /**
+     * A recursive function that will find a new layout for a slice. 
+     * For the TraceNode node, try to layout it and the remaining
+     * TraceNodes of its slice.  We start by selecting a random starting
+     * tile for the first node of the slice and then snake the slice along
+     * the chip randomly.  If at anytime we cannot continue, return false, 
+     * and the caller will try a new direction for the next node.  If nothing 
+     * is legal, return false.  The false will propagate to the root.  
      * 
      * @param newAssign
      * @param node  call with first filterTraceNode of trace
@@ -262,13 +314,19 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
  
     /**
-     * We want to try to place <pre>filter</pre> on <pre>tile</pre> but it is a file reader,
-     * so we have to make sure that no other file reading filters are 
-     * mapped to this tile.  If so return false.
+     * We want to try to place <pre>filter</pre> on <pre>tile</pre> 
+     * but it is a file reader, so we have to make sure that no 
+     * other file reading filters are mapped to this tile.  
+     * If so return false.
      * 
-     * @param filter
-     * @param tile
-     * @return
+     * Note that when we use file reader, we mean a FilterTraceNode 
+     * that is directly connected to a FileReader slice.
+     * 
+     * @see AnnealedLayout#fileReaders
+     * 
+     * @param filter A FilterTraceNode that reads from a file
+     * @param tile The tile it is currently mapped to.
+     * @return false if there are other file readers mapped to this tile.
      */
     private boolean legalFileReaderTile(FilterTraceNode filter,
             RawTile tile) {
@@ -290,12 +348,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**
-     * We want to try to place <pre>filter</pre> on <pre>tile</pre> but <pre>filter</pre> writes 
-     * to a file, so we have to make sure that no other filters that writes 
-     * to a file is mapped to this tile.  If there is one, return false. 
-     * @param filter
-     * @param tile
-     * @return
+     * We want to try to place <pre>filter</pre> on <pre>tile</pre> but 
+     * <pre>filter</pre> writes to a file, so we have to make sure 
+     * that no other filters that writes to a file is mapped to this tile.  
+     * If there is one, return false.
+     * 
+     * Note that when we use the term file writer, we mean a FilterTraceNode
+     * that outputs to a file, not the FileWriter slice itself.
+     * 
+     * @see AnnealedLayout#fileWriters
+     *  
+     * @param filter A FilterTraceNode that writes to a file.
+     * @param tile The RawTile it is currently mapped to.
+     * @return false if another FilterTraceNode that writes to a file is 
+     * mapped to tile.
      */
     private boolean legalFileWriterTile(FilterTraceNode filter, 
             RawTile tile) {
@@ -320,7 +386,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     /**
      * For each trace, generate a random legal tile assignment 
-     * as the initial layout.
+     * as the initial layout, but each slice assignment is legal and thus
+     * the entire assignment is legal.
      */
     private void legalInitialPlacement() {
         Trace[] traces = partitioner.getTraceGraph();
@@ -331,8 +398,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /** 
-     * @return The maximum work for a tile (accounting for 
-     * pipeline bubbles) plus the cost of intertrace communication.
+     * Return the cost function evaluated on the current assignment.
+     * 
+     * @return the cost function evaluated on the current assignment.
      *  
      */
     public double placementCost(boolean debug) {
@@ -358,10 +426,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return cost;
     }
 
-    /** check if the layout is legal, meaning that communicating filters of a
-     * trace are placed on neighboring tiles.
+    /** 
+     * Check that communicating filters of slice are placed on neighboring tiles.
+     * If all are, then return true.
      * 
-     * @return
+     * Note: This does not check for file reader/write collision.
+     * 
+     * @return Return true if all slices are properly snaked across the chip.
      */
     private boolean isLegalLayout() {
         Iterator filters = filterList.iterator();
@@ -383,11 +454,16 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /** 
-     * @param bigWorkers
-     * @param edge
-     * @return If the edge is between bigworkers, then estimate the initial latency
-     * of the intertracebuffer by calculating the manhattan distance of hte
-     * edge.
+     * Given Edge <pre>edge</pre>, if edge is mapped to a source DRAM or 
+     * a destination DRAM whose home tile is in the bigWorker set, then
+     * return the distance that the edge occupies + 1 * a multiplier, 
+     * if neither home tile is a bigWorker, then just return manhattan distance 
+     * + 1.  
+     * 
+     * @param bigWorkers A set of RawTiles for tiles that do a bunch of work.
+     * @param edge The Edge in question.
+     * 
+     * @return A metric of the latency of the Edge edge.
      */
     private int distanceLatency(HashSet bigWorkers, Edge edge) {
         
@@ -418,6 +494,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }    
     
     /**
+     * Calculate a measure of the communication cost of the current 
+     * assignment.  This method changes frequently, see the method itself 
+     * for implementation.
+     * 
      * @return An estimate of the cost of communication for this layout.
      */
     private int commEstimate(int tileCosts[]) {
@@ -476,15 +556,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**
-     * @param bigWorkers
-     * @param edge
-     * @param src
-     * @param dst
+     * Given a set of tiles that perform a bunch of work, bigWorkers,
+     * and a Edge with source dram src and dest dram dst, determine how many 
+     * items travel over the bigWorkers tiles in the route from 
+     * src to dest.  
+     * 
+     * @param bigWorkers A set of RawTiles that perform a bunch of work.
+     * @param edge The Edge in question.
+     * @param src The src DRAM for edge.
+     * @param dst The dest DRAM for edge.
+     * 
      * @return The number of items that travel over inter-trace-buffer
      * edge with src dram and dst dram 
-     * and the pass through a tile in the <bigWorkers> tile set,
-     * but you don't care about this if the tile must use the gdn for 
-     * input and output intra trace.
+     * and the pass through a tile in the <bigWorkers> tile set.
+     * 
      */
     private int itemsThroughBigWorkers(HashSet bigWorker, Edge edge, 
             StreamingDram src, StreamingDram dst) {
@@ -495,9 +580,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //int work = 
         //    Math.max(spaceTime.partitioner.getTraceBNWork(edge.getSrc().getParent()),
         //            spaceTime.partitioner.getTraceBNWork(edge.getDest().getParent()));
-        
+        //get the route
         Iterator route = Router.getRoute(src, dst).iterator();
-        HashSet accountedFor = new HashSet();
+        //set of big workers we have already accounted for 
+        HashSet<ComputeNode> accountedFor = new HashSet<ComputeNode>();
+        //cycle through the route and see if any of the intermediate
+        //hops are big workers...
         while (route.hasNext()) {
             ComputeNode hop = (ComputeNode)route.next();
             if (hop instanceof RawTile && 
@@ -529,10 +617,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**
-     * @return The maximum amount of work that is performed on a tile
-     * using a formula that accounts for startup costs of filter (pipeline lag).
-     * Also, if the filter outputs using the gdn account 
-     * for the added cost of sending an item.
+     * Return the max element of tileCosts.
+     * 
+     * @param tileCosts The array that holds the cost for each tile 
+     * number. 
+     * 
+     * @return The maximum amount of work that is performed on a tile.
+     *
      */
     private int maxTileWork(int[] tileCosts) {
         
@@ -548,7 +639,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //return the work that the max tile is estimated to do
         return max;
     }
-        
+    
+    /**
+     * Calculate the amount of work that is performed by each
+     * tile in the steady-state.  This calculation will use the work
+     * estimation for each filter and will account for pipeline lag inside 
+     * of a slice.
+     * 
+     * If bias, we attempt to bias the tiles with little work by calling
+     * {@link AnnealedLayout#biasCosts}.
+     * 
+     * @param bias Should we bias the costs calculated.
+     *
+     * @return An array that contains the amount of work indexed by tile number.
+     */
     private int[] getTileWorks(boolean bias) {
         int[] tileCosts = new int[rawChip.getTotalTiles()];
         Iterator traces = scheduleOrder.iterator();
@@ -663,6 +767,15 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             return tileCosts;
     }
     
+    /**
+     * Given an array of tileCosts indexed by tile number, 
+     * if an elements is less than the max, then multiply 
+     * its value by 1.20.
+     * 
+     * @param tileCosts The array of tile costs.
+     * 
+     * @return A new biased array.
+     */
     private int[] biasCosts(int[] tileCosts) {
         int maxWork = maxTileWork(tileCosts);
         for (int i = 0; i < tileCosts.length; i++) {
@@ -673,6 +786,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return tileCosts;
     }
     
+    /**
+     * Not used anymore.
+     * 
+     * @return Got me?
+     */
     private int[] getTileWorksOld() {
         int[] tileCosts = new int[rawChip.getTotalTiles()];
         Iterator traces = scheduleOrder.iterator();
@@ -743,7 +861,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**    
-     * initalize the simulated annealing.
+     * This method initalizes the simulated annealing algorithm.  It will
+     * setup the file reading and writing structures and determine which 
+     * filters need to be assigned to tiles.
      */
     public void initialize() {
         //generate the startup cost of each filter...         
@@ -793,7 +913,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     
     /**
-     * @param vals
+     * Calculate the standard deviation of the values in vals.
+     * 
+     * @param vals An array of ints.
+     * 
      * @return The standard deviation of the values in <pre>vals</pre>.
      */
     public static double standardDeviation(int[] vals) {
@@ -815,6 +938,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     static {
+        //initialize the direction strings
+        //when attempting to find a new assignment for a slice,
+        //for each filter we pick a random dirString and try to 
+        //place the next filter at a tiles in the directions 
+        //given by the string...
         dirStrings = new String[24];
         dirStrings[0] = "NESW";
         dirStrings[1] = "NEWS";

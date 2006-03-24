@@ -2184,7 +2184,7 @@ public class Rawify {
 
     /**
      * Generate the conditional branch instruction of a loop on the switch that is using
-     * switch reg <reg> as its working register.
+     * switch reg <pre>reg</pre> as its working register.
      * @param label
      * @param tile
      * @param init

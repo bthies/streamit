@@ -16,19 +16,19 @@ public class DRAMCommandDist {
     private Trace[] schedule;
     private RawChip rawChip;
     
-    /** the number of reads for <schedule> to each dram while
+    /** the number of reads for <pre>schedule</pre> to each dram while
      * executing within a trace
      */
     private int[] intraReads;
-    /** the number of writes for <schedule> to each dram while
+    /** the number of writes for <pre>schedule</pre> to each dram while
      * executing within a trace
      */
     private int[] intraWrites;
-    /** the number of reads for <schedule> to each dram while
+    /** the number of reads for <pre>schedule</pre> to each dram while
      * executing splitting and joining
      */
     private int[] interReads;
-    /** the number of writes for <schedule> to each dram while
+    /** the number of writes for <pre>schedule</pre> to each dram while
      * executing splitting and joining
      */
     private int[] interWrites;
@@ -43,7 +43,7 @@ public class DRAMCommandDist {
     
     /**
      * @param dram
-     * @return The number of writes from <dram> during schedule for 
+     * @return The number of writes from <pre>dram</pre> during schedule for 
      * splitting and joining
      */
     public int getInterWrites(StreamingDram dram) {
@@ -52,7 +52,7 @@ public class DRAMCommandDist {
     
     /**
      * @param dram
-     * @return The number of reads from <dram> during schedule for
+     * @return The number of reads from <pre>dram</pre> during schedule for
      * splitting and joining
      */
     public int getInterReads(StreamingDram dram) {
@@ -60,7 +60,7 @@ public class DRAMCommandDist {
     }
     /**
      * @param dram
-     * @return The number of writes from <dram> during schedule within
+     * @return The number of writes from <pre>dram</pre> during schedule within
      * a trace (intra trace buffers).
      */
     
@@ -70,7 +70,7 @@ public class DRAMCommandDist {
     
     /**
      * @param dram
-     * @return The number of reads from <dram> during schedule within
+     * @return The number of reads from <pre>dram</pre> during schedule within
      * a trace (intra trace buffer).
      */
     public int getIntraReads(StreamingDram dram) {

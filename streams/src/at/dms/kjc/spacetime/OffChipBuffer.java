@@ -115,7 +115,7 @@ public abstract class OffChipBuffer {
     /** 
      * @param node 
      * @param i
-     * @return The string for the rotation structure for <node> 
+     * @return The string for the rotation structure for <pre>node</pre> 
      *  
      **/
     public String getIdent(int i) {

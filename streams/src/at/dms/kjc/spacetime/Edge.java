@@ -4,7 +4,7 @@ import at.dms.kjc.*;
 
 /**
  *  This class represents an edge in the partitioned stream graph between slices (traces).
- *  But it actually connectes <OutputTraceNodes> to <InputTraceNodes>.
+ *  But it actually connectes <pre>OutputTraceNodes</pre> to <pre>InputTraceNodes</pre>.
  * 
  * @author mgordon
  *

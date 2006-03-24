@@ -17,7 +17,7 @@ public class LayoutDot
 {
     /**
      * Print the final cost of the layout according to the cost function
-     * of <anneal>.
+     * of <pre>anneal</pre>.
      *  
      * @param spaceTime
      * @param anneal

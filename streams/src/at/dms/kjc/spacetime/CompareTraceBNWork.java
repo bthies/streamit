@@ -22,7 +22,7 @@ public class CompareTraceBNWork implements Comparator {
     }
     
     /**
-     * Compare the bottleneck work of Trace <o1> with Trace <o2>.
+     * Compare the bottleneck work of Trace <pre>o1</pre> with Trace <pre>o2</pre>.
      * 
      * @return The comparison 
      */

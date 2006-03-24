@@ -10,9 +10,9 @@ import at.dms.util.Utils;
  **/
 public class LinearFission {
     /** 
-     * Fiss linear FilterContent <content> into a pipeline of <num> filters and return 
-     * the new FilterContents, right now, <num> must evenly divide the number
-     * weights of the linear filter <content>.
+     * Fiss linear FilterContent <pre>content</pre> into a pipeline of <pre>num</pre> filters and return 
+     * the new FilterContents, right now, <pre>num</pre> must evenly divide the number
+     * weights of the linear filter <pre>content</pre>.
      **/
     public static FilterContent[] fiss(FilterContent content, int num) {
         assert content.isLinear() : "Trying to Linear fiss a nonlinear filter";

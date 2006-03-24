@@ -69,7 +69,7 @@ public class ManualTraceLayout implements Layout {
     /**
      * Ask the user to lay out the trace on the raw chip.
      * @param rawChip The Raw Chip 
-     * @param trace The Trace we would want to layout out on <rawChip>
+     * @param trace The Trace we would want to layout out on <pre>rawChip</pre>
      */
     private void layout(RawChip rawChip, Trace trace) {
         BufferedReader inputBuffer = 

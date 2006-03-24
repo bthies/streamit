@@ -35,7 +35,7 @@ public class RawChip {
     public static final int DRAM_GDN_DATA_OPCODE = 13;
     
     /**
-     * Initialize a <xsize> x <ysize> raw chip.
+     * Initialize a <pre>xsize</pre> x <pre>ysize</pre> raw chip.
      *   
      * @param xSize
      * @param ySize
@@ -319,7 +319,7 @@ public class RawChip {
     /**
      * @param tile1
      * @param tile2
-     * @return True if <tile1> neighbors <tile2>.
+     * @return True if <pre>tile1</pre> neighbors <pre>tile2</pre>.
      */
     public boolean areNeighbors(ComputeNode tile1, ComputeNode tile2) {
         if (tile1 == tile2)
@@ -336,7 +336,7 @@ public class RawChip {
  
     
     /**
-     * Get the tile that is at the specified <dir> from <tile>.
+     * Get the tile that is at the specified <pre>dir</pre> from <pre>tile</pre>.
      * 
      * @param tile
      * @param dir 'N', 'S', 'W', 'E'
@@ -370,7 +370,7 @@ public class RawChip {
     /** 
      * @param n1
      * @param n2
-     * @return The hops between <n1> and <n2>.
+     * @return The hops between <pre>n1</pre> and <pre>n2</pre>.
      */
     public int manhattanDistance(ComputeNode n1, 
             ComputeNode n2) {

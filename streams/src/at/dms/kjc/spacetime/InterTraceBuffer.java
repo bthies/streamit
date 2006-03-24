@@ -75,7 +75,7 @@ public class InterTraceBuffer extends OffChipBuffer {
 
     /**
      * @param dram
-     * @return The number of intertracebuffer's mapped to <dram>.
+     * @return The number of intertracebuffer's mapped to <pre>dram</pre>.
      * Used because each dram can at handle at most 
      * StreamingDram.STREAMING_QUEUE_SIZE number of reads and writes.
      */

@@ -242,7 +242,7 @@ public class FilterInfo {
 
     /**
      * get the total number of items received during the execution of the stage
-     * we are in (based on <init> and <primepump>.  For primepump, this is just
+     * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
      * for one firing of the parent trace in the primepump stage, the trace may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 
@@ -266,7 +266,7 @@ public class FilterInfo {
 
     /**
      * get the total number of itmes sent during the execution of the stage
-     * we are in (based on <init> and <primepump>.  For primepump, this is just
+     * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
      * for one firing of the parent trace in the primepump stage, the trace may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 

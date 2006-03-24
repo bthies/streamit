@@ -30,7 +30,7 @@ public class BufferDRAMAssignment {
     
     /**
      * Assign the buffers to ports
-     * @param assignment A hash map of filtertraceNode->RawTile
+     * @param assignment A hash map of filtertraceNode-&gt;RawTile
      */
     public void run(SpaceTimeSchedule spaceTime, Layout layout) {
         OffChipBuffer.resetDRAMAssignment();
@@ -143,7 +143,7 @@ public class BufferDRAMAssignment {
     
     /**
      * first go thru the file, reader and writers and assign their 
-     * input->file and file->output buffers to reside in the dram 
+     * input-&gt;file and file-&gt;output buffers to reside in the dram 
      * attached to the output port.
      * 
      * @param files
@@ -218,7 +218,7 @@ public class BufferDRAMAssignment {
     }
     
     /**
-     * Assign the filter->output intratracebuffer of a split trace
+     * Assign the filter-&gt;output intratracebuffer of a split trace
      * to the upstream filter's homebase.
      * 
      * @param output
@@ -302,7 +302,7 @@ public class BufferDRAMAssignment {
     /**
      * Try to assign InterTraceBuffers that originate from a trace with multiple
      * outputs and end at a trace a single input.  Try to assign the 
-     * inter trace buffer to the downstream trace's input->filter buffer dram.
+     * inter trace buffer to the downstream trace's input-&gt;filter buffer dram.
      * 
      * @param input
      */
@@ -332,8 +332,8 @@ public class BufferDRAMAssignment {
      * Now, take the remaining InterTraceBuffers that were not assigned in 
      * previous passes and assign them.  To do this we look at all the edges for 
      * the OutputtraceNode and if any are unassigned, we build a list of drams
-     * in ascending distance from the src port of the filter->outputtrace and the
-     * dest port of the inputtrace->filter and try to assign it to the buffer one at a time.
+     * in ascending distance from the src port of the filter-&gt;outputtrace and the
+     * dest port of the inputtrace-&gt;filter and try to assign it to the buffer one at a time.
      * We will not be able to assign a buffer to a port if the port has already been used
      * for the outputtracenode or the inputtracenode.
      *
@@ -396,7 +396,7 @@ public class BufferDRAMAssignment {
     /**
      * @param output
      * @return A hashet of StreamingDrams that are already assigned to the
-     * outgoing edges of <output> at the current time.  
+     * outgoing edges of <pre>output</pre> at the current time.  
      */
     private Set assignedOutputDRAMs(OutputTraceNode output) {
         HashSet set = new HashSet();
@@ -412,7 +412,7 @@ public class BufferDRAMAssignment {
     /**
      * @param input
      * @return A hashset of StreamingDrams that are already assigned to the incoming
-     * buffers of <input> at the current time.
+     * buffers of <pre>input</pre> at the current time.
      */
     private Set assignedInputDRAMs(InputTraceNode input) {
         HashSet set = new HashSet();
@@ -460,7 +460,7 @@ public class BufferDRAMAssignment {
      * @param chip
      * @return An iterator over a list of PortDistance ordered in ascending 
      * order of the distance from both the dram assigned to the source of 
-     * <edge> and the dram assigned to the dest of <edge>. 
+     * <pre>edge</pre> and the dram assigned to the dest of <pre>edge</pre>. 
      */
     private Iterator assignmentOrder(Edge edge) {
         // the streaming DRAM implementation can do both a

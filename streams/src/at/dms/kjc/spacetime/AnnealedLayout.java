@@ -17,7 +17,7 @@ import java.util.HashSet;
  *
  */
 public class AnnealedLayout extends SimulatedAnnealing implements Layout {
-    /** if a tile does at least <BIG_WORKER> percentage of the bottle neck tile,
+    /** if a tile does at least <pre>BIG_WORKER</pre> percentage of the bottle neck tile,
      * communication to and from it are included in the communication cost component
      * of the cost function.
      */
@@ -262,7 +262,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
  
     /**
-     * We want to try to place <filter> on <tile> but it is a file reader,
+     * We want to try to place <pre>filter</pre> on <pre>tile</pre> but it is a file reader,
      * so we have to make sure that no other file reading filters are 
      * mapped to this tile.  If so return false.
      * 
@@ -290,7 +290,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**
-     * We want to try to place <filter> on <tile> but <filter> writes 
+     * We want to try to place <pre>filter</pre> on <pre>tile</pre> but <pre>filter</pre> writes 
      * to a file, so we have to make sure that no other filters that writes 
      * to a file is mapped to this tile.  If there is one, return false. 
      * @param filter
@@ -794,7 +794,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     /**
      * @param vals
-     * @return The standard deviation of the values in <vals>.
+     * @return The standard deviation of the values in <pre>vals</pre>.
      */
     public static double standardDeviation(int[] vals) {
         double squaredSum = 0.0;

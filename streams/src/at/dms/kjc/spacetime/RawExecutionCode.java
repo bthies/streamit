@@ -151,8 +151,8 @@ public abstract class RawExecutionCode
     public abstract JMethodDeclaration getPrimePumpMethod();
     
     /**
-     * Returns a for loop that uses field <var> to count
-     * <count> times with the body of the loop being <body>.  If count
+     * Returns a for loop that uses field <pre>var</pre> to count
+     * <pre>count</pre> times with the body of the loop being <pre>body</pre>.  If count
      * is non-positive, just returns empty (!not legal in the general case)
      */
     public static JStatement makeForLoop(JStatement body,
@@ -161,7 +161,7 @@ public abstract class RawExecutionCode
         if (body == null)
             return new JEmptyStatement(null, null);
     
-        // make init statement - assign zero to <var>.  We need to use
+        // make init statement - assign zero to <pre>var</pre>.  We need to use
         // an expression list statement to follow the convention of
         // other for loops and to get the codegen right.
         JExpression initExpr[] = {
@@ -179,7 +179,7 @@ public abstract class RawExecutionCode
                 return new JEmptyStatement(null, null);
             }
         }
-        // make conditional - test if <var> less than <count>
+        // make conditional - test if <pre>var</pre> less than <pre>count</pre>
         JExpression cond = 
             new JRelationalExpression(null,
                                       Constants.OPE_LT,
@@ -259,7 +259,7 @@ public abstract class RawExecutionCode
     /**
      * @param integer if true use csti_integer, false use csti_fp
      * @param recvInto The expression to receive into
-     * @return A statement to receive into <recvInto> from the static network.
+     * @return A statement to receive into <pre>recvInto</pre> from the static network.
      */
     public JStatement gdnReceive(boolean integer, JExpression recvInto) {
         JAssignmentExpression ass = 
@@ -324,7 +324,7 @@ public abstract class RawExecutionCode
      * If we are in the prime pump or the steady state, we may be compressing
      * the switch code and if so, we need to send the push rate and the pop rate
      * to the switch for loop bounds.  This function will decide if we need to do that
-     * and if so, do it (append the ins to <workBlock>).
+     * and if so, do it (append the ins to <pre>workBlock</pre>).
      * 
      * @param filterInfo
      * @param workBlock
@@ -350,7 +350,7 @@ public abstract class RawExecutionCode
     
     /**
      * @param words
-     * @return Return code to receive <words> words into a dummy variable defined in 
+     * @return Return code to receive <pre>words</pre> words into a dummy variable defined in 
      * traceIRToC over the gdn.
      */
     public static JBlock gdnDisregardIncoming(int words) {
@@ -372,7 +372,7 @@ public abstract class RawExecutionCode
     
     /**
      * @param words
-     * @return Return code to send <words> words over the gdn using a predefined
+     * @return Return code to send <pre>words</pre> words over the gdn using a predefined
      * header. 
      */
     public static JBlock gdnDummyOutgoing(int words) {

@@ -43,7 +43,7 @@ public class CommunicateAddrs
     
     /**
      * @param tile
-     * @return For <tile> return the fields that represent the buffers.
+     * @return For <pre>tile</pre> return the fields that represent the buffers.
      */
     public static String getFields(RawTile tile) 
     {
@@ -264,7 +264,7 @@ public class CommunicateAddrs
     
     /**
      * @param tile
-     * @return For <tile> return a function that will free the buffer memory.
+     * @return For <pre>tile</pre> return a function that will free the buffer memory.
      */
     public static String getFreeFunction(RawTile tile) 
     {
@@ -281,7 +281,7 @@ public class CommunicateAddrs
 
     /** 
      * @param tile
-     * @return For <tile> return the function that will allocate the buffers or 
+     * @return For <pre>tile</pre> return the function that will allocate the buffers or 
      * get the addresses from the static network.
      */
     public static String getFunction(RawTile tile) 

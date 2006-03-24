@@ -199,7 +199,7 @@ public abstract class Partitioner {
     
     /**
      * @param node
-     * @return The startup cost for <node> 
+     * @return The startup cost for <pre>node</pre> 
      */
     public int getFilterStartupCost(FilterTraceNode node) {
         assert filterStartupCost.containsKey(node);

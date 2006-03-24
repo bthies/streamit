@@ -142,7 +142,7 @@ public class Util {
     /**
      * @param trace
      * @param tile
-     * @return True if <trace> has a filter that is mapped to <tile>.
+     * @return True if <pre>trace</pre> has a filter that is mapped to <pre>tile</pre>.
      */
     public static boolean doesTraceUseTile(Trace trace, 
             RawTile tile, Layout layout) {
@@ -162,7 +162,7 @@ public class Util {
     
     /**
      * @param array
-     * @return The median element of <array>.
+     * @return The median element of <pre>array</pre>.
      */
     public static int median(int[] array) {
         int[] sortMe = (int[])array.clone();
@@ -173,7 +173,7 @@ public class Util {
     /**
      * 
      * @param array
-     * @return The mean of the elements of <array>.
+     * @return The mean of the elements of <pre>array</pre>.
      */
     public static double mean(int[] array) {
         return (double)sum(array) / (double)array.length;
@@ -263,7 +263,7 @@ public class Util {
         return "outputs_" + getFileVar(out);
     }
 
-    // given <i> bytes, round <i> up to the nearest cache
+    // given <pre>i</pre> bytes, round <pre>i</pre> up to the nearest cache
     // line divisible int
     public static int cacheLineDiv(int i) {
         if (i % RawChip.cacheLineBytes == 0)
@@ -305,8 +305,8 @@ public class Util {
 
     /**
      * @param traces
-     * @return An array of all the TraceNode in the <traces> array 
-     * dictated by the order that the traces appear in <traces>. 
+     * @return An array of all the TraceNode in the <pre>traces</pre> array 
+     * dictated by the order that the traces appear in <pre>traces</pre>. 
      */
     public static TraceNode[] traceNodeArray(Trace[] traces) {
         LinkedList trav = new LinkedList();

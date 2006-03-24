@@ -274,7 +274,7 @@ public class SimplePartitioner extends Partitioner {
     }
 
     /**
-     * given <unflatFilter> determine if we should continue the current trace we
+     * given <pre>unflatFilter</pre> determine if we should continue the current trace we
      * are building
      */
     private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear,

@@ -87,7 +87,7 @@ public class SwitchCodeStore {
     */
 
 
-    //create the header of a switch loop on all the tiles in <tiles> and 
+    //create the header of a switch loop on all the tiles in <pre>tiles</pre> and 
     //first send mult from the compute processor to the switch
     //returns map of tile->Label
     public static HashMap switchLoopHeader(HashSet tiles, int mult, boolean init, boolean primePump) 
@@ -107,7 +107,7 @@ public class SwitchCodeStore {
         return labels;
     }
     
-    //create the trailer of the loop for all tiles in the key set of <lables>
+    //create the trailer of the loop for all tiles in the key set of <pre>lables</pre>
     //labels maps RawTile->label
     public static void switchLoopTrailer(HashMap labels, boolean init, boolean primePump) 
     {
@@ -151,7 +151,7 @@ public class SwitchCodeStore {
      * Given a source and an array of dests, generate the code to 
      * route an item from the source to the dests and place the
      * place the switch instruction in the appropriate stage's instruction
-     * vector based on the <stage> argument.
+     * vector based on the <pre>stage</pre> argument.
      * 
      * @param source 
      * @param dests the dests for this item, if multiple, duplicate
@@ -211,8 +211,8 @@ public class SwitchCodeStore {
     }
     
     /**
-     * Generate code on the switch neigboring <dev> to disregard the input from
-     * the dev for <words> words.
+     * Generate code on the switch neigboring <pre>dev</pre> to disregard the input from
+     * the dev for <pre>words</pre> words.
      * 
      * @param dev
      * @param words
@@ -233,8 +233,8 @@ public class SwitchCodeStore {
     }
     
     /**
-     * Generate code on the switch neighboring <dev> to send dummy values to <dev> for
-     * <words> words. 
+     * Generate code on the switch neighboring <pre>dev</pre> to send dummy values to <pre>dev</pre> for
+     * <pre>words</pre> words. 
      * 
      * @param dev
      * @param words

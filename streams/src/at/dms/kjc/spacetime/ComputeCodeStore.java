@@ -120,7 +120,7 @@ public class ComputeCodeStore {
 
     /**
      * Generate a command to read from a file daisy-chained to a i/o
-     * port on the gdn and send the data to <dest>
+     * port on the gdn and send the data to <pre>dest</pre>
      * 
      * @param init true if we want to append command to init stage, false steady
      * @param words the number of words to x-fer
@@ -218,7 +218,7 @@ public class ComputeCodeStore {
     }
     
     /**
-     * Generate code on the compute process to send over <words> words of data
+     * Generate code on the compute process to send over <pre>words</pre> words of data
      * using a header that was already set previously.
      * 
      * @param dev
@@ -259,7 +259,7 @@ public class ComputeCodeStore {
     }
     
     /**
-     * Generate code to receive <words> words into a dummy volatile variable on 
+     * Generate code to receive <pre>words</pre> words into a dummy volatile variable on 
      * the compute processor from gdn.
      * 
      * @param dev
@@ -406,7 +406,7 @@ public class ComputeCodeStore {
 
     /**
      * Return sir code that will call the macro for a dram command to transfer
-     * <cacheLines> cache-lines from a single address <address> using <sampleAddress>
+     * <pre>cacheLines</pre> cache-lines from a single address <pre>address</pre> using <pre>sampleAddress</pre>
      * to send the command to the correct dram port.
      * 
      * @param read True then load, false then store
@@ -453,7 +453,7 @@ public class ComputeCodeStore {
     /**
      * Add a dram read command at the current position of this code compute code 
      * for either the init stage (including primepump) or the steady state over the
-     * gdn and send it to the <dest> tile.  Don't rotate the buffer we are in the init
+     * gdn and send it to the <pre>dest</pre> tile.  Don't rotate the buffer we are in the init
      * stage.  
      * 
      * @param init true if init 
@@ -729,8 +729,8 @@ public class ComputeCodeStore {
     }
 
     /**
-     * Bill's code adds method <meth> to this, if <meth> is not already
-     * registered as a method of this. Requires that <method> is non-null.
+     * Bill's code adds method <pre>meth</pre> to this, if <pre>meth</pre> is not already
+     * registered as a method of this. Requires that <pre>method</pre> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
         assert method != null;
@@ -753,7 +753,7 @@ public class ComputeCodeStore {
     }
 
     /**
-     * Adds <f> to the fields of this. Does not check for duplicates.
+     * Adds <pre>f</pre> to the fields of this. Does not check for duplicates.
      */
     public void addFields(JFieldDeclaration[] f) {
         JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
@@ -768,7 +768,7 @@ public class ComputeCodeStore {
     }
 
     /**
-     * adds field <field> to this, if <field> is not already registered as a
+     * adds field <pre>field</pre> to this, if <pre>field</pre> is not already registered as a
      * field of this.
      */
     public void addField(JFieldDeclaration field) {
@@ -791,7 +791,7 @@ public class ComputeCodeStore {
     }
 
     /**
-     * Adds <m> to the methods of this. Does not check for duplicates.
+     * Adds <pre>m</pre> to the methods of this. Does not check for duplicates.
      */
     public void addMethods(JMethodDeclaration[] m) {
         JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length
@@ -808,7 +808,7 @@ public class ComputeCodeStore {
     /**
      * @param meth
      * @return Return true if this compute code store already has the
-     * declaration of <meth> in its method array.
+     * declaration of <pre>meth</pre> in its method array.
      */
     public boolean hasMethod(JMethodDeclaration meth) {
         for (int i = 0; i < methods.length; i++)

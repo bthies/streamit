@@ -47,7 +47,7 @@ public class SIREndMarker extends SIRMarker {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIREndMarker other) {
         super.deepCloneInto(other);
         other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);

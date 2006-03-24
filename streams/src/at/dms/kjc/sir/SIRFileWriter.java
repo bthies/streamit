@@ -58,7 +58,7 @@ public class SIRFileWriter extends SIRPredefinedFilter implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRFileWriter other) {
         super.deepCloneInto(other);
         other.fileName = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);

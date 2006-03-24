@@ -364,7 +364,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRSplitJoin other) {
         super.deepCloneInto(other);
         other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter);

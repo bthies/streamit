@@ -132,7 +132,7 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
         super.deepCloneInto(other);
         other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);

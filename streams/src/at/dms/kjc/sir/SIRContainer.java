@@ -289,7 +289,7 @@ public abstract class SIRContainer extends SIRStream {
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRContainer other) {
         super.deepCloneInto(other);
         other.children = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.children);

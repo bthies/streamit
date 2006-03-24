@@ -82,7 +82,7 @@ public class SIRLatencySet extends SIRLatency {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRLatencySet other) {
         super.deepCloneInto(other);
         other.entries = (java.util.TreeSet)at.dms.kjc.AutoCloner.cloneToplevel(this.entries);

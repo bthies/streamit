@@ -27,9 +27,9 @@ import java.io.IOException;
 public class CloneGenerator {
 
     /** header for cloning methods in files */
-    private static final String HEADER = "    /* THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String HEADER = "    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
     /** footer for cloning methods in files */
-    private static final String FOOTER = "    /* THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String FOOTER = "    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
 
     // disable access control when this class is running
     static {

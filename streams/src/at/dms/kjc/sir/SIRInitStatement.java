@@ -131,7 +131,7 @@ public class SIRInitStatement extends JStatement {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRInitStatement other) {
         super.deepCloneInto(other);
         other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args);

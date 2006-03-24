@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.12 2006-03-16 16:41:19 dimock Exp $
+ * $Id: CSourceClass.java,v 1.13 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -354,7 +354,7 @@ public class CSourceClass extends CClass {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CSourceClass other) {
         super.deepCloneInto(other);
         other.outers = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.outers);

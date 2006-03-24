@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMultExpression.java,v 1.7 2006-02-03 00:50:56 thies Exp $
+ * $Id: JMultExpression.java,v 1.8 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -218,7 +218,7 @@ public class JMultExpression extends JBinaryArithmeticExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JMultExpression other) {
         super.deepCloneInto(other);
     }

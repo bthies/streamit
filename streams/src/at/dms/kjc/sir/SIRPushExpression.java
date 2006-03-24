@@ -147,7 +147,7 @@ public class SIRPushExpression extends JExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRPushExpression other) {
         super.deepCloneInto(other);
         other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg);

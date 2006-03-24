@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayLengthExpression.java,v 1.10 2006-01-25 17:01:22 thies Exp $
+ * $Id: JArrayLengthExpression.java,v 1.11 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -132,7 +132,7 @@ public class JArrayLengthExpression extends JExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JArrayLengthExpression other) {
         super.deepCloneInto(other);
         other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);

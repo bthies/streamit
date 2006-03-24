@@ -65,7 +65,7 @@ public class SIRCreatePortal extends JExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRCreatePortal other) {
         super.deepCloneInto(other);
     }

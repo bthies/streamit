@@ -62,7 +62,7 @@ public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRPredefinedFilter other) {
         super.deepCloneInto(other);
     }

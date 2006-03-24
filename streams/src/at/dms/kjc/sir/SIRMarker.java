@@ -72,7 +72,7 @@ public class SIRMarker extends JStatement {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRMarker other) {
         super.deepCloneInto(other);
     }

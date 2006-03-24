@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.10 2006-01-25 17:01:23 thies Exp $
+ * $Id: JRelationalExpression.java,v 1.11 2006-03-24 15:54:48 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -416,7 +416,7 @@ public class JRelationalExpression extends JBinaryExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JRelationalExpression other) {
         super.deepCloneInto(other);
         other.oper = this.oper;

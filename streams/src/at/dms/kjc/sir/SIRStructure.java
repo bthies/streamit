@@ -92,7 +92,7 @@ public class SIRStructure extends SIRStream
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRStructure other) {
         super.deepCloneInto(other);
     }

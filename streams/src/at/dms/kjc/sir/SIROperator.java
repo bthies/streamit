@@ -236,7 +236,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIROperator other) {
         other.parent = this.parent;
         other.serializationHandle = this.serializationHandle;

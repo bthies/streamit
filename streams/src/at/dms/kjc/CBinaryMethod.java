@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBinaryMethod.java,v 1.6 2006-03-24 15:39:15 dimock Exp $
+ * $Id: CBinaryMethod.java,v 1.7 2006-03-24 15:54:46 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -261,7 +261,7 @@ public class CBinaryMethod extends CMethod {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CBinaryMethod other) {
         super.deepCloneInto(other);
     }

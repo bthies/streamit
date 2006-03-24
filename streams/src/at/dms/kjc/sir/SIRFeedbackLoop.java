@@ -357,7 +357,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRFeedbackLoop other) {
         super.deepCloneInto(other);
         other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner);

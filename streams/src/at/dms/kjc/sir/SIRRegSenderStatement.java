@@ -115,7 +115,7 @@ public class SIRRegSenderStatement extends JStatement {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRRegSenderStatement other) {
         super.deepCloneInto(other);
         other.portal = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);

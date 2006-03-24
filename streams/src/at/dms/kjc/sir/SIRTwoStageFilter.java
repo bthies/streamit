@@ -20,7 +20,7 @@ import at.dms.kjc.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.17 2006-01-25 17:01:54 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.18 2006-03-24 15:54:50 dimock Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -217,7 +217,7 @@ public class SIRTwoStageFilter extends SIRFilter {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRTwoStageFilter other) {
         super.deepCloneInto(other);
     }

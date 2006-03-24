@@ -2939,7 +2939,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
         super.deepCloneInto(other);
         other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application);

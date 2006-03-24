@@ -144,7 +144,7 @@ public class SIRPhaseInvocation extends JStatement {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRPhaseInvocation other) {
         super.deepCloneInto(other);
         other.call = (at.dms.kjc.JMethodCallExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.call);

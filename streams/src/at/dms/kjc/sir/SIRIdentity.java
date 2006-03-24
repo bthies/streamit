@@ -155,7 +155,7 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRIdentity other) {
         super.deepCloneInto(other);
         other.rate = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.rate);

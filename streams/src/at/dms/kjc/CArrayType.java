@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.17 2006-03-24 15:39:15 dimock Exp $
+ * $Id: CArrayType.java,v 1.18 2006-03-24 15:54:46 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -374,7 +374,7 @@ public class CArrayType extends CClassType {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CArrayType other) {
         super.deepCloneInto(other);
         other.baseType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.baseType);

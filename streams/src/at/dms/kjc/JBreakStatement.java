@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBreakStatement.java,v 1.10 2006-01-25 17:01:22 thies Exp $
+ * $Id: JBreakStatement.java,v 1.11 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -123,7 +123,7 @@ public class JBreakStatement extends JStatement {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JBreakStatement other) {
         super.deepCloneInto(other);
         other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);

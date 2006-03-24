@@ -255,7 +255,7 @@ public class SIRSplitter extends SIROperator {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRSplitter other) {
         super.deepCloneInto(other);
         other.type = (at.dms.kjc.sir.SIRSplitType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);

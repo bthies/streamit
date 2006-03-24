@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAddExpression.java,v 1.8 2006-01-25 17:01:22 thies Exp $
+ * $Id: JAddExpression.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -317,7 +317,7 @@ public class JAddExpression extends JBinaryArithmeticExpression {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JAddExpression other) {
         super.deepCloneInto(other);
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.31 2006-01-25 17:01:23 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.32 2006-03-24 15:54:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -720,7 +720,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JMethodDeclaration other) {
         super.deepCloneInto(other);
         other.peek = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.peek);

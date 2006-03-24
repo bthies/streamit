@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchGroup.java,v 1.8 2006-01-25 17:01:23 thies Exp $
+ * $Id: JSwitchGroup.java,v 1.9 2006-03-24 15:54:48 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -168,7 +168,7 @@ public class JSwitchGroup extends JPhylum {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JSwitchGroup other) {
         super.deepCloneInto(other);
         other.labels = (at.dms.kjc.JSwitchLabel[])at.dms.kjc.AutoCloner.cloneToplevel(this.labels);

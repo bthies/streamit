@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.10 2006-03-24 15:39:15 dimock Exp $
+ * $Id: TabbedPrintWriter.java,v 1.11 2006-03-24 15:54:46 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -151,7 +151,7 @@ public class TabbedPrintWriter implements at.dms.kjc.DeepCloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.compiler.TabbedPrintWriter other) {
         other.p = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p);
         other.pos = this.pos;

@@ -134,7 +134,7 @@ public class SIRInterfaceTable extends JExpression
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRInterfaceTable other) {
         super.deepCloneInto(other);
         other.iface = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.iface);

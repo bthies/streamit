@@ -192,7 +192,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRPipeline other) {
         super.deepCloneInto(other);
     }

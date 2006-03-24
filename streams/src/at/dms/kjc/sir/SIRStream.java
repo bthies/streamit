@@ -477,7 +477,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRStream other) {
         super.deepCloneInto(other);
         other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);

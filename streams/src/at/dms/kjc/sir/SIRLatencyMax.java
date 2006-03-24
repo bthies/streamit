@@ -92,7 +92,7 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRLatencyMax other) {
         super.deepCloneInto(other);
         other.max = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.max);

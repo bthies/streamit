@@ -83,7 +83,7 @@ public class SIRJoinType implements Serializable, DeepCloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRJoinType other) {
         other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
     }

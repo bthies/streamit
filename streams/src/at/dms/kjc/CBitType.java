@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBitType.java,v 1.6 2006-03-24 15:39:15 dimock Exp $
+ * $Id: CBitType.java,v 1.7 2006-03-24 15:54:46 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -175,7 +175,7 @@ public class CBitType extends CNumericType {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CBitType other) {
         super.deepCloneInto(other);
     }

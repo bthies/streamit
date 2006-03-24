@@ -842,8 +842,6 @@ public class Getopt extends Object
      * Put in a separate method because this needs to be done twice.  (The
      * C getopt authors just copy-pasted the code!).
      *
-     * @param longind A buffer in which to store the 'val' field of found LongOpt
-     *
      * @return Various things depending on circumstances
      */
     protected int

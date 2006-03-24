@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenStreamIOException.java,v 1.2 2006-01-25 17:00:55 thies Exp $
+ * $Id: TokenStreamIOException.java,v 1.3 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -29,7 +29,7 @@ public class TokenStreamIOException extends TokenStreamException {
     public IOException io;
     /**
      * TokenStreamIOException constructor comment.
-     * @param s java.lang.String
+     * @param io java.lang.String
      */
     public TokenStreamIOException(IOException io) {
         super(io.getMessage());

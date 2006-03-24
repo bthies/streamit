@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.4 2006-03-23 18:53:36 dimock Exp $
+ * $Id: Utils.java,v 1.5 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -234,7 +234,7 @@ public class Utils extends at.dms.compiler.tools.common.Utils {
     /**
      * General-purpose utility function for removing
      * characters from the front and back of string
-     * @param s The string to process
+     * @param src The string to process
      * @param head exact string to strip from head
      * @param tail exact string to strip from tail
      * @return The resulting string

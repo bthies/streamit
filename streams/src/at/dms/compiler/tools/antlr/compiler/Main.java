@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.3 2006-01-25 17:00:49 thies Exp $
+ * $Id: Main.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -168,7 +168,7 @@ public class Main {
 
     /**
      * Perform processing on the grammar file.
-     * @param args The command-line arguments
+     * implicit parameter?? The command-line arguments
      */
     public boolean process() {
         Reader f;

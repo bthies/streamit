@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.3 2006-01-25 17:00:56 thies Exp $
+ * $Id: Compiler.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -111,7 +111,7 @@ public abstract class Compiler {
 
     /**
      * Takes a vector of file names an checks that each exists.
-     * @param   files           a vector of names
+     * @param   names           a vector of file names
      * @return  a vector of files known to exist
      * @exception   UnpositionedError   at least one file does not exist
      */
@@ -198,7 +198,7 @@ public abstract class Compiler {
 
     /**
      * Write a message to the diagnostic output.
-     * @param   message     the formatted message
+     * @param   error     the formatted message
      */
     public void inform(UnpositionedError error) {
         inform(error.getMessage());
@@ -206,7 +206,7 @@ public abstract class Compiler {
 
     /**
      * Write a message to the diagnostic output.
-     * @param   message     the formatted message
+     * @param   error     the formatted message
      */
     public void inform(PositionedError error) {
         inform(error.getMessage());

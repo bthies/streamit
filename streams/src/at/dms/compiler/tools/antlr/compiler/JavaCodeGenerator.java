@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaCodeGenerator.java,v 1.4 2006-03-23 18:53:35 dimock Exp $
+ * $Id: JavaCodeGenerator.java,v 1.5 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -658,7 +658,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The {...} action to generate
+     * @param action The {...} action to generate
      */
     public void gen(ActionElement action) {
         if ( action.isSemPred ) {
@@ -706,7 +706,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The block-end element to generate.  Block-end
+     * @param end The block-end element to generate.  Block-end
      * elements are synthesized by the grammar parser to represent
      * the end of a block.
      */
@@ -714,7 +714,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The character literal reference to generate
+     * @param atom The character literal reference to generate
      */
     public void gen(CharLiteralElement atom) {
         if ( atom.getLabel()!=null ) {
@@ -725,7 +725,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The character-range reference to generate
+     * @param r The character-range reference to generate
      */
     public void gen(CharRangeElement r) {
         if ( r.getLabel()!=null  && syntacticPredLevel == 0) {
@@ -1087,7 +1087,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The rule-reference to generate
+     * @param rr The rule-reference to generate
      */
     public void gen(RuleRefElement rr) {
         RuleSymbol rs = (RuleSymbol)grammar.getSymbol(rr.targetRule);
@@ -1150,7 +1150,7 @@ public class JavaCodeGenerator {
     }
     /**
      * Generate code for the given grammar element.
-     * @param blk The string-literal reference to generate
+     * @param atom The string-literal reference to generate
      */
     public void gen(StringLiteralElement atom) {
         // Variable declarations for labeled elements
@@ -1164,7 +1164,7 @@ public class JavaCodeGenerator {
 
     /**
      * Generate code for the given grammar element.
-     * @param blk The token-range reference to generate
+     * @param r The token-range reference to generate
      */
     public void gen(TokenRangeElement r) {
         genErrorTryForElement(r);
@@ -1179,7 +1179,7 @@ public class JavaCodeGenerator {
 
     /**
      * Generate code for the given grammar element.
-     * @param blk The token-reference to generate
+     * @param atom The token-reference to generate
      */
     public void gen(TokenRefElement atom) {
         if ( grammar instanceof LexerGrammar ) {
@@ -2081,8 +2081,9 @@ public class JavaCodeGenerator {
      * If an alternative defeats the default tree construction, it
      * must set <rule>_AST to the root of the returned AST.
      *
-     * @param rule The name of the rule to generate
+     * @param s The name of the rule to generate
      * @param startSymbol true if the rule is a start symbol (i.e., not referenced elsewhere)
+     * @param ruleNum
      */
     public void genRule(RuleSymbol s, boolean startSymbol, int ruleNum) {
         tabs=1;

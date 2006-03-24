@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InputBuffer.java,v 1.2 2006-01-25 17:00:55 thies Exp $
+ * $Id: InputBuffer.java,v 1.3 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -39,7 +39,7 @@ import java.io.IOException;
  * character is not done by conume(), but deferred until needed by LA or LT.
  * <p>
  *
- * @see at.dms.compiler.tools.antlr.CharQueue
+ * @see at.dms.compiler.tools.antlr.runtime.CharQueue
  */
 public abstract class InputBuffer {
     // char source

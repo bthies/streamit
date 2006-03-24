@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Table.java,v 1.2 2006-01-25 17:01:10 thies Exp $
+ * $Id: Table.java,v 1.3 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -74,7 +74,7 @@ public class Table {
      *
      * @param   key     the key to insert
      * @param   max     the maximum value
-     * @returns the sum of the values assigned to each character
+     * @return the sum of the values assigned to each character
      */
     public long insertKey(String key, long max) {
         long    sum = 0;

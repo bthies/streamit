@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Scanner.java,v 1.3 2006-01-25 17:00:53 thies Exp $
+ * $Id: Scanner.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
@@ -89,7 +89,7 @@ public abstract class Scanner implements TokenStream {
     /**
      * Reports that an error has been detected in the lexical analyser.
      * The handling is delegated to the compiler driver.
-     * @param   error       the error to report
+     * @param   trouble       the error to report
      */
     protected final void reportTrouble(PositionedError trouble) {
         compiler.reportTrouble(trouble);

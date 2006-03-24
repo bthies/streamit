@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.3 2006-01-25 17:00:56 thies Exp $
+ * $Id: Message.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -61,7 +61,6 @@ public class Message {
     /**
      * Constructs a message without parameters
      * @param   description the message description
-     * @param   parameter   the parameter
      */
     public Message(MessageDescription description) {
         this(description, null);

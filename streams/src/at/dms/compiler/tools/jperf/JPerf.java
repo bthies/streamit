@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPerf.java,v 1.3 2006-03-23 18:56:44 dimock Exp $
+ * $Id: JPerf.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -40,7 +40,7 @@ public class JPerf {
      * @param   keywords    the keywords to hash
      * @param   header      the verbatim part to output at the beginning of the file
      * @param   footer      the verbatim part to output at the end of the file
-     * @param   load factor the load factor
+     * @param   loadFactor factor the load factor
      */
     public JPerf(String[] keywords,
                  String[] header,
@@ -58,7 +58,6 @@ public class JPerf {
      * @param   keywords    the keywords to hash
      * @param   header      the verbatim part to output at the beginning of the file
      * @param   footer      the verbatim part to output at the end of the file
-     * @param   load factor the load factor
      */
     public JPerf(String[] keywords, String[] header, String[] footer) {
         this(keywords, header, footer, 25./12.);

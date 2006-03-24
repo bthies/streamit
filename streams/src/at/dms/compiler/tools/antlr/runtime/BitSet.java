@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: BitSet.java,v 1.3 2006-01-25 17:00:54 thies Exp $
+ * $Id: BitSet.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -339,7 +339,7 @@ public class BitSet implements Cloneable {
 
     /**
      * Transform a bit set into a string by formatting each element as an integer
-     * @separator The string to put in between elements
+     * @param separator The string to put in between elements
      * @return A commma-separated list of values
      */
     public String toString(String separator) {
@@ -357,7 +357,7 @@ public class BitSet implements Cloneable {
 
     /**
      * Transform a bit set into a string of characters.
-     * @separator The string to put in between elements
+     * @param separator The string to put in between elements
      * @param formatter An object implementing the CharFormatter interface.
      * @return A commma-separated list of character constants.
      */
@@ -379,7 +379,7 @@ public class BitSet implements Cloneable {
      * Create a string representation where instead of integer elements, the
      * ith element of vocabulary is displayed instead.  Vocabulary is a Vector
      * of Strings.
-     * @separator The string to put in between elements
+     * @param separator The string to put in between elements
      * @return A commma-separated list of character constants.
      */
     public String toString(String separator, Vector vocabulary) {

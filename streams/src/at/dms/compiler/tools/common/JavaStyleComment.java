@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.3 2006-01-25 17:00:56 thies Exp $
+ * $Id: JavaStyleComment.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -32,7 +32,7 @@ public class JavaStyleComment {
     /**
      * Construct a node in the parsing tree
      * @param   text        the string representation of this comment
-     * @param   !!! COMPLETE
+     *  !!! COMPLETE params
      */
     public JavaStyleComment(String text, boolean isLineComment, boolean spaceBefore, boolean spaceAfter) {
         this.text = text;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ByteBuffer.java,v 1.3 2006-03-23 18:53:36 dimock Exp $
+ * $Id: ByteBuffer.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -34,7 +34,7 @@ import java.io.IOException;
  * character is not done by conume(), but deferred until needed by LA or LT.
  * <p>
  *
- * @see at.dms.compiler.tools.antlr.CharQueue
+ * @see at.dms.compiler.tools.antlr.runtime.CharQueue
  */
 // SAS: added this class to handle Binary input w/ FileInputStream
 

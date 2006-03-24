@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodInfo.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: MethodInfo.java,v 1.3 2006-03-24 00:45:29 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -42,7 +42,7 @@ public class MethodInfo extends Member {
      * Constructs a method entry
      *
      * @param   modifiers   access permission to and properties of the method
-     * @param   name        the simple name of the method (or <init> or <clinit>)
+     * @param   name        the simple name of the method (or <pre>init</pre> or <pre>clinit</pre>)
      * @param   type        the method signature
      * @param   exceptions  the checked exceptions the method may throw
      * @param   code        the virtual machine instructions and auxiliary infos

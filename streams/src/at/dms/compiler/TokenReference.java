@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.9 2006-01-25 17:00:42 thies Exp $
+ * $Id: TokenReference.java,v 1.10 2006-03-24 00:48:17 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -117,7 +117,7 @@ public class TokenReference implements Serializable, at.dms.kjc.DeepCloneable {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.compiler.TokenReference other) {
         other.file = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.file);
         other.line = this.line;

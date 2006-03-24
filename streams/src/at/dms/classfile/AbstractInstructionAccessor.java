@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: AbstractInstructionAccessor.java,v 1.3 2006-01-25 17:00:38 thies Exp $
+ * $Id: AbstractInstructionAccessor.java,v 1.4 2006-03-24 00:45:29 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -46,7 +46,7 @@ public abstract class AbstractInstructionAccessor
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.classfile.AbstractInstructionAccessor other) {
     }
 

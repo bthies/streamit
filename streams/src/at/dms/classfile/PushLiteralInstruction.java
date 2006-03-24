@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: PushLiteralInstruction.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: PushLiteralInstruction.java,v 1.3 2006-03-24 00:45:29 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -27,8 +27,8 @@ import at.dms.util.InconsistencyException;
 
 /**
  * This class encapsulates the instructions pushing a literal on the stack:
- * bipush, sipush, ldc, ldc_w, ldc2_w, dconst_<d>, fconst_<f>, iconst_<i>,
- * lconst_<l>
+ * bipush, sipush, ldc, ldc_w, ldc2_w, dconst_d, fconst_f, iconst_i,
+ * lconst_l
  */
 public class PushLiteralInstruction extends Instruction {
 

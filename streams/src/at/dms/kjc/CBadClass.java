@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBadClass.java,v 1.7 2006-03-24 15:54:46 dimock Exp $
+ * $Id: CBadClass.java,v 1.8 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -111,7 +111,6 @@ public class CBadClass extends CClass {
      * search for a field
      * look in parent hierarchy as needed
      * @param   name        method name
-     * @param   params      method parameters
      * @exception UnpositionedError this error will be positioned soon
      */
     public CField lookupField(String name) {
@@ -136,8 +135,7 @@ public class CBadClass extends CClass {
      * collectInterfaceMethods
      * search for a matching method with the provided type parameters
      * look in parent hierarchy as needed
-     * @param   name        method name
-     * @param   params      method parameters
+     * @param  v        method name
      */
     public void collectInterfaceMethods(Vector v) {
     }
@@ -146,8 +144,7 @@ public class CBadClass extends CClass {
      * collectAbstractMethods
      * search for a matching method with the provided type parameters
      * look in parent hierarchy as needed
-     * @param   name        method name
-     * @param   params      method parameters
+     * @param   v        method name
      */
     public void collectAbstractMethods(Vector v) {
     }
@@ -158,7 +155,7 @@ public class CBadClass extends CClass {
 
     /**
      * Generate the code in a class file
-     * @param   classes     a vector to add inner classes
+     * @param   destination
      */
     public void genClassFile(File destination) {
         throw new InconsistencyException();

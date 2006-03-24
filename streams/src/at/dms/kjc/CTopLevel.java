@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTopLevel.java,v 1.5 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CTopLevel.java,v 1.6 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -57,7 +57,7 @@ public final class CTopLevel extends at.dms.util.Utils {
     /**
      * @return  false if name exists for source class as source class
      *          in an other file
-     * @param CClass a class to add (must be a CSourceClass)
+     * @param cl a class to add (must be a CSourceClass)
      */
     public static boolean addSourceClass(CClass cl) {
         assert cl instanceof CSourceClass;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryArithmeticExpression.java,v 1.8 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JBinaryArithmeticExpression.java,v 1.9 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -40,8 +40,8 @@ public abstract class JBinaryArithmeticExpression extends JBinaryExpression {
      * Construct a node in the parsing tree
      * This method is directly called by the parser
      * @param   where       the line of this node in the source code
-     * @param   p1      left operand
-     * @param   p2      right operand
+     * @param   left      left operand
+     * @param   right      right operand
      */
     public JBinaryArithmeticExpression(TokenReference where,
                                        JExpression left,
@@ -88,8 +88,6 @@ public abstract class JBinaryArithmeticExpression extends JBinaryExpression {
 
     /**
      * Computes the result of the operation at compile-time (JLS 15.28).
-     * @param   left        the left value
-     * @param   right       the right value
      * @return  the literal holding the result of the operation
      */
     public JExpression constantFolding() {

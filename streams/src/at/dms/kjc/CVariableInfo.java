@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVariableInfo.java,v 1.7 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CVariableInfo.java,v 1.8 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -68,7 +68,6 @@ public final class CVariableInfo implements DeepCloneable {
 
     /**
      * merge
-     * @param   other       the second JLocalVariable info
      * @return  the merging information onto this flags
      */
     public static final int merge(int info1, int info2) {

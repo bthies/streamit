@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.12 2006-03-24 16:10:59 dimock Exp $
+ * $Id: JTypeDeclaration.java,v 1.13 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -364,7 +364,6 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
      * checkTypeBody
      * Check expression and evaluate and alter context
      * @param context the actual context of analyse
-     * @return  a pure java expression including promote node
      * @exception PositionedError Error catched as soon as possible (for subclasses)
      */
     public void checkTypeBody(CContext context) throws PositionedError {

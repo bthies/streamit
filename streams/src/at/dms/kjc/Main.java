@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.24 2006-02-27 18:32:54 dimock Exp $
+ * $Id: Main.java,v 1.25 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -325,8 +325,6 @@ public class Main extends Compiler {
     /**
      * Generates the code from an array of compilation unit and
      * a destination
-     *
-     * @param   destination the directory where to write classfiles
      */
     public void genCode() {
         CSourceClass[]  classes = getClasses();

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JInterfaceDeclaration.java,v 1.6 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JInterfaceDeclaration.java,v 1.7 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -85,7 +85,6 @@ public class JInterfaceDeclaration extends JTypeDeclaration {
      * Exceptions are not allowed here, this pass is just a tuning
      * pass in order to create informations about exported elements
      * such as Classes, Interfaces, Methods, Constructors and Fields
-     * @return true iff sub tree is correct enought to check code
      * @exception   PositionedError an error with reference to the source file
      */
     public void checkInterface(CContext context) throws PositionedError {
@@ -169,7 +168,6 @@ public class JInterfaceDeclaration extends JTypeDeclaration {
      * checkTypeBody
      * Check expression and evaluate and alter context
      * @param context the actual context of analyse
-     * @return  a pure java expression including promote node
      * @exception   PositionedError an error with reference to the source file
      */
     public void checkTypeBody(CContext context) throws PositionedError {

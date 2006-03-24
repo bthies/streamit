@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.8 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CodeSequence.java,v 1.9 2006-03-24 22:45:15 dimock Exp $
  */
 
 /**
@@ -257,7 +257,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
     /**
      * Adds an instruction to the code of the current method.
      *
-     * @param   insn        the instruction to append
+     * @param   label
      */
     public final void plantLabel(CodeLabel label) {
         label.setAddress(pc);
@@ -422,7 +422,6 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
     /**
      * Return the instruction as a list
      *
-     * @param   insn        the instruction to append
      * WARNING: AFTER a call to release() this array will be reused
      */
     public Instruction[] getInstructionArray() {

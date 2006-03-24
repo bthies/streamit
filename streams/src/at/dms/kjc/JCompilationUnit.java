@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompilationUnit.java,v 1.11 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JCompilationUnit.java,v 1.12 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -150,7 +150,6 @@ public class JCompilationUnit extends JPhylum {
      * Exceptions are not allowed here, this pass is just a tuning
      * pass in order to create informations about exported elements
      * such as Classes, Interfaces, Methods, Constructors and Fields
-     * @return  true iff sub tree is correct enought to check code
      * @exception   PositionedError an error with reference to the source file
      */
     public void checkInitializers(Compiler compiler, Vector classes) throws PositionedError {

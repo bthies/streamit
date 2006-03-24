@@ -11,7 +11,6 @@ import at.dms.kjc.flatgraph.FlatNode;
  * 
  * 
  * @author Janis
- * @see GenerateMasterDotH
  */
 public class GenerateMasterDotCpp {
     /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CContext.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CContext.java,v 1.10 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -165,7 +165,7 @@ public abstract class CContext extends at.dms.util.Utils implements Constants {
     }
 
     /**
-     * @param   field       the definition of a field
+     * @param   index       the definition of a field
      * @return  a field from a field definition in current context
      */
     public int getFieldInfo(int index) {
@@ -173,8 +173,8 @@ public abstract class CContext extends at.dms.util.Utils implements Constants {
     }
 
     /**
-     * @param   field       the definition of a field
-     * @return  a field from a field definition in current context
+     * @param   index       the definition of a field
+     * @param info
      */
     public void setFieldInfo(int index, int info) {
         parent.setFieldInfo(index, info);

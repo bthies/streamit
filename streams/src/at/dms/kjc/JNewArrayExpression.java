@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.14 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JNewArrayExpression.java,v 1.15 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -48,15 +48,6 @@ public class JNewArrayExpression extends JExpression {
      * @param   dims        the dimensions of the array
      * @param   init        an initializer for the array
      */
-    public JNewArrayExpression(CType type,
-                               JExpression[] dims) {
-        this(null, type, dims, null);
-    }
-    public JNewArrayExpression(CType type,
-                               JExpression[] dims,
-                               JArrayInitializer init) {
-        this(null, type, dims, init);
-    }
     public JNewArrayExpression(TokenReference where,
                                CType type,
                                JExpression[] dims,
@@ -67,6 +58,17 @@ public class JNewArrayExpression extends JExpression {
         this.type = new CArrayType(type, dims.length, dims);
         this.dims = dims;
         this.init = init;
+    }
+
+    public JNewArrayExpression(CType type,
+                               JExpression[] dims) {
+        this(null, type, dims, null);
+    }
+
+    public JNewArrayExpression(CType type,
+                               JExpression[] dims,
+                               JArrayInitializer init) {
+        this(null, type, dims, init);
     }
 
     public String toString() {

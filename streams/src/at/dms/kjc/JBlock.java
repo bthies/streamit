@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.23 2006-03-24 16:10:59 dimock Exp $
+ * $Id: JBlock.java,v 1.24 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -44,7 +44,7 @@ public class JBlock extends JStatement {
      * Construct a node in the parsing tree
      * @param   where       the line of this node in the source code
      * @param   body        the statements contained in the block
-     * @param   comment     other comments in the source code
+     * @param   comments     other comments in the source code
      */
     public JBlock(TokenReference where,
                   JStatement[] body,
@@ -67,7 +67,7 @@ public class JBlock extends JStatement {
      * Construct a node in the parsing tree
      * @param   where       the line of this node in the source code
      * @param   body        a list of statements contained in the block
-     * @param   comment     other comments in the source code
+     * @param   comments     other comments in the source code
      */
     public JBlock(TokenReference where,
                   List body,

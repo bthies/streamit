@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.33 2006-03-24 16:10:59 dimock Exp $
+ * $Id: JMethodDeclaration.java,v 1.34 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -64,7 +64,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * Sets all io rates to 0, parameters to EMPTY, exceptions to EMPTY
      * body to the passed comment as a block, returnType to Void.
      *
-     * @param  comment: for use in debugging Since this comment
+     * @param  comment is for use in debugging Since this comment
      *         is often lost in making copies, it is included
      *         in C / C++ comment form in the ident.
      */
@@ -92,7 +92,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
      * @param   exceptions  the exceptions declared by the method
      * @param   body        the body of the method
      * @param   javadoc     java documentation comments
-     * @param   comment     other comments in the source code
+     * @param   comments     other comments in the source code
      */
     public JMethodDeclaration(TokenReference where,
                               int modifiers,
@@ -441,7 +441,6 @@ public class JMethodDeclaration extends JMemberDeclaration {
     /**
      * Check expression and evaluate and alter context
      * @param context the actual context of analyse
-     * @return  a pure java expression including promote node
      * @exception PositionedError Error catched as soon as possible
      */
     public void checkBody1(CClassContext context) throws PositionedError {

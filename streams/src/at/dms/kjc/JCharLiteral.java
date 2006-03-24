@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCharLiteral.java,v 1.11 2006-03-24 16:10:59 dimock Exp $
+ * $Id: JCharLiteral.java,v 1.12 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -57,7 +57,7 @@ public class JCharLiteral extends JLiteral {
     /**
      * Construct a node in the parsing tree
      * @param   where       the line of this node in the source code
-     * @param   image       the string representation of this literal
+     * @param   value       the string representation of this literal
      */
     public JCharLiteral(TokenReference where, char value) {
         super(where);

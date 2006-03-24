@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.17 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JLocalVariable.java,v 1.18 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -160,7 +160,6 @@ public abstract class JLocalVariable extends JPhylum {
     }
 
     /**
-     * @return the local index in context variable table
      */
     public void setIndex(int index) {
         this.index = index;

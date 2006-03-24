@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.12 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CClassType.java,v 1.13 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -37,7 +37,6 @@ public class CClassType extends CType {
 
     /**
      * Construct a class type
-     * @param   clazz       the class that will represent this type
      */
     protected CClassType() {
         super(TID_CLASS);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPackageImport.java,v 1.10 2006-03-24 15:54:48 dimock Exp $
+ * $Id: JPackageImport.java,v 1.11 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -80,7 +80,7 @@ public class JPackageImport extends JPhylum {
 
     /**
      * Analyses the node (semantically).
-     * @param   context     the analysis context
+     * @param   compiler
      * @param   thisPackage the package name of the compilation unit
      * @exception   PositionedError the analysis detected an error
      */

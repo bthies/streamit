@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorDeclaration.java,v 1.6 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JConstructorDeclaration.java,v 1.7 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -41,7 +41,6 @@ public class JConstructorDeclaration extends JMethodDeclaration {
      * Construct a node in the parsing tree
      * This method is directly called by the parser
      * @param   where       the line of this node in the source code
-     * @param   parent      parent in which this methodclass is built
      * @param   modifiers   list of modifiers
      * @param   ident       the name of this method
      * @param   parameters  the parameters of this method
@@ -110,7 +109,6 @@ public class JConstructorDeclaration extends JMethodDeclaration {
     /**
      * Check expression and evaluate and alter context
      * @param   context         the actual context of analyse
-     * @return  a pure java expression including promote node
      * @exception   PositionedError Error catched as soon as possible
      */
     public void checkBody1(CClassContext context) throws PositionedError {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.15 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JClassDeclaration.java,v 1.16 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -288,7 +288,6 @@ public class JClassDeclaration extends JTypeDeclaration {
      * checkTypeBody
      * Check expression and evaluate and alter context
      * @param context the actual context of analyse
-     * @return  a pure java expression including promote node
      * @exception   PositionedError an error with reference to the source file
      */
     public void checkTypeBody(CContext context) throws PositionedError {

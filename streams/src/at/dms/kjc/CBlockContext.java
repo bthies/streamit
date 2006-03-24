@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBlockContext.java,v 1.9 2006-03-24 15:54:46 dimock Exp $
+ * $Id: CBlockContext.java,v 1.10 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -147,7 +147,6 @@ public class CBlockContext extends CBodyContext {
     /**
      * addLocal variable
      * @param   var     the name of the variable
-     * @param   initialized is the varaible already initialized
      * @exception UnpositionedError this error will be positioned soon
      */
     public void addVariable(JLocalVariable var) throws UnpositionedError {
@@ -189,8 +188,6 @@ public class CBlockContext extends CBodyContext {
 
     /**
      * addLocal variable
-     * @param   var     the name of the variable
-     * @param   initialized is the varaible already initialized
      */
     public void addThisVariable() {
         localsPosition += 1;

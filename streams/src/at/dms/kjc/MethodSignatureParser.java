@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodSignatureParser.java,v 1.5 2006-03-24 15:54:48 dimock Exp $
+ * $Id: MethodSignatureParser.java,v 1.6 2006-03-24 22:45:15 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -31,8 +31,6 @@ public class MethodSignatureParser implements DeepCloneable {
      * Parses a VM-standard type signature.
      *
      * @param   signature   the type signature
-     * @param   from        the start index
-     * @param   to      the end index
      * @return  the type represented by the signature
      */
     public final CType parseSignature(String signature) {

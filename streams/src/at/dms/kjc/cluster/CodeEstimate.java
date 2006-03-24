@@ -9,9 +9,9 @@ import java.util.HashMap;
 
 
 /**
- * Estimate the code size and size of local variables for a single filter.
- *
+ * Estimates the code size and size of local variables for a {@link SIRFilter}
  */
+
 public class CodeEstimate extends SLIREmptyVisitor {
 
     private static HashMap saved_locals = new HashMap();
@@ -39,9 +39,14 @@ public class CodeEstimate extends SLIREmptyVisitor {
     static int FIELD_EXPR = 4;
     static int ARRAY_ACCESS = 10;
 
-    // returns the size of code, if you also need the size of 
-    // local varaibles construct your own CodeEstimate 
-    // instance and call visitFilter.
+    /**
+     * Creates a new instance of CodeEstimate and passes
+     * a filter to it. This will result in calculating 
+     * the size of code and local variables. The size of
+     * code and locals will be saved in a cache.
+     * @param filter the filter
+     * @return instance of CodeEstimate with code and locals estimates
+     */
 
     public static CodeEstimate estimate(SIRFilter filter) {
         CodeEstimate est = new CodeEstimate(filter);
@@ -50,6 +55,13 @@ public class CodeEstimate extends SLIREmptyVisitor {
         saved_locals.put(filter, new Integer(est.locals_size));
         return est;
     }
+ 
+    /**
+     * Returns estimated code size. If this has already been
+     * calculated look up the value in cache. Otherwise do calculation.
+     * @param filter the filter
+     * @return estimated size of code
+     */
     
     public static int estimateCode(SIRFilter filter) {
 
@@ -59,6 +71,13 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
         return estimate(filter).getCodeSize();
     }
+
+    /**
+     * Returns estimated size of locals. If this has already been
+     * calculated look up the value in cache. Otherwise do calculation.
+     * @param filter the filter
+     * @return estimated size of locals
+     */
 
     public static int estimateLocals(SIRFilter filter) {
 
@@ -72,25 +91,34 @@ public class CodeEstimate extends SLIREmptyVisitor {
     private int code_size;        // size of code
     private int locals_size;      // size of local variables
 
-    SIRFilter filter;
+    private SIRFilter filter;
 
     private HashMap methodsToVisit;
 
     private int for_loop_level;
     private int code_at_level[];
 
-    CodeEstimate(SIRFilter filter) {
+    private CodeEstimate(SIRFilter filter) {
         this.filter = filter;
         code_size = 0;
         locals_size = 0;
         code_at_level = new int[64];
     }
 
+    /**
+     * Returns size of locals
+     * @return size of locals
+     */
 
     public int getLocalsSize() {
     
         return locals_size;
     }
+
+    /**
+     * Returns size of code
+     * @return size of code
+     */
 
     public int getCodeSize() {
     
@@ -106,6 +134,11 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
         return code_size;
     }
+
+    /**
+     * visit a {@link SIRFilter}
+     * @param self the filter
+     */
 
     public void visitFilter(SIRFilter self) {
 
@@ -153,11 +186,11 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
 
 
-    ///
-    ///
-    /// Increase the size of local variables
-    ///
 
+
+    /**
+     * visits a variable definition, this increase size of locals
+     */
 
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
@@ -190,11 +223,9 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
 
     
-    ///
-    ///
-    /// All of the following methods increase the estimated code size
-    ///
-
+    /**
+     * visits a method call expression
+     */
 
     public void visitMethodCallExpression(JMethodCallExpression self,
                                           JExpression prefix,
@@ -214,6 +245,10 @@ public class CodeEstimate extends SLIREmptyVisitor {
             methodsToVisit.put(ident, new Boolean(false));
         }
     }
+
+    /**
+     * visits a for statement
+     */
 
     public void visitForStatement(JForStatement self,
                                   JStatement init,
@@ -240,6 +275,9 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     
+    /**
+     * visits a peek expression.
+     */
 
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
@@ -250,7 +288,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * Visits a pop expression.
+     * visits a pop expression.
      */
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType) {
@@ -261,7 +299,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * Visits a print statement.
+     * visits a print statement.
      */
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression arg) {
@@ -271,7 +309,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * Visits a push expression.
+     * visits a push expression.
      */
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,
@@ -303,7 +341,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
 
     /**
-     * prints an unary plus expression
+     * visits an unary plus expression
      */
     public void visitUnaryPlusExpression(JUnaryExpression self,
                                          JExpression expr) {
@@ -313,7 +351,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints an unary minus expression
+     * visits an unary minus expression
      */
     public void visitUnaryMinusExpression(JUnaryExpression self,
                                           JExpression expr) {
@@ -324,7 +362,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a bitwise complement expression
+     * visits a bitwise complement expression
      */
     public void visitBitwiseComplementExpression(JUnaryExpression self,
                                                  JExpression expr)
@@ -336,7 +374,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a logical complement expression
+     * visits a logical complement expression
      */
     public void visitLogicalComplementExpression(JUnaryExpression self,
                                                  JExpression expr)
@@ -348,7 +386,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a prefix expression
+     * visits a prefix expression
      */
     public void visitPrefixExpression(JPrefixExpression self,
                                       int oper,
@@ -360,7 +398,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a postfix expression
+     * visits a postfix expression
      */
     public void visitPostfixExpression(JPostfixExpression self,
                                        int oper,
@@ -372,7 +410,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a binary expression
+     * visits a binary expression
      */
     public void visitBinaryExpression(JBinaryExpression self,
                                       String oper,
@@ -383,7 +421,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a conditional expression
+     * visits a conditional expression
      */
     public void visitConditionalExpression(JConditionalExpression self,
                                            JExpression cond,
@@ -397,7 +435,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints a field expression
+     * visits a field expression
      */
     public void visitFieldExpression(JFieldAccessExpression self,
                                      JExpression left,
@@ -409,7 +447,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     }
 
     /**
-     * prints an array length expression
+     * visits an array access expression
      */
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,

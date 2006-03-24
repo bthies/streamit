@@ -11,7 +11,10 @@ import java.lang.Math;
 import at.dms.compiler.TokenReference;
 
 /**
- * This class breaks up structures as much as possible
+ * This class breaks up structures as much as possible. The goal is to
+ * break up structure assignments and modifications into regular
+ * assignments on local variable.
+ * @author jasperln
  */
 public class StructDestroyer extends SLIRReplacingVisitor {
     private static final String SEP="_"; //Separator mark
@@ -19,9 +22,12 @@ public class StructDestroyer extends SLIRReplacingVisitor {
     private HashMap newFields; //caches created fields by their name
     private ArrayList leftF; //list of left expression in a series of assignments
     private JExpression rightF; //rightmost expression in an assignment
-    private HashMap paramMap; //stores parametes indexed by name
+    private HashMap paramMap; //stores parameters indexed by name
     private JExpression unsafeRhs; //stores last structure used unsafely (need to pack fields beforehand)
 
+    /**
+     * Construct new StructDestroyer. Initializes state.
+     */
     public StructDestroyer() {
         nameToVar=new HashMap();
         newFields=new HashMap();
@@ -29,7 +35,10 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         paramMap=new HashMap();
     }
 
-    //Call after visiting all methods. Adds the needed fields
+    /**
+     * Call after visiting all methods. Adds the needed fields.
+     * @param str The SIRStream containing the methods.
+     */
     public void addFields(SIRStream str) {
         JFieldDeclaration[] fields=str.getFields();
         JFieldDeclaration[] newField=new JFieldDeclaration[fields.length+newFields.size()];
@@ -40,6 +49,14 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         str.setFields(newField);
     }
     
+    /**
+     * Visit field expression. Only needs to worry about visiting
+     * struct assignments since visitBlockStatement only descends into
+     * those.
+     * @param self Visiting this JFieldAccessExpression.
+     * @param left Left hand side JExpression.
+     * @param ident Identifier of field access.
+     */
     public Object visitFieldExpression(JFieldAccessExpression self,
                                        JExpression left,
                                        String ident) {
@@ -62,14 +79,31 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return self;
     }
 
+    /**
+     * Visit local variable expression. Only appropriate for variable
+     * expressions on the right hand side. When called via
+     * visitAssignmentExpression() this is taken care of.
+     * @param self Visiting this JLocalVariableExpression.
+     * @param ident Identifier of variable access.
+     */
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
                                                String ident) {
         JExpression out=(JExpression)super.visitLocalVariableExpression(self,ident);
         if(out.getType() instanceof CClassNameType) //unsafe access
+	    /*visitAssignmentExpression() takes care of saving and
+	      restoring the old unsafeRhs when not visiting right hand
+	      side so ok to always overwrite.*/
             unsafeRhs=out;
         return out;
     }
     
+    /**
+     * Visit assignment expression. Makes sure to only change right
+     * hand state when descending into right hand side
+     * @param self Visiting this JAssignmentExpression.
+     * @param left Left hand side JExpression.
+     * @param right Right hand side JExpression.
+     */
     public Object visitAssignmentExpression(JAssignmentExpression self,
                                             JExpression left,
                                             JExpression right) {
@@ -104,7 +138,13 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return self;
     }
 
-    //Try to pull out expr from cast with right type
+    /**
+     * Visit cast expression. Try to pull out expression from cast
+     * expression changed to the right type.
+     * @param self Visiting this JCastExpression.
+     * @param expr Expression being cast.
+     * @param type Type being cast to.
+     */
     public Object visitCastExpression(JCastExpression self,
                                       JExpression expr,
                                       CType type) {
@@ -112,8 +152,9 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         if (newExp!=null && newExp!=expr) {
             self.setExpr(newExp);
         }
-        if(expr.getType().equals(type))
+        if(expr.getType().equals(type)) //Correct type so pass through
             return expr;
+	//Wrong type so set the type instead
         if((expr.getType() instanceof CClassNameType)&&(type instanceof CClassNameType))
             if(((CClassNameType)expr.getType()).getQualifiedName().equals("java/lang/Object"))
                 if(expr instanceof JLocalVariableExpression) {
@@ -123,6 +164,13 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return self;
     }
 
+    /**
+     * Visit block. Only interested in struct=struct,
+     * struct=something, and struct construction statements. The rest
+     * are mostly ignored.
+     * @param self Visiting this JBlock.
+     * @param comments Comments attached to this block.
+     */
     public Object visitBlockStatement(JBlock self,
                                       JavaStyleComment[] comments) {
         List statements=self.getStatements();
@@ -217,6 +265,12 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return self;
     }
 
+    /**
+     * Visit Init Statements. Tries to break up structure parameters
+     * into regular arguments.
+     * @param self The SIRInitStatement being visited.
+     * @param target The expanded SIRStream init statement refers to.
+     */
     public Object visitInitStatement(SIRInitStatement self,
                                      SIRStream target) {
         List args=self.getArgs();
@@ -272,7 +326,12 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return self;
     }
     
-    //Get fresh new var and or retrieve from cache
+    /**
+     * Helper function that creates a fresh new var or retreives one
+     * from the nameToVar cache.
+     * @param name Desired name.
+     * @param type Desired type.
+     */
     private JLocalVariable getVar(String name,CType type) {
         if(paramMap.containsKey(name))
             return (JFormalParameter)paramMap.get(name);
@@ -284,7 +343,13 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return out;
     }
 
-    //Add to fields that need to be added by call to addFields(SIRStream)
+    /**
+     * Helper function to add a field to the list that will later be
+     * added all at once by addFields(SIRStream) when done visting all
+     * methods.
+     * @param name Desired name.
+     * @param type Desired type.
+     */
     private void addField(String name,CType type) {
         JFieldDeclaration decl=new JFieldDeclaration(null,new JVariableDefinition(null,0,type,name,null),null,null);
         if(!newFields.containsKey(name)) {
@@ -292,7 +357,12 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         }
     }
 
-    //Recursive extracts components struct and substructs
+    /**
+     * Recursive extracts component's structures and
+     * substructures. Returns array [List name,List type] containing
+     * names and types in Lists.
+     * @param struct The struct to attempt to extract fields from.
+     */
     private static List[] extractFields(CClass struct) {
         CField[] fields=struct.getFields();
         List out=new ArrayList();
@@ -316,7 +386,11 @@ public class StructDestroyer extends SLIRReplacingVisitor {
         return new List[]{out,out2}; //Return list of names and types
     }
 
-    //Same as normal except be sure to add vars created with getVar(String name,CType type) at end
+    /**
+     * Visit method declaration. Same as normal except when done be
+     * sure to add declarations for the temporary variables created by
+     * calling getVar(String name,CType type).
+     */
     public Object visitMethodDeclaration(JMethodDeclaration self,
                                          int modifiers,
                                          CType returnType,

@@ -34,17 +34,17 @@ improve load balancing and those that optimize other metrics.
 The partitioners oriented towards <b>load balancing</b> include:
 <ul>
 
-<p><li> {@link
+<li> {@link
 at.dms.kjc.sir.lowering.partition.dynamicprog.DynamicProgPartitioner}.
 This partitioner (currently the default used by strc) uses a dynamic
 programming algorithm to calculate the most load-balanced refactoring
 and fusion/fission of filters.  It is described in a yet-unpublished
-draft (contact thies@alum.mit.edu) and is similar to the dynamic
-programming partitioner described in this <a
+draft (contact <tt>thies@alum.mit.edu</tt>) and is similar to the
+dynamic programming partitioner described in this <a
 href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03</a>
 paper (see Section 6.2).
 
-<li> {@link
+<p><li> {@link
 at.dms.kjc.sir.lowering.partition.GreedyPartitioner}. One
 of the first and still most robust partitioners, it iteratively
 identifies the stream <em>container</em> containing the least amount

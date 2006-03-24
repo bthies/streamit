@@ -71,15 +71,17 @@ Partitioners that have <b>other optimization metrics</b> include:
 at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner}.  As part
 of linear analysis and optimization, this partitioner decides which
 filters should be algebraically combined or translated to the
-frequency domain.  For details, see Section 6.2 of this <a
+frequency domain.  As it also utilizes a dynamic programming
+algorithm, it can be considered a "dynamic programming partitioner".
+For details, see Section 6.2 of this <a
 href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03</a>
 paper.
 
 <p><li> {@link
 at.dms.kjc.sir.lowering.partition.cache.CachePartitioner}.  This
-partitioner fuses filters based on cache constraints (instruction size
-and data size).  It implements the "cache aware fusion" algorithm
-described in Section 4.2 of this <a
+partitioner greedily fuses filters based on cache constraints
+(instruction size and data size).  It implements the "cache aware
+fusion" algorithm described in Section 4.2 of this <a
 href="http://cag.lcs.mit.edu/commit/papers/05/sermulins-lctes05.pdf">LCTES'05</a>
 paper.
 
@@ -92,13 +94,7 @@ other transformations.
 </ul>
 Several of these inherit from {@link
 at.dms.kjc.sir.lowering.partition.ListPartitioner} to reuse some
-common code.  Also, the {@link
-at.dms.kjc.sir.lowering.partition.cache.CachePartitioner} and {@link
-at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner} (in
-addition to {@link
-at.dms.kjc.sir.lowering.partition.dynamicprog.DynamicProgPartitioner})
-can be considered "dynamic programming partitioners" because they use
-a similar underlying dynamic programming algorithm.
+common code.
 
 <p>
 The other files in this package fall under a few categories:

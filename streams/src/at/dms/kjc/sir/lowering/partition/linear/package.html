@@ -1,0 +1,78 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir.lowering.partition.linear</title>
+</head>
+<body>
+
+<p>
+Applies linear optimizations to the stream graph, using a dynamic
+programming algorithm to calculate the most profitable set of
+transformations.  The transformations considered are algebraic
+combination of linear nodes and translation of linear nodes to the
+frequency domain.  A partitioning algorithm is needed because these
+transformations are not always profitable; furthermore,
+non-neighboring filters may need to be considered at once to gauge
+profitability.
+
+<p>
+The linear partitioning algorithm is described in Section 6.2 of this
+<a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03</a>
+paper.
+
+<p>The general strategy behind the algorithm is to calculate, for each
+hierarchical stream, the estimated runtime if that stream was
+algebraically collapsed, translated to the frequency domain, or left
+alone.  If this information is available for a set of sub-streams,
+then a parent stream can recursively calculate these estimates as a
+composition of the child estimates.
+
+<p>The dynamic programming partitioner uses <em>rectangles</em> as a
+uniform representation of streams.  An <em>n</em>-element pipeline is
+a rectangle that has a width of 1 and a height of <em>n</em>, while a
+splitjoin of <em>n</em> filters is a rectangle with a width of
+<em>n</em> and a height of 1.  Splitjoins containing pipelines are
+represented as a single rectangle.  Using this representation, the
+partitioning algorithm can perform a linear optimization on any
+sub-rectangle, and implement the transformation using a hierarchical
+refactoring of the splitjoin.
+
+<p>To support the rectangle abstraction, all filters and streams are
+wrapped in <em>configurations</em>.  The basic configuration is {@link
+at.dms.kjc.sir.lowering.partition.linear.LDPConfig}, and there is
+a subclass for each stream type.  The standard dynamic programming
+methods of <tt>get()</tt> (to calculate the partitioning costs for a
+sub-stream) and
+<tt>traceback()</tt> (to reconstruct the minimal-cost partitioning)
+are implemented by each type of configuration.  The heart of the
+algorithm is in {@link
+at.dms.kjc.sir.lowering.partition.linear.LDPConfigContainer}, which
+implements these two functions for arbitrary rectangles.
+
+<p>The high-level interface for the package is {@link
+at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner}, which
+contains constants and configuration-building code.
+
+<p>
+@see at.dms.kjc.sir.linear
+
+</body>
+</html>

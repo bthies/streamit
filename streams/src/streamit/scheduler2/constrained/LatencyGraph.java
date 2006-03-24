@@ -174,7 +174,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
     /**
      * Returns whether or not this graph has a cycle, contained within
-     * <ancestor>.
+     * <pre>ancestor</pre>.
      */
     private boolean hasCycle(StreamInterface ancestor) {
         // do a depth-first search; if we find a back-edge, report
@@ -187,22 +187,22 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return hasCycleHelper(top, visiting, done);
     }
     /**
-     * Visits <node> and all its children in the depth-first
+     * Visits <pre>node</pre> and all its children in the depth-first
      * search for cycles.  Returns whether or not it found a cycle.
      */
     private boolean hasCycleHelper(LatencyNode node, HashSet visiting, HashSet done) {
         if (visiting.contains(node)) {
-            // if we are already visiting <node>, then report cycle
+            // if we are already visiting <pre>node</pre>, then report cycle
             return true;
         } else if (done.contains(node)) {
-            // if we already visited <node>, then no cycle here
+            // if we already visited <pre>node</pre>, then no cycle here
             return false;
         }
 
         // otherwise, start visiting node
         visiting.add(node);
 
-        // visit all children of <node> and return true if any of them
+        // visit all children of <pre>node</pre> and return true if any of them
         // lead to a cycle
         DLList_const downstreamEdges = node.getDependants();
         DLListIterator edgeIter = downstreamEdges.begin();
@@ -225,8 +225,8 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     }
 
     /**
-     * Returns edges between a set of <upstreamNode>'s and a set of
-     * <downstreamNode>'s.  Both sets are filled with LatencyNodes.
+     * Returns edges between a set of <pre>upstreamNode</pre>'s and a set of
+     * <pre>downstreamNode</pre>'s.  Both sets are filled with LatencyNodes.
      * An edge is "between" the two sets if it lies on a path between
      * any upstream node and any downstream node.
      */
@@ -241,7 +241,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         // find an intersection between these two sets:
 	result.retainAll(edgesUpstream);
 
-        // if there are any loops in the graph within <ancestor>,
+        // if there are any loops in the graph within <pre>ancestor</pre>,
         // remove the backward pointing edges:
         if (hasCycle(ancestor)) {
             // right now this iterates over upstream nodes and removes
@@ -422,9 +422,9 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     }
 
     /**
-     * Returns all edges reachable from <startNodes> while staying
-     * within stream container <withinStream>.  If <travelDownstream>
-     * is true, then nodes are explored downstream from <startNodes>;
+     * Returns all edges reachable from <pre>startNodes</pre> while staying
+     * within stream container <pre>withinStream</pre>.  If <pre>travelDownstream</pre>
+     * is true, then nodes are explored downstream from <pre>startNodes</pre>;
      * otherwise, nodes are explored upstream.
      */
     public HashSet exploreEdges(HashSet startNodes,

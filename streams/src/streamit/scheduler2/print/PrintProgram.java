@@ -155,7 +155,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
             {
                 /*
                  * map maps the object returned by getInitFunctionStage and 
-                 * getWorkFunctionPhase to a Pair<nFunction, isInit>
+                 * getWorkFunctionPhase to a Pair&lt;nFunction, isInit&gt;
                  */
                 OMap map = new OMap();
 

@@ -97,8 +97,8 @@ public class Scheduler extends streamit.scheduler2.Scheduler
     }
 
     /**
-     * Computes SDEP from <src> to each Iterator in <dst>.  Returns
-     * all SDEPData's in a map that is keyed on the members of <dst>.
+     * Computes SDEP from <pre>src</pre> to each Iterator in <pre>dst</pre>.  Returns
+     * all SDEPData's in a map that is keyed on the members of <pre>dst</pre>.
      */
     public HashMap computeSDEP(Iterator src, HashSet dst)
         throws NoPathException
@@ -107,7 +107,7 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         LatencyNode srcNode =
             ((Filter)factory.newFrom(src, null)).getLatencyNode();
 
-        // translate <dst> into a new HashSet of LatencyNodes rather
+        // translate <pre>dst</pre> into a new HashSet of LatencyNodes rather
         // than Iterators
         HashSet dstNodes = new HashSet();
         for (java.util.Iterator i = dst.iterator(); i.hasNext(); ) {

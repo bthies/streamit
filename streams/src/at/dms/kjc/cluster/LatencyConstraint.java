@@ -25,7 +25,11 @@ import streamit.scheduler2.*;
 import streamit.scheduler2.iriter.*;
 
 /**
- * Reprecents a constraint due to a latency constrained message.
+ * Reprecents a pairwise constraint due to a latency constrained message
+ * between a source and destination filters. Note that source will
+ * have to send credit messages to the destination. Destination will
+ * have to check credit messages and make sure it does not execute past
+ * the credit received to guarantee a correct message delivery.
  */
 
 public class LatencyConstraint {
@@ -45,7 +49,21 @@ public class LatencyConstraint {
     private int sourceSteadyExec, destSteadyExec; 
     
     private SIRFilter receiver;
-    int dependencyData[];
+    private int dependencyData[];
+
+    /**
+     * Constructs a latency constraint
+     * @param sourceInit for downstream messages this represents
+     * how many times source can execute before sending first credit.
+     * For upstream messages this represents initial credit that
+     * the receiver receives. Also creates a dependency data array
+     * of size equal to sourceSteadyExec that must be set using
+     * method setDependencyData.
+     * @param sourceSteadyExec number of times source filter executes
+     * in a steady state (this is not the steady state for whole program)
+     * @param destSteadyExec number of times destination filter executes
+     * in a steady state (this is not the steady state for whole program)
+     */
 
     LatencyConstraint(int sourceInit, 
                       int sourceSteadyExec,
@@ -61,10 +79,28 @@ public class LatencyConstraint {
         }
     }
 
+    /**
+     * A method for setting the dependency data. The size of dependency
+     * array is equal to sourceSteadyExec. This represents what credit
+     * can be sent by source during first steady state (For downstream message
+     * the phase starts after sourceInit number of source iterations).
+     * During subsequent phases source can send a credit that is by
+     * destSteadyExec larger each time.
+     * @param index index within dependency data array
+     * @param value value of credit that can be sent during the first phase
+     */
+
     public void setDependencyData(int index, int value) {
         dependencyData[index] = value;
     }
 
+    /**
+     * Returns a credit that can be sent by source to dest during first 
+     * steady state.
+     * @param index index within dependency array
+     * @return the credit
+     */
+    
     public int getDependencyData(int index) {
         return dependencyData[index];
     }

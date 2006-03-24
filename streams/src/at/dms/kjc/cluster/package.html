@@ -23,12 +23,12 @@
 <body>
 
 <p>
-The cluster backend for StreamIt. The cluster backend generates
-a set of threads that can be exeecuted on a cluster of networked
+The cluster backend for StreamIt generates
+a set of threads that can be executed on a cluster of networked
 computers or a SMP. For each splitter/joiner/filter (see {@link @SIROperator})
 a threadX.cpp file is generated that contains code for the operator.
-The threads are enumerated from 0 to N-1. The mapping between 
-operators and integers is maintained by the class {@link NodeEnumerator}.
+The threads are enumerated from 0 to N-1 (the mapping between 
+operators and integers is maintained by the class {@link NodeEnumerator}).
 
 <p>
 A file master.cpp contains the master thread that is executed on

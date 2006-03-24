@@ -365,7 +365,7 @@ public class SwitchCode extends at.dms.util.Utils
         Repetition[] threeBiggest = new Repetition[3]; //force the repetition count to be > 1
         for (int i = 0; i < 3; i++) 
             threeBiggest[i] = new Repetition(4);
-        // pos is our location in <nodes> 
+        // pos is our location in <pre>nodes</pre> 
         int pos = 0; 
         // keep going 'til we've printed all the nodes 
         while (pos<nodes.length) { 
@@ -377,7 +377,7 @@ public class SwitchCode extends at.dms.util.Utils
                        !nodes[pos].equals(nodes[pos+ahead])) {
                     ahead++; 
                 } 
-                // if we found a match, try to build on it. <reps> denotes
+                // if we found a match, try to build on it. <pre>reps</pre> denotes
                 //how many iterations of a loop we have. 
                 int reps = 0; 
                 if (ahead <= MAX_LOOKAHEAD && pos+ahead < nodes.length &&
@@ -394,7 +394,7 @@ public class SwitchCode extends at.dms.util.Utils
                                 break; 
                             } 
                         } 
-                        // if we finished loop, increment <reps>; otherwise break 
+                        // if we finished loop, increment <pre>reps</pre>; otherwise break 
                         if (i==pos+(reps+1)*ahead) { 
                             reps++; 
                         }

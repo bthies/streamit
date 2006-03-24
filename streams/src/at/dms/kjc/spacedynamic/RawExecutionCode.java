@@ -301,7 +301,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         // follow the channels backward until we get to a filter or joiner,
         // remembering the weights on the rr splitters that connect
         // the filter (joiner) to node, so we know the number of items passed to
-        // <node>
+        // <pre>node</pre>
         FlatNode current = prev;
         FlatNode downstream = node;
         while (current.contents instanceof SIRSplitter) {
@@ -336,8 +336,8 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
 
     /**
-     * Returns a for loop that uses field <var> to count <count> times with the
-     * body of the loop being <body>. If count is non-positive, just returns
+     * Returns a for loop that uses field <pre>var</pre> to count <pre>count</pre> times with the
+     * body of the loop being <pre>body</pre>. If count is non-positive, just returns
      * empty (!not legal in the general case)
      */
     public static JStatement makeForLoop(JStatement body, JLocalVariable var,
@@ -356,13 +356,13 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
                 return body;
             }
         }
-        // make init statement - assign zero to <var>. We need to use
+        // make init statement - assign zero to <pre>var</pre>. We need to use
         // an expression list statement to follow the convention of
         // other for loops and to get the codegen right.
         JExpression initExpr[] = { new JAssignmentExpression(null,
                                                              new JLocalVariableExpression(null, var), new JIntLiteral(0)) };
         JStatement init = new JExpressionListStatement(null, initExpr, null);
-        // make conditional - test if <var> less than <count>
+        // make conditional - test if <pre>var</pre> less than <pre>count</pre>
         JExpression cond = new JRelationalExpression(null, Constants.OPE_LT,
                                                      new JLocalVariableExpression(null, var), count);
         JExpression incrExpr = new JPostfixExpression(null,

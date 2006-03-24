@@ -181,7 +181,7 @@ public class JoinerScheduleNode
     
 
     /**
-     * Returns whether <other> has the same type and buffer name as
+     * Returns whether <pre>other</pre> has the same type and buffer name as
      * this.
      */
     public boolean equals(JoinerScheduleNode other) {
@@ -192,7 +192,7 @@ public class JoinerScheduleNode
     }
 
     /**
-     * Traverses the list defined from <node> and returns an array of
+     * Traverses the list defined from <pre>node</pre> and returns an array of
      * all elements reachable through the list.  result[0] is node,
      * and result[result.length-1].next = null.
      */

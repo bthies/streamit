@@ -158,7 +158,7 @@ public class StaticStreamGraph {
         topLevel.addEdges(topLevel, node);
     }
 
-    /** when constructing this SSG, add <node> to it * */
+    /** when constructing this SSG, add <pre>node</pre> to it * */
     public void addFlatNode(FlatNode node) {
         // System.out.println("Adding " + node + " to " + id);
         flatNodes.add(node);
@@ -343,7 +343,7 @@ public class StaticStreamGraph {
 
     /**
      * given an output node for this SSG, get the SSGEdge that represents the
-     * connection, <source> is the source of the SSG edge.
+     * connection, <pre>source</pre> is the source of the SSG edge.
      */
     public SSGEdge getOutputSSGEdgeSource(FlatNode source) {
         for (int i = 0; i < outputSSGEdges.length; i++)
@@ -355,7 +355,7 @@ public class StaticStreamGraph {
     }
 
     /***************************************************************************
-     * Given <dest> a source of a direct downstream SSG, get the SSGEdge that
+     * Given <pre>dest</pre> a source of a direct downstream SSG, get the SSGEdge that
      * represents the connection
      **************************************************************************/
     public SSGEdge getOutputSSEdgeDest(FlatNode dest) {
@@ -520,7 +520,7 @@ public class StaticStreamGraph {
 
     /**
      * Schedule the static communication of this SSG, given the schedule of
-     * joiner firing, <js> *
+     * joiner firing, <pre>js</pre> *
      */
     public void scheduleCommunication(JoinerSimulator js) {
         if (KjcOptions.wbs)
@@ -618,7 +618,7 @@ public class StaticStreamGraph {
 
     /***************************************************************************
      * when constructing this SSG, add a new connection from node->source to the
-     * prevs hash map and add <node> to the inputs array
+     * prevs hash map and add <pre>node</pre> to the inputs array
      **************************************************************************/
     public void addPrev(FlatNode node, FlatNode source) {
         assert flatNodes.contains(node);
@@ -634,7 +634,7 @@ public class StaticStreamGraph {
 
     /***************************************************************************
      * when constructing this SSG, add a new connection from node->next to the
-     * nexts hash map and add the <node> to the outputs array
+     * nexts hash map and add the <pre>node</pre> to the outputs array
      **************************************************************************/
     public void addNext(FlatNode node, FlatNode next) {
         assert flatNodes.contains(node);
@@ -663,7 +663,7 @@ public class StaticStreamGraph {
         return outputSSGEdges.length > 0;
     }
 
-    /** is <node> a dynamic source for this SSG * */
+    /** is <pre>node</pre> a dynamic source for this SSG * */
     public boolean isInput(FlatNode node) {
         assert flatNodes.contains(node);
         for (int i = 0; i < inputs.length; i++)
@@ -672,7 +672,7 @@ public class StaticStreamGraph {
         return false;
     }
 
-    /** is <node> a dynamic sink for this SSG * */
+    /** is <pre>node</pre> a dynamic sink for this SSG * */
     public boolean isOutput(FlatNode node) {
         assert flatNodes.contains(node);
         for (int i = 0; i < outputs.length; i++)
@@ -909,7 +909,7 @@ public class StaticStreamGraph {
     }
 
     /**
-     * get the multiplicity for <node> in the given stage, if <init> then init
+     * get the multiplicity for <pre>node</pre> in the given stage, if <pre>init</pre> then init
      * stage *
      */
     public int getMult(FlatNode node, boolean init) {
@@ -981,8 +981,8 @@ public class StaticStreamGraph {
     }
 
     /**
-     * Get an input SSGEdge coming into this SSG given the <dest> of the edge,
-     * so <dest> is in this SSG
+     * Get an input SSGEdge coming into this SSG given the <pre>dest</pre> of the edge,
+     * so <pre>dest</pre> is in this SSG
      */
     public SSGEdge getInputSSGEdgeDest(FlatNode dest) {
         SSGEdge edge = null;
@@ -1010,7 +1010,7 @@ public class StaticStreamGraph {
             return node.getFilter().getInputType();
     }
 
-    /** get the output type for <node> of this SSG * */
+    /** get the output type for <pre>node</pre> of this SSG * */
     public CType getOutputType(FlatNode node) {
         assert flatNodes.contains(node) : "Calling getOutputType(node) and node is not in SSG";
         if (isOutput(node))

@@ -69,9 +69,9 @@ public abstract class Simulator {
     public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
                                     SimulationCounter counters);
 
-    /** Create switch assembly code for to route one item from <fire> to
-        the dests.  <previous> is a hashmap from ComputeNode -> ComputeNode that 
-        maps a node to its previous hop, <next> is similiar...
+    /** Create switch assembly code for to route one item from <pre>fire</pre> to
+        the dests.  <pre>previous</pre> is a hashmap from ComputeNode -> ComputeNode that 
+        maps a node to its previous hop, <pre>next</pre> is similiar...
     **/
     protected void asm(ComputeNode fire, HashMap previous, HashMap next) 
     {
@@ -178,7 +178,7 @@ public abstract class Simulator {
     }
 
     /** 
-        given a node <fire> and the current state of the simulation, 
+        given a node <pre>fire</pre> and the current state of the simulation, 
         return how many items are necessary for the node to fire.
     **/
     protected int itemsNeededToFire(FlatNode fire, SimulationCounter counters,

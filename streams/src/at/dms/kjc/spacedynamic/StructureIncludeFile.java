@@ -34,7 +34,7 @@ public class StructureIncludeFile {
     }
 
     /**
-     * Create structures include file in directory <dir>.
+     * Create structures include file in directory <pre>dir</pre>.
      */
     public static void doit(SIRStructure[] structs, StreamGraph sg, String dir) {
         if (structs.length == 0)
@@ -119,7 +119,7 @@ public class StructureIncludeFile {
         }
     }
 
-    /** create the push/pop functions for the structs, over <network> * */
+    /** create the push/pop functions for the structs, over <pre>network</pre> * */
     private void createPushPopFunctions(SIRStructure[] structs, FileWriter fw,
                                         String network) throws Exception {
         assert network.equals("Static") || network.equals("Dynamic");

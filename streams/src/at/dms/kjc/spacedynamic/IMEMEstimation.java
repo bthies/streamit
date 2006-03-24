@@ -59,7 +59,7 @@ public class IMEMEstimation implements FlatVisitor
     }
     
     /**
-     * Returns true iff all filters in <str> fit in IMEM.  Each filter
+     * Returns true iff all filters in <pre>str</pre> fit in IMEM.  Each filter
      * is measured independently (assuming 1 filter per tile).
      */
     public static boolean testMe(StaticStreamGraph ssg, FlatNode top) 

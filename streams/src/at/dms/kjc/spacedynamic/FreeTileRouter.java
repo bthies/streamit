@@ -15,7 +15,7 @@ import java.util.ListIterator;
 import java.util.Iterator;
 
 /** 
-    This class generates a route from <src> to <dst> attempting to minimize the 
+    This class generates a route from <pre>src</pre> to <pre>dst</pre> attempting to minimize the 
     number of tiles assigned to filters or joiners in the route 
 **/
 

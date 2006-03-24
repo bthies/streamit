@@ -61,8 +61,8 @@ public class StreamGraph {
     private RawChip rawChip;
 
     /**
-     * Create the static stream graph for the application that has <top> as the
-     * top level FlatNode, and compile it to <rawChip>
+     * Create the static stream graph for the application that has <pre>top</pre> as the
+     * top level FlatNode, and compile it to <pre>rawChip</pre>
      */
     public StreamGraph(FlatNode top, RawChip rawChip) {
         this.rawChip = rawChip;
@@ -126,9 +126,9 @@ public class StreamGraph {
 
     /**
      * recursive function to cut the graph into ssgs, it searchs downstream
-     * starting at <current> and adds nodes to <ssg> that are connected by
+     * starting at <pre>current</pre> and adds nodes to <pre>ssg</pre> that are connected by
      * static rate channels or it remember entry points to new SSGs in
-     * <dynamicBoundary>
+     * <pre>dynamicBoundary</pre>
      */
     private void searchDownstream(FlatNode current, StaticStreamGraph ssg,
                                   HashSet visited, List dynamicBoundary) {
@@ -221,9 +221,9 @@ public class StreamGraph {
     }
 
     /**
-     * This method cuts the connects from <upstream> to <downstream> in the
+     * This method cuts the connects from <pre>upstream</pre> to <pre>downstream</pre> in the
      * flatgraph and in the SIR graph, sets the types of the input of
-     * <downstream> and output of <upstream> to void, and sets the appropriate
+     * <pre>downstream</pre> and output of <pre>upstream</pre> to void, and sets the appropriate
      * rates to 0
      */
     private void cutGraph(FlatNode upstream, FlatNode downstream) {
@@ -248,9 +248,9 @@ public class StreamGraph {
     }
 
     /**
-     * This method search upstream from <current> for nodes that it should add
-     * to <ssg>. It will add nodes that are connected thru static rate channels.
-     * <dynamicBoundary> stores all the entries for SSGs we haven't constructed
+     * This method search upstream from <pre>current</pre> for nodes that it should add
+     * to <pre>ssg</pre>. It will add nodes that are connected thru static rate channels.
+     * <pre>dynamicBoundary</pre> stores all the entries for SSGs we haven't constructed
      * yet
      * 
      * It is necessary in order to ensure a cut across a splitjoin contruct
@@ -326,7 +326,7 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * Return true if the source of this stream, <stream> has dynamic rate input
+     * Return true if the source of this stream, <pre>stream</pre> has dynamic rate input
      **************************************************************************/
     public boolean dynamicEntry(SIRStream stream) {
         if (stream instanceof SIRFilter) {
@@ -342,7 +342,7 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * Return true if the sink of this stream, <stream> has dynamic rate output
+     * Return true if the sink of this stream, <pre>stream</pre> has dynamic rate output
      **************************************************************************/
     public boolean dynamicExit(SIRStream stream) {
         if (stream instanceof SIRFilter) {
@@ -442,14 +442,14 @@ public class StreamGraph {
     }
 
     /**
-     * Add the mapping node->ssg to the parent map to remember that <ssg> is the
-     * parent of <node>
+     * Add the mapping node->ssg to the parent map to remember that <pre>ssg</pre> is the
+     * parent of <pre>node</pre>
      */
     public void putParentMap(FlatNode node, StaticStreamGraph ssg) {
         parentMap.put(node, ssg);
     }
 
-    /** get the parent SSG of <node> * */
+    /** get the parent SSG of <pre>node</pre> * */
     public StaticStreamGraph getParentSSG(FlatNode node) {
         assert parentMap.containsKey(node) : node;
         return (StaticStreamGraph) parentMap.get(node);

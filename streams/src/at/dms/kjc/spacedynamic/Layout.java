@@ -169,7 +169,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     }
 
     /**
-     * Returns the tile number assignment for <str>, or null if none has been
+     * Returns the tile number assignment for <pre>str</pre>, or null if none has been
      * layout It will die if this str should not be assigned to RawTile
      */
     public RawTile getTile(SIROperator str) {
@@ -182,8 +182,8 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     }
 
     /**
-     * Returns the tile number assignment for <str>, or null if none has been
-     * layout It will die if <str> should not be assigned to RawTile
+     * Returns the tile number assignment for <pre>str</pre>, or null if none has been
+     * layout It will die if <pre>str</pre> should not be assigned to RawTile
      */
     public RawTile getTile(FlatNode str) {
         if (SIRassignment == null) {
@@ -194,7 +194,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     }
 
     /***************************************************************************
-     * Return the tile number for the <node> it will die if the node has not
+     * Return the tile number for the <pre>node</pre> it will die if the node has not
      * been assigned to a tile
      **************************************************************************/
     public int getTileNumber(FlatNode node) {
@@ -202,24 +202,24 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
     }
 
     /***************************************************************************
-     * Return the tile number for the <str> it will die if the node has not been
+     * Return the tile number for the <pre>str</pre> it will die if the node has not been
      * assigned to a tile
      **************************************************************************/
     public int getTileNumber(SIROperator str) {
         return getTile(str).getTileNumber();
     }
 
-    /** Return the flatNode assigned to this <tile> * */
+    /** Return the flatNode assigned to this <pre>tile</pre> * */
     public FlatNode getNode(RawTile tile) {
         return (FlatNode) tileAssignment.get(tile);
     }
 
-    /** return the compute node (tile or ioport) assigned to <node> * */
+    /** return the compute node (tile or ioport) assigned to <pre>node</pre> * */
     public ComputeNode getComputeNode(FlatNode node) {
         return getComputeNode(node.contents);
     }
 
-    /** return the compute node (tile or ioport) assigned to <str> * */
+    /** return the compute node (tile or ioport) assigned to <pre>str</pre> * */
     public ComputeNode getComputeNode(SIROperator str) {
         if (SIRassignment == null)
             return null;
@@ -351,7 +351,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         return str;
     }
 
-    /** get all the downstream *assigned* nodes and file writers (!!) of <node> * */
+    /** get all the downstream *assigned* nodes and file writers (!!) of <pre>node</pre> * */
     private HashSet getDownStream(FlatNode node) {
         if (node == null)
             return new HashSet();
@@ -445,7 +445,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     /**
      * Given a Buffered reader, get the tile number assignment from the reader
-     * for <node>
+     * for <pre>node</pre>
      */
     private void assignFromReader(BufferedReader inputBuffer,
                                   StaticStreamGraph ssg, FlatNode node) {
@@ -508,7 +508,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     /**
      * return the cost of this layout calculated by the cost function, if the
-     * cost is negative, this layout is illegal. if <debug> then print out why
+     * cost is negative, this layout is illegal. if <pre>debug</pre> then print out why
      * this layout was illegal
      */
     public double placementCost(boolean debug) {

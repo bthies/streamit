@@ -244,7 +244,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
     /**
-     * Prints the schedule to <ret> for node list starting at <first>.
+     * Prints the schedule to <pre>ret</pre> for node list starting at <pre>first</pre>.
      */
     private static void printSchedule(FlatNode joiner, JoinerScheduleNode first, StringBuffer ret) {
         // get the array of the schedule
@@ -319,7 +319,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
     /**
-     * Appends schedule for <node> to <ret>, only compressing single lines that are repeated.
+     * Appends schedule for <pre>node</pre> to <pre>ret</pre>, only compressing single lines that are repeated.
      */
     private static void oldPrintSchedule(FlatNode joiner, JoinerScheduleNode node, StringBuffer ret, boolean fp) {
         while (node != null) {

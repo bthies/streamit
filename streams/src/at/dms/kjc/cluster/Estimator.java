@@ -8,13 +8,21 @@ import java.util.*;
 
 
 /**
- * Estimate size of code and local variables for entire program.
+ * The calss allows forcing of the recalculation of estimates of 
+ * code and local variable size for the entire stream program.
+ * Forcing is necessary since {@link CodeEstimate} caches 
+ * old values.
  * @see CodeEstimate
- *
  */
+
 class Estimator implements StreamVisitor {
 
-    public Estimator() {}
+    //public Estimator() {}
+
+    /**
+     * Force recalculation of code and locals size.
+     * @param str the top level stream 
+     */
 
     public static void estimate(SIRStream str) {
         Estimator est = new Estimator();
@@ -22,6 +30,10 @@ class Estimator implements StreamVisitor {
         IterFactory.createFactory().createIter(str).accept(est);
         System.out.println("done.");
     }
+
+    /**
+     * Recalculate code and locals size for a filter
+     */
 
     public void visitFilter(SIRFilter filter,
                             SIRFilterIter iter) { 
@@ -35,6 +47,10 @@ class Estimator implements StreamVisitor {
         //System.out.println("Estimator Filter: "+filter+" Code: "+code+" Locals: "+locals);
     
     }
+
+    /**
+     * Phased Filters are not supported!
+     */
 
     public void visitPhasedFilter(SIRPhasedFilter self,
                                   SIRPhasedFilterIter iter) {

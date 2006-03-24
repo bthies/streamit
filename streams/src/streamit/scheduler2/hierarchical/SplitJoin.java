@@ -23,7 +23,7 @@ import streamit.scheduler2.Schedule;
 
 /**
  * This class provides the required functions to implement a scheduler
- * for a SplitJOin.  Mostly, it simply implements wrappers for functions
+ * for a SplitJoin.  Mostly, it simply implements wrappers for functions
  * in StreamInterface and passes them on to the StreamAlgorithm.  This
  * is necessary, 'cause Java doesn't support multiple inheritance.
  * 

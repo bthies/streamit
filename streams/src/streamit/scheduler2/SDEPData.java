@@ -16,6 +16,14 @@
 
 package streamit.scheduler2;
 
+/**
+ * Provide a basic interface for expressing SDEP data.
+ * 
+ * Each instance of SDEPData is specific to a pair of filters.
+ * 
+ * @author karczma
+ */
+
 public interface SDEPData
 {
     /**

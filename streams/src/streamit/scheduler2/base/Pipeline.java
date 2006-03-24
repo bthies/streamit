@@ -21,7 +21,10 @@ import java.math.BigInteger;
 import at.dms.kjc.sir.*;
 
 /**
- * Computes some basic data for Pipelines.  
+ * Computes some basic data for Pipelines.
+ * 
+ * Namely it computes how many times each child needs to execute its
+ * steady state to achieve a steady state execution for the Pipeline
  *
  * @version 2
  * @author  Michal Karczmarek

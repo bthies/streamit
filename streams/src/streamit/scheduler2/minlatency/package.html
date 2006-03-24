@@ -1,0 +1,36 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of streamit.scheduler2.minlatency</title>
+</head>
+<body>
+
+<p>
+This scheduler implements a minlatency scheduler, as described
+in my (Michal Karczmarek) Master's Thesis.
+
+<p>
+A minlatency schedule is one which, for every phase, consumes only
+as much data as is necessary to produce an output. One useful property
+of such a schedule is that as long as a program has a legal schedule,
+this scheduler will be able to find it.
+
+</body>
+</html>

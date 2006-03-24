@@ -18,6 +18,15 @@ package streamit.library.iriter;
 
 import streamit.library.Pipeline;
 
+/**
+ * This is the implementation of the Pipeline iterator, as required by
+ * scheduler2.
+ * 
+ * This class will correctly answer all the inquiries about the filter. 
+ * All the inquiries are basically relayed back to the underlying 
+ * library Pipeline.
+ */
+
 public class PipelineIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.PipelineIter

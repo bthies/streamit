@@ -22,6 +22,15 @@ import streamit.library.Pipeline;
 import streamit.library.SplitJoin;
 import streamit.library.Stream;
 
+/**
+ * This is the implementation of the basic Iterator, as required by
+ * scheduler2. All the stream-specific iterators must be derrived from
+ * this one. It only provides some super basic capability, like verying
+ * the type of the underlying object. These functions return null if
+ * the iterator is not of the types inquired about, and they return
+ * an iterator to the same object with the proper type if the types match.
+ */
+
 public class Iterator implements streamit.scheduler2.iriter.Iterator
 {
     /**

@@ -27,6 +27,16 @@ import java.util.Stack;
 
 import streamit.scheduler2.SDEPData;
 
+/**
+ * LatencyGraph provides an implementation of a graph of stream operators.
+ * These operators do not have to be arranged in a structured way (StreamIt
+ * operators).
+ * 
+ * This class also provides an algorithm for computing the SDEP 
+ * relationship between an upstream filter and a set of downstream filters.
+ *
+ */
+
 public class LatencyGraph extends streamit.misc.AssertedClass
 {
     /*
@@ -274,6 +284,21 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * (LatencyNode's), returns a mapping (LatencyNode -> SDEPData) of
      * the SDEP data from the upstream node to a given downstream
      * node.
+     * 
+     * This method works as follows:
+     * <li> First it finds all nodes and edges that are on any path 
+     * between the upstreamNode and the downstreamNodes.
+     * <li> It eliminates any edges that form loops in this subgraph.
+     * This doesn't modify the SDEP relationship, because loops do not
+     * contribute to SDEP.
+     * <li> It traverses this graph, starting from the upstreamNode
+     * using a breadth-first traversal. When a joiner is reached, it is
+     * not traversed across until all it incoming edges have been traversed.
+     * During this traversal, an SDEP relationship is calulated between the
+     * node being visited and the upstreamNode. This is done by combining
+     * the SDEP between the previous node and upstreamNode and SDEP between
+     * previous node and current node.
+     * <li> SDEP for nodes in downsteramNodes are selected and returned.
      */
     public HashMap computeSDEP(LatencyNode upstreamNode,
                                HashSet downstreamNodes) 
@@ -523,6 +548,14 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return result;
     }
                               
+    /**
+     * Finds edges which form loops within a certain stream, starting
+     * at a particular node.
+     * 
+     * @param startNode
+     * @param withinStream
+     * @return
+     */
     public HashSet findBackPointingEdges(
                                       LatencyNode startNode,
                                       StreamInterface withinStream)

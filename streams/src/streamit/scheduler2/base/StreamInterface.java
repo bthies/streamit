@@ -23,7 +23,7 @@ import streamit.scheduler2.iriter.Iterator;
  * This interface will provide the basic functionality for
  * all future stream classes.  This will ensure that streams can
  * be used interchangably.  I have to make this an interface because
- * Java doesn't have multi-inheritance :(
+ * Java doesn't have multiple-inheritance :(
  * 
  * @version 2
  * @author  Michal Karczmarek

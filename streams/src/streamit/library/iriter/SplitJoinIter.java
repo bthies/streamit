@@ -21,6 +21,15 @@ import streamit.library.NullSplitter;
 import streamit.library.NullJoiner;
 import streamit.misc.Pair;
 
+/**
+ * This is the implementation of the SplitJoin iterator, as required by
+ * scheduler2.
+ * 
+ * This class will correctly answer all the inquiries about the filter. 
+ * All the inquiries are basically relayed back to the underlying 
+ * library SplitJoin. Some answers are memoised to reduce computation.
+ */
+
 public class SplitJoinIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.SplitJoinIter

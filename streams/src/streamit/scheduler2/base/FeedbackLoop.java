@@ -24,6 +24,10 @@ import at.dms.kjc.sir.*;
 /**
  * Computes some basic steady state data for FeedbackLoops.
  *
+ * Namely it computes how many times each child, splitter and joiner 
+ * need to execute their steady states to achieve a steady state execution
+ * for the FeedbackLoop.
+ * 
  * @version 2
  * @author  Michal Karczmarek
  */

@@ -1,0 +1,47 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of streamit.scheduler2.iriter</title>
+</head>
+<body>
+
+<p>
+The main scheduler2 package. Here you find all the important classes
+the provide an interface between the scheduler and the user.
+
+<p>
+Schedule class implements a basic phasing schedule. 
+
+<p>
+Scheduler provides an interface between the user and the scheduler.
+Each scheduler implementation must provide its own Scheduler subclass.
+
+<p>
+SDEPData is a basic interface for represending SDEP relationship
+between two filters.
+
+<p>
+This package also contains the ScheduleOptimizer and ScheduleBuffers
+algorithms. ScheduleOptimizer performs basic factoring of a schedule, based
+on repetitions of phases and single-element phases. ScheduleBuffers 
+computes the size of buffers necessary to execute a given schedule.
+
+</body>
+</html>

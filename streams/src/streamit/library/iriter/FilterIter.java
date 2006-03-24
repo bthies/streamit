@@ -18,6 +18,15 @@ package streamit.library.iriter;
 
 import streamit.library.Filter;
 
+/**
+ * This is the implementation of the Filter iterator, as required by
+ * scheduler2.
+ * 
+ * This class will correctly answer all the inquiries about the filter,
+ * including multi-phased filters. All the inquiries are basically relayed
+ * back to the underlying library Filter.
+ */
+
 public class FilterIter
     extends streamit.misc.DestroyedClass
     implements streamit.scheduler2.iriter.FilterIter

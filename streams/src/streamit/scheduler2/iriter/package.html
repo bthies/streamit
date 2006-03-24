@@ -1,0 +1,52 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of streamit.scheduler2.iriter</title>
+</head>
+<body>
+
+<p>
+Provides iterfaces that need to be implemented in order to use the
+scheduler.
+
+<p>
+In order to provide clean separation between the scheduler and the
+rest of the code, the scheduler is implemented as a completely independent
+library. It can be compiled without any other package. This package
+provides an interface between the scheduler and the user.
+
+<p>
+Each user needs to implement these interfaces. Every scheduler extends
+the {@link streamit.scheduer2.Scheduler} class that the user
+instantiates. The StreamFactory class will walk all the iterators, extract
+all the appropriate information from the user, and pass it on to the
+scheduler.
+
+<p>
+<i>
+Note: This interface is probably an over-engineered solution to a simple
+problem. The correct way of providing this functionality probably would
+be to provide a basic Scheduler interface that each actual scheduler would
+implement. A user would simply call this scheduler in order to 'create'
+streams. Incidentally, this is pretty much the interface used in scheduler1.
+<b>DOH!</b></i>
+
+</body>
+</html>

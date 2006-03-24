@@ -1,0 +1,47 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of streamit.scheduler2.constrained</title>
+</head>
+<body>
+
+<p>
+This package was meant to provide a scheduler for programs constrained
+by messaging. Unfortunately it was never finished, and for the most part
+has little value.
+
+<p>
+The only useful (functional) part of this package is the SDEP computation.
+This is provided through LatencyEdge, LatencyGraph and LatencyNode classes.
+These classes are a library and do not depend on the rest of this package.
+However, access to these classes is provided through the standard scheduler
+interface using IR iterators, so much of the code here is actually
+necessary.
+
+<p>
+The SDEP computation library is designed to work for arbitrary graphs of
+streaming computation, not just structured graphs that StreamIt currently
+uses. However, in discussion with Bill, we recently realized that the
+algorithm here can fail in certain corner cases of unstructured graphs
+involving loops. If non-structured graphs are ever to be used in this
+library, the computation of SDEP algorithm may need to be rewritten.
+
+</body>
+</html>

@@ -26,6 +26,10 @@ import streamit.misc.Fraction;
 /**
  * Computes some basic steady state data for SplitJoins.
  *
+ * Namely it computes how many times each child, splitter and joiner 
+ * need to execute their steady states to achieve a steady state execution
+ * for the SplitJoin.
+ * 
  * @version 2
  * @author  Michal Karczmarek
  */

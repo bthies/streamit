@@ -18,9 +18,9 @@ package streamit.library;
 
 import java.util.*;
 
-import streamit.misc.AssertedClass;
+import streamit.misc.DestroyedClass;
 
-public class ParameterContainer extends AssertedClass
+public class ParameterContainer extends DestroyedClass
 {
     Map parameters = new TreeMap ();
     String paramName;

@@ -21,6 +21,9 @@ import at.dms.kjc.sir.*;
 
 /**
  * Computes some basic data for Filters.
+ * 
+ * Namely, it totals up the data consumed and produced by phases
+ * of the filter to come up with a steady state total. 
  *
  * @version 2
  * @author  Michal Karczmarek

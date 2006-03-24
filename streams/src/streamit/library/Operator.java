@@ -82,7 +82,7 @@ public class Operator extends DestroyedClass
         deliverMessages();
     }
     /**
-     * Enqueues <message> for delivery to this.
+     * Enqueues <pre>message</pre> for delivery to this.
      */
     public void enqueueMessage(Message m) {
         int currentTime = getSDEPExecutions(true, m.isDownstream());
@@ -214,29 +214,29 @@ public class Operator extends DestroyedClass
     }
 
     /**
-     * Returns whether this is downstream of <op>.  An operator can be
+     * Returns whether this is downstream of <pre>op</pre>.  An operator can be
      * either upstream, downstream, or in parallel to another.  If
-     * this contains <op> or vice-versa, result is undefined.
+     * this contains <pre>op</pre> or vice-versa, result is undefined.
      */
     public boolean isDownstreamOf(Operator op) {
         return compareStreamPosition(this, op) == 1;
     }
 
     /**
-     * Returns whether this is upstream of <op>.  An operator can be
+     * Returns whether this is upstream of <pre>op</pre>.  An operator can be
      * either upstream, downstream, or in parallel to another.  If
-     * this contains <op> or vice-versa, result is undefined.
+     * this contains <pre>op</pre> or vice-versa, result is undefined.
      */
     public boolean isUpstreamOf(Operator op) {
         return compareStreamPosition(this, op) == -1;
     }
 
     /**
-     * Returns whether this is in parallel to <op> -- that is, whether
+     * Returns whether this is in parallel to <pre>op</pre> -- that is, whether
      * there does NOT exist a directed path in the stream graph
      * between these two ops, within the least-common-ancestor of the
      * two ops.  An operator can be either upstream, downstream, or in
-     * parallel to another.  If this contains <op> or vice-versa,
+     * parallel to another.  If this contains <pre>op</pre> or vice-versa,
      * result is undefined.
      */
     public boolean isParallelTo(Operator op) {
@@ -244,7 +244,7 @@ public class Operator extends DestroyedClass
     }
 
     /**
-     * Compares the stream position of <op1> and <op2>, determining
+     * Compares the stream position of <pre>op1</pre> and <pre>op2</pre>, determining
      * which one is upstream of the other (or if they are in
      * parallel).  The stream position is only considered within the
      * least common ancestor of the two ops.  For example, if two ops
@@ -254,9 +254,9 @@ public class Operator extends DestroyedClass
      * loop, then the body stream is considered upstream.  Result is
      * undefined if either op contains the other.
      *
-     * @return -1  if <op1> is downstream of <op2>
-     * @return 0   if <op1> is in parallel with <op2>
-     * @return 1   if <op1> is upstream of <op2>
+     * @return -1  if <pre>op1</pre> is downstream of <pre>op2</pre>
+     * @return 0   if <pre>op1</pre> is in parallel with <pre>op2</pre>
+     * @return 1   if <pre>op1</pre> is upstream of <pre>op2</pre>
      */
     public static int compareStreamPosition(Operator op1, Operator op2) {
         // make lists of parents.  Higher-level parents at front
@@ -1396,11 +1396,11 @@ public class Operator extends DestroyedClass
                                             }
     }
 
-    // send a message to a handler that returns <stub> within <delay>
+    // send a message to a handler that returns <pre>stub</pre> within <pre>delay</pre>
     // units of my input/output (to be specified more clearly...)
     public void sendMessage(MessageStub stub, int delay) {}
 
-    // send a message to a handler that returns <stub> at the earliest
+    // send a message to a handler that returns <pre>stub</pre> at the earliest
     // convenient time.
     public void sendMessage(MessageStub stub) {}
 

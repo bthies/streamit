@@ -38,7 +38,7 @@ public class FileWriter extends Filter
     public FileWriter (String fileName, Class type, boolean TREAT_AS_BITS)
     {
         allFileWriters.add(this);
-        // This is part of the hack to make FileReader/Writer<bit> work
+        // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
         if (TREAT_AS_BITS)
             fileType = null;
         else 
@@ -57,14 +57,14 @@ public class FileWriter extends Filter
             }
     }
 
-    // This is part of the hack to make FileReader/Writer<bit> work
+    // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
     public FileWriter (String fileName, Class type) {
         this(fileName, type, false);
     }
 
     public void init ()
     {
-        // This is part of the hack to make FileReader/Writer<bit> work
+        // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
         if (fileType == null) {
             input = new Channel (Integer.TYPE, 1);
             bits_to_go = 8;
@@ -102,7 +102,7 @@ public class FileWriter extends Filter
     public void work ()
     {
         try {
-            // This is part of the hack to make FileReader/Writer<bit> work
+            // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
             if (fileType == null) {
                 the_bits = (byte) ((the_bits << 1) | (input.popInt() & 1));
                 bits_to_go--;
@@ -141,7 +141,7 @@ public class FileWriter extends Filter
     }
 
     /**
-     * Closing is necessary to get last bits out for <bit>
+     * Closing is necessary to get last bits out for &lt;bit:gt;
      */
     public void close() 
     {

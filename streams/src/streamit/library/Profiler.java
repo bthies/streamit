@@ -133,7 +133,7 @@ public class Profiler {
      * @param val     One of the values taking part in the operation.
      * @param code    The code that computes this op.
      *
-     * @return The value of the parameter <val>.
+     * @return The value of the parameter <pre>val</pre>.
      */
     public static int registerOp(int op, int id, String code, int val) {
         idCode[id] = code;
@@ -152,7 +152,7 @@ public class Profiler {
      * @param val     One of the values taking part in the operation.
      * @param code    The code that computes this op.
      *
-     * @return The value of the parameter <val>.
+     * @return The value of the parameter <pre>val</pre>.
      */
     public static float registerOp(int op, int id, String code, float val) {
         idCode[id] = code;
@@ -171,7 +171,7 @@ public class Profiler {
      * @param val     One of the values taking part in the operation.
      * @param code    The code that computes this op.
      *
-     * @return The value of the parameter <val>.
+     * @return The value of the parameter <pre>val</pre>.
      */
     public static boolean registerOp(int op, int id, String code, boolean val) {
         idCode[id] = code;
@@ -199,7 +199,7 @@ public class Profiler {
      * @param id      A static identifier for the line of code calling this.
      * @param val     One of the values taking part in the operation.
      *
-     * @return The value of the parameter <val>.
+     * @return The value of the parameter <pre>val</pre>.
      */
     public static String registerOp(int op, int id, String code, String val) {
         // don't profile string ops, should only be used for debugging
@@ -238,7 +238,7 @@ public class Profiler {
     }
 
     /**
-     * Write profile information to <out>.
+     * Write profile information to <pre>out</pre>.
      */
     private static void summarize(PrintStream out) throws IOException {
         // total ops 
@@ -305,7 +305,7 @@ public class Profiler {
     }
 
     /**
-     * Formats <f> into an <n>-character string.
+     * Formats <pre>f</pre> into an <pre>n</pre>-character string.
      */
     private static String format(float f, int n) {
         String str = ""+f;
@@ -317,7 +317,7 @@ public class Profiler {
     }
 
     /**
-     * Formats <i> into an <n>-character string.
+     * Formats <pre>i</pre> into an <pre>n</pre>-character string.
      */
     private static String format(int i, int n) {
         String str = ""+i;

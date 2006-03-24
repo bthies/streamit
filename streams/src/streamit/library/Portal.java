@@ -31,12 +31,12 @@ import java.util.HashSet;
 /**
  * A portal that messages can be sent to.  For the StreamIt compiler,
  * the set of messages that can be sent should be defined in an
- * interface.  A class derived from <code>Portal</code> and
+ * interface.  A class derived from <pre>code</pre>Portal</code> and
  * implementing the interface whose name ends in "Portal" should be
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.18 2006-02-23 10:12:45 thies Exp $
+ * @version $Id: Portal.java,v 1.19 2006-03-24 16:31:46 dimock Exp $
  */
 public abstract class Portal
 {
@@ -98,8 +98,8 @@ public abstract class Portal
     }
 
     /**
-     * Enqueues a message to <handlerName> method in all receivers of
-     * this, from <sender>, and with arguemnts <args>.
+     * Enqueues a message to <pre>handlerName</pre> method in all receivers of
+     * this, from <pre>sender</pre>, and with arguemnts <pre>args</pre>.
      */
     public void enqueueMessage(Stream sender, String handlerName, Object[] args) {
         // get SDEP to receivers
@@ -178,7 +178,7 @@ public abstract class Portal
     }
     
     /**
-     * Given whether or not each receiver is <downstream> of the
+     * Given whether or not each receiver is <pre>downstream</pre> of the
      * sender, return mapping from filters to SDEP data for the
      * upstream messages.
      */
@@ -248,7 +248,7 @@ public abstract class Portal
                 for (java.util.Iterator iter = result.iterator(); iter.hasNext(); ) {
                     HashSet set = (HashSet)iter.next();
                     // test to see if str[i] runs in parallel with all
-                    // elements of <set>
+                    // elements of <pre>set</pre>
                     boolean parallel = true;
                     for (java.util.Iterator setIter = set.iterator(); setIter.hasNext(); ) {
                         PhasedFilter other = (PhasedFilter)setIter.next();
@@ -279,7 +279,7 @@ public abstract class Portal
     }
 
     /**
-     * Given whether or not each receiver is <downstream> of the
+     * Given whether or not each receiver is <pre>downstream</pre> of the
      * sender, return mapping from filters to SDEP data for the
      * downstream messages.
      */

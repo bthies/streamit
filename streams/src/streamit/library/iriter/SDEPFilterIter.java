@@ -117,7 +117,7 @@ public class SDEPFilterIter extends FilterIter
         
     /**
      * Assuming that some of the stages of the current filter are
-     * visible, returns the index of the <target>'th visible init stage.
+     * visible, returns the index of the <pre>target</pre>'th visible init stage.
      * For now, only see stages that do I/O in the direction of the
      * message.
      */
@@ -135,7 +135,7 @@ public class SDEPFilterIter extends FilterIter
             if (countPop && super.getInitPopStage(index)>0) count++;
             // count pushing stages where appropriate
             if (!countPop && super.getInitPushStage(index)>0) count++;
-            // quit when we reach the desired <target> 
+            // quit when we reach the desired <pre>target</pre> 
             if (count == target) break;
             index++;
         }
@@ -144,7 +144,7 @@ public class SDEPFilterIter extends FilterIter
     }
     /**
      * Assuming that some of the phases of the current filter are
-     * visible, returns the index of the <target>'th visible steady
+     * visible, returns the index of the <pre>target</pre>'th visible steady
      * phase.  For now, only see phases that do I/O in the direction
      * of the message.
      */
@@ -162,7 +162,7 @@ public class SDEPFilterIter extends FilterIter
             if (countPop && super.getPopPhase(index)>0) count++;
             // count pushing phases where appropriate
             if (!countPop && super.getPushPhase(index)>0) count++;
-            // quit when we reach the desired <target> 
+            // quit when we reach the desired <pre>target</pre> 
             if (count == target) break;
             index++;
         }

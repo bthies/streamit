@@ -28,22 +28,22 @@ import streamit.library.Stream;
 public interface IterFactory {
 
     /**
-     * Returns a new basic iterator for <filter>.
+     * Returns a new basic iterator for <pre>filter</pre>.
      */
     public streamit.scheduler2.iriter.FilterIter newFrom(Filter filter);
 
     /**
-     * Returns a new iterator for <pipeline>.
+     * Returns a new iterator for <pre>pipeline</pre>.
      */
     public streamit.scheduler2.iriter.PipelineIter newFrom(Pipeline pipeline);
     
     /**
-     * Returns a new iterator for <sj>.
+     * Returns a new iterator for <pre>sj</pre>.
      */
     public streamit.scheduler2.iriter.SplitJoinIter newFrom(SplitJoin sj);
     
     /**
-     * Returns a new iterator for <fl>.
+     * Returns a new iterator for <pre>fl</pre>.
      */
     public streamit.scheduler2.iriter.FeedbackLoopIter newFrom(FeedbackLoop fl);
 

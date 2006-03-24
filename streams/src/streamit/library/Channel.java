@@ -337,7 +337,7 @@ public class Channel extends streamit.misc.DestroyedClass
     
     public int getItemsPushed () { return totalItemsPushed; }
 
-    // push something of type <type>
+    // push something of type <pre>type</pre>
     public void push(Object o)
     {
         assert o.getClass () == type;
@@ -425,7 +425,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
     public int getItemsPopped () { return totalItemsPopped; }
 
-    // pop something of type <type>
+    // pop something of type <pre>type</pre>
     public Object pop()
     {
         ensureData ();
@@ -517,7 +517,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
 
 
-    // peek at something of type <type>
+    // peek at something of type <pre>type</pre>
     public Object peek(int index)
     {
         sink.registerPeek(index);

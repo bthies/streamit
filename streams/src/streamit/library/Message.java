@@ -27,7 +27,7 @@ import java.lang.reflect.*;
  *
  * There is a distinct message for every receiver object.
  *
- * @version $Id: Message.java,v 1.5 2006-03-03 04:46:15 thies Exp $
+ * @version $Id: Message.java,v 1.6 2006-03-24 16:31:46 dimock Exp $
  */
 public class Message {
     /**
@@ -72,7 +72,7 @@ public class Message {
     }
 
     /**
-     * Delivers this message to <receiver>.  The receiver must
+     * Delivers this message to <pre>receiver</pre>.  The receiver must
      * implement the appropriate method.
      */
     public void deliver(Object receiver) {
@@ -98,7 +98,7 @@ public class Message {
     }
 
     /**
-     * If <c> represents a primitive type, return that primitive type.
+     * If <pre>c</pre> represents a primitive type, return that primitive type.
      */
     public Class extractPrimitive(Object o) { 
         if (o instanceof Byte) {

@@ -66,8 +66,8 @@ public class SDEPIterFactory implements IterFactory {
     private boolean downstream;
     
     /**
-     * Construct a factory for an SDEP calculation between <sender>
-     * and <receivers>, which should be Streams, of a given message.
+     * Construct a factory for an SDEP calculation between <pre>sender</pre>
+     * and <pre>receivers</pre>, which should be Streams, of a given message.
      */
     public SDEPIterFactory(Stream sender, HashSet receivers, boolean downstream) {
         // currently only support messages between filters
@@ -79,8 +79,8 @@ public class SDEPIterFactory implements IterFactory {
     }
 
     /**
-     * Construct a factory for an SDEP calculation between <sender>
-     * and <receiver> (of a given message).
+     * Construct a factory for an SDEP calculation between <pre>sender</pre>
+     * and <pre>receiver</pre> (of a given message).
      */
     public SDEPIterFactory(Stream sender, Stream receiver, boolean downstream) {
         this(sender, new HashSet(Arrays.asList(new Stream[] { receiver })), downstream);
@@ -90,14 +90,14 @@ public class SDEPIterFactory implements IterFactory {
     }
 
     /**
-     * Returns whether or not <sender> is one of the senders of this.
+     * Returns whether or not <pre>sender</pre> is one of the senders of this.
      */
     public boolean containsSender(Filter sender) {
         return this.sender == sender;
     }
 
     /**
-     * Returns whether or not <receiver> is one of the receivers of this.
+     * Returns whether or not <pre>receiver</pre> is one of the receivers of this.
      */
     public boolean containsReceiver(Filter receiver) {
         return receivers.contains(receiver);
@@ -111,28 +111,28 @@ public class SDEPIterFactory implements IterFactory {
     }
 
     /**
-     * Returns a new SDEP iterator for <filter>.
+     * Returns a new SDEP iterator for <pre>filter</pre>.
      */
     public streamit.scheduler2.iriter.FilterIter newFrom(Filter filter) {
         return new streamit.library.iriter.SDEPFilterIter((Filter) filter, this);
     }
 
     /**
-     * Returns a new SDEP iterator for <pipeline>.
+     * Returns a new SDEP iterator for <pre>pipeline</pre>.
      */
     public streamit.scheduler2.iriter.PipelineIter newFrom(Pipeline pipeline) {
         return new streamit.library.iriter.PipelineIter((Pipeline) pipeline, this);
     }
     
     /**
-     * Returns a new SDEP iterator for <sj>.
+     * Returns a new SDEP iterator for <pre>sj</pre>.
      */
     public streamit.scheduler2.iriter.SplitJoinIter newFrom(SplitJoin sj) {
         return new streamit.library.iriter.SplitJoinIter((SplitJoin) sj, this);
     }
     
     /**
-     * Returns a new SDEP iterator for <fl>.
+     * Returns a new SDEP iterator for <pre>fl</pre>.
      */
     public streamit.scheduler2.iriter.FeedbackLoopIter newFrom(FeedbackLoop fl) {
         return new streamit.library.iriter.FeedbackLoopIter((FeedbackLoop) fl, this);

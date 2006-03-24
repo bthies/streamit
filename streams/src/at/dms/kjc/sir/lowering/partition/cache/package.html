@@ -1,0 +1,39 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir.lowering.partition.cache</title>
+</head>
+<body>
+
+<p>
+Fuses filters in the stream graph while respecting instruction and
+data cache constraints.  This package corresponds to the "cache aware
+fusion" algorithm described in Section 4.2 of this <a
+href="http://cag.lcs.mit.edu/commit/papers/05/sermulins-lctes05.pdf">LCTES'05</a>
+paper.  
+
+<p>While the code in this package evolved from the dynamic programming
+partitioner, the final algorithm utilized here is greedy.
+
+<p>
+@see at.dms.kjc.cluster
+
+</body>
+</html>

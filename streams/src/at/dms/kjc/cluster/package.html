@@ -75,11 +75,18 @@ FlatIRToCluster - gemerates C code for filters
 <li>
 ClusterCode - generates code for splitters and joiners
 <li>
+BuiltinsCodeGen - generate code for file reader, writer, identity 
+and dummy sink
+<li>
 ClusterCodeGenerator - generates fragments of threadX.cpp files that are common for all operators
 <li>
 ClusterFusion - a fusion pass that fuses splitters and joiners to adjacent filters
 <li>
 FusionCode - generates fusion.h and fusion.cpp files for uniprocessor
+<li>
+ClusterUtils - some utility functions
+<li>
+DiscoverSchedule - finds an execution schedule using breadth first search
 <li>
 GenerateMasterDotCpp - generates master.cpp
 <li>

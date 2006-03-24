@@ -1,0 +1,144 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir.lowering.partition</title>
+</head>
+<body>
+
+<p>
+Provides algorithms for adjusting the granularity of the stream graph
+to improve load balancing or optimization potential.  Also provides
+estimation of the work requirements of filters, as well as refactoring
+routines that adjust the synchronization points in a stream graph.
+The high-level partitioners can be broadly categorized as those that
+improve load balancing and those that optimize other metrics.  
+
+<p>
+The partitioners oriented towards <b>load balancing</b> include:
+<ul>
+
+<p><li> {@link
+at.dms.kjc.sir.lowering.partition.dynamicprog.DynamicProgPartitioner}.
+This partitioner (currently the default used by strc) uses a dynamic
+programming algorithm to calculate the most load-balanced refactoring
+and fusion/fission of filters.  It is described in a yet-unpublished
+draft (contact thies@alum.mit.edu) and is similar to the dynamic
+programming partitioner described in this <a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03</a>
+paper (see Section 6.2).
+
+<li> {@link
+at.dms.kjc.sir.lowering.partition.GreedyPartitioner}. One
+of the first and still most robust partitioners, it iteratively
+identifies the stream <em>container</em> containing the least amount
+of work, and collapses that container into a single filter.
+
+<p><li> {@link
+at.dms.kjc.sir.lowering.partition.GreedierPartitioner}.
+This partitioner is faster and more fair than the greedy partitioner.
+Rather than collapsing the container with the smallest amount of work,
+it iteratively collapses the pair of adjacent filters that have the
+smallest amount of work.
+
+<p><li> {@link
+at.dms.kjc.sir.lowering.partition.ILPPartitioner}. This
+partitioner is obsolete.  It translated the load balancing problem
+into a linear program, but proved too slow to be practical.
+
+</ul>
+
+Partitioners that have <b>other optimization metrics</b> include:
+<ul>
+
+<li> {@link
+at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner}.  As part
+of linear analysis and optimization, this partitioner decides which
+filters should be algebraically combined or translated to the
+frequency domain.  For details, see Section 6.2 of this <a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03</a>
+paper.
+
+<p><li> {@link
+at.dms.kjc.sir.lowering.partition.cache.CachePartitioner}.  This
+partitioner fuses filters based on cache constraints (instruction size
+and data size).  It implements the "cache aware fusion" algorithm
+described in Section 4.2 of this <a
+href="http://cag.lcs.mit.edu/commit/papers/05/sermulins-lctes05.pdf">LCTES'05</a>
+paper.
+
+<p><li> {@link
+at.dms.kjc.sir.lowering.partition.ManualPartition}.  This
+partitioner provides an interface for programmers to manually drive
+the partitioning process.  It can apply both to load balancing, and
+other transformations.
+
+</ul>
+Several of these inherit from {@link
+at.dms.kjc.sir.lowering.partition.ListPartitioner} to reuse some
+common code.  Also, the {@link
+at.dms.kjc.sir.lowering.partition.cache.CachePartitioner} and {@link
+at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner} (in
+addition to {@link
+at.dms.kjc.sir.lowering.partition.dynamicprog.DynamicProgPartitioner})
+can be considered "dynamic programming partitioners" because they use
+a similar underlying dynamic programming algorithm.
+
+<p>
+The other files in this package fall under a few categories:
+
+<ul>
+<li>All files ending with <tt>Transform</tt> (inheriting from {@link
+at.dms.kjc.sir.lowering.partition.StreamTransform}) represent a
+symbolic transformation to be applied to a stream graph.  These are
+generated as output from any partitioner based on dynamic programming,
+because it is simpler (and easier to debug) than mutating the stream
+graph in place.
+
+<p><li>The {@link at.dms.kjc.sir.lowering.partition.WorkEstimate} class
+(and helper files <tt>Work*</tt>) provides an estimation of the number
+of cycles needed to execute a filter.
+
+<p><li>The {@link at.dms.kjc.sir.lowering.partition.RefactorPipeline},
+{@link at.dms.kjc.sir.lowering.partition.RefactorSplitJoin}, and
+{@link at.dms.kjc.sir.lowering.partition.SJToPipe} classes perform
+refactoring of hierarchical stream graphs.  As the fusion passes
+generally operate on a single stream container at a time, the location
+of container boundaries often needs to adjusted to perform various
+partitionings.  Refactoring is done by the dynamic programming
+partitioners.
+
+</ul>
+
+<!-- Not mentioned (just utils)
+PartitionDot
+Partitioner
+PartitionRecord
+PartitionUtil
+PartitionGroup
+RecordingStreamVisitor
+-->
+
+<p>
+@see at.dms.kjc.sir.lowering.partition.dynamicprog
+@see at.dms.kjc.sir.lowering.partition.cache
+@see at.dms.kjc.sir.lowering.partition.linear
+
+</body>
+</html>

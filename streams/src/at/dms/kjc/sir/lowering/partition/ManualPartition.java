@@ -14,7 +14,86 @@ import java.lang.reflect.*;
 import java.util.*;
 
 /**
- * Contains interface for manually driving partitioning process.
+ * Represents an interface to the StreamIt compiler that allows the
+ * programmer to specify how the partitioning / load balancing is done.
+ * 
+ * To use the interface, follow these steps:
+ * 
+ * ------------------
+ * 
+ * 1. Run the StreamIt compiler once on the input file:
+ * 
+ * strc MyInput.str
+ * 
+ * This will produce a "numbered.dot" file which assigns a unique number
+ * to each filter and stream container in the graph.  (You can view dot
+ * with "dotty numbered.dot" or by converting to postscript, "dot -Tps
+ * numbered.dot -o numbered.ps.)
+ * 
+ * ------------------
+ * 
+ * 2. Start writing your own class that implements the following
+ * function:
+ * 
+ * public static void manualPartition(SIRStream str) { ... }
+ * 
+ * Let's say you wrote this in "MyPartitioner.java".
+ * 
+ * ------------------
+ * 
+ * 3. Use the API in ManualPartition, given below, to implement your
+ * manualPartition function.
+ * 
+ * The basic idea is that you can lookup any stream based on its number
+ * (which you get from the graph).  This will give you back an SIRStream
+ * object.  With these objects, you can do the following operations:
+ * 
+ * - fusion
+ *   - collapse a whole stream container into 1
+ *   - collapse only certain children of a given container
+ * - fission:  split a filter into a splitjoin
+ * - refactoring
+ *   - create / eliminate hierarchical pipelines or splitjoins
+ *   - create / eliminate synchronization points in symmetrical
+ *     splitjoins
+ * - partitioning
+ *   - you can run our own greedy or dynamic-programming partitioner on a
+ *     hierarchical unit, asking it to automatically fuse or fiss to a
+ *     given number of tiles
+ * 
+ * There is also a function "printGraph" for printing a new numbered
+ * graph, in case you want to check that your transformations are working
+ * as expected.  This also lets you see the numbers assigned to
+ * newly-created streams.
+ * 
+ * ------------------
+ * 
+ * 4. Run your manual partitioning with the following command line:
+ * 
+ * strc -r4 -manual MyPartitioner MyFile.str
+ * 
+ * This will call your MyPartitioner.manualPartition function using
+ * reflection.  It will not do any automatic partitioning for the given
+ * stream.  [This command line also targets a 4x4 Raw machine; you could
+ * target other configurations, too.]
+ * 
+ * ------------------
+ * 
+ * EXAMPLES.  We have implemented two examples in for our Beamformer
+ * benchmark, which is in the following directory of CVS:
+ * 
+ * streams/apps/benchmarks/beamformer/streamit
+ * 
+ * The files are called:
+ * 
+ * MyPartition1.java
+ * MyPartition2.java
+ * 
+ * The first one implements a simple partitioning in which each pipeline
+ * is fused, and then the width of a splitjoin is decreased from 4 to 2.
+ * The second one is more sophisticated: it adds a synchronization point,
+ * collapsing the top of the splitjoin from 12 to 1 and the bottom from
+ * 12 to 6.
  */
 public class ManualPartition {
     /**

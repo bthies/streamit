@@ -27,9 +27,9 @@ import java.io.IOException;
 public class CloneGenerator {
 
     /** header for cloning methods in files */
-    private static final String HEADER = "    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String HEADER = "    /* THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
     /** footer for cloning methods in files */
-    private static final String FOOTER = "    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
+    private static final String FOOTER = "    /* THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */";
 
     // disable access control when this class is running
     static {
@@ -108,7 +108,7 @@ public class CloneGenerator {
             sb.append("INTERFACE - ABORTING\n");
             return sb.toString();
         }
-        sb.append("    /** Clones all fields of this into <other> */\n");
+        sb.append("    /** Clones all fields of this into <pre>other</pre> */\n");
         sb.append("    protected void deepCloneInto(" + c.getName() + " other) {\n");
         // if there's a superclass, then call deepClone on super.
         if (c.getSuperclass()!=null && !c.getSuperclass().getName().equals("java.lang.Object")) {

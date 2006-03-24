@@ -105,8 +105,8 @@ public class AutoCloner {
      *************************************************************/
 
     /**
-     * Indicate that <oldObj> is being cloned into <newObj>.  All
-     * future references to <oldObj> should take <newObj> as the clone
+     * Indicate that <pre>oldObj</pre> is being cloned into <pre>newObj</pre>.  All
+     * future references to <pre>oldObj</pre> should take <pre>newObj</pre> as the clone
      * instead of creating yet another clone.
      */
     static public void register(Object oldObj, Object newObj) {
@@ -124,14 +124,14 @@ public class AutoCloner {
         if (o==null) {
             return null;
         }
-        // if we've already cloned <o>, then return the clone
+        // if we've already cloned <pre>pre</pre>o</pre>, then return the clone
         Object alreadyCloned = registry.get(new RegistryWrapper(o));
         if (alreadyCloned!=null) {
             return alreadyCloned;
         }
-        // otherwise, we'll get a new cloned result for <o>.  
+        // otherwise, we'll get a new cloned result for <pre>pre</pre>o</pre>.  
         Object result;
-        // dispatch on type of <o>...
+        // dispatch on type of <pre>pre</pre>o</pre>...
         String typeName = o.getClass().getName();
         // local variables require special treatment since their
         // references might be shared
@@ -233,8 +233,8 @@ public class AutoCloner {
 
     /**
      * If o is an SIROperator and it has a parent that has been
-     * cloned, then set parent of <result> to be the cloned parent of
-     * <o>.
+     * cloned, then set parent of <pre>result</pre> to be the cloned parent of
+     * <pre>pre</pre>o</pre>.
      */
     static private void fixParent(Object o, Object result) {
         if (o instanceof SIROperator) {
@@ -311,7 +311,7 @@ public class AutoCloner {
         }
     
         /**
-         * Hashcode of <obj>.
+         * Hashcode of <pre>obj</pre>.
          */
         public int hashCode() {
             return obj.hashCode();

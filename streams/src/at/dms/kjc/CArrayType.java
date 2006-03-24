@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.15 2006-03-16 21:57:56 dimock Exp $
+ * $Id: CArrayType.java,v 1.16 2006-03-24 15:36:02 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -234,7 +234,7 @@ public class CArrayType extends CClassType {
             baseType.checkType(context);
         }
         // also resolve dims.  In all cases this is needed
-        // (JFormalParameter and JVariableDefinition), <context> should
+        // (JFormalParameter and JVariableDefinition), <pre>context</pre> should
         // be a CBodyContext
         if (context instanceof CBodyContext) {
             for (int i = 0; i < dims.length; i++) {
@@ -374,7 +374,7 @@ public class CArrayType extends CClassType {
         return other;
     }
 
-    /** Clones all fields of this into <other> */
+    /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CArrayType other) {
         super.deepCloneInto(other);
         other.baseType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.baseType);

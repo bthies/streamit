@@ -1,0 +1,74 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir.lowering.fusion</title>
+</head>
+<body>
+
+
+<p>
+Provides compiler passes to fuse (combine) a set of filters into a
+single filter.  Currently this transformation is applied for two
+reasons:
+<ul>
+<li> To allow optimization across filter boundaries.  After being
+fused into a single filter, optimizations such as constant propagation
+(and scalar replacement) can improve buffer-management code.  See
+Section 5 of this
+<a
+href="http://cag.lcs.mit.edu/commit/papers/05/sermulins-lctes05.pdf">LCTES'05</a>
+paper for more details.
+<p><li> To provide load-balancing on a distributed target.  If one
+employs a simple runtime system that runs only one filter per
+processor (for example, the space-multiplexing {@link
+at.dms.kjc.raw.RawBackend}), then fusion is needed to map multiple
+filters to that processor.
+</ul>
+
+<p>
+The main fusion classes are {@link
+at.dms.kjc.sir.lowering.fusion.FusePipe} and {@link
+at.dms.kjc.sir.lowering.fusion.FuseSplit}, which apply to pipelines
+and splitjoins, respectively.  (Fusion of feedback loops is not yet
+implemented, though it should be straightforward to write.)  There are
+two alternate implementations of pipeline fusion, as described in the
+<a
+href="http://cag.lcs.mit.edu/commit/papers/05/sermulins-lctes05.pdf">LCTES'05</a>
+paper: one that uses modulo addressing ({@link
+at.dms.kjc.sir.lowering.fusion.ModuloPipelineFusion}) and one that
+avoids modulo operations ({@link
+at.dms.kjc.sir.lowering.fusion.ShiftPipelineFusion}).  There is also
+an optimized splitjoin fusion ({@link
+at.dms.kjc.sir.lowering.fusion.FuseSimpleSplit}) for certain cases of
+splitjoins.
+
+<p>The {@link at.dms.kjc.sir.lowering.fusion.FuseAll} class can be
+used to fuse everything in a hierarchical stream graph.  {@link
+at.dms.kjc.sir.lowering.fusion.Lifter} provides graph canonicalization
+(removing pipeline wrappers, for example) that are sometimes produced
+by fusion (as well as other transformations).
+
+<p>
+@see at.dms.kjc.raw
+@see at.dms.kjc.cluster
+@see at.dms.kjc.sir.lowering.partition.SJToPipe
+
+</body>
+</html>

@@ -126,7 +126,7 @@ public class Edge {
     * pump stage, the link might be used many times in the prime pump stage conceptually 
     * using the rotating buffers.
     * 
-    * @return
+    * @return ...
     */
     public int primePumpItems() {
         return (int) ((double) FilterInfo.getFilterInfo(src.getPrevFilter())

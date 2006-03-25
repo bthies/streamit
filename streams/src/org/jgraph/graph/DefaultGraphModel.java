@@ -106,7 +106,7 @@ public class DefaultGraphModel
     /**
      * Returns the index of <code>root</code> in the model.
      * If root is <code>null</code>, returns -1.
-     * @param parent a root in the model, obtained from this data source
+     * @param root is  a root in the model, obtained from this data source
      * @return the index of the root in the model, or -1
      *    if the parent is <code>null</code>
      */
@@ -809,8 +809,8 @@ public class DefaultGraphModel
         /**
          * Constructs an edit record.
          *
-         * @param e the element
-         * @param index the index into the model >= 0
+         * NOparam e the element
+         * NOparam index the index into the model &gt;= 0
          * @param removed a set of elements that were removed
          * @param inserted a set of roots that were inserted
          */

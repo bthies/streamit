@@ -52,14 +52,14 @@ public interface CellHandle {
     /**
      * Return a cursor for the given point.
      *
-     * @param p   the point for which the cursor is returned
+     * @param e   the point for which the cursor is returned
      */
     void mouseMoved(MouseEvent e);
 
     /**
      * Messaged when a drag gesture is recogniced.
      *
-     * @param e   the drag gesture event to be processed
+     * @param event   the drag gesture event to be processed
      */
     void mousePressed(MouseEvent event);
 
@@ -76,7 +76,7 @@ public interface CellHandle {
      * Messaged when the drag operation has
      * terminated with a drop.
      *
-     * @param e   the drop event to be processed
+     * @param event   the drop event to be processed
      */
     void mouseReleased(MouseEvent event);
 

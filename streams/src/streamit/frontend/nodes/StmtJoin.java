@@ -20,7 +20,7 @@ package streamit.frontend.nodes;
  * Declare the joiner type for a split-join or feedback loop.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtJoin.java,v 1.5 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StmtJoin.java,v 1.6 2006-03-25 00:08:00 dimock Exp $
  */
 public class StmtJoin extends Statement
 {
@@ -30,7 +30,7 @@ public class StmtJoin extends Statement
      * Creates a new join statement with the specified joiner type.
      *
      * @param context  file and line number this statement corresponds to
-     * @param splitter type of splitter for this stream
+     * @param JOINER type of splitter for this stream
      */
     public StmtJoin(FEContext context, SplitterJoiner joiner)
     {

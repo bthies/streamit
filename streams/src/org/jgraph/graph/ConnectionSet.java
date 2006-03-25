@@ -338,14 +338,14 @@ public class ConnectionSet implements Serializable {
     }
 
     /**
-     * @return
+     * @return ...
      */
     public Set getConnections() {
         return connections;
     }
 
     /**
-     * @return
+     * @return ...
      */
     public Set getEdges() {
         return edges;

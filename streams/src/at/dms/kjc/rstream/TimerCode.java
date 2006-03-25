@@ -56,7 +56,7 @@ public final class TimerCode {
     /**
      * Constructor for timer code.
      * 
-     * @param timerName: The name of the timer (will have some suffices appended
+     * @param timerName is the name of the timer (will have some suffices appended
      *        to become names of some fields)
      */
     public TimerCode(String timerName) {

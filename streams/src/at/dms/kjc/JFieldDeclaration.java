@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.16 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JFieldDeclaration.java,v 1.17 2006-03-25 00:07:58 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -112,7 +112,7 @@ public class JFieldDeclaration extends JMemberDeclaration {
      * such as Classes, Interfaces, Methods, Constructors and Fields
      *  sub classes must check modifiers and call checkInterface(super)
      * @param context
-     * @return 
+     * @return ??
      * @exception   PositionedError an error with reference to the source file
      */
     public CSourceField checkInterface(CClassContext context) throws PositionedError {

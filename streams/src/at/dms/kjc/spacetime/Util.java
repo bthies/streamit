@@ -283,7 +283,7 @@ public class Util {
      * Get a traversal (linked list) that includes all the trace nodes of the
      * given trace traversal.
      * 
-     * @param traceTraversal
+     * @param traces
      * @return A LinkedList of TraceNodes.
      */
     public static Iterator traceNodeTraversal(List traces) {
@@ -327,7 +327,7 @@ public class Util {
      * Get a traversal (linked list) that includes all the trace nodes of the
      * given trace traversal.
      * 
-     * @param traceTraversal
+     * @param traces
      * @return A LinkedList of TraceNodes.
      */
     public static Iterator traceNodeTraversal(Trace[] traces) {

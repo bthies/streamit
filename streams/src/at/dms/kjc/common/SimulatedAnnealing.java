@@ -67,7 +67,7 @@ public abstract class SimulatedAnnealing {
      * The placement cost (energy) of the configuration.
      * 
      * @param debug Might want to do some debugging...
-     * @return
+     * @return placement cost
      */
     public abstract double placementCost(boolean debug); 
     
@@ -293,7 +293,7 @@ public abstract class SimulatedAnnealing {
      * Get the nex random number from [0, max).
      * 
      * @param max
-     * @return
+     * @return next random int in range
      */
     public int getRandom(int max) {
         return random.nextInt(max);

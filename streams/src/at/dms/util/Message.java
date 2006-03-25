@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.11 2006-03-24 15:54:50 dimock Exp $
+ * $Id: Message.java,v 1.12 2006-03-25 00:07:59 dimock Exp $
  */
 
 package at.dms.util;
@@ -63,7 +63,6 @@ public class Message implements at.dms.kjc.DeepCloneable {
     /**
      * Constructs a message without parameters
      * @param   description the message description
-     * @param   parameter   the parameter
      */
     public Message(MessageDescription description) {
         this(description, null);

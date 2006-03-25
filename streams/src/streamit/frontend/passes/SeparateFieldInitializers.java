@@ -43,8 +43,6 @@ import java.util.ArrayList;
  * }
  * </pre>
  *
- * @author 
- * @version 
  */
 public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMunger
 {

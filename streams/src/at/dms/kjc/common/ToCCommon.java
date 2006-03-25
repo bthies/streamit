@@ -728,7 +728,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * do not cause an uncaught exception, but they may generate bad code...
      * 
      * @param exp
-     * @return
+     * @return list of expressions that had been string concatenated.
      */
     protected List /*<JExpression>*/ splitForPrint(JExpression exp) {
         List exprs = new ArrayList(1);

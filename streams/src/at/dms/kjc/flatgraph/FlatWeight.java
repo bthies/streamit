@@ -4,7 +4,7 @@ package at.dms.kjc.flatgraph;
  * Interface for a private class used in {@link FlatWeights}.
  * 
  * Used to co-ordinate offsets in splitter / joiner weights
- * with offsets in {@link FlatNode#edges} / {@link FlatNode#incoming}. 
+ * with offsets in {@link at.dms.kjc.flatgraph.FlatNode#edges} / {@link at.dms.kjc.flatgraph.FlatNode#incoming}. 
  * 
  * Note that these offsets may be different of there are weights of 0 in
  * a splitter or joiner, since weights of 0 do not lead to edges being
@@ -34,7 +34,7 @@ public interface FlatWeight {
     public int getWeightsOffset();
     /**
      * Get offset of the current edge in
-     * {@link Flatnode#edges} / {@link Flatnode#incoming}.
+     * {@link at.dms.kjc.flatgraph.FlatNode#edges} / {@link at.dms.kjc.flatgraph.FlatNode#incoming}.
      * 
      * @return offset
      */

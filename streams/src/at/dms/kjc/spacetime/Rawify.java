@@ -1095,7 +1095,7 @@ public class Rawify {
      * 
      * @param traceNode
      * @param sourcePort
-     * @return
+     * @return Set of tiles used in the splitting
      */
     public static HashSet getTilesUsedInSplit(OutputTraceNode traceNode,
                                               StreamingDram sourcePort) {

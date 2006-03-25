@@ -417,7 +417,6 @@ public class JGraph
      * Creates and returns a sample <code>GraphModel</code>.
      * Used primarily for beanbuilders to show something interesting.
      *
-     * @return the default <code>GraphModel</code>
      */
     public static void addSampleData(GraphModel model) {
         ConnectionSet cs = new ConnectionSet();
@@ -584,7 +583,7 @@ public class JGraph
      * the specified data model using the specified view.
      *
      * @param model  the <code>GraphModel</code> to use as the data model
-     * @param view  the <code>GraphLayoutCache</code> to use as the view
+     * @param mh
      */
     public JGraph(GraphModel model, BasicMarqueeHandler mh) {
         this(model, null, mh);
@@ -904,7 +903,7 @@ public class JGraph
 
     /**
      * Returns the given point applied to the grid.
-     * @param p a point in screen coordinates.
+     * @param d a point in screen coordinates.
      * @return the same point applied to the grid.
      */
     public Dimension snap(Dimension d) {
@@ -1572,7 +1571,7 @@ public class JGraph
      * Note: Updates the GraphLayoutCache's model using setModel if the
      * GraphLayoutCache points to an other model than this graph. <p>
      * Fires a property change for the GRAPH_LAYOUT_CACHE_PROPERTY.
-     * @param newView the <code>GraphLayoutCache</code> that is to provide the view-data
+     * @param newLayoutCache the <code>GraphLayoutCache</code> that is to provide the view-data
      */
     public void setGraphLayoutCache(GraphLayoutCache newLayoutCache) {
         GraphLayoutCache oldLayoutCache = graphLayoutCache;

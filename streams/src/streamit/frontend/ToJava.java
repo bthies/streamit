@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.75 2006-03-16 21:15:50 madrake Exp $
+ * @version $Id: ToJava.java,v 1.76 2006-03-25 00:08:00 dimock Exp $
  */
 public class ToJava
 {
@@ -85,7 +85,7 @@ public class ToJava
      * Generate a Program object that includes built-in structures
      * and streams with code, but no user code.
      *
-     * @returns a StreamIt program containing only built-in code
+     * @return a StreamIt program containing only built-in code
      */
     public static Program emptyProgram()
     {
@@ -157,7 +157,7 @@ public class ToJava
      * structures and streams.
      *
      * @param inputFiles  list of strings naming the files to be read
-     * @returns a representation of the entire program, composed of the
+     * @return a representation of the entire program, composed of the
      *          code in all of the input files
      * @throws java.io.IOException if an error occurs reading the input
      *         files
@@ -212,7 +212,7 @@ public class ToJava
      * @param libraryFormat  true if the program is being converted
      *        to run under the StreamIt Java library
      * @param varGen  object to generate unique temporary variable names
-     * @returns the converted IR tree
+     * @return the converted IR tree
      */
     public static Program lowerIRToJava(Program prog, boolean libraryFormat,
                                         TempVarGen varGen)

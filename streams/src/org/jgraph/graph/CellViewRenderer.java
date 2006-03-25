@@ -43,10 +43,10 @@ public interface CellViewRenderer {
      * illegal argument exception if it's not correct.
      *
      * @param   graph the graph that that defines the rendering context.
-     * @param   value the object that should be rendered.
-     * @param   selected whether the object is selected.
-     * @param   hasFocus whether the object has the focus.
-     * @param   isPreview whether we are drawing a preview.
+     * @param   view the object that should be rendered.
+     * @param   sel whether the object is selected.
+     * @param   focus whether the object has the focus.
+     * @param   preview whether we are drawing a preview.
      * @return  the component used to render the value.
      */
     Component getRendererComponent(

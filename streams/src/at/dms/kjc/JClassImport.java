@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.10 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JClassImport.java,v 1.11 2006-03-25 00:07:58 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -93,8 +93,6 @@ public class JClassImport extends JPhylum {
 
     /**
      * Analyses the statement (semantically).
-     * @param   context     the analysis context
-     * @exception   PositionedError the analysis detected an error
      */
     public void analyse(Compiler compiler) {
         if (!used && getTokenReference() != TokenReference.NO_REF) {

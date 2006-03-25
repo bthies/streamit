@@ -25,7 +25,7 @@ public class ConstantProp {
      * Propagates constants as far as possible in <str> and also
      * unrolls loops.
      *
-     * @param a SIRStream.  Propagation occurs in this and all reachable.
+     * @param str a SIRStream.  Propagation occurs in this and all reachable.
      */
     public static void propagateAndUnroll(SIRStream str) {
         // start at the outermost loop with an empty set of constants
@@ -36,8 +36,8 @@ public class ConstantProp {
      * Propagates constants as far as possible in <str> and also
      * unrolls loops.
      *
-     *  @param a SIRStream.  Propagation occurs in this and all reachable.
-     *  @param whether FieldProp should remove fully-propagated fields.
+     *  @param str a SIRStream.  Propagation occurs in this and all reachable.
+     *  @param removeDeadFields whether FieldProp should remove fully-propagated fields.
      */  
     public static void propagateAndUnroll(SIRStream str, boolean removeDeadFields) {
         // start at the outermost loop with an empty set of constants

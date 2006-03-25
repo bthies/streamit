@@ -27,7 +27,6 @@ public class SIRPushExpression extends JExpression {
     
     /**
      * Construct a node in the parsing tree
-     * @param   where       the line of this node in the source code
      * @param   arg     the argument of the call
      */
     public SIRPushExpression(JExpression arg)

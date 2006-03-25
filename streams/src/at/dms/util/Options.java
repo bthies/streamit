@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Options.java,v 1.4 2006-01-25 17:02:47 thies Exp $
+ * $Id: Options.java,v 1.5 2006-03-25 00:07:59 dimock Exp $
  */
 
 package at.dms.util;
@@ -40,7 +40,7 @@ public abstract class Options {
     /**
      * Parses the command line and processes the arguments.
      *
-     * @param   args        the command line arguments
+     * @param   argv        the command line arguments
      * @return true iff the command line is valid
      */
     public boolean parseCommandLine(String[] argv) {
@@ -66,7 +66,8 @@ public abstract class Options {
     }
 
     /**
-     * @param   args        the command line arguments
+     * @param   code
+     * @param g
      */
     public boolean processOption(int code, Getopt g) {
         switch (code) {

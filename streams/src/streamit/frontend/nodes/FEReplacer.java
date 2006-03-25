@@ -54,7 +54,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.39 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: FEReplacer.java,v 1.40 2006-03-25 00:08:00 dimock Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -97,7 +97,7 @@ public class FEReplacer implements FEVisitor
      * declaration for a variable that is used inside a rewritten
      * statement, and return the statement from the visitor function.
      * 
-     * @param stmt The statement to add
+     * @param stmts The statements to add
      */ 
     protected void addStatements(Collection stmts)
     {

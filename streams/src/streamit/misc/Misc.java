@@ -41,7 +41,7 @@ public class Misc extends AssertedClass
      */
 
     /**
-     * Returns int[size] array of elements read from <filename>, which
+     * Returns int[size] array of elements read from <pre>filename</pre>, which
      * should be text with one value per line.
      */
     public static int[] init_array_1D_int(String filename, int size) {
@@ -69,7 +69,7 @@ public class Misc extends AssertedClass
     }
     
     /**
-     * Returns float[size] array of elements read from <filename>,
+     * Returns float[size] array of elements read from <pre>filename</pre>,
      * which should be text with one value per line.
      */
     public static float[] init_array_1D_float(String filename, int size) {

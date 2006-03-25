@@ -20,7 +20,7 @@ public class SIRPopExpression extends JExpression {
     
     /**
      * Construct a node in the parsing tree
-     * @param   where       the line of this node in the source code
+     * @param   tapeType  type of expressions to be popped
      */
     public SIRPopExpression(CType tapeType)
     {

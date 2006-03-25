@@ -20,7 +20,7 @@ public class LayoutDot
      * of <pre>anneal</pre>.
      *  
      * @param spaceTime
-     * @param anneal
+     * @param layout
      */
     public static void printLayoutCost(SpaceTimeSchedule spaceTime, 
             Layout layout) {

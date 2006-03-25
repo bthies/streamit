@@ -113,7 +113,6 @@ public abstract class OffChipBuffer {
     }
 
     /** 
-     * @param node 
      * @param i
      * @return The string for the rotation structure for <pre>node</pre> 
      *  
@@ -127,7 +126,7 @@ public abstract class OffChipBuffer {
     
     
     /** 
-     * @param reat
+     * @param read
      * @return return the rotating buffer structure name that is used for either reading
      * or writing.  Reading and writing have separate rotation structures.
      */

@@ -64,8 +64,8 @@ public class ArrayMemoizer
 
     /**
      * Returns the initial copy of an array with a given type and dimensions.
-     * @param sampleArrayOfTYpe An array of the same base type
-     * @param the dimensions of the array
+     * @param sampleArrayOfType An array of the same base type
+     * @param dimensions the dimensions of the array
      * @return A reference to an initialized array with the correct type and dimensions.
      *         Always returns the same copy 
      */

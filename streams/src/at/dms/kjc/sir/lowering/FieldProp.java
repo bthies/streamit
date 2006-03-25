@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.34 2006-01-25 17:02:07 thies Exp $
+ * $Id: FieldProp.java,v 1.35 2006-03-25 00:07:59 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -56,7 +56,7 @@ public class FieldProp implements Constants
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
      * 
-     * @param a SIRStream
+     * @param str a SIRStream
      */
     public static SIRStream doPropagate(SIRStream str) {
         return doPropagate(str, false, false);
@@ -66,8 +66,8 @@ public class FieldProp implements Constants
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
      * 
-     * @param a SIRStream
-     * @param whether to unroll outer (for) loops.
+     * @param str a SIRStream
+     * @param unrollOuterLoops whether to unroll outer (for) loops.
      */
     public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops) {
         return doPropagate(str, unrollOuterLoops, false);
@@ -81,9 +81,9 @@ public class FieldProp implements Constants
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
      * 
-     * @param a SIRStream
-     * @param whether to unroll outer (for) loops.
-     * @param whether to remove fully-propagated fields.
+     * @param str a SIRStream
+     * @param unrollOuterLoops whether to unroll outer (for) loops.
+     * @param removeDeadFields whether to remove fully-propagated fields.
      */
     public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops,
                                         boolean removeDeadFields)

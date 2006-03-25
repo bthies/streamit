@@ -48,7 +48,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
     /**
      * Build an IRPrinter for a particular file.
      *
-     * @arg filename  Name of the file to write IR to
+     * @param filename  Name of the file to write IR to
      */
     public SIRPrinter(String filename) {
         super(filename);

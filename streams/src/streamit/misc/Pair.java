@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: Pair.java,v 1.6 2006-01-25 17:04:38 thies Exp $ */
+/* $Id: Pair.java,v 1.7 2006-03-25 00:08:00 dimock Exp $ */
 
 /**
  * <dl>
@@ -39,7 +39,6 @@ public class Pair
 
     /**
      * Constructor simply stores the two objects.
-     * @return none
      */
     public Pair(Object _first, Object _second)
     {

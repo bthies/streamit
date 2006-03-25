@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DeadcodeElimination.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: DeadcodeElimination.java,v 1.3 2006-03-25 00:07:58 dimock Exp $
  */
 
 package at.dms.backend;
@@ -32,10 +32,7 @@ public class DeadcodeElimination extends TreeWalker {
 
     /**
      * Creates a new instruction handle.
-     *
-     * @param   insn        the instruction
-     * @param   prev        the handle of the next instruction
-     *              in textual order
+     * BUGGY CUT AND PAST COMMENT
      */
     public DeadcodeElimination(BasicBlock[] bblocks, BasicBlock[] eblocks) {
         super(bblocks, eblocks);

@@ -29,7 +29,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.19 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.20 2006-03-25 00:08:00 dimock Exp $
  */
 
 public class SymbolTableVisitor extends FEReplacer
@@ -99,7 +99,7 @@ public class SymbolTableVisitor extends FEReplacer
      * Get the type of an <code>Expression</code>.
      *
      * @param expr  Expression to get the type of
-     * @returns     Type of the expression
+     * @return     Type of the expression
      * @see         streamit.frontend.nodes.GetExprType
      */
     public Type getType(Expression expr)
@@ -114,7 +114,7 @@ public class SymbolTableVisitor extends FEReplacer
      * Add a variable declaration and register the variable in the
      * symbol table.  This creates a {@link
      * streamit.frontend.nodes.StmtVarDecl} for the specified type and
-     * name, and adds that statement using {@link addStatement}.  It
+     * name, and adds that statement using {@link streamit.frontend.nodes.FEReplacer#addStatement()}.  It
      * also registers the new variable in the current symbol table.
      *
      * @param context  file and line number the statement belongs to

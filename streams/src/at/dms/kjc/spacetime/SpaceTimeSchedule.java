@@ -49,7 +49,7 @@ public class SpaceTimeSchedule {
     }
     
     /**
-     * @param initSchedule The initSchedule to set.
+     * @param is The initSchedule to set.
      */
     public void setInitSchedule(LinkedList is) {
         this.initSchedule = (Trace[])is.toArray(new Trace[0]);
@@ -99,7 +99,7 @@ public class SpaceTimeSchedule {
     }
     
     /**
-     * @param primePumpSchedule The primePumpSchedule to set.
+     * @param preLoopSchedule The primePumpSchedule to set.
      */
     public void setPrimePumpSchedule(LinkedList preLoopSchedule) {
         //      convert into an array for easier access...

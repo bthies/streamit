@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: IndexedVector.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: IndexedVector.java,v 1.3 2006-03-25 00:07:58 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -56,7 +56,7 @@ public class IndexedVector {
     }
     /**
      * Returns the element at the specified index.
-     * @param index the index of the desired element
+     * @param i the index of the desired element
      * @exception ArrayIndexOutOfBoundsException If an invalid
      * index was given.
      */

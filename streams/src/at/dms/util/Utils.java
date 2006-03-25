@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.33 2006-03-24 15:54:50 dimock Exp $
+ * $Id: Utils.java,v 1.34 2006-03-25 00:07:59 dimock Exp $
  */
 
 package at.dms.util;
@@ -102,10 +102,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
-       /** replaces in all occurances
-       *@modifies: nothing.
-       *@effects: constructs a new String from orig, replacing all occurances of oldSubStr with newSubStr.
-       *@returns: a copy of orig with all occurances of oldSubStr replaced with newSubStr.
+       /** replaces in all occurances.
+       *modifies: nothing.<br/>
+       *effects: constructs a new String from orig, replacing all occurances of oldSubStr with newSubStr.
+       * <br/>
+       *@return  a copy of orig with all occurances of oldSubStr replaced with newSubStr.
        *
        * if any of arguments are null, returns orig.
        */
@@ -249,7 +250,6 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * Creates a int array from a vector.
      *
      * @param   vect        the vector containing the elements
-     * @param   type        the type of the elements
      */
     public static int[] toIntArray(Vector vect) {
         if (vect != null && vect.size() > 0) {
@@ -283,7 +283,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * Returns a new array of length n with all values set to val
      *
      * @param   n       the desired number of elements in the array
-     * @param   val     the value of each element
+     * @param   exp     the value of each element
      */
     public static JExpression[] initArray(int n, JExpression exp) {
         JExpression[] result = new JExpression[n];

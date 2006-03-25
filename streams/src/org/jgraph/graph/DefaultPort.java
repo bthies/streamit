@@ -61,7 +61,7 @@ public class DefaultPort extends DefaultGraphCell implements Port {
      * and a reference to the specified anchor.
      *
      * @param userObject reference to the user object
-     * @param reference to a a graphcell that constitutes the anchor
+     * @param anchor to a a graphcell that constitutes the anchor
      */
     public DefaultPort(Object userObject, Port anchor) {
         super(userObject, false);

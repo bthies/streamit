@@ -41,7 +41,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
     /**
      * Build an IRPrinter for a particular file.
      *
-     * @arg filename  Name of the file to write IR to
+     * @param filename  Name of the file to write IR to
      */
     public IRPrinter(String filename)
     {
@@ -109,7 +109,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
     /**
      * Print arbitrary string data to p.
      *
-     * @arg data  Data to write
+     * @param data  Data to write
      */
     protected void printData(String data)
     {
@@ -128,7 +128,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
     /**
      * Print an arbitrary single character.
      *
-     * @arg data  Character to write
+     * @param data  Character to write
      */
     protected void printData(char data)
     {

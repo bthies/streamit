@@ -63,7 +63,7 @@ public interface GraphModel {
     /**
      * Returns the index of <code>root</code> in the model.
      * If root is <code>null</code>, returns -1.
-     * @param parent a root in the model, obtained from this data source
+     * @param root is  a root in the model, obtained from this data source
      * @return the index of the root in the model, or -1
      *    if the parent is <code>null</code>
      */

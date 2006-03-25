@@ -48,7 +48,7 @@ public class DefaultRealEditor
     /**
      * Constructs a DefaultCellEditor that uses a text field.
      *
-     * @param x  a JTextField object ...
+     * @param textField  a JTextField object ...
      */
     public DefaultRealEditor(final JTextField textField) {
         super(textField);
@@ -58,7 +58,7 @@ public class DefaultRealEditor
     /**
      * Constructs a DefaultCellEditor object that uses a check box.
      *
-     * @param x  a JCheckBox object ...
+     * @param checkBox  a JCheckBox object ...
      */
     public DefaultRealEditor(final JCheckBox checkBox) {
         super(checkBox);
@@ -67,7 +67,7 @@ public class DefaultRealEditor
     /**
      * Constructs a DefaultCellEditor object that uses a combo box.
      *
-     * @param x  a JComboBox object ...
+     * @param comboBox  a JComboBox object ...
      */
     public DefaultRealEditor(final JComboBox comboBox) {
         super(comboBox);

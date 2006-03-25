@@ -248,7 +248,7 @@ public class FilterInfo {
      * 
      * @param init
      * @param primepump
-     * @return
+     * @return total number of items received
      */
     public int totalItemsReceived(boolean init, boolean primepump) {
         assert !((init) && (init && primepump)) : "incorrect usage";
@@ -272,7 +272,7 @@ public class FilterInfo {
      * 
      * @param init
      * @param primepump
-     * @return
+     * @return total number of itmes sent
      */
     public int totalItemsSent(boolean init, boolean primepump) {
         assert !((init) && (init && primepump)) : "incorrect usage";

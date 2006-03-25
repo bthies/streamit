@@ -49,7 +49,6 @@ public class ParentMap implements Serializable {
 
     /**
      * Constructs a <code>ParentMap</code> object.
-     * @param model the model that this parent map represents changes to.
      */
     public ParentMap() {
     }

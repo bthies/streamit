@@ -20,8 +20,6 @@ package streamit.frontend.nodes;
  * Indicates a range such as [min,ave,max] as used in a dynamic rate.
  * Ranges are over integers.
  *
- * @author
- * @version
  */
 public class ExprRange extends Expression
 {

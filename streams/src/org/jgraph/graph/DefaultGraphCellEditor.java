@@ -88,12 +88,7 @@ public class DefaultGraphCellEditor
     protected Font font;
 
     /**
-     * Constructs a DefaultTreeCellEditor object for a JGraph using the
-     * specified renderer and a default editor. (Use this constructor
-     * for normal editing.)
-     *
-     * @param tree      a JTree object
-     * @param renderer  a DefaultTreeCellRenderer object
+     * BOGUS CUT AND PASTE COMMENT
      */
     public DefaultGraphCellEditor() {
         this(null);
@@ -104,8 +99,8 @@ public class DefaultGraphCellEditor
      * specified renderer and the specified editor. (Use this constructor
      * for specialized editing.)
      *
-     * @param tree      a JTree object
-     * @param renderer  a DefaultTreeCellRenderer object
+     * NOparam tree      a JTree object
+     * NOparam renderer  a DefaultTreeCellRenderer object
      * @param editor    a TreeCellEditor object
      */
     public DefaultGraphCellEditor(GraphCellEditor editor) {

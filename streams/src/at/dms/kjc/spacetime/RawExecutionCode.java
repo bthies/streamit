@@ -408,8 +408,8 @@ public abstract class RawExecutionCode
      * dram transfers to cache-line sized transfers.  Only do this if we are 
      * sending or receiving over the gdn. 
      * 
-     * @param wordsSent The number of words sent during the execution of the stage.
-     * @param wordsReceived The number of words received during the execution of the
+     * ??param wordsSent The number of words sent during the execution of the stage.
+     * ??param wordsReceived The number of words received during the execution of the
      * stage.
      * 
      * @param init Are we in the init stage?  Used to calculate the number of items we

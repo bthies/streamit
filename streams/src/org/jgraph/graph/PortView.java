@@ -49,8 +49,8 @@ public class PortView extends AbstractCellView {
      * anchor and parent vertex.
      *
      * @param cell reference to the cell in the model
-     * @param anchor view of the parent
-     * @param anchor view of the anchor port
+     * @param graph
+     * @param mapper
      */
     public PortView(Object cell, JGraph graph, CellMapper mapper) {
         super(cell, graph, mapper);

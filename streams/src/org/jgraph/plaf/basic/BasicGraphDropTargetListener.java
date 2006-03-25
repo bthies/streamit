@@ -63,10 +63,7 @@ public class BasicGraphDropTargetListener
     implements DropTargetListener, UIResource, ActionListener {
 
     /**
-     * construct a DropTargetAutoScroller
-     * <P>
-     * @param c the <code>Component</code>
-     * @param p the <code>Point</code>
+     * BUGGY CUT AND PASTE COMMENT
      */
     public BasicGraphDropTargetListener() {
     }

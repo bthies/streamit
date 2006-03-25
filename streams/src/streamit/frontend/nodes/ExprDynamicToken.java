@@ -20,8 +20,6 @@ package streamit.frontend.nodes;
  * Indicates the '*' token as used in a dynamic rate declaration.  Its
  * type is an integer.
  *
- * @author
- * @version
  */
 public class ExprDynamicToken extends Expression
 {

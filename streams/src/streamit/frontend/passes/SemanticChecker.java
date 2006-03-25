@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.33 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.34 2006-03-25 00:08:00 dimock Exp $
  */
 public class SemanticChecker
 {
@@ -38,7 +38,7 @@ public class SemanticChecker
      * error if errors are detected.
      *
      * @param prog  parsed program object to check
-     * @returns     <code>true</code> if no errors are detected
+     * @returns    <code>true</code> if no errors are detected
      */
     public static boolean check(Program prog)
     {
@@ -81,7 +81,7 @@ public class SemanticChecker
      * of structures or streams.
      *
      * @param prog  parsed program object to check
-     * @returns a map from structure names to <code>FEContext</code>
+     * @return a map from structure names to <code>FEContext</code>
      *          objects showing where they are declared
      */
     public Map checkStreamNames(Program prog)

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSwitchGroupContext.java,v 1.5 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CSwitchGroupContext.java,v 1.6 2006-03-25 00:07:58 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -70,7 +70,7 @@ public class CSwitchGroupContext extends CBodyContext {
 
     /**
      * add a label to this switch and check it is a new one
-     * @param   lit     the literal value of this label
+     * @param   value     the Integer value of this label
      * @exception   UnpositionedError   this error will be positioned soon
      */
     public void addLabel(Integer value) throws UnpositionedError {

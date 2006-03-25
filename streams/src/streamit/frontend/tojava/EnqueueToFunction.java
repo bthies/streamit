@@ -20,16 +20,16 @@ import streamit.frontend.nodes.*;
 /**
  * Pass to convert StreamIt enqueue statements to similar function
  * calls.  The StreamIt Java library has <code>enqueueFloat()</code>,
- * etc. functions in the {@link streamit.FeedbackLoop} class.  This
+ * etc. functions in the {@link streamit.library.FeedbackLoop} class.  This
  * pass replaces each StreamIt <code>enqueue</code> statement with a
  * call to the appropriate enqueue function; this requires more
  * support in the compiler after unrolling than generating the older
  * <code>initPath</code> function, but can be done regardless of
  * surrounding control flow.
  *
- * @see     streamit.frontend.TranslateEnqueue
+ * @see     streamit.frontend.tojava.TranslateEnqueue
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToFunction.java,v 1.4 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: EnqueueToFunction.java,v 1.5 2006-03-25 00:08:00 dimock Exp $
  */
 public class EnqueueToFunction extends FEReplacer
 {

@@ -104,7 +104,7 @@ public class StatelessDuplicate {
     /**
      * Returns whether or not <filter> is stateless.
      */
-    private static boolean isStateless(SIRFilter filter) {
+    public static boolean isStateless(SIRFilter filter) {
         // for now just do a conservative check -- if it has no
         // fields, then it is stateless.  This actually isn't too bad
         // if fieldprop has removed the field references; otherwise we

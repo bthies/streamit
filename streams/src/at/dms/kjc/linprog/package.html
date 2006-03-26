@@ -1,0 +1,45 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.linprog</title>
+</head>
+<body>
+
+<p>
+Provides a programmatic interface to various linear programming
+solvers.  The main solvers available are {@link
+at.dms.kjc.linprog.CPLEXSolve}, {@link at.dms.kjc.linprog.GLPKSolve},
+and {@link at.dms.kjc.linprog.LPSolve}.  The {@link
+at.dms.kjc.linprog.MPSWriter} class provides a way to write a linear
+program to an MPS file (the standard format for linear programming),
+thereby providing compatibility with a variety of additional solvers.
+
+<p>
+Of the solvers, the CPLEX solver is likely the fastest, though it
+requires a commercial installation (available on <tt>cagfarm-40</tt>
+for MIT CAG users).  As this machine is under batch processing
+control, the {@link at.dms.kjc.linprog.CPLEXServer} class provides an
+interface to invoke CPLEX from another machine using Java RMI.
+
+<p>
+@see at.dms.kjc.sir.lowering.partition.ILPPartitioner
+
+</body>
+</html>

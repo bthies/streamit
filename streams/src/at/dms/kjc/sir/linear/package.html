@@ -1,0 +1,75 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.linear</title>
+</head>
+<body>
+
+<p>
+Provides analysis and optimization of linear portions of the stream
+graph.  A filter is linear if each of its outputs is a known affine
+combination of its inputs.  This package automatically detects such
+filters by analyzing the code in their work functions.  Linear filters
+can be optimized in two ways: first, by algebraically collapsing
+adjacent filters, and second, by converting filters to the frequency
+domain.  Both of these transformations can remove a significant number
+of FLOPs from the overall computation.  For the details of linear
+analysis, see this <a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03
+paper</a> or Andrew Lamb's <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">M.Eng. thesis</a>.
+
+<p>
+The main classes involved in the detection of linear filters are
+{@link at.dms.kjc.sir.linear.LinearAnalyzer} (which operates at the
+stream level) and {@link at.dms.kjc.sir.linear.LinearFilterVisitor}
+(which operates inside each work function).  The linear representation
+itself is encapsulated by {@link
+at.dms.kjc.sir.linear.LinearFilterRepresentation}, which uses {@link
+at.dms.kjc.sir.linear.FilterMatrix} and {@link at.dms.kjc.sir.linear.FilterVector}.
+
+<p>
+Once linear filters are detected, adjacent filters can be combined and
+simplified.  The implementation of algebraic combination is contained
+in a sub-package: {@link
+at.dms.kjc.sir.linear.transform.LinearTransformPipeline} and {@link
+at.dms.kjc.sir.linear.transform.LinearTransformSplitJoin}.  
+
+<p>
+The classes ending with "Replacer" generate code for the linear
+components.  There are several different code generation strategies
+for the direct implementation of linear filters (as a matrix-vector
+multiply); those implementations are contained in this directory.  One
+can also implement linear filters in the frequency domain; this code
+generation is done in the <tt>frequency</tt> sub-package.
+
+<p>
+Note that the best driver for linear optimizations is the {@link
+at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner}, which
+applies a dynamic programming algorithm to determine which
+optimizations should be applied to various filters.
+
+<p>
+@see at.dms.kjc.sir.lowering.partition.linear
+@see at.dms.kjc.sir.linear.transform
+@see at.dms.kjc.sir.linear.frequency
+@see at.dms.kjc.sir.statespace
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.statespace</title>
+</head>
+<body>
+
+<p>
+Provides analysis and optimization of linear statespace portions of
+the stream graph.  A <em>linear statespace</em> filter is just like a
+linear filter, except that it may also contain a number of internal
+states.  On each execution step, the filter outputs a linear
+combination of its inputs and the states; furthermore, the states are
+updated to be a linear combination of the inputs and the previous
+states.
+
+<p>
+This package automatically detects linear statespace filters (or
+<em>statespace</em> filters for short) by analyzing the code in their
+work functions.  Statespace filters can be optimized in three ways:
+first, by algebraically collapsing adjacent filters; second, by
+minimizing the number of states; and third, by reducing the number of
+system parameters.  All of these transformations can reduce the number
+of FLOPs in the overall computation.  For the details of statespace
+analysis, see this <a
+href="http://cag.lcs.mit.edu/commit/papers/05/agrawal-cases05.pdf">CASES'05
+paper</a> or Sitij Agrawal's <a
+href="http://cag.lcs.mit.edu/commit/papers/04/sitij-meng-thesis.pdf">M.Eng. thesis</a>.
+
+<p>
+The implementation of statespace analysis was based on that of linear
+analysis (from the <tt>linear</tt> package).  The main classes
+involved in the detection of statespace filters are {@link
+at.dms.kjc.sir.statespace.LinearAnalyzer} (which operates at the
+stream level) and {@link
+at.dms.kjc.sir.statespace.LinearFilterVisitor} (which operates inside
+each work function).  The statespace representation itself is encapsulated
+by {@link at.dms.kjc.sir.statespace.LinearFilterRepresentation}, which
+uses {@link at.dms.kjc.sir.statespace.FilterMatrix} and {@link
+at.dms.kjc.sir.statespace.FilterVector}.
+
+<p>
+The implementation of algebraic combination is contained in a
+sub-package: {@link
+at.dms.kjc.sir.statespace.transform.LinearTransformPipeline}, {@link
+at.dms.kjc.sir.statespace.transform.LinearTransformSplitJoin}, and
+{@link at.dms.kjc.sir.statespace.transform.LinearTransformFeedback}.
+The state minimization and parameter reduction optimizations are
+implemented in {@link at.dms.kjc.sir.statespace.LinearOptimizer},
+while the {@link at.dms.kjc.sir.statespace.LinearDirectReplacer} class
+provides the only code generation mechanism for statespace filters.
+
+<p>
+Unlike with plain linear optimizations, there does not yet exist a
+partitioner that automatically determines which statespace
+optimizations are the most profitable to apply to a given stream
+graph.
+
+<p>
+Note that some files in this package may be complete vestigial
+artifacts from copying over the <tt>linear</tt> package.  For example,
+the {@link at.dms.kjc.sir.statespace.LinearRedundancyAnalyzer} and
+{@link at.dms.kjc.sir.statespace.LinearRedundancy} classes should be
+ignored (they could be removed, if incidental dependences from other
+files were taken care of).
+
+<p>
+@see at.dms.kjc.sir.linear
+@see at.dms.kjc.sir.statespace.transform
+
+</body>
+</html>

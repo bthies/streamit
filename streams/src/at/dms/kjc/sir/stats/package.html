@@ -1,0 +1,46 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.sir.stats</title>
+</head>
+<body>
+
+<p>
+Provides passes to gather statistics about stream programs, such as
+parallelization potential and botteleneck work.
+
+<p>
+This package was written by Jeremy Wong as part of his M.Eng thesis,
+<a
+href="http://cag.lcs.mit.edu/commit/papers/04/wong-meng-thesis.pdf">Modeling
+the Scalability of Acyclic Stream Programs</a>.  The harness that
+calls this code is not completely integrated with the rest of the
+source tree, so it may not be usable in its current form.  This code
+also appears to depend on some minor adjustment of constants elsewhere
+in the source tree (such as {@link
+at.dms.kjc.sir.lowering.partition.WorkEstimate}) that were never
+checked in.  Thus, it might not be possible to reproduce the numbers
+reported in the thesis without consulting in Jeremy's home directory
+on the MIT CAG server (grep for "jnwong" in the StreamIt
+<tt>.java</tt> sources under
+<tt>/u/jnwong/streams/src</tt>).
+
+</body>
+</html>

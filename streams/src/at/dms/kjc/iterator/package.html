@@ -24,22 +24,37 @@
 
 <h2>Package Specification.</h2>
 <p>
-This package provides a facility for iterating over the SIR structures
-that make up a StreamIt program after <code>at.dms.kjc.Kopi2SIR</code>
-has been run. 
-<br/>
-The package creates iterators that take <code>StreamVisitor</code>
-iterators and use them
+Provides a facility for iterating over the SIR structures that make up
+a StreamIt program after <code>at.dms.kjc.Kopi2SIR</code> has been
+run.  These iterators were created to serve to primary functions:
+<ul>
+
+<li> To serve as an interface to the StreamIt scheduler, which does
+not know about internal SIR nodes.
+
+<li> To allow for automatic memoization of nodes in the stream graph.
+
+</ul>
+
+<p>Of these two intentions, only the first one is currently utilized.
+The classes in this package implement the iterator interfaces defined
+by the scheduler, and thus serve as a primary contact between the
+compiler and the scheduler.  However, the memoization procedure (see
+{@link at.dms.kjc.iterator.Memoizer}) has been <em>deprecated</em>.
+</p>
+<p>Apart from interfacing with the scheduler, there is no particular
+reason to use iterators for traversing the stream graph.  It is
+equally viable to perform manual recursion through the stream
+hierarchy.
 </p>
 <p>
 The package should support all <code>SIRStream</code> constructs in
-the program.
-Support is included for <code>SIRFilter</code>,
+the program. Support is included for <code>SIRFilter</code>,
 <code>SIRPhasedFilter</code>,  <code>SIRPipeline</code>, 
 <code>SIRSplitJoin</code>, <code>SIRFeedbackLoop</code>, and
 <code>SIRRecursiveStub</code>.
-The package currently does not iterate over <code>SIRClobal</code>s
-since that are not reachable from the root of the program.
+The package currently does not iterate over <code>SIRGlobal</code>s
+since they are not reachable from the root of the program.
 </p>
 <p>
 The basis for using the iterator package <code>IterFactory</code> is
@@ -57,10 +72,6 @@ iterated over, finding its parent, determining its type, finding some
 parameters of the object, etc.
 <code>StreamVisitor</code> (and its subclasses) pass the iterator to the
 visiting methods, and 
-</p>
-<p>
-The class <code>at.dms.kjc.iterator.Memoizer</code> has been almost
-completely removed from use and should be considered <em>deprecated</em>.
 </p>
 <p>
 One common debugging idiom for dumping program contents is:

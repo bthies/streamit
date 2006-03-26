@@ -483,7 +483,122 @@ public class RawBackend {
         }
     }
 
-    
+    /** 
+     * Similar to createExecutionCounts, but returns a HashMap[] and
+     * does not go through the RawBackend per se.  For external use
+     * outside of the RawBackend.
+     */ 
+    public static HashMap[] returnExecutionCounts(SIRStream str,
+                                                  GraphFlattener graphFlattener) {
+
+	HashMap[] localExecutionCounts = SIRScheduler.getExecutionCounts(str);
+	// make fresh hashmaps for results
+	HashMap[] result = { initExecutionCounts = new HashMap(), 
+			     steadyExecutionCounts = new HashMap()} ;
+
+	// then filter the results to wrap every filter in a flatnode,
+	// and ignore splitters
+	for (int i=0; i<2; i++) {
+	    for (Iterator it = localExecutionCounts[i].keySet().iterator();
+		 it.hasNext(); ){
+		SIROperator obj = (SIROperator)it.next();
+		int val = ((int[])localExecutionCounts[i].get(obj))[0];
+		//System.err.println("execution count for " + obj + ": " + val);
+		/** This bug doesn't show up in the new version of
+		 * FM Radio - but leaving the comment here in case
+		 * we need to special case any other scheduler bugsx.
+		 
+		 if (val==25) { 
+		 System.err.println("Warning: catching scheduler bug with special-value "
+		 + "overwrite in RawBackend");
+		 val=26;
+		 }
+	       	if ((i == 0) &&
+		    (obj.getName().startsWith("Fused__StepSource") ||
+		     obj.getName().startsWith("Fused_FilterBank")))
+		    val++;
+	       */
+		if (graphFlattener.getFlatNode(obj) != null)
+		    result[i].put(graphFlattener.getFlatNode(obj), 
+				  new Integer(val));
+	    }
+	}
+	
+	//Schedule the new Identities and Splitters introduced by GraphFlattener
+	for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
+	    FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
+	    int initCount=-1;
+	    if(node.incoming.length>0) {
+		if(initExecutionCounts.get(node.incoming[0])!=null)
+		    initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
+		if((initCount==-1)&&(localExecutionCounts[0].get(node.incoming[0].contents)!=null))
+		    initCount=((int[])localExecutionCounts[0].get(node.incoming[0].contents))[0];
+	    }
+	    int steadyCount=-1;
+	    if(node.incoming.length>0) {
+		if(steadyExecutionCounts.get(node.incoming[0])!=null)
+		    steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
+		if((steadyCount==-1)&&(localExecutionCounts[1].get(node.incoming[0].contents)!=null))
+		    steadyCount=((int[])localExecutionCounts[1].get(node.incoming[0].contents))[0];
+	    }
+	    if(node.contents instanceof SIRIdentity) {
+		if(initCount>=0)
+		    initExecutionCounts.put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    steadyExecutionCounts.put(node,new Integer(steadyCount));
+	    } else if(node.contents instanceof SIRSplitter) {
+		//System.out.println("Splitter:"+node);
+		int[] weights=node.weights;
+		FlatNode[] edges=node.edges;
+		int sum=0;
+		for(int j=0;j<weights.length;j++)
+		    sum+=weights[j];
+		for(int j=0;j<edges.length;j++) {
+		    if(initCount>=0)
+			initExecutionCounts.put(edges[j],new Integer((initCount*weights[j])/sum));
+		    if(steadyCount>=0)
+			steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
+		}
+		if(initCount>=0)
+		    result[0].put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    result[1].put(node,new Integer(steadyCount));
+	    } else if(node.contents instanceof SIRJoiner) {
+		FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
+		if(localExecutionCounts[0].get(node.oldContents)!=null)
+		    result[0].put(node,new Integer(((int[])localExecutionCounts[0].get(node.oldContents))[0]));
+		if(localExecutionCounts[1].get(node.oldContents)!=null)
+		    result[1].put(node,new Integer(((int[])localExecutionCounts[1].get(node.oldContents))[0]));
+	    }
+	}
+	
+	//now, in the above calculation, an execution of a joiner node is 
+	//considered one cycle of all of its inputs.  For the remainder of the
+	//raw backend, I would like the execution of a joiner to be defined as
+	//the joiner passing one data item down stream
+	for (int i=0; i < 2; i++) {
+	    Iterator it = result[i].keySet().iterator();
+	    while(it.hasNext()){
+		FlatNode node = (FlatNode)it.next();
+		if (node.contents instanceof SIRJoiner) {
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
+		    if((node.schedMult!=0)&&(node.schedDivider!=0))
+			cycles=(cycles*node.schedMult)/node.schedDivider;
+		    result[i].put(node, new Integer(cycles));
+		}
+		if (node.contents instanceof SIRSplitter) {
+		    int sum = 0;
+		    for (int j = 0; j < node.ways; j++)
+			sum += node.weights[j];
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    result[i].put(node, new Integer(sum*oldVal));
+		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
+		}
+	    }
+	}
+	return result;
+    }
 
     //simple helper function to find the topmost pipeline
     private static SIRStream getTopMostParent (FlatNode node) 

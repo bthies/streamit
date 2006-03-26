@@ -36,8 +36,16 @@ public class NumberGathering extends at.dms.util.Utils
     public static FlatNode sink;
     public static int totalPrintsPerSteady = 0;
 
-    public static boolean doit(FlatNode top) 
+    public static boolean doit(FlatNode top) {
+        return doit(top, new HashMap[] { RawBackend.initExecutionCounts,
+                                         RawBackend.steadyExecutionCounts });
+    }
+
+    public static boolean doit(FlatNode top, HashMap[] executionCounts) 
     {
+	HashMap initExecutionCounts = (HashMap) executionCounts[0];
+	HashMap steadyExecutionCounts = (HashMap) executionCounts[1];
+
         // reset variables since we might be called multiple times
         printsPerSteady = 0;
         skipPrints = 0;
@@ -52,7 +60,7 @@ public class NumberGathering extends at.dms.util.Utils
         while (sinksIt.hasNext()) {
             sink = (FlatNode)sinksIt.next();
             int prints = CheckPrint.check((SIRFilter)sink.contents);
-            Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+            Integer steadyInteger = (Integer)steadyExecutionCounts.get(sink);
             int steady = 0;
         
             if (steadyInteger != null) 
@@ -94,8 +102,8 @@ public class NumberGathering extends at.dms.util.Utils
                 continue;
             }
         
-            Integer initInteger = (Integer)RawBackend.initExecutionCounts.get(sink);
-            Integer steadyInteger = (Integer)RawBackend.steadyExecutionCounts.get(sink);
+            Integer initInteger = (Integer)initExecutionCounts.get(sink);
+            Integer steadyInteger = (Integer)steadyExecutionCounts.get(sink);
             int init = 0, steady = 0;
         
             if (initInteger != null)

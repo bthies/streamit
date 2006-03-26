@@ -1,0 +1,48 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.linear.frequency</title>
+</head>
+<body>
+
+<p>
+Translates linear filters into the frequency domain.  As described in
+this <a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03
+paper</a> and Andrew Lamb's <a
+href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">M.Eng. thesis</a>,
+filters can be implemented in the frequency domain if each of their
+outputs is an affine combination of their inputs.  This package
+implements this transformation for linear filters by generating code
+that performs an FFT, vector-vector multiply, and IFFT.  
+
+<p>
+Currently the {@link
+at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer} is the main
+class for this package.  It depends on some library hooks to implement
+FFT and IFFT.  At the time of this writing, these hooks are available
+only in the original uniprocessor C library.
+
+<p>
+@see at.dms.kjc.sir.linear
+@see at.dms.kjc.sir.lowering.partition.linear
+
+</body>
+</html>

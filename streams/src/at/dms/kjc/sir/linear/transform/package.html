@@ -1,0 +1,55 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+<head>
+<title>Overview of at.dms.kjc.linear.transform</title>
+</head>
+<body>
+
+<p>
+Performs algebraic combination of adjacent linear filters in the
+stream graph.  As described in this <a
+href="http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf">PLDI'03
+paper</a> and Andrew Lamb's <a
+href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">M.Eng. thesis</a>,
+adjacent filters can be algebraically combined if each of their
+outputs is an affine combination of their inputs.  As opposed to
+filter fusion, this transformation statically evaluates the product of
+coefficients in the two filters, and often changes the number of FLOPs
+required by the overall computation.
+
+<p>
+The main classes performing the combinations are {@link
+at.dms.kjc.sir.linear.transform.LinearTransformPipeline} and {@link
+at.dms.kjc.sir.linear.transform.LinearTransformSplitJoin}.  They
+employ the rules described in the above papers.  Note that there are
+no combination rules for feedback loops because it is impossible to
+combine a feedback loop while maintaining a linear representation;
+instead, a linear representation with <em>state</em> is needed.  This
+combination is implemented by the statespace package (see below),
+which is a generalization of linear combination but may introduce
+extra overhead for simple linear filters.
+
+<p>
+@see at.dms.kjc.sir.linear
+@see at.dms.kjc.sir.statespace
+@see at.dms.kjc.sir.lowering.partition.linear
+
+</body>
+</html>

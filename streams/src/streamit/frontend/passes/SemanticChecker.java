@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.34 2006-03-25 00:08:00 dimock Exp $
+ * @version $Id: SemanticChecker.java,v 1.35 2006-03-27 21:42:56 dimock Exp $
  */
 public class SemanticChecker
 {
@@ -38,7 +38,7 @@ public class SemanticChecker
      * error if errors are detected.
      *
      * @param prog  parsed program object to check
-     * @returns    <code>true</code> if no errors are detected
+     * @return    <code>true</code> if no errors are detected
      */
     public static boolean check(Program prog)
     {

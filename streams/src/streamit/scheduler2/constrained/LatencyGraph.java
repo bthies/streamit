@@ -554,7 +554,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * 
      * @param startNode
      * @param withinStream
-     * @return
+     * @return Set of back edges
      */
     public HashSet findBackPointingEdges(
                                       LatencyNode startNode,

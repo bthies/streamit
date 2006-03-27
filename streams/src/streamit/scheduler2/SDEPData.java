@@ -32,7 +32,6 @@ public interface SDEPData
      * Once the upstream node has executed this many times, the downstream
      * node has enough data available to execute getNumDstInitPhases()
      * without executing the upstream node any more.
-     * @return
      */
     public int getNumSrcInitPhases();
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStatement.java,v 1.10 2006-03-24 15:54:48 dimock Exp $
+ * $Id: JStatement.java,v 1.11 2006-03-27 21:42:55 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -130,7 +130,7 @@ public abstract class JStatement extends JPhylum {
 
     private JavaStyleComment[]  comments;
 
-    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /* THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
     /** Returns a deep clone of this object. */
     public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
@@ -141,5 +141,5 @@ public abstract class JStatement extends JPhylum {
         other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
     }
 
-    /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    /* THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

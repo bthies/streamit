@@ -28,14 +28,15 @@ fine-grained filters.  The primary application of fission is to expose
 parallelism for execution on a distributed machine.
 
 <p>
-The {@link at.dms.kjc.sir.lowering.StatelessDuplicate} pass splits
+The 
+{@link at.dms.kjc.sir.lowering.fission.StatelessDuplicate} pass splits
 <em>stateless</em> filters into a number of filters that are wrapped
-in a splitjoin, while the {@link
-at.dms.kjc.sir.lowering.VerticalFission} pass splits
+in a splitjoin, while the 
+{@link at.dms.kjc.sir.lowering.fission.VerticalFission} pass splits
 <em>linear</em> filters into a pipeline.  Both passes can be called
 directly; the StatelessDuplicate pass is also called automatically
-from the dynamic programming partitioner via the {@link
-at.dms.kjc.sir.lowering.FissionReplacer}.
+from the dynamic programming partitioner via the 
+{@link at.dms.kjc.sir.lowering.fission.FissionReplacer}.
 
 <p>
 @see at.dms.kjc.sir.lowering.partition.dynamicprog

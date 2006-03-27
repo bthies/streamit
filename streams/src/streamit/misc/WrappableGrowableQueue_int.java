@@ -44,7 +44,6 @@ public class WrappableGrowableQueue_int implements WrappableGrowableQueue {
 
     /**
      * Constructs a WrappableGrowableQueue object
-     * @return A new wrappable growable queue.
      */
     public WrappableGrowableQueue_int() {
         sizeof_buffer = 2;

@@ -163,7 +163,7 @@ public class DefaultGraphSelectionModel
      * and adding the new paths would make the selection discontiguous,
      * the selection is reset to the first TreePath in <code>paths</code>.
      *
-     * @param cellss new selection
+     * @param cells new selection
      */
     public void setSelectionCells(Object[] cells) {
         if (cells != null) {
@@ -274,7 +274,7 @@ public class DefaultGraphSelectionModel
      * are in the selection the TreeSelectionListeners are notified.
      * This has no effect if <code>paths</code> is null.
      *
-     * @param path the path to remove from the selection
+     * @param cells the path to remove from the selection
      */
     public void removeSelectionCells(Object[] cells) {
         if (cells != null) {

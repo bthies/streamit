@@ -29,7 +29,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.20 2006-03-25 00:08:00 dimock Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.21 2006-03-27 21:42:56 dimock Exp $
  */
 
 public class SymbolTableVisitor extends FEReplacer
@@ -114,7 +114,8 @@ public class SymbolTableVisitor extends FEReplacer
      * Add a variable declaration and register the variable in the
      * symbol table.  This creates a {@link
      * streamit.frontend.nodes.StmtVarDecl} for the specified type and
-     * name, and adds that statement using {@link streamit.frontend.nodes.FEReplacer#addStatement()}.  It
+     * name, and adds that statement using 
+     * {@link streamit.frontend.nodes.FEReplacer#addStatement(Statement)}.  It
      * also registers the new variable in the current symbol table.
      *
      * @param context  file and line number the statement belongs to

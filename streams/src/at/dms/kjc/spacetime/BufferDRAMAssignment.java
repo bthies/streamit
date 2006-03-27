@@ -453,12 +453,11 @@ public class BufferDRAMAssignment {
      * on the chip.
      * 
      * @param output The output trace node that splits
-     * @param assigmnent The assignment of filterTraceNodes to Tiles. 
+     * @param assignment The assignment of filterTraceNodes to Tiles. 
      * 
      * @return A set of tiles that this splitter, output, occupies.
      */
-    public Set tilesOccupiedSplit(OutputTraceNode output,
-            HashMap assignment) {
+    public Set tilesOccupiedSplit(OutputTraceNode output, HashMap assignment) {
         HashSet tiles = new HashSet();
         Iterator edges = assignment.keySet().iterator();
         StreamingDram src = IntraTraceBuffer.getBuffer(output.getPrevFilter(),

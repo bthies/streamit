@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CharBuffer.java,v 1.2 2006-01-25 17:00:54 thies Exp $
+ * $Id: CharBuffer.java,v 1.3 2006-03-27 21:42:55 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -26,7 +26,7 @@ package at.dms.compiler.tools.antlr.runtime;
  * <p>
  * A dynamic array is used to buffer up all the input characters.  Normally,
  * "k" characters are stored in the buffer.  More characters may be stored during
- * guess mode (testing syntactic predicate), or when LT(i>k) is referenced.
+ * guess mode (testing syntactic predicate), or when LT(i&gt;k) is referenced.
  * Consumption of characters is deferred.  In other words, reading the next
  * character is not done by conume(), but deferred until needed by LA or LT.
  * <p>

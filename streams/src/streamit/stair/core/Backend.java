@@ -14,7 +14,7 @@ public interface Backend
      * every <code>Opcode</code> object that will ever exist.
      *
      * @param name  Name of the opcode to return
-     * @returns     The unique opcode object named <code>name</code>
+     * @return     The unique opcode object named <code>name</code>
      */
     public Opcode getOpcode(String name);
     

@@ -19,7 +19,7 @@ import java.util.List;
  * higher-level constructs might want to be block containers.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: Block.java,v 1.1 2003-02-24 21:45:11 dmaze Exp $
+ * @version $Id: Block.java,v 1.2 2006-03-27 21:42:56 dimock Exp $
  */
 public class Block
 {
@@ -102,7 +102,7 @@ public class Block
      * label instructions as necessary.
      *
      * @param container  CFG region to flatten
-     * @returns          A single block containing all of the code
+     * @return          A single block containing all of the code
      *                   in <code>container</code>
      */
     public static Block flatten(BlockContainer container)

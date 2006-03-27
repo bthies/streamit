@@ -340,7 +340,7 @@ public class RawChip {
      * 
      * @param tile
      * @param dir 'N', 'S', 'W', 'E'
-     * @return
+     * @return the tile
      */
     public RawTile getTile(RawTile tile, char dir) {
         int dirX = 0;

@@ -25,10 +25,10 @@
 <p>
 The cluster backend for StreamIt generates
 a set of threads that can be executed on a cluster of networked
-computers or a SMP. For each splitter/joiner/filter (see {@link @SIROperator})
+computers or a SMP. For each splitter/joiner/filter
 a threadX.cpp file is generated that contains code for the operator.
 The threads are enumerated from 0 to N-1 (the mapping between 
-operators and integers is maintained by the class {@link NodeEnumerator}).
+operators and integers is maintained by the class {@link at.dms.kjc.cluster.NodeEnumerator}).
 
 <p>
 A file master.cpp contains the master thread that is executed on
@@ -62,9 +62,16 @@ can be used to compile a single thread version of a stream program
 for execution on a uniprocessor. The fusion.cpp contains a method
 that invokes work functions of the operators from a single thread.
 
-If -cluster option is cobined with -standalone then after executing
+If -cluster option is combined with -standalone then after executing
 'make -f Makefile.cluster' a 'fusion' file will be generated instead
 or 'run_cluster'.
+
+Despite compiling for a single thread, the code is still split into 
+files threadX.cpp.
+
+If the <pre>-fusion</pre> switch is passed along with the <pre>-standalone</pre>
+switch, then the usual fusion is performed, resulting in a minimal number
+of threadX.cpp files.
 
 <h3>Class Overview</h3>
 <ul>

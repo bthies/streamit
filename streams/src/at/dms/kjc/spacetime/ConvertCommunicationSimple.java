@@ -25,7 +25,7 @@ import java.math.BigInteger;
  * the peek's and pop's.   
  * 
  * This class will only work for filters that are deemed 
- * simple by {@link at.dms.kjc.spacetime.RawExecutionCode#isSimple}.
+ * simple by {@link at.dms.kjc.spacetime.FilterInfo#isSimple()}.
  * 
  * It uses a simple linear buffer from which to read it values.
  * 
@@ -49,7 +49,7 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
      * generateds.
      * 
      * @param generateds the compiler generated variables to use.
-     * @param fitlerInfo The filter to convert.
+     * @param filterInfo The filter to convert.
      */
     public ConvertCommunicationSimple(GeneratedVariables generateds,
                                       FilterInfo filterInfo)  

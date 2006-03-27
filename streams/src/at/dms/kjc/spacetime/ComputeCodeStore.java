@@ -428,7 +428,7 @@ public class ComputeCodeStore {
      * @param staticNet If true, use static net, otherwise gdn
      * @param shouldPreSynch If true, generate a presynched command
      * @param address The address for the xfer
-     * @return
+     * @return ...
      */
     public static JStatement sirDramCommand(boolean read, int cacheLines, JExpression sampleAddress,
             boolean staticNet, boolean shouldPreSynch, JExpression address) {

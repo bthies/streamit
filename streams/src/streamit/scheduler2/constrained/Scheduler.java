@@ -83,7 +83,7 @@ public class Scheduler extends streamit.scheduler2.Scheduler
      * @param dst Iterator for downstream node.
      * @return SDEPData
      * @throws NoPathException
-     * @see LatencyGraph.computeSDEP
+     * @see streamit.scheduler2.constrained.LatencyGraph#computeSDEP(LatencyNode,HashSet)
      */
     public SDEPData computeSDEP(Iterator src, Iterator dst)
         throws NoPathException

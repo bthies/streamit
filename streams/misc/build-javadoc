@@ -2,7 +2,7 @@
 ###############################################################################
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.7 2006-03-27 21:35:10 dimock Exp $
+# $Id: build-javadoc,v 1.8 2006-03-28 20:09:23 dimock Exp $
 #
 # Takes as implicit input the shell variable $STREAMIT_HOME, which 
 #  is the root of the StreamIt directory heirarchy.
@@ -51,7 +51,7 @@ for PKG in $PREPACKAGES; do
  fi
 done
 
-echo $PACKAGES
+#echo $PACKAGES
 
 # We seem to have some "debug" Eclipse packages, so adding these -links
 # doesn't actually help matters any.

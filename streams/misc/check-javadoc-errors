@@ -1,0 +1,87 @@
+#!/bin/sh
+###############################################################################
+# check-javadoc-errors:
+#
+#  switches (1) --output (-o) directory for output 
+#               default: ./javadoc-errors
+#           (2) --sourcepath (-s) directory containing your packages. 
+#               default: $STREAMIT_HOME/src
+#           (3) --packages (-p) package(s) that you want to check. 
+#                 default: a list of packages in which StreamIt development 
+#                 is ongoing, see text of this file for details.
+#
+#  If you are listing multiple packages, surround the list in quotes.
+#
+#  It is a hack, but:  You may get away with passing DocCheck or JavaDoc 
+#  switches at the head of the package list.  If you have reason to do much of
+#  this, then just run doccheck directly.
+#
+#  DocCheck is most useful in its ability to generate pasteable comments
+#  in a number of situations.  
+#  After running DocCheck, open the generated PackageStatistics.html file.
+#  You can click on a file name or on an error type for a file name to get
+#  a description and template text to put in.
+#
+#  See file:///home/bits8/streamit/doccheck1.2b2/docs/DocCheckErrors.html
+#  for a description of errors and how they are processed.
+#
+#  DocCheck is executed as a JavaDoc doclet.
+#  We use the switch -execDepth 7  to make sure that the "executive summary"
+#   report contains information about all subpackages.
+#  We use the switch -evident 5 to decrease the error level for undocumented
+#   getters and setters from a level 2 error to a warning.
+#  We use the -protected switch to check documentation for developers.
+#
+#  There are some features of Sun's documentation style that are built into
+#  DocCheck, and that I do not know how to turn off: e.g. if getters and 
+#  setters do not cross-reference each other using @see the DocCheck generates
+#  an error.  Aother nuisance is its checking for a @since tag for packages.
+#
+#  
+###############################################################################
+OUTDIR=./javadoc-errors
+SOURCEPATH=$STREAMIT_HOME/src
+PACKAGES="at.dms.kjc at.dms.kjc.cluster at.dms.kjc.common at.dms.kjc.flatgraph at.dms.kjc.flatgraph2 at.dms.kjc.iterator at.dms.kjc.linprog at.dms.kjc.lir at.dms.kjc.raw at.dms.kjc.rstream at.dms.kjc.sir at.dms.kjc.sir.linear at.dms.kjc.sir.linear.frequency at.dms.kjc.sir.linear.transform at.dms.kjc.sir.lowering at.dms.kjc.sir.lowering.fission at.dms.kjc.sir.lowering.fusion at.dms.kjc.sir.lowering.partition at.dms.kjc.sir.lowering.partition.cache at.dms.kjc.sir.lowering.partition.dynamicprog at.dms.kjc.sir.lowering.partition.linear at.dms.kjc.sir.lowering.reordering at.dms.kjc.sir.statespace at.dms.kjc.sir.statespace.transform at.dms.kjc.sir.stats at.dms.kjc.spacedynamic at.dms.kjc.spacetime at.dms.kjc.spacetime.switchIR at.dms.optimize at.dms.util streamit.frontend streamit.frontend.controlflow streamit.frontend.nodes streamit.frontend.passes streamit.frontend.tojava streamit.library streamit.library.io streamit.library.iriter streamit.library.jcc streamit.misc streamit.scheduler1 streamit.scheduler1.simple streamit.scheduler2 streamit.scheduler2.base streamit.scheduler2.constrained streamit.scheduler2.hierarchical streamit.scheduler2.iriter streamit.scheduler2.minlatency streamit.scheduler2.print streamit.scheduler2.singleappearance streamit.stair.core"
+
+OUTD=$OUTDIR
+SRCP=$SOURCEPATH
+usage() {
+  cat >&2 <<EOF
+$0: wrapper for DocCheck to check JavaDoc style.
+
+Usage:
+  $0 [options]
+
+Options:
+  --output (-o)      Override default output directory ($OUTD)
+  --sourcepath (-s)  Override packave root path ($SRCP)
+  --packages (-p)    Override default package list with specific package(s)
+EOF
+}
+
+
+while [ -n "$1" ]
+do
+  OPT="$1"; shift
+  case $OPT in
+      --output|-o) OUTDIR=$1; shift;;
+      --sourcepath|-s) SOURCEPATH=$1; shift;;
+      --packages|-p) PACKAGES=$1; shift;;
+          *) usage; exit 1;;
+  esac
+done
+
+if [ ! -e $OUTDIR ]
+then
+  mkdir -p $OUTDIR
+fi
+
+javadoc -J-Xmx200m \
+ -protected \
+ -doclet com.sun.tools.doclets.doccheck.DocCheck \
+ -docletpath /home/bits8/streamit/doccheck1.2b2/doccheck.jar \
+ -d $OUTDIR \
+ -sourcepath $SOURCEPATH \
+ -evident 5 \
+ -execDepth 7 \
+ $PACKAGES

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.30 2006-03-29 00:04:27 dimock Exp $
+# $Id: run-reg-tests.py,v 1.31 2006-03-29 16:08:34 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -67,8 +67,8 @@ class RunRegTests:
         except PrepError, e:
             self.mail_admins(str(e))
 
-#    def get_clean_timedate_stamp(self):
-#        return time.strftime("%Y%m%d.%H%M%S.%a")
+    def get_clean_timedate_stamp(self):
+        return time.strftime("%Y%m%d.%H%M%S.%a")
 
 # uncomment the following and comment the preceeding to just report on
 # an already-run regression test.

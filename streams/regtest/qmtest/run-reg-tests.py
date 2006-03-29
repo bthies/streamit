@@ -2,13 +2,17 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.29 2006-02-24 21:35:15 dimock Exp $
+# $Id: run-reg-tests.py,v 1.30 2006-03-29 00:04:27 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
 # since all of our other regtest stuff is for the QMTest world and
 # because this should be saner.
 
+# Javadoc crash:
+# 	at com.sun.tools.javadoc.Main.main(Main.java:31)
+# Javadoc wrnings
+#288 warnings    as last line, even with crash
 import email.MIMEText
 import os
 import os.path
@@ -23,7 +27,16 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 #admins = 'dimock@csail.mit.edu'
 #users = 'dimock@csail.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
-regtest_root = '/home/bits8/streamit/regtest'
+regtest_parent = '/home/bits8/streamit'
+regtest_root = os.path.join(regtest_parent, 'regtest')
+javadoc_dir = os.path.join(regtest_parent, 'regtest_javadoc')
+javadoc_script = 'misc/build-javadoc'
+javadoc_error_dir = os.path.join(regtest_parent, 'regtest_doccheck')
+javadoc_error_script = 'misc/check-javadoc-errors'
+summary_script_first = 'regtest/qmtest/status_summary.xsl'
+summary_script_second = 'regtest/qmtest/status_summary.pl'
+javadocLog = 'javadocLog'
+xmlresults = 'results.xml'
 smtp_server = 'k2.csail.mit.edu'
 
 # TODO: determine distinctions between "nightly" and "all" regtests.
@@ -54,8 +67,20 @@ class RunRegTests:
         except PrepError, e:
             self.mail_admins(str(e))
 
-    def get_clean_timedate_stamp(self):
-        return time.strftime("%Y%m%d.%H%M%S.%a")
+#    def get_clean_timedate_stamp(self):
+#        return time.strftime("%Y%m%d.%H%M%S.%a")
+
+# uncomment the following and comment the preceeding to just report on
+# an already-run regression test.
+
+#     def main(self):
+#         self.starttime = time.localtime()
+#         self.endtime = time.localtime()
+#         self.pre_report()
+#         self.report()
+        
+#     def get_clean_timedate_stamp(self):
+#         return "20060326.220014.Sun"
 
     def make_paths(self):
         self.working_dir = regtest_root + "/" + self.get_clean_timedate_stamp()
@@ -65,7 +90,6 @@ class RunRegTests:
         os.environ['TOPDIR'] = os.path.join(self.streamit_home, 'misc', 'raw')
         os.environ['PATH'] = self.streamit_home + \
                              ":/usr/uns/jdk1.5.0_01/bin" + \
-                             ":/home/bits8/streamit/jikes-1.22-customized/bin" + \
                              ":/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin"
 
         # Vaguely overcomplicated assembly of the CLASSPATH.
@@ -100,6 +124,27 @@ class RunRegTests:
 #                          ('core.resources', 'resources.jar')])
         
         os.environ['CLASSPATH'] = ':'.join(class_path)
+
+        # Set up "cvs_date" which is independent of any actions in current run
+        #
+        # There may or may not be a 'latest' file.
+        # If there is then it is a link to a directory
+        # The directory name should be the start time of the previous
+        # regression test run.
+        # Get a file of cvs history since the last run.  There is a slight
+        # overlap since we are getting cvs history from the start of the
+        # last run until now, rather than from the start of the cvs checkout
+        # for the last run until the start of the cvs checkout for this run.
+        self.cvs_date = ''
+        try:
+            last_dirname = os.path.basename(os.path.realpath(regtest_root
+                                                             + '/latest'))
+            re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
+            m = re_pattern.match(last_dirname)
+            self.cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
+        except:
+            pass
+
 
     def run_and_log(self, cmd, filename, action, permissible=0):
         """Run a command, logging its output under self.working_dir.
@@ -148,39 +193,32 @@ class RunRegTests:
         os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
 
-        self.run_and_log('printenv', 'envlog', 'Log working environment')
-        self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvslog',
+        self.run_and_log('printenv', 'envLog', 'Log working environment')
+        self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvsLog',
                          'CVS checkout')
 
-        # There may or may not be a 'latest' file.
-        # If there is then it is a link to a directory
-        # The directory name should be the start time of the previous
-        # regression test run.
-        # Get a file of cvs history since the last run.  There is a slight
+        # I there is a "latest" run,
+        # get a file of cvs history since the latest run.  There is a slight
         # overlap since we are getting cvs history from the start of the
         # last run until now, rather than from the start of the cvs checkout
         # for the last run until the start of the cvs checkout for this run.
-        self.cvs_date = ''
-        try:
-            last_dirname = os.path.basename(os.path.realpath(regtest_root
-                                                             + '/latest'))
-            re_pattern=re.compile('^(\d\d\d\d)(\d\d)(\d\d)\.(\d\d)(\d\d)')
-            m = re_pattern.match(last_dirname)
-            self.cvs_date = m.group(1)+'-'+m.group(2)+'-'+m.group(3)+' '+m.group(4)+':'+m.group(5)
-            cvs_command = 'cvs history -x AMR -a -D "' + self.cvs_date + '"'
-            os.chdir(self.working_dir + '/streams')
-            self.run_and_log(cvs_command, 'cvshistory', 'Getting CVS history')
-            os.chdir(self.working_dir)
-        except:
-            pass
+        if cvs_date != '':
+            try:
+                cvs_command = 'cvs history -x AMR -a -D "' + self.cvs_date + '"'
+                os.chdir(self.working_dir + '/streams')
+                self.run_and_log(cvs_command, 'cvsHistory',
+                                 'Getting CVS history')
+                os.chdir(self.working_dir)
+            except:
+                self.cvs_date = ''
         
-        self.run_and_log('make -C %s/src' % self.streamit_home, 'makelog',
+        self.run_and_log('make -C %s/src' % self.streamit_home, 'makeLog',
                          'Building the compiler')
         self.run_and_log('make -C %s/library/c' % self.streamit_home,
-                         'makeclog', 'Building the C library')
+                         'makeCLog', 'Building the C library')
         self.run_and_log('make -C %s/library/cluster' % self.streamit_home,
-                         'makeclusterlog', 'Building the cluster library')
-        self.run_and_log('make -C %s/misc/raw' % self.streamit_home, 'rawlog',
+                         'makeClusterLog', 'Building the cluster library')
+        self.run_and_log('make -C %s/misc/raw' % self.streamit_home, 'rawLog',
                          'Building the RAW tree', permissible=1)
         # No error results on this yet.
         os.chdir(self.streamit_home)
@@ -208,19 +246,41 @@ class RunRegTests:
         #    run_command = run_command + ' -j' + str(cpu_count)
         # ok, now run with thread count as set above
         os.chdir(self.streamit_home)
-        self.run_and_log('qmtest create-target -a processes=4 p4 process_target.ProcessTarget p', 'qmtestTargetLog', 'Setting Process target')
+        self.run_and_log('qmtest create-target -a processes=4 p4 '
+                         + 'process_target.ProcessTarget p',
+                         'qmtestTargetLog', 'Setting Process target')
         self.starttime = time.localtime()
-        self.run_and_log(run_command, 'qmtestlog', 'Running QMTest',
+        self.run_and_log(run_command, 'qmtestLog', 'Running QMTest',
 			 permissible=1)
         self.endtime = time.localtime()
 
     def pre_report(self):
         self.run_and_log('qmtest report -o ' +
-                         self.streamit_home + '/results.xml' + ' ' +
-                         self.streamit_home + '/results.qmr',
-                         'qmprereportlog', 'Generating xml report')
+                         os.path.join(self.streamit_home, xmlresults)
+                         + ' ' +
+                         os.path.join(self.streamit_home, 'results.qmr'),
+                         'qmPrereportLog', 'Generating xml report')
+        self.run_and_log(os.path.join(self.streamit_home, javadoc_script)
+                         + " " + javadoc_dir,
+                         javadocLog, "Generating latest javadoc")
+
+        self.javadocwarnings = ''
+        pop = popen2.Popen4('tail -n 1 '
+                            + os.path.join(self.working_dir,javadocLog)
+                            + ' | grep warnings')
+        while 1:
+            data = pop.fromchild.read()
+            if data == '':
+                break
+            self.javadocwarnings += data
+        status = pop.wait()
+
+        self.run_and_log(os.path.join(self.streamit_home, javadoc_error_script)
+                         + " -o " + javadoc_error_dir,
+                         "javadocErrorLog", "Generating javadoc error report")
 
     def report(self):
+        hdrfile = open(os.path.join(self.streamit_home,'summary_report'), 'w')
         header = """StreamIt Regression Test Summary
 --------------------------------
 
@@ -239,18 +299,21 @@ is the QMTest results file.
                            time.mktime(self.starttime)),
            self.working_dir,
            self.streamit_home)
-        
+
         last_results = ''
         try:
-            fn = regtest_root + '/latest/streams/results.xml'
+            fn = os.path.join(regtest_root, 'latest', 'streams', xmlresults)
             os.stat(fn) # throws OSError if fn doesn't exist
             last_results = ' ' + fn
         except:
             pass
 
+        if self.javadocwarnings != '':
+            header = header + 'Javadoc: ' + self.javadocwarnings + "\n"
+            
         if self.cvs_date:
             header = header + "CVS history since " + self.cvs_date + "\n"
-            hf = open(self.working_dir + '/cvshistory', 'r')
+            hf = open(os.path.join(self.working_dir, 'cvsHistory'), 'r')
             lines = hf.readlines()
             hf.close()
             re_pattern = re.compile('^(\S\s+\S+\s+\S+\s+\S+\s+\S+)\s+(\S+)\s+(\S+)\s+(streams/\S*)')
@@ -264,17 +327,40 @@ is the QMTest results file.
 
             header = header + '\n';
             
-        pop = popen2.Popen4(self.streamit_home +
-                            '/regtest/qmtest/summarize_xml_results ' +
-                            self.streamit_home + '/results.xml' +
-                            last_results)
+        hdrfile.write(header)          # save header as file in case mail error
+        hdrfile.close()
+        
+        tmpfile = os.path.join(self.working_dir, 'summary_data')
+        
+        self.run_and_log('xsltproc -o ' + tmpfile
+                         + ' --novalid ' + os.path.join(self.streamit_home,
+                                                        summary_script_first)
+                          + ' ' + os.path.join(self.streamit_home, xmlresults),
+                         "summaryXslLog", "Generating summary: xsl process")
+
+        oldxml = os.path.join(regtest_root, 'latest', 'streams', xmlresults)
+
+        oldtmp = ''
+        if os.access(oldxml, os.R_OK):
+            oldtmp = os.path.join(self.working_dir, 'old_summary_data')
+            self.run_and_log('xsltproc -o ' + oldtmp
+                         + ' --novalid ' + os.path.join(self.streamit_home,
+                                                        summary_script_first)
+                          + ' ' + oldxml,
+                         "summaryXslLog2", "Generating summary: xsl process 2")
+
+        summary_body = os.path.join(self.streamit_home,'summary_body')
+        self.run_and_log(os.path.join(self.streamit_home,summary_script_second)
+                         + ' ' + tmpfile + ' ' + oldtmp + ' > ' + summary_body,
+                         "summaryLog", "Generating summary: format")
+
+
         summary = ''
-        while 1:
-            data = pop.fromchild.read()
-            if data == '':
-                break
-            summary += data
-        pop.wait()
+        sb = open(summary_body, 'r')
+        for line in sb:
+            summary += line
+        sb.close()
+        
         self.mail_all(header + summary)
 
     def rt_report(self):
@@ -284,10 +370,9 @@ is the QMTest results file.
         os.spawnl(os.P_WAIT,
                   os.path.join(self.streamit_home,'regtest/qmtest/rt-results'),
                   'rt-results',
-                  os.path.join(self.streamit_home, 'results.xml'),
+                  os.path.join(self.streamit_home, xmlresults),
                   rt_root)
         
-
     def mail_admins(self, contents):
         self.mail_to(admins, 'StreamIt Regression Test Log', contents)
 

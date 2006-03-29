@@ -1,6 +1,7 @@
 #! /usr/uns/bin/perl
-#
-# perl script to take the result of status2.xsl and determine the status of tests
+###############################################################################
+# perl script to take the result of status_summary.xsl and determine the 
+# status of tests
 #
 # xsltproc -o foo.out --novalid status_summary.xsl /home/bits8/streamit/regtest/latest/streams/results.xml
 # status_summary.pl foo.out > status_summary.txt
@@ -32,6 +33,7 @@
 # compile ERROR          similar -- often exceeded allowable compile time.
 #
 # we lump FAIL and ERROR together in this report, and report 'ERROR' as 'FAIL'
+###############################################################################
 
 use warnings;
 use strict;

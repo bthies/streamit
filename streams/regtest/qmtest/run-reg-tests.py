@@ -2,17 +2,17 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.31 2006-03-29 16:08:34 dimock Exp $
+# $Id: run-reg-tests.py,v 1.32 2006-03-29 17:29:18 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
 # since all of our other regtest stuff is for the QMTest world and
 # because this should be saner.
 
-# Javadoc crash:
+# Javadoc crash looks like:
 # 	at com.sun.tools.javadoc.Main.main(Main.java:31)
-# Javadoc wrnings
-#288 warnings    as last line, even with crash
+# should check for this.
+
 import email.MIMEText
 import os
 import os.path
@@ -275,6 +275,19 @@ class RunRegTests:
             self.javadocwarnings += data
         status = pop.wait()
 
+        self.javadocdetail = ''
+        pop = popen2.Popen4('cat '
+                            + os.path.join(self.working_dir,javadocLog)
+                            + ' | grep /warnings | sed '
+                            + "'" + 's/^.*\/streams//' + "'" )
+        while 1:
+            data = pop.fromchild.read()
+            if data == '':
+                break
+            self.javadocdetail += data
+        status = pop.wait()
+
+
         self.run_and_log(os.path.join(self.streamit_home, javadoc_error_script)
                          + " -o " + javadoc_error_dir,
                          "javadocErrorLog", "Generating javadoc error report")
@@ -360,6 +373,8 @@ is the QMTest results file.
         for line in sb:
             summary += line
         sb.close()
+
+        summary = summary + "\n\nJavaDoc warnings:\n" + self.javadocdetail
         
         self.mail_all(header + summary)
 

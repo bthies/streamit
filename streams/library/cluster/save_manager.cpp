@@ -7,8 +7,10 @@ queue <checkpoint_info*> save_manager::checkpoints;
 
 void save_manager::push_item(checkpoint_info *info) {
 
+  //fprintf(stderr, "save_manager:1 %s\n", "LOCK(&queue_lock);");
   LOCK(&queue_lock);
   checkpoints.push(info);
+  //fprintf(stderr, "save_manager:2 %s\n", "UNLOCK(&queue_lock);");
   UNLOCK(&queue_lock);
 }
 
@@ -16,6 +18,7 @@ checkpoint_info *save_manager::pop_item() {
 
   checkpoint_info *res;
 
+  //fprintf(stderr, "save_manager:3 %s\n", "LOCK(&queue_lock);");
   LOCK(&queue_lock);
 
   if (!checkpoints.empty()) {
@@ -28,6 +31,7 @@ checkpoint_info *save_manager::pop_item() {
     res = NULL;
   }    
 
+  //fprintf(stderr, "save_manager:4 %s\n", "UNLOCK(&queue_lock);");
   UNLOCK(&queue_lock);
 
   return res;

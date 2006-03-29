@@ -56,9 +56,11 @@ void *accept_thread(void *param) {
   //LOCK(&init_instance::accept_lock);
 
   if (init_instance::listen() == -1) {
+    UNLOCK(&init_instance::accept_lock);
     exit(-1);
   }
 
+  //fprintf(stderr, "init_instance:1 %s\n", "UNLOCK(&init_instance::accept_lock);");
   UNLOCK(&init_instance::accept_lock);
 
   return NULL;
@@ -222,7 +224,7 @@ void init_instance::initialize_sockets() {
 
       int sockets[2];
       if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
-        perror("opening stream socket pair");
+        perror("init_instance: opening stream socket pair");
         exit(-1);
       }
 
@@ -267,14 +269,18 @@ void init_instance::initialize_sockets() {
 
     pthread_t id;
   
+    //fprintf(stderr, "init_instance:2 %s\n", "LOCK(&accept_lock);");
     LOCK(&accept_lock);
+    //fprintf(stderr, "init_instance:3 %s\n", "LOCK(&bind_lock);");
     LOCK(&bind_lock);
 
     pthread_create(&id, NULL, accept_thread, (void*)"Thread");
   
   }  
 
+  //fprintf(stderr, "init_instance:4 %s\n", "LOCK(&bind_lock);");
   LOCK(&bind_lock);
+  //fprintf(stderr, "init_instance:5 %s\n", "UNLOCK(&bind_lock);");
   UNLOCK(&bind_lock);
 
   // make connections to other hosts etc.
@@ -300,7 +306,7 @@ void init_instance::initialize_sockets() {
       sock = open_socket::connect(ip_addr, 22222);
 
       if (sock == NULL) {
-	fprintf(stderr,"Trying again ...\n");
+	fprintf(stderr,"init_instance: Sleeping and retrying ...\n"); fflush(stderr);
 	sleep(1);     
       }
     }
@@ -324,7 +330,9 @@ void init_instance::initialize_sockets() {
 
   // wait for accept thread to finnish
 
+  //fprintf(stderr, "init_instance:6 %s\n", "LOCK(&accept_lock);");
   LOCK(&accept_lock);
+  //fprintf(stderr, "init_instance:7 %s\n", "UNLOCK(&accept_lock);");
   UNLOCK(&accept_lock);
 
   fprintf(stderr,"\n");
@@ -357,6 +365,9 @@ mysocket* init_instance::get_outgoing_socket(int from , int to, int type) {
   }
 }
 
+/*
+ * Seems to be entered with bind_lock LOCK'ed...
+ */
 
 int init_instance::listen() {
 
@@ -372,7 +383,8 @@ int init_instance::listen() {
   listenfd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (listenfd == -1) {
 
-    perror("socket()");
+    perror("init_instance: socket()");
+    UNLOCK(&bind_lock);
     return -1;
   }
 
@@ -386,7 +398,8 @@ int init_instance::listen() {
 			  (char*)&flag, sizeof flag);
   if (retval == -1) {
   
-    perror("setsockopt()");
+    perror("init_instance: setsockopt()");
+    UNLOCK(&bind_lock);
     return -1;
   }
 
@@ -400,7 +413,8 @@ int init_instance::listen() {
 
   if (retval == -1) {
   
-    perror("bind()");
+    perror("init_instance: bind()");
+    UNLOCK(&bind_lock);
     return -1;
   }
 
@@ -408,7 +422,8 @@ int init_instance::listen() {
 
   if (retval == -1) {
 
-    perror("listen()");
+    perror("init_instance: listen()");
+    UNLOCK(&bind_lock);
     return -1;
   }
 
@@ -416,12 +431,14 @@ int init_instance::listen() {
 
   if (retval == -1) {
 
-    perror("fcntl()");
+    perror("init_instance: fcntl()");
+    UNLOCK(&bind_lock);
     return -1;
   }
 
-  fprintf(stderr,"Socket bound and listening....done\n");
+  fprintf(stderr,"init_instance: Socket bound and listening....done\n");
   
+  //fprintf(stderr, "init_instance:8 %s\n", "UNLOCK(&bind_lock);");
   UNLOCK(&bind_lock);
 
 
@@ -457,7 +474,7 @@ int init_instance::listen() {
 
       if (sock == -1) {	
 
-	fprintf(stderr,"failed to accept socket\n");
+	fprintf(stderr,"init_instance: failed to accept socket\n");
 
       } else {
 	

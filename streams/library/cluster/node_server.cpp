@@ -16,6 +16,7 @@ void node_server::run(unsigned ccp_ip) {
 
     if (thread_init != NULL) thread_init();
 
+    //fprintf(stderr, "node_server: %s\n", "sleeping now..."); fflush(stderr);
     for (;;) {
       sleep(10);
 
@@ -49,6 +50,7 @@ netsocket *node_server::connect_to_ccp(unsigned ccp_ip) {
   for (;;) {
     sock = open_socket::connect(ccp_ip, 3000);
     if (sock != NULL) return sock;
+    //fprintf(stderr, "node_server::connect_to_ccp: sleep and retry open"); fflush(stderr);
     sleep(1);
   }
 }
@@ -251,12 +253,14 @@ vector<int> node_server::pause_proper(int thread_id) {
 
       *(info->get_state_flag()) = PAUSE_PROPER_REQUEST;
 
+      //fprintf(stderr, "node_server::pause_proper..."); fflush(stderr); 
       for (;;) {
 
 	usleep(10000); // sleep 1/100th of a second
 	if (*(info->get_state_flag()) == PAUSE_PROPER_ENTERED) break;
 
       }
+      //fprintf(stderr, "node_server::pause_proper: done\n"); fflush(stderr);
 	    
       resp.push_back(0);
       return resp;
@@ -282,6 +286,7 @@ vector<int> node_server::pause_any(int thread_id) {
 
       *(info->get_state_flag()) = PAUSE_ANY_REQUEST;
 
+      //fprintf(stderr, "node_server::pause_any..."); fflush(stderr); 
       for (;;) {
 
 	usleep(10000); // sleep 1/100th of a second
@@ -297,6 +302,7 @@ vector<int> node_server::pause_any(int thread_id) {
 	}
 
       }
+      //fprintf(stderr, "node_server::pause_any: done\n"); fflush(stderr);
 	    
       return resp;
     }

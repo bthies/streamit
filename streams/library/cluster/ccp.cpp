@@ -122,7 +122,7 @@ int ccp::run_ccp() {
     return -1;
   }
 
-  fprintf(stderr,"Socket bound and listening....done\n");
+  fprintf(stderr,"ccp: Socket bound and listening....done\n");
   
   struct timeval rwait;
 
@@ -168,9 +168,9 @@ int ccp::run_ccp() {
 	  */
 
 	  if ( fcntl(fd, F_SETFL, O_NONBLOCK) == -1 ) {
-	    
+	    perror("ccp: Failed to set non-blocking! fcntl(): ");
 	    close(fd);
-	    fprintf(stderr,"Failed to set non-blocking!\n");	  
+	    //fprintf(stderr,"Failed to set non-blocking!\n");	  
 	    
 	  } else {
 	  
@@ -311,14 +311,14 @@ void ccp::handle_change_in_number_of_nodes() {
       
 	fprintf(stderr,"Node: (%d.%d.%d.%d) ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
 	if (ret == 1) {
-	  fprintf(stderr,"All threads stoped\n");
+	  fprintf(stderr,"All threads stopped\n");
 	} else {
-	  fprintf(stderr,"Unexpected error!\n");
+	  fprintf(stderr,"ccp: Unexpected error!\n");
 	}
 
       }
 
-      fprintf(stderr,"Sleep 5 seconds...");
+      fprintf(stderr,"cpp: Sleep 5 seconds..."); fflush(stderr);
       sleep(5);
       fprintf(stderr,"Done.\n");
 
@@ -330,7 +330,7 @@ void ccp::handle_change_in_number_of_nodes() {
 
       int res = read_config_file(name);
       if (res == -1) {
-	fprintf(stderr,"Failed!\n"); 
+	fprintf(stderr,"ccp: Failed!\n"); 
 	return;
       } else {
 	fprintf(stderr,"Success!\n");
@@ -338,7 +338,7 @@ void ccp::handle_change_in_number_of_nodes() {
 
       assign_nodes_to_partition();
       
-      fprintf(stderr,"Assignement of threads to nodes...\n");
+      fprintf(stderr,"Assignment of threads to nodes...\n");
       
       for (int t = 0; t < number_of_threads; t++) {
 	unsigned ip = machines[partition[t]];

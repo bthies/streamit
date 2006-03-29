@@ -74,7 +74,7 @@ netsocket *open_socket::listen(short port) {
     return NULL;
   }
 
-  //fprintf(stderr,"Socket bound and listening....done\n");
+  //fprintf(stderr,"open_socket: Socket bound and listening....done\n");
   
 
   ///////////////////////////////////////////
@@ -117,7 +117,8 @@ netsocket *open_socket::listen(short port) {
 
       if (sock == -1) {	
 
-	fprintf(stderr,"failed\n");
+	perror("open_socket: close failed");
+	//fprintf(stderr,"failed\n");
 
 	return NULL;
 
@@ -173,7 +174,7 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
 
   if (::connect(sock, (struct sockaddr *)&sa, sizeof(sa))) {
 
-    fprintf(stderr,"failed to connect to ");
+    fprintf(stderr,"open_socket: failed to connect to ");
     print_ip(stderr, ipaddr);
     fprintf(stderr,"\n");
     return NULL; // Could not connect to the host

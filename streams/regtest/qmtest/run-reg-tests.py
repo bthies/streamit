@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.32 2006-03-29 17:29:18 dimock Exp $
+# $Id: run-reg-tests.py,v 1.33 2006-03-30 19:52:17 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -202,7 +202,7 @@ class RunRegTests:
         # overlap since we are getting cvs history from the start of the
         # last run until now, rather than from the start of the cvs checkout
         # for the last run until the start of the cvs checkout for this run.
-        if cvs_date != '':
+        if self.cvs_date != '':
             try:
                 cvs_command = 'cvs history -x AMR -a -D "' + self.cvs_date + '"'
                 os.chdir(self.working_dir + '/streams')

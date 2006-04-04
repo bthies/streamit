@@ -29,6 +29,12 @@
 
 #include "mpeg2enc.h"
 
+// Uncomment any of these to specify that an encoding step should be skipped.
+// May get vbv_overflow errors but that's ok
+// #define SKIP_PREDICTION
+// #define SKIP_BLOCK_ENCODE
+// #define SKIP_BLOCK_DECODE
+
 /* choose between declaration (GLOBAL undefined)
  * and definition (GLOBAL defined)
  * GLOBAL is defined in exactly one file (mpeg2enc.c)

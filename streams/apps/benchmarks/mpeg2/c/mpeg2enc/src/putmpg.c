@@ -52,7 +52,11 @@ int cc;
   for (n=1; n<64; n++)
   {
     /* use appropriate entropy scanning pattern */
+#ifndef SKIP_BLOCK_ENCODE
     signed_level = blk[(altscan ? alternate_scan : zig_zag_scan)[n]];
+#else
+    signed_level = blk[n];
+#endif
     if (signed_level!=0)
     {
       putAC(run,signed_level,intravlc);

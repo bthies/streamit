@@ -103,18 +103,24 @@ unsigned char *frame;
       /* quantize macroblock */
       if (mb_type & MB_INTRA)
       {
-        for (comp=0; comp<block_count; comp++)
+        for (comp=0; comp<block_count; comp++) {
+#ifndef SKIP_BLOCK_ENCODE          
           quant_intra(blocks[k*block_count+comp],blocks[k*block_count+comp],
                       dc_prec,intra_q,mbinfo[k].mquant);
+#endif
+        }
         mbinfo[k].cbp = cbp = (1<<block_count) - 1;
       }
       else
       {
         cbp = 0;
-        for (comp=0;comp<block_count;comp++)
+        for (comp=0;comp<block_count;comp++) {
+#ifndef SKIP_BLOCK_ENCODE
           cbp = (cbp<<1) | quant_non_intra(blocks[k*block_count+comp],
                                            blocks[k*block_count+comp],
                                            inter_q,mbinfo[k].mquant);
+#endif
+        }
 
         mbinfo[k].cbp = cbp;
 

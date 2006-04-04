@@ -98,7 +98,6 @@ short blocks[][64];
           if (pict_struct==BOTTOM_FIELD)
             offs += chrom_width;
         }
-
         sub_pred(pred[cc]+offs,cur[cc]+offs,lx,blocks[k*block_count+n]);
         fdct(blocks[k*block_count+n]);
       }
@@ -187,8 +186,13 @@ short *blk;
 
   for (j=0; j<8; j++)
   {
-    for (i=0; i<8; i++)
+    for (i=0; i<8; i++) {
+#ifndef SKIP_PREDICTION
       cur[i] = clp[blk[i] + pred[i]];
+#else
+      cur[i] = clp[blk[i]];
+#endif
+    }
     blk+= 8;
     cur+= lx;
     pred+= lx;
@@ -205,8 +209,12 @@ short *blk;
 
   for (j=0; j<8; j++)
   {
-    for (i=0; i<8; i++)
-      blk[i] = cur[i] - pred[i];
+    for (i=0; i<8; i++) {
+      blk[i] = cur[i];
+#ifndef SKIP_PREDICTION
+      blk[i] -= pred[i];
+#endif
+    }
     blk+= 8;
     cur+= lx;
     pred+= lx;

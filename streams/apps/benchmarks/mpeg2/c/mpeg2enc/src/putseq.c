@@ -203,17 +203,22 @@ void putseq()
 
       pict_struct = topfirst ? TOP_FIELD : BOTTOM_FIELD;
 
+#ifndef SKIP_PREDICTION
       motion_estimation(oldorgframe[0],neworgframe[0],
                         oldrefframe[0],newrefframe[0],
                         neworg[0],newref[0],
                         sxf,syf,sxb,syb,mbinfo,0,0);
 
       predict(oldrefframe,newrefframe,predframe,0,mbinfo);
+#endif
+#ifndef SKIP_BLOCK_ENCODE
       dct_type_estimation(predframe[0],neworg[0],mbinfo);
       transform(predframe,neworg,mbinfo,blocks);
+#endif
 
       putpict(neworg[0]);
 
+#ifndef SKIP_BLOCK_DECODE
       for (k=0; k<mb_height2*mb_width; k++)
       {
         if (mbinfo[k].mb_type & MB_INTRA)
@@ -227,6 +232,7 @@ void putseq()
       }
 
       itransform(predframe,newref,mbinfo,blocks);
+#endif
       calcSNR(neworg,newref);
       stats();
 
@@ -250,17 +256,22 @@ void putseq()
         syf = motion_data[0].syf;
       }
 
+#ifndef SKIP_PREDICTION
       motion_estimation(oldorgframe[0],neworgframe[0],
                         oldrefframe[0],newrefframe[0],
                         neworg[0],newref[0],
                         sxf,syf,sxb,syb,mbinfo,1,ipflag);
 
       predict(oldrefframe,newrefframe,predframe,1,mbinfo);
+#endif
+#ifndef SKIP_BLOCK_ENCOED
       dct_type_estimation(predframe[0],neworg[0],mbinfo);
       transform(predframe,neworg,mbinfo,blocks);
+#endif
 
       putpict(neworg[0]);
 
+#ifndef SKIP_BLOCK_DECODE
       for (k=0; k<mb_height2*mb_width; k++)
       {
         if (mbinfo[k].mb_type & MB_INTRA)
@@ -274,6 +285,7 @@ void putseq()
       }
 
       itransform(predframe,newref,mbinfo,blocks);
+#endif
       calcSNR(neworg,newref);
       stats();
     }
@@ -287,17 +299,21 @@ void putseq()
        * and reconstructed frames (...refframe) for half pel search
        */
 
+#ifndef SKIP_PREDICTION
       motion_estimation(oldorgframe[0],neworgframe[0],
                         oldrefframe[0],newrefframe[0],
                         neworg[0],newref[0],
                         sxf,syf,sxb,syb,mbinfo,0,0);
 
       predict(oldrefframe,newrefframe,predframe,0,mbinfo);
+#endif
+#ifndef SKIP_BLOCK_ENCODE
       dct_type_estimation(predframe[0],neworg[0],mbinfo);
       transform(predframe,neworg,mbinfo,blocks);
-
+#endif
       putpict(neworg[0]);
 
+#ifndef SKIP_BLOCK_DECODE
       for (k=0; k<mb_height*mb_width; k++)
       {
         if (mbinfo[k].mb_type & MB_INTRA)
@@ -311,6 +327,7 @@ void putseq()
       }
 
       itransform(predframe,newref,mbinfo,blocks);
+#endif
       calcSNR(neworg,newref);
       stats();
     }

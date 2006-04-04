@@ -79,3 +79,15 @@ unsigned char *frame[];
   fwrite(frame[2],1,chrom_hsize*chrom_vsize,fd);
   fclose(fd);
 }
+
+
+
+
+
+
+
+
+
+
+
+

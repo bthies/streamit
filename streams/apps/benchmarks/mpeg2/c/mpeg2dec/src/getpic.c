@@ -106,7 +106,9 @@ int bitstream_framenum, sequence_framenum;
 
   /* write or display current or previously decoded reference frame */
   /* ISO/IEC 13818-2 section 6.1.1.11: Frame reordering */
-  frame_reorder(bitstream_framenum, sequence_framenum);
+#ifndef SKIP_FRAME_REORDER
+    frame_reorder(bitstream_framenum, sequence_framenum);
+#endif
 
   if (picture_structure!=FRAME_PICTURE)
     Second_Field = !Second_Field;
@@ -248,7 +250,7 @@ resync: /* if Fault_Flag: resynchronize to next next_start_code */
     /* ISO/IEC 13818-2 section 7.6 */
     motion_compensation(MBA, macroblock_type, motion_type, PMV, 
       motion_vertical_field_select, dmvector, stwtype, dct_type);
-
+    
 
     /* advance to next macroblock */
     MBA++;
@@ -808,9 +810,11 @@ int dct_type;
   by = 16*(MBA/mb_width);
 
   /* motion compensation */
+#ifndef SKIP_PREDICTION
   if (!(macroblock_type & MACROBLOCK_INTRA))
     form_predictions(bx,by,macroblock_type,motion_type,PMV,
-      motion_vertical_field_select,dmvector,stwtype);
+                     motion_vertical_field_select,dmvector,stwtype);
+#endif
   
   /* SCALABILITY: Data Partitioning */
   if (base.scalable_mode==SC_DP)
@@ -819,23 +823,25 @@ int dct_type;
   /* copy or add block data into picture */
   for (comp=0; comp<block_count; comp++)
   {
-    /* SCALABILITY: SNR */
-    /* ISO/IEC 13818-2 section 7.8.3.4: Addition of coefficients from 
-       the two a layers */
-    if (Two_Streams && enhan.scalable_mode==SC_SNR)
-      Sum_Block(comp); /* add SNR enhancement layer data to base layer */
-
-    /* MPEG-2 saturation and mismatch control */
-    /* base layer could be MPEG-1 stream, enhancement MPEG-2 SNR */
-    /* ISO/IEC 13818-2 section 7.4.3 and 7.4.4: Saturation and Mismatch control */
-    if ((Two_Streams && enhan.scalable_mode==SC_SNR) || ld->MPEG2_Flag)
-      Saturate(ld->block[comp]);
-
-    /* ISO/IEC 13818-2 section Annex A: inverse DCT */
-    if (Reference_IDCT_Flag)
-      Reference_IDCT(ld->block[comp]);
-    else
-      Fast_IDCT(ld->block[comp]);
+#ifndef SKIP_BLOCK_DECODE
+      /* SCALABILITY: SNR */
+      /* ISO/IEC 13818-2 section 7.8.3.4: Addition of coefficients from 
+         the two a layers */
+      if (Two_Streams && enhan.scalable_mode==SC_SNR)
+        Sum_Block(comp); /* add SNR enhancement layer data to base layer */
+      
+      /* MPEG-2 saturation and mismatch control */
+      /* base layer could be MPEG-1 stream, enhancement MPEG-2 SNR */
+      /* ISO/IEC 13818-2 section 7.4.3 and 7.4.4: Saturation and Mismatch control */
+      if ((Two_Streams && enhan.scalable_mode==SC_SNR) || ld->MPEG2_Flag)
+        Saturate(ld->block[comp]);
+      
+      /* ISO/IEC 13818-2 section Annex A: inverse DCT */
+      if (Reference_IDCT_Flag)
+        Reference_IDCT(ld->block[comp]);
+      else
+        Fast_IDCT(ld->block[comp]);
+#endif
     
     /* ISO/IEC 13818-2 section 7.6.8: Adding prediction and coefficient data */
     Add_Block(comp,bx,by,dct_type,(macroblock_type & MACROBLOCK_INTRA)==0);

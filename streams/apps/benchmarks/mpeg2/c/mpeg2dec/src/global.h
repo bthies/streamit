@@ -29,6 +29,11 @@
 
 #include "mpeg2dec.h"
 
+// Uncomment any of these to specify that a decoding step should be skipped.
+// #define SKIP_PREDICTION
+// #define SKIP_BLOCK_DECODE
+// #define SKIP_FRAME_REORDER
+
 /* choose between declaration (GLOBAL undefined)
  * and definition (GLOBAL defined)
  * GLOBAL is defined in exactly one file mpeg2dec.c)

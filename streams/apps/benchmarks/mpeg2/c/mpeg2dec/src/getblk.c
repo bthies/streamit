@@ -406,11 +406,12 @@ int dc_dct_pred[];
     if (Trace_Flag)
       printf("): %d/%d",run,sign ? -val : val);
 #endif /* TRACE */
-
-    j = scan[ld1->alternate_scan][i];
-    val = (val * ld1->quantizer_scale * qmat[j]) >> 4;
-    bp[j] = sign ? -val : val;
-    nc++;
+#ifndef SKIP_BLOCK_DECODE
+      j = scan[ld1->alternate_scan][i];
+      val = (val * ld1->quantizer_scale * qmat[j]) >> 4;
+      bp[j] = sign ? -val : val;
+      nc++;
+#endif
 
     if (base.scalable_mode==SC_DP && nc==base.priority_breakpoint-63)
       ld = &enhan;
@@ -558,13 +559,15 @@ int comp;
     if (Trace_Flag)
       printf("): %d/%d",run,sign?-val:val);
 #endif /* TRACE */
-
-    j = scan[ld1->alternate_scan][i];
-    val = (((val<<1)+1) * ld1->quantizer_scale * qmat[j]) >> 5;
-    bp[j] = sign ? -val : val;
-    nc++;
+#ifndef SKIP_BLOCK_DECODE
+      j = scan[ld1->alternate_scan][i];
+      val = (((val<<1)+1) * ld1->quantizer_scale * qmat[j]) >> 5;
+      bp[j] = sign ? -val : val;
+      nc++;
+#endif
 
     if (base.scalable_mode==SC_DP && nc==base.priority_breakpoint-63)
       ld = &enhan;
   }
 }
+

@@ -82,3 +82,21 @@ $ make docs
 This will generate html files documenting the API for the various
 StreamIt files. For details on using functions in this library, please
 make the documentation and refer to that.
+
+NOTES ON C REFERENCE IMPLEMENTATION
+
+The C reference implementation of the MPEG-2 encoder and decoder is
+committed for convenience and comparison. A number of precompiler
+directives have been added which allow one to compile either the
+decoder or encoder with certain functionality left out - i.e. 
+motion prediction, block decoding, etc. If any functionality is left out
+the decoder or encoder will not produce a valid MPEG file as output.
+However, for performance and comparison information these modes may be
+valuable. 
+
+To compile either the encoder or decoder with certain support left out,
+edit the global.h file in the src/ directory for the appropriate program.
+Near the top of the file are a series of #define comments which are
+commented out and begin with SKIP_<something>. There are also some comments
+indicating the added lines. These should be uncommented to skip certain
+steps.

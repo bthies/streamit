@@ -31,7 +31,9 @@ void object_write_buffer::write(void *data, int dsize) {
 
   if (this->size + dsize > OWB_BUFFER_SIZE) {
     fprintf(stderr, "object_write_buffer::write - buffer overflow!\n");
-    exit(0);
+    fflush(stderr);
+    fflush(stdout);
+    exit(1);
   }
   
   memcpy(buf + this->size, data, dsize);
@@ -43,7 +45,9 @@ void object_write_buffer::read(void *data, int dsize) {
 
   if (read_offset + dsize > OWB_BUFFER_SIZE) {
     fprintf(stderr, "object_write_buffer::read - buffer overflow!\n");
-    exit(0);
+    fflush(stderr);
+    fflush(stdout);
+    exit(1);
   }
 
   memcpy(data, buf + read_offset, dsize);

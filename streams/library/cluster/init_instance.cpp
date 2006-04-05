@@ -57,6 +57,8 @@ void *accept_thread(void *param) {
 
   if (init_instance::listen() == -1) {
     UNLOCK(&init_instance::accept_lock);
+    fflush(stdout);
+    fflush(stderr);
     exit(-1);
   }
 
@@ -225,6 +227,8 @@ void init_instance::initialize_sockets() {
       int sockets[2];
       if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
         perror("init_instance: opening stream socket pair");
+	fflush(stderr);
+	fflush(stdout);
         exit(-1);
       }
 

@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.CType;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.cluster.ClusterUtils;
 import at.dms.kjc.common.CodegenPrintWriter;

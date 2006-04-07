@@ -463,6 +463,17 @@ class FusionCode {
             p.print("extern void __init_sdep_"+id+"();\n");
             p.print("extern void check_messages__"+id+"();\n");
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
+	    if ((node.contents instanceof SIRFilter) &&
+		!(node.contents instanceof SIRFileReader) &&
+		!(node.contents instanceof SIRFileWriter)) {
+		
+		CType input_type = ((SIRFilter)node.contents).getInputType();
+		CType output_type = ((SIRFilter)node.contents).getOutputType();
+
+		p.println("extern void "+get_work_function(node.contents)+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out);");
+		p.println("extern void "+get_work_function(node.contents)+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2);");
+
+	    }
 
             /*
               String work_n = get_work_n_function(node.contents);

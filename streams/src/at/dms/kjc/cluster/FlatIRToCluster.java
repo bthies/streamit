@@ -50,6 +50,9 @@ public class FlatIRToCluster extends InsertTimers implements
     // true if generating code for global struct
     protected boolean global = false;
 
+    // true if push and pop from provided buffers!!
+    protected boolean mod_push_pop = false;
+
     // ?? set up in ClusterCode.generateGlobal
     public String helper_package = null;
 
@@ -223,6 +226,9 @@ public class FlatIRToCluster extends InsertTimers implements
         // create code for this filter to include in 
         // ClusterCodegenerator.generateRunFunction
         cleanupCode = new Vector();
+
+	//PPAnalyze pp = new PPAnalyze();
+	//self.getWork().accept(pp);
         
         filter = self;        
         selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
@@ -927,6 +933,36 @@ public class FlatIRToCluster extends InsertTimers implements
         // | Work Function (int ____n) |
         // +=============================+
 
+	if (!(self instanceof SIRFileReader) &&
+	    !(self instanceof SIRFileWriter)) {
+
+	    p.println();
+	    p.println("void "+work.getName()+"__"+selfID+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out) {");
+	    p.print("  for (; (0 < ____n); ____n--)\n");
+	    
+	    mod_push_pop = true;
+	    work.getBody().accept(this);
+	    mod_push_pop = false;
+	    
+	    p.println("}\n");
+
+	}
+
+	if (!(self instanceof SIRFileReader) &&
+	    !(self instanceof SIRFileWriter)) {
+
+	    p.println();
+	    p.println("void "+work.getName()+"__"+selfID+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2) {");
+	    p.print("  for (; (0 < ____n); (____n--, ____in+=s1, ____out+=s2))\n");
+	    
+	    mod_push_pop = true;
+	    work.getBody().accept(this);
+	    mod_push_pop = false;
+	    
+	    p.println("}\n");
+
+	}
+
         JBlock block = new JBlock(null, new JStatement[0], null);
 
         JVariableDefinition counter = new JVariableDefinition(null, 0,
@@ -1004,6 +1040,8 @@ public class FlatIRToCluster extends InsertTimers implements
 
             work_n.accept(this);
         }
+
+	
 
         // +=============================+
         // | Check Messages |
@@ -2278,6 +2316,14 @@ public class FlatIRToCluster extends InsertTimers implements
 
         NetStream in = RegisterStreams.getFilterInStream(filter);
         //print(in.consumer_name()+".peek(");
+
+	if (mod_push_pop) {
+	    p.print("(*(____in+");
+	    num.accept(this);
+	    p.print("))");
+	    return;
+	}
+
         p.print(ClusterUtils.peekName(selfID) + "(");
         num.accept(this);
         p.print(")");
@@ -2289,8 +2335,15 @@ public class FlatIRToCluster extends InsertTimers implements
 
         NetStream in = RegisterStreams.getFilterInStream(filter);
 	if (self.getNumPop() == 1)  {
+	    if (mod_push_pop) {
+		p.print("(*____in++)");
+		return;
+	    }
             p.print("__pop__" + selfID + "()");
         } else {
+	    if (mod_push_pop) {
+		p.print("assert(false);");
+	    }
             p.print("__pop__" + selfID + "(" + self.getNumPop() + ")");
         }
     }
@@ -2299,6 +2352,13 @@ public class FlatIRToCluster extends InsertTimers implements
 
     private void pushScalar(SIRPushExpression self, CType tapeType,
                             JExpression val) {
+	
+	if (mod_push_pop) {
+	    p.print("((*____out++)=");
+	    val.accept(this);
+	    p.print(")");
+	    return;
+	}
 
         p.print(ClusterUtils.pushName(selfID) + "(");
         val.accept(this);

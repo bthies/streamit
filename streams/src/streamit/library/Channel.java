@@ -26,15 +26,12 @@
 
 package streamit.library;
 
-import java.util.*;
 import streamit.misc.*;
 
 public class Channel extends streamit.misc.DestroyedClass
 {
     protected Class type;
     Operator source = null, sink = null;
-
-    LinkedList queue;
 
     Integer popPushCount = null;
     Integer peekCount = null;
@@ -195,8 +192,8 @@ public class Channel extends streamit.misc.DestroyedClass
                           "Internal message:\n" +
                           "maxSize should equal -1 " +
                           "(representing not a scheduled buffer)\n" +
-                          "Queue: " + queue +
-                          ".size: " + queue.size() +
+                          "Queue: " + myqueue +
+                          ".size: " + myqueue.size() +
                           " amount is: " + amount +
                           " and maxSize is: " + maxSize);
                 }
@@ -528,7 +525,7 @@ public class Channel extends streamit.misc.DestroyedClass
         } else {
 
             Object data;
-            data = queue.get (index);
+            data = wgqueue_obj.elem(index);
             assert data != null;
             
             // make a copy of structures in case they are subsequently
@@ -698,7 +695,7 @@ public class Channel extends streamit.misc.DestroyedClass
         } else if (type == Bit.TYPE) {
             wgqueue_bit.setBufferSize(size);
         } else {
-            assert queue.size () <= maxSize;
+            assert wgqueue_obj.size () <= maxSize;
         }
     }
 

@@ -73,8 +73,10 @@ complex->complex filter divide_by_N(int len) {
 
   work push len pop len {
 
-    for(int i=0; i<len; i++)
-      push(pop()/len);
+      for(int i=0; i<len; i++) {
+	  complex popped = pop();
+	  push(popped/len);
+      }
   }
 }
 

@@ -169,15 +169,17 @@ complex->complex filter calculate_matrix(int len) {
 
   work push len*len pop len*len + 1 {
 
+    complex one = 1+0i;
     complex beta = pop();
     beta = -2/beta;
 
     for(int i=0; i<len; i++) {
       for(int j=0; j<len; j++) {
+	complex popped = pop();
         if(i==j)
-          push(1 + beta*pop());
+          push(one + beta*popped);
         else
-          push(beta*pop());
+          push(beta*popped);
       }
     }
   }

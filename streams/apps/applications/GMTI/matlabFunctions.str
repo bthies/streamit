@@ -59,8 +59,9 @@ complex->complex filter MatrixMultComplex1(int l, int p, int r) {
          for(int k=0; k<p; k++) {
 // want the ith row, kth col of first matrix times
 // kth row, jth column of second matrix, summed over k
-
-           sum = sum + peek(i*p + k)*peek(l*p + k*r + j);
+	     complex peeka =  peek(i*p + k);
+	     complex peekb = peek(l*p + k*r + j);
+           sum = sum + peeka*peekb;
 
          }
          push(sum);
@@ -176,12 +177,26 @@ void->float filter Hamming(int N) {
 
 void->float filter cheb_taps(int N) {
 
-  int num_a = 31; float[num_a] a;
-  int num_b = 30; float[num_b] b;
+    /* Drives bug in front end: fields are not necessarily initialized
+    * in the order in which they defined.
+    * https://www2.cag.csail.mit.edu/rt/Ticket/Display.html?id=266
+    * This led to 0-length arrays being created 
+    *
+    * kluge to fis was to set array sizes using numbers rather than variables
+    * the numbers and variables must be ket in synch with each other. 
+    */
+
+  int num_a = 31; 
+  // float[num_a] a;
+  float[31] a;
+  int num_b = 30; 
+  // float[num_b] b;
+  float[30] b;
 
   int num_TEMP = 7; int num2_TEMP = 6;
 
-  float[num_TEMP] c; float[num2_TEMP] c2;
+  //  float[num_TEMP] c; float[num2_TEMP] c2;
+  float[7] c; float[6] c2;
 
   init {
 
@@ -448,7 +463,8 @@ complex->complex filter sum_vectorComplex(int N) {
     complex total = 0.0 + 0.0i;
 
     for(int i=0; i<N; i++) {
-      total = total + pop();
+	complex popped = pop();
+	total = total + popped;
     }
     push(total);
   }
@@ -774,9 +790,10 @@ complex->complex filter f_substitutions_c(int n) {
       temp_count.real = 0.0;
       temp_count.imag = 0.0;
 
-      for(int j=0; j<i; j++)
-        temp_count += pop()*s[j];  // multiply row entries by previously calculated solutions
-
+      for(int j=0; j<i; j++) {
+	complex popped = pop();
+        temp_count += popped*s[j];  // multiply row entries by previously calculated solutions
+      }
       temp_l = pop();
 
       for(int j=i+1; j<n; j++)
@@ -831,9 +848,10 @@ complex->complex filter convert_to_square_cols(int m, int n) {
 
     for(int i=0; i<m; i++) {
 
-      for(int j=0; j<m; j++)
-        push(pop());
-
+	for(int j=0; j<m; j++) {
+	    complex popped = pop();
+	    push(popped);
+	}
       for(int j=m; j<n; j++)
         pop();
     }
@@ -852,8 +870,10 @@ complex->complex filter convert_to_square_rows(int m, int n) {
   work push n*n pop m*n {
 
     for(int i=0; i<n; i++) 
-      for(int j=0; j<n; j++)
-        push(pop());
+	for(int j=0; j<n; j++) {
+	  complex popped = pop();
+	  push(popped);
+	}
 
     for(int i=n; i<m; i++)
       for(int j=0; j<n; j++)
@@ -892,8 +912,10 @@ complex->complex filter divide_by_constant_c(int len) {
   work push len pop len+1 {
     val = pop();
 
-    for(int i=0; i<len; i++) 
-      push(pop()/val);
+    for(int i=0; i<len; i++) {
+      complex popped = pop();
+      push(popped/val);
+    }
   }
 }
 
@@ -928,8 +950,10 @@ complex->complex filter multiply_by_constant_c(int len) {
   work push len pop len+1 {
     val = pop();
 
-    for(int i=0; i<len; i++) 
-      push(pop()*val);
+    for(int i=0; i<len; i++) {
+	complex popped = pop();
+	push(popped*val);
+    }
   }
 }
 
@@ -958,8 +982,10 @@ complex->complex filter addvalComplex(complex val, int N) {
 
   work push N pop N {
 
-    for(int i=0; i<N; i++)
-      push(pop()+val);
+      for(int i=0; i<N; i++) {
+	  complex popped = pop();
+	  push(popped+val);
+      }
   }
 }
 
@@ -1003,8 +1029,10 @@ complex->complex filter mult_valComplex(complex val, int N) {
 
   work push N pop N {
 
-    for(int i=0; i<N; i++)
-      push(pop()*val);
+      for(int i=0; i<N; i++) {
+	  complex popped = pop();
+	  push(popped*val);
+      }
   }
 }
 
@@ -1018,8 +1046,10 @@ complex->complex filter div_valComplex(complex val, int N) {
 
   work push N pop N {
 
-    for(int i=0; i<N; i++)
-      push(pop()/val);
+      for(int i=0; i<N; i++) {
+	  complex popped = pop();
+	  push(popped/val);
+      }
   }
 }
 
@@ -1146,8 +1176,9 @@ complex->complex filter sqr_sumComplex(int len) {
     complex sum_c;
 
     for(int i=0; i<len; i++) {
-      temp = abs(pop());
-      sum += temp*temp;
+	complex popped = pop();
+	temp = abs(popped);
+	sum += temp*temp;
     }
     sum_c.real = sum;
     sum_c.imag = 0.0;
@@ -1188,8 +1219,9 @@ complex->complex filter normComplex(int len) {
     complex sum_c;
     
     for(int i=0; i<len; i++) {
-      temp = abs(pop());
-      sum += temp*temp;
+	complex popped = pop();
+	temp = abs(popped);
+	sum += temp*temp;
     }
     sum_c.real = sqrt(sum);
     sum_c.imag = 0.0;
@@ -1360,8 +1392,10 @@ complex->complex filter exp_vector(int len) {
 
   work push len pop len {
 
-    for(int i=0; i<len; i++)
-      push(exp(pop()));
+      for(int i=0; i<len; i++) {
+	  complex popped = pop(); 
+	  push(exp(popped));
+      }
   }
 }
 
@@ -1375,8 +1409,10 @@ complex->complex filter sin_vector(int len) {
 
   work push len pop len {
 
-    for(int i=0; i<len; i++)
-      push(sin(pop()));
+      for(int i=0; i<len; i++) {
+	  complex popped = pop();
+	  push(sin(popped));
+      }
   }
 }
 
@@ -1393,8 +1429,9 @@ complex->complex filter abs_vector(int len) {
     complex temp;
 
     for(int i=0; i<len; i++) {
-      temp.real = abs(pop());
-      push(temp);
+	complex popped = pop();
+	temp.real = abs(popped);
+	push(temp);
     }
   }
 }
@@ -1413,8 +1450,9 @@ complex->complex filter sqr_vector(int len) {
     complex temp;
 
     for(int i=0; i<len; i++) {
-      temp = abs(pop());
-      push(temp*temp);
+	complex popped = pop();
+	temp = abs(popped);
+	push(temp*temp);
     }
   }
 }

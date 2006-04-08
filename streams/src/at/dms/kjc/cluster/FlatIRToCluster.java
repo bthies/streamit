@@ -933,6 +933,8 @@ public class FlatIRToCluster extends InsertTimers implements
         // | Work Function (int ____n) |
         // +=============================+
 
+	p.println("\n\n#ifdef BUFFER_MERGE\n");
+
 	if (!(self instanceof SIRFileReader) &&
 	    !(self instanceof SIRFileWriter) &&
 	    (in != null && out != null)) {
@@ -964,6 +966,8 @@ public class FlatIRToCluster extends InsertTimers implements
 	    p.println("}\n");
 
 	}
+
+	p.println("\n#endif // BUFFER_MERGE\n\n");
 
         JBlock block = new JBlock(null, new JStatement[0], null);
 

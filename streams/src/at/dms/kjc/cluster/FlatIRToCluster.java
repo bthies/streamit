@@ -934,7 +934,8 @@ public class FlatIRToCluster extends InsertTimers implements
         // +=============================+
 
 	if (!(self instanceof SIRFileReader) &&
-	    !(self instanceof SIRFileWriter)) {
+	    !(self instanceof SIRFileWriter) &&
+	    (in != null && out != null)) {
 
 	    p.println();
 	    p.println("void "+work.getName()+"__"+selfID+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out) {");
@@ -949,7 +950,8 @@ public class FlatIRToCluster extends InsertTimers implements
 	}
 
 	if (!(self instanceof SIRFileReader) &&
-	    !(self instanceof SIRFileWriter)) {
+	    !(self instanceof SIRFileWriter) &&
+	    (in != null && out != null)) {
 
 	    p.println();
 	    p.println("void "+work.getName()+"__"+selfID+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2) {");

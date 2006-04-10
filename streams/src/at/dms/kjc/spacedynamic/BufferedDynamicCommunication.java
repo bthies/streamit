@@ -135,10 +135,7 @@ public class BufferedDynamicCommunication {
             block.addStatement(body);
         }
         
-        
-        JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                                                              .getBody());
-
+        JBlock workBlock = RawExecutionCode.executeWorkFunction(filter);
         // if we are in debug mode, print out that the filter is firing
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             block.addStatement(new SIRPrintStatement(null, new JStringLiteral(

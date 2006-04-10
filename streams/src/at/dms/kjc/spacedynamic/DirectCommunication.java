@@ -16,6 +16,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
 import at.dms.kjc.flatgraph.*;
+import at.dms.kjc.common.*;
 
 //if 
 //not 2 stage
@@ -72,11 +73,13 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
             return false;
         if (filter instanceof SIRTwoStageFilter)
             return false;
+        if (PeekFinder.findPeek(filter.getWork())) {
+            System.out.println("*** Found Peek! ***");
+            return false;
+        }
         if (filter.getPeekInt() > filter.getPopInt())
             return false;
-        if (CommunicationOutsideWork.check(filter))
-            return false;
-        if (PeekFinder.findPeek(filter.getWork()))
+        if (!dynamicInput && PeekPopPushInHelper.check(filter))
             return false;
         // must popping a scalar
         if (filter.getInputType().isClassType()
@@ -157,10 +160,8 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         //if we execute in the init stage, then create the loop'ed work function
         if (initMult > 0) {
             //inline the work function in a while loop
-            JBlock workInitBlock = 
-                (JBlock)ObjectDeepCloner.
-                deepCopy(filter.getWork().getBody());
-        
+            JBlock workInitBlock = RawExecutionCode.executeWorkFunction(filter);
+                
             //call work function for init stage????
             statements.addStatement
                 (RawExecutionCode.makeForLoop(workInitBlock, 
@@ -181,8 +182,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         }
 
         // inline the work function in a while loop
-        JBlock workBlock = (JBlock) ObjectDeepCloner.deepCopy(filter.getWork()
-                                                              .getBody());
+        JBlock workBlock = RawExecutionCode.executeWorkFunction(filter);
 
         if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
             statements.addStatement(new SIRPrintStatement(null,
@@ -300,39 +300,8 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
             return null;
         }
     }
-
-    static class CommunicationOutsideWork extends SLIREmptyVisitor {
-        private static boolean found;
-
-        // returns true if we find communication statements/expressions
-        // outside of the work function (i.e. in a helper function)
-        public static boolean check(SIRFilter filter) {
-            for (int i = 0; i < filter.getMethods().length; i++) {
-                if (!filter.getMethods()[i].equals(filter.getWork())) {
-                    found = false;
-                    filter.getMethods()[i]
-                        .accept(new CommunicationOutsideWork());
-                    if (found)
-                        return true;
-                }
-            }
-            return false;
-        }
-
-        public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
-                                        JExpression arg) {
-            found = true;
-        }
-
-        public void visitPopExpression(SIRPopExpression self, CType tapeType) {
-            found = true;
-        }
-
-        public void visitPushExpression(SIRPushExpression self, CType tapeType,
-                                        JExpression arg) {
-            arg.accept(this);
-        }
-    }
+    
+    
 
     static class PushBeforePop extends SLIREmptyVisitor {
         private static boolean sawPush;

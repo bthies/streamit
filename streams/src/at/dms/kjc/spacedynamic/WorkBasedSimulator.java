@@ -248,7 +248,7 @@ public class WorkBasedSimulator extends Simulator
         //extracting it from the proper buffer...
         if (src.isJoiner()) {
             //this joiner fired because it has data that can be sent downstream
-            JoinerScheduleNode current = new JoinerScheduleNode();
+            JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(src));
             current.buffer = counters.getJoinerBuffer(src);
             current.type = JoinerScheduleNode.FIRE;
             addJoinerCode(src, current);
@@ -355,7 +355,7 @@ public class WorkBasedSimulator extends Simulator
         //record that the data was placed in this buffer...
         counters.incrementJoinerBufferCount(dest, joinerBuffer);
         //add to the joiner code for this dest
-        JoinerScheduleNode current = new JoinerScheduleNode();
+        JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(dest));
         current.buffer = joinerBuffer;
         //if we have seen this dest already, then we are passing
         //thru a duplicate splitter with identity filters...
@@ -640,7 +640,7 @@ public class WorkBasedSimulator extends Simulator
     
         if (false) {
             //this joiner fired because it has data that can be sent downstream
-            JoinerScheduleNode current = new JoinerScheduleNode();
+            JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(fire));
             current.buffer = counters.getJoinerBuffer(fire);
             current.type = JoinerScheduleNode.FIRE;
             addJoinerCode(fire, current);

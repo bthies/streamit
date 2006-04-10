@@ -30,10 +30,20 @@ public class FileReaderDevice extends IODevice {
     }
 
     public void setDynamic() {
+        isDynamic = true;
         //set the destination of this filereader 
         StaticStreamGraph parent = streamGraph.getParentSSG(node);
-        dest = parent.getNext(node);
-        isDynamic = true;
+        //if this file reader is its own SSG
+        if (parent.isOutput(node)) {
+            dest = parent.getNext(node);
+            return;
+        }
+        else {
+            //otherwise, just use the downstream filter as dest
+            assert node.ways == 1;
+            dest = node.edges[0];
+            return;
+        }
     }
     
     

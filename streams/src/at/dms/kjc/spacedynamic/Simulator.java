@@ -69,9 +69,33 @@ public abstract class Simulator {
     public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
                                     SimulationCounter counters);
 
+    /**
+     * 
+     * @return true if we need switch code for this graph, otherwise we
+     * can just use the dynamic network because there are no overlapping routes
+     * and no splitters or joiners 
+     */
+    public static boolean needSimulator(StaticStreamGraph ssg) {
+        //check if there are any overlapping routes...
+        if (ssg.getStreamGraph().getLayout().getIntermediateTiles().size() > 0)
+            return true;
+        
+        //check if there are any splitters...
+        Iterator it = ssg.getFlatNodes().iterator();
+        while (it.hasNext()) {
+            FlatNode node = (FlatNode) it.next();
+            if (node.isJoiner() || node.isSplitter())
+                return true;
+        }
+        //all's good!
+        return false;
+    }
+    
+
     /** Create switch assembly code for to route one item from <pre>fire</pre> to
         the dests.  <pre>previous</pre> is a hashmap from ComputeNode -> ComputeNode that 
         maps a node to its previous hop, <pre>next</pre> is similiar...
+
     **/
     protected void asm(ComputeNode fire, HashMap previous, HashMap next) 
     {

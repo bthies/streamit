@@ -180,8 +180,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     public boolean isConnectedToFileReader(RawTile tile) {
         for (int i = 0; i < tile.getIOPorts().length; i++)
             if (tile.getIOPorts()[i].hasDevice()
-                && tile.getIOPorts()[i].getDevice().isFileReader())
+                && tile.getIOPorts()[i].getDevice().isFileReader()) {
                 return true;
+            }
         return false;
     }
 

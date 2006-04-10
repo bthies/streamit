@@ -48,7 +48,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
     //the flat node for the filter we are visiting
     private FlatNode flatNode;
-    
+
+   
+
     private Layout layout;
     /** true if the filter is the sink of a SSG, so it has dynamic output 
         and must sent output over the dynamic network **/
@@ -77,8 +79,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
         toC.flatNode = node;
         toC.ssg = SSG;
         toC.layout = SSG.getStreamGraph().getLayout();
-        toC.dynamicOutput = toC.ssg.isOutput(node);
-        toC.dynamicInput = toC.ssg.isInput(node);
+        toC.dynamicOutput = toC.ssg.isOutput(node) || toC.ssg.simulator instanceof NoSimulator;
+        toC.dynamicInput = toC.ssg.isInput(node) || toC.ssg.simulator instanceof NoSimulator;
     
         //FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
         //FieldProp.doPropagate((SIRFilter)node.contents);
@@ -95,7 +97,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
             JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
             
-            if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
+            //don't do anything for the work function if it is inlined or for the init work
+            if(!((RawExecutionCode.INLINE_WORK && method.getName().startsWith("work")) || 
+                 method.getName().startsWith("initWork"))) { 
                 //Already in __RAWMAIN__
                 if (!KjcOptions.nofieldprop) {
                     Unroller unroller;
@@ -213,6 +217,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print("#include <stdlib.h>\n");
         p.print("#include <math.h>\n\n");
 
+        p.print(RawSimulatorPrint.getHeader());
+        
         //if we are number gathering and this is the sink, generate the dummy
         //vars for the assignment of the print expression.
         if (KjcOptions.numbers > 0) {
@@ -313,8 +319,19 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //if we are using the dynamic network create the dynamic network
         //header to be used for all outgoing messages
         if (dynamicOutput) {
-            FlatNode downstream = 
-                ssg.getStreamGraph().getParentSSG(flatNode).getNext(flatNode);
+            FlatNode downstream = null;
+            
+            if (ssg.isOutput(flatNode)) { // the node is an endpoint of the ssg
+                downstream = ssg.getStreamGraph().getParentSSG(flatNode).getNext(flatNode);
+            } else {
+                //the node is not an endpoint and we did not use a comm simulator
+                //so everything is on the dynamic net
+                if (flatNode.ways > 0) {
+                    //it has to be a pipeline!
+                    assert flatNode.ways == 1;
+                    downstream = flatNode.edges[0];
+                }
+            }
             
             if (downstream != null) {
                 int size = Util.getTypeSize(ssg.getOutputType(flatNode));
@@ -520,9 +537,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //System.out.println(ident);
         
         //in the raw path we do not want to print the 
-        //prework or work function definition
+        //prework or work function definition (if the work function is inlined)
         if (filter != null && 
-            (filter.getWork().equals(self) ||
+            ((filter.getWork().equals(self) && RawExecutionCode.INLINE_WORK) ||
              (filter instanceof SIRTwoStageFilter &&
               ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
             return;
@@ -884,70 +901,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
             return;
         }
 
-        if (type.equals(CStdType.Boolean))
-            {
-                Utils.fail("Cannot print a boolean");
-            }
-        else if (type.equals(CStdType.Byte) ||
-                 type.equals(CStdType.Integer) ||
-                 type.equals(CStdType.Short) ||
-                 type.equals(CStdType.Char) ||
-                 type.equals(CStdType.Long))
-            {
-                if (KjcOptions.standalone)
-                    p.print("printf(\"%d\\n\", "); 
-                else if (KjcOptions.decoupled)
-                    p.print("print_int(");
-                else
-                    p.print("raw_test_pass_reg(");
-
-                    
-                //print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Float))
-            {
-                if (KjcOptions.standalone)
-                    p.print("printf(\"%f\\n\", "); 
-                else if (KjcOptions.decoupled)
-                    p.print("print_float(");
-                else 
-                    p.print("raw_test_pass_reg(");
-                    
-                //print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.String)) 
-            {
-                if (KjcOptions.standalone)
-                    p.print("printf(\"%s\\n\", "); 
-                else if (KjcOptions.decoupled)
-                    p.print("print_string(");
-                else {
-                    //assert false : "Can't print strings in the raw simulator without using printf";
-                    //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                    //for now just print -1 as the string and warn the user!
-                    //we don't have to evaluate a string!
-                    p.print("raw_test_pass_reg(-1);");    
-                    return;
-                }
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else
-            {
-                System.out.println("Unprintatble type");
-                p.print("print_int(");
-                exp.accept(this);
-                p.print(");");
-                //Utils.fail("Unprintable Type");
-            }
-    }
+        //handle the print statment using a magic instruction
+        RawSimulatorPrint.visitPrintStatement(self, exp, p, this);
+    } 
     
     private void pushScalar(SIRPushExpression self,
                             CType tapeType,

@@ -28,7 +28,15 @@ import java.math.BigInteger;
  * 
  */
 public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
-                                                                   Constants {
+        Constants {
+
+
+    /** if this is true, then inline the work function calls (for each of the 
+	code generation schemes), if work remains a function and is called.
+    */
+    public static boolean INLINE_WORK = false;
+
+
     /** * fields for the var names we introduce ** */
     public static String recvBuffer = "__RECVBUFFER__";
 
@@ -163,7 +171,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
     // calcuate bottomPeek, initFire, remaining
     // see my thesis section 5.1.2
-    void calculateItems(SIRFilter filter) {
+    public void calculateItems(SIRFilter filter) {
         int pop = filter.getPopInt();
         int peek = filter.getPeekInt();
 
@@ -315,9 +323,10 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
         // now current must be a joiner or filter
         // get the number of item current produces
-        int currentUpStreamItems = getUpStreamItems(ssg
-                                                    .getExecutionCounts(true), current.edges[0]);
-        System.out.println(currentUpStreamItems);
+        int currentUpStreamItems = 
+	    getUpStreamItems(ssg
+			     .getExecutionCounts(true), current.edges[0]);
+        //System.out.println(currentUpStreamItems);
         /*
          * if (getUpStreamItems(ssg.getExecutionCounts(true), node) !=
          * ((int)(currentUpStreamItems * roundRobinMult))) System.out.println
@@ -370,6 +379,44 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         JStatement incr = new JExpressionStatement(null, incrExpr, null);
 
         return new JForStatement(null, init, cond, incr, body, null);
+    }
+
+
+    /** This method is used by the various code generation schemes to return the 
+	statement that executes a work function call.  If we are inlining work, it will return
+	the cloned work body block, otherwise it will return a method call for the work function. 
+	Return a block so that we can add statements to the block if necessary.
+    */
+    public static JBlock executeWorkFunction(SIRFilter filter) 
+    {
+	if (INLINE_WORK) {
+	    JBlock workInitBlock = 
+		(JBlock)ObjectDeepCloner.
+		deepCopy(filter.getWork().getBody());
+	    return workInitBlock;
+	}
+	else {
+	    JBlock block = new JBlock();
+	    JMethodCallExpression workCall = 
+		new JMethodCallExpression(null, new JThisExpression(null),
+					  filter.getWork().getName(),
+					  new JExpression[0]);
+	    block.addStatement(new JExpressionStatement(null, workCall, null));
+	    return block;
+	}
+	
+    }
+
+    public int getBottomPeek() {
+        return bottomPeek;
+    }
+
+    public int getInitFire() {
+        return initFire;
+    }
+
+    public int getRemaining() {
+        return remaining;
     }
 
 }

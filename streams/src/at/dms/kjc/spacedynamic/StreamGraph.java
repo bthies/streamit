@@ -124,6 +124,22 @@ public class StreamGraph {
         }
     }
 
+    /** 
+     * @return True if the graph is laid out with no overlapping routes, no
+     * routing tiles, and each joiner has at most 3 incoming nodes with no
+     * chained joiners, and each splitter has as most 3 outgoing nodes with
+     * no chained splitters.  
+     * 
+     */
+    public boolean isSimple() {
+        //check there are no overlapping routes and not router tiles, 
+        //this check should be sufficient on a 2d raw configuration
+        if (!(layout.getIntermediateTiles().size() == 0))
+            return false;
+        
+        return true;
+    }
+    
     /**
      * recursive function to cut the graph into ssgs, it searchs downstream
      * starting at <pre>current</pre> and adds nodes to <pre>ssg</pre> that are connected by

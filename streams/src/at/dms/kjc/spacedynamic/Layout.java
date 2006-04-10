@@ -51,6 +51,9 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     private StreamGraph streamGraph;
 
+    /** this set contains ComputeNodes that appear as an hop in a route (not an endpoint) */
+    private HashSet intermediateTiles;
+    
     /*
      * hashset of Flatnodes representing all the joiners that are mapped to
      * tiles
@@ -601,7 +604,9 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         // allt tiles used for this SSG, add it to used tiles at the end, if
         // legal
         HashSet tiles = new HashSet();
-
+        //reset the intermediate tiles list
+        intermediateTiles = new HashSet();
+        
         Iterator nodes = ssg.getFlatNodes().iterator();
         double cost = 0.0;
 
@@ -676,6 +681,8 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
                 for (int i = 1; i < route.length - 1; i++) {
                     assert route[i].isTile();
+                    //add this intermediate hop tile to the list of intermediate tiles
+                    intermediateTiles.add(route[i]);
                     // make sure that this route does not pass thru any tiles
                     // assigned to other SSGs
                     // otherwise we have a illegal layout!!!!
@@ -1136,6 +1143,25 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     /** END simulated annealing methods * */
 
+    
+    /**
+     * @return Return the set of tiles that are intermediate hops for routes. 
+     */
+    public HashSet getIntermediateTiles() {
+        assert intermediateTiles != null : "Did not setup intermediate tiles in layout.";
+        return intermediateTiles;
+    }
+   
+    /**
+     * @param tile  The tile to test.
+     * @return True if this tile is involved in an intermediate hop of a route (not an
+     * endpoint).
+     */
+    public boolean isIntermediateTile(RawTile tile) {
+        assert intermediateTiles != null : "Did not setup intermediate tiles in layout.";
+        return intermediateTiles.contains(tile);
+    }
+    
     /** visit each flatnode and decide whether is should be assigned * */
     public void visitNode(FlatNode node) {
         if (node.isFilter()) {

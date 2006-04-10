@@ -15,6 +15,12 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Iterator;
 
+
+/**
+ * 
+ * @author mgordon
+ *
+ */
 public class JoinerSimulator 
 {
     //hash set indexed by flatnode to schedule
@@ -49,7 +55,7 @@ public class JoinerSimulator
     private void buildJoinerSchedule(FlatNode node) 
     {
         JoinerCounter counters = new JoinerCounter();
-        JoinerScheduleNode first = new JoinerScheduleNode();
+        JoinerScheduleNode first = new JoinerScheduleNode(Util.getJoinerType(node));
         JoinerScheduleNode current, temp;
         current = first;
 
@@ -61,7 +67,7 @@ public class JoinerSimulator
             if (counters.checkAllZero())
                 break;
         
-            temp = new JoinerScheduleNode();
+            temp = new JoinerScheduleNode(Util.getJoinerType(node));
             current.next = temp;
             current = temp;
         }while(true);

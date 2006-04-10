@@ -1,5 +1,6 @@
 package at.dms.kjc.spacedynamic;
 
+import at.dms.kjc.common.RawSimulatorPrint;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -63,23 +64,15 @@ public class MakefileGenerator {
                     .write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
             }
 
-            // if we are generating number gathering code,
-            // we do not want to use the default print service...
-            if (KjcOptions.outputs > 0 || KjcOptions.numbers > 0
-                || KjcOptions.decoupled) {
-                fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
-            } else {
-                // we don't need the print service anymore because we
-                // use raw_test_pass_reg() to print from the simulator
-                // fw.write("ATTRIBUTES += USES_PRINT_SERVICE\n");
-            }
+            //magic instruction support for printing...
+            fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 
             // fw.write("SIM-CYCLES = 500000\n\n");
             fw.write("\n");
             // if we are using the magic network, tell btl
             if (KjcOptions.magic_net)
                 fw.write("EXTRA_BTL_ARGS += "
-                         + "-magic_instruction -magic_crossbar C1H1\n");
+                         + "-magic_crossbar C1H1\n");
             fw.write("include $(TOPDIR)/Makefile.include\n\n");
             fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
@@ -170,8 +163,7 @@ public class MakefileGenerator {
         fw.write("include(\"<dev/basic.bc>\");\n");
 
         // workaround for magic instruction support...
-        if (KjcOptions.magic_net || KjcOptions.numbers > 0)
-            fw.write("include(\"<dev/magic_instruction.bc>\");\n");
+        fw.write("include(\"<dev/magic_instruction.bc>\");\n");
 
         // let the simulation know how many tiles are mapped to
         // filters or joiners
@@ -248,6 +240,9 @@ public class MakefileGenerator {
             fw.write("}\n");
         }
 
+        //generate the bc code for the magic print handler...
+        fw.write(RawSimulatorPrint.bCMagicHandler());
+        
         fw
             .write("global gAUTOFLOPS = 0;\n"
                    + "fn __event_fpu_count(hms)\n"
@@ -370,7 +365,11 @@ public class MakefileGenerator {
             }
             while (frs.hasNext()) {
                 FileReaderDevice dev = (FileReaderDevice) frs.next();
-                if (dev.isDynamic()) {
+                //if this file reader is its own device or we don't have a communication simulator
+                //then use the dynamic network
+                if (dev.isDynamic() || 
+                        streamGraph.getParentSSG(dev.getFlatNode()).simulator instanceof NoSimulator) {
+                    dev.setDynamic();
                     fw.write("\tdev_from_file_dyn_raw(\"" + dev.getFileName() + "\", " +
                              dev.getPort().getY() + ", " + 
                              dev.getPort().getX()  + ", " + 
@@ -389,9 +388,15 @@ public class MakefileGenerator {
             while (fws.hasNext()) {
                 FileWriterDevice dev = (FileWriterDevice) fws.next();
                 int size = getTypeSize(dev.getType());
+//              if this file write is its own device or we don't have a communication simulator
+                //then use the dynamic network
+                boolean dynamic = dev.isDynamic() || 
+                    streamGraph.getParentSSG(dev.getFlatNode()).simulator instanceof NoSimulator;
+                if (dynamic)
+                    dev.setDynamic();
                 //now create the function call the creates the bc device, create the 
                 //appropriate device based on what network is used
-                fw.write("\tdev_" + (dev.isDynamic() ? "gdn" : "st") + "_port_to_file_size(\"" + 
+                fw.write("\tdev_" + ( dynamic ? "gdn" : "st") + "_port_to_file_size(\"" + 
                          dev.getFileName()
                          + "\", " + size + ", " + 
                          dev.getPort().getPortNumber() + 

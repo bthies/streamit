@@ -74,6 +74,8 @@ public class StructureIncludeFile {
      */
     private void createStructureDefs(SIRStructure[] structs, FileWriter fw)
         throws Exception {
+        fw.write("#ifndef round\n#define round(x) (floorf((x)+0.5))\n#endif\n");
+        fw.write("#ifndef roundf\n#define roundf(x) (floorf((x)+0.5))\n#endif\n");
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
             fw.write("typedef struct __" + current.getIdent() + " {\n");

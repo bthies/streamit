@@ -131,7 +131,9 @@ public class RemoveGlobals extends at.dms.util.Utils
             if (MultiDimensionalArrays.exists(methods[i]))
                 return false;
         
-            if (methods[i].getName().startsWith("work") ||
+            //don't do anything for the work function if it is inlined and skip
+            //the init work method (it is always inlined) and the init methods
+            if ((methods[i].getName().startsWith("work") && RawExecutionCode.INLINE_WORK) ||
                 methods[i].getName().startsWith("init") ||
                 methods[i].getName().startsWith("initWork") ||
                 methods[i].getName().startsWith(RawExecutionCode.rawMain) )
@@ -549,8 +551,8 @@ public class RemoveGlobals extends at.dms.util.Utils
                 filter.setInit(SIRStream.makeEmptyInit());
             }
 
-            //set the work to a dummy work if we need a work
-            if (filter.needsWork()) {
+            //set the work to a dummy work if we need a work and we are inlining work
+            if (filter.needsWork() && RawExecutionCode.INLINE_WORK) {
                 filter.setWork(new JMethodDeclaration(null, ACC_PUBLIC, 
                                                       CStdType.Void, 
                                                       "work",

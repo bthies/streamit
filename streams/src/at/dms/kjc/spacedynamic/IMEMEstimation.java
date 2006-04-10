@@ -250,16 +250,16 @@ public class IMEMEstimation implements FlatVisitor
                     };
                 Process jProcess = Runtime.getRuntime().exec(cmdArray);
                 /*  
-                  InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
-                  BufferedReader br = new BufferedReader(output);
-                  try {
-                  String str;
-                  while ((str = br.readLine()) != null) {
-                  //System.out.println(str);
-                  }
-                  } catch (IOException e) {
-                  System.err.println("Error reading stdout of child process in work estimation...");
-                  }
+                    InputStreamReader output = new InputStreamReader(jProcess.getInputStream());
+                    BufferedReader br = new BufferedReader(output);
+                    try {
+                    String str;
+                    while ((str = br.readLine()) != null) {
+                    //System.out.println(str);
+                    }
+                    } catch (IOException e) {
+                    System.err.println("Error reading stdout of child process in work estimation...");
+                    }
                 */
         
                 jProcess.waitFor();

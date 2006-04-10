@@ -64,6 +64,9 @@ public class SpaceDynamicBackend {
         //this must be run now, FlatIRToC relies on it!!!
         RenameAll.renameAllFilters(str);
     
+        SIRPrinter printer = new SIRPrinter("sir_BEFORE_CONSTPROP_.out");
+        IterFactory.createFactory().createIter(str).accept(printer);
+        printer.close();
     
         
         // propagate constants and unroll loop

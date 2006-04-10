@@ -523,7 +523,14 @@ public class StaticStreamGraph {
      * joiner firing, <pre>js</pre> *
      */
     public void scheduleCommunication(JoinerSimulator js) {
-        if (KjcOptions.wbs)
+        //if there are no overlapping routes in the graph and no
+        //router tiles, we do not have to run a simulator, just
+        //create the switch code directly in SwitchCode.java
+        if (!Simulator.needSimulator(this)) 
+            simulator = new NoSimulator(this, js);
+        else if (streamGraph.isSimple())                
+            simulator = new SimpleSimulator(this, js);        
+        else if (KjcOptions.wbs)
             simulator = new WorkBasedSimulator(this, js);
         else
             simulator = new FineGrainSimulator(this, js);

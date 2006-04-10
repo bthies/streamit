@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.common.RawSimulatorPrint;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -63,25 +64,16 @@ public class MakefileGenerator
             else {
                 fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
             }
-        
-        
-            //if we are generating number gathering code, 
-            //we do not want to use the default print service...
-            if (KjcOptions.outputs > 0 ||
-                KjcOptions.numbers > 0 ||
-                KjcOptions.decoupled) {
-                fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
-            }
-            else {
-                fw.write("ATTRIBUTES += USES_PRINT_SERVICE\n");
-            }
-        
+                
+            //enable magic instructions for printing...            
+            fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
+                    
             //fw.write("SIM-CYCLES = 500000\n\n");
             fw.write("\n");
             //if we are using the magic network, tell btl
             if (KjcOptions.magic_net)
                 fw.write("EXTRA_BTL_ARGS += " +
-                         "-magic_instruction -magic_crossbar C1H1\n");
+                         "-magic_crossbar C1H1\n");
             fw.write("include $(TOPDIR)/Makefile.include\n\n");
             fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
@@ -168,8 +160,7 @@ public class MakefileGenerator
         fw.write("include(\"<dev/basic.bc>\");\n");
 
         //workaround for magic instruction support...
-        if (KjcOptions.magic_net || KjcOptions.numbers > 0)
-            fw.write("include(\"<dev/magic_instruction.bc>\");\n");
+        fw.write("include(\"<dev/magic_instruction.bc>\");\n");
     
         //let the simulation know how many tiles are mapped to 
         //filters or joiners
@@ -228,6 +219,9 @@ public class MakefileGenerator
         fw.write("return 0;\n");
         fw.write("}\n");
     
+        //generate the bc code for the magic print handler...
+        fw.write(RawSimulatorPrint.bCMagicHandler());
+        
         if (KjcOptions.outputs > 0) {
             fw.write("{\n");
             fw.write("  local outputpath = malloc(strlen(streamit_home) + 30);\n");

@@ -156,6 +156,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print("#include <stdlib.h>\n");
         p.print("#include <math.h>\n\n");
 
+        p.print(RawSimulatorPrint.getHeader());
+        
         //if we are number gathering and this is the sink, generate the dummy
         //vars for the assignment of the print expression.
         if (KjcOptions.numbers > 0) {
@@ -204,12 +206,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("void " + SwitchCode.SW_SS_TRIPS + "();\n");
         }
 
-
-                
-        //not used any more
-        //print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
-        //print("unsigned int " + INT_HEADER_WORD + ";\n");
-       
         //Visit fields declared in the filter class
         JFieldDeclaration[] fields = self.getFields();
         for (int i = 0; i < fields.length; i++)
@@ -240,12 +236,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             //otherwise print a normal main()
             p.print("int main(int argc, char** argv) {\n");
         }
-        //not used at this time
-        //print(FLOAT_HEADER_WORD + 
-        //" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-        //print(INT_HEADER_WORD + 
-        //" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
-        
+      
         if (KjcOptions.standalone) {
             p.print("  " + ARGHELPER_COUNTER + "(argc, argv);\n");
         }
@@ -768,84 +759,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
             return;
         }
 
-            
-        if (type.equals(CStdType.Boolean))
-            {
-                Utils.fail("Cannot print a boolean");
-            }
-        else if (type.equals(CStdType.Byte) ||
-                 type.equals(CStdType.Integer) ||
-                 type.equals(CStdType.Short))
-            {
-                if (!KjcOptions.standalone) {
-                    //print("raw_test_pass_reg(");
-                    p.print("print_int(");
-                }
-                else
-                    p.print("printf(\"%d\\n\", "); 
-                //print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Char))
-            {
-                if (!KjcOptions.standalone) {
-                    //print("raw_test_pass_reg(");
-                    p.print("print_int(");
-                }
-                else
-                    p.print("printf(\"%d\\n\", "); 
-                //print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Float))
-            {
-                if (!KjcOptions.standalone) {
-                    //print("raw_test_pass_reg(");
-                    p.print("print_float(");
-                }
-                else 
-                    p.print("printf(\"%f\\n\", "); 
-                //print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Long))
-            {
-                if (!KjcOptions.standalone) {
-                    //print("raw_test_pass_reg(");
-                    p.print("print_int(");
-                }
-                else
-                    p.print("printf(\"%d\\n\", "); 
-                //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.String)) 
-            {
-                if (!KjcOptions.standalone)
-                    p.print("print_string(");
-                else
-                    p.print("printf(\"%s\\n\", "); 
-                //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else
-            {
-                System.out.println("Unprintatble type");
-                p.print("print_int(");
-                exp.accept(this);
-                p.print(");");
-                //Utils.fail("Unprintable Type");
-            }
+        //generate code to handle the print statement with a magic instruction
+        //simulator callback
+        RawSimulatorPrint.visitPrintStatement(self, exp, p, this);
     }
     
     private void pushScalar(SIRPushExpression self,

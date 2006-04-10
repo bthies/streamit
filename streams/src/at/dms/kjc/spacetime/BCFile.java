@@ -3,6 +3,8 @@ package at.dms.kjc.spacetime;
 import java.lang.StringBuffer;
 import at.dms.kjc.*;
 import java.io.FileWriter;
+
+import at.dms.kjc.common.RawSimulatorPrint;
 import at.dms.kjc.flatgraph2.*;
 
 /**
@@ -97,6 +99,9 @@ public class BCFile
         buf.append("\tgInterrupted = 1;\n");
         buf.append("\texit_now(0);\n");
         buf.append("}\n");
+        
+        //generate the bc code for the magic print handler...
+        buf.append(RawSimulatorPrint.bCMagicHandler());
         
         files();
 

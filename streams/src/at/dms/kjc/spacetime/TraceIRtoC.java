@@ -150,7 +150,7 @@ public class TraceIRtoC extends ToC
         p.print("#include <stdlib.h>\n");
         p.print("#include <math.h>\n\n");
         
-        
+        p.print(RawSimulatorPrint.getHeader());
         
         //if we are number gathering and this is the sink, generate the dummy
         //vars for the assignment of the print expression.
@@ -575,78 +575,9 @@ public class TraceIRtoC extends ToC
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-        CType type = null;
-
-        
-        try {
-            type = exp.getType();
-        }
-        catch (Exception e) {
-            System.err.println("Cannot get type for print statement");
-            type = CStdType.Integer;
-        }
-        
-        if (type.equals(CStdType.Boolean))
-            {
-                Utils.fail("Cannot print a boolean");
-            }
-        else if (type.equals(CStdType.Byte) ||
-                 type.equals(CStdType.Integer) ||
-                 type.equals(CStdType.Short))
-            {
-                //print("print_int(");
-                p.print("raw_test_pass_reg(");
-
-                //print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Char))
-            {
-                p.print("raw_test_pass_reg(");
-                //print("print_int(");
-
-                //print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Float))
-            {
-                p.print("raw_test_pass_reg(");
-                //print("print_float(");
-
-                //print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.Long))
-            {
-                p.print("raw_test_pass_reg(");
-                //print("print_int(");
-                //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else if (type.equals(CStdType.String)) 
-            {
-                p.print("print_string(");
-                //              p.print("gdn_send(" + INT_HEADER_WORD + ");\n");
-                //print("gdn_send(");
-                exp.accept(this);
-                p.print(");");
-            }
-        else
-            {
-                System.out.println("Unprintable type");
-                p.print("print_int(");
-                exp.accept(this);
-                p.print(");");
-                //Utils.fail("Unprintable Type");
-            }
+        //generate code to handle the print statement with a magic instruction
+        //simulator callback
+        RawSimulatorPrint.visitPrintStatement(self, exp, p, this);
     }
     
     private void pushScalar(boolean dynamicOutput,

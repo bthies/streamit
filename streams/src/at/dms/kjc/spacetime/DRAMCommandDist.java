@@ -13,9 +13,10 @@ import java.util.Iterator;
  *
  */
 public class DRAMCommandDist {
+    /** The schedule we are executing */
     private Trace[] schedule;
+    /** The raw chip we are executing on */
     private RawChip rawChip;
-    
     /** the number of reads for <pre>schedule</pre> to each dram while
      * executing within a trace
      */
@@ -32,6 +33,14 @@ public class DRAMCommandDist {
      * executing splitting and joining
      */
     private int[] interWrites;
+    
+    /**
+     * Create a new object that will calculate how many DRAM commands 
+     * each DRAM has issued to it for schedule on rawChip.
+     * 
+     * @param schedule The schedule. 
+     * @param rawChip The raw chip.
+     */
     public DRAMCommandDist(Trace[] schedule, RawChip rawChip) {
         this.schedule = schedule;
         this.rawChip = rawChip;
@@ -42,6 +51,9 @@ public class DRAMCommandDist {
     }
     
     /**
+     * Return the number of writes from <pre>dram</pre> during schedule for 
+     * splitting and joining.
+     * 
      * @param dram
      * @return The number of writes from <pre>dram</pre> during schedule for 
      * splitting and joining
@@ -51,24 +63,35 @@ public class DRAMCommandDist {
     }
     
     /**
+     * Return the number of reads from <pre>dram</pre> during schedule for
+     * splitting and joining.
+     * 
      * @param dram
+     * 
      * @return The number of reads from <pre>dram</pre> during schedule for
      * splitting and joining
      */
     public int getInterReads(StreamingDram dram) {
         return interReads[dram.port];
     }
+
     /**
+     * Return the number of writes from <pre>dram</pre> during schedule within
+     * a trace (intra trace buffers).
+     * 
      * @param dram
+     * 
      * @return The number of writes from <pre>dram</pre> during schedule within
      * a trace (intra trace buffers).
      */
-    
     public int getIntraWrites(StreamingDram dram) {
         return intraWrites[dram.port];
     }
     
     /**
+     * Return the number of reads from <pre>dram</pre> during schedule within
+     * a trace (intra trace buffer).
+     * 
      * @param dram
      * @return The number of reads from <pre>dram</pre> during schedule within
      * a trace (intra trace buffer).

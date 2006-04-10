@@ -125,10 +125,12 @@ public class Makefile
     
         buf.append("SIM-CYCLES = 500000\n\n");
         buf.append("BTL-DEVICES += -dram_streaming -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
+        //enable the magic network for printing...
+        buf.append("EXTRA_BTL_ARGS += -magic_instruction\n ");
         //if we are using the magic network, tell btl
         if (KjcOptions.magic_net)
             buf.append("EXTRA_BTL_ARGS += " +
-                       "-magic_instruction -magic_crossbar C1H1\n");
+                       "-magic_crossbar C1H1\n");
     
         buf.append("include $(TOPDIR)/Makefile.include\n\n");
         //buf.append("RGCCFLAGS += -O3\n\n");

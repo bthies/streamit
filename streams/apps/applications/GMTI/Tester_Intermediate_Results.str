@@ -1,51 +1,21 @@
-void->complex filter generate {
-   complex[14] a;  
-   complex c;
-   int i;
-
-  init {
-    i=0;
-
-    c = 1.0 + 0.0i;
-
-
-    a[0] = -8.4i+3.0;
-    a[1] = 1.0 + 2i;
-    a[2] = 2.0;
-
-    a[3] = 3.0 - 8i;
-    a[4] = 7.6i-8.2;
-    a[5] = 9.7 - 4.2i;
-
-    a[6] = -1.4;
-    a[7] = 8.3 + 4.5i;
-    a[8] = 9.0-2.9i;
-
-    a[9] = 0.0+3.4i;
-    a[10] = 9;
-    a[11] = 9;
-    a[12] = 9;
-    a[13] = 9;
-  }
-
-  work push 1 pop 0 {
-
-//    if(i<14)
-//      push(a[i++]);
-//    else
-
-complex max_val;
-max_val.real = 1000.0;
-
-      if((c.real==7.0)||(c.real==114.0))
-        push(max_val);
-      else
-        push(c);
-      
-  c.real += 1.0;
-
-  }
-}
+/**
+ * Tester.str integrates the five implemented phases of GMTI.
+ *
+ *   AdaptiveBeamform
+ *   PulseCompression
+ *   DopFilt
+ *   Stap
+ *   Detector
+ *
+ *   There are some split/joins to remove unecessary data foar particular
+ *   phases.  There is also a (unfortunate) splitjoin between DopFilt and
+ *   Stap reorganizing the order of the data.
+ *
+ * So far, I have no hint as to where the original input data came from...
+ *
+ * This version puts out intermediate files between phases to be used 
+ * as inputs for running individual phases.
+ */
 
 
 // takes two floats, assigns the first to be the real part and the second to be the imaginary part of a complex

@@ -1,51 +1,37 @@
-void->complex filter generate {
-   complex[14] a;  
-   complex c;
-   int i;
+/**
+ * @description
+ * GMTI_Fragments.str allows the user to 
+ * select a fragment of GMTI to compile.
+ *
+ * Use SED or some other text processor to replace the string FRAGMENT
+ * with a number.
+ *                                         filts/nodes  compare output with
+ *   FRAGMENT == 1 -- whole of Tester.str   2868/5146
+ *   FRAGMENT == 2 -- AdaptiveBeamform      1197/2055   afterABf.bin
+ *   FRAGMENT == 3 -- PulseCompression       355/ 779   beforeDopFilt.bin
+ *   FRAGMENT == 4 -- DopFilt                236/ 442   afterDopFilt.bin
+ *   FRAGMENT == 5 -- Stap                   546/1070   afterStap.bin
+ *   FRAGMENT == 6 -- Detector               545/ 807   afterDetector.bin
+ *   FRAGMENT == 7 -- PulseCompression + DopFilt 587/1217 afterDopFilt.bin
+ *
+ * number of filters and numbers of graph nodes are based on 
+ * make 'FRAGMENT=N' fragments_lib
+ * grep '\[ label=' GMTI_FragmentN.dot | grep -v _join | grep -v _split | wc -l
+ * grep '\[ label=' GMTI_FragmentN.dot | wc -l
+ *
+ * with current Makefile, you would specify something like
+ * make 'FRAGMENT=4'  'STRCFLAGS=--spacedynamic' fragments_raw
+ * this will produce a combined .str file named GMTI_Fragment4.str and
+ * compile it for raw with the specified flags to strc.
+ *
+ * So far, I have no hint as to where the original input data came from...
+ *
+ * @author Sijit Agrawal, adapted by Allyn Dimock</a>
+ * @file GMTI_Fragments.str
+ * @version 1.0
+ *
+ */
 
-  init {
-    i=0;
-
-    c = 1.0 + 0.0i;
-
-
-    a[0] = -8.4i+3.0;
-    a[1] = 1.0 + 2i;
-    a[2] = 2.0;
-
-    a[3] = 3.0 - 8i;
-    a[4] = 7.6i-8.2;
-    a[5] = 9.7 - 4.2i;
-
-    a[6] = -1.4;
-    a[7] = 8.3 + 4.5i;
-    a[8] = 9.0-2.9i;
-
-    a[9] = 0.0+3.4i;
-    a[10] = 9;
-    a[11] = 9;
-    a[12] = 9;
-    a[13] = 9;
-  }
-
-  work push 1 pop 0 {
-
-//    if(i<14)
-//      push(a[i++]);
-//    else
-
-complex max_val;
-max_val.real = 1000.0;
-
-      if((c.real==7.0)||(c.real==114.0))
-        push(max_val);
-      else
-        push(c);
-      
-  c.real += 1.0;
-
-  }
-}
 
 
 // takes two floats, assigns the first to be the real part and the second to be the imaginary part of a complex
@@ -96,7 +82,7 @@ complex->void filter output_c {
 }
 
 
-void->void pipeline Tester {
+void->void pipeline GMTI_FragmentFRAGMENT {
 
 
   GmtiParamType GmtiParam;
@@ -307,29 +293,14 @@ int T1_tot = N*Nch;
 int Wabf_tot = Nch*Nbm;
 int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;      
 
+// The whole thing -- so far.
+if (FRAGMENT == 1) { 
 // get the data input from file, and convert every pair of floats to a complex
   add FileReader<float>("data.bin");
   add combine_floats();
 
 // first round of GMTI, outputs V1,T1,Wabf,Data1
   add AdaptiveBeamform(GmtiParam,AntParams);
-
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("afterABf.bin");
-      }
-      join roundrobin(1,0);
-  }
 
 // don't need V1
   add output_final(V1_tot,T1_tot+Wabf_tot+data1_tot);
@@ -344,56 +315,8 @@ int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;
 // these stages do not use T1,Wabf
     add pipeline { 
 
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("beforePuslseComp.bin");
-	    }
-	    join roundrobin(1,0);
-	}
       add PulseCompression(GmtiParam);
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("beforeDopFilt.bin");
-	    }
-	    join roundrobin(1,0);
-	}
       add DopFilt(GmtiParam);
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("afterDopFilt.bin");
-	    }
-	    join roundrobin(1,0);
-	}
     }
 
     join roundrobin(T1_tot+Wabf_tot,data3_tot);
@@ -408,74 +331,55 @@ int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;
   }
 
 // Data3,T1,Wabf inputted in that order, Stap outputs Astapset,Data4
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("beforeStap.bin");
-      }
-      join roundrobin(1,0);
-  }
 
   add Stap(GmtiParam,AntParams);  
-
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("afterStap.bin");
-      }
-      join roundrobin(1,0);
-  }
-
 
 // remove Astapset, which is not needed
   add output_final(Astapset_tot,data4_tot);
 
 // Data4 inputted, TargetReport outputted
 
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("beforeDetector.bin");
-      }
-      join roundrobin(1,0);
-  }
-
-
   add Detector(GmtiParam);
 
-  add output_f();
+  add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 2) {
+    add FileReader<float>("data.bin");
+    add combine_floats();
+    add AdaptiveBeamform(GmtiParam,AntParams);
+    add disassemble_floats();
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 3) {
+    add FileReader<float>("beforePuslseComp.bin");
+    add combine_floats();
+    add PulseCompression(GmtiParam);
+    add disassemble_floats();
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 4) {
+    add FileReader<float>("beforeDopFilt.bin");
+    add combine_floats();
+    add DopFilt(GmtiParam);
+    add disassemble_floats();
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 5) {
+    add FileReader<float>("beforeStap.bin");
+    add combine_floats();
+    add Stap(GmtiParam,AntParams);  
+    add disassemble_floats();
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 6) {
+    add FileReader<float>("beforeDetector.bin");
+    add combine_floats();
+    add Detector(GmtiParam);
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
+} else if (FRAGMENT == 7) {
+    add FileReader<float>("beforePuslseComp.bin");
+    add combine_floats();
+    add PulseCompression(GmtiParam);
+    add DopFilt(GmtiParam);
+    add disassemble_floats();
+    add FileWriter<float>("GMTI_FRAGMENT_output_data");
 }
-
-
-
-
+}
 
 
 

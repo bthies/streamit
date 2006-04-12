@@ -28,7 +28,7 @@ import java.util.LinkedList;
  * This class can tabulate profiling statistics for execution of
  * StreamIt programs in the Java library.  It is notified of
  * arithmetic operations by instrumentation code that is inserted by
- * the frontend (when run with strc -profile -library).
+ * the frontend (when run with strc -countops -library).
  */
 public class Profiler {
     // Temporary list for constructing names of operations.

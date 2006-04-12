@@ -69,13 +69,6 @@ float->complex filter combine_floats() {
   }
 }
 
-complex->float filter disassemble_floats() {
-    work pop 1 push 2 {
-	complex c = pop();
-	push(c.real);
-	push(c.imag);
-    }
-}
 
 float->void filter output_f {
 
@@ -314,23 +307,6 @@ int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;
 // first round of GMTI, outputs V1,T1,Wabf,Data1
   add AdaptiveBeamform(GmtiParam,AntParams);
 
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("afterABf.bin");
-      }
-      join roundrobin(1,0);
-  }
-
 // don't need V1
   add output_final(V1_tot,T1_tot+Wabf_tot+data1_tot);
 
@@ -343,57 +319,8 @@ int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;
     
 // these stages do not use T1,Wabf
     add pipeline { 
-
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("beforePuslseComp.bin");
-	    }
-	    join roundrobin(1,0);
-	}
       add PulseCompression(GmtiParam);
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("beforeDopFilt.bin");
-	    }
-	    join roundrobin(1,0);
-	}
       add DopFilt(GmtiParam);
-	add splitjoin {
-	    split duplicate();
-	    // first direction passes through to next phase
-	    add complex->complex filter {
-		work push 1 pop 1 {
-		    complex popped = pop();
-		    push (popped);
-		}
-	    }
-	    // second direction writes to output file.
-	    add complex->void pipeline {
-		add disassemble_floats();
-		add FileWriter<float>("afterDopFilt.bin");
-	    }
-	    join roundrobin(1,0);
-	}
     }
 
     join roundrobin(T1_tot+Wabf_tot,data3_tot);
@@ -408,66 +335,12 @@ int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;
   }
 
 // Data3,T1,Wabf inputted in that order, Stap outputs Astapset,Data4
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("beforeStap.bin");
-      }
-      join roundrobin(1,0);
-  }
-
   add Stap(GmtiParam,AntParams);  
-
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("afterStap.bin");
-      }
-      join roundrobin(1,0);
-  }
-
 
 // remove Astapset, which is not needed
   add output_final(Astapset_tot,data4_tot);
 
 // Data4 inputted, TargetReport outputted
-
-  add splitjoin {
-      split duplicate();
-      // first direction passes through to next phase
-      add complex->complex filter {
-	  work push 1 pop 1 {
-	      complex popped = pop();
-	      push (popped);
-	  }
-      }
-      // second direction writes to output file.
-      add complex->void pipeline {
-	  add disassemble_floats();
-	  add FileWriter<float>("beforeDetector.bin");
-      }
-      join roundrobin(1,0);
-  }
-
-
   add Detector(GmtiParam);
 
   add output_f();

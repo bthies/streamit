@@ -96,6 +96,8 @@ public class Profiler {
     public static final int FUNC_SQRT =       registerOp("sqrt");
     public static final int FUNC_TANH =       registerOp("tanh");
     public static final int FUNC_TAN =        registerOp("tan");
+    public static final int FUNC_MIN =        registerOp("minf");
+    public static final int FUNC_MAX =        registerOp("maxf");
 
     // construct array of names
     public static final String[] OP_TO_NAME = (String[])tempOpToName.toArray(new String[0]);

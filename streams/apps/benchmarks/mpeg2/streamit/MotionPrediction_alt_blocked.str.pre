@@ -172,7 +172,7 @@ int->int filter MotionPrediction(int width, int height) {
                                         permsample[x][y] = sample_data[1];
                                     } else {
                                         // TODO - this should be the previous frame's macroblock, not the previous reference frame's macroblock
-                                        permsample = prev_picture[x][y];
+                                        permsample[x][y] = prev_picture[x][y];
                                     }
                                 }
                             } else {

@@ -827,37 +827,32 @@ int->int pipeline ReorderPictures(int width,
         // This isn't ENTIRELY unbounded - it may be bounded by the implementation of PicturePreprocessing
         // and its implementation - in particular the vbv buffer concept might come into play here, but
         // I'll worry about that later TODO.
-        boolean ran;
+
         // FEATURETODO - change when phases can take parameters
         int PushAheadFrameThrough_nextIPframe;
         
         int picture_data_size_temp = picture_data_size+2; // TODO temp
 
-        init {
-            ran = false;
+        prework push picture_data_size_temp {
+            PushFrameThrough();   
         }
 
         work pop * push * {
             // How this works: On the first execution this filter pushes an I-frame through. On subsequent
             // executions it pushes an I or P frame through, immediately followed by all B frames that
             // refer to the past two I/P frames.
-            if (!ran) {
-                ran = true;
-                PushFrameThrough();   
-            } else {
-                int nextIPframe = 0;
-                // Find the next I frame
-                while (peek(nextIPframe*picture_data_size_temp+1) == 3) {
-                    nextIPframe++;
-                }
-                // Push that frame through
-                PushAheadFrameThrough_nextIPframe = nextIPframe;
-                PushAheadFrameThrough();
-                while (peek(1) == 3) {
-                    PushFrameThrough();
-                }
-                PopFrameOff();
+            int nextIPframe = 0;
+            // Find the next I frame
+            while (peek(nextIPframe*picture_data_size_temp+1) == 3) {
+                nextIPframe++;
             }
+            // Push that frame through
+            PushAheadFrameThrough_nextIPframe = nextIPframe;
+            PushAheadFrameThrough();
+            while (peek(1) == 3) {
+                PushFrameThrough();
+            }
+            PopFrameOff();
         }
 
         phase PushAheadFrameThrough push picture_data_size_temp pop * {
@@ -1069,7 +1064,7 @@ int->int filter SendBackReferenceFrameEncoder(int width,
                         for (int x = 0; x < 8; x++) {
                             cr_data[macroblockx*8+x][macroblocky*8+y] = pop();
                         }
-                        }
+                    }
                     for (int i = 0; i < 4; i++) {
                         motion_vectors[macroblockx][macroblocky][i] = pop();
                     }                       

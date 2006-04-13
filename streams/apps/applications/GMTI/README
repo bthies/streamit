@@ -1,0 +1,129 @@
+The GMTI application is adapted from the Matlab code for five phases out of
+the GMTI version 1.01.
+
+The adapted phases are
+  Adaptive Beamformer
+  Pulse Compression
+  Doppler Filter
+  STAP
+  Target Detection.
+
+
+
+The Matlab code was originally munged to create some smaller splitjoins and do 
+somewhat less wotk than the supplied Matlab code for GMTI 1.01.
+
+The original Matlab code can be found in 
+/home/streamit/3rdparty/specs/pca-irt/2003-all/IRT-ver1-01.tar.gz
+The modified Matlab code can be found in 
+/home/streamit/3rdparty/specs/pca-irt/2003-all/modifiedMatlab.tar.gz
+
+modifiedMatlab.tar.gz also contains two possibly usefule programs:
+  matlab/mybuilddata.m builds a data.bin file to be used as input to GMTI
+  matlab/mycheckdata.m checks what resultts Matlab would get from a data.bin
+
+
+
+To compile and run out GMTI, see header documentation in Makefile and in 
+GMTI_fragments.str.
+
+
+
+We have more Matlab and C versions of GMTI:
+subdirectories of /home/streamit/3rdparty/specs/pca-irt:
+  2003-code-jan/BasicIrtMatlabCode
+  2003-all/IRT-ver1-01.tar.gz  and 2003-all/modifiedMatlab.tar.gz
+  2004-jan/matlab-and-docs and 2004-jan/c  for version 2
+
+
+
+There is design documentation in several subdirectories of 
+/home/streamit/3rdparty/specs/pca-irt:
+  2003 version in 2003-all/GMTIforPCA_NB_rev1.pdf
+  2004 version in 2004-jan/matlab-and-docs/PCA-IRT-3.pdf
+
+
+
+
+The header documentation for matlab/mybuilddata.m and matlab/mycheckdata.m
+follows.
+
+mybuilddata.m
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Generate data for testing our GMTI application.
+%
+% If you uncomment lines 16,17 and comment out lines 20--23 then
+% this will generate a data cube based on the GMTIParams.
+% The version of Matlab code used has been hacked to make some GMTIParams
+% smaller -- for less total work and narrower splitjoins.  Given the
+% hacked parameters, we will not find any targets in the standard data.
+%
+% So:  instead, this program sets up (hacked) parameters and generates
+% a data cube.  That data sube is thrown away and replaced by a data cube
+% containing random complex numbers.  Run this program:
+%   matlab -nosplash -r mybuilddata
+%   TargetReport
+%   TargetReport2
+%
+%  if TargetReport2 shows some targets, then use the generated data.bin
+%  file for StreamIt testing.
+%
+%  The target cube for StreamIt is slightly differently ordered than the
+%  target cube for Matlab:
+%  Where the Matlab target cube is (i,j,k), the StreamIt target cube is
+%  (2j,k,i) letting the matlab writer do the linearization of the 3d array.
+%  Using 1-based indices: the real component of each complex number is at
+%  (2j-1,k,i) and the imaginary component is at (2j,k,i).
+%
+% Sijit's changes to the Matlab code in
+% /projects/streamit/3rdparty/specs/pca-irt/2003-all/IRT-ver1-01.tar.gz are:
+%
+%  old                              new
+% Make_Input_Params.m
+%  InputParam.GMTI.Npc = 167;       5        less work?
+%  InputParam.GMTI.Nch = 9;         5        smaller split-joins?
+%  InputParam.GMTI.Nbm = 7;         5        smaller split-joins?
+%  InputParam.GMTI.Ncnb = 5;        2        smaller split-joins?
+%  InputParam.GMTI.Npri = 31;       7        smaller split-joins?
+%
+% Detection.m
+%  yCellRange = 3;                  1        ??
+%  zCellRange = 2;                  1        ??
+%
+% GetTargets.m
+%  targ = 'diagonal';               'random'
+%  TargetNum = 5;                   3
+%
+% GMTI_Init.m
+%  GmtiParam.Nrg =
+%   ceil(GmtiParam.SamplingRate*2*GmtiParam.Distance/GmtiParam.SpeedofLight);
+%                                   9
+%
+% There are also some code changes in other modules:
+%  Cfar.m   fix bad variable name 'j'
+%  FindTargets.m
+%    different calling sequence: pass formal parameter X and get it set to an
+%    intermediate value of T
+% GMTI_run.m
+%  change TargetReport to TargetReport2 in places so have
+%  TargetReport from Detection, TargetReport2 from Estimation
+% STAP2.m
+%  different calling sequence: add parameter V2t, set V2t at line 64.
+%
+%  author: Sijit Agarwal, documented by Allyn Dimock
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 
+mycheckdata.m
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The idea here is to check out output against the Matlab code.
+%
+% To use:
+%   copy your input data to 'data.in'
+%   matlab -nosplash -r mycheckdata
+%   TargetReport                      prints target detection info
+%   TargetReport2                     prints target estimation info
+%
+% author: Allyn Dimock, modified from Sijit Agarwal's mybuilddata.m
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ 

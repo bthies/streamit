@@ -127,8 +127,9 @@ complex->complex filter addnorm(int len) {
     // blows away -countops with too long a string
     //    new_first = first + (first/abs(first))*norm_val;
     complex absfirst = abs(first);
-    complex normabsfirst = absfirst*norm_val;
-    new_first = first + normabsfirst;
+    complex normalizedfirst = first/absfirst;
+    complex timesnorm = normalizedfirst*norm_val;
+    new_first = first + timesnorm;
 
     push(new_first);
     for(int j=1;j<len; j++) 

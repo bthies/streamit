@@ -2,8 +2,16 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.21 2006-02-13 19:00:31 dimock Exp $
+# $Id: streamit.py,v 1.22 2006-04-13 19:44:41 dimock Exp $
 #
+
+# TODO: implement own_output to spec:
+#   build_regtest.py should only define own_output if in the .xml
+#   streamit.py should check if own_output is defined.  If not, just
+#   use file "output" to communicate stdout from run phase to verification.
+#   If defined, then do not write stdout to a file in run phase and open
+#   own_output file for read in verification.
+
 
 # This file just defines some extra test classes that QMTest can use.
 # For now it assumes the standard XML database class, though it doesn't
@@ -60,17 +68,6 @@ class BackendField(EnumerationField):
     def __init__(self, name, default_value=None, **properties):
         EnumerationField.__init__(self, name, default_value,
                                   self.backend_tags, **properties)
-
-class RunOptionsField(TupleField):
-    """A field containing options to run a StreamIt program."""
-
-    def __init__(self, name, **properties):
-
-        fields = [qm.fields.TextField(name="output",
-                                      default_value="output"),
-                  qm.fields.IntegerField(name="iters",
-                                         default_value=100)]
-        TupleField.__init__(self, name, fields, **properties)
 
 def InterpretExitCode(result, status, expected, component):
     """Interpret the exit code of a program and populate 'result'.
@@ -143,16 +140,19 @@ class RunStrcTest(qm.test.test.Test):
         executing the program; for the other backends, this involves
         producing a set of one or more C files."""),
         
-        RunOptionsField(name='runopts', title='Runtime options',
-                        description="""Options used running the program.
-                        
-        Specifies the number of iterations and the output file for
-        the program.  Whether and how these are used depends on
-        the backend.  The iteration count here is always passed to
-        'strc', but only affects actual compilation for the RAW
-        backend.  For the library backend, 'strc' also runs the
-        program, so the iteration count and output file here
-        affect the program execution."""),
+        IntegerField(name='iters', title='Iteration Count',
+                     description="""The number of steady-state iterations to run.
+
+        This field specifies the number of iterations to run the program.
+        Must be available in compile test for library backend.  Must be
+        availble in run test for other backends."""),
+
+        TextField(name='own_output', title='Output File',
+                  description="""Output file from running program
+
+        This field specifies the file holding the program output to eventually
+        be verified.  Must be available in compile test for library backend.
+        Must be availble in run test for other backends."""),
 
         IntegerField(name='timeout', title='Timeout', default_value=TIMEOUT,
                      description="""Timeout in seconds.
@@ -181,9 +181,13 @@ class RunStrcTest(qm.test.test.Test):
       # List of args to the program, starting with the program name,
       # and always including the iteration count:
       arguments = [path] + backend + \
-                  ["--iterations", str(self.runopts[1])] + \
+                  ["--iterations", str(self.iters)] + \
                   self.options + self.filenames
-      #e = TimedExecutable()
+
+#      print >> sys.stderr, "ABOUT TO COMPILE"
+#      print >> sys.stderr, "dir = " + test_home_dir
+#      print >> sys.stderr, "path = " + path
+#      print >> sys.stderr, "arguments: " + (" ".join(arguments))
       e = qm.executable.RedirectedExecutable(self.timeout)
       status = e.Run(arguments, dir=test_home_dir, path=path)
 
@@ -192,7 +196,7 @@ class RunStrcTest(qm.test.test.Test):
       # For the library backend, write stdout to a file;
       # for other backends, save it.
       if self.backend == 'library':
-          f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
+          f = open(os.path.join(test_home_dir,self.own_output), 'w')
           f.write(e.stdout)
           f.close()
       else:
@@ -251,15 +255,29 @@ class RunProgramTest(qm.test.test.Test):
     arguments = [
         BackendField(name='backend', title='Backend'),
 
-        RunOptionsField(name='runopts', title='Runtime options',
-                        description="""Options used running the program.
+#         RunOptionsField(name='runopts', title='Runtime options',
+#                         description="""Options used running the program.
                         
-        Specifies the number of iterations and the output file for
-        the program.  Whether and how these are used depends on
-        the backend.  In both cases, the output is written to
-        the specified output file.  The iteration count is used
-        for the uniprocessor backend; for the RAW backend, the
-        iteration count used at compile time is used instead."""),
+#         Specifies the number of iterations and the output file for
+#         the program.  Whether and how these are used depends on
+#         the backend.  In both cases, the output is written to
+#         the specified output file.  The iteration count is used
+#         for the uniprocessor backend; for the RAW backend, the
+#         iteration count used at compile time is used instead."""),
+
+        IntegerField(name='iters', title='Iteration Count',
+                     description="""The number of steady-state iterations to run.
+
+        This field specifies the number of iterations to run the program.
+        Must be available in compile test for library backend.  Must be
+        availble in run test for other backends."""),
+
+        TextField(name='own_output', title='Output File',
+                  description="""Output file from running program
+
+        This field specifies the file holding the program output to eventually
+        be verified.  Must be available in compile test for library backend.
+        Must be availble in run test for other backends."""),
 
         IntegerField(name='timeout', title='Timeout', default_value=TIMEOUT,
                      description="""Timeout in seconds.
@@ -271,8 +289,6 @@ class RunProgramTest(qm.test.test.Test):
     def Run(self, context, result):
       """Actually run the target program."""
 
-#      print "Run: runopts[1]: ", str(self.runopts[1]), "\n"
-#      print "timeout: ", str(self.timeout), "\n"
       if self.backend == 'raw4':
           return self._RunRaw(context, result)
       elif self.backend == 'uni' or self.backend == 'rstream':
@@ -291,7 +307,7 @@ class RunProgramTest(qm.test.test.Test):
         status = e.Run(['make', '-f', 'Makefile.streamit', 'run'])
 
         # TODO: see what processing happens on this output, if any.
-        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
+        f = open(os.path.join(test_home_dir,self.own_output), 'w')
         f.write(e.stdout)
         f.close()
 
@@ -301,20 +317,58 @@ class RunProgramTest(qm.test.test.Test):
         # then run_cluster with path and -i
         test_home_dir = context_to_dir(context)
 
-        path = os.path.join('.', filename)
-        arguments = [path, '-i ' + str(self.runopts[1])]
-        #e = TimedExecutable()
-        e = qm.executable.RedirectedExecutable(self.timeout)
-        status = e.Run(arguments, dir=test_home_dir, path=path)
+        ### Problems with below: when using cluster backend
+        ### sometimes get traceback on disappearing
+        ### child process without getting full stderr output to diagnose
+        ### what is going wrong in tested program -- rather than in qmtest.
+        ### The attempted fix is to use TimeoutExecutable rather than
+        ### RedirectedExecutable, redirect stdout and stderr to files,
+        ### and instead of having to copy stdout to output file as per
+        ### RedirectedExecutable, need to copy stderr file to qm results.
+######## removed code
+#         path = os.path.join('.', filename)
+#         arguments = [path, '-i ' + str(self.iters)]
+#         e = qm.executable.RedirectedExecutable(self.own_output)
+#         status = e.Run(arguments, dir=test_home_dir, path=path)
 
-        # Dump stdout to the file; ignore stderr.
-        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
-        f.write(e.stdout)
-        f.close()
-        result['RunProgramTest.stderr'] = e.stderr
-
+#         # Dump stdout to the file; ignore stderr.
+#         f = open(os.path.join(test_home_dir,self.own_output), 'w')
+#         f.write(e.stdout)
+#         f.close()
+#         result['RunProgramTest.stderr'] = e.stderr
+######### end removed code, begin replacement code
+        # run program in its own shell to redirect output.
+        # in bash, either
+        # exec -a bash '/usr/uns/bin/bash' "-c" "./run_cluster -i 100 > eo 2> ee"
+        # or
+        # exec '/usr/uns/bin/bash' "-c" "./run_cluster -i 100 > eo 2> ee"
+        path = os.path.join(test_home_dir, filename)
+        itercount = str(self.iters)
+        output = os.path.join(test_home_dir,self.own_output)
+        errfilename = "stderr_file"
+        errout = os.path.join(test_home_dir,errfilename)
+        shellcmdstring = './run_cluster -i ' + itercount + '  > ' + \
+                         self.own_output + ' 2> ' + errfilename
+        shellcmd = ["/usr/uns/bin/bash", "-c", shellcmdstring]
+        e = qm.executable.TimeoutExecutable(self.timeout)
+        excinfo = None
+#        print >> sys.stderr, "ABOUT TO RUN"
+#        print >> sys.stderr, (" ".join(shellcmd))
+#        print >> sys.stderr, "dir = " + test_home_dir
+        try:
+            status = e.Run(shellcmd, dir=test_home_dir)
+#            print >> sys.stderr, "e.Run returned successfully"
+        finally:
+            excinfo = sys.exc_info()
+            stde = open(errout,'r')
+            result['RunProgramTest.stderr'] = stde.read()
+            stde.close()
+######### end replacement code.
         # Mostly, note if the program died an unholy death.
         InterpretExitCode(result, status, None, 'RunProgramTest')
+        
+        
+        
         
     def _RunClu(self, context, result):
         test_home_dir = context_to_dir(context)
@@ -385,6 +439,11 @@ class CompareResultsTest(qm.test.test.Test):
             fail = 1
             
         # For the RAW backend, cook 'actual'.
+        # [21: 00001b444]: 0.098017   ==> 0.098017
+        # with -spacetime format is: decimal, hex, float: 1.23 or 1 or -1e-08
+        # ### PASSED:  1036565814 3dc8bd36    0.0980171412 [x,y] = [1, 2]
+        # furthermore if this pattern occurs before the last occurrence of
+        # the lline "running..." it should be ignored.
         if self.backend == 'raw4':
             actual = map(lambda s: re.subn(r'^\[(.+:) (.+)\]: (.*)$',
                                            r'\3', s),

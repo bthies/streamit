@@ -199,8 +199,8 @@ directory subtree.)
 All \verb+<option target="BACKEND">COMMAND_LINE_OPTIONS</option>+
 indicate back ends that will be used for all tests.
 
-Current legal values for the target attribute are  ``uni'', ``raw4'', or 
-``cluster''.
+Current legal values for the target attribute are  ``library'', ``uni'', 
+``raw4'', ``rstream'', or ``cluster''.
 
 All \verb+<whichtype>TESTING_TYPE</whichtype>+ provide keywords indicating a 
 subset of tests to be run.
@@ -231,8 +231,14 @@ directory containing the benchmark.xml
 \item {\tt id} optional, used for naming test directories, for
   reporting.  If absent defaults to ``impl'' plus a sequence number.
 \item {\tt lang} Language to use in testing.  build-qmtest.py filters
-  out all {\tt impl}s where {\tt lang} $\neq$ {\tt StreamIT}.
+  out all {\tt impl}s where {\tt lang} $\neq$ {\tt StreamIt}.
 \item {\tt iters} Overrides default of running test for 100 iterations of steady state.
+\item {\tt own\_output} Name of a file in which the tested program produces
+output to verify.  If this is not specified, then the tested program is
+expected to produce any output to be verified to {\tt stdout}.
+Default output to stdout is stored in the file {\tt output} between the run
+phase and the verification phase.
+\item {\tt output_type} Type of output.  Legitimate values are {\tt ASCII}, {\tt int}, and {\tt float} where {\tt int}, and {\tt float} refer to 32-bit integers and 32-bit floats, and ASCII is a series of lines with one formatted integer or floating point value per line. 
 \item {\tt compile\_time} Time in seconds to override default compile time of 20 minutes.
 \item {\tt run\_time} Time in seconds to override default run time of 20 minutes.
 In case of compile-and-go situation like library compiler, use {\tt compile\_time}, not {\tt run\_time}.
@@ -247,6 +253,14 @@ is "source" or if class is missing then the file name is of a source
 file.  If {\tt class} is "output" then the file name is the is expected
 output.  If there is no "output" file, then the source is compiled and
 run, but any output from the run is considered to pass the test.
+
+%% {\tt proc\_output} is a test field containing a {\tt bash} command to be
+%% run between the run phase and the verification phase.  It is meant to be
+%% used to process output into a form that the verification phase can understand.
+%% For instance, if your program produces binary output, but the verification
+%% phase expacts ASCII output, you can use {\tt proc\_output} to perform the
+%% conversion.
+%% (Extension:  in the future we should introduce an attribute {\tt canned\_transform="float"} or {\tt canned\_transform="int"}.  But not there yet.)
 
 A {\tt whichtype} has a text field indicating that the test is to be run
 if the text matches one of the whichtypes from {\tt benchmarks.xml}.
@@ -327,6 +341,11 @@ needed to order tests correctly.
 {\tt build-qmtest.py} creates the ``apps.qms'' directory structure and
 the {\tt .qmt} files based on {\tt impl} fields in a {\tt benchmark.xml}
 file and {\tt option}s in the {\tt regtest.xml} file.
+
+Recently an evil hack has been added so that {\tt run-reg-tests.py} builds 
+/home/public/streamit/latest\_javadoc and /home/public/streamit/latest\_doccheck.
+This behavior (going outside of the subdirectory structure) should be on a switch
+and the switch should be off by default!
 
 \subsection{Programs and Control Flow}
 
@@ -445,6 +464,6 @@ to compare with most recent regtest, or replace 'latest' with a
 directory name in /home/bits8/streamit/regtest to compare with tests
 for a particular date.
 \end{verbatim}
-# note to self: create-target format
-# qmtest create-target -a processes=5 p5 process_target.ProcessTarget p
+% note to self: create-target format
+% qmtest create-target -a processes=5 p5 process_target.ProcessTarget p
 \end{document}

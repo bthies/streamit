@@ -13,4 +13,5 @@
   <option target="raw4">-O2</option>
   <option target="raw4">-O2 --altcodegen</option>
   <option target="cluster">-fusion -standalone</option>
+  <option target="raw4">-spacetime</option>
 </regtest>

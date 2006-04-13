@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.12 2006-02-13 19:00:31 dimock Exp $
+# $Id: build-qmtest.py,v 1.13 2006-04-13 19:44:41 dimock Exp $
 #
 
 import os
@@ -461,7 +461,7 @@ def GetVerifyDOM(target, fileset, extras):
     
     return doc
 
-def CreateRunOpts(doc, parent, iters=100, output='output'):
+def CreateRunOpts(doc, parent, iters=100, output=''):
     """Create an XML node describing StreamIt runtime options.
 
     When invoking a StreamIt program, we need to know how long the
@@ -477,13 +477,18 @@ def CreateRunOpts(doc, parent, iters=100, output='output'):
     'iters' -- Number of iterations to run the program for.
 
     'output' -- Name of the output file."""
+
     argument = doc.createElement('argument')
     parent.appendChild(argument)
-    argument.setAttribute('name', 'runopts')
-    tuple = doc.createElement('tuple')
-    argument.appendChild(tuple)
-    CreateTextElement(doc, tuple, 'text', output)
-    CreateTextElement(doc, tuple, 'integer', str(iters))
+    argument.setAttribute('name', 'iters')
+    CreateTextElement(doc, argument, 'integer', str(iters))
+
+    argument = doc.createElement('argument')
+    parent.appendChild(argument)
+    argument.setAttribute('name', 'own_output')
+    CreateTextElement(doc, argument, 'text', output)
+
+
 
 def CreateTextElement(doc, parent, name, content):
     """Create an XML node with a text element for a child.

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.33 2006-03-30 19:52:17 dimock Exp $
+# $Id: run-reg-tests.py,v 1.34 2006-04-13 19:44:41 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -29,9 +29,9 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 regtest_parent = '/home/bits8/streamit'
 regtest_root = os.path.join(regtest_parent, 'regtest')
-javadoc_dir = os.path.join(regtest_parent, 'regtest_javadoc')
+javadoc_dir = '/home/public/streamit/latest_javadoc'
 javadoc_script = 'misc/build-javadoc'
-javadoc_error_dir = os.path.join(regtest_parent, 'regtest_doccheck')
+javadoc_error_dir = '/home/public/streamit/latest_doccheck'
 javadoc_error_script = 'misc/check-javadoc-errors'
 summary_script_first = 'regtest/qmtest/status_summary.xsl'
 summary_script_second = 'regtest/qmtest/status_summary.pl'
@@ -279,7 +279,7 @@ class RunRegTests:
         pop = popen2.Popen4('cat '
                             + os.path.join(self.working_dir,javadocLog)
                             + ' | grep /warnings | sed '
-                            + "'" + 's/^.*\/streams//' + "'" )
+                            + "'" + 's/^.*\\/streams//' + "'" )
         while 1:
             data = pop.fromchild.read()
             if data == '':

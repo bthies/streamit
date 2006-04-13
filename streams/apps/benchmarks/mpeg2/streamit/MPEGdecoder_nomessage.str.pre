@@ -89,7 +89,7 @@ void->void pipeline MPEGdecoder_nomessage() {
     // All of these test cases can be run independently of each other.
     // For each output file, there is an associated output file without the "unver" extension
     // and an md5sum which can be compared against the actual output to make sure it's correct.
-    int parse_or_process = 1;
+    int parse_or_process = 2;
 
     int width=352;
     int height=240;
@@ -1978,83 +1978,60 @@ int->int filter MotionPrediction(int width, int height) {
 /**
  * @internal
  */
-int->int pipeline ChannelUpsample_Vert_and_Horz(int sourcewidth, 
-                                                int sourceheight) {
+int->int pipeline ChannelUpsample_Vert_and_Horz(int sourcewidth, int sourceheight) {
     add ChannelUpsample_Vertical(sourcewidth, sourceheight);
     add ChannelUpsample_Horizontal(sourcewidth, sourceheight);
 }
 
-int->int splitjoin ChannelUpsample_Vertical(int sourcewidth, 
-                                            int sourceheight) {
+int->int splitjoin ChannelUpsample_Vertical(int sourcewidth, int sourceheight) {
     split roundrobin(1);
     for (int i = 0; i < sourcewidth; i++) {
-        add ChannelUpsample_1D(sourceheight, 0.75, 0.25);
+        add ChannelUpsample_1D(sourceheight, 3, 1, 2);
     }
     join roundrobin(1);
 }
 
-int->int splitjoin ChannelUpsample_Horizontal(int sourcewidth, 
-                                              int sourceheight) {
+int->int splitjoin ChannelUpsample_Horizontal(int sourcewidth, int sourceheight) {
     split roundrobin(sourcewidth);
     for (int i = 0; i < sourceheight; i++) {
-        add ChannelUpsample_1D(sourcewidth, 0.5, 0.5);
+        add ChannelUpsample_1D(sourcewidth, 1, 1, 1);
     }
     join roundrobin(sourcewidth*2);
 }
 
 /**
  * @internal
- */
-int->int filter ChannelUpsample_1D_Unoptimized(int sourcelen, 
-					       float weight1, 
-					       float weight2) {
-    work pop sourcelen push sourcelen*2 {
-        int val1 = 0, val2 = 0;
-        val1 = pop();
-        push(val1);
-        for (int i = 0; i < sourcelen-1; i++) {
-            val2 = pop();
-            float outval = (weight1*val1+weight2*val2);
-            push((int) round(outval));
-            outval = (weight2*val1+weight1*val2);
-            push((int) round(outval));
-            val1 = val2;
-        }
-        push(val2);
-    }    
-}
-
-/**
- * @internal
+ * 
  */
 int->int filter ChannelUpsample_1D(int sourcelen, 
-				    float weight1, 
-				    float weight2) {
+                                   int weight1, 
+                                   int weight2,
+                                   int shiftAtEnd) {
     work pop sourcelen push sourcelen*2 {
         int val1 = 0, val2 = 0;
-	// keep track of product of weights to avoid extra multiplies
-	float w1val1, w1val2; // weight1 * val1, weight1 * val2
-	float w2val1, w2val2; // weight2 * val1, weight2 * val2
+        // keep track of product of weights to avoid extra multiplies
+        int w1val1, w1val2; // weight1 * val1, weight1 * val2
+        int w2val1, w2val2; // weight2 * val1, weight2 * val2
 
         val1 = pop();
-	w1val1 = weight1*val1;
-	w2val1 = weight2*val1;
+        w1val1 = weight1*val1;
+        w2val1 = weight2*val1;
 
-        push(val1);
+        push(val1 >> shiftAtEnd);
         for (int i = 0; i < sourcelen-1; i++) {
             val2 = pop();
-	    w1val2 = weight1*val2;
-	    w2val2 = weight2*val2;
+            w1val2 = weight1*val2;
+            w2val2 = weight2*val2;
 
-            float outval = (w1val1+w2val2);
-            push((int) round(outval));
+            int outval = (w1val1+w2val2);
+            push(outval >> shiftAtEnd);
             outval = (w2val1+w1val2);
-            push((int) round(outval));
+            push(outval >> shiftAtEnd);
 
             w1val1 = w1val2;
             w2val1 = w2val2;
         }
-        push(val2);
+        push(val2 >> shiftAtEnd);
     }    
 }
 

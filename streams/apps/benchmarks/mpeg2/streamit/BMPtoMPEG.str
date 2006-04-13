@@ -18,7 +18,7 @@ void->void pipeline BMPtoMPEG() {
 
     int width=352; 
     int height=240;
-    int numpictures = 30;
+    int numpictures = 4;
 
     add void->int splitjoin {
         split roundrobin(0);
@@ -40,3 +40,7 @@ void->void pipeline BMPtoMPEG() {
     add rawImageStream_to_MPEGStream(width, height, numpictures);
     add FileWriter<bit>("./output.m2v");
 }
+
+
+
+

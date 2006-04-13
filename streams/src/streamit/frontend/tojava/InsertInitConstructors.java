@@ -25,7 +25,7 @@ import java.util.*;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.22 2006-03-16 21:18:35 madrake Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.23 2006-04-13 02:32:55 madrake Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -134,7 +134,7 @@ public class InsertInitConstructors extends InitMunger
                         Type base = type;
                         while (base instanceof TypeArray) 
                         {
-                            elements.add(0, 
+                            elements.add(elements.size(),
                                          ((TypeArray) base).getLength()
                                 );
                             base = ((TypeArray) base).getBase();

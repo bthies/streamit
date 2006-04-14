@@ -118,9 +118,14 @@ class FusionCode {
 
         int threadCount = NodeEnumerator.getNumberOfNodes();
     
-        CodegenPrintWriter p;
+        CodegenPrintWriter p = null;
     
-        p = new CodegenPrintWriter();
+        try {
+            p = new CodegenPrintWriter(new FileWriter("fusion.h"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         p.print("#ifndef __FUSION_H\n");
         p.print("#define __FUSION_H\n");
@@ -346,9 +351,7 @@ class FusionCode {
         }
         
         try {
-            FileWriter fw = new FileWriter("fusion.h");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write fusion.h");
@@ -369,7 +372,13 @@ class FusionCode {
     
         int threadNumber = NodeEnumerator.getNumberOfNodes();
     
-        CodegenPrintWriter p = new CodegenPrintWriter();
+        CodegenPrintWriter p = null;
+        try {
+            p = new CodegenPrintWriter(new FileWriter("fusion.cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
     
         p.print("#include <pthread.h>\n");
         p.print("#include <unistd.h>\n");
@@ -834,9 +843,7 @@ class FusionCode {
         p.println("}");
 
         try {
-            FileWriter fw = new FileWriter("fusion.cpp");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write fusion.cpp");

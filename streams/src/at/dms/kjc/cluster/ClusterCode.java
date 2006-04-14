@@ -90,7 +90,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         int sum_of_weights = splitter.getSumOfWeights();
     
-        CodegenPrintWriter p = new CodegenPrintWriter();
+        CodegenPrintWriter p = null;
+        try {
+            p = new CodegenPrintWriter(new FileWriter("thread_"+id+".cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         p.println("#include <stream_node.h>\n");
         p.println("class thread"+id+" : public stream_node<"+baseType+","+baseType+"> {");
@@ -177,9 +183,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p.println("void run_"+id+"() { get_instance_"+id+"()->run_simple("+init_counts+"+("+steady_counts+"*__max_iteration)); }");
 
         try {
-            FileWriter fw = new FileWriter("thread_"+id+".cpp");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write code to file thread_"+id+".cpp");
@@ -224,7 +228,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         int sum_of_weights = joiner.getSumOfWeights();
     
-        CodegenPrintWriter p = new CodegenPrintWriter();
+        CodegenPrintWriter p = null;
+        try {
+            p = new CodegenPrintWriter(new FileWriter("thread_"+id+".cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         p.println("#include <stream_node.h>\n");
         p.println("class thread"+id+" : public stream_node<"+baseType+","+baseType+"> {");
@@ -294,9 +304,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p.println("void run_"+id+"() { get_instance_"+id+"()->run_simple("+init_counts+"+("+steady_counts+"*__max_iteration)); }");
 
         try {
-            FileWriter fw = new FileWriter("thread_"+id+".cpp");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write code to file thread_"+id+".cpp");
@@ -339,7 +347,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         NetStream in = (NetStream)in_v.elementAt(0);
         Vector out = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
     
-        CodegenPrintWriter p = new CodegenPrintWriter();
+        CodegenPrintWriter p = null;
+        try {
+            p = new CodegenPrintWriter(new FileWriter("thread"+thread_id+".cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         ClusterCodeGenerator gen = new ClusterCodeGenerator(splitter, new JFieldDeclaration[0]);
 
@@ -891,9 +905,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         //  +=============================+
     
         try {
-            FileWriter fw = new FileWriter("thread"+thread_id+".cpp");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write splitter code to file thread"+thread_id+".cpp");
@@ -936,7 +948,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         Vector out_v = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
         NetStream out = (NetStream)out_v.elementAt(0);
 
-        CodegenPrintWriter p = new CodegenPrintWriter();
+        CodegenPrintWriter p = null;
+        try {
+            p = new CodegenPrintWriter(new FileWriter("thread"+thread_id+".cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
         
         ClusterCodeGenerator gen = new ClusterCodeGenerator(joiner, new JFieldDeclaration[0]);
 
@@ -1444,9 +1462,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         //  +=============================+
 
         try {
-            FileWriter fw = new FileWriter("thread"+thread_id+".cpp");
-            fw.write(p.getString());
-            fw.close();
+            p.close();
         }
         catch (Exception e) {
             System.err.println("Unable to write joiner code to file thread"+thread_id+".cpp");

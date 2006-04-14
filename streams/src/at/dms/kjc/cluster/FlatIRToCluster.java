@@ -230,8 +230,15 @@ public class FlatIRToCluster extends InsertTimers implements
 	//PPAnalyze pp = new PPAnalyze();
 	//self.getWork().accept(pp);
         
-        filter = self;        
+        filter = self;
         selfID = NodeEnumerator.getSIROperatorId(self); // needed by the class
+
+        try {
+            p = new CodegenPrintWriter(new FileWriter("thread" + selfID + ".cpp"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         method_names = new HashSet();
         JMethodDeclaration[] meth = self.getMethods();
@@ -1382,25 +1389,12 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print(run.elementAt(i).toString());
         }
 
-        createFile(selfID);
+        p.close();
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self, SIRPhasedFilterIter iter) {
         // This is a stub; it'll get filled in once we figure out how phased
         // filters should actually work.
-    }
-
-    private void createFile(int thread_id) {
-        System.out.println("Code for " + filter.getName()
-                           + " written to thread" + thread_id + ".cpp");
-        try {
-            FileWriter fw = new FileWriter("thread" + thread_id + ".cpp");
-            fw.write(p.getString());
-            fw.close();
-        } catch (Exception e) {
-            System.err.println("Unable to write tile code file for filter "
-                               + filter.getName());
-        }
     }
 
     /**

@@ -489,6 +489,8 @@ public class ClusterBackend implements FlatVisitor {
         GenerateConfigFile.generateConfigFile();        // cluster-config.txt
         GenerateSetupFile.generateSetupFile();          // cluster-setup.txt
 
+        GenerateWorkEst.generateWorkEst();        // work-estimate.txt
+
         System.err.println("Cluster Code End.");    
 
         /*

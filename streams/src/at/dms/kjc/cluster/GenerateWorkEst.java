@@ -10,7 +10,17 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
+/**
+ * Generates work-estimate.txt file that contains work estimates for
+ * all threads during a single steady state cycle
+ *
+ */
+
 public class GenerateWorkEst {
+
+    /**
+     * Generate the work-estimate.txt file
+     */
 
     public static void generateWorkEst() {
 
@@ -30,6 +40,8 @@ public class GenerateWorkEst {
 		WorkList w_list = w_est.getSortedFilterWork();
 		w = w_list.getWork(0);
 	    }
+
+	    // For splitters and joiners the estimate is 8 times the sum of weights
 	   
  	    if (oper instanceof SIRJoiner) {
 		SIRJoiner j = (SIRJoiner)oper;
@@ -40,6 +52,11 @@ public class GenerateWorkEst {
 		SIRSplitter s = (SIRSplitter)oper;
 		w = s.getSumOfWeights() * 8;
 	    }
+
+	    // If work estimate is 0 (for Identities) then set it to the smallest
+	    // positive amount 1
+
+	    if (w == 0) w = 1;
 
 	    p.print(i+" " + (w * steady_counts) + "\n");
 

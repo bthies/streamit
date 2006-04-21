@@ -6,7 +6,8 @@
   </description>
   <reference>(none)</reference>
   <implementations>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" compile_time="1800">
+      <desc>Extra compile time since raw -o2 sometimes needs more</desc>
       <file class="source">perftest.str</file>
       <file class="output">Linkedperftest4.out</file>
     </impl>

@@ -14,23 +14,23 @@ import java.util.ListIterator;
  */
 public class DeadCodeElimination {
     
-    public static void doit(SIRFilter filter) {
+    public static void doit(SIRCodeUnit unit) {
         // for now, only removes dead field declarations and local
         // declarations
-        removeDeadFieldDecls(filter);
-        removeDeadLocalDecls(filter);
-        removeEmptyStatements(filter);
+        removeDeadFieldDecls(unit);
+        removeDeadLocalDecls(unit);
+        removeEmptyStatements(unit);
     }
 
     /**
      * Removes local variables that are never referenced.
      */
-    private static void removeDeadLocalDecls(SIRFilter filter) {
+    private static void removeDeadLocalDecls(SIRCodeUnit unit) {
         // variables used
         final HashSet varsUsed = new HashSet();
 
         // in all the methods...
-        JMethodDeclaration[] methods = filter.getMethods();
+        JMethodDeclaration[] methods = unit.getMethods();
         for (int i=0; i<methods.length; i++) {
             // take a recording pass, seeing what's used
             methods[i].accept(new SLIREmptyVisitor() {
@@ -177,12 +177,12 @@ public class DeadCodeElimination {
     /**
      * Removes fields that are never referenced.
      */
-    private static void removeDeadFieldDecls(SIRFilter filter) {
+    private static void removeDeadFieldDecls(SIRCodeUnit unit) {
         // keep track of field names referenced
         final HashSet fieldsUsed = new HashSet();
 
         // get field references in all the methods
-        JMethodDeclaration[] methods = filter.getMethods();
+        JMethodDeclaration[] methods = unit.getMethods();
         for (int i=0; i<methods.length; i++) {
             methods[i].accept(new SLIREmptyVisitor() {
                     public void visitFieldExpression(JFieldAccessExpression self,
@@ -195,7 +195,7 @@ public class DeadCodeElimination {
         }
     
         // remove any field that was not referenced
-        JFieldDeclaration[] fields = filter.getFields();
+        JFieldDeclaration[] fields = unit.getFields();
         ArrayList fieldsToKeep = new ArrayList();
         int removed = 0;
         for (int i=0; i<fields.length; i++) {
@@ -206,7 +206,7 @@ public class DeadCodeElimination {
                 removed++;
             }
         }
-        filter.setFields((JFieldDeclaration[])fieldsToKeep.toArray(new JFieldDeclaration[0]));
+        unit.setFields((JFieldDeclaration[])fieldsToKeep.toArray(new JFieldDeclaration[0]));
         /*
           if (removed>0) {
           System.err.println("  Removed " + removed + " dead fields.");
@@ -217,9 +217,9 @@ public class DeadCodeElimination {
     /**
      * Removes empty statements
      */
-    private static void removeEmptyStatements(SIRFilter filter) {
+    private static void removeEmptyStatements(SIRCodeUnit unit) {
         // get field references in all the methods
-        JMethodDeclaration[] methods = filter.getMethods();
+        JMethodDeclaration[] methods = unit.getMethods();
         for (int i=0; i<methods.length; i++) {
             JBlock newBody = (JBlock)methods[i].getBody().accept(new SLIRReplacingVisitor() {
                     public Object visitBlockStatement(JBlock self,

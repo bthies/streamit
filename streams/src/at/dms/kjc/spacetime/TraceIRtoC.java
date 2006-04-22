@@ -122,7 +122,6 @@ public class TraceIRtoC extends ToC
     {
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
-            System.out.println(tile.getComputeCode().getMethods()[i]);
             if (!KjcOptions.nofieldprop) {
                 Unroller unroller;
                 do {

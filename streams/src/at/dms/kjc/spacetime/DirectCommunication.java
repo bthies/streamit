@@ -314,7 +314,7 @@ public class DirectCommunication extends RawExecutionCode
                                                                   workCounter,
                                                                   null);
         JStatement loop = 
-            makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
+            makeForLoopLocalIndex(workBlock, loopCounter, new JIntLiteral(mult));
     
         block.addStatement(new JVariableDeclarationStatement(null,
                                                              loopCounter,
@@ -375,7 +375,7 @@ public class DirectCommunication extends RawExecutionCode
     
         //return the for loop that executes the block init - 1
         //times
-        return makeForLoop(block, generatedVariables.exeIndex1, 
+        return makeForLoopFieldIndex(block, generatedVariables.exeIndex1, 
                            new JIntLiteral(filterInfo.initMult));
     }
 

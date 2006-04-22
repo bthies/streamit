@@ -145,7 +145,7 @@ public class TraceIRtoC extends ToC
         if(KjcOptions.destroyfieldarray)
             arrayDest.destroyFieldArrays(tile.getComputeCode());
     
-        //DeadCodeElimination.doit((SIRFilter)node.contents);
+        DeadCodeElimination.doit(tile.getComputeCode());
     }
     
     private void generateHeader() 

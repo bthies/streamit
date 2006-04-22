@@ -24,7 +24,7 @@ import at.dms.kjc.flatgraph2.FilterContent;
  * @author mgordon
  *
  */
-public class ComputeCodeStore {
+public class ComputeCodeStore implements SIRCodeUnit{
     /** If true, generate presynched dram commands when needed */
     public static final boolean GEN_PRESYNCH = true;
     /** the name of the main function for each tile */
@@ -809,6 +809,15 @@ public class ComputeCodeStore {
         // reset old to new
         this.methods = newMethods;
     }
+    
+    /**
+     * Set methods to m.
+     * 
+     * @param m The methods to install.
+     */
+    public void setMethods(JMethodDeclaration[] m) {
+        this.methods = m;
+    }
 
     /**
      * Adds <pre>f</pre> to the fields of this. Does not check for duplicates.
@@ -893,6 +902,15 @@ public class ComputeCodeStore {
         return fields;
     }
 
+    /**
+     * Set the fields of this to f.
+     * 
+     * @param f The fields to install.
+     */
+    public void setFields(JFieldDeclaration[] f) {
+        this.fields = f;
+    }
+    
     /**
      * Return the main function of this store that 
      * will execute the init, primepump, and loop the steady-schedule.

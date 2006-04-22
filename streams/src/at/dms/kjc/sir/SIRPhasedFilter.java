@@ -13,7 +13,7 @@ import java.util.HashMap;
  * peek rate for the entire filter can be satisfied", or a phased
  * filter we only wait until the current phase can execute.
  */
-public class SIRPhasedFilter extends SIRStream implements Cloneable 
+public class SIRPhasedFilter extends SIRStream implements Cloneable, SIRCodeUnit 
 {
     /**
      * The input and output types.  Each type is void if and only if this

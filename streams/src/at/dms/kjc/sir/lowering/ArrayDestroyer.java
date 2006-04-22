@@ -9,6 +9,7 @@ import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
+import at.dms.kjc.spacetime.*;
 
 /**
  * This class breaks up arrays into local vars as much as possible
@@ -266,7 +267,52 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         }
         return self;
     }
-
+    
+    /**
+     * Destory field arrays on the code store of a tile from the
+     * space time backend.  It is in here because we cannot construct
+     * a filter from the tile code to trick this pass into doing the right 
+     * thing, so all this code duplication is the easiest thing to do.
+     * 
+     * @param codeStore The ComputeCodeStore of the tile.
+     */
+    public void destroyFieldArrays(ComputeCodeStore codeStore) {
+        replaced.clear();
+        Set keySet=targetsField.keySet();
+        String[] names=new String[keySet.size()];
+        keySet.toArray(names);
+        for(int i=0;i<names.length;i++) {
+            String name=names[i];
+            //CType type=(CType)((HashMap)targetsField.get(name)).remove(Boolean.TRUE);
+            CType type=getType(name, codeStore.getFields());
+            if(type==null)
+                break;
+            keySet=((HashMap)targetsField.get(name)).keySet();
+            Integer[] ints=new Integer[keySet.size()];
+            keySet.toArray(ints);
+            int top=0;
+            for(int j=0;j<ints.length;j++) {
+                int newInt=ints[j].intValue();
+                if(newInt>top)
+                    top=newInt;
+            }
+            String[] newFields=new String[top+1];
+            for(int j=0;j<ints.length;j++) {
+                int newInt=ints[j].intValue();
+                JFieldDeclaration newField=toField(name,newInt,type);
+                codeStore.addField(newField);
+                newFields[newInt]=newField.getVariable().getIdent();
+            }
+            replaced.put(name,newFields);
+        }
+        JMethodDeclaration[] methods = codeStore.getMethods(); 
+        for(int i=0;i<methods.length;i++) {
+            JMethodDeclaration method=methods[i];
+            //if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork")))
+                method.getBody().accept(this);
+        }
+    }
+    
     public void destroyFieldArrays(SIRFilter filter) {
         replaced.clear();
         Set keySet=targetsField.keySet();
@@ -275,7 +321,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         for(int i=0;i<names.length;i++) {
             String name=names[i];
             //CType type=(CType)((HashMap)targetsField.get(name)).remove(Boolean.TRUE);
-            CType type=getType(name,filter);
+            CType type=getType(name, filter.getFields());
             if(type==null)
                 break;
             keySet=((HashMap)targetsField.get(name)).keySet();
@@ -296,16 +342,15 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
             }
             replaced.put(name,newFields);
         }
-        JMethodDeclaration[] methods=filter.getMethods();
+        JMethodDeclaration[] methods = filter.getMethods(); 
         for(int i=0;i<methods.length;i++) {
             JMethodDeclaration method=methods[i];
-            if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork")))
+            //if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork")))
                 method.getBody().accept(this);
         }
     }
 
-    private CType getType(String name,SIRFilter filter) {
-        JFieldDeclaration[] fields=filter.getFields();
+    private CType getType(String name,JFieldDeclaration[] fields) {
         for(int i=0;i<fields.length;i++) {
             JVariableDefinition var=fields[i].getVariable();
             if(var.getIdent().equals(name))

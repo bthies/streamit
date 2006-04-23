@@ -57,7 +57,6 @@ private:
 
   static void set_start_iter(int iter);
   static void read_config_file();
-  static void read_work_estimate_file();
 
   static void set_thread_ip(int thread, unsigned ip); 
   static unsigned get_thread_ip(int thread);

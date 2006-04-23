@@ -115,44 +115,6 @@ void init_instance::read_config_file() {
 }
 
 
-void init_instance::read_work_estimate_file()
-{
-  FILE *fp = fopen("work-estimate.txt", "r");
-  int thread_number = 0;
-  int thread_usage = 0;
-
-
-  map<int, Thread_Info>::iterator i;
-/*
-  if (i == thread_machines.end()) {
-    return 0;
-  } else {
-    return (unsigned)(*i).second;
-  }
-}*/
-
-  fprintf(stderr,"Reading work estimate file...\n");
-
-  for (;;) {
-  
-    fscanf(fp, "%i %i", &(thread_number), &(thread_usage));
-    
-    if (feof(fp)) break;
-    i = threadInfo.find(thread_number);
-    if (i == threadInfo.end()) {
-        fprintf(stderr, "thread %i doesn't exist in the cluster-config.txt \n", thread_number);
-    }
-    threadInfo[thread_number].t_usage = thread_usage;
-
-    fprintf(stderr,"TEST: Usage:%i Machine:%i\n", thread_number,threadInfo[thread_number].t_usage) ;
-  }
-
-  fprintf(stderr,"\n");
-  
-  fclose(fp);
-}
-
-
 
 void init_instance::set_thread_ip(int thread, unsigned ip) {
   thread_machines[thread] = ip;

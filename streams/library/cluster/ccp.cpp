@@ -420,18 +420,6 @@ void ccp::handle_change_in_number_of_nodes() {
 	fprintf(stderr,"Success to open cluster-config.txt!\n");
       }
 
-      // DB_COMMENT
-      sprintf(name, "work-estimate.txt.%d", count);
-      fprintf(stderr,"Trying to open file [%s] ...", name); 
-
-      res = read_work_estimate_file(name);
-      if (res == -1) {
-	fprintf(stderr,"Failed to open work-estimate.txt!\n"); 
-	return;
-      } else {
-	fprintf(stderr,"Success to open work-estimate.txt!\n");
-      }
-
       find_thread_per_machine_mapping(); 
       
       // DB_COMMENT_END

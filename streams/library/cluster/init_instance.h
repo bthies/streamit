@@ -21,7 +21,15 @@ using namespace std;
 #define UNLOCK(var) pthread_mutex_unlock(var)
 
 class init_instance {
+public:
+  typedef struct {
+     int t_usage;
+     int t_host_ip;
+  } Thread_Info;
 
+  typedef map<int, Thread_Info> Thread_info;
+private:
+  
   static short listen_port;
   static int start_iter;
   
@@ -32,6 +40,7 @@ class init_instance {
   static map<int, unsigned> thread_machines;
   static map<int, unsigned> thread_start_iter;
 
+  static Thread_info threadInfo;
   //// helpers
 
   static int listen();
@@ -41,12 +50,14 @@ class init_instance {
   
   friend void *accept_thread(void *param);
 
+  
  public:
 
   static void reset_all();
 
   static void set_start_iter(int iter);
   static void read_config_file();
+  static void read_work_estimate_file();
 
   static void set_thread_ip(int thread, unsigned ip); 
   static unsigned get_thread_ip(int thread);
@@ -63,7 +74,9 @@ class init_instance {
   static mysocket* get_incoming_socket(int from, int to, int type);
   static mysocket* get_outgoing_socket(int from, int to, int type);
 
-
+  static void set_thread_usage(int thread, int usage);
+  static int get_thread_usage(int thread);
+  static Thread_info return_thread_map();
 };
 
 #endif

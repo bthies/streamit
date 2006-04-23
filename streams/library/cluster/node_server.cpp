@@ -13,6 +13,7 @@ void node_server::run(unsigned ccp_ip) {
 
   if (ccp_ip == 0) {
     init_instance::read_config_file();
+//    init_instance::read_work_estimate_file();
 
     if (thread_init != NULL) thread_init();
 

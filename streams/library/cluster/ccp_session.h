@@ -16,7 +16,10 @@ class ccp_session {
   bool alive_cmd_sent;
   bool alive_response_received;
   
+  // Per CPU info
   int latest_checkpoint;
+  int cpu_utilization;
+  int idle_time;
 
   int read_int(int *ptr);
 
@@ -26,6 +29,11 @@ class ccp_session {
 
   netsocket *get_socket();
   unsigned get_ip();
+
+// DB_COMMENT
+  int get_idle_time();
+  int get_cpu_util();
+
 
   int read_data();
 

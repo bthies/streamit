@@ -19,7 +19,10 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+//#include <string>
 
+#define DBG 0 
+ 
 ccp::ccp() {
   machines_in_partition = 0;
   number_of_threads = 0;
@@ -35,6 +38,9 @@ int ccp::read_config_file(char *file_name) {
 
   int id, m_id, max;
   char buf[128];
+//  map<std::string, int> mmap1;
+
+//  typedef map<std::string, int>::const_iterator CI;
 
   FILE *f = fopen(file_name, "r");
 
@@ -67,6 +73,50 @@ int ccp::read_config_file(char *file_name) {
   return 0;
 }
 
+// DB_COMMENT: read This function should be called after read_config_file
+int ccp::read_work_estimate_file(char *file_name) {
+
+  FILE *fp = fopen(file_name,"r");
+  int thread_number = 0;
+  int thread_usage =0;
+
+#if DBG
+  fprintf(stderr,"This is in the read_work_estimate_file. \n");
+#endif
+  map<int, int>::iterator l_iter;
+
+  if(fp == NULL) return -1;
+
+  for (;;) {
+
+    fscanf(fp, "%i %i", &thread_number, &thread_usage);
+
+    if (feof(fp)) break;
+
+    l_iter = partition.find(thread_number);
+   
+    if(l_iter == partition.end()) {
+	threadusage[thread_number] = thread_usage;
+	fprintf(stderr, "thread %i doesn't exist in the cluster-config.txt \n", thread_number);
+    }
+    else {
+        threadusage[thread_number] = thread_usage;
+    }
+  }
+  
+  fprintf(stderr,"\n");
+
+#if DBG
+  // DB_COMMENT, FOR TEST ONLY
+  typedef map<int,int>::iterator l_d_iter;
+  
+  for (l_d_iter p=threadusage.begin(); p != threadusage.end(); ++p)
+	fprintf(stderr, "DB ccp::read_work_estimate_file \t thread = %i \t usage = %i \n", p->first, p->second);  
+#endif
+
+  // DB_COMMENT Should delter the iterator
+  fclose(fp);
+}
 
 int ccp::run_ccp() {
 
@@ -77,8 +127,19 @@ int ccp::run_ccp() {
 
   int last_latest_chkpt = 0;
 
+  fprintf(stderr,"Reading files.\n");
   int res = read_config_file("cluster-config.txt");
   assert (res != -1);  
+  
+  // DB_COMMENT
+  res = read_work_estimate_file("work-estimate.txt");
+  assert (res != -1);
+  
+  fprintf(stderr,"finish Reading files.\n");
+  // DB_COMMENT check where is the right place to put this
+  find_thread_per_machine_mapping(); 
+
+  cpu_utilization_per_thread();
 
   struct sockaddr_in serveraddr;
 
@@ -179,6 +240,7 @@ int ccp::run_ccp() {
 	    ccp_session *s = new ccp_session(ip, sock);
 	    sessions.push_back(s);
 	    
+//          DB_COMMENT HERE I SHOULD ADD the new entry to the containters
 	    fprintf(stderr,"new connection from (%d.%d.%d.%d)\n", 
 		   (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));
 
@@ -215,6 +277,28 @@ int ccp::run_ccp() {
     for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
 
       int tmp = (*i)->get_latest_checkpoint();
+      int tmp_int = (*i)->get_cpu_util();
+
+      int tmp_m = 0;
+      for (tmp_m = 0; tmp_m < machines_in_partition; tmp_m++)
+      {
+        if (machines[tmp_m]==(*i)->get_ip())
+        {
+           for (int tmp_n = 0; tmp_n <number_of_threads; tmp_n++)
+	   {
+              if(partition[tmp_n]==tmp_m)
+              {
+                  threadCpuUtil[tmp_n] = threadCpuUtil[tmp_n] * tmp_int;
+                  
+                  #if DBG
+                     printf("threadCpuUtil Normalized %i, thread = %i \r\n", threadCpuUtil[tmp_n], tmp_n);
+                  #endif
+              }
+
+           }           
+	}
+      }
+      
 
       if (tmp < latest_chkpt || !any) latest_chkpt = tmp;
 
@@ -299,7 +383,7 @@ void ccp::handle_change_in_number_of_nodes() {
 
     } else {
     
-      
+ 
       /* send STOP_ALL_THREADS to all active sessions */
 
       for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
@@ -330,20 +414,37 @@ void ccp::handle_change_in_number_of_nodes() {
 
       int res = read_config_file(name);
       if (res == -1) {
-	fprintf(stderr,"ccp: Failed!\n"); 
+	fprintf(stderr,"Failed to open cluster-config.txt!\n"); 
 	return;
       } else {
-	fprintf(stderr,"Success!\n");
+	fprintf(stderr,"Success to open cluster-config.txt!\n");
       }
 
+      // DB_COMMENT
+      sprintf(name, "work-estimate.txt.%d", count);
+      fprintf(stderr,"Trying to open file [%s] ...", name); 
+
+      res = read_work_estimate_file(name);
+      if (res == -1) {
+	fprintf(stderr,"Failed to open work-estimate.txt!\n"); 
+	return;
+      } else {
+	fprintf(stderr,"Success to open work-estimate.txt!\n");
+      }
+
+      find_thread_per_machine_mapping(); 
+      
+      // DB_COMMENT_END
       assign_nodes_to_partition();
       
       fprintf(stderr,"Assignment of threads to nodes...\n");
       
+#if DBG
       for (int t = 0; t < number_of_threads; t++) {
 	unsigned ip = machines[partition[t]];
 	fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
+#endif
 
       int iter = save_state::find_max_iter(number_of_threads);
 
@@ -428,6 +529,66 @@ void ccp::assign_nodes_to_partition() {
 
     m++;    
   }
+}
+
+// DB_COMMENT calculate the CPU ultilization per thread
+void ccp::cpu_utilization_per_thread() {
+
+    int nThread = 0;
+
+    // DB_COMMENT: delete the iterator
+    typedef map<int,unsigned>::const_iterator CI;
+
+    for(CI p=machines.begin(); p !=(machines.end()); ++p)
+    {
+      typedef multimap<int, int>::const_iterator I;
+
+      pair<I,I> b=machineTothread.equal_range(p->first);
+
+      for (I i=b.first; i !=b.second; ++i)
+      { 
+         threadCpuUtil[i->second] = threadusage[i->second];
+         nThread = nThread+ threadCpuUtil[i->second];          
+      }
+
+      // This maybe a problem    
+      for (I i=b.first; i !=b.second; ++i)
+      {
+         threadCpuUtil[i->second] = (int)(((double)threadCpuUtil[i->second]/(double)nThread) * 100.0);
+#if DBG
+	 fprintf(stderr, "ccp::cpu_utilization_per_thread, thread = %i cpu utilization = %i \n", i->second, threadCpuUtil[i->second]);
+#endif
+      }
+
+    }
+
+}
+
+    
+// DB_COMMENT create the multimap
+void ccp::find_thread_per_machine_mapping() 
+{
+#if DBG 
+  for (int i=0; i<26;i++)
+    printf("This is in a loop. %i \n", partition[i]);
+#endif
+
+  // DB_COMMENT: delete iterator j CHECK if it should be ++j j++
+  for(map<int,int>::iterator j=partition.begin(); j!=partition.end(); ++j)
+  {
+      machineTothread.insert(make_pair(j->second,j->first));
+#if DBG
+      printf("1. ccp::find_thread_per_machine_mapping machine = %i,  Thread = %i \n",  j->first, j->second);
+#endif
+  }
+  
+#if DBG
+  // DB_COMMENT: TEST DELETE THIS PART
+  typedef multimap<int, int>::const_iterator I;
+  for (I i=machineTothread.begin(); i !=machineTothread.end(); ++i){
+      printf("ccp::find_thread_per_machine_mapping machine = %i,  Thread = %i \n",  i->first, i->second);
+  }
+#endif
 }
 
 #endif //ARM

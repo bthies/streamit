@@ -7,6 +7,8 @@ ccp_session::ccp_session(unsigned ip, netsocket *sock) {
   this->alive_cmd_sent = false;
   this->alive_response_received = false;
   this->latest_checkpoint = 0;
+  this->cpu_utilization = 0;
+  this->idle_time = 0;
 }
 
 netsocket *ccp_session::get_socket() {
@@ -15,6 +17,16 @@ netsocket *ccp_session::get_socket() {
 
 unsigned ccp_session::get_ip() {
   return ip;
+}
+
+// DB_COMMENT
+int ccp_session::get_cpu_util() {
+  return cpu_utilization;
+}
+
+// DB_COMMENT
+int ccp_session::get_idle_time() {
+  return idle_time;
 }
 
 int ccp_session::read_int(int *ptr) {
@@ -35,6 +47,7 @@ int ccp_session::read_int(int *ptr) {
 	  
       *ptr = *((int*)c);
       
+      // DB_COMMENT read another char
       return 0;
 
     } else {

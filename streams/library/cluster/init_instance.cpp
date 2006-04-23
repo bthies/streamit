@@ -50,6 +50,8 @@ short init_instance::listen_port = 22222;
 map<int, unsigned> init_instance::thread_machines;
 map<int, unsigned> init_instance::thread_start_iter;
 
+init_instance::Thread_info init_instance::threadInfo;
+
 void *accept_thread(void *param) {
 
   // this now locked my main thread
@@ -72,6 +74,7 @@ void init_instance::reset_all() {
 
   thread_machines.clear();
   thread_start_iter.clear();
+  threadInfo.clear();
 
   in_connections.clear();
   out_connections.clear();
@@ -101,6 +104,7 @@ void init_instance::read_config_file() {
 
     string s(name);
     thread_machines[node] = lookup_ip(s.c_str());
+    threadInfo[node].t_host_ip = lookup_ip(s.c_str());
     fprintf(stderr,"thread:%d machine:%s\n", node, name);
 
   }
@@ -110,8 +114,49 @@ void init_instance::read_config_file() {
   fclose(f);
 }
 
+
+void init_instance::read_work_estimate_file()
+{
+  FILE *fp = fopen("work-estimate.txt", "r");
+  int thread_number = 0;
+  int thread_usage = 0;
+
+
+  map<int, Thread_Info>::iterator i;
+/*
+  if (i == thread_machines.end()) {
+    return 0;
+  } else {
+    return (unsigned)(*i).second;
+  }
+}*/
+
+  fprintf(stderr,"Reading work estimate file...\n");
+
+  for (;;) {
+  
+    fscanf(fp, "%i %i", &(thread_number), &(thread_usage));
+    
+    if (feof(fp)) break;
+    i = threadInfo.find(thread_number);
+    if (i == threadInfo.end()) {
+        fprintf(stderr, "thread %i doesn't exist in the cluster-config.txt \n", thread_number);
+    }
+    threadInfo[thread_number].t_usage = thread_usage;
+
+    fprintf(stderr,"TEST: Usage:%i Machine:%i\n", thread_number,threadInfo[thread_number].t_usage) ;
+  }
+
+  fprintf(stderr,"\n");
+  
+  fclose(fp);
+}
+
+
+
 void init_instance::set_thread_ip(int thread, unsigned ip) {
   thread_machines[thread] = ip;
+  threadInfo[thread].t_host_ip = ip;
 }
 
 void init_instance::set_thread_start_iter(int thread, unsigned iter) {
@@ -120,7 +165,7 @@ void init_instance::set_thread_start_iter(int thread, unsigned iter) {
 
 
 unsigned init_instance::get_thread_ip(int thread) {
-
+  // Here I should make a change also
   map<int, unsigned>::iterator i = thread_machines.find(thread);
 
   if (i == thread_machines.end()) {
@@ -559,6 +604,21 @@ void init_instance::close_sockets() {
     ((*i).second)->close();
   }
 
+}
+
+void init_instance::set_thread_usage(int thread, int usage)
+{
+  threadInfo[thread].t_usage = usage;
+}
+
+int init_instance::get_thread_usage(int thread)
+{
+  return threadInfo[thread].t_usage;
+}
+
+init_instance::Thread_info init_instance::return_thread_map()
+{
+  return threadInfo;
 }
 
 #endif // ARM

@@ -4,7 +4,7 @@
 #include <thread_info.h>
 #include <object_write_buffer.h>
 
-#define PATH "/u/janiss/checkpoints/"
+#define PATH "/u/hasti/checkpoints/"
 
 class save_state {
 

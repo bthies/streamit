@@ -218,6 +218,9 @@ public class AutoCloner {
             result = ((Vector)o).clone();
             register(o, result);
             cloneWithinList((List)result);
+        } else if (o.getClass().toString().equals("class at.dms.kjc.sir.SIRGlobal")) {
+            // if object is a global (static) section, just return it.
+            return o;
         }
         // unknown types
         else {

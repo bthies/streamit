@@ -161,7 +161,17 @@ public class GenerateMasterDotCpp {
 
         p.print("int main(int argc, char **argv) {\n");
 
-        p.print("  myip = get_myip();\n");
+        p.print("  thread_info *t_info;\n");
+
+        for (int i = 0; i < threadNumber; i++) {
+            FlatNode tmp = NodeEnumerator.getFlatNode(i);
+            if (!ClusterFusion.isEliminated(tmp)) {     
+                p.print("  t_info = __get_thread_info_"+i+"();\n"); 
+                p.print("  thread_list.push_back(t_info);\n");  
+            }    
+        }
+
+        p.print("\n  myip = get_myip();\n");
 
         // tell the profiler how many ID's there are
         if (KjcOptions.countops) {
@@ -203,7 +213,7 @@ public class GenerateMasterDotCpp {
         p.print("    }\n");
 
         p.print("    if (strcmp(argv[a], \"-runccp\") == 0) {\n");
-        p.print("      ccp c;\n");
+        p.print("      ccp c(thread_list);\n");
         p.print("      if (__init_iter > 0) c.set_init_iter(__init_iter);\n");
         p.print("      (new delete_chkpts())->start();\n");
         p.print("      c.run_ccp();\n");
@@ -227,16 +237,6 @@ public class GenerateMasterDotCpp {
 
         p.print("  __global__init();\n");
         p.newLine();
-
-        p.print("  thread_info *t_info;\n");
-
-        for (int i = 0; i < threadNumber; i++) {
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {     
-                p.print("  t_info = __get_thread_info_"+i+"();\n"); 
-                p.print("  thread_list.push_back(t_info);\n");  
-            }    
-        }
 
         p.print("  (new save_manager())->start();\n");
         p.print("  node_server *node = new node_server(thread_list, init);\n");

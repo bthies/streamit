@@ -11,6 +11,8 @@ using namespace std;
 
 class ccp {
 
+  vector <thread_info*> thread_list;
+
   int number_of_threads;
   int machines_in_partition;
   map<int, int> partition;         // from thread to machine id
@@ -41,9 +43,13 @@ class ccp {
   void execute_partitioner(int number_of_nodes);
   // DB_COMMENT
   void cpu_utilization_per_thread();
+
+  thread_info *get_thread_info(int id);
+  void find_partition(int num_p);
+
  public:
 
-  ccp();
+  ccp(vector <thread_info*> list);
 
   void set_init_iter(int iter);
 

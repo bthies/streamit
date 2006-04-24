@@ -21,9 +21,12 @@
 #include <stdio.h>
 //#include <string>
 
+#include <queue>
+
 #define DBG 0 
  
-ccp::ccp() {
+ccp::ccp(vector <thread_info*> list) {
+  this->thread_list = list;
   machines_in_partition = 0;
   number_of_threads = 0;
   initial_iteration = 0;
@@ -118,6 +121,120 @@ int ccp::read_work_estimate_file(char *file_name) {
   fclose(fp);
 }
 
+
+thread_info *ccp::get_thread_info(int id) {
+  vector<thread_info*>::iterator i;
+  for (i = thread_list.begin(); i < thread_list.end(); ++i)
+    if ((*i)->get_thread_id() == id) return *i;
+  assert(false);
+}
+
+void ccp::find_partition(int num_p) {
+
+  printf("find_partition: [ #threads=%d  thred_list.size=%d ]\n",
+	 number_of_threads, thread_list.size());
+
+  assert(number_of_threads == thread_list.size());
+
+  int sum = 0, target;
+  int added[number_of_threads];
+
+  for (int a = 0; a < number_of_threads; a++) {
+    added[a] = 0;
+    sum += threadusage[a];
+  }
+
+  target = sum / num_p; 
+
+  printf("find_partition: sum of work est = %d\n", sum);
+  printf("find_partition: 1/N sum of work est = %d\n", target);
+
+  vector<thread_info*>::iterator i;
+  queue<int> q;
+
+  for (int p = 0; p < num_p; p++) {
+
+    printf("find_partition: ================ Partition %d ================\n", p+1);
+
+    int cur_sum = 0;
+
+    for (i = thread_list.begin(); i < thread_list.end(); ++i) {
+      
+      vector<connection_info*> in = (*i)->get_incoming_data_connections();
+      vector<connection_info*> out = (*i)->get_outgoing_data_connections();
+      int id = (*i)->get_thread_id();
+      int work = threadusage[id];
+      
+      vector<connection_info*>::iterator yy;
+      bool all_prev_added = true;
+      for (yy = in.begin(); yy < in.end(); ++yy) {
+	if (!added[(*yy)->get_from()]) all_prev_added = false;
+      }
+      
+      if (!added[id] && all_prev_added && 
+	  (cur_sum + work < target || p == num_p-1)) {
+	
+	printf("find_partition: thread %d CAN start the partition (work est %d)\n",
+	       id, work);
+	
+	partition[id] = p;
+	q.push(id);
+	cur_sum += work;
+      }
+    }
+    
+    while (q.size() > 0) {
+      
+      int id = q.front();
+      q.pop();
+      added[id] = 1;
+      
+      thread_info *i = get_thread_info(id);
+      
+      vector<connection_info*> out = i->get_outgoing_data_connections();
+      vector<connection_info*>::iterator y;
+      for (y = out.begin(); y < out.end(); ++y) {
+	
+	int to = (*y)->get_to();
+	int work = threadusage[to];
+	
+	thread_info *ii = get_thread_info(to);
+	vector<connection_info*> in = ii->get_incoming_data_connections();
+	vector<connection_info*>::iterator yy;
+	
+	bool all_prev_added = true;
+	for (yy = in.begin(); yy < in.end(); ++yy) {
+	  if (!added[(*yy)->get_from()]) all_prev_added = false;
+	}
+	
+	if (!added[to] && all_prev_added &&
+	    (cur_sum + work < target || p == num_p-1)) {
+	  
+	  partition[to] = p;
+	  q.push(to);
+	  cur_sum += work;
+
+	  long long p = cur_sum;
+	  p *= 1000;
+	  p /= target;
+	  int pp = p;
+
+	  printf("find_partition: ADDING thread %3d cur_sum=%9d/%9d (%2d.%d\%)\n", 
+		 to, cur_sum, target, pp/10, pp%10);
+	} 
+      }
+    }
+  } 
+
+  machines_in_partition = num_p;
+
+  //for (int y = 0; y < number_of_threads; y++) {
+  //printf("thread-%d partition(%d)\n", y, partition[y]);
+  //}
+
+}
+
+
 int ccp::run_ccp() {
 
   int listenfd;
@@ -135,6 +252,8 @@ int ccp::run_ccp() {
   res = read_work_estimate_file("work-estimate.txt");
   assert (res != -1);
   
+  //find_partition(1);
+
   fprintf(stderr,"finish Reading files.\n");
   // DB_COMMENT check where is the right place to put this
   find_thread_per_machine_mapping(); 

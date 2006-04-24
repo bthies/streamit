@@ -1,6 +1,6 @@
 
 /*
-usage: Data2 = PulseCompression2(GmtiParam, Data, windowPulse)
+usage: Data2 = PulseCompression2(Data, windowPulse)
  Description:
    Pulse compression processing for GMTI processing. Uses FIR filter to 
    compress pulses of the radar.   
@@ -21,20 +21,20 @@ usage: Data2 = PulseCompression2(GmtiParam, Data, windowPulse)
 // input: Nbm*Nsrg*Npri complex
 // output: Nbm*(Nsrg+Npc-1)*Npri complex
 
-complex->complex pipeline PulseCompression(GmtiParamType GmtiParam) {
+complex->complex pipeline PulseCompression() {
 
-  int Nbm = GmtiParam.Nbm;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npri = GmtiParam.Npri;
-  int Npc = GmtiParam.Npc;
+  int Nbm = GmtiParam_Nbm;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npri = GmtiParam_Npri;
+  int Npc = GmtiParam_Npc;
 
   int in_total = Nbm*Nsrg*Npri;
   int out_total = Nbm*(Nsrg+Npc-1)*Npri;
 
-  float cf = GmtiParam.CenterFrequency;
-  float Band = GmtiParam.Bandwidth;
-  float sample = GmtiParam.SamplingRate;
-  float cr = GmtiParam.ChirpRate;
+  float cf = GmtiParam_CenterFrequency;
+  float Band = GmtiParam_Bandwidth;
+  float sample = GmtiParam_SamplingRate;
+  float cr = GmtiParam_ChirpRate;
 
 
   add splitjoin {
@@ -99,17 +99,17 @@ complex->complex pipeline freq_conv(int x, int y) {
 
 void->complex pipeline windowPulse(float cf, float Band, float sample, float cr, int Npc, int Nrg) {
 
-//  float cf = GmtiParam.CenterFrequency;
-//  float Band = GmtiParam.Bandwidth;
-//  float sample = GmtiParam.SamplingRate;
-// float cr = GmtiParam.ChirpRate;
+//  float cf = GmtiParam_CenterFrequency;
+//  float Band = GmtiParam_Bandwidth;
+//  float sample = GmtiParam_SamplingRate;
+// float cr = GmtiParam_ChirpRate;
 
   float startFrequency = (cf - Band/2.0)/sample;
   float centerFrequency = cf/sample;
   float chirpRate = cr/(sample*sample);  
  
-//  int Npc = GmtiParam.Npc;
-//  int Nrg = GmtiParam.Nrg;
+//  int Npc = GmtiParam_Npc;
+//  int Nrg = GmtiParam_Nrg;
   int wind_len = (int)(0.5 + 1.05*Nrg*Band/sample);
 
   add pulse_init(startFrequency,chirpRate,Npc);
@@ -133,9 +133,12 @@ void->complex pipeline pulse_init(float startFreq, float chirpRate, int Npc) {
   add splitjoin {
     split duplicate();
     add pipeline {
-      add mult_valComplex(chirp,Npc);
-      add addvalComplex(start,Npc);
-      add mult_valComplex(val,Npc);
+//       add mult_valComplex(chirp,Npc);
+//       add addvalComplex(start,Npc);
+//       add mult_valComplex(val,Npc);
+       add mult_valComplex2r(chirpRate/2.0, 0.0, Npc);
+       add addvalComplex2r(startFreq, 0.0, Npc);
+       add mult_valComplex2r(0.0, 2*pi ,Npc);
     }
     add iden_c(Npc);
     join roundrobin(Npc);
@@ -171,7 +174,8 @@ complex->complex pipeline pri_to_weights(int Nrg, float centerFreq) {
       c.imag = -2.0*pi*centerFreq;
 
       add gen_ints(0,Nrg-1);
-      add mult_valComplex(c,Nrg);
+//      add mult_valComplex(c,Nrg);
+      add mult_valComplex2r(0.0, -2.0*pi*centerFreq, Nrg);
       add exp_vector(Nrg);
     }
     join roundrobin(Nrg);

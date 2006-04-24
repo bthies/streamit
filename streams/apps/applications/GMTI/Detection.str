@@ -1,5 +1,5 @@
 /*
- usage: TargetReport = Detection(GmtiParam, Data, cpi)
+ usage: TargetReport = Detection(Data, cpi)
  Description:
    Detection processing for GMTI processing. Detect targets in data cube. 
    This includes 3-dimensional target grouping which helps find a local 
@@ -26,11 +26,11 @@
 // input: Ncnb*(Nsrg+Npc-1)*Ndop complex (Data)
 // output: Ncnb*(Nsrg+Npc-1)*Ndop floats (TargetReport)
 
-complex->float pipeline Detector(GmtiParamType GmtiParam) {
+complex->float pipeline Detector() {
 
-  int x = GmtiParam.Ncnb;
-  int y = GmtiParam.Nsrg+GmtiParam.Npc-1;
-  int z = GmtiParam.Ndop;
+  int x = GmtiParam_Ncnb;
+  int y = GmtiParam_Nsrg+GmtiParam_Npc-1;
+  int z = GmtiParam_Ndop;
 
   int x_range = 1;
 //  int y_range = 2;
@@ -39,7 +39,7 @@ complex->float pipeline Detector(GmtiParamType GmtiParam) {
 int y_range = 1;
 int z_range = 1;
 
-  add Cfar(GmtiParam);
+  add Cfar();
   add get_final_targets(x,y,z,x_range,y_range,z_range);
 }
 

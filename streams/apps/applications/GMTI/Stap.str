@@ -18,17 +18,17 @@
 // input: Nbm*Nstag*(Nsrg+Npc-1)*Ndop+N*Nch+Nch*Nbm complex (Data,T1,Wabf)
 // output: Nbm*Nstag*(NstapTS+Nbm*Nstag)*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (AstapSet, Data_out)
 
-complex->complex pipeline Stap(GmtiParamType GmtiParam, AntParamType AntParams)
+complex->complex pipeline Stap()
 {
-  int N = AntParams.N;
-  int Nbm = GmtiParam.Nbm;
-  int Nstag = GmtiParam.Nstag;
-  int NstapTS = GmtiParam.NstapTS;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npc = GmtiParam.Npc;
-  int Ncnb = GmtiParam.Ncnb;
-  int Ndop = GmtiParam.Ndop;
-  float alphaStap = GmtiParam.alphaStap;
+  int N = AntParams_N;
+  int Nbm = GmtiParam_Nbm;
+  int Nstag = GmtiParam_Nstag;
+  int NstapTS = GmtiParam_NstapTS;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npc = GmtiParam_Npc;
+  int Ncnb = GmtiParam_Ncnb;
+  int Ndop = GmtiParam_Ndop;
+  float alphaStap = GmtiParam_alphaStap;
 
   int A_x = Nbm * Nstag;
   int A_y = NstapTS + Nbm * Nstag;
@@ -46,7 +46,7 @@ complex->complex pipeline Stap(GmtiParamType GmtiParam, AntParamType AntParams)
   int Wstap_y = Nbm * Nstag;  // = V2_x
   int Wstap_tot = Wstap_x * Wstap_y;
 
-  add interleave_data_V2space_dops(GmtiParam, N);
+  add interleave_data_V2space_dops(N);
 
   add splitjoin {  // outputs A,Data(i),V2,R2 from Data(i),V2space,dops(i)
     split roundrobin(Dat_tot,1+Nbm*Ncnb);
@@ -226,16 +226,16 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
 // input: Nbm*Nstag*(Nsrg+Npc-1)*Ndop+N*Nch+Nch*Nbm complex (Data,T1,Wabf)
 // output: Ndop*(Nbm*Nstag*(Nsrg+Npc-1)+Nbm*Ncnb+1) complex (Data(1),dops(1),V2space,...,Data(Ndop),dops(Ndop),V2space)
 
-complex->complex splitjoin interleave_data_V2space_dops(GmtiParamType GmtiParam, int N) {
+complex->complex splitjoin interleave_data_V2space_dops(int N) {
 
-  int Nbm = GmtiParam.Nbm;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npc = GmtiParam.Npc;
-  int Ndop = GmtiParam.Ndop;
-  int Nch = GmtiParam.Nch;
-  int Nstag = GmtiParam.Nstag;
-  int Ncnb = GmtiParam.Ncnb;
-  float Azi = GmtiParam.Azimuth;
+  int Nbm = GmtiParam_Nbm;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npc = GmtiParam_Npc;
+  int Ndop = GmtiParam_Ndop;
+  int Nch = GmtiParam_Nch;
+  int Nstag = GmtiParam_Nstag;
+  int Ncnb = GmtiParam_Ncnb;
+  float Azi = GmtiParam_Azimuth;
 
   split roundrobin(Nbm*Nstag*(Nsrg+Npc-1)*Ndop,N*Nch+Nch*Nbm);
   add iden_c(1);

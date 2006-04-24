@@ -62,3 +62,16 @@ fragments_lib:
 fragments_raw:
 	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)
 	strc --raw $(TILESQRT)  $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
+
+fragments_cluster:
+	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)
+	strc -cluster 1 -standalone $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
+
+
+fragments_rstream:
+	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)
+	strc -rstream $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
+
+fragments_uni:
+	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)
+	strc $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)

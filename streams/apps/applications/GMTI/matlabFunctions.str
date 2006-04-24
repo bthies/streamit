@@ -990,6 +990,26 @@ complex->complex filter addvalComplex(complex val, int N) {
 }
 
 
+complex->complex filter addvalComplex2r(float valreal, float valimag, int N) {
+
+  complex val;
+
+  init {
+  val.real = valreal;
+  val.imag = valimag;
+  }
+
+  work push N pop N {
+
+      for(int i=0; i<N; i++) {
+	  complex popped = pop();
+	  push(popped+val);
+      }
+  }
+}
+
+
+
 // divides stream of N values by val
 
 // input: N floats
@@ -1035,6 +1055,24 @@ complex->complex filter mult_valComplex(complex val, int N) {
       }
   }
 }
+
+complex->complex filter mult_valComplex2r(float valreal, float valimag, int N) {
+  complex val;
+
+  init {
+  val.real = valreal;
+  val.imag = valimag;
+  }
+
+  work push N pop N {
+
+      for(int i=0; i<N; i++) {
+	  complex popped = pop();
+	  push(popped*val);
+      }
+  }
+}
+
 
 
 // divides complex stream of N values by complex val

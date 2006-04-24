@@ -1,5 +1,5 @@
 /*
-usage: Data3 = DopplerFilter2(GmtiParam, Data)
+usage: Data3 = DopplerFilter2(Data)
  Description:
    Doppler filter for GMTI processing. Doppler filter across pulses for 
    baseline STAP processing before PRI-stagggered STAP processing. 
@@ -16,14 +16,14 @@ usage: Data3 = DopplerFilter2(GmtiParam, Data)
 // input: Nbm*(Nsrg+Npc-1)*Npri complex (Data)
 // output: Nbm*Nstag*(Nsrg+Npc-1)*Ndop (Data3)
 
-complex->complex pipeline DopFilt(GmtiParamType GmtiParam) {
+complex->complex pipeline DopFilt() {
 
-  int Nstag = GmtiParam.Nstag;
-  int Nbm = GmtiParam.Nbm;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npc = GmtiParam.Npc;
-  int Ndop = GmtiParam.Ndop;
-  int Npri = GmtiParam.Npri;
+  int Nstag = GmtiParam_Nstag;
+  int Nbm = GmtiParam_Nbm;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npc = GmtiParam_Npc;
+  int Ndop = GmtiParam_Ndop;
+  int Npri = GmtiParam_Npri;
 
   int in_1 = Nbm;
   int in_2 = Nsrg+Npc-1;

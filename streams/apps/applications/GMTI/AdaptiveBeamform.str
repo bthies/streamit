@@ -1,5 +1,5 @@
 /*
-usage: [Data1, Wabf, T1, V1] = AdaptiveBeamform(GmtiParam, AntParams, Data)
+usage: [Data1, Wabf, T1, V1] = AdaptiveBeamform(Data)
  Description:
    Adaptive beamforming processing for GMTI processing. Adaptively removes 
    sidelobe barrage jamming.  
@@ -21,12 +21,12 @@ usage: [Data1, Wabf, T1, V1] = AdaptiveBeamform(GmtiParam, AntParams, Data)
 // input: Nch*Nsrg*Npri complex (Data)
 // output: Nch*Nbm+N*Nch+Nch*Nbm+Nbm*Nsrg*Npri complex (V1,T1,Wabf,Data1)
 
-complex->complex pipeline AdaptiveBeamform(GmtiParamType GmtiParam, AntParamType AntParams) {
+complex->complex pipeline AdaptiveBeamform() {
 
-  int N = AntParams.Nx*AntParams.fam;
+  int N = AntParams_Nx*AntParams_fam;
 
-  add get_pieces(GmtiParam,AntParams);
-  add separate_pieces(GmtiParam,N);
+  add get_pieces();
+  add separate_pieces(N);
 }
 
 
@@ -35,16 +35,16 @@ complex->complex pipeline AdaptiveBeamform(GmtiParamType GmtiParam, AntParamType
 // input: Nch*Nsrg*Npri complex (Data)
 // output: Nch*Nbm+N*Nch+2*Nch*Nbm+Nch*Nsrg*Npri complex (V1,T1,Wabf,Wabf,Data)
 
-complex->complex splitjoin get_pieces(GmtiParamType GmtiParam, AntParamType AntParams) {
+complex->complex splitjoin get_pieces() {
 
-  int Nch = GmtiParam.Nch;
-  int N = AntParams.Nx*AntParams.fam;
+  int Nch = GmtiParam_Nch;
+  int N = AntParams_Nx*AntParams_fam;
 
-  int total1 = Nch*GmtiParam.Nbm + Nch*N + Nch*GmtiParam.Nbm*2;
-  int total2 = Nch*GmtiParam.Nsrg*GmtiParam.Npri;
+  int total1 = Nch*GmtiParam_Nbm + Nch*N + Nch*GmtiParam_Nbm*2;
+  int total2 = Nch*GmtiParam_Nsrg*GmtiParam_Npri;
 
   split duplicate();
-  add data_to_pieces(GmtiParam,AntParams);
+  add data_to_pieces();
   add iden_c(total2);
   join roundrobin(total1,total2);
 }
@@ -55,18 +55,18 @@ complex->complex splitjoin get_pieces(GmtiParamType GmtiParam, AntParamType AntP
 // input: Nch*Nsrg*Npri complex (Data)
 // output: Nch*Nbm+N*Nch+2*Nch*Nbm complex (V1,T1,Wabf,Wabf)
  
-complex->complex pipeline data_to_pieces(GmtiParamType GmtiParam, AntParamType AntParams) {
+complex->complex pipeline data_to_pieces() {
 
-  int Nch = GmtiParam.Nch;
-  int N = AntParams.Nx*AntParams.fam;
+  int Nch = GmtiParam_Nch;
+  int N = AntParams_Nx*AntParams_fam;
 
   int A_x = Nch;  // = V1_x
-  int A_y = Nch+GmtiParam.NabfTS; 
-  int V1_y = GmtiParam.Nbm;
+  int A_y = Nch+GmtiParam_NabfTS; 
+  int V1_y = GmtiParam_Nbm;
 
   int T1_len = Nch*N;
 
-  add combine_A_V1_T1(GmtiParam,AntParams);
+  add combine_A_V1_T1();
   add split_pieces(A_x,A_y,V1_y,T1_len);
 }
 
@@ -147,12 +147,12 @@ complex->complex filter output_A_V1(int total1, int total2) {
 // input: Nch*Nbm+N*Nch+2*Nch*Nbm+Nch*Nsrg*Npri complex (V1,T1,Wabf,Wabf,Data)
 // output: Nch*Nbm+N*Nch+Nch*Nbm+Nbm*Nsrg*Npri complex (V1,T1,Wabf,Data1)
 
-complex->complex splitjoin separate_pieces(GmtiParamType GmtiParam, int N) {
+complex->complex splitjoin separate_pieces(int N) {
 
-  int Nch = GmtiParam.Nch;
-  int Nbm = GmtiParam.Nbm;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npri = GmtiParam.Npri;
+  int Nch = GmtiParam_Nch;
+  int Nbm = GmtiParam_Nbm;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npri = GmtiParam_Npri;
 
   int len_v = Nch*Nbm; 
   int len_t = N*Nch;
@@ -197,20 +197,20 @@ complex->complex pipeline get_new_data(int Nch, int Nbm, int Nsrg, int Npri) {
 // generates A and V1,T1 (from data)
 
 // input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
-// output: Nch*(Nch+NabfTS)+Nch*Nbm + AntParams.N*Nch complex (Nch by Nch+NabfTS matrix, Nch by Nbm matrix, Nx*fam by Nch matrix)
+// output: Nch*(Nch+NabfTS)+Nch*Nbm + GmtiParam_N*Nch complex (Nch by Nch+NabfTS matrix, Nch by Nbm matrix, Nx*fam by Nch matrix)
 
-complex->complex splitjoin combine_A_V1_T1(GmtiParamType GmtiParam, AntParamType AntParams) {
+complex->complex splitjoin combine_A_V1_T1() {
 
-  int Nch = GmtiParam.Nch;
+  int Nch = GmtiParam_Nch;
 
-  int total1 = GmtiParam.Npri*GmtiParam.Nch*GmtiParam.Nsrg;
-  int total2 = Nch*(GmtiParam.Nch + GmtiParam.NabfTS);
-  int total3 = Nch*GmtiParam.Nbm + AntParams.N*Nch;
+  int total1 = GmtiParam_Npri*GmtiParam_Nch*GmtiParam_Nsrg;
+  int total2 = Nch*(GmtiParam_Nch + GmtiParam_NabfTS);
+  int total3 = Nch*GmtiParam_Nbm + AntParams_N*Nch;
 
   split roundrobin(total1,0);
 
-  add create_A(GmtiParam);
-  add getV1andT1(GmtiParam, AntParams);
+  add create_A();
+  add getV1andT1();
 
   join roundrobin(total2,total3);
 }
@@ -221,21 +221,21 @@ complex->complex splitjoin combine_A_V1_T1(GmtiParamType GmtiParam, AntParamType
 // input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
 // output: Nch*(Nch+NabfTS) complex (Nch by Nch+NabfTS matrix)
 
-complex->complex pipeline create_A(GmtiParamType GmtiParam) {
+complex->complex pipeline create_A() {
 
-  int NabfTS = GmtiParam.NabfTS;
-  int Nsrg = GmtiParam.Nsrg;
-  int Npri = GmtiParam.Npri;
-  int Nch = GmtiParam.Nch;
-  int alphaAbf = GmtiParam.alphaAbf;
+  int NabfTS = GmtiParam_NabfTS;
+  int Nsrg = GmtiParam_Nsrg;
+  int Npri = GmtiParam_Npri;
+  int Nch = GmtiParam_Nch;
+  int alphaAbf = GmtiParam_alphaAbf;
 
   float normDopTrain, normDop;
 
 // calculate normDopTrain
-  float lambda = GmtiParam.SpeedofLight/GmtiParam.CenterFrequency;
-  float sin_theta = sin(GmtiParam.Azimuth);
+  float lambda = GmtiParam_SpeedofLight/GmtiParam_CenterFrequency;
+  float sin_theta = sin(GmtiParam_Azimuth);
   float spatial_frequency = 0.5*sin_theta;
-  normDop = 4*GmtiParam.PlatformSpeed*spatial_frequency/lambda/GmtiParam.PRF;
+  normDop = 4*GmtiParam_PlatformSpeed*spatial_frequency/lambda/GmtiParam_PRF;
   normDop = normDop - (int)(normDop+0.5);
   normDopTrain = normDop - (int)(normDop) - 0.5;
 

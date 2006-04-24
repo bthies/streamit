@@ -6,15 +6,15 @@
 // input: Ncnb*(Nsrg+Npc-1)*Ndop complex (Data)
 // output: Ncnb*(Nsrg+Npc-1)*Ndop floats (PrelimTargets)
 
-complex->float pipeline Cfar(GmtiParamType GmtiParam) {
+complex->float pipeline Cfar() {
 
-  int Ncfar = GmtiParam.Ncfar;
-  int G = GmtiParam.G;
-  int mu = GmtiParam.mu;
+  int Ncfar = GmtiParam_Ncfar;
+  int G = GmtiParam_G;
+  int mu = GmtiParam_mu;
 
-  int x = GmtiParam.Ncnb;
-  int y = GmtiParam.Nsrg+GmtiParam.Npc-1;
-  int z = GmtiParam.Ndop;
+  int x = GmtiParam_Ncnb;
+  int y = GmtiParam_Nsrg+GmtiParam_Npc-1;
+  int z = GmtiParam_Ndop;
 
   int sub_total = x*z;
   int total = x*y*z;

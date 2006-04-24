@@ -1,83 +1,103 @@
 // these are the data structures used by the GMTI program
+// In the reference code thet are divided into two data structures
+// GmtiParam (general parameters) and AntParams (antenna parameters)
+// Since our constant propagation for the compiled back ends does not work
+// well with structures, we use this static section instead.
 
-struct GmtiParamType {
+static {
 
+///////////// GMTI parameters ///////////////////////
 
-  float SpeedofLight;            // speed of light in meters per second
-  float CenterFrequency;         // radar center frequency in Hertz
-  float Bandwidth;               // radar bandwidth in Hertz
-  float SamplingRate;            // radar A/D sampling rate in Hertz
-  float PRF;                     // pulse repitition frequency in Hertz
-  int Npc;                     // pulse compression filter length in samples
-  float PulseTime;             // Pulse length in seconds
-  float ChirpRate;            // Chirp Rate
-  float DutyCycle;      // Percentage of pulse cycle that radar is transmitting
-  int Ntde;                    // Time delay and equalization filter length
+  float GmtiParam_SpeedofLight = 2.9979e8; // speed of light in meters per second
+  float GmtiParam_CenterFrequency = 1e10;  // radar center frequency in Hertz
+  float GmtiParam_Bandwidth = 1.6e7;       // radar bandwidth in Hertz
+  float GmtiParam_SamplingRate = 2e7;      // radar A/D sampling rate in Hertz
+  float GmtiParam_PRF = 7.0e3;             // pulse repitition frequency in Hertz
+  // int GmtiParam_Npc = 167;      Small model value
+  int GmtiParam_Npc = 5;                   // pulse compression filter length in samples
+  float GmtiParam_PulseTime;               // Pulse length in seconds (calculated)
+  float GmtiParam_ChirpRate;               // Chirp Rate (calculated)
+  float GmtiParam_DutyCycle;               // Percentage of pulse cycle that radar is transmitting (calculated)
+  int GmtiParam_Ntde = 36;                 // Time delay and equalization filter length
 
  // MAIN RADAR PROCESSING PARAMETERS
 
 // Don't change Nch, Nbm, or Ncnb - the are matched precisely to the system antenna
 
-  int Nch;  // Number of sensor channels
-  int Nbm;  // Number of beams formed 
-  int Ncnb; // Number of clutter nulled beams
+// Small model values:
+//  GmtiParam.Nch = 9;  // Number of sensor channels
+//  GmtiParam.Nbm = 7;  // Number of beams formed 
+//  GmtiParam.Ncnb = 5; // Number of clutter nulled beams
+  int GmtiParam_Nch = 5;                   // Number of sensor channels
+  int GmtiParam_Nbm = 3;                   // Number of beams formed 
+  int GmtiParam_Ncnb = 2;                  // Number of clutter nulled beams
 
 // Number of Staggers in doppler filtering
-  int Nstag; // number of temporal degrees of freedom in PRI-staggered STAP
-  int Npri;  // Number of radar pulses
-  int Ndop;   // Number of doppler bins
+  int GmtiParam_Nstag = 2; // number of temporal degrees of freedom in PRI-staggered STAP
+//  GmtiParam.Npri = 31; // Number of radar pulses
+  int GmtiParam_Npri = 7;                  // Number of radar pulses
+  int GmtiParam_Ndop;                      // Number of doppler bins (calculated)
 
 // Number of training sample vectors for ABF and STAP
-  int NabfTS;
-  int NstapTS;
+//  int NabfTSHistory  = 5;
+  int GmtiParam_NabfTSHistory  = 1;
+//  int NstapTSHistory = 5;
+  int GmtiParam_NstapTSHistory = 1;
+
+  int GmtiParam_NabfTS;		// calculated
+  int GmtiParam_NstapTS;	// calculated
 
 // number of STAP weight vector training regions - for this radar, it should always be 1
-  int StapTR;
+  int GmtiParam_StapTR = 1;
 
 // Base the number of range gates on the distance of surveillance in meters
-  float MinDistance;
+  float GmtiParam_MinDistance;		// calculated
 
 // surveillance distance in meters
-  float Distance;
+  float GmtiParam_Distance;		// calculated
 
 // number of range samples per channel per pulse 
-  int Nrg;
+//  GmtiParam.Nrg = (int)ceil(GmtiParam.SamplingRate*2*GmtiParam.Distance/GmtiParam.SpeedofLight);
+  int GmtiParam_Nrg = 9;
 
 // For narrowband radar, Nsrg will be set to Nrg
-  int Nsrg;
+  int GmtiParam_Nsrg = /*GmtiParam_Nrg*/9;
 
 // Number of CPIs in simulation
-  int NumberCPIs;
+  int GmtiParam_NumberCPIs = 1;
 
 // Set diagonal loading factors for ABF and STAP
 //  - Don't change any of these, they are tuned to the antenna
-  int alphaAbf;
-  float alphaStap;
+  int GmtiParam_alphaAbf = 10;
+  float GmtiParam_alphaStap = 0.01;
 
 
 // DETECTION PARAMETERS
 // Don't change these; they are tuned to the radar system
-  int Ncfar; // CFAR range buffer
-  int G;     // CFAR guard cells
-  int mu;    // sensitivity for detection
+//  GmtiParam.Ncfar = 30;  // CFAR range buffer
+  int GmtiParam_Ncfar = 3;		// CFAR range buffer
+//  GmtiParam.G = 10;      // CFAR guard cells
+  int GmtiParam_G = 2;			// CFAR guard cells
+//  GmtiParam.mu = 200;    // sensitivity for detection
+  int GmtiParam_mu = 1;			// sensitivity for detection
 
 // LOOK ANGLE PARAMTERS
 // Don't change Azimuth, Elevation, and Platform speed
-  float Azimuth;          // in radians off broadside
-  float Elevation;        // in radians off broadside
-  float PlatformSpeed; // platform ground speed in meters per second
+  float GmtiParam_Azimuth = /*0*pi/180*/0.0;	// in radians off broadside
+  float GmtiParam_Elevation = /*0*pi/180*/0.0;	// in radians off broadside
+  float GmtiParam_PlatformSpeed = 0.0;      // platform ground speed in meters per second, 10.0 mi/hr = 4.47 m/sec
 
 // Level of clutter to noise ratio at the element level on a linear scale
-  float CNR;
+  float GmtiParam_CNR = 1e1;
 
 // Flag for turning clutter generation on or off: 1=on, 0=off
-  bit GenClutter;
+  bit GmtiParam_GenClutter = 1;
 
 // Turn adaptive beamforming on=1/off=0
-  bit AdaptiveBeamforming;
+  bit GmtiParam_AdaptiveBeamforming = 1;
 
 // Turn STAP on=1/off=0
-  bit AdaptiveSTAP;
+  bit GmtiParam_AdaptiveSTAP = 1;
 
 // Create parameters to estimate target locations from target bin estimates
 // Don't change these parameters, they are derived from other currently
@@ -85,63 +105,82 @@ struct GmtiParamType {
 //   estimation of absolute positions in the output.
 // -- Azimuth dimension
 
-  float AzStart;
-  float AzEnd;
-  int AzBins;
+  float GmtiParam_AzStart = /*-1 * pi/180*/-0.017453293;
+  float GmtiParam_AzEnd = /*1 * pi/180*/0.017453293;
+  int GmtiParam_AzBins = /*GmtiParam_Ncnb*/2;
 
-// -- Range dimension
-  float RgStart;
-  float RgEnd;
-  int RgBins;
+// -- Range dimension (calculated from other parameters)
+  float GmtiParam_RgStart;
+  float GmtiParam_RgEnd;
+  int GmtiParam_RgBins;
 
-// -- Doppler dimension
-  float DopStart;
-  float DopEnd;
-  int DopBins;
+// -- Doppler dimension (calculated from other parameters)
+  float GmtiParam_DopStart;
+  float GmtiParam_DopEnd;
+  int GmtiParam_DopBins;
 
 // SIMULATION SYSTEM PARAMETERS
 // relative location of GMTI data
-//  String dataFolderName;
+//  String dataFolderName = 'GmtiData';;
 
 // Flag for saving target cubes: 1=yes, 0=no
-  bit SaveTargetCubes;
+  bit GmtiParam_SaveTargetCubes = 0;
 
 // Flag for saving output data cubes
-  bit SaveOutputCubes;
+  bit GmtiParam_SaveOutputCubes = 0;
 
-// Produce a reduced number of noise data cubes 
-  int noiseCubes;
-
-}
+// Produce a reduced number of noise data cubes (calculated)
+  int GmtiParam_noiseCubes;
 
 
-
-struct AntParamType {
+/////////////  Antenna parameters //////////////////////////
 
 // The following parameters are for the antenna
-  int Nx;    // Dimension of subarray in x-direction 
-  int Ny;    // Dimension of subarray in y-direction
-  int am1;   // Location index on x-axis for first auxilary element 
-  int am2;   // Location index on x-axis for second auxilary element
-  int an1;   // Location index on y-axis for first auxilary element
-  int an2;   // Location index on t-axis for second auxilary element
-  float a;
-  float b;
-  float scale;
-  int fam;
-  int N;
+  int AntParams_fam = 4;
+  int AntParams_Nx = 18;// Dimension of subarray in x-direction 
+  int AntParams_Ny= 4;  // Dimension of subarray in y-direction
+  int AntParams_am1 = 1;// Location index on x-axis for first auxilary element 
+  int AntParams_am2;    // Location index on x-axis for second auxilary element (calc)
+  int AntParams_an1 = 0;// Location index on y-axis for first auxilary element
+  int AntParams_an2 = 0;// Location index on t-axis for second auxilary element
+  float AntParams_a = 0.54;
+  float AntParams_b = 0.46;
+  float AntParams_scale;
+  int AntParams_N;
 
+  /////////////////////////////// set up calculated values
+  init {
+      GmtiParam_PulseTime = /*GmtiParam_Npc / GmtiParam_SamplingRate*/2.5e-07;   // Pulse length in seconds
+      GmtiParam_ChirpRate = /*GmtiParam_Bandwidth / GmtiParam_PulseTime*/6.4e+13;// Chirp Rate
+      GmtiParam_DutyCycle = /*GmtiParam_PulseTime * GmtiParam_PRF*/1.75e-03;      // Percentage of pulse cycle that radar is transmitting
+      GmtiParam_Ndop  = /*GmtiParam_Npri - GmtiParam_Nstag + 1*/6;         // Number of doppler bins
+      GmtiParam_NabfTS  = /*GmtiParam_NabfTSHistory * GmtiParam_Nch*/5;
+      GmtiParam_NstapTS  = /*GmtiParam_NstapTSHistory * GmtiParam_Nbm * GmtiParam_Nstag*/6;
+      GmtiParam_MinDistance = /*(GmtiParam_SpeedofLight / (2 * GmtiParam_PRF)) * GmtiParam_DutyCycle*/3.747375e+1;
+      float num1 = /*((GmtiParam_SpeedofLight / GmtiParam_PRF)/2) - GmtiParam_MinDistance*/2.137609767857143e+4;
+//       if (num1 < 4e4) {
+       	  GmtiParam_Distance = /*num1*/2.137609767857143e+4;
+//       } else {
+// 	  GmtiParam_Distance = 4e4;
+//       }
+      GmtiParam_RgStart = /*-round( ( (GmtiParam_Npc-1) / GmtiParam_Nsrg) * GmtiParam_Distance)*/-9500;
+      GmtiParam_RgEnd   = /*GmtiParam_Distance*/2.137609767857143e+4;
+      GmtiParam_RgBins  = /*GmtiParam_Nrg+GmtiParam_Npc-1*/13;
+
+      GmtiParam_DopStart = /*GmtiParam_SpeedofLight * GmtiParam_PRF / (4 * GmtiParam_CenterFrequency)*/5.246325e+01;
+      GmtiParam_DopEnd   = /*-GmtiParam_SpeedofLight * GmtiParam_PRF / (4 * GmtiParam_CenterFrequency)*/-5.246325e+01;
+      GmtiParam_DopBins  = /*GmtiParam_Ndop*/6;
+
+      //      int num2 = (int)floor(sqrt(GmtiParam_NumberCPIs));
+      //      if(num2 < 5) {
+      //	  noiseCubes = num2;
+      //      } else {
+      //	  noiseCubes = 5;
+      //      }
+      GmtiParam_noiseCubes = 1; 		// since NumberCPIs
+
+      AntParams_am2   = /*AntParams_fam * AntParams_Nx*/72;	// Location index on x-axis for second auxilary element
+      AntParams_scale = /*(AntParams_a * AntParams_Ny - AntParams_b) * (AntParams_a * AntParams_Nx - AntParams_b)*/1.5742e+01;
+      AntParams_N     = /*AntParams_Nx * AntParams_fam*/72;
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

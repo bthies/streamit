@@ -19,15 +19,15 @@ Outputs:
 // input: none
 // output: Nch*Nbm (Nch by Nbm matrix)
 
-void->complex pipeline get_V1_only(GmtiParamType GmtiParam, AntParamType AntParams) {
+void->complex pipeline get_V1_only() {
 
-  int Ns = AntParams.Nx;
-  int N = Ns*AntParams.fam;
-  int Nch = GmtiParam.Nch;
-  int Nbm = GmtiParam.Nbm;
-  float Azimuth = GmtiParam.Azimuth;
+  int Ns = AntParams_Nx;
+  int N = Ns*AntParams_fam;
+  int Nch = GmtiParam_Nch;
+  int Nbm = GmtiParam_Nbm;
+  float Azimuth = GmtiParam_Azimuth;
   
-  float val_num = (AntParams.fam*AntParams.Nx - AntParams.Nx);
+  float val_num = (AntParams_fam*AntParams_Nx - AntParams_Nx);
   float val_den = (Nch - 1);
   float val = val_num/val_den;
 
@@ -41,15 +41,15 @@ void->complex pipeline get_V1_only(GmtiParamType GmtiParam, AntParamType AntPara
 // input: none
 // output: Nch*Nbm+N*Nch (Nch by Nbm matrix, N by Nch matrix)
 
-void->complex pipeline getV1andT1(GmtiParamType GmtiParam, AntParamType AntParams) {
+void->complex pipeline getV1andT1() {
 
-  int Ns = AntParams.Nx;
-  int N = Ns*AntParams.fam;
-  int Nch = GmtiParam.Nch;
-  int Nbm = GmtiParam.Nbm;
-  float Azimuth = GmtiParam.Azimuth;
+  int Ns = AntParams_Nx;
+  int N = Ns*AntParams_fam;
+  int Nch = GmtiParam_Nch;
+  int Nbm = GmtiParam_Nbm;
+  float Azimuth = GmtiParam_Azimuth;
   
-  float val_num = (AntParams.fam*AntParams.Nx - AntParams.Nx);
+  float val_num = (AntParams_fam*AntParams_Nx - AntParams_Nx);
   float val_den = (Nch - 1);
   float val = val_num/val_den;
 
@@ -305,8 +305,6 @@ void->complex pipeline create_steeraz(float Azi, float start, float end, int Nbm
   add ConvertFloatToComplex(Nbm);
 
 }
-
-
 
 
 

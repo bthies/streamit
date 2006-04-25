@@ -133,14 +133,12 @@ public class FlatIRToRS extends ToC
      **/
     private void handleArrayDecl(String ident, CArrayType type)
     {
-        printType(type.getBaseType());
-        p.print(" ");
-        p.print(ident);
+        String decl1 = CommonUtils.declToString(type, ident, false);
+        // change brackets to double brackets
+        String decl2 = Utils.replaceAll(decl1, "]", "]]");
+        String decl3 = Utils.replaceAll(decl2, "[", "[[");
 
-        // print brackets
-        for (int i=0; i<type.getDims().length; i++) {
-            p.print("[[]]");
-        }
+        p.print(decl3);
     }
     
     

@@ -13,6 +13,8 @@ class ccp {
 
   vector <thread_info*> thread_list;
 
+  int init_nodes;
+
   int number_of_threads;
   int machines_in_partition;
   map<int, int> partition;         // from thread to machine id
@@ -49,7 +51,7 @@ class ccp {
 
  public:
 
-  ccp(vector <thread_info*> list);
+  ccp(vector <thread_info*> list, int init_n);
 
   void set_init_iter(int iter);
 

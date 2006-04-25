@@ -31,6 +31,7 @@ int netsocket::read_chunk(char *buf, int len) { return -1; }
 #include <strings.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <stdio.h>
 #include <sys/poll.h>
 
@@ -141,6 +142,8 @@ int netsocket::write_chunk(char *buf, int len) {
 
   if (retval == len) return 0;
 
+  if (retval == -1 && errno == EPIPE) return 0;
+
   /////////////////////////////////
   // if initial attempt failed try again
   
@@ -169,8 +172,10 @@ int netsocket::write_chunk(char *buf, int len) {
     if (select_retval > 0) {
 
        int res = write(fd, buf + done, len - done);
-
-      if (res > 0) done += res;
+ 
+       if (retval == -1 && errno == EPIPE) return 0;
+     
+       if (res > 0) done += res;
     }
 
     if (done >= len) break;

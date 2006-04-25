@@ -7,6 +7,7 @@
 #include <save_state.h>
 #include <delete_chkpts.h>
 
+#include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -25,7 +26,8 @@
 
 #define DBG 0 
  
-ccp::ccp(vector <thread_info*> list) {
+ccp::ccp(vector <thread_info*> list, int init_n) {
+  this->init_nodes = init_n;
   this->thread_list = list;
   machines_in_partition = 0;
   number_of_threads = 0;
@@ -236,6 +238,8 @@ void ccp::find_partition(int num_p) {
 
 
 int ccp::run_ccp() {
+
+  signal(SIGPIPE, SIG_IGN);
 
   int listenfd;
   int retval;
@@ -456,7 +460,8 @@ int ccp::run_ccp() {
 	}
       }
 
-    
+    //fprintf(stderr,"[End of the LOOP]\n");
+    //fflush(stderr);
 
   }
 }
@@ -472,10 +477,12 @@ void ccp::handle_change_in_number_of_nodes() {
 
   if ( waiting_to_start_execution ) {
 
-    if (count == machines_in_partition) {
+    if (count == init_nodes /*machines_in_partition*/) {
 
       fprintf(stderr,"Enough nodes to start cluster execution!\n");
       
+      find_partition(count);
+
       assign_nodes_to_partition();
       
       fprintf(stderr,"Assignement of threads to nodes...\n");
@@ -527,6 +534,9 @@ void ccp::handle_change_in_number_of_nodes() {
 
       //execute_partitioner(count);
 
+      find_partition(count);
+      
+      /*
       char name[64];
       sprintf(name, "cluster-config.txt.%d", count);
       fprintf(stderr,"Trying to open file [%s] ...", name); 
@@ -538,6 +548,7 @@ void ccp::handle_change_in_number_of_nodes() {
       } else {
 	fprintf(stderr,"Success to open cluster-config.txt!\n");
       }
+      */
 
       find_thread_per_machine_mapping(); 
       
@@ -587,6 +598,8 @@ void ccp::send_cluster_config(int iter) {
     }
   }
   fprintf(stderr,"done.\n");
+  fprintf(stderr,"Wait until config read.\n");
+  fflush(stderr);
 
   for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
     

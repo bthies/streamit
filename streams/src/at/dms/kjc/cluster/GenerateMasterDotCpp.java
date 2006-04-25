@@ -213,7 +213,12 @@ public class GenerateMasterDotCpp {
         p.print("    }\n");
 
         p.print("    if (strcmp(argv[a], \"-runccp\") == 0) {\n");
-        p.print("      ccp c(thread_list);\n");
+        p.print("      int tmp = 1;\n");
+        p.print("      if (argc > a + 1 && argv[a+1][0] >= '1' &&  argv[a+1][0] <= '9' ) {\n");
+        p.print("        sscanf(argv[a + 1], \"%d\", &tmp);\n");
+        p.print("      }\n");
+        p.print("      printf(\"RUNCCP number of init nodes is: %d\\n\", tmp);\n");
+        p.print("      ccp c(thread_list, tmp);\n");
         p.print("      if (__init_iter > 0) c.set_init_iter(__init_iter);\n");
         p.print("      (new delete_chkpts())->start();\n");
         p.print("      c.run_ccp();\n");

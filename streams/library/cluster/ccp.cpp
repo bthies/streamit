@@ -174,7 +174,7 @@ void ccp::find_partition(int num_p) {
       }
       
       if (!added[id] && all_prev_added && 
-	  (cur_sum + work < target || p == num_p-1)) {
+	  (cur_sum + work < target || p == num_p-1 || cur_sum == 0)) {
 	
 	printf("find_partition: thread %d CAN start the partition (work est %d)\n",
 	       id, work);

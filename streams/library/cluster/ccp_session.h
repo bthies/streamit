@@ -1,4 +1,3 @@
-
 #ifndef __CCP_SESSION_H
 #define __CCP_SESSION_H
 
@@ -20,6 +19,13 @@ class ccp_session {
   int latest_checkpoint;
   int cpu_utilization;
   int idle_time;
+
+  // QM
+  int cpu_utilization;
+  int idle_time;
+
+  int get_cpu_util();
+  int get_idle_time();
 
   int read_int(int *ptr);
 

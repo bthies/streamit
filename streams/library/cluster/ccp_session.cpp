@@ -58,19 +58,41 @@ int ccp_session::read_int(int *ptr) {
   }
 }
 
+int ccp_session::get_cpu_util() {
+  return cpu_utilization;
+}
+
+int ccp_session::get_idle_time() {
+  return idle_time;
+}
 
 void ccp_session::wait_until_configuration_read() {
 
   int retval;
   int tmp;
 
+  //QM
+  int tmp2, tmp3;
+
   if (alive_cmd_sent && !alive_response_received) {
 
     retval = read_int(&tmp);
     if (retval == -1) return;
+
+    // QM
+    retval = read_int(&tmp2);
+    if (retval == -1) return;
+    retval = read_int(&tmp3);
+    if (retval == -1) return;
+
+
     alive_response_received = true;	    
-    latest_checkpoint = tmp; 
-    
+    latest_checkpoint = tmp;
+
+    // QM
+    cpu_utilization = tmp2;
+    idle_time = tmp3;
+    printf("CPU utilization: \%%d  Idle time: \%%d\n", cpu_utilization, idle_time);
   }
 
   retval = read_int(&tmp);

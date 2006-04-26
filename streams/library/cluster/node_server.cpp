@@ -4,6 +4,14 @@
 node_server::node_server(vector <thread_info*> list, void (*thread_init)()) {
   this->thread_list = list;
   this->thread_init = thread_init;
+
+  int t1, t2;
+  old_cpu_utilization = 0;
+  old_idle_time = 0;
+  measure_load(&t1,&t2);
+
+  printf("Ok.\n");
+
 }
 
 
@@ -112,8 +120,15 @@ void node_server::run_server(netsocket *sock) {
 
       int __n = find_latest_checkpoint();
 
-      fprintf(stderr,"ALIVE reply is: %d\n", __n);
+      // QM
+      int __cu, __it;
+      measure_load(&__cu, &__it);
+      printf("Alive...\n");
+
+      fprintf(stderr,"ALIVE reply is: %d %d %d\n", __n, __cu, __it);
       resp.push_back(__n);
+      resp.push_back(__cu);
+      resp.push_back(__it);
       break;
 
     case CLUSTER_CONFIG:
@@ -172,6 +187,143 @@ void node_server::run_server(netsocket *sock) {
     
   }
 }
+
+
+// QM
+void node_server::measure_load(int *idle_time_out, int *cpu_util_out) {
+
+  double jiffy = sysconf(_SC_CLK_TCK);
+
+  printf("here, jiffy = 1/%f sec\n",jiffy);
+
+  struct rusage usage;
+  int ret;
+
+  int idle_time, cpu_util;
+
+  char file[256], buf[128], b;
+  unsigned long c, cutime, cstime;
+  unsigned long utime, nice, stime, idle, sum;
+  int pid, a, i;
+
+
+  FILE *stat = fopen("/proc/stat", "r");
+  fscanf(stat, "cpu  %lu %lu %lu %lu",&utime,&nice,&stime,&idle);
+  fclose(stat);
+  
+
+  pid = getpid();
+  sprintf(file, "/proc/%d/stat", pid);
+  FILE *statp = fopen(file, "r");
+  fscanf(statp, "%d %s %c", &a, buf, &b);
+  for (i = 0; i < 5; i++) {
+    fscanf(statp, "%d ", &a);
+  }
+  for (i = 0; i < 7; i++) {
+    fscanf(statp, "%lu ", &c);
+  }
+  fscanf(statp, "%lu %lu", &cutime, &cstime);
+  fclose(statp);
+
+  ret = getrusage(RUSAGE_SELF, &usage);
+  cutime = (unsigned long) ((double)usage.ru_utime.tv_usec * 1000 / jiffy);
+  cstime = (unsigned long) ((double)usage.ru_stime.tv_usec * 1000 / jiffy);
+
+  printf("-- ru_utime: %d   ru_stime: %d  \n", usage.ru_utime.tv_usec, usage.ru_stime.tv_usec);
+
+  ret = getrusage(RUSAGE_CHILDREN, &usage);
+  cutime += (unsigned long) ((double)usage.ru_utime.tv_usec * 1000 / jiffy);
+  cstime += (unsigned long) ((double)usage.ru_stime.tv_usec * 1000 / jiffy);
+
+  printf("-- ru_utime: %d   ru_stime: %d  \n", usage.ru_utime.tv_usec, usage.ru_stime.tv_usec);
+
+  sum = utime + nice + stime + idle;
+
+  printf("-- pid: %d\n", pid);
+
+  printf("-- utime: %lu  nice: %lu  stime: %lu  idle: %lu\n",utime,nice,stime,idle);
+  printf("-- cutime: %lu    cstime: %lu\n",cutime,cstime);
+
+  printf("-- sum: %lu    old_sum: %lu    sum-old_sum: %lu\n",sum,old_sum, sum-old_sum);
+
+  printf("[sum, cutime, cstime] = [%lu,%lu,%lu]\n",sum,cutime,cstime);
+
+  if (sum > old_sum) {
+
+    printf(" sum > old_sum \n");
+
+    idle_time = (int)((100 * ( idle - old_idle_time ) ) / (sum - old_sum));
+
+    cpu_util = (int)((100 * (cutime + cstime - old_cpu_utilization)) / (sum - old_sum));
+
+  old_sum = sum;
+  old_idle_time = idle;
+  old_cpu_utilization = cutime + cstime;
+
+  } else if (old_sum <= 0) {
+    printf(" sum <= old_sum && old_sum <= 0 \n");
+    idle_time = 0;
+    cpu_util = 0;
+  } else {
+
+    printf(" sum <= old_sum \n");
+
+    idle_time = (int)((100 * ( old_idle_time ) / (old_sum)));
+    
+    cpu_util = (int)(100 * (old_cpu_utilization) / (old_sum));
+
+  }
+
+  printf("cpu_util: %d  idle_time: %d\n",cpu_util,idle_time);
+
+  //assert(idle_time < 110);
+  //assert(cpu_util < 110);
+
+  if (idle_time < 0) idle_time = 0;
+  if (cpu_util < 0) cpu_util = 0;
+  if (idle_time > 100) idle_time = 100;
+  if (cpu_util > 100) cpu_util = 100;
+
+  printf("CPU utilization: %d  Idle Time: %d\n",cpu_util,idle_time);
+
+  *cpu_util_out = cpu_util;
+  *idle_time_out = idle_time;
+
+}
+
+
+// QM
+//int node_server::idle_time() {
+//  int a,b,c, idle;
+//  FILE *stat = fopen("/proc/stat", "r");
+//  fscanf(stat, "cpu  %d %d %d %d",&a,&b,&c,&idle);
+//  fclose(stat);
+//  a = idle - old_idle_time;
+//  old_idle_time = idle;
+//  return a;
+//}
+//
+// QM
+//int node_server::cpu_utilization() {
+//  char file[256], buf[128], b;
+//  int pid, a, i;
+//  unsigned long c, cutime, cstime;
+//  pid = getpid();
+//  sprintf(file, "/proc/%d/stat", pid);
+//  FILE *stat = fopen(file, "r");
+//  fscanf(stat, "%d %s %c", &a, buf, &b);
+//  for (i = 0; i < 5; i++) {
+//    fscanf(stat, "%d ", &a);
+//  }
+//  for (i = 0; i < 7; i++) {
+//    fscanf(stat, "%lu ", &c);
+//  }
+//  fscanf(stat, "%lu %lu", &cutime, &cstime);
+//  fclose(stat);
+//  c = cutime + cstime - old_cpu_utilization;
+//  old_cpu_utilization = cutime + cstime;
+//  return (int)c;
+//}
 
 int node_server::find_latest_checkpoint() {
   

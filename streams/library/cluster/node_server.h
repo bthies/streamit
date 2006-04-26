@@ -10,6 +10,10 @@
 #include <vector>
 #include <unistd.h>
 
+//QM
+#include <sys/time.h> 
+#include <sys/resource.h>
+
 using namespace std;
 
 #define LIST_COMMAND 10
@@ -76,6 +80,12 @@ class node_server {
   vector<int> stop_all();
 
   int find_latest_checkpoint();
+
+  //QM
+  unsigned long old_cpu_utilization;
+  unsigned long old_idle_time;
+  unsigned long old_sum;
+  void measure_load(int *idle, int *cpu);
 
   netsocket *wait_for_connection();
   static netsocket *connect_to_ccp(unsigned ip);

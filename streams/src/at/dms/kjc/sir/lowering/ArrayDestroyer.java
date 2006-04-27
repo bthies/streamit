@@ -9,7 +9,6 @@ import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
-import at.dms.kjc.spacetime.*;
 
 /**
  * This class breaks up arrays into local vars as much as possible

@@ -4,7 +4,6 @@ import java.util.*;
 import java.io.FileWriter;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import at.dms.kjc.spacetime.*;
 import at.dms.kjc.sir.linear.*;
 
 /**

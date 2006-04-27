@@ -159,20 +159,6 @@ STREAMIT_BACKENDS += \
   at/dms/kjc/spacedynamic/SpaceDynamicBackend.class
 endif
 
-JAVA_TARGET = \
-  $(KOPI_TARGET) \
-  $(KOPI_TOOL_TARGET) \
-  $(STREAMIT_LIBRARIES) \
-  $(STREAMIT_BACKENDS) \
-  streamit/library/StreamIt.class \
-  streamit/library/StreamItFilter.class \
-  streamit/library/StreamItFeedbackLoop.class \
-  streamit/library/StreamItPhasedFilter.class \
-  streamit/library/StreamItPipeline.class \
-  streamit/library/StreamItSplitJoin.class \
-  streamit/frontend/ToJava.class \
-  streamit/frontend/ToKopi.class
-
 JAVA_SRCS = \
   $(KOPI_SRCS) \
   $(KOPI_GENERATED) \
@@ -233,7 +219,7 @@ jar:
 	$(RM) streamit.jar streamit-lib.jar
 	$(MAKE) streamit.jar streamit-lib.jar
 
-streamit.jar: $(JAVA_TARGET)
+streamit.jar: all
 	$(RM) -r classes
 	mkdir classes
 	find . -name '*.class' | grep -v './classes/' | grep -v './streamit/eclipse/' | cpio -p -d -V classes
@@ -247,7 +233,7 @@ streamit.jar: $(JAVA_TARGET)
 	$(RM) -r manifest.streamit
 
 # same as streamit.jar, but also includes eclipse classes
-streamit-eclipse.jar: $(JAVA_TARGET)
+streamit-eclipse.jar: all
 	$(RM) -r classes
 	mkdir classes
 	find . -name '*.class' | grep -v './classes/' | cpio -p -d -V classes
@@ -261,7 +247,7 @@ streamit-eclipse.jar: $(JAVA_TARGET)
 	$(RM) -r manifest.streamit
 
 # only includes streamit frontend, library, scheduler classes
-streamit-lib.jar: $(JAVA_TARGET)
+streamit-lib.jar: all
 	$(RM) -r classes
 	mkdir classes
 	find streamit -name '*.class' | grep -v './streamit/eclipse/' | cpio -d -p -V classes

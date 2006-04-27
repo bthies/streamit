@@ -20,13 +20,6 @@ class ccp_session {
   int cpu_utilization;
   int idle_time;
 
-  // QM
-  int cpu_utilization;
-  int idle_time;
-
-  int get_cpu_util();
-  int get_idle_time();
-
   int read_int(int *ptr);
 
  public:
@@ -39,7 +32,6 @@ class ccp_session {
 // DB_COMMENT
   int get_idle_time();
   int get_cpu_util();
-
 
   int read_data();
 

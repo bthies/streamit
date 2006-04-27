@@ -58,14 +58,6 @@ int ccp_session::read_int(int *ptr) {
   }
 }
 
-int ccp_session::get_cpu_util() {
-  return cpu_utilization;
-}
-
-int ccp_session::get_idle_time() {
-  return idle_time;
-}
-
 void ccp_session::wait_until_configuration_read() {
 
   int retval;

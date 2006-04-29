@@ -116,7 +116,7 @@ void node_server::run_server(netsocket *sock) {
 
     switch (cmd) {
 
-    case ALIVE_COMMAND:
+    case ALIVE_COMMAND: {
 
       int __n = find_latest_checkpoint();
 
@@ -130,7 +130,7 @@ void node_server::run_server(netsocket *sock) {
       resp.push_back(__cu);
       resp.push_back(__it);
       break;
-
+    }
     case CLUSTER_CONFIG:
       
       init_instance::reset_all();

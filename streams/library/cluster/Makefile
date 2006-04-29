@@ -1,5 +1,5 @@
 
-CC =		gcc34
+CC =		gcc
 CC_IA64 =       ecc
 CC_ARM = 	arm343 #arm-linux-gcc
 

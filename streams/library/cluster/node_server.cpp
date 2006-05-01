@@ -4,14 +4,6 @@
 node_server::node_server(vector <thread_info*> list, void (*thread_init)()) {
   this->thread_list = list;
   this->thread_init = thread_init;
-
-  int t1, t2;
-  old_cpu_utilization = 0;
-  old_idle_time = 0;
-  measure_load(&t1,&t2);
-
-  printf("Ok.\n");
-
 }
 
 
@@ -33,6 +25,12 @@ void node_server::run(unsigned ccp_ip) {
     }
 
   } else {
+
+    int t1, t2;
+    old_cpu_utilization = 0;
+    old_idle_time = 0;
+    measure_load(&t1,&t2);
+    printf("measure_load: Ok.\n");
 
     sock = connect_to_ccp(ccp_ip);
     run_server(sock);

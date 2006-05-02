@@ -9,10 +9,15 @@ ccp_session::ccp_session(unsigned ip, netsocket *sock) {
   this->latest_checkpoint = 0;
   this->cpu_utilization = 0;
   this->idle_time = 0;
+  this->socket_open = true;
 }
 
 netsocket *ccp_session::get_socket() {
   return sock;
+}
+
+bool ccp_session::is_socket_open() {
+  return socket_open;
 }
 
 unsigned ccp_session::get_ip() {
@@ -37,6 +42,7 @@ int ccp_session::read_int(int *ptr) {
   if (retval == -1) {
 
     // socket closed
+    socket_open = false;
     return -1;
     
   } else {
@@ -51,11 +57,49 @@ int ccp_session::read_int(int *ptr) {
       return 0;
 
     } else {
-      
+
       // socket closed
+      socket_open = false;
       return -1;
     }
   }
+}
+
+void ccp_session::read_alive_response() {
+
+  int retval;
+  int tmp;
+
+  //QM
+  int tmp2, tmp3;
+
+  retval = read_int(&tmp);
+  if (retval == -1) {
+    printf("ccp_session::read_alive_response socket-closed-1\n");
+    return;
+  }
+    
+  // QM
+  retval = read_int(&tmp2);
+  if (retval == -1) {
+    printf("ccp_session::read_alive_response socket-closed-2\n");
+    return;
+  }
+  retval = read_int(&tmp3);
+  if (retval == -1) {
+    printf("ccp_session::read_alive_response socket-closed-3\n");
+    return;
+  }
+  
+  alive_response_received = true;	    
+  latest_checkpoint = tmp;
+
+  // QM
+  cpu_utilization = tmp2;
+  idle_time = tmp3;
+
+  printf("Alive response = [chkpt=%d, util=%d, idle=%d]\n", latest_checkpoint, cpu_utilization, idle_time);
+
 }
 
 void ccp_session::wait_until_configuration_read() {
@@ -68,23 +112,7 @@ void ccp_session::wait_until_configuration_read() {
 
   if (alive_cmd_sent && !alive_response_received) {
 
-    retval = read_int(&tmp);
-    if (retval == -1) return;
-
-    // QM
-    retval = read_int(&tmp2);
-    if (retval == -1) return;
-    retval = read_int(&tmp3);
-    if (retval == -1) return;
-
-
-    alive_response_received = true;	    
-    latest_checkpoint = tmp;
-
-    // QM
-    cpu_utilization = tmp2;
-    idle_time = tmp3;
-    printf("CPU utilization: \%%d  Idle time: \%%d\n", cpu_utilization, idle_time);
+    read_alive_response();
   }
 
   retval = read_int(&tmp);
@@ -98,10 +126,7 @@ int ccp_session::read_data() {
 
   if (alive_cmd_sent && !alive_response_received) {
 
-    retval = read_int(&tmp);
-    if (retval == -1) return -1;
-    alive_response_received = true;	    
-    latest_checkpoint = tmp; 
+    read_alive_response();
     return 0;
     
   }

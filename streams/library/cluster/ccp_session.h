@@ -11,6 +11,8 @@ class ccp_session {
   unsigned ip;
   netsocket *sock;
 
+  bool socket_open;
+
   timeval last_alive_request;
   bool alive_cmd_sent;
   bool alive_response_received;
@@ -27,6 +29,7 @@ class ccp_session {
   ccp_session(unsigned ip, netsocket *sock);
 
   netsocket *get_socket();
+  bool is_socket_open();
   unsigned get_ip();
 
 // DB_COMMENT
@@ -40,6 +43,8 @@ class ccp_session {
 
   void wait_until_configuration_read(); // waits until node confirms that it has received
                                         // the cluster configuration
+
+  void read_alive_response();
 
   int get_latest_checkpoint();
 };

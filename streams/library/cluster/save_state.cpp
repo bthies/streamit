@@ -71,7 +71,7 @@ int save_state::load_from_file(int thread,
 				int steady_iter, 
 				void (*read_object)(object_write_buffer *)) {
   
-  object_write_buffer buf;
+  object_write_buffer *buf = new object_write_buffer();
   
   char fname[256];
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
@@ -93,7 +93,7 @@ int save_state::load_from_file(int thread,
     char tmp[4];
     int retval = file_sock.read_chunk(tmp, 4);
     if (retval == -1) break;
-    buf.write(tmp, 4);
+    buf->write(tmp, 4);
 
     count += 4;
 
@@ -103,8 +103,10 @@ int save_state::load_from_file(int thread,
   fprintf(stderr,"thread: %d file: %s size: %d bytes\n", thread, fname, count);
   close(fd);
   
-  buf.set_read_offset(0);
-  read_object(&buf);
+  buf->set_read_offset(0);
+  read_object(buf);
+
+  delete buf;
 
   return 0;
 }

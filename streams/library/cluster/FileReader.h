@@ -34,6 +34,11 @@ int FileReader_open(char *pathname) {
   return (int)fs;
 }
 
+void FileReader_close(int fs_ptr) {
+  FileReader_state *fs = (FileReader_state*)fs_ptr;
+  close(fs->file_handle);
+}
+
 int FileReader_getpos(int fs_ptr) {
   FileReader_state *fs = (FileReader_state*)fs_ptr;
   return fs->file_offset;

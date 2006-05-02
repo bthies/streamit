@@ -34,6 +34,11 @@ int FileWriter_open(char *pathname) {
   return (int)fs;
 }
 
+void FileWriter_close(int fs_ptr) {
+  FileWriter_state *fs = (FileWriter_state*)fs_ptr;
+  close(fs->file_handle);
+}
+
 int FileWriter_getpos(int fs_ptr) {
   FileWriter_state *fs = (FileWriter_state*)fs_ptr;
   return fs->file_offset + fs->buf_index;

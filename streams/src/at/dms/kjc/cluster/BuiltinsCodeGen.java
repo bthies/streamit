@@ -186,6 +186,12 @@ class BuiltinsCodeGen {
 
         // template code to generate, using symbolic free vars above.
         String template = 
+            "\n  int __index;" + "\n" +
+            "  for (__index=0; __index < ____n; __index++) {" + "\n" +
+	    "    PUSH(FileReader_read<"+theType+">(__file_descr__"+selfID+"));\n" +
+	    "  }\n";
+
+	/*
             "  #ifdef FUSED" + "\n" +
             "    #ifdef NOMOD" + "\n" +
             "      // read directly into buffer" + "\n" +
@@ -223,6 +229,7 @@ class BuiltinsCodeGen {
             "      }" + "\n" +
             "    }" + "\n" +
             "  #endif";
+	*/
 
         // set values of free variables
         String TYPE = theType;
@@ -333,25 +340,46 @@ class BuiltinsCodeGen {
     private static void genFileReaderInit(SIRFileReader fr,
                                           CType return_type, String function_name, int selfID,
                                           List/*String*/ cleanupCode,CodegenPrintWriter p) {
-        p.print("FILE* " + fpName(fr) + ";");
-        p.newLine();
-        p.newLine();
+
+	int id = NodeEnumerator.getSIROperatorId(fr);
+        String theType = "" + fr.getOutputType();
+        // dispatch to special routine for bit type
+        if (theType.equals("bit")) {
+	    p.print("FILE* " + fpName(fr) + ";");
+	    p.newLine();
+	    p.newLine();
+        }
+
         startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
                                    function_name, p);
-        p.print(fpName(fr) + " = fopen(\"" + fr.getFileName()
-                + "\", \"r\");");
-        p.newLine();
-        p.print("assert (" + fpName(fr) + ");");
-        p.newLine();
-        endFunction(p);
+
+        if (theType.equals("bit")) {
+	    p.print(fpName(fr) + " = fopen(\"" + fr.getFileName()
+		    + "\", \"r\");");
+	    p.newLine();
+	    p.print("assert (" + fpName(fr) + ");");
+	    p.newLine();
+	} else {
+	    p.print("__file_descr__"+id+" = FileReader_open(\""+fr.getFileName()+"\");");
+	    p.newLine();
+	    p.print("assert (__file_descr__"+id+");");
+	    p.newLine();
+	}
+
+	endFunction(p);
 
         String closeName = ClusterUtils.getWorkName(fr, selfID)
             + "__close"; 
                                   
         startParameterlessFunction("void", closeName, p);
-        p.print("fclose(" + fpName(fr) + ");");
-        p.newLine();
-        endFunction(p);
+
+	if (theType.equals("bit")) {
+	    p.println("fclose(" + fpName(fr) + ");");
+	} else {
+	    p.println("FileReader_close(__file_descr__"+id+");");
+	}
+        
+	endFunction(p);
         
         cleanupCode.add(closeName+"();\n");
 
@@ -401,7 +429,13 @@ class BuiltinsCodeGen {
                       + ");");
         } else {
             // not a bit type.  write directly to file without needing to buffer bits.
+	    
+	    p.println("\n  int __index;" + "\n" +
+		      "  for (__index=0; __index < ____n; __index++) {" + "\n" +
+		      "    FileWriter_write<"+theType+">(__file_descr__"+selfID+", __pop__"+selfID+"());\n" +
+		      "  }\n");
 
+	    /*
             NetStream in = RegisterStreams.getFilterInStream(fw);
             // source and destination of incoming stream
             int s = in.getSource();
@@ -426,6 +460,7 @@ class BuiltinsCodeGen {
             }
             p.outdent();
             p.println("#endif");
+	    */
         }
     }
     
@@ -437,10 +472,15 @@ class BuiltinsCodeGen {
                                           CType return_type, String function_name, int selfID,
                                           List/*String*/ cleanupCode,CodegenPrintWriter p) {
 
-        p.println("FILE* " + fpName(fw) + ";");
+	int id = NodeEnumerator.getSIROperatorId(fw);
+
         String theType = "" + fw.getInputType();
         String bits_to_go = bitsToGoName(fw);
         String the_bits = theBitsName(fw);
+
+        if (theType.equals("bit")) {
+	    p.println("FILE* " + fpName(fw) + ";");
+	}
 
         if (theType.equals("bit")) {
             // the bit type is special since you can not just read or
@@ -454,9 +494,18 @@ class BuiltinsCodeGen {
 
         startParameterlessFunction(ClusterUtils.CTypeToString(return_type),
                                    function_name, p);
-        p.println(fpName(fw) + " = fopen(\"" + fw.getFileName()
-                  + "\", \"w\");");
-        p.println("assert (" + fpName(fw) + ");");
+
+        if (theType.equals("bit")) {
+	    p.println(fpName(fw) + " = fopen(\"" + fw.getFileName()
+		      + "\", \"w\");");
+	    p.println("assert (" + fpName(fw) + ");");
+	} else {
+	    p.print("__file_descr__"+id+" = FileWriter_open(\""+fw.getFileName()+"\");");
+	    p.newLine();
+	    p.print("assert (__file_descr__"+id+");");
+	    p.newLine();
+	}
+
         endFunction(p);
 
         String closeName = ClusterUtils.getWorkName(fw, selfID)
@@ -474,7 +523,14 @@ class BuiltinsCodeGen {
             p.outdent();
             p.println("}");
         } 
-        p.println("fclose(" + fpName(fw) + ");");
+
+        if (theType.equals("bit")) {
+	    p.println("fclose(" + fpName(fw) + ");");
+	} else {
+	    p.println("FileWriter_flush(__file_descr__"+id+");");
+	    p.println("FileWriter_close(__file_descr__"+id+");");
+	}
+
         endFunction(p);
         
         cleanupCode.add(closeName+"();\n");

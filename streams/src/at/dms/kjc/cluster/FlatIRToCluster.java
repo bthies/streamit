@@ -925,9 +925,20 @@ public class FlatIRToCluster extends InsertTimers implements
         }
         p.newLine();
 
+	if ((self instanceof SIRFileReader) ||
+	    (self instanceof SIRFileWriter)) {
+
+	    if (self instanceof SIRFileReader) { p.println("#include <FileReader.h>"); }
+	    if (self instanceof SIRFileWriter) { p.println("#include <FileWriter.h>"); }
+
+	    p.println("int __file_descr__"+selfID+";\n");
+	}
+
         // +=============================+
         // | Method Bodies |
         // +=============================+
+
+
 
         setDeclOnly(false);
         for (int i = 0; i < methods.length; i++) {
@@ -935,6 +946,36 @@ public class FlatIRToCluster extends InsertTimers implements
                 methods[i].accept(this);
             // methods[i].accept(this);
         }
+
+
+	if ((self instanceof SIRFileReader) ||
+	    (self instanceof SIRFileWriter)) {
+	    
+	    if (self instanceof SIRFileReader) {
+
+		p.println("void save_file_pointer__"+selfID+"(object_write_buffer *buf)");
+		p.println("{ buf->write_int(FileReader_getpos(__file_descr__"+selfID+")); }\n");
+
+		p.println("void load_file_pointer__"+selfID+"(object_write_buffer *buf)");
+		p.println("{ FileReader_setpos(__file_descr__"+selfID+", buf->read_int()); }\n");
+	    }
+
+	    if (self instanceof SIRFileWriter) {
+
+		p.println("void save_file_pointer__"+selfID+"(object_write_buffer *buf)");
+		p.println("{ FileWriter_flush(__file_descr__"+selfID+");");
+		p.println("  buf->write_int(FileWriter_getpos(__file_descr__"+selfID+")); }\n");
+
+		p.println("void load_file_pointer__"+selfID+"(object_write_buffer *buf)");
+		p.println("{ FileWriter_setpos(__file_descr__"+selfID+", buf->read_int()); }\n");
+	    }
+
+	} else {
+	
+	    p.println("void save_file_pointer__"+selfID+"(object_write_buffer *buf) {}");
+	    p.println("void load_file_pointer__"+selfID+"(object_write_buffer *buf) {}");	    
+
+	}
 
         // +=============================+
         // | Work Function (int ____n) |

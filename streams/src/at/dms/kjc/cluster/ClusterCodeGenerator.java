@@ -281,6 +281,8 @@ class ClusterCodeGenerator {
 
         p.println("void save_peek_buffer__"+id+"(object_write_buffer *buf);");
         p.println("void load_peek_buffer__"+id+"(object_write_buffer *buf);");
+        p.println("void save_file_pointer__"+id+"(object_write_buffer *buf);");
+        p.println("void load_file_pointer__"+id+"(object_write_buffer *buf);");
         p.println("");
 
 	if (! KjcOptions.noverbose || ! KjcOptions.standalone) {
@@ -300,6 +302,7 @@ class ClusterCodeGenerator {
         }
 
         p.println("  save_peek_buffer__"+id+"(buf);");
+        p.println("  save_file_pointer__"+id+"(buf);");
 
         for (int f = 0; f < fields.length; f++) {
             CType type = fields[f].getType();
@@ -347,6 +350,7 @@ class ClusterCodeGenerator {
         }
 
         p.println("  load_peek_buffer__"+id+"(buf);");
+        p.println("  load_file_pointer__"+id+"(buf);");
 
         for (int f = 0; f < fields.length; f++) {
             CType type = fields[f].getType();
@@ -728,6 +732,9 @@ class ClusterCodeGenerator {
             //r.add("// ClusterCodeGenerator_1\n");
             r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
             if (oper instanceof SIRFilter) {
+
+		//r.add("      printf(\"thread"+id+" %d/"+init_counts+"\\n\", _tmp);\n");
+
                 r.add("      //check_status__"+id+"();\n");
 
                 r.add("      if (*__state_flag_"+id+" == EXIT_THREAD) exit_thread(__thread_"+id+");\n");

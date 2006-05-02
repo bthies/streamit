@@ -370,6 +370,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p.println("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}");
         p.newLine();
 
+	p.println("void save_file_pointer__"+thread_id+"(object_write_buffer *buf) {}");
+	p.println("void load_file_pointer__"+thread_id+"(object_write_buffer *buf) {}");
+        p.newLine();
+
+
         //  +=============================+
         //  | Splitter Push               |
         //  +=============================+
@@ -971,6 +976,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p.print("void save_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
         p.print("void load_peek_buffer__"+thread_id+"(object_write_buffer *buf) {}\n");
         p.newLine();
+
+	p.println("void save_file_pointer__"+thread_id+"(object_write_buffer *buf) {}");
+	p.println("void load_file_pointer__"+thread_id+"(object_write_buffer *buf) {}");
+        p.newLine();
+
 
         //  +=============================+
         //  | Joiner Pop                  |

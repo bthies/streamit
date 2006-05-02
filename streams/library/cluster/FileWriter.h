@@ -54,7 +54,7 @@ void FileWriter_setpos(int fs_ptr, int pos) {
   struct stat buf;
   fstat(fs->file_handle, &buf);
   fs->file_length = buf.st_size;
-  assert(pos >= 0 && pos < fs->file_length);
+  assert(pos >= 0 && pos <= fs->file_length);
 
   int seek_pos = lseek(fs->file_handle, pos, SEEK_SET);
   assert(seek_pos == pos);
@@ -86,6 +86,7 @@ int FileWriter_flush(int fs_ptr) {
      
       
     if (ret_val > 0) {
+      fs->file_offset += ret_val;
       pos += ret_val;
     }
 

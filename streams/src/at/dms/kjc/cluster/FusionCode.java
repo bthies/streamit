@@ -473,6 +473,12 @@ class FusionCode {
             p.print("extern void __init_sdep_"+id+"();\n");
             p.print("extern void check_messages__"+id+"();\n");
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
+
+	    if ((node.contents instanceof SIRFileReader) ||
+		(node.contents instanceof SIRFileWriter)) {
+		p.print("extern void "+get_work_function(node.contents)+"__close();\n");
+	    }
+
 	    if ((node.contents instanceof SIRFilter) &&
 		!(node.contents instanceof SIRFileReader) &&
 		!(node.contents instanceof SIRFileWriter)) {
@@ -785,6 +791,12 @@ class FusionCode {
             
 		    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
+
+		    if ((node.contents instanceof SIRFileReader) ||
+			(node.contents instanceof SIRFileWriter)) {
+			p.print("    "+get_work_function(oper)+"__close();\n");
+		    }
+
                 }
 
                 /*

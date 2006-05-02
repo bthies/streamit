@@ -323,8 +323,10 @@ int ccp::run_ccp() {
     for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
       {
 	int fd = (*i)->get_socket()->get_fd();
-	if (fd > maxfd) maxfd = fd;
-	FD_SET(fd, &set);	
+	if ((*i)->is_socket_open()) {
+	  if (fd > maxfd) maxfd = fd;
+	  FD_SET(fd, &set);	
+	}
       }
 
     rwait.tv_sec = 0;
@@ -447,9 +449,10 @@ int ccp::run_ccp() {
       {
 
 	bool alive = (*i)->is_alive();
+	bool open = (*i)->is_socket_open();
 	unsigned ip  = (*i)->get_ip();
 
-	if (!alive) {
+	if (!alive || !open) {
 
 	  fprintf(stderr,"connection closed from (%d.%d.%d.%d) no longer ALIVE\n", 
 		 (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256));

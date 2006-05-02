@@ -1,7 +1,7 @@
 #ifndef __OBJECT_WRITE_BUFFER_H
 #define __OBJECT_WRITE_BUFFER_H
 
-#define OWB_BUFFER_SIZE 65000    // 65,000 bytes
+#define OWB_BUFFER_SIZE 1200000    // 1,200,000 bytes
 
 class object_write_buffer {
 

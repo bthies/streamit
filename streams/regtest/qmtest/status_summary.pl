@@ -51,9 +51,8 @@ my @summary_range = (0..4);
 # if results have improved or worsened.
 my @comparison_status = ('compile-failed',
 			 'run-failed',
-			 'un-verified',
-			 'un-verified',
 			 'verify-failed',
+			 'un-verified',
 			 'passed');
 
 

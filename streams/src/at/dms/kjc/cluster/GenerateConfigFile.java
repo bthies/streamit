@@ -57,7 +57,10 @@ public class GenerateConfigFile {
         */
 
         for (int i = 0; i < threadNumber; i++) {
-            p.print(i+" "+currentHostName+"\n");
+
+	    //p.print(i+" "+"machine-"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(i))+"\n");            
+	    
+	    p.print(i+" "+currentHostName+"\n");
         }
 
         try {

@@ -109,7 +109,7 @@ int ccp::read_work_estimate_file(char *file_name) {
     }
   }
   
-  fprintf(stderr,"\n");
+  //fprintf(stderr,"\n");
 
 #if DBG
   // DB_COMMENT, FOR TEST ONLY
@@ -129,6 +129,23 @@ thread_info *ccp::get_thread_info(int id) {
   for (i = thread_list.begin(); i < thread_list.end(); ++i)
     if ((*i)->get_thread_id() == id) return *i;
   assert(false);
+}
+
+
+void ccp::find_new_partition(int num_p) {
+  char name[64];
+  sprintf(name, "cluster-config.txt.%d", num_p);
+  fprintf(stderr,"Trying to open file [%s]...\n", name); 
+  
+  int res = read_config_file(name);
+  if (res == -1) {
+
+    fprintf(stderr,"Failed to open [%s]\n", name); 
+    find_partition(num_p);
+
+  } else {
+    fprintf(stderr,"Success to open [%s]\n", name);
+  }
 }
 
 void ccp::find_partition(int num_p) {
@@ -242,15 +259,20 @@ int ccp::run_ccp() {
   signal(SIGPIPE, SIG_IGN);
 
   int listenfd;
-  int retval;
+  int retval, res;
   int flag;
   int fd;
 
   int last_latest_chkpt = 0;
 
+  number_of_threads = thread_list.size();
+  printf("Number of threads = %d\n", number_of_threads); 
+  partition.clear();
+  for (int i = 0; i < number_of_threads; i++) partition[i] = 0;
+
   fprintf(stderr,"Reading files.\n");
-  int res = read_config_file("cluster-config.txt");
-  assert (res != -1);  
+  //res = read_config_file("cluster-config.txt");
+  //assert (res != -1);  
   
   // DB_COMMENT
   res = read_work_estimate_file("work-estimate.txt");
@@ -259,6 +281,11 @@ int ccp::run_ccp() {
   //find_partition(1);
 
   fprintf(stderr,"finish Reading files.\n");
+
+  fprintf(stderr,"Deleting old checkpoints...");fflush(stderr);
+  save_state::delete_checkpoints(2000000000);
+  fprintf(stderr,"done.\n");
+
   // DB_COMMENT check where is the right place to put this
   find_thread_per_machine_mapping(); 
 
@@ -484,7 +511,7 @@ void ccp::handle_change_in_number_of_nodes() {
 
       fprintf(stderr,"Enough nodes to start cluster execution!\n");
       
-      find_partition(count);
+      find_new_partition(count);
 
       assign_nodes_to_partition();
       
@@ -537,21 +564,7 @@ void ccp::handle_change_in_number_of_nodes() {
 
       //execute_partitioner(count);
 
-      find_partition(count);
-      
-      /*
-      char name[64];
-      sprintf(name, "cluster-config.txt.%d", count);
-      fprintf(stderr,"Trying to open file [%s] ...", name); 
-
-      int res = read_config_file(name);
-      if (res == -1) {
-	fprintf(stderr,"Failed to open cluster-config.txt!\n"); 
-	return;
-      } else {
-	fprintf(stderr,"Success to open cluster-config.txt!\n");
-      }
-      */
+      find_new_partition(count);
 
       find_thread_per_machine_mapping(); 
       

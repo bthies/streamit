@@ -1,0 +1,120 @@
+// FROM genRawSAR.m
+//
+// % SAR signal array [# samples, # samples on aperture]
+// s=zeros(n,mc);     
+// % Loop for each target
+// for i=1:ntarget;   
+// % [p35(1/3),p(59(2/4),186(1/3),p202(5/5),p283(1/2)]
+// td=t(:)*ones(1,mc)-2*ones(n,1)*sqrt((Xc+xn(i)).^2+(yn(i)-uc).^2)/c; 
+// % [s(t,u), p23(2/6), p25(1/1), p35(1/3)]
+// s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
+//     .* (td >= 0 & td <= Tp & ones(n,1)*abs(uc) <= L & t(:)*ones(1,mc) < Tf);
+// end
+// % [pi2*fc = carrier frequency]
+// % Fast-time baseband conversion
+// s=s.*exp(-cj*pi2*fc*t(:)*ones(1,mc));
+void->complex filter genRawSAR()
+{
+// DEPENDS ON
+// n, mc, ntarget
+// Xc, c
+// t[], xn[], yn[], fn[], uc[]
+// Tp, Tf
+// PI2
+// fc, f0
+    work push n*mc {
+        complex[n][mc] S = {0};
+    
+        for (int h = 0; h < ntarget; h++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < mc; j++){
+                    // td=t(:)*ones(1,mc)-2*ones(n,1)*sqrt((Xc+xn(i)).^2+(yn(i)-uc).^2)/c;
+                    td[i][j] = t[i] - 2 * sqrt(pow(Xc + xn[h], 2) + pow(yn[h] - uc[j], 2)) / c;
+                    
+                    // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
+                    //     .* (td >= 0 & td <= Tp & ones(n,1)*abs(uc) <= L & t(:)*ones(1,mc) < Tf);
+                    if ((td[i][j] >= 0.0) && (td[i][j] <= Tp) && (fabs(uc[j]) <= L) && (t[i] < Tf)) {
+                        // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
+                        float value  = PI2 * ((fc - f0) * td[i][j] + (f0 / Tp) * pow(td[i][j], 2));
+                        S[i][j].real += fn[h] * cos(value);
+                        S[i][j].imag += fn[h] * sin(value);
+                    }
+                    // else { S[i][j].real += 0; S[i][j].imag += 0; }
+                }
+            }
+        }
+        
+        // s=s.*exp(-cj*pi2*fc*t(:)*ones(1,mc));
+        for (int i = 0; i < n; i++) {
+            float cos_value = cos(PI2 * fc * t[i]);
+            float sin_value = sin(PI2 * fc * t[i]);
+            
+            for(int j = 0; j < mc; j++) {
+                complex output;
+                
+                output.real = S[i][j].real * cos_value + S[i][j].imag * sin_value;
+                output.imag = S[i][j].imag * cos_value - S[i][j].real * sin_value;         
+                
+                push(output);
+            }
+        }
+    }
+}
+
+// FROM genRawSAR.m
+//
+// td0=t(:)-2*Xc/c; % [p85(2/7)]
+// s0=exp(cj*pi2*( (fc-f0)*td0 + (f0/Tp)*(td0.^2) )) ...
+//        .*(td0 >= 0 & td0 <= Tp);
+// % Baseband reference fast-time signal
+// s0=s0.*exp(-cj*pi2*fc*t(:));
+// fast_time_filter = (conj(ftx(s0))*ones(1,mc));
+void->complex pipeline FastTimeFilter() 
+{
+// DEPENDS ON
+// t[]
+// fc, f0, Tp
+// PI2
+    add void->complex filter {
+        work push n {
+            float[n] td0;
+            complex[n] s0;
+            complex[n] ftf;
+            
+            for (int i = 0; i < n; i++) {
+                // td0=t(:)-2*Xc/c; % [p85(2/7)]
+                // s0=exp(cj*pi2*( (fc-f0)*td0 + (f0/Tp)*(td0.^2) )) ...
+                //        .*(td0 >= 0 & td0 <= Tp);
+                td0[i] = t[i] - 2 * Xc / c;
+                if ((td0[i] >= 0.0) && (td0[i] <= Tp)) {
+                    float value= PI2 * ((fc - f0) * td0[i] + (f0 / Tp) * pow(td0[i], 2));
+                    s0[i].real = cos(value);
+                    s0[i].imag = sin(value);
+                }
+                // else { s0[i].real=0; s0[i].imag=0; }
+                
+                // s0=s0.*exp(-cj*pi2*fc*t(:));
+                flaot value = PI2 * fc * t[i];
+                float cos_value = cos(value);
+                float sin_value = sin(value);
+                
+                ftf[i].real = s0[i].real * cos_value + s0[i].imag * sin_value;
+                ftf[i].imag = s0[i].imag * cos_value - s0[i].real * sin_value;   
+                
+                push(ftf[i]);
+            }
+        }
+    }
+
+    // fast_time_filter = (conj(ftx(s0))*ones(1,mc));
+    add ftx1d(n);
+    add complex->complex filter {
+        work pop n push n {
+            for (int i = 0; i < n; i++) {
+                complex output = pop();
+                output.imag = 0 - output.imag;
+                push(output);
+            }
+        }
+    }
+}

@@ -1,0 +1,362 @@
+/* fft/ifft/sstshift functions.
+   Because the input size is not the power of 2, use DFT to replace the
+   real fft operation.
+*/
+   
+complex->complex pipeline ftx1d(/*complex *p,*/ int nx){
+    add fftshift1d(/*p,*/ nx);
+    add fft1d(/*p,*/ nx);
+    add fftshift1d(/*p,*/ nx);
+}
+
+complex->complex pipeline ftx2d(/*complex **p,*/ int nx, int ny) {
+    add fftshift2d(/*p,*/ nx, ny);
+    add fft2d(/*p,*/ nx, ny, 0);
+    add fftshift2d(/*p,*/ nx, ny);
+}
+
+complex->complex pipeline iftx2d(/*complex **p,*/ int nx, int ny) {
+    add fftshift2d(/*p,*/ nx, ny);
+    add ifft2d(/*p,*/ nx, ny, 0);
+    add fftshift2d(/*p,*/ nx, ny);
+}
+
+complex->complex pipline fty2d(/*complex **p,*/ int nx, int ny) {
+    add fftshift2d(/*p,*/ nx, ny);
+    add fft2d(/*p,*/ nx, ny, 1);
+    add fftshift2d(/*p,*/ nx, ny);
+}
+
+complex->complex pipeline ifty2d(/*complex **p,*/ int nx, int ny) {
+    add fftshift2d(/*p,*/ nx, ny);
+    add ifft2d(/*p,*/ nx, ny, 1);
+    add fftshift2d(/*p,*/ nx, ny);
+}
+
+/*1D fft shift*/
+complex->complex filter fftshift1d(/*complex *p,*/ int nx) {
+    int nx_mid;
+    int i;
+        
+    complex[nx] temp_p;
+
+    //    temp_p=malloc(sizeof(complex)*nx);
+
+    work push nx pop nx {
+	  if (nx % 2 == 1) {
+		nx_mid = (nx-1) / 2;
+	  } else {
+		nx_mid = nx / 2;
+	  }
+
+	  for (i = 0; i < nx; i++) {
+		//temp_p[nx_mid].real=p[i].real;
+		//temp_p[nx_mid].image=p[i].image;
+		temp_p[nx_mid] = pop();
+		nx_mid = nx_mid + 1;
+
+		if (nx_mid == nx) {
+		    nx_mid = 0;
+		}
+	  }
+	  
+	  for (i = 0; i < nx; i++) {
+		//p[i].real=temp_p[i].real;
+		//p[i].image=temp_p[i].image;
+		push(temp_p[i]);
+	  }
+    }
+    //    free(temp_p);
+}
+
+/*2D fft shift*/
+complex->complex filter fftshift2d(/*complex **p,*/ int nx, int ny) {
+    int nx_mid;
+    int ny_mid;
+    int i,j;
+    
+    complex[ny][nx] temp_p;
+
+    //    temp_p=(complex **)malloc(sizeof(complex)*ny);
+    //    for(i=0;i<ny;i++){
+    //	  temp_p[i]=(complex *)malloc(sizeof(complex)*nx);
+    //    }
+
+    work push ny*nx pop ny*nx {
+	  if (nx % 2 == 1) {
+		nx_mid = (nx-1) / 2;
+	  } else {
+		nx_mid = nx / 2;
+	  }
+
+	  if (ny % 2 == 1) {
+		ny_mid = (ny-1) / 2;
+	  } else {
+		ny_mid = ny / 2;
+	  }
+
+	  for (i = 0; i < ny; i++) {
+		for (j = 0; j < nx; j++) {
+		    //temp_p[ny_mid][nx_mid].real = p[i][j].real;
+		    //temp_p[ny_mid][nx_mid].imag = p[i][j].imag;
+		    temp_p[ny_mid][nx_mid] = pop();
+		    nx_mid = nx_mid + 1;
+
+		    if (nx_mid == nx) {
+			  nx_mid = 0;
+		    }
+		}
+
+		ny_mid = ny_mid + 1;
+
+		if (ny_mid == ny) {
+		    ny_mid = 0;
+		}
+	  }
+
+	  for (i = 0; i < ny; i++) {
+		for (j = 0; j < nx; j++) {
+		    //p[i][j].real = temp_p[i][j].real;
+		    //p[i][j].imag = temp_p[i][j].imag;
+		    push(temp_p[i][j]);
+		}
+	  }
+    }
+    //    for(i=0;i<ny;i++){
+    //	  free(temp_p[i]);
+    //    }
+    //    free(temp_p);
+}
+
+/*1D fft */
+complex->complex filter fft1d(/*complex *p,*/ int nx) {
+    int   i, j, k;
+
+    float[nx] cos_value;
+    float[nx] sin_value;
+    
+    complex[nx] temp_p;
+
+    //    temp_p=malloc(sizeof(complex)*nx);
+    //    cos_value=malloc(sizeof(double)*nx);
+    //    sin_value=malloc(sizeof(double)*nx);
+
+    init {
+	  for (i = 0; i < nx; i++) {
+		cos_value[i] = cos(2*3.1415926 * (float)i / (float)nx);
+		sin_value[i] = sin(2*3.1415926 * (float)i / (float)nx);
+	  }
+    }
+
+    work push nx pop nx {
+	  for (i = 0; i < nx; i++) {
+		float real = 0;
+		float imag = 0;
+
+		for (j = 0; j < nx; j++) {
+		    k = (i * j) % nx;
+		    //real=real+p[j].real*cos_value[k]+ p[j].image*sin_value[k];
+		    //image=image+p[j].image*cos_value[k]-p[j].real*sin_value[k];
+		    real += (peek(j).real * cos_value[k]) + (peek(j).imag * sin_value[k]);
+		    imag += (peek(j).imag * cos_value[k]) - (peek(j).imag * sin_value[k]);
+		}
+		temp_p[i].real = real;
+		temp_p[i].imag = imag;
+	  }
+	  
+	  for (i = 0; i < nx; i++) {
+		//p[i].real=temp_p[i].real;
+		//p[i].image=temp_p[i].image;
+		push(temp_p[i]);
+	  }
+    }
+   
+    //    free(temp_p);
+    //    free(cos_value);
+    //    free(sin_value);
+}
+
+/*2D fft*/
+complex->complex filter fft2d(/*complex **p,*/ int nx, int ny, int transform) {
+    int  i, j, k, l;
+
+    float[ny] cos_value;
+    float[ny] sin_value;
+    float[nx] cos_value_t;
+    float[nx] sin_value_t;
+    
+    complex[ny][nx] temp_p;
+
+    //    temp_p=(complex **)malloc(sizeof(complex)*ny);
+    //    for(i=0;i<ny;i++){
+    //        temp_p[i]=(complex *)malloc(sizeof(complex)*nx);
+    //    }
+
+    //    if(transform==0){
+    //        cos_value=malloc(sizeof(float)*ny);
+    //        sin_value=malloc(sizeof(float)*ny);
+    //    } else {
+    //	  cos_value=malloc(sizeof(float)*nx);
+    //	  sin_value=malloc(sizeof(float)*nx);
+    //    }
+
+    init {
+	  if (trasnform == 0) {
+		for(i = 0; i < ny; i++) {
+		    cos_value[i] = cos(2*3.1415926 * (float)i / (float)ny);
+		    sin_value[i] = sin(2*3.1415926 * (float)i / (float)ny);
+		}
+	  } else {
+		for(i = 0; i < nx; i++) {
+ 		    cos_value_t[i] = cos(2*3.1415926 * (float)i / (float)nx);
+		    sin_value_t[i] = sin(2*3.1415926 * (float)i / (float)nx);
+		}
+	  }
+    }
+
+    work push ny*nx pop ny*nx {
+	  if (transform == 0) {
+		for (i = 0; i < nx; i++) {
+		    for (j = 0; j < ny; j++) {
+			  float real = 0;
+			  float imag = 0;
+
+			  for (k = 0; k < ny; k++) {
+				l = (j * k) % ny;
+				//real=real+p[k][i].real*cos_value[l]+p[k][i].image*sin_value[l];
+				//image=image+p[k][i].image*cos_value[l]-p[k][i].real*sin_value[l];
+				real += (peek(k*ny + i).real * cos_value[l]) + (peek(k*ny + i).imag * sin_value[l]);
+				imag += (peek(k*ny + i).imag * cos_value[l]) - (peek(k*ny + i).real * sin_value[l]);
+			  }
+			  temp_p[j][i].real = real;
+			  temp_p[j][i].imag = imag;
+		    }
+		}
+	  } else {
+		for (i = 0; i < ny; i++) {
+		    for (j = 0; j < nx; j++) {
+			  float real = 0;
+			  float imag = 0;
+
+			  for (k = 0; k < nx; k++) {
+				l = (j * k) % nx;
+				//real=real+p[i][k].real*cos_value[l]+p[i][k].image*sin_value[l];
+				//image=image+p[i][k].image*cos_value[l]-p[i][k].real*sin_value[l];
+				real += (peek(i*ny + k).real * cos_value_t[l]) + (peek(i*ny + k).imag * sin_value_t[l]);
+				imag += (peek(i*ny + k).imag * cos_value_t[l]) - (peek(i*ny + k).real * sin_value_t[l]);
+			  }
+			  temp_p[i][j].real = real;
+			  temp_p[i][j].imag = imag;
+		    }
+		}
+	  }
+	  
+	  for (i = 0; i < ny; i++) {
+		for(j = 0; j < nx; j++) {
+		    //p[i][j].real=temp_p[i][j].real;
+		    //p[i][j].image=temp_p[i][j].image;
+		    push(temp_p[i][j]);
+		}
+	  }
+    }
+
+    //    for(i=0;i<ny;i++){
+    //	  free(temp_p[i]);
+    //    }
+    //    free(temp_p);
+    //    free(cos_value);
+    //    free(sin_value);
+}
+
+/*2D ifft */
+complex->comple filter ifft2d(/*complex **p,*/ int nx, int ny, int transform) {
+    int  i, j, k, l;
+
+    float[ny] cos_value;
+    float[ny] sin_value;
+    float[nx] cos_value_t;
+    float[nx] sin_value_t;
+    
+    complex[ny][nx] temp_p;
+
+    //    temp_p=(complex **)malloc(sizeof(complex)*ny);
+    //    for(i=0;i<ny;i++){
+    //        temp_p[i]=(complex *)malloc(sizeof(complex)*nx);
+    //    }
+   
+    //    if(transform==0){
+    //        cos_value=malloc(sizeof(float)*ny);
+    //        sin_value=malloc(sizeof(float)*ny);
+    //    }else{
+    //        cos_value=malloc(sizeof(float)*nx);
+    //        sin_value=malloc(sizeof(float)*nx);
+    //    }
+
+    init {
+	  if (trasnform == 0) {
+		for(i = 0; i < ny; i++) {
+		    cos_value[i] = cos(2*3.1415926 * (float)i / (float)ny);
+		    sin_value[i] = sin(2*3.1415926 * (float)i / (float)ny);
+		}
+	  } else {
+		for(i = 0; i < nx; i++) {
+ 		    cos_value_t[i] = cos(2*3.1415926 * (float)i / (float)nx);
+		    sin_value_t[i] = sin(2*3.1415926 * (float)i / (float)nx);
+		}
+	  }
+    }
+
+    work push ny*nx pop ny*nx {
+	  if (transform == 0) {
+		for (i = 0; i < nx; i++) {
+		    for (j = 0; j < ny; j++) {
+			  float real = 0;
+			  float imag = 0;
+
+			  for (k = 0; k < ny; k++) {
+				l = (j * k) % ny;
+				//real=real+p[k][i].real*cos_value[l]-p[k][i].image*sin_value[l];
+				//image=image+p[k][i].image*cos_value[l]+p[k][i].real*sin_value[l];
+				real += (peek(k*ny + i).real * cos_value[l]) - (peek(k*ny + i).imag * sin_value[l]);
+				imag += (peek(k*ny + i).imag * cos_value[l]) + (peek(k*ny + i).real * sin_value[l]);
+			  }
+			  temp_p[j][i].real = real / ny;
+			  temp_p[j][i].imag = imag / ny;
+		    }
+		}
+	  } else {
+		for (i = 0; i < ny; i++) {
+		    for (j = 0; j < nx; j++) {
+			  float real = 0;
+			  float imag = 0;
+
+			  for (k = 0; k < nx; k++) {
+				l = (j * k) % nx;
+				//real=real+p[i][k].real*cos_value[l]-p[i][k].image*sin_value[l];
+				//image=image+p[i][k].image*cos_value[l]+p[i][k].real*sin_value[l];
+				real += (peek(i*ny + k).real * cos_value_t[l]) - (peek(i*ny + k).imag * sin_value_t[l]);
+				imag += (peek(i*ny + k).imag * cos_value_t[l]) + (peek(i*ny + k).real * sin_value_t[l]);
+			  }
+			  temp_p[i][j].real = real / nx;
+			  temp_p[i][j].imag = imag / nx;
+		    }
+		}
+	  }
+ 
+	  for (i = 0; i < ny; i++) {
+		for(j = 0; j < nx; j++) {
+		    //p[i][j].real=temp_p[i][j].real;
+		    //p[i][j].image=temp_p[i][j].image;
+		    push(temp_p[i][j]);
+		}
+	  }
+    }
+
+    //    for(i=0;i<ny;i++){
+    //        free(temp_p[i]);
+    //    }
+    //    free(temp_p);
+    //    free(cos_value);
+    //    free(sin_value);
+}
+

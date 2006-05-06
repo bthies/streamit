@@ -98,7 +98,14 @@ void ccp_session::read_alive_response() {
   cpu_utilization = tmp2;
   idle_time = tmp3;
 
-  printf("Alive response = [chkpt=%d, util=%d, idle=%d]\n", latest_checkpoint, cpu_utilization, idle_time);
+  printf("[%d.%d.%d.%d] Alive resp is (chkpt=%d, util=%d, idle=%d)\n", 
+	 (ip % 256), 
+	 ((ip>>8) % 256), 
+	 ((ip>>16) % 256), 
+	 ((ip>>24) % 256),
+	 latest_checkpoint, 
+	 cpu_utilization, 
+	 idle_time);
 
 }
 

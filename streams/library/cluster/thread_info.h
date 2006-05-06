@@ -5,6 +5,7 @@
 #include <connection_info.h>
 
 #include <pthread.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <vector>
@@ -45,6 +46,10 @@ class thread_info {
   vector <connection_info*> outgoing_data; // outgoing data connections
 
  public:
+
+  timeval last_jiff;
+  int last_count;
+  float usage;
   
   thread_info(int thread_id, void (*check_thread_status_during_io)() = NULL);
 

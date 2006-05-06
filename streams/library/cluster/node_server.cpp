@@ -4,6 +4,7 @@
 node_server::node_server(vector <thread_info*> list, void (*thread_init)()) {
   this->thread_list = list;
   this->thread_init = thread_init;
+  gettimeofday(&last_jiff, NULL);
 }
 
 
@@ -188,12 +189,54 @@ void node_server::run_server(netsocket *sock) {
 
 
 // QM
-void node_server::measure_load(int *idle_time_out, int *cpu_util_out) {
+void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
 
   double jiffy = sysconf(_SC_CLK_TCK);
 
-  printf("here, jiffy = 1/%f sec\n",jiffy);
+  //printf("here, jiffy = 1/%f sec\n",jiffy);
 
+  timeval tv;
+  gettimeofday(&tv, NULL);
+
+  float time_diff = 0;
+  time_diff += (tv.tv_sec-last_jiff.tv_sec);
+  time_diff += (tv.tv_usec-last_jiff.tv_usec) / 1e6;
+  last_jiff.tv_sec = tv.tv_sec;
+  last_jiff.tv_usec = tv.tv_usec;
+  printf("-- time difference     : %5.2f seconds\n", time_diff);
+
+  float jiff_sec = 0;
+
+  for (vector<thread_info*>::iterator iter = thread_list.begin();
+       iter < thread_list.end();
+       ++iter) {
+
+    thread_info *info = *iter;
+    jiff_sec += info->usage;
+  }
+
+  printf("-- streamit jiffy usage: %6.2f jiffies/second\n", jiff_sec);
+
+  unsigned long utime, nice, stime, idle, sum;
+
+  FILE *stat = fopen("/proc/stat", "r");
+  fscanf(stat, "cpu  %lu %lu %lu %lu",&utime,&nice,&stime,&idle);
+  fclose(stat);
+
+  sum = utime + nice + stime + idle;
+  printf("-- sum: %lu    old_sum: %lu    sum-old_sum: %lu\n",sum,old_sum, sum-old_sum);
+  printf("-- idle: %lu    old_idle: %lu    idle-old_idle: %lu\n",idle,old_idle_time, idle-old_idle_time);
+  
+  *cpu_util_out = (int)((100 * jiff_sec) / (sum - old_sum));
+  *idle_time_out = (int)((100 * ( idle - old_idle_time ) ) / (sum - old_sum));
+
+  printf("-- cpu util: %d idle: %d\n", *cpu_util_out, *idle_time_out);
+
+  old_sum = sum;
+  old_idle_time = idle;
+  
+
+  /*
   struct rusage usage;
   int ret;
 
@@ -286,7 +329,7 @@ void node_server::measure_load(int *idle_time_out, int *cpu_util_out) {
 
   *cpu_util_out = cpu_util;
   *idle_time_out = idle_time;
-
+  */
 }
 
 

@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <unistd.h>
+#include <sys/time.h>
 
 //QM
 #include <sys/time.h> 
@@ -82,10 +83,11 @@ class node_server {
   int find_latest_checkpoint();
 
   //QM
+  timeval last_jiff;
   unsigned long old_cpu_utilization;
   unsigned long old_idle_time;
   unsigned long old_sum;
-  void measure_load(int *idle, int *cpu);
+  void measure_load(int *util, int *idle);
 
   netsocket *wait_for_connection();
   static netsocket *connect_to_ccp(unsigned ip);

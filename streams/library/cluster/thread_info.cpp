@@ -6,6 +6,9 @@ thread_info::thread_info(int thread_id, void (*check_thread_status_during_io)())
   this->check_thread_status_during_io = check_thread_status_during_io;
   this->active = false;
   this->latest_checkpoint = 0;
+  gettimeofday(&last_jiff, NULL);
+  last_count = 0;
+  usage = 0;
 }
 
 int thread_info::get_thread_id() {

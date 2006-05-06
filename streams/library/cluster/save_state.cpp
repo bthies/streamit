@@ -7,8 +7,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+//#include <unistd.h>
+#include <linux/unistd.h>
 #include <stdio.h>
+
+_syscall0(pid_t,gettid)
 
 #ifndef ARM
 
@@ -16,10 +19,44 @@
 
 #endif
 
+
+void save_state::observe_jiffies(thread_info *t_info) {
+  
+  timeval tv;
+  gettimeofday(&tv, NULL);
+
+  int pid = gettid();
+  char fname[128], tmp[512];
+  sprintf(fname, "/proc/%d/stat", pid);
+  FILE *f = fopen(fname, "r");
+
+  for (int i = 0; i < 13; i++) fscanf(f, "%s", tmp);
+  int u, s;
+  fscanf(f, "%d %d", &u, &s);
+  fclose(f);
+
+  float time_diff = 0;
+  time_diff += (tv.tv_sec-t_info->last_jiff.tv_sec);
+  time_diff += (tv.tv_usec-t_info->last_jiff.tv_usec) / 1e6;
+
+  int jiff_diff = (u+s - t_info->last_count);
+  float usage = jiff_diff / time_diff;
+
+  printf("Thread-%d Usage is %5.2f jiffies/sec\n", 
+	 t_info->get_thread_id(), usage);
+  
+  t_info->usage = usage;
+  t_info->last_count = u+s;
+  t_info->last_jiff.tv_sec = tv.tv_sec;
+  t_info->last_jiff.tv_usec = tv.tv_usec;
+}
+
+
 void save_state::save_to_file(thread_info *t_info, 
 			      int steady_iter, 
 			      void (*write_object)(object_write_buffer *)) {
 
+  observe_jiffies(t_info);
   
   object_write_buffer *buf = new object_write_buffer();
   write_object(buf);

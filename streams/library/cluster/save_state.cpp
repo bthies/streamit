@@ -25,6 +25,13 @@ void save_state::observe_jiffies(thread_info *t_info) {
   timeval tv;
   gettimeofday(&tv, NULL);
 
+  float time_diff = 0;
+  time_diff += (tv.tv_sec-t_info->last_jiff.tv_sec);
+  time_diff += (tv.tv_usec-t_info->last_jiff.tv_usec) / 1e6;
+
+  // make sure we dont gather data too frequently
+  if (time_diff < 0.8) return; 
+
   int pid = gettid();
   char fname[128], tmp[512];
   sprintf(fname, "/proc/%d/stat", pid);
@@ -34,10 +41,6 @@ void save_state::observe_jiffies(thread_info *t_info) {
   int u, s;
   fscanf(f, "%d %d", &u, &s);
   fclose(f);
-
-  float time_diff = 0;
-  time_diff += (tv.tv_sec-t_info->last_jiff.tv_sec);
-  time_diff += (tv.tv_usec-t_info->last_jiff.tv_usec) / 1e6;
 
   int jiff_diff = (u+s - t_info->last_count);
   float usage = jiff_diff / time_diff;

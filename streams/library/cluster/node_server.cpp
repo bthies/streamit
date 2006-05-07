@@ -232,8 +232,17 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
   printf("-- sum: %lu    old_sum: %lu    sum-old_sum: %lu\n",sum,old_sum, sum-old_sum);
   printf("-- idle: %lu    old_idle: %lu    idle-old_idle: %lu\n",idle,old_idle_time, idle-old_idle_time);
   
-  *cpu_util_out = (int)((100 * jiff_sec) / (sum - old_sum));
-  *idle_time_out = (int)((100 * ( idle - old_idle_time ) ) / (sum - old_sum));
+  if (sum - old_sum != 0) {  // Else, divides by 0
+
+    *cpu_util_out = (int)((100 * jiff_sec) / (sum - old_sum));
+    *idle_time_out = (int)((100 * ( idle - old_idle_time ) ) / (sum - old_sum));
+
+  } else {
+
+    *cpu_util_out = 0;
+    *idle_time_out = 0;
+
+  }
 
   if (*cpu_util_out < 0) *cpu_util_out = 0;
   if (*cpu_util_out > 100) *cpu_util_out = 100;

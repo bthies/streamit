@@ -263,6 +263,23 @@ void ccp::find_partition(int num_p, float *targets) {
 }
 
 
+int ccp::partition_distance() {
+  /*  
+  int epsilon = 0;
+
+  for(map<int,int>::iterator p = threadusage.begin();
+      p != threadusage.end();
+      ++p) {
+
+    if (partition[p->first] != newpartition[p->first])
+      epsilon += p->second;
+
+  }
+
+  return epsilon;
+  */
+}
+
 int ccp::run_ccp() {
 
   signal(SIGPIPE, SIG_IGN);
@@ -466,7 +483,7 @@ int ccp::run_ccp() {
 
     if (latest_chkpt > last_latest_chkpt) {
 
-      fprintf(stderr,"latest chkpt is: [%d]", latest_chkpt);
+      fprintf(stderr,"latest chkpt is: [%d]\n", latest_chkpt);
       fflush(stderr);
 
       delete_chkpts::set_max_iter(latest_chkpt);

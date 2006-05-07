@@ -50,6 +50,8 @@ class ccp {
   void find_new_partition(int num_p);
   void find_partition(int num_p, float *targets);
 
+  int partition_distance();
+
  public:
 
   ccp(vector <thread_info*> list, int init_n);

@@ -141,14 +141,17 @@ void ccp::find_new_partition(int num_p) {
   if (res == -1) {
 
     fprintf(stderr,"Failed to open [%s]\n", name); 
-    find_partition(num_p);
+
+    float *targets = (float*)malloc(num_p * sizeof(float)); 
+    for (int i = 0; i < num_p; i++) targets[i] = 1.0 / (float)num_p; 
+    find_partition(num_p, targets);
 
   } else {
     fprintf(stderr,"Success to open [%s]\n", name);
   }
 }
 
-void ccp::find_partition(int num_p) {
+void ccp::find_partition(int num_p, float *targets) {
 
   printf("find_partition: [ #threads=%d  thred_list.size=%d ]\n",
 	 number_of_threads, thread_list.size());
@@ -163,15 +166,21 @@ void ccp::find_partition(int num_p) {
     sum += threadusage[a];
   }
 
-  target = sum / num_p; 
-
   printf("find_partition: sum of work est = %d\n", sum);
-  printf("find_partition: 1/N sum of work est = %d\n", target);
+
+  printf("find_partition: targets [");
+  for (int i = 0; i < num_p; i++) { 
+    printf("%d=%4.2f", i, targets[i]);
+    if (i < num_p-1) printf(",");
+  }
+  printf("]\n");
 
   vector<thread_info*>::iterator i;
   queue<int> q;
 
   for (int p = 0; p < num_p; p++) {
+
+    target = (int)(sum * targets[p]);
 
     printf("find_partition: ================ Partition %d ================\n", p+1);
 
@@ -278,8 +287,6 @@ int ccp::run_ccp() {
   res = read_work_estimate_file("work-estimate.txt");
   assert (res != -1);
   
-  //find_partition(1);
-
   fprintf(stderr,"finish Reading files.\n");
 
   fprintf(stderr,"Deleting old checkpoints...");fflush(stderr);

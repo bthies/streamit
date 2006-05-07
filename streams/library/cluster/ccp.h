@@ -48,7 +48,7 @@ class ccp {
 
   thread_info *get_thread_info(int id);
   void find_new_partition(int num_p);
-  void find_partition(int num_p);
+  void find_partition(int num_p, float *targets);
 
  public:
 

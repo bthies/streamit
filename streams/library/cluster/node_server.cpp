@@ -134,6 +134,11 @@ void node_server::run_server(netsocket *sock) {
       
       init_instance::reset_all();
       read_cluster_config(sock);
+
+      for (vector<thread_info*>::iterator iter = thread_list.begin();
+	   iter < thread_list.end(); ++iter) 	
+	(*iter)->set_active(false);
+
       if (thread_init != NULL) thread_init();   // initialize sockets and threads according to configuration
       resp.push_back(1);
       break;
@@ -212,7 +217,7 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
        ++iter) {
 
     thread_info *info = *iter;
-    jiff_sec += info->usage;
+    if (info->is_active()) jiff_sec += info->usage;
   }
 
   printf("-- streamit jiffy usage: %6.2f jiffies/second\n", jiff_sec);
@@ -391,7 +396,8 @@ int node_server::find_latest_checkpoint() {
   
       int latest = *info->get_latest_checkpoint();
 
-      //fprintf(stderr,"latest chkpt: (%d->%d)", info->get_thread_id(), latest);
+      //fprintf(stderr,"(%d->%d)", info->get_thread_id(), latest);
+      //fflush(stderr);
 
       if (latest < resp || !any) resp = latest;
       

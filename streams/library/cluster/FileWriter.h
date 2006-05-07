@@ -21,7 +21,9 @@ public:
 
 int FileWriter_open(char *pathname) {
   FileWriter_state *fs = new FileWriter_state();
-  fs->file_handle = open(pathname, O_RDWR | O_CREAT, S_IRWXU);
+  fs->file_handle = open(pathname, 
+			 O_RDWR | O_CREAT, 
+			 S_IREAD | S_IWRITE | S_IRGRP | S_IROTH);
   fs->file_offset = 0;
   if (fs->file_handle == -1) {
     printf("ABORT! Failed to open file [%s]\n", pathname);

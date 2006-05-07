@@ -230,6 +230,14 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
   *cpu_util_out = (int)((100 * jiff_sec) / (sum - old_sum));
   *idle_time_out = (int)((100 * ( idle - old_idle_time ) ) / (sum - old_sum));
 
+  if (cpu_util_out < 0) cpu_util_out = 0;
+  if (cpu_util_out > 100) cpu_util_out = 100;
+
+  if (idle_time_out < 0) idle_time_out = 0;
+  if (idle_time_out > 100) idle_time_out = 100;
+
+  if (cpu_util_out + idle_time_out > 100) idle_time_out = 100 - cpu_util_out;
+
   printf("-- cpu util: %d idle: %d\n", *cpu_util_out, *idle_time_out);
 
   old_sum = sum;

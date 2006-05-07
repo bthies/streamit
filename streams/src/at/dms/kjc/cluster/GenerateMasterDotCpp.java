@@ -89,10 +89,12 @@ public class GenerateMasterDotCpp {
             if (!ClusterFusion.isEliminated(tmp)) {     
                 p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
                 p.print("    pthread_join(__pthread_"+i+", NULL);\n");
+		p.print("    __get_thread_info_"+i+"()->set_active(false);\n");
                 p.print("  }\n");
             }
         }
         p.print("  sleep(1);\n");
+        p.print("  if (__ccp_ip != 0) for(;;) sleep(1);\n");
         p.print("  exit(0);\n");
 
         p.print("}\n");

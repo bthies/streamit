@@ -1,4 +1,4 @@
-// FROM genRawSAR.m
+// Code adapted FROM genRawSAR.m
 //
 // % SAR signal array [# samples, # samples on aperture]
 // s=zeros(n,mc);     

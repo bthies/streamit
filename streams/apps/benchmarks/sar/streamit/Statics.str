@@ -1,5 +1,8 @@
-[] t, xn, yn, fn
-PI, PI2, Tf
+// Code adapted FROM genRawSAR.m
+//
+// PROVIDES
+// [] t, xn, yn, fn
+// PI, PI2, Tf
 
 static {
     /* Range distance to center of target area */

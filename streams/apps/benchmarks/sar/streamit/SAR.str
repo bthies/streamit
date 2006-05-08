@@ -1,3 +1,5 @@
+// Code adapted FROM formSARimage.m
+//
 // % Function formSARimage() - part of Kernel 1 - Given the raw SAR complex 
 // % data, forms the SAR image.
 // %
@@ -207,7 +209,7 @@ complex->complex filter Decompression()
 }
 
 // Reconstruction (multistage)
-complex->complex pipeline Reconstruction ()
+complex->complex pipeline Reconstruction()
 {
 // DEPENDS ON
 // k[], ku[]

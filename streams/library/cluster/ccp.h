@@ -21,7 +21,8 @@ class ccp {
 
   timeval cTime;
 
-  map<int, int> partition;         // from thread to machine id
+  map<int, int> cur_partition;         // from thread to machine id
+  map<int, int> new_partition;         // from thread to machine id
 
   map<int, unsigned> machines;     // from machine id to ip address
 
@@ -64,7 +65,7 @@ class ccp {
   void find_partition(int num_p, float *targets);
 
   int partition_distance();
-
+  void materialize_new_partition();
  public:
 
   ccp(vector <thread_info*> list, int init_n);

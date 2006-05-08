@@ -52,7 +52,8 @@ int ccp::read_config_file(char *file_name) {
 
   number_of_threads = 0;
   max = 0;
-  partition.clear();
+  cur_partition.clear();
+  new_partition.clear();
 
   for (;;) {
     fscanf(f, "%d %s", &id, buf);
@@ -65,7 +66,7 @@ int ccp::read_config_file(char *file_name) {
 
     m_id--; // adjust from 1..n to 0..(1-n) 
     
-    partition[id] = m_id;
+    cur_partition[id] = m_id;
     fprintf(stderr,"thread %d -> %s (%d)\n", id, buf, m_id);
   }
 
@@ -96,9 +97,9 @@ int ccp::read_work_estimate_file(char *file_name) {
     if (feof(fp)) break;
 
 
-    l_iter = partition.find(thread_number);
+    l_iter = cur_partition.find(thread_number);
    
-    if(l_iter == partition.end()) {
+    if(l_iter == cur_partition.end()) {
 	fprintf(stderr, "thread %i doesn't exist in the cluster-config.txt \n", thread_number);
     }
 
@@ -139,6 +140,7 @@ void ccp::find_new_partition(int num_p) {
     float *targets = (float*)malloc(num_p * sizeof(float)); 
     for (int i = 0; i < num_p; i++) targets[i] = 1.0 / (float)num_p; 
     find_partition(num_p, targets);
+    materialize_new_partition();
 
   } else {
     fprintf(stderr,"Success to open [%s]\n", name);
@@ -199,7 +201,7 @@ void ccp::find_partition(int num_p, float *targets) {
 	printf("find_partition: thread %d CAN start the partition (work est %d)\n",
 	       id, work);
 	
-	partition[id] = p;
+	new_partition[id] = p;
 	q.push(id);
 	cur_sum += work;
       }
@@ -232,7 +234,7 @@ void ccp::find_partition(int num_p, float *targets) {
 	if (!added[to] && all_prev_added &&
 	    (cur_sum + work < target || p == num_p-1)) {
 	  
-	  partition[to] = p;
+	  new_partition[to] = p;
 	  q.push(to);
 	  cur_sum += work;
 
@@ -283,8 +285,9 @@ int ccp::run_ccp() {
 
   number_of_threads = thread_list.size();
   printf("Number of threads = %d\n", number_of_threads); 
-  partition.clear();
-  for (int i = 0; i < number_of_threads; i++) partition[i] = 0;
+  cur_partition.clear();
+  new_partition.clear();
+  for (int i = 0; i < number_of_threads; i++) cur_partition[i] = 0;
 
   fprintf(stderr,"Reading files.\n");
   //res = read_config_file("cluster-config.txt");
@@ -562,7 +565,7 @@ void ccp::handle_change_in_number_of_nodes() {
       fprintf(stderr,"Assignement of threads to nodes...\n");
       
       for (int t = 0; t < number_of_threads; t++) {
-	unsigned ip = machines[partition[t]];
+	unsigned ip = machines[cur_partition[t]];
 	fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
       
@@ -620,7 +623,7 @@ void ccp::handle_change_in_number_of_nodes() {
       
 #if DBG
       for (int t = 0; t < number_of_threads; t++) {
-	unsigned ip = machines[partition[t]];
+	unsigned ip = machines[cur_partition[t]];
 	fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
 #endif
@@ -651,7 +654,7 @@ void ccp::send_cluster_config(int iter) {
     (*i)->get_socket()->write_int(number_of_threads);
 
     for (int t = 0; t < number_of_threads; t++) {
-      unsigned ip = machines[partition[t]];
+      unsigned ip = machines[cur_partition[t]];
 
       (*i)->get_socket()->write_int(t);
       (*i)->get_socket()->write_chunk((char*)&ip, sizeof(unsigned));
@@ -712,6 +715,11 @@ void ccp::assign_nodes_to_partition() {
   }
 }
 
+void ccp::materialize_new_partition() {
+
+  for (int i = 0; i < number_of_threads; i++) cur_partition[i] = new_partition[i];
+}
+
 // calculate the CPU ultilization per thread
 void ccp::cpu_utilization_per_thread() {
 
@@ -748,7 +756,7 @@ void ccp::find_thread_per_machine_mapping()
 {
   machineTothread.clear();
 
-  for(map<int,int>::iterator j=partition.begin(); j!=partition.end(); ++j)
+  for(map<int,int>::iterator j=cur_partition.begin(); j!=cur_partition.end(); ++j)
   {
       machineTothread.insert(make_pair(j->second,j->first));
 #if DBG

@@ -502,6 +502,10 @@ int ccp::run_ccp() {
 	       printf("machine = %i workPerCpu = %i, cpu_avg_util = %i, workToCpuUtil = %5.2f\n", j, workPerCpu[j], cpu_avg_util, workToCpuUtil[j]);
 #endif
            }
+           else
+           {
+               workToCpuUtil[j] = 0;
+           }
         } 
       }     
  
@@ -526,17 +530,23 @@ int ccp::run_ccp() {
     //fflush(stderr);
     timeval now;
     gettimeofday(&now,NULL);    
+    float *weights = new float[machines_in_partition];
 
-    if( (now.tv_sec - cTime.tv_sec) > 1 )
+    if( (now.tv_sec - cTime.tv_sec) > 5 && sum_work_load != 0 )
     {
         for(int i=0; i < machines_in_partition ; i++) {
 //           tmp_cpu_idle = (((double)workToCpuUtil[i])/(double)(cpu_avg_util)) *(   
-            
-           printf("machine id = %i , workToCpuUtil = %5.2f \n",i, (workToCpuUtil[i]/sum_work_load));
+           weights[i] = workToCpuUtil[i]/sum_work_load; 
+           printf("machine id = %i , workToCpuUtil = %5.2f \n",i, weights[i]);
+
         }
 
         cTime.tv_sec = now.tv_sec;
+
+        find_partition(machines_in_partition, weights);
     }
+ 
+    delete weights;
   }
 }
 

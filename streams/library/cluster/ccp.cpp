@@ -24,7 +24,7 @@
 
 #include <queue>
 
-#define DBG 1 
+#define DBG 0 
  
 ccp::ccp(vector <thread_info*> list, int init_n) {
   this->init_nodes = init_n;
@@ -479,19 +479,25 @@ int ccp::run_ccp() {
 	}
       }
 
+
+    float sum_work_load = 0;     
     for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
     {
 
       int tmp_cpu_util = (*i)->get_cpu_util();
       int cpu_avg_util = (*i)->get_avg_cpu_util();
       int cpu_avg_idle_time = (*i)->get_avg_idle_time();
-
+ 
       for(int j = 0; j < machines_in_partition; j++)
       {
 	if(machines[j] == (*i)->get_ip())
         {
            if(cpu_avg_util != 0) {
-               workToCpuUtil[j] = (int)( ((double)workPerCpu[j])/((double)cpu_avg_util) );
+               workToCpuUtil[j] = ( ((double)workPerCpu[j])/((double)cpu_avg_util) ) *(cpu_avg_util+cpu_avg_idle_time);
+               sum_work_load = sum_work_load + workToCpuUtil[j];
+#if DBG
+	       printf("machine = %i workPerCpu = %i, cpu_avg_util = %i, workToCpuUtil = %5.2f\n", j, workPerCpu[j], cpu_avg_util, workToCpuUtil[j]);
+#endif
            }
         } 
       }     
@@ -520,11 +526,10 @@ int ccp::run_ccp() {
 
     if( (now.tv_sec - cTime.tv_sec) > 1 )
     {
-        
         for(int i=0; i < machines_in_partition ; i++) {
-           workToCpuUtil_n[i] = ((double)workToCpuUtil[i])/((double)total_work_load);       
-           
-           printf("machine id = %i normalize_work_to_cpu_util = %5.2f\n",i,workToCpuUtil_n[i]);
+//           tmp_cpu_idle = (((double)workToCpuUtil[i])/(double)(cpu_avg_util)) *(   
+            
+           printf("machine id = %i , workToCpuUtil = %5.2f \n",i, (workToCpuUtil[i]/sum_work_load));
         }
 
         cTime.tv_sec = now.tv_sec;
@@ -770,6 +775,7 @@ ccp::find_cpu_work_estimate()
   typedef multimap<int, int>::const_iterator I;
   for (I i=machineTothread.begin(); i !=machineTothread.end(); ++i){
       workPerCpu[i->first] = workPerCpu[i->first] + threadusage[i->second];
+
 #if DBG
       printf("find_thread_per_machine_mapping machine = %i,  Thread = %i, workPerCpu =%i \n",  i->first, i->second, workPerCpu[i->first]);
 #endif

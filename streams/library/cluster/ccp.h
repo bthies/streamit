@@ -31,7 +31,7 @@ class ccp {
 
   map<int, int> workPerCpu;	
 
-  map<int, int> workToCpuUtil;
+  map<int, float> workToCpuUtil;
   map<int, double> workToCpuUtil_n;
 
   multimap<int, int> machineTothread;   // machine to thread

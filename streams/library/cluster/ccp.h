@@ -17,18 +17,30 @@ class ccp {
 
   int number_of_threads;
   int machines_in_partition;
+  int total_work_load;
+
+  timeval cTime;
+
   map<int, int> partition;         // from thread to machine id
 
   map<int, unsigned> machines;     // from machine id to ip address
 
-  map<int, int> threadusage;	   // DB_COMMENT from thread to usage
+  map<int, int> threadusage;	   // thread to usage
 
-  map<int, int> threadCpuUtil;	   // DB_COMMENT from thread to cpu utilization
+  map<int, int> threadCpuUtil_n;   // thread to cpu utilization, this is normalized when CPU Util =1
 
-  multimap<int, int> machineTothread;   // DB_COMMENT from machine to thread
+  map<int, int> workPerCpu;	
 
-  void find_thread_per_machine_mapping();  // DB_COMMENT create the multimap
+  map<int, int> workToCpuUtil;
+  map<int, double> workToCpuUtil_n;
 
+  multimap<int, int> machineTothread;   // machine to thread
+  
+  map<int, int> threadCpuUtil;	// cpu utilization per thread
+
+  void add_per_cpu_info(int cpuUtil, int cpuIdleTime, unsigned cpuIpAddress);
+  
+  void find_thread_per_machine_mapping();  // create the multimap
 
   bool waiting_to_start_execution;
   int initial_iteration;
@@ -38,12 +50,13 @@ class ccp {
   int read_config_file(char *fname);
   int read_work_estimate_file(char *file_name);
   void assign_nodes_to_partition();
+  void find_cpu_work_estimate();
 
   void send_cluster_config(int iter = 0);
 
   void handle_change_in_number_of_nodes();
   void execute_partitioner(int number_of_nodes);
-  // DB_COMMENT
+
   void cpu_utilization_per_thread();
 
   thread_info *get_thread_info(int id);

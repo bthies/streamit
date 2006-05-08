@@ -22,7 +22,14 @@ class ccp_session {
   int cpu_utilization;
   int idle_time;
 
+  int avg_cpu_utilization;
+  int avg_idle_time;
+
+  vector<int> cpuUtil;
+  vector<int> idleTime;
+
   int read_int(int *ptr);
+  void calculate_avg();
 
  public:
 
@@ -32,9 +39,11 @@ class ccp_session {
   bool is_socket_open();
   unsigned get_ip();
 
-// DB_COMMENT
   int get_idle_time();
   int get_cpu_util();
+
+  int get_avg_idle_time();
+  int get_avg_cpu_util();
 
   int read_data();
 

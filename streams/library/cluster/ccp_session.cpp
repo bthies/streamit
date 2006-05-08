@@ -98,6 +98,26 @@ void ccp_session::read_alive_response() {
   cpu_utilization = tmp2;
   idle_time = tmp3;
 
+  cpuUtil.push_back(cpu_utilization);  
+  idleTime.push_back(idle_time);  
+
+  if(cpuUtil.size() > 20)
+  {
+    vector<int>::iterator i;
+    i = cpuUtil.begin();
+    cpuUtil.erase(i,i+1);
+  }
+
+  if(idleTime.size() > 20)
+  {
+    vector<int>::iterator i;
+    i = idleTime.begin();
+    idleTime.erase(i,i+1);
+  }
+
+
+  calculate_avg();
+
   printf("[%d.%d.%d.%d] Alive resp is (chkpt=%d, util=%d, idle=%d)\n", 
 	 (ip % 256), 
 	 ((ip>>8) % 256), 
@@ -203,4 +223,35 @@ bool ccp_session::is_alive() {
 int ccp_session::get_latest_checkpoint() {
 
   return latest_checkpoint;
+}
+
+
+void ccp_session::calculate_avg(){
+  
+  avg_cpu_utilization = 0;
+
+  for(int i=0; i < cpuUtil.size(); i++)  
+  {
+     avg_cpu_utilization = avg_cpu_utilization + cpuUtil[i];
+  }
+
+  avg_cpu_utilization = (int)((double)avg_cpu_utilization/(double)cpuUtil.size()); 
+  
+  for(int i =0; i < idleTime.size(); i++)
+  {
+     avg_idle_time = avg_idle_time + idleTime[i];
+  }
+
+  avg_idle_time = (int)((double)avg_idle_time/(double)idleTime.size()); 
+  
+}
+
+int ccp_session::get_avg_cpu_util() {  
+  return avg_cpu_utilization;
+}
+
+// DB_COMMENT
+int ccp_session::get_avg_idle_time() {
+
+  return avg_idle_time;
 }

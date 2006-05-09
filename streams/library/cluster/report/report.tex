@@ -1,0 +1,169 @@
+\documentclass[11pt,oneside]{article}
+\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage[pdftex]{graphics,color}
+\usepackage{verbatim,indentfirst}
+\usepackage{listings}
+\usepackage{textcomp}
+
+\usepackage{pifont}
+\newcommand{\X}{\ding{54} }
+\newcommand{\note}[1]{\marginpar{{\it #1}}}
+%\renewcommand{\note}[1]{}
+
+\title{Dynamic Load Balancing for Executing\\ Stream Programs on a Cluster\\ \ \\}
+\author{Hasti Ahlehagh \\ Quinn Mahoney \\ Janis Sermulins\\ \ \\}
+\date{\today}
+
+
+\begin{document}
+
+\maketitle
+
+\thispagestyle{empty}
+
+\vspace{50pt}
+
+\begin{abstract}
+ 
+This work considers dynamic load balancing for executing stream programs on a cluster. StreamIt is a high-level data-flow programming language and compiler for modern streaming systems \cite{thies}. This language is designed to facilitate the programming of large streaming applications; it outputs a set of components that can be distributed among a cluster of commodity computers. Load balancing is vital for improving performance. The current StreamIt implementation uses statically generated mappings to assign threads to cluster computers, but these static mappings assume that an equal amount of CPU resources are available on each cluster machine. In this study, we propose a new load balancing algorithm for detecting load imbalances. This allows a StreamIt program to adjust to varying CPU resources on cluster machines by collecting run-time statistics. We compare StreamIt performance with our approach to that of the current implementation.
+ 
+\end{abstract} 
+
+\newpage
+
+\section{Introduction}
+The emergence of different streaming applications like streaming media, software radio, and graphic packages on a variety of embedded and high-performance system has fomented the need for a streaming language and compiler that facilitate modularity, programming productivity, and robustness. StreamIt is a high-level data-flow programming language and compiler introduced to facilitate the development of modern streaming applications \cite{thies}. StreamIt exploits the modular nature of the streaming application to distribute the computation workload to different processors, which results in faster execution. This characterisÂtic of StreamIt introduces load balancing issues, which is an important area for improvement. The performance of a StreamIt application is closely related to the distribution of the load on each processor.
+
+The current StreamIt implementation uses static load balancing to assign threads to each cluster machine; it assumes that each machine has an equal amount of CPU resources available to run the application. However, this assumption is not always valid since the computers in a cluster may a have different number of processors or different clock speeds. Additionally, there might be other processes executing on the cluster machines, which decrease the resources available to the StreamIt application. The resources consumed by these unrelated processes may change dynamically. Therefore, dynamic load balancing is preferable because it can adapt to changing conditions as well as accommodate heterogeneous clusters.
+
+In the current implementation, a Central Control Processor (CCP) runs on one of the cluster machines and monitors the running application. It periodically checks that each node is alive and reachable and uses this information to reconfigure the stream application if any of the machines fails or is disconnected from the network. We will modify the CCP to collect statistics about CPU utilization from each node. This information can be used to optimize the distribution of the components corresponding to the stream program. We propose an algorithm that computes an efficient mapping given the current CPU resources.
+
+In this paper we briefly present an overview of the load balancing problem and description of the StreamIt compiler as a distributed system. Next, we discuss the design of the load balancing algorithm and potential improvements, and finally we evaluate and compare our proposed algorithm with the current implementation of StreamIt.
+ 
+\subsection*{Related Work}
+ 
+Load balancing algorithms have been studied both in terms of CPU usage in parallel processing and route selection algorithm in communication networks. For our study, we assume the bandwidth between two nodes is abundant and that memory usage is not a concern. We only consider CPU utilization for load balancing. Static and dynamic load balancing have been studied in \cite{ghosh,hamdi,nandy}. \cite{ghosh} studies load balancing in the context of graph theory and solves the problem of Incremental Weight Migration on an arbitrary graph. \cite{nandy} proposes and compares different load balancing techniques for parallel discrete event driven simulation. \cite{hamdi} introduces a load balancing scheme that aims at dynamically balancing the workload of data parallel applications. They use a central manager to partition a given image into a set of several smaller sub-images, distribute them to all components involved, and collect the results. Our load balancing technique is also centralized and specific to the StreamIt implementation.
+
+\section{Current StreamIt Implementation}
+
+\subsection*{Existing Partitioner}
+
+The current StreamIt implementation estimates how much computational resources each component will require. It then applies a sequence of $N-1$ vertical and horizontal cuts to the graph of the stream program to produce $N$ partitions such that the estimated work within all partitions is as uniform as possible. In some cases, it must insert components whose outputs are equal to their inputs in order to enforce certain properties of the stream graph. Better load balancing can be achieved if the algorithm is not restricted only to horizontal or vertical cuts. 
+
+\subsection*{Executing Stream Programs without Reliability or Dynamic Load Balancing}
+
+A StreamIt application is compiled into a set of threads where each threadÕs code is implemented using the C language. The existing static partitioner provides a mapping between the threads and a given number of cluster machines, which is stored in a cluster configuration file. Multiple threads can be mapped to a single machine.
+
+Initially, a process is started on each of the cluster machines. These processes read the cluster configuration file and create the necessary TCP connections between corresponding process running on the other cluster machines. Once the connections have been established, the computation threads are started. The computation continues for a specified number of iterations. This does not provide support for any dynamic reconfiguration or failure recovery.
+
+\subsection*{Executing Stream Programs with Reliability}
+
+The CCP process is started on one of the cluster machines. We make an assumption that this machine will not crash. In theory we could deal even with the CCP crashing. However, a failure of the CCP would require an intervention by a person who would have to start a new CCP process and start new computation processes on all of the cluster machines; the computation could proceed from a recent checkpoint. 
+
+On each of the cluster nodes a NodeServer thread connects to the CCP machine and informs it that a node is available for stream processing. The CCP then gives instructions to the NodeServer and periodically checks that the node is alive.
+
+Each time that a new computation node connects to the CCP or an existing node becomes unavailable the assignment of threads to nodes has to be changed.
+
+\begin{list}{}
+\item 1.	The CCP sends a STOP\_ALL\_THREADS message to all connected nodes.
+\item 2.	The CCP reads a mapping for the threads to a given number of nodes from a file (a set of files has to be pre-generated statically).
+\item 3.	The CCP sends out CLUSTER\_CONFIG message that contains mapping of threads to the node IP addresses. At this point all nodes perform same logic as if a new stream program is to be executed unreliably; they create TCP connections and start computation (the only difference is that they may have to read state variables of the threads from a recent checkpoint Ð this information is present in CLUSTER\_CONFIG message).
+\end{list}
+\ \\
+
+In order to support the restart of a stream computation, each computation thread periodically saves its state variables to disk, each time creating a new file called a checkpoint. 
+
+One thread of the CCP process deletes checkpoints that are no longer needed. For example, once all computation threads have created a checkpoint for the iteration 200, we no longer need checkpoints for earlier iterations (ex. 100) and can delete them (If we need to recover, we can use iteration 200 instead of any earlier iteration). 
+
+\section{Design Overview}
+
+Our design begins with the static mapping of threads to nodes created by the StreamIt compiler. It collects statistics about the running program and periodically changes the mapping in order to improve balancing of CPU resources. The result is that the program is able to reconfigure itself for optimization and react to changing conditions, such as other programs running on the same cluster.
+
+\subsection*{Data Collection}
+
+Our dynamic load balancing algorithm requires that certain data be collected. We divide this data into two categories, dynamic and static. The dynamic data is measured at run-time by each computer and sent to the CCP. This data includes the CPU usage of the StreamIt program on every node, and the amount of idle CPU cycles on each node as the program runs. The static data is produced at compile-time by the StreamIt compiler. This information includes the communication bandwidth between each pair of threads, and an estimate of the CPU resources required by each thread relative to other threads. This estimated work ratio, when combined with actual CPU usage measurements, allows us to estimate the actual CPU utilization of each thread.
+
+\subsection*{Improved Partitioner}
+
+The new partitioner is not restricted to making horizontal or vertical cuts and it does not introduce unnecessary identity threads. The algorithm begins at the top of the stream program and adds threads to a partition using a breadth-first search. It only adds a thread to the current partition if all the threads that supply input to it have already been added the current or a previous partition. Otherwise, the algorithm is greedy; it adds a thread if it can be added without the current partitionÕs work estimate becoming larger than a certain threshold. For a homogenous cluster, the threshold would be the sum of all the work estimates divided by the number of partitions. When no thread can be added to satisfy the condition, it starts a new partition from the remaining eligible threads. A thread is considered eligible if all the threads that supply input to it have been added to some previous partition.
+
+Because of the simplicity of our algorithm, it can be executed by the CCP during runtime whenever the number of available nodes changes instead of having a set of statically pre-generated mappings.
+
+\subsection*{Dynamic Load Balancing}
+
+Initially, the application starts with a distribution of threads that assumes equal computational resources are available on all cluster machines. If they are not uniform, the algorithm can adjust the threshold for each partition in order to produce a mapping that is better suited to the available resources.
+
+For each machine, the CCP needs to monitor the CPU utilization of the corresponding StreamIt process and the CPU idle time. It also computes the sum of the work estimates for all the StreamIt threads running on a single machine. This allows it to estimate the relative speeds of different machines.
+
+However, we do not want it to adjust for every slight perturbation of the available CPU resources. Therefore, it regularly collects data, computes the averages, and modifies the mapping if the current mapping is no longer efficient. The optimal frequency of reconfiguration is dependent on the cost of reconfiguration. 
+
+\begin{figure}[htp]
+\begin{center}
+\framebox[.8 \textwidth]{
+\vbox{
+\begin{flushleft}
+\begin{tabbing}
+xxxx \= xxxx \= xxxx \= xxxx \= \kill
+1. Read Configuration File\\
+2. Send ALIVE\_COMMAND to Nodes\\
+3. Receive Load Info from Nodes\\
+4. Find Relative Distribution of Load\\
+5. If ( Requires Redistribution )\\
+\> Send STOP\_THREAD to Nodes\\
+\> \> Send New Mapping to Nodes\\
+\> \> Send RESUME\_COMPUTATION from Checkpoint to Nodes\\
+\> \> \> If ( Success )\\
+\> \> \> \> Return\\
+\> \> \> Else\\
+\> \> \> \> Halt the System or Continue\\
+6. Else \\
+\> Goto Step 2
+\end{tabbing}
+\end{flushleft}
+}
+}
+\end{center}
+\caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
+\end{figure}
+
+%\begin{figure}[htp]
+%\begin{center}
+%\framebox[.75 \textwidth]{
+%\vbox{
+%\begin{flushleft}
+%\begin{tabbing}
+%xxxx \= xxxx \= xxxx \= xxxx \= \kill
+%1. Read-config-file ( )\\
+%2. Send-alive-command-to-nodes ( )\\
+%3. Receive-load-info-from-nodes ( )\\
+%4. Find-relative-distribution-of-load ( )\\
+%5. If require-redistribution == TRUE\\
+%\> Send-stop-thread-to-nodes ( )\\
+%\> \> Send-new-mapping-to-nodes ( )\\
+%\> \> Send-resume-computation-from-checkpoint-to-nodes ( )\\
+%\> \> \> If success\\
+%\> \> \> \> Return ( ) \\
+%\> \> \> Else\\
+%\> \> \> \> Halt-the-system-or-continue ( )\\
+%6. Else \\
+%\> Goto step 2
+%\end{tabbing}
+%\end{flushleft}
+%}
+%}
+%\end{center}
+%\caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
+%\end{figure}
+
+
+Every 1 to 5 seconds, the CCP sends an ALIVE\_COMMAND message to the all the connected nodes participating in the StreamIt computation. Each node sends its current CPU utilization along with its greatest checkpoint number to the CCP.
+
+Whenever the CCP detects that a reconfiguration is necessary, it sends a STOP\_THREAD message to all the nodes and then sends a new mapping along with the checkpoint number from which computation should resume. 
+
+\newpage
+
+\nocite{*}
+\bibliography{report}
+\bibliographystyle{plain}
+
+\end{document}

@@ -105,7 +105,7 @@ void node_server::run_server(netsocket *sock) {
   for (;;) {
     cmd = sock->read_int();
 
-    fprintf(stderr,"received command: %d\n", cmd);
+    //fprintf(stderr,"received command: %d\n", cmd);
     
     if (sock->eof()) break;
     
@@ -122,9 +122,9 @@ void node_server::run_server(netsocket *sock) {
       // QM
       int __cu, __it;
       measure_load(&__cu, &__it);
-      printf("Alive...\n");
+      //printf("Alive...\n");
 
-      fprintf(stderr,"ALIVE reply is: %d %d %d\n", __n, __cu, __it);
+      fprintf(stderr,"Alive resp is (chkpt=%d, util=%d, idle= %d)\n", __n, __cu, __it);
       resp.push_back(__n);
       resp.push_back(__cu);
       resp.push_back(__it);
@@ -208,7 +208,7 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
   time_diff += (tv.tv_usec-last_jiff.tv_usec) / 1e6;
   last_jiff.tv_sec = tv.tv_sec;
   last_jiff.tv_usec = tv.tv_usec;
-  printf("-- time difference     : %5.2f seconds\n", time_diff);
+  //printf("-- time difference     : %5.2f seconds\n", time_diff);
 
   float jiff_sec = 0;
 
@@ -220,7 +220,7 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
     if (info->is_active()) jiff_sec += info->usage;
   }
 
-  printf("-- streamit jiffy usage: %6.2f jiffies/second\n", jiff_sec);
+  //printf("-- streamit jiffy usage: %6.2f jiffies/second\n", jiff_sec);
 
   unsigned long utime, nice, stime, idle, sum;
 
@@ -229,8 +229,8 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
   fclose(stat);
 
   sum = utime + nice + stime + idle;
-  printf("-- sum: %lu    old_sum: %lu    sum-old_sum: %lu\n",sum,old_sum, sum-old_sum);
-  printf("-- idle: %lu    old_idle: %lu    idle-old_idle: %lu\n",idle,old_idle_time, idle-old_idle_time);
+  //printf("-- sum: %lu    old_sum: %lu    sum-old_sum: %lu\n",sum,old_sum, sum-old_sum);
+  //printf("-- idle: %lu    old_idle: %lu    idle-old_idle: %lu\n",idle,old_idle_time, idle-old_idle_time);
   
   if (sum - old_sum != 0) {  // Else, divides by 0
 
@@ -253,7 +253,7 @@ void node_server::measure_load(int *cpu_util_out, int *idle_time_out) {
   if (*cpu_util_out + *idle_time_out > 100) 
     *idle_time_out = 100 - *cpu_util_out;
 
-  printf("-- cpu util: %d idle: %d\n", *cpu_util_out, *idle_time_out);
+  //printf("-- cpu util: %d idle: %d\n", *cpu_util_out, *idle_time_out);
 
   old_sum = sum;
   old_idle_time = idle;

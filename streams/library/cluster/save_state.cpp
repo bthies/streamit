@@ -45,8 +45,8 @@ void save_state::observe_jiffies(thread_info *t_info) {
   int jiff_diff = (u+s - t_info->last_count);
   float usage = jiff_diff / time_diff;
 
-  printf("Thread-%d Usage is %5.2f jiffies/sec\n", 
-	 t_info->get_thread_id(), usage);
+  //printf("Thread-%d Usage is %5.2f jiffies/sec\n", 
+  //	 t_info->get_thread_id(), usage);
   
   t_info->usage = usage;
   t_info->last_count = u+s;

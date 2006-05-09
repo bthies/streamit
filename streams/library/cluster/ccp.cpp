@@ -254,22 +254,25 @@ void ccp::find_partition(int num_p, float *targets) {
 
 }
 
-
+// Returns partition "distance" as a percentage
 int ccp::partition_distance() {
-  /*  
+
   int epsilon = 0;
+  int sigma = 0;
 
   for(map<int,int>::iterator p = threadusage.begin();
       p != threadusage.end();
       ++p) {
 
-    if (partition[p->first] != newpartition[p->first])
+    sigma += p->second;
+
+    if (cur_partition[p->first] != new_partition[p->first])
       epsilon += p->second;
 
   }
 
-  return epsilon;
-  */
+  return epsilon * 100 / sigma;
+
 }
 
 int ccp::run_ccp() {

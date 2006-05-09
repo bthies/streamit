@@ -157,6 +157,10 @@ void ccp::find_partition(int num_p, float *targets) {
   int sum = 0, target;
   int added[number_of_threads];
 
+  for (int i = 0; i < num_p; i++) { 
+    new_weights[i] = targets[i];
+  }
+
   for (int a = 0; a < number_of_threads; a++) {
     added[a] = 0;
     sum += threadusage[a];
@@ -257,8 +261,8 @@ void ccp::find_partition(int num_p, float *targets) {
 // Returns partition "distance" as a percentage
 int ccp::partition_distance() {
 
-  int epsilon = 0;
-  int sigma = 0;
+  float epsilon = 0;
+  float sigma = 0;
 
   for(map<int,int>::iterator p = threadusage.begin();
       p != threadusage.end();
@@ -271,7 +275,7 @@ int ccp::partition_distance() {
 
   }
 
-  return epsilon * 100 / sigma;
+  return (int)(epsilon * 100.0 / sigma);
 
 }
 
@@ -485,71 +489,102 @@ int ccp::run_ccp() {
 	}
       }
 
-
-    float sum_work_load = 0;     
-    for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
-    {
-
-      int tmp_cpu_util = (*i)->get_cpu_util();
-      int cpu_avg_util = (*i)->get_avg_cpu_util();
-      int cpu_avg_idle_time = (*i)->get_avg_idle_time();
- 
-      for(int j = 0; j < machines_in_partition; j++)
-      {
-	if(machines[j] == (*i)->get_ip())
-        {
-           if(cpu_avg_util != 0) {
-               workToCpuUtil[j] = ( ((double)workPerCpu[j])/((double)cpu_avg_util) ) *(cpu_avg_util+cpu_avg_idle_time);
-               sum_work_load = sum_work_load + workToCpuUtil[j];
-#if DBG
-	       printf("machine = %i workPerCpu = %i, cpu_avg_util = %i, workToCpuUtil = %5.2f\n", j, workPerCpu[j], cpu_avg_util, workToCpuUtil[j]);
-#endif
-           }
-           else
-           {
-               workToCpuUtil[j] = 0;
-           }
-        } 
-      }     
- 
-
-      for (int tmp_m = 0; tmp_m < machines_in_partition; tmp_m++)
-      {
-        if (machines[tmp_m]==(*i)->get_ip())
-        {
-
-            typedef multimap<int, int>::const_iterator I;
-
-            pair<I,I> b=machineTothread.equal_range(tmp_m);
-
-           for (I i=b.first; i !=b.second; ++i)
-           { 
-               threadCpuUtil[i->second] = tmp_cpu_util;
-           }
-	}
-      }
-    }
     //fprintf(stderr,"[End of the LOOP]\n");
     //fflush(stderr);
+
+    if (waiting_to_start_execution) gettimeofday(&cTime,NULL);    
+
     timeval now;
     gettimeofday(&now,NULL);    
     float *weights = new float[machines_in_partition];
 
-    if( (now.tv_sec - cTime.tv_sec) > 5 && sum_work_load != 0 )
+    if( (now.tv_sec - cTime.tv_sec) > 30)
     {
-        for(int i=0; i < machines_in_partition ; i++) {
-//           tmp_cpu_idle = (((double)workToCpuUtil[i])/(double)(cpu_avg_util)) *(   
-           weights[i] = workToCpuUtil[i]/sum_work_load; 
-           printf("machine id = %i , workToCpuUtil = %5.2f \n",i, weights[i]);
 
-        }
+      float sum_work_load = 0;     
+      for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
+	{
+	  
+	  int tmp_cpu_util = (*i)->get_cpu_util();
+	  int cpu_avg_util = (*i)->get_avg_cpu_util();
+	  int cpu_avg_idle_time = (*i)->get_avg_idle_time();
+	  
+	  for(int j = 0; j < machines_in_partition; j++)
+	    {
+	      if(machines[j] == (*i)->get_ip())
+		{
+		  if(cpu_avg_util != 0) {
+		    workToCpuUtil[j] = ( ((double)workPerCpu[j])/((double)cpu_avg_util) ) *(cpu_avg_util+cpu_avg_idle_time);
+		    
+		    printf("machine = %i workPerCpu = %i, cpu_avg_util = %i, cpu_avg_idle_time = %i, workToCpuUtil = %5.2f\n", j, workPerCpu[j], cpu_avg_util, cpu_avg_idle_time, workToCpuUtil[j]);
+		    
+		    sum_work_load = sum_work_load + workToCpuUtil[j];
+#if DBG
+		    printf("machine = %i workPerCpu = %i, cpu_avg_util = %i, workToCpuUtil = %5.2f\n", j, workPerCpu[j], cpu_avg_util, workToCpuUtil[j]);
+#endif
+		  }
+		  else
+		    {
+		      workToCpuUtil[j] = 0;
+		    }
+		} 
+	    }     
+	  
+	  
+	  for (int tmp_m = 0; tmp_m < machines_in_partition; tmp_m++)
+	    {
+	      if (machines[tmp_m]==(*i)->get_ip())
+		{
+		  
+		  typedef multimap<int, int>::const_iterator I;
+		  
+		  pair<I,I> b=machineTothread.equal_range(tmp_m);
+		  
+		  for (I i=b.first; i !=b.second; ++i)
+		    { 
+		      threadCpuUtil[i->second] = tmp_cpu_util;
+		    }
+		}
+	    }
+	}
 
-        cTime.tv_sec = now.tv_sec;
 
-        find_partition(machines_in_partition, weights);
-    }
- 
+      if( sum_work_load != 0 )
+	{
+
+	  for(int i=0; i < machines_in_partition ; i++) {
+	    //           tmp_cpu_idle = (((double)workToCpuUtil[i])/(double)(cpu_avg_util)) *(   
+	    weights[i] = workToCpuUtil[i]/sum_work_load; 
+	    printf("machine id = %i , workToCpuUtil = %5.2f (current = %5.2f)\n",i, weights[i], cur_weights[i]);
+	    
+	  }
+	  
+	  printf("**** doing smothing ****\n");
+	  
+	  for(int i=0; i < machines_in_partition ; i++) {
+	    weights[i] = (weights[i]*2+cur_weights[i])/3; 
+	    printf("machine id = %i , workToCpuUtil = %5.2f (current = %5.2f)\n",i, weights[i], cur_weights[i]);
+	    
+	  }
+
+	  
+	  cTime.tv_sec = now.tv_sec;
+	  
+	  find_partition(machines_in_partition, weights);
+	  
+	  int dist = partition_distance();
+	  printf("========== Partition distance is: %d ===========\n", dist);
+	  
+	  if (dist > 5) {
+	    materialize_new_partition();
+	    reconfigure_cluster();
+	  }
+	  
+	}
+    } 
+
     delete weights;
+
   }
 }
 
@@ -656,6 +691,48 @@ void ccp::handle_change_in_number_of_nodes() {
 }
 
 
+void ccp::reconfigure_cluster() {
+ 
+  /* send STOP_ALL_THREADS to all active sessions */
+
+  for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
+
+    (*i)->get_socket()->write_int(STOP_ALL_THREADS);
+    int ret = (*i)->get_socket()->read_int();
+
+    unsigned ip = (*i)->get_ip();
+      
+    fprintf(stderr,"Node: (%d.%d.%d.%d) ", (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
+    if (ret == 1) {
+      fprintf(stderr,"All threads stopped\n");
+    } else {
+      fprintf(stderr,"ccp: Unexpected error!\n");
+    }
+
+  }
+
+  fprintf(stderr,"cpp: Sleep 2 seconds..."); fflush(stderr);
+  sleep(2);
+  fprintf(stderr,"Done.\n");
+
+  fprintf(stderr,"Assignment of threads to nodes...\n");
+      
+  for (int t = 0; t < number_of_threads; t++) {
+    unsigned ip = machines[cur_partition[t]];
+    fprintf(stderr,"thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
+  }
+
+  int iter = save_state::find_max_iter(number_of_threads);
+
+  fprintf(stderr,"Latest checkpoint found is: %d\n", iter);
+
+  send_cluster_config(iter);
+
+  for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
+    (*i)->extend_alive_limit();
+  }
+}
+
 void ccp::send_cluster_config(int iter) {
 
   fprintf(stderr,"Sending cluster configuration to cluster nodes... ");
@@ -731,6 +808,7 @@ void ccp::assign_nodes_to_partition() {
 void ccp::materialize_new_partition() {
 
   for (int i = 0; i < number_of_threads; i++) cur_partition[i] = new_partition[i];
+  for (int i = 0; i < machines_in_partition; i++) cur_weights[i] = new_weights[i];
 }
 
 // calculate the CPU ultilization per thread

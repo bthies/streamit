@@ -21,6 +21,9 @@ class ccp {
 
   timeval cTime;
 
+  map<int, float> cur_weights;         // from machine to weight
+  map<int, float> new_weights;         // from machine to weight
+
   map<int, int> cur_partition;         // from thread to machine id
   map<int, int> new_partition;         // from thread to machine id
 
@@ -57,6 +60,8 @@ class ccp {
 
   void handle_change_in_number_of_nodes();
   void execute_partitioner(int number_of_nodes);
+
+  void reconfigure_cluster();
 
   void cpu_utilization_per_thread();
 

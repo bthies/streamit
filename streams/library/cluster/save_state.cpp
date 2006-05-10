@@ -11,7 +11,10 @@
 #include <linux/unistd.h>
 #include <stdio.h>
 
+// use this on RHEL-3
 _syscall0(pid_t,gettid)
+// use this on other machines
+//int gettid() { return 0; }
 
 #ifndef ARM
 

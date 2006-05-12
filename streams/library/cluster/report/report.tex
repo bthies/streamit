@@ -178,7 +178,10 @@ changed.
 
 In order to support the restart of a stream computation, each computation 
 thread periodically saves its state variables to disk, each time creating 
-a new file called a checkpoint. 
+a new file called a checkpoint. The checkpoints are created such that
+if we restore all threads using a set of matching checkpoints then all
+communication channels are empty; therefore we do not need to checkpoint
+data in the communication channels.
 
 One thread of the CCP process deletes checkpoints that are no longer 
 needed. For example, once all computation threads have created a 

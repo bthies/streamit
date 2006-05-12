@@ -136,11 +136,12 @@ vertical cuts.
 
 \subsection*{Executing Stream Programs without Reliability or Dynamic Load Balancing}
 
-A StreamIt application is compiled into a set of threads where each 
-thread’s code is implemented using the C language. The existing static 
-partitioner provides a mapping between the threads and a given number 
-of cluster machines, which is stored in a cluster configuration file. 
-Multiple threads can be mapped to a single machine.
+When executing StreamIt application on a cluster each stream program
+component is executed as a separate thread. The StreamIt compiler
+generates the code for each thread using C language.
+The existing static partitioner maps the threads to a given number
+of cluster machines. The mapping is stored in a cluster configuration 
+file. Note that multiple threads can be mapped to a single machine.
 
 Initially, a process is started on each of the cluster machines. These 
 processes read the cluster configuration file and create the necessary 

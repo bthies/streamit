@@ -204,11 +204,10 @@ The dynamic data is measured at run-time by each computer and sent to
 the CCP. This data includes the CPU usage of the StreamIt program on 
 every node, and the amount of idle CPU cycles on each node as the 
 program runs. The static data is produced at compile-time by the 
-StreamIt compiler. This information includes the communication 
-bandwidth between each pair of threads, and an estimate of the CPU 
-resources required by each thread relative to other threads. This 
-estimated work ratio, when combined with actual CPU usage measurements, 
-allows us to estimate the actual CPU utilization of each thread.
+StreamIt compiler. This information includes the estimate of the CPU 
+resources required by each thread relative to other threads. 
+This estimate, when combined with actual CPU usage, 
+allows us to estimate relative speeds of different cluster machines.
 
 \subsection*{Improved Partitioner}
 
@@ -219,7 +218,7 @@ a partition using a breadth-first search. It only adds a thread to the
 current partition if all the threads that supply input to it have already 
 been added the current or a previous partition. Otherwise, the algorithm 
 is greedy; it adds a thread if it can be added without the current 
-partition’s work estimate becoming larger than a certain threshold. 
+partition's work estimate becoming larger than a certain threshold. 
 For a homogenous cluster, the threshold would be the sum of all the 
 work estimates divided by the number of partitions. When no thread can 
 be added to satisfy the condition, it starts a new partition from the 
@@ -309,14 +308,18 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 %\end{figure}
 
 
-Every 1 to 5 seconds, the CCP sends an ALIVE\_COMMAND message to the 
-all the connected nodes participating in the StreamIt computation. 
-Each node sends its current CPU utilization along with its greatest 
-checkpoint number to the CCP.
+Every 1 to 2 seconds, the CCP sends an ALIVE\_COMMAND message to 
+all of the machines participating in the StreamIt computation. 
+Each machine responds by sending the current CPU utilization of the 
+StreamIt process along with the number of idle CPU cycles.
 
 Whenever the CCP detects that a reconfiguration is necessary, it sends 
-a STOP\_THREAD message to all the nodes and then sends a new mapping 
-along with the checkpoint number from which computation should resume. 
+a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
+new mapping of threads to machines. The threads examine the most recent
+checkpoint and load their state variables. The CCP makes sure that
+all threads examine the same checkpoint by including a unique
+checkpoint identification number along with the mapping that it
+sends to all machines.
 
 \newpage
 

@@ -231,45 +231,69 @@ resources required by each thread relative to other threads.
 This estimate, when combined with actual CPU usage, 
 allows us to estimate relative speeds of different cluster machines.
 
-\subsection*{Improved Partitioner}
+Suppose that a cluster machine $i$ has threads whose work
+estimates sum up to $work_i$, average CPU utilization by the
+StreamIt threads is $util_i$ and CPU has $idle_i$ idle cycyles
+($util_i$ and $idle_i$ are represented as integers from 0 to 100).
+We calculate the $R_i$ relative amount of CPU resources available on the
+machine $i$ by using the following formula:
 
-The new partitioner is not restricted to making horizontal or vertical 
-cuts and it does not introduce unnecessary identity threads. The 
-algorithm begins at the top of the stream program and adds threads to 
+$R_i = \displaystyle\frac{work_i}{util_i} * (util_i + idle_i)$
+
+\subsection*{New Partitioner}
+
+The existing partitioner calculates the best $N-1$ horizontal and vertical
+cuts, such that the load balance among the $N$ partitions is as equal as
+possible. The algorithm uses dynamic programing and is implenented in 
+Java. The existing partitioner is invoked during the compilation of the 
+StreamIt program to C. It is therefore inappropriate for execution 
+during runtime.
+
+We have developed an alternative partitioner, which does not use
+dynamic programing, but is not restricted to making only horizontal
+and vertical cuts. Because the algorithm is greedy its
+execution time is negligible even for large graphs.
+
+The algorithm begins at the top of the stream program and adds threads to 
 a partition using a breadth-first search. It only adds a thread to the 
 current partition if all the threads that supply input to it have already 
-been added the current or a previous partition. Otherwise, the algorithm 
+been added to the current or a previous partition. Otherwise, the algorithm 
 is greedy; it adds a thread if it can be added without the current 
 partition's work estimate becoming larger than a certain threshold. 
-For a homogenous cluster, the threshold would be the sum of all the 
-work estimates divided by the number of partitions. When no thread can 
-be added to satisfy the condition, it starts a new partition from the 
-remaining eligible threads. A thread is considered eligible if all the 
-threads that supply input to it have been added to some previous partition.
+When no thread can be added to satisfy the condition, it starts a 
+new partition from the remaining eligible threads. A thread is considered 
+eligible if all the threads that supply input to it have been added to 
+some previous partition.
 
-Because of the simplicity of our algorithm, it can be executed by the 
-CCP during runtime whenever the number of available nodes changes 
-instead of having a set of statically pre-generated mappings.
+For a homogenous cluster, the threshold for all partitions is the 
+sum of all the work estimates divided by the number of partitions. 
+Once we have gathered statistics from the cluster machines the 
+thresholds are proportional to $R_i$ values for the machines.
 
-\subsection*{Dynamic Load Balancing}
+\subsection*{Dynamic Load Balancing Algorithm}
 
-Initially, the application starts with a distribution of threads that 
-assumes equal computational resources are available on all cluster 
-machines. If they are not uniform, the algorithm can adjust the 
-threshold for each partition in order to produce a mapping that is 
-better suited to the available resources.
+When we start executing a StreamIt program on a cluster consisting
+on $N$ machines the initial mapping of threads to machines
+is constructed using our new partitioner, but assuming that 
+all machines have equal CPU resources.
 
-For each machine, the CCP needs to monitor the CPU utilization of the 
-corresponding StreamIt process and the CPU idle time. It also computes 
-the sum of the work estimates for all the StreamIt threads running on a 
-single machine. This allows it to estimate the relative speeds of 
-different machines.
+The CCP collects current statistics from the cluster machines
+every 1 to 2 seconds. It calculates the average values for each
+statistic (the CPU utilization by StreamIt and the idle CPU cycles)
+over a time period of 20 seconds. Every 30 seconds the CCP computes
+a new mapping of threads to machines using the new partitioner
+and $R_i$ values that have been computed using the average 
+values of CPU statistics.
 
-However, we do not want it to adjust for every slight perturbation of 
-the available CPU resources. Therefore, it regularly collects data, 
-computes the averages, and modifies the mapping if the current mapping 
-is no longer efficient. The optimal frequency of reconfiguration is 
-dependent on the cost of reconfiguration. 
+If the sum of the work estimates of the threads that are located on a
+different machine in the new mapping is more than 5 percent, the
+CCP initiates a reconfiguration. During a reconfiguration the CCP sends 
+a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
+new mapping of threads to machines. The threads examine the most recent
+checkpoint and load their state variables. The CCP makes sure that
+all threads examine the same checkpoint by including a unique
+checkpoint identification number along with the mapping that it
+sends to all machines.
 
 \begin{figure}[htp]
 \begin{center}
@@ -278,20 +302,13 @@ dependent on the cost of reconfiguration.
 \begin{flushleft}
 \begin{tabbing}
 xxxx \= xxxx \= xxxx \= xxxx \= \kill
-1. Read Configuration File\\
-2. Send ALIVE\_COMMAND to Nodes\\
-3. Receive Load Info from Nodes\\
-4. Find Relative Distribution of Load\\
-5. If ( Requires Redistribution )\\
-\> Send STOP\_THREAD to Nodes\\
-\> \> Send New Mapping to Nodes\\
-\> \> Send RESUME\_COMPUTATION from Checkpoint to Nodes\\
-\> \> \> If ( Success )\\
-\> \> \> \> Return\\
-\> \> \> Else\\
-\> \> \> \> Halt the System or Continue\\
-6. Else \\
-\> Goto Step 2
+1. Receive Load Info from Machines\\
+2. Find New Mapping of Threads to Machines\\
+3. If ( More Than 5 Percent Differece )\\
+\> Send STOP\_ALL\_THREADS to Machines\\
+\> Send New Mapping to Machines\\
+\> Ask Machines to Resume Computation from a Checkpoint\\
+4. Goto Step 2
 \end{tabbing}
 \end{flushleft}
 }
@@ -328,20 +345,6 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 %\end{center}
 %\caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
 %\end{figure}
-
-
-Every 1 to 2 seconds, the CCP sends an ALIVE\_COMMAND message to 
-all of the machines participating in the StreamIt computation. 
-Each machine responds by sending the current CPU utilization of the 
-StreamIt process along with the number of idle CPU cycles.
-
-Whenever the CCP detects that a reconfiguration is necessary, it sends 
-a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
-new mapping of threads to machines. The threads examine the most recent
-checkpoint and load their state variables. The CCP makes sure that
-all threads examine the same checkpoint by including a unique
-checkpoint identification number along with the mapping that it
-sends to all machines.
 
 \newpage
 

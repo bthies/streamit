@@ -19,9 +19,9 @@
 
 \maketitle
 
-\thispagestyle{empty}
+%\thispagestyle{empty}
 
-\vspace{50pt}
+%\vspace{50pt}
 
 \begin{abstract}
  
@@ -42,7 +42,7 @@ of the current implementation.
  
 \end{abstract} 
 
-\newpage
+%\newpage
 
 \section{Introduction}
 The emergence of different streaming applications like streaming media, 
@@ -97,8 +97,6 @@ system. Next, we discuss the design of the dynamic load balancing algorithm
 and potential improvements, and finally we evaluate and compare our 
 proposed algorithm with the current implementation of StreamIt.
 
-\newpage
- 
 \subsection*{Related Work}
  
 Load balancing algorithms have been studied both in terms of CPU usage 
@@ -117,6 +115,7 @@ into a set of several smaller sub-images, distribute them to all
 components involved, and collect the results. Our load balancing 
 technique is also centralized and specific to the StreamIt implementation.
 
+ 
 \section{Current StreamIt Implementation}
 
 \subsection*{Existing Partitioner}
@@ -188,8 +187,6 @@ needed. For example, once all computation threads have created a
 checkpoint for the iteration 200, we no longer need checkpoints for 
 earlier iterations (ex. 100) and can delete them (If we need to recover, 
 we can use iteration 200 instead of any earlier iteration). 
-
-\newpage
 
 \section{Design Overview}
 

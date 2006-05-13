@@ -115,8 +115,17 @@ into a set of several smaller sub-images, distribute them to all
 components involved, and collect the results. Our load balancing 
 technique is also centralized and specific to the StreamIt implementation.
 
- 
+\newpage 
+
 \section{Current StreamIt Implementation}
+
+In this section we present how StreamIt programs can be compiled
+to and executed on a cluster. We present the existing partitioner
+and reasons why we need to modify the partitioner. We also explain
+how by using the Central Control Process it is possible to restart a 
+StreamIt program on a cluster from a recent checkpoint. We will 
+need this property in order to restart a StreamIt program after
+reconfiguration.
 
 \subsection*{Existing Partitioner}
 
@@ -133,7 +142,7 @@ certain properties of the stream graph. Better load balancing may be
 achieved if the algorithm is not restricted only to horizontal or 
 vertical cuts. 
 
-\subsection*{Executing Stream Programs without Reliability or Dynamic Load Balancing}
+\subsection*{Executing Stream Programs on a Cluster}
 
 When executing StreamIt application on a cluster each stream program
 component is executed as a separate thread. The StreamIt compiler
@@ -150,7 +159,7 @@ computation threads are started. The computation continues for a
 specified number of iterations. This does not provide support for any 
 dynamic reconfiguration or failure recovery.
 
-\subsection*{Executing Stream Programs with Reliability}
+\subsection*{Restarting a Stream Program from a Checkpoint}
 
 The CCP process is started on one of the cluster machines. We make an 
 assumption that this machine will not crash. In theory we could deal 
@@ -188,14 +197,26 @@ checkpoint for the iteration 200, we no longer need checkpoints for
 earlier iterations (ex. 100) and can delete them (If we need to recover, 
 we can use iteration 200 instead of any earlier iteration). 
 
+\newpage 
+
 \section{Design Overview}
 
-Our design begins with the static mapping of threads to nodes created 
-by the StreamIt compiler. It collects statistics about the running 
-program and periodically changes the mapping in order to improve 
-balancing of CPU resources. The result is that the program is able to 
-reconfigure itself for optimization and react to changing conditions, 
-such as other programs running on the same cluster.
+Our implementation of the dynamic load balancing algorithm gathers 
+statistics from the cluster machines such as the percentage of the CPU 
+utilized by the StreamIt process and the percentage of the CPU cycles 
+that are idle. The CCP gathers this data periodically
+and computes a new mapping of threads to machines that represents
+the CPU resources available at each cluster machine. If the new mapping
+is sufficiently different from the current mapping then the CCP initiates
+a reconfiguration where the stream program is halted and restarted
+from a most recent checkpoint. The restart allows us to adjust
+the mapping of threads to machines.
+
+Initially we assume that all cluster machines have equal CPU 
+resources. However, as we gather profiling data we can adjust the
+mapping to improve the load balance. The result is that the program 
+is able to reconfigure itself for optimization and react to changing 
+conditions, such as other programs running on the same cluster.
 
 \subsection*{Data Collection}
 

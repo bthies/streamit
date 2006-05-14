@@ -575,11 +575,11 @@ int ccp::run_ccp() {
 	  int dist = partition_distance();
 	  printf("========== Partition distance is: %d ===========\n", dist);
 	  
-	  if (dist > 5) {
+	  if (dist > 4) {
+            printf("CHANGE THE CONFIGURATION = %i \n", dist);
 	    materialize_new_partition();
 	    reconfigure_cluster();
 	  }
-	  
 	}
     } 
 

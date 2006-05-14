@@ -118,14 +118,14 @@ void ccp_session::read_alive_response() {
 
   calculate_avg();
 
-  printf("[%d.%d.%d.%d] Alive resp is (chkpt=%d, util=%d, idle=%d)\n", 
+/*  printf("[%d.%d.%d.%d] Alive resp is (chkpt=%d, util=%d, idle=%d)\n", 
 	 (ip % 256), 
 	 ((ip>>8) % 256), 
 	 ((ip>>16) % 256), 
 	 ((ip>>24) % 256),
 	 latest_checkpoint, 
 	 cpu_utilization, 
-	 idle_time);
+	 idle_time);*/
 
 }
 

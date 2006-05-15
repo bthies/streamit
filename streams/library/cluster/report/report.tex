@@ -140,7 +140,30 @@ of partitions by exactly one. In some cases, the algorithm must insert
 components whose outputs are equal to their inputs in order to enforce 
 certain properties of the stream graph. Better load balancing may be 
 achieved if the algorithm is not restricted only to horizontal or 
-vertical cuts. 
+vertical cuts as shown in Figure~\ref{part1} and Figure~\ref{part2}.
+
+
+\begin{figure}[h] %  figure placement: here, top, bottom, or page
+\begin{center}
+\begin{minipage}{.4\textwidth}
+\begin{center}
+   \includegraphics*[width=180pt]{partition1.png} 
+   \caption{Partitions considered by the existiong partitioner}
+   \label{part1}
+\end{center}
+\end{minipage}
+\begin{minipage}{.1\textwidth}
+\end{minipage}
+\begin{minipage}{.4\textwidth}
+\begin{center}
+   \includegraphics*[width=120pt]{partition2.png} 
+   \caption{Partitions not considered by the existiong partitioner}
+   \label{part2}
+\end{center}
+\end{minipage}
+\end{center}
+\end{figure}
+
 
 \subsection*{Executing Stream Programs on a Cluster}
 
@@ -324,6 +347,8 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
    \label{mpeg-1ghz-3ghz}
    \end{center}
 \end{figure}
+
+
 
 
 %\begin{figure}[htp]

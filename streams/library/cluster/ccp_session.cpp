@@ -101,14 +101,14 @@ void ccp_session::read_alive_response() {
   cpuUtil.push_back(cpu_utilization);  
   idleTime.push_back(idle_time);  
 
-  if(cpuUtil.size() > 20)
+  if(cpuUtil.size() > 33)
   {
     vector<int>::iterator i;
     i = cpuUtil.begin();
     cpuUtil.erase(i,i+1);
   }
 
-  if(idleTime.size() > 20)
+  if(idleTime.size() > 33)
   {
     vector<int>::iterator i;
     i = idleTime.begin();

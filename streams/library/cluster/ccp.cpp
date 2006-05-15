@@ -498,8 +498,10 @@ int ccp::run_ccp() {
     gettimeofday(&now,NULL);    
     float *weights = new float[machines_in_partition];
 
-    if( (now.tv_sec - cTime.tv_sec) > 30)
+    if( (now.tv_sec - cTime.tv_sec) > 40)
     {
+      find_thread_per_machine_mapping(); 
+      find_cpu_work_estimate();
 
       float sum_work_load = 0;     
       for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
@@ -562,7 +564,7 @@ int ccp::run_ccp() {
 	  printf("**** doing smothing ****\n");
 	  
 	  for(int i=0; i < machines_in_partition ; i++) {
-	    weights[i] = (weights[i]*2+cur_weights[i])/3; 
+	    weights[i] = (weights[i]*4+cur_weights[i])/5; 
 	    printf("machine id = %i , workToCpuUtil = %5.2f (current = %5.2f)\n",i, weights[i], cur_weights[i]);
 	    
 	  }
@@ -574,12 +576,13 @@ int ccp::run_ccp() {
 	  
 	  int dist = partition_distance();
 	  printf("========== Partition distance is: %d ===========\n", dist);
-	  
+
 	  if (dist > 4) {
             printf("CHANGE THE CONFIGURATION = %i \n", dist);
 	    materialize_new_partition();
 	    reconfigure_cluster();
 	  }
+
 	}
     } 
 

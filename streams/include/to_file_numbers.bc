@@ -236,7 +236,7 @@ fn install_event_handlers() {
   //install any devices that need to be installed
   //register the workcount event
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
-  EventManager_RegisterHandler("clock", "__check_deadlock");
+  // EventManager_RegisterHandler("clock", "__check_deadlock");
 }
 
 fn __check_deadlock(hms) {

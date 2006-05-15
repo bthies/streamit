@@ -148,7 +148,7 @@ vertical cuts as shown in Figure~\ref{part1} and Figure~\ref{part2}.
 \begin{minipage}{.35\textwidth}
 \begin{center}
    \includegraphics*[width=180pt]{partition1.png} 
-   \caption{Partitions considered by the existiong partitioner}
+   \caption{Partitions considered by the existing partitioner}
    \label{part1}
 \end{center}
 \end{minipage}
@@ -158,7 +158,7 @@ vertical cuts as shown in Figure~\ref{part1} and Figure~\ref{part2}.
 \begin{minipage}{.45\textwidth}
 \begin{center}
    \includegraphics*[width=240pt]{partition2.png} 
-   \caption{Some partitions not considered by the existiong partitioner}
+   \caption{Some partitions not considered by the existing partitioner}
    \label{part2}
 \end{center}
 \end{minipage}
@@ -278,21 +278,30 @@ dynamic programing, but is not restricted to making only horizontal
 and vertical cuts. Because the algorithm is greedy its
 execution time is negligible even for large graphs.
 
-The algorithm begins at the top of the stream program and adds threads to 
-a partition using a breadth-first search. It only adds a thread to the 
-current partition if all the threads that supply input to it have already 
-been added to the current or a previous partition. Otherwise, the algorithm 
-is greedy; it adds a thread if it can be added without the current 
-partition's work estimate becoming larger than a certain threshold. 
-When no thread can be added to satisfy the condition, it starts a 
-new partition from the remaining eligible threads. A thread is considered 
-eligible if all the threads that supply input to it have been added to 
-some previous partition.
+Figure~\ref{newpart} shows the execution of the new partitioner step
+by step. The filled nodes have been added to a partition. The shaded nodes 
+are eligible to be added in the current step because all nodes that supply 
+input to them have been added to some partition. At each step
+the algorithm chooses any of the eligible (shaded) nodes and adds it
+to the current partition as long as the current partition's work 
+estimate does not become larger than a certain threshold. Once no
+node can be added to satisfy this condition a new partition is started.
+Note that the algorithm resembles a breadth first search and that the 
+last node becomes eligible only after the both previous nodes have been 
+added to some partition. 
+
+\begin{figure}[h] %  figure placement: here, top, bottom, or page
+\begin{center}
+   \includegraphics*[width=360pt]{partition3.png} 
+   \caption{Execution of the new partitioner}
+   \label{newpart}
+\end{center}
+\end{figure}
 
 For a homogenous cluster, the threshold for all partitions is the 
 sum of all the work estimates divided by the number of partitions. 
 Once we have gathered statistics from the cluster machines the 
-thresholds are proportional to $R_i$ values for the machines.
+thresholds are proportional to the $R_i$ values for the machines.
 
 \subsection*{Dynamic Load Balancing Algorithm}
 

@@ -318,15 +318,6 @@ a new mapping of threads to machines using the new partitioner
 and $R_i$ values that have been computed using the average 
 values of CPU statistics.
 
-If the sum of the work estimates of the threads that are located on a
-different machine in the new mapping is more than 5 percent, the
-CCP initiates a reconfiguration. During a reconfiguration the CCP sends 
-a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
-new mapping of threads to machines. The threads examine the most recent
-checkpoint and load their state variables. The CCP makes sure that
-all threads examine the same checkpoint by including a unique
-checkpoint identification number along with the mapping that it
-sends to all machines.
 
 \begin{figure}[htp]
 \begin{center}
@@ -349,6 +340,48 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 \end{center}
 \caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
 \end{figure}
+
+
+If the sum of the work estimates of the threads that are located on a
+different machine in the new mapping is more than 5 percent, the
+CCP initiates a reconfiguration. During a reconfiguration the CCP sends 
+a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
+new mapping of threads to machines. The threads examine the most recent
+checkpoint and load their state variables. The CCP makes sure that
+all threads examine the same checkpoint by including a unique
+checkpoint identification number along with the mapping that it
+sends to all machines.
+
+
+\section{Experimental Results}
+
+We study the performance of our dynamic load balancing for different cluster
+configurations. We use two machines and three machine cluster with the clock speeds
+of 1GHz, 3.6GHz and 840 MHz, 1GHz, 3.6 GHz respectively. The network has a capacity
+of a gigabit/second and it is fully switched. We use a MPEG-2 Decode implementation
+in StreamIt for evaluating our algorithm. We chose this benchmark because it can be
+run for extended amount of time alowing us to see the effect of dynamic load balancing 
+over time. We measure the performance by inserting a timer in last thread (this thread 
+writes to a file), the timer measures the time it takes to gather the data corresponding
+to a single frame. This timer reflect the steady state performance of the StreamIt 
+program. 
+
+Figure 1 shows the result of the simulation on a three cluster machines with clock speeds
+of 840MHz, 1GHz, and 3.6 GHz. Results are captured in three different scenarios. The first
+scenario represents no reconfiguration, in which partitioning is done assuming that all
+machines have  equal CPU resources. The next two scenarios represents our dynamic load 
+balancing algorithm with two different threshold of 4 percent and 8 percent for reconfiguration. 
+The different threshold represents the different censitivity of the reconfiguration. With
+4 percent threshold the frequency of changing the configuration is higher than with 8 percent
+threshold. This allows us to determine the performance of the StreamIt program based on this 
+threshold. The results show that our dynamic load balancing algorithm performance better 
+than without dynamic load balancing which assumes equal CPU resources. 
+
+
+ 
+
+ 
+
 
 \begin{figure}[h] %  figure placement: here, top, bottom, or page
    \begin{center}

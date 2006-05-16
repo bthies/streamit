@@ -124,8 +124,9 @@ to and executed on a cluster. We present the existing partitioner
 and reasons why we need to modify the partitioner. We also explain
 how by using the Central Control Process it is possible to restart a 
 StreamIt program on a cluster from a recent checkpoint. We will 
-need this property in order to restart a StreamIt program after
-reconfiguration.
+need this property for our dynamic load balancing algorithm.
+
+%in order to restart a StreamIt program after reconfiguration.
 
 \subsection*{Existing Partitioner}
 
@@ -355,73 +356,100 @@ sends to all machines.
 
 \section{Experimental Results}
 
-We study the performance of our dynamic load balancing for different cluster
-configurations. We use two machines and three machine cluster with the clock speeds
-of 1GHz, 3.6GHz and 840 MHz, 1GHz, 3.6 GHz respectively. The network has a capacity
-of a gigabit/second and it is fully switched. We use a MPEG-2 Decode implementation
-in StreamIt for evaluating our algorithm. We chose this benchmark because it can be
-run for extended amount of time alowing us to see the effect of dynamic load balancing 
-over time. We measure the performance by inserting a timer in last thread (this thread 
-writes to a file), the timer measures the time it takes to gather the data corresponding
-to a single frame. This timer reflect the steady state performance of the StreamIt 
-program. 
-
-Figure 1 shows the result of the simulation on a three cluster machines with clock speeds
-of 840MHz, 1GHz, and 3.6 GHz. Results are captured in three different scenarios. The first
-scenario represents no reconfiguration, in which partitioning is done assuming that all
-machines have  equal CPU resources. The next two scenarios represents our dynamic load 
-balancing algorithm with two different threshold of 4 percent and 8 percent for reconfiguration. 
-The different threshold represents the different censitivity of the reconfiguration. With
-4 percent threshold the frequency of changing the configuration is higher than with 8 percent
-threshold. This allows us to determine the performance of the StreamIt program based on this 
-threshold. The results show that our dynamic load balancing algorithm performance better 
-than without dynamic load balancing which assumes equal CPU resources. 
-
-
- 
-
- 
-
+We study the performance of our dynamic load balancing for different 
+cluster configurations. Our cluster consists of dual processor machines
+with processor speeds of 840MHz, 1GHz, 2.2GHz and 3.6GHz.
+The network has a capacity of 1 gigabit/second and it is fully switched. 
+We use a MPEG-2 Decoder implementation in StreamIt for our load 
+balancing algorithm. We chose this benchmark because it can be
+run for an extended amount of time alowing us to see the effect of 
+dynamic load balancing over time. We measure the performance by inserting 
+a timer in the last thread (the thread that writes data to a file), the timer 
+measures the time it takes to gather data corresponding to a single frame. 
+This timer reflects the steady state performance of the StreamIt program. 
 
 \begin{figure}[h] %  figure placement: here, top, bottom, or page
-   \begin{center}
-   \includegraphics*[width=\textwidth]{mpeg-1ghz-3ghz.png} 
-   \caption{Inserted Graphics Example}
-   \label{mpeg-1ghz-3ghz}
-   \end{center}
+\begin{center}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig1.png} 
+   \caption{MPEG2 decoder performance on a 2~machine cluster (1GHz,~3.6GHz).}
+   \label{fig1}
+\end{center}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig2.png} 
+   \caption{MPEG2 decoder performance on a 3~machine cluster (840MHz,~1GHz,~3.6GHz).}
+   \label{fig2}
+\end{center}
+\end{minipage}
+\end{center}
 \end{figure}
 
 
+Figure~\ref{fig1} and Figure~\ref{fig2} show the performance of MPEG2 
+decoder on a non-homegeneous 2~machine and 3~machine cluster respectively.
+Results are captured in three different scenarios. The first scenario 
+represents no reconfiguration, in which partitioning is done assuming that 
+all machines have equal CPU resources. The next two scenarios represent 
+our dynamic load balancing algorithm with two different thresholds of 4~percent 
+and 8~percent for reconfiguration. The different thresholds represent 
+different sensitivity. With the 4~percent threshold the frequency 
+reconfiguration is higher than with the 8~percent threshold. 
+We observe that our dynamic load balancing has aproximately same performance
+with both thresholds and performs better than with the assumption that 
+all machines have equal CPU resources. 
 
 
-%\begin{figure}[htp]
-%\begin{center}
-%\framebox[.75 \textwidth]{
-%\vbox{
-%\begin{flushleft}
-%\begin{tabbing}
-%xxxx \= xxxx \= xxxx \= xxxx \= \kill
-%1. Read-config-file ( )\\
-%2. Send-alive-command-to-nodes ( )\\
-%3. Receive-load-info-from-nodes ( )\\
-%4. Find-relative-distribution-of-load ( )\\
-%5. If require-redistribution == TRUE\\
-%\> Send-stop-thread-to-nodes ( )\\
-%\> \> Send-new-mapping-to-nodes ( )\\
-%\> \> Send-resume-computation-from-checkpoint-to-nodes ( )\\
-%\> \> \> If success\\
-%\> \> \> \> Return ( ) \\
-%\> \> \> Else\\
-%\> \> \> \> Halt-the-system-or-continue ( )\\
-%6. Else \\
-%\> Goto step 2
-%\end{tabbing}
-%\end{flushleft}
-%}
-%}
-%\end{center}
-%\caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
-%\end{figure}
+\begin{figure}[h] %  figure placement: here, top, bottom, or page
+\begin{center}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig3.png} 
+   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz).}
+   \label{fig3}
+\end{center}
+\end{minipage}
+\end{center}
+\end{figure}
+
+
+The Figure~\ref{fig3} shows the performance on a homogeneous 3 machine
+cluster. We see that there is some cost to our dynamic load balancing
+as compared to no reconfiguration; however, the steady state performance 
+is about the same.
+
+
+\begin{figure}[h] %  figure placement: here, top, bottom, or page
+\begin{center}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig4.png} 
+   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process between frames 12 and 22.}
+   \label{fig4}
+\end{center}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig5.png} 
+   \caption{MPEG2~decoder~performance~on~a 4~machine~cluster~(840MHz~-~3.6GHz) with a background process after frame 9.}
+   \label{fig5}
+\end{center}
+\end{minipage}
+\end{center}
+\end{figure}
+
+
+Figure~\ref{fig4} and Figure~\ref{fig5} show how our dynaimc load 
+balancing can adapt to transient or permanent background processes.
+In both cases we see that our dynamic load balancing algorithm 
+has significant advantages as compared to execution with no 
+reconfiguration.
+ 
+
+ 
+
 
 \newpage
 

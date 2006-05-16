@@ -314,7 +314,7 @@ all machines have equal CPU resources.
 The CCP collects current statistics from the cluster machines
 every 1 to 2 seconds. It calculates the average values for each
 statistic (the CPU utilization by StreamIt and the idle CPU cycles)
-over a time period of 20 seconds. Every 30 seconds the CCP computes
+over a time period of 40 seconds. Every 40 seconds the CCP computes
 a new mapping of threads to machines using the new partitioner
 and $R_i$ values that have been computed using the average 
 values of CPU statistics.
@@ -329,7 +329,7 @@ values of CPU statistics.
 xxxx \= xxxx \= xxxx \= xxxx \= \kill
 1. Receive Load Info from Machines\\
 2. Find New Mapping of Threads to Machines\\
-3. If ( More Than 5 Percent Differece )\\
+3. If ( More Than 4 Percent Differece )\\
 \> Send STOP\_ALL\_THREADS to Machines\\
 \> Send New Mapping to Machines\\
 \> Ask Machines to Resume Computation from a Checkpoint\\
@@ -344,7 +344,7 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 
 
 If the sum of the work estimates of the threads that are located on a
-different machine in the new mapping is more than 5 percent, the
+different machine in the new mapping is more than 4 percent, the
 CCP initiates a reconfiguration. During a reconfiguration the CCP sends 
 a STOP\_ALL\_THREADS message to all of the machines and then sends out a 
 new mapping of threads to machines. The threads examine the most recent

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.46 2005-08-20 02:12:10 thies Exp $
+# $Id: release.sh,v 1.47 2006-05-17 15:25:37 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -112,10 +112,15 @@ rm -rf $WORKING/streams/apps/benchmarks/vocoder
 rm -rf $WORKING/streams/apps/benchmarks/micro04
 rm -rf $WORKING/streams/apps/benchmarks/mpeg2
 rm -rf $WORKING/streams/apps/benchmarks/traces
+rm -rf $WORKING/streams/apps/benchmarks/asplos06
 # JPEGtoBMP was not working at time of release
 rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
 # this is only relevant for spacedynamic backend, so don't release
 rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
+
+# remove the 500MB of input and output for DCT
+rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/input
+rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/output
 
 # complex FIR is fine but was a simple benchmarking exercise, 
 # seems redundant with "fir"
@@ -134,17 +139,17 @@ rm -rf $WORKING/streams/apps/examples/vectadd/VectAdd1.*
 rm -rf $WORKING/streams/apps/tests/portals
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
-# complicated param doesn't resolve
-rm -rf $WORKING/streams/apps/applications/DCT/IDCT.*
+# don't release applications directory
+rm -rf $WORKING/streams/apps/applications
 
 # don't release some C++ software radio thing (?)
 rm -rf $WORKING/streams/apps/libraries/SoftRadio
 
 # Some parts of the compiler aren't useful to release; trim those here.
-rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
+#rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
-rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
+#rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
@@ -159,6 +164,7 @@ rm -rf $WORKING/streams/misc/raw/pca-mm
 # Some parts of the language notes we don't want to be visible
 rm -f $WORKING/streams/docs/syntax/02-04-24-additions
 rm -f $WORKING/streams/docs/syntax/02-08-additions
+rm -f $WORKING/streams/docs/syntax/messaging.tex
 rm -f $WORKING/streams/docs/implementation-notes/assumptions
 rm -f $WORKING/streams/docs/implementation-notes/immutable-ir.txt
 rm -f $WORKING/streams/docs/implementation-notes/low-ir.txt

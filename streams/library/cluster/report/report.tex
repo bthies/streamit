@@ -496,7 +496,12 @@ balancing can adapt to transient or permanent background processes.
 In both cases we see that our dynamic load balancing algorithm 
 has significant advantages as compared to execution with no 
 reconfiguration.
- 
+
+Our experimental evaluation shows that there is no difference
+between having the threshold of reconfiguration being set at 4 
+percent or 8 percent. Therefore, we suggest using a threshold
+value of 8 percent to avoid too much reconfiguration.
+
 \section{Future Work}
 
 Evaluate other heuristics for deciding when to reconfigure. Determine

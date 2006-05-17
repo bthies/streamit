@@ -22,7 +22,7 @@
 
 \thispagestyle{empty}
 
-\vspace{60pt}
+%\vspace{60pt}
 
 \begin{abstract}
  
@@ -44,7 +44,7 @@ are available an all cluster machines.
  
 \end{abstract} 
 
-\newpage
+%\newpage
 
 \section{Introduction}
 The emergence of different streaming applications like streaming media, 
@@ -156,6 +156,15 @@ StreamIt program on a cluster from a recent checkpoint. We will
 need this property for our dynamic load balancing algorithm.
 
 %in order to restart a StreamIt program after reconfiguration.
+
+\subsection*{StreamIt Language}
+
+In StreamIt each program can be represented as a garph with nodes
+and edges. Each node represents a computation element and each edge
+represents a FIFO data channel. For an example graph see 
+Figure~\ref{part1}. To perform file I/O the first node can read
+data from a file and write it to its output channel, the last
+node can read data from its input channel and write it to a file.
 
 \subsection*{Existing Partitioner}
 
@@ -488,7 +497,7 @@ In both cases we see that our dynamic load balancing algorithm
 has significant advantages as compared to execution with no 
 reconfiguration.
  
-\section{Future Wrok}
+\section{Future Work}
 
 Evaluate other heuristics for deciding when to reconfigure. Determine
 the best reconfiguration interval. Improve the new partitioner

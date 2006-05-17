@@ -490,11 +490,19 @@ reconfiguration.
  
 \section{Future Wrok}
 
-
+Evaluate other heuristics for deciding when to reconfigure. Determine
+the best reconfiguration interval. Improve the new partitioner
+algorithm to use some heuristic or backtracking instead of
+being greedy.
 
 \section{Conclusion}
  
-
+Our dynamic load balancing algorithm can have significant impact on the
+performance of a StreamIt application that is executed on a cluster.
+It allows us to adjust load balance for a non homogeneous cluster.
+It also allows us to adjust load balance if a computationally 
+intensive background process is executing or is started on one of the 
+cluster machines.
 
 \newpage
 

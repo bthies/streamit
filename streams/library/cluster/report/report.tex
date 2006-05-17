@@ -436,8 +436,16 @@ all machines have equal CPU resources.
 \begin{minipage}{.49\textwidth}
 \begin{center}
    \includegraphics*[width=230pt]{fig3.png} 
+   \vspace{12pt}
    \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz).}
    \label{fig3}
+\end{center}
+\end{minipage}
+\begin{minipage}{.49\textwidth}
+\begin{center}
+   \includegraphics*[width=230pt]{fig6.png} 
+   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process started on one of the machines after 2 minutes.}
+   \label{fig6}
 \end{center}
 \end{minipage}
 \end{center}
@@ -447,8 +455,12 @@ all machines have equal CPU resources.
 The Figure~\ref{fig3} shows the performance on a homogeneous 3 machine
 cluster. We see that there is some cost to our dynamic load balancing
 as compared to no reconfiguration; however, the steady state performance 
-is about the same.
-
+is about the same. The Figure~\ref{fig6} shows the performance on
+a homogeneous 3 machine cluster with a background process that starts
+on one of the machines two minutes after the start of computation.
+We see that without dynamicl load balancing the performance degrades
+significantly; however, with dynamic load balancing the performance
+is about 3 times better. 
 
 \begin{figure}[h] %  figure placement: here, top, bottom, or page
 \begin{center}
@@ -476,7 +488,11 @@ In both cases we see that our dynamic load balancing algorithm
 has significant advantages as compared to execution with no 
 reconfiguration.
  
+\section{Future Wrok}
 
+
+
+\section{Conclusion}
  
 
 

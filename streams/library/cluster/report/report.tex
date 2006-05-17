@@ -1,5 +1,5 @@
 \documentclass[11pt,oneside]{article}
-\usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage[margin=1in,top=0.5in]{geometry}
 \usepackage[pdftex]{graphicx,color}
 \usepackage{verbatim,indentfirst}
 \usepackage{listings}
@@ -10,18 +10,19 @@
 \newcommand{\note}[1]{\marginpar{{\it #1}}}
 %\renewcommand{\note}[1]{}
 
-\title{Dynamic Load Balancing for Executing\\ Stream Programs on a Cluster\\ \ \\}
+\title{\ \\\vspace{40pt}Dynamic Load Balancing for Executing\\ Stream Programs on a Cluster\\ \ \\}
 \author{Hasti Ahlehagh \\ Quinn Mahoney \\ Janis Sermulins\\ \ \\}
 \date{\today}
 
 
 \begin{document}
 
+
 \maketitle
 
-%\thispagestyle{empty}
+\thispagestyle{empty}
 
-%\vspace{50pt}
+\vspace{60pt}
 
 \begin{abstract}
  
@@ -42,7 +43,7 @@ of the current implementation.
  
 \end{abstract} 
 
-%\newpage
+\newpage
 
 \section{Introduction}
 The emergence of different streaming applications like streaming media, 
@@ -99,29 +100,55 @@ proposed algorithm with the current implementation of StreamIt.
 
 \subsection*{Related Work}
  
-Load balancing algorithms have been studied both in terms of CPU usage 
-in parallel processing and route selection algorithm in communication 
-networks. For our study, we assume the bandwidth between two nodes is 
-abundant and that memory usage is not a concern. We only consider CPU 
-utilization for load balancing. Static and dynamic load balancing have 
-been studied in \cite{ghosh,hamdi,nandy}. \cite{ghosh} studies load 
-balancing in the context of graph theory and solves the problem of 
-Incremental Weight Migration on an arbitrary graph. \cite{nandy} proposes 
-and compares different load balancing techniques for parallel discrete 
-event driven simulation. \cite{hamdi} introduces a load balancing scheme 
-that aims at dynamically balancing the workload of data parallel 
-applications. They use a central manager to partition a given image 
-into a set of several smaller sub-images, distribute them to all 
-components involved, and collect the results. Our load balancing 
-technique is also centralized and specific to the StreamIt implementation.
+Load balancing algorithms have been studied in various contexts like CPU usage
+in parallel processing and route selection in communication networks. For our
+study, we only consider CPU utilization for load balancing and assume the
+network bandwidth is abundant and that memory usage is not a concern. Static
+and dynamic load balancing have been studied in \cite{ghosh}, \cite{hamdi}, and \cite{zhang}. \cite{zhang} uses simulation
+approach to compare the performance of dynamic and static load balancing in
+heterogeneous distributed systems. \cite{ghosh} studies dynamic load balancing in the
+context of graph theory and solves the problem of Incremental Weight Migration
+on an arbitrary graph. They propose a randomized algorithm that results in
+optimal convergence towards the equal weighted graph. \cite{hamdi} introduces a dynamic
+load balancing scheme for parallel image processing applications, where a
+central manager is used to partition a given workload (image) into a set of
+several smaller sub-images, distribute them to all components involved, and
+collect the results. In their computing environment, bandwidth of the network
+is limited, and they try to optimize the algorithm so that communication cost
+involved in transferring the data is not greater than the cost of
+computing the
+data locally. Also, their load balancing algorithm is very specific to
+the image
+processing application. Like \cite{zhang}, our dynamic load balancing algorithm uses a
+centralized manager and the graph theory approach to compute the
+repartitioning
+of the workload assigned to each cluster machine. Our dynamic load balancing
+algorithm implementation is specific to Streamit, and any 3rd party
+application, that runs on Streamit can benefit from the load balancing.
 
-\newpage 
+%Load balancing algorithms have been studied both in terms of CPU usage 
+%in parallel processing and route selection algorithm in communication 
+%networks. For our study, we assume the bandwidth between two nodes is 
+%abundant and that memory usage is not a concern. We only consider CPU 
+%utilization for load balancing. Static and dynamic load balancing have 
+%been studied in \cite{ghosh,hamdi,nandy}. \cite{ghosh} studies load 
+%balancing in the context of graph theory and solves the problem of 
+%Incremental Weight Migration on an arbitrary graph. \cite{nandy} proposes 
+%and compares different load balancing techniques for parallel discrete 
+%event driven simulation. \cite{hamdi} introduces a load balancing scheme 
+%that aims at dynamically balancing the workload of data parallel 
+%applications. They use a central manager to partition a given image 
+%into a set of several smaller sub-images, distribute them to all 
+%components involved, and collect the results. Our load balancing 
+%technique is also centralized and specific to the StreamIt implementation.
+
+%\newpage 
 
 \section{Current StreamIt Implementation}
 
 In this section we present how StreamIt programs can be compiled
 to and executed on a cluster. We present the existing partitioner
-and reasons why we need to modify the partitioner. We also explain
+and describe its shortcomings. We also explain
 how by using the Central Control Process it is possible to restart a 
 StreamIt program on a cluster from a recent checkpoint. We will 
 need this property for our dynamic load balancing algorithm.
@@ -263,7 +290,9 @@ StreamIt threads is $util_i$ and CPU has $idle_i$ idle cycyles
 We calculate the $R_i$ relative amount of CPU resources available on the
 machine $i$ by using the following formula:
 
-$R_i = \displaystyle\frac{work_i}{util_i} * (util_i + idle_i)$
+$$
+R_i = \displaystyle\frac{work_i}{util_i} * (util_i + idle_i)
+$$
 
 \subsection*{New Partitioner}
 
@@ -338,8 +367,8 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 \end{flushleft}
 }
 }
-\end{center}
 \caption{StreamIt dynamic load balancing algorithm}\label{load-balance}
+\end{center}
 \end{figure}
 
 
@@ -453,7 +482,7 @@ reconfiguration.
 
 \newpage
 
-\nocite{*}
+%\nocite{*}
 \bibliography{report}
 \bibliographystyle{plain}
 

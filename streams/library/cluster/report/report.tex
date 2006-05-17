@@ -493,10 +493,14 @@ value of 8 percent to avoid frequent reconfiguration.
 
 \section{Future Work}
 
-Evaluate other heuristics for deciding when to reconfigure. Determine
-the best reconfiguration interval. Improve the new partitioner
-algorithm to use some heuristic or backtracking instead of
-being greedy.
+In this section we suggest several areas of potential improvement.
+The time interval for considering a reconfiguration, which is
+currently set at 40 seconds could be adjusted dynamically.
+The difference between the current and the new mapping
+could be calculated differently and the heuristic for
+deciding when to reconfigure be adjusted accordingly.
+Lastly, our partitioner which is greedy could be improved
+to use some heuristic or a search to produce better mapping. 
 
 \section{Conclusion}
  

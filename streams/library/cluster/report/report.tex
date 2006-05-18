@@ -4,10 +4,12 @@
 \usepackage{verbatim,indentfirst}
 \usepackage{listings}
 \usepackage{textcomp}
+\usepackage[small]{caption}
+\usepackage{subfigure}
 
-\usepackage{pifont}
-\newcommand{\X}{\ding{54} }
-\newcommand{\note}[1]{\marginpar{{\it #1}}}
+%\usepackage{pifont}
+%\newcommand{\X}{\ding{54} }
+%\newcommand{\note}[1]{\marginpar{{\it #1}}}
 %\renewcommand{\note}[1]{}
 
 \title{Dynamic Load Balancing for Executing\\ Stream Programs on a Cluster\\ \ \\}
@@ -43,6 +45,8 @@ balancing to the na\"{i}ve approach, which assumes that equal CPU resources
 are available on all cluster machines.
  
 \end{abstract} 
+
+\vspace{30pt}
 
 %\newpage
 
@@ -150,7 +154,7 @@ need this property for our dynamic load balancing algorithm.
 
 Each StreamIt program can be represented as a graph with nodes and
 edges. Each node represents a computation element and each edge
-represents a FIFO data channel. See Figure~\ref{part1} for an example
+represents a FIFO data channel. See Figure~\ref{partitioner}(a) for an example
 graph. To perform file I/O, the first node can read data from a file
 and write it to its output channel, the last node can read data from
 its input channel and write it to a file.
@@ -168,32 +172,42 @@ of partitions by exactly one. In some cases, the algorithm must insert
 dummy components (whose outputs are equal to their inputs) in order to enforce 
 certain properties of the stream graph. Better load balancing may be 
 achieved if the algorithm is not restricted to only horizontal and 
-vertical cuts as shown in Figure~\ref{part1} and Figure~\ref{part2}.
+vertical cuts as shown in Figures~\ref{partitioner}(a)~and~\ref{partitioner}(b).
 
 
-\begin{figure}[h] %  figure placement: here, top, bottom, or page
-\begin{center}
-\begin{minipage}{.35\textwidth}
-\begin{center}
-   \includegraphics*[width=180pt]{partition1.png} 
-   \caption{Partitions considered by the existing partitioner}
-   \label{part1}
-\end{center}
-\end{minipage}
-\begin{minipage}{.06\textwidth}
-\hspace{.06\textwidth}
-\end{minipage}
-\begin{minipage}{.45\textwidth}
-\begin{center}
-   \includegraphics*[width=240pt]{partition2.png} 
-   \caption{Partitions not considered by the existing partitioner}
-   \label{part2}
-\end{center}
-\end{minipage}
-\end{center}
+%\begin{figure}[h] %  figure placement: here, top, bottom, or page
+%\begin{center}
+%\begin{minipage}{.35\textwidth}
+%\begin{center}
+%   \includegraphics*[width=180pt]{partition1.png} 
+%   \caption{Partitions considered by the existing partitioner}
+%   \label{part1}
+%\end{center}
+%\end{minipage}
+%\begin{minipage}{.06\textwidth}
+%\hspace{.06\textwidth}
+%\end{minipage}
+%\begin{minipage}{.45\textwidth}
+%\begin{center}
+%   \includegraphics*[width=240pt]{partition2.png} 
+%   \caption{Partitions not considered by the existing partitioner}
+%   \label{part2}
+%\end{center}
+%\end{minipage}
+%\end{center}
+%\end{figure}
+
+\begin{figure}[h]
+\caption{Existing StreamIt Partitioner}
+\label{partitioner}
+\subfigure[Partitions considered]{
+  \includegraphics*[width=180pt]{partition1.png}
+}
+\hspace{30pt}
+\subfigure[Partitions not considered]{
+   \includegraphics*[width=240pt]{partition2.png}
+}
 \end{figure}
-
-
 \subsection*{Executing Stream Programs on a Cluster}
 
 When executing a StreamIt application on a cluster, each stream program
@@ -229,12 +243,31 @@ Each time that a new cluster machine connects to the CCP or a connected
 machine becomes unavailable, the mapping of threads to machines has to be 
 changed.
 
-\begin{list}{}
-\item 1. The CCP sends a STOP\_ALL\_THREADS message to all connected machines.
-\item 2. The CCP reads a mapping of threads to a given number of machines from a file (a set of files has to be pre-generated statically).
-\item 3. The CCP sends out a CLUSTER\_CONFIG message that contains the mapping of threads to the machine IP addresses. At this point all machines perform the same steps as if a new stream program is to be executed unreliably; they create TCP connections and start computation (the only difference is that they may have to read state variables of the threads from a recent checkpoint; this information is present in the CLUSTER\_CONFIG message).
-\end{list}
-\ \\
+\begin{figure}[htp]
+\begin{center}
+\framebox[.85 \textwidth]{
+\hspace{1in}
+\vbox{
+\begin{flushleft}
+\begin{enumerate}
+\item The CCP sends a STOP\_ALL\_THREADS message to all\\
+connected machines.
+\item The CCP reads a mapping of threads to a given number of machines\\
+ from a file (a set of files has to be pre-generated statically).
+\item The CCP sends out a CLUSTER\_CONFIG message that contains the\\
+mapping of threads to the machine IP addresses. At this point all\\
+machines perform the same steps as if a new stream program is to be\\
+executed unreliably; they create TCP connections and start computation\\
+(the only difference is that they may have to read state variables of\\
+the threads from a recent checkpoint; this information is present in\\
+the CLUSTER\_CONFIG message).
+\end{enumerate}
+\end{flushleft}
+}
+}
+\caption{Restarting a StreamIt Program}\label{restart}
+\end{center}
+\end{figure}
 
 In order to support the restarting of a stream application, each computation 
 thread periodically saves its state variables to disk, each time creating 
@@ -349,7 +382,7 @@ the average values of CPU statistics.
 
 \begin{figure}[htp]
 \begin{center}
-\framebox[.8 \textwidth]{
+\framebox[.75 \textwidth]{
 \vbox{
 \begin{flushleft}
 \begin{tabbing}
@@ -369,6 +402,7 @@ xxxx \= xxxx \= xxxx \= xxxx \= \kill
 \end{center}
 \end{figure}
 
+\enlargethispage{2\baselineskip}
 
 If the sum of the work estimates of the threads that are moved to a
 different machine in the new mapping is more than 4 percent of the sum
@@ -396,123 +430,170 @@ that writes data to a file), the timer measures the time it takes to
 gather data corresponding to a single frame.  This timer reflects the
 steady state performance of the StreamIt program.
 
-\begin{figure}[h] %  figure placement: here, top, bottom, or page
-\begin{center}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig1.png} 
-   \caption{MPEG2 decoder performance on a 2~machine cluster (1GHz,~3.6GHz).}
-   \label{fig1}
-\end{center}
-\end{minipage}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig2.png} 
-   \caption{MPEG2 decoder performance on a 3~machine cluster (840MHz,~1GHz,~3.6GHz).}
-   \label{fig2}
-\end{center}
-\end{minipage}
-\end{center}
+%\begin{figure}[h] %  figure placement: here, top, bottom, or page
+%\begin{center}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig1.png} 
+%   \caption{MPEG2 decoder performance on a 2~machine cluster (1GHz,~3.6GHz).}
+%   \label{fig1}
+%\end{center}
+%\end{minipage}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig2.png} 
+%   \caption{MPEG2 decoder performance on a 3~machine cluster (840MHz,~1GHz,~3.6GHz).}
+%   \label{fig2}
+%\end{center}
+%\end{minipage}
+%\end{center}
+%\end{figure}
+
+\begin{figure}[h]
+\caption{MPEG2 decoder performance}
+\label{mpeg-decoder}
+\subfigure[2~machine cluster (1GHz,~3.6GHz)]{\includegraphics*[width=220pt]{fig1.png}}
+\hspace{10pt}
+\subfigure[3~machine cluster (840MHz,~1GHz,~3.6GHz)]{\includegraphics*[width=220pt]{fig2.png}}
+\end{figure}
+
+Figures~\ref{mpeg-decoder}(a)~and~\ref{mpeg-decoder}(b) show the
+performance of the MPEG2 decoder on a non-homegeneous 2~machine and
+3~machine cluster, respectively.  Results are captured in three
+different scenarios. The first scenario represents no reconfiguration,
+in which partitioning is done assuming that all machines have equal
+CPU resources. The next two scenarios represent our dynamic load
+balancing algorithm with two different thresholds of 4~percent and
+8~percent for reconfiguration. The different thresholds represent
+different sensitivity. With the 4~percent threshold the frequency of
+reconfiguration is higher than with the 8~percent threshold.  We
+observe that our dynamic load balancing has almost the same
+performance with both thresholds and performs better than the no
+reconfiguration scenario.
+
+
+%\begin{figure}[h] %  figure placement: here, top, bottom, or page
+%\begin{center}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig3.png} 
+%   \vspace{12pt}
+%   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz).}
+%   \label{fig3}
+%\end{center}
+%\end{minipage}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig6.png} 
+%   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process started on one of the machines after three minutes.}
+%   \label{fig6}
+%\end{center}
+%\end{minipage}
+%\end{center}
+%\end{figure}
+
+\begin{figure}[hp]
+\caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz)}
+\label{with-without}
+\subfigure[Without any background processes]{
+  \includegraphics*[width=230pt]{fig3.png}
+}
+\subfigure[With a background process (started on one machine after three minutes)]{
+%\subfigure[\hbox{With a background process\hspace{80pt}} \hbox{\hspace{25pt}(started on one machine after three minutes)}]{
+  \includegraphics*[width=230pt]{fig6.png}
+}
 \end{figure}
 
 
-Figure~\ref{fig1} and Figure~\ref{fig2} show the performance of the MPEG2 
-decoder on a non-homegeneous 2~machine and 3~machine cluster, respectively.
-Results are captured in three different scenarios. The first scenario 
-represents no reconfiguration, in which partitioning is done assuming that 
-all machines have equal CPU resources. The next two scenarios represent 
-our dynamic load balancing algorithm with two different thresholds of 
-4~percent and 8~percent for reconfiguration. The different thresholds 
-represent different sensitivity. With the 4~percent threshold the frequency 
-of reconfiguration is higher than with the 8~percent threshold. 
-We observe that our dynamic load balancing has almost the same performance
-with both thresholds and performs better than the no reconfiguration
-scenario.
-
-\begin{figure}[h] %  figure placement: here, top, bottom, or page
-\begin{center}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig3.png} 
-   \vspace{12pt}
-   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz).}
-   \label{fig3}
-\end{center}
-\end{minipage}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig6.png} 
-   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process started on one of the machines after three minutes.}
-   \label{fig6}
-\end{center}
-\end{minipage}
-\end{center}
-\end{figure}
-
-
-Figure~\ref{fig3} shows the performance on a homogeneous 3 machine
+Figure~\ref{with-without}(a) shows the performance on a homogeneous 3 machine
 cluster. We see that there is some cost to our dynamic load balancing
 as compared to no reconfiguration; however, the steady state performance 
-is about the same. Figure~\ref{fig6} shows the performance on
+is about the same. Figure~\ref{with-without}(b) shows the performance on
 a homogeneous 3 machine cluster with a background process that starts
 on one of the machines three minutes after the start of the computation.
 We see that without dynamic load balancing the performance degrades
 significantly; however, with dynamic load balancing, the performance
 is about 3 times better. 
 
-\begin{figure}[h] %  figure placement: here, top, bottom, or page
-\begin{center}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig4.png} 
-   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process between frames 12 and 22.}
-   \label{fig4}
-\end{center}
-\end{minipage}
-\begin{minipage}{.49\textwidth}
-\begin{center}
-   \includegraphics*[width=230pt]{fig5.png} 
-   \caption{MPEG2~decoder~performance~on~a 4~machine~cluster~(840MHz, 1GHz, 2.2GHz, 3.6GHz) with a background process after frame 8.}
-   \label{fig5}
-\end{center}
-\end{minipage}
-\end{center}
+\newpage
+
+
+%\begin{figure}[h] %  figure placement: here, top, bottom, or page
+%\begin{center}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig4.png} 
+%   \caption{MPEG2 decoder performance on a 3~machine cluster (all~1GHz) with a background process between frames 12 and 22.}
+%   \label{fig4}
+%\end{center}
+%\end{minipage}
+%\begin{minipage}{.49\textwidth}
+%\begin{center}
+%   \includegraphics*[width=230pt]{fig5.png} 
+%   \caption{MPEG2~decoder~performance~on~a 4~machine~cluster~(840MHz, 1GHz, 2.2GHz, 3.6GHz) with a background process after frame 8.}
+%   \label{fig5}
+%\end{center}
+%\end{minipage}
+%\end{center}
+%\end{figure}
+
+\begin{figure}[hp]
+\caption{MPEG2 decoder performance with background processes}
+\label{hom-nonhom}
+\subfigure[On a homogenous cluster (three~1GHz) with an interruption between frames 12 and 22]{
+  \includegraphics*[width=230pt]{fig4.png}
+}
+\subfigure[On a heterogenous cluster (840MHz, 1GHz, 2.2GHz, 3.6GHz) with an interruption after frame 8]{
+  \includegraphics*[width=230pt]{fig5.png}
+}
 \end{figure}
 
+\clearpage
 
-Figure~\ref{fig4} and Figure~\ref{fig5} show how our dynamic load 
+Figures~\ref{hom-nonhom}(a)~and~\ref{hom-nonhom}(b) show how our dynamic load 
 balancing can adapt to transient or permanent background processes.
 In both cases we see that our dynamic load balancing algorithm 
 has significant advantages as compared to execution with no 
 reconfiguration.
+
 
 Our experimental evaluation shows that there is no difference
 between having the threshold of reconfiguration being set at 4 
 percent or 8 percent. Therefore, we suggest using a threshold
 value of 8 percent to avoid frequent reconfiguration.
 
+
 \section{Future Work}
 
 In this section we suggest several areas of potential improvement.
-The time interval for considering a reconfiguration, which is
-currently set at 40 seconds could be adjusted dynamically.
-The difference between the current and the new mapping
-could be calculated differently and the heuristic for
-deciding when to reconfigure be adjusted accordingly.
-Lastly, our partitioner which is greedy could be improved
-to use some heuristic or a search to produce better mapping. 
+Firstly, our implementation considers reconfiguring the program after
+a fixed interval (i.e. every 40 seconds). Though this does create
+significance performance gain, this interval could be adjusted
+dynamically instead. For instance, if the program reaches a steady
+state with no interruption, the CCP could increase the time between
+each evaluation.
+
+Currently, the CCP calculates a `distance' between the current
+partition and a new partition. There may, however, be a better
+heuristic for deciding when to reconfigure the running program.
+
+Lastly, our partitioner is designed to allocate nodes in a `greedy'
+fashion. Though this algorithm is relatively fast, it is possible to
+create an algorithm which produces an better mapping.
+
 
 \section{Conclusion}
  
 In this work we have proposed and implemented a new load balancing
-algorithm for Streamit, that can benefit any stream application
-running on Streamit clustered machines. We used static and run-time
-gathered statistics to dynamically adjust load balance for a
-non-homogeneous cluster, and showed that this would significantly
-improve the performance of a StreamIt application. It also allows us
-to adjust load balance if a computationally intensive background
-process is executing or started on one of the cluster machines.
-\newpage
+algorithm for Streamit that can benefit any stream application running
+on a variety of clusters. It uses static and run-time gathered
+statistics to dynamically adjust load balancing for a non-homogeneous
+cluster, and showed that this significantly improves the performance
+of a StreamIt application. It also adjusts the load balance if a
+computationally intensive background process is executing or started
+on one of the cluster machines.
+
+%\newpage
 
 %\nocite{*}
 \bibliography{report}

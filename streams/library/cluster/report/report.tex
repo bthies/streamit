@@ -504,13 +504,14 @@ to use some heuristic or a search to produce better mapping.
 
 \section{Conclusion}
  
-Our dynamic load balancing algorithm can have significant impact on the
-performance of a StreamIt application that is executed on a cluster.
-It allows us to adjust load balance for a non-homogeneous cluster.
-It also allows us to adjust load balance if a computationally 
-intensive background process is executing or is started on one of the 
-cluster machines.
-
+In this work we have proposed and implemented a new load balancing
+algorithm for Streamit, that can benefit any stream application
+running on Streamit clustered machines. We used static and run-time
+gathered statistics to dynamically adjust load balance for a
+non-homogeneous cluster, and showed that this would significantly
+improve the performance of a StreamIt application. It also allows us
+to adjust load balance if a computationally intensive background
+process is executing or started on one of the cluster machines.
 \newpage
 
 %\nocite{*}

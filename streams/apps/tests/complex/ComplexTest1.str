@@ -1,0 +1,27 @@
+// This tests RT 140: structures (complex) in loops could be mutated
+// rather than created anew.
+
+// This should output "2".  Due to the bug, it outputs "4" (in library).
+// Also triggers const-prop bug in backends (May 2006)
+
+void->void pipeline ComplexTest1 {
+    add void->int filter {
+        work push 1 { push(1); }
+    }
+    // TO GET CORRECT OUTPUT, MOVE THIS DECLARATION STATEMENT INSIDE LOOP
+    complex c = 0 + 0i;
+    for (int i=0; i<2; i++) {
+        //complex c = 0 + 0i;
+        c.real = (i+1);
+        add Times(c);
+    }
+    add int->void filter {
+        work pop 1 { println(pop()); }
+    }
+}
+
+int->int filter Times(complex x) {
+    work push 1 pop 1 {
+        push(((int)x.real) * pop());
+    }
+}

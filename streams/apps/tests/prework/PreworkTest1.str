@@ -1,0 +1,35 @@
+// Tests that prework functions execute
+
+// cagfarm-44 % strc -library -i 10 PreworkTest1.str
+// 10
+// 1
+// 1
+// 1
+// 1
+// 1
+// 1
+// 1
+// 1
+// 1
+// 1
+
+void->void pipeline PreworkTest1 {
+    add void->int filter {
+        work push 1 { push(1); }
+    }
+    add Times();
+    add int->void filter {
+        work pop 1 { println(pop()); }
+    }
+}
+
+int->int filter Times() {
+    int factor = 0;
+    prework push 1 pop 1 {
+        factor = 1;
+        push(10*pop());
+    }
+    work push 1 pop 1 {
+        push(factor * pop());
+    }
+}

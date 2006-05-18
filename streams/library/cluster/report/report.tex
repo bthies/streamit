@@ -93,7 +93,7 @@ for StreamIt are: estimating the CPU resources needed for each component
 of the stream program, estimating the CPU resources available for
 StreamIt on each of the cluster machines, finding a suitable mapping for
 the stream program components to cluster machines and deciding when
-to change the current assignement due to a change in the CPU resources 
+to change the current assignment due to a change in the CPU resources 
 available. The estimation of the relative CPU resources needed by each 
 stream program component has already been implemented in the StreamIt 
 compiler. We propose a solution to the other key challenges.
@@ -101,7 +101,7 @@ compiler. We propose a solution to the other key challenges.
 In this paper we briefly present a description of the StreamIt language, 
 compiler and an execution environment for a distributed cluster.
 Then, we discuss the design of our dynamic load balancing algorithm
-followed by an experimantal evaluation.
+followed by an experimental evaluation.
 Finally we present some future work and conclude the paper.
 
 \subsection*{Related Work}
@@ -337,7 +337,7 @@ StreamIt program to C. It is therefore inappropriate for execution
 during runtime.
 
 We have developed an alternative partitioner, which does not use
-dynamic programing, but is not restricted to making only horizontal
+dynamic programming, but is not restricted to making only horizontal
 and vertical cuts. Because the algorithm is greedy its
 execution time is negligible even for large graphs.
 
@@ -423,7 +423,7 @@ of dual processor machines with processor speeds of 840MHz, 1GHz,
 2.2GHz and 3.6GHz.  The network has a capacity of 1 Gigabit per second and
 it is fully switched.  We use a MPEG-2 Decoder implementation in
 StreamIt for evaluating our load balancing algorithm. We chose this
-benchmark because it can be run for an extended amount of time alowing
+benchmark because it can be run for an extended amount of time allowing
 us to see the effect of dynamic load balancing over time. We measure
 the performance by inserting a timer in the last thread (the thread
 that writes data to a file), the timer measures the time it takes to
@@ -458,7 +458,7 @@ steady state performance of the StreamIt program.
 \end{figure}
 
 Figures~\ref{mpeg-decoder}(a)~and~\ref{mpeg-decoder}(b) show the
-performance of the MPEG2 decoder on a non-homegeneous 2~machine and
+performance of the MPEG2 decoder on a heterogeneous 2~machine and
 3~machine cluster, respectively.  Results are captured in three
 different scenarios. The first scenario represents no reconfiguration,
 in which partitioning is done assuming that all machines have equal
@@ -543,7 +543,7 @@ is about 3 times better.
 \subfigure[On a homogenous cluster (three~1GHz) with an interruption between frames 12 and 22]{
   \includegraphics*[width=230pt]{fig4.png}
 }
-\subfigure[On a heterogenous cluster (840MHz, 1GHz, 2.2GHz, 3.6GHz) with an interruption after frame 8]{
+\subfigure[On a heterogeneous cluster (840MHz, 1GHz, 2.2GHz, 3.6GHz) with an interruption after frame 8]{
   \includegraphics*[width=230pt]{fig5.png}
 }
 \end{figure}
@@ -587,7 +587,7 @@ create an algorithm which produces an better mapping.
 In this work we have proposed and implemented a new load balancing
 algorithm for Streamit that can benefit any stream application running
 on a variety of clusters. It uses static and run-time gathered
-statistics to dynamically adjust load balancing for a non-homogeneous
+statistics to dynamically adjust load balancing for a heterogeneous
 cluster, and showed that this significantly improves the performance
 of a StreamIt application. It also adjusts the load balance if a
 computationally intensive background process is executing or started

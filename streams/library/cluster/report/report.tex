@@ -198,7 +198,6 @@ vertical cuts as shown in Figures~\ref{partitioner}(a)~and~\ref{partitioner}(b).
 %\end{figure}
 
 \begin{figure}[h]
-\caption{Existing StreamIt Partitioner}
 \label{partitioner}
 \subfigure[Partitions considered]{
   \includegraphics*[width=180pt]{partition1.png}
@@ -207,6 +206,7 @@ vertical cuts as shown in Figures~\ref{partitioner}(a)~and~\ref{partitioner}(b).
 \subfigure[Partitions not considered]{
    \includegraphics*[width=240pt]{partition2.png}
 }
+\caption{Existing StreamIt Partitioner}
 \end{figure}
 \subsection*{Executing Stream Programs on a Cluster}
 
@@ -241,7 +241,7 @@ checks that the machine is alive.
 
 Each time that a new cluster machine connects to the CCP or a connected
 machine becomes unavailable, the mapping of threads to machines has to be 
-changed.
+changed (See Figure~\ref{restart}).
 
 \begin{figure}[htp]
 \begin{center}

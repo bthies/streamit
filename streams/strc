@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.73 2006-03-15 18:20:16 dimock Exp $
+# $Id: strc,v 1.74 2006-05-18 20:33:46 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -169,7 +169,7 @@ Options available for all backends:
 + --statespace        Use state-space representation for linear analyses
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
-+ --sync              Turn on sync removal
+* --sync              Turn on splitter/joiner coalescing (space/spacedynamic)
   --unroll, -u        Specify loop unrolling limit
 + --countops          Add instrumentation to count arith ops (library or cluster)
 + --profile           Add a timer for each filter body (cluster)
@@ -515,6 +515,7 @@ sub run_in_library
 	  $result = call("$javac $jfile");
 	  return undef if $result != 0;
 	  $result = call("$java $xmx $server $class " . get_lib_opts());
+#	  $result = call("$java -Xrunhprof:cpu=samples,heap=all $xmx $server $class " . get_lib_opts());
 	  return undef if $result != 0;
       }
     return [];

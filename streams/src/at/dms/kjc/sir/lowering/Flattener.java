@@ -143,7 +143,7 @@ public class Flattener {
         MarkFilterBoundaries.doit(str);
 
         if (KjcOptions.manual != null) {
-            System.err.print("Running manual optimizations...");
+            System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("done.");
         }

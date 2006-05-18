@@ -208,11 +208,12 @@ public class SpaceDynamicBackend {
                 }
         
                 if (manual) {
-                    System.err.println("Running Manual Partitioning...");
+                    System.err.println("Running User-Defined Transformations...");
                     ssg.setTopLevelSIR(ManualPartition.doit(ssg.getTopLevelSIR()));
-                    System.err.println("Done Manual Partitioning...");
+                    System.err.println("Done User-Defined Transformations...");
+                    RemoveMultiPops.doit(str);
                 }
-        
+
                 if (partitioning) {
                     System.err.println("Running Partitioning...");
                     System.err.println("  Do not fuse: ");

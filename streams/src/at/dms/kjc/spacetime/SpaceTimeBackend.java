@@ -103,6 +103,14 @@ public class SpaceTimeBackend {
             System.out.println("Done Vertical Fission...");
         }
 
+        // run user-defined transformations if enabled
+        if (KjcOptions.manual != null) {
+            System.err.println("Running User-Defined Transformations...");
+            str = ManualPartition.doit(str);
+            System.err.println("Done User-Defined Transformations...");
+            RemoveMultiPops.doit(str);
+        }
+    
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);
         }
@@ -147,7 +155,6 @@ public class SpaceTimeBackend {
             }
         }
 
-    
         // make sure SIRPopExpression's only pop one element
         // code generation doesn't handle generating multiple pops
         // from a single SIRPopExpression

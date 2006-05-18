@@ -309,6 +309,12 @@ public class ClusterBackend implements FlatVisitor {
 
         System.err.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
 
+        if (KjcOptions.manual != null) {
+            System.err.println("Running User-Defined Transformations...");
+            str = ManualPartition.doit(str);
+            System.err.println("User-Defined Transformations End.");
+            RemoveMultiPops.doit(str);
+        }
 
         System.err.println("Running Partitioning... target number of threads: "+threads);
 

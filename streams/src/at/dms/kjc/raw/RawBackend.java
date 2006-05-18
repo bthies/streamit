@@ -174,9 +174,9 @@ public class RawBackend {
             }
 
             if (manual) {
-                System.err.println("Running Manual Partitioning...");
+                System.err.println("Running User-Defined Transformations...");
                 str = ManualPartition.doit(str);
-                System.err.println("Done Manual Partitioning...");
+                System.err.println("Done User-Defined Transformations...");
                 RemoveMultiPops.doit(str);
             }
 

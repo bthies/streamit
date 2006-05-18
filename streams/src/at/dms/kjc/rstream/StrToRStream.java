@@ -149,7 +149,15 @@ public class StrToRStream {
         //future...but don't run it now, there is no point.
         //  str = Flattener.doLinearAnalysis(str);
         //      str = Flattener.doStateSpaceAnalysis(str);
-    
+
+        // run user-defined transformations if enabled
+        if (KjcOptions.manual != null) {
+            System.err.println("Running User-Defined Transformations...");
+            str = ManualPartition.doit(str);
+            System.err.println("Done User-Defined Transformations...");
+            RemoveMultiPops.doit(str);
+        }
+
         //if Splitjoin to pipe is enabled, run it...
         if (KjcOptions.sjtopipe) {
             SJToPipe.doit(str);

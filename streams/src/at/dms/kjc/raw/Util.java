@@ -184,54 +184,54 @@ public class Util extends at.dms.util.Utils {
     }
 
     public static String staticNetworkReceivePrefix() {
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) 
+//        if(KjcOptions.altcodegen || KjcOptions.decoupled) 
             return "";
-        else 
-            //return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
-            return "/* receive */ asm volatile (\"move %0, $csti\" : \"=r\" (";
+//        else 
+//            //return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
+//            return "/* receive */ asm volatile (\"move %0, $csti\" : \"=r\" (";
     }
 
     public static String staticNetworkReceiveSuffix(CType tapeType) {
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+//        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
             if (tapeType.isFloatingPoint())
                 return "= " + CSTIFPVAR + ";";
             else
                 return "= " + CSTIINTVAR + ";";
-        }
-        else 
-            return "));";
+//        }
+//        else 
+//            return "));";
     }
 
     public static String staticNetworkSendPrefix(CType tapeType) {
         StringBuffer buf = new StringBuffer();
     
-        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+//        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
             if (tapeType.isFloatingPoint())
                 buf.append(CSTOFPVAR);
             else
                 buf.append(CSTOINTVAR);
             //temporary fix for type changing filters
             buf.append(" = (" + tapeType + ")");
-        } 
-        else {
-            buf.append("(");
-            if (RawBackend.FILTER_DEBUG_MODE)
-                buf.append("static_send_print");
-            else
-                buf.append("static_send");
-            buf.append("(");    
-            //temporary fix for type changing filters
-            //commented out by MGordon 9/24, this should not longer be necessary
-            //buf.append("(" + tapeType + ")");
-        }
+//        } 
+//        else {
+//            buf.append("(");
+//            if (RawBackend.FILTER_DEBUG_MODE)
+//                buf.append("static_send_print");
+//            else
+//                buf.append("static_send");
+//            buf.append("(");    
+//            //temporary fix for type changing filters
+//            //commented out by MGordon 9/24, this should not longer be necessary
+//            //buf.append("(" + tapeType + ")");
+//        }
         return buf.toString();
     }
 
     public static String staticNetworkSendSuffix() {
-        if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+//        if (KjcOptions.altcodegen || KjcOptions.decoupled) 
             return "";
-        else 
-            return "))";
+//        else 
+//            return "))";
     }
 
     //return the FlatNodes that are directly downstream of the 

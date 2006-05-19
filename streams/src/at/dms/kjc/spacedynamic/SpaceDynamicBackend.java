@@ -42,7 +42,7 @@ public class SpaceDynamicBackend {
         System.out.println("Entry to RAW Backend (spacedynamic)");
     
         //alt code gen has to be enabled for this pass to work
-        KjcOptions.altcodegen = true;
+        //KjcOptions.altcodegen = true;
 
         structures = structs;
     
@@ -143,15 +143,12 @@ public class SpaceDynamicBackend {
             do {
         
                 // do constant propagation on fields
-                if (KjcOptions.nofieldprop) {
-                } else {
                     System.out.println("Running Constant Field Propagation...");
                     FieldProp.doPropagate(ssg.getTopLevelSIR());
                     System.out.println("Done Constant Field Propagation...");
                     //System.out.println("Analyzing Branches..");
                     //new BlockFlattener().flattenBlocks(ssg.getTopLevelSIR());
                     //new BranchAnalyzer().analyzeBranches(ssg.getTopLevelSIR());
-                }
         
                 Lifter.liftAggressiveSync(ssg.getTopLevelSIR());
                 NumberDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("numbered", ssg.getTopLevelSIR()));
@@ -186,7 +183,7 @@ public class SpaceDynamicBackend {
                 int count = new GraphFlattener(ssg.getTopLevelSIR()).getNumTiles();
                 //partition this sub graph based on the number of tiles it is assigned...
                 int numTiles = ssg.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
-                boolean manual = KjcOptions.manual != null;
+                boolean manual = KjcOptions.optfile != null;
                 //we may automatically turn dynamic programming partitioning on, so remember the old val of the option
                 boolean oldKjcDP = KjcOptions.partition_dp;
 

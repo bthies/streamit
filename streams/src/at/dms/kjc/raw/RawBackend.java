@@ -110,15 +110,12 @@ public class RawBackend {
         do {
 
             // do constant propagation on fields
-            if (KjcOptions.nofieldprop) {
-            } else {
                 System.out.println("Running Constant Field Propagation...");
                 FieldProp.doPropagate(str);
                 System.out.println("Done Constant Field Propagation...");
                 //System.out.println("Analyzing Branches..");
                 //new BlockFlattener().flattenBlocks(str);
                 //new BranchAnalyzer().analyzeBranches(str);
-            }
         
             // expand array initializers loaded from a file
             ArrayInitExpander.doit(str);
@@ -161,7 +158,7 @@ public class RawBackend {
             // the filters
             int count = new GraphFlattener(str).getNumTiles();
             int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
-            boolean manual = KjcOptions.manual != null;
+            boolean manual = KjcOptions.optfile != null;
             boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
                                     && (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp));
             // want to turn on partitioning for standalone; in this

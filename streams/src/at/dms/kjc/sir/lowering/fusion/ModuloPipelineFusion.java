@@ -319,9 +319,9 @@ class ModuloPipelineFusion {
                 JBlock oldBody = new JBlock(work.getStatements());
                 JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 
-                if (KjcOptions.rename1) {
-                    body = (JBlock)findVarDecls.findAndReplace(body);
-                }
+//                if (KjcOptions.rename1) {
+//                    body = (JBlock)findVarDecls.findAndReplace(body);
+//                }
 
                 // mutate <statements> to make them fit for fusion
                 FusingVisitor fuser = new FusingVisitor(cur, next, i!=0, i!=filterInfo.size()-1);
@@ -354,10 +354,10 @@ class ModuloPipelineFusion {
             }
         }
 
-        //add variable declarations calculated by FindVarDecls
-        if (KjcOptions.rename1) {
-            findVarDecls.addVariableDeclarations(statements);
-        }
+//        //add variable declarations calculated by FindVarDecls
+//        if (KjcOptions.rename1) {
+//            findVarDecls.addVariableDeclarations(statements);
+//        }
     }
 
     /**

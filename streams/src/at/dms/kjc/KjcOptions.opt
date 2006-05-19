@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.73 2006-03-15 18:20:16 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.74 2006-05-19 16:57:08 dimock Exp $
  */
 
 prefix Kjc
@@ -121,7 +121,8 @@ longname		"profile"
 	default		"false"
 	help		"Output timers for timing execution in each filter."
 
-longname		"manual"
+// changed from "manual"
+longname		"optfile"
 	type		String
 	default		"null"
 	requireArgument
@@ -142,10 +143,11 @@ longname		"debug"
 	default		"false"
 	help		"Produces debug information (does nothing yet)"
 
-longname		"nofieldprop"
-	type		boolean
-	default		"false"
-	help		"Turns on StreamIt Field Prop"
+/* remove: we are dependent on FieldProp */
+/* longname		"nofieldprop" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Turns off StreamIt Field Prop" */
 
 longname		"fusion"
 	type		boolean
@@ -196,10 +198,11 @@ longname		"forceunroll"
 	default		"false"
 	help		"Force unroll to -u amount (even if overflows IMEM)."
 
-longname		"altcodegen"
-	type		boolean
-	default		"false"
-	help		"Alternate raw communication code generation for Sam."
+/* remove: only used in ras space, shoulf be the default, replacing other codegen */
+/* longname		"altcodegen" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Alternate raw communication code generation for Sam." */
 
 longname		"decoupled"
 	type		boolean
@@ -216,12 +219,14 @@ longname		"ratematch"
 	default		"false"
 	help		"Turn on rate matching for Raw"
 
-longname		"simplesjfusion"
-	type		boolean
-	default		"false"
-	help		"Revert to the old, simple SplitJoin fusion algorithm"
+/* no longer used so removed to keep down maintenance headaches */
+/* longname		"simplesjfusion" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Revert to the old, simple SplitJoin fusion algorithm" */
 
-longname		"noanneal"
+// chaned from "noanneal"
+longname		"manuallayout"
 	type		boolean
 	default		"false"
 	help		"Do not run simulated annealing for layout"
@@ -283,15 +288,18 @@ longname		"poptopeek"
 	default		"false"
 	help		"Convert all Pop expressions into Peek expressions (for uniprocessor only, does nothing for raw)."
 
-longname		"ptraccess"
-	type		boolean
-	default		"false"
-	help		"For filters needing a buffer on Raw, access the buffer thru a pointer (needed for some GCC optimization."
+/* removed */
+/* longname		"ptraccess" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"For filters needing a buffer on Raw, access the buffer thru a pointer (needed for some GCC optimization." */
 
-longname		"viram"
-	type		boolean
-	default		"false"
-	help		"Compile for VIRAM, a vector uniprocessor"
+/* removed: backend never submitted. */
+/* longname		"viram" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Compile for VIRAM, a vector uniprocessor" */
+
 
 longname		"cluster"
 	type		int
@@ -316,15 +324,17 @@ longname		"nomult"
 	help		"Do not increase multiplicity of partitions"
 
 
-longname		"rename1"
-	type		boolean
-	default		"false"
-	help		"Rename local vars of operators during fusion"
+/* removed, used in testing on cluster */
+/* longname		"rename1" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Rename local vars of operators during fusion" */
 
-longname		"rename2"
-	type		boolean
-	default		"false"
-	help		"Rename local vars of destroyed arrays"
+/* removed, used in testing on cluster */
+/* longname		"rename2" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"Rename local vars of destroyed arrays" */
 
 longname		"raw"
 	shortcut	"r"
@@ -356,7 +366,7 @@ longname		"standalone"
 	shortcut	"S"
 	type		boolean
 	default		"false"
-	help		"Use the Raw backend to produce uniprocessor C code."
+	help		"Use the Raw backend to generate C file for uniprocessor."
 
 longname		"magic_net"
 	shortcut	"M"
@@ -417,11 +427,13 @@ longname		"struct"
 	default		"false"
 	help		"Handle Structures. Experimental feature."
 
-longname		"magicdram"
-	type 		boolean
-	default		"false"
-	help		"For the SpaceTime RAW backend, use magic dram devices"
+/* remove: (real dram functional?) */
+/* longname		"magicdram" */
+/* 	type 		boolean */
+/* 	default		"false" */
+/* 	help		"For the SpaceTime RAW backend, use magic dram devices" */
 
+/* Not a strc switch but produced by strc */
 longname		"backend"
 	type		String
 	default		"null"
@@ -434,16 +446,18 @@ longname		"steadymult"
 	requireArgument
 	help		"For the SpaceTime RAW backend, multiply the steady-state multiplicities by i"
 
-longname		"forceplacement"
-	type 		boolean
-	default		"false"
-	help		"For the SpaceTime RAW backend, use try to minimize communication in layout"
+/* removed */
+/* longname		"forceplacement" */
+/* 	type 		boolean */
+/* 	default		"false" */
+/* 	help		"For the SpaceTime RAW backend, use try to minimize communication in layout" */
 
-longname		"scheduler"
-	type 		String
-	default		"work"
-	requireArgument
-	help		"For the SpaceTime RAW backend, either work, dep, or comm."
+/* removed: only a single scheduler now */
+/* longname		"scheduler" */
+/* 	type 		String */
+/* 	default		"work" */
+/* 	requireArgument */
+/* 	help		"For the SpaceTime RAW backend, either work, dep, or comm." */
 
 longname 		"rstream"
 	shortcut	"R"
@@ -475,6 +489,12 @@ longname 		"spacedynamic"
 	type		boolean
 	default		"false"
 	help		"Use the space multiplexing Raw backend with dynamic rate support."
+
+longname 		"space"
+	type		boolean
+	default		"false"
+	help		"Use the space Raw backend (without dynamic rate support)."
+
 
 longname		"malloczeros"
 	type		boolean
@@ -516,7 +536,8 @@ longname 		"slicethresh"
 	requireArgument
 	help 		"For the spacetime backend, set the slice threshold to be <int> percent."
 
-longname 		"noverbose"
-	type		boolean
-	default		"false"
-	help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration."
+/* remove: now default */
+/* longname 		"noverbose" */
+/* 	type		boolean */
+/* 	default		"false" */
+/* 	help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration." */

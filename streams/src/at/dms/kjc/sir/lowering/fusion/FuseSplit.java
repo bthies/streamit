@@ -223,11 +223,11 @@ public class FuseSplit {
      */
     private static SIRStream dispatchToSimple(SIRSplitJoin sj) {
         // revert to the older version of fusion if either:
-        //   - the simplesjfusion tag is specified
+//        //   - the simplesjfusion tag is specified
         //   - there are no two stage filters AND there is no round-robin with peeking
-        if (KjcOptions.simplesjfusion) {
-            return FuseSimpleSplit.fuse(sj);
-        } else {
+//        if (KjcOptions.simplesjfusion) {
+//            return FuseSimpleSplit.fuse(sj);
+//        } else {
             boolean twostage = false;
             boolean roundrobin = (sj.getSplitter().getType()==SIRSplitType.WEIGHTED_RR || 
                                   sj.getSplitter().getType()==SIRSplitType.ROUND_ROBIN);
@@ -250,7 +250,7 @@ public class FuseSplit {
             } else {
                 return null;
             }
-        }
+//        }
     }
     
     /**
@@ -853,9 +853,9 @@ public class FuseSplit {
             // Get the statements of the old work function
             JBlock statements = childInfo[i].filter.getWork().getBody().copy();
             //replace variable accesses with numbered variables
-            if (KjcOptions.rename1) {
-                statements = (JBlock)findVarDecls.findAndReplace(statements);
-            }
+//            if (KjcOptions.rename1) {
+//                statements = (JBlock)findVarDecls.findAndReplace(statements);
+//            }
             // adjust statements to access arrays instead of peek/pop/push
             statements.accept(new FuseSplitVisitor(childInfo[i]));
             // Make a for loop that repeats these statements according
@@ -870,10 +870,10 @@ public class FuseSplit {
         newStatements.addStatement(doPushing(sj.getJoiner(), childInfo, rep, rate, sj.getOutputType()));
         newStatements.addStatement(MarkFilterBoundaries.makeBeginMarker(sj.getJoiner()));
 
-        //add variable declarations calculated by FindVarDecls
-        if (KjcOptions.rename1) {
-            findVarDecls.addVariableDeclarations(newStatements);
-        }
+//        //add variable declarations calculated by FindVarDecls
+//        if (KjcOptions.rename1) {
+//            findVarDecls.addVariableDeclarations(newStatements);
+//        }
 
         // make the work function based on statements
         JMethodDeclaration newWork =

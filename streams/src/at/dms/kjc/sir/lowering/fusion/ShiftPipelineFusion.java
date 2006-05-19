@@ -389,9 +389,9 @@ class ShiftPipelineFusion {
                 JBlock oldBody = new JBlock(null, work.getStatements(), null);
                 JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 
-                if (KjcOptions.rename1) {
-                    body = (JBlock)findVarDecls.findAndReplace(body);
-                }
+//                if (KjcOptions.rename1) {
+//                    body = (JBlock)findVarDecls.findAndReplace(body);
+//                }
 
                 // mutate <statements> to make them fit for fusion
                 FusingVisitor fuser = 
@@ -438,10 +438,10 @@ class ShiftPipelineFusion {
             }
         }
 
-        //add variable declarations calculated by FindVarDecls
-        if (KjcOptions.rename1) {
-            findVarDecls.addVariableDeclarations(statements);
-        }
+//        //add variable declarations calculated by FindVarDecls
+//        if (KjcOptions.rename1) {
+//            findVarDecls.addVariableDeclarations(statements);
+//        }
     }
 
     /**

@@ -67,7 +67,7 @@ public class TraceIRtoC extends ToC
         p.print("\n");
         
         //print the pointers to the off chip buffers
-        if (!KjcOptions.magicdram)
+//        if (!KjcOptions.magicdram)
             p.print(CommunicateAddrs.getFields(tile));
 
         
@@ -87,12 +87,12 @@ public class TraceIRtoC extends ToC
         }
         
 
-        if (!KjcOptions.magicdram) {
+//        if (!KjcOptions.magicdram) {
             //print the method that sends/recvs block addresses
             p.print(CommunicateAddrs.getFunction(tile));
             //print the method that sets up the rotation for the buffers
             p.print(CommunicateAddrs.getRotSetupFunct(tile));
-        }
+//        }
         
         //generate the entry function for the simulator
         p.print("void begin(void) {\n");
@@ -107,10 +107,10 @@ public class TraceIRtoC extends ToC
             //print("  raw_init2();\n");
         }
 
-        if (!KjcOptions.magicdram) { 
+//        if (!KjcOptions.magicdram) { 
             p.print("  " + CommunicateAddrs.functName + "();\n");
             p.print("  " + CommunicateAddrs.rotationSetupFunction + "();\n");
-        }
+//        }
         //print(tile.getComputeCode().getMainFunction().getName() + "();\n");
         method = mainMethod;
         mainMethod.getBody().accept(this); //Inline Main method
@@ -122,7 +122,6 @@ public class TraceIRtoC extends ToC
     {
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
-            if (!KjcOptions.nofieldprop) {
                 Unroller unroller;
                 do {
                     do {
@@ -135,8 +134,6 @@ public class TraceIRtoC extends ToC
                 } while(unroller.hasUnrolled());
                 tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
                 tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
-            } else
-                tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
              
             tile.getComputeCode().getMethods()[i].accept(arrayDest);
             tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
@@ -167,11 +164,11 @@ public class TraceIRtoC extends ToC
         */
         
 //      print the typedefs for the rotating buffers
-        if (!KjcOptions.magicdram) {
+//        if (!KjcOptions.magicdram) {
             p.print(CommunicateAddrs.getRotationTypes());
-        }
+//        }
         
-        if (KjcOptions.altcodegen && !KjcOptions.decoupled){
+        if (/*KjcOptions.altcodegen && */ !KjcOptions.decoupled){
             p.print(getNetRegsDecls());
         }
         
@@ -639,15 +636,15 @@ public class TraceIRtoC extends ToC
                     RawExecutionCode.ARRAY_INDEX + i + "++)\n");
         }
 
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-            p.print("{\n");
-            //      p.print(Util.CSTOVAR + " = ");
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-            p.print(";\n}\n");
-        } else {
+//        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+//            p.print("{\n");
+//            //      p.print(Util.CSTOVAR + " = ");
+//            val.accept(this);
+//            for (int i = 0; i < dims.length; i++) {
+//                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+//            }
+//            p.print(";\n}\n");
+//        } else {
             p.print("{");
             p.print("static_send((" + baseType + ") ");
             val.accept(this);
@@ -655,7 +652,7 @@ public class TraceIRtoC extends ToC
                 p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
             }
             p.print(");\n}\n");
-        }
+//        }
     }
     
     public void visitPushExpression(SIRPushExpression self,

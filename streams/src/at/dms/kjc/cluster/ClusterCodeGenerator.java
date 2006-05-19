@@ -32,8 +32,8 @@ class ClusterCodeGenerator {
     private Vector data_in;
     private Vector data_out;
 
-    private Vector msg_from;
-    private Vector msg_to;
+    private Vector<SIRStream> msg_from;
+    private Vector<SIRStream> msg_to;
 
     private boolean restrictedExecution;
     private int initCredit = 0;
@@ -97,8 +97,8 @@ class ClusterCodeGenerator {
                 data_out.clear();
         }
 
-        msg_from = new Vector();
-        msg_to = new Vector();
+        msg_from = new Vector<SIRStream>();
+        msg_to = new Vector<SIRStream>();
 
         restrictedExecution = false;
         sendsCreditsTo = new HashSet();
@@ -285,7 +285,7 @@ class ClusterCodeGenerator {
         p.println("void load_file_pointer__"+id+"(object_write_buffer *buf);");
         p.println("");
 
-	if (! KjcOptions.noverbose || ! KjcOptions.standalone) {
+	if (! KjcOptions.standalone) {
 	p.println("#ifndef __CLUSTER_STANDALONE\n");
         p.println("void __write_thread__"+id+"(object_write_buffer *buf) {");
 
@@ -658,10 +658,10 @@ class ClusterCodeGenerator {
      */
 
 
-    public Vector generateRunFunction(String init_f, String main_f,
+    public Vector<String> generateRunFunction(String init_f, String main_f,
                                       List/*String*/ cleanupCode) {
     
-        Vector r = new Vector();
+        Vector<String> r = new Vector<String>();
 
         r.add("\n");
 
@@ -679,7 +679,7 @@ class ClusterCodeGenerator {
             }
         }
         
-	if (! KjcOptions.noverbose || ! KjcOptions.standalone) {
+	if (! KjcOptions.standalone) {
 	r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void __init_state_"+id+"() {\n");
 

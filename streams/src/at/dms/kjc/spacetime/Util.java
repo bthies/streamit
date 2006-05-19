@@ -125,7 +125,6 @@ public class Util {
      * or the static network based on the type.
      */
     public static String networkReceive(boolean dynamic, CType tapeType) {
-        assert KjcOptions.altcodegen;
         if (dynamic) {
             if (tapeType.isFloatingPoint())
                 return CGNIFPVAR;
@@ -200,7 +199,6 @@ public class Util {
      * over the network is generated.
      */
     public static String networkSendPrefix(boolean dynamic, CType tapeType) {
-        assert KjcOptions.altcodegen;
         StringBuffer buf = new StringBuffer();
         if (dynamic) {
             if (tapeType.isFloatingPoint())
@@ -224,7 +222,6 @@ public class Util {
      * a network send.
      */
     public static String networkSendSuffix(boolean dynamic) {
-        assert KjcOptions.altcodegen;
         return "";
     }
 

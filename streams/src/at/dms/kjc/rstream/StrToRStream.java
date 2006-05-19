@@ -117,15 +117,12 @@ public class StrToRStream {
         new VarDeclRaiser().raiseVars(str);
 
         // do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-        } else {
             System.out.println("Running Constant Field Propagation...");
             FieldProp.doPropagate(str);
             System.out.println("Done Constant Field Propagation...");
             //System.out.println("Analyzing Branches..");
             //new BlockFlattener().flattenBlocks(str);
             //new BranchAnalyzer().analyzeBranches(str);
-        }
 
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
@@ -151,7 +148,7 @@ public class StrToRStream {
         //      str = Flattener.doStateSpaceAnalysis(str);
 
         // run user-defined transformations if enabled
-        if (KjcOptions.manual != null) {
+        if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("Done User-Defined Transformations...");

@@ -5,7 +5,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.util.IRPrinter;
-import at.dms.util.SIRPrinter;
+//import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
@@ -53,7 +53,7 @@ public class ClusterBackend implements FlatVisitor {
      * 
      * <br/> Also read by ClusterExecutionCode
      */
-    public static HashMap filter2Node;
+    public static HashMap<SIROperator,FlatNode> filter2Node;
 
     /**
      * Result of call to SIRScheduler.getExecutionCounts.
@@ -118,8 +118,8 @@ public class ClusterBackend implements FlatVisitor {
         System.out.println("Entry to Cluster Backend");
         System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
         System.out.println("  peekratio is: "+KjcOptions.peekratio);
-        System.out.println("  rename1 is: "+KjcOptions.rename1);
-        System.out.println("  rename2 is: "+KjcOptions.rename2);
+//        System.out.println("  rename1 is: "+KjcOptions.rename1);
+//        System.out.println("  rename2 is: "+KjcOptions.rename2);
 
         if (debugPrint) {
             SIRGlobal[] globals;
@@ -150,7 +150,7 @@ public class ClusterBackend implements FlatVisitor {
         IntroduceMultiPops.doit(str);
         
         // Perform propagation on fields from 'static' sections.
-        Set statics = new HashSet();
+        Set<SIRGlobal> statics = new HashSet<SIRGlobal>();
         if (global != null)
             statics.add(global);
         Map associatedGlobals = StaticsProp.propagate(str, statics);
@@ -272,10 +272,10 @@ public class ClusterBackend implements FlatVisitor {
 
         if ( doCacheOptimization ) {
 
-            boolean decreased;
+            //boolean decreased;
 
             str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
-            decreased = IncreaseFilterMult.decreaseMult(partitionMap);
+            //decreased = IncreaseFilterMult.decreaseMult(partitionMap);
 
 
             /*
@@ -309,7 +309,7 @@ public class ClusterBackend implements FlatVisitor {
 
         System.err.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
 
-        if (KjcOptions.manual != null) {
+        if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("User-Defined Transformations End.");

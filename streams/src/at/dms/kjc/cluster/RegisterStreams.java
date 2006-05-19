@@ -119,6 +119,8 @@ public class RegisterStreams implements FlatVisitor {
     /**
      * Return a NetStream that represents input tape for a filter
      * 
+     * no side effects.
+     * 
      * @param filter a SIRFilter
      * @return The FlatGraph input to <filter> in NetStream format, or null if no input
      * @see NetStream 
@@ -130,6 +132,8 @@ public class RegisterStreams implements FlatVisitor {
 
     /**
      * Return a NetStream that represents output tape for a filter
+     * 
+     * no side effects
      * 
      * @param filter a SIRFilter
      * @return The FlatGraph output of <filter> in NetStream format, or null if no output

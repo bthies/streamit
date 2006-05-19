@@ -70,12 +70,12 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             fw.write("#include <raw.h>\n");
             fw.write("#include <math.h>\n\n");
   
-            if(KjcOptions.altcodegen) {
+//            if(KjcOptions.altcodegen) {
                 fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
                 fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
                 fw.write("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
                 fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
-            }
+//            }
 
             if (RawBackend.FILTER_DEBUG_MODE) {
                 fw.write("void static_send_print(");

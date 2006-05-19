@@ -241,7 +241,6 @@ public class Util extends at.dms.util.Utils {
      */
 
     public static String networkReceive(boolean dynamic, CType tapeType) {
-        assert KjcOptions.altcodegen;
         if (dynamic) {
             if (tapeType.isFloatingPoint())
                 return CGNIFPVAR;
@@ -256,7 +255,6 @@ public class Util extends at.dms.util.Utils {
     }
 
     public static String networkSendPrefix(boolean dynamic, CType tapeType) {
-        assert KjcOptions.altcodegen;
         StringBuffer buf = new StringBuffer();
         if (dynamic) {
             if (tapeType.isFloatingPoint())
@@ -275,7 +273,6 @@ public class Util extends at.dms.util.Utils {
     }
 
     public static String networkSendSuffix(boolean dynamic) {
-        assert KjcOptions.altcodegen;
         return "";
     }
 

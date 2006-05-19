@@ -230,8 +230,8 @@ public class Rawify {
      */
     private static void processOutputTraceNode(OutputTraceNode traceNode, boolean init,
         boolean primepump, RawChip rawChip) {
-        if (KjcOptions.magicdram)
-            return;
+//        if (KjcOptions.magicdram)
+//            return;
         
         assert StreamingDram.differentDRAMs(traceNode) : 
             "outputs for a single OutputTraceNode going to same DRAM";
@@ -260,8 +260,8 @@ public class Rawify {
      */
     private static void processInputTraceNode(InputTraceNode traceNode, boolean init,
             boolean primepump, RawChip rawChip) {
-        if (KjcOptions.magicdram) 
-            return; 
+//        if (KjcOptions.magicdram) 
+//            return; 
         assert StreamingDram.differentDRAMs(traceNode) : 
             "inputs for a single InputTraceNode coming from same DRAM";
         handleFileInput(traceNode, init,
@@ -1133,10 +1133,10 @@ public class Rawify {
             sourceNode = layout.getTile(((FilterTraceNode) node.getPrevious()));
                                          
         else {
-            if (KjcOptions.magicdram && node.getPrevious() != null
-                && node.getPrevious().isInputTrace() && tile.hasIODevice())
-                sourceNode = tile.getIODevice();
-            else
+//            if (KjcOptions.magicdram && node.getPrevious() != null
+//                && node.getPrevious().isInputTrace() && tile.hasIODevice())
+//                sourceNode = tile.getIODevice();
+//            else
                 sourceNode = IntraTraceBuffer.getBuffer(
                                                         (InputTraceNode) node.getPrevious(), node)
                     .getNonRedundant().getDRAM();
@@ -1149,14 +1149,14 @@ public class Rawify {
         if (node.getNext().isFilterTrace())
             destNode = layout.getTile(((FilterTraceNode) node.getNext()));
         else {
-            if (KjcOptions.magicdram && node.getNext() != null
-                && node.getNext().isOutputTrace() && tile.hasIODevice())
-                destNode = tile.getIODevice();
-            else {
+//            if (KjcOptions.magicdram && node.getNext() != null
+//                && node.getNext().isOutputTrace() && tile.hasIODevice())
+//                destNode = tile.getIODevice();
+//            else {
                 destNode = IntraTraceBuffer.getBuffer(node,
                                                       (OutputTraceNode) node.getNext()).getNonRedundant()
                     .getDRAM();
-            }
+//            }
         }
         SwitchOPort dest = rawChip.getOPort(tile, destNode);
         SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
@@ -1310,10 +1310,10 @@ public class Rawify {
             sourceNode = layout.getTile(((FilterTraceNode) node.getPrevious()));
                                          
         else {
-            if (KjcOptions.magicdram && node.getPrevious() != null
-                && node.getPrevious().isInputTrace() && tile.hasIODevice())
-                sourceNode = tile.getIODevice();
-            else
+//            if (KjcOptions.magicdram && node.getPrevious() != null
+//                && node.getPrevious().isInputTrace() && tile.hasIODevice())
+//                sourceNode = tile.getIODevice();
+//            else
                 sourceNode = IntraTraceBuffer.getBuffer(
                                                         (InputTraceNode) node.getPrevious(), node)
                     .getNonRedundant().getDRAM();
@@ -1327,14 +1327,14 @@ public class Rawify {
             destNode = layout.getTile(((FilterTraceNode) node.getNext()));
                                       
         else {
-            if (KjcOptions.magicdram && node.getNext() != null
-                && node.getNext().isOutputTrace() && tile.hasIODevice())
-                destNode = tile.getIODevice();
-            else {
+//            if (KjcOptions.magicdram && node.getNext() != null
+//                && node.getNext().isOutputTrace() && tile.hasIODevice())
+//                destNode = tile.getIODevice();
+//            else {
                 destNode = IntraTraceBuffer.getBuffer(node,
                                                       (OutputTraceNode) node.getNext()).getNonRedundant()
                     .getDRAM();
-            }
+//            }
         }
         SwitchOPort dest = rawChip.getOPort(tile, destNode);
         SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
@@ -1857,7 +1857,7 @@ public class Rawify {
         // do it for the init and the steady state, primepump
         
         // generate code to fill the remainder of the cache line
-        if (!KjcOptions.magicdram && node.getNext().isOutputTrace()
+        if (/*!KjcOptions.magicdram && */ node.getNext().isOutputTrace()
             && cacheAlignDest && switchSendCode) {
             //perform the filling in the switch if we are using the static net
             fillCacheLineStatic(rawChip, node, init, primePump, sentItems);
@@ -1865,7 +1865,7 @@ public class Rawify {
         
         // because all dram transfers must be multiples of cacheline
         // generate code to disregard the remainder of the transfer
-        if (!KjcOptions.magicdram && node.getPrevious().isInputTrace()
+        if (/*!KjcOptions.magicdram && */ node.getPrevious().isInputTrace()
             && cacheAlignSource && switchReceiveCode) {
             //perform the disregarding in the switch if we are static
             handleUnneededInputStatic(rawChip, node, init, primePump, 
@@ -2031,10 +2031,10 @@ public class Rawify {
             sourceNode = layout.getTile(((FilterTraceNode) node.getPrevious()));
                                          
         else {
-            if (KjcOptions.magicdram && node.getPrevious() != null
-                && node.getPrevious().isInputTrace() && tile.hasIODevice())
-                sourceNode = tile.getIODevice();
-            else
+//            if (KjcOptions.magicdram && node.getPrevious() != null
+//                && node.getPrevious().isInputTrace() && tile.hasIODevice())
+//                sourceNode = tile.getIODevice();
+//            else
                 sourceNode = IntraTraceBuffer.getBuffer(
                                                         (InputTraceNode) node.getPrevious(), node)
                     .getNonRedundant().getDRAM();
@@ -2051,10 +2051,10 @@ public class Rawify {
             tile.getSwitchCode().appendIns(ins, (init || primePump));
             // if we are receiving from an inputtracenode and
             // magic dram is enabled, generate the magic dram load ins
-            if (KjcOptions.magicdram && node.getPrevious() != null
-                && node.getPrevious().isInputTrace())
-                createMagicDramLoad((InputTraceNode) node.getPrevious(), node,
-                                    (init || primePump), rawChip);
+//            if (KjcOptions.magicdram && node.getPrevious() != null
+//                && node.getPrevious().isInputTrace())
+//                createMagicDramLoad((InputTraceNode) node.getPrevious(), node,
+//                                    (init || primePump), rawChip);
         }
     }
 
@@ -2089,14 +2089,14 @@ public class Rawify {
             destNode = layout.getTile(((FilterTraceNode) node.getNext()));
                                        
         else {
-            if (KjcOptions.magicdram && node.getNext() != null
-                && node.getNext().isOutputTrace() && tile.hasIODevice())
-                destNode = tile.getIODevice();
-            else {
+//            if (KjcOptions.magicdram && node.getNext() != null
+//                && node.getNext().isOutputTrace() && tile.hasIODevice())
+//                destNode = tile.getIODevice();
+//            else {
                 destNode = IntraTraceBuffer.getBuffer(node,
                         (OutputTraceNode) node.getNext()).getNonRedundant()
                     .getDRAM();
-            }
+//            }
 
         }
 
@@ -2119,10 +2119,10 @@ public class Rawify {
             tile.getSwitchCode().appendIns(ins, (init || primePump));
             // if we are connected to an output trace node and
             // magicdram is enabled, create the magic dram store instuction
-            if (KjcOptions.magicdram && node.getNext() != null
-                && node.getNext().isOutputTrace())
-                createMagicDramStore((OutputTraceNode) node.getNext(), node,
-                                     (init || primePump), rawChip);
+//            if (KjcOptions.magicdram && node.getNext() != null
+//                && node.getNext().isOutputTrace())
+//                createMagicDramStore((OutputTraceNode) node.getNext(), node,
+//                                     (init || primePump), rawChip);
         }
 
         return items;

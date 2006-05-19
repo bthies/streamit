@@ -61,10 +61,10 @@ public class FlatIRToCluster extends InsertTimers implements
 
     // List of statements to invoke before end of thread to
     // perform cleanup;
-    protected Vector/*<String>*/ cleanupCode = new Vector();
+    protected Vector<String> cleanupCode = new Vector<String>();
     
     // method names communicated from visitFilter to visitMethodCallExpression
-    private Set method_names = new HashSet();
+    private Set<String> method_names = new HashSet<String>();
 
     // ALWAYS!!!!
     // true if we are using the second buffer management scheme
@@ -88,15 +88,15 @@ public class FlatIRToCluster extends InsertTimers implements
     // reasonable format for backends.
     //    int PRINT_MSG_PARAM = -1;
 
-    private static int byteSize(CType type) {
-        if (type instanceof CIntType)
-            return 4;
-        if (type instanceof CFloatType)
-            return 4;
-        if (type instanceof CDoubleType)
-            return 8;
-        return 0;
-    }
+//    private static int byteSize(CType type) {
+//        if (type instanceof CIntType)
+//            return 4;
+//        if (type instanceof CFloatType)
+//            return 4;
+//        if (type instanceof CDoubleType)
+//            return 8;
+//        return 0;
+//    }
 
     public void setGlobal(boolean g) {
         global = g;
@@ -122,9 +122,8 @@ public class FlatIRToCluster extends InsertTimers implements
         // FieldProp.doPropagate(contentsAsFilter);
 
         // Optimizations
-        if (!KjcOptions.nofieldprop)
-            System.out.println("Optimizing "
-                               + ((SIRFilter) node.contents).getName() + "...");
+        System.out.println("Optimizing "
+                + ((SIRFilter) node.contents).getName() + "...");
 
         Set destroyed_vars = new HashSet();
 
@@ -140,32 +139,28 @@ public class FlatIRToCluster extends InsertTimers implements
                 }
             }
 
-            if (!KjcOptions.nofieldprop) {
-
-                Unroller unroller;
+            Unroller unroller;
+            do {
                 do {
-                    do {
-                        // System.out.println("Unrolling..");
-                        unroller = new Unroller(new Hashtable());
-                        (contentsAsFilter).getMethods()[i].accept(unroller);
-                    } while (unroller.hasUnrolled());
-                    // System.out.println("Constant Propagating..");
-                    (contentsAsFilter).getMethods()[i].accept(new Propagator(
-                                                                             new Hashtable()));
                     // System.out.println("Unrolling..");
                     unroller = new Unroller(new Hashtable());
                     (contentsAsFilter).getMethods()[i].accept(unroller);
                 } while (unroller.hasUnrolled());
-                // System.out.println("Flattening..");
-                (contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
-                // System.out.println("Analyzing Branches..");
-                // (contentsAsFilter).getMethods()[i].accept(new
-                // BranchAnalyzer());
                 // System.out.println("Constant Propagating..");
                 (contentsAsFilter).getMethods()[i].accept(new Propagator(
-                                                                         new Hashtable()));
-            } else
-                (contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
+                        new Hashtable()));
+                // System.out.println("Unrolling..");
+                unroller = new Unroller(new Hashtable());
+                (contentsAsFilter).getMethods()[i].accept(unroller);
+            } while (unroller.hasUnrolled());
+            // System.out.println("Flattening..");
+            (contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
+            // System.out.println("Analyzing Branches..");
+            // (contentsAsFilter).getMethods()[i].accept(new
+            // BranchAnalyzer());
+            // System.out.println("Constant Propagating..");
+            (contentsAsFilter).getMethods()[i].accept(new Propagator(
+                    new Hashtable()));
 
             if (KjcOptions.destroyfieldarray) {
                 ArrayDestroyer arrayDest = new ArrayDestroyer();
@@ -181,12 +176,6 @@ public class FlatIRToCluster extends InsertTimers implements
         // }
 
         DeadCodeElimination.doit(contentsAsFilter);
-
-        if (KjcOptions.rename2 && KjcOptions.destroyfieldarray) {
-            RenameDestroyedVars.renameDestroyedVars(contentsAsFilter,
-                                                    destroyed_vars);
-            DeadCodeElimination.doit(contentsAsFilter);
-        }
 
         IterFactory.createFactory().createIter(contentsAsFilter).accept(toC);
     }
@@ -225,7 +214,7 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
         // create code for this filter to include in 
         // ClusterCodegenerator.generateRunFunction
-        cleanupCode = new Vector();
+        cleanupCode = new Vector<String>();
 
 	//PPAnalyze pp = new PPAnalyze();
 	//self.getWork().accept(pp);
@@ -240,7 +229,7 @@ public class FlatIRToCluster extends InsertTimers implements
             System.exit(1);
         }
 
-        method_names = new HashSet();
+        method_names = new HashSet<String>();
         JMethodDeclaration[] meth = self.getMethods();
         for (int i = 0; i < meth.length; i++) {
             method_names.add(meth[i].getName());
@@ -254,8 +243,8 @@ public class FlatIRToCluster extends InsertTimers implements
         SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
         SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
 
-        Vector sends_to = new Vector();
-        Vector receives_from = new Vector();
+        Vector<SIRStream> sends_to = new Vector<SIRStream>();
+        Vector<SIRStream> receives_from = new Vector<SIRStream>();
 
         FlatNode node = NodeEnumerator.getFlatNode(selfID);
 
@@ -1110,7 +1099,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     + ") {\n");
         }
 
-	if (! KjcOptions.noverbose || ! KjcOptions.standalone) { 
+	if (! KjcOptions.standalone) { 
 	p.print("#ifndef __CLUSTER_STANDALONE\n");
 
         {
@@ -2047,25 +2036,25 @@ public class FlatIRToCluster extends InsertTimers implements
             String ident;
             ident = ((JLocalVariableExpression) left).getVariable().getIdent();
 
-            if (KjcOptions.ptraccess) {
-
-                // HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                // turn all array access into access of a pointer pointing to
-                // the array
-                p.print(ident + "_Alloc");
-
-                // print the dims of the array
-                printDecl(left.getType(), ident);
-
-                // print the pointer def and the assignment to the array
-                p.print(";\n");
-                p.print(baseType + " *" + ident + " = " + ident + "_Alloc");
-            } else {
-                // the way it used to be before the hack
+//            if (KjcOptions.ptraccess) {
+//
+//                // HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                // turn all array access into access of a pointer pointing to
+//                // the array
+//                p.print(ident + "_Alloc");
+//
+//                // print the dims of the array
+//                printDecl(left.getType(), ident);
+//
+//                // print the pointer def and the assignment to the array
+//                p.print(";\n");
+//                p.print(baseType + " *" + ident + " = " + ident + "_Alloc");
+//            } else {
+//                // the way it used to be before the hack
                 left.accept(this);
                 // print the dims of the array
                 printDecl(left.getType(), ident);
-            }
+//            }
             return;
         }
 
@@ -2122,7 +2111,7 @@ public class FlatIRToCluster extends InsertTimers implements
           p.print(");");
         */
 
-        String ident;
+        //String ident;
         int num_params = 0;
 
         if (portal instanceof SIRPortal) {
@@ -2355,7 +2344,7 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitPeekExpression(SIRPeekExpression self, CType tapeType,
                                     JExpression num) {
 
-        NetStream in = RegisterStreams.getFilterInStream(filter);
+        //NetStream in = RegisterStreams.getFilterInStream(filter);
         //print(in.consumer_name()+".peek(");
 
 	if (mod_push_pop) {
@@ -2374,7 +2363,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
     public void visitPopExpression(SIRPopExpression self, CType tapeType) {
 
-        NetStream in = RegisterStreams.getFilterInStream(filter);
+        //NetStream in = RegisterStreams.getFilterInStream(filter);
 	if (self.getNumPop() == 1)  {
 	    if (mod_push_pop) {
 		p.print("(*____in++)");
@@ -2438,15 +2427,16 @@ public class FlatIRToCluster extends InsertTimers implements
                     + " ; " + RawExecutionCode.ARRAY_INDEX + i + "++)\n");
         }
 
-        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-            p.print("{\n");
-            //      p.print(Util.CSTOVAR + " = ");
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-            p.print(";\n}\n");
-        } else {
+// AD: never tested to my knowledge.  Also, decoupled is only defined for RAW backends
+//        if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+//            p.print("{\n");
+//            // p.print(Util.CSTOVAR + " = ");
+//            val.accept(this);
+//            for (int i = 0; i < dims.length; i++) {
+//                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+//            }
+//            p.print(";\n}\n");
+//        } else {
             p.print("{");
             p.print("static_send((" + baseType + ") ");
             val.accept(this);
@@ -2454,7 +2444,7 @@ public class FlatIRToCluster extends InsertTimers implements
                 p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
             }
             p.print(");\n}\n");
-        }
+//        }
     }
 
     public void visitPushExpression(SIRPushExpression self, CType tapeType,

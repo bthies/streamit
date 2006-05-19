@@ -100,9 +100,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             fw.write("#include <raw.h>\n");
             fw.write("#include <math.h>\n\n");
 
-            if (KjcOptions.altcodegen) {
+//            if (KjcOptions.altcodegen) {
                 fw.write(FlatIRToC.getNetRegsDecls());
-            }
+//            }
 
             if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
                 fw.write("void static_send_print(");

@@ -271,10 +271,10 @@ public class DirectCommunication extends at.dms.util.Utils
             else {
                 //I am keeping it the was it is because we should use static_receive
                 //instead of receiving to memory as in the code in Util
-                if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+//                if (KjcOptions.altcodegen || KjcOptions.decoupled) 
                     return altCodeGen(self);
-                else
-                    return normalCodeGen(self);
+//                else
+//                    return normalCodeGen(self);
             }
         }
     

@@ -142,7 +142,7 @@ public class Flattener {
 
         MarkFilterBoundaries.doit(str);
 
-        if (KjcOptions.manual != null) {
+        if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("done.");
@@ -252,12 +252,9 @@ public class Flattener {
         /* aal -- changed so that the default action is to do field prop.
          * turn off field prop using --nofieldprop or -L */
         // do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-        } else {
             if (printStatus) { System.err.print("Propagating constant fields... "); }
             FieldProp.doPropagate(str);
             if (printStatus) { System.err.println("done."); }
-        }
 
         /* dzm -- note phase ordering issue here.  In particular, we
          * probably want to form filter phases before fusing the world, but we need
@@ -275,8 +272,6 @@ public class Flattener {
            printer1.close();
         */
     
-        if (KjcOptions.nofieldprop) {
-        } else {
             //Flatten Blocks
             if (printStatus) { System.err.print("Flattening blocks... "); }
             new BlockFlattener().flattenBlocks(str);
@@ -285,7 +280,6 @@ public class Flattener {
             //System.err.print("Analyzing branches... ");
             //new BranchAnalyzer().analyzeBranches(str);
             //System.err.println("done.");
-        }
         //Destroys arrays into local variables if possible
         //System.err.print("Destroying arrays... ");
         //new ArrayDestroyer().destroyArrays(str);

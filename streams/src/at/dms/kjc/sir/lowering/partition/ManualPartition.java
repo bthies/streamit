@@ -103,25 +103,25 @@ public class ManualPartition {
     public static SIRStream doit(SIRStream str) {
         // invoke manual optimization via reflection
         try {
-            Class c = Class.forName(KjcOptions.manual);
+            Class c = Class.forName(KjcOptions.optfile);
             Method manualPartition = c.getMethod("manualPartition", new Class[] { Class.forName("at.dms.kjc.sir.SIRStream") });
             Object result = manualPartition.invoke(null, new Object[] { str });
             if (!(result instanceof SIRStream)) {
-                Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " did not return an SIRStream.");
+                Utils.fail("Manual partitioning failed:  class " + KjcOptions.optfile + " did not return an SIRStream.");
                 return null;
             } else {
                 return (SIRStream)result;
             }
         } catch (ClassNotFoundException e) {
-            Utils.fail("Manual partitioning failed:  can't find class " + KjcOptions.manual);
+            Utils.fail("Manual partitioning failed:  can't find class " + KjcOptions.optfile);
         } catch (NoSuchMethodException e) {
-            Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " does not contain appropriate manualPartition method.");
+            Utils.fail("Manual partitioning failed:  class " + KjcOptions.optfile + " does not contain appropriate manualPartition method.");
         } catch (InvocationTargetException e) {
             e.printStackTrace();
-            Utils.fail("Manual partitioning failed:  class " + KjcOptions.manual + " threw exception.");
+            Utils.fail("Manual partitioning failed:  class " + KjcOptions.optfile + " threw exception.");
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            Utils.fail("Manual partitioning failed:  illegal to access class " + KjcOptions.manual);
+            Utils.fail("Manual partitioning failed:  illegal to access class " + KjcOptions.optfile);
         }
         return null;
     }

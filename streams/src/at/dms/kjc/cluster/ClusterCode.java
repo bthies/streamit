@@ -381,7 +381,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         int sum_of_weights = splitter.getSumOfWeights();
 
-	if (! KjcOptions.noverbose || ! KjcOptions.standalone) { 
+	if (! KjcOptions.standalone) { 
 
 	p.print("#ifndef __CLUSTER_STANDALONE\n");
 

@@ -54,7 +54,6 @@ class Optimizer implements StreamVisitor {
 
         for (int i = 0; i < filter.getMethods().length; i++) {
             JMethodDeclaration method=filter.getMethods()[i];
-            if (!KjcOptions.nofieldprop) {
                 Unroller unroller;
                 do {
                     do {
@@ -71,10 +70,6 @@ class Optimizer implements StreamVisitor {
                 method.accept(new BlockFlattener());
                 method.accept(new Propagator(new Hashtable()));
                
-            } else {
-                filter.getMethods()[i].accept(new BlockFlattener());
-            }
-        
             filter.getMethods()[i].accept(new VarDeclRaiser());
         }
            

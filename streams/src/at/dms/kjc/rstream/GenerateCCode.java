@@ -520,7 +520,6 @@ public class GenerateCCode {
         for (int i = 0; i < filter.getMethods().length; i++) {
             JMethodDeclaration method = filter.getMethods()[i];
 
-            if (!KjcOptions.nofieldprop) {
                 Unroller unroller;
                 do {
                     do {
@@ -535,8 +534,6 @@ public class GenerateCCode {
 
                 method.accept(new BlockFlattener());
                 method.accept(new Propagator(new Hashtable()));
-            } else
-                method.accept(new BlockFlattener());
             method.accept(arrayDest);
             method.accept(new VarDeclRaiser());
         }

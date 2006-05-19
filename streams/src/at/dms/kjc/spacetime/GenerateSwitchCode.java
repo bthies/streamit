@@ -19,9 +19,9 @@ public class GenerateSwitchCode {
             
                         fw.write("#  Switch code\n");
                         fw.write(getHeader());
-                        if (KjcOptions.magicdram) 
-                            fw.write(startIO(chip, tile));
-                        else {
+//                        if (KjcOptions.magicdram) 
+//                            fw.write(startIO(chip, tile));
+//                        else {
                             //normal streaming dram operation
                             //just write out the instructions...
                             //write the initialization code
@@ -29,7 +29,7 @@ public class GenerateSwitchCode {
                                 fw.write("\t" + 
                                          tile.getSwitchCode().getCommAddrIns(i).toString() + "\n");
                             }
-                        }
+//                        }
             
                         fw.write("# End of Address Communication\n");
                         //write the initialization code

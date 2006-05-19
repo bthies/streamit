@@ -57,7 +57,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //Optimizations
         
         
-        if(!KjcOptions.nofieldprop)
             System.out.println
                 ("Optimizing "+
                  ((SIRFilter)node.contents).getName()+"...");
@@ -68,7 +67,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
             
             if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
                 //Already in __RAWMAIN__
-                if (!KjcOptions.nofieldprop) {
                     Unroller unroller;
                     do {
                         do {
@@ -88,8 +86,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
                     //method.accept(new BranchAnalyzer());
                     //System.out.println("Constant Propagating..");
                     method.accept(new Propagator(new Hashtable()));
-                } else
-                    method.accept(new BlockFlattener());
                 method.accept(arrayDest);
                 method.accept(new VarDeclRaiser());
             }
@@ -165,7 +161,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("volatile float dummyFloat;\n");
         }
         
-        if (KjcOptions.altcodegen && !KjcOptions.decoupled){
+        if (/*KjcOptions.altcodegen && */ !KjcOptions.decoupled){
             p.print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
             p.print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
             p.print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
@@ -820,7 +816,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
                     ARRAY_INDEX + i + "++)\n");
         }
 
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+//        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
             p.print("{\n");
             p.print(Util.staticNetworkSendPrefix(Util.getBaseType(tapeType)));
             val.accept(this);
@@ -829,15 +825,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
             }
             p.print(Util.staticNetworkSendSuffix());
             p.print(";\n}\n");
-        } else {
-            p.print("{");
-            p.print("static_send((" + baseType + ") ");
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                p.print("[" + ARRAY_INDEX + i + "]");
-            }
-            p.print(");\n}\n");
-        }
+//        } else {
+//            p.print("{");
+//            p.print("static_send((" + baseType + ") ");
+//            val.accept(this);
+//            for (int i = 0; i < dims.length; i++) {
+//                p.print("[" + ARRAY_INDEX + i + "]");
+//            }
+//            p.print(");\n}\n");
+//        }
         p.print("}\n");
     }
     

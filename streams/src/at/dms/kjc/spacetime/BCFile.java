@@ -109,8 +109,8 @@ public class BCFile
             decoupled();
         mappedFunction();
 
-        if (KjcOptions.magicdram) 
-            magicDram();
+//        if (KjcOptions.magicdram) 
+//            magicDram();
 
         if (KjcOptions.magic_net)
             magicNet();

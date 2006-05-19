@@ -118,7 +118,7 @@ public class MakefileGenerator {
             }
 
             // use sam's gcc and set the parameters of the tile
-            if (KjcOptions.altcodegen) {
+//            if (KjcOptions.altcodegen) {
                 // fw.write
                 // ("\nRGCC=/home/pkg/brave_new_linux/0225.btl.rawlib.starbuild/install/slgcc/bin/raw-gcc\n");
                 fw
@@ -129,7 +129,7 @@ public class MakefileGenerator {
                     .write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS)\n");
                 fw
                     .write("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
-            }
+//            }
 
             fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
             fw.write("clean:\n");

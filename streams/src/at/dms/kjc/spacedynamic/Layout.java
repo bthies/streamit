@@ -853,7 +853,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             assert currentCost >= 0.0;
             System.out.println("Initial Cost: " + currentCost);
 
-            if (KjcOptions.noanneal || KjcOptions.decoupled) {
+            if (KjcOptions.manuallayout || KjcOptions.decoupled) {
                 dumpLayout("noanneal.dot");
                 return;
             }

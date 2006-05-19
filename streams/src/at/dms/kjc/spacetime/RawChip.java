@@ -51,9 +51,9 @@ public class RawChip {
 
         devices = new IODevice[2 * gXSize + 2 * gYSize];
 
-        if (KjcOptions.magicdram)
-            addMagicDrams();
-        else
+//        if (KjcOptions.magicdram)
+//            addMagicDrams();
+//        else
             // install streaming drams
             addStreamingDrams();
 
@@ -383,9 +383,9 @@ public class RawChip {
     }
     
     public void printChip() {
-        if (!KjcOptions.magicdram) {
+//        if (!KjcOptions.magicdram) {
             StreamingDram.printSetup(this);
             RawTile.printDramSetup(this);
-        }
+//        }
     }
 }

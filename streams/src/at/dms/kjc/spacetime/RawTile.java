@@ -183,7 +183,7 @@ public class RawTile extends ComputeNode {
 
     public static void printDramSetup(RawChip chip) {
         System.out.println("Memory Mapping:");
-        if (!KjcOptions.magicdram)
+//        if (!KjcOptions.magicdram)
             for (int x = 0; x < chip.getXSize(); x++)
                 for (int y = 0; y < chip.getYSize(); y++)
                     chip.getTile(x, y).printDram();

@@ -499,7 +499,7 @@ public class StreamGraph {
         // call the appropriate layout function
         if (KjcOptions.layoutfile != null)
             layout.fileAssign();
-        else if (KjcOptions.noanneal)
+        else if (KjcOptions.manuallayout)
             layout.handAssign();
         else
             layout.simAnnealAssign();

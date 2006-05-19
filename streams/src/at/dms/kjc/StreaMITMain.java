@@ -43,13 +43,13 @@ public class StreaMITMain {
         if (KjcOptions.malloczeros) 
             System.out.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
         
-        if (KjcOptions.altcodegen &&
-            KjcOptions.standalone)
-            at.dms.util.Utils.fail("The options altcodegen and standalone are mutually exclusive.");
-
-        if (KjcOptions.altcodegen &&
-            KjcOptions.decoupled)
-            at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
+//        if (KjcOptions.altcodegen &&
+//            KjcOptions.standalone)
+//            at.dms.util.Utils.fail("The options altcodegen and standalone are mutually exclusive.");
+//
+//        if (KjcOptions.altcodegen &&
+//            KjcOptions.decoupled)
+//            at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
 
         if (KjcOptions.outputs > 0 &&
             KjcOptions.numbers > 0)
@@ -96,10 +96,10 @@ public class StreaMITMain {
             //            System.out.println("*/");
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
-            } else if (KjcOptions.spacedynamic) {
-                backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
-            } else {
+            } else if (KjcOptions.space) {
                 backendClass = "at.dms.kjc.raw.RawBackend";
+            } else {
+                backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
             }
         } else if (KjcOptions.cluster != -1) {
             //            System.out.println("*/");

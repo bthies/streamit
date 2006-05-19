@@ -145,14 +145,7 @@ class FusionCode {
         p.print("#define __MULT "+mult+"\n");
         p.newLine();
 
-        if (KjcOptions.standalone || !  KjcOptions.noverbose) {
-        if (!KjcOptions.standalone) {
-
-            // if not standalone then comment out the fusion variables
-            p.print("/*\n");
-
-        }
-
+        if (KjcOptions.standalone) {
         p.print("#define __CLUSTER_STANDALONE\n");
         // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
@@ -338,13 +331,6 @@ class FusionCode {
                 p.print("\n");
 
             }
-        }
-
-        if (!KjcOptions.standalone) {
-
-            // if not standalone then comment out the fusion variables
-            p.print(" */\n");
-
         }
 
         p.print("#endif\n");

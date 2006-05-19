@@ -44,7 +44,7 @@ public class SpaceTimeBackend {
         structures = structs;
     
         //first of all enable altcodegen by default
-        KjcOptions.altcodegen = true;
+        //KjcOptions.altcodegen = true;
 
         int rawRows = -1;
         int rawColumns = -1;
@@ -80,14 +80,10 @@ public class SpaceTimeBackend {
         new VarDeclRaiser().raiseVars(str);
 
         // do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-        
-        } else {
             System.out.println("Running Constant Field Propagation...");
             FieldProp.doPropagate(str);
             System.out.println("Done Constant Field Propagation...");
-        }
-
+ 
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
 
@@ -104,7 +100,7 @@ public class SpaceTimeBackend {
         }
 
         // run user-defined transformations if enabled
-        if (KjcOptions.manual != null) {
+        if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("Done User-Defined Transformations...");
@@ -231,7 +227,7 @@ public class SpaceTimeBackend {
         Layout layout = null;
         //create the layout for each stage of the execution using simulated annealing
          
-        if (KjcOptions.noanneal) {
+        if (KjcOptions.manuallayout) {
             layout = new ManualTraceLayout(spaceTimeSchedule);
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
@@ -265,9 +261,9 @@ public class SpaceTimeBackend {
         
         //communicate the addresses for the off-chip buffers && set up
         // the rotating buffers based on the preloopschedule for software pipelining
-        if (!KjcOptions.magicdram) {
+//        if (!KjcOptions.magicdram) {
             CommunicateAddrs.doit(rawChip, spaceTimeSchedule);
-        }
+//        }
  
         //dump some dot graphs!
         TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
@@ -288,9 +284,9 @@ public class SpaceTimeBackend {
         // generate the compute code from the SIR
         GenerateComputeCode.run(rawChip);
         // generate the magic dram code if enabled
-        if (KjcOptions.magicdram) {
-            MagicDram.GenerateCode(rawChip);
-        }
+//        if (KjcOptions.magicdram) {
+//            MagicDram.GenerateCode(rawChip);
+//        }
         //dump the layout
         LayoutDot.dumpLayout(spaceTimeSchedule, rawChip, "layout.dot");
         

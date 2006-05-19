@@ -41,9 +41,9 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
     protected boolean    global = false; 
 
     public String                  helper_package = null;
-    public boolean                   declOnly = false;
+    public boolean                 declOnly = false;
     public SIRFilter               filter = null;
-    private Set                    method_names = new HashSet();
+    private Set<String>            method_names = new HashSet<String>();
 
     protected JMethodDeclaration   method;
 
@@ -69,13 +69,6 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
     public CodegenPrintWriter getPrinter() { return null; }
 
-    private static int byteSize(CType type) {
-        if (type instanceof CIntType) return 4;
-        if (type instanceof CFloatType) return 4;
-        if (type instanceof CDoubleType) return 8;
-        return 0;
-    }
-
     public void setGlobal(boolean g) {
         global = g;
     }
@@ -87,10 +80,8 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         //FieldProp.doPropagate((SIRFilter)node.contents);
 
         //Optimizations
-        if(!KjcOptions.nofieldprop)
-            System.out.println
-                ("Optimizing "+
-                 ((SIRFilter)node.contents).getName()+"...");
+        System.out.println("Optimizing "
+                + ((SIRFilter) node.contents).getName() + "...");
 
     
         Set destroyed_vars = new HashSet();
@@ -106,29 +97,30 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                 }
             }
 
-            if (!KjcOptions.nofieldprop) {
-        
                 Unroller unroller;
+            do {
                 do {
-                    do {
-                        //System.out.println("Unrolling..");
-                        unroller = new Unroller(new Hashtable());
-                        ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
-                    } while(unroller.hasUnrolled());
-                    //System.out.println("Constant Propagating..");
-                    ((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
-                    //System.out.println("Unrolling..");
+                    // System.out.println("Unrolling..");
                     unroller = new Unroller(new Hashtable());
-                    ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
-                } while(unroller.hasUnrolled());
-                //System.out.println("Flattening..");
-                ((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
-                //System.out.println("Analyzing Branches..");
-                //((SIRFilter)node.contents).getMethods()[i].accept(new BranchAnalyzer());
-                //System.out.println("Constant Propagating..");
-                ((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
-            } else
-                ((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
+                    ((SIRFilter) node.contents).getMethods()[i]
+                            .accept(unroller);
+                } while (unroller.hasUnrolled());
+                // System.out.println("Constant Propagating..");
+                ((SIRFilter) node.contents).getMethods()[i]
+                        .accept(new Propagator(new Hashtable()));
+                // System.out.println("Unrolling..");
+                unroller = new Unroller(new Hashtable());
+                ((SIRFilter) node.contents).getMethods()[i].accept(unroller);
+            } while (unroller.hasUnrolled());
+            // System.out.println("Flattening..");
+            ((SIRFilter) node.contents).getMethods()[i]
+                    .accept(new BlockFlattener());
+            // System.out.println("Analyzing Branches..");
+            // ((SIRFilter)node.contents).getMethods()[i].accept(new
+            // BranchAnalyzer());
+            // System.out.println("Constant Propagating..");
+            ((SIRFilter) node.contents).getMethods()[i].accept(new Propagator(
+                    new Hashtable()));
 
             if (KjcOptions.destroyfieldarray) {
                 ArrayDestroyer arrayDest = new ArrayDestroyer();
@@ -144,11 +136,6 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         //}
 
         DeadCodeElimination.doit((SIRFilter)node.contents);
-
-        if (KjcOptions.rename2 && KjcOptions.destroyfieldarray) {
-            RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
-            DeadCodeElimination.doit((SIRFilter)node.contents);
-        }
 
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
@@ -226,7 +213,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
         int id = selfID;
 
-        method_names = new HashSet();
+        method_names = new HashSet<String>();
         JMethodDeclaration[] meth = self.getMethods();
         for (int i = 0; i < meth.length; i++) {
             method_names.add(meth[i].getName());
@@ -239,8 +226,8 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
         SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
     
-        Vector sends_to = new Vector();
-        Vector receives_from = new Vector();
+        Vector<SIRStream> sends_to = new Vector<SIRStream>();
+        Vector<SIRStream> receives_from = new Vector<SIRStream>();
 
         FlatNode node = NodeEnumerator.getFlatNode(selfID);
         Iterator constrIter;
@@ -305,12 +292,12 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         CType output_type = self.getOutputType();
 
 
-        NetStream in = RegisterStreams.getFilterInStream(self);
-        NetStream out = RegisterStreams.getFilterOutStream(self);
+        //NetStream in = RegisterStreams.getFilterInStream(self);
+        //NetStream out = RegisterStreams.getFilterOutStream(self);
 
-        int out_pop_buffer_size = 10240;
-        int out_pop_num_iters = 0;
-        if (push_n != 0) out_pop_num_iters = out_pop_buffer_size / push_n;
+        //int out_pop_buffer_size = 10240;
+        //int out_pop_num_iters = 0;
+        //if (push_n != 0) out_pop_num_iters = out_pop_buffer_size / push_n;
 
 
         print("#include <stream_node.h>\n");
@@ -450,7 +437,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         print("  }\n");
 
         {
-            Iterator i;
+            //Iterator i;
 
             //r.add("void save_peek_buffer__"+id+"(object_write_buffer *buf);\n");
             //r.add("void load_peek_buffer__"+id+"(object_write_buffer *buf);\n");
@@ -470,7 +457,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                 if (type.isArrayType()) {
                     int size = 0;
                     String dims[] = Util.makeString(((CArrayType)type).getDims());
-                    CType base = ((CArrayType)type).getBaseType();
+                    //CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
                     } catch (NumberFormatException ex) {
@@ -888,12 +875,12 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                                     new JIntLiteral(0));
 
 
-        JVariableDefinition iter_counter = 
-            new JVariableDefinition(null, 
-                                    0, 
-                                    CStdType.Integer,
-                                    "__counter_"+selfID,
-                                    null);
+//        JVariableDefinition iter_counter = 
+//            new JVariableDefinition(null, 
+//                                    0, 
+//                                    CStdType.Integer,
+//                                    "__counter_"+selfID,
+//                                    null);
     
 
         JStatement init = new JEmptyStatement(null, null);
@@ -1530,21 +1517,6 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         method = null;
     }
 
-    private void dummyWork(int push) {
-        print("{\n");
-        print("  int i;\n");
-        print("  for(i = 0; i < " + push + "; i++)\n");
-        print("    static_send(i);\n");
-        print("}\n");
-    }
-
-    private int nextPow2(int i) {
-        String str = Integer.toBinaryString(i);
-        if  (str.indexOf('1') == -1)
-            return 0;
-        int bit = str.length() - str.indexOf('1');
-        return (int)Math.pow(2, bit);
-    }
     
     // ----------------------------------------------------------------------
     // STATEMENT
@@ -2481,25 +2453,25 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
 
         
-            if (KjcOptions.ptraccess) {
-        
-                //HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                //turn all array access into access of a pointer pointing to the array
-                print(ident + "_Alloc");
-        
-                //print the dims of the array
-                printDecl(left.getType(), ident);
-
-                //print the pointer def and the assignment to the array
-                print(";\n");
-                print(baseType + " *" + ident + " = " + ident + "_Alloc");
-            }
-            else {
-                //the way it used to be before the hack
+//            if (KjcOptions.ptraccess) {
+//        
+//                //HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                //turn all array access into access of a pointer pointing to the array
+//                print(ident + "_Alloc");
+//        
+//                //print the dims of the array
+//                printDecl(left.getType(), ident);
+//
+//                //print the pointer def and the assignment to the array
+//                print(";\n");
+//                print(baseType + " *" + ident + " = " + ident + "_Alloc");
+//            }
+//            else {
+//                //the way it used to be before the hack
                 left.accept(this);
                 //print the dims of the array
                 printDecl(left.getType(), ident);
-            }
+//            }
             return;
         }
            
@@ -2768,7 +2740,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                                     JExpression num)
     {
 
-        NetStream in = RegisterStreams.getFilterInStream(filter);
+        //NetStream in = RegisterStreams.getFilterInStream(filter);
         //print(in.consumer_name()+".peek(");
         print("peek(");
         num.accept(this);
@@ -2781,7 +2753,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                                    CType tapeType)
     {
         assert self.getNumPop() == 1: "Need support here for multiple pop";
-        NetStream in = RegisterStreams.getFilterInStream(filter);
+        //NetStream in = RegisterStreams.getFilterInStream(filter);
         //print("get_consumer("+in.getSource()+")->pop()");
         print("pop()");
         //Utils.fail("FlatIRToCluster2 should see no pop expressions");
@@ -2853,7 +2825,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                             CType tapeType,
                             JExpression val) 
     {
-        NetStream out = RegisterStreams.getFilterOutStream(filter);
+        //NetStream out = RegisterStreams.getFilterOutStream(filter);
         print("push(");
         val.accept(this);
         print(")");
@@ -2871,7 +2843,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                           JExpression val) 
     {
 
-        NetStream out = RegisterStreams.getFilterOutStream(filter);
+        //NetStream out = RegisterStreams.getFilterOutStream(filter);
         print("push(");
         val.accept(this);
         print(")");
@@ -2898,15 +2870,17 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                   RawExecutionCode.ARRAY_INDEX + i + "++)\n");
         }
 
-        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-            print("{\n");
-            //      print(Util.CSTOVAR + " = ");
-            val.accept(this);
-            for (int i = 0; i < dims.length; i++) {
-                print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-            }
-            print(";\n}\n");
-        } else {
+
+// Not used or tested to my knowledge [AD]
+//        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+//            print("{\n");
+//            //      print(Util.CSTOVAR + " = ");
+//            val.accept(this);
+//            for (int i = 0; i < dims.length; i++) {
+//                print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+//            }
+//            print(";\n}\n");
+//        } else {
             print("{");
             print("static_send((" + baseType + ") ");
             val.accept(this);
@@ -2914,7 +2888,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                 print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
             }
             print(");\n}\n");
-        }
+//        }
     }
     
     public void visitPushExpression(SIRPushExpression self,

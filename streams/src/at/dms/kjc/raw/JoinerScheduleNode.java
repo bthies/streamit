@@ -112,7 +112,7 @@ public class JoinerScheduleNode
             ret.append(");\n");
         }
         else { //scalar or array type
-            if (!KjcOptions.altcodegen || KjcOptions.decoupled) 
+            if (/*!KjcOptions.altcodegen ||*/ KjcOptions.decoupled) 
                 ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
             if (nextDup) {
                 ret.append(DUPVAR);
@@ -122,14 +122,14 @@ public class JoinerScheduleNode
             }
             ret.append(arrayAccess);
         
-            if (KjcOptions.altcodegen || KjcOptions.decoupled){
+//            if (KjcOptions.altcodegen || KjcOptions.decoupled){
                 if (type.isFloatingPoint())
                     ret.append(" = " + Util.CSTIFPVAR + ";\n");
                 else
                     ret.append(" = " + Util.CSTIINTVAR + ";\n");
-            }
-            else
-                ret.append("));\n");
+//            }
+//            else
+//                ret.append("));\n");
         }
         return ret;
     }
@@ -144,21 +144,21 @@ public class JoinerScheduleNode
             ret.append(");\n");
         }
         else { //array or scalar type
-            if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+//            if (KjcOptions.altcodegen || KjcOptions.decoupled) {
                 if (type.isFloatingPoint())
                     ret.append(Util.CSTOFPVAR + " = ");
                 else
                     ret.append(Util.CSTOINTVAR + " = ");
-            }
-            else 
-                ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(");
+//            }
+//            else 
+//                ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(");
             ret.append("__buffer" + buffer + "[__first" + buffer + "++]");
             ret.append(arrayAccess);
             //end the send statement...
-            if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+//            if (KjcOptions.altcodegen || KjcOptions.decoupled) 
                 ret.append(";\n");
-            else 
-                ret.append("));\n");
+//            else 
+//                ret.append("));\n");
         }
         ret.append("}\n");
         //mod the start of the circular buffer

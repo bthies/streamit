@@ -1,0 +1,14 @@
+<benchmark>
+  <name>complex</name>
+   <desc>Tests for complex numbers</desc>
+  <description>
+These tests involve complex numbers, and thus simple structures.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="ComplexTest1">
+      <desc>RT Ticket 140: structures (complex) in loops could be mutated rather than created anew</desc>
+      <file class="source">ComplexTest1.str</file>
+      <file class="output">ComplexTest1.out</file>
+    </impl>
+   </implementations>
+</benchmark>

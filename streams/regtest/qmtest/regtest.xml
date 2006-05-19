@@ -1,17 +1,12 @@
 <regtest>
   <test root="apps"/>
   <option target="cluster">-standalone</option>
+  <option target="raw4">-nopartition</option>
   <option target="library"/>
   <option target="cluster"></option>
-  <option target="uni"/>
-  <option target="uni">-O1</option>
-  <option target="uni">-O2</option>
   <option target="rstream"/>
-  <option target="raw4"/>
+  <option target="raw4">-space</option>
   <option target="cluster">-O2</option>
-  <option target="raw4">-O1</option>
-  <option target="raw4">-O2</option>
-  <option target="raw4">-O2 --altcodegen</option>
-  <option target="cluster">-fusion -standalone</option>
+  <option target="raw4">-nopartition -O2</option>
   <option target="raw4">-spacetime</option>
 </regtest>

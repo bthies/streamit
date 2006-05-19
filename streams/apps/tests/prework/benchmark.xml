@@ -1,0 +1,14 @@
+<benchmark>
+  <name>complex</name>
+   <desc>Tests for prework functions</desc>
+  <description>
+These tests check that prework dunctions are correctly implemented in the libtaty and compilers..
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="PreworkTest1" iters="10">
+      <desc>RT Ticket 140: structures (complex) in loops could be mutated rather than created anew</desc>
+      <file class="source">PreworkTest1.str</file>
+      <file class="output">PreworkTest1.out</file>
+    </impl>
+   </implementations>
+</benchmark>

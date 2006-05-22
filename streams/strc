@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.75 2006-05-22 14:02:37 dimock Exp $
+# $Id: strc,v 1.76 2006-05-22 19:45:22 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -582,6 +582,7 @@ sub get_kjc_opts
 	($kjcopts .= " --i " . $opts{iterations});
     $opts{raw} && $opts{iterations} &&
 	($kjcopts .= " --outputs " . $opts{iterations});
+    $opts{output} && ($kjcopts .= " --output " . $opts{output});
     $opts{poptopeek} && ($kjcopts .= " --poptopeek");
     $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
     $opts{profile} && ($kjcopts .= " --profile");
@@ -616,6 +617,10 @@ sub get_kjc_opts
     $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});
     $opts{backendvalues} && ($kjcopts .= " --backendvalues \"". $opts{backendvalues}. "\"");
+    # defaults: backend:
+    $opts{raw} || $opts{rstream} || $opts{simpleC} || $opts{library} || 
+	$opts{streamit}  || $opts{uni} ||
+	($kjcopts .= " --cluster 1 --standalone");
     return $kjcopts;
 }
 

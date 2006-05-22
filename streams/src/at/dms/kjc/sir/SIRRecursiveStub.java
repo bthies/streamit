@@ -76,16 +76,16 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      * Shouldn't be calling this.
      */
     public CType getOutputType() {
-        Utils.fail("Can't get output type of recursive stub.");
-        return null;
+        throw new RuntimeException("Can't get output type of recursive stub.");
+        //return null;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public CType getInputType() {
-        Utils.fail("Can't get input type of recursive stub.");
-        return null;
+        throw new RuntimeException("Can't get input type of recursive stub.");
+        //return null;
     }
 
     /**
@@ -93,8 +93,8 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      */
     public int getPushForSchedule(HashMap[] counts)
     {
-        Utils.fail("Can't get push for schedule of recursive stub.");
-        return -1;
+        throw new RuntimeException("Can't get push for schedule of recursive stub.");
+        //return -1;
     }
 
     /**
@@ -102,24 +102,24 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
      */
     public int getPopForSchedule(HashMap[] counts)
     {
-        Utils.fail("Can't get pop for schedule of recursive stub.");
-        return -1;
+        throw new RuntimeException("Can't get pop for schedule of recursive stub.");
+        //return -1;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public LIRStreamType getStreamType() {
-        Utils.fail("Can't get stream type of recursive stub.");
-        return null;
+        throw new RuntimeException("Can't get stream type of recursive stub.");
+        //return null;
     }
 
     /**
      * Shouldn't be calling this.
      */
     public Object accept(AttributeStreamVisitor v) {
-        Utils.fail("Can't visit RecursiveStub.");
-        return null;
+        throw new RuntimeException("Can't visit RecursiveStub.");
+        //return null;
     }
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

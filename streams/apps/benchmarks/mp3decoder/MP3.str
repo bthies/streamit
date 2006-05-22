@@ -1378,8 +1378,9 @@ float->int splitjoin MultiChannelPCMSynthesisInterval(int n) {
 
 
 void->void pipeline MP3() {
-
-  add FileReader<float>("/home/streamit/compiler-static/mp3//Blur.float.raw");
+  // Input file is enough for -i 100.  Full file is not in distribution
+  // due to length: /home/streamit/compiler-static/mp3/Blur.float.raw
+  add FileReader<float>("./Blur.float.raw.portion");
   add MultiChannelPCMSynthesis(2);
   add output_int();
 }

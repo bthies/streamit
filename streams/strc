@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.74 2006-05-18 20:33:46 thies Exp $
+# $Id: strc,v 1.75 2006-05-22 14:02:37 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -81,14 +81,7 @@ EOH
     exit(0);
   }
 my $fns = \@ARGV;
-# Autodetect old-syntax code:
-if (!exists $opts{java})
-  {
-    my $non_java = grep(!/\.java$/, @$fns);
-    $opts{java} = !$non_java;
-    # which is to say, 1 if there are no non-java files, 0 otherwise
-  }
-$fns = new_to_old($fns) unless ($opts{java} || $opts{tokopi});
+$fns = new_to_old($fns) unless $opts{tokopi};
 exit(1) if !$fns;
 if ($opts{streamit}) {
   $fns = streamit_to_streamit($fns);
@@ -121,33 +114,35 @@ strc: StreamIt compiler wrapper
 
 Usage: strc [options] file.str ...
 	
-Options:
+ Options:
   --help              Show this screen
   --more-help         Include extra options
 * --much-more-help    Include internal-only options
-+ --java              Input file is "old" syntax (in Java)
-  --output, -o file   Write a binary to given filename
-  --uni               Compile for uniprocessor with C library (default)
-* --noexecutable      Do not create an executable (for configurations that might otherwise)
-  --raw n, -r n       Compile for Raw, with an n-by-n grid
-  --standalone, -S    Generate C file without library dependencies
-  --rstream, -R       Generate C file to be compiled by RStream compiler 
-* --streamit          Output of the compiler is a StreamIt program
+
   --cluster n         Compile for a networked cluster with n nodes
-* --viram             Compile for VIRAM, a vector uniprocessor
-* --backend class     Explicitly specify the backend class
   --library           Run in the Java library instead of compiling
-  --memory, -Xmx      Specify Java runtime heap limit
+  --raw n, -r n       Compile for Raw, with an n-by-n grid
+  --rstream, -R       Generate C file to be compiled by RStream compiler 
+  --simpleC           Uses basic backend (not full-featured) to generate C output
+* --standalone, -S    Use Raw backend to generate C file for uniprocessor
+* --streamit          Output of the compiler is a StreamIt program
+* --uni               Compile for uniprocessor with C library (deprecated)
+
+  --memory, -Xmx      Specify Java heap limit (applies to library and compiler)
+* --noexecutable      Do not create an executable (for configurations that might otherwise)
+  --output, -o file   Write a binary to given filename
   --verbose           Print commands as they are executed
 
-Options available for all backends:
+ Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
++ --countops          Add instrumentation to count arith ops (library or cluster)
 + --debug             Output debugging information in the compiler
 + --fusion            Fuse entire program to a single filter
-+ --fission           Do vertical fission up to limit of argument
++ --fission n         Do vertical fission up to limit of argument
+  --iterations n,-i n Specify number of iterations to run
   --linearreplacement, -l
                       Perform linear transformations based on analysis
 * --linearreplacement2
@@ -156,79 +151,74 @@ Options available for all backends:
 *                     Do linear replacement using diagonal replacement
 + --macros            Convert small functions to macros (inlining them)
 + --modfusion         Use wraparound buffers (vs. copying) for fusion
-* --nofieldprop       Do not propagate constant field values
 * --nolinearcollapse
 *                     Do not combine filters with linear replacement
++ --optfile class     Specify user-defined Java class for performing IR transformations
 + --print-partitioned-source
-+                     Print equivalent source after partitioning
++                     Print StreamIt source after partitioning
 * --redundantreplacement
 *                     Create linear filters without redundant computation
-* --server            Run with "java -server", faster for large programs
-* --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
-+ --sjtopipe          Convert split-joins to pipelines
-+ --statespace        Use state-space representation for linear analyses
+* --server            Run with "java -server", faster for large programs (default for library)
+* --sjtopipe          Convert split-joins to pipelines
+  --statespace        Use state-space representation for linear analyses
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
 * --sync              Turn on splitter/joiner coalescing (space/spacedynamic)
-  --unroll, -u        Specify loop unrolling limit
-+ --countops          Add instrumentation to count arith ops (library or cluster)
-+ --profile           Add a timer for each filter body (cluster)
+  --unroll n, -u n    Specify loop unrolling limit
 
-Options specific to Raw backend:
+ Options specific to Raw backend:
   --partition, -p     Automatically partition stream graph
 +   --partition-dp       Dynamic programming partitioner (default)
 +   --partition-greedy   Greedy partitioner (fuse lightest streams first)
 +   --partition-greedier Greedier partitioner (fuse lightest filter pairs)
-* --altcodegen        Alternate Raw communication code generation
 * --decoupled         Generate dummy communication code
 * --dpscaling         Collect theoretical scaling statistics
 * --forceunroll       Force unroll to -u amount (even if overflows IMEM)
-+ --manual            Specify Java class for performing manual optimizations
-  --magic-net, -M     Generate Raw "magic network" code
-* --noanneal          Do not run simulated annealing for layout
+* --magic-net, -M     Generate Raw "magic network" code
++ --manuallayout      Do not run simulated annealing for layout; ask user for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
-+ --ptraccess         Access buffers through a pointer
-+ --ratematch         Turn on rate matching
-  --rawcol, -c        Specify number of columns; --raw has number of rows
-+ --removeglobals     Inline all functions and turn globals into locals
+* --ratematch         Turn on rate matching
+  --rawcol n, -c n    Specify number of columns; --raw has number of rows
+* --removeglobals     Inline all functions and turn globals into locals
 + --simulatework, -s  Use simulator for work estimation
-* --spacetime         Use space-time partitioner
-* --spacedynamic      Use the space-muliplexing Raw backend with dynamic rate support
+* --space             Use space-only partitioner (deprecated)
+* --spacetime         Use space-time partitioner (experimental)
 * --dynamicnet        Use dynamic network for communication for space multplexing raw backend
-* --magicdram         Use magic DRAMs in the space-tile partitioner
   --wbs               Use work-based simulator for communication code
 * --steadymult n      For the SpaceTime Raw backend, multiply the steady-state multiplicities by n
 * --slicethresh n     For the SpaceTime backend use n% for the slice work threshold
-* --forceplacement    For the SpaceTime Raw backend, try to minimize communication in layout
-* --scheduler         For the SpaceTime Raw backend, either work, dep, or comm
-* --malloczeros       For spacedynamic, generate malloc instead of calloc (malloc will zero)
-* --nopartition       For spacedynamic, do not attempt to partition each static subgraph
-* --layoutfile        For spacedynamic, specify a layout file (a new-line separated list of tiles)
-* --devassignfile     For spacedynamic, specify a device-to-port assignment file (a new-line separated list of tiles)
+* --malloczeros       For default backend, generate malloc instead of calloc (malloc will zero)
+* --nopartition       For default backend, do not attempt to partition each static subgraph
+* --layoutfile f      For default backend, specify a layout file (a new-line separated list of tiles)
+* --devassignfile f   For default backend, specify a device-to-port assignment file (a new-line separated list of tiles)
 
-Options specific to cluster backend:
-* --noverbose         Do not generate ifdef s for configurations other than those specified in the switches 
++Options specific to Cluster backend:
++ --cacheopt          Optimize for cache sizes
++ --linearpartition, -L
++                     Automatically selecting targets of linear analyses
+* --numult            Do not increase multiplicity of partitions
+* --peekratio n       Expand filters so that (pops * n) >= (peeks - pops)
++ --profile           Add a timer for each filter body (cluster)
 
-Options specific to uniprocessor backend:
-  --frequencyreplacement, -F
-                      Convert FIR filters to frequency
-  --linearpartition, -L
-                      Automatically selecting targets of linear analyses
+*Options specific to deprecated uniprocessor backend:
+* --frequencyreplacement, -F
+*                     Convert FIR filters to frequency
+* --linearpartition, -L
+*                     Automatically selecting targets of linear analyses
 * --atlas             Use ATLAS for generated matrix multiplies
-+ --poptopeek         Convert all pop expressions into peeks
+* --poptopeek         Convert all pop expressions into peeks
 
-Options specific to the RStream backend:
-  --doloops           Generate doloops instead of for loops where possible
-  --absarray          Generate abstract arrays instead of C arrays
+ Options specific to the RStream backend:
++ --doloops           Generate doloops instead of for loops where possible (default)
++ --absarray          Generate abstract arrays instead of C arrays (default)
 
-Options specific to Java library backend:
-  --iterations, -i    Specify number of iterations to run
-  --norun             Schedule but do not run the program
-  --nosched           Run the program in pull mode, not under the scheduler
-  --marksteady        Print * after each steady-state execution
-  --printreps         Print number of times filters execute in schedule
-  --printsched        Print the full program schedule
-  --jcc               Use the JCC library
+ Options specific to Java library backend:
+* --norun             Schedule but do not run the program
++ --nosched           Run the program in pull mode, not under the scheduler
++ --marksteady        Print * after each steady-state execution
++ --printreps         Print number of times filters execute in schedule
++ --printsched        Print the full program schedule
+* --jcc               Use the JCC library (experimental)
 EOT
     $text =~ s/^\*/ /mg if $more >= 2;
     $text =~ s/^\+/ /mg if $more >= 1;
@@ -248,14 +238,11 @@ sub get_options
 			    "help",
 			    "more-help|help-more",
 			    "much-more-help|help-much-more",
-			    "java!",
 			    "output|o=s",
 			    "raw|r=i",
 			    "verbose|v",
 			    "optimize|O=i",
-			    "altcodegen",
 			    "atlas!",
-			    "backend=s",
 			    "clone-with-serialization|clone_with_serialization",
 			    "countops!",
 			    "debug!",
@@ -274,16 +261,14 @@ sub get_options
 			    "linearreplacement3",
 			    "magic-net|magic_net|M",
 			    "macros",
-			    "manual=s",
+			    "optfile=s",
 			    "memory|Xmx=s",
 			    "modfusion",
-			    "noanneal",
-			    "nofieldprop",
+			    "manuallayout",
 			    "nolinearcollapse",
 			    "noexecutable",
 			    "norun",
 			    "nosched",
-			    "noverbose",
 			    "numbers|N=i",
 			    "partition|p",
 			    "partition-dp|pdp",
@@ -295,23 +280,21 @@ sub get_options
 			    "printsched!",
 			    "print-partitioned-source|print_partitioned_source",
 			    "profile!",
-			    "ptraccess",
 			    "ratematch",
 			    "rawcol|c=i",
 			    "redundantreplacement",
 			    "removeglobals",
-			    "simplesjfusion",
 			    "simulatework|s",
 			    "sjtopipe",
-			    "spacetime!",
-			    "spacedynamic!",
+			    "space",
+			    "spacetime",
 			    "dynamicnet!",
 			    "statespace!",
 			    "absarray!",
 			    "doloops!",
-			    "magicdram!",
 			    "standalone|S",
 			    "rstream|R",
+			    "simpleC",
 			    "server!",
 			    "stats!",
 			    "streamit",
@@ -319,23 +302,18 @@ sub get_options
 			    "tokopi!",
 			    "uni",
 			    "unroll|u=i",
-			    "viram",
 			    "wbs!",
 			    "cluster=i",
 			    "steadymult=i",
 			    "slicethresh=i",
-			    "forceplacement!",
 			    "malloczeros!",
 			    "nopartition!",
 			    "layoutfile=s",
 			    "devassignfile=s",
-			    "scheduler=s",
 			    "destroyfieldarray!",
-			    "cacheopt!",
-			    "nomult!",
-			    "rename1!",
-			    "rename2!",
-			    "peekratio=i",
+			    "cacheopt!",# no documentation
+			    "nomult!",  # no documentation
+			    "peekratio=i", # no documentation
 			    "backendvalues|bevals=s",
 			    "jcc");
     return $result if !$result;
@@ -349,12 +327,14 @@ sub get_options
       !grep {$opts{partition} eq $_} ('dp', 'greedy', 'greedier');
     # If the user specified -O#, transform that into appropriate options,
     # but don't override things otherwise on the command line.
+    
     if (exists $opts{optimize})
       {
 	if ($opts{optimize} >= 2)
 	  {
 	    $opts{unroll} = 256 unless exists $opts{unroll};
-	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
+            # wait until fully debugged
+	    #$opts{removeglobals} = 1 unless exists $opts{removeglobals};
 	    $opts{partition} = "dp" unless $opts{partition};
             # macros don't work yet in the cluster backend
             $opts{macros} = 1 unless (exists $opts{macros} || exists $opts{cluster});
@@ -567,17 +547,16 @@ sub get_kjc_opts
   {
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
-    $opts{raw} && $opts{iterations} &&
-      ($kjcopts .= " --outputs " . $opts{iterations});
+    $opts{raw} && $opts{spacetime} && ($kjcopts .= " --spacetime");
+    $opts{raw} && $opts{space} && ($kjcopts .= " --space");
+    $opts{raw} && !$opts{spacetime} && !$opts{space} && ($kjcopts .= " --spacedynamic");
     if (exists $opts{partition})
       {
 	$opts{partition} eq 'dp' && ($kjcopts .= " --partition_dp");
 	$opts{partition} eq 'greedy' && ($kjcopts .= " --partition_greedy");
 	$opts{partition} eq 'greedier' && ($kjcopts .= " --partition_greedier");
       }
-    $opts{altcodegen} && ($kjcopts .= " --altcodegen");
     $opts{atlas} && ($kjcopts .= " --atlas");
-    $opts{backend} && ($kjcopts .= " --backend " . $opts{backend});
     $opts{'clone-with-serialization'} && ($kjcopts .= " --clone_with_serialization");
     $opts{countops} && ($kjcopts .= " --countops");
     $opts{debug} && ($kjcopts .= " --debug");
@@ -594,41 +573,39 @@ sub get_kjc_opts
     $opts{linearreplacement3} && ($kjcopts .= " --linearreplacement3");
     $opts{'magic-net'} && ($kjcopts .= " --magic_net");
     $opts{macros} && ($kjcopts .= " --macros ");
-    $opts{manual} && ($kjcopts .= " --manual " . $opts{manual});
+    $opts{optfile} && ($kjcopts .= " --optfile " . $opts{optfile});
     $opts{modfusion} && ($kjcopts .= " --modfusion");
-    $opts{noanneal} && ($kjcopts .= " --noanneal");
-    $opts{nofieldprop} && ($kjcopts .= " --nofieldprop");
+    $opts{manuallayout} && ($kjcopts .= " --manuallayout");
     $opts{nolinearcollapse} && ($kjcopts .= " --nolinearcollapse");
     $opts{numbers} && ($kjcopts .= " --numbers " . $opts{numbers});
+    !$opts{raw} && $opts{iterations} && 
+	($kjcopts .= " --i " . $opts{iterations});
+    $opts{raw} && $opts{iterations} &&
+	($kjcopts .= " --outputs " . $opts{iterations});
     $opts{poptopeek} && ($kjcopts .= " --poptopeek");
     $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
     $opts{profile} && ($kjcopts .= " --profile");
-    $opts{ptraccess} && ($kjcopts .= " --ptraccess");
     $opts{ratematch} && ($kjcopts .= " --ratematch");
     $opts{rawcol} && ($kjcopts .= " --rawcol ". $opts{rawcol});
     $opts{standalone} && ($kjcopts .= " --standalone");
-    $opts{rstream} && ($kjcopts .= " --rstream");
+    $opts{rstream} && ($kjcopts .= " --rstream --doloops --absarray");
+    $opts{simpleC} && ($kjcopts .= " --rstream");
     $opts{removeglobals} && ($kjcopts .= " --removeglobals");
-    $opts{simplesjfusion} && ($kjcopts .= " --simplesjfusion");
     $opts{simulatework} && ($kjcopts .= " --simulatework");
     $opts{sjtopipe} && ($kjcopts .= " --sjtopipe");
     $opts{statespace} && ($kjcopts .= " --statespace");
     $opts{stats} && ($kjcopts .= " --stats");
     $opts{sync} && ($kjcopts .= " --sync");
     defined $opts{unroll} && ($kjcopts .= " --unroll " . $opts{unroll});
-    $opts{viram} && ($kjcopts .= " --viram");
     $opts{cluster} && ($kjcopts .= " --cluster " . $opts{cluster});
     $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
     $opts{cacheopt} && ($kjcopts .= " --cacheopt");
     $opts{nomult} && ($kjcopts .= " --nomult");
-    $opts{rename1} && ($kjcopts .= " --rename1");
-    $opts{rename2} && ($kjcopts .= " --rename2");
     $opts{peekratio} && ($kjcopts .= " --peekratio " . $opts{peekratio});
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
-    $opts{spacedynamic} && ($kjcopts .= " --spacedynamic");
+    $opts{space} && ($kjcopts .= " --space");
     $opts{dynamicnet} && ($kjcopts .= " --dynamicnet");
-    $opts{magicdram} && ($kjcopts .= " --magicdram");
     $opts{absarray} && ($kjcopts .= " --absarray");
     $opts{doloops} && ($kjcopts .= " --doloops");
     $opts{forceplacement} && ($kjcopts .= " --forceplacement");
@@ -636,11 +613,9 @@ sub get_kjc_opts
     $opts{nopartition} && ($kjcopts .= " --nopartition");
     $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
     $opts{slicethresh} && ($kjcopts .= " --slicethresh ". $opts{slicethresh});
-    $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});
     $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});
     $opts{backendvalues} && ($kjcopts .= " --backendvalues \"". $opts{backendvalues}. "\"");
-    $opts{noverbose} && ($kjcopts .= " --noverbose");
     return $kjcopts;
 }
 

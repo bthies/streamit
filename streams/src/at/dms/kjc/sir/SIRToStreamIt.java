@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.29 2006-03-03 00:24:47 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.30 2006-05-22 22:45:12 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -211,21 +211,33 @@ public class SIRToStreamIt
                 if (!seenStreams.contains(o))
                     {
                         seenStreams.add(o);
-                        // Avoid builtins.
-                        if (!(o instanceof SIRPredefinedFilter))
-                            {
-                                theStream = o;
-                                o.accept(this);
-                                p.newLine();
-                            }
-                    }
+                        // Avoid Recursive stubs and avoid builtins
+                        if (o instanceof SIRRecursiveStub) {
+                            p.println("// Found unexpanded stub: " + o.getIdent() + " / " + o.getName());
+                        } else if (!(o instanceof SIRPredefinedFilter))  {
+                            theStream = o;
+                            o.accept(this);
+                            p.newLine();
+                        }
+                    }   
             }
     }
 
     private void printHeader(SIRStream self, String type)
     {
-        CType inType = self.getInputType();
-        CType outType = self.getOutputType();
+        CType inType = null;
+        try {
+            inType= self.getInputType();
+        } catch (RuntimeException x) {
+            // ignore errors thrown when dealing with a Recursive Stub
+        }
+        CType outType = null;
+        try {
+            outType = self.getOutputType();
+        } catch (RuntimeException x) {
+            // ignore errors thrown when dealing with a Recursive Stub
+        }
+ 
         // Consider special-case inputs and outputs for feedback loops.
         if (self instanceof SIRFeedbackLoop)
             {

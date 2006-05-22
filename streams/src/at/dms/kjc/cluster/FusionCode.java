@@ -333,8 +333,8 @@ class FusionCode {
             }
         }
 
-        p.print("#endif\n");
         }
+        p.print("#endif\n"); 
         
         try {
             p.close();

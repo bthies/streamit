@@ -251,12 +251,12 @@ complex->complex pipeline create_A() {
 
 complex->complex splitjoin convert_Xt_to_A(int Nch, int NabfTS, int alphaAbf) {
 
-  complex val;
-  val.real = sqrt(NabfTS);
-  val.imag = 0.0;
+  
+  float val_real = sqrt(NabfTS);
+  float val_imag = 0.0;
 
   split roundrobin(Nch*NabfTS,0);
-  add div_valComplex(val,Nch*NabfTS);
+  add div_valComplex2r(val_real, val_imag, Nch*NabfTS);
   add create_loading_matrix(Nch, alphaAbf);
   join roundrobin(NabfTS,Nch);
 }

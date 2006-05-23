@@ -1080,13 +1080,20 @@ complex->complex filter mult_valComplex2r(float valreal, float valimag, int N) {
 // input: N complex
 // output: N complex
 
-complex->complex filter div_valComplex(complex val, int N) {
+complex->complex filter div_valComplex2r(float val_real, float val_imag, int N) {
+
+  complex val;
+
+  init {
+      val.real = val_real;
+      val.imag = val_imag;
+  }
 
   work push N pop N {
-
       for(int i=0; i<N; i++) {
 	  complex popped = pop();
-	  push(popped/val);
+	  complex ratio = popped/val;
+	  push(ratio);
       }
   }
 }

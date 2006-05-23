@@ -68,9 +68,9 @@ fragments_cluster:
 	strc -cluster 1 -standalone $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
 
 
-fragments_rstream:
+fragments_simpleC:
 	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)
-	strc -rstream $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
+	strc -simpleC $(STRCFLAGS) GMTI_Fragment$(FRAGMENT).str $(FILES:%=%.str)
 
 fragments_uni:
 	(cat GMTI_Fragments.str | sed -e 's/FRAGMENT/$(FRAGMENT)/g' > GMTI_Fragment$(FRAGMENT).str)

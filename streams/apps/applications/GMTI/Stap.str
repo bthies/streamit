@@ -161,13 +161,14 @@ complex->complex pipeline data_to_A(int Npc, int NstapTS, int Nbm, int Nstag, in
   int x = Nbm*Nstag;
   int y = Nsrg+Npc-1;
 
-  complex val1;
-  val1.real = sqrt(NstapTS);
-  complex val2;
-  val2.real = sqrt(alphaStap);
+  float val1_real = sqrt(NstapTS);
+  float val1_imag = 0.0;
+  float val2_real = sqrt(alphaStap);
+  float val2_imag = 0.0;
 
   add partial_2d_matrix(x,y,0,x-1,start,end);
-  add div_valComplex(val1,x*NstapTS);
+  // add div_valComplex2r(val1, x*NstapTS);
+  add div_valComplex2r(val1_real, val1_imag, x*NstapTS);
 
   add splitjoin {
     split roundrobin(x*NstapTS,0);
@@ -175,7 +176,8 @@ complex->complex pipeline data_to_A(int Npc, int NstapTS, int Nbm, int Nstag, in
     add pipeline {
       add eye(x);
       add ConvertFloatToComplex(x*x);
-      add mult_valComplex(val2,x*x);
+      //add mult_valComplex(val2, x*x);
+      add mult_valComplex2r(val2_real, val2_imag, x*x);
     }
     join roundrobin(NstapTS,x);
   }
@@ -192,7 +194,7 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
 
     add pipeline {
 
-      complex c = 0.0 + pi*2.0i;
+      //complex c = 0.0 + pi*2.0i;
 
       add splitjoin {
         split roundrobin(1,0);
@@ -202,7 +204,8 @@ complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
       }
 
       add multiply_by_constant_c(Nstag);
-      add mult_valComplex(c,Nstag);
+      //add mult_valComplex(c,Nstag);
+      add mult_valComplex2r(0.0, pi*2.0, Nstag);
       add exp_vector(Nstag);
     }
 
@@ -291,12 +294,12 @@ complex->complex pipeline create_V2space(int N, int Nch, int Nbm, int Ncnb, floa
 
 void->complex pipeline create_dops(int Ndop) {
 
-  complex val;
-  val.real = Ndop;
+  float val_real = Ndop;
+  float val_imag = 0.0;
 
   add gen_ints(0,Ndop-1);
   add fftshift_1d(Ndop);
-  add div_valComplex(val,Ndop);
+  add div_valComplex2r(val_real, val_imag, Ndop);
 }
 
 

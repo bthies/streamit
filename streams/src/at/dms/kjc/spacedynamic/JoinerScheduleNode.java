@@ -111,7 +111,7 @@ public class JoinerScheduleNode {
             ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
             ret.append(");\n");
         } else { // scalar or array type
-//            if (!KjcOptions.altcodegen || KjcOptions.decoupled)
+            if (/*!KjcOptions.altcodegen ||*/ KjcOptions.decoupled)
             ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
             if (nextDup) {
                 ret.append(DUPVAR);

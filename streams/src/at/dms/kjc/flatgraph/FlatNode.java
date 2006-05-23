@@ -416,6 +416,27 @@ public class FlatNode {
     }
 
     /**
+     * Return true if this flat node is a null splitter.
+     * 
+     * @return true if this flat node is a null splitter.
+     */
+    public boolean isNullSplitter() {
+        if (isSplitter() && getTotalOutgoingWeights() == 0) {
+            assert getTotalIncomingWeights() == 0;
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isNullJoiner() {
+        if (isJoiner() && getTotalIncomingWeights() == 0) {
+            assert getTotalOutgoingWeights() == 0;
+            return true;
+        }
+        return false;
+    }
+    
+    /**
      * Return True if the underlying SIROperator is a joiner and that joiner
      * is directly contained in an SIRFeedbackLoop.
      * 

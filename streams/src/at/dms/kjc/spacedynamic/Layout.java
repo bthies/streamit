@@ -1122,23 +1122,26 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         return false;
     }
 
+    /**
+     * Decide whether this joiner should be assigned to a tile.  Don't assign
+     * null joiners or joiners that output to a joiner.
+     * 
+     * @param node The flatnode to check.
+     * @return True if we should assign this joiner to a tile.
+     */
     public static boolean assignedJoiner(FlatNode node) {
         assert node.isJoiner();
+        //don't assign null joiners with zero weights
         if (node.edges.length == 0) {
             assert node.getTotalIncomingWeights() == 0;
             return false;
         }
-        // do not assign joiners directly connected to other joiners or null
-        // joiners
-        if (node.edges[0] != null
-            || !(node.edges[0].contents instanceof SIRJoiner)) {
-            for (int i = 0; i < node.inputs; i++) {
-                if (node.incomingWeights[i] != 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        
+        //don't need this joiner if it is connected to a joiner downstream
+        if (node.edges[0] != null && node.edges[0].isJoiner())
+            return false;
+        
+        return true;
     }
 
     /** END simulated annealing methods * */

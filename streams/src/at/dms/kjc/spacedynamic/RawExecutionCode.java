@@ -157,7 +157,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             }
 
             //if we get here, then we need a buffer!
-            if (ssg.isInput(node)) {             // dynamic input
+            if (ssg.isInput(node) || ssg.simulator instanceof NoSimulator) {             // dynamic input
                 // create dynamic network code and a circular buffer
                 (new BufferedDynamicCommunication(ssg, node)).doit();
             } else {

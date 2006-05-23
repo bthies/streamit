@@ -21,6 +21,11 @@ import java.util.Iterator;
  * @author mgordon
  */
 public class FileState implements StreamGraphVisitor, FlatVisitor {
+    /** set to true if you want to query the user for the port assignment
+     * for each file reader and writer.
+     */
+    private static final boolean MANUAL = false;
+    
     // true if the graph contains a fileReader
     public boolean foundReader;
 
@@ -44,7 +49,10 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     // the buffered reader from where we get the assignment
     private BufferedReader inputBuffer;
 
-   
+    /** As we are assigning ports to readers, this is the next port num to assign */
+    private int readerPort;
+    /** As we are assigning ports to writers, this is the next port num to assign */
+    private int writerPort;
     
     public void visitStaticStreamGraph(StaticStreamGraph ssg) {
         ssg.getTopLevel().accept(this, new HashSet(), false);
@@ -58,6 +66,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         fileReaders = new HashMap();
         fileWriters = new HashMap();
         fileNodes = new HashSet();
+        
+        readerPort = 0;
+        writerPort = rawChip.getNumPorts() / 2;
 
         if (KjcOptions.devassignfile != null) {
             try { // read from the file specified...
@@ -102,9 +113,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
                 dev.setDynamic();
             }
 
-            IOPort port = getPortFromUser(dev);
+            IOPort port = getPort(dev);
             rawChip.connectDevice(dev, port);
-
+            System.out.println("Assigning " + dev + " to " + port + ".");
             fileReaders.put(node, dev);
             foundReader = true;
         } else if (node.contents instanceof SIRFileWriter) {
@@ -117,14 +128,35 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             }
 
 
-            IOPort port = getPortFromUser(dev);
+            IOPort port = getPort(dev);
             rawChip.connectDevice(dev, port);
-
+            System.out.println("Assigning " + dev + " to " + port + ".");
             foundWriter = true;
             fileWriters.put(node, dev);
         }
     }
 
+    private IOPort getPort(IODevice dev) {
+        //if we want to query the user, then do it
+        if (MANUAL)
+            return getPortFromUser(dev);
+        //assign automatically, file readers start from port 0
+        //and increase to max port -1
+        if (dev.isFileReader()) {
+            assert readerPort >=0 && readerPort < rawChip.getNumPorts() :
+                "Error assigning ports to file reader: probably too many file readers.";
+            return rawChip.getIOPort(readerPort++);
+            
+        } else {
+            //file writers start at maxport / 2 and go to maxPort / 2 - 1
+            assert writerPort >=0 && writerPort < rawChip.getNumPorts() :
+                 "Error assigning ports to file writer: probably too many file writers.";
+            IOPort port = rawChip.getIOPort(writerPort); 
+            writerPort = (writerPort + 1) & rawChip.getNumPorts();
+            return port;
+        }
+    }
+    
     private IOPort getPortFromUser(IODevice dev) {
         int num;
 

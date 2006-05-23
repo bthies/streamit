@@ -63,7 +63,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         this.node = node;
         this.filter = (SIRFilter) node.contents;
         // if this is a source of an ssg then set dynamicInput
-        dynamicInput = ssg.isInput(node);
+        dynamicInput = ssg.isInput(node) || SSG.simulator instanceof NoSimulator;
     }
 
     private boolean canRun() {
@@ -271,9 +271,11 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
             // if this is a struct, use the struct's pop method, generated in
             // struct.h
             if (self.getType().isClassType()) {
-                return new JMethodCallExpression(null,
+                JMethodCallExpression receive = new JMethodCallExpression(null,
                                                  new JThisExpression(null), "pop" + self.getType(),
                                                  new JExpression[0]);
+                receive.setTapeType(self.getType());
+                return receive;
             } else if (self.getType().isArrayType()) {
                 return null;
             } else {

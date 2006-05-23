@@ -95,4 +95,8 @@ public class IOPort extends ComputeNode {
         assert false : "invalid x, y coordinate for streaming dram";
         return -1;
     }
+    
+    public String toString() {
+        return "IOPort " + port;
+    }
 }

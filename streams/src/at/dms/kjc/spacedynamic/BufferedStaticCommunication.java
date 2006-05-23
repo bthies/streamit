@@ -893,7 +893,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                                                              null, 
                                                                              accessBufferVar(localVariables.recvBuffer),
                                                                              increment);
-                    
+            bufferAccess.setType(self.getType());
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
         }
@@ -918,7 +918,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                                                              null,
                                                                              accessBufferVar(localVariables.recvBuffer),
                                                                              index);
-
+            bufferAccess.setType(self.getType());
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
 
@@ -974,7 +974,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                                                              null, 
                                                                              accessBufferVar(localVariables.recvBuffer),
                                                                              indexAnd);
-                    
+            bufferAccess.setType(self.getType());
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
         }
@@ -1009,7 +1009,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                                                              null,
                                                                              accessBufferVar(localVariables.recvBuffer),
                                                                              indexAnd);
-
+            bufferAccess.setType(self.getType());
             // return the parenthesed expression
             return new JParenthesedExpression(null, bufferAccess);
         }

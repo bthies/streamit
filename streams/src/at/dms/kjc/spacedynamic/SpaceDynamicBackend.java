@@ -112,8 +112,11 @@ public class SpaceDynamicBackend {
         //create the static stream graphs cutting at dynamic rate boundaries
         streamGraph.createStaticStreamGraphs();
 
+        assert streamGraph.getStaticSubGraphs().length > 0 : 
+            "Error creating static subgraph of application, there are no graphs!";
+        
         //assign tiles to each static stream graph
-        if (KjcOptions.nopartition)  //if we don't want to partition the SSGs just ass the necc tiles to each
+        if (KjcOptions.nopartition || streamGraph.getStaticSubGraphs().length == 1)  //if we don't want to partition the SSGs just ass the necc tiles to each
             streamGraph.tileAssignment();
         else  //otherwise ask user...
             streamGraph.handTileAssignment();

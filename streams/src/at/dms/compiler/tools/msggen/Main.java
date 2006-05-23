@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.2 2006-01-25 17:01:16 thies Exp $
+ * $Id: Main.java,v 1.3 2006-05-23 22:01:12 dimock Exp $
  */
 
 package at.dms.compiler.tools.msggen;
@@ -27,8 +27,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Hashtable;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
+//import gnu.getopt.Getopt;
+//import gnu.getopt.LongOpt;
 
 /**
  * This class is the entry point for the Message generator.

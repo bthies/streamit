@@ -13,18 +13,28 @@
 // % [pi2*fc = carrier frequency]
 // % Fast-time baseband conversion
 // s=s.*exp(-cj*pi2*fc*t(:)*ones(1,mc));
-void->complex filter genRawSAR()
+void->complex filter genRawSAR(float PI2,
+                               float L,
+                               float c,
+                               float Xc,
+                               float fc,
+                               float f0,
+                               float Tp,
+                               float Tf,
+                               int n,
+                               int mc, 
+                               int ntarget,
+                               float[n] t,
+                               float[mc] uc,
+                               float[ntarget] xn,
+                               float[ntarget] yn,
+                               float[ntarget] fn)
 {
-// DEPENDS ON
-// n, mc, ntarget
-// Xc, c
-// t[], xn[], yn[], fn[], uc[]
-// Tp, Tf
-// PI2
-// fc, f0
     work push n*mc {
-        complex[n][mc] S = {0};
-    
+        float[n][mc]   td;
+        complex[n][mc] S;
+        
+        // for i=1:ntarget;   
         for (int h = 0; h < ntarget; h++) {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < mc; j++){
@@ -33,7 +43,8 @@ void->complex filter genRawSAR()
                     
                     // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
                     //     .* (td >= 0 & td <= Tp & ones(n,1)*abs(uc) <= L & t(:)*ones(1,mc) < Tf);
-                    if ((td[i][j] >= 0.0) && (td[i][j] <= Tp) && (fabs(uc[j]) <= L) && (t[i] < Tf)) {
+                    // NOTE: check if abs() is a floating poitn abs() function
+                    if ((td[i][j] >= 0.0) && (td[i][j] <= Tp) && (abs(uc[j]) <= L) && (t[i] < Tf)) {
                         // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
                         float value  = PI2 * ((fc - f0) * td[i][j] + (f0 / Tp) * pow(td[i][j], 2));
                         S[i][j].real += fn[h] * cos(value);
@@ -49,13 +60,12 @@ void->complex filter genRawSAR()
             float cos_value = cos(PI2 * fc * t[i]);
             float sin_value = sin(PI2 * fc * t[i]);
             
-            for(int j = 0; j < mc; j++) {
-                complex output;
+            for (int j = 0; j < mc; j++) {
+                complex out;
                 
-                output.real = S[i][j].real * cos_value + S[i][j].imag * sin_value;
-                output.imag = S[i][j].imag * cos_value - S[i][j].real * sin_value;         
-                
-                push(output);
+                out.real = S[i][j].real * cos_value + S[i][j].imag * sin_value;
+                out.imag = S[i][j].imag * cos_value - S[i][j].real * sin_value;         
+                push(out);
             }
         }
     }
@@ -69,12 +79,15 @@ void->complex filter genRawSAR()
 // % Baseband reference fast-time signal
 // s0=s0.*exp(-cj*pi2*fc*t(:));
 // fast_time_filter = (conj(ftx(s0))*ones(1,mc));
-void->complex pipeline FastTimeFilter() 
+void->complex pipeline FastTimeFilter(float PI2, 
+                                      float c,
+                                      float Xc,
+                                      float fc,
+                                      float f0,
+                                      float Tp,
+                                      int n,
+                                      float[n] t) 
 {
-// DEPENDS ON
-// t[]
-// fc, f0, Tp
-// PI2
     add void->complex filter {
         work push n {
             float[n] td0;
@@ -94,7 +107,7 @@ void->complex pipeline FastTimeFilter()
                 // else { s0[i].real=0; s0[i].imag=0; }
                 
                 // s0=s0.*exp(-cj*pi2*fc*t(:));
-                flaot value = PI2 * fc * t[i];
+                float value = PI2 * fc * t[i];
                 float cos_value = cos(value);
                 float sin_value = sin(value);
                 
@@ -111,9 +124,9 @@ void->complex pipeline FastTimeFilter()
     add complex->complex filter {
         work pop n push n {
             for (int i = 0; i < n; i++) {
-                complex output = pop();
-                output.imag = 0 - output.imag;
-                push(output);
+                complex out = pop();
+                out.imag = 0 - out.imag;
+                push(out);
             }
         }
     }

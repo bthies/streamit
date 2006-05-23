@@ -73,7 +73,7 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * This method creates the static subgraphs of the StreamGraph but cutting
+     * This method creates the static subgraphs of the StreamGraph by cutting
      * the stream graph at dynamic rate boundaries, right now the top level flat
      * node has to be a filter
      **************************************************************************/
@@ -94,7 +94,8 @@ public class StreamGraph {
             // added
             assert !visited.contains(top);
             // dynamic boundaries can only be filters!
-            assert top.isFilter() : "Error: Toplevel node for a static subgraph is not filter";
+            assert top.isFilter() || top.isNullSplitter() : 
+                "Error: Toplevel node for a static subgraph is not filter or null splitter!";
             StaticStreamGraph ssg = new StaticStreamGraph(this, top);
             // set topleve;
             if (topLevel == null)
@@ -237,30 +238,34 @@ public class StreamGraph {
     }
 
     /**
-     * This method cuts the connects from <pre>upstream</pre> to <pre>downstream</pre> in the
+     * This method cuts the connections from <pre>upstream</pre> to <pre>downstream</pre> in the
      * flatgraph and in the SIR graph, sets the types of the input of
      * <pre>downstream</pre> and output of <pre>upstream</pre> to void, and sets the appropriate
      * rates to 0
      */
     private void cutGraph(FlatNode upstream, FlatNode downstream) {
         // System.out.println("*** Cut Graph ***");
-        assert upstream.isFilter() && downstream.isFilter();
-        SIRFilter upFilter = (SIRFilter) upstream.contents;
-        SIRFilter downFilter = (SIRFilter) downstream.contents;
-
-        assert upFilter.getPush().isDynamic()
-            || downFilter.getPeek().isDynamic()
-            || downFilter.getPop().isDynamic();
-
-        // reset upstream
-        upFilter.setPush(new JIntLiteral(0));
-        upFilter.setOutputType(CStdType.Void);
-        upstream.removeEdges();
+        //The upstream has to be a filter or a null joiner,
+        //The downstream has to be a null splitter 
+        assert (upstream.isFilter() || upstream.isNullJoiner()) && 
+                (downstream.isFilter() || (downstream.isNullSplitter()));
+      
+        if (upstream.isFilter()) {
+            SIRFilter upFilter = (SIRFilter) upstream.contents;
+            // reset upstream
+            upFilter.setPush(new JIntLiteral(0));
+            upFilter.setOutputType(CStdType.Void);
+            upstream.removeEdges();
+        }
+        
         // reset downstream
-        downFilter.setPop(new JIntLiteral(0));
-        downFilter.setPeek(new JIntLiteral(0));
-        downFilter.setInputType(CStdType.Void);
-        downstream.removeIncoming();
+        if (downstream.isFilter()) {
+            SIRFilter downFilter = (SIRFilter) downstream.contents;
+            downFilter.setPop(new JIntLiteral(0));
+            downFilter.setPeek(new JIntLiteral(0));
+            downFilter.setInputType(CStdType.Void);
+            downstream.removeIncoming();
+        }
     }
 
     /**
@@ -342,7 +347,8 @@ public class StreamGraph {
     }
 
     /***************************************************************************
-     * Return true if the source of this stream, <pre>stream</pre> has dynamic rate input
+     * Return true if the source of this stream, <pre>stream</pre> has 
+     * dynamic rate input
      **************************************************************************/
     public boolean dynamicEntry(SIRStream stream) {
         if (stream instanceof SIRFilter) {

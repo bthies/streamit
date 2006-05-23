@@ -124,7 +124,14 @@ public class StaticStreamGraph {
     /** add a source node to this SSG and add it to the toplevel * */
     public void addTopLevelFlatNode(FlatNode node) {
         // System.out.println("AddTopLevelNode " + node + " to " + id) ;
-        assert node.isFilter();
+        assert node.isFilter() || node.isNullSplitter();
+        
+        //nothing to do for a null splitter!!!
+        if (node.isNullSplitter()) {
+            topLevel = node;
+            return;
+        }
+        
         SIRFilter filter = (SIRFilter) node.contents;
         // checks on the filter
         assert filter.getPopInt() == 0 && filter.getPeekInt() == 0;

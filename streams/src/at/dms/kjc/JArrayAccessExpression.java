@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.16 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JArrayAccessExpression.java,v 1.17 2006-05-23 05:20:24 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -245,6 +245,10 @@ public class JArrayAccessExpression extends JExpression {
         prefix = p;
     }
 
+    public void setType(CType type) {
+        this.type = type;
+    }
+    
     /**
      * In the case when the prefix of this is a one-dimensional array
      * that is a local variable, resolves the type of this by looking

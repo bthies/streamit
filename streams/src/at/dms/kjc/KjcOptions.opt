@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.75 2006-05-24 03:38:31 rabbah Exp $
+ * $Id: KjcOptions.opt,v 1.76 2006-05-24 18:31:57 dimock Exp $
  */
 
 prefix Kjc
@@ -141,7 +141,7 @@ longname		"print_partitioned_source"
 longname		"debug"
 	type		boolean
 	default		"false"
-	help		"Produces debug information (not much yet)"
+	help		"Produces debug information (does nothing yet)"
 
 /* remove: we are dependent on FieldProp */
 /* longname		"nofieldprop" */
@@ -422,6 +422,15 @@ longname 		"outputs"
 	requireArgument
 	help		"Run the application until it produces <n> outputs (RAW only)."
 
+/* Not yet used, but intended for backends that build a number of iterations to run into */
+/* the code or into a value in a Makefile */ 
+longname 		"iterations"
+        shortcut        "i"
+	type		int
+	default 	"-1"
+	requireArgument
+	help		"Run the application for <n> steady-state iterations.."
+
 longname		"struct"
 	type		boolean
 	default		"false"
@@ -480,10 +489,11 @@ longname 		"modfusion"
 	default		"false"
 	help		"Use circular buffer with mod operations when fusing pipelines."
 
-longname		"dynamicnet"
-	type 		boolean
-	default		"false"
-	help		"Use general dynamic network for space multiplexing raw backend."
+// removed as per MGordon's request: no longer used
+// longname		"dynamicnet"
+// 	type 		boolean
+// 	default		"false"
+// 	help		"Use general dynamic network for space multiplexing raw backend."
 
 longname 		"spacedynamic"
 	type		boolean

@@ -518,6 +518,52 @@ public class SplitJoin extends Stream
                                                      int w5,
                                                      int w6,
                                                      int w7,
+                                                     int w8)
+    {
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7)
+            .addWeight(w8);
+    }
+
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+                                                     int w1,
+                                                     int w2,
+                                                     int w3,
+                                                     int w4,
+                                                     int w5,
+                                                     int w6,
+                                                     int w7,
+                                                     int w8,
+                                                     int w9,
+                                                     int w10)
+    {
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7)
+            .addWeight(w8)
+            .addWeight(w9)
+            .addWeight(w10);
+    }
+
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+                                                     int w1,
+                                                     int w2,
+                                                     int w3,
+                                                     int w4,
+                                                     int w5,
+                                                     int w6,
+                                                     int w7,
                                                      int w8,
                                                      int w9,
                                                      int w10,

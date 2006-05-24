@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.76 2006-05-22 19:45:22 dimock Exp $
+# $Id: strc,v 1.77 2006-05-24 18:21:08 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -45,6 +45,17 @@ $java = $java . " -ea";
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");
 
+my $compiler_opts;
+my $lib_opts;
+
+###
+# Process command line
+#
+# $fns      : reference to array of file names.
+# %opts     : options with minimal processing, indicates what backend needed.
+# %lib_opts : options to be passed to library backend, sanitized.
+# %compiler_opts : options to be passed to compioler backends, sanitized. 
+###
 get_options() or die "Error parsing options";
 if ($opts{'much-more-help'})
   {
@@ -78,33 +89,85 @@ strc: StreamIt compiler wrapper
 Usage: strc [options] file.str ...
 Run 'strc --help' for option listing
 EOH
-    exit(0);
+    exit(1);
   }
+if ($opts{library}) {
+    $lib_opts = get_lib_opts();
+} else {
+    $compiler_opts = get_compiler_opts();
+}
 my $fns = \@ARGV;
-$fns = new_to_old($fns) unless $opts{tokopi};
+
+###
+#
+# Compile through various stages:
+#
+###
+
+# convert streamit to java. 
+$fns = streamit_to_java($fns) unless $opts{tokopi};
 exit(1) if !$fns;
+
+# if --streamit flag to strc: 
 if ($opts{streamit}) {
-  $fns = streamit_to_streamit($fns);
+  $fns = java_to_streamit($fns);
   exit(1) if !$fns;
   # Stop now if no other backends were requested.
-  exit(0) unless $opts{'library'} || $opts{'uni'} || $opts{raw} ||
-    $opts{cluster};
-  # Well, okay, get old syntax again.
-  $fns = new_to_old($fns) unless $opts{tokopi};
+  exit(0) unless non_streamit_backend_defined();
+
+  # Want both streamit output and compilation / library.
+  $fns = streamit_to_java($fns) unless $opts{tokopi};
 }
 exit(1) if !$fns;
+
+# --library requested: run in library and exit since this is compile & go. 
 if ($opts{'library'}) {
     exit(1) if ! defined run_in_library($fns);
     exit(0);
 }
-$fns = old_to_c($fns) unless $opts{tokopi};
+
+# generate c either from java(ish) or via tokopi/
+if ($opts{tokopi}) {
+    $fns = to_c_via_tokopi($fns)
+} else {
+    $fns = java_to_c($fns);
+}
 exit(1) if !$fns;
-$fns = new_to_c($fns) if $opts{tokopi};
-exit(1) if !$fns;
-$fns = c_to_out($fns, $opts{output}) unless 
-    ($opts{raw} || $opts{cluster} || $opts{absarray} || $opts{doloops} || $opts{noexecutable});
+
+$fns = c_to_out($fns, $opts{output}  || "a.out") if 
+    ($opts{simpleC} || $opts{uni}) && ! $opts{noexecutable};
 exit(1) if !$fns;
 exit(0);
+
+###
+# 
+# Back end defined (other than --streamit)?
+#
+# --streamit is odd case as can run through --streamit then through another
+# back end.
+#
+###
+
+sub non_streamit_backend_defined {
+    return $opts{library} || $opts{cluster} || $opts{raw} || $opts{rstream} ||
+	$opts{simpleC} || $opts{uni};
+}
+
+###
+# 
+# Back end defined?
+#
+###
+
+sub backend_defined {
+    return non_streamit_backend_defined() || $opts{streamit};
+}
+
+###
+#
+# Print help information
+#
+###
 
 sub usage
   {
@@ -183,7 +246,6 @@ Usage: strc [options] file.str ...
 + --simulatework, -s  Use simulator for work estimation
 * --space             Use space-only partitioner (deprecated)
 * --spacetime         Use space-time partitioner (experimental)
-* --dynamicnet        Use dynamic network for communication for space multplexing raw backend
   --wbs               Use work-based simulator for communication code
 * --steadymult n      For the SpaceTime Raw backend, multiply the steady-state multiplicities by n
 * --slicethresh n     For the SpaceTime backend use n% for the slice work threshold
@@ -288,7 +350,6 @@ sub get_options
 			    "sjtopipe",
 			    "space",
 			    "spacetime",
-			    "dynamicnet!",
 			    "statespace!",
 			    "absarray!",
 			    "doloops!",
@@ -317,6 +378,18 @@ sub get_options
 			    "backendvalues|bevals=s",
 			    "jcc");
     return $result if !$result;
+
+    # determine back-end:
+    
+    # if no backend specified, then cluster -1
+    backend_defined() || ($opts{cluster} = 1 &&  $opts{standalone} = 1);
+
+    # if simpleC specified then rstream, ignoring ignore doloops, absarray
+    if ($opts{simpleC}) {
+	$opts{doloops} = 0;
+	$opts{absarray} = 0;
+    }
+
     # Figure out which partitioning is in use, if any:
     $opts{partition} = "greedier" if $opts{'partition-greedier'};
     $opts{partition} = "greedy" if $opts{'partition-greedy'};
@@ -325,6 +398,7 @@ sub get_options
     # but none of these options.
     $opts{partition} = "dp" if $opts{partition} &&
       !grep {$opts{partition} eq $_} ('dp', 'greedy', 'greedier');
+
     # If the user specified -O#, transform that into appropriate options,
     # but don't override things otherwise on the command line.
     
@@ -333,8 +407,6 @@ sub get_options
 	if ($opts{optimize} >= 2)
 	  {
 	    $opts{unroll} = 256 unless exists $opts{unroll};
-            # wait until fully debugged
-	    #$opts{removeglobals} = 1 unless exists $opts{removeglobals};
 	    $opts{partition} = "dp" unless $opts{partition};
             # macros don't work yet in the cluster backend
             $opts{macros} = 1 unless (exists $opts{macros} || exists $opts{cluster});
@@ -342,7 +414,6 @@ sub get_options
 	if ($opts{optimize} >= 1)
 	  {
 	    $opts{unroll} = 16 unless exists $opts{unroll};
-	    $opts{ratematch} = 1 unless exists $opts{ratematch};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
 	    $opts{destroyfieldarray} = 1 unless
 	      exists $opts{destroyfieldarray};
@@ -353,6 +424,7 @@ sub get_options
 	    $opts{unroll} = 0 unless exists $opts{unroll};
 	  }
       }
+
     return 1;
   }
 
@@ -392,7 +464,17 @@ sub remove_extension
     return $fn;
   }
 
-sub new_to_old
+###
+#
+# Convert StreamIt to java (library) or java_ish (compilers)
+#
+# returning array containing first file name with .java extension if
+# compilation successful, undef if compilation unsuccessful, and empty
+# array if asked to compile 0 files. 
+#
+###
+
+sub streamit_to_java
   {
     my ($fns) = @_;
     return [] if !@$fns;
@@ -411,11 +493,26 @@ sub new_to_old
     return [$target];
   }
 
-sub streamit_to_streamit
+
+###
+#
+# Convert a java file to StreamIt.
+# converts foo1.java ... fooN.java to foo1_c.str
+#
+# More useful: if you started with foo1.str ... fooN.str, then 
+# streamit_to_java followed by java_to_streamit gets you foo1_c.str
+# which may show effects of optimizations: result of strc --steamit
+#
+# TODO: does not work followed by another backend since SIRToStreamit changed 
+# to output on stderr as a code dumper.  Need additional flag to SIRToStreamit
+# to say: dump to stdout. 
+#
+###
+
+sub java_to_streamit
   {
     my ($fns) = @_;
     return [] if !@$fns;
-    my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
@@ -424,43 +521,54 @@ sub streamit_to_streamit
     $target =~ s/^([^.]*)/$1_c/;
     my $result = call("$java $xmx $server at.dms.kjc.Main --streamit " .
 		      "--backend at.dms.kjc.sir.SIRToStreamIt " .
-		      "$kjcopts $jfiles > $target");
+		      "$compiler_opts $jfiles > $target");
     return undef if $result != 0;
     return [$target];
   }
 
-sub old_to_c
+###
+#
+# Use requested backend to produce C / C++ code
+#
+###
+
+sub java_to_c
   {
     my ($fns) = @_;
     return [] if !@$fns;
-    my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $server = $opts{server} ? "-server" : "";
     my $jfiles = join(' ', @$fns);
-    if (!$opts{raw} && !$opts{standalone} && !$opts{cluster} && !$opts{rstream})
+    if ($opts{uni})	     # uni backend writes to stdout: TODO fix some day
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts " .
+	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts " .
 			  "$jfiles > $target");
 	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $jfiles");
+	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles");
 	return undef if $result != 0;
-	return ["tile0.c"] if $opts{standalone};
-	return ["str.c"] if $opts{rstream};
+	# TODO: implement --output flags to backends.
+	return ["tile0.c"] if $opts{raw} && $opts{standalone};
+	return ["str.c"] if $opts{simpleC} || $opts{rstream};
 	return [];
       }
   }
 
-sub new_to_c
+###
+#
+# un-supported translation using to-kopi.
+#
+###
+
+sub streamit_via_tokopi
   {
     my ($fns) = @_;
     return [] if !@$fns;
-    my $kjcopts = get_kjc_opts();
     my $xmx = "-Xmx" . $opts{memory};
     my $server = $opts{server} ? "-server" : "";
     my $sfiles = join(' ', @$fns);
@@ -469,17 +577,24 @@ sub new_to_c
       {
 	my $target = change_extension($fns->[0], "str", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	$result = call("$java $xmx $server streamit.frontend.ToKopi $kjcopts $sfiles > $target");
+	$result = call("$java $xmx $server streamit.frontend.ToKopi $compiler_opts $sfiles > $target");
 	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	$result = call("$java $xmx $server at.dms.kjc.Main --streamit $kjcopts $sfiles");
+	$result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $sfiles");
 	return undef if $result != 0;
 	return [];
       }
   }
+
+###
+#
+# "library" back end: Compile java file from front end and run. 
+#  (must call streamit_to_java first).
+#
+###
 
 sub run_in_library
   {
@@ -501,6 +616,15 @@ sub run_in_library
     return [];
   }
 
+
+###
+#
+# Take output of --simpleC or --uni and create executable.
+#
+# eventually expand to create output for --cluster 1 -standalone (TODO) 
+#
+###
+
 sub c_to_out
   {
     my ($fns, $target) = @_;
@@ -515,7 +639,7 @@ sub c_to_out
     my $incflags = "";
     my $libflags = "";
 
-    if ($opts{rstream}) 
+    if ($opts{simpleC}) 
     {
 	  $libs .= " -lm";
     }
@@ -543,86 +667,93 @@ sub c_to_out
     return [$tfn];
   }
 
-sub get_kjc_opts
+###
+#
+# Get and mung options to pass to compiled backends
+#
+###
+
+sub get_compiler_opts
   {
-    my $kjcopts = "";
-    $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
-    $opts{raw} && $opts{spacetime} && ($kjcopts .= " --spacetime");
-    $opts{raw} && $opts{space} && ($kjcopts .= " --space");
-    $opts{raw} && !$opts{spacetime} && !$opts{space} && ($kjcopts .= " --spacedynamic");
+    my $copts = "";
+    $opts{raw} && ($copts .= " -raw " . $opts{raw});
+    $opts{raw} && $opts{spacetime} && ($copts .= " --spacetime");
+    $opts{raw} && $opts{space} && ($copts .= " --space");
+    $opts{raw} && !$opts{spacetime} && !$opts{space} && ($copts .= " --spacedynamic");
     if (exists $opts{partition})
       {
-	$opts{partition} eq 'dp' && ($kjcopts .= " --partition_dp");
-	$opts{partition} eq 'greedy' && ($kjcopts .= " --partition_greedy");
-	$opts{partition} eq 'greedier' && ($kjcopts .= " --partition_greedier");
+	$opts{partition} eq 'dp' && ($copts .= " --partition_dp");
+	$opts{partition} eq 'greedy' && ($copts .= " --partition_greedy");
+	$opts{partition} eq 'greedier' && ($copts .= " --partition_greedier");
       }
-    $opts{atlas} && ($kjcopts .= " --atlas");
-    $opts{'clone-with-serialization'} && ($kjcopts .= " --clone_with_serialization");
-    $opts{countops} && ($kjcopts .= " --countops");
-    $opts{debug} && ($kjcopts .= " --debug");
-    $opts{decoupled} && ($kjcopts .= " --decoupled");
-    $opts{dpscaling} && ($kjcopts .= " --dpscaling");
-    $opts{forceunroll} && ($kjcopts .= " --forceunroll");
-    $opts{frequencyreplacement} && ($kjcopts .= " --frequencyreplacement");
-    $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
-    $opts{fusion} && ($kjcopts .= " --fusion");
-    $opts{linearanalysis} && ($kjcopts .= " --linearanalysis");
-    $opts{linearpartition} && ($kjcopts .= " --linearpartition");
-    $opts{linearreplacement} && ($kjcopts .= " --linearreplacement");
-    $opts{linearreplacement2} && ($kjcopts .= " --linearreplacement2");
-    $opts{linearreplacement3} && ($kjcopts .= " --linearreplacement3");
-    $opts{'magic-net'} && ($kjcopts .= " --magic_net");
-    $opts{macros} && ($kjcopts .= " --macros ");
-    $opts{optfile} && ($kjcopts .= " --optfile " . $opts{optfile});
-    $opts{modfusion} && ($kjcopts .= " --modfusion");
-    $opts{manuallayout} && ($kjcopts .= " --manuallayout");
-    $opts{nolinearcollapse} && ($kjcopts .= " --nolinearcollapse");
-    $opts{numbers} && ($kjcopts .= " --numbers " . $opts{numbers});
+    $opts{atlas} && ($copts .= " --atlas");
+    $opts{'clone-with-serialization'} && ($copts .= " --clone_with_serialization");
+    $opts{countops} && ($copts .= " --countops");
+    $opts{debug} && ($copts .= " --debug");
+    $opts{decoupled} && ($copts .= " --decoupled");
+    $opts{dpscaling} && ($copts .= " --dpscaling");
+    $opts{forceunroll} && ($copts .= " --forceunroll");
+    $opts{frequencyreplacement} && ($copts .= " --frequencyreplacement");
+    $opts{fission} && ($copts .= " --fission " . $opts{fission});
+    $opts{fusion} && ($copts .= " --fusion");
+    $opts{linearanalysis} && ($copts .= " --linearanalysis");
+    $opts{linearpartition} && ($copts .= " --linearpartition");
+    $opts{linearreplacement} && ($copts .= " --linearreplacement");
+    $opts{linearreplacement2} && ($copts .= " --linearreplacement2");
+    $opts{linearreplacement3} && ($copts .= " --linearreplacement3");
+    $opts{'magic-net'} && ($copts .= " --magic_net");
+    $opts{macros} && ($copts .= " --macros ");
+    $opts{optfile} && ($copts .= " --optfile " . $opts{optfile});
+    $opts{modfusion} && ($copts .= " --modfusion");
+    $opts{manuallayout} && ($copts .= " --manuallayout");
+    $opts{nolinearcollapse} && ($copts .= " --nolinearcollapse");
+    $opts{numbers} && ($copts .= " --numbers " . $opts{numbers});
     !$opts{raw} && $opts{iterations} && 
-	($kjcopts .= " --i " . $opts{iterations});
+	($copts .= " --i " . $opts{iterations});
     $opts{raw} && $opts{iterations} &&
-	($kjcopts .= " --outputs " . $opts{iterations});
-    $opts{output} && ($kjcopts .= " --output " . $opts{output});
-    $opts{poptopeek} && ($kjcopts .= " --poptopeek");
-    $opts{'print-partitioned-source'} && ($kjcopts .= " --print_partitioned_source");
-    $opts{profile} && ($kjcopts .= " --profile");
-    $opts{ratematch} && ($kjcopts .= " --ratematch");
-    $opts{rawcol} && ($kjcopts .= " --rawcol ". $opts{rawcol});
-    $opts{standalone} && ($kjcopts .= " --standalone");
-    $opts{rstream} && ($kjcopts .= " --rstream --doloops --absarray");
-    $opts{simpleC} && ($kjcopts .= " --rstream");
-    $opts{removeglobals} && ($kjcopts .= " --removeglobals");
-    $opts{simulatework} && ($kjcopts .= " --simulatework");
-    $opts{sjtopipe} && ($kjcopts .= " --sjtopipe");
-    $opts{statespace} && ($kjcopts .= " --statespace");
-    $opts{stats} && ($kjcopts .= " --stats");
-    $opts{sync} && ($kjcopts .= " --sync");
-    defined $opts{unroll} && ($kjcopts .= " --unroll " . $opts{unroll});
-    $opts{cluster} && ($kjcopts .= " --cluster " . $opts{cluster});
-    $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
-    $opts{cacheopt} && ($kjcopts .= " --cacheopt");
-    $opts{nomult} && ($kjcopts .= " --nomult");
-    $opts{peekratio} && ($kjcopts .= " --peekratio " . $opts{peekratio});
-    $opts{wbs} && ($kjcopts .= " --wbs");
-    $opts{spacetime} && ($kjcopts .= " --spacetime");
-    $opts{space} && ($kjcopts .= " --space");
-    $opts{dynamicnet} && ($kjcopts .= " --dynamicnet");
-    $opts{absarray} && ($kjcopts .= " --absarray");
-    $opts{doloops} && ($kjcopts .= " --doloops");
-    $opts{forceplacement} && ($kjcopts .= " --forceplacement");
-    $opts{malloczeros} && ($kjcopts .= " --malloczeros");
-    $opts{nopartition} && ($kjcopts .= " --nopartition");
-    $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
-    $opts{slicethresh} && ($kjcopts .= " --slicethresh ". $opts{slicethresh});
-    $opts{layoutfile} && ($kjcopts .= " --layoutfile ". $opts{layoutfile});
-    $opts{devassignfile} && ($kjcopts .= " --devassignfile ". $opts{devassignfile});
-    $opts{backendvalues} && ($kjcopts .= " --backendvalues \"". $opts{backendvalues}. "\"");
-    # defaults: backend:
-    $opts{raw} || $opts{rstream} || $opts{simpleC} || $opts{library} || 
-	$opts{streamit}  || $opts{uni} ||
-	($kjcopts .= " --cluster 1 --standalone");
-    return $kjcopts;
+	($copts .= " --outputs " . $opts{iterations});
+    $opts{output} && ($copts .= " --output " . $opts{output});
+    $opts{poptopeek} && ($copts .= " --poptopeek");
+    $opts{'print-partitioned-source'} && ($copts .= " --print_partitioned_source");
+    $opts{profile} && ($copts .= " --profile");
+    $opts{ratematch} && ($copts .= " --ratematch");
+    $opts{rawcol} && ($copts .= " --rawcol ". $opts{rawcol});
+    $opts{standalone} && ($copts .= " --standalone");
+    $opts{rstream} && ($copts .= " --rstream --doloops --absarray");
+    $opts{simpleC} && ($copts .= " --rstream");
+    $opts{removeglobals} && ($copts .= " --removeglobals");
+    $opts{simulatework} && ($copts .= " --simulatework");
+    $opts{sjtopipe} && ($copts .= " --sjtopipe");
+    $opts{statespace} && ($copts .= " --statespace");
+    $opts{stats} && ($copts .= " --stats");
+    $opts{sync} && ($copts .= " --sync");
+    defined $opts{unroll} && ($copts .= " --unroll " . $opts{unroll});
+    $opts{cluster} && ($copts .= " --cluster " . $opts{cluster});
+    $opts{destroyfieldarray} && ($copts .= " --destroyfieldarray");
+    $opts{cacheopt} && ($copts .= " --cacheopt");
+    $opts{nomult} && ($copts .= " --nomult");
+    $opts{peekratio} && ($copts .= " --peekratio " . $opts{peekratio});
+    $opts{wbs} && ($copts .= " --wbs");
+    $opts{spacetime} && ($copts .= " --spacetime");
+    $opts{space} && ($copts .= " --space");
+    $opts{absarray} && ($copts .= " --absarray");
+    $opts{doloops} && ($copts .= " --doloops");
+    $opts{forceplacement} && ($copts .= " --forceplacement");
+    $opts{malloczeros} && ($copts .= " --malloczeros");
+    $opts{nopartition} && ($copts .= " --nopartition");
+    $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
+    $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
+    $opts{layoutfile} && ($copts .= " --layoutfile ". $opts{layoutfile});
+    $opts{devassignfile} && ($copts .= " --devassignfile ". $opts{devassignfile});
+    $opts{backendvalues} && ($copts .= " --backendvalues \"". $opts{backendvalues}. "\"");
+    return $copts;
 }
+
+###
+#
+# Get (and mung) options to pass to library
+#
+###
 
 sub get_lib_opts
   {

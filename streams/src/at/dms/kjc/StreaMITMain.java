@@ -41,7 +41,7 @@ public class StreaMITMain {
         }
 
         if (KjcOptions.malloczeros) 
-            System.out.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
+            System.err.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
         
 //        if (KjcOptions.altcodegen &&
 //            KjcOptions.standalone)
@@ -65,8 +65,6 @@ public class StreaMITMain {
         
         System.err.println("Starting Kopi2SIR..");
 
-        //       if(!KjcOptions.graph)
-        //           System.out.println("/*");
         Kopi2SIR k2s = new Kopi2SIR(app);
         SIRStream stream = null;
         for (int i = 0; i < app.length; i++) {
@@ -81,7 +79,6 @@ public class StreaMITMain {
 
         SemanticChecker.doCheck(stream);
 
-        //        System.err.println("Out of semantic checker.");
         System.err.println("Done Semantic Check..");
 
         String backendClass = null;
@@ -93,7 +90,6 @@ public class StreaMITMain {
         } else if (KjcOptions.rstream) {
             backendClass = "at.dms.kjc.rstream.StrToRStream";
         } else if (KjcOptions.raw != -1) {
-            //            System.out.println("*/");
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
             } else if (KjcOptions.space) {
@@ -102,11 +98,10 @@ public class StreaMITMain {
                 backendClass = "at.dms.kjc.spacedynamic.SpaceDynamicBackend";
             }
         } else if (KjcOptions.cluster != -1) {
-            //            System.out.println("*/");
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else {
             backendClass = "at.dms.kjc.sir.lowering.Flattener";
-            //            backendMethod = "flatten";
+            // backendMethod = "flatten";
         }
         
         // To find a method, we need its name and signature.  To

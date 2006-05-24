@@ -113,7 +113,7 @@ public class FlatIRToRS extends ToC
             p.print(ident);
         
             if (expr != null) {
-                p.print("\t= ");
+                p.print(" = ");
                 expr.accept(this);
             } else { //initialize all fields to 0
                 if (type.isOrdinal())
@@ -144,6 +144,8 @@ public class FlatIRToRS extends ToC
     
     private void printArrayType(CArrayType type) 
     {
+        assert false : "Should not be printing an array type";
+
         printType(type.getBaseType());
         p.print(" ");
 
@@ -169,7 +171,7 @@ public class FlatIRToRS extends ToC
     
         //we have an array declaration
         if (type.isArrayType() && KjcOptions.absarray) {
-                handleArrayDecl(ident, (CArrayType)type); 
+            handleArrayDecl(ident, (CArrayType)type);
         } else {
             printDecl(type, ident);
         
@@ -252,15 +254,14 @@ public class FlatIRToRS extends ToC
      */
     public void visitBlockStatement(JBlock self,
                                     JavaStyleComment[] comments) {
-        if (self instanceof Jrstream_pr)
+        if (self instanceof Jrstream_pr) {
             // RMR { did the rstream C language extensions change?
             // replace rstream_pr with a pragma so that rstream 2.1 doesn't barf
             //p.print("rstream_pr ");
-            {
-                p.print("#pragma res parallel");
-                p.newLine();
-            }
-        // } RMR
+            p.print("#pragma res parallel");
+            p.newLine();
+            // } RMR
+        }
 
         p.print("{");
         p.indent();
@@ -583,7 +584,6 @@ public class FlatIRToRS extends ToC
     protected void print(CType s) {
         if (s instanceof CArrayType){
             printArrayType((CArrayType)s);
-            //assert false : "Should not be printing an array type";
         }
         else if (s.getTypeID() == TID_BOOLEAN)
             p.print("int");

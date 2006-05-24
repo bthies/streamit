@@ -34,7 +34,7 @@ import java.util.Hashtable;
 
 public class GenerateCCode {
     /* Whether or not to generate code for timing */
-    public static final boolean generateTimingCode = true;
+    public static final boolean generateTimingCode = !(KjcOptions.absarray || KjcOptions.doloops);
 
     /* The fields of the application, convert to locals for rstream */
     private Vector fields;
@@ -318,10 +318,15 @@ public class GenerateCCode {
 
         str.append("/* retrieve iteration count for top level driver */\n");
         str.append("static int " + ARGHELPER_COUNTER + "(int argc, char** argv) {\n");
-        str.append("    int flag;\n");
-        str.append("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
-        str.append("       if (flag == \'i\') return atoi(optarg);\n");
-        str.append("    return -1; /* default iteration count (run indefinitely) */\n");
+        if (!(KjcOptions.absarray || KjcOptions.doloops)) {
+            str.append("    int flag;\n");
+            str.append("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
+            str.append("       if (flag == \'i\') return atoi(optarg);\n");
+            str.append("    return -1; /* default iteration count (run indefinitely) */\n");
+        }
+        else {
+            str.append("    return 100; /* default iteration count (run 100 steady states) */\n");
+        }
         str.append("}\n\n\n");
         /* } RMR */
 

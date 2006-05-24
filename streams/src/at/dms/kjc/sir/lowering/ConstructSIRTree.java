@@ -51,8 +51,7 @@ public class ConstructSIRTree {
                 }
             });
         // dump the dot graph of <str>
-        if (KjcOptions.debug)
-            SimpleDot.printGraph(str, "first-sir-tree.dot");
+        SimpleDot.printGraph(str, "first-sir-tree.dot");
         // if we had an exception, throw it
         if (nonConstantArgError!=null) {
             throw nonConstantArgError;

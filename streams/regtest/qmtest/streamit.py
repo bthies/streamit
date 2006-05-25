@@ -2,7 +2,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.22 2006-04-13 19:44:41 dimock Exp $
+# $Id: streamit.py,v 1.23 2006-05-25 22:01:17 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -177,7 +177,7 @@ class RunStrcTest(qm.test.test.Test):
       elif self.backend == 'raw4':
           backend = ['--raw', '4']
       elif self.backend == 'cluster':
-          backend = ['-cluster', '1']
+          backend = ['--cluster', '1']
       # List of args to the program, starting with the program name,
       # and always including the iteration count:
       arguments = [path] + backend + \
@@ -204,46 +204,6 @@ class RunStrcTest(qm.test.test.Test):
 
       InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
 
-      if (self.backend == 'cluster'
-          and result.GetOutcome() == result.PASS):
-          # cluster requires extra make step
-          #e = TimedExecutable()
-          e = qm.executable.RedirectedExecutable(self.timeout)
-          # make with no optimization.  'CCFLAGS=""' will not work because
-          # of quoting problems...
-          #e.Run(['make', 'CCFLAGS=-O0', '-f', 'Makefile.cluster'], dir=test_home_dir)
-          e.Run(['make', '-f', 'Makefile.cluster'], dir=test_home_dir)
-          result['RunStrcTest.stdout_makefile'] = e.stdout
-          result['RunStrcTest.stderr_makefile'] = e.stderr
-          makestatus = 1
-          if os.access(os.path.join(test_home_dir,'run_cluster'), os.F_OK) \
-             or os.access(os.path.join(test_home_dir,'fusion'), os.F_OK):
-                makestatus=0
-
-          InterpretExitCode(result, makestatus, self.exit_code, 'RunStrcTest_makefile')
-
-          if (result.GetOutcome() == result.PASS):
-              try:
-                  # first need to replace "machine-1" in cluster-config.txt
-                  # with name of the machine that we are running on (uname -n)
-                  finame = os.path.join(test_home_dir, "cluster-config.txt")
-                  ftname = os.path.join(test_home_dir, "cluster-config.txt.tmp")
-                  # need socket to get host name??!
-                  hostname = socket.gethostname()
-                  fi = open(finame)
-                  ft = open(ftname, 'w')
-                  for s in fi.readlines():
-                      ft.write(s.replace('machine-1',hostname))
-                      
-                  fi.close()
-                  ft.close()
-                  # Python 2.2.2: no shutil.move yet
-                  shutil.copy(ftname,finame)
-                  os.unlink(ftname)        
-              except:
-                  errmes = sys.exc_info()[0]
-                  result['RunStrcTest.cluster-config'] =  'Error: %s' % errmes
-                  result.Fail("Error in editing cluster-config")
                   
 class RunProgramTest(qm.test.test.Test):
     """Run a compiled program as a QMTest test.
@@ -254,16 +214,6 @@ class RunProgramTest(qm.test.test.Test):
 
     arguments = [
         BackendField(name='backend', title='Backend'),
-
-#         RunOptionsField(name='runopts', title='Runtime options',
-#                         description="""Options used running the program.
-                        
-#         Specifies the number of iterations and the output file for
-#         the program.  Whether and how these are used depends on
-#         the backend.  In both cases, the output is written to
-#         the specified output file.  The iteration count is used
-#         for the uniprocessor backend; for the RAW backend, the
-#         iteration count used at compile time is used instead."""),
 
         IntegerField(name='iters', title='Iteration Count',
                      description="""The number of steady-state iterations to run.
@@ -294,7 +244,7 @@ class RunProgramTest(qm.test.test.Test):
       elif self.backend == 'uni' or self.backend == 'rstream':
           return self._RunUni(context, result)
       elif self.backend == 'cluster':
-          return self._RunClu(context, result)
+          return self._RunUni(context, result)
       else:
           # Should raise an exception
           pass
@@ -317,66 +267,25 @@ class RunProgramTest(qm.test.test.Test):
         # then run_cluster with path and -i
         test_home_dir = context_to_dir(context)
 
-        ### Problems with below: when using cluster backend
-        ### sometimes get traceback on disappearing
-        ### child process without getting full stderr output to diagnose
-        ### what is going wrong in tested program -- rather than in qmtest.
-        ### The attempted fix is to use TimeoutExecutable rather than
-        ### RedirectedExecutable, redirect stdout and stderr to files,
-        ### and instead of having to copy stdout to output file as per
-        ### RedirectedExecutable, need to copy stderr file to qm results.
-######## removed code
-#         path = os.path.join('.', filename)
-#         arguments = [path, '-i ' + str(self.iters)]
-#         e = qm.executable.RedirectedExecutable(self.own_output)
-#         status = e.Run(arguments, dir=test_home_dir, path=path)
+        # see CVS version 1.22 for attempt to run dumping stdout and
+        # stderr to files in case internal QMTest error obscured error
+        # in running program.  Didn't seem to help...
+        path = os.path.join('.', filename)
+        arguments = [path, '-i ' + str(self.runopts[1])]
+        #e = TimedExecutable()
+        e = qm.executable.RedirectedExecutable(self.timeout)
+        status = e.Run(arguments, dir=test_home_dir, path=path)
 
-#         # Dump stdout to the file; ignore stderr.
-#         f = open(os.path.join(test_home_dir,self.own_output), 'w')
-#         f.write(e.stdout)
-#         f.close()
-#         result['RunProgramTest.stderr'] = e.stderr
-######### end removed code, begin replacement code
-        # run program in its own shell to redirect output.
-        # in bash, either
-        # exec -a bash '/usr/uns/bin/bash' "-c" "./run_cluster -i 100 > eo 2> ee"
-        # or
-        # exec '/usr/uns/bin/bash' "-c" "./run_cluster -i 100 > eo 2> ee"
-        path = os.path.join(test_home_dir, filename)
-        itercount = str(self.iters)
-        output = os.path.join(test_home_dir,self.own_output)
-        errfilename = "stderr_file"
-        errout = os.path.join(test_home_dir,errfilename)
-        shellcmdstring = './run_cluster -i ' + itercount + '  > ' + \
-                         self.own_output + ' 2> ' + errfilename
-        shellcmd = ["/usr/uns/bin/bash", "-c", shellcmdstring]
-        e = qm.executable.TimeoutExecutable(self.timeout)
-        excinfo = None
-#        print >> sys.stderr, "ABOUT TO RUN"
-#        print >> sys.stderr, (" ".join(shellcmd))
-#        print >> sys.stderr, "dir = " + test_home_dir
-        try:
-            status = e.Run(shellcmd, dir=test_home_dir)
-#            print >> sys.stderr, "e.Run returned successfully"
-        finally:
-            excinfo = sys.exc_info()
-            stde = open(errout,'r')
-            result['RunProgramTest.stderr'] = stde.read()
-            stde.close()
-######### end replacement code.
+        # Dump stdout to the file; ignore stderr.
+        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
+        f.write(e.stdout)
+        f.close()
+        result['RunProgramTest.stderr'] = e.stderr
+
         # Mostly, note if the program died an unholy death.
         InterpretExitCode(result, status, None, 'RunProgramTest')
         
         
-        
-        
-    def _RunClu(self, context, result):
-        test_home_dir = context_to_dir(context)
-        if os.access(os.path.join(test_home_dir,'fusion'), os.F_OK):
-            self._RunNamedFile(context, result, 'fusion')
-        else:
-            self._RunNamedFile(context, result, 'run_cluster')
-            
     def _RunUni(self, context, result):
         self._RunNamedFile(context, result, 'a.out')
 
@@ -433,10 +342,10 @@ class CompareResultsTest(qm.test.test.Test):
 
         # Optimizations may change the meaning of "n steady-state iterations"
         # So we accept actual results with length different from expected
-        # The one thing we don't allow is no actual output whre some output
+        # The one thing we don't allow is no actual output where some output
         # is expected
         if len(actual) == 0 and len(expected) > 0:
-            fail = 1
+            failed = 1
             
         # For the RAW backend, cook 'actual'.
         # [21: 00001b444]: 0.098017   ==> 0.098017

@@ -222,14 +222,15 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("volatile float dummyFloat;\n");
         }
         
-        if (/*KjcOptions.altcodegen && */ !KjcOptions.decoupled){
+        if (/*KjcOptions.altcodegen && */ 
+                !(KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK)){
             p.print(getNetRegsDecls());
             //print("unsigned " + DYNMSGHEADER + ";\n");
         }
         
     
         
-        if (KjcOptions.decoupled) {
+        if (KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK) {
             p.print("volatile float " + Util.CSTOFPVAR + ";\n");
             p.print("volatile float " + Util.CSTIFPVAR + ";\n");
             p.print("volatile int " + Util.CSTOINTVAR + ";\n");
@@ -361,7 +362,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("  __asm__ volatile (\"magc $0, $0, 1\");\n");
         
         //initialize the dummy network receive value
-        if (KjcOptions.decoupled) {
+        if (KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK) {
             if (self.getInputType().isFloatingPoint()) 
                 p.print("  " + Util.CSTIFPVAR + " = 1.0;\n");
             else 
@@ -372,7 +373,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //only if we are not using a uniprocessor or the
         //magic network
         if (!(KjcOptions.standalone || KjcOptions.magic_net || KjcOptions.decoupled ||
-              IMEMEstimation.TESTING_IMEM)) {
+              IMEMEstimation.TESTING_IMEM || RawWorkEstimator.SIMULATING_WORK)) {
             p.print("  raw_init();\n");
             //the call to raw_init2 is now within __RAW_MAIN__()
         }

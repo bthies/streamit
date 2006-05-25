@@ -141,7 +141,7 @@ public class IMEMEstimation implements FlatVisitor
     
         // make structures header file in this directory
         StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
-
+        SwitchCode.generate(streamGraph);
         TileCode.generateCode(streamGraph);
         MakefileGenerator.createMakefile(streamGraph);
     
@@ -150,12 +150,13 @@ public class IMEMEstimation implements FlatVisitor
             {
                 System.out.println("moving...");
                 System.out.flush();
-                String[] cmdArray = new String[5];
+                String[] cmdArray = new String[6];
                 cmdArray[0] = "mv";
                 cmdArray[1] = "tile" + tileNumber + ".c";
                 cmdArray[2] = "Makefile.streamit";
                 cmdArray[3] = "fileio.bc";
-                cmdArray[4] = dir;    
+                cmdArray[4] = "sw" + tileNumber + ".s";
+                cmdArray[5] = dir;    
                 Process jProcess = Runtime.getRuntime().exec(cmdArray);
                 jProcess.waitFor();
             

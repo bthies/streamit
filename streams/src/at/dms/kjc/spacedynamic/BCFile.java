@@ -102,7 +102,7 @@ public class BCFile {
         fw.write("return 0;\n");
         fw.write("}\n");
         
-        if (KjcOptions.decoupled) {
+        if (KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK) {
             fw.write("global gStreamItFilterTiles = " + tiles.size() + ";\n");
             fw.write("global gFilterNames;\n");
             
@@ -118,22 +118,11 @@ public class BCFile {
                             + "\");\n");
                 }
             }
-            fw
-            .write("  sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
-            // include the number gathering code and install the device file
-            fw.write("  include(workestpath);\n");
-            // add print service to the south of the SE tile
-            fw.write("  {\n");
-            fw.write("    local str = malloc(256);\n");
-            fw.write("    local result;\n");
-            fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
-            fw
-            .write("    result = dev_work_est_init(\"/dev/null\", gXSize+gYSize);\n");
-            fw.write("    if (result == 0)\n");
-            fw.write("      exit(-1);\n");
-            fw.write("  }\n");
+            //use a magic instruction handler to handle the stuff...
+            fw.write("sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
+            fw.write("include(workestpath);\n");
+            fw.write("work_est_init();\n");
             fw.write("}\n");
-            
         }
         
         // number gathering code

@@ -110,7 +110,7 @@ public class MakefileGenerator {
                 fw.write(tile + " = " + "tile" + tile + ".o ");
 
                 // make sure that there is some
-                if (!(KjcOptions.magic_net || KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM))
+                if (!(KjcOptions.magic_net || KjcOptions.decoupled))
                     fw.write("sw" + tile + ".o");
 
                 fw.write("\n");

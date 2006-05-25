@@ -37,22 +37,26 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             return 0;
         }
 
-        boolean oldDecoupledValue = KjcOptions.decoupled;
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
+        boolean oldSimulateWorkValue = KjcOptions.simulatework;
+        
         int oldOutputsValue = KjcOptions.outputs;
 
         int work = 0;
         //clone the Filter and create a dummy pipeline with just this
         //new cloned filter
 
+        KjcOptions.simulatework = false;
+        SIMULATING_WORK = true;
+        
         SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
 
         Util.removeIO(filter);
 
         StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
         StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[0];
-
+        ssg.scheduleAndCreateMults();
         //make a new directory and change the current working dir
         String dir = File.separator + "tmp" + File.separator + 
             filter.getName();
@@ -60,8 +64,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         File file = new File(dir);
         file.mkdir();
 
-        // set decouple execution to true
-        KjcOptions.decoupled = true;
         // set magic net to false
         KjcOptions.magic_net = false;
         //set rate match to false
@@ -87,7 +89,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         RemovePrintStatements.doIt(ssg.getTopLevel());
     
         //Generate the tile code
-
+        
         RawExecutionCode rawExe = new RawExecutionCode(ssg);
         ssg.getTopLevel().accept(rawExe, null, true);
         
@@ -98,21 +100,22 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         // make structures header file in this directory
         StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
 
-        SIMULATING_WORK = true;
+        SwitchCode.generate(streamGraph);
         TileCode.generateCode(streamGraph);
-        SIMULATING_WORK = false;
         MakefileGenerator.createMakefile(streamGraph);
+        SIMULATING_WORK = false;
 
         try {
             //copy the files 
             {
                 System.out.println("Moving files to /tmp...");
-                String[] cmdArray = new String[5];
+                String[] cmdArray = new String[6];
                 cmdArray[0] = "cp";
                 cmdArray[1] = "tile" + tileNumber + ".c";
                 cmdArray[2] = "Makefile.streamit";
                 cmdArray[3] = "fileio.bc";
-                cmdArray[4] = dir;    
+                cmdArray[4] = "sw" + tileNumber + ".s";
+                cmdArray[5] = dir;    
                 Process jProcess = Runtime.getRuntime().exec(cmdArray);
                 jProcess.waitFor();
             
@@ -208,8 +211,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             Utils.fail("Error running the raw simulator for work estimation");
         }
     
-
-        KjcOptions.decoupled = oldDecoupledValue;
+        KjcOptions.simulatework = oldSimulateWorkValue;
         KjcOptions.magic_net = oldMagicNetValue;
         KjcOptions.ratematch = oldRateMatchValue;
         KjcOptions.outputs = oldOutputsValue;

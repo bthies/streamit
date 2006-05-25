@@ -63,7 +63,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
                                              new HashSet(), true);
 
             // for decoupled execution the scheduler does not run
-            if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
+            if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM ||
+                    RawWorkEstimator.SIMULATING_WORK)) {
                 computeNodes.addAll(staticGraph.simulator.initSchedules
                                     .keySet());
                 computeNodes.addAll(staticGraph.simulator.steadySchedules
@@ -122,7 +123,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
             fw.write("#include \"structs.h\"\n");
 
-            if (KjcOptions.decoupled) {
+            if (KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK) {
                 fw.write("float " + Util.CSTOFPVAR + ";\n");
                 fw.write("float " + Util.CSTIFPVAR + ";\n");
                 fw.write("int " + Util.CSTOINTVAR + ";\n");

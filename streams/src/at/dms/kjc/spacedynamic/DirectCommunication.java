@@ -193,7 +193,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         // if we are in decoupled mode do not put the work function in a for
         // loop
         // and add the print statements
-        if (KjcOptions.decoupled) {
+        if (KjcOptions.decoupled || RawWorkEstimator.SIMULATING_WORK) {
             workBlock.addStatementFirst(new SIRPrintStatement(null,
                                                               new JIntLiteral(0), null));
             workBlock.addStatement(workBlock.size(), new SIRPrintStatement(

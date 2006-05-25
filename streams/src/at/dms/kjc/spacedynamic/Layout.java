@@ -397,8 +397,11 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         assert rawChip.getTotalTiles() == 1;
         assert (FlatNode) (assigned.toArray()[0]) == streamGraph
             .getStaticSubGraphs()[0].getTopLevel();
-
+        //assign the one filter
         assign(rawChip.getTile(0), (FlatNode) (assigned.toArray()[0]));
+        
+        //set up the hash sets for future passes!
+        getStaticCost(streamGraph.getStaticSubGraphs()[0], new HashSet());
     }
 
     /** read the layout from a new-line separated file * */

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.77 2006-05-24 18:21:08 dimock Exp $
+# $Id: strc,v 1.78 2006-05-25 19:18:17 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -576,7 +576,7 @@ sub streamit_via_tokopi
     if (!$opts{raw} && !$opts{cluster})
       {
 	my $target = change_extension($fns->[0], "str", "c");
-	$target = $opts{output} . ".c" if $opts{outputs};
+	$target = $opts{output} . ".c" if $opts{output};
 	$result = call("$java $xmx $server streamit.frontend.ToKopi $compiler_opts $sfiles > $target");
 	return undef if $result != 0;
 	return [$target];

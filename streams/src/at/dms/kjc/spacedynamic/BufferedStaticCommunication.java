@@ -936,6 +936,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
      */
     private JExpression accessBufferVar(JVariableDefinition var) {
         if (globalBuffer) {
+            System.out.println(var);
             return new JFieldAccessExpression(null, new JThisExpression(null), var.getIdent());
         }
         else {

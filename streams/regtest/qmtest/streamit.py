@@ -1,8 +1,9 @@
+
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.23 2006-05-25 22:01:17 dimock Exp $
+# $Id: streamit.py,v 1.24 2006-05-25 23:19:17 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -152,7 +153,7 @@ class RunStrcTest(qm.test.test.Test):
 
         This field specifies the file holding the program output to eventually
         be verified.  Must be available in compile test for library backend.
-        Must be availble in run test for other backends."""),
+        Must be available in run test for other backends."""),
 
         IntegerField(name='timeout', title='Timeout', default_value=TIMEOUT,
                      description="""Timeout in seconds.
@@ -271,13 +272,13 @@ class RunProgramTest(qm.test.test.Test):
         # stderr to files in case internal QMTest error obscured error
         # in running program.  Didn't seem to help...
         path = os.path.join('.', filename)
-        arguments = [path, '-i ' + str(self.runopts[1])]
+        arguments = [path, '-i ' + str(self.iters)]
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
         status = e.Run(arguments, dir=test_home_dir, path=path)
 
         # Dump stdout to the file; ignore stderr.
-        f = open(os.path.join(test_home_dir,self.runopts[0]), 'w')
+        f = open(os.path.join(test_home_dir,self.own_output), 'w')
         f.write(e.stdout)
         f.close()
         result['RunProgramTest.stderr'] = e.stderr
@@ -369,6 +370,7 @@ class CompareResultsTest(qm.test.test.Test):
             pairs.append(p)
 
         # Now do the actual comparison:
+        error_count = 0
         for i in range(len(pairs)):
             (ev, av) = pairs[i]
             difference = abs(av - ev)
@@ -381,7 +383,9 @@ class CompareResultsTest(qm.test.test.Test):
                 if ev != 0:
                     percent = (difference / ev) * 100
                     result[tag + '.percent'] = str(percent)
-
+                error_count += 1
+                if error_count == 10:  # only print first 10 differences
+                    break
         # All done.
         if failed:
             result.Fail('Output mismatch.')

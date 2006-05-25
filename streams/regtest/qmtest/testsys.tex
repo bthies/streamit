@@ -238,7 +238,7 @@ output to verify.  If this is not specified, then the tested program is
 expected to produce any output to be verified to {\tt stdout}.
 Default output to stdout is stored in the file {\tt output} between the run
 phase and the verification phase.
-\item {\tt output_type} Type of output.  Legitimate values are {\tt ASCII}, {\tt int}, and {\tt float} where {\tt int}, and {\tt float} refer to 32-bit integers and 32-bit floats, and ASCII is a series of lines with one formatted integer or floating point value per line. 
+\item {\tt output\_type} Type of output.  Legitimate values are {\tt ASCII}, {\tt int}, and {\tt float} where {\tt int}, and {\tt float} refer to 32-bit integers and 32-bit floats, and ASCII is a series of lines with one formatted integer or floating point value per line. 
 \item {\tt compile\_time} Time in seconds to override default compile time of 20 minutes.
 \item {\tt run\_time} Time in seconds to override default run time of 20 minutes.
 In case of compile-and-go situation like library compiler, use {\tt compile\_time}, not {\tt run\_time}.
@@ -286,7 +286,7 @@ may change between versions of QM).  This is the file produced by
 
 \subsubsection{results.xml}
 This is a version of the QM results file as processed by ``qmtest report''.
-the programs {\tt summarize_xml_results} and {\tt rt-results} run off
+the programs {\tt summarize\_xml\_results} and {\tt rt-results} run off
 the contents of this file.
 Unfortunately, there is no DTD for this file, and as of QM 2.3, there
 was no guarantee from CodeSourcery that the file format would not
@@ -385,7 +385,7 @@ verify one test's output against another test's expected output file.
 \item use streamitqm / run-reg-tests.py to convert from our .xml files to QM
   files,
 \item run QM,  ({\tt qmtest run} followed by  {\tt qmtest report})
-\item run summarize_xml_results to create summary report and mail it to all.
+\item run summarize\_xml\_results to create summary report and mail it to all.
 \item run rt-results to build files usable by RT for detailed
   reporting of the results,
 \item and set the directory built by this run to be the ``latest'' results.
@@ -403,7 +403,7 @@ regtest.xml file.  streamitqm expects this file to be in './regtest/qmtest'.
 Creates files {\tt compile.qmt}, {\tt run.qmt}, and {\tt verify.qmt}
 for each combination of backend and options.
 
-\subsubsection{summarize_xml_results}
+\subsubsection{summarize\_xml\_results}
 Executable, invoked from run-reg-tests.py to produce a brief report based on
 the current QMTest results.xml file, and differences from the ``latest''
 QMTest results.xml file if one exists. The first parameter is the path to
@@ -450,16 +450,19 @@ compile options being tested are stored under $STREAMIT_HOME/apps.qms.
 When done, you can see a summary report similar to that from the
 nightly regression test using the commands:
    qmtest report  -o ./results.xml ./results.qmr 
-   ./regtest/qmtest/summarize_xml_results ./results.xml
-however, for a substantial test, you will have to wait for a rather
-slow XML parser to do its work.  It may be easier to just capture the
-results of "qmtest run" to a file.
+   xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
+      ./results.xml
+   ./regtest/qmtest/status_summary.pl summary_tmp > summary.txt
+It may be sufficient to just capture the results of "qmtest run" to a file.
 
 If you run a complete test and want to compare it to a standard
 regression test for some date, try:
    qmtest report -o ./results.xml ./results.qmr 
-   ./regtest/qmtest/summarize_xml_results ./results.xml \
- /home/bits8/streamit/regtest/latest/streams/results.xml
+   xsltproc -o summary_tmp  --novalid ./regtest/qmtest/status_summary.xsl \
+      ./results.xml
+   xsltproc -o summary_tmp2  --novalid ./regtest/qmtest/status_summary.xsl \
+      /home/bits8/streamit/regtest/latest/streams/results.xml
+   ./regtest/qmtest/status_summary.pl summary_tmp summary_tmp2 > summary.txt
 to compare with most recent regtest, or replace 'latest' with a
 directory name in /home/bits8/streamit/regtest to compare with tests
 for a particular date.

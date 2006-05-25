@@ -149,7 +149,6 @@ public class StatelessDuplicate {
                                                          String ident) {
                             // if we are in assignment, mark that there is mutable state
                             if (inAssignment[0]) {
-                                System.err.println("access to " + self + " in " + filter);
                                 foundMutable[0] = true;
                             }
 

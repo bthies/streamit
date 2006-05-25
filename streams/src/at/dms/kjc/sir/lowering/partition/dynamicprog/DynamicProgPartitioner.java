@@ -58,7 +58,16 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * traceback.
      */
     static final boolean pruningOnTraceback = true;
-    
+    /**
+     * Whether or not we collapse nodes as much as possible while
+     * maintaining the optimal bottleneck.  Extra collapsing can
+     * reduce synchronization overhead, but could also introduce a new
+     * bottleneck if the work estimate was not accurate.
+     *
+     * Compared to pruningOnTraceback, this has the effect of
+     * collapsing extra pipelines rather than just splitjoins.
+     */
+    private static final boolean MINIMIZE_TILE_USAGE = false;
     /**
      * Whether or not we're transforming the stream on traceback.  If
      * not, then we're just gathering the partition info for dot
@@ -201,7 +210,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
             // build up tables.
             System.out.println("  Calculating partition info...");
             cost = topConfig.get(numTiles, 0);
-            System.err.println("  Partitioner thinks bottleneck is " + cost.getMaxCost());
+            bottleneck = cost.getMaxCost();
+            // Don't print this because it could be misleading -- the bottleneck in the
+            // original graph has a different scaling factor than the bottleneck in the
+            // partitioned graph, because fission could increase the steady state size.
+            // The user gets equivalent information from the final work estimates.
+            // System.err.println("  Partitioner thinks bottleneck is " + bottleneck);
             if (limitICode) {
                 System.err.println("  Max iCode size: " + cost.getICodeSize());
             }
@@ -211,15 +225,15 @@ public class DynamicProgPartitioner extends ListPartitioner {
         // decrease the number of tiles to the fewest that we need for
         // a given bottleneck.  This is in an attempt to decrease
         // synchronization and improve utilization.
-        /*
-          while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
-          tilesUsed--;
-          }
-          if (tilesUsed<numTiles) {
-          System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
-          }
-        */
-    
+        if (MINIMIZE_TILE_USAGE) {
+            while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
+                tilesUsed--;
+            }
+            if (tilesUsed<numTiles) {
+                System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+            }
+        }
+            
         if (KjcOptions.debug && topConfig instanceof DPConfigContainer) {
             ((DPConfigContainer)topConfig).printArray();
         }

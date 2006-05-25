@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.78 2006-05-25 19:18:17 dimock Exp $
+# $Id: strc,v 1.79 2006-05-25 20:09:34 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -21,7 +21,7 @@
 
 use strict;
 use warnings;
-use vars qw(%opts $java $javac $cc $have_fftw);
+use vars qw(%opts $java $javac $cc $rm $make $have_fftw);
 use POSIX qw(:sys_wait_h);
 
 # QMTest 2.3 running in some way different from QMTest 2.0.3
@@ -34,6 +34,8 @@ use Cwd;
 $java = "java";
 $javac = "javac -nowarn";
 $cc = "gcc";
+$rm = "rm";
+$make = "make";
 $have_fftw = "1";
 # END AUTOCONFISCATE
 
@@ -134,8 +136,15 @@ if ($opts{tokopi}) {
 }
 exit(1) if !$fns;
 
-$fns = c_to_out($fns, $opts{output}  || "a.out") if 
-    ($opts{simpleC} || $opts{uni}) && ! $opts{noexecutable};
+# generate executable if possible
+if (! $opts{noexecutable}) {
+    my $executablename = $opts{output}  || "a.out";
+    if ($opts{simpleC} || $opts{uni}) {
+	$fns = c_to_out($fns, $executablename);
+	} elsif ($opts{cluster}) {
+	    cluster_to_out($fns, $executablename);
+	} else { print %opts; print "\n"; }
+}
 exit(1) if !$fns;
 exit(0);
 
@@ -552,7 +561,8 @@ sub java_to_c
       {
 	my $result = call("$java $xmx $server at.dms.kjc.Main --streamit $compiler_opts $jfiles");
 	return undef if $result != 0;
-	# TODO: implement --output flags to backends.
+	# TODO: implement --output flags to all backends.
+	return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files
 	return ["tile0.c"] if $opts{raw} && $opts{standalone};
 	return ["str.c"] if $opts{simpleC} || $opts{rstream};
 	return [];
@@ -666,6 +676,22 @@ sub c_to_out
     return undef if $result != 0;
     return [$tfn];
   }
+
+###
+#
+# Take output of --cluster and create executable.
+#
+###
+
+sub cluster_to_out {
+    my ($fns, $target) = @_;
+    #return [] if !@$fns;
+    call("$rm $target"); 	# remove existing output file if any.
+    my $result = call("$make -f Makefile.cluster");
+    return undef if $result != 0;
+    return undef unless -e $target;
+    return [$target];
+}
 
 ###
 #

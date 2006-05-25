@@ -553,7 +553,7 @@ public class ParallelizationGathering {
 	//System.err.println("Initial work of " + self.getName() + " is " + workestimate);
 	int numreps = work.getReps(self);  
 	//System.err.println("Self is " + numreps);
-	boolean nostate = StatelessDuplicate.isStateless(self);
+	boolean nostate = !StatelessDuplicate.hasMutableState(self);
 
 	//from Bill:  work.getWork already incorporates numreps!
 	if(printsperexec > 0)

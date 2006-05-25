@@ -20,7 +20,7 @@ public class StatelessDuplicate {
      * turns out to usually be faster to duplicate all data and
      * decimate at the nodes.
      */
-    private static final boolean USE_ROUNDROBIN_SPLITTER = false;
+    private static final boolean USE_ROUNDROBIN_SPLITTER = true;
     
     /**
      * The filter we're duplicating.
@@ -64,8 +64,8 @@ public class StatelessDuplicate {
         if (filter.getPushInt() == 0)
             return false;
 
-        // check that it is stateless
-        if (!isStateless(filter)) {
+        // check that it does not have mutable state
+        if (hasMutableState(filter)) {
             return false;
         }
     
@@ -102,30 +102,63 @@ public class StatelessDuplicate {
     }
 
     /**
-     * Returns whether or not <filter> is stateless.
+     * Returns whether or not <filter> has mutable state.  This is
+     * equivalent to checking if there are any assignments to fields
+     * outside of the init function.
      */
-    public static boolean isStateless(SIRFilter filter) {
-        // for now just do a conservative check -- if it has no
-        // fields, then it is stateless.  This actually isn't too bad
-        // if fieldprop has removed the field references; otherwise we
-        // could use something more robust.
-        //if(filter.getFields().length!=0)
-        final boolean[] out=new boolean[1];
-        out[0]=true;
-        JMethodDeclaration[] methods=filter.getMethods();
-        JMethodDeclaration init=filter.getInit();
+    public static boolean hasMutableState(final SIRFilter filter) {
+        // whether or not we are on the LHS of an assignment
+        final boolean[] inAssignment = { false };
+        // whether or not we have found any mutable state
+        final boolean[] foundMutable = { false };
+
+        // visit all methods except <init>
+        JMethodDeclaration[] methods = filter.getMethods();
+        JMethodDeclaration init = filter.getInit();
         for(int i=0;i<methods.length;i++)
             if(methods[i]!=init)
-                methods[i].accept(new EmptyAttributeVisitor() {
-                        public Object visitFieldExpression(JFieldAccessExpression self,
-                                                           JExpression left,
-                                                           String ident) {
-                            out[0]=false;
-                            return self;
+                methods[i].accept(new SLIREmptyVisitor() {
+                        // wrap visit to <left> with some book-keeping
+                        // to indicate that it is on the LHS of an assignment
+                        private void wrapVisit(JExpression left) {
+                            // in case of nested assignment
+                            // expressions, remember the old value of <inAssignment>
+                            boolean old = inAssignment[0];
+                            inAssignment[0] = true;
+                            left.accept(this);
+                            inAssignment[0] = old;
                         }
+
+                        public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+                                                                      int oper,
+                                                                      JExpression left,
+                                                                      JExpression right) {
+                            wrapVisit(left);
+                            right.accept(this);
+                        }
+
+                        public void visitAssignmentExpression(JAssignmentExpression self,
+                                                              JExpression left,
+                                                              JExpression right) {
+                            wrapVisit(left);
+                            right.accept(this);
+                        }
+
+                        public void visitFieldExpression(JFieldAccessExpression self,
+                                                         JExpression left,
+                                                         String ident) {
+                            // if we are in assignment, mark that there is mutable state
+                            if (inAssignment[0]) {
+                                System.err.println("access to " + self + " in " + filter);
+                                foundMutable[0] = true;
+                            }
+
+                            super.visitFieldExpression(self, left, ident);
+                        }
+                        
                     });
-        //return filter.getFields().length==0;
-        return out[0];
+
+        return foundMutable[0];
     }
 
     /**

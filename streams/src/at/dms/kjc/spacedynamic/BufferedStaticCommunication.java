@@ -455,6 +455,12 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
         // if (KjcOptions.ratematch)
         // return false;
 
+        //always generate buffer while testing imem or Raw work estimation
+        //so nobuffer is false
+        if (IMEMEstimation.TESTING_IMEM || 
+                RawWorkEstimator.SIMULATING_WORK) 
+            return false;
+        
         if (filter.getPeekInt() == 0
             && (!(filter instanceof SIRTwoStageFilter) || (((SIRTwoStageFilter) filter)
                                                            .getInitPeekInt() == 0)))
@@ -936,7 +942,6 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
      */
     private JExpression accessBufferVar(JVariableDefinition var) {
         if (globalBuffer) {
-            System.out.println(var);
             return new JFieldAccessExpression(null, new JThisExpression(null), var.getIdent());
         }
         else {

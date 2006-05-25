@@ -367,10 +367,10 @@ public class Util extends at.dms.util.Utils {
     /** set the push and pop/peek rates to 0 and the input / output types to void * */
     public static void removeIO(SIRFilter filter) {
         filter.setPush(new JIntLiteral(0));
-        filter.setOutputType(CStdType.Void);
+        //filter.setOutputType(CStdType.Void);
         filter.setPop(new JIntLiteral(0));
         filter.setPeek(new JIntLiteral(0));
-        filter.setInputType(CStdType.Void);
+        //filter.setInputType(CStdType.Void);
     }
 
     /** Given a flatnode of a joiner or a filter that is mapped, get the schedule

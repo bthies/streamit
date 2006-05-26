@@ -170,8 +170,7 @@ public class MakefileGenerator
         fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
         fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
     
-        if (KjcOptions.outputs > 0) 
-            fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
+        fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
     
         if (KjcOptions.decoupled) {
             fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
@@ -222,6 +221,7 @@ public class MakefileGenerator
         //generate the bc code for the magic print handler...
         fw.write(RawSimulatorPrint.bCMagicHandler());
         
+        /*
         if (KjcOptions.outputs > 0) {
             fw.write("{\n");
             fw.write("  local outputpath = malloc(strlen(streamit_home) + 30);\n");
@@ -239,7 +239,7 @@ public class MakefileGenerator
             fw.write("  }\n");
             fw.write("}\n");
         }
-    
+        */
 
         //number gathering code
         if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {

@@ -846,7 +846,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
                 return;
             //now see if we need this joiner
             if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
-                //do not assign the joiner if JoinerRemoval wants is removed...
+                //do not assign the joiner if JoinerRemoval wants it removed...
                 if (JoinerRemoval.unnecessary != null && 
                     JoinerRemoval.unnecessary.contains(node))
                     return;

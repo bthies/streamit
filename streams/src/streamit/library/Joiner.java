@@ -30,8 +30,8 @@ abstract public class Joiner extends Operator
 
     List srcs = new ArrayList();
 
-    public Channel input[] = null;
-    public Channel output = null;
+    public Channel inputChannel[] = null;
+    public Channel outputChannel = null;
 
     public void init()
     {}
@@ -53,7 +53,7 @@ abstract public class Joiner extends Operator
             return;
 
         // yep, create an input array of appropriate size
-        input = new Channel[srcs.size()];
+        inputChannel = new Channel[srcs.size()];
 
         // yep, go through my members and connect them all with
         // ChannelConnectFilter
@@ -73,23 +73,23 @@ abstract public class Joiner extends Operator
                         // retrieve the output of this filter, which will be an
                         // input to this joiner
                         Channel channel = s.getOutputChannel();
-                        input[inputIndx] = channel;
+                        inputChannel[inputIndx] = channel;
 
                         // if it is not a sink, make sure that it produces data
                         // of the same kind as everything else in this Joiner
                         if (channel != null)
                             {
                                 // handle input channel
-                                if (output == null)
+                                if (outputChannel == null)
                                     {
-                                        output = new Channel(channel);
-                                        output.setSource(this);
+                                        outputChannel = new Channel(channel);
+                                        outputChannel.setSource(this);
                                     }
                                 else
                                     {
                                         // check that the input types agree
                                         assert channel.getType().getName().equals(
-                                                                                  output.getType().getName());
+                                                                                  outputChannel.getType().getName());
                                     }
 
                                 // now connect the channel to me
@@ -129,11 +129,11 @@ abstract public class Joiner extends Operator
                 (sjIter != null
                  ? sjIter.getJoinPopWeights(nWork)
                  : flIter.getJoinPopWeights(nWork));
-            for (int i=0; i<input.length; i++) {
+            for (int i=0; i<inputChannel.length; i++) {
                 // input will be null for RR joiners that don't read
                 // in one direction
-                if (input[i]!=null) {
-                    input[i].ensureData(throughput[i]);
+                if (inputChannel[i]!=null) {
+                    inputChannel[i].ensureData(throughput[i]);
                 }
             }
         }
@@ -160,7 +160,7 @@ abstract public class Joiner extends Operator
             {
                 for (int nData = 0; nData < throughput[nCh]; nData++)
                     {
-                        passOneData(input[nCh], output);
+                        passOneData(inputChannel[nCh], outputChannel);
                     }
 
             }

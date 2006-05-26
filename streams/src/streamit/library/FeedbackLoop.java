@@ -519,7 +519,7 @@ public class FeedbackLoop extends Stream
                     Filter joinerIn = new Identity (bodyInput.getType ());
                     joinerIn.setupOperator ();
                     joiner.add (joinerIn);
-                    channelIn = joinerIn.getIOField ("input");
+                    channelIn = joinerIn.getIOField("inputChannel");
                 } else {
                     joiner.add (null);
                 }
@@ -529,7 +529,7 @@ public class FeedbackLoop extends Stream
 
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
-                Channel in = joiner.getIOField ("output", 0);
+                Channel in = joiner.getIOField("outputChannel", 0);
                 Channel out = body.getInputChannel ();
                 connect.useChannels (in, out);
                 connect.setupOperator();
@@ -542,7 +542,7 @@ public class FeedbackLoop extends Stream
                     Filter splitterOut = new Identity (bodyOutput.getType ());
                     splitterOut.setupOperator ();
                     splitter.add (splitterOut);
-                    channelOut = splitterOut.getIOField ("output");
+                    channelOut = splitterOut.getIOField("outputChannel");
                 } else {
                     splitter.add (null);
                 }
@@ -552,7 +552,7 @@ public class FeedbackLoop extends Stream
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
                 Channel in = body.getOutputChannel ();
-                Channel out = splitter.getIOField ("input", 0);
+                Channel out = splitter.getIOField("inputChannel", 0);
                 connect.useChannels (in, out);
                 connect.setupOperator();
             }
@@ -816,13 +816,13 @@ public class FeedbackLoop extends Stream
         // between joiner and body
         s = buffers.getBufferSizeBetween (new Iterator(this), new Iterator(body));
         StreamIt.totalBuffer += s;
-        joiner.getIOField ("output", 0).makePassThrough ();
+        joiner.getIOField("outputChannel", 0).makePassThrough ();
         body.getInputChannel ().setChannelSize (s);
 
         // between body and splitter
         s = buffers.getBufferSizeBetween (new Iterator(body), new Iterator(this));
         StreamIt.totalBuffer += s;
-        splitter.getIOField ("input", 0).setChannelSize (s);
+        splitter.getIOField("inputChannel", 0).setChannelSize (s);
         body.getOutputChannel ().makePassThrough ();
 
         // between splitter and loop
@@ -837,7 +837,7 @@ public class FeedbackLoop extends Stream
 
         // make sure that the input/output channels push data through right away:
         if (getInputChannel () != null) getInputChannel ().makePassThrough ();
-        if (getOutputChannel () != null) splitter.getIOField ("output", 0).makePassThrough ();
+        if (getOutputChannel () != null) splitter.getIOField("outputChannel", 0).makePassThrough ();
     }
 }
 

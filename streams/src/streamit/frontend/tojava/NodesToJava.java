@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.123 2006-05-26 16:53:14 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.124 2006-05-26 19:05:50 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -262,14 +262,14 @@ public class NodesToJava implements FEVisitor
                         suffix = "Double";
                         break;
                     case TypePrimitive.TYPE_COMPLEX:
-                        if (name.startsWith("input"))
+                        if (name.startsWith("inputChannel"))
                             prefix  = "(Complex)";
                         break;
                     default:
                         assert false : type;
                     }
             }
-        else if (name.startsWith("input"))
+        else if (name.startsWith("inputChannel"))
             {
                 prefix = "(" + convertType(type) + ")";
             }

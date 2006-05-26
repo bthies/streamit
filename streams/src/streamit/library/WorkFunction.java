@@ -26,8 +26,8 @@ package streamit.library;
  * {
  *    public void init()
  *    {
- *      input = new Channel(Float.TYPE);
- *      output = new Channel(Float.TYPE);
+ *      inputChannel = new Channel(Float.TYPE);
+ *      outputChannel = new Channel(Float.TYPE);
  *    }
  *    public void work()
  *    {
@@ -36,11 +36,11 @@ package streamit.library;
  *    }
  *    public void phase1()
  *    {
- *      input.popFloat();
+ *      inputChannel.popFloat();
  *    }
  *    public void phase2()
  *    {
- *      output.pushFloat(1.0);
+ *      outputChannel.pushFloat(1.0);
  *    }
  * }
  */

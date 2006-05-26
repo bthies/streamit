@@ -45,8 +45,8 @@ public class IStreamItGraphConstants {
     public static final String PIPELINE_FIELD = STREAMIT_LIBRARY + "Pipeline";
     public static final String SPLITJOIN_FIELD = STREAMIT_LIBRARY + "SplitJoin";
     public static final String FEEDBACKLOOP_FIELD = STREAMIT_LIBRARY + "FeedbackLoop";
-    public static final String INPUT_FIELD = "input";
-    public static final String OUTPUT_FIELD = "output";
+    public static final String INPUT_FIELD = "inputChannel";
+    public static final String OUTPUT_FIELD = "outputChannel";
     public static final char ZERO_CHAR = '0';
     public static final char ONE_CHAR = '1';
 

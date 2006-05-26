@@ -1852,7 +1852,7 @@ public class Operator extends DestroyedClass
     // returns null if none present
     Channel[] getIOFields (String fieldName)
     {
-        assert fieldName == "input" || fieldName == "output";
+        assert fieldName == "inputChannel" || fieldName == "outputChannel";
 
         Channel fieldsInstance [] = null;
 
@@ -1910,7 +1910,7 @@ public class Operator extends DestroyedClass
 
     void setIOField (String fieldName, int fieldIndex, Channel newChannel)
     {
-        assert fieldName == "input" || fieldName == "output";
+        assert fieldName == "inputChannel" || fieldName == "outputChannel";
 
         Channel fieldsInstance [];
 

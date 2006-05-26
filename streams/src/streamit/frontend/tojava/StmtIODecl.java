@@ -26,7 +26,7 @@ import streamit.frontend.nodes.*;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtIODecl.java,v 1.4 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: StmtIODecl.java,v 1.5 2006-05-26 19:05:50 thies Exp $
  */
 public class StmtIODecl extends streamit.frontend.nodes.Statement
 {
@@ -36,10 +36,11 @@ public class StmtIODecl extends streamit.frontend.nodes.Statement
     
     /**
      * Creates a new I/O rate declaration.  The name should be either
-     * "input" or "output".  If it is "output", <code>rate1</code> is the
-     * push rate.  If the name is "input", <code>rate1</code> is the
-     * pop rate, and <code>rate2</code> is the peek rate.  The second rate
-     * can be <code>null</code> if it is unnecessary or it is equal to the
+     * "inputChannel" or "outputChannel".  If it is "outputChannel",
+     * <code>rate1</code> is the push rate.  If the name is
+     * "inputChannel", <code>rate1</code> is the pop rate, and
+     * <code>rate2</code> is the peek rate.  The second rate can be
+     * <code>null</code> if it is unnecessary or it is equal to the
      * first rate.
      *
      * @param context  Context this statement appears in

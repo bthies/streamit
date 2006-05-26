@@ -28,7 +28,7 @@ public class DuplicateSplitter extends Splitter
        and remains atomic */
     public void work ()
     {
-        duplicateOneData (input, output);
+        duplicateOneData (inputChannel, outputChannel);
     }
 
     public int [] getWeights ()

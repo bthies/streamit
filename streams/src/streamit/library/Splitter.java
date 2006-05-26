@@ -30,8 +30,8 @@ abstract public class Splitter extends Operator
     public boolean duplicateSplitter = false;
 
     List dest = new ArrayList();
-    public Channel input = null;
-    public Channel output[] = null;
+    public Channel inputChannel = null;
+    public Channel outputChannel[] = null;
 
     public void init()
     {}
@@ -77,7 +77,7 @@ abstract public class Splitter extends Operator
             }
 
             // ensure data
-            input.ensureData(totalData);
+            inputChannel.ensureData(totalData);
         }
         super.prepareToWork();
     }
@@ -102,7 +102,7 @@ abstract public class Splitter extends Operator
             {
                 for (int nData = 0; nData < throughput[nCh]; nData++)
                     {
-                        passOneData(input, output[nCh]);
+                        passOneData(inputChannel, outputChannel[nCh]);
                     }
 
             }
@@ -126,7 +126,7 @@ abstract public class Splitter extends Operator
             return;
 
         // yep, create an output array of appropriate size
-        output = new Channel[dest.size()];
+        outputChannel = new Channel[dest.size()];
 
         // go through my members and connect them all with
         // ChannelConnectFilter
@@ -144,26 +144,26 @@ abstract public class Splitter extends Operator
                         // connect it and retrieve its input and copy it into
                         // the output array for this splitter
                         s.setupOperator();
-                        Channel channel = s.getIOField("input");
-                        output[outputIndx] = channel;
+                        Channel channel = s.getIOField("inputChannel");
+                        outputChannel[outputIndx] = channel;
 
                         // if it is not a source, make sure that it consumes data
                         // of the same kind as everything else in this Splitter
                         if (channel != null)
                             {
                                 // handle input channel
-                                if (input == null)
+                                if (inputChannel == null)
                                     {
-                                        input = new Channel(channel);
-                                        input.setSink(this);
+                                        inputChannel = new Channel(channel);
+                                        inputChannel.setSink(this);
                                     }
                                 else
                                     {
                                         // check that the input types agree
                                         assert channel.getType().getName()
-                                            .equals(input.getType().getName()):
+                                            .equals(inputChannel.getType().getName()):
                                             "input type = "
-                                            + input.getType().getName()
+                                            + inputChannel.getType().getName()
                                             + " but channel type = "
                                             + channel.getType().getName();
                                     }

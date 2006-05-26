@@ -447,6 +447,11 @@ This will start a regtest running with your local copy of the source
 tree and outputting the results to the screen.  The applications and
 compile options being tested are stored under $STREAMIT_HOME/apps.qms.
 
+If you want to set up for something other than ./regtest/qmtest/regtest.xml
+then use 
+  ./regtest/qmtest/streamitqm setup mytest.xml
+where mytest.xml 
+
 When done, you can see a summary report similar to that from the
 nightly regression test using the commands:
    qmtest report  -o ./results.xml ./results.qmr 

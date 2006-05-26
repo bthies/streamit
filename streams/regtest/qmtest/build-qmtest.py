@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.13 2006-04-13 19:44:41 dimock Exp $
+# $Id: build-qmtest.py,v 1.14 2006-05-26 21:41:31 dimock Exp $
 #
 
 import os
@@ -87,6 +87,8 @@ def BuildQMTestTree(control):
     attribute of 'impl'"""
 
     def visit(arg, dirname, names):
+#        print >> sys.stderr, "dirname = " + dirname
+#        print >> sys.stderr, "names = " + (" ".join(names))
         if 'benchmark.xml' in names:
             DoQMTestDir(dirname, control)
 

@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.25 2006-05-26 14:40:42 dimock Exp $
+# $Id: streamit.py,v 1.26 2006-05-26 21:41:31 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -245,15 +245,16 @@ class RunProgramTest(qm.test.test.Test):
       elif self.backend == 'uni' or self.backend == 'simpleC' or self.backend == 'cluster':
           return self._RunUni(context, result)
       else:
-          # Should raise an exception
-          pass
+          result.Fail('Unknown backend: "' + self.backend + '"')
 
     def _RunRaw(self, context, result):
         test_home_dir = context_to_dir(context)
 
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
-        status = e.Run(['make', '-f', 'Makefile.streamit', 'run'])
+        status = e.Run(['make', '-f', 'Makefile.streamit', 'run'], dir=test_home_dir)
+        result['RunProgramTest.stderr'] = e.stderr
+        #result['RunProgramTest.outputfilename'] = os.path.join(test_home_dir,self.own_output)
 
         # TODO: see what processing happens on this output, if any.
         f = open(os.path.join(test_home_dir,self.own_output), 'w')
@@ -329,21 +330,33 @@ class CompareResultsTest(qm.test.test.Test):
         #print "self.expected: ", str(self.expected), "\n"
         #print "self.output:   ", str(self.output), "\n"
 
+        #result['CompareResultsTest.outputfilename'] = os.path.join(test_home_dir,self.output)
         # First off, read the expected results file:
-        f = open(os.path.join(test_home_dir,self.expected), 'r')
-        expected = f.readlines()
-        f.close()
-
+        try:
+            f = open(os.path.join(test_home_dir,self.expected), 'r')
+            expected = f.readlines()
+            f.close()
+        except:
+            result.Fail('Missing correct results file "' +  \
+                        os.path.join(test_home_dir,self.expected) + '"')
+            
         # Next, read the actual results file:
-        f = open(os.path.join(test_home_dir,self.output), 'r')
-        actual = f.readlines()
-        f.close()
-
+        try:
+            f = open(os.path.join(test_home_dir,self.output), 'r')
+            actual = f.readlines()
+            f.close()
+        except:
+            result.Fail('Missing program run results file "' +  \
+                        os.path.join(test_home_dir,self.output) + '"')
+            
         # Optimizations may change the meaning of "n steady-state iterations"
         # So we accept actual results with length different from expected
         # The one thing we don't allow is no actual output where some output
         # is expected
         if len(actual) == 0 and len(expected) > 0:
+            tag = 'CompareResultsTest.line_0'
+            result[tag + '.expected'] = 'some output'
+            result[tag + '.actual'] = 'no output'
             failed = 1
             
         # For the RAW backend, cook 'actual'.
@@ -362,11 +375,17 @@ class CompareResultsTest(qm.test.test.Test):
         # Build pairs of values, converted to floats.
         pairs = []
         for i in range(min(len(expected), len(actual))):
-            ev = float(expected[i])
-            av = float(actual[i])
-            p = (ev, av)
-            pairs.append(p)
-
+            try:
+                ev = float(expected[i])
+                av = float(actual[i])
+                p = (ev, av)
+                pairs.append(p)
+            except:                     # error in conversion to float.
+                tag = 'CompareResultsTest.line_%d' % i
+                result[tag + '.expected'] = expected[i]
+                result[tag + '.actual'] = actual[i]
+                failed = 1
+                
         # Now do the actual comparison:
         error_count = 0
         for i in range(len(pairs)):

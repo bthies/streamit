@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.122 2006-03-16 21:18:35 madrake Exp $
+ * @version $Id: NodesToJava.java,v 1.123 2006-05-26 16:53:14 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -225,17 +225,17 @@ public class NodesToJava implements FEVisitor
     // Helpers to get function names for stream types.
     public String pushFunction(StreamType st)
     {
-        return annotatedFunction("output.push", st.getOut());
+        return annotatedFunction("outputChannel.push", st.getOut());
     }
     
     public String popFunction(StreamType st)
     {
-        return annotatedFunction("input.pop", st.getIn());
+        return annotatedFunction("inputChannel.pop", st.getIn());
     }
     
     public String peekFunction(StreamType st)
     {
-        return annotatedFunction("input.peek", st.getIn());
+        return annotatedFunction("inputChannel.peek", st.getIn());
     }
     
     private String annotatedFunction(String name, Type type)

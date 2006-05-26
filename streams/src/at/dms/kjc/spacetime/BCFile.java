@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.lang.StringBuffer;
 import at.dms.kjc.*;
+
 import java.io.FileWriter;
 
 import at.dms.kjc.common.RawSimulatorPrint;
@@ -82,7 +83,8 @@ public class BCFile
 
         buf.append("global to_file_path = malloc(strlen(streamit_home) + 30);\n"); 
         buf.append("global from_file_path = malloc(strlen(streamit_home) + 30);\n\n"); 
-
+        buf.append("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
+        
         //number gathering stuff
         if (numbers) {
             numberGathering();

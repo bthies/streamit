@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.24 2006-05-25 23:19:17 dimock Exp $
+# $Id: streamit.py,v 1.25 2006-05-26 14:40:42 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -61,8 +61,8 @@ def context_to_dir(context):
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""
 
-    backend_names = ['Uniprocessor', 'Library', 'RAW 4x4', 'Cluster 1']
-    backend_tags = ['uni', 'library', 'raw4', 'cluster']    
+    backend_names = ['Uniprocessor', 'Library', 'RAW 4x4', 'Cluster 1', 'simpleC']
+    backend_tags = ['uni', 'library', 'raw4', 'cluster', 'simpleC']    
 
     # TODO: think about some way to present the backend_names
     # to the user, but use the backend_tags internally.
@@ -171,8 +171,8 @@ class RunStrcTest(qm.test.test.Test):
       # Figure out what flags to use for the backend
       if self.backend == 'uni':
           backend = []
-      elif self.backend == 'rstream':
-          backend = ['--rstream']
+      elif self.backend == 'simpleC':
+          backend = ['--simpleC']
       elif self.backend == 'library':
           backend = ['--library']
       elif self.backend == 'raw4':
@@ -242,9 +242,7 @@ class RunProgramTest(qm.test.test.Test):
 
       if self.backend == 'raw4':
           return self._RunRaw(context, result)
-      elif self.backend == 'uni' or self.backend == 'rstream':
-          return self._RunUni(context, result)
-      elif self.backend == 'cluster':
+      elif self.backend == 'uni' or self.backend == 'simpleC' or self.backend == 'cluster':
           return self._RunUni(context, result)
       else:
           # Should raise an exception

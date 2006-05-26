@@ -40,7 +40,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
         boolean oldSimulateWorkValue = KjcOptions.simulatework;
-        
+                
         int oldOutputsValue = KjcOptions.outputs;
 
         int work = 0;

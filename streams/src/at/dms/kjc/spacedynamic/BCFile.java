@@ -87,6 +87,8 @@ public class BCFile {
         fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
         fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
         
+        fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
+        
         // create the function to tell the simulator what tiles are mapped
         fw.write("fn mapped_tile(tileNumber) {\n");
         fw.write("if (0 ");

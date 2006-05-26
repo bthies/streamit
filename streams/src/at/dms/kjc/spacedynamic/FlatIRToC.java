@@ -49,8 +49,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
     //the flat node for the filter we are visiting
     private FlatNode flatNode;
 
-   
-
     private Layout layout;
     /** true if the filter is the sink of a SSG, so it has dynamic output 
         and must sent output over the dynamic network **/

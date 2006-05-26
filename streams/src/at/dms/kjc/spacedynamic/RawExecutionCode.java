@@ -34,7 +34,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     /** if this is true, then inline the work function calls (for each of the 
 	code generation schemes), if work remains a function and is called.
     */
-    public static boolean INLINE_WORK = false;
+    public static boolean INLINE_WORK = true;
 
 
     /** * fields for the var names we introduce ** */

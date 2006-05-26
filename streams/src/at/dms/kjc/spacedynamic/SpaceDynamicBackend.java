@@ -64,11 +64,6 @@ public class SpaceDynamicBackend {
         //this must be run now, FlatIRToC relies on it!!!
         RenameAll.renameAllFilters(str);
     
-        SIRPrinter printer = new SIRPrinter("sir_BEFORE_CONSTPROP_.out");
-        IterFactory.createFactory().createIter(str).accept(printer);
-        printer.close();
-    
-        
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set theStatics = new HashSet();
@@ -77,10 +72,6 @@ public class SpaceDynamicBackend {
         ConstantProp.propagateAndUnroll(str,true);
         System.out.println("Done Constant Prop and Unroll...");
 
-        SIRPrinter printer1 = new SIRPrinter("sir_AFTER_CONSTPROP_.out");
-        IterFactory.createFactory().createIter(str).accept(printer1);
-        printer1.close();
-    
         // convert round(x) to floor(0.5+x) to avoid obscure errors
         RoundToFloor.doit(str);
 

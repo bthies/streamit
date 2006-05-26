@@ -86,8 +86,12 @@ public class IMEMEstimation implements FlatVisitor
 
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
+        boolean oldSimulateWorkValue = KjcOptions.simulatework;
+        
         int oldOutputsValue = KjcOptions.outputs;
-
+        //turn off simlate work while testing IMEM...
+        KjcOptions.simulatework = false;
+        
         //clone the Filter and create a dummy pipeline with just this
         //new cloned filter
         SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
@@ -307,6 +311,7 @@ public class IMEMEstimation implements FlatVisitor
         }
 
         TESTING_IMEM = false;
+        KjcOptions.simulatework = oldSimulateWorkValue;
         KjcOptions.magic_net = oldMagicNetValue;
         KjcOptions.ratematch = oldRateMatchValue;
         KjcOptions.outputs = oldOutputsValue;

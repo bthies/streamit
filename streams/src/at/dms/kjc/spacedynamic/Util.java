@@ -370,6 +370,12 @@ public class Util extends at.dms.util.Utils {
         //filter.setOutputType(CStdType.Void);
         filter.setPop(new JIntLiteral(0));
         filter.setPeek(new JIntLiteral(0));
+        if (filter instanceof SIRTwoStageFilter) {
+            SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+            two.setInitPop(0);
+            two.setInitPeek(0);
+            two.setInitPush(0);
+        }
         //filter.setInputType(CStdType.Void);
     }
 

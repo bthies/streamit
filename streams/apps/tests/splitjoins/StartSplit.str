@@ -1,0 +1,29 @@
+/* Check allowability of programs starting with split 0
+
+strc -library -i 2 StartSplit.str 
+1
+2
+1
+2
+ */
+void->void pipeline StartSplit {
+    add void->int splitjoin {
+	split roundrobin(0);
+	add void->int filter {
+	    work pop 0 peek 0 push 1 {
+		push(1);
+	    }
+	}
+	add void->int filter {
+	    work pop 0 peek 0 push 1 {
+		push(2);
+	    }
+	}
+	join roundrobin(1);
+    }
+    add int->void filter {
+	work pop 1 peek 0 push 0 {
+	    println(pop());
+	}
+    }
+}

@@ -1,0 +1,47 @@
+/* SimpleSplit test from Streamit 1.0 days. 
+
+strc -library -i 2 SimpleSplit.str 
+0
+3
+2
+1
+4
+7
+6
+5
+ */
+void->void pipeline SimpleSplit {
+    add void->int filter {
+	int count = 0;
+	work push 1 {
+	    push(count++);
+	}
+    }
+    add int->int splitjoin {
+	split roundrobin();
+	add straight();
+	add reverse();
+	join roundrobin();
+    }
+    add int->void filter {
+	work pop 1 {
+	    println(pop());
+	}
+    }
+}
+
+int->int filter straight {
+    work pop 2 push 2 {
+	push(pop());
+	push(pop());
+    }
+}
+
+int->int filter reverse {
+    work pop 2 push 2 {
+	int i1 = pop();
+	int i2 = pop();
+	push(i2);
+	push(i1);
+    }
+}

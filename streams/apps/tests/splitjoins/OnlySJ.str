@@ -1,0 +1,30 @@
+/* Check allowability of programs starting with split 0 and ending with join 0
+
+strc -library -i 2 OnlySJ.str 
+Error: ...
+
+This should fail (as should the same code with split roundrobin(0)).
+StreamIt does not currently attempt to handle parallel streams with
+neither common inputs nor common outputs.
+
+ */
+void->void pipeline OnlySJ {
+    add void->void splitjoin {
+	split duplicate();
+	add f1();
+	add f2();
+	join roundrobin(0);
+    }
+}
+
+void->void filter f1 {
+    work {
+	println(1); 
+    }
+}
+
+void->void filter f2 {
+    work {
+	println(2); 
+    }
+}

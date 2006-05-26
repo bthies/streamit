@@ -1,0 +1,32 @@
+<benchmark>
+  <name>splitjoins</name>
+  <desc>Tests of normal and edge cases for splits and joins</desc>
+  <description>
+This set of tests checks for the correct implementation of the semantics 
+of split-joins.
+
+One negative case is missing from the implementations list OnlySJ.str should
+fail.  If we ever add the capacity to verify that a test faile in a certain way
+then we should add OnlySJ to the regression test suite.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="simplesplit">
+      <desc>Simple reordering by work rates not matching splitjoin rates</desc>
+      <file class="source">SimpleSplit.str</file>
+      <file class="output">SimpleSplit.out</file>
+    </impl>
+    <impl lang="StreamIt" id="startsplit">
+      <desc>corner case: program starts with split roundrobin(0)</desc>
+      <file class="source">StartSplit.str</file>
+      <file class="output">StartSplit.out</file>
+    </impl>
+    <impl lang="StreamIt" id="endjoin" iters="1">
+      <desc>corner case: program ends with join roundrobin(0).
+            Low number of iterations because printing results in parallel:
+            the more iterations, the more chance of prints interfering.
+      </desc>
+      <file class="source">EndJoin.str</file>
+      <file class="output">EndJoin.out</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -51,7 +51,7 @@ public class RawSimulatorPrint {
         
         ret.append("fn streamit_print(procNum, rs, imm, result_ptr)\n");
         ret.append("{\n");
-        ret.append("  local proc, time_hi, time_lo;\n");
+        ret.append("  local proc, time_hi, time_lo;\n");  //, outputs;\n");
         ret.append("  if (imm != 21 && imm != 22)\n");
         ret.append("    return 0;\n");
         
@@ -60,6 +60,19 @@ public class RawSimulatorPrint {
         ret.append("  //get the cycle\n");
         ret.append("  Proc_GetCycleCounter(proc, &time_hi, &time_lo);\n");
 
+        //handle the --outputs options
+        
+        //ret.append("  outputs = get_variable_val(\"gStreamItOutputs\");\n");
+        ret.append("  if (gStreamItOutputs == 0) {\n");
+        ret.append("     gInterrupted = 1;\n");
+        ret.append("     exit_now(0);\n");
+        ret.append("   }\n");
+        ret.append("   else if (gStreamItOutputs > 0) {\n");
+        ret.append("      gStreamItOutputs--;\n");
+        ret.append("   }\n");
+        ret.append("\n");
+        
+        //print the value
         ret.append("  if (imm == 21) {  //print an int\n");
         ret.append("    printf(\"[%d: %d]: %d\\n\", procNum, time_lo, rs);\n");
         ret.append("  }\n");

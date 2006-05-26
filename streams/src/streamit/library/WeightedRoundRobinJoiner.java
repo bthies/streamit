@@ -75,7 +75,7 @@ public class WeightedRoundRobinJoiner extends Joiner
         int i;
         for (i = 0; i < numChildren; i++)
             {
-                if (srcs.get(i) != null && ((Stream) srcs.get(i)).output != null)
+                if (srcs.get(i) != null && ((Stream) srcs.get(i)).outputChannel != null)
                     {
                         weights[i] = ((Integer) srcsWeight.get(i)).intValue();
                     }
@@ -92,7 +92,7 @@ public class WeightedRoundRobinJoiner extends Joiner
         int i;
         for (i = 0; i < numChildren; i++)
             {
-                if (srcs.get(i) != null && ((Stream) srcs.get(i)).output != null)
+                if (srcs.get(i) != null && ((Stream) srcs.get(i)).outputChannel != null)
                     {
                         outputTotal += ((Integer) srcsWeight.get(i)).intValue();
                     }

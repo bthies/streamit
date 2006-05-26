@@ -559,8 +559,8 @@ public class FeedbackLoop extends Stream
 
             // copy the input/output from the identities to the input/output
             // fields of the feedback loop
-            input = channelIn;
-            output = channelOut;
+            inputChannel = channelIn;
+            outputChannel = channelOut;
         }
 
         // now fill up the feedback path with precomputed data:

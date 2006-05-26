@@ -57,14 +57,14 @@ public class JccFilter extends JccStream {
 		inChannel = channel;
 		super.setInChannel(inChannel);
 
-		filter.input = inChannel;
+		filter.inputChannel = inChannel;
 	}
 
 	void setOutChannel(JccChannel channel) {
 		outChannel = channel;
 		super.setOutChannel(outChannel);
 
-		filter.output = outChannel;
+		filter.outputChannel = outChannel;
 	}
 
 	public void init() {

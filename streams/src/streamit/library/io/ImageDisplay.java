@@ -182,7 +182,7 @@ public class ImageDisplay extends Filter {
     }
 
     public void init() {
-        input = new Channel (Integer.TYPE, width*height*3);
+        inputChannel = new Channel (Integer.TYPE, width*height*3);
     }
  
     public void work() {
@@ -190,9 +190,9 @@ public class ImageDisplay extends Filter {
         int[] pixel = new int[3];    
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                pixel[0] = input.popInt();
-                pixel[1] = input.popInt();
-                pixel[2] = input.popInt();
+                pixel[0] = inputChannel.popInt();
+                pixel[1] = inputChannel.popInt();
+                pixel[2] = inputChannel.popInt();
                 newImage.getRaster().setPixel(x, y, pixel);
             }
         }

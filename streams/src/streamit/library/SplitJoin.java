@@ -714,13 +714,13 @@ public class SplitJoin extends Stream
         if (splitter != null)
             {
                 splitter.setupOperator();
-                input = splitter.getIOField("input", 0);
+                inputChannel = splitter.getIOField("input", 0);
             }
 
         if (joiner != null)
             {
                 joiner.setupOperator();
-                output = joiner.getIOField("output", 0);
+                outputChannel = joiner.getIOField("output", 0);
             }
     }
 

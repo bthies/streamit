@@ -66,11 +66,11 @@ public class FileWriter extends Filter
     {
         // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
         if (fileType == null) {
-            input = new Channel (Integer.TYPE, 1);
+            inputChannel = new Channel (Integer.TYPE, 1);
             bits_to_go = 8;
             the_bits = 0;
         } else {
-            input = new Channel (fileType, 1);
+            inputChannel = new Channel (fileType, 1);
         }
     }
 
@@ -104,7 +104,7 @@ public class FileWriter extends Filter
         try {
             // This is part of the hack to make FileReader/Writer&lt;bit:gt; work
             if (fileType == null) {
-                the_bits = (byte) ((the_bits << 1) | (input.popInt() & 1));
+                the_bits = (byte) ((the_bits << 1) | (inputChannel.popInt() & 1));
                 bits_to_go--;
                 if (bits_to_go == 0) {
                     outputStream.writeByte(the_bits);
@@ -112,13 +112,13 @@ public class FileWriter extends Filter
                     bits_to_go = 8;
                 }
             } else if (fileType == Integer.TYPE) {
-                outputStream.writeInt(endianFlip(input.popInt()));
+                outputStream.writeInt(endianFlip(inputChannel.popInt()));
             } else if (fileType == Short.TYPE) {
-                outputStream.writeShort(endianFlip(input.popShort()));
+                outputStream.writeShort(endianFlip(inputChannel.popShort()));
             } else if (fileType == Character.TYPE) {
-                outputStream.writeChar(input.popChar());
+                outputStream.writeChar(inputChannel.popChar());
             } else if (fileType == Float.TYPE) {
-                outputStream.writeInt(endianFlip(Float.floatToIntBits(input
+                outputStream.writeInt(endianFlip(Float.floatToIntBits(inputChannel
                                                                       .popFloat())));
             } else {
                 ERROR("You must define a writer for your type here.\n" +

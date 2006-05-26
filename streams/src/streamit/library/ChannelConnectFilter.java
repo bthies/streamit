@@ -33,20 +33,20 @@ public class ChannelConnectFilter extends Filter
     {
         if (type != null)
             {
-                input = new Channel (type, 1);
-                output = new Channel (type, 1);
+                inputChannel = new Channel (type, 1);
+                outputChannel = new Channel (type, 1);
             }
         addSteadyPhase(1, 1, 1, "work");
     }
 
     public void work()
     {
-        passOneData (input, output);
+        passOneData (inputChannel, outputChannel);
     }
 
     void useChannels (Channel in, Channel out)
     {
-        assert input == null && output == null;
+        assert inputChannel == null && outputChannel == null;
         assert in != null && out != null;
         assert in != out;
         assert out.getType ().getName ().equals (in.getType ().getName ()):
@@ -54,10 +54,10 @@ public class ChannelConnectFilter extends Filter
             in.getType().getName() + ", but sink input is " +
             out.getType().getName();
 
-        input = in;
-        output = out;
+        inputChannel = in;
+        outputChannel = out;
 
-        input.setSink (this);
-        output.setSource (this);
+        inputChannel.setSink (this);
+        outputChannel.setSource (this);
     }
 }

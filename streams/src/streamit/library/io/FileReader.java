@@ -70,10 +70,10 @@ public class FileReader extends Filter
     {
         // Hacked to make FileReader/Writer<bit> work
         if (fileType == null) {
-            output = new Channel (Integer.TYPE, 1);
+            outputChannel = new Channel (Integer.TYPE, 1);
             bits_to_go = 0;
         } else {
-            output = new Channel (fileType, 1);
+            outputChannel = new Channel (fileType, 1);
         }
     }
 
@@ -112,17 +112,17 @@ public class FileReader extends Filter
                         the_bits = (byte)(inputStream.readUnsignedByte());
                         bits_to_go = 8;
                     }
-                    output.pushInt((the_bits >> 7) & 1);
+                    outputChannel.pushInt((the_bits >> 7) & 1);
                     the_bits <<= 1;
                     bits_to_go--;
                 } else if (fileType == Integer.TYPE) {
-                    output.pushInt (endianFlip (inputStream.readInt ()));
+                    outputChannel.pushInt (endianFlip (inputStream.readInt ()));
                 } else if (fileType == Short.TYPE) {
-                    output.pushShort (endianFlip (inputStream.readShort ()));
+                    outputChannel.pushShort (endianFlip (inputStream.readShort ()));
                 } else if (fileType == Character.TYPE) {
-                    output.pushChar (inputStream.readChar ());
+                    outputChannel.pushChar (inputStream.readChar ());
                 } else if (fileType == Float.TYPE) {
-                    output.pushFloat (Float.intBitsToFloat (endianFlip (inputStream.readInt ())));
+                    outputChannel.pushFloat (Float.intBitsToFloat (endianFlip (inputStream.readInt ())));
                 } else {
                     ERROR ("You must define a reader for your type here.\nObjects aren't really supported right now (for compatibility\nwith the C library).");
                 }

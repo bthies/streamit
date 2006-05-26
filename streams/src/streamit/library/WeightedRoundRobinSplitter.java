@@ -71,7 +71,7 @@ public class WeightedRoundRobinSplitter extends Splitter
         int i;
         for (i=0;i<numChildren;i++)
             {
-                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                if (dest.get(i) != null && ((Stream)dest.get (i)).inputChannel != null)
                     {
                         weights [i] = ((Integer)destWeight.get (i)).intValue ();
                     }
@@ -88,7 +88,7 @@ public class WeightedRoundRobinSplitter extends Splitter
         int i;
         for (i=0;i<numChildren;i++)
             {
-                if (dest.get(i) != null && ((Stream)dest.get (i)).input != null)
+                if (dest.get(i) != null && ((Stream)dest.get (i)).inputChannel != null)
                     {
                         inputTotal += ((Integer)destWeight.get (i)).intValue ();
                     }

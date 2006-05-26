@@ -690,7 +690,7 @@ public abstract class Filter extends Stream
             // filter) prior to execution.
             PhaseInfo phase = getCurrentPhase();
             if (phase.e!=Rate.DYNAMIC_RATE && phase.e>0) {
-                input.ensureData(phase.e);
+                inputChannel.ensureData(phase.e);
             }
         }
         super.prepareToWork();
@@ -728,13 +728,13 @@ public abstract class Filter extends Stream
         assert Stream.scheduledRun;  // this is only executed when there's a schedule
 
         int inputCount=0, outputCount=0;
-        if (input != null)
+        if (inputChannel != null)
             {
-                inputCount = input.getItemsPopped();
+                inputCount = inputChannel.getItemsPopped();
             }
-        if (output != null)
+        if (outputChannel != null)
             {
-                outputCount = output.getItemsPushed();
+                outputCount = outputChannel.getItemsPushed();
             }
 
         // this is where phase is advanced for scheduled run
@@ -745,8 +745,8 @@ public abstract class Filter extends Stream
         assert schedName.equals(phase.name);
 
         // make sure that there is enough data to peek!
-        assert input == null
-            || input.getItemsPushed() - input.getItemsPopped() >= phase.e;
+        assert inputChannel == null
+            || inputChannel.getItemsPushed() - inputChannel.getItemsPopped() >= phase.e;
 
         // execute the phase
         try
@@ -771,9 +771,9 @@ public abstract class Filter extends Stream
             }
 
         int newInputCount, newOutputCount;
-        if (input != null)
+        if (inputChannel != null)
             {
-                newInputCount = input.getItemsPopped();
+                newInputCount = inputChannel.getItemsPopped();
                 if (newInputCount - inputCount != phase.o)
                     throw new IllegalArgumentException(
                                                        "This probably means that you declared the wrong pop rate for "
@@ -787,9 +787,9 @@ public abstract class Filter extends Stream
                                                        + " on Stream "
                                                        + this);
             }
-        if (output != null)
+        if (outputChannel != null)
             {
-                newOutputCount = output.getItemsPushed();
+                newOutputCount = outputChannel.getItemsPushed();
                 if (newOutputCount - outputCount != phase.u)
                     throw new IllegalArgumentException(
                                                        "This probably means that you declared the wrong push rate for "
@@ -816,14 +816,14 @@ public abstract class Filter extends Stream
             {
                 if (outputType != null)
                     {
-                        output = new Channel(outputType, pushAmount);
+                        outputChannel = new Channel(outputType, pushAmount);
                     }
 
                 if (inputType != null)
                     {
                         if (peekAmount == -1)
                             peekAmount = popAmount;
-                        input = new Channel(inputType, popAmount, peekAmount);
+                        inputChannel = new Channel(inputType, popAmount, peekAmount);
                     }
             }
         else if (multiPhaseStyle)
@@ -834,9 +834,9 @@ public abstract class Filter extends Stream
                         // Channel (for Eclipse debugger to find it there).
                         if (initPhases.size()==0 && steadyPhases.size()==1) {
                             PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
-                            input = new Channel(inType, pi.o, pi.e);
+                            inputChannel = new Channel(inType, pi.o, pi.e);
                         } else {
-                            input = new Channel(inType);
+                            inputChannel = new Channel(inType);
                         }
                     }
 
@@ -846,9 +846,9 @@ public abstract class Filter extends Stream
                         // Channel (for Eclipse debugger to find it there).
                         if (initPhases.size()==0 && steadyPhases.size()==1) {
                             PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
-                            output = new Channel(outType, pi.u);
+                            outputChannel = new Channel(outType, pi.u);
                         } else {
-                            output = new Channel(outType);
+                            outputChannel = new Channel(outType);
                         }
                     }
             }

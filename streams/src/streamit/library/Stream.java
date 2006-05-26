@@ -34,8 +34,8 @@ public abstract class Stream extends Operator
      */
     public static Stream toplevel;    
 
-    public Channel input = null;
-    public Channel output = null;
+    public Channel inputChannel = null;
+    public Channel outputChannel = null;
 
     LinkedList streamElements = new LinkedList();
 
@@ -495,12 +495,12 @@ public abstract class Stream extends Operator
 
     Channel getOutputChannel()
     {
-        return output;
+        return outputChannel;
     }
 
     Channel getInputChannel()
     {
-        return input;
+        return inputChannel;
     }
 
     public abstract void connectGraph();

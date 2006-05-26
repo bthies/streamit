@@ -30,7 +30,7 @@ public class DataPrinter extends Filter
 
     public void init ()
     {
-        input = new Channel (fileType, 1);
+        inputChannel = new Channel (fileType, 1);
     }
 
     public void work ()
@@ -39,19 +39,19 @@ public class DataPrinter extends Filter
             {
                 if (fileType == Character.TYPE)
                     {
-                        System.out.print (input.popChar () + ", ");
+                        System.out.print (inputChannel.popChar () + ", ");
                     } else
                         if (fileType == Float.TYPE)
                             {
-                                System.out.print (input.popFloat () + ", ");
+                                System.out.print (inputChannel.popFloat () + ", ");
                             } else
                                 if (fileType == Integer.TYPE)
                                     {
-                                        System.out.print (input.popInt () + ", ");
+                                        System.out.print (inputChannel.popInt () + ", ");
                                     } else
                                         if (Class.forName ("java.io.Serializable").isAssignableFrom (fileType))
                                             {
-                                                System.out.print (input.pop () + ", ");
+                                                System.out.print (inputChannel.pop () + ", ");
                                             } else
                                                 {
                                                     ERROR ("You must define a writer for your type here.\nIf you're trying to write an object, it should be a serializable object\n(and then you won't have to do anything special).");

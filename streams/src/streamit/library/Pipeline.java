@@ -419,8 +419,8 @@ public class Pipeline extends Stream
 
         // set myself up with proper input and output
         {
-            input = ((Stream)streamElements.getFirst ()).getInputChannel ();
-            output = ((Stream)streamElements.getLast ()).getOutputChannel ();
+            inputChannel = ((Stream)streamElements.getFirst ()).getInputChannel ();
+            outputChannel = ((Stream)streamElements.getLast ()).getOutputChannel ();
         }
     }
 

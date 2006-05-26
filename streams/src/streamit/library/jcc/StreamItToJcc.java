@@ -70,7 +70,7 @@ public class StreamItToJcc {
 		boolean hasPrework = (filter.getNumInitPhases() > 0);
 		JccFilter jccFilter;
 
-		if (filter.input == null) {
+		if (filter.inputChannel == null) {
 			// Filter is source
 			jccFilter = new JccFilter(filter, 0, hasPrework, 0);
 			sourceList.add(jccFilter);
@@ -90,7 +90,7 @@ public class StreamItToJcc {
 				jccFilter = new JccFilter(filter, peekRate, hasPrework,
 						preworkPeekRate);
 
-				if (filter.output == null) {
+				if (filter.outputChannel == null) {
 					sinkList.add(jccFilter);
 				}
 			}
@@ -116,8 +116,8 @@ public class StreamItToJcc {
 
 			// Create input channel for the new filter and connect it to the
 			// last one
-			assert filter.input != null;
-			JccChannel jccChannel = convertChannel(filter.input);
+			assert filter.inputChannel != null;
+			JccChannel jccChannel = convertChannel(filter.inputChannel);
 			jccFilters[i - 1].setOutChannel(jccChannel);
 			jccFilters[i].setInChannel(jccChannel);
 		}
@@ -164,16 +164,16 @@ public class StreamItToJcc {
 			jccFilters[i] = convertStream(filter);
 
 			// Create input channel for filter and attach it to splitter
-			assert filter.input != null;
-			JccChannel inChannel = convertChannel(filter.input);
+			assert filter.inputChannel != null;
+			JccChannel inChannel = convertChannel(filter.inputChannel);
 			jccSplitter.addOutChannel(inChannel);
 			jccFilters[i].setInChannel(inChannel);
 
 			// Create output channel for filter and attach it to joiner
-			if (filter.output == null) {
+			if (filter.outputChannel == null) {
 				jccJoiner.addInChannel(null);
 			} else {
-				JccChannel outChannel = convertChannel(filter.output);
+				JccChannel outChannel = convertChannel(filter.outputChannel);
 				jccFilters[i].setOutChannel(outChannel);
 				jccJoiner.addInChannel(outChannel);
 			}
@@ -224,26 +224,26 @@ public class StreamItToJcc {
 		Stream body = feedbackLoop.getBody();
 		JccStream jccBody = convertStream(body);
 
-		assert body.input != null;
-		jccChannel = convertChannel(body.input);
+		assert body.inputChannel != null;
+		jccChannel = convertChannel(body.inputChannel);
 		jccJoiner.setOutChannel(jccChannel);
 		jccBody.setInChannel(jccChannel);
 
-		assert body.output != null;
-		jccChannel = convertChannel(body.output);
+		assert body.outputChannel != null;
+		jccChannel = convertChannel(body.outputChannel);
 		jccBody.setOutChannel(jccChannel);
 		jccSplitter.setInChannel(jccChannel);
 
 		Stream loop = feedbackLoop.getLoop();
 		JccStream jccLoop = convertStream(loop);
 
-		assert loop.input != null;
-		jccChannel = convertChannel(loop.input);
+		assert loop.inputChannel != null;
+		jccChannel = convertChannel(loop.inputChannel);
 		jccSplitter.addOutChannel(jccChannel);
 		jccLoop.setInChannel(jccChannel);
 
-		assert loop.output != null;
-		jccChannel = convertChannel(loop.output);
+		assert loop.outputChannel != null;
+		jccChannel = convertChannel(loop.outputChannel);
 		jccLoop.setOutChannel(jccChannel);
 		jccJoiner.addInChannel(jccChannel);
 

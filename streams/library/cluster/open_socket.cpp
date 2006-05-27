@@ -102,7 +102,7 @@ netsocket *open_socket::listen(short port) {
       //fprintf(stderr,"Accepting connection....");
       //fflush(stderr);
 
-      sock = accept(listenfd, (struct sockaddr *)&cliaddr, (int*)&clilen);
+      sock = accept(listenfd, (struct sockaddr *)&cliaddr, (socklen_t *)&clilen);
 
       unsigned ip = cliaddr.sin_addr.s_addr;
 

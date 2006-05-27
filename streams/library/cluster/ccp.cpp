@@ -391,7 +391,7 @@ int ccp::run_ccp() {
 	struct sockaddr_in cliaddr;
 	unsigned clilen = sizeof(cliaddr);
 	
-	fd = accept(listenfd, (struct sockaddr *)&cliaddr, (int*)&clilen);
+	fd = accept(listenfd, (struct sockaddr *)&cliaddr, (socklen_t *)&clilen);
 	
 	if (fd != -1) {
 	  

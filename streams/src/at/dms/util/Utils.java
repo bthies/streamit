@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.35 2006-05-24 03:42:55 rabbah Exp $
+ * $Id: Utils.java,v 1.36 2006-05-27 18:05:06 rabbah Exp $
  */
 
 package at.dms.util;
@@ -160,7 +160,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
              ident.equals("sinh") ||
              ident.equals("exp") ||
              ident.equals("fabs") ||
-             // RMR { add max()
+             // RMR { add abs() and max()
+             ident.equals("abs") ||
              ident.equals("max") ||
              // } RMR
              ident.equals("modf") ||
@@ -178,6 +179,22 @@ public abstract class Utils implements Serializable, DeepCloneable {
             return true;
         return false;
     }
+    
+    /* RMR { the compiler currently uses the floating-point versions
+     * of the math functions and hence the math routines are renamed to
+     * their floating point counterparts: some math functions reqire a
+     * prefix 'f', and others require a postfix 'f' 
+     */
+    public static boolean mathMethodRequiresFloatPrefix(JExpression prefix, String ident) 
+    {
+        if (prefix instanceof JTypeNameExpression &&
+            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+       
+            (ident.equals("abs")))
+            return true;
+        return false;
+    }
+    /* } RMR */
     
     /**
      * Returns <pre>val</pre> as a percentage with maximum of 4 digits

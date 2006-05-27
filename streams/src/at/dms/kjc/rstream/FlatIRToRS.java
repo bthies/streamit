@@ -520,12 +520,24 @@ public class FlatIRToRS extends ToC
 
         assert (!ident.equals(Names.receiveMethod)) :
             "Error: RStream code generation should not see network receive method";
-    
-        p.print(ident);
-    
-        //we want single precision versions of the math functions
-        if (Utils.isMathMethod(prefix, ident)) 
+
+        // RMR { math functions are converted to use their floating-point counterparts;
+        // to do this, some function names are prepended with a 'f', and others have an
+        // 'f' appended to them
+        if (Utils.isMathMethod(prefix, ident) 
+            && (Utils.mathMethodRequiresFloatPrefix(prefix, ident))) {
             p.print("f");
+            p.print(ident);
+        }
+        else {
+            p.print(ident);
+
+            //we want single precision versions of the math functions
+            if (Utils.isMathMethod(prefix, ident)) {
+                p.print("f");
+            }
+        }
+        // } RMR
         
         p.print("(");
         if (args != null) {

@@ -7,14 +7,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-//#include <unistd.h>
-#include <linux/unistd.h>
 #include <stdio.h>
-
-// use this on RHEL-3
+#ifdef RHEL3
+#include <linux/unistd.h>
 _syscall0(pid_t,gettid)
-// use this on other machines
-//int gettid() { return 0; }
+#else
+#include <unistd.h>
+int gettid() { return 0; }
+#endif // RHEL3
 
 #ifndef ARM
 

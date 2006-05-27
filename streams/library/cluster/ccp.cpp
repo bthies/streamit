@@ -7,6 +7,7 @@
 #include <save_state.h>
 #include <delete_chkpts.h>
 
+#include <assert.h>
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -390,7 +391,7 @@ int ccp::run_ccp() {
 	struct sockaddr_in cliaddr;
 	unsigned clilen = sizeof(cliaddr);
 	
-	fd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+	fd = accept(listenfd, (struct sockaddr *)&cliaddr, (int*)&clilen);
 	
 	if (fd != -1) {
 	  

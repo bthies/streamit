@@ -3,6 +3,7 @@
 
 #ifndef ARM
 
+#include <assert.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -101,7 +102,7 @@ netsocket *open_socket::listen(short port) {
       //fprintf(stderr,"Accepting connection....");
       //fflush(stderr);
 
-      sock = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+      sock = accept(listenfd, (struct sockaddr *)&cliaddr, (int*)&clilen);
 
       unsigned ip = cliaddr.sin_addr.s_addr;
 

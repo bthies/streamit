@@ -1,4 +1,4 @@
-
+#include <assert.h>
 #include <netinet/tcp.h>
 #include <init_instance.h>
 #include <open_socket.h>
@@ -477,7 +477,7 @@ int init_instance::listen() {
       //fprintf(stderr,"Accepting connection....");
       //fflush(stderr);
 
-      sock = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+      sock = accept(listenfd, (struct sockaddr *)&cliaddr, (int*) &clilen);
 
       unsigned ip = cliaddr.sin_addr.s_addr;
 

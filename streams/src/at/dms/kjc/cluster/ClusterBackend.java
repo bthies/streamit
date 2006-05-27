@@ -113,11 +113,13 @@ public class ClusterBackend implements FlatVisitor {
         int code_cache = 16000;
         int data_cache = 16000;
 
-        System.out.println("Cluster Backend SIRGlobal: "+global);
+        if (debugPrint)
+            System.out.println("Cluster Backend SIRGlobal: "+global);
 
         System.out.println("Entry to Cluster Backend");
         System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
-        System.out.println("  peekratio is: "+KjcOptions.peekratio);
+        if (debugPrint)
+            System.out.println("  peekratio is: "+KjcOptions.peekratio);
 //        System.out.println("  rename1 is: "+KjcOptions.rename1);
 //        System.out.println("  rename2 is: "+KjcOptions.rename2);
 
@@ -178,6 +180,7 @@ public class ClusterBackend implements FlatVisitor {
         Unroller.setLimitNoTapeLoops(true, 4);
     
         ConstantProp.propagateAndUnroll(str);
+        System.err.println(" done.");
 
         // do constant propagation on fields
         System.err.print("Running Constant Field Propagation...");
@@ -257,7 +260,7 @@ public class ClusterBackend implements FlatVisitor {
         // Increasing filter Multiplicity
         //if ( doCacheOptimization && KjcOptions.peekratio < 1024) {
 
-	if (!(KjcOptions.peekratio >= 256)) {
+        if (!(KjcOptions.peekratio >= 256)) {
             IncreaseFilterMult.inc(str, 1, code_cache);
         }
 
@@ -473,7 +476,7 @@ public class ClusterBackend implements FlatVisitor {
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(graphFlattener.top);
 
-        System.err.println("Cluster Code begin...");
+        System.err.println("Generating cluster code...");
 
         ClusterFusion.setPartitionMap(partitionMap);
         if (KjcOptions.fusion) {
@@ -497,7 +500,7 @@ public class ClusterBackend implements FlatVisitor {
 
         GenerateWorkEst.generateWorkEst();        // work-estimate.txt
 
-        System.err.println("Cluster Code End.");    
+        System.err.println(" done.");    
 
         /*
         //generate the makefiles
@@ -565,14 +568,15 @@ public class ClusterBackend implements FlatVisitor {
         try {
             sdep = cscheduler.computeSDEP(firstIter, lastIter);
 
-            System.out.println("\n");
-            System.out.println("Source --> Sink Dependency:\n");
-
-            System.out.println("  Source Init Phases: "+sdep.getNumSrcInitPhases());
-            System.out.println("  Destn. Init Phases: "+sdep.getNumDstInitPhases());
-            System.out.println("  Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
-            System.out.println("  Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
-        
+            if (ClusterBackend.debugPrint) {
+                System.out.println("\n");
+                System.out.println("Source --> Sink Dependency:\n");
+            
+                System.out.println("  Source Init Phases: "+sdep.getNumSrcInitPhases());
+                System.out.println("  Destn. Init Phases: "+sdep.getNumDstInitPhases());
+                System.out.println("  Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
+                System.out.println("  Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
+            }
         
             /*
               for (int t = 0; t < 20; t++) {

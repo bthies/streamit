@@ -1,4 +1,3 @@
-
 void->void pipeline FFT6() {
 
   int N = 64;
@@ -55,7 +54,6 @@ complex->complex filter CombineDFT(int n) {
 complex->complex filter CombineIDFT(int n, int maxN) {
 
   complex wn;
-  float invN;
 
   init {
     wn.real = cos(2 * pi / n);

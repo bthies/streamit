@@ -2,8 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.47 2006-05-17 15:25:37 thies Exp $
+# $Id: release.sh,v 1.48 2006-05-29 20:52:41 dimock Exp $
 #
+
+# foe script debugging: -v print line in script, -x print expanded line
+#set -v
+#set -x
 
 # Interesting/configurable variables:
 
@@ -17,6 +21,7 @@ TAG=HEAD
 
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
+CVSROOT2=
 
 usage() {
   cat >&2 <<EOF
@@ -43,7 +48,7 @@ do
     --version|-v) VERSION="$1"; shift;;
     --tag|-r) TAG="$1"; shift;;
     --tmpdir) TMPDIR="$1"; shift;;
-    --cvsroot|-d) CVSROOT="$1"; export CVSROOT; shift;;
+    --cvsroot|-d) CVSROOT="$1"; export CVSROOT; CVSROOT2="-d $1" shift;;
     --precious|-k) PRECIOUS=yes;;
     *) usage; exit 1;;
   esac
@@ -73,7 +78,7 @@ builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes release syntax
 builddirs streams/docs index.html
 
-cvs export -r $TAG -d $WORKING $DIRS
+cvs $CVSROOT2 export -r $TAG -d $WORKING $DIRS
 
 # Run autoconf to get a configure script.
 autoconf $WORKING/streams/configure.in > $WORKING/streams/configure
@@ -107,10 +112,14 @@ rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/gsm
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
+# no streamit code being built currently:
+rm -rf $WORKING/streams/apps/benchmarks/serpent
 rm -rf $WORKING/streams/apps/benchmarks/viram
 rm -rf $WORKING/streams/apps/benchmarks/vocoder
 rm -rf $WORKING/streams/apps/benchmarks/micro04
-rm -rf $WORKING/streams/apps/benchmarks/mpeg2
+rm -rf $WORKING/streams/apps/benchmarks/pldi03
+#rm -rf $WORKING/streams/apps/benchmarks/mpeg2
+# do we want to trim down mpeg inputs, outputs?
 rm -rf $WORKING/streams/apps/benchmarks/traces
 rm -rf $WORKING/streams/apps/benchmarks/asplos06
 # JPEGtoBMP was not working at time of release
@@ -139,8 +148,20 @@ rm -rf $WORKING/streams/apps/examples/vectadd/VectAdd1.*
 rm -rf $WORKING/streams/apps/tests/portals
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
-# don't release applications directory
-rm -rf $WORKING/streams/apps/applications
+# don't release applications directory except GMTI
+rm -rf $WORKING/streams/apps/applications/802.11a
+rm -rf $WORKING/streams/apps/applications/crc
+rm -rf $WORKING/streams/apps/applications/DCT
+rm -rf $WORKING/streams/apps/applications/FAT
+rm -rf $WORKING/streams/apps/applications/FAT-new
+rm -rf $WORKING/streams/apps/applications/hdtv
+rm -rf $WORKING/streams/apps/applications/nokia
+rm -rf $WORKING/streams/apps/applications/nokia-fine
+rm -rf $WORKING/streams/apps/applications/nokia-new
+rm -rf $WORKING/streams/apps/applications/raytracer
+rm -rf $WORKING/streams/apps/applications/raytracer-new
+rm -rf $WORKING/streams/apps/applications/reed-solomon
+rm -rf $WORKING/streams/apps/applications/video
 
 # don't release some C++ software radio thing (?)
 rm -rf $WORKING/streams/apps/libraries/SoftRadio

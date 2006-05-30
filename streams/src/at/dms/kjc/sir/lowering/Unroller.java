@@ -91,9 +91,14 @@ public class Unroller extends SLIRReplacingVisitor {
             });
         // now do unrolling
         int origUnroll = KjcOptions.unroll;
+        boolean origLimitNoTapeLoops = limitNoTapeLoops;
+
         KjcOptions.unroll = 100000;
+        limitNoTapeLoops = false;
         FieldProp.doPropagate(filter, true);
+
         KjcOptions.unroll = origUnroll;
+        limitNoTapeLoops = origLimitNoTapeLoops;
     }
 
     public void setContainerInit(boolean init) {

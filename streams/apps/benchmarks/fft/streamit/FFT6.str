@@ -3,11 +3,11 @@ void->void pipeline FFT6() {
   int N = 64;
 
   add FFTTestSource(N);
-  add FFTKernel2(N);
+  add FFTKernel(N);
 
   // the IFFT also works, but for regtest purposes, only perform an
   // FFT (otherwise output is all zero)
-  // add IFFTKernel2(N);
+  // add IFFTKernel(N);
 
   add CPrinter();
 }
@@ -173,7 +173,7 @@ complex->complex pipeline FFTKernel1(int n) {
 }
 
 
-complex->complex pipeline FFTKernel2(int n) {
+complex->complex pipeline FFTKernel(int n) {
 
   add FFTReorder(n);
   for(int j=2; j<=n; j*=2)
@@ -181,7 +181,7 @@ complex->complex pipeline FFTKernel2(int n) {
 
 }
 
-complex->complex pipeline IFFTKernel2(int n) {
+complex->complex pipeline IFFTKernel(int n) {
   add FFTReorder(n);
   for(int j=2; j<n; j*=2)
     add CombineIDFT(j, n);

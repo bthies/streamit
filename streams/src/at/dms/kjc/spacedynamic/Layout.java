@@ -754,7 +754,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                         // now calculate the number of items sent to this dest
                         // by this filter
                         items = (int) rate * ssg.getMult(dst, false)
-                            * src.getFilter().getPopInt();
+                            * Util.getItemsProduced(src);
                     }
                 } else {
                     // sending without intermediate splitter

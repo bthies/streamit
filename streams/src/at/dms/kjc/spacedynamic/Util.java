@@ -34,6 +34,23 @@ public class Util extends at.dms.util.Utils {
 
     public static String CGNIINTVAR = "__cgni_integer__";
 
+    
+    /**
+     * Return the number of items node produces during one firing during
+     * steady-state.  For filters it is the pop, for splitters and joiners it is
+     * 1.
+     * 
+     * @param node The str in question
+     * @return The number of items produced per firing in the steady-state
+     */
+    public static int getItemsProduced(FlatNode node) {
+        if (node.isFilter())
+            return ((SIRFilter)node.contents).getPopInt();
+        else 
+            return 1;
+    }
+    
+    
     // returns true if this filter is mapped
     public static boolean countMe(SIRFilter filter) {
         return !(filter instanceof SIRIdentity

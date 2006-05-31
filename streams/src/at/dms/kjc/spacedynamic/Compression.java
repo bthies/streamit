@@ -26,12 +26,28 @@ public class Compression {
      */
     public int compressionLevel;
     
-    /** 
-     * Fully compress a sequcence of 
-     * @param nodes
-     * @return
+    /** the sequence to compress */
+    private Object[] nodes;
+    
+    /** the compressed sequence, after compression is performed */
+    public CompressedSequence compressed;
+    
+    /**
+     * Create a new compression object that will compress the 
+     * sequence nodes.
+     * 
+     * @param nodes The sequence to compress.
      */
-    public CompressedSequence fullyCompress(Object[] nodes) {
+    public Compression(Object[] nodes) {
+        this.nodes = nodes;
+    }
+    
+    /** 
+     * Fully compress a sequcence. 
+     * 
+     * @param nodes The sequence to compress.
+     */
+    public void fullyCompress() {
         System.out.println("Joiner code length: " + nodes.length);
         CompressedSequence comp = compress(nodes); 
         compressionLevel = 0;
@@ -44,7 +60,7 @@ public class Compression {
             
         } while (didCompress);
         
-        return comp;
+        this.compressed = comp;
     }
     
     /**
@@ -53,38 +69,38 @@ public class Compression {
      * @param nodes The node schedule to compress
      * @return An array of CompressedSequence's that represent <nodes> compressed.
      */
-    private CompressedSequence compress(Object[] nodes) {
+    private CompressedSequence compress(Object[] seq) {
         //This is the compressed list that we will return compossed of CompressedSequences 
         CompressedSequence compressed = new CompressedSequence(1); 
-        // System.out.println("Joiner sched size " + nodes.length);
-        // pos is our location in <nodes>
+        // System.out.println("Joiner sched size " + seq.length);
+        // pos is our location in <seq>
         int pos = 0;
-        // keep going 'til we've printed all the nodes
-        while (pos < nodes.length) {
+        // keep going 'til we've printed all the seq
+        while (pos < seq.length) {
             // ahead is our repetition-looking device
             int ahead = 1;
             do {
-                while (ahead <= MAX_LOOKAHEAD && pos + ahead < nodes.length
-                       && !nodes[pos].equals(nodes[pos + ahead])) {
-                    //System.out.println(nodes[pos] + " != " + nodes[pos + ahead]);
+                while (ahead <= MAX_LOOKAHEAD && pos + ahead < seq.length
+                       && !seq[pos].equals(seq[pos + ahead])) {
+                    //System.out.println(seq[pos] + " != " + seq[pos + ahead]);
                     ahead++;
                 }
                 // if we found a match, try to build on it. <reps> denotes
                 // how many iterations of a loop we have.
                 int reps = 0;
-                if (ahead <= MAX_LOOKAHEAD && pos + ahead < nodes.length
-                    && nodes[pos].equals(nodes[pos + ahead])) {
+                if (ahead <= MAX_LOOKAHEAD && pos + ahead < seq.length
+                    && seq[pos].equals(seq[pos + ahead])) {
                     // see how many repetitions of the loop we can make...
                     do {
                         int i;
                         for (i = pos + reps * ahead; i < pos + (reps + 1)
                                  * ahead; i++) {
                             // quit if we reach the end of the array
-                            if (i + ahead >= nodes.length) {
+                            if (i + ahead >= seq.length) {
                                 break;
                             }
                             // quit if there's something non-matching
-                            if (!nodes[i].equals(nodes[i + ahead])) {
+                            if (!seq[i].equals(seq[i + ahead])) {
                                 break;
                             }
                         }
@@ -109,7 +125,7 @@ public class Compression {
                         //create a compressed sequence to add that is only looped once,
                         //with one element in the sequence
                         CompressedSequence seq1 = new CompressedSequence(1);
-                        seq1.addToSeq(nodes[pos]);
+                        seq1.addToSeq(seq[pos]);
                         compressed.addToSeq(seq1);
                         pos++;
                     }
@@ -117,7 +133,7 @@ public class Compression {
                     CompressedSequence comp = new CompressedSequence(reps);                   
                     // add the component code
                     for (int i = 0; i < ahead; i++) {
-                        comp.addToSeq(nodes[pos + i]);
+                        comp.addToSeq(seq[pos + i]);
                     }
                     compressed.addToSeq(comp);
                     //remember that some compression was performed
@@ -147,15 +163,15 @@ public class Compression {
      * @param varPrefix The prefix to use for loop indices (these have been declared previously).
      * @return
      */
-    public String compressedCode(CompressedSequence seq, String varPrefix) {
+    public String compressedCode(String varPrefix) {
         StringBuffer buf = new StringBuffer();
         
         buf.append("{\n");
         //create the var defs
         for (int i = 0; i < compressionLevel; i++) 
-            buf.append("\tint " + varPrefix + i + ";\n");
+            buf.append("  int " + varPrefix + i + ";\n");
         //create the nested loops and the code for the schedule
-        buf.append(compressedSequence(seq, 0, varPrefix));
+        buf.append(compressedSequence(compressed, 0, varPrefix));
         buf.append("}\n");
         return buf.toString();
     }
@@ -163,17 +179,17 @@ public class Compression {
     private String indent(int level) {
         StringBuffer buf = new StringBuffer();
         //print some indentation
-        for (int t = 0; t < level; t++)
-            buf.append("\t"); 
+        for (int t = 0; t <= level; t++)
+            buf.append("  "); 
         return buf.toString();
     }
     
     private String elementString(Object obj, int level, String varPrefix) {
         if (obj instanceof CompressedSequence) {
-            return compressedSequence((CompressedSequence)obj, level++, varPrefix);
+            return compressedSequence((CompressedSequence)obj, level, varPrefix);
         }
         else {
-            return indent(level++) + obj.toString();
+            return indent(level) + obj.toString();
         }
     }
     
@@ -193,7 +209,7 @@ public class Compression {
             buf.append("for (" + var + " = 0; " + var + " < " + seq.getReps() + 
                        "; " + var + "++) {\n");
             for (int i = 0; i < seq.getSequence().length; i++) {
-                buf.append(elementString(seq.getSequence()[i], level, varPrefix));
+                buf.append(elementString(seq.getSequence()[i], level + 1, varPrefix));
             }
             buf.append("}\n");
         }
@@ -208,5 +224,7 @@ public class Compression {
         return buf.toString();
     }
     
-    
+    public String toString() {
+        return compressed.toString();
+    }
 }

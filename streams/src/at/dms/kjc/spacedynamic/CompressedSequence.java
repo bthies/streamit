@@ -35,6 +35,16 @@ public class CompressedSequence {
         seq.add(addMe);
     }
     
+    public String toString() {
+        StringBuffer buf = new StringBuffer();
+        buf.append("\nCompressSeq " + hashCode() + "(Reps: " + reps + ") {");
+        Iterator it = seq.iterator();
+        while (it.hasNext()) {
+            buf.append(it.next());
+        }
+        return buf.toString() + "}\n";
+    }
+    
     public boolean equals(Object arg0) {
         if (!(arg0 instanceof CompressedSequence))
             return false;

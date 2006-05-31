@@ -237,10 +237,14 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
+        //oldPrintSchedule(joiner, (JoinerScheduleNode) streamGraph
+        //        .getParentSSG(joiner).simulator.initJoinerCode.get(joiner), ret, false);
         printSchedule(joiner, (JoinerScheduleNode) streamGraph
                       .getParentSSG(joiner).simulator.initJoinerCode.get(joiner), ret);
         ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
         ret.append("while(1) {\n");
+        //oldPrintSchedule(joiner, (JoinerScheduleNode) streamGraph
+        //       .getParentSSG(joiner).simulator.steadyJoinerCode.get(joiner), ret, false);
         printSchedule(joiner, (JoinerScheduleNode) streamGraph
                       .getParentSSG(joiner).simulator.steadyJoinerCode.get(joiner),
                       ret);
@@ -253,10 +257,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         if (first == null)
             return;
         JoinerScheduleNode[] nodes = JoinerScheduleNode.toArray(first);
-        Compression compression = new Compression();
-        CompressedSequence compressed = compression.fullyCompress(nodes);
-        
-        ret.append(compression.compressedCode(compressed, LOOP_VAR));
+        Compression compression = new Compression(nodes);
+        compression.fullyCompress();
+      //  System.out.println(compression.toString());
+        ret.append(compression.compressedCode(LOOP_VAR));
     }
     
     /**

@@ -6,7 +6,14 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
 import at.dms.compiler.JavaStyleComment; // for debugging
-
+/**
+ * Obsolete class to increase peek scaling.
+ * 
+ * Was almost always a slowdown rather than a speedup.
+ * 
+ * @author Janis
+ * @deprecated
+ */
 class IncreaseFilterMult implements StreamVisitor {
 
     class WorkInfo {

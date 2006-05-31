@@ -27,7 +27,7 @@ import java.util.*;
 //import streamit.scheduler2.*;
 //import streamit.scheduler2.constrained.*;
 
-public class ClusterBackend implements FlatVisitor {
+public class ClusterBackend {
 
     //public static Simulator simulator;
     // get the execution counts from the scheduler
@@ -79,15 +79,6 @@ public class ClusterBackend implements FlatVisitor {
     public static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
     /**
-     * visitor used to set up filter2Node field.
-     */
-    public void visitNode(FlatNode node) 
-    {
-        filter2Node.put(node.contents, node);
-    }
-
-
-    /**
      * This provides a way for cache partitioner to access filter execution counts.
      */
 
@@ -113,13 +104,14 @@ public class ClusterBackend implements FlatVisitor {
         int code_cache = 16000;
         int data_cache = 16000;
 
-        if (debugPrint)
-            System.out.println("Cluster Backend SIRGlobal: "+global);
+//        if (debugPrint)
+//            System.out.println("Cluster Backend SIRGlobal: " +global);
 
-        System.out.println("Entry to Cluster Backend");
-        System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
-        if (debugPrint)
-            System.out.println("  peekratio is: "+KjcOptions.peekratio);
+        System.out.println("Entry to Cluster Backend"
+        + ((KjcOptions.standalone && KjcOptions.cluster == 1)? " (unprocessor)": ""));
+//        System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
+//        if (debugPrint)
+//            System.out.println("  peekratio is: "+KjcOptions.peekratio);
 //        System.out.println("  rename1 is: "+KjcOptions.rename1);
 //        System.out.println("  rename2 is: "+KjcOptions.rename2);
 
@@ -134,15 +126,6 @@ public class ClusterBackend implements FlatVisitor {
             System.err.println("// END str on entry to Cluster backend");
         }
         structures = structs;
-    
-        // set number of columns/rows
-        //RawBackend.rawRows = KjcOptions.raw;
-        //if(KjcOptions.rawcol>-1)
-        //    RawBackend.rawColumns = KjcOptions.rawcol;
-        //else
-        //    RawBackend.rawColumns = KjcOptions.raw;
-
-        //simulator = new FineGrainSimulator();
     
         //this must be run now, FlatIRToC relies on it!!!
         RenameAll.renameAllFilters(str);
@@ -210,7 +193,7 @@ public class ClusterBackend implements FlatVisitor {
 
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
-        System.err.println(" done.");
+        System.err.println(" done.");   // announce end of ConstantProp and Unroll
 
         //System.err.println("Analyzing Branches..");
         //new BlockFlattener().flattenBlocks(str);
@@ -218,16 +201,20 @@ public class ClusterBackend implements FlatVisitor {
 
         SIRPortal.findMessageStatements(str);
 
-        // optimize so that IncreaseFilterMult has accurate estimates
-        // of code size
+        // Unroll and propagate maximally within each (not phased) filter.
+        // Initially justified as necessary for IncreaseFilterMult which is
+        // now obsolete.
         Optimizer.optimize(str); 
         if (debugPrint) {
             System.err.println("// str after Optimizer");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
             System.err.println("// END str after Optimizer");
         }
+ 
+        // estimate code and local variable size for each filter (and store where???)
         Estimator.estimate(str);
 
+        // canonicalize stream graph, reorganizing some splits and joins
         Lifter.liftAggressiveSync(str);
         //StreamItDot.printGraph(str, "before-partition.dot");
 
@@ -236,7 +223,11 @@ public class ClusterBackend implements FlatVisitor {
             StatisticsGathering.doit(str);
         }
 
+        // Flattener is a misnomer here.
+        // rewrite str for linearreplacement, frequencyreplacement
+        // redundantreplacement
         str = Flattener.doLinearAnalysis(str);
+        // statespace.
         str = Flattener.doStateSpaceAnalysis(str);
 
         // for scheduler, interpret dynamic rates as a constant.
@@ -269,25 +260,14 @@ public class ClusterBackend implements FlatVisitor {
         Optimizer.optimize(str);
         Estimator.estimate(str);
 
+        // should really be hosts -- how many systems
+        // will be running this code.
         int threads = KjcOptions.cluster;
 
         HashMap partitionMap = new HashMap();
 
         if ( doCacheOptimization ) {
-
-            //boolean decreased;
-
             str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
-            //decreased = IncreaseFilterMult.decreaseMult(partitionMap);
-
-
-            /*
-              if (decreased) {
-              // Repartition second time
-              str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
-              decreased = IncreaseFilterMult.decreaseMult(partitionMap);
-              }
-            */
         }
 
         // Calculate SIRSchedule after increasing multiplicity
@@ -305,18 +285,18 @@ public class ClusterBackend implements FlatVisitor {
         HashMap steady1 = exec_counts1[1];
         HashMap steady2 = exec_counts2[1];
     
-        int implicit_mult =
-            IncreaseFilterMult.scheduleMultAfterScaling(steady1, steady2);
+        //int implicit_mult =
+        //    IncreaseFilterMult.scheduleMultAfterScaling(steady1, steady2);
 
+        // something to do with profiling?
         MarkFilterBoundaries.doit(str);
-
-        System.err.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
 
         if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
             str = ManualPartition.doit(str);
             System.err.println("User-Defined Transformations End.");
-            RemoveMultiPops.doit(str);
+            // cluster backend should handle multipops 
+            //RemoveMultiPops.doit(str);
         }
 
         System.err.println("Running Partitioning... target number of threads: "+threads);
@@ -471,7 +451,14 @@ public class ClusterBackend implements FlatVisitor {
 
         // creating filter2Node
         filter2Node = new HashMap();
-        graphFlattener.top.accept(new ClusterBackend(), null, true); 
+        graphFlattener.top.accept(
+                new FlatVisitor() {
+                  public void visitNode(FlatNode node) {
+                      filter2Node.put(node.contents,node);
+                  }
+                },
+                null,
+                true);
 
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(graphFlattener.top);
@@ -487,7 +474,7 @@ public class ClusterBackend implements FlatVisitor {
         ClusterCode.generateCode(graphFlattener.top);
 
         FusionCode.generateFusionHeader(str, doCacheOptimization);
-        FusionCode.generateFusionFile(d_sched, implicit_mult);
+        FusionCode.generateFusionFile(d_sched /*, implicit_mult*/);
 
         GenerateGlobal.generateGlobal(global, helpers); // global.h, global.cpp
 

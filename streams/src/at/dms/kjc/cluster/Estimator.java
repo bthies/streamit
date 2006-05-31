@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /**
- * The calss allows forcing of the recalculation of estimates of 
+ * The class allows forcing of the recalculation of estimates of 
  * code and local variable size for the entire stream program.
  * Forcing is necessary since {@link CodeEstimate} caches 
  * old values.
@@ -26,9 +26,9 @@ class Estimator implements StreamVisitor {
 
     public static void estimate(SIRStream str) {
         Estimator est = new Estimator();
-        System.out.print("Estimating Code size of Filters...");
+        System.err.print("Estimating Code size of Filters...");
         IterFactory.createFactory().createIter(str).accept(est);
-        System.out.println("done.");
+        System.err.println("done.");
     }
 
     /**

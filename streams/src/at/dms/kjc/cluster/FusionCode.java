@@ -351,10 +351,9 @@ class FusionCode {
      * creates the fusion.cpp file
      * 
      * @param d_schedule reference to {@link DiscoverSchedule} with a schedule
-     * @param implicit_mult an implicit multiplicity increase due to peek_scaling
      */
 
-    public static void generateFusionFile(DiscoverSchedule d_sched, int implicit_mult) {
+    public static void generateFusionFile(DiscoverSchedule d_sched) {
     
         int threadNumber = NodeEnumerator.getNumberOfNodes();
     
@@ -512,15 +511,17 @@ class FusionCode {
 
         p.print("  }\n");
 
-
-        p.print("  if ("+implicit_mult+" > 1) {\n");
-        p.print("    fprintf(stderr,\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
-        p.print("    int tmp;\n");
-        p.print("    tmp = __max_iteration / "+implicit_mult+";\n");
-        p.print("    if (__max_iteration % "+implicit_mult+" > 0) tmp++;\n");
-        p.print("    __max_iteration = tmp;\n");
-        p.print("    fprintf(stderr,\"Number of Iterations: %d (%d)\\n\", __max_iteration, __max_iteration * "+implicit_mult+");\n");
-        p.print("  }\n");
+// implicit_mult used to be a parameter, but entire peek-scaling
+// feature has been turned off since muck more likely to be a pessimization
+// than an optimization
+//        p.print("  if ("+implicit_mult+" > 1) {\n");
+//        p.print("    fprintf(stderr,\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
+//        p.print("    int tmp;\n");
+//        p.print("    tmp = __max_iteration / "+implicit_mult+";\n");
+//        p.print("    if (__max_iteration % "+implicit_mult+" > 0) tmp++;\n");
+//        p.print("    __max_iteration = tmp;\n");
+//        p.print("    fprintf(stderr,\"Number of Iterations: %d (%d)\\n\", __max_iteration, __max_iteration * "+implicit_mult+");\n");
+//        p.print("  }\n");
 
         /*
           for (int i = 0; i < threadNumber; i++) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.17 2006-03-24 16:10:59 dimock Exp $
+ * $Id: JFieldAccessExpression.java,v 1.18 2006-05-31 23:47:20 rabbah Exp $
  */
 
 package at.dms.kjc;
@@ -247,8 +247,8 @@ public class JFieldAccessExpression extends JExpression {
 
     /**
      * Analyses the expression (semantically).
-     * @param   context     the analysis context
-     * @return  an equivalent, analysed expression
+     * @param       context         the analysis context
+     * @return      an equivalent, analysed expression
      * @exception   PositionedError the analysis detected an error
      */
     public JExpression analyse(CExpressionContext context) throws PositionedError {
@@ -380,7 +380,7 @@ public class JFieldAccessExpression extends JExpression {
     /**
      * Generates JVM bytecode to evaluate this expression.
      *
-     * @param   code        the bytecode sequence
+     * @param   code            the bytecode sequence
      * @param   discardValue    discard the result of the evaluation ?
      */
     public void genCode(CodeSequence code, boolean discardValue) {
@@ -424,7 +424,7 @@ public class JFieldAccessExpression extends JExpression {
      * - code to determine the value to store,
      * - suffix code for the storage location.
      *
-     * @param   code        the code list
+     * @param   code            the code list
      * @param   discardValue    discard the result of the evaluation ?
      */
     public void genEndStoreCode(CodeSequence code, boolean discardValue) {
@@ -458,9 +458,9 @@ public class JFieldAccessExpression extends JExpression {
     /*
      * Is the prefix null or a type name ? Needed for isConstant().
      */
-    private boolean     constantPrefix;
+    private boolean constantPrefix;
 
-    protected JExpression       prefix;     // !!! graf 991205 make private
+    protected JExpression   prefix;     // !!! graf 991205 make private
     protected String        ident;
     protected CField        field;
 

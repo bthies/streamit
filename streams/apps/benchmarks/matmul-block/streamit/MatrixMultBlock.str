@@ -1,7 +1,7 @@
 /*
  * MatrixMultBlock.str: block matrix multiply
  * Translated from Jasper's old-syntax code
- * $Id: MatrixMultBlock.str,v 1.7 2005-11-04 01:06:14 dimock Exp $
+ * $Id: MatrixMultBlock.str,v 1.8 2006-05-31 19:48:33 mgordon Exp $
  */
 
 void->void pipeline MatrixMultBlock
@@ -40,7 +40,7 @@ float->float pipeline MatrixBlockMultiply(int x0, int y0, int x1, int y1,
                       y0 / blockDiv,
                       x1 / blockDiv,
                       y1 / blockDiv);
-    add BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv);
+    add BlockAdd();
     add BlockCombine(x1, y0, blockDiv);
 }
 
@@ -57,7 +57,29 @@ float->float pipeline BlockCombine(int x0, int y0, int blockDiv)
     add BlockSplit(x0 * y0 / (blockDiv * blockDiv), y0, y0/blockDiv);
 }
 
-float->float filter BlockAdd(int x, int y, int times)
+float->float filter BlockAdd()//int x = 3, int y = 4, int times = 3)
+{
+     work pop 36 push 12
+        {
+            int a;
+            int b;
+            int c;
+	    float temp = 0;
+	    for (b = 0; b < 4; b++)
+                for (a = 0; a < 3; a++)
+		temp = pop();
+
+            for (c = 1; c < 3; c++)
+                for (b = 0; b < 4; b++)
+                    for (a = 0; a < 3; a++)
+                         temp += pop();
+            for (b = 0; b < 4; b++)
+                for (a = 0; a < 3; a++)
+                    push(temp);
+        }
+}
+
+float->float filter BlockAddArray(int x, int y, int times)
 {
     float[x][y] result;
     work pop (x * y * times) push (x * y)

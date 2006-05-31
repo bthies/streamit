@@ -25,7 +25,13 @@ causes the I/O rates of the filters to be much larger.
     <impl lang="StreamIt" dir="streamit">
       <make>Makefile</make>
       <file>BeamFormer.str</file>
-      <desc>StreamIt benchmark as described above.</desc>
+      <desc>StreamIt benchmark as described above, with parallel outputs.</desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <make>Makefile</make>
+      <file>SerializedBeamFormer.str</file>
+      <file class="output">SerializedBeamFormer.out</file>
+      <desc>StreamIt benchmark as described above, with deterministic output ordering.</desc>
     </impl>
   </implementations>
 </benchmark>

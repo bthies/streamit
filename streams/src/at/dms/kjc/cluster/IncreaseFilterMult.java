@@ -203,7 +203,8 @@ class IncreaseFilterMult implements StreamVisitor {
                         WorkInfo w = 
                             (WorkInfo)previous_work.get(oper);
 
-                        System.out.println("Filter: "+oper+" Restoring mult to 1");
+                        if (ClusterBackend.debugPrint)
+                            System.out.println("Filter: "+oper+" Restoring mult to 1");
                         ((SIRFilter)oper).setWork(w.work);
                         ((SIRFilter)oper).setPop(w.pop);
                         ((SIRFilter)oper).setPush(w.push);
@@ -251,8 +252,9 @@ class IncreaseFilterMult implements StreamVisitor {
 
         if (_mult == 1) return;
 
-        System.out.print("IncMult visiting: "+filter.getName()+
-                         " mult: "+_mult);
+        if (ClusterBackend.debugPrint)
+            System.out.print("IncMult visiting: "+filter.getName()+
+                             " mult: "+_mult);
 
         //if (_mult == 1) {
         //    System.out.println(" No change!");
@@ -261,8 +263,8 @@ class IncreaseFilterMult implements StreamVisitor {
 
         JMethodDeclaration work = filter.getWork();
 
-        System.out.print(" work: "+work.getName());
-
+        if (ClusterBackend.debugPrint)
+            System.out.print(" work: "+work.getName());
 
         //
         // adding a work2 method
@@ -411,7 +413,8 @@ class IncreaseFilterMult implements StreamVisitor {
         filter.setPush(push * _mult);
         filter.setPeek(pop * _mult + extra);
 
-        System.out.println(" new work: "+filter.getWork().getName());
+        if (ClusterBackend.debugPrint)
+            System.out.println(" new work: "+filter.getWork().getName());
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,

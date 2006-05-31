@@ -189,8 +189,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             System.err.println("Unable to write code to file thread_"+id+".cpp");
         }
     
-        System.out.println("Code for " + node.contents.getName() +
-                           " written to thread_"+id+".cpp");
+        if (ClusterBackend.debugPrint)
+            System.out.println("Code for " + node.contents.getName() +
+                               " written to thread_"+id+".cpp");
 
     }
 
@@ -310,8 +311,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             System.err.println("Unable to write code to file thread_"+id+".cpp");
         }
     
-        System.out.println("Code for " + node.contents.getName() +
-                           " written to thread_"+id+".cpp");
+        if (ClusterBackend.debugPrint)
+            System.out.println("Code for " + node.contents.getName() +
+                               " written to thread_"+id+".cpp");
 
     }
 
@@ -916,8 +918,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             System.err.println("Unable to write splitter code to file thread"+thread_id+".cpp");
         }
     
-        System.out.println("Code for " + node.contents.getName() +
-                           " written to thread"+thread_id+".cpp");
+        if (ClusterBackend.debugPrint)
+            System.out.println("Code for " + node.contents.getName() +
+                               " written to thread"+thread_id+".cpp");
 
     }
 
@@ -1478,8 +1481,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             System.err.println("Unable to write joiner code to file thread"+thread_id+".cpp");
         }
 
-        System.out.println("Code for " + node.contents.getName() +
-                           " written to thread"+thread_id+".cpp");
+        if (ClusterBackend.debugPrint)
+            System.out.println("Code for " + node.contents.getName() +
+                               " written to thread"+thread_id+".cpp");
 
 
     }

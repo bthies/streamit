@@ -72,7 +72,8 @@ public class ClusterFusion
     // "NodeMaster" is updated for nodes fusedWith slave node.
     private static void fuseTo(FlatNode master_node, FlatNode slave_node) {
 
-        System.err.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
+        if (ClusterBackend.debugPrint)
+            System.err.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
         localMaster.put(slave_node, master_node);
 
         if (isEliminated(master_node)) { master_node = (FlatNode)nodeMaster.get(master_node); } 

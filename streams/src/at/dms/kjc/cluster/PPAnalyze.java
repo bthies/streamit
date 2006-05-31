@@ -93,7 +93,8 @@ public class PPAnalyze extends SLIREmptyVisitor {
 	super.visitMethodDeclaration(self, modifiers, returnType, ident,
                                      parameters, exceptions, body);
 
-	System.out.println("=======> PP method:"+ident+" balance:"+peekBalance());
+    if (ClusterBackend.debugPrint)
+        System.out.println("=======> PP method:"+ident+" balance:"+peekBalance());
 
     }
 
@@ -323,14 +324,14 @@ public class PPAnalyze extends SLIREmptyVisitor {
 	    nullBalance();
 	} else {
 	    if (info.bal < 0) {
-		// if balance < 0 then can reduce balance arbitrarily
-		nullBalance();
+            // if balance < 0 then can reduce balance arbitrarily
+            nullBalance();
 	    } else {
-		// if min < 0 then worst case is one execution
-		// if min == 0 then worst case is no executions
-		if (info.min < 0) {			
-		    addBalance(info.bal, info.min);
-		} 
+            // if min < 0 then worst case is one execution
+            // if min == 0 then worst case is no executions
+            if (info.min < 0) {			
+                addBalance(info.bal, info.min);
+            } 
 	    }
 	}
 

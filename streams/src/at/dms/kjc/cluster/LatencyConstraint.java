@@ -122,17 +122,19 @@ public class LatencyConstraint {
     }
 
     public void output() {
-        System.out.println(" init: "+sourceInit+
-                           " source: "+sourceSteadyExec+
-                           " dest: "+destSteadyExec);
-        System.out.print(" data: ");
-        for (int t = 0; t < sourceSteadyExec; t++) {
-            System.out.print(dependencyData[t]+" ");
-    
-        }
+        if (ClusterBackend.debugPrint) {
+            System.out.println(" init: "+sourceInit+
+                               " source: "+sourceSteadyExec+
+                               " dest: "+destSteadyExec);
+            System.out.print(" data: ");
 
-        System.out.print(" receiver id: "+NodeEnumerator.getSIROperatorId(receiver));
-        System.out.println();
+            for (int t = 0; t < sourceSteadyExec; t++) {
+                System.out.print(dependencyData[t]+" ");
+                
+            }
+            
+            System.out.print(" receiver id: "+NodeEnumerator.getSIROperatorId(receiver));
+            System.out.println();
+        }
     }
 }
-

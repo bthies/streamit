@@ -63,7 +63,9 @@ class FusionCode {
                 globals = DataEstimate.filterGlobalsSize((SIRFilter)oper);
             }
 
-            System.out.println("DWS: "+dws+" (g="+globals+") Avail: "+avail+" IO: "+io+" Mult: "+mult);
+            if (ClusterBackend.debugPrint) {
+                System.out.println("DWS: "+dws+" (g="+globals+") Avail: "+avail+" IO: "+io+" Mult: "+mult);
+            }
 
             /*
               if (oper instanceof SIRFilter) {
@@ -80,27 +82,29 @@ class FusionCode {
     
         Arrays.sort(histogram);
 
-        System.out.println("[bestMult] [DWS] min: "+histogram[0]+" max: "+histogram[threadCount-1]);
-
-        System.out.println("[bestMult] [DWS] 0th-precentile: "+histogram[threadCount-1]);
-
-        System.out.println("[bestMult] [DWS] 10th-precentile: "+histogram[(threadCount-1)*9/10]);
-        System.out.println("[bestMult] [DWS] 20th-precentile: "+histogram[(threadCount-1)*8/10]);
-        System.out.println("[bestMult] [DWS] 30th-precentile: "+histogram[(threadCount-1)*7/10]);
-        System.out.println("[bestMult] [DWS] 40th-precentile: "+histogram[(threadCount-1)*6/10]);
-        System.out.println("[bestMult] [DWS] 50th-precentile: "+histogram[(threadCount-1)*5/10]);
-        System.out.println("[bestMult] [DWS] 60th-precentile: "+histogram[(threadCount-1)*4/10]);
-        System.out.println("[bestMult] [DWS] 70th-precentile: "+histogram[(threadCount-1)*3/10]);
-        System.out.println("[bestMult] [DWS] 80th-precentile: "+histogram[(threadCount-1)*2/10]);
-        System.out.println("[bestMult] [DWS] 90th-precentile: "+histogram[(threadCount-1)*1/10]);
-
-        System.out.println("[bestMult] [DWS] 100th-precentile: "+histogram[0]);
+        if (ClusterBackend.debugPrint) {
+            System.out.println("[bestMult] [DWS] min: "+histogram[0]+" max: "+histogram[threadCount-1]);
+            System.out.println("[bestMult] [DWS] 0th-precentile: "+histogram[threadCount-1]);
+            System.out.println("[bestMult] [DWS] 10th-precentile: "+histogram[(threadCount-1)*9/10]);
+            System.out.println("[bestMult] [DWS] 20th-precentile: "+histogram[(threadCount-1)*8/10]);
+            System.out.println("[bestMult] [DWS] 30th-precentile: "+histogram[(threadCount-1)*7/10]);
+            System.out.println("[bestMult] [DWS] 40th-precentile: "+histogram[(threadCount-1)*6/10]);
+            System.out.println("[bestMult] [DWS] 50th-precentile: "+histogram[(threadCount-1)*5/10]);
+            System.out.println("[bestMult] [DWS] 60th-precentile: "+histogram[(threadCount-1)*4/10]);
+            System.out.println("[bestMult] [DWS] 70th-precentile: "+histogram[(threadCount-1)*3/10]);
+            System.out.println("[bestMult] [DWS] 80th-precentile: "+histogram[(threadCount-1)*2/10]);
+            System.out.println("[bestMult] [DWS] 90th-precentile: "+histogram[(threadCount-1)*1/10]);
+            System.out.println("[bestMult] [DWS] 100th-precentile: "+histogram[0]);
+        }
 
         min_mult = histogram[(threadCount-1)/10];
 
         //if (min_mult > 100) min_mult = 100;   
         if (min_mult <= 0) min_mult = 1;    
-        System.out.println("[bestMult] [DWS] Returning Multiplicity : "+min_mult);
+
+        if (ClusterBackend.debugPrint) {
+            System.out.println("[bestMult] [DWS] Returning Multiplicity : "+min_mult);
+        }
 
         return min_mult;
     }
@@ -649,12 +653,12 @@ class FusionCode {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
-		boolean rcv_msg = false;
-		if (oper instanceof SIRFilter) {
-		    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
-			rcv_msg = true;
-		    }
-		}
+                boolean rcv_msg = false;
+                if (oper instanceof SIRFilter) {
+                    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
+                        rcv_msg = true;
+                    }
+                }
 
                 Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
                 int init_int = 0;
@@ -700,14 +704,14 @@ class FusionCode {
                         */
                     }
 
-		    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
+                    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
                 }
-
+                
                 p.newLine();
             }
         }
-    
+        
         p.print("  }\n");
 
 
@@ -725,13 +729,13 @@ class FusionCode {
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
-		boolean rcv_msg = false;
-		if (oper instanceof SIRFilter) {
-		    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
-			rcv_msg = true;
-		    }
-		}
-
+                boolean rcv_msg = false;
+                if (oper instanceof SIRFilter) {
+                    if (SIRPortal.getPortalsWithReceiver((SIRFilter)oper).length > 0) {
+                        rcv_msg = true;
+                    }
+                }
+                
                 Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
                 int init_int = 0;
                 if (init != null) init_int = (init).intValue();
@@ -776,14 +780,14 @@ class FusionCode {
                         */
                     }
             
-		    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
+                    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
-
-		    if ((node.contents instanceof SIRFileReader) ||
-			(node.contents instanceof SIRFileWriter)) {
-			p.print("    "+get_work_function(oper)+"__close();\n");
-		    }
-
+                    
+                    if ((node.contents instanceof SIRFileReader) ||
+                        (node.contents instanceof SIRFileWriter)) {
+                        p.print("    "+get_work_function(oper)+"__close();\n");
+                    }
+                    
                 }
 
                 /*

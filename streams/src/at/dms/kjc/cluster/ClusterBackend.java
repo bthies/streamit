@@ -104,16 +104,16 @@ public class ClusterBackend {
         int code_cache = 16000;
         int data_cache = 16000;
 
-//        if (debugPrint)
-//            System.out.println("Cluster Backend SIRGlobal: " +global);
+        // if (debugPrint)
+        //    System.out.println("Cluster Backend SIRGlobal: "+global);
 
         System.out.println("Entry to Cluster Backend"
-        + ((KjcOptions.standalone && KjcOptions.cluster == 1)? " (unprocessor)": ""));
-//        System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
-//        if (debugPrint)
-//            System.out.println("  peekratio is: "+KjcOptions.peekratio);
-//        System.out.println("  rename1 is: "+KjcOptions.rename1);
-//        System.out.println("  rename2 is: "+KjcOptions.rename2);
+                           + ((KjcOptions.standalone && KjcOptions.cluster == 1) ? " (uniprocessor)": ""));
+        // System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
+        // if (debugPrint)
+        //     System.out.println("  peekratio is: "+KjcOptions.peekratio);
+        // System.out.println("  rename1 is: "+KjcOptions.rename1);
+        // System.out.println("  rename2 is: "+KjcOptions.rename2);
 
         if (debugPrint) {
             SIRGlobal[] globals;
@@ -138,7 +138,7 @@ public class ClusterBackend {
         Set<SIRGlobal> statics = new HashSet<SIRGlobal>();
         if (global != null)
             statics.add(global);
-        Map associatedGlobals = StaticsProp.propagate(str, statics);
+        StaticsProp.propagate(str, statics);
 
         if (debugPrint) {
             System.err.println("// str after RenameAll and StaticsProp");
@@ -663,62 +663,60 @@ public class ClusterBackend {
         }
     
         /*
-
         //now, in the above calculation, an execution of a joiner node is 
         //considered one cycle of all of its inputs.  For the remainder of the
         //raw backend, I would like the execution of a joiner to be defined as
         //the joiner passing one data item down stream
         for (int i=0; i < 2; i++) {
-        Iterator it = result[i].keySet().iterator();
-        while(it.hasNext()){
-        FlatNode node = (FlatNode)it.next();
-        if (node.contents instanceof SIRJoiner) {
-        int oldVal = ((Integer)result[i].get(node)).intValue();
-        int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
-        if((node.schedMult!=0)&&(node.schedDivider!=0))
-        cycles=(cycles*node.schedMult)/node.schedDivider;
-        result[i].put(node, new Integer(cycles));
-        }
-        if (node.contents instanceof SIRSplitter) {
-        int sum = 0;
-        for (int j = 0; j < node.ways; j++)
-        sum += node.weights[j];
-        int oldVal = ((Integer)result[i].get(node)).intValue();
-        result[i].put(node, new Integer(sum*oldVal));
-        //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
-        }
-        }
+            Iterator it = result[i].keySet().iterator();
+            while(it.hasNext()){
+                FlatNode node = (FlatNode)it.next();
+                if (node.contents instanceof SIRJoiner) {
+                    int oldVal = ((Integer)result[i].get(node)).intValue();
+                    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
+                    if((node.schedMult!=0)&&(node.schedDivider!=0))
+                        cycles=(cycles*node.schedMult)/node.schedDivider;
+                    result[i].put(node, new Integer(cycles));
+                }
+                if (node.contents instanceof SIRSplitter) {
+                    int sum = 0;
+                    for (int j = 0; j < node.ways; j++)
+                        sum += node.weights[j];
+                    int oldVal = ((Integer)result[i].get(node)).intValue();
+                    result[i].put(node, new Integer(sum*oldVal));
+                    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
+                }
+            }
         }
         */
-
     
         //The following code fixes an implementation quirk of two-stage-filters
         //in the *FIRST* version of the scheduler.  It is no longer needed,
         //but I am keeping it around just in case we every need to go back to the old
         //scheduler.
     
+        /*
         //increment the execution count for all two-stage filters that have 
         //initpop == initpush == 0, do this for the init schedule only
         //we must do this for all the two-stage filters, 
         //so iterate over the keyset from the steady state 
-        /*  Iterator it = result[1].keySet().iterator();
-            while(it.hasNext()){
+        Iterator it = result[1].keySet().iterator();
+        while(it.hasNext()){
             FlatNode node = (FlatNode)it.next();
             if (node.contents instanceof SIRTwoStageFilter) {
-            SIRTwoStageFilter two = (SIRTwoStageFilter) node.contents;
-            if (two.getInitPush() == 0 &&
-            two.getInitPop() == 0) {
-            Integer old = (Integer)result[0].get(node);
-            //if this 2-stage was not in the init sched
-            //set the oldval to 0
+                SIRTwoStageFilter two = (SIRTwoStageFilter) node.contents;
+                if (two.getInitPush() == 0 &&
+                    two.getInitPop() == 0) {
+                    Integer old = (Integer)result[0].get(node);
+                    //if this 2-stage was not in the init sched
+                    //set the oldval to 0
             int oldVal = 0;
             if (old != null)
-            oldVal = old.intValue();
+                oldVal = old.intValue();
             result[0].put(node, new Integer(1 + oldVal));   
+                }
             }
-            }
-            }*/
+        }
+        */
     }
-
-
 }

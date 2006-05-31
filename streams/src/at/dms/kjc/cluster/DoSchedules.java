@@ -47,7 +47,8 @@ public class DoSchedules {
         
         if (nodeIter.equals(firstNode)) return;
     
-        System.err.println("DoSchedule Visiting node: "+str);
+        if (ClusterBackend.debugPrint)
+            System.err.println("DoSchedule Visiting node: "+str);
     
         try {
 
@@ -55,8 +56,10 @@ public class DoSchedules {
                 streamit.scheduler2.constrained.Scheduler.createForSDEP(selfIter);
 
             streamit.scheduler2.SDEPData sdep = scheduler.computeSDEP(firstNode, nodeIter);
-            System.err.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());
-            System.err.println("  Destn. Init & Steady Phases: "+sdep.getNumDstInitPhases()+", "+sdep.getNumDstSteadyPhases());
+            if (ClusterBackend.debugPrint) {
+                System.err.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());
+                System.err.println("  Destn. Init & Steady Phases: "+sdep.getNumDstInitPhases()+", "+sdep.getNumDstSteadyPhases());
+            }
         
         } catch (Exception ex) {
             //System.out.println("!!!Exception: "+ex);

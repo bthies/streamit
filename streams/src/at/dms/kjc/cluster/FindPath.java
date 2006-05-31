@@ -17,8 +17,10 @@ public class FindPath {
 
     static void find(int src_id, int dst_id) {
     
-        System.out.println("============================================================");
-        System.out.println("Finding path from:"+src_id+" to:"+dst_id);
+        if (ClusterBackend.debugPrint) {
+            System.out.println("============================================================");
+            System.out.println("Finding path from:"+src_id+" to:"+dst_id);
+        }
 
         LinkedList list = new LinkedList();
         list.add(new Integer(src_id));
@@ -26,19 +28,22 @@ public class FindPath {
         while (list.size() > 0) {
         
             int node = ((Integer)list.getFirst()).intValue();
-            System.out.print("visiting node:"+node);
+            if (ClusterBackend.debugPrint)
+                System.out.print("visiting node:"+node);
 
             SIROperator oper = NodeEnumerator.getOperator(node);
 
-            if (oper instanceof SIRFilter) 
-                { System.out.print(" [filter]"); }
+            if (ClusterBackend.debugPrint) {
+                if (oper instanceof SIRFilter) 
+                    { System.out.print(" [filter]"); }
+                
+                if (oper instanceof SIRJoiner) 
+                    { System.out.print(" [joiner]"); }
+                
+                if (oper instanceof SIRSplitter) 
+                    { System.out.print(" [splitter]"); }
+            }
 
-            if (oper instanceof SIRJoiner) 
-                { System.out.print(" [joiner]"); }
-        
-            if (oper instanceof SIRSplitter) 
-                { System.out.print(" [splitter]"); }
-        
             Vector v = RegisterStreams.getNodeOutStreams(oper);
             try {
             for (int y = 0; y < v.size(); y++) {
@@ -54,11 +59,12 @@ public class FindPath {
             }
             list.removeFirst();
 
-            System.out.println();
+            if (ClusterBackend.debugPrint)
+                System.out.println();
         }
 
-        System.out.println("============================================================");
-    
+        if (ClusterBackend.debugPrint)
+            System.out.println("============================================================");
     }
 
 }

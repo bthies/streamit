@@ -35,9 +35,11 @@ public class ModState extends SLIREmptyVisitor {
     public static boolean methodModsState(JMethodDeclaration self) {
         ModState m = new ModState();
 
-        System.out.println("=========== ModState: "+self.getName()+" ===========");
+        if (ClusterBackend.debugPrint)
+            System.out.println("=========== ModState: "+self.getName()+" ===========");
         m.visitBlockStatement(self.getBody(), null);
-        System.out.println("============================================");
+        if (ClusterBackend.debugPrint)
+            System.out.println("============================================");
 
         return m.mod;
     }
@@ -50,7 +52,8 @@ public class ModState extends SLIREmptyVisitor {
 
         if (expr instanceof JFieldAccessExpression) {
             JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-            System.out.println("ModState: field "+f_expr.getIdent()+" changed by a prefix expression");
+            if (ClusterBackend.debugPrint)
+                System.out.println("ModState: field "+f_expr.getIdent()+" changed by a prefix expression");
             mod = true;
         }
     }
@@ -73,7 +76,8 @@ public class ModState extends SLIREmptyVisitor {
 
         if (left instanceof JFieldAccessExpression) {
             JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-            System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+            if (ClusterBackend.debugPrint)
+                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
             mod = true;
         }
 
@@ -82,7 +86,8 @@ public class ModState extends SLIREmptyVisitor {
 
             if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
                 JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+                if (ClusterBackend.debugPrint)
+                    System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
                 mod = true;
             }
         }
@@ -96,7 +101,8 @@ public class ModState extends SLIREmptyVisitor {
 
         if (left instanceof JFieldAccessExpression) {
             JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-            System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+            if (ClusterBackend.debugPrint)
+                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
             mod = true;
         }
 
@@ -105,7 +111,8 @@ public class ModState extends SLIREmptyVisitor {
 
             if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
                 JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-                System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
+                if (ClusterBackend.debugPrint)
+                    System.out.println("ModState: field "+f_expr.getIdent()+" changed by an assignement expression");
                 mod = true;
             }
         }

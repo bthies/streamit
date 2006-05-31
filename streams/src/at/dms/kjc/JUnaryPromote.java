@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryPromote.java,v 1.12 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JUnaryPromote.java,v 1.13 2006-05-31 19:46:17 thies Exp $
  */
 
 package at.dms.kjc;
@@ -42,7 +42,7 @@ public class JUnaryPromote extends JExpression {
         this.expr = expr;
         this.type = type;
     
-        if (!expr.isAssignableTo(type)) {
+        if (type.isPrimitive() || !expr.isAssignableTo(type)) {
             needCheck = true;
         }
     }

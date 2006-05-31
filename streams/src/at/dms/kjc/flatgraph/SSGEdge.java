@@ -5,16 +5,16 @@ import at.dms.kjc.flatgraph.FlatNode;
 /**
  * This class represents inter-SSG edges.
  *
- * Dynamic-rate edges between static-rate subgraphs (StaticStreamGraph)
+ * Dynamic-rate edges between static-rate subgraphs (StaticStreamGraph).
  * 
  * @author Mike Gordon
  */
 
-public class SSGEdge 
+public class SSGEdge<S extends StaticStreamGraph> 
 {
     //the source and dest SSG
     //fromSSG->toSSG
-    private StaticStreamGraph fromSSG, toSSG;
+    private S fromSSG, toSSG;
     //the exact nodes of the SSGs,
     // outputNode -> inputNode
     public FlatNode outputNode, inputNode;
@@ -22,8 +22,8 @@ public class SSGEdge
         SSGEdges if the flatgraph changes **/
     private int from, to;
 
-    public SSGEdge(StaticStreamGraph fromSSG, 
-                   StaticStreamGraph toSSG,
+    public SSGEdge(S fromSSG, 
+                   S toSSG,
                    int from, int to) 
     {
         this.fromSSG = fromSSG;
@@ -45,12 +45,12 @@ public class SSGEdge
     }
 
     /** the downstream SSG of edge **/
-    public StaticStreamGraph getInput() 
+    public S getInput() 
     {
         return toSSG;
     }
     /** the upstream SSG of edge **/
-    public StaticStreamGraph getOutput()
+    public S getOutput()
     {
         return fromSSG;
     }

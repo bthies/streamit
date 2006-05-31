@@ -19,8 +19,8 @@ public class YXRouter implements Router {
     // including source and dest
     public LinkedList getRoute(StaticStreamGraph ssg, ComputeNode src,
                                ComputeNode dst) {
-        RawChip rawChip = ssg.getStreamGraph().getRawChip();
-        Layout layout = ssg.getStreamGraph().getLayout();
+        RawChip rawChip = ((StreamGraph)ssg.getStreamGraph()).getRawChip();
+        Layout layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
         RawTile srcTile, dstTile;
 
         // if the source or dest is an iodevice we have to

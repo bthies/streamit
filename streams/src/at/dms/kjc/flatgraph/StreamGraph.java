@@ -20,7 +20,7 @@ public class StreamGraph {
     private FlatNode topLevelFlatNode;
 
     /** A list of all the static sub graphs * */
-    private StaticStreamGraph[] staticSubGraphs;
+    protected StaticStreamGraph[] staticSubGraphs;
 
     /** the entry point static subgraph * */
     private StaticStreamGraph topLevel;
@@ -37,6 +37,33 @@ public class StreamGraph {
         parentMap = new HashMap<FlatNode,StaticStreamGraph>();
     }
 
+    /**
+     * Use in place of "new StaticStreamGraph" for subclassing.
+     * 
+     * A subclass of StreamGraph may refer to a subclass of StaticStreamGraph.
+     * If we just used "new StaticStreamGraph" in this class we would
+     * only be making StaticStreamGraph's of the type in this package.
+     * 
+     * 
+     * @param sg       a StreamGraph
+     * @param realTop  the top node
+     * @return         a new StaticStreamGraph
+     */
+    protected StaticStreamGraph new_StaticStreamGraph(StreamGraph sg, FlatNode realTop) {
+        return new StaticStreamGraph(sg,realTop);
+    }
+
+    
+    /**
+     * Use in place of "new StaticStreamGraph" for subclassing.
+     * 
+     */
+   protected static StreamGraph new_StreamGraph(FlatNode top) {
+        return new StreamGraph(top);
+    }
+    
+
+    
     /**
      * This method creates the static subgraphs of the StreamGraph by cutting
      * the stream graph at dynamic rate boundaries, right now the top level flat
@@ -62,7 +89,7 @@ public class StreamGraph {
             // dynamic boundaries can only be filters!
             assert top.isFilter() || top.isNullSplitter() : 
                 "Error: Toplevel node for a static subgraph is not filter or null splitter!";
-            StaticStreamGraph ssg = new StaticStreamGraph(this, top);
+            StaticStreamGraph ssg = this.new_StaticStreamGraph(this, top);
             // set topleve;
             if (topLevel == null)
                 topLevel = ssg;
@@ -72,7 +99,7 @@ public class StreamGraph {
         }
 
         // set up the array of sub graphs
-        staticSubGraphs = (StaticStreamGraph[]) ssgs
+        staticSubGraphs = ssgs
             .toArray(new StaticStreamGraph[0]);
 
         // clean up the flat graph so that is can be converted to an SIR
@@ -354,6 +381,10 @@ public class StreamGraph {
         return topLevel;
     }
 
+//    public void setTopLevel(StaticStreamGraph ssg) {
+//        this.topLevel = ssg;
+//    }
+    
     /** print out some stats on each SSG to STDOUT * */
     public void dumpStaticStreamGraph() {
         StaticStreamGraph current = topLevel;
@@ -388,7 +419,7 @@ public class StreamGraph {
     public static StreamGraph constructStreamGraph(FlatNode node) {
         assert node.isFilter();
 
-        StreamGraph streamGraph = new StreamGraph(node);
+        StreamGraph streamGraph = new_StreamGraph(node);
         streamGraph.createStaticStreamGraphs();
         return streamGraph;
     }

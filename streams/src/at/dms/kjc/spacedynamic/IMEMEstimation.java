@@ -100,7 +100,7 @@ public class IMEMEstimation implements FlatVisitor
 
         //just call this 
         StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
-        StaticStreamGraph fakeSSG = streamGraph.getStaticSubGraphs()[0];
+        StaticStreamGraph fakeSSG = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
         fakeSSG.scheduleAndCreateMults();
         //make a new directory and change the current working dir
         String dir = File.separator + "tmp" + File.separator + 

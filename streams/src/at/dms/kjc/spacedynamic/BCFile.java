@@ -271,7 +271,7 @@ public class BCFile {
                 //if this file reader is its own device or we don't have a communication simulator
                 //then use the dynamic network
                 if (dev.isDynamic() || 
-                        streamGraph.getParentSSG(dev.getFlatNode()).simulator instanceof NoSimulator) {
+                        ((StaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator) {
                     dev.setDynamic();
                     fw.write("\tdev_from_file_dyn_raw(\"" + dev.getFileName() + "\", " +
                             dev.getPort().getY() + ", " + 
@@ -294,7 +294,7 @@ public class BCFile {
 //              if this file write is its own device or we don't have a communication simulator
                 //then use the dynamic network
                 boolean dynamic = dev.isDynamic() || 
-                streamGraph.getParentSSG(dev.getFlatNode()).simulator instanceof NoSimulator;
+                ((StaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator;
                 if (dynamic)
                     dev.setDynamic();
                 //now create the function call the creates the bc device, create the 

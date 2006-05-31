@@ -61,7 +61,7 @@ public class WorkEstimatesMap implements FlatVisitor
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
         return ((Integer)estimates.get(node)).intValue() * 
-            streamGraph.getParentSSG(node).getMult(node, false);
+        ((StaticStreamGraph)streamGraph.getParentSSG(node)).getMult(node, false);
     }
     
 }

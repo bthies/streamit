@@ -116,14 +116,14 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
 
     public RawExecutionCode(StaticStreamGraph ssg) {
         this.ssg = ssg;
-        this.layout = ssg.getStreamGraph().getLayout();
+        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
     }
 
     public static void doit(StreamGraph streamGraph) {
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             streamGraph.getStaticSubGraphs()[i].getTopLevel().accept(
-                                                                     new RawExecutionCode(streamGraph.getStaticSubGraphs()[i]),
+                                                                     new RawExecutionCode((StaticStreamGraph)streamGraph.getStaticSubGraphs()[i]),
                                                                      null, true);
             /*
              * SIRPrinter printer1 = new SIRPrinter("sir" +

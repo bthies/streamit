@@ -58,7 +58,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         tiles = new HashSet();
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph staticGraph = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph staticGraph = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             staticGraph.getTopLevel().accept(new TileCode(staticGraph),
                                              new HashSet(), true);
 
@@ -237,16 +237,12 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
-        //oldPrintSchedule(joiner, (JoinerScheduleNode) streamGraph
-        //        .getParentSSG(joiner).simulator.initJoinerCode.get(joiner), ret, false);
-        printSchedule(joiner, (JoinerScheduleNode) streamGraph
-                      .getParentSSG(joiner).simulator.initJoinerCode.get(joiner), ret);
+        printSchedule(joiner, (JoinerScheduleNode) ((StaticStreamGraph)streamGraph
+                      .getParentSSG(joiner)).simulator.initJoinerCode.get(joiner), ret);
         ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
         ret.append("while(1) {\n");
-        //oldPrintSchedule(joiner, (JoinerScheduleNode) streamGraph
-        //       .getParentSSG(joiner).simulator.steadyJoinerCode.get(joiner), ret, false);
-        printSchedule(joiner, (JoinerScheduleNode) streamGraph
-                      .getParentSSG(joiner).simulator.steadyJoinerCode.get(joiner),
+        printSchedule(joiner, (JoinerScheduleNode) ((StaticStreamGraph)streamGraph
+                      .getParentSSG(joiner)).simulator.steadyJoinerCode.get(joiner),
                       ret);
         ret.append("}}\n");
 

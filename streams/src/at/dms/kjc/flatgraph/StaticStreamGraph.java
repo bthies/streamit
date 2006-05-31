@@ -29,8 +29,8 @@ public class StaticStreamGraph {
     /** the inter-SSG communication edges of this SSG, both incoming and outgoing * */
     private SSGEdge[] inputSSGEdges, outputSSGEdges;
 
-    private List<StaticStreamGraph> prevSSGs, nextSSGs;
-
+    private List<StaticStreamGraph> prevSSGs/*, nextSSGs*/;
+    protected List<StaticStreamGraph> nextSSGs;
     // arrays representing the inputs and output of this ssg
     // from top to bottom (left to right)...
     private FlatNode[] inputs;
@@ -40,14 +40,22 @@ public class StaticStreamGraph {
     // the output type of the ssg output
     private CType[] outputTypes;
 
-    // the top level SIR node
-    private SIRStream topLevelSIR;
+    /** the top level SIR node.
+     * 
+     * Used in debugging and scheduling from subclasses.
+     */
+    protected SIRStream topLevelSIR;
 
-    // the top level FlatNode
-    private FlatNode topLevel;
+    /** the top level FlatNode
+     *  
+     * Used in debugging from subclasses.
+     */
+    protected FlatNode topLevel;
 
-    // the graph flattener used to convert SIR to FlatGraph
-    private GraphFlattener graphFlattener;
+    /** the graph flattener used to convert SIR to FlatGraph
+     * 
+     */
+    protected GraphFlattener graphFlattener;
 
     // the rate declaration of the output of this SSG
     public JExpression pushRate;
@@ -73,6 +81,7 @@ public class StaticStreamGraph {
     // the parent stream graph
     private StreamGraph streamGraph;
 
+    protected StaticStreamGraph() {}
     /**
      * create a static stream graph with realTop as the first node that the
      * implicit splitter points to
@@ -301,6 +310,10 @@ public class StaticStreamGraph {
 
             FlatNode dest = (FlatNode) nexts.get(outputs[i]);
             StaticStreamGraph input = streamGraph.getParentSSG(dest);
+            // N.B.  Can not guarantee static type safety given
+            // array of generic objects.  Would get error if
+            // put parameterized type on array decl.
+
             outputSSGEdges[i] = new SSGEdge(this, input, i, input
                                             .getInputNum(dest));
             outputSSGEdges[i].outputNode = outputs[i];

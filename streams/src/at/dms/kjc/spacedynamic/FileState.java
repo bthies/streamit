@@ -84,7 +84,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             // otherwise read for standard input
             inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 
-        streamGraph.getTopLevel().accept(this, null, true);
+        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
 
         try { // close the file
             if (KjcOptions.devassignfile != null)
@@ -106,7 +106,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         //lots of duplication here, but oh well
         if (node.contents instanceof SIRFileReader) {
             FileReaderDevice dev = new FileReaderDevice(streamGraph, node);
-            StaticStreamGraph parent = streamGraph.getParentSSG(node);
+            StaticStreamGraph parent = (StaticStreamGraph)streamGraph.getParentSSG(node);
             
             if (parent.getIOFilters().contains(node.contents)) {
                 //we have a dynamic file reader
@@ -120,7 +120,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             foundReader = true;
         } else if (node.contents instanceof SIRFileWriter) {
             FileWriterDevice dev = new FileWriterDevice(streamGraph, node);
-            StaticStreamGraph parent = streamGraph.getParentSSG(node);
+            StaticStreamGraph parent = (StaticStreamGraph)streamGraph.getParentSSG(node);
             
             if (parent.getIOFilters().contains(node.contents)) {
                 //we have a dynamic file reader

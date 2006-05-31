@@ -83,7 +83,7 @@ public class SwitchCode extends at.dms.util.Utils {
          * current.getNext(); }
          */
 
-        streamGraph.getTopLevel().accept(new StreamGraphVisitor() {
+        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(new StreamGraphVisitor() {
                 public void visitStaticStreamGraph(StaticStreamGraph ssg) {
                     ssg.scheduleCommunication(sg.joinerSimulator);
                 }
@@ -111,7 +111,7 @@ public class SwitchCode extends at.dms.util.Utils {
      */
     private static void simpleSchedules() {
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             
             Iterator nodes = ssg.getFlatNodes().iterator();
             while (nodes.hasNext()) {
@@ -127,14 +127,14 @@ public class SwitchCode extends at.dms.util.Utils {
         // code for
         HashSet tilesGenerated = new HashSet();
 
-        for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+        for (int i = 0; i < (streamGraph.getStaticSubGraphs()).length; i++) {
             // get all the nodes that have either init switch code
             // or steady state switch code
             HashSet computeNodes = new HashSet();
 
             // SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
 
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             SpaceDynamicBackend.addAll(computeNodes,
                                        ssg.simulator.initSchedules.keySet());
             SpaceDynamicBackend.addAll(computeNodes,

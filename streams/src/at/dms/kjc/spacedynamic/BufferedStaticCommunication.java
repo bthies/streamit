@@ -134,7 +134,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                        int bottomPeek, int remaining, int initFire) {
         this.node = node;
         this.ssg = ssg;
-        this.layout = ssg.getStreamGraph().getLayout();
+        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
         this.bottomPeek = bottomPeek;
         this.remaining = remaining;
         this.initFire = initFire;

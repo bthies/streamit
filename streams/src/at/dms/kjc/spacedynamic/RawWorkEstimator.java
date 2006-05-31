@@ -55,7 +55,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         Util.removeIO(filter);
 
         StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
-        StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[0];
+        StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
         ssg.scheduleAndCreateMults();
         //make a new directory and change the current working dir
         String dir = File.separator + "tmp" + File.separator + 

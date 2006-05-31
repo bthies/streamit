@@ -117,7 +117,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         workEstimates = new WorkEstimatesMap(streamGraph);
 
         // find out exactly what we should layout !!!
-        streamGraph.getTopLevel().accept(this, null, true);
+        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
 
         System.out.println("Tiles layout.assigned: " + assigned.size());
 
@@ -324,7 +324,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         buf
             .append("edge[color = blue,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             for (int out = 0; out < ssg.getOutputs().length; out++) {
                 if (!assignToATile(ssg.getOutputs()[out]) || 
                     !assignToATile(ssg.getNext(ssg.getOutputs()[out])))
@@ -401,7 +401,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         assign(rawChip.getTile(0), (FlatNode) (assigned.toArray()[0]));
         
         //set up the hash sets for future passes!
-        getStaticCost(streamGraph.getStaticSubGraphs()[0], new HashSet());
+        getStaticCost((StaticStreamGraph)streamGraph.getStaticSubGraphs()[0], new HashSet());
     }
 
     /** read the layout from a new-line separated file * */
@@ -423,7 +423,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         }
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();
@@ -494,7 +494,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                                                                               System.in));
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();
@@ -532,7 +532,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         double cost = 0.0;
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             double dynamicCost = 0.0;
             double staticCost = 0.0;
             double memoryCost = 0.0;
@@ -948,7 +948,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         // and build it in data-flow order for each SSG
         LinkedList assignMeToATile = new LinkedList();
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();

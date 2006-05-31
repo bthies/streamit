@@ -122,7 +122,7 @@ public class SpaceDynamicBackend {
         streamGraph.dumpStaticStreamGraph();
     
         for (int k = 0; k < streamGraph.getStaticSubGraphs().length; k++) {
-            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[k];
+            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
             System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
         
             //VarDecl Raise to move array assignments up

@@ -76,7 +76,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         FlatIRToC toC = new FlatIRToC(str);
         toC.flatNode = node;
         toC.ssg = SSG;
-        toC.layout = SSG.getStreamGraph().getLayout();
+        toC.layout = ((StreamGraph)SSG.getStreamGraph()).getLayout();
         toC.dynamicOutput = toC.ssg.isOutput(node) || toC.ssg.simulator instanceof NoSimulator;
         toC.dynamicInput = toC.ssg.isInput(node) || toC.ssg.simulator instanceof NoSimulator;
     
@@ -398,7 +398,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         assert downstream.contents instanceof SIRFileWriter : 
             "Didn't see an SIRFileWriter where one was expected, instead: " + downstream.contents; 
     
-        FileWriterDevice fwd = ssg.getStreamGraph().getFileState().getFileWriterDevice(downstream);
+        FileWriterDevice fwd = ((StreamGraph)ssg.getStreamGraph()).getFileState().getFileWriterDevice(downstream);
         //get the neighboring tile
         RawTile neighboringTile = fwd.getPort().getNeighboringTile();
         //now calculated the final route, once the packet gets to the destination (neighboring) tile

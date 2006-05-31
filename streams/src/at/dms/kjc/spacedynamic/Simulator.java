@@ -61,8 +61,8 @@ public abstract class Simulator {
         this.ssg = ssg;
         this.joinerSimulator = joinerSimulator;
         this.toplevel = ssg.getTopLevel();
-        this.layout = ssg.getStreamGraph().getLayout();
-        this.rawChip = ssg.getStreamGraph().getRawChip();
+        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
+        this.rawChip = ((StreamGraph)ssg.getStreamGraph()).getRawChip();
     }
 
     public abstract void simulate();
@@ -77,7 +77,7 @@ public abstract class Simulator {
      */
     public static boolean needSimulator(StaticStreamGraph ssg) {
         //check if there are any overlapping routes...
-        if (ssg.getStreamGraph().getLayout().getIntermediateTiles().size() > 0)
+        if (((StreamGraph)ssg.getStreamGraph()).getLayout().getIntermediateTiles().size() > 0)
             return true;
         
         //check if there are any splitters...

@@ -56,7 +56,7 @@ public class FreeTileRouter implements Router
             return yxRouter.getRoute(ssg, src, dst);
         }
     
-        Layout layout = ssg.getStreamGraph().getLayout();
+        Layout layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
 
         //if the source or dest is an iodevice we have to 
         //route the item to/from neighboring tiles

@@ -88,6 +88,12 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         //if we are running with decoupled
         RemovePrintStatements.doIt(ssg.getTopLevel());
     
+        SwitchCode.generate(streamGraph);
+        
+        //restore the i/o rates of the filter we created
+        //done for code generation purposes
+        Util.restoreIO((SIRFilter)ssg.getTopLevel().contents, oldFilter);
+        
         //Generate the tile code
         
         RawExecutionCode rawExe = new RawExecutionCode(ssg);
@@ -100,7 +106,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         // make structures header file in this directory
         StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
 
-        SwitchCode.generate(streamGraph);
         TileCode.generateCode(streamGraph);
         MakefileGenerator.createMakefile(streamGraph);
         SIMULATING_WORK = false;

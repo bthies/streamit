@@ -710,6 +710,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
             CArrayType type = (CArrayType)right.getType();
             String dims[] = Util.makeString(type.getDims());
 
+            //System.out.println("ArrayCopy: " + left + " = " + right);
+            
             // dims should never be null now that we have static array
             // bounds
             assert dims != null;

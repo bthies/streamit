@@ -381,6 +381,28 @@ public class Util extends at.dms.util.Utils {
         return null;
     }
 
+    /**
+     * Set the i/o rates of f1 to the i/o rates of f2.
+     * 
+     * @param f1 Set this filter to the i/o rates of f2.
+     * @param f2 Set f1 to this filters i/o rates.
+     */
+    public static void restoreIO(SIRFilter f1, SIRFilter f2) {
+        f1.setPush(new JIntLiteral(f2.getPushInt()));
+        f1.setPeek(new JIntLiteral(f2.getPeekInt()));
+        f1.setPop(new JIntLiteral(f2.getPopInt()));
+        if (f1 instanceof SIRTwoStageFilter) {
+            assert f2 instanceof SIRTwoStageFilter;
+            SIRTwoStageFilter f12 = (SIRTwoStageFilter)f1;
+            SIRTwoStageFilter f22 = (SIRTwoStageFilter)f2;
+            f12.setInitPop(f22.getInitPopInt());
+            f12.setInitPeek(f22.getInitPeekInt());
+            f12.setInitPush(f22.getInitPushInt());
+        }
+        f1.setInputType(f2.getInputType());
+        f1.setOutputType(f2.getOutputType());
+    }
+    
     /** set the push and pop/peek rates to 0 and the input / output types to void * */
     public static void removeIO(SIRFilter filter) {
         filter.setPush(new JIntLiteral(0));

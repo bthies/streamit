@@ -60,7 +60,9 @@ public class SpaceDynamicBackend {
 
         //create the RawChip
         rawChip = new RawChip(rawColumns, rawRows);
-
+        
+     
+        
         //this must be run now, FlatIRToC relies on it!!!
         RenameAll.renameAllFilters(str);
     
@@ -71,7 +73,11 @@ public class SpaceDynamicBackend {
         Map associatedGlobals = StaticsProp.propagate(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
         System.out.println("Done Constant Prop and Unroll...");
-
+        
+        /*SIRPrinter printer1 = new SIRPrinter("before_rename.out");
+        IterFactory.createFactory().createIter(str).accept(printer1);
+        printer1.close();*/
+        
         // convert round(x) to floor(0.5+x) to avoid obscure errors
         RoundToFloor.doit(str);
 

@@ -130,9 +130,15 @@ public class IMEMEstimation implements FlatVisitor
 
         // layout the components (assign filters to tiles)  
         streamGraph.getLayout().singleFilterAssignment();
-
+        
         String tileNumber = streamGraph.getLayout().getTileNumber(fakeSSG.getTopLevel()) + "";
 
+        SwitchCode.generate(streamGraph);
+        
+        //restore the i/o rates of the filter we created
+        //done for code generation purposes
+        Util.restoreIO((SIRFilter)fakeSSG.getTopLevel().contents, oldFilter);
+        
         //Generate the tile code
         if (!containsRawMain(filter)) {
             RawExecutionCode rawExe = new RawExecutionCode(fakeSSG);
@@ -145,7 +151,6 @@ public class IMEMEstimation implements FlatVisitor
     
         // make structures header file in this directory
         StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
-        SwitchCode.generate(streamGraph);
         TileCode.generateCode(streamGraph);
         MakefileGenerator.createMakefile(streamGraph);
     
@@ -320,6 +325,12 @@ public class IMEMEstimation implements FlatVisitor
         return fits;
     }
     
+    /**
+     * Return true if filter contains a declaration of the RAWMAIN function.
+     * 
+     * @param filter 
+     * @return true if filter contains a declaration of the RAWMAIN function.
+     */
     private static boolean containsRawMain(SIRFilter filter) 
     {
         for (int i = 0; i < filter.getMethods().length; i++) {

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.30 2006-05-22 22:45:12 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.31 2006-06-01 15:59:14 rabbah Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -84,8 +84,6 @@ public class SIRToStreamIt
                            JInterfaceDeclaration[] interfaces,
                            SIRInterfaceTable[] interfaceTables,
                            SIRStructure[] structs) {
-        System.out.println("*/");
-    
         SIRToStreamIt s2s = new SIRToStreamIt();
 
         for (int i = 0; i < structs.length; i++)
@@ -153,7 +151,6 @@ public class SIRToStreamIt
      * Generates code for <flatClass> and sends to System.err.
      */
     public static void generateCode(JClassDeclaration flat) {
-        System.out.println("*/");   
         SIRToStreamIt s2s = new SIRToStreamIt(new CodegenPrintWriter(new PrintWriter(System.out)));
 
         // Print all of the portals.

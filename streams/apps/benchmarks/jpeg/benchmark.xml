@@ -8,15 +8,29 @@ it as a JPEG.
 
 Other files: JPEGtoBMP.str produces output.bmp.int,
 JPEG.str does not compile   strc -library JPEG.str
-Transcoder_Raw.str  ??
+
+Transcoder_Raw.str is a version that prints numbers rather than messaged since
+the raw back end does not currently suport printing strings.
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" regtest="skip">
+    <impl lang="StreamIt" dir="streamit" iters="2">
+      <whichtype>releasetest</whichtype>
       <desc>StreamIt version of JPEG decoder/encoder.
-            strc -library Transcode.str -i1  does not seem to terminate.
-            presumably testing would want to look at output.jpg.int</desc>
-      <make>Makefile output.jpg input.jpg.int</make>
-      <file>Transcoder.str</file>
+            strc -library Transcoder.str -i1 does not seem to produce complete
+            output, but strc -library Transcoder.str -i2 does.  Check sometime
+            as to why this is so: it there a fencepost error in the StreamIt
+	    code?.
+            After testing would want to look at output.jpg.int
+	    For some reason, this is included in release testing, but not in
+	    the nightly regression test.</desc>
+      <make>Makefile output.jpg</make>
+      <file>Transcoder_raw.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" iters="2">
+      <whichtype>releasetest</whichtype>
+      <desc>StreamIt version of JPEG decoder to .bmp</desc>
+      <make>Makefile output.jpg</make>
+      <file>JPEG_toBMP.str</file>
     </impl>
   </implementations>
 </benchmark>

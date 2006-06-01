@@ -718,16 +718,6 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
     {
         JExpression newExp = (JExpression)expr.accept(this);
         if (newExp!=null && newExp!=expr) {
-            // RMR { if the new expression is a constant, then
-            // promote it to the appropriate type and replace
-            // the parent expression (i.e., self)
-            if (newExp.isConstant()) {
-                if (type!=newExp.getType())
-                    return ((JLiteral)newExp).convertType(type,null);
-                else
-                    return newExp;
-            }
-            // } RMR
             self.setExpr(newExp);
         }
     

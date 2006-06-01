@@ -1116,6 +1116,32 @@ public class Propagator extends SLIRReplacingVisitor {
         }
     }
 
+    // RMR { add visitor for unary promote expression;
+    // if the new expression is a constant, then
+    // promote it to the appropriate type and replace
+    // the parent expression (i.e., self)
+    /**
+     * visits a type promotion expression
+     */
+    public Object visitUnaryPromoteExpression(JUnaryPromote self,
+                                              JExpression expr,
+                                              CType type) {
+        JExpression newExp = (JExpression)expr.accept(this);
+        if (newExp.isConstant()) {
+            if (type!=newExp.getType()) {
+                return ((JLiteral)newExp).convertType(type,null);
+            } else {
+                return newExp;
+            }
+        } else {
+            if (write&&(newExp!=expr)) {
+                self.setExpr(newExp);
+            }
+            return self;
+        }
+    }
+    // } RMR
+
     /**
      * Visits an unary minus expression
      */
@@ -1321,8 +1347,7 @@ public class Propagator extends SLIRReplacingVisitor {
     /**
      * For processing BinaryExpressions.  
      */
-    private Object doBinaryExpression(JBinaryExpression 
-                                      self,
+    private Object doBinaryExpression(JBinaryExpression self,
                                       JExpression left,
                                       JExpression right) {
         JExpression newLeft = (JExpression)left.accept(this);

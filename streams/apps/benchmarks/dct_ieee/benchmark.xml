@@ -13,25 +13,14 @@ can be found in Appendix A of the MPEG-2 specification (ISO/IEC
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit" regtest="skip">
-      <file>DCTreference.str</file>
+      <file>DCT.str</file>
       <desc>
+      Contains two implementations od DCT:
+
       A reference implementation based on the DCT code found within
 the C reference MPEG implementation.
-      </desc>
-    </impl>
-    <impl lang="StreamIt" dir="streamit" regtest="skip">
-      <file>DCTcomparison.str</file>
-      <desc>
-Numerically equivalent to the reference
-implementation. However, this will run the numbers through both the
-reference DCT components and the fast DCT components and report
-discrepancies between the two. This version is substantially slower
-than either the reference or the fast DCT versions.
-      </desc>
-    </impl>
-    <impl lang="StreamIt" dir="streamit" regtest="skip">
-      <file>DCTfast.str</file>
-      <desc>
+
+      A (hopefully) faster implementation:
 An intuitive StreamIt DCT implementation based on the formula
 for the DCT and its natural representation in StreamIt. The
 2-Dimensional DCT is broken down into 1-Dimensional DCTs in
@@ -40,10 +29,25 @@ the reference implementation. However, ideally it will be.)
       </desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" regtest="skip">
-      <file>DCTinternal.str</file>
+      <file>iDCTcompare.str</file>
       <desc>
-Contains library of functions used by above versions. 
+This will run the numbers through both the
+reference DCT components and the fast DCT components and report
+discrepancies between the two.
       </desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" regtest="skip">
+      <file>DCT.str</file>
+      <desc>Contains library of functions for reference and fast versions 
+of DCT.</desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" id="dctcompare"  iters="1">
+      <file class="source">iDCTcompare.str DCT.str</file>
+      <desc>Compares coarse reference, fine reference, and fine fast DCT implementations</desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" id="dctverify" iters="1">
+      <file class="source">DCTverify.str DCT.str</file>
+      <desc>Checks that reference DCT and reference IDCT are inverses</desc>
     </impl>
   </implementations>
 </benchmark>

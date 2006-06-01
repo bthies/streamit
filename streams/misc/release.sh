@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.48 2006-05-29 20:52:41 dimock Exp $
+# $Id: release.sh,v 1.49 2006-06-01 14:56:09 dimock Exp $
 #
 
 # foe script debugging: -v print line in script, -x print expanded line
@@ -106,6 +106,8 @@ rm -rf `find $WORKING -name "calculations"`
 rm -rf $WORKING/streams/misc/scripts/number-gathering
 
 # Some benchmarks we can't (or won't) export; trim those here.
+# Streamit code not currently working.
+rm -rf $WORKING/streams/apps/benchmarks/audiobeam
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
 rm -rf $WORKING/streams/apps/benchmarks/cfar
 rm -rf $WORKING/streams/apps/benchmarks/gsm/c
@@ -115,9 +117,9 @@ rm -rf $WORKING/streams/apps/benchmarks/perftest4
 # no streamit code being built currently:
 rm -rf $WORKING/streams/apps/benchmarks/serpent
 rm -rf $WORKING/streams/apps/benchmarks/viram
-rm -rf $WORKING/streams/apps/benchmarks/vocoder
+#rm -rf $WORKING/streams/apps/benchmarks/vocoder
 rm -rf $WORKING/streams/apps/benchmarks/micro04
-rm -rf $WORKING/streams/apps/benchmarks/pldi03
+#rm -rf $WORKING/streams/apps/benchmarks/pldi03
 #rm -rf $WORKING/streams/apps/benchmarks/mpeg2
 # do we want to trim down mpeg inputs, outputs?
 rm -rf $WORKING/streams/apps/benchmarks/traces

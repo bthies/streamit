@@ -1,0 +1,20 @@
+<benchmark>
+  <name>gmti</name>
+  <desc>GMTI(Ground Moving Target Indicator) Application</desc>
+  <description>
+GMTI(Ground Moving Target Indicator) Application, or more properly phases two 
+through six out out of the seven phases of the application.  The first phase
+is separated out as the TDE benchmark, the last phase  was not written sine it 
+required dynamic rates, which were not available at the time.
+
+This is a proof-of-concept implementation: the DFT is slow, and the input 
+parameter sizes have been cut down from the original.  
+
+For more inforation see readme.txt.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" dir="streamit" id="gmti" iters="1">
+    <file class="source">Tester.str DataStruct.str lqHouse.str WienerHopfSolution.str qr.str matlabFunctions.str AdaptiveBeamform.str ABsteeringMatrix.str Stap.str DopplerFilter.str Cfar.str Detection.str Pulse.str DFT.str</file>
+    </impl>
+  </implementations>
+</benchmark>

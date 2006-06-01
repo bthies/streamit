@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.36 2006-05-27 18:05:06 rabbah Exp $
+ * $Id: Utils.java,v 1.37 2006-06-01 20:25:30 dimock Exp $
  */
 
 package at.dms.util;
@@ -217,8 +217,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
     /**
      * Returns a list of Integers containing same elements as <pre>arr</pre>
      */
-    public static List intArrayToList(int[] arr) {
-        LinkedList result = new LinkedList();
+    public static List<Integer> intArrayToList(int[] arr) {
+        LinkedList<Integer> result = new LinkedList<Integer>();
         for (int i=0; i<arr.length; i++) {
             result.add(new Integer(arr[i]));
         }
@@ -230,11 +230,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
      *
      * @param   array       the array of elements
      */
-    public static Vector toVector(Object[] array) {
+    public static <T> Vector<T> toVector(T[] array) {
         if (array == null) {
-            return new Vector();
+            return new Vector<T>();
         } else {
-            Vector  vector = new Vector(array.length);
+            Vector<T> vector = new Vector<T>(array.length);
 
             for (int i = 0; i < array.length; i++) {
                 vector.addElement(array[i]);
@@ -245,9 +245,12 @@ public abstract class Utils implements Serializable, DeepCloneable {
 
     /**
      * Creates a typed array from a vector.
+     * 
+     * Java 1.5: should use Vector.toArray
      *
      * @param   vect        the vector containing the elements
      * @param   type        the type of the elements
+     * @deprecated
      */
     public static Object[] toArray(Vector vect, Class type) {
         if (vect != null && vect.size() > 0) {
@@ -269,9 +272,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
     /**
      * Creates a int array from a vector.
      *
+     * different from Vector.toArray because casts Integer to int
+     *
      * @param   vect        the vector containing the elements
      */
-    public static int[] toIntArray(Vector vect) {
+    public static int[] toIntArray(Vector<Integer> vect) {
         if (vect != null && vect.size() > 0) {
             int[]   array = new int[vect.size()];
 
@@ -809,7 +814,6 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * the variable is undefined.
      */
     public static String getEnvironmentVariable(String var) {
-        String result = null;
         try {
             String OS = System.getProperty("os.name").toLowerCase();
             String command = (OS.indexOf("windows") > -1 ? "set" : "env");
@@ -831,6 +835,18 @@ public abstract class Utils implements Serializable, DeepCloneable {
         }
     }
 
+    /**
+     * Make a name for a dot file from a supplied prefix and the name
+     * of the top-level SIRStream.
+     * 
+     */
+    
+    public static String makeDotFileName(String prefix, SIRStream strName) 
+    {
+        return prefix + (strName != null ? strName.getIdent() : "") + ".dot";
+    }
+
+    
     // ----------------------------------------------------------------------
     // DATA MEMBERS
     // ----------------------------------------------------------------------

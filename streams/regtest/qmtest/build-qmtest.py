@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.14 2006-05-26 21:41:31 dimock Exp $
+# $Id: build-qmtest.py,v 1.15 2006-06-02 16:11:28 dimock Exp $
 #
 
 import os
@@ -191,6 +191,8 @@ def DoQMTestDir(path, control):
             
         # Walk through the files.  Classify them by their class
         # attribute, and also copy them into benchdir.
+        # You can now put more than one file in a single <file> tag.
+        # separate files by spaces (may change of ever support Windoze)
         fileset = {}
         files = impl.getElementsByTagName('file')
         for file in files:
@@ -199,7 +201,7 @@ def DoQMTestDir(path, control):
             cls = file.getAttribute('class')
             if not cls: cls = 'source'
             if cls not in fileset: fileset[cls] = []
-            fileset[cls].append(fn)
+            fileset[cls].extend(fn.split())
 
         ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_time, run_time, iters)
 
@@ -282,7 +284,11 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_ti
             for fn in l:
                 src = os.path.join(srcdir, fn)
                 dst = os.path.join(testdir, fn)
-                shutil.copyfile(src, dst)
+                try:
+                    shutil.copyfile(src, dst)
+                except:
+                    print >> sys.stderr, "failure to copy file " + \
+                          src + " may cause errors later in test process"
         # Three stages, write out the files.
         extras = { 'opts': opts,
                    'testname': benchname + '.' + testname,

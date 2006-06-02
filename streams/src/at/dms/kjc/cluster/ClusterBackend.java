@@ -20,10 +20,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.raw.*;
 import java.util.*;
 //import java.io.*;
-
 //import streamit.scheduler2.print.PrintProgram;
-//import at.dms.util.Utils;
-
 //import streamit.scheduler2.*;
 //import streamit.scheduler2.constrained.*;
 
@@ -40,13 +37,13 @@ public class ClusterBackend {
     /**
      * Given a flatnode, map to the init execution count.
      */
-    public static HashMap initExecutionCounts;
+    public static HashMap<FlatNode,Integer> initExecutionCounts;
     /**
      * Given a flatnode, map to steady-state execution count.
      *
      * <br/> Also read in several other modules.
      */
-    public static HashMap steadyExecutionCounts;
+    public static HashMap<FlatNode,Integer> steadyExecutionCounts;
 
     /**
      * Map filters (also presumably splitters and joiners) to FlatNodes.
@@ -57,8 +54,9 @@ public class ClusterBackend {
 
     /**
      * Result of call to SIRScheduler.getExecutionCounts.
+     * (not generic since mixing generics and arrays not allowed)
      */
-    private static HashMap[] executionCounts;
+    private static HashMap/*<FlatNode,int[]>*/[] executionCounts;
     
     /**
      * Holds passed structures until they can be handeed off to StructureIncludeFile.
@@ -82,7 +80,7 @@ public class ClusterBackend {
      * This provides a way for cache partitioner to access filter execution counts.
      */
 
-    private static HashMap filter_steady_counts;
+    private static HashMap<FlatNode,int[]> filter_steady_counts;
 
     public static int getExecCounts(SIROperator oper) {
         int c[] = (int[])filter_steady_counts.get(oper);
@@ -248,15 +246,8 @@ public class ClusterBackend {
         // sets filter steady counts, which are needed by cache partitioner
         filter_steady_counts = exec_counts1[1]; 
 
-        // Increasing filter Multiplicity
-        //if ( doCacheOptimization && KjcOptions.peekratio < 1024) {
-
-        if (!(KjcOptions.peekratio >= 256)) {
-            IncreaseFilterMult.inc(str, 1, code_cache);
-        }
-
-        //}
-
+        // Code relating to IncreaseFilterMult removed here.
+        
         Optimizer.optimize(str);
         Estimator.estimate(str);
 
@@ -277,17 +268,8 @@ public class ClusterBackend {
         // sets filter steady counts, which are needed by cache partitioner
         filter_steady_counts = exec_counts2[1]; 
 
-        //exec_counts2 = SIRScheduler.getExecutionCounts(str);
-
-        //find out how what is the schedule multiplicity due to
-        //peek scaling
-
-        HashMap steady1 = exec_counts1[1];
-        HashMap steady2 = exec_counts2[1];
-    
-        //int implicit_mult =
-        //    IncreaseFilterMult.scheduleMultAfterScaling(steady1, steady2);
-
+        // code relating to IncreaseFilterMult removed here.
+        
         // something to do with profiling?
         MarkFilterBoundaries.doit(str);
 
@@ -450,7 +432,7 @@ public class ClusterBackend {
         new VarDeclRaiser().raiseVars(str);
 
         // creating filter2Node
-        filter2Node = new HashMap();
+        filter2Node = new HashMap<SIROperator,FlatNode>();
         graphFlattener.top.accept(
                 new FlatVisitor() {
                   public void visitNode(FlatNode node) {
@@ -490,12 +472,6 @@ public class ClusterBackend {
         System.err.println(" done.");    
 
         /*
-        //generate the makefiles
-        System.out.println("Creating Makefile.");
-        MakefileGenerator.createMakefile();
-        */
-
-        /*
         // attempt to find constrained schedule!
         Greedy g = new Greedy(d_sched);
 
@@ -513,7 +489,7 @@ public class ClusterBackend {
         System.exit(0);
     }
 
-    private static void mapToPartitionZero(SIRStream str, final HashMap partitionMap) {
+    private static void mapToPartitionZero(SIRStream str, final HashMap<SIROperator,Integer> partitionMap) {
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 public void preVisitStream(SIRStream self,
                                            SIRIterator iter) {
@@ -583,8 +559,8 @@ public class ClusterBackend {
     private static void createExecutionCounts(SIRStream str,
                                               GraphFlattener graphFlattener) {
         // make fresh hashmaps for results
-        HashMap[] result = { initExecutionCounts = new HashMap(), 
-                             steadyExecutionCounts = new HashMap()} ;
+        HashMap[] result = { initExecutionCounts = new HashMap<FlatNode,Integer>(), 
+                             steadyExecutionCounts = new HashMap<FlatNode,Integer>()} ;
 
         // then filter the results to wrap every filter in a flatnode,
         // and ignore splitters
@@ -594,20 +570,6 @@ public class ClusterBackend {
                 SIROperator obj = (SIROperator)it.next();
                 int val = ((int[])executionCounts[i].get(obj))[0];
                 //System.err.println("execution count for " + obj + ": " + val);
-                /* This bug doesn't show up in the new version of
-                 * FM Radio - but leaving the comment here in case
-                 * we need to special case any other scheduler bugsx.
-         
-                 if (val==25) { 
-                 System.err.println("Warning: catching scheduler bug with special-value "
-                 + "overwrite in RawBackend");
-                 val=26;
-                 }
-                 if ((i == 0) &&
-                 (obj.getName().startsWith("Fused__StepSource") ||
-                 obj.getName().startsWith("Fused_FilterBank")))
-                 val++;
-                */
                 if (graphFlattener.getFlatNode(obj) != null)
                     result[i].put(graphFlattener.getFlatNode(obj), 
                                   new Integer(val));
@@ -650,73 +612,16 @@ public class ClusterBackend {
                         steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
                 }
                 if(initCount>=0)
-                    result[0].put(node,new Integer(initCount));
+                    initExecutionCounts.put(node,new Integer(initCount));
                 if(steadyCount>=0)
-                    result[1].put(node,new Integer(steadyCount));
+                    steadyExecutionCounts.put(node,new Integer(steadyCount));
             } else if(node.contents instanceof SIRJoiner) {
-                FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
+                //FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
                 if(executionCounts[0].get(node.oldContents)!=null)
-                    result[0].put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
+                    initExecutionCounts.put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
                 if(executionCounts[1].get(node.oldContents)!=null)
-                    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
+                    steadyExecutionCounts.put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
             }
         }
-    
-        /*
-        //now, in the above calculation, an execution of a joiner node is 
-        //considered one cycle of all of its inputs.  For the remainder of the
-        //raw backend, I would like the execution of a joiner to be defined as
-        //the joiner passing one data item down stream
-        for (int i=0; i < 2; i++) {
-            Iterator it = result[i].keySet().iterator();
-            while(it.hasNext()){
-                FlatNode node = (FlatNode)it.next();
-                if (node.contents instanceof SIRJoiner) {
-                    int oldVal = ((Integer)result[i].get(node)).intValue();
-                    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
-                    if((node.schedMult!=0)&&(node.schedDivider!=0))
-                        cycles=(cycles*node.schedMult)/node.schedDivider;
-                    result[i].put(node, new Integer(cycles));
-                }
-                if (node.contents instanceof SIRSplitter) {
-                    int sum = 0;
-                    for (int j = 0; j < node.ways; j++)
-                        sum += node.weights[j];
-                    int oldVal = ((Integer)result[i].get(node)).intValue();
-                    result[i].put(node, new Integer(sum*oldVal));
-                    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
-                }
-            }
-        }
-        */
-    
-        //The following code fixes an implementation quirk of two-stage-filters
-        //in the *FIRST* version of the scheduler.  It is no longer needed,
-        //but I am keeping it around just in case we every need to go back to the old
-        //scheduler.
-    
-        /*
-        //increment the execution count for all two-stage filters that have 
-        //initpop == initpush == 0, do this for the init schedule only
-        //we must do this for all the two-stage filters, 
-        //so iterate over the keyset from the steady state 
-        Iterator it = result[1].keySet().iterator();
-        while(it.hasNext()){
-            FlatNode node = (FlatNode)it.next();
-            if (node.contents instanceof SIRTwoStageFilter) {
-                SIRTwoStageFilter two = (SIRTwoStageFilter) node.contents;
-                if (two.getInitPush() == 0 &&
-                    two.getInitPop() == 0) {
-                    Integer old = (Integer)result[0].get(node);
-                    //if this 2-stage was not in the init sched
-                    //set the oldval to 0
-            int oldVal = 0;
-            if (old != null)
-                oldVal = old.intValue();
-            result[0].put(node, new Integer(1 + oldVal));   
-                }
-            }
-        }
-        */
     }
 }

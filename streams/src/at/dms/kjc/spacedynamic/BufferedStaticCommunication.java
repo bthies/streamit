@@ -63,7 +63,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
     private Layout layout;
 
     /** the ssg of this flat node * */
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     /** the flat node we are generating code for * */
     private FlatNode node;
@@ -130,11 +130,11 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
      *            The init multiplicity of the filter (assuming all filters are
      *            2 stage).
      */
-    public BufferedStaticCommunication(StaticStreamGraph ssg, FlatNode node,
+    public BufferedStaticCommunication(SpdStaticStreamGraph ssg, FlatNode node,
                                        int bottomPeek, int remaining, int initFire) {
         this.node = node;
         this.ssg = ssg;
-        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
+        this.layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
         this.bottomPeek = bottomPeek;
         this.remaining = remaining;
         this.initFire = initFire;

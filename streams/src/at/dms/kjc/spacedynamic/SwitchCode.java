@@ -56,13 +56,13 @@ public class SwitchCode extends at.dms.util.Utils {
      */
     public static final String SW_SS_TRIPS = "raw_init2";
 
-    private static StreamGraph streamGraph;
+    private static SpdStreamGraph streamGraph;
 
     private static RawChip rawChip;
 
     private static Layout layout;
 
-    public static void generate(final StreamGraph sg) {
+    public static void generate(final SpdStreamGraph sg) {
         streamGraph = sg;
         rawChip = sg.getRawChip();
         layout = streamGraph.getLayout();
@@ -83,8 +83,8 @@ public class SwitchCode extends at.dms.util.Utils {
          * current.getNext(); }
          */
 
-        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(new StreamGraphVisitor() {
-                public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+        ((SpdStaticStreamGraph)streamGraph.getTopLevel()).accept(new StreamGraphVisitor() {
+                public void visitStaticStreamGraph(SpdStaticStreamGraph ssg) {
                     ssg.scheduleCommunication(sg.joinerSimulator);
                 }
 
@@ -111,7 +111,7 @@ public class SwitchCode extends at.dms.util.Utils {
      */
     private static void simpleSchedules() {
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             
             Iterator nodes = ssg.getFlatNodes().iterator();
             while (nodes.hasNext()) {
@@ -134,7 +134,7 @@ public class SwitchCode extends at.dms.util.Utils {
 
             // SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
 
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             SpaceDynamicBackend.addAll(computeNodes,
                                        ssg.simulator.initSchedules.keySet());
             SpaceDynamicBackend.addAll(computeNodes,
@@ -635,7 +635,7 @@ public class SwitchCode extends at.dms.util.Utils {
      * @return true if we generated code for this tile.  If false, we have 
      * to generate code the standard way.
      */
-    private static boolean simpleSwitchCode(StaticStreamGraph ssg, RawTile tile) {
+    private static boolean simpleSwitchCode(SpdStaticStreamGraph ssg, RawTile tile) {
         FlatNode node = layout.getNode(tile);
         if (node == null)
             return false;
@@ -711,7 +711,7 @@ public class SwitchCode extends at.dms.util.Utils {
      * @param rec
      * @throws Exception
      */
-    private static void simpleTrailer(StaticStreamGraph ssg, FileWriter fw, FlatNode node, RawExecutionCode rec) 
+    private static void simpleTrailer(SpdStaticStreamGraph ssg, FileWriter fw, FlatNode node, RawExecutionCode rec) 
         throws Exception {
         fw.write(".text\n\n");
         fw.write("raw_init:\n");
@@ -754,7 +754,7 @@ public class SwitchCode extends at.dms.util.Utils {
      * @param node
      * @throws Exception
      */
-    private static void createSimpleFilterCode(StaticStreamGraph ssg,
+    private static void createSimpleFilterCode(SpdStaticStreamGraph ssg,
                                                FileWriter fw, RawTile tile, FlatNode node) throws Exception {
         assert node.isFilter();
         int pop = node.getFilter().getPopInt();
@@ -906,7 +906,7 @@ public class SwitchCode extends at.dms.util.Utils {
      * @param tile
      * @return the direction to route.
      */
-    private static String getCurrentDestDir(StaticStreamGraph ssg, CircularSchedule destSched, RawTile tile) {
+    private static String getCurrentDestDir(SpdStaticStreamGraph ssg, CircularSchedule destSched, RawTile tile) {
         FlatNode curDest = destSched.next();
         
         LinkedList route = layout.router.getRoute(ssg, tile, layout.getComputeNode(curDest));
@@ -923,7 +923,7 @@ public class SwitchCode extends at.dms.util.Utils {
      * @param node
      * @throws Exception
      */
-    private static void createSimpleJoinerCode(StaticStreamGraph ssg, FileWriter fw, RawTile tile, FlatNode node) 
+    private static void createSimpleJoinerCode(SpdStaticStreamGraph ssg, FileWriter fw, RawTile tile, FlatNode node) 
         throws Exception {
         assert false : "Simple switch code for joiners is broken!";
         assert node.isJoiner();

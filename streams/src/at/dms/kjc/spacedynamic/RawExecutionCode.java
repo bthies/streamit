@@ -95,7 +95,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     public static String rawMain = "__RAWMAIN__";
 
     /** the current SSG we are traversing * */
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     /** the layout for the ssg we are traversing * */
     private Layout layout;
@@ -114,16 +114,16 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     /** number of items to receive after initialization */
     private int remaining = 0;
 
-    public RawExecutionCode(StaticStreamGraph ssg) {
+    public RawExecutionCode(SpdStaticStreamGraph ssg) {
         this.ssg = ssg;
-        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
+        this.layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
     }
 
-    public static void doit(StreamGraph streamGraph) {
+    public static void doit(SpdStreamGraph streamGraph) {
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             streamGraph.getStaticSubGraphs()[i].getTopLevel().accept(
-                                                                     new RawExecutionCode((StaticStreamGraph)streamGraph.getStaticSubGraphs()[i]),
+                                                                     new RawExecutionCode((SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i]),
                                                                      null, true);
             /*
              * SIRPrinter printer1 = new SIRPrinter("sir" +

@@ -1,7 +1,7 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.spacedynamic.StaticStreamGraph;
+import at.dms.kjc.spacedynamic.SpdStaticStreamGraph;
 //import at.dms.util.IRPrinter;
 //import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -26,7 +26,7 @@ import java.io.*;
  * of type StreamGraph to StreamGraph, wh should have had different names.
  */
 
-public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
+public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
 
     /** the tile assignment for the stream graph * */
     private Layout layout;
@@ -52,7 +52,7 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
      * Create the static stream graph for the application that has <pre>top</pre> as the
      * top level FlatNode, and compile it to <pre>rawChip</pre>
      */
-    public StreamGraph(FlatNode top, RawChip rawChip) {
+    public SpdStreamGraph(FlatNode top, RawChip rawChip) {
         super(top);
         this.rawChip = rawChip;
 //        this.topLevelFlatNode = top;
@@ -72,22 +72,22 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
      * match the type of the overridden method, so we expect a StreamGraph
      * but have to claim that the input is a  at.dms.kjc.flatgraph.StreamGraph
      * 
-     * @param sg       a StreamGraph
+     * @param sg       a SpdStreamGraph
      * @param realTop  the top node
-     * @return         a new StaticStreamGraph
+     * @return         a new SpdStaticStreamGraph
      */
-    @Override protected StaticStreamGraph new_StaticStreamGraph(at.dms.kjc.flatgraph.StreamGraph sg, FlatNode realTop) {
-        assert sg instanceof StreamGraph;
-        return new StaticStreamGraph((StreamGraph)sg,realTop);
+    @Override protected SpdStaticStreamGraph new_StaticStreamGraph(at.dms.kjc.flatgraph.StreamGraph sg, FlatNode realTop) {
+        assert sg instanceof SpdStreamGraph;
+        return new SpdStaticStreamGraph((SpdStreamGraph)sg,realTop);
     }
 
     
     /**
-     * Use in place of "new StaticStreamGraph" for subclassing.
+     * Use in place of "new StreamGraph" for subclassing.
      * 
      */
-   @Override protected static StreamGraph new_StreamGraph(FlatNode top) {
-        return new StreamGraph(top, new RawChip(1, 1));
+   @Override protected static SpdStreamGraph new_StreamGraph(FlatNode top) {
+        return new SpdStreamGraph(top, new RawChip(1, 1));
     }
 
    /** 
@@ -114,7 +114,7 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
         assert rawChip.getTotalTiles() == 1;
         assert staticSubGraphs.length == 1;
 
-        StaticStreamGraph ssg = (StaticStreamGraph)staticSubGraphs[0];
+        SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)staticSubGraphs[0];
         assert ssg.filterCount() == 1;
         // set the number of tiles of the static sub graph
         ssg.setNumTiles(1);
@@ -131,10 +131,10 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
         BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(
                                                                               System.in));
         int numTilesToAssign = rawChip.getTotalTiles(), num;
-        StaticStreamGraph current;
+        SpdStaticStreamGraph current;
 
         for (int i = 0; i < staticSubGraphs.length; i++) {
-            current = (StaticStreamGraph)staticSubGraphs[i];
+            current = (SpdStaticStreamGraph)staticSubGraphs[i];
             int assignedNodes = current.countAssignedNodes();
             
             //don't do anything for file readers and writers SSGs that do not need a tile
@@ -173,16 +173,16 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
     public void tileAssignment() {
         // if there is just one ssg, give all the tiles to it...
         if (staticSubGraphs.length == 1) {
-            ((StaticStreamGraph)staticSubGraphs[0]).setNumTiles(rawChip.getTotalTiles());
+            ((SpdStaticStreamGraph)staticSubGraphs[0]).setNumTiles(rawChip.getTotalTiles());
             return;
         }
 
         int numTilesToAssign = rawChip.getTotalTiles();
-        StaticStreamGraph current;
+        SpdStaticStreamGraph current;
 
         // for right now just assign exactly the number of tiles as needed
         for (int i = 0; i < staticSubGraphs.length; i++) {
-            current = (StaticStreamGraph)staticSubGraphs[i];
+            current = (SpdStaticStreamGraph)staticSubGraphs[i];
             int assignedNodes = current.countAssignedNodes();
             current.setNumTiles(assignedNodes);
             numTilesToAssign -= assignedNodes;
@@ -203,8 +203,8 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
     /** layout the entire Stream Graph on the RawChip * */
     public void layoutGraph() {
         // set up the parent map for other passes
-        ((StaticStreamGraph)getTopLevel()).accept(new StreamGraphVisitor() {
-                public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+        ((SpdStaticStreamGraph)getTopLevel()).accept(new StreamGraphVisitor() {
+                public void visitStaticStreamGraph(SpdStaticStreamGraph ssg) {
                     parentMap.putAll(ssg.getParentMap());
                 }
 
@@ -231,9 +231,9 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
 
     /** print out some stats on each SSG to STDOUT * */
     public void dumpStreamGraph() {
-        StaticStreamGraph current = (StaticStreamGraph)getTopLevel();
+        SpdStaticStreamGraph current = (SpdStaticStreamGraph)getTopLevel();
         for (int i = 0; i < staticSubGraphs.length; i++) {
-            current = (StaticStreamGraph)staticSubGraphs[i];
+            current = (SpdStaticStreamGraph)staticSubGraphs[i];
             System.out.println("******* StaticStreamGraph ********");
             System.out.println("Dynamic rate input = "
                                + dynamicEntry(current.getTopLevelSIR()));
@@ -253,7 +253,7 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
     }
 
     /** create a stream graph with only one filter (thus one SSG) * */
-    public static StreamGraph constructStreamGraph(SIRFilter filter) {
+    public static SpdStreamGraph constructStreamGraph(SIRFilter filter) {
         return constructStreamGraph(new FlatNode(filter));
     }
 
@@ -261,10 +261,10 @@ public class StreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
      * create a stream graph with only one filter (thus one SSG), it's not laid
      * out yet*
      */
-    public static StreamGraph constructStreamGraph(FlatNode node) {
+    public static SpdStreamGraph constructStreamGraph(FlatNode node) {
         assert node.isFilter();
 
-        StreamGraph streamGraph = new_StreamGraph(node);
+        SpdStreamGraph streamGraph = new_StreamGraph(node);
         streamGraph.createStaticStreamGraphs();
         streamGraph.tileAssignmentOneFilter();
 

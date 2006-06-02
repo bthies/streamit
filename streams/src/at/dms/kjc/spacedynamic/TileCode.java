@@ -29,21 +29,21 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     // hash map of all tiles that either compute or route
     public static HashSet tiles;
 
-    private static StreamGraph streamGraph;
+    private static SpdStreamGraph streamGraph;
 
     private static Layout layout;
 
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
 
     public static final String LOOP_VAR = "JOINER_REP";
     
-    public TileCode(StaticStreamGraph SSG) {
+    public TileCode(SpdStaticStreamGraph SSG) {
         this.ssg = SSG;
     }
 
-    public static void generateCode(StreamGraph sg) {
+    public static void generateCode(SpdStreamGraph sg) {
         streamGraph = sg;
         layout = sg.getLayout();
 
@@ -58,7 +58,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         tiles = new HashSet();
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph staticGraph = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph staticGraph = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             staticGraph.getTopLevel().accept(new TileCode(staticGraph),
                                              new HashSet(), true);
 
@@ -237,11 +237,11 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
-        printSchedule(joiner, (JoinerScheduleNode) ((StaticStreamGraph)streamGraph
+        printSchedule(joiner, (JoinerScheduleNode) ((SpdStaticStreamGraph)streamGraph
                       .getParentSSG(joiner)).simulator.initJoinerCode.get(joiner), ret);
         ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
         ret.append("while(1) {\n");
-        printSchedule(joiner, (JoinerScheduleNode) ((StaticStreamGraph)streamGraph
+        printSchedule(joiner, (JoinerScheduleNode) ((SpdStaticStreamGraph)streamGraph
                       .getParentSSG(joiner)).simulator.steadyJoinerCode.get(joiner),
                       ret);
         ret.append("}}\n");

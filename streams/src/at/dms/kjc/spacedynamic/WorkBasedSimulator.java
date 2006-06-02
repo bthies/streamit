@@ -52,7 +52,7 @@ public class WorkBasedSimulator extends Simulator
         HashMap steadyExecutionCounts = (HashMap)ssg.getExecutionCounts(false).clone();
 
         //get the workestimates and put them in the hashmap
-        workEstimatesMap = new WorkEstimatesMap((StreamGraph)ssg.getStreamGraph(), ssg.getTopLevel());
+        workEstimatesMap = new WorkEstimatesMap((SpdStreamGraph)ssg.getStreamGraph(), ssg.getTopLevel());
 
         joinerCode = initJoinerCode;
     
@@ -78,7 +78,7 @@ public class WorkBasedSimulator extends Simulator
     }
     
     
-    public WorkBasedSimulator(StaticStreamGraph ssg, JoinerSimulator js) {
+    public WorkBasedSimulator(SpdStaticStreamGraph ssg, JoinerSimulator js) {
         super(ssg, js);
     }
 

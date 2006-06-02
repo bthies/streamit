@@ -27,7 +27,7 @@ public class IMEMEstimation implements FlatVisitor
     private boolean everythingFits = true;
     private static Random rand;
     private static String user;
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     static 
     {
@@ -53,7 +53,7 @@ public class IMEMEstimation implements FlatVisitor
         }
     }
     
-    public IMEMEstimation(StaticStreamGraph ssg) 
+    public IMEMEstimation(SpdStaticStreamGraph ssg) 
     {
         this.ssg = ssg;
     }
@@ -62,7 +62,7 @@ public class IMEMEstimation implements FlatVisitor
      * Returns true iff all filters in <pre>str</pre> fit in IMEM.  Each filter
      * is measured independently (assuming 1 filter per tile).
      */
-    public static boolean testMe(StaticStreamGraph ssg, FlatNode top) 
+    public static boolean testMe(SpdStaticStreamGraph ssg, FlatNode top) 
     {
         IMEMEstimation visitor = new IMEMEstimation(ssg);
         top.accept(visitor, null, true);
@@ -99,8 +99,8 @@ public class IMEMEstimation implements FlatVisitor
         Util.removeIO(filter);
 
         //just call this 
-        StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
-        StaticStreamGraph fakeSSG = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
+        SpdStreamGraph streamGraph = SpdStreamGraph.constructStreamGraph(filter);
+        SpdStaticStreamGraph fakeSSG = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[0];
         fakeSSG.scheduleAndCreateMults();
         //make a new directory and change the current working dir
         String dir = File.separator + "tmp" + File.separator + 

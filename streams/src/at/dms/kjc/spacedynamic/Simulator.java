@@ -30,7 +30,7 @@ public abstract class Simulator {
         for steady **/
     public HashMap steadyJoinerCode;
     
-    protected StaticStreamGraph ssg;
+    protected SpdStaticStreamGraph ssg;
 
     protected FlatNode toplevel;
 
@@ -56,13 +56,13 @@ public abstract class Simulator {
     protected HashMap currentJoinerCode;    
 
     
-    public Simulator(StaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
+    public Simulator(SpdStaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
     {
         this.ssg = ssg;
         this.joinerSimulator = joinerSimulator;
         this.toplevel = ssg.getTopLevel();
-        this.layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
-        this.rawChip = ((StreamGraph)ssg.getStreamGraph()).getRawChip();
+        this.layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
+        this.rawChip = ((SpdStreamGraph)ssg.getStreamGraph()).getRawChip();
     }
 
     public abstract void simulate();
@@ -75,9 +75,9 @@ public abstract class Simulator {
      * can just use the dynamic network because there are no overlapping routes
      * and no splitters or joiners 
      */
-    public static boolean needSimulator(StaticStreamGraph ssg) {
+    public static boolean needSimulator(SpdStaticStreamGraph ssg) {
         //check if there are any overlapping routes...
-        if (((StreamGraph)ssg.getStreamGraph()).getLayout().getIntermediateTiles().size() > 0)
+        if (((SpdStreamGraph)ssg.getStreamGraph()).getLayout().getIntermediateTiles().size() > 0)
             return true;
         
         //check if there are any splitters...

@@ -32,9 +32,9 @@ public class JoinerSimulator
     //the current flatnode we are working on
     private FlatNode current;
 
-    private StreamGraph streamGraph;
+    private SpdStreamGraph streamGraph;
 
-    public JoinerSimulator(StreamGraph streamGraph) 
+    public JoinerSimulator(SpdStreamGraph streamGraph) 
     {
         this.streamGraph = streamGraph;
         schedules = new HashMap();

@@ -29,7 +29,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
 
     private FlatNode node;
 
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     /** true if this filter is the source of a static stream graph * */
     private boolean dynamicInput;
@@ -49,7 +49,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
      * false we cannot, so we have to generate a code using a buffer in 
      * Buffered*Communication.java
      */
-    public static boolean doit(StaticStreamGraph SSG, FlatNode node) {
+    public static boolean doit(SpdStaticStreamGraph SSG, FlatNode node) {
         DirectCommunication dc = new DirectCommunication(SSG, node);
         // see if we can generate direct communication
         if (dc.canRun())
@@ -58,7 +58,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         return false;
     }
 
-    private DirectCommunication(StaticStreamGraph SSG, FlatNode node) {
+    private DirectCommunication(SpdStaticStreamGraph SSG, FlatNode node) {
         this.ssg = SSG;
         this.node = node;
         this.filter = (SIRFilter) node.contents;

@@ -17,7 +17,7 @@ public class NoSimulator extends Simulator {
      * @see at.dms.kjc.spacedynamic.Simulator#simulate()
      */
   
-    public NoSimulator(StaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
+    public NoSimulator(SpdStaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
     {
         super(ssg, joinerSimulator);
         initJoinerCode = new HashMap();

@@ -10,9 +10,9 @@ import at.dms.kjc.sir.*;
 public class WorkEstimatesMap implements FlatVisitor 
 {
     private HashMap estimates;
-    private StreamGraph streamGraph;
+    private SpdStreamGraph streamGraph;
 
-    public WorkEstimatesMap(StreamGraph sg) 
+    public WorkEstimatesMap(SpdStreamGraph sg) 
     {
         streamGraph = sg;
         estimates = new HashMap();
@@ -35,7 +35,7 @@ public class WorkEstimatesMap implements FlatVisitor
     }
     
 
-    public WorkEstimatesMap(StreamGraph sg, FlatNode top) 
+    public WorkEstimatesMap(SpdStreamGraph sg, FlatNode top) 
     {
         sg = streamGraph;
         estimates = new HashMap();
@@ -61,7 +61,7 @@ public class WorkEstimatesMap implements FlatVisitor
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
         return ((Integer)estimates.get(node)).intValue() * 
-        ((StaticStreamGraph)streamGraph.getParentSSG(node)).getMult(node, false);
+        ((SpdStaticStreamGraph)streamGraph.getParentSSG(node)).getMult(node, false);
     }
     
 }

@@ -54,7 +54,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         and must sent output over the dynamic network **/
     private boolean dynamicOutput = false;
     private boolean dynamicInput = false;
-    private StaticStreamGraph ssg;
+    private SpdStaticStreamGraph ssg;
 
     private static String ARRAY_INIT_PREFIX = "init_array";
 
@@ -64,7 +64,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     //don't generate the magic instruction
     private static boolean gen_magc_done_boot = false;
 
-    public static void generateCode(StaticStreamGraph SSG, FlatNode node)
+    public static void generateCode(SpdStaticStreamGraph SSG, FlatNode node)
     {
         assert Layout.assignToATile(node);
         SIRFilter str = (SIRFilter)node.contents;
@@ -76,7 +76,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         FlatIRToC toC = new FlatIRToC(str);
         toC.flatNode = node;
         toC.ssg = SSG;
-        toC.layout = ((StreamGraph)SSG.getStreamGraph()).getLayout();
+        toC.layout = ((SpdStreamGraph)SSG.getStreamGraph()).getLayout();
         toC.dynamicOutput = toC.ssg.isOutput(node) || toC.ssg.simulator instanceof NoSimulator;
         toC.dynamicInput = toC.ssg.isInput(node) || toC.ssg.simulator instanceof NoSimulator;
     
@@ -398,7 +398,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         assert downstream.contents instanceof SIRFileWriter : 
             "Didn't see an SIRFileWriter where one was expected, instead: " + downstream.contents; 
     
-        FileWriterDevice fwd = ((StreamGraph)ssg.getStreamGraph()).getFileState().getFileWriterDevice(downstream);
+        FileWriterDevice fwd = ((SpdStreamGraph)ssg.getStreamGraph()).getFileState().getFileWriterDevice(downstream);
         //get the neighboring tile
         RawTile neighboringTile = fwd.getPort().getNeighboringTile();
         //now calculated the final route, once the packet gets to the destination (neighboring) tile

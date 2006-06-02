@@ -49,7 +49,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     private Random random;
 
-    private StreamGraph streamGraph;
+    private SpdStreamGraph streamGraph;
 
     /** this set contains ComputeNodes that appear as an hop in a route (not an endpoint) */
     private HashSet intermediateTiles;
@@ -100,7 +100,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
     private double oldCost = 0.0;
 
-    public Layout(StreamGraph streamGraph) {
+    public Layout(SpdStreamGraph streamGraph) {
         this.streamGraph = streamGraph;
         fileState = streamGraph.getFileState();
         joiners = new HashSet();
@@ -117,7 +117,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         workEstimates = new WorkEstimatesMap(streamGraph);
 
         // find out exactly what we should layout !!!
-        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
+        ((SpdStaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
 
         System.out.println("Tiles layout.assigned: " + assigned.size());
 
@@ -133,7 +133,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      * visit each node of the ssg and find out which flatnodes should be
      * assigned to tiles
      **************************************************************************/
-    public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+    public void visitStaticStreamGraph(SpdStaticStreamGraph ssg) {
         ssg.getTopLevel().accept(this, new HashSet(), false);
     }
 
@@ -324,7 +324,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         buf
             .append("edge[color = blue,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             for (int out = 0; out < ssg.getOutputs().length; out++) {
                 if (!assignToATile(ssg.getOutputs()[out]) || 
                     !assignToATile(ssg.getNext(ssg.getOutputs()[out])))
@@ -401,7 +401,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         assign(rawChip.getTile(0), (FlatNode) (assigned.toArray()[0]));
         
         //set up the hash sets for future passes!
-        getStaticCost((StaticStreamGraph)streamGraph.getStaticSubGraphs()[0], new HashSet());
+        getStaticCost((SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[0], new HashSet());
     }
 
     /** read the layout from a new-line separated file * */
@@ -423,7 +423,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         }
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();
@@ -454,7 +454,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      * for <pre>node</pre>
      */
     private void assignFromReader(BufferedReader inputBuffer,
-                                  StaticStreamGraph ssg, FlatNode node) {
+                                  SpdStaticStreamGraph ssg, FlatNode node) {
         // Assign a filter, joiner to a tile
         // perform some error checking.
         while (true) {
@@ -494,7 +494,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                                                                               System.in));
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();
@@ -532,7 +532,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         double cost = 0.0;
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             double dynamicCost = 0.0;
             double staticCost = 0.0;
             double memoryCost = 0.0;
@@ -559,7 +559,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         return cost;
     }
 
-    private double getMemoryCost(StaticStreamGraph ssg) {
+    private double getMemoryCost(SpdStaticStreamGraph ssg) {
         int memReq = 0;
         double memCost = 0.0;
 
@@ -599,7 +599,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      * if the communication is legal, it does not cross paths with other SSGs,
      * usedTiles holds tiles that have been used by previous SSGs
      **************************************************************************/
-    private double getStaticCost(StaticStreamGraph ssg, HashSet usedTiles) {
+    private double getStaticCost(SpdStaticStreamGraph ssg, HashSet usedTiles) {
         // the tiles used by THIS SSG for routing
         // this set is filled with tiles that are not assigned but
         // have been used to route items previously by this SSG
@@ -790,7 +790,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
      * SHARING DYNAMIC LINKS. WE SHOULD CHECK THAT TWO PARALLEL SECTIONs OF A
      * STREAM GRAPH DO NOT SHARE A LINK.
      */
-    private double getDynamicCost(StaticStreamGraph ssg, HashSet usedTiles) {
+    private double getDynamicCost(SpdStaticStreamGraph ssg, HashSet usedTiles) {
         double cost = 0.0;
 
         // check if the dynamic communication is legal
@@ -948,7 +948,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         // and build it in data-flow order for each SSG
         LinkedList assignMeToATile = new LinkedList();
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             Iterator flatNodes = ssg.getFlatNodes().iterator();
             while (flatNodes.hasNext()) {
                 FlatNode node = (FlatNode) flatNodes.next();

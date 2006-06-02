@@ -29,7 +29,7 @@ public class SimpleSimulator extends Simulator {
     }
     
 
-    public SimpleSimulator(StaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
+    public SimpleSimulator(SpdStaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
     {
         super(ssg, joinerSimulator);
         initJoinerCode = new HashMap();

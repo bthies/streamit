@@ -15,13 +15,13 @@ import java.io.*;
 public class MakefileGenerator {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
 
-    private static StreamGraph streamGraph;
+    private static SpdStreamGraph streamGraph;
 
     private static Layout layout;
 
     private static RawChip rawChip;
 
-    public static void createMakefile(StreamGraph sg) {
+    public static void createMakefile(SpdStreamGraph sg) {
         streamGraph = sg;
         layout = sg.getLayout();
         rawChip = sg.getRawChip();

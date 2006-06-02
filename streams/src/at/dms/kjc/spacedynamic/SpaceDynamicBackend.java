@@ -22,7 +22,7 @@ import at.dms.util.Utils;
 
 public class SpaceDynamicBackend {
     //the stream  graph object that represents the application...
-    public static StreamGraph streamGraph;
+    public static SpdStreamGraph streamGraph;
     //the raw chip that we are executing on...
     public static RawChip rawChip;
 
@@ -103,7 +103,7 @@ public class SpaceDynamicBackend {
         GraphFlattener graphFlattener = new GraphFlattener(str);
         //  FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);
     
-        streamGraph = new StreamGraph(graphFlattener.top, rawChip);
+        streamGraph = new SpdStreamGraph(graphFlattener.top, rawChip);
         (new DumpGraph()).dumpGraph(graphFlattener.top, "pre-SSG-FG.dot", null, null);
 
         //create the static stream graphs cutting at dynamic rate boundaries
@@ -122,7 +122,7 @@ public class SpaceDynamicBackend {
         streamGraph.dumpStaticStreamGraph();
     
         for (int k = 0; k < streamGraph.getStaticSubGraphs().length; k++) {
-            StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
+            SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
             System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
         
             //VarDecl Raise to move array assignments up
@@ -376,7 +376,8 @@ public class SpaceDynamicBackend {
 
     public static String makeDotFileName(String prefix, SIRStream strName) 
     {
-        return prefix + (strName != null ? strName.getIdent() : "") + ".dot";
+        // moved to at.dms.util.Utils, but no time for lots of little changes....
+        return Utils.makeDotFileName(prefix,strName);
     }
     
 }

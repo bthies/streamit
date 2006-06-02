@@ -47,7 +47,7 @@ public class FreeTileRouter implements Router
 
     //returns a linked list of coordinates that gives the route
     //including source and dest
-    public LinkedList getRoute(StaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
+    public LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
     {
         assert src != null && dst != null;
     
@@ -56,7 +56,7 @@ public class FreeTileRouter implements Router
             return yxRouter.getRoute(ssg, src, dst);
         }
     
-        Layout layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
+        Layout layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
 
         //if the source or dest is an iodevice we have to 
         //route the item to/from neighboring tiles
@@ -101,7 +101,7 @@ public class FreeTileRouter implements Router
     }
 
     /** find the best route, remember of src is an occupied tile, then it will count it **/
-    private RouteAndOccupiedCount findBestRoute(StaticStreamGraph ssg, Layout layout, 
+    private RouteAndOccupiedCount findBestRoute(SpdStaticStreamGraph ssg, Layout layout, 
                                                 RawTile src, RawTile dst) 
     {
         RawChip rawChip = layout.getRawChip();

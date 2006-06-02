@@ -28,7 +28,7 @@ public class ConvertLonelyReceives
 {
     public static final String VARNAME = "__lonely_receive__";
 
-    public static void doit(StaticStreamGraph ssg, FlatNode node)
+    public static void doit(SpdStaticStreamGraph ssg, FlatNode node)
     {
         SIRFilter filter = node.getFilter();
     

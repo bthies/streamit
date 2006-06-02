@@ -62,7 +62,7 @@ public class FineGrainSimulator extends Simulator {
         System.out.println("End of steady-state simulation");
     }
 
-    public FineGrainSimulator(StaticStreamGraph ssg, JoinerSimulator js) {
+    public FineGrainSimulator(SpdStaticStreamGraph ssg, JoinerSimulator js) {
         super(ssg, js);
     }
 

@@ -17,10 +17,10 @@ import java.util.Iterator;
 public class YXRouter implements Router {
     // returns a linked list of coordinates that gives the route
     // including source and dest
-    public LinkedList getRoute(StaticStreamGraph ssg, ComputeNode src,
+    public LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src,
                                ComputeNode dst) {
-        RawChip rawChip = ((StreamGraph)ssg.getStreamGraph()).getRawChip();
-        Layout layout = ((StreamGraph)ssg.getStreamGraph()).getLayout();
+        RawChip rawChip = ((SpdStreamGraph)ssg.getStreamGraph()).getRawChip();
+        Layout layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
         RawTile srcTile, dstTile;
 
         // if the source or dest is an iodevice we have to

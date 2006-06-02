@@ -22,7 +22,7 @@ import at.dms.util.Utils;
  */
 public class BCFile {
     /** the entire streamgraph of the app */
-    private static StreamGraph streamGraph;
+    private static SpdStreamGraph streamGraph;
     /** the layout for the app */
     private static Layout layout;
     /** the raw chip that we are compiling to */
@@ -36,7 +36,7 @@ public class BCFile {
      * @param computeTiles The tiles that are assigned to filters 
      * (performing useful work).
      */
-    public static void generate(StreamGraph streamGraph, HashSet computeTiles) {
+    public static void generate(SpdStreamGraph streamGraph, HashSet computeTiles) {
         BCFile.streamGraph = streamGraph;
         layout = streamGraph.getLayout();
         rawChip = streamGraph.getRawChip();
@@ -271,7 +271,7 @@ public class BCFile {
                 //if this file reader is its own device or we don't have a communication simulator
                 //then use the dynamic network
                 if (dev.isDynamic() || 
-                        ((StaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator) {
+                        ((SpdStaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator) {
                     dev.setDynamic();
                     fw.write("\tdev_from_file_dyn_raw(\"" + dev.getFileName() + "\", " +
                             dev.getPort().getY() + ", " + 
@@ -294,7 +294,7 @@ public class BCFile {
 //              if this file write is its own device or we don't have a communication simulator
                 //then use the dynamic network
                 boolean dynamic = dev.isDynamic() || 
-                ((StaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator;
+                ((SpdStaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator;
                 if (dynamic)
                     dev.setDynamic();
                 //now create the function call the creates the bc device, create the 

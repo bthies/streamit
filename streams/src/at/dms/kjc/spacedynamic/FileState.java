@@ -44,7 +44,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
 
     private RawChip rawChip;
 
-    private StreamGraph streamGraph;
+    private SpdStreamGraph streamGraph;
 
     // the buffered reader from where we get the assignment
     private BufferedReader inputBuffer;
@@ -54,11 +54,11 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     /** As we are assigning ports to writers, this is the next port num to assign */
     private int writerPort;
     
-    public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+    public void visitStaticStreamGraph(SpdStaticStreamGraph ssg) {
         ssg.getTopLevel().accept(this, new HashSet(), false);
     }
 
-    public FileState(StreamGraph streamGraph) {
+    public FileState(SpdStreamGraph streamGraph) {
         this.streamGraph = streamGraph;
         this.rawChip = streamGraph.getRawChip();
         foundReader = false;
@@ -84,7 +84,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             // otherwise read for standard input
             inputBuffer = new BufferedReader(new InputStreamReader(System.in));
 
-        ((StaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
+        ((SpdStaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
 
         try { // close the file
             if (KjcOptions.devassignfile != null)
@@ -106,7 +106,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         //lots of duplication here, but oh well
         if (node.contents instanceof SIRFileReader) {
             FileReaderDevice dev = new FileReaderDevice(streamGraph, node);
-            StaticStreamGraph parent = (StaticStreamGraph)streamGraph.getParentSSG(node);
+            SpdStaticStreamGraph parent = (SpdStaticStreamGraph)streamGraph.getParentSSG(node);
             
             if (parent.getIOFilters().contains(node.contents)) {
                 //we have a dynamic file reader
@@ -120,7 +120,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             foundReader = true;
         } else if (node.contents instanceof SIRFileWriter) {
             FileWriterDevice dev = new FileWriterDevice(streamGraph, node);
-            StaticStreamGraph parent = (StaticStreamGraph)streamGraph.getParentSSG(node);
+            SpdStaticStreamGraph parent = (SpdStaticStreamGraph)streamGraph.getParentSSG(node);
             
             if (parent.getIOFilters().contains(node.contents)) {
                 //we have a dynamic file reader

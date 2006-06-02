@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -g -I/usr/local/include
+CFLAGS = -I/usr/local/include -g
 LIBPATH = -L/usr/lib -L/usr/local/lib 
 LDLIBS = -lm # -ldmalloc
 PROG = delay_and_sum 
-SRCS = main.c
+SRCS = main.c #optimized.c 
 OBJS = ${SRCS:.c=.o}
 LDFLAGS = ${LDLIBS}
 LD = $(CC)
@@ -16,6 +16,8 @@ ${PROG}: ${OBJS}
 clean: 	
 	rm -f *.o *~ $(PROG)
 
-run: 	all
-	./delay_and_sum -data_file ../../from_kevin_farfield/eugene2 -output_file blah2 -search_far_field
+run1: all
+	./delay_and_sum -data_file ../data/c-data/near-field/data1 -output_file data1.out
+run2: all
+	./delay_and_sum -data_file ../data/c-data/near-field/data2 -output_file data2.out
 

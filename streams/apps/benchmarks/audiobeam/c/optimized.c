@@ -1,8 +1,8 @@
 #include "optimized.h"
 #include <sys/time.h>
 
-//#define NUM_MIC 15
-#define NUM_MIC 1024
+#define NUM_MIC 15
+//#define NUM_MIC 1024
 //#define NUM_MIC 14
 #define ANGLE_ENERGY_WINDOW_SIZE 400
 #define NUM_ANGLES 180
@@ -14,8 +14,8 @@
 #define MIC_HORIZ_SPACE 0.038257
 #define MIC_VERT_SPACE 0.015001
 #define TWO23        8388608.0    // 2^23
-#define BUFFER_DATA 1
-#define BUFFER_SIZE 1600
+//#define BUFFER_DATA
+#define BUFFER_SIZE 20000 //1600
 #define NUM_MIC_IN_CHAIN 32
 #define NUM_BOARDS_IN_CHAIN 16
 
@@ -43,20 +43,20 @@ float mic_locations[NUM_MIC][3] = {
 };
 
 // For Kevin's data
-//float source_location[] = {1.1677,2.1677,1};
+float source_location[] = {1.1677,2.1677,1};
 
 // In front of RAW - Meters from center of array
 //float source_location[] = {0.79692, -1.118859, 0.058023};
 void preprocess_delays(struct PreprocessedDelays prep_delays[], float* delays)
 {
-  int i;
+    int i;
 
-  for (i=0; i < NUM_MIC; i++) {
-    prep_delays[i].delay = delays[i];
-    prep_delays[i].high = (int) ceil(delays[i]);
-    prep_delays[i].low = (int) floor(delays[i]);
-    prep_delays[i].offset = delays[i] - prep_delays[i].low;
-  }
+    for (i=0; i < NUM_MIC; i++) {
+        prep_delays[i].delay = delays[i];
+        prep_delays[i].high = (int) ceil(delays[i]);
+        prep_delays[i].low = (int) floor(delays[i]);
+        prep_delays[i].offset = delays[i] - prep_delays[i].low;
+    }
 }
 
 
@@ -85,7 +85,7 @@ float* parse_line(char* line, float* float_arr, int num_mic) {
             }
             
             sscanf(str, "%f",&f);
-//            printf("here4 -- %d\n",i);
+            //            printf("here4 -- %d\n",i);
             float_arr[i] = f;
 
             str = (char*) strchr(str,' ');
@@ -194,12 +194,10 @@ float interpolate(float low_value, float high_value, float offset) {
     float val = ((high_value-low_value)*(offset)) + low_value;
     int multiplier = 32768;
 
-
-
-//    printf("interpolation-- low_value: %f;high_value: %f;offset: %f; interpolated: %f\n", 
-//           low_value, high_value, offset, val);
-//    printf("interpolation-- low_value: %d;high_value: %d;offset: %f; interpolated: %f\n", 
-//           (int)floor(low_value*multiplier), (int)floor(high_value*multiplier), offset, val);
+    //    printf("interpolation-- low_value: %f;high_value: %f;offset: %f; interpolated: %f\n", 
+    //           low_value, high_value, offset, val);
+    //    printf("interpolation-- low_value: %d;high_value: %d;offset: %f; interpolated: %f\n", 
+    //           (int)floor(low_value*multiplier), (int)floor(high_value*multiplier), offset, val);
     
     return val;
 }
@@ -300,8 +298,8 @@ calc_far_field_delays(float mic_locations[NUM_MIC][3], float origin_location[3],
     
     float cosine = cos(-angle);
     float sine = sin(-angle);
-//    float cosine = cos(angle);
-//    float sine = sin(angle);
+    //    float cosine = cos(angle);
+    //    float sine = sin(angle);
 
     
     for (i=0; i<num_mic; i++) {
@@ -310,12 +308,13 @@ calc_far_field_delays(float mic_locations[NUM_MIC][3], float origin_location[3],
         delays[i] = - (((mic_locations[i][0]-origin_location[0])*cosine) + 
                        ((mic_locations[i][1]-origin_location[1])*sine)) * sampling_rate / sound_speed;
 
-/*        // alternative formula for array oriented along the z-axis
+        /*
+        // alternative formula for array oriented along the z-axis
         // delay(in samples) = (- [(ym-y0)*(cos(theta))+(zm-z0)*(sin(theta))] / speed of sound) * (# samples / second)
 
         delays[i] = - (((mic_locations[i][1]-origin_location[1])*cosine) + 
-                       ((mic_locations[i][2]-origin_location[2])*sine)) * sampling_rate / sound_speed;
-*/
+        ((mic_locations[i][2]-origin_location[2])*sine)) * sampling_rate / sound_speed;
+        */
 
     }
 }
@@ -357,7 +356,7 @@ float calc_target_cube_delays(float initial_location[3], float **target_location
 
     // Initialize a "cube" of delays
     
-    // It's easier to just to it this way rather than try to roll it
+    // It's easier to just do it this way rather than try to roll it
     // into a loop.... errr I mean, I'm doing fancy loop unrolling for
     // effieciency :D
     target_locations[0][0] = initial_location[0]-GRID_STEP_SIZE; // x
@@ -393,16 +392,16 @@ float calc_target_cube_delays(float initial_location[3], float **target_location
         calc_distances(target_locations[i], mic_locations, mic_distances, NUM_MIC);
         calc_delays(mic_distances, delays->delay_values[i], SOUND_SPEED, SAMPLING_RATE, NUM_MIC);
 
-//        printf("Index %d, position:(%f,%f,%f)\n",i,target_locations[i][0],target_locations[i][1],target_locations[i][2]);
-        sprintf(delays->delay_info[i],"Index %d, position:(%f,%f,%f)",i,target_locations[i][0],target_locations[i][1],target_locations[i][2]);
-/*        printf ("Mic distances:\n");
-        float_arr_to_str(mic_distances,NUM_MIC,str);
-        printf ("%s",str);
+        //        printf("Index %d, position:(%f,%f,%f)\n",i,target_locations[i][0],target_locations[i][1],target_locations[i][2]);
+        //        sprintf(delays->delay_info[i],"Index %d, position:(%f,%f,%f)",i,target_locations[i][0],target_locations[i][1],target_locations[i][2]);
+        /*        printf ("Mic distances:\n");
+                  float_arr_to_str(mic_distances,NUM_MIC,str);
+                  printf ("%s",str);
         
-        printf ("Mic delays(# samples):\n");
-        float_arr_to_str(delays->delay_values[i],NUM_MIC,str);
-        printf ("%s",str);
-*/
+                  printf ("Mic delays(# samples):\n");
+                  float_arr_to_str(delays->delay_values[i],NUM_MIC,str);
+                  printf ("%s",str);
+        */
     }        
 
 
@@ -435,15 +434,15 @@ float *calc_weights_lr (int num_mic) {
 
     }
 
-/*
-    for (z = 1; z >= -1; z -= 2) {
-        for (y = -half; y <= half; y++) {
-            weights[index] = 0.54+0.46*cos(M_PI*y/half);
-            index++;
-        }
-    }
+    /*
+      for (z = 1; z >= -1; z -= 2) {
+      for (y = -half; y <= half; y++) {
+      weights[index] = 0.54+0.46*cos(M_PI*y/half);
+      index++;
+      }
+      }
 
-*/    return weights;
+    */    return weights;
 }
 
 
@@ -473,15 +472,15 @@ float calculate_energy(float* samples, int num_samples) {
     float sum = 0.0;
     char str[MAX_LINE*100];
 
-//    float_arr_to_str(samples,num_samples,str);
-//    printf ("%s",str);
+    //    float_arr_to_str(samples,num_samples,str);
+    //    printf ("%s",str);
 
 
     for (i=0; i<num_samples; i++) {
         sum += (samples[i]*samples[i]);
-//        printf ("sum is %e\n",sum);
+        //        printf ("sum is %e\n",sum);
         
-//        printf("%f ^2 = %f, energy is %f\n", samples[i], samples[i]*samples[i], sum);
+        //        printf("%f ^2 = %f, energy is %f\n", samples[i], samples[i]*samples[i], sum);
 
 
     }
@@ -501,9 +500,9 @@ void figure_which_mics(int tile_num, int* first_mic, int* last_mic) {
     // the chip
     
     int slice_size = ceil(((float)NUM_MIC)/((float)NUM_TILES));
-//    int i;
-//    raw_test_pass_reg(259);
-//    raw_test_pass_reg(slice_size);
+    //    int i;
+    //    raw_test_pass_reg(259);
+    //    raw_test_pass_reg(slice_size);
 
     *first_mic = tile_num*slice_size;
     *last_mic = (tile_num+1)*slice_size-1;
@@ -518,7 +517,7 @@ void figure_which_mics(int tile_num, int* first_mic, int* last_mic) {
 // from max_delay previous samples
 float do_beamforming(struct PreprocessedDelays preprocessed_delays[],
                      float *delays, float **sample_queue, 
-                      int queue_head, long int max_delay, int num_mic, float* weights) {
+                     int queue_head, long int max_delay, int num_mic, float* weights) {
     int i;
     float sum=0;
     int delay_floor;
@@ -531,7 +530,8 @@ float do_beamforming(struct PreprocessedDelays preprocessed_delays[],
     
     // add up all the num_mic delayed samples
     for (i=0; i<num_mic; i++) {
-         delay_floor = preprocessed_delays[i].low;
+        delay_floor = preprocessed_delays[i].low;
+        delay_ceil  = preprocessed_delays[i].high;
 
         // Inline wrap around here
         // Low index gets index of sample right before desired sample
@@ -541,7 +541,7 @@ float do_beamforming(struct PreprocessedDelays preprocessed_delays[],
         }
 
         // High index gets index of sample right after desired sample
-        high_index = queue_head+delay_floor+1;
+        high_index = queue_head + delay_ceil;
         if (high_index > max_delay) {
             high_index -= (max_delay+1);
         }
@@ -550,28 +550,28 @@ float do_beamforming(struct PreprocessedDelays preprocessed_delays[],
         // the array only has microphones first_mic to last_mic, we
         // need to offset our index by first_mic
 
-/*
-        interpolated_value = interpolate(sample_queue[low_index][i], 
-                                         sample_queue[high_index][i], 
-                                         preprocessed_delays[i].offset);
-*/
+        /*
+          interpolated_value = interpolate(sample_queue[low_index][i], 
+          sample_queue[high_index][i], 
+          preprocessed_delays[i].offset);
+        */
 
 
         interpolated_value = INTERPOLATE(sample_queue[low_index][i], 
                                          sample_queue[high_index][i], 
                                          preprocessed_delays[i].offset);
 
-/*
-        printf("interpolation for mic # %d -- low_value at index %d: %d;high_value at index %d: %d;offset: %f; interpolated: %f\n", 
-               i,
-               low_index, 
-               (int)(sample_queue[low_index][i]*TWO23), 
-               high_index,
-               (int)(sample_queue[high_index][i]*TWO23), 
-               preprocessed_delays[i].offset, interpolated_value);
-*/
+        /*
+          printf("interpolation for mic # %d -- low_value at index %d: %d;high_value at index %d: %d;offset: %f; interpolated: %f\n", 
+          i,
+          low_index, 
+          (int)(sample_queue[low_index][i]*TWO23), 
+          high_index,
+          (int)(sample_queue[high_index][i]*TWO23), 
+          preprocessed_delays[i].offset, interpolated_value);
+        */
 
-       // If we have microphone weights, multiply the value by the weight
+        // If we have microphone weights, multiply the value by the weight
         if (weights != NULL) {
             sum+=(interpolated_value*weights[i]);
         } else {
@@ -585,64 +585,64 @@ float do_beamforming(struct PreprocessedDelays preprocessed_delays[],
 
 void initialize_microphone_locations_lr(float locations[NUM_MIC][3])
 {
-  int x, y, z;
-  int half = NUM_MIC/4;
-  int index = 0;
-  float offset = .5*MIC_HORIZ_SPACE;
+    int x, y, z;
+    int half = NUM_MIC/4;
+    int index = 0;
+    float offset = .5*MIC_HORIZ_SPACE;
 
-  x = 0;
-  for (z = 1; z >= -1; z -= 2) {
-    for (y = 0; y < half; y++) {
-      locations[index][0] = x*0.0;
-      locations[index][1] = (-offset) - y*MIC_HORIZ_SPACE;
-      locations[index][2] = z*MIC_VERT_SPACE;
-      index++;
+    x = 0;
+    for (z = 1; z >= -1; z -= 2) {
+        for (y = 0; y < half; y++) {
+            locations[index][0] = x*0.0;
+            locations[index][1] = (-offset) - y*MIC_HORIZ_SPACE;
+            locations[index][2] = z*MIC_VERT_SPACE;
+            index++;
+        }
+        for (y = 0; y < half; y++) {
+            locations[index][0] = x*0.0;
+            locations[index][1] = offset + y*MIC_HORIZ_SPACE;
+            locations[index][2] = z*MIC_VERT_SPACE;
+            index++;
+        }
     }
-    for (y = 0; y < half; y++) {
-      locations[index][0] = x*0.0;
-      locations[index][1] = offset + y*MIC_HORIZ_SPACE;
-      locations[index][2] = z*MIC_VERT_SPACE;
-      index++;
-    }
-  }
 }
 
 void initialize_microphone_locations_left_only(float locations[NUM_MIC][3])
 {
-  int x, y, z;
-  int half = NUM_MIC/2;
-  int index = 0;
-  x = 0;
-  z = -1;
+    int x, y, z;
+    int half = NUM_MIC/2;
+    int index = 0;
+    x = 0;
+    z = -1;
     for (y = -half; y <= half; y++) {
-      locations[index][0] = x*0.0;
-      locations[index][1] = y*MIC_HORIZ_SPACE;
-      locations[index][2] = z*MIC_VERT_SPACE;
-      index++;
+        locations[index][0] = x*0.0;
+        locations[index][1] = y*MIC_HORIZ_SPACE;
+        locations[index][2] = z*MIC_VERT_SPACE;
+        index++;
 
     }
 }
 
 /*
-void initialize_microphone_locations(float locations[NUM_MIC][3])
-{
-    if ( (NUM_MIC%2) == 1 ) {
-      // Assume Odd numbers are only the left microphones
-      initialize_microphone_locations_left_only(locations);
-    } else {
-      initialize_microphone_locations_lr(locations);
-    }
-}
+  void initialize_microphone_locations(float locations[NUM_MIC][3])
+  {
+  if ( (NUM_MIC%2) == 1 ) {
+  // Assume Odd numbers are only the left microphones
+  initialize_microphone_locations_left_only(locations);
+  } else {
+  initialize_microphone_locations_lr(locations);
+  }
+  }
 */
 void set_mic_location(float locations[NUM_MIC][3],int index,float x, float y, float z)
 {
-  if (index >=0 && index < NUM_MIC) {
-    locations[index][0] = x;
-    locations[index][1] = y;
-    locations[index][2] = z;
-  } else {
-      exit(1);
-  }
+    if (index >=0 && index < NUM_MIC) {
+        locations[index][0] = x;
+        locations[index][1] = y;
+        locations[index][2] = z;
+    } else {
+        exit(1);
+    }
 }
 
 
@@ -663,12 +663,12 @@ void initialize_microphone_locations(float locations[NUM_MIC][3])
     // 
     for (chain=0; chain < num_chains; chain++) {
 
-/*
- if (chain == 0) y = -1.5;
-  if (chain == 1) y = -3.5;
-  if (chain == 2) y = 2.5;
-  if (chain == 3) y = 0.5;
-*/
+        /*
+          if (chain == 0) y = -1.5;
+          if (chain == 1) y = -3.5;
+          if (chain == 2) y = 2.5;
+          if (chain == 3) y = 0.5;
+        */
 
         // Generalizing this
 
@@ -723,7 +723,7 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
     long int max_delay = 0;
     int i,j, k;
     int queue_head = 0;
-//    int queue_tail = 0;
+    //    int queue_tail = 0;
     unsigned char queue_full = 0;
     float time_index = 0;
     float time_index_inc = (1.0/sampling_rate);
@@ -743,21 +743,12 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
     unsigned long long int total_cycle_count;
     unsigned long long int cycle_count;
 
+    int done =0;
+    double total_time = 0;
 
 #ifdef BUFFER_DATA
     int **tmp_int_buffer;
     float **data_buffer;
-
-    int done =0;
-
-    double total_time = 0;
-
-    // Pre-calulated ceiling, floor and offset values for each delay
-    struct PreprocessedDelays preprocessed_delays[NUM_MIC];
-    
-    // Pre-calculate delay values
-    preprocess_delays(preprocessed_delays, delays->delay_values[0]);
-
 
     // Initialize the buffer array
     data_buffer = (float**) malloc(BUFFER_SIZE*sizeof(float*));
@@ -769,48 +760,36 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
     }
 #endif
 
-//  queue = (struct DataQueue *) malloc(sizeof(struct DataQueue));
-
-
+    // Pre-calulated ceiling, floor and offset values for each delay
+    struct PreprocessedDelays preprocessed_delays[NUM_MIC];
     
-//    float **sample_queue = malloc((max_delay+1)*sizeof(float*));
+    // Pre-calculate delay values
+    preprocess_delays(preprocessed_delays, delays->delay_values[0]);
 
+    //  queue = (struct DataQueue *) malloc(sizeof(struct DataQueue));
+    //    float **sample_queue = malloc((max_delay+1)*sizeof(float*));
 
+    //    if (output_fp != NULL) {
+    //        fprintf(output_fp,"; Sample Rate %d\t%s\n",SAMPLING_RATE,info_str);
+    //    }
 
-
-
-
-    if (output_fp != NULL) {
-        fprintf(output_fp,"; Sample Rate %d\t%s\n",SAMPLING_RATE,info_str);
-    }
-
-//    printf ("Max delay: %li\n",max_delay);
+    //    printf ("Max delay: %li\n",max_delay);
     
     i = 0;
-//    while (fgets(line,MAX_LINE,fp)!=NULL) {
-    
-
+    //    while (fgets(line,MAX_LINE,fp)!=NULL) {
 
 #ifdef BUFFER_DATA
     buffer = 1;
-#endif
-
-
 
     i = 0;
     if (buffer  == 1) {
         while (fgets(line,MAX_LINE,fp)!=NULL) {
             parse_line(line, data_buffer[i], NUM_MIC);
 
-/*            printf("parsing current line");
-            
-            float_arr_to_str(data_buffer[i],
-                             NUM_MIC, str);
-            printf("%s", str);
-*/
-
-//            printf("i: %d\n",i);
-
+            //            printf("parsing current line");
+            //            float_arr_to_str(data_buffer[i], NUM_MIC, str);
+            //            printf("%s", str);
+            //            printf("i: %d\n",i);
 
             // Copy into the int array so that we can simulate the division later
             for (j=0; j< NUM_MIC; j++) {
@@ -818,38 +797,39 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
             }
 
             i++;
-
         }
     }
 
-    printf("read %d lines\n",i);
-
-    
+    //    printf("read %d lines\n",i);
+#endif
+   
 
     /* First, call gettimeofday() to get start time */
-    printf("blah\n");
+    //    printf("blah\n");
 
-    for (k=0; k<=100; k++) {
-        printf("k:%d\n",k);
+    //    for (k=0; k<=100; k++) 
+    {
+        //        printf("k:%d\n",k);
         
         gettimeofday(&start_time, NULL);
         start_cycle_count = rdtsc();
    
         // If window is <0, keep going until EOF
         for (i=0; (i<window) || (window<0) ; i++) {
+#ifdef BUFFER_DATA
             if (buffer == 1) {
                 if (i>=BUFFER_SIZE) {
                     done = 1;
-                    printf("buffer size exceeded\n");
-                    printf("processed %d lines\n",i);
+                    //                    printf("buffer size exceeded\n");
+                    //                    printf("processed %d lines\n",i);
                     break;
 
-//                    exit (0);
+                    //                    exit (0);
                 
                 }
                 
 
-//                memcpy((queue->sample_queue)[queue->head], data_buffer[i], NUM_MIC*sizeof(float));
+                //                memcpy((queue->sample_queue)[queue->head], data_buffer[i], NUM_MIC*sizeof(float));
 
                 // conver the tmp_int_array back to the buffer
                 for (j=0;j<NUM_MIC;j++) {
@@ -857,17 +837,19 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
                 }
 
 
-            } else if (fgets(line,MAX_LINE,fp)!=NULL) {
+            } else 
+#endif
+            if (fgets(line,MAX_LINE,fp)!=NULL) {
                 parse_line(line, (queue->sample_queue)[queue->head], NUM_MIC);
             } else { 
                 done = 1;
-                printf("window exceeded\n");
+                //                printf("window exceeded\n");
                 break;
             }
 
-//        printf ("time_index %lf\n",time_index);
+            //        printf ("time_index %lf\n",time_index);
 
-//        if (queue->full == 1) {
+            //        if (queue->full == 1) {
             // output beamformed signal for max_delay samples back (in
             // other words, the sample that's located at
             // (queue->head+1) -- the next sample to get overwritten )
@@ -876,7 +858,7 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
             // rather than queue->head+1 since we don't want to overrun
             // the end of the array, i.e. if queue->head is max_delay,
             // wrapped_inc(queue->head,max_delay) will be one
-//        printf("num_beams: %d\n",num_beams);
+            //        printf("num_beams: %d\n",num_beams);
             for (j=0; j<num_beams; j++) {
                 value = do_beamforming(preprocessed_delays,
                                        delays->delay_values[j], (queue->sample_queue), 
@@ -892,12 +874,10 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
                     beamform_results[j][i] = value;
                 } else if (output_fp != NULL) {
                     // put this back later
-//                fprintf(output_fp,"%lf %lf\n",time_index, value);
+                    fprintf(output_fp,"%lf %lf\n",time_index, value);//*TWO23);
                 }
 
-//                fprintf(output_fp,"%f %d\n",time_index, (int)(value*TWO23));
-
-                
+                //                fprintf(output_fp,"%f %d\n",time_index, (int)(value*TWO23));
             }
 
             
@@ -932,12 +912,12 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
 
     }
 
-        printf("Average cycle count was %ld.\n", (total_cycle_count/k));
-        printf("Average time was %f Sec.\n", (total_time/k));
+    //    printf("Average cycle count was %ld.\n", (total_cycle_count/k));
+    //    printf("Average time was %f Sec.\n", (total_time/k));
 
 
-// Figure out what to do with this later
-//    fprintf(output_fp,"%lf %lf\n",time_index, value);
+    // Figure out what to do with this later
+    //    fprintf(output_fp,"%lf %lf\n",time_index, value);
     return (done);
 }    
 
@@ -955,8 +935,8 @@ int calc_beamforming_result(FILE *fp, FILE *output_fp, struct Delays *delays,
                             int num_beams, int window,
                             int hamming) {
     
-//    beamform_result = (float*) malloc(ENERGY_WINDOW_SIZE*sizeof(float));
-//    energies = (float*) malloc(ENERGY_WINDOW_SIZE*sizeof(float));
+    //    beamform_result = (float*) malloc(ENERGY_WINDOW_SIZE*sizeof(float));
+    //    energies = (float*) malloc(ENERGY_WINDOW_SIZE*sizeof(float));
     int i;
     int done; 
     float* weights=NULL;
@@ -973,9 +953,9 @@ int calc_beamforming_result(FILE *fp, FILE *output_fp, struct Delays *delays,
             weights = calc_weights_lr(NUM_MIC);
         }
 
-        printf ("Mic Weights:\n");
-        float_arr_to_str(weights,NUM_MIC,str);
-        printf ("%s",str);
+        //        printf ("Mic Weights:\n");
+        //        float_arr_to_str(weights,NUM_MIC,str);
+        //        printf ("%s",str);
     }
 
 
@@ -988,7 +968,7 @@ int calc_beamforming_result(FILE *fp, FILE *output_fp, struct Delays *delays,
                           beamform_results, info_str, 
                           queue, num_beams, window, weights);
     
-//    end_cycle_count = rdtsc();
+    //    end_cycle_count = rdtsc();
 
     /* Now call gettimeofday() to get end time */
     gettimeofday(&end_time, NULL);  /* after time */
@@ -1050,7 +1030,7 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
         calc_far_field_delays(mic_locations, origin_location, angle, 
                               delays->delay_values[i], SOUND_SPEED, SAMPLING_RATE, NUM_MIC);
         positivize_delays(delays->delay_values[i], NUM_MIC);
-        sprintf(delays->delay_info[i], "angle is %f\n", angle);
+        //        sprintf(delays->delay_info[i], "angle is %f\n", angle);
 
         i++;
     }
@@ -1065,11 +1045,7 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
         }
     }        
 
-
     queue = init_data_queue(delays->max_delay, NUM_MIC);
-
-
-
 
     // Open the data file and process it
     if ((fp = fopen(data_file,"r")) == NULL) {
@@ -1077,27 +1053,22 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
         exit(1);
     } 
   
-
-//        printf("1angle is %f\n", angle);
-        
-//f    sprintf(info_str, "angle is %f\n", angle);
-//        printf("2angle is %f\n", angle);
+    //        printf("1angle is %f\n", angle);
     
+    //        sprintf(info_str, "angle is %f\n", angle);
+    //        printf("2angle is %f\n", angle);
     
-
     while (done == 0) {
         max_energy = 0;
         max_angle = 0;
-
 
         // Get beamforming results for all NUM_ANGLES directions
         done = calc_beamforming_result(fp, NULL /*output_fp*/, delays, beamform_results, 
                                        energies, info_str, queue, NUM_ANGLES, ANGLE_ENERGY_WINDOW_SIZE, hamming);
 
-
         // Now, figure out which angle has the maximum energy
         for (i = 0; i<NUM_ANGLES; i++) {
-//            printf("%f %f %f\n",time_index,(i-NUM_ANGLES/2)*M_PI/NUM_ANGLES,energies[i]);
+            //            printf("%f %f %f\n",time_index,(i-NUM_ANGLES/2)*M_PI/NUM_ANGLES,energies[i]);
 
             if (energies[i]>max_energy) {
                 max_energy = energies[i];
@@ -1106,7 +1077,6 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
             }
         }
 
-        
         // At this point, just print out the result. Later, figure out
         // how to track it or whatever.
         printf("at time index %f, maximum energy was %f, occuring at angle %f (radians)\n",
@@ -1119,7 +1089,7 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
     
     fclose(fp);
 
-//    fclose(output_fp);
+    //    fclose(output_fp);
 
     return(max_energy);
 }
@@ -1129,7 +1099,7 @@ float search_far_field_angles(float* max_result, char* data_file, char *output_f
 
 void calc_single_pos(float source_location[3], float mic_locations[NUM_MIC][3], int hamming, char* data_file, char* output_file) {
     float mic_distances[NUM_MIC];
-//    float delays[NUM_MIC];
+    //    float delays[NUM_MIC];
     char str[MAX_LINE];
     char info_str[MAX_LINE];
     float energy;
@@ -1147,11 +1117,11 @@ void calc_single_pos(float source_location[3], float mic_locations[NUM_MIC][3], 
 
 
     // Initialize the results array
-//    beamform_results = (float**) malloc(sizeof(float*));
-//
-//    for (i=0; i<(NUM_ANGLES); i++) {
-//        beamform_results[i] = (float*) malloc(*sizeof(float));
-//    }
+    //    beamform_results = (float**) malloc(sizeof(float*));
+    //
+    //    for (i=0; i<(NUM_ANGLES); i++) {
+    //        beamform_results[i] = (float*) malloc(*sizeof(float));
+    //    }
 
 
     // Calculate distances from source to each of mics
@@ -1160,40 +1130,41 @@ void calc_single_pos(float source_location[3], float mic_locations[NUM_MIC][3], 
     
 
     
-    printf ("Mic distances:\n");
-    float_arr_to_str(mic_distances,NUM_MIC,str);
-    printf ("%s",str);
+    //    printf ("Mic distances:\n");
+    //    float_arr_to_str(mic_distances,NUM_MIC,str);
+    //    printf ("%s",str);
     
     
-    printf ("Mic delays(# samples):\n");
-    float_arr_to_str(delays->delay_values[0],NUM_MIC,str);
-    printf ("%s",str);
+    //    printf ("Mic delays(# samples):\n");
+    //    float_arr_to_str(delays->delay_values[0],NUM_MIC,str);
+    //    printf ("%s",str);
     
     
     adjust_delays(delays->delay_values[0], NUM_MIC);
-    printf ("Adjusted Mic delays(# samples):\n");
-    float_arr_to_str(delays->delay_values[0],NUM_MIC,str);
-    printf ("%s",str);
+    //    printf ("Adjusted Mic delays(# samples):\n");
+    //    float_arr_to_str(delays->delay_values[0],NUM_MIC,str);
+    //    printf ("%s",str);
 
 
-/*    if (hamming) {
+    /*
+    if (hamming) {
         if ( (NUM_MIC%2) == 1 ) {
             // Assume Odd numbers are only the left microphones
             weights = calc_weights_left_only(NUM_MIC);
         } else {
             weights = calc_weights_lr(NUM_MIC);
         }
-
+        
         printf ("Mic Weights:\n");
         float_arr_to_str(weights,NUM_MIC,str);
         printf ("%s",str);
     }
-*/
+    */
     delays->max_delay = find_max_in_arr (delays->delay_values[0], NUM_MIC);
 
     queue = init_data_queue(delays->max_delay, NUM_MIC);
 
-    sprintf (info_str, "source position is (%f,%f,%f)\n", source_location[0], source_location[1], source_location[2]);
+    //    sprintf (info_str, "source position is (%f,%f,%f)\n", source_location[0], source_location[1], source_location[2]);
     
     // Open the output file
     if ((output_fp = fopen(output_file,"w")) == NULL) {
@@ -1217,7 +1188,7 @@ void calc_single_pos(float source_location[3], float mic_locations[NUM_MIC][3], 
     fclose(fp);
     fclose(output_fp);
 
-//    return energy;
+    //    return energy;
 }
 
 
@@ -1227,7 +1198,7 @@ void calc_single_pos(float source_location[3], float mic_locations[NUM_MIC][3], 
 float search_grid(float initial_location[3], char* data_file, char* output_file, int hamming) {
     FILE *fp, *output_fp;
     
-//    float energy;
+    //    float energy;
     float *energies = (float*) malloc(NUM_ANGLES*sizeof(float));
     float max_angle;
     float angle;
@@ -1274,7 +1245,7 @@ float search_grid(float initial_location[3], char* data_file, char* output_file,
         target_locations[i] = (float*) malloc(3*sizeof(float));
     }
 
-//    printf("Starting reference position is :(%f,%f,%f)\n",initial_location[0],initial_location[1],initial_location[2]);
+    //    printf("Starting reference position is :(%f,%f,%f)\n",initial_location[0],initial_location[1],initial_location[2]);
 
     memcpy(current_location, initial_location, 3*sizeof(float));
     printf("Starting reference position is :(%f,%f,%f)\n",current_location[0],current_location[1],current_location[2]);
@@ -1303,12 +1274,12 @@ float search_grid(float initial_location[3], char* data_file, char* output_file,
 
         // Figure out which position has the max energy
         for (i = 0; i<NUM_DIRS; i++) {
-//            printf("%f %f %f\n",time_index,i);
-            printf ("%s, Energy: %f\n", delays->delay_info[i],energies[i]);
+            //            printf("%f %f %f\n",time_index,i);
+            //            printf ("%s, Energy: %f\n", delays->delay_info[i],energies[i]);
             
             if (energies[i]>max_energy) {
                 max_energy = energies[i];
-//                max_angle = (i-NUM_ANGLES/2)*M_PI/NUM_ANGLES;
+                //                max_angle = (i-NUM_ANGLES/2)*M_PI/NUM_ANGLES;
                 memcpy(max_result, beamform_results[i], ANGLE_ENERGY_WINDOW_SIZE);
                 max_location = target_locations[i];
             }
@@ -1317,13 +1288,13 @@ float search_grid(float initial_location[3], char* data_file, char* output_file,
 
         // Adjust the current location to the location with the maximum energy
 
-        printf("New reference position is :(%f,%f,%f)\n",max_location[0],max_location[1],max_location[2]);
+        //        printf("New reference position is :(%f,%f,%f)\n",max_location[0],max_location[1],max_location[2]);
 
         memcpy(current_location, max_location, 3*sizeof(float));
         
 
-//        printf("at time index %f, maximum energy was %f, occuring at angle %f\n",
-//               time_index, max_energy, max_angle);
+        //        printf("at time index %f, maximum energy was %f, occuring at angle %f\n",
+        //               time_index, max_energy, max_angle);
 
         // It always does an extra one -- why?
         
@@ -1332,8 +1303,6 @@ float search_grid(float initial_location[3], char* data_file, char* output_file,
     
 
     fclose(fp);
-
-
 }
 
 
@@ -1367,9 +1336,9 @@ main (int argc, char* argv[]) {
     char hamming = 0;
 
 
-// Old location
-    float source_location[] = {0.812800, 0.760362-(4*MIC_HORIZ_SPACE), 0.054849};
-//    float source_location[] = {0.79692, -1.118859, 0.058023};
+    // Old location
+    //    float source_location[] = {0.812800, 0.760362-(4*MIC_HORIZ_SPACE), 0.054849};
+    //    float source_location[] = {0.79692, -1.118859, 0.058023};
            
 
     if (argc>1) {
@@ -1389,8 +1358,8 @@ main (int argc, char* argv[]) {
                     hill_climb = 1;
                 } else if (strcmp(key, "-hamming") == 0) {
                     hamming = 1;
-//                } else if (strcmp(key, "-num_mic") == 0) {
-//                    num_mic = (int) strtol(argv[++i],&pEnd,0);
+                    //                } else if (strcmp(key, "-num_mic") == 0) {
+                    //                    num_mic = (int) strtol(argv[++i],&pEnd,0);
                 } else {
                     fprintf (stderr, "Error: unknown option: %s\n",key);
                     print_usage();
@@ -1408,15 +1377,15 @@ main (int argc, char* argv[]) {
 
 
     // take this out later
-    initialize_microphone_locations(mic_locations);
+    //    initialize_microphone_locations(mic_locations);
 
+    /*
+      for(i = 0; i<NUM_MIC; i++) {
+      printf("Position for microphone %d:(%f,%f,%f)\n",i,mic_locations[i][0],mic_locations[i][1],mic_locations[i][2]);
+      }
 
-    for(i = 0; i<NUM_MIC; i++) {
-        printf("Position for microphone %d:(%f,%f,%f)\n",i,mic_locations[i][0],mic_locations[i][1],mic_locations[i][2]);
-    }
-
-    printf("Position for source: (%f,%f,%f)\n",source_location[0],source_location[1],source_location[2]);
-
+      printf("Position for source: (%f,%f,%f)\n",source_location[0],source_location[1],source_location[2]);
+    */
 
 
     if (search_far_field == 1) {
@@ -1432,16 +1401,12 @@ main (int argc, char* argv[]) {
     }
 
 
+    //    process_signal(fp,output_fp,delays,NUM_MIC,SAMPLING_RATE);
+    //    process_signal(fp,output_fp,delays,NUM_MIC,SAMPLING_RATE, beamform_result, info_str);
 
+    //    fclose(fp);
 
-//    process_signal(fp,output_fp,delays,NUM_MIC,SAMPLING_RATE);
-//    process_signal(fp,output_fp,delays,NUM_MIC,SAMPLING_RATE, beamform_result, info_str);
-
-
-
-//    fclose(fp);
-
-//    printf ("blah\n");
+    //    printf ("blah\n");
 
     exit(0);
 }

@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS = -I/usr/local/include -g
+CFLAGS = -I/usr/local/include -O3 #-g
 LIBPATH = -L/usr/lib -L/usr/local/lib 
 LDLIBS = -lm # -ldmalloc
 PROG = delay_and_sum 
-SRCS = main.c #optimized.c 
+SRCS = optimized.c 
 OBJS = ${SRCS:.c=.o}
 LDFLAGS = ${LDLIBS}
 LD = $(CC)

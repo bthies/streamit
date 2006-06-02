@@ -1,288 +1,251 @@
-complex->complex pipeline ftx1d(int nx)
+// Implement FFT/iFFT and related functions FROM ftx.m, fty.m, iftx.m, ifty.m
+// (rodric rabbah, <rabbah@mit.edu>)
+
+complex->complex pipeline FTX1D(int rows)
 {
-    add fftshift1d(nx);
-    add fft1d(nx);
-    add fftshift1d(nx);
+    add FFT1Dshift(rows);
+    add FFT1D(rows);
+    add FFT1Dshift(rows);
 }
 
-complex->complex pipeline ftx2d(int nx, int ny) 
+complex->complex pipeline FTX2D(int rows, int cols) 
 {
-    add fftshift2d(nx, ny);
-    add fft2d(nx, ny, 0);
-    add fftshift2d(nx, ny);
+    add FFT2Dshift(rows, cols);
+    add FFT2D(rows, cols);
+    add FFT2Dshift(rows, cols);
 }
 
-complex->complex pipeline fty2d(int nx, int ny) 
+complex->complex pipeline FTY2D(int rows, int cols) 
 {
-    add fftshift2d(nx, ny);
-    add fft2d(nx, ny, 1);
-    add fftshift2d(nx, ny);
+    add Transpose(rows, cols);
+    add FFT2Dshift(cols, rows);    
+    add FFT2D(cols, rows);
+    add FFT2Dshift(cols, rows);    
+    add Transpose(cols, rows);
 }
 
-complex->complex pipeline iftx2d(int nx, int ny) 
+complex->complex pipeline iFTX2D(int rows, int cols) 
 {
-    add fftshift2d(nx, ny);
-    add ifft2d(nx, ny, 0);
-    add fftshift2d(nx, ny);
+    add FFT2Dshift(rows, cols);
+    add iFFT2D(rows, cols);
+    add FFT2Dshift(rows, cols);
 }
 
 
-complex->complex pipeline ifty2d(int nx, int ny) 
+complex->complex pipeline iFTY2D(int rows, int cols) 
 {
-    add fftshift2d(nx, ny);
-    add ifft2d(nx, ny, 1);
-    add fftshift2d(nx, ny);
+    add Transpose(rows, cols);
+    add FFT2Dshift(cols, rows);    
+    add iFFT2D(cols, rows);
+    add FFT2Dshift(cols, rows);    
+    add Transpose(cols, rows);
 }
 
-// 1D fft shift
-complex->complex filter fftshift1d(int nx) 
+// transpose a 2D stream
+complex->complex filter Transpose(int rows, int cols)
 {
-    work push nx pop nx {
-        complex[nx] temp_p;
-
-        int nx_mid;
-
-        if (nx % 2 == 1) {
-            nx_mid = (nx-1) / 2;
-        } else {
-            nx_mid = nx / 2;
-        }
-        
-
-        for (int i = 0; i < nx; i++) {
-            temp_p[nx_mid] = pop();
-            nx_mid = nx_mid + 1;
-            
-            if (nx_mid == nx) {
-                nx_mid = 0;
-            }
-        }
-        
-        for (int i = 0; i < nx; i++) {
-            push(temp_p[i]);
-        }
+    work push rows*cols pop rows*cols {
+        for (int j = 0; j < cols; j++)
+            for (int i = 0; i < rows; i++)
+                push(peek(i * cols + j));
+        for (int i = 0; i < rows*cols; i++)
+            pop();
     }
 }
 
-// 2D fft shift
-complex->complex filter fftshift2d(int nx, int ny) 
+// 1D FFT shift: swap the two halves of a vector
+complex->complex filter FFT1Dshift(int rows) 
 {
-    work push ny*nx pop ny*nx {
-        complex[ny][nx] temp_p;
-
-        int nx_mid;
-        int ny_mid;
-
-        if (nx % 2 == 1) {
-            nx_mid = (nx-1) / 2;
+    int rows_mid;
+    
+    init {
+        if (rows % 2 == 1) {
+            rows_mid = (rows - 1) / 2;
         } else {
-            nx_mid = nx / 2;
+            rows_mid = rows / 2;
+        }
+    }
+    
+    work push rows pop rows {
+        for (int i = 0; i < rows; i++) {
+            complex t = peek(rows_mid);
+            push(t);
+            
+            if (++rows_mid == rows) {
+                rows_mid = 0;
+            }
         }
         
-        if (ny % 2 == 1) {
-            ny_mid = (ny-1) / 2;
+        for (int i = 0; i < rows; i++) pop();
+    }
+}
+
+// 2D FFT shift: criss-cross swap of the four matrix quadrants
+// NOTE: if there were a reverse roundrobin joiner, it would be
+// trivial to do this data reorganization
+complex->complex filter FFT2Dshift(int rows, int cols) 
+{
+    int rows_mid;
+    int cols_mid;
+
+    init {
+        if (rows % 2 == 1) {
+            rows_mid = (rows - 1) / 2;
         } else {
-            ny_mid = ny / 2;
+            rows_mid = rows / 2;
         }
         
-        for (int i = 0; i < ny; i++) {
-            for (int j = 0; j < nx; j++) {
-                temp_p[ny_mid][nx_mid] = pop();
-                nx_mid = nx_mid + 1;
+        if (cols % 2 == 1) {
+            cols_mid = (cols - 1) / 2;
+        } else {
+            cols_mid = cols / 2;
+        }
+    }
+     
+    work push rows*cols pop rows*cols {
+        complex[rows][cols] temp;
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                temp[rows_mid][cols_mid] = pop();
                 
-                if (nx_mid == nx) {
-                    nx_mid = 0;
+                if (++cols_mid == cols) {
+                    cols_mid = 0;
                 }
             }
             
-            ny_mid = ny_mid + 1;
-            
-            if (ny_mid == ny) {
-                ny_mid = 0;
+            if (++rows_mid == rows) {
+                rows_mid = 0;
             }
         }
         
-        for (int i = 0; i < ny; i++) {
-            for (int j = 0; j < nx; j++) {
-                push(temp_p[i][j]);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                push(temp[i][j]);
             }
         }
     }
 }
 
-// 1D fft
-complex->complex filter fft1d(int nx) 
+// 1D FFT
+complex->complex filter FFT1D(int rows) 
 {
-    float[nx] cos_value;
-    float[nx] sin_value;
+    float[rows] cos_value;
+    float[rows] sin_value;
     
     init {
-        for (int i = 0; i < nx; i++) {
-            cos_value[i] = cos(2*3.1415926 * (float)i / (float)nx);
-            sin_value[i] = sin(2*3.1415926 * (float)i / (float)nx);
+        for (int i = 0; i < rows; i++) {
+            cos_value[i] = cos(PI2 * (float)i / (float)rows);
+            sin_value[i] = sin(PI2 * (float)i / (float)rows);
         }
     }
     
-    work push nx pop nx {
-        complex[nx] temp_p;
-
-        for (int i = 0; i < nx; i++) {
+    work push rows pop rows {
+        complex[rows] temp;
+        
+        for (int i = 0; i < rows; i++) {
             float real = 0;
             float imag = 0;
             
-            for (int j = 0; j < nx; j++) {
-                int k = (i * j) % nx;
-
+            for (int j = 0; j < rows; j++) {
+                int k = (i * j) % rows;
+                
                 complex t = peek(j);
                 real += (t.real * cos_value[k]) + (t.imag * sin_value[k]);
-                imag += (t.imag * cos_value[k]) - (t.imag * sin_value[k]);
+                imag += (t.imag * cos_value[k]) - (t.real * sin_value[k]);
             }
-            temp_p[i].real = real;
-            temp_p[i].imag = imag;
+            temp[i].real = real;
+            temp[i].imag = imag;
         }
         
-        for (int i = 0; i < nx; i++) {
+        for (int i = 0; i < rows; i++) {
             pop();
-            push(temp_p[i]);
+            push(temp[i]);
         }
     }
 }
 
-// 2D fft
-complex->complex filter fft2d(int nx, int ny, int transform) 
+// 2D FFT
+complex->complex filter FFT2D(int rows, int cols) 
 {
-    float[ny] cos_value;
-    float[ny] sin_value;
-    float[nx] cos_value_t;
-    float[nx] sin_value_t;
-    
+    float[rows] cos_value;
+    float[rows] sin_value;
+
     init {
-        if (transform == 0) {
-            for (int i = 0; i < ny; i++) {
-                cos_value[i] = cos(2*3.1415926 * (float)i / (float)ny);
-                sin_value[i] = sin(2*3.1415926 * (float)i / (float)ny);
-            }
-        } else {
-            for (int i = 0; i < nx; i++) {
-                cos_value_t[i] = cos(2*3.1415926 * (float)i / (float)nx);
-                sin_value_t[i] = sin(2*3.1415926 * (float)i / (float)nx);
-            }
+        for (int i = 0; i < rows; i++) {
+            cos_value[i] = cos(PI2 * (float)i / (float)rows);
+            sin_value[i] = sin(PI2 * (float)i / (float)rows);
         }
     }
     
-    work push ny*nx pop ny*nx {
-        complex[ny][nx] temp_p;
-
-        if (transform == 0) {
-            for (int i = 0; i < nx; i++) {
-                for (int j = 0; j < ny; j++) {
-                    float real = 0;
-                    float imag = 0;
+    work push rows*cols pop rows*cols {
+        complex[rows][cols] temp;
+    
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                float real = 0;
+                float imag = 0;
+                
+                for (int k = 0; k < rows; k++) {
+                    int l = (j * k) % rows;
                     
-                    for (int k = 0; k < ny; k++) {
-                        int l = (j * k) % ny;
+                    complex t = peek(k * cols + i);
 
-                        complex t = peek(k*nx + i);
-                        real += (t.real * cos_value[l]) + (t.imag * sin_value[l]);
-                        imag += (t.imag * cos_value[l]) - (t.real * sin_value[l]);
-                    }
-                    temp_p[j][i].real = real;
-                    temp_p[j][i].imag = imag;
+                    real += (t.real * cos_value[l]) + (t.imag * sin_value[l]);
+                    imag += (t.imag * cos_value[l]) - (t.real * sin_value[l]);
                 }
-            }
-        } else {
-            for (int i = 0; i < ny; i++) {
-                for (int j = 0; j < nx; j++) {
-                    float real = 0;
-                    float imag = 0;
-                    
-                    for (int k = 0; k < nx; k++) {
-                        int l = (j * k) % nx;
-
-                        complex t = peek(i*ny + k);
-                        real += (t.real * cos_value_t[l]) + (t.imag * sin_value_t[l]);
-                        imag += (t.imag * cos_value_t[l]) - (t.real * sin_value_t[l]);
-                    }
-                    temp_p[i][j].real = real;
-                    temp_p[i][j].imag = imag;
-                }
+                temp[j][i].real = real;
+                temp[j][i].imag = imag;
             }
         }
         
-        for (int i = 0; i < ny; i++) {
-            for(int j = 0; j < nx; j++) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
                 pop();
-                push(temp_p[i][j]);
+                push(temp[i][j]);
             }
         }
     }
 }
 
-// 2D ifft
-complex->complex filter ifft2d(int nx, int ny, int transform) 
+// 2D iFFT
+complex->complex filter iFFT2D(int rows, int cols)
 {
-    float[ny] cos_value;
-    float[ny] sin_value;
-    float[nx] cos_value_t;
-    float[nx] sin_value_t;
-    
+    float[rows] cos_value;
+    float[rows] sin_value;
+
     init {
-        if (transform == 0) {
-            for (int i = 0; i < ny; i++) {
-                cos_value[i] = cos(2*3.1415926 * (float)i / (float)ny);
-                sin_value[i] = sin(2*3.1415926 * (float)i / (float)ny);
-            }
-        } else {
-            for (int i = 0; i < nx; i++) {
-                cos_value_t[i] = cos(2*3.1415926 * (float)i / (float)nx);
-                sin_value_t[i] = sin(2*3.1415926 * (float)i / (float)nx);
-            }
+        for (int i = 0; i < rows; i++) {
+            cos_value[i] = cos(PI2 * (float)i / (float)rows);
+            sin_value[i] = sin(PI2 * (float)i / (float)rows);
         }
     }
     
-    work push ny*nx pop ny*nx {
-        complex[ny][nx] temp_p;
+    work push rows*cols pop rows*cols {
+        complex[rows][cols] temp;
 
-        if (transform == 0) {
-            for (int i = 0; i < nx; i++) {
-                for (int j = 0; j < ny; j++) {
-                    float real = 0;
-                    float imag = 0;
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                float real = 0;
+                float imag = 0;
                     
-                    for (int k = 0; k < ny; k++) {
-                        int l = (j * k) % ny;
-                        
-                        complex t = peek(k*ny + i);
-                        real += (t.real * cos_value[l]) - (t.imag * sin_value[l]);
-                        imag += (t.imag * cos_value[l]) + (t.real * sin_value[l]);
-                    }
-                    temp_p[j][i].real = real / ny;
-                    temp_p[j][i].imag = imag / ny;
-                }
-            }
-        } else {
-            for (int i = 0; i < ny; i++) {
-                for (int j = 0; j < nx; j++) {
-                    float real = 0;
-                    float imag = 0;
-                    
-                    for (int k = 0; k < nx; k++) {
-                        int l = (j * k) % nx;
+                for (int k = 0; k < rows; k++) {
+                    int l = (j * k) % rows;
 
-                        complex t = peek(i*ny + k);
-                        real += (t.real * cos_value_t[l]) - (t.imag * sin_value_t[l]);
-                        imag += (t.imag * cos_value_t[l]) + (t.real * sin_value_t[l]);
-                    }
-                    temp_p[i][j].real = real / nx;
-                    temp_p[i][j].imag = imag / nx;
+                    complex t = peek(k * cols + i);
+
+                    real += (t.real * cos_value[l]) - (t.imag * sin_value[l]);
+                    imag += (t.imag * cos_value[l]) + (t.real * sin_value[l]);
                 }
+                temp[j][i].real = real / (float)rows;
+                temp[j][i].imag = imag / (float)rows;
             }
         }
-        
-        for (int i = 0; i < ny; i++) {
-            for(int j = 0; j < nx; j++) {
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
                 pop();
-                push(temp_p[i][j]);
+                push(temp[i][j]);
             }
         }
     }
@@ -293,11 +256,40 @@ complex->complex filter ifft2d(int nx, int ny, int transform)
 void->void pipeline FFT
 {
     add void->complex filter {
-        work push 1 { complex x; push(x); }
+        complex x;
+
+        init {
+            x = 1 + 0i;
+        }
+        work push 1 { 
+            push(x); 
+            x.real++;
+        }
     }
-    add ftx2d(160, 438);
+    int rows = 3;
+    int cols = 4;
+
+    //add Transpose(rows, cols);
+    //add FFT2Dshift(cols, rows);    
+    //add FFT2D(cols, rows, false);
+    //add FFT2Dshift(cols, rows);
+    //add Transpose(cols, rows);
+    add FTY2D(rows, cols);
+    add iFTY2D(rows, cols);
+    //add FTX2D(rows, cols);
+    //add iFTX2D(rows, cols);
+    //add FTX1D(rows*cols);
+    //add iFFT2D(rows, cols);
+
     add complex->void filter {
-        work pop 1 { pop(); }
+        work pop 1 {
+            complex t = pop();
+            print(t.real);
+            print("+");
+            print(t.imag);
+            println("i");
+        }
     }
+    //add FileWriter<complex>("ffttest.bin");
 }
 */

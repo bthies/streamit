@@ -1,4 +1,5 @@
 // Code adapted FROM genRawSAR.m
+// (rodric rabbah, <rabbah@mit.edu>)
 //
 // % SAR signal array [# samples, # samples on aperture]
 // s=zeros(n,mc);     
@@ -13,37 +14,148 @@
 // % [pi2*fc = carrier frequency]
 // % Fast-time baseband conversion
 // s=s.*exp(-cj*pi2*fc*t(:)*ones(1,mc));
-void->complex filter genRawSAR(float PI2,
-                               float L,
-                               float c,
-                               float Xc,
-                               float fc,
-                               float f0,
-                               float Tp,
-                               float Tf,
+int->complex filter genRawSAR(float Tf,
                                int n,
-                               int mc, 
-                               int ntarget,
+                               int m,
+                               int mc,
                                float[n] t,
-                               float[mc] uc,
-                               float[ntarget] xn,
-                               float[ntarget] yn,
-                               float[ntarget] fn)
+                               float[n] k,
+                               float[m] ku,
+                               float[mc] uc)
 {
-    work push n*mc {
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // %%  Pre-determine the pixel size of the eventual image in the   %%
+    // %%  X-dimm, to control placement of SAR returns relative to     %%
+    // %%  pixel-based templates placement. (Code from formSARimage()) %%
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //
+    // ku=ones(n,1)*ku;                     % ku array
+    // kx=(4*k(:).^2)*ones(1,m)-ku.^2;      % [p197(1/6), p200(1/6)(3/6)]
+    // kx=sqrt(kx.*(kx > 0));               % kx array
+    // kxmin=min(min(kx));
+    // kxmax=max(max(kx));
+    // dkx=pi/X0;            % Nyquist sample spacing in kx domain
+    // nx=2*ceil((.5*(kxmax-kxmin))/dkx); % Required number of
+    //                       % samples in kx domain;
+    //                       % This value will be increased slightly
+    //                       % to avoid negative array index
+    // is=8;         % number of neighbors (sidelobes) used for sinc interpolator.
+    // nx=nx+2*is+4; % increase number of samples to avoid negative
+
+    float kxmin   = 1e25;
+    float kxmax   = 0;
+    float dkx     = PI / X0;            
+    int   is      = 8;    
+    int   nx      = 0;
+    float[n][m]   kx;
+
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    // %%           Parameters of Targets                 %%
+    // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    //
+    // % SAR reflectors within digital spotlight filter
+    // % [targets in an equally spaced mesh, all with unity
+    // % reflection coefficient.]
+    // xn = [];  yn = [];  fn = [];
+    // npixx = (N_pix/nx)*2*X0; % template pixels noramlized to X0
+    // npixy = (N_pix/m)*2*Y0;  % template pixels noramlized to Y0
+    // % Place the SAR lobes appart from eachother by twice a template's size.
+    // for xni = floor(npixx/2):2*npixx:2*X0-ceil(npixx/2)
+    //     for yni = floor(npixy/2):2*npixy:2*Y0-ceil(npixy/2)
+    //         xn = [xn xni-X0];
+    //         yn = [yn yni-Y0];
+    //     end
+    // end
+    // ntarget=length(xn);
+    // fn = ones(1,size(xn,2));
+
+    /* letter image size */
+    int N_pix     = 24;
+
+    float npixx   = 0;
+    float npixy   = 0;
+    int   xni     = 0;
+    int   yni     = 0;
+    int   ntarget = 0;
+    // NOTE: to statically resolve the value of ntarget requires aggressive
+    // constant propagation of kx[][] which is 70K elements in size; so
+    // use MAX_TARGET to cap the size of the arrays then calculate the loop 
+    // bounds (currently MAX_TARGET == ntarget)
+    int   MAX_TARGETS = 48;
+    float[MAX_TARGETS] xn;
+    float[MAX_TARGETS] yn;
+    float[MAX_TARGETS] fn;
+    
+    init {
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // %%  Pre-determine the pixel size of the eventual image in the   %%
+        // %%  X-dimm, to control placement of SAR returns relative to     %%
+        // %%  pixel-based templates placement. (Code from formSARimage()) %%
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        for (int i = 0; i < n; i++) {
+            for(int j = 0; j < m; j++) {
+                float val = (4 * (k[i] * k[i])) - (ku[j] * ku[j]);
+                
+                if (val > 0) {
+                    kx[i][j] = sqrt(val);
+                } 
+                else { 
+                    kx[i][j] = 0; 
+                }
+                
+                if (kxmax < kx[i][j]) {
+                    kxmax = kx[i][j];
+                }
+                if (kxmin > kx[i][j]) {
+                    kxmin = kx[i][j];
+                }
+            }
+        }
+        
+        nx = 2 * (int) ceil((0.5 * (kxmax - kxmin)) / dkx);
+        nx = nx + 2 * is + 4;
+        
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        // %%           Parameters of Targets                 %%
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        npixx = (N_pix / (float) nx) * 2 * X0;
+        npixy = (N_pix / (float) m ) * 2 * Y0;
+
+        xni = (int) ((((2 * X0 - ceil(npixx / 2)) 
+                       - floor(npixx / 2))
+                      / (2 * npixx)) 
+                     + 1);
+        
+        yni = (int) ((((2 * Y0 - ceil(npixy / 2))
+                       - floor(npixy / 2))
+                      / (2 * npixy))
+                     + 1);
+        
+        /* number of targets */
+        ntarget = xni * yni;
+
+        for (int i = 0; i < xni; i++) {
+            for (int j = 0; j < yni; j++) {
+                xn[i * yni + j] = (floor(npixx / 2) + 2 * npixx * i) - X0;
+                yn[i * yni + j] = (floor(npixy / 2) + 2 * npixy * j) - Y0;
+                fn[i * yni + j] = 1;
+            }
+        }
+    }
+
+    work pop 1 push n*mc {
         float[n][mc]   td;
         complex[n][mc] S;
-        
+        pop();
         // for i=1:ntarget;   
         for (int h = 0; h < ntarget; h++) {
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < mc; j++){
                     // td=t(:)*ones(1,mc)-2*ones(n,1)*sqrt((Xc+xn(i)).^2+(yn(i)-uc).^2)/c;
                     td[i][j] = t[i] - 2 * sqrt(pow(Xc + xn[h], 2) + pow(yn[h] - uc[j], 2)) / c;
-                    
+
                     // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
                     //     .* (td >= 0 & td <= Tp & ones(n,1)*abs(uc) <= L & t(:)*ones(1,mc) < Tf);
-                    // NOTE: check if abs() is a floating poitn abs() function
                     if ((td[i][j] >= 0.0) && (td[i][j] <= Tp) && (abs(uc[j]) <= L) && (t[i] < Tf)) {
                         // s=s + fn(i)*exp(cj*pi2*( (fc-f0)*td + (f0/Tp)*(td.^2) )) ...
                         float value  = PI2 * ((fc - f0) * td[i][j] + (f0 / Tp) * pow(td[i][j], 2));
@@ -54,7 +166,7 @@ void->complex filter genRawSAR(float PI2,
                 }
             }
         }
-        
+ 
         // s=s.*exp(-cj*pi2*fc*t(:)*ones(1,mc));
         for (int i = 0; i < n; i++) {
             float cos_value = cos(PI2 * fc * t[i]);
@@ -79,21 +191,15 @@ void->complex filter genRawSAR(float PI2,
 // % Baseband reference fast-time signal
 // s0=s0.*exp(-cj*pi2*fc*t(:));
 // fast_time_filter = (conj(ftx(s0))*ones(1,mc));
-void->complex pipeline FastTimeFilter(float PI2, 
-                                      float c,
-                                      float Xc,
-                                      float fc,
-                                      float f0,
-                                      float Tp,
-                                      int n,
+int->complex pipeline FastTimeFilter(int n,
                                       float[n] t) 
 {
-    add void->complex filter {
-        work push n {
+    add int->complex filter {
+        work pop 1 push n {
             float[n] td0;
             complex[n] s0;
             complex[n] ftf;
-            
+            pop();            
             for (int i = 0; i < n; i++) {
                 // td0=t(:)-2*Xc/c; % [p85(2/7)]
                 // s0=exp(cj*pi2*( (fc-f0)*td0 + (f0/Tp)*(td0.^2) )) ...
@@ -120,14 +226,18 @@ void->complex pipeline FastTimeFilter(float PI2,
     }
 
     // fast_time_filter = (conj(ftx(s0))*ones(1,mc));
-    add ftx1d(n);
-    add complex->complex filter {
-        work pop n push n {
-            for (int i = 0; i < n; i++) {
-                complex out = pop();
-                out.imag = 0 - out.imag;
-                push(out);
-            }
+    add FTX1D(n);
+    add Conjugate(n);
+}
+
+// convert a stream of complex to its complex conjugate
+complex->complex filter Conjugate(int n) 
+{
+    work pop n push n {
+        for (int i = 0; i < n; i++) {
+            complex out = pop();
+            out.imag = 0 - out.imag;
+            push(out);
         }
     }
 }

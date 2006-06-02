@@ -1,242 +1,51 @@
-// Code adapted FROM genRawSAR.m
-//
-// PROVIDES
-// [] t, xn, yn, fn
-// PI, PI2, Tf
+// Code adapted FROM getUserParameters.m and getSARparams*.m
+// (rodric rabbah, <rabbah@mit.edu>)
 
 static {
-    /* Range distance to center of target area */
-    float Xc;                 
+    float PI  = 3.14159265358979;
+    float PI2 = 2 * PI;
+
+    // getUserParameters.m
+    float SCALE_FACTOR = 1.0;
+    
+    // getSARparams0.m
+    float ASPECT_RATIO = 0.4;
+    float RANGE_FACTOR = 10.0;
+    
+    /* synthetic aperture is 2*L */
+    float L = 100 * SCALE_FACTOR;
+    
+    /* target area in cross-range is within */
+    float Y0 = L;
 
     /* target area in range is within [Xc-X0,Xc+X0] */
-    float X0;
+    float X0 = Y0 * ASPECT_RATIO;
 
-    /* Cross-range distance to center of target area */
-    float Yc;                  
+    /* range distance to center of target area */
+    float Xc = Y0 * RANGE_FACTOR;                
 
-    /*target area in cross-range is within */
-    float Y0;            
-
-    /* synthetic aperture is 2*L */
-    float L;
-
-    /* baseband bandwidth */
-    float f0;
-
-    /* carrier frequency*/
-    float fc;         
+    // getSARparams.m
+    float RELATIVE_BANDWIDTH = 0.5;
+    int   RPULSE = 75;
 
     /* propagation speed */
-    float c;
+    float c = 3e8;
 
-    /* SPATIAL/GEOMETRIC PARAMETERS. */
-    float Rmin;
-    float Rmax;
+    /* carrier frequency */
+    float fc = 400e6;
 
-    /* Chirp pulse duration */
-    float Tp;
+    /* spatial/geometric parameters */
+    float Rmin = Xc - X0;
+    float Rmax = sqrt(((Xc + X0)*(Xc + X0)) + ((Y0 + L)*(Y0 + L)));
 
-    /* Wavelength at highest frequency*/
-    float lambda_min;  
-  
-    /* Wavelength at lowest frequency*/
-    float lambda_max;    
+    /* chirp pulse duration */
+    float Tp = RPULSE / c;    
 
-    /* number of samples on aperture */
-    int mc;               
- 
-    /* number of samples on aperture */
-    int m;                
+    /* baseband bandwidth */
+    float f0 = 0.5 * RELATIVE_BANDWIDTH * fc;
 
-    /* number of time samples */
-    int n;             
+    /* wavelength at highest frequency */
+    float lambda_min = c / (fc + f0);
 
-    /* number of targets */
-    int ntarget;
-
-    /*Wavenumber array*/
-    float[n] k;
-	
-    /* ku array */
-    float[m] ku;           
-
-    /* synthetic aperture array */
-    float[m] u;
-	
-    /* synthetic aperture array */
-    float[mc] uc;           
-
-    /*letter image size*/
-    int N_pix;
-
-    init {
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %% u domain parameters and arrays for compressed SAR signal %%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //
-        // duc=(Xc*lambda_min)/(4*Y0)/1.2;   % sample spacing in aperture domain
-        //                                   % for compressed SAR signal
-        //                                   % 10 percent guard band; this guard band
-        //                                   % would not be sufficient for targets
-        //                                   % outside digital spotlight filter (use
-        //                                   % a larger guard band, i.e., PRF)
-        // mc=2*ceil(L/duc);                 % number of samples on aperture
-        // dku=pi2/(mc*duc);                 % sample spacing in ku domain
-        // uc=duc*(-mc/2:mc/2-1);            % synthetic aperture array
-        // kuc=dku*(-mc/2:mc/2-1);           % kuc array
-  
-        duc = ((Xc * lambda_min) / (4 * Y0)) / 1.2;
-        mc  = 2 * (int) ceil(L / duc);
-        dku = PI2 / ((float) mc * duc);
-          
-        for (int i = 0; i < mc; i++) {
-            uc[i]  = duc * (((float) i) - ((float) mc) / 2.0);
-            kuc[i] = dku * (((float) i) - ((float) mc) / 2.0);
-        }
-
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%    u domain parameters and arrays for SAR signal     %%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // 
-        // theta_min=atan((-Y0-L)/(Xc-X0));  % minimum aspect angle
-        // theta_max=atan((Y0+L)/(Xc-X0));   % max aspect angle [p79(3/7)]
-        // du=lambda_min/(1.4*2*( sin(theta_max)- sin(theta_min) ));
-        //                                   % sample spacing in aperture
-        //                                   % domain for SAR signal [Delta u, p79(4/7)]
-        //                                   % 20 percent guard band
-        // m=2*ceil(pi/(du*dku));            % number of samples on aperture
-        // du=pi2/(m*dku);                   % readjust du
-        // u=du*(-m/2:m/2-1);                % synthetic aperture array
-        // ku=dku*(-m/2:m/2-1);              % ku array
-
-
-        theta_min = atan((0 - Y0 - L) / (Xc - X0));
-        theta_max = atan((Y0 + L) / (Xc - X0)); 
-        // theta_max = atan((Yc + Y0 + L) / (Xc - X0)); 
-
-        du = lambda_min / (1.4 * 2 * (sin(theta_max) - sin(theta_min)));
-        m  = 2 * (int) ceil(PI / (du * dku));
-        du = PI2 / (m * dku);                   
-
-        for (int i = 0; i < m; i++) {
-            u[i]  = du  * (((float) i) - ((float) m) / 2.0);
-            ku[i] = dku * (((float) i) - ((float) m) / 2.0);
-        }
-
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%       Fast-time domain parmeters and arrays          %%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //
-        // Ts=(2/c)*Rmin;                 % start time of sampling [p19(2/6)]
-        // Tf=(2/c)*Rmax+Tp;              % end time of sampling [p19(3/6)]
-        // T=Tf-Ts;                       % fast-time interval of measurement
-        // Ts = Ts - 0.1*T;
-        // Tf = Tf + 0.1*T;
-        // T=Tf-Ts;
-        // Tmin=max(T,(4*X0)/(c*cos(theta_max)));  % Minimum required T
-        // dt=1/(4*f0);                 % Time domain sampling (guard band factor 2)
-        // n=2*ceil((.5*Tmin)/dt);      % number of time samples
-        // t=Ts+(0:n-1)*dt;             % time array for data acquisition
-        // k = (pi2/c)*(fc + 4*f0*(-n/2:n/2-1)/n);  % Wavenumber array
-        
-        Ts = (2 / c) * Rmin; 
-        Tf = (2 / c) * Rmax + Tp;
-        T  = Tf - Ts;
-        Ts = Ts - 0.1 * T;  
-        Tf = Tf + 0.1 * T;  
-        T  = Tf - Ts;
-        Tmin = float_max(T, (4 * X0) / (c * cos(theta_max))); 
-        dt = 1 / (4 * f0);
-        n  = 2 * (int) ceil((0.5 * Tmin) / dt);     
-        
-        for (int i = 0; i < n; i++) {
-            t[i] = Ts + i * dt;
-            k[i] = (PI2 / c) * (fc + 4 * f0 * (((float) i) - ((float) n) / 2.0) / n);
-        }
-
-
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%  Pre-determine the pixel size of the eventual image in the   %%
-        // %%  X-dimm, to control placement of SAR returns relative to     %%
-        // %%  pixel-based templates placement. (Code from formSARimage()) %%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //
-        // kusave = ku;
-        // ku=ones(n,1)*ku;                     % ku array
-        // kx=(4*k(:).^2)*ones(1,m)-ku.^2;      % [p197(1/6), p200(1/6)(3/6)]
-        // kx=sqrt(kx.*(kx > 0));               % kx array
-        // kxmin=min(min(kx));
-        // kxmax=max(max(kx));
-        // dkx=pi/X0;            % Nyquist sample spacing in kx domain
-        // nx=2*ceil((.5*(kxmax-kxmin))/dkx); % Required number of
-        //                       % samples in kx domain;
-        //                       % This value will be increased slightly
-        //                       % to avoid negative array index
-        // is=8;         % number of neighbors (sidelobes) used for sinc interpolator.
-        // nx=nx+2*is+4; % increase number of samples to avoid negative
-        // ku = kusave;  % return variable to what it was originally.
-
-        kxmin = 1000e100;
-        kxmax = 0;
-        for (int i = 0; i < n; i++) {
-            for(int j = 0; j < m; j++) {
-                kx = 4 * (k[i] * k[i]) - (ku[j] * ku[j]);
-                if (kx > 0) {
-                    kx = sqrt(kx);
-                } else {
-                    kx = 0;
-                }
-                if (kxmin > kx) kxmin = kx;
-                if (kxmax < kx) kxmax = kx;
-            }
-        }
-        
-        dkx = PI / X0;            
-        nx  = 2 * (int) ceil((0.5 * (kxmax - kxmin)) / dkx);
-        is  = 8;    
-        nx  = nx + 2 * is + 4; 
-
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        // %%           Parameters of Targets                 %%
-        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        //
-        // % SAR reflectors within digital spotlight filter
-        // % [targets in an equally spaced mesh, all with unity
-        // % reflection coefficient.]
-        // xn = [];  yn = [];  fn = [];
-        // npixx = (N_pix/nx)*2*X0; % template pixels noramlized to X0
-        // npixy = (N_pix/m)*2*Y0;  % template pixels noramlized to Y0
-        // % Place the SAR lobes appart from eachother by twice a template's size.
-        // for xni = floor(npixx/2):2*npixx:2*X0-ceil(npixx/2)
-        //     for yni = floor(npixy/2):2*npixy:2*Y0-ceil(npixy/2)
-        //         xn = [xn xni-X0];
-        //         yn = [yn yni-Y0];
-        //     end
-        // end
-        // ntarget=length(xn);
-        // fn = ones(1,size(xn,2));
-
-        npixx = (N_pix / nx) * 2 * X0;
-        npixy = (N_pix / m ) * 2 * Y0;
-
-        xni = (int) ((((2 * X0 - ceil(npixx / 2)) 
-                       - floor(npixx / 2))
-                      / (2 * npixx)) 
-                     + 1);
-
-        yni = (int) ((((2 * Y0 - ceil(npixy / 2))
-                       - floor(npixy / 2))
-                      / (2 * npixy))
-                     + 1);
-
-        ntarget = xni * yni;
-
-        for (int i = 0; i < xni; i++) {
-            for (int j = 0; j < yni; j++) {
-                xn[i * yni + j] = (floor(npixx / 2) + 2 * npixx * i) - X0;
-                yn[i * yni + j] = (floor(npixy / 2) + 2 * npixy * j) - Y0;
-                fn[i * yni + j] = 1;
-            }
-        }
-    }
+    init {}
 }

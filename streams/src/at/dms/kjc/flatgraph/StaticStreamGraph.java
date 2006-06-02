@@ -68,7 +68,7 @@ public class StaticStreamGraph {
     private FlatNode bottomLevel;
 
     // set of all the flat nodes of this graph...
-    private LinkedList<FlatNode> flatNodes;
+    protected LinkedList<FlatNode> flatNodes;
 
     // used to construct a valid SIR graph
     private int splitterBalance;
@@ -710,24 +710,6 @@ public class StaticStreamGraph {
         }
     }
 
-    /** accept a stream graph visitor * */
-    public void accept(StreamGraphVisitor s, HashSet<StaticStreamGraph> visited, boolean newHash) {
-        if (newHash)
-            visited = new HashSet<StaticStreamGraph>();
-
-        if (visited.contains(this))
-            return;
-
-        visited.add(this);
-        s.visitStaticStreamGraph(this);
-
-        Iterator nextsIt = nextSSGs.iterator();
-        while (nextsIt.hasNext()) {
-            StaticStreamGraph ssg = (StaticStreamGraph) nextsIt.next();
-            ssg.accept(s, visited, false);
-        }
-    }
-
     /**
      * Called right after construction to set the rates of the endpoints of the
      * SSG (push = 0 for sink, peek = pop = 0 for source) and remember true
@@ -807,4 +789,23 @@ public class StaticStreamGraph {
                                                                         });
         return filters[0];
     }
+    
+    /** accept a stream graph visitor * */
+    public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) {
+        if (newHash)
+            visited = new HashSet();
+
+        if (visited.contains(this))
+            return;
+
+        visited.add(this);
+        s.visitStaticStreamGraph(this);
+
+        Iterator nextsIt = nextSSGs.iterator();
+        while (nextsIt.hasNext()) {
+            StaticStreamGraph ssg = (StaticStreamGraph) nextsIt.next();
+            ssg.accept(s, visited, false);
+        }
+    }
+
 }

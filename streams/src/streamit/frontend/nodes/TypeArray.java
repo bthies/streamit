@@ -22,7 +22,7 @@ package streamit.frontend.nodes;
  * but may contain variables if they can be resolved by constant propagation.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeArray.java,v 1.4 2006-03-16 21:16:51 madrake Exp $
+ * @version $Id: TypeArray.java,v 1.5 2006-06-03 15:18:23 rabbah Exp $
  */
 public class TypeArray extends Type
 {
@@ -42,6 +42,19 @@ public class TypeArray extends Type
     {
         return base;
     }
+
+    // RMR {
+    /** Returns the number of dimensions in this array */
+    public int getDims() { 
+        int count = 0;
+        Type dim = base;
+        while (dim instanceof TypeArray) {
+            dim = ((TypeArray) dim).getBase();
+            count++;
+        }
+        return count + 1;
+    }
+    // } RMR
 
     /** gets the component that this array is made out of */
     public Type getComponent() 

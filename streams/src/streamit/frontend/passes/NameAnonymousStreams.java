@@ -34,7 +34,7 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.7 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.8 2006-06-03 15:16:07 rabbah Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
@@ -93,7 +93,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         String specName = "AnonFilter_" +
             varGen.getPrefix() + varGen.nextVarNum();
         List formals = new java.util.ArrayList();
-        List params = new java.util.ArrayList();
+        List params  = new java.util.ArrayList();
         for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
             {
                 String name = (String)iter.next();
@@ -104,16 +104,22 @@ public class NameAnonymousStreams extends SymbolTableVisitor
                 Type formalType;
                 if (type instanceof TypeArray)
                     {
-                        String lengthName = "_len_" + name;
-                        params.add(((TypeArray)type).getLength());
-                        formals.add(new Parameter
-                                    (new TypePrimitive(TypePrimitive.TYPE_INT),
-                                     lengthName));
-                        // reset length of the array to reference the
+                        // RMR { process all array dims
+                        int dims = ((TypeArray)type).getDims();
+                        for (int d = 0; d < dims; d++) {
+                            String lengthName = genDimName(name, d);
+                            params.add(((TypeArray)type).getLength());
+                            formals.add(new Parameter
+                                        (new TypePrimitive(TypePrimitive.TYPE_INT),
+                                         lengthName));
+                            type = ((TypeArray)type).getBase();
+                        }
+
+                        // reset all dim lengths of the array to reference the
                         // parameter passed in, rather than the old length
-                        formalType = new TypeArray(((TypeArray)type).getBase(),
-                                                   new ExprVar(newSpec.getContext(), 
-                                                               lengthName));
+                        formalType = renameArrayLengths(getType(var), dims, 
+                                                        name, newSpec);
+                        // } RMR
                     } else {
                         formalType = getType(var);
                     }
@@ -137,4 +143,39 @@ public class NameAnonymousStreams extends SymbolTableVisitor
                             params,
                             Collections.EMPTY_LIST);
     }
+
+    // RMR { 
+    /**
+     * Construct a new type for the input <pre>array</pre> by 
+     * recursively visiting each of its dimensions (i.e., base)
+     * and respective renaming its lengths to references the new
+     * parameters passed to the stream constructor (as generated
+     * by genDimName()).
+     *
+     * @return array with renamed lengths for each dimension
+     */
+    private Type renameArrayLengths(Type array,  int dims, 
+                                    String name, StreamSpec spec)
+    {
+        assert array instanceof TypeArray;
+        String dimName = genDimName(name, ((TypeArray)array).getDims()-dims);
+
+        if (dims == 1) {
+            return new TypeArray(((TypeArray)array).getComponent(),
+                                 new ExprVar(spec.getContext(), dimName));
+        }
+        else {
+            return new TypeArray(renameArrayLengths(array, dims-1, name, spec),
+                                 new ExprVar(spec.getContext(), dimName));
+        }
+    }
+
+    /**
+     * Generate a new name for the array dimension length
+     */
+    private String genDimName(String name, int dim)
+    {
+        return "_len_" + "d" + dim + "_" + name;
+    }
+    // } RMR
 }

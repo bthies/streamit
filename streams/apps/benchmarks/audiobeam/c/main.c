@@ -550,7 +550,7 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
 
 
     if (output_fp != NULL) {
-        fprintf(output_fp,"; Sample Rate %d\t%s\n",SAMPLING_RATE,info_str);
+        //        fprintf(output_fp,"; Sample Rate %d\t%s\n",SAMPLING_RATE,info_str);
     }
 
 //    printf ("Max delay: %li\n",max_delay);
@@ -558,9 +558,19 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
     i = 0;
 //    while (fgets(line,MAX_LINE,fp)!=NULL) {
     
+    // RMR { prime the sample queue (fill in max_delay entries)
+    // so that the samples from low index and high index in beamforming()
+    // point to appropriate data
+    for (i = 0; i < delays->max_delay; i++) {
+        if (fgets(line,MAX_LINE,fp)!=NULL) {
+            parse_line(line, (queue->sample_queue)[queue->head], NUM_MIC);
+        } else { 
+            return(-1);
+        }
+        queue->head = wrapped_inc(queue->head, delays->max_delay);
+    }
+    // } RMR
 
-
-    
     // If window is <0, keep going until EOF
     for (i=0; (i<window) || (window<0) ; i++) {
 //    printf("blah2\n");

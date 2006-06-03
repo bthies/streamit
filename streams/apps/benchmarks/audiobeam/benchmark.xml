@@ -15,5 +15,6 @@
           While fixing: could author provide proper number of iterations
           to process standard input data file in iters attribute above.</desc>
     <file class="source">beamformer.str</file>
+    </impl>
   </implementations>
 </benchmark>

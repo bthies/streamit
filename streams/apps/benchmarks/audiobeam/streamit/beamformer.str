@@ -1,13 +1,99 @@
-void->void pipeline beamformer
-{
-    int     num_mics = 15;
-    boolean hamming  = false;
+static {
+    int     num_mics      = 15;
+    int     num_beams     = 1;
+    boolean hamming       = false;
     float   sound_speed   = 342;
     float   sampling_rate = 16000;
+
+    init {}
+}
+
+void->void pipeline beamformer
+{
+    add FileReader<float>("../data/str-data/data2.bin");
     
-    float[15][3] mic_locations;
-    float[3] source_location;
+    /*
+    add float->void filter { 
+        work pop num_mics { 
+            for (int i = 0; i < num_mics-1; i++) {
+                float val = pop();
+                print(" ");
+                print(val);
+            }
+            print(" ");
+            println(pop());
+        } 
+    }
+    */
+
+    add calculate_single_position();
     
+    add float->void filter {
+        float time_index = 0;
+        float time_index_increment = 1.0 / sampling_rate;
+        
+        work pop num_beams {
+            print(time_index);
+            
+            for (int i = 0; i < num_beams; i++) {
+                print(" ");
+                print(pop());
+            }
+            println("");
+            
+            time_index += time_index_increment;
+        }
+    }
+}
+
+
+// the  most basic  mode  is to  process  the microphone  data and  to
+// calculate  the output  based on  one beam  focused on  a particular
+// point in space
+float->float pipeline calculate_single_position()
+{
+    add process_signal();
+}
+
+
+// read in lines  of the signal and run  the beamforming algorithms on
+// it:  the main  idea is  that we  have a  circular queue  of samples
+// implemented via  an array  of max_delay+1 samples,  so that  we can
+// keep max_delay  previous samples and  the current sample;  once the
+// queue is "full", that is, we have max_delay+1 samples in it, we can
+// start outputting  beamformed results (delay each  microphone by the
+// appropriate amount by reading that amount into the future)
+float->float pipeline process_signal()
+{
+    add float->float splitjoin {
+        split duplicate;
+        
+        for (int beam = 0; beam < num_beams; beam++) {
+            add do_beamforming();
+        }
+        
+        join roundrobin;
+    }
+}
+
+
+// take in  a sample  and a  queue of previous  samples, and  output a
+// beamformed  one-channel  sample,  incorporating timing  information
+// from max_delay previous samples
+float->float pipeline do_beamforming()
+{
+    // NOTE: constant prop bug; not propping num_mics to array dims
+    // also not propping arrays properly
+    // once constant prop of globals is fixed, move all the following 
+    // to static {}
+    // static {
+    int _num_mics = num_mics;
+    float[_num_mics]    delays;
+    float[_num_mics]    weights;
+    
+    float[_num_mics][3] mic_locations;
+    float[3]            source_location;
+
     for (int i = 0; i < num_mics; i++) {
         mic_locations[i][0] = 1.5;
         mic_locations[i][1] = 2.79 + (i * 0.03);
@@ -18,70 +104,44 @@ void->void pipeline beamformer
     source_location[1] = 2.1677;
     source_location[2] = 1;
     
-    //  add FileReader<float>("/home/streamit/compiler-static/audiobeam/data/near-field/data2");
-    add FileReader<float>("../data/data2.binary");
-
-    //  add float->float filter { work pop 1 push 1 { float val = pop(); println(val); push(val); } } 
-
-    add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 
-                                  mic_locations, source_location);    
-}
-
-
-// the  most basic  mode  is to  process  the microphone  data and  to
-// calculate  the output  based on  one beam  focused on  a particular
-// point in space
-float->void pipeline calculate_single_position(int num_mics, boolean hamming,
-                                               float sound_speed, float sampling_rate,
-                                               float[15][3] mic_locations,
-                                               float[3] source_location)
-{
-    int   num_beams = 1;
-    
-    float[num_beams][15] delays;
-    int  [num_beams][15] delays_floor;
-    int  [num_beams][15] delays_ceil;
-    float[num_beams][15] delays_diff;
-    float[15] distances;
-    float[15] weights;
-    
+    // calculate microphone distances and delays
     float min_delay = 1e38;
-    float max_delay = 0;
-    int   index     = 0;
-    
-    for (int i = 0; i < num_mics; i++) {
-        distances[i] = sqrt(((mic_locations[i][0] - source_location[0]) *
-                             (mic_locations[i][0] - source_location[0])) + 
-                            ((mic_locations[i][1] - source_location[1]) * 
-                             (mic_locations[i][1] - source_location[1])) + 
-                            ((mic_locations[i][2] - source_location[2]) * 
-                             (mic_locations[i][2] - source_location[2])));
-	
-        delays[0][i] = (distances[i] / sound_speed) * sampling_rate;
+    float max_delayf = 0;
+    int   max_delay  = 0;
 
-        if (delays[0][i] < min_delay) {
-            min_delay = delays[0][i];
+    for (int i = 0; i < num_mics; i++) {
+        float distance = sqrt(((mic_locations[i][0] - source_location[0]) *
+                               (mic_locations[i][0] - source_location[0])) + 
+                              ((mic_locations[i][1] - source_location[1]) * 
+                               (mic_locations[i][1] - source_location[1])) + 
+                              ((mic_locations[i][2] - source_location[2]) * 
+                               (mic_locations[i][2] - source_location[2])));
+        
+        delays[i] = (distance / sound_speed) * sampling_rate;
+        
+        if (delays[i] < min_delay) {
+            min_delay = delays[i];
         }
     }
     
     min_delay = floor(min_delay) - 1;
     
+    // adjust delays
     for (int i = 0; i < num_mics; i++) {
-        delays[0][i] -= min_delay;
-        delays_floor[0][i] = (int) floor(delays[0][i]);
-        delays_ceil [0][i] = (int) ceil (delays[0][i]);
-        delays_diff [0][i] = delays[0][i] - delays_floor[0][i];
-
-        if (delays[0][i] > max_delay) {
-            max_delay = delays[0][i];
+        delays[i] -= min_delay;
+        
+        if (delays[i] > max_delay) {
+            max_delayf = delays[i];
         }
-    
+        
         weights[i] = 1;
     }
 
-    max_delay = ceil(max_delay);
-	  
+    max_delay = (int) ceil(max_delayf);
+
     if (hamming) {
+        int index = 0;
+        
         if ((num_mics % 2) == 1) {
             int half = num_mics / 2;
             for (int y = -half; y <= half; y++) {
@@ -97,139 +157,57 @@ float->void pipeline calculate_single_position(int num_mics, boolean hamming,
             }
         }
     }
+    // } static
 
-    add process_signal(num_mics, num_beams, (int) max_delay, delays_floor, delays_diff, weights);
-
-    add float->void filter {
-        float time_index, time_index_increment;
-
-        init {
-            time_index = 0;
-            time_index_increment = 1.0 / sampling_rate;
-        }
-	  
-        work pop 1 {
-            println(time_index);
-            println(pop());
-            time_index += time_index_increment;
-        }
-    }
-}
-
-
-// read in lines  of the signal and run  the beamforming algorithms on
-// it:  the main  idea is  that we  have a  circular queue  of samples
-// implemented via  an array  of max_delay+1 samples,  so that  we can
-// keep max_delay  previous samples and  the current sample;  once the
-// queue is "full", that is, we have max_delay+1 samples in it, we can
-// start outputting  beamformed results (delay each  microphone by the
-// appropriate amount by reading that amount into the future)
-float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
-                                     int  [num_beams][15] delays_floor,
-                                     float[num_beams][15] delays_diff,
-                                     float[15] weights)
-{
-    add distribute_samples(num_mics, num_beams, max_delay, delays_floor, weights);
-  
     add float->float splitjoin {
-        split roundrobin(2 * num_mics);
-    
-        for (int beam = 0; beam < num_beams; beam++) {
-            add do_beamforming(num_mics, num_beams, beam, delays_diff, weights);
-        }
-	  
-        join roundrobin;
-    }
-}
-
-
-float->float filter distribute_samples(int num_mics, int num_beams, int max_delay,
-                                       int  [num_beams][15] delays_floor,
-                                       float[15] weights)
-{
-    int   queue_head;
-    float[max_delay + 1][15] sample_queue;
-    
-    init {
-        queue_head = 1;
-	
-        for (int beam = 0; beam < num_beams; beam++) {
-            for (int mic = 0; mic < num_mics; mic++) {
-                sample_queue[beam][mic] = 0;
-            }
-        }
-    }
-    
-    work pop num_mics push (2 * num_beams * num_mics) {
-        int   low_index;
-        int   high_index;
-	
-        for (int mic = 0; mic < num_mics; mic++) {
-            sample_queue[queue_head-1][mic] = pop();
-        }
-	
-        for (int beam = 0; beam < num_beams; beam++) {
-            for (int mic = 0; mic < num_mics; mic++) {
-                int delay_floor = delays_floor[beam][mic];
-		  
-                // low index gets index of sample right before desired sample
-                low_index = queue_head + delay_floor;
-                if (low_index > max_delay) {
-                    low_index -= (max_delay + 1);
-                }
-		  
-                // high index gets index of sample right after desired sample
-                high_index = queue_head + delay_floor + 1;
-                if (high_index > max_delay) {
-                    high_index -= (max_delay + 1);
-                }
-
-                push(sample_queue[low_index][mic]);
-                push(sample_queue[high_index][mic]);
-            }
-        }
-
-        queue_head = queue_head + 1;
-        if (queue_head > max_delay) {
-            queue_head = queue_head - max_delay;
-        }
-    }
-}
-
-
-// take in  a sample  and a  queue of previous  samples, and  output a
-// beamformed  one-channel  sample,  incorporating timing  information
-// from max_delay previous samples
-float->float pipeline do_beamforming(int num_mics, int num_beams, int beam, 
-                                     float[num_beams][15] delays_diff, 
-                                     float[15] weights)
-{
-    add float->float splitjoin {
-        split roundrobin(2);
+        split roundrobin(1);
 	  
         for (int mic = 0; mic < num_mics; mic++) {
             add float->float filter {
-                work pop 2 push 1{
-                    float low_sample  = pop();
-                    float high_sample = pop();
-                    float delay       = delays_diff[beam][mic];
-                    float value       = (((high_sample - low_sample) * delay) + low_sample);
+                int   delay_floor;
+                int   delay_ceil;
+                float delay_offset;
+                int   low_index;
+                int   high_index;
+
+                init {
+                    delay_floor  = (int) floor(delays[mic]);
+                    delay_ceil   = (int) ceil (delays[mic]);
+                    delay_offset = delays[mic] - delay_floor;
+
+                    low_index    = delay_floor % (max_delay + 1);
+                    high_index   = delay_ceil  % (max_delay + 1);
+                }
+
+                work peek max_delay+1 pop 1 push 1 {
+                    // Interpolate between two sample values to avoid quantization
+                    // error. The idea is that we have a fractional delay, but obviously
+                    // since the signal is sampled, we can only get real values for the
+                    // signal at whole delay values. So, we can use linear approximation
+                    // to estimate what the value of the signal would have been at the
+                    // fractional delay.
+                    float high_sample = peek(high_index);
+                    float low_sample  = peek(low_index);
+                    float value       = (((high_sample - low_sample) * delay_offset) + low_sample);
 
                     push(value * weights[mic]);
+                    pop();
                 }
             }
         }
 	  
-        join roundrobin;
+        join roundrobin(1);
     }
     
     add float->float filter {
         work pop num_mics push 1 {
             float sum = 0;
+
             for (int i = 0; i < num_mics; i++) {
                 float val = pop();
                 sum += val;
             }
+
             push(sum / (float) num_mics);
         }
     }

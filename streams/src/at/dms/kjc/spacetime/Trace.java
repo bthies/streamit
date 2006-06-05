@@ -121,6 +121,15 @@ public class Trace {
         return tail;
     }
 
+    /**
+     * Return a brief string description of this slice.
+     * 
+     * @return a brief string description of this slice.
+     */
+    public String getIdent() {
+        return head.toString() + tail.toString();
+    }
+    
     public String toString() {
         return "Trace: " + head + "->" + head.getNext() + "->...";
     }

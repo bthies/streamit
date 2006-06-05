@@ -37,13 +37,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private static final int BIG_WORKER_COMM_LATENCY_WEIGHT = 100;
     
     private static final int ILLEGAL_COST = 1000000;
-    /** the cost of outputing one item using the gdn versus using the static net
-     for the final filter of a Trace */
-    private static final int GDN_PUSH_COST = 2;
-    /** the cost of issue a read or a write dram command on the tiles assigned 
-     * to trace enpoints for each trace.
-     */
-    private static final int DRAM_ISSUE_COST = 5;
+  
     /** the rawchip we are compiling to */
     private RawChip rawChip;
     /** the space time schedule object, with different schedules */
@@ -414,9 +408,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         
         
         //int wastedWork = Util.sum(tileCosts) - totalWork;
-        
-        
-        
+       
         //cost += (double)wastedWork * 0.15; 
             
         /*
@@ -654,112 +646,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return An array that contains the amount of work indexed by tile number.
      */
     private int[] getTileWorks(boolean bias) {
-        int[] tileCosts = new int[rawChip.getTotalTiles()];
-        Iterator traces = scheduleOrder.iterator();
+        ScheduleModel model = new ScheduleModel(spaceTime, this, 
+                scheduleOrder);
         
-        while (traces.hasNext()) {
-            Trace trace = (Trace)traces.next();
-             
-            //don't do anything for predefined filters...
-            if (trace.getHead().getNextFilter().isPredefined()) 
-                continue;
-            //find the bottleneck filter based on the filter work estimates
-            //and the tile avail for each filter
-            FilterTraceNode bottleNeck = null;
-            int maxAvail = -1;
-            int prevStart = 0;
-            int bottleNeckStart = 0;
-            
-            assert trace.getFilterNodes().length == 
-                trace.getNumFilters();
-            
-         //   System.out.println("Scheduling: " + trace);
-            
-            
-         //   System.out.println("Finding bottleNeck: ");
-            for (int f = 0; f < trace.getFilterNodes().length; f++) {
-                FilterTraceNode current = trace.getFilterNodes()[f];
-                
-                RawTile tile = getTile(current);
-                int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
-                        prevStart + partitioner.getFilterStartupCost(current));
-                int tileAvail = partitioner.getFilterWorkSteadyMult(current) +
-                   currentStart;
-                //System.out.println("Trying " + current + " start: " + currentStart +
-                 //       " end: " + tileAvail);
-                //System.out.println("Checking start of " + current + " on " + tile + 
-                //        "start: " + currentStart + ", tile avail: " + tileAvail);
-                if (tileAvail > maxAvail) {
-                    maxAvail = tileAvail;
-                    bottleNeck = current;
-                    bottleNeckStart = currentStart;
-                }
-                prevStart = currentStart;
-            }
-                
-            assert bottleNeck != null : "Could not find bottleneck for " + trace ;
-                
-            RawTile bottleNeckTile = getTile(bottleNeck);
-            
-            //System.out.println("Found bottleneck: " + bottleNeck + " " + bottleNeckTile);
-            
-            if (bottleNeck.getPrevious().isInputTrace()) {
-                tileCosts[bottleNeckTile.getTileNumber()]+= DRAM_ISSUE_COST;
-            }
-            if (bottleNeck.getNext().isOutputTrace()) {
-                //account for the
-                //cost of sending an item over the gdn if it uses it...
-                if (LogicalDramTileMapping.mustUseGdn(bottleNeckTile)) {
-                    tileCosts[bottleNeckTile.getTileNumber()] += (bottleNeck.getFilter().getPushInt() * 
-                            bottleNeck.getFilter().getSteadyMult() * 
-                            GDN_PUSH_COST);
-                }
-            }
-            
-           
-            
-            //calculate when the bottle neck tile will finish, 
-            //and base everything off of that, traversing backward and 
-            //foward in the trace
-            tileCosts[bottleNeckTile.getTileNumber()] = 
-                (bottleNeckStart +
-                partitioner.getFilterWorkSteadyMult(bottleNeck));
-            
-            //System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
-             //       tileCosts[bottleNeckTile.getTileNumber()]);
-            
-            int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
-            int next1Iter = partitioner.getWorkEstOneFiring(bottleNeck);
-            TraceNode current = bottleNeck.getPrevious();
-
-            //traverse backwards and set the finish times of the traces...
-            while (current.isFilterTrace()) {
-                RawTile tile = getTile(current.getAsFilter());
-                tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
-                //get ready for next iteration
-                //System.out.println("Setting " + tile + " " + current + " to " + 
-                //        tileCosts[tile.getTileNumber()]);
-                
-                nextFinish = tileCosts[tile.getTileNumber()];
-                next1Iter = partitioner.getWorkEstOneFiring(current.getAsFilter());
-                current = current.getPrevious();
-            }
-            
-            //traverse forwards and set the finish times of the traces
-            current = bottleNeck.getNext();
-            int prevFinish = tileCosts[bottleNeckTile.getTileNumber()];
-            
-            while (current.isFilterTrace()) {
-                RawTile tile = getTile(current.getAsFilter());
-                tileCosts[tile.getTileNumber()] = 
-                    (prevFinish + partitioner.getWorkEstOneFiring(current.getAsFilter()));
-                //System.out.println("Setting " + tile + " " + current + " to " + 
-                //        tileCosts[tile.getTileNumber()]);
-                prevFinish = tileCosts[tile.getTileNumber()];
-                current = current.getNext();
-            }
-        }
- 
+        model.createModel();
+        
+        int[] tileCosts = model.getTileCosts();
         
         if (bias)
             return biasCosts(tileCosts);
@@ -841,7 +733,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             //account for the cost of issuing its load dram commands 
             RawTile inputTile = 
                 (RawTile)assignment.get(trace.getHead().getNextFilter());
-            tileCosts[inputTile.getTileNumber()]+= DRAM_ISSUE_COST;
+            tileCosts[inputTile.getTileNumber()]+= ScheduleModel.DRAM_ISSUE_COST;
                         
             //account for the
             //cost of sending an item over the gdn if it uses it...
@@ -850,11 +742,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             if (LogicalDramTileMapping.mustUseGdn(outputTile)) {
                 tileCosts[outputTile.getTileNumber()] += (node.getFilter().getPushInt() * 
                         node.getFilter().getSteadyMult() * 
-                        GDN_PUSH_COST);
+                        ScheduleModel.GDN_PUSH_COST);
             }
             
             //account for the cost of issuing its store dram command
-            tileCosts[outputTile.getTileNumber()]+= DRAM_ISSUE_COST;
+            tileCosts[outputTile.getTileNumber()]+= ScheduleModel.DRAM_ISSUE_COST;
         }
          
         return tileCosts;

@@ -63,6 +63,21 @@ public class SpaceTimeSchedule {
     }
 
     /**
+     * Return a linked list representation of the
+     * steady state schedule;
+     * 
+     * @return a linked list representation of the
+     * steady state schedule;
+     */
+    public LinkedList<Trace> getScheduleList() {
+        LinkedList<Trace> list = new LinkedList<Trace>();
+        for (int i = 0; i < schedule.length; i++)
+            list.add(schedule[i]);
+        
+        return list;
+    }
+    
+    /**
      * @return Returns the steady state schedule.
      */
     public Trace[] getSchedule() {

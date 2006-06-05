@@ -236,7 +236,21 @@ fn install_event_handlers() {
   //install any devices that need to be installed
   //register the workcount event
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
-  // EventManager_RegisterHandler("clock", "__check_deadlock");
+  EventManager_RegisterHandler
+    ("static_network_transfer", "__record_static_transfer");
+  EventManager_RegisterHandler("clock", "__check_deadlock");
+}
+
+//for deadlock detection, record that we have transfered a 
+//word over the static network and we are not deadlocked
+fn __record_static_transfer(hms) {
+  local time_hi, time_lo;
+  local proc = Machine_GetProc(machine, 0);
+  
+  //get the cycle
+  Proc_GetCycleCounter(proc, &time_hi, &time_lo);
+  //reset the last useful cycle
+  gLastInsCycle = time_lo;
 }
 
 fn __check_deadlock(hms) {
@@ -261,7 +275,7 @@ fn __event_instr_count(hms)
 //  local lWorkCount = gWorkCount;
   local tileNumber = Proc_GetTileNumber(hms.theProc);
   local time_hi, time_lo;
-  
+
   //get the cycle
   Proc_GetCycleCounter(hms.theProc, &time_hi, &time_lo);
   

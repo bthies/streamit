@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: PositionedError.java,v 1.2 2006-01-25 17:00:41 thies Exp $
+ * $Id: PositionedError.java,v 1.3 2006-06-06 14:44:28 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -108,7 +108,10 @@ public class PositionedError extends FormattedException {
      * Returns the string explaining the error.
      */
     public String getMessage() {
-        return where.getFile() + ":" + where.getLine() + ": " + super.getMessage();
+        if (where != null) {
+            return where.getFile() + ":" + where.getLine() + ": " + super.getMessage();
+        }
+        return super.getMessage();
     }
 
     // ----------------------------------------------------------------------

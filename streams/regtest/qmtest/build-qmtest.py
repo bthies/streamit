@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.15 2006-06-02 16:11:28 dimock Exp $
+# $Id: build-qmtest.py,v 1.16 2006-06-07 00:08:54 dimock Exp $
 #
 
 import os
@@ -132,7 +132,7 @@ def DoQMTestDir(path, control):
         # get compiletime and runtime if present
         compile_time = impl.getAttribute('compile_time')
         run_time = impl.getAttribute('run_time')
-        iters = impl.getAttribute('iterations')
+        iters = impl.getAttribute('iters')
         
         # if regtest is looking for markers for a certain subset of benchmarks
         # and if this benchmark has 'whichtype' markers, and there is no
@@ -148,7 +148,7 @@ def DoQMTestDir(path, control):
                     twhichtypes.append(tnode.data)
             twhichtypes.sort()
 
-            if (len(twhichtypes > 0)
+            if ((len(twhichtypes) > 0)
                 and EmptyIntersectionOfSorted(whichtypes, twhichtypes)):
                 continue
 
@@ -214,12 +214,12 @@ def EmptyIntersectionOfSorted(sorted1, sorted2):
     while (i1 < n1 and i2 < n2):
         c = cmp(sorted1[i1],sorted2[i2])
         if (c == 0):
-            return false
+            return 0
         elif (c < 0):
             i1 = i1 + 1
         else:
             i2 = i2 + 1
-    return true
+    return 1
 
 def DirToQMDir(path):
     """Convert a source-tree path to a QMTest path.
@@ -282,8 +282,9 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_ti
         # Start by copying all of the files over.
         for l in fileset.itervalues():
             for fn in l:
-                src = os.path.join(srcdir, fn)
-                dst = os.path.join(testdir, fn)
+                src = os.path.normpath(os.path.join(srcdir, \
+                                                    os.path.expandvars(fn)))
+                dst = os.path.join(testdir, os.path.basename(fn))
                 try:
                     shutil.copyfile(src, dst)
                 except:
@@ -343,7 +344,7 @@ def GetCompileDOM(target, fileset, extras):
     set = doc.createElement('set')
     argument.appendChild(set)
     for fn in fileset['source']:
-        CreateTextElement(doc, set, 'text', fn)
+        CreateTextElement(doc, set, 'text', os.path.basename(fn))
 
     if extras['compile_time']:
         argument = doc.createElement('argument')

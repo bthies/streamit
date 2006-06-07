@@ -23,13 +23,13 @@ the raw back end does not currently suport printing strings.
             After testing would want to look at output.jpg.int
 	    For some reason, this is included in release testing, but not in
 	    the nightly regression test.</desc>
-      <make>Makefile output.jpg</make>
+      <make>Makefile input.jpg.int</make>
       <file>Transcoder.str</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="jpegtobmp" iters="2">
       <whichtype>releasetest</whichtype>
       <desc>StreamIt version of JPEG decoder to .bmp</desc>
-      <make>Makefile output.jpg</make>
+      <make>Makefile input.jpg.int</make>
       <file>JPEGtoBMP.str</file>
     </impl>
   </implementations>

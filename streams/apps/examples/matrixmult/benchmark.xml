@@ -11,7 +11,7 @@ result matrix.
     <impl lang="C">
       <file>matrix.c</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" compile_time="2400">
       <file class="source">MatrixMult.str</file>
       <file class="output">MatrixMult.out</file>
     </impl>

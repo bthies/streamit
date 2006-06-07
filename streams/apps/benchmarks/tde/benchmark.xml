@@ -15,11 +15,11 @@ phase that has been parallelized in such a way as to accept its data.
 tde_pp.str canonicalizes the order of the output data.
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" id="tde">
+    <impl lang="StreamIt" dir="streamit" id="tde" compile_time="3600" run_time="2400">
       <file>tde.str</file>
       <desc>The data-parallel versin of tde described above.</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit" id="tde-pp">
+    <impl lang="StreamIt" dir="streamit" id="tde-pp" compile_time="3600" run_time="2400">
       <file>tde_pp.str</file>
       <desc>The pipeline-parallel version of tde described above.</desc>
     </impl>

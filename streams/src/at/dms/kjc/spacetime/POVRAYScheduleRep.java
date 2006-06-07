@@ -104,10 +104,17 @@ public class POVRAYScheduleRep {
             RawTile tile = layout.getTile(filter);
             int lowerLeftX = getLowerLeftX(tile);
             int lowerLeftY = getLowerLeftY(tile); 
-            double lowerLeftZ = (double)scheduleModel.getFilterStart(filter) *
-                heightScale;
+            /* double lowerLeftZ = (double)scheduleModel.getFilterStart(filter) *
+                heightScale; */
             double upperLeftZ = (double)scheduleModel.getFilterEnd(filter) *
                 heightScale;
+            double lowerLeftZ =  
+                (double)(scheduleModel.getFilterEnd(filter) - 
+                        spaceTime.partitioner.getFilterWorkSteadyMult(filter));
+            
+            assert lowerLeftZ >= scheduleModel.getFilterStart(filter);
+            
+            lowerLeftZ *= heightScale;
             
             fw.write("box {\n");
             //create the coordinates of box in the following form:
@@ -174,10 +181,11 @@ public class POVRAYScheduleRep {
         fw.write("         }\n");
         fw.write("\n");
         fw.write("camera {\n");
-        fw.write("   location <-2.0, 3.5,-8.5>\n");
+        fw.write("   location <-2.0, 5.5,-8.5>\n");
         fw.write("   up y  right x*image_width/image_height\n");
         fw.write("   angle 45\n");
         fw.write("   look_at <0.0, 0.7, 0.0>\n");
+        fw.write("   rotate   <0,-360*(clock+0.10),0>\n");
         fw.write("}\n");
         fw.write("\n");
         fw.write("light_source {<-150, 200,-100>, color 1.2 * <1.0, 1.0, 0.6>} // yellowish light from the left\n");

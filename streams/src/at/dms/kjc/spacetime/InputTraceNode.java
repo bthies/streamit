@@ -68,6 +68,17 @@ public class InputTraceNode extends TraceNode {
         return ident;
     }
 
+    /**
+     * Return the number of inputs to this join.
+     * 
+     * @return The width of the join.
+     */
+    public int getWidth() {
+        assert weights.length == sources.length;
+        
+        return weights.length;
+    }
+    
     public int[] getWeights() {
         return weights;
     }
@@ -76,6 +87,15 @@ public class InputTraceNode extends TraceNode {
         return sources;
     }
 
+    /**
+     * Set the weights to newWeights.
+     * 
+     * @param newWeights The new weights array.
+     */
+    public void setWeights(int[] newWeights) {
+        this.weights = newWeights;
+    }
+    
     public void setSources(Edge[] sources) {
         this.sources = sources;
     }

@@ -180,8 +180,8 @@ public class SpaceTimeBackend {
             System.out.println(topNodes[i]);
 
         Trace[] traces = null;
-        Trace[] traceGraph = null; // used if REAL
-
+        Trace[] traceGraph = null; 
+        
         // get the work estimation
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         SimplePartitioner partitioner = new SimplePartitioner(topNodes,
@@ -190,6 +190,10 @@ public class SpaceTimeBackend {
         System.out.println("UnPrunnedTraces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
 
+        //We have to create multilevel splits and/or joins if their width
+        //is greater than the number of memories of the chip...
+        
+        
         /*
          * System.gc(); System.out.println("MEM:
          * "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));

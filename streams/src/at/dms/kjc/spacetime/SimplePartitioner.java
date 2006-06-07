@@ -33,7 +33,7 @@ public class SimplePartitioner extends Partitioner {
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
                              LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
         super(topFilters, exeCounts, lfa, work, rawChip);
-        workEstimation = new HashMap();
+        workEstimation = new HashMap<FilterContent, Integer>();
         TRASHOLD = (double)KjcOptions.slicethresh / (double)100.0;
     }
 

@@ -50,7 +50,7 @@ public class Trace {
     }
 
     /**
-     * Finishes creating Trace
+     * Finishes creating Trace.
      *  
      * @return The number of FilterTraceNodes.
      */

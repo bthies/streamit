@@ -18,7 +18,7 @@ import at.dms.kjc.KjcOptions;
  */
 public abstract class Partitioner {
     // Trace->Integer for bottleNeck work estimation
-    protected HashMap traceBNWork;
+    protected HashMap<Trace, Integer> traceBNWork;
 
     /** The startup cost of a filter when starting a slice */
     protected HashMap filterStartupCost;
@@ -42,12 +42,12 @@ public abstract class Partitioner {
     /** This hashmap maps a Trace to the FilterTraceNode that
      * has the most work;
      */ 
-    protected HashMap bottleNeckFilter;
+    protected HashMap<Trace, FilterTraceNode> bottleNeckFilter;
     
     public Trace[] io;
 
     // filtercontent -> work estimation
-    protected HashMap workEstimation;
+    protected HashMap<FilterContent, Integer> workEstimation;
 
     protected int steadyMult;
     
@@ -59,10 +59,10 @@ public abstract class Partitioner {
         this.lfa = lfa;
         this.work = work;
         topTraces = new Trace[topFilters.length];
-        traceBNWork = new HashMap();
+        traceBNWork = new HashMap<Trace, Integer>();
         steadyMult = KjcOptions.steadymult;
         filterStartupCost = new HashMap();
-        bottleNeckFilter = new HashMap();
+        bottleNeckFilter = new HashMap<Trace, FilterTraceNode>();
     }
 
     /**
@@ -91,6 +91,79 @@ public abstract class Partitioner {
         return traceGraph;
     }
 
+    /**
+     * Set the trace graph to traces.
+     * 
+     * @param traces The trace list to install as the new trace graph.
+     */
+    private void setTraceGraph(Trace[] traces) {
+        traceGraph = traces;
+        
+        //perform some checks on the trace graph...
+        for (int i = 0; i < traces.length; i++) {
+            assert traceBNWork.containsKey(traces[i]);
+            assert bottleNeckFilter.containsKey(traces[i]);
+            for (int j = 0; j < traces[i].getFilterNodes().length; j++) {
+                assert workEstimation.containsKey(traces[i].getFilterNodes()[j]);
+                
+            }
+        }
+    }
+    
+    /**
+     * Does the the trace graph contain trace (perform a simple linear
+     * search).
+     * 
+     * @param trace The trace to query.
+     * 
+     * @return True if the trace graph contains trace.
+     */
+    public boolean containsTrace(Trace trace) {
+        for (int i = 0; i < traceGraph.length; i++) 
+            if (traceGraph[i] == trace)
+                return true;
+        return false;
+    }
+    
+    /**
+     * Set the trace graph to traces, where the only difference between the 
+     * previous trace graph and the new trace graph is the addition of identity
+     * traces (meaning traces with only an identities filter), used for 
+     * reducing the width of splits and joins.
+     *  
+     * @param traces The new trace graph.
+     */
+    public void setTraceGraphNewIds(Trace[] traces) {
+        //add the new filters to the necessary structures...
+        for (int i = 0; i < traces.length; i++) {
+            if (!containsTrace(traces[i])) {
+                assert traces[i].getFilterNodes().length == 1;
+                assert traces[i].getFilterNodes()[0].isPredefined();
+                
+                if (!workEstimation.containsKey(traces[i].getFilterNodes()[0])) {
+                    //for a work estimation of an identity filter
+                    //multiple the estimated cost of on item by the number
+                    //of items that passes through it (determined by the schedule mult).
+                    workEstimation.put(traces[i].getFilterNodes()[0].getFilter(), 
+                            MultiLevelSplitsJoins.IDENTITY_WORK *
+                            traces[i].getFilterNodes()[0].getFilter().getSteadyMult());
+                }
+                
+                //remember that that the only filter, the id, is the bottleneck..
+                if (!traceBNWork.containsKey(traces[i])) {
+                    traceBNWork.put(traces[i], 
+                            workEstimation.get(traces[i].getFilterNodes()[0].getFilter()));;
+                }
+                if (!bottleNeckFilter.containsKey(traces[i])) {
+                    bottleNeckFilter.put(traces[i], traces[i].getFilterNodes()[0]);
+                }
+                
+            }
+        }
+        //now set the new trace graph...
+        setTraceGraph(traces);
+    }
+    
     /**
      * @param node The Filter 
      * @return The work estimation for the filter trace node for one steady-state

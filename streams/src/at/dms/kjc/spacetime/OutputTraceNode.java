@@ -86,6 +86,22 @@ public class OutputTraceNode extends TraceNode {
     }
 
     /**
+     * Return the width of this splitter meaning the number
+     * of connections it has to downstream traces, including 
+     * all the edges of a duplicated item.
+     * 
+     * @return The width of this splitter.
+     */
+    public int getWidth() {
+        int width = 0;
+        for (int i = 0; i < dests.length; i++) {
+            width += dests[i].length;
+        }
+        return width;
+    }
+    
+    
+    /**
      * return the number of items sent to this inputtracenode for on iteration
      * of the weights..
      */

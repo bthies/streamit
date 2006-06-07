@@ -10,7 +10,7 @@
       <file>main.c</file>
       <desc>Hand-coded C version.</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit" regtest="skip" iters="100">
+    <impl lang="StreamIt" dir="streamit" iters="100">
     <desc>Does not compile: Front end finds unrecognized variable name.
           While fixing: could author provide proper number of iterations
           to process standard input data file in iters attribute above.</desc>

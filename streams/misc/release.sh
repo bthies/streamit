@@ -2,12 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.49 2006-06-01 14:56:09 dimock Exp $
+# $Id: release.sh,v 1.50 2006-06-09 20:26:23 dimock Exp $
 #
 
-# foe script debugging: -v print line in script, -x print expanded line
-#set -v
-#set -x
+# for script debugging: -v print line in script, -x print expanded line
+set -v
+set -x
 
 # Interesting/configurable variables:
 
@@ -114,6 +114,8 @@ rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/gsm
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
+# still in debugging
+rm -rf $WORKING/streams/apps/benchmarks/sar
 # no streamit code being built currently:
 rm -rf $WORKING/streams/apps/benchmarks/serpent
 rm -rf $WORKING/streams/apps/benchmarks/viram
@@ -125,7 +127,7 @@ rm -rf $WORKING/streams/apps/benchmarks/micro04
 rm -rf $WORKING/streams/apps/benchmarks/traces
 rm -rf $WORKING/streams/apps/benchmarks/asplos06
 # JPEGtoBMP was not working at time of release
-rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
+#rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
 # this is only relevant for spacedynamic backend, so don't release
 rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
 
@@ -164,30 +166,34 @@ rm -rf $WORKING/streams/apps/applications/raytracer
 rm -rf $WORKING/streams/apps/applications/raytracer-new
 rm -rf $WORKING/streams/apps/applications/reed-solomon
 rm -rf $WORKING/streams/apps/applications/video
-
+# GMTI: remove internal-only README file, remove internal-only generator of 
+# intermediate results for use with GMTI_Fragment testing.
+rm -rf $WORKING/streams/apps/applications/GMTI/README
+rm -rf $WORKING/streams/apps/applications/GMTI/Tester_Intermediate_Results.str
 # don't release some C++ software radio thing (?)
 rm -rf $WORKING/streams/apps/libraries/SoftRadio
 
 # Some parts of the compiler aren't useful to release; trim those here.
 #rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
-rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
+#rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 #rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
 
-# la la la
+# A release does not need to build a release
 rm -rf $WORKING/streams/misc/release.sh
 
 # remove PCA machine model
 rm -rf $WORKING/streams/misc/raw/pca-mm
+rm -rf $WORKING/streams/misc/raw/darpa
 
 # Some parts of the language notes we don't want to be visible
-rm -f $WORKING/streams/docs/syntax/02-04-24-additions
-rm -f $WORKING/streams/docs/syntax/02-08-additions
-rm -f $WORKING/streams/docs/syntax/messaging.tex
+#rm -f $WORKING/streams/docs/syntax/02-04-24-additions
+#rm -f $WORKING/streams/docs/syntax/02-08-additions
+#rm -f $WORKING/streams/docs/syntax/messaging.tex
 rm -f $WORKING/streams/docs/implementation-notes/assumptions
 rm -f $WORKING/streams/docs/implementation-notes/immutable-ir.txt
 rm -f $WORKING/streams/docs/implementation-notes/low-ir.txt
@@ -211,6 +217,9 @@ for f in INSTALL NEWS OPTIONS README; do
 done
 $WORKING/streams/misc/build-bench-doc
 rm $WORKING/streams/apps/benchall.xml
+
+# clean up misc, scripts
+
 
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.

@@ -17,8 +17,10 @@ void read_setup::read_setup_file() {
 
     if (f == NULL) return;
 
+#ifdef VERBOSE
     fprintf(stderr,"Reading cluster setup file...\n");
-    
+#endif
+
     for (;;) {
 
       line[0] = 0;
@@ -30,15 +32,18 @@ void read_setup::read_setup_file() {
       if (strcmp(arg1, "frequency_of_checkpoints") == 0) {
 	sscanf(line, "%s %d", arg1, &i);
 
+#ifdef VERBOSE
 	fprintf(stderr,"frequency of checkpoints: %d\n", i);
+#endif
 	freq_of_chkpts = i;
-
       }
 
       if (strcmp(arg1, "outbound_data_buffer") == 0) {
 	sscanf(line, "%s %d", arg1, &i);
 
+#ifdef VERBOSE
 	fprintf(stderr,"outbound data buffer: %d\n", i);
+#endif
 	out_data_buffer = i;
 
       }
@@ -46,7 +51,9 @@ void read_setup::read_setup_file() {
       if (strcmp(arg1, "number_of_iterations") == 0) {
 	sscanf(line, "%s %d", arg1, &i);
 
+#ifdef VERBOSE
 	fprintf(stderr,"number of iterations: %d\n", i);
+#endif
 	max_iteration = i;
 
       }

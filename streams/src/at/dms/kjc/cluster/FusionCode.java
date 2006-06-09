@@ -504,12 +504,16 @@ class FusionCode {
         p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n");
         p.print("      int tmp;\n");
         p.print("      sscanf(argv[a + 1], \"%d\", &tmp);\n");
+        p.println("#ifdef VERBOSE");
         p.print("      fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);\n");
+        p.println("#endif");
         p.print("      __max_iteration = tmp;\n");
         p.print("    }\n");
 
         p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
+        p.println("#ifdef VERBOSE");
         p.print("       fprintf(stderr,\"Timer enabled.\\n\");\n"); 
+        p.println("#endif");
         p.print("       __timer_enabled = 1;"); 
         p.print("    }\n");
 
@@ -519,12 +523,16 @@ class FusionCode {
 // feature has been turned off since muck more likely to be a pessimization
 // than an optimization
 //        p.print("  if ("+implicit_mult+" > 1) {\n");
+//        p.println("#ifdef VERBOSE");
 //        p.print("    fprintf(stderr,\"Implicit multiplicity: "+implicit_mult+"\\n\");\n");
+//        p.println("#endif");
 //        p.print("    int tmp;\n");
 //        p.print("    tmp = __max_iteration / "+implicit_mult+";\n");
 //        p.print("    if (__max_iteration % "+implicit_mult+" > 0) tmp++;\n");
 //        p.print("    __max_iteration = tmp;\n");
+//        p.println("#ifdef VERBOSE");
 //        p.print("    fprintf(stderr,\"Number of Iterations: %d (%d)\\n\", __max_iteration, __max_iteration * "+implicit_mult+");\n");
+//        p.println("#endif");
 //        p.print("  }\n");
 
         /*
@@ -637,8 +645,9 @@ class FusionCode {
         p.newLine();
         p.print("  // ============= Steady State =============\n");
         p.newLine();
-        p.print("  tt.start();\n");
-
+        p.println("  if (__timer_enabled) {");
+        p.println("    tt.start();");
+        p.println("  }");
         p.print("  for (int n = 0; n < (__max_iteration / __MULT); n++) {\n");
 
         for (int ph = 0; ph < n_phases; ph++) {
@@ -660,9 +669,9 @@ class FusionCode {
                     }
                 }
 
-                Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
-                int init_int = 0;
-                if (init != null) init_int = (init).intValue();
+//                Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
+//                int init_int = 0;
+//                if (init != null) init_int = (init).intValue();
 
                 Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
                 int steady_int = 0;
@@ -736,9 +745,9 @@ class FusionCode {
                     }
                 }
                 
-                Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
-                int init_int = 0;
-                if (init != null) init_int = (init).intValue();
+//                Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
+//                int init_int = 0;
+//                if (init != null) init_int = (init).intValue();
 
                 Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
                 int steady_int = 0;
@@ -819,10 +828,13 @@ class FusionCode {
 
         p.indent();
 
-        p.println("tt.stop();");
-        p.println("tt.output(stderr);");
-
-        // print timer summary
+        // print -t timer summary.
+        p.println("if (__timer_enabled) {");
+        p.println("  tt.stop();");
+        p.println("  tt.output(stderr);");
+        p.println("}");
+        
+        // print profiling timer summary
         p.println();
         if (KjcOptions.profile) {
             String ident = InsertTimers.getIdentifier();
@@ -854,23 +866,23 @@ class FusionCode {
     }
 
 
-    private static String get_loop(int times, String code) {
-        String res = "";
-        if (times == 0) {
-            return "";
-        }
-        if (times == 1) {
-            return code;
-        }
-        //res += "// FusionCode_2 " + times + "\n";
-        if (times <= 4) {
-            for (int i = 0; i < times; i++)
-                res += code;
-            return res;
-        } else {
-            return "for (int i=0; i<" + times + "; i++) { " + code + " }";
-        }
-    }
+//    private static String get_loop(int times, String code) {
+//        String res = "";
+//        if (times == 0) {
+//            return "";
+//        }
+//        if (times == 1) {
+//            return code;
+//        }
+//        //res += "// FusionCode_2 " + times + "\n";
+//        if (times <= 4) {
+//            for (int i = 0; i < times; i++)
+//                res += code;
+//            return res;
+//        } else {
+//            return "for (int i=0; i<" + times + "; i++) { " + code + " }";
+//        }
+//    }
 
     private static String get_work_function(SIROperator oper) {
 
@@ -893,18 +905,18 @@ class FusionCode {
     }
 
 
-    private static String get_work_n_function(SIROperator oper) {
-
-        int id = NodeEnumerator.getSIROperatorId(oper); 
-
-        /*
-          if (oper instanceof SIRFilter) {   
-          return ((SIRFilter)oper).getWork().getName()+"__n__"+id;
-          }
-        */
-
-        return null;
-    }
+//    private static String get_work_n_function(SIROperator oper) {
+//
+//        int id = NodeEnumerator.getSIROperatorId(oper); 
+//
+//        /*
+//          if (oper instanceof SIRFilter) {   
+//          return ((SIRFilter)oper).getWork().getName()+"__n__"+id;
+//          }
+//        */
+//
+//        return null;
+//    }
 
 
 

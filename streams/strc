@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.82 2006-06-07 19:01:53 dimock Exp $
+# $Id: strc,v 1.83 2006-06-09 20:02:32 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -23,10 +23,6 @@ use strict;
 use warnings;
 use vars qw(%opts $java $javac $cc $rm $make $have_fftw);
 use POSIX qw(:sys_wait_h);
-
-# QMTest 2.3 running in some way different from QMTest 2.0.3
-#foreach (sort keys(%ENV)) { print "$_ = $ENV{$_}\n"; }
-#print STDERR getcwd(), "\n";
 
 use Cwd;
 

@@ -1,16 +1,22 @@
 
-CC =		gcc34
-CC_IA64 =       ecc
-CC_ARM = 	arm343 #arm-linux-gcc
-
-CFLAGS = 	-O2 -I.
-
+# AUTOCONFISCATE VAR =	@VAR@
+CXX =		g++
 AR =            ar
 RANLIB =        ranlib
+CFLAGS = 	-O2
+# END AUTOCONFISCATE
+CFLAGS += 	-I.
 LIBRARY =       libcluster.a
+LIBRARYP =      libcluster_p.a
+
+# unsupported versions
+CC_IA64 =       ecc
+CC_ARM = 	arm343 #arm-linux-gcc
 LIBRARY_IA64 =  libcluster_ia64.a
 LIBRARY_ARM =   libcluster_arm.a
-LIBRARYP =      libcluster_p.a
+# end unsupported versions
+
+# End of parameterizable stuff.
 
 NAMES =		profiler \
 		sock_dscr \
@@ -80,7 +86,7 @@ $(LIBRARYP): $(OBJSP)
 
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) -c -o $@ $<
 
 %_ia64.o: %.cpp
 	$(CC_IA64) $(CFLAGS) -c -o $@ $<
@@ -89,10 +95,10 @@ $(LIBRARYP): $(OBJSP)
 	$(CC_ARM) $(CFLAGS) -DARM -c -o $@ $<
 
 %_p.o: %.c
-	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<
+	$(CXX) $(CFLAGS) -g -pg -a -c -o $@ $<
 
 deps:	
-	$(CC) $(CFLAGS) -MD -E $(SOURCES) > /dev/null
+	$(CXX) $(CFLAGS) -MD -E $(SOURCES) > /dev/null
 
 
 -include $(DEPS)

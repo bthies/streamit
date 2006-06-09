@@ -38,7 +38,7 @@ public class GenerateMakefile {
         p.print("LIB_CLUSTER = $(STREAMIT_HOME)/library/cluster\n");
 
         p.newLine();    
-        p.print("CC = gcc34\n"); // gcc34
+        //p.print("CC = gcc34\n"); // gcc
         p.print("CCFLAGS = -O3\n");
 
         p.newline();
@@ -93,13 +93,13 @@ public class GenerateMakefile {
             }
         }
         p.print("$(OBJS)\n");
-        p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
+        p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
         p.newLine();
         
         // =============== %.o : %.cpp
     
         p.print("%.o: %.cpp fusion.h cluster.h global.h\n");
-        p.print("\t$(CC) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<\n");
+        p.print("\t$(CXX) $(CCFLAGS) -I$(LIB_CLUSTER) -c -o $@ $<\n");
         p.newLine();
 
         p.newLine();

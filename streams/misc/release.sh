@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.50 2006-06-09 20:26:23 dimock Exp $
+# $Id: release.sh,v 1.51 2006-06-12 21:32:55 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -12,8 +12,8 @@ set -x
 # Interesting/configurable variables:
 
 # For a version release
-#VERSION=2.0
-#TAG=streamit-2-0
+#VERSION=2.1
+#TAG=streamit-2-1
 
 # For a snapshot release
 VERSION=2.0.`date +%Y%m%d`
@@ -77,6 +77,7 @@ builddirs streams 3rdparty src library include misc configure.in
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes release syntax
 builddirs streams/docs index.html
+mkdir $WORKING/streams/javadoc
 
 cvs $CVSROOT2 export -r $TAG -d $WORKING $DIRS
 
@@ -84,26 +85,41 @@ cvs $CVSROOT2 export -r $TAG -d $WORKING $DIRS
 autoconf $WORKING/streams/configure.in > $WORKING/streams/configure
 chmod 0755 $WORKING/streams/configure
 
-# Generate .in files.  (See also the tail of configure.in.)
-INFILES="strc Makefile library/c/Makefile misc/Makefile.vars"
+# Generate .in files.  
+# See also the tail of configure.in to process the generated .in files.
+INFILES="strc Makefile library/c/Makefile misc/Makefile.vars misc/dat2bin.pl misc/scripts/preprocess.perl misc/scripts/streamitdoc misc/scripts/turnOffPrints.pl misc/htmlformat.pl"
 for f in $INFILES; do
   if test -f "$WORKING/streams/$f"; then
     $WORKING/streams/misc/make-dot-in.pl "$WORKING/streams/$f"
   fi
 done
+rm -fr $WORKING/streams/misc/make-dot-in.pl
+
+#put out javadoc for released version
+$WORKING/streams/misc/build-javadoc $WORKING/streams/javadoc
 
 # Don't release CPLEX jar file or anything that depends on it
 rm -rf $WORKING/streams/3rdparty/cplex/
 rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
+# lpsolve is only used by removed code.
+rm -fr $WORKING/streams/3rdparty/lpsolve/
 
 # Remove .cvsignore files
 rm -rf `find $WORKING -name ".cvsignore"`
 # remove "calculations" from ASPLOS paper
 rm -rf `find $WORKING -name "calculations"`
 
-# remove PBS number gathering scripts
+# remove PBS number gathering scripts, and other scripts not needed outside
+# or used later in this release script.
 rm -rf $WORKING/streams/misc/scripts/number-gathering
+rm -rf $WORKING/streams/misc/scripts/emacs-indent.sh
+rm -rf $WORKING/streams/misc/scripts/hwprof.sh
+rm -rf $WORKING/streams/misc/scripts/NumericArraySummary.perl
+rm -rf $WORKING/streams/misc/streamit-mail-unowned.pl
+rm -rf $WORKING/streams/misc/dat2bin.pl
+rm -rf $WORKING/streams/misc/check-javadoc-errors
+rm -rf $WORKING/streams/misc/c
 
 # Some benchmarks we can't (or won't) export; trim those here.
 # Streamit code not currently working.
@@ -182,6 +198,11 @@ rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
+# desupported backends:
+rm -rf $WORKING/streams/src/at/dms/kjc/raw
+# not yet finished backends
+rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
+
 
 # A release does not need to build a release
 rm -rf $WORKING/streams/misc/release.sh
@@ -215,8 +236,11 @@ done
 for f in INSTALL NEWS OPTIONS README; do
   mv $WORKING/streams/docs/release/$f $WORKING/streams
 done
+# combine documentation from benchmark.xml files into benchmarks.html
+# then remove intermediate file, script files.
 $WORKING/streams/misc/build-bench-doc
 rm $WORKING/streams/apps/benchall.xml
+rm $WORKING/streams/misc/{build-bench-doc,build-bench-xml.py,benchall.xsl}
 
 # clean up misc, scripts
 
@@ -224,6 +248,7 @@ rm $WORKING/streams/apps/benchall.xml
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.
 cp -R $WORKING/streams $BINDIR
+rm -rf $BINDIR/javadoc
 rm -rf $BINDIR/src $BINDIR/README.source
 rm -rf $BINDIR/include/dot-bashrc
 rm -rf $BINDIR/include/dot-cshrc

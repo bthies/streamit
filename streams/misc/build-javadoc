@@ -2,7 +2,7 @@
 ###############################################################################
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.8 2006-03-28 20:09:23 dimock Exp $
+# $Id: build-javadoc,v 1.9 2006-06-12 15:05:47 dimock Exp $
 #
 # Takes as implicit input the shell variable $STREAMIT_HOME, which 
 #  is the root of the StreamIt directory heirarchy.
@@ -61,7 +61,7 @@ done
 #/usr/uns/bin/javadoc -J-Xmx128M -source 1.4 -use -version -author \
 #  -link http://java.sun.com/j2se/1.4.1/docs/api/ \
 
-/usr/uns/jdk1.5.0_01/bin/javadoc -J-Xmx128M -source 1.5 -use -version -author \
+javadoc -J-Xmx128M -source 1.5 -use -version -author \
   -link http://java.sun.com/j2se/1.5.0/docs/api/ \
   -link http://www.antlr.org/javadoc/ \
   -doctitle 'StreamIt Compiler Documentation' \

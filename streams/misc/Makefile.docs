@@ -1,6 +1,6 @@
 #
 # Makefile.docs: makefile fragment for building documentation
-# $Id: Makefile.docs,v 1.1 2003-09-26 15:53:42 dmaze Exp $
+# $Id: Makefile.docs,v 1.2 2006-06-12 21:47:32 dimock Exp $
 #
 
 # Include this from a Makefile that builds documentation.
@@ -51,11 +51,16 @@ docs: $(DVI) $(PS) $(PDF) $(HTML) $(TEXT)
 %.html: %.tex %.hva
 	$(HEVEA) -nosymb $*.hva $*.tex
 	if [ -f $*.image.tex ]; then $(IMAGEN) -png $*; fi
+	@# if you have images:
+	@# (1) you need  \renewcommand{\heveaimageext}{.png} in your .hva
+	@# (2) we need to run "convert input.png png8:output.png" here
+	@# on all images since with 24-bit color, your just get a blur in
+	@# your rendered image from the html file.
 	$(HEVEA) -nosymb $*.hva $*.tex
 
 # If there's no HeVeA magic file, we might be able to live without.
 %.html: %.tex
-	$(HEVEA) -nosymb $*.tex
+	$(HEVEA) -fix -nosymb $*.tex
 	if [ -f $*.image.tex ]; then $(IMAGEN) -png $*; fi
 	$(HEVEA) -nosymb $*.tex
 

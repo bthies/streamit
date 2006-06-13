@@ -19,6 +19,10 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 
+# use gcc34 as our gcc and g++
+alias gcc gcc34
+alias g++ gcc34
+
 # for running dotty
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
 

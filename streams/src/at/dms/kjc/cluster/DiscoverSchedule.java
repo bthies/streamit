@@ -1,11 +1,7 @@
 
 package at.dms.kjc.cluster;
 
-import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.raw.*;
-import at.dms.kjc.CType;
-import java.lang.*;
 import java.util.*;
 
 /**

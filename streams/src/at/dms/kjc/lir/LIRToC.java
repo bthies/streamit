@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.110 2006-03-16 21:57:56 dimock Exp $
+ * $Id: LIRToC.java,v 1.111 2006-06-13 17:33:55 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -10,9 +10,9 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
 import java.util.Map;
-import at.dms.kjc.raw.RawExecutionCode;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
+import at.dms.kjc.common.RawExecutionCode;
 import at.dms.util.InconsistencyException;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.util.Utils;

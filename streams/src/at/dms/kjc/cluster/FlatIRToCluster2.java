@@ -18,8 +18,6 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 
-import at.dms.kjc.raw.*;
-
 /**
  * This class contains code generation for speculative execution,
  * where individual threads are represented by c++ classes.
@@ -410,7 +408,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = Util.makeString(((CArrayType)type).getDims());
+                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();
@@ -456,7 +454,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = Util.makeString(((CArrayType)type).getDims());
+                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                     //CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -519,7 +517,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = Util.makeString(((CArrayType)type).getDims());
+                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                     CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -578,7 +576,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = Util.makeString(((CArrayType)type).getDims());
+                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                     CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -2390,7 +2388,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         if (arrayType && !(right instanceof JNewArrayExpression)) {
         
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = Util.makeString(type.getDims());
+            String dims[] = RawUtil.makeString(type.getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -2862,7 +2860,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                            JExpression val) 
     {
         CType baseType = ((CArrayType)tapeType).getBaseType();
-        String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
+        String dims[] = RawUtil.makeString(((CArrayType)tapeType).getDims());
     
         for (int i = 0; i < dims.length; i++) {
             print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +

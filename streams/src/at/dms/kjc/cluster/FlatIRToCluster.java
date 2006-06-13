@@ -3,23 +3,19 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
 import at.dms.kjc.flatgraph.FlatNode;
-//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
-//import java.util.List;
-//import java.util.ListIterator;
 import java.util.Iterator;
-//import java.util.LinkedList;
-//import java.util.HashMap;
 import java.util.HashSet;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 import at.dms.kjc.common.CodegenPrintWriter;
-import at.dms.kjc.raw.*;
+import at.dms.kjc.common.RawExecutionCode;
+import at.dms.kjc.common.RawUtil;
 
 /**
  * This class dumps the tile code for each filter into a file based on the tile
@@ -1987,7 +1983,7 @@ public class FlatIRToCluster extends InsertTimers implements
         if (arrayType && !(right instanceof JNewArrayExpression)) {
 
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = Util.makeString(type.getDims());
+            String dims[] = RawUtil.makeString(type.getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -2438,7 +2434,7 @@ public class FlatIRToCluster extends InsertTimers implements
     private void pushArray(SIRPushExpression self, CType tapeType,
                            JExpression val) {
         CType baseType = ((CArrayType) tapeType).getBaseType();
-        String dims[] = Util.makeString(((CArrayType) tapeType).getDims());
+        String dims[] = RawUtil.makeString(((CArrayType) tapeType).getDims());
 
         for (int i = 0; i < dims.length; i++) {
             p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; "

@@ -1,20 +1,13 @@
 
 package at.dms.kjc.cluster;
 
-//import java.io.*; 
-//import java.lang.*;
 import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
-//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
-import at.dms.kjc.raw.Util;
-//import at.dms.kjc.cluster.*;
-//import at.dms.kjc.raw.Util;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.common.CodegenPrintWriter;
-//import at.dms.kjc.sir.lowering.*;
-//import at.dms.util.Utils;
+import at.dms.kjc.common.RawUtil;
 
 
 /**
@@ -313,7 +306,7 @@ class ClusterCodeGenerator {
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = Util.makeString(((CArrayType)type).getDims());
+                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();
@@ -361,7 +354,7 @@ class ClusterCodeGenerator {
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = Util.makeString(((CArrayType)type).getDims());
+                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();

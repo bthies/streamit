@@ -1,9 +1,10 @@
-package at.dms.kjc.raw;
+package at.dms.kjc.common;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import java.util.*;
 import java.io.*;
+
 import at.dms.kjc.flatgraph.*;
 //import at.dms.util.IRPrinter;
 //import at.dms.util.SIRPrinter;
@@ -144,9 +145,9 @@ public class StructureIncludeFile implements FlatVisitor
                              " = pop" + current.getFields()[j].getType() + "();\n");
                 }
                 else {
-                    fw.write("\t" + Util.staticNetworkReceivePrefix());
+                    fw.write("\t" + RawUtil.staticNetworkReceivePrefix());
                     fw.write("temp." + current.getFields()[j].getVariable().getIdent());
-                    fw.write(Util.staticNetworkReceiveSuffix(current.getFields()[j].getType()) + "\n");
+                    fw.write(RawUtil.staticNetworkReceiveSuffix(current.getFields()[j].getType()) + "\n");
                 }
             }
             fw.write("\treturn temp;\n}\n");
@@ -168,9 +169,9 @@ public class StructureIncludeFile implements FlatVisitor
                              ");\n");
                 }
                 else {
-                    fw.write("\t" + Util.staticNetworkReceivePrefix());
+                    fw.write("\t" + RawUtil.staticNetworkReceivePrefix());
                     fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-                    fw.write(Util.staticNetworkReceiveSuffix(current.getFields()[j].getType()) + "\n");
+                    fw.write(RawUtil.staticNetworkReceiveSuffix(current.getFields()[j].getType()) + "\n");
                 }
             }
             fw.write("}\n");
@@ -190,9 +191,9 @@ public class StructureIncludeFile implements FlatVisitor
                              current.getFields()[j].getVariable().getIdent() + ");\n");
                 }
                 else {
-                    fw.write("\t" + Util.staticNetworkSendPrefix(current.getFields()[j].getType()));
+                    fw.write("\t" + RawUtil.staticNetworkSendPrefix(current.getFields()[j].getType()));
                     fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-                    fw.write(Util.staticNetworkSendSuffix() + ";\n");
+                    fw.write(RawUtil.staticNetworkSendSuffix() + ";\n");
                 }
             }
             fw.write("}\n");

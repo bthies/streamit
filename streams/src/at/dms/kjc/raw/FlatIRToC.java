@@ -162,17 +162,17 @@ public class FlatIRToC extends ToC implements StreamVisitor
         }
         
         if (/*KjcOptions.altcodegen && */ !KjcOptions.decoupled){
-            p.print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
-            p.print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
-            p.print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
-            p.print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+            p.print("register float " + RawUtil.CSTOFPVAR + " asm(\"$csto\");\n");
+            p.print("register float " + RawUtil.CSTIFPVAR + " asm(\"$csti\");\n");
+            p.print("register int " + RawUtil.CSTOINTVAR + " asm(\"$csto\");\n");
+            p.print("register int " + RawUtil.CSTIINTVAR + " asm(\"$csti\");\n");
         }
         
         if (KjcOptions.decoupled) {
-            p.print("volatile float " + Util.CSTOFPVAR + ";\n");
-            p.print("volatile float " + Util.CSTIFPVAR + ";\n");
-            p.print("volatile int " + Util.CSTOINTVAR + ";\n");
-            p.print("volatile int " + Util.CSTIINTVAR + ";\n");
+            p.print("volatile float " + RawUtil.CSTOFPVAR + ";\n");
+            p.print("volatile float " + RawUtil.CSTIFPVAR + ";\n");
+            p.print("volatile int " + RawUtil.CSTOINTVAR + ";\n");
+            p.print("volatile int " + RawUtil.CSTIINTVAR + ";\n");
         }
         
         if (RawBackend.FILTER_DEBUG_MODE) {
@@ -246,9 +246,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //initialize the dummy network receive value
         if (KjcOptions.decoupled) {
             if (self.getInputType().isFloatingPoint()) 
-                p.print("  " + Util.CSTIFPVAR + " = 1.0;\n");
+                p.print("  " + RawUtil.CSTIFPVAR + " = 1.0;\n");
             else 
-                p.print("  " + Util.CSTIINTVAR + " = 1;\n");
+                p.print("  " + RawUtil.CSTIINTVAR + " = 1;\n");
         }
 
         //call the raw_init() function for the static network
@@ -578,7 +578,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         if (arrayType && !(right instanceof JNewArrayExpression)) {
                     
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = Util.makeString(type.getDims());
+            String dims[] = RawUtil.makeString(type.getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -653,10 +653,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //generate the inline asm instruction to execute the 
         //receive if this is a receive instruction
         if (ident.equals(RawExecutionCode.receiveMethod)) {
-            p.print(Util.staticNetworkReceivePrefix());
+            p.print(RawUtil.staticNetworkReceivePrefix());
             visitArgs(args,0);
-            p.print(Util.staticNetworkReceiveSuffix
-                    (Util.getBaseType(filter.getInputType())));
+            p.print(RawUtil.staticNetworkReceiveSuffix
+                    (RawUtil.getBaseType(filter.getInputType())));
             statementContext = oldStatementContext;
             return;  
         }
@@ -767,13 +767,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //      if (tapeType != val.getType()) {
         //    Utils.fail("type of push argument does not match filter output type");
         //      }
-        p.print(Util.staticNetworkSendPrefix(tapeType));
+        p.print(RawUtil.staticNetworkSendPrefix(tapeType));
         //if the type of the argument to the push statement does not 
         //match the filter output type, print a cast.
         if (tapeType != val.getType())
             p.print("(" + tapeType + ")");
         val.accept(this);
-        p.print(Util.staticNetworkSendSuffix());
+        p.print(RawUtil.staticNetworkSendSuffix());
         //useful if debugging...!
         /*print(";\n");
           p.print("raw_test_pass_reg(");
@@ -799,7 +799,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
                            JExpression val) 
     {
         CType baseType = ((CArrayType)tapeType).getBaseType();
-        String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
+        String dims[] = RawUtil.makeString(((CArrayType)tapeType).getDims());
         String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
 
         p.print("{\n");
@@ -818,12 +818,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
 //        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
             p.print("{\n");
-            p.print(Util.staticNetworkSendPrefix(Util.getBaseType(tapeType)));
+            p.print(RawUtil.staticNetworkSendPrefix(RawUtil.getBaseType(tapeType)));
             val.accept(this);
             for (int i = 0; i < dims.length; i++) {
                 p.print("[" + ARRAY_INDEX + i + "]");
             }
-            p.print(Util.staticNetworkSendSuffix());
+            p.print(RawUtil.staticNetworkSendSuffix());
             p.print(";\n}\n");
 //        } else {
 //            p.print("{");

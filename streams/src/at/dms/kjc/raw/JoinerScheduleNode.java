@@ -1,6 +1,7 @@
 package at.dms.kjc.raw;
 
 import at.dms.kjc.*;
+import at.dms.kjc.common.RawUtil;
 
 public class JoinerScheduleNode 
 {
@@ -51,7 +52,7 @@ public class JoinerScheduleNode
                    next.type == DUPLICATE);
     
         if (ctype.isArrayType()) {
-            dims = Util.makeString(((CArrayType)ctype).getDims());
+            dims = RawUtil.makeString(((CArrayType)ctype).getDims());
             fp = ((CArrayType)ctype).getBaseType().equals(CStdType.Float);
         }
     
@@ -124,9 +125,9 @@ public class JoinerScheduleNode
         
 //            if (KjcOptions.altcodegen || KjcOptions.decoupled){
                 if (type.isFloatingPoint())
-                    ret.append(" = " + Util.CSTIFPVAR + ";\n");
+                    ret.append(" = " + RawUtil.CSTIFPVAR + ";\n");
                 else
-                    ret.append(" = " + Util.CSTIINTVAR + ";\n");
+                    ret.append(" = " + RawUtil.CSTIINTVAR + ";\n");
 //            }
 //            else
 //                ret.append("));\n");
@@ -146,9 +147,9 @@ public class JoinerScheduleNode
         else { //array or scalar type
 //            if (KjcOptions.altcodegen || KjcOptions.decoupled) {
                 if (type.isFloatingPoint())
-                    ret.append(Util.CSTOFPVAR + " = ");
+                    ret.append(RawUtil.CSTOFPVAR + " = ");
                 else
-                    ret.append(Util.CSTOINTVAR + " = ");
+                    ret.append(RawUtil.CSTOINTVAR + " = ");
 //            }
 //            else 
 //                ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(");

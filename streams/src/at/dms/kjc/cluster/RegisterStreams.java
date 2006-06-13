@@ -4,9 +4,8 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.raw.*;
 import at.dms.kjc.CType;
-//import java.lang.*;
+import at.dms.kjc.common.RawUtil;
 import java.util.*;
 
 /**
@@ -51,15 +50,15 @@ public class RegisterStreams implements FlatVisitor {
 
         try {
             if (operator instanceof SIRJoiner) {
-                input_t = Util.getBaseType(Util.getJoinerType(node));
-                output_t = Util.getBaseType(Util.getJoinerType(node));
+                input_t = RawUtil.getBaseType(RawUtil.getJoinerType(node));
+                output_t = RawUtil.getBaseType(RawUtil.getJoinerType(node));
             }
         } catch (Exception ex) {}
 
         try {
             if (operator instanceof SIRSplitter) {
-                input_t = Util.getBaseType(Util.getOutputType(node));
-                output_t = Util.getBaseType(Util.getOutputType(node));
+                input_t = RawUtil.getBaseType(RawUtil.getOutputType(node));
+                output_t = RawUtil.getBaseType(RawUtil.getOutputType(node));
             }
         } catch (Exception ex) {}
 

@@ -2,6 +2,8 @@ package at.dms.kjc.raw;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.common.RawExecutionCode;
+import at.dms.kjc.common.RawUtil;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
@@ -286,14 +288,14 @@ public class DirectCommunication extends at.dms.util.Utils
                     new JLocalVariableExpression(null,
                                                  new JGeneratedLocalVariable(null, 0, 
                                                                              CStdType.Float, 
-                                                                             Util.CSTIFPVAR,
+                                                                             RawUtil.CSTIFPVAR,
                                                                              null));
             else 
                 return 
                     new JLocalVariableExpression(null,
                                                  new JGeneratedLocalVariable(null, 0, 
                                                                              CStdType.Integer,
-                                                                             Util.CSTIINTVAR,
+                                                                             RawUtil.CSTIINTVAR,
                                                                              null));
         }
     

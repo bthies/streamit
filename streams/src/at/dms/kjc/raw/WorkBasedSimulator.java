@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.common.RawUtil;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -522,7 +523,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     private boolean waitForIdentityDests(FlatNode identity, 
                                          HashMap exeCounts, SimulationCounter sCounters)
     {
-        Iterator upstream = Util.getAssignedEdges(identity).iterator();
+        Iterator upstream = RawUtil.getAssignedEdges(identity).iterator();
 
         while (upstream.hasNext()) {
             FlatNode current = (FlatNode)upstream.next();
@@ -578,7 +579,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         //  System.out.println("Checking down stream:" + node);
         visited.add(node);
     
-        Iterator downstream = Util.getAssignedEdges(node).iterator();
+        Iterator downstream = RawUtil.getAssignedEdges(node).iterator();
     
         if (!downstream.hasNext())
             return true;
@@ -708,7 +709,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         }
     
         //create the appropriate amount of routing instructions
-        int elements = Util.getTypeSize(Util.getOutputType(fire));
+        int elements = RawUtil.getTypeSize(RawUtil.getOutputType(fire));
         for (int i = 0; i < elements; i++)
             asm(Layout.getTile(fire), prev, next);
     

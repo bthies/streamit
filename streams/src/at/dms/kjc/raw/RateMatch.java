@@ -1,5 +1,6 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.common.RawUtil;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -50,7 +51,7 @@ public class RateMatch extends at.dms.util.Utils
                  ((SIRFilter)node.contents).getOutputType().isClassType()))
                 fail = true;
         
-            Iterator it = Util.getAssignedEdges(node).iterator();
+            Iterator it = RawUtil.getAssignedEdges(node).iterator();
         
             while (it.hasNext()) {
                 FlatNode dest = (FlatNode)it.next();

@@ -1,6 +1,7 @@
 
 package at.dms.kjc.cluster;
 
+import at.dms.kjc.common.StructureIncludeFile;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.flatgraph.GraphFlattener;
@@ -365,9 +366,9 @@ public class ClusterBackend {
         //new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
         //new streamit.scheduler2.print.PrintProgram().printProgram(topStreamIter);
 
-        if (KjcOptions.debug) {
-            debugOutput(str);
-        }
+//        if (KjcOptions.debug) {
+//            debugOutput(str);
+//        }
 
         System.err.println(" done.");
 
@@ -505,56 +506,56 @@ public class ClusterBackend {
             });
     }
 
-    /**
-     * Just some debugging output.
-     */
-    private static void debugOutput(SIRStream str) {
-        streamit.scheduler2.constrained.Scheduler cscheduler =
-            streamit.scheduler2.constrained.Scheduler.createForSDEP(topStreamIter);
-
-        //cscheduler.computeSchedule(); //"Not Implemented"
-
-        if (!(str instanceof SIRPipeline)) return;
-    
-        int pipe_size = ((SIRPipeline)str).size();
-    
-        SIRFilter first = (SIRFilter)((SIRPipeline)str).get(0);
-        SIRFilter last = (SIRFilter)((SIRPipeline)str).get(pipe_size-1);
-
-        streamit.scheduler2.iriter.Iterator firstIter = 
-            IterFactory.createFactory().createIter(first);
-        streamit.scheduler2.iriter.Iterator lastIter = 
-            IterFactory.createFactory().createIter(last);   
-
-        streamit.scheduler2.SDEPData sdep;
-
-        try {
-            sdep = cscheduler.computeSDEP(firstIter, lastIter);
-
-            if (ClusterBackend.debugPrint) {
-                System.out.println("\n");
-                System.out.println("Source --> Sink Dependency:\n");
-            
-                System.out.println("  Source Init Phases: "+sdep.getNumSrcInitPhases());
-                System.out.println("  Destn. Init Phases: "+sdep.getNumDstInitPhases());
-                System.out.println("  Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
-                System.out.println("  Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
-            }
-        
-            /*
-              for (int t = 0; t < 20; t++) {
-              int phase = sdep.getSrcPhase4DstPhase(t);
-              int phaserev = sdep.getDstPhase4SrcPhase(t);
-              System.out.println("sdep ["+t+"] = "+phase+
-              " reverse_sdep["+t+"] = "+phaserev);
-              }
-            */
-
-        } catch (streamit.scheduler2.constrained.NoPathException ex) {
-
-        }
-        DoSchedules.findSchedules(topStreamIter, firstIter, str);
-    }
+//    /**
+//     * Just some debugging output.
+//     */
+//    private static void debugOutput(SIRStream str) {
+//        streamit.scheduler2.constrained.Scheduler cscheduler =
+//            streamit.scheduler2.constrained.Scheduler.createForSDEP(topStreamIter);
+//
+//        //cscheduler.computeSchedule(); //"Not Implemented"
+//
+//        if (!(str instanceof SIRPipeline)) return;
+//    
+//        int pipe_size = ((SIRPipeline)str).size();
+//    
+//        SIRFilter first = (SIRFilter)((SIRPipeline)str).get(0);
+//        SIRFilter last = (SIRFilter)((SIRPipeline)str).get(pipe_size-1);
+//
+//        streamit.scheduler2.iriter.Iterator firstIter = 
+//            IterFactory.createFactory().createIter(first);
+//        streamit.scheduler2.iriter.Iterator lastIter = 
+//            IterFactory.createFactory().createIter(last);   
+//
+//        streamit.scheduler2.SDEPData sdep;
+//
+//        try {
+//            sdep = cscheduler.computeSDEP(firstIter, lastIter);
+//
+//            if (ClusterBackend.debugPrint) {
+//                System.out.println("\n");
+//                System.out.println("Source --> Sink Dependency:\n");
+//            
+//                System.out.println("  Source Init Phases: "+sdep.getNumSrcInitPhases());
+//                System.out.println("  Destn. Init Phases: "+sdep.getNumDstInitPhases());
+//                System.out.println("  Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
+//                System.out.println("  Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
+//            }
+//        
+//            /*
+//              for (int t = 0; t < 20; t++) {
+//              int phase = sdep.getSrcPhase4DstPhase(t);
+//              int phaserev = sdep.getDstPhase4SrcPhase(t);
+//              System.out.println("sdep ["+t+"] = "+phase+
+//              " reverse_sdep["+t+"] = "+phaserev);
+//              }
+//            */
+//
+//        } catch (streamit.scheduler2.constrained.NoPathException ex) {
+//
+//        }
+//        DoSchedules.findSchedules(topStreamIter, firstIter, str);
+//    }
    
     private static void createExecutionCounts(SIRStream str,
                                               GraphFlattener graphFlattener) {

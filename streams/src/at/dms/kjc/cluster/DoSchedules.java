@@ -1,28 +1,9 @@
 
 package at.dms.kjc.cluster;
 
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
-import at.dms.kjc.*;
-import at.dms.kjc.cluster.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
-import at.dms.util.Utils;
-import java.util.Vector;
-import java.util.List;
-import at.dms.compiler.TabbedPrintWriter;
-import at.dms.kjc.raw.Util;
-import at.dms.kjc.sir.lowering.*;
-import java.util.ListIterator;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.TreeSet;
-import java.util.HashSet;
-import java.io.*;
-import java.lang.*;
-
-import streamit.scheduler2.*;
-import streamit.scheduler2.iriter.*;
 
 /**
  * Looks like printing some debugging info about SDEP schedules.
@@ -62,7 +43,7 @@ public class DoSchedules {
             }
         
         } catch (Exception ex) {
-            //System.out.println("!!!Exception: "+ex);
+            System.err.println("Comstrained Scheduler / SDEP exception: "+ex);
             ex.printStackTrace();
         }
  

@@ -1,0 +1,20 @@
+/**
+ * This provides a simple example of the delay stream.
+ */
+void->void pipeline DelayTest {
+    // count: 1, 2, 3, ...
+    add void->float filter {
+        int i=1;
+        work push 1 { 
+            push(i++);
+        }
+    }
+    // delay by 5
+    add Delay(5);
+    // print result
+    add float->void filter {
+        work pop 1 {
+            println(pop());
+        }
+    }
+}

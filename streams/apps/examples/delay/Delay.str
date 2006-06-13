@@ -1,14 +1,19 @@
-/* Delay element implemented as a feedback loop.  Inputs are delayed
- * for N executions before being output.  This isn't necessarily
- * a good implementation of a delay, since analysis of feedback loops
- * within the compiler is tricky; to be efficient, this would need
- * to be fused into a single filter.
- * $Id: Delay.str,v 1.2 2003-10-10 18:55:19 dmaze Exp $ */
-float->float feedbackloop delay(int N) {
-    join roundrobin;
-    body Identity<float>();
-    split roundrobin;
-    loop Identity<float>();
-    for (int i = 0; i < N; i++) enqueue(0.0);
-}
+/* This filter is a delay element that outputs N zeros before letting
+ * the inputs pass through.  It is implemented using a prework
+ * function, which should be more efficient than using internal
+ * buffering or feedback loops.
+ * $Id: Delay.str,v 1.3 2006-06-13 23:31:30 thies Exp $ */
+float->float filter Delay(int N) {
 
+    // push N zeros at start of execution
+    prework push N {
+        for (int i=0; i<N; i++) {
+            push(0.0);
+        }
+    }
+
+    // then let inputs pass through
+    work push 1 pop 1 {
+        push(pop());
+    }
+}

@@ -427,6 +427,15 @@ public class FilterContent {
     }
 
     /**
+     * Set the steady multiplicity of this filter to sm.
+     * 
+     * @param sm The new steady multiplicity.
+     */
+    public void setSteadyMult(int sm) {
+        steadyMult = sm;
+    }
+    
+    /**
      * Returns push amount.
      */
     public int getPushInt() {

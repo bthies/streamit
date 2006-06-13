@@ -101,10 +101,12 @@ public abstract class Partitioner {
         
         //perform some checks on the trace graph...
         for (int i = 0; i < traces.length; i++) {
-            assert traceBNWork.containsKey(traces[i]);
-            assert bottleNeckFilter.containsKey(traces[i]);
+            assert traceBNWork.containsKey(traces[i]) : traces[i];
+            //this doesn't get filled till later
+            //assert bottleNeckFilter.containsKey(traces[i]) : traces[i];
             for (int j = 0; j < traces[i].getFilterNodes().length; j++) {
-                assert workEstimation.containsKey(traces[i].getFilterNodes()[j]);
+                assert workEstimation.containsKey(traces[i].getFilterNodes()[j].getFilter()) :
+                    traces[i].getFilterNodes()[j].getFilter();
                 
             }
         }
@@ -138,7 +140,7 @@ public abstract class Partitioner {
         for (int i = 0; i < traces.length; i++) {
             if (!containsTrace(traces[i])) {
                 assert traces[i].getFilterNodes().length == 1;
-                assert traces[i].getFilterNodes()[0].isPredefined();
+                assert traces[i].getFilterNodes()[0].toString().startsWith("Identity");
                 
                 if (!workEstimation.containsKey(traces[i].getFilterNodes()[0])) {
                     //for a work estimation of an identity filter

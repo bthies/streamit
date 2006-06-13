@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.LinkedList;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;
 
@@ -88,9 +89,25 @@ public class InputTraceNode extends TraceNode {
     }
 
     /**
+     * Set the weights and sources array of this input trace node
+     * to the weights list and the edges list.
+     * 
+     * @param weights The list of weights (Integer).
+     * @param edges The list of edges.
+     */
+    public void set(LinkedList<Integer> weights, 
+            LinkedList<Edge> edges) {
+        int[] intArr = new int[weights.size()]; 
+        for (int i = 0; i < weights.size(); i++)
+            intArr[i] = weights.get(i).intValue();
+        setWeights(intArr);
+        setSources(edges.toArray(new Edge[edges.size()]));
+    }
+    
+    /**
      * Set the weights to newWeights.
      * 
-     * @param newWeights The new weights array.
+     * @param newWeights
      */
     public void setWeights(int[] newWeights) {
         this.weights = newWeights;
@@ -140,13 +157,20 @@ public class InputTraceNode extends TraceNode {
         return ((double) getWeight(edge) / (double) totalWeights());
     }
 
-    public HashSet getSourceSet() {
-        HashSet set = new HashSet();
+    public HashSet<Edge> getSourceSet() {
+        HashSet<Edge> set = new HashSet<Edge>();
         for (int i = 0; i < sources.length; i++)
             set.add(sources[i]);
         return set;
     }
 
+    /**
+     * Return a string that gives some information for this input trace node.
+     * If escape is true, then escape the new lines "\\n".
+     *  
+     * @param escape Should we escape the new lines?
+     * @return The string.
+     */
     public String debugString(boolean escape) {
         String newLine = "\n";
         if (escape)

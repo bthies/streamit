@@ -107,6 +107,25 @@ public class Trace {
         return len;
     }
 
+    /**
+     * Set the tail of this trace to out.  This method
+     * does not fix the intra-trace connections of the trace nodes, but 
+     * it does set the parent of the new output trace.
+     * 
+     * @param out The new output trace node.
+     */
+    public void setTail(OutputTraceNode out) {
+        tail = out;
+        out.setParent(this);
+    }
+    
+    /**
+     * Set the head of this trace to node.  This method
+     * does not fix the intra-trace connections of the trace nodes, but 
+     * it does set the parent of the new input trace node.
+     * 
+     * @param node The new input trace node.
+     */
     public void setHead(InputTraceNode node) {
         head = node;
         node.setParent(this);

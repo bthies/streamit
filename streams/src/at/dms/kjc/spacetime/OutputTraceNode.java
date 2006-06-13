@@ -42,6 +42,22 @@ public class OutputTraceNode extends TraceNode {
         this.dests = dests;
     }
 
+    /**
+     * Create a new output trace node based on the lists weights
+     * and dests.
+     * 
+     * @param weights The list of weights
+     * @param dests The list of dests.
+     */
+    public OutputTraceNode(LinkedList<Integer> weights, 
+            LinkedList<LinkedList<Edge>> dests) {
+        assert weights.size() == dests.size();
+        ident = "output" + unique++;
+        //convert the weights list
+        set(weights, dests);
+    }
+    
+    
     public OutputTraceNode(int[] weights) {
         // this.parent = parent;
         ident = "output" + unique;
@@ -58,6 +74,24 @@ public class OutputTraceNode extends TraceNode {
         dests = EMPTY_DESTS;
     }
 
+    /**
+     * Set the weights and dests of this input trace node to 
+     * weights and dests.
+     * 
+     * @param weights List of integer weights.
+     * @param dests List of Lists of Edge for splitting pattern.
+     */
+    public void set(LinkedList<Integer> weights, 
+            LinkedList<LinkedList<Edge>> dests) {
+        this.weights = new int[weights.size()];
+        for (int i = 0; i < weights.size(); i++)
+            this.weights[i] = weights.get(i).intValue();
+        //convert the dests list
+        this.dests = new Edge[dests.size()][];
+        for (int i = 0; i < dests.size(); i++) 
+            this.dests[i] = dests.get(i).toArray(new Edge[0]);
+    }
+        
     public int[] getWeights() {
         return weights;
     }
@@ -85,6 +119,8 @@ public class OutputTraceNode extends TraceNode {
         return sum;
     }
 
+    
+    
     /**
      * Return the width of this splitter meaning the number
      * of connections it has to downstream traces, including 
@@ -127,7 +163,25 @@ public class OutputTraceNode extends TraceNode {
     }
 
     /**
-     * @return The outgoing edges of this OutputTraceNode.
+     * Return a list of the dests in round-robin order flattening
+     * the duplicates.  
+     * 
+     * @return A list of the dests in round-robin order flattening
+     * the duplicates.  
+     */ 
+    public Edge[] getDestList() {
+        LinkedList<Edge> edges = new LinkedList<Edge>();
+        for (int i = 0; i < dests.length; i++) {
+            for (int j = 0; j < dests[i].length; j++)
+                edges.add(dests[i][j]);
+        }
+        return edges.toArray(new Edge[0]);
+    }
+    
+    /**
+     * Return the set of the outgoing edges of this OutputTraceNode.
+     * 
+     * @return The set of the outgoing edges of this OutputTraceNode.
      */
     public Set getDestSet() {
         HashSet set = new HashSet();

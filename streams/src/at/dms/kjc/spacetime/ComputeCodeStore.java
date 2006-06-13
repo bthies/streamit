@@ -369,6 +369,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      */    
     public void addDRAMCommand(boolean read, boolean init, boolean primepump, int bytes,
             OffChipBuffer buffer, boolean staticNet) {
+        
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
                 
@@ -479,6 +480,8 @@ public class ComputeCodeStore implements SIRCodeUnit{
      */    
     public void addDRAMGDNReadCommand(boolean init, boolean primepump, int bytes,
             OffChipBuffer buffer, boolean presynched, RawTile dest) {
+        
+
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
          

@@ -6,6 +6,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
+import java.util.HashSet;
 import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -141,7 +142,12 @@ public class TraceIRtoC extends ToC
         if(KjcOptions.destroyfieldarray)
             arrayDest.destroyFieldArrays(tile.getComputeCode());
     
-        DeadCodeElimination.doit(tile.getComputeCode());
+        
+        //run dce but don't eliminate the compiler generated vars introduced
+        //by ConvertLonelyPops
+        HashSet<String> keepLive = new HashSet<String>();
+        keepLive.add(ConvertLonelyPops.VARNAME);
+        DeadCodeElimination.doit(tile.getComputeCode(), keepLive, keepLive);
     }
     
     private void generateHeader() 

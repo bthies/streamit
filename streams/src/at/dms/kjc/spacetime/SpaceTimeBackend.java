@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.flatgraph2.*;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -163,6 +164,11 @@ public class SpaceTimeBackend {
         SafeFileReaderWriterPositions.doit(str);
 	//        System.err.println("After SafeFileReaderWriterPositions");
 	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
+        
+        //lonely pops are converted into a statement with only a register read
+        //then they are optimized out by gcc, so convert lonely pops (pops unnested in
+        //a larger expression) into an assignment of the pop to a dummy variable
+        ConvertLonelyPops.doit(str);
         
         // make sure that push expressions do not contains pop expressions
         // because if they do and we use the gdn, we will generate the header 

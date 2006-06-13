@@ -19,7 +19,7 @@ tde_pp.str canonicalizes the order of the output data.
       <file>tde.str</file>
       <desc>The data-parallel versin of tde described above.</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit" id="tde-pp" compile_time="3600" run_time="2400">
+    <impl lang="StreamIt" dir="streamit" id="tde-pp" compile_time="3600" run_time="3600">
       <file>tde_pp.str</file>
       <desc>The pipeline-parallel version of tde described above.</desc>
     </impl>

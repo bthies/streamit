@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.51 2006-06-12 21:32:55 dimock Exp $
+# $Id: release.sh,v 1.52 2006-06-14 22:47:58 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -94,9 +94,6 @@ for f in $INFILES; do
   fi
 done
 rm -fr $WORKING/streams/misc/make-dot-in.pl
-
-#put out javadoc for released version
-$WORKING/streams/misc/build-javadoc $WORKING/streams/javadoc
 
 # Don't release CPLEX jar file or anything that depends on it
 rm -rf $WORKING/streams/3rdparty/cplex/
@@ -192,16 +189,38 @@ rm -rf $WORKING/streams/apps/libraries/SoftRadio
 # Some parts of the compiler aren't useful to release; trim those here.
 #rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
-#rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
-#rm -rf $WORKING/streams/src/at/dms/kjc/spacedynamic
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
 rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
 # desupported backends:
 rm -rf $WORKING/streams/src/at/dms/kjc/raw
-# not yet finished backends
+# remove dependencies on raw:
+rm -rf $WORKING/streams/src/at/dms/kjc/sir/stats
+
+perl -pi -e's/at.dms.kjc.raw.RawWorkEstimator/at.dms.kjc.spacedynamic.RawWorkEstimator/'  $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/WorkInfo.java
+
+perl -pi -e's/StatisticsGathering\.doit\(str\);/\/\*StatisticsGathering.doit(str);\*\//' $WORKING/streams/src/at/dms/kjc/cluster/ClusterBackend.java
+perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import at.dms.kjc.sir.stats.StatisticsGathering;\*\//' $WORKING/streams/src/at/dms/kjc/cluster/ClusterBackend.java
+
+perl -pi -e's/StatisticsGathering\.doit\(str\);/\/\*StatisticsGathering.doit(str);\*\//' $WORKING/streams/src/at/dms/kjc/sir/lowering/Flattener.java
+perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import at.dms.kjc.sir.stats.StatisticsGathering;\*\//' $WORKING/streams/src/at/dms/kjc/sir/lowering/Flattener.java
+
+perl -pi -e's/StatisticsGathering\.doit\(ssg\.getTopLevelSIR\(\)\);/\/\*StatisticsGathering.doit(ssg.getTopLevelSIR());\*\//' $WORKING/streams/src/at/dms/kjc/spacedynamic/SpaceDynamicBackend.java
+perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import at.dms.kjc.sir.stats.StatisticsGathering;\*\//' $WORKING/streams/src/at/dms/kjc/spacedynamic/SpaceDynamicBackend.java
+
+## experimantal backend: jcc
+rm -rf $WORKING/streams/src/streamit/library/jcc
+perl -pi -e's/new StreamItToJcc\(\)\.convertAndRun\(this, nIters\);/\/\*new StreamItToJcc().convertAndRun(this, nIters);\*\/ assert false:"jcc library support removed";/' $WORKING/streams/src/streamit/library/Stream.java
+perl -pi -e's/import streamit\.library\.jcc\.StreamItToJcc;/\/\*import streamit.library.jcc.StreamItToJcc;\*\//' $WORKING/streams/src/streamit/library/Stream.java
+# not yet finished backends. neatly modularized, thank goodness.
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
+
+#Put out javadoc for released version
+#All source directories that are going to be removed must be removed before
+# this.
+$WORKING/streams/misc/build-javadoc $WORKING/streams/javadoc
+
 
 
 # A release does not need to build a release

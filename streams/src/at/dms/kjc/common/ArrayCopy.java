@@ -1,10 +1,6 @@
-package at.dms.kjc.raw;
+package at.dms.kjc.common;
 
-import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.*;
-import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.util.Utils;
 import java.util.*;
 
 public class ArrayCopy {

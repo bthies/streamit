@@ -4,7 +4,7 @@ import java.util.*;
 import at.dms.kjc.*;
 //import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.raw.ArrayCopy;
+import at.dms.kjc.common.ArrayCopy;
 //import at.dms.kjc.lir.*;
 //import at.dms.compiler.JavaStyleComment;
 /**

@@ -1,6 +1,6 @@
 package at.dms.kjc.common;
 //import java.io.StringWriter;
-import java.util.Vector;
+//import java.util.Vector;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import java.util.Map;
 //import java.util.HashMap;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.LoweringConstants;
+//import at.dms.kjc.sir.lowering.LoweringConstants;
 //import at.dms.compiler.TabbedPrintWriter;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.common.CommonUtils;
@@ -41,16 +41,16 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      *  backend, you will probably want to override printExp.
      */
 
-    static protected Map/*<String><String>*/ printPrefixMap;
+    static protected Map<String,String> printPrefixMap;
     
     /**
      * Print postfixes: defaults to ");" useful for printing boolean.
      */
-    static protected Map/*<String><String>*/ printPostfixMap;
+    static protected Map<String,String> printPostfixMap;
 
     static {
-        printPrefixMap = new java.util.HashMap();
-        printPostfixMap = new java.util.HashMap();
+        printPrefixMap = new java.util.HashMap<String,String>();
+        printPostfixMap = new java.util.HashMap<String,String>();
         // Set up standard prefixes for visitPrintStatement.
         // a subclass may override by:
         // printPrefixMap.clear(); printPrefixMap.put...
@@ -130,6 +130,52 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         }
     }
 
+    /**
+     * Generate a code string for a JExpression or JStatement
+     * 
+     * <p>usage:<br/ >
+     * (new mySubClass()).makeString(e);
+     * </p>
+     * Relies on the subclass's nullary constructor doing something sensible.
+     * 
+     * @param e a JPhylum (superclass of Jexpression and Jstatement)
+     * @return code generated for the expression.
+     */
+    public String makeString(JPhylum e) {
+        ToCCommon toc;
+        try {
+            toc = this.getClass().newInstance();
+        } catch (/*IllegalAccess,Instantiation*/Exception exn) {
+            System.err.println("Error in creating class " + this.getClass().getName());
+            throw new Error (exn.getCause());
+        } 
+        e.accept(toc);
+        return toc.getPrinter().getString();
+    }
+    
+/**
+ * Generate an array of code strings for an array of JPhylums.
+ * Usually used to generate code for each of CArrayType's dimensions.
+ * 
+ * <p>usual usage:<br/ >
+ * String[] dims_code = (new mySubClass()).makeArrayStrings(((CArrayType)type).getDims());
+ * <br/ > or, if called from a within an object method of a subclass:<br/ >
+ * String[] dims_code = this.makeArrayStrings(((CArrayType)type).getDims());
+ * </p>
+ * Relies on the subclass's nullary constructor doing something sensible.
+ *
+ * @param dims  an array of JExpression
+ * @return array of String conatining generated code for each expression
+ */
+    public String[] makeArrayStrings(JPhylum[] dims) {
+        String[] ret = new String[dims.length];
+        
+        for (int i = 0; i < dims.length; i++) {
+            ret[i] = makeString(dims[i]);
+        }
+        return ret;
+         
+    }
     // ------------------------------------------------------------------------
     // More substantial common methods.
     // ------------------------------------------------------------------------
@@ -730,8 +776,8 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * @param exp
      * @return list of expressions that had been string concatenated.
      */
-    protected List /*<JExpression>*/ splitForPrint(JExpression exp) {
-        List exprs = new ArrayList(1);
+    protected List<JExpression> splitForPrint(JExpression exp) {
+        List<JExpression> exprs = new ArrayList<JExpression>(1);
         if (exp instanceof JAddExpression) {
             JExpression l, r;
             CType lt = null; 

@@ -5,11 +5,8 @@ import java.util.*;
 import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
-import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 import at.dms.kjc.flatgraph.*;
 

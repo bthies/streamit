@@ -12,6 +12,8 @@ import at.dms.kjc.flatgraph.*;
 /**
  * Create structs.h and its contents.
  *  
+ *  Used in raw (space) and cluster backends.
+ *  
  * @author Janis
  *
  */
@@ -105,7 +107,7 @@ public class StructureIncludeFile implements FlatVisitor
                 fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +
                          "*);\n");
                 fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "();\n");
-                fw.write("inline void " + RawExecutionCode.structReceiveMethodPrefix + 
+                fw.write("inline void " + CommonConstants.structReceiveMethodPrefix + 
                          current.getIdent() + "(" + current.getIdent() + "*);\n\n");
             }
         }
@@ -154,7 +156,7 @@ public class StructureIncludeFile implements FlatVisitor
 
             //create the pop functions that take a pointer argument
             //these are more efficent, we use these when we can
-            fw.write("inline void " + RawExecutionCode.structReceiveMethodPrefix + 
+            fw.write("inline void " + CommonConstants.structReceiveMethodPrefix + 
                      current.getIdent() + "(" + 
                      current.getIdent() + "* temp) {\n");
             for (int j = 0; j < current.getFields().length; j++) {
@@ -163,7 +165,7 @@ public class StructureIncludeFile implements FlatVisitor
                 }
                 else if (current.getFields()[j].getType().isClassType()) {
                     //if this is struct field, call the struct's popPointer method
-                    fw.write("\t" + RawExecutionCode.structReceiveMethodPrefix + 
+                    fw.write("\t" + CommonConstants.structReceiveMethodPrefix + 
                              current.getFields()[j].getType() +
                              "(&temp->" + current.getFields()[j].getVariable().getIdent() +
                              ");\n");

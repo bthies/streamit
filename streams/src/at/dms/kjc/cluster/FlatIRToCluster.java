@@ -14,7 +14,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 import at.dms.kjc.common.CodegenPrintWriter;
-import at.dms.kjc.common.RawExecutionCode;
+import at.dms.kjc.common.CommonConstants;
 import at.dms.kjc.common.RawUtil;
 
 /**
@@ -1817,17 +1817,17 @@ public class FlatIRToCluster extends InsertTimers implements
 
         // generate the inline asm instruction to execute the
         // receive if this is a receive instruction
-        if (ident.equals(RawExecutionCode.receiveMethod)) {
-
-            // Do not generate this!
-
-            /*
-             * p.print(Util.staticNetworkReceivePrefix()); visitArgs(args,0);
-             * p.print(Util.staticNetworkReceiveSuffix(args[0].getType()));
-             */
-
-            return;
-        }
+//        if (ident.equals(CommonConstants.receiveMethod)) {
+//
+//            // Do not generate this!
+//
+//            /*
+//             * p.print(Util.staticNetworkReceivePrefix()); visitArgs(args,0);
+//             * p.print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+//             */
+//
+//            return;
+//        }
 
         if (prefix instanceof JTypeNameExpression) {
             JTypeNameExpression nexp = (JTypeNameExpression) prefix;
@@ -1869,7 +1869,7 @@ public class FlatIRToCluster extends InsertTimers implements
         // if this method we are calling is the call to a structure
         // receive method that takes a pointer, we have to add the
         // address of operator
-        if (ident.startsWith(RawExecutionCode.structReceiveMethodPrefix))
+        if (ident.startsWith(CommonConstants.structReceiveMethodPrefix))
             p.print("&");
 
         int i = 0;
@@ -1983,7 +1983,7 @@ public class FlatIRToCluster extends InsertTimers implements
         if (arrayType && !(right instanceof JNewArrayExpression)) {
 
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = RawUtil.makeString(type.getDims());
+            String dims[] = this.makeArrayStrings(type.getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -2009,22 +2009,22 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("int ");
             // print the index var decls
             for (int i = 0; i < dims.length - 1; i++)
-                p.print(RawExecutionCode.ARRAY_COPY + i + ", ");
-            p.print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
+                p.print(CommonConstants.ARRAY_COPY + i + ", ");
+            p.print(CommonConstants.ARRAY_COPY + (dims.length - 1));
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
                 //p.println("// FlatIRToCluster_7");
-                p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; "
-                        + RawExecutionCode.ARRAY_COPY + i + " < " + dims[i]
-                        + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                p.print("for (" + CommonConstants.ARRAY_COPY + i + " = 0; "
+                        + CommonConstants.ARRAY_COPY + i + " < " + dims[i]
+                        + "; " + CommonConstants.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
-                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                p.print("[" + CommonConstants.ARRAY_COPY + i + "]");
             p.print(" = ");
             right.accept(this);
             for (int i = 0; i < dims.length; i++)
-                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                p.print("[" + CommonConstants.ARRAY_COPY + i + "]");
             p.print(";\n}\n");
 
             return;
@@ -2434,12 +2434,12 @@ public class FlatIRToCluster extends InsertTimers implements
     private void pushArray(SIRPushExpression self, CType tapeType,
                            JExpression val) {
         CType baseType = ((CArrayType) tapeType).getBaseType();
-        String dims[] = RawUtil.makeString(((CArrayType) tapeType).getDims());
+        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
 
         for (int i = 0; i < dims.length; i++) {
-            p.print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; "
-                    + RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i]
-                    + " ; " + RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+            p.print("for (" + CommonConstants.ARRAY_INDEX + i + " = 0; "
+                    + CommonConstants.ARRAY_INDEX + i + " < " + dims[i]
+                    + " ; " + CommonConstants.ARRAY_INDEX + i + "++)\n");
         }
 
         // AD: never tested to my knowledge.  Also, decoupled is only defined for RAW backends
@@ -2448,7 +2448,7 @@ public class FlatIRToCluster extends InsertTimers implements
         //            // p.print(Util.CSTOVAR + " = ");
         //            val.accept(this);
         //            for (int i = 0; i < dims.length; i++) {
-        //                p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+        //                p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
         //            }
         //            p.print(";\n}\n");
         //        } else {
@@ -2456,7 +2456,7 @@ public class FlatIRToCluster extends InsertTimers implements
         p.print("static_send((" + baseType + ") ");
         val.accept(this);
         for (int i = 0; i < dims.length; i++) {
-            p.print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+            p.print("[" + CommonConstants.ARRAY_INDEX + i + "]");
         }
         p.print(");\n}\n");
         //        }

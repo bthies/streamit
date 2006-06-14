@@ -1,14 +1,12 @@
 package at.dms.kjc.raw;
 
-import at.dms.kjc.common.RawUtil;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.util.HashSet;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.List;
@@ -307,7 +305,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         }
     
         //create the appropriate amount of routing instructions
-        int elements = RawUtil.getTypeSize(RawUtil.getOutputType(fire));
+        int elements = Util.getTypeSize(CommonUtils.getOutputType(fire));
         for (int i = 0; i < elements; i++)
             asm(Layout.getTile(fire), prev, next);
     }

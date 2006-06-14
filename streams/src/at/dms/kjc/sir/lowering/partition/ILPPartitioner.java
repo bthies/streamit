@@ -1,20 +1,8 @@
 package at.dms.kjc.sir.lowering.partition;
 
-import java.rmi.RemoteException;
-
 import java.util.*;
-import java.io.*;
-import lpsolve.*;
-
-import at.dms.kjc.*;
-import at.dms.util.*;
 import at.dms.kjc.linprog.*;
-import at.dms.kjc.iterator.*;
-import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
 
 public class ILPPartitioner extends ListPartitioner {
     /**

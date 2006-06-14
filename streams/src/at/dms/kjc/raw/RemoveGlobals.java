@@ -1,6 +1,5 @@
 package at.dms.kjc.raw;
 
-import at.dms.kjc.common.RawExecutionCode;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;

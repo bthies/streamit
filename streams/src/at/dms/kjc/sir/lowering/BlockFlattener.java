@@ -2,14 +2,8 @@ package at.dms.kjc.sir.lowering;
 
 import java.util.*;
 import at.dms.kjc.*;
-import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
-import java.lang.Math;
-import at.dms.compiler.TokenReference;
-import at.dms.kjc.raw.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 

@@ -1,6 +1,6 @@
 package at.dms.kjc.raw;
 
-import at.dms.kjc.common.RawUtil;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -548,7 +548,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
             //if (hops > 0 && numAssigned > 0.0)
             //      System.out.println(node + ": " + hops + " " + numAssigned);
         
-            sum += ((items * hops) + (items * RawUtil.getTypeSize(RawUtil.getOutputType(node)) * 
+            sum += ((items * hops) + (items * Util.getTypeSize(CommonUtils.getOutputType(node)) * 
                                       /*Math.pow(*/numAssigned /** 2.0, 3.0)*/ * 10.0));
         }
         return sum;

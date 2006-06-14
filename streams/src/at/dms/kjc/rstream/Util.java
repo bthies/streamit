@@ -132,7 +132,7 @@ public class Util extends at.dms.util.Utils {
         this relies on the surrounding filters **/
     public static CType getOutputType(FlatNode node) 
     {
-        return at.dms.kjc.common.RawUtil.getOutputType(node);
+        return at.dms.kjc.common.CommonUtils.getOutputType(node);
     }
     
     /** convert an IR tree to a string of C code **/

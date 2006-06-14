@@ -4,18 +4,11 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-//import at.dms.kjc.iterator.*;
+import at.dms.kjc.common.CommonConstants;
 import at.dms.util.Utils;
 import java.util.List;
 import java.util.ListIterator;
-//import java.util.Iterator;
-//import java.util.LinkedList;
 import java.util.HashMap;
-//import java.io.*;
-//import at.dms.compiler.*;
-//import at.dms.kjc.sir.lowering.*;
-//import java.util.Hashtable;
-//import java.math.BigInteger;
 
 public class RawExecutionCode extends at.dms.util.Utils 
     implements FlatVisitor, Constants
@@ -40,9 +33,15 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String exeIndex = "__EXEINDEX__";
     public static String exeIndex1 = "__EXEINDEX__1__";
 
-    public static String ARRAY_INDEX = "__ARRAY_RECEIVE_INDEX__";
-    public static String ARRAY_COPY = "__ARRAY_COPY__";
+    /* didn't want to change all the references */
+    public static String ARRAY_INDEX;
+    public static String ARRAY_COPY;
 
+    static {
+        ARRAY_INDEX = CommonConstants.ARRAY_INDEX; 
+        ARRAY_COPY = CommonConstants.ARRAY_COPY;
+    }
+    
     public static String initSchedFunction = "__RAWINITSCHED__";
     public static String steadySchedFunction = "__RAWSTEADYSCHED__";
     

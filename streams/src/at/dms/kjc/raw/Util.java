@@ -13,6 +13,7 @@ import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.io.*;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * This class contains various function used by multiple passes
@@ -120,67 +121,33 @@ public class Util extends at.dms.util.Utils {
 
     public static CType getJoinerType(FlatNode joiner) 
     {
-        boolean found;
-        //search backward until we find the first filter
-        while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
-            found = false;
-            for (int i = 0; i < joiner.inputs; i++) {
-                if (joiner.incoming[i] != null) {
-                    joiner = joiner.incoming[i];
-                    found = true;
-                }
-            }
-            if (!found)
-                Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());
-        }
-        if (joiner != null) 
-            return ((SIRFilter)joiner.contents).getOutputType();
-        else 
-            return CStdType.Void;
+        return CommonUtils.getJoinerType(joiner);
     }
     
     public static CType getOutputType(FlatNode node) {
-        if (node.contents instanceof SIRFilter)
-            return ((SIRFilter)node.contents).getOutputType();
-        else if (node.contents instanceof SIRJoiner)
-            return getJoinerType(node);
-        else if (node.contents instanceof SIRSplitter)
-            return getOutputType(node.incoming[0]);
-        else {
-            Utils.fail("Cannot get output type for this node");
-            return null;
-        }
+        return CommonUtils.getOutputType(node);
     }
 
     public static CType getBaseType (CType type) 
     {
-        if (type.isArrayType())
-            return ((CArrayType)type).getBaseType();
-        return type;
+        return CommonUtils. getBaseType(type);
     }
 
-    public static String[] makeString(JExpression[] dims) {
-        String[] ret = new String[dims.length];
-    
-    
-        for (int i = 0; i < dims.length; i++) {
-            FlatIRToC ftoc = new FlatIRToC();
-            dims[i].accept(ftoc);
-            ret[i] = ftoc.getPrinter().getString();
-        }
-        return ret;
-    }
+//    public static String[] makeString(JExpression[] dims) {
+//        String[] ret = new String[dims.length];
+//    
+//    
+//        for (int i = 0; i < dims.length; i++) {
+//            FlatIRToC ftoc = new FlatIRToC();
+//            dims[i].accept(ftoc);
+//            ret[i] = ftoc.getPrinter().getString();
+//        }
+//        return ret;
+//    }
 
 
     public static int[] makeInt(JExpression[] dims) {
-        int[] ret = new int[dims.length];
-    
-        for (int i = 0; i < dims.length; i++) {
-            if (!(dims[i] instanceof JIntLiteral))
-                Utils.fail("Array length for tape declaration not an int literal");
-            ret[i] = ((JIntLiteral)dims[i]).intValue();
-        }
-        return ret;
+        return CommonUtils.makeArrayInts(dims);
     }
 
     public static String staticNetworkReceivePrefix() {

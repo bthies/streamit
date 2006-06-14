@@ -1,5 +1,6 @@
 package at.dms.kjc.common;
  
+import at.dms.kjc.CStdType;
 import at.dms.kjc.JIntLiteral;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.CType;
@@ -12,13 +13,52 @@ import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.SIRJoiner;
+import at.dms.kjc.sir.SIRSplitter;
 /**
  * Some public static utility functions pulled out of other routines.
  */
 public class CommonUtils {
 
     /**
-     * Turn a CType into a string for includion in C or C++ code generation.
+     * Make an array of int's from an array of JExpression's for array dimensions.
+     * 
+     * @param dims An array of JExpressions that shuold all be  JIntLiteral's
+     * @return array of ints, or asserts that the array has a non-int dimension.
+     */
+    public static int[] makeArrayInts(JExpression[] dims) {
+        int[] ret = new int[dims.length];
+    
+        for (int i = 0; i < dims.length; i++) {
+            assert dims[i] instanceof JIntLiteral :
+                "Length of array dimension is not an int literal";
+            ret[i] = ((JIntLiteral)dims[i]).intValue();
+        }
+        return ret;
+    }
+
+
+    /**
+     * Return the underlying CType for a Ctype.
+     * 
+     * For anything except an array this is  no-op.
+     * For an array, return the array's base type (which according to CArrayType
+     * is not allowed to be another array type).
+     * 
+     * @param type a CType
+     * @return the underlying type
+     */
+    public static CType getBaseType (CType type) 
+    {
+        if (type.isArrayType())
+            return ((CArrayType)type).getBaseType();
+        return type;
+    }
+
+    /**
+     * Turn a CType into a string for inclusion in C or C++ code generation.
      *
      * @param s            a CType.
      * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
@@ -142,5 +182,63 @@ public class CommonUtils {
         // SIRPortal = SIRCreatePortal
         return expr;
     }
+    /**
+     * Get the output type of a joiner in a Flatnode representation.
+     * 
+     * The type of a joiner is the output type of the first filter found searching
+     * back from the joiner.
+     * 
+     * Edge cases: If you pass this method a filter, you will get back the output
+     * type of the filter.  If you pass this a null joiner, you will get back void.
+     * 
+     * @param joiner a joiner in a FlatNode representation
+     * @return a CType
+     */
+       public static CType getJoinerType(FlatNode joiner) 
+       {
+           boolean found;
+           //search backward until we find the first filter
+           while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
+               found = false;
+               for (int i = 0; i < joiner.inputs; i++) {
+                   if (joiner.incoming[i] != null) {
+                       joiner = joiner.incoming[i];
+                       found = true;
+                   }
+               }
+               assert found :
+                   "Cannot find any upstream filter from " 
+                   + joiner.contents.getName();
+           }
+           if (joiner != null) 
+               return ((SIRFilter)joiner.contents).getOutputType();
+           else 
+               return CStdType.Void;
+       }
+       
+       /**
+        * Get the output type of any FlatNode element (filter, splitter, joiner).
+        *
+        * The output type of a filter is stored in the filter.
+        * The output type of a splitter is the output type of its incoming edge:
+        * fix or do not use this method fot null splitters!
+        * The output type of a joiner is that of the first filter found above the
+        * joiner.
+        *
+        * @param node a FlatNode
+        * @return a CType
+        */
+       public static CType getOutputType(FlatNode node) {
+           if (node.contents instanceof SIRFilter)
+               return ((SIRFilter)node.contents).getOutputType();
+           else if (node.contents instanceof SIRJoiner)
+               return getJoinerType(node);
+           else if (node.contents instanceof SIRSplitter)
+               return getOutputType(node.incoming[0]);
+           else {
+               assert false: "Cannot get output type for this node";
+               return null;
+           }
+       }
 
 }

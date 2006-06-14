@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.111 2006-06-13 17:33:55 dimock Exp $
+ * $Id: LIRToC.java,v 1.112 2006-06-14 21:01:04 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -10,9 +10,9 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.List;
 import java.util.Map;
+import at.dms.kjc.common.CommonConstants;
 import at.dms.kjc.common.MacroConversion;
 import at.dms.kjc.common.CodeGenerator;
-import at.dms.kjc.common.RawExecutionCode;
 import at.dms.util.InconsistencyException;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.util.Utils;
@@ -1116,22 +1116,22 @@ public class LIRToC
             p.print("int ");
             // print the index var decls
             for (int i = 0; i < dims.length - 1; i++)
-                p.print(RawExecutionCode.ARRAY_COPY + i + ", ");
-            p.print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
+                p.print(CommonConstants.ARRAY_COPY + i + ", ");
+            p.print(CommonConstants.ARRAY_COPY + (dims.length - 1));
             p.print(";\n");
             for (int i = 0; i < dims.length; i++) {
-                p.print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; "
-                        + RawExecutionCode.ARRAY_COPY + i + " < ");
+                p.print("for (" + CommonConstants.ARRAY_COPY + i + " = 0; "
+                        + CommonConstants.ARRAY_COPY + i + " < ");
                 dims[i].accept(this);
-                p.print("; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                p.print("; " + CommonConstants.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
-                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                p.print("[" + CommonConstants.ARRAY_COPY + i + "]");
             p.print(" = ");
             right.accept(this);
             for (int i = 0; i < dims.length; i++)
-                p.print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                p.print("[" + CommonConstants.ARRAY_COPY + i + "]");
             p.print(";\n}\n");
 
             return;

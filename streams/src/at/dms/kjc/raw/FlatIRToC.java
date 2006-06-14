@@ -578,7 +578,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         if (arrayType && !(right instanceof JNewArrayExpression)) {
                     
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = RawUtil.makeString(type.getDims());
+            String dims[] = this.makeArrayStrings(type.getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -656,7 +656,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print(RawUtil.staticNetworkReceivePrefix());
             visitArgs(args,0);
             p.print(RawUtil.staticNetworkReceiveSuffix
-                    (RawUtil.getBaseType(filter.getInputType())));
+                    (CommonUtils.getBaseType(filter.getInputType())));
             statementContext = oldStatementContext;
             return;  
         }
@@ -799,7 +799,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
                            JExpression val) 
     {
         CType baseType = ((CArrayType)tapeType).getBaseType();
-        String dims[] = RawUtil.makeString(((CArrayType)tapeType).getDims());
+        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
         String ARRAY_INDEX = "ARRAY_PUSH_INDEX";
 
         p.print("{\n");
@@ -818,7 +818,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
 //        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
             p.print("{\n");
-            p.print(RawUtil.staticNetworkSendPrefix(RawUtil.getBaseType(tapeType)));
+            p.print(RawUtil.staticNetworkSendPrefix(CommonUtils.getBaseType(tapeType)));
             val.accept(this);
             for (int i = 0; i < dims.length; i++) {
                 p.print("[" + ARRAY_INDEX + i + "]");

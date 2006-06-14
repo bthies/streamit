@@ -3,15 +3,9 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
-import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
 import at.dms.compiler.TokenReference;
-import at.dms.kjc.raw.*;
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
 
 /**
  * Create initPath() functions for feedback loops that don't have them.
@@ -22,7 +16,7 @@ import at.dms.kjc.flatgraph.FlatVisitor;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.4 2006-01-25 17:02:07 thies Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.5 2006-06-14 21:01:05 dimock Exp $
  */
 public class EnqueueToInitPath
 {

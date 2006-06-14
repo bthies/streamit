@@ -1,6 +1,6 @@
 package at.dms.kjc.raw;
 
-import at.dms.kjc.common.RawUtil;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -72,16 +72,16 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             fw.write("#include <math.h>\n\n");
   
 //            if(KjcOptions.altcodegen) {
-                fw.write("register float " + RawUtil.CSTOFPVAR + " asm(\"$csto\");\n");
-                fw.write("register float " + RawUtil.CSTIFPVAR + " asm(\"$csti\");\n");
-                fw.write("register int " + RawUtil.CSTOINTVAR + " asm(\"$csto\");\n");
-                fw.write("register int " + RawUtil.CSTIINTVAR + " asm(\"$csti\");\n");
+                fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
+                fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
+                fw.write("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
+                fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
 //            }
 
             if (RawBackend.FILTER_DEBUG_MODE) {
                 fw.write("void static_send_print(");
-                fw.write(RawUtil.getJoinerType(joiner) + " f) {\n");
-                if (RawUtil.getJoinerType(joiner).isFloatingPoint()) 
+                fw.write(CommonUtils.getJoinerType(joiner) + " f) {\n");
+                if (CommonUtils.getJoinerType(joiner).isFloatingPoint()) 
                     fw.write("print_float(f);\n");
                 else 
                     fw.write("print_int(f);\n");
@@ -99,10 +99,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
                 fw.write("#include \"structs.h\"\n");
         
             if (KjcOptions.decoupled) {
-                fw.write("float " + RawUtil.CSTOFPVAR + ";\n");
-                fw.write("float " + RawUtil.CSTIFPVAR + ";\n");
-                fw.write("int " + RawUtil.CSTOINTVAR + ";\n");
-                fw.write("int " + RawUtil.CSTIINTVAR + ";\n");
+                fw.write("float " + Util.CSTOFPVAR + ";\n");
+                fw.write("float " + Util.CSTIFPVAR + ";\n");
+                fw.write("int " + Util.CSTOINTVAR + ";\n");
+                fw.write("int " + Util.CSTIINTVAR + ";\n");
             }
 
             //write the extern for the function to init the 
@@ -125,10 +125,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         
             //initialize the dummy network receive value
             if (KjcOptions.decoupled) {
-                if (RawUtil.getJoinerType(joiner).isFloatingPoint()) 
-                    fw.write("  " + RawUtil.CSTIFPVAR + " = 1.0;\n");
+                if (CommonUtils.getJoinerType(joiner).isFloatingPoint()) 
+                    fw.write("  " + Util.CSTIFPVAR + " = 1.0;\n");
                 else 
-                    fw.write("  " + RawUtil.CSTIINTVAR + " = 1;\n");
+                    fw.write("  " + Util.CSTIINTVAR + " = 1;\n");
             }
         
             fw.write("  work();\n");
@@ -164,7 +164,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         int buffersize = nextPow2((Integer)SimulationCounter.maxJoinerBufferSize.get(joiner),
                                   joiner);
         //get the type, since this joiner is guaranteed to be connected to a filter
-        CType type = RawUtil.getBaseType(RawUtil.getJoinerType(joiner));  //??
+        CType type = CommonUtils.getBaseType(CommonUtils.getJoinerType(joiner));  //??
     
         ret.append("#define __BUFSIZE__ " + buffersize + "\n");
         ret.append("#define __MINUSONE__ " + (buffersize - 1) + "\n\n");
@@ -174,9 +174,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         ret.append("  int rep;\n");
         //print the index vars if the type is an array type
         //and the duplication var for duplicate splitjoins with identities inside 
-        if (RawUtil.getJoinerType(joiner).isArrayType()) {
+        if (CommonUtils.getJoinerType(joiner).isArrayType()) {
             String dims[] = 
-                RawUtil.makeString(((CArrayType)RawUtil.getJoinerType(joiner)).getDims());
+                (new FlatIRToC()).makeArrayStrings(((CArrayType)CommonUtils.getJoinerType(joiner)).getDims());
             ret.append("  int ");
             for (int i = 0; i < dims.length -1; i++)
                 ret.append(ARRAY_INDEX + i + ", ");
@@ -202,9 +202,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append("int __first" + current + " = 0;\n");
             ret.append("int __last" + current + " = 0;\n");
             ret.append(type + " __buffer" + current + "[__BUFSIZE__]");
-            if (RawUtil.getJoinerType(joiner).isArrayType()) {
+            if (CommonUtils.getJoinerType(joiner).isArrayType()) {
                 String dims[] = 
-                    RawUtil.makeString(((CArrayType)RawUtil.getJoinerType(joiner)).getDims());
+                    (new FlatIRToC()).makeArrayStrings(((CArrayType)CommonUtils.getJoinerType(joiner)).getDims());
                 for (int i = 0; i < dims.length; i++)
                     ret.append("[" + dims[i] + "]");
             }
@@ -269,7 +269,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
                     // if we've't exhausted the possibility of finding
                     // loops, then make a single statement
                     if (ahead >= MAX_LOOKAHEAD) {
-                        ret.append(nodes[pos].getC(RawUtil.getJoinerType(joiner)));
+                        ret.append(nodes[pos].getC(CommonUtils.getJoinerType(joiner)));
                         pos++;
                     }
                 } else {
@@ -281,7 +281,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
                     ret.append("for (rep = 0; rep < " + reps + "; rep++) {\n");
                     // add the component code
                     for (int i=0; i<ahead; i++) {
-                        ret.append(nodes[pos+i].getC(RawUtil.getJoinerType(joiner)));
+                        ret.append(nodes[pos+i].getC(CommonUtils.getJoinerType(joiner)));
                     }
                     ret.append("}\n");
                     // increment the position
@@ -301,13 +301,13 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static void oldPrintSchedule(FlatNode joiner, JoinerScheduleNode node, StringBuffer ret, boolean fp) {
         while (node != null) {
             int repeat = 1;
-            String code = node.getC(RawUtil.getJoinerType(joiner));
+            String code = node.getC(CommonUtils.getJoinerType(joiner));
             node = node.next;
             //look for repeats
             while (true) {
                 if (node == null)
                     break;
-                if (node.getC(RawUtil.getJoinerType(joiner)).equals(code)) {
+                if (node.getC(CommonUtils.getJoinerType(joiner)).equals(code)) {
                     node = node.next;
                     repeat++;
                 }

@@ -9,7 +9,7 @@ import java.util.Vector;
 import at.dms.kjc.common.CodegenPrintWriter;
 import java.util.HashSet;
 import java.io.*;
-import at.dms.kjc.common.RawUtil;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * This class generates and emits code for each filter, splitter, and joiner
@@ -81,7 +81,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
-        CType baseType = RawUtil.getBaseType(RawUtil.getOutputType(node));
+        CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
         int id = NodeEnumerator.getSIROperatorId(node.contents);
 
         Vector in_v = (Vector)RegisterStreams.getNodeInStreams(node.contents);
@@ -220,7 +220,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
-        CType baseType = RawUtil.getBaseType(RawUtil.getJoinerType(node));
+        CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
         int id = NodeEnumerator.getSIROperatorId(node.contents);
 
         Vector in = (Vector)RegisterStreams.getNodeInStreams(node.contents);
@@ -342,7 +342,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
         steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
-        CType baseType = RawUtil.getBaseType(RawUtil.getOutputType(node));
+        CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
         Vector in_v = (Vector)RegisterStreams.getNodeInStreams(node.contents);
@@ -949,7 +949,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         }
 
         steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
-        CType baseType = RawUtil.getBaseType(RawUtil.getJoinerType(node));
+        CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
         Vector in = (Vector)RegisterStreams.getNodeInStreams(node.contents);

@@ -408,7 +408,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                String dims[] = this.makeArrayStrings(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();
@@ -454,7 +454,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                    String dims[] = this.makeArrayStrings(((CArrayType)type).getDims());
                     //CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -517,7 +517,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                    String dims[] = this.makeArrayStrings(((CArrayType)type).getDims());
                     CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -576,7 +576,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
                 if (type.isArrayType()) {
                     int size = 0;
-                    String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                    String dims[] = this.makeArrayStrings(((CArrayType)type).getDims());
                     CType base = ((CArrayType)type).getBaseType();
                     try {
                         size = Integer.valueOf(dims[0]).intValue();
@@ -2137,19 +2137,19 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 
         //generate the inline asm instruction to execute the 
         //receive if this is a receive instruction
-        if (ident.equals(RawExecutionCode.receiveMethod)) {
-
-            //Do not generate this!
-        
-            /*
-              print(Util.staticNetworkReceivePrefix());
-              visitArgs(args,0);
-              print(Util.staticNetworkReceiveSuffix(args[0].getType()));
-            */
-
-
-            return;  
-        }
+//        if (ident.equals(CommonConstants.receiveMethod)) {
+//
+//            //Do not generate this!
+//        
+//            /*
+//              print(Util.staticNetworkReceivePrefix());
+//              visitArgs(args,0);
+//              print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+//            */
+//
+//
+//            return;  
+//        }
     
         if (prefix instanceof JTypeNameExpression) {
             JTypeNameExpression nexp = (JTypeNameExpression)prefix;
@@ -2174,7 +2174,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         //if this method we are calling is the call to a structure 
         //receive method that takes a pointer, we have to add the 
         //address of operator
-        if (ident.startsWith(RawExecutionCode.structReceiveMethodPrefix))
+        if (ident.startsWith(CommonConstants.structReceiveMethodPrefix))
             print("&");
 
         int i = 0;
@@ -2388,7 +2388,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
         if (arrayType && !(right instanceof JNewArrayExpression)) {
         
             CArrayType type = (CArrayType)right.getType();
-            String dims[] = RawUtil.makeString(type.getDims());
+            String dims[] = this.makeArrayStrings(((CArrayType)type).getDims());
 
             // dims should never be null now that we have static array
             // bounds
@@ -2413,20 +2413,20 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
             print("int ");
             //print the index var decls
             for (int i = 0; i < dims.length -1; i++)
-                print(RawExecutionCode.ARRAY_COPY + i + ", ");
-            print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
+                print(CommonConstants.ARRAY_COPY + i + ", ");
+            print(CommonConstants.ARRAY_COPY + (dims.length - 1));
             print(";\n");
             for (int i = 0; i < dims.length; i++) {
-                print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
-                      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
+                print("for (" + CommonConstants.ARRAY_COPY + i + " = 0; " + CommonConstants.ARRAY_COPY + i +  
+                      " < " + dims[i] + "; " + CommonConstants.ARRAY_COPY + i + "++)\n");
             }
             left.accept(this);
             for (int i = 0; i < dims.length; i++)
-                print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                print("[" + CommonConstants.ARRAY_COPY + i + "]");
             print(" = ");
             right.accept(this);
             for (int i = 0; i < dims.length; i++)
-                print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
+                print("[" + CommonConstants.ARRAY_COPY + i + "]");
             print(";\n}\n");
             return;
         }
@@ -2811,7 +2811,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
             }
         else
             {
-                System.out.println("Unprintatble type");
+                System.out.println("Unprintable type");
                 print("print_int(");
                 exp.accept(this);
                 print(");");
@@ -2860,12 +2860,12 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
                            JExpression val) 
     {
         CType baseType = ((CArrayType)tapeType).getBaseType();
-        String dims[] = RawUtil.makeString(((CArrayType)tapeType).getDims());
+        String dims[] = this.makeArrayStrings(((CArrayType)tapeType).getDims());
     
         for (int i = 0; i < dims.length; i++) {
-            print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
-                  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
-                  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+            print("for (" + CommonConstants.ARRAY_INDEX + i + " = 0; " +
+                  CommonConstants.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+                  CommonConstants.ARRAY_INDEX + i + "++)\n");
         }
 
 
@@ -2875,7 +2875,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
 //            //      print(Util.CSTOVAR + " = ");
 //            val.accept(this);
 //            for (int i = 0; i < dims.length; i++) {
-//                print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+//                print("[" + CommonConstants.ARRAY_INDEX + i + "]");
 //            }
 //            print(";\n}\n");
 //        } else {
@@ -2883,7 +2883,7 @@ public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements Str
             print("static_send((" + baseType + ") ");
             val.accept(this);
             for (int i = 0; i < dims.length; i++) {
-                print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+                print("[" + CommonConstants.ARRAY_INDEX + i + "]");
             }
             print(");\n}\n");
 //        }

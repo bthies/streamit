@@ -52,7 +52,7 @@ public class JoinerScheduleNode
                    next.type == DUPLICATE);
     
         if (ctype.isArrayType()) {
-            dims = RawUtil.makeString(((CArrayType)ctype).getDims());
+            dims = (new FlatIRToC()).makeArrayStrings(((CArrayType)ctype).getDims());
             fp = ((CArrayType)ctype).getBaseType().equals(CStdType.Float);
         }
     

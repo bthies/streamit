@@ -2,7 +2,6 @@ package at.dms.kjc.sir.lowering.partition;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
-import at.dms.kjc.raw.*;
 import at.dms.kjc.spacedynamic.*;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
@@ -53,6 +52,7 @@ class WorkInfo {
                 if (KjcOptions.spacedynamic)
                     result.workExact = at.dms.kjc.spacedynamic.RawWorkEstimator.estimateWork(filter); 
                 else
+                    
                     result.workExact = at.dms.kjc.raw.RawWorkEstimator.estimateWork(filter); 
             } else {
                 // otherwise, just take workEstimate to be exact

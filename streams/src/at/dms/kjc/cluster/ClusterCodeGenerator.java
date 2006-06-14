@@ -308,7 +308,7 @@ class ClusterCodeGenerator {
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                String dims[] = (new FlatIRToCluster()).makeArrayStrings(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();
@@ -356,7 +356,7 @@ class ClusterCodeGenerator {
 
             if (type.isArrayType()) {
                 int size = 0;
-                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                String dims[] = (new FlatIRToCluster()).makeArrayStrings(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
                 try {
                     size = Integer.valueOf(dims[0]).intValue();

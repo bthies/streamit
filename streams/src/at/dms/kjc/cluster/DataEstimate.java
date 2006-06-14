@@ -5,7 +5,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashMap;
-import at.dms.kjc.common.RawUtil;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * Estimates the data working set of an operator. Currently
@@ -139,14 +139,14 @@ public class DataEstimate {
     
         if (oper instanceof SIRJoiner) {
             SIRJoiner joiner = (SIRJoiner)oper;
-            CType baseType = RawUtil.getBaseType(RawUtil.getJoinerType(node));
+            CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
             int sum = joiner.getSumOfWeights();
             return DataEstimate.getTypeSize(baseType)*sum*2; 
         }
 
         if (oper instanceof SIRSplitter) {
             SIRSplitter splitter = (SIRSplitter)oper;
-            CType baseType = RawUtil.getBaseType(RawUtil.getOutputType(node));
+            CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
             int sum = splitter.getSumOfWeights();
             return DataEstimate.getTypeSize(baseType)*sum*2; 
         }
@@ -193,7 +193,7 @@ public class DataEstimate {
 
             if (type.isArrayType()) {
 
-                String dims[] = RawUtil.makeString(((CArrayType)type).getDims());
+                String dims[] = (new FlatIRToCluster()).makeArrayStrings(((CArrayType)type).getDims());
                 CType base = ((CArrayType)type).getBaseType();
         
                 if (dims != null) {

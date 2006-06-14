@@ -201,7 +201,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     
         if (type.isArrayType()) {
         
-            String dims[] = RawUtil.makeString(((CArrayType)self.getType()).getDims());
+            String dims[] = (new FlatIRToCluster()).makeArrayStrings(((CArrayType)self.getType()).getDims());
             CType base = ((CArrayType)type).getBaseType();
         
             if (dims != null && dims[0] != null) {

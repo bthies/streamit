@@ -194,7 +194,7 @@ public class SpaceTimeBackend {
 
         //We have to create multilevel splits and/or joins if their width
         //is greater than the number of memories of the chip...
-        new MultiLevelSplitsJoins(partitioner, rawChip).doit();
+        //new MultiLevelSplitsJoins(partitioner, rawChip).doit();
         
         /*
          * System.gc(); System.out.println("MEM:

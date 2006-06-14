@@ -80,6 +80,28 @@ public class InputTraceNode extends TraceNode {
         return weights.length;
     }
     
+    /**
+     * Return the number of items that traverse this edge
+     * on one iteration of this input trace node, remember
+     * that a single edge can appear multiple times in the joining
+     * pattern.
+     * 
+     * @param edge The edge to query.
+     * @return The number of items passing on the edge.
+     */
+    public int getItems(Edge edge) {
+        int items = 0;
+        
+        for (int i = 0; i < sources.length; i++) {
+            if (sources[i] == edge) {
+                items += weights[i];
+            }
+        }
+        
+        return items;
+    }
+  
+    
     public int[] getWeights() {
         return weights;
     }

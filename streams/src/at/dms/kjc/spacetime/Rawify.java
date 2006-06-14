@@ -396,17 +396,19 @@ public class Rawify {
 
         // generate the commands to read from the o/i temp buffer
         // for each input to the input trace node
-        for (int i = 0; i < input.getSources().length; i++) {
+        Iterator<Edge> edges = input.getSourceSet().iterator(); 
+        while (edges.hasNext()) {
+            Edge edge = edges.next();
             // get the first non-redundant buffer         
             OffChipBuffer srcBuffer = 
-                InterTraceBuffer.getBuffer(input.getSources()[i]).getNonRedundant();
+                InterTraceBuffer.getBuffer(edge).getNonRedundant();
             
             assert srcBuffer != null;
             
             SpaceTimeBackend.println("Generate the DRAM read command for "
                                      + srcBuffer);
             int readWords = iterations * typeSize
-                * input.getWeight(input.getSources()[i]);
+                * input.getItems(edge);
             if (srcBuffer.getDest() instanceof OutputTraceNode
                 && ((OutputTraceNode) srcBuffer.getDest()).isFileInput())
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
@@ -785,13 +787,13 @@ public class Rawify {
         dest[0].getNeighboringTile().getSwitchCode().appendComment(init || primepump,
                                                                    "Start join: This is the dest (" + filter.toString() + ")");
 
-        Iterator sources = traceNode.getSourceSet().iterator();
+        Iterator<Edge> sources = traceNode.getSourceSet().iterator();
         while (sources.hasNext()) {
-            StreamingDram dram = InterTraceBuffer.getBuffer(
-                                                            (Edge) sources.next()).getNonRedundant().getDRAM();
-            dram.getNeighboringTile().getSwitchCode().appendComment(
-                                                                    init || primepump,
-                                                                    "Start join: This a source (" + dram.toString() + ")");
+            StreamingDram dram = 
+                InterTraceBuffer.getBuffer((Edge) sources.next()).getNonRedundant().getDRAM();
+            dram.getNeighboringTile().getSwitchCode().
+                    appendComment(init || primepump,
+                            "Start join: This a source (" + dram.toString() + ")");
         }
 
         //generate the switch code...
@@ -825,8 +827,8 @@ public class Rawify {
             for (int i = 0; i < iterations; i++) {
                 for (int j = 0; j < traceNode.getWeights().length; j++) {
                     // get the source buffer, pass thru redundant buffer(s)
-                    StreamingDram source = InterTraceBuffer.getBuffer(
-                                                                      traceNode.getSources()[j]).getNonRedundant()
+                    StreamingDram source = 
+                        InterTraceBuffer.getBuffer(traceNode.getSources()[j]).getNonRedundant()
                         .getDRAM();
                     for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                         for (int q = 0; q < typeSize; q++)
@@ -847,9 +849,11 @@ public class Rawify {
             SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);
         }
         // disregard remainder of inputs coming from temp offchip buffers
-        for (int i = 0; i < traceNode.getSources().length; i++) {
-            Edge edge = traceNode.getSources()[i];
-            int remainder = ((iterations * typeSize * traceNode.getWeight(edge)) % RawChip.cacheLineWords);
+        Iterator<Edge> edges = traceNode.getSourceSet().iterator();
+        while (edges.hasNext()) {
+            Edge edge = edges.next();
+            int remainder = ((iterations * typeSize * traceNode.getItems(edge)) % 
+                    RawChip.cacheLineWords);
             if (remainder > 0
                 && !(edge.getSrc().isFileInput() && OffChipBuffer
                      .unnecessary(edge.getSrc())))

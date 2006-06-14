@@ -43,6 +43,7 @@ public class MultiLevelSplitsJoins {
         this.partitioner = partitioner;
         //set max width to number of devices
         maxWidth = rawChip.getNumDev();
+        System.out.println("Maxwidth: " + maxWidth);
     }
     
     /**
@@ -66,15 +67,20 @@ public class MultiLevelSplitsJoins {
             
             //see if the width of the joiner is too wide and 
             //keep breaking it up until it is, adding new levels...
-            while (trace.getHead().getWidth() > maxWidth)
+            while (trace.getHead().getWidth() > maxWidth) {
+                System.out.println("Breaking up " + trace.getHead() + 
+                        " width is " + trace.getHead().getWidth());
                 breakUpJoin(trace, traces);
-           
+            }
             //add the original trace to the new list of traces
             traces.add(trace);
             
             //see if the width of the splitter is too wide
-            while (trace.getTail().getWidth() > maxWidth) 
+            while (trace.getTail().getWidth() > maxWidth) {
+                System.out.println("Breaking up " + trace.getTail() + 
+                        " width is " + trace.getTail().getWidth());
                 breakUpSplit(trace, traces);
+            }
            
         }
         //set the trace graph to the new list of traces that we have

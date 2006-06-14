@@ -2153,10 +2153,10 @@ public class FlatIRToCluster extends InsertTimers implements
                 //                    num_params++;
                 //                    p.print(",");
                 //                }
-                for (i = 0; i < params.length; i++) {
-                    params[i].accept(this);
+                for (int j = 0; j < params.length; j++) {
+                    params[j].accept(this);
                     num_params++;
-                    if (i < params.length - 1) { p.print(",");}
+                    if (j < params.length - 1) { p.print(",");}
                 }
                 
                 p.print(" num_params: " + num_params + "*/\n");
@@ -2216,7 +2216,14 @@ public class FlatIRToCluster extends InsertTimers implements
 
                 p.print("\n#ifdef __CLUSTER_STANDALONE\n\n");
 
-                p.print("  message *__msg = new message("+size+", "+index+", ");
+                // declare variable only first time through
+                if (i == 0) {
+                    p.print("  message* ");
+                } else {
+                    p.print("  ");
+                }
+
+                p.print("__msg = new message("+size+", "+index+", ");
 
                 if (latency instanceof SIRLatencyMax) {
 

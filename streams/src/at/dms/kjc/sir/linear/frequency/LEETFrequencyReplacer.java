@@ -16,49 +16,53 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.<br>
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.24 2006-01-30 18:15:55 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.25 2006-06-14 20:36:19 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
+    /** Indicates whether or not anything has been transformed to the
+     * frequency domain.  This can be used to indicate whether or not
+     * the final executable needs to link against an FFT library. **/
+    public static boolean didTransform = false;
+    
     /** the name of the function in the C library that converts a buffer of real data from the time
      * domain to the frequency domain (replacing the value in the buffer with the half complex array
      * representation of the frequency response. **/
-    public static final String TO_FREQ_EXTERNAL   = "convert_to_freq";
+    private static final String TO_FREQ_EXTERNAL   = "convert_to_freq";
     /** the name of the function in the C library that converts a buffer of half complex array in the
      * frequency domain to a buffer of real data in the time domain. **/
-    public static final String FROM_FREQ_EXTERNAL   = "convert_from_freq";
+    private static final String FROM_FREQ_EXTERNAL   = "convert_from_freq";
     /** the name of the function in the C library that scales an array by 1/size. **/
-    public static final String SCALE_EXTERNAL = "scale_by_size";
+    private static final String SCALE_EXTERNAL = "scale_by_size";
     /** the name of the function in the C library that multiplies two complex arrays together. **/
-    public static final String MULTIPLY_EXTERNAL  = "do_halfcomplex_multiply";
+    private static final String MULTIPLY_EXTERNAL  = "do_halfcomplex_multiply";
 
     /** the name of the field to treat as the input buffer. */
-    public static final String INPUT_BUFFER_NAME = "inputBuffer";
+    private static final String INPUT_BUFFER_NAME = "inputBuffer";
     /** the field to use as the output buffer for the filter. **/
-    public static final String OUTPUT_BUFFER_NAME = "outputBuffer";
+    private static final String OUTPUT_BUFFER_NAME = "outputBuffer";
     /** the field to use as the output buffer for the filter. **/
-    public static final String TEMP_BUFFER_NAME = "tempBuffer";
+    private static final String TEMP_BUFFER_NAME = "tempBuffer";
     /** the prefix for the fields that we will store the transform of the filters in. **/
-    public static final String FILTER_WEIGHTS_PREFIX = "freqWeightField";
+    private static final String FILTER_WEIGHTS_PREFIX = "freqWeightField";
     /** the prefix for the fields that will store the partial results between filter executions. **/
-    public static final String PARTIAL_BUFFER_PREFIX ="freqPartial";
+    private static final String PARTIAL_BUFFER_PREFIX ="freqPartial";
     
-
     /** Constant specifying we are making the work function. **/
-    public static final int INITWORK = 1;
+    private static final int INITWORK = 1;
     /** Constant specifying we are making the init work. **/
-    public static final int WORK = 2;
+    private static final int WORK = 2;
 
     /** The minimum size FIR (eg peek count) we will replace. There is no way that
      * a size one FIR will benefit from this transformation. **/
-    public static final int minFIRSize = 2;
+    private static final int minFIRSize = 2;
     
     /** We multiply the FIR size to get the target FFT size. "Good tradeoff between
      * execution time and storage space requirements. **/
-    public static final int fftSizeFactor = 2;
+    private static final int fftSizeFactor = 2;
 
     /** name of the loop variable to use **/
-    public static final String LOOPVARNAME = "__freqIndex__";
-    
+    private static final String LOOPVARNAME = "__freqIndex__";
+
     /** the linear analyzier which keeps mappings from filters-->linear representations. **/
     LinearAnalyzer linearityInformation;
     
@@ -134,6 +138,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
         // make sure we can replace "self" with a frequency version.
         if (!canReplace(self, this.linearityInformation)) {
             return false;
+        } else {
+            // otherwise, we are committed to doing a frequency
+            // replacement.  Mark that we have done a replacement so
+            // that we can link against the appropriate libraries.
+            didTransform = true;
         }
 
         LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);

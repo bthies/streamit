@@ -1,6 +1,5 @@
 
 # AUTOCONFISCATE VAR =	@VAR@
-CXX =		g++
 AR =            ar
 RANLIB =        ranlib
 CFLAGS = 	-O2

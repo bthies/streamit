@@ -10,14 +10,10 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
- * Removes what dead code we can detect within a filter.
+ * Removes what dead code we can detect within a filter.  For local
+ * variables only, don't remove volatile variables.
  */
 public class DeadCodeElimination {
-    
-    /** keep these locals */
-    private static HashSet<String> liveLocals;
-    /** keep these fields */
-    private static HashSet<String> liveFields;
     
     public static void doit(SIRCodeUnit unit) {
         // for now, only removes dead field declarations and local
@@ -25,31 +21,8 @@ public class DeadCodeElimination {
         removeDeadFieldDecls(unit);
         removeDeadLocalDecls(unit);
         removeEmptyStatements(unit);
-        //if we called this version of do it, then initialize the 
-        //hashsets to null
-        if (liveLocals == null)
-            liveLocals = new HashSet<String>();
-        if (liveFields == null)
-            liveFields = new HashSet<String>();
     }
 
-    /**
-     * Run DCE on the code unit, but do not eliminate any uses of a
-     * local variable whose name is contained in keepLiveLocals or a 
-     * field whose name is contained in keepLiveFields.
-     * 
-     * @param unit The big unit.
-     * @param liveLocals Don't optimize these local (strings).
-     * @param liveFields Don't optimize these fields (string).
-     */
-    public static void doit(SIRCodeUnit unit, HashSet<String> keepLiveLocals,
-            HashSet<String> keepLiveFields) {
-        liveLocals = keepLiveLocals;
-        liveFields = keepLiveFields;
-        doit(unit);
-    }
-    
-    
     /**
      * Removes local variables that are never referenced.
      */
@@ -120,7 +93,7 @@ public class DeadCodeElimination {
                                     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                                                              String ident) {
                                         if (!(varsUsed.contains(self.getVariable()) ||
-                                                liveLocals.contains(self.getVariable().getIdent()))) {
+                                                self.getVariable().isVolatile())) {
                                             assigningToDeadVar[0] = true;
                                             dead.add(self.getVariable());
                                         } else {
@@ -187,7 +160,7 @@ public class DeadCodeElimination {
                         // see if vars used
                         for (int i=0; i<vars.length; i++) {
                             if (varsUsed.contains(vars[i]) || 
-                                    liveLocals.contains(vars[i].getIdent())) {
+                                    vars[i].isVolatile()) {
                                 newVars.add(vars[i]);
                             }
                         }
@@ -230,8 +203,7 @@ public class DeadCodeElimination {
         int removed = 0;
         for (int i=0; i<fields.length; i++) {
             JFieldDeclaration decl = (JFieldDeclaration)fields[i];
-            if (fieldsUsed.contains(decl.getVariable().getIdent()) ||
-                    liveFields.contains(decl.getVariable().getIdent())) {
+            if (fieldsUsed.contains(decl.getVariable().getIdent())) {
                 fieldsToKeep.add(decl);
             } else {
                 removed++;

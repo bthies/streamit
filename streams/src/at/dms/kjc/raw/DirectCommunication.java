@@ -2,7 +2,7 @@ package at.dms.kjc.raw;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.common.RawExecutionCode;
+import at.dms.kjc.common.CommonConstants;
 import at.dms.kjc.common.RawUtil;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;

@@ -4,7 +4,7 @@
 package at.dms.kjc.common;
 
 import java.util.Iterator;
-
+import java.util.HashSet;
 import at.dms.kjc.JAssignmentExpression;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JExpressionStatement;
@@ -31,26 +31,20 @@ import at.dms.kjc.*;
  * @author mgordon
  *
  */
-public class ConvertLonelyPops {
+public class ConvertLonelyPops implements Constants {
+    /** The name of the var we create */
     public static final String VARNAME = "__lonely_receive__";
-
-    /**
-     * Run convert all lonely pops for str.
-     * 
-     * @param str The toplevel stream.
-     */
-    public static void doit(SIRStream str) {
-        System.out.println("Converting Lonely Pops...");
-        new ConvertLonelyPops().convertGraph(str);
+     
+    public ConvertLonelyPops() {
+      
     }
-    
-    
+      
     /**
      * Visit the stream graph.
      * 
      * @param str The current stream.
      */
-    private void convertGraph(SIRStream str) {
+    public void convertGraph(SIRStream str) {
         if (str instanceof SIRFeedbackLoop) {
             SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
             convertGraph(fl.getBody());
@@ -93,10 +87,9 @@ public class ConvertLonelyPops {
             //did we replace anything...
             final boolean[] replaced = {false};
             final JVariableDefinition varDef = 
-                new JVariableDefinition(null, 0, type, VARNAME, 
+                new JVariableDefinition(null, ACC_VOLATILE, type, VARNAME, 
                                         type.isFloatingPoint() ? (JLiteral) new JFloatLiteral(0) :
                                         (JLiteral)new JIntLiteral(0));
-
             //replace the lonely receives
             meth.getBody().accept(new SLIRReplacingVisitor() {
                     public Object visitExpressionStatement(JExpressionStatement self,
@@ -104,7 +97,7 @@ public class ConvertLonelyPops {
 
                         //this this statement consists only of a method call and 
                         //it is a receive and it has zero args, the create a dummy assignment
-                        if (expr instanceof SIRPopExpression) { 
+                        if (expr instanceof SIRPopExpression) {
                             self.setExpression
                                 (new JAssignmentExpression(new JLocalVariableExpression(varDef), 
                                                            expr));
@@ -117,12 +110,10 @@ public class ConvertLonelyPops {
         
             //if we created an assignment expression, create a var def for the 
             //dummy variable
-            if (replaced[0])
+            if (replaced[0]) {
                 meth.getBody().
                     addStatementFirst(new JVariableDeclarationStatement(null, varDef, null));
-        
-        
+            }
         }
     }
-
 }

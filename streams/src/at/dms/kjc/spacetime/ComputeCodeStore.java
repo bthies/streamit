@@ -109,7 +109,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
 
         assert buffer.getRotationLength() == 1 : 
             "The buffer connected to a file reader / writer cannot rotate!";
-        parent.setMapped();
+        parent.setComputes();
         String functName = "raw_streaming_dram" + 
             (staticNet ? "" : "_gdn") + 
             "_request_bypass_" +
@@ -147,7 +147,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
         
         assert buffer.getRotationLength() == 1 : 
             "The buffer connected to a file reader / writer cannot rotate!";
-        parent.setMapped();
+        parent.setComputes();
         String functName = "raw_streaming_dram_gdn_request_bypass_read_dest";
         
         String bufferName = buffer.getIdent(0);
@@ -375,7 +375,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 
         boolean shouldPreSynch = shouldPresynch(read, init, primepump, buffer);
         
-        parent.setMapped();
+        parent.setComputes();
         
         //the name of the rotation struction we are using...
         String rotStructName = buffer.getIdent(read);
@@ -487,7 +487,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
          
         boolean shouldPreSynch = presynched && GEN_PRESYNCH && (init || primepump);
         
-        parent.setMapped();
+        parent.setComputes();
         String functName = "raw_streaming_dram_gdn_request_read" + 
         (shouldPreSynch ? "_presynched" : "") + "_dest";
         
@@ -557,7 +557,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param layout The layout of the application.
      */
     public void addTraceSteady(FilterInfo filterInfo, Layout layout) {
-        parent.setMapped();
+     
         RawExecutionCode exeCode;
 
         // check to see if we have seen this filter already
@@ -574,6 +574,9 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 exeCode = new BufferedCommunication(parent, filterInfo, layout);
             addTraceFieldsAndMethods(exeCode, filterInfo);
         }
+        
+        parent.setMapped();
+        
         // add the steady state
         JBlock steady = exeCode.getSteadyBlock();
         if (CODE)
@@ -644,7 +647,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param layout The layout of the application.
      */
     public void addTracePrimePump(FilterInfo filterInfo, Layout layout) {
-        parent.setMapped();
+      
         RawExecutionCode exeCode;
         JMethodDeclaration primePump;
         
@@ -668,6 +671,8 @@ public class ComputeCodeStore implements SIRCodeUnit{
             addMethod(primePump);
         }   
        
+        parent.setMapped();
+        
         // now add a call to the init stage in main at the appropiate index
         // and increment the index
         initBlock.addStatement(new JExpressionStatement(null,
@@ -683,7 +688,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param layout The layout of the application.
      */
     public void addTraceInit(FilterInfo filterInfo, Layout layout) {
-        parent.setMapped();
+     
         RawExecutionCode exeCode;
 
         // if we can run direct communication, run it
@@ -705,6 +710,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
         // get the initialization routine of the phase
         JMethodDeclaration initStage = exeCode.getInitStageMethod();
         if (initStage != null) {
+            parent.setMapped();
             // add the method
             if (CODE)
                 addMethod(initStage);
@@ -715,6 +721,59 @@ public class ComputeCodeStore implements SIRCodeUnit{
                                                             new JMethodCallExpression(null, new JThisExpression(null),
                                                                                       initStage.getName(), new JExpression[0]), null));
         }
+    }
+    
+    /**
+     * This function will create a presynch read command for each dram that 
+     * does not have a filter assigned to it but initiates DRAM commands.
+     * This will be placed at the current position of the steady state.
+     *
+     */
+    public static void presynchEmptyTilesInSteady() {
+        Iterator buffers = OffChipBuffer.getBuffers().iterator();
+        HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
+        
+        while (buffers.hasNext()) {
+            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            if (buffer.redundant())
+                continue;
+            //don't do anything if a filter is mapped to this
+            //tile
+            if (buffer.getOwner().isMapped())
+                continue;
+            
+            if (!visitedTiles.contains(buffer.getOwner())) {
+                //remember that we have already presynched this tile
+                visitedTiles.add(buffer.getOwner());
+             
+                //need sample address and address
+                JExpression sampleAddress = 
+                    new JNameExpression(null, null, 
+                            buffer.getIdent(true) + "->buffer");
+                    
+                JExpression address =  new JNameExpression(null, null, 
+                        buffer.getIdent(true) + "->buffer");
+                
+                //the dram command to send over, use the gdn
+                JStatement dramCommand = ComputeCodeStore.sirDramCommand(true, 1, 
+                        sampleAddress, false, true, address);
+                
+                //now add the presynch command which is just 
+                //a presynched read of length 1
+                buffer.getOwner().getComputeCode().steadyLoop.addStatement
+                (dramCommand);
+                
+                //now disregard the incoming data from the dram...
+                //do this in two statement because there is an assert inside 
+                //of gdnDisregardIncoming() that prevents you from disregarding
+                //an entire cacheline and I like it there...
+                buffer.getOwner().getComputeCode().steadyLoop.addStatement
+                (RawExecutionCode.gdnDisregardIncoming(RawChip.cacheLineWords - 1));
+                buffer.getOwner().getComputeCode().steadyLoop.addStatement
+                (RawExecutionCode.gdnDisregardIncoming(1));
+            }
+        }
+        
     }
 
     /**

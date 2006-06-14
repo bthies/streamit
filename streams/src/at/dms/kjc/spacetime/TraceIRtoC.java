@@ -145,9 +145,7 @@ public class TraceIRtoC extends ToC
         
         //run dce but don't eliminate the compiler generated vars introduced
         //by ConvertLonelyPops
-        HashSet<String> keepLive = new HashSet<String>();
-        keepLive.add(ConvertLonelyPops.VARNAME);
-        DeadCodeElimination.doit(tile.getComputeCode(), keepLive, keepLive);
+        DeadCodeElimination.doit(tile.getComputeCode());
     }
     
     private void generateHeader() 

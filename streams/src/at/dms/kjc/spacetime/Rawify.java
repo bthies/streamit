@@ -86,6 +86,7 @@ public class Rawify {
         //the splitter, this will create a data-redistribution 
         //stage between the iterations that will improve performance 
         iterateJoinFiltersSplit(traces, false, false, rawChip);
+        ComputeCodeStore.presynchEmptyTilesInSteady();
     }
 
     /**

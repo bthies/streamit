@@ -28,12 +28,8 @@ public class SpaceTimeBackend {
 
     public static SIRStructure[] structures;
 
-    final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
-    final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
-    final private static boolean REAL=true; //The Real Stuff
-    
     private static RawChip rawChip;
-    
+  
     public static double COMP_COMM_RATIO;
     
     public static void run(SIRStream str,
@@ -168,8 +164,8 @@ public class SpaceTimeBackend {
         //lonely pops are converted into a statement with only a register read
         //then they are optimized out by gcc, so convert lonely pops (pops unnested in
         //a larger expression) into an assignment of the pop to a dummy variable
-        ConvertLonelyPops.doit(str);
-        
+        new ConvertLonelyPops().convertGraph(str);
+                
         // make sure that push expressions do not contains pop expressions
         // because if they do and we use the gdn, we will generate the header 
         // for the pop expression before the push expression and that may cause 

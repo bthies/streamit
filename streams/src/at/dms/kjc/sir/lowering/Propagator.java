@@ -117,13 +117,25 @@ public class Propagator extends SLIRReplacingVisitor {
     // ----------------------------------------------------------------------
 
     public Object visitRegReceiverStatement(SIRRegReceiverStatement self, JExpression portal, SIRStream receiver, JMethodDeclaration[] methods) {
-        JExpression expr = self.getPortal();
-        if (expr instanceof JLocalVariableExpression) {
-            Object obj = constants.get(((JLocalVariableExpression)expr).getVariable());
+        // first try to resolve the <portal> from a JLocalVariable to
+        // an SIRPortal if it has not been done already
+        if (portal instanceof JLocalVariableExpression) {
+            Object obj = constants.get(((JLocalVariableExpression)portal).getVariable());
             if (obj instanceof SIRPortal) {
-                SIRPortal p = (SIRPortal)obj;
-                p.addReceiver(receiver);
-                self.setPortal(p);
+                self.setPortal((SIRPortal)obj);
+            }
+        }
+        // Only register receivers if loop depth is zero.  
+        // Reason:
+        //   The only place we are allowing registration to a portal
+        //   is from within the init function.  In the init function,
+        //   all loops will be unrolled.  We do not want to register a
+        //   receiver before a loop is unrolled, because the receiver
+        //   will be cloned and will not exist in the final graph.
+        if (loopDepth == 0) {
+            // if we have a hook on an SIRPortal, add the receiver stream to it
+            if (self.getPortal() instanceof SIRPortal) {
+                ((SIRPortal)self.getPortal()).addReceiver(receiver);
             }
         }
         return self;

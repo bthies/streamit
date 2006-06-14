@@ -24,8 +24,8 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 
 # use gcc34 as our gcc and g++
-alias gcc gcc34
-alias g++ gcc34
+alias gcc='gcc34'
+alias g++='gcc34'
 
 # the current version of starsearch we're using
 #export TOPDIR=${STREAMIT_HOME}/misc/raw

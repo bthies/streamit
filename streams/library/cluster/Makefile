@@ -39,7 +39,8 @@ NAMES =		profiler \
 		read_setup \
 		mysocket \
 		netsocket \
-		memsocket 
+		memsocket \
+		fft
 
 #               data_consumer
 #               data_producer

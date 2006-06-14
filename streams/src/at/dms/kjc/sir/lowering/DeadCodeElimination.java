@@ -25,6 +25,12 @@ public class DeadCodeElimination {
         removeDeadFieldDecls(unit);
         removeDeadLocalDecls(unit);
         removeEmptyStatements(unit);
+        //if we called this version of do it, then initialize the 
+        //hashsets to null
+        if (liveLocals == null)
+            liveLocals = new HashSet<String>();
+        if (liveFields == null)
+            liveFields = new HashSet<String>();
     }
 
     /**

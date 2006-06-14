@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.18 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JLocalVariable.java,v 1.19 2006-06-14 18:48:25 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -81,6 +81,16 @@ public abstract class JLocalVariable extends JPhylum {
     // ACCESSORS
     // ----------------------------------------------------------------------
 
+    /**
+     * Returns true if this variable is declared volatile.
+     * 
+     * @return true if this variable is declared volatile.
+     */
+    public boolean isVolatile() {
+        return (getModifiers() & ACC_VOLATILE) != 0;
+    }
+  
+    
     /**
      * Returns if this variable is final
      */

@@ -23,6 +23,10 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 alias gcc gcc34
 alias g++ gcc34
 
+# also need to define CXX and CC to be gcc34; otherwise make will subvert aliases
+setenv CC gcc34
+setenv CXX gcc34
+
 # for running dotty
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
 
@@ -45,6 +49,16 @@ if ($?LD_LIBRARY_PATH) then
   setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/home/streamit/lib
 else
   setenv LD_LIBRARY_PATH /home/streamit/lib
+endif
+
+# libraries for FFTW
+setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+
+# include files for FFTW.  (This variable only seems to be needed on RHEL-3).
+if ($?CPATH) then
+  setenv CPATH ${CPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+else
+  setenv CPATH /projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
 endif
 
 # add java and jikes to path
@@ -84,3 +98,6 @@ endif
 #setenv CLASSPATH ${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
 #unset PRE
 #unset VER
+
+# on RHEL-3, LD_LIBRARY_PATH is called LPATH
+setenv LPATH $LD_LIBRARY_PATH

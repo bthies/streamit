@@ -27,6 +27,10 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 alias gcc='gcc34'
 alias g++='gcc34'
 
+# also need to define CXX and CC to be gcc34; otherwise make will subvert aliases
+export CC=gcc34
+export CXX=gcc34
+
 # the current version of starsearch we're using
 #export TOPDIR=${STREAMIT_HOME}/misc/raw
 export TOPDIR=/home/bits6/mgordon/starsearch/
@@ -51,6 +55,17 @@ then
   export LD_LIBRARY_PATH=/home/streamit/lib
 else
   LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/streamit/lib
+fi
+
+# libraries for FFTW
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+
+# include files for FFTW.  (This variable only seems to be needed on RHEL-3).
+if [ -z "$CPATH" ]
+then
+  export CPATH=/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+else
+  CPATH=${CPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
 fi
 
 # add java and jikes to path
@@ -82,3 +97,6 @@ export TEXINPUTS
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
 # CLASSPATH=${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
+
+# on RHEL-3, LD_LIBRARY_PATH is called LPATH
+export LPATH=$LD_LIBRARY_PATH

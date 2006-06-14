@@ -406,10 +406,10 @@ public class LatencyConstraints {
 
                     // take care of upstream messages
 
-                    if (upstream && any_latency_found && min_latency <= 0) {
+                    if (upstream && any_latency_found && min_latency < 0) {
 
                         AssertedClass.ASSERT(topStreamIter, false, 
-                                             "Error: an upstream message is being sent with a non-positive latency.");
+                                             "Error: an upstream message is being sent with a negative latency.");
             
                     }
             

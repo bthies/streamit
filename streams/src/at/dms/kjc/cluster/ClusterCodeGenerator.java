@@ -166,6 +166,7 @@ class ClusterCodeGenerator {
         p.println("#include <thread_info.h>");
         p.println("#include <consumer2.h>");
         p.println("#include <producer2.h>");
+        p.println("#include <fft.h>");
         p.println("#include \"cluster.h\"");
         p.println("#include \"fusion.h\"");
         //p.println("#include \"structs.h\"");
@@ -240,8 +241,9 @@ class ClusterCodeGenerator {
         }
 
         for (Iterator i = msg_to.iterator(); i.hasNext();) {
-            int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-            p.println("netsocket *__msg_sock_"+id+"_"+dst+"out;");
+            SIRStream str = (SIRStream)i.next();
+            int dst = NodeEnumerator.getSIROperatorId(str);
+            p.println("netsocket *__msg_sock_"+id+"_"+dst+"out; // to " + str);
         }
     
         p.println("");

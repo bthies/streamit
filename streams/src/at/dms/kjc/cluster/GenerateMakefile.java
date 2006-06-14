@@ -93,7 +93,10 @@ public class GenerateMakefile {
             }
         }
         p.print("$(OBJS)\n");
-        p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++\n");
+        // link against FFTW if we need an FFT library
+        String fftLib = (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform ?
+                         " -lsrfftw -lsfftw" : "");
+        p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
         p.newLine();
         
         // =============== %.o : %.cpp
@@ -117,7 +120,7 @@ public class GenerateMakefile {
             p.print(executablename + "_ia64: master_ia64.o ");
         }
         p.println("$(OBJS_IA64)");
-        p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64\n");
+        p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster_ia64" + fftLib + "\n");
         p.newLine();
 
 //        // =============== %_ia64.o : %.cpp
@@ -134,7 +137,7 @@ public class GenerateMakefile {
         p.print(executablename + "_arm: fusion_arm.o $(OBJS_ARM)\n");
         p.print("\tar r objects_arm.a $^\n");
         p.print("\tranlib objects_arm.a\n");
-        p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(LIB_CLUSTER) -lstdc++ -lm -lcluster_arm #-lpthread\n");
+        p.print("\t$(CC_ARM) $(CCFLAGS_ARM) -o $@ objects_arm.a -L$(LIB_CLUSTER) -lstdc++ -lm -lcluster_arm" + fftLib + " #-lpthread\n");
 
         p.newLine();
 

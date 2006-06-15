@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.34 2006-04-13 19:44:41 dimock Exp $
+# $Id: run-reg-tests.py,v 1.35 2006-06-15 19:14:13 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -102,6 +102,14 @@ class RunRegTests:
         class_path = ['.',
                       '/usr/uns/jdk1.5.0_01/jre/lib/rt.jar',
                       '/usr/uns/java/antlr.jar'] + class_path
+
+        ld_library_path = '/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs'
+        c_include_path = '/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw'
+        #different gcc / OS releases have different standard names
+        os.environ['LD_LIBRARY_PATH'] = ld_library_path
+        os.environ['LPATH'] = ld_library_path
+        os.environ['C_INCLUDE_PATH'] = c_include_path
+        os.environ['CPATH'] = c_include_path
 
         # Eclipse crud:
 #        eclipse_base = '/home/bits7/NO_BACKUP/streamit/eclipse/plugins'

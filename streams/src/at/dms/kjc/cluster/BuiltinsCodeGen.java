@@ -417,7 +417,7 @@ class BuiltinsCodeGen {
             p.println(bits_to_go + "--;");
             p.println("if (" + bits_to_go + " == 0) {");
             p.indent();
-            p.println("__buffer[__index++] = FileWriter__5_4__the_bits;");
+            p.println("__buffer[__index++] = " + the_bits + ";");
             p.println(the_bits + " = 0;");
             p.println(bits_to_go + " = 8 * sizeof(" + the_bits + ");");
             p.outdent();

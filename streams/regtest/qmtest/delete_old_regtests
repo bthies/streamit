@@ -56,8 +56,8 @@ if ($sizedu > 100000) {
 }
 
 #
-# delete all but 8 latest regtest directories and summaarize the results of the
-# deleted directoried in the attic.
+# delete all but 8 latest regtest directories and summarize the results of the
+# deleted directories in the attic.
 # 
 
 #my @dirs = ls('-lt', $base);   unreliable if touched directories!!!
@@ -76,8 +76,15 @@ closedir(BASE);
 # remaining in the list @dirs.
 foreach (@dirs) {
     print "Summarizing $_. ";
-    system("bzip2 -c $base/$_/streams/results.xml > $attic/results.xml.$_.bz2") && print "error during bzip $!";
+    system("bzip2 -c $base/$_/streams/results.xml > $attic/results.xml.$_.bz2")
+	&& do {print "error during bzip $!"; next;};
+
     print "Deleting $_\n";
     system "rm -rf $base/$_";	# not 'unlink' since recursive removal
+
+    system("mv /tmp/results.xml.$_.bz2 $attic/results.xml.$_.bz2") 
+    && print 
+    "Error moving /tmp/results.xml.$_.bz2 to $attic/results.xml.$_.bz2.\n"
+    . "File left in /tmp.  Move manually when enough disk space";
 }
 

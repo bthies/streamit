@@ -248,11 +248,22 @@ In case of compile-and-go situation like library compiler, use {\tt compile\_tim
 Since the text is just processed by ``make -f ...'', you can put targets, 
 switches, ... on this line as well.
 
-{\tt file} has one attribute, {\tt class}.  If the value of {\tt class}
+{\tt file} has two attributes: {\tt class} and {\tt relative}.  
+If the value of {\tt class}
 is "source" or if class is missing then the file name is of a source
-file.  If {\tt class} is "output" then the file name is the is expected
-output.  If there is no "output" file, then the source is compiled and
+file. A ``source'' file is considered to be an input to the compiler.
+ If {\tt class} is "output" then the file name is the is expected
+output. A ``output'' file is input to the verification phase of testing.
+If there is no "output" file, then the source is compiled and
 run, but any output from the run is considered to pass the test.
+If the {\tt class} is ``data'' (or any other string) then the file is just 
+copied to the test directory. 
+
+The {\tt relative} attribute of a {\tt file}, if ``true'', will cause the 
+file to not be copied to the test directory, but rather to the directory
+specified in the file path.  If the directory is relative then the path will
+be copied on a path relative to the test directory.  This is useful for
+benchmarks that read from (for instance) {\tt ../inputs/data.bin}. 
 
 %% {\tt proc\_output} is a test field containing a {\tt bash} command to be
 %% run between the run phase and the verification phase.  It is meant to be

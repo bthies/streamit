@@ -15,6 +15,7 @@ For more inforation see readme.txt.
   <implementations>
     <impl lang="StreamIt" id="gmti" iters="1">
     <file class="source">Tester.str DataStruct.str lqHouse.str WienerHopfSolution.str qr.str matlabFunctions.str AdaptiveBeamform.str ABsteeringMatrix.str Stap.str DopplerFilter.str Cfar.str Detection.str Pulse.str DFT.str</file>
+      <file class="data">data.bin</file>
     </impl>
   </implementations>
 </benchmark>

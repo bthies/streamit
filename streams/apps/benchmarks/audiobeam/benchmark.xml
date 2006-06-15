@@ -11,10 +11,11 @@
       <desc>Hand-coded C version.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" iters="100">
-    <desc>Does not compile: Front end finds unrecognized variable name.
+      <desc>Does not compile: Front end finds unrecognized variable name.
           While fixing: could author provide proper number of iterations
           to process standard input data file in iters attribute above.</desc>
-    <file class="source">beamformer.str</file>
+      <file class="source">beamformer.str</file>
+      <file class="data" relative="true">../data/str-data/data2.bin</file>
     </impl>
   </implementations>
 </benchmark>

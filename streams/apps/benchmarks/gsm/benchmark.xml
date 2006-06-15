@@ -10,7 +10,8 @@ data is fed through a large feedback loop to do the main decoding.
   <implementations>
     <impl lang="StreamIt" dir="streamit">
       <make>Makefile</make>
-      <file>Gsm.str</file>
+      <file class="source">Gsm.str</file>
+      <file class="data">IntBinarySmallEndianDecoderInput1</file>
     </impl>
   </implementations>
 </benchmark>

@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.16 2006-06-07 00:08:54 dimock Exp $
+# $Id: build-qmtest.py,v 1.17 2006-06-15 03:23:14 dimock Exp $
 #
 
 import os
@@ -114,6 +114,7 @@ def DoQMTestDir(path, control):
     benchmarkname = os.path.join(path, 'benchmark.xml')
     qmname = '.'.join(map(lambda p: QMSanitize(p), SplitAll(path)))
     qmdir = DirToQMDir(path)
+    #print >> sys.stderr, "Benchmark name " + benchmarkname
     dom = xml.dom.minidom.parse(benchmarkname)
     # We basically want to ignore the entire benchmark.xml file, except
     # for the <implementations>.
@@ -193,6 +194,7 @@ def DoQMTestDir(path, control):
         # attribute, and also copy them into benchdir.
         # You can now put more than one file in a single <file> tag.
         # separate files by spaces (may change of ever support Windoze)
+        # fileset is a map from class to sets of filenames.
         fileset = {}
         files = impl.getElementsByTagName('file')
         for file in files:
@@ -200,6 +202,8 @@ def DoQMTestDir(path, control):
             fn = fnode.data
             cls = file.getAttribute('class')
             if not cls: cls = 'source'
+            is_relative = file.getAttribute('relative')
+            if is_relative: cls = cls + '_relative'
             if cls not in fileset: fileset[cls] = []
             fileset[cls].extend(fn.split())
 
@@ -261,8 +265,8 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_ti
 
     'benchdir' -- Directory in which to create the test files.
 
-    'fileset' -- Mapping from type of file ('source' and 'output'
-    matter) to lists of filenames.
+    'fileset' -- Mapping from type of file to lists of filenames.
+      we expect keys in source, output, data, data_relative
 
     'benchname' -- QMTest base name for this set of tests.
 
@@ -278,18 +282,33 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_ti
         testname = MakeOptionName(target, opts)
         testdir = os.path.join(benchdir, testname + ".qms")
         if not os.path.exists(testdir):
+            #print >> sys.stderr, "making directory " + testdir
             os.makedirs(testdir)
         # Start by copying all of the files over.
-        for l in fileset.itervalues():
+        for c,l in fileset.iteritems():
             for fn in l:
                 src = os.path.normpath(os.path.join(srcdir, \
                                                     os.path.expandvars(fn)))
-                dst = os.path.join(testdir, os.path.basename(fn))
+                dst = "";
+                may_need_dir = c.endswith('_relative')
+                if may_need_dir:
+                    dst = os.path.normpath(os.path.join(testdir, \
+                                                    os.path.expandvars(fn)))
+                    
+                else:
+                    dst = os.path.join(testdir, os.path.basename(fn))
                 try:
-                    shutil.copyfile(src, dst)
+                    if may_need_dir:
+                        if not os.path.exists(os.path.dirname(dst)):
+                            os.makedirs(os.path.dirname(dst))
+                    if not os.path.isfile(dst):
+                        shutil.copyfile(src, dst)
                 except:
-                    print >> sys.stderr, "failure to copy file " + \
-                          src + " may cause errors later in test process"
+                    print >> sys.stderr, "Unexpected error: ", sys.exc_info()[0]
+                    print >> sys.stderr, "Failure to copy file " + \
+                          src + " to " + dst + \
+                          " may cause errors later in test process"
+                    
         # Three stages, write out the files.
         extras = { 'opts': opts,
                    'testname': benchname + '.' + testname,

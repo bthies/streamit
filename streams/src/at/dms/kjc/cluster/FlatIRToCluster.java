@@ -2214,16 +2214,9 @@ public class FlatIRToCluster extends InsertTimers implements
                   }
                 */
 
-                p.print("\n#ifdef __CLUSTER_STANDALONE\n\n");
+                p.print("\n{\n#ifdef __CLUSTER_STANDALONE\n\n");
 
-                // declare variable only first time through
-                if (i == 0) {
-                    p.print("  message* ");
-                } else {
-                    p.print("  ");
-                }
-
-                p.print("__msg = new message("+size+", "+index+", ");
+                p.print("  message* __msg = new message("+size+", "+index+", ");
 
                 if (latency instanceof SIRLatencyMax) {
 
@@ -2350,7 +2343,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     }
                 }
 
-                p.print("\n#endif\n\n");
+                p.print("\n#endif\n}\n");
 
             }
         }

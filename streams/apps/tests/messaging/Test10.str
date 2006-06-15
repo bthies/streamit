@@ -1,0 +1,49 @@
+/**
+ * Tests communication between filters that are connected by more than
+ * one portal.
+ *
+ *  cagfarm-50 % strc -library -i 10 Test10.str
+ *  0
+ *  2
+ *  4
+ *  6
+ *  8
+ *  10
+ *  12
+ *  14
+ *  16
+ *  18
+ *
+ */
+
+void->void pipeline Test10 {
+    portal<Receiver> p1,p2;
+    add Sender(p1, p2);
+    add Receiver() to p1, p2;
+    add Sink;
+}
+
+void->int filter Sender(portal<Receiver> p1, portal<Receiver> p2) {
+    work push 1 {
+        p1.increment() [1:1];
+        p2.increment() [1:1];
+        push(0);
+    }
+}
+
+int->int filter Receiver {
+    int val = 0;
+    work push 1 pop 1 {
+        push(val+pop());
+    }
+    handler increment() {
+        val++;
+    }
+}
+
+int->void filter Sink() {
+    work pop 1 {
+        int val = pop();
+        println(val);
+    }
+}

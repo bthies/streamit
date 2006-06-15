@@ -2,7 +2,7 @@
 #
 # dat2bin.pl: convert formatted data to binary
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: dat2bin.pl,v 1.1 2003-10-22 19:34:26 dmaze Exp $
+# $Id: dat2bin.pl,v 1.2 2006-06-15 20:54:45 thies Exp $
 #
 # Use this script to convert data from a text file to native binary
 # data for use with a StreamIt FileReader object.
@@ -25,12 +25,22 @@ use vars qw($format $in $out);
 $format = "int";
 my $result = GetOptions("bit" => sub { $format = "bit"; },
 			"int" => sub { $format = "int"; },
-			"float" => sub { $format = "float"; });
+			"float" => sub { $format = "float"; },
+                        "ppm" => sub { $format = "ppm"; });
 
 $in = \*STDIN;
 $in = new IO::File("<$ARGV[0]") if @ARGV >= 1;
 $out = \*STDOUT;
 $out = new IO::File(">$ARGV[1]") if @ARGV >= 2;
+
+# kill first 4 lines of ppm file, as they do not represent data
+if ($format eq "ppm") {
+  # I don't know perl, this seems to advance the line
+  my $line = $_; if (<$in>) {}
+  my $line = $_; if (<$in>) {}
+  my $line = $_; if (<$in>) {}
+  my $line = $_; if (<$in>) {}
+}
 
 while (<$in>)
   {
@@ -43,6 +53,13 @@ while (<$in>)
       }
     if ($format eq "int")
       {
+	my @ints = split /\s+/, $line;
+	print $out pack("i*", @ints);
+      }
+    if ($format eq "ppm")
+      {
+        # ppms could really be byte's instead of int's, but StreamIt
+        # doesn't have a byte primitive type yet...
 	my @ints = split /\s+/, $line;
 	print $out pack("i*", @ints);
       }

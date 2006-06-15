@@ -170,7 +170,10 @@ class ClusterCodeGenerator {
         p.println("#include <thread_info.h>");
         p.println("#include <consumer2.h>");
         p.println("#include <producer2.h>");
-        p.println("#include <fft.h>");
+        // only include fft.h if we did a frequency transformation
+        if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform) {
+            p.println("#include <fft.h>");
+        }
         p.println("#include \"cluster.h\"");
         p.println("#include \"fusion.h\"");
         //p.println("#include \"structs.h\"");

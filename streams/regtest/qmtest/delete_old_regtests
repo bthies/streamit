@@ -76,7 +76,7 @@ closedir(BASE);
 # remaining in the list @dirs.
 foreach (@dirs) {
     print "Summarizing $_. ";
-    system("bzip2 -c $base/$_/streams/results.xml > $attic/results.xml.$_.bz2")
+    system("bzip2 -c $base/$_/streams/results.xml > /tmp/results.xml.$_.bz2")
 	&& do {print "error during bzip $!"; next;};
 
     print "Deleting $_\n";

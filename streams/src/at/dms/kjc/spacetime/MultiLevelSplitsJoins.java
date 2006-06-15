@@ -42,7 +42,7 @@ public class MultiLevelSplitsJoins {
         this.rawChip = rawChip;
         this.partitioner = partitioner;
         //set max width to number of devices
-        maxWidth = rawChip.getNumDev();
+        maxWidth = 8;//rawChip.getNumDev();
         System.out.println("Maxwidth: " + maxWidth);
     }
     
@@ -76,12 +76,13 @@ public class MultiLevelSplitsJoins {
             traces.add(trace);
             
             //see if the width of the splitter is too wide
+            /*
             while (trace.getTail().getWidth() > maxWidth) {
                 System.out.println("Breaking up " + trace.getTail() + 
                         " width is " + trace.getTail().getWidth());
                 breakUpSplit(trace, traces);
             }
-           
+           */
         }
         //set the trace graph to the new list of traces that we have
         //calculated in this pass
@@ -114,33 +115,60 @@ public class MultiLevelSplitsJoins {
         int numNewTraces = input.getWidth() / maxWidth +
              (input.getWidth() % maxWidth > 0 ? 1 : 0); 
         
+        //create the new input trace nodes
         InputTraceNode[] newInputs = new InputTraceNode[numNewTraces];
+        for (int i = 0; i < numNewTraces; i++)
+            newInputs[i] = new InputTraceNode(); 
         
-        //create the new input traces nodes that are full (== to maxwidth)
-        for (int i = 0; i < input.getWidth() / maxWidth; i++) {
-            Edge[] edges = new Edge[maxWidth];
-            int[] weights = new int[maxWidth];
-            
-            //fill in the edges and weights
-            for (int j = 0; j < maxWidth; j++) {
-                edges[j] = input.getSources()[i * maxWidth + j];
-                weights[j] = input.getWeights()[i * maxWidth + j];
+        //now assign each of the original edges to one of the new 
+        //input trace nodes
+        HashMap<Edge, Integer> assignment = new HashMap<Edge, Integer>();
+        Iterator<Edge> sources = input.getSourceSequence().iterator();
+        for (int i = 0; i < numNewTraces; i++) {
+            int count = maxWidth;
+            if (i == (numNewTraces - 1))
+                count = input.getWidth() % maxWidth;
+            for (int j = 0; j < count; j++) { 
+                Edge edge = sources.next();
+                //System.out.println("Assignment: " + edge + " " + i);
+                assignment.put(edge, new Integer(i));
             }
-            
-            newInputs[i] = new InputTraceNode(weights, edges); 
         }
-        //handle the remainder
-        if (input.getWidth() % maxWidth > 0) {
-            Edge[] edges = new Edge[input.getWidth() % maxWidth];
-            int[] weights = new int[input.getWidth() % maxWidth];
+        //make sure there is nothing left to assign
+        assert !sources.hasNext();
+        
+        //the weights array of each new inputs trace node
+        LinkedList<Integer>[] newInputsWeights = new LinkedList[numNewTraces];
+        //the source array of each new input trace node
+        LinkedList<Edge>[] newInputsSources = new LinkedList[numNewTraces];
+        for (int i = 0; i < numNewTraces; i++) {
+            newInputsWeights[i] = new LinkedList<Integer>();
+            newInputsSources[i] = new LinkedList<Edge>();
+         }
             
-            for (int i = 0; i < (input.getWidth() % maxWidth); i++) {
-                edges[i] = input.getSources()[(input.getWidth() / maxWidth) * maxWidth + i];
-                weights[i] = input.getWeights()[(input.getWidth() / maxWidth) * maxWidth + i];
-            }
-            newInputs[newInputs.length - 1] = new InputTraceNode(weights, edges);
+        //the weights array of the new input trace node of the orignal trace
+        LinkedList<Integer> origTraceInputWeights = new LinkedList<Integer>();
+        //the source array of the new input trace node of the orignal trace
+        //right now it is just the index of the new trace, because we don't have
+        //the edges right now
+        LinkedList<Integer> origTraceInputSources = new LinkedList<Integer>();
+        
+        for (int i = 0; i < input.getSources().length; i++) {
+            int index = assignment.get(input.getSources()[i]).intValue();
+            
+            newInputsWeights[index].add(new Integer(input.getWeights()[i]));
+            newInputsSources[index].add(input.getSources()[i]);
+            
+            origTraceInputWeights.add(new Integer(input.getWeights()[i]));
+            origTraceInputSources.add(new Integer(index));
         }
         
+        //set the weights and sources of the new input trace nodes
+        for (int i = 0; i < numNewTraces; i++) {
+            newInputs[i].set(newInputsWeights[i], newInputsSources[i]);
+            newInputs[i].canonicalize();
+        }
+ 
         //ok so now we have all the new input trace nodes, create the new traces
         Trace[] newTraces = new Trace[numNewTraces];
                 
@@ -155,18 +183,16 @@ public class MultiLevelSplitsJoins {
             traces.add(newTraces[i]);
         }
         
-        //connect the edges and set the weights of the new input trace node of the
-        //original trace
-        Edge edges[] = new Edge[numNewTraces];
-        int weights[] = new int[numNewTraces];
-        for (int i = 0; i < numNewTraces; i++) {
-            edges[i] = newTraces[i].getTail().getSingleEdge();
-            //the weight of the edge is just the sum of the incoming 
-            //weights of the new upstream
-            weights[i] = newTraces[i].getHead().totalWeights();
+        //now we can create the pattern of source edges from the index list
+        //we built above
+        LinkedList<Edge> origTraceInputEdges = new LinkedList<Edge>();
+        for (int i = 0; i < origTraceInputSources.size(); i++) {
+            Trace source = newTraces[origTraceInputSources.get(i).intValue()];
+            origTraceInputEdges.add(source.getTail().getSingleEdge());
         }
-        newInput.setSources(edges);
-        newInput.setWeights(weights);
+        //set the pattern of the new input trace
+        newInput.set(origTraceInputWeights, origTraceInputEdges);
+        newInput.canonicalize();
         //now install the new input trace node in the old trace
         newInput.setNext(trace.getHead().getNext());
         trace.getHead().getNext().setPrevious(newInput);
@@ -448,9 +474,7 @@ public class MultiLevelSplitsJoins {
         //a port is the collection of duplicated edges, 
         //so output.getWeights()[port][edge] = an edge 
         int port = 0, edge = 0;
-        //just for sanity
-        int totalConnected = 0;
-        
+                
         //create all the output trace nodes of the new traces
         for (int n = 0; n < numNewTraces; n++) {
             //number of edges connected to this new trace so far...
@@ -465,8 +489,6 @@ public class MultiLevelSplitsJoins {
                     portEdges.add(edges[port][addMe]);
                     //increment the edge index because we just added one
                     edge++;
-                    //remember that we have connected an edge
-                    totalConnected++;
                     //check to make sure that we have not filled this new trace
                     if (++connected >= maxWidth)
                         break;
@@ -498,10 +520,6 @@ public class MultiLevelSplitsJoins {
             }
             newOutputs[n] = new OutputTraceNode(newWeights, newEdges);
         }
-        //we should have added as many connections as there were (flattened) connections 
-        //in the original trace 
-        assert totalConnected == output.getWidth();
-        
         return newOutputs;
     }
     

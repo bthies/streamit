@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;
@@ -61,6 +62,41 @@ public class InputTraceNode extends TraceNode {
         unique++;
     }
 
+    /**
+     * Merge any neighboring edges in the sources and weights 
+     * arrays that are equal.
+     *
+     */
+    public void canonicalize() {
+        //do nothing for 0 length joiners
+        if (sources.length == 0)
+            return;
+        
+        LinkedList<Integer> newWeights = new LinkedList<Integer>();
+        LinkedList<Edge> newEdges = new LinkedList<Edge>();
+
+        //add the first edge and weight
+        newWeights.add(new Integer(weights[0]));
+        newEdges.add(sources[0]);
+        
+        for (int i = 1; i < sources.length; i++) {
+            if (sources[i] == newEdges.get(newEdges.size() - 1)) {
+                //this src is equal to the last one, so add the weights together!
+                Integer newWeight = 
+                    new Integer(newWeights.get(newWeights.size() - 1).intValue() + 
+                                weights[i]);
+                newWeights.remove(newWeights.size() - 1);
+                newWeights.add(newWeight);
+            }
+            else {
+                //not equal, start a new entry and weight
+                newEdges.add(sources[i]);
+                newWeights.add(new Integer(weights[i]));
+            }
+        }
+        set(newWeights, newEdges);
+    }
+    
     public boolean isFileOutput() {
         return ((FilterTraceNode) getNext()).isFileOutput();
     }
@@ -70,14 +106,12 @@ public class InputTraceNode extends TraceNode {
     }
 
     /**
-     * Return the number of inputs to this join.
+     * Return the number of unique inputs (Edges) to this join.
      * 
      * @return The width of the join.
      */
     public int getWidth() {
-        assert weights.length == sources.length;
-        
-        return weights.length;
+        return getSourceSet().size();
     }
     
     /**
@@ -179,6 +213,34 @@ public class InputTraceNode extends TraceNode {
         return ((double) getWeight(edge) / (double) totalWeights());
     }
 
+    /**
+     * Return a list of the edges with each edge appearing once
+     * and ordered by the order in which each edge appears in the
+     * join pattern.
+     * 
+     * @return The list.
+     */
+    public LinkedList<Edge> getSourceSequence() {
+        LinkedList<Edge> list = new LinkedList<Edge>();
+        for (int i = 0; i < sources.length; i++) {
+            if (!list.contains(sources[i]))
+                list.add(sources[i]);
+        }
+        return list;
+    }
+    
+    /**
+     * Return a linked list of the sources pattern.
+     * 
+     * @return The linked list of the sources pattern.
+     */
+    public LinkedList<Edge> getSourceList() {
+       LinkedList<Edge> list = new LinkedList<Edge>();
+       for (int i = 0; i < sources.length; i++)
+           list.add(sources[i]);
+       return list;
+    }
+    
     public HashSet<Edge> getSourceSet() {
         HashSet<Edge> set = new HashSet<Edge>();
         for (int i = 0; i < sources.length; i++)

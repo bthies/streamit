@@ -46,6 +46,11 @@ Someone want to write a detailed description?
       <file class="source">Test9.str</file>
       <file class="output">Test9.out</file>
     </impl>
+    <impl lang="StreamIt" id="test10">
+      <desc>Tests filter pairs connected by multiple portals.</desc>
+      <file class="source">Test10.str</file>
+      <file class="output">Test10.out</file>
+    </impl>
     <impl lang="StreamIt" id="test_upstream">
       <desc>Someone want to write a description of this test?</desc>
       <file class="source">Test_Upstream.str</file>

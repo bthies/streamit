@@ -119,6 +119,49 @@ public class Util {
     }
     
     /**
+     * Return true if the sets contructed from list and array are equal.
+     * 
+     * @param list The list
+     * @param array The array
+     * @return true if the sets contructed from list and array are equal.
+     */
+    public static boolean setCompare(LinkedList list, Object[] array) {
+        if (array.length == list.size()) {
+            HashSet listSet = new HashSet();
+            HashSet arraySet = new HashSet();
+            for (int i = 0; i < array.length; i++) {
+                listSet.add(list.get(i));
+                arraySet.add(array[i]);
+            }
+            return listSet.equals(arraySet);
+        }
+        return false;
+    }
+    
+    /**
+     * Add the elements of addme to list.
+     * 
+     * @param list The list.
+     * @param addme Add elements to list.
+     */
+    public static void add(LinkedList<Integer> list, int[] addme) {
+        for (int i = 0; i < addme.length; i++)
+            list.add(new Integer(addme[i]));
+    }
+    
+    
+    /**
+     * Add the elements of addme to list.
+     * 
+     * @param list The list.
+     * @param addme Add elements to list.
+     */
+    public static void add(LinkedList list, Object[] addme) {
+        for (int i = 0; i < addme.length; i++)
+            list.add(addme[i]);
+    }
+    
+    /**
      * @param dynamic
      * @param tapeType
      * @return The code to receive a item from either the dynamic network 

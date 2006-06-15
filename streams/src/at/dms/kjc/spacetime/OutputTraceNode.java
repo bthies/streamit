@@ -119,7 +119,41 @@ public class OutputTraceNode extends TraceNode {
         return sum;
     }
 
-    
+    /**
+     * Combine the weights of adajacent outputs that have equal 
+     * destinations.
+     *
+     */
+    public void canonicalize() {
+        if (weights.length == 0)
+            return;
+        LinkedList<LinkedList<Edge>> edges = new LinkedList<LinkedList<Edge>>();
+        LinkedList<Integer> newWeights = new LinkedList<Integer>();
+        //add the first port to the new edges and weights
+        LinkedList<Edge> port = new LinkedList<Edge>();
+        Util.add(port, dests[0]);
+        edges.add(port);
+        newWeights.add(new Integer(weights[0]));
+        
+        for (int i = 1; i < dests.length; i++) {
+            if (Util.setCompare(edges.get(edges.size() - 1), dests[i])) {
+                Integer newWeight = new Integer(
+                    newWeights.get(newWeights.size() - 1).intValue() + 
+                    weights[i]);
+                newWeights.remove(newWeights.size() - 1);
+                newWeights.add(newWeight);
+            }
+            else {
+                //not equal, so create a new port and add it and the weight
+                port = new LinkedList<Edge>();
+                Util.add(port, dests[i]);
+                edges.add(port);
+                newWeights.add(new Integer(weights[i]));
+            }
+        }
+        //set the new weights and the destsx
+        set(newWeights, edges);
+    }
     
     /**
      * Return the width of this splitter meaning the number

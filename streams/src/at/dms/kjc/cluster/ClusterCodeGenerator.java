@@ -118,14 +118,18 @@ class ClusterCodeGenerator {
             for (int t = 0; t < outgoing.length; t++) {
                 SIRStream[] receivers = outgoing[t].getReceivers();
                 for (int i = 0; i < receivers.length; i++) {
-                    msg_to.add(receivers[i]);
+                    if (!msg_to.contains(receivers[i])) {
+                        msg_to.add(receivers[i]);
+                    }
                 }
             }
 
             for (int t = 0; t < incoming.length; t++) {
                 SIRPortalSender[] senders = incoming[t].getSenders();
                 for (int i = 0; i < senders.length; i++) {
-                    msg_from.add(senders[i].getStream());
+                    if (!msg_from.contains(senders[i].getStream())) {
+                        msg_from.add(senders[i].getStream());
+                    }
                 }
             }
         }

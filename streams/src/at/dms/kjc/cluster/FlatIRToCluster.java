@@ -2190,7 +2190,7 @@ public class FlatIRToCluster extends InsertTimers implements
                 // determine how large parameters are
                 int param_size = 0;
                 for (int j = 0; j < params.length; j++) {
-                    param_size += params[i].getType().getSizeInC();
+                    param_size += params[j].getType().getSizeInC();
                 }
 
                 // int and float have size of 4 bytes

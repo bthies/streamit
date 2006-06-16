@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.83 2006-06-09 20:02:32 dimock Exp $
+# $Id: strc,v 1.84 2006-06-16 18:01:16 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -205,6 +205,7 @@ Usage: strc [options] file.str ...
 
  Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets
+  --asciifileio       Use ascii format for file input and output
 * --backendvalues     "package.class.field val ..." (Internal use only)
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
@@ -251,6 +252,8 @@ Usage: strc [options] file.str ...
 + --manuallayout      Do not run simulated annealing for layout; 
 +                     ask user for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
+  --ssoutputs         With --numbers on a dynamic-rate app, specify
+                      outputs per steady state.
 * --ratematch         Turn on rate matching
   --rawcol n, -c n    Specify number of columns; --raw has number of rows
 * --removeglobals     Inline all functions and turn globals into locals
@@ -385,8 +388,10 @@ sub get_options
 			    "cluster=i",
 			    "steadymult=i",
 			    "slicethresh=i",
+			    "ssoutputs=i",
+			    "asciifileio",
 			    "malloczeros!",
-			    "nopartition!",
+			    "nopartition",
 			    "layoutfile=s",
 			    "devassignfile=s",
 			    "destroyfieldarray!",
@@ -725,6 +730,7 @@ sub get_compiler_opts
     $opts{'clone-with-serialization'} && ($copts .= " --clone_with_serialization");
     $opts{countops} && ($copts .= " --countops");
     $opts{debug} && ($copts .= " --debug");
+    $opts{asciifileio} && ($copts .= " --asciifileio");
     $opts{decoupled} && ($copts .= " --decoupled");
     $opts{dpscaling} && ($copts .= " --dpscaling");
     $opts{forceunroll} && ($copts .= " --forceunroll");
@@ -778,6 +784,7 @@ sub get_compiler_opts
     $opts{nopartition} && ($copts .= " --nopartition");
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
+    $opts{ssoutputs} && ($copts .= " --ssoutputs ". $opts{ssoutputs});
     $opts{layoutfile} && ($copts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($copts .= " --devassignfile ". $opts{devassignfile});
     $opts{backendvalues} && ($copts .= " --backendvalues \"". $opts{backendvalues}. "\"");

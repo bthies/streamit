@@ -1465,19 +1465,20 @@ public class Propagator extends SLIRReplacingVisitor {
         // RMR { look for known functions with 2 args
         if (args.length == 2 && args[0].isConstant() && args[1].isConstant())
             {
-                JExpression narg1 = doPromote(args[0],
-                                              new JDoubleLiteral(null, 0.0));
-                double darg1 = narg1.doubleValue();
+                if (ident.equals("max")) {
+                    JExpression narg1 = doPromote(args[0],
+                                                  new JDoubleLiteral(null, 0.0));
 
-                JExpression narg2 = doPromote(args[1],
-                                              new JDoubleLiteral(null, 0.0));
-                double darg2 = narg2.doubleValue();
+                    double darg1 = narg1.doubleValue();
+                    
+                    JExpression narg2 = doPromote(args[1],
+                                                  new JDoubleLiteral(null, 0.0));
+                    double darg2 = narg2.doubleValue();
 
-                // RMR {
-                if (ident.equals("max"))
-                    return new JDoubleLiteral(self.getTokenReference(),
-                                              Math.max(darg1, darg2));
-                // } RMR
+                    if (ident.equals("max"))
+                        return new JDoubleLiteral(self.getTokenReference(),
+                                                  Math.max(darg1, darg2));
+                }
             }
         // } RMR
 

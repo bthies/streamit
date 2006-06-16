@@ -427,6 +427,30 @@ public class FilterContent {
     }
 
     /**
+     * Set the init multiplicity of this fitler to im;
+     * 
+     * @param im The new init multiplicity.
+     */
+    public void setInitMult(int im) {
+        initMult = im;
+    }
+   
+    
+    /** 
+     * return the number of items produced in the init stage.
+     * 
+     * @return the number of items produced in the init stage.
+     */
+    public int initItemsPushed() {
+        int items = steady[0].getPushInt() * initMult;
+        if (isTwoStage()) {
+            items -= steady[0].getPushInt();
+            items += getInitPush();
+        }
+        return items;
+    }
+    
+    /**
      * Set the steady multiplicity of this filter to sm.
      * 
      * @param sm The new steady multiplicity.

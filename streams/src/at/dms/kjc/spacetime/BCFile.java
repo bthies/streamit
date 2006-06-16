@@ -198,10 +198,14 @@ public class BCFile
                         StreamingDram dram = (StreamingDram)tile.getIODevices()[d];
                         if (dram.isFileReader()) {
                             buf.append("  dev_from_file(\"" + 
-                                       dram.getFileReader().getFileName() +
-                                       "\", slavePort" + dram.getPort() + 
-                                       (dram.getFileReader().isFP() ? ", 1" : ", 0") +
-                                       ");\n");
+                                    dram.getFileReader().getFileName() +
+                                    "\", slavePort" + dram.getPort() + ", " + 
+                                    "1, " + //always use static network
+                                    (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                                    (dram.getFileReader().isFP() ? "1, " : "0, ") +
+                                    "0, " + //don't wait for trigger
+                                    "0, 0, 0, 0" + //just use zero, only used for gdn
+                                    ");\n");
                         }
                         if (dram.isFileWriter()) {
                             //if numbers call the ng file writer

@@ -558,10 +558,10 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
     i = 0;
 //    while (fgets(line,MAX_LINE,fp)!=NULL) {
     
-    // RMR { prime the sample queue (fill in max_delay entries)
+    // RMR { prime the sample queue (fill in max_delay-1 entries; last entry filled in main loop)
     // so that the samples from low index and high index in beamforming()
     // point to appropriate data
-    for (i = 0; i < delays->max_delay; i++) {
+    for (i = 0; i < delays->max_delay-1; i++) {
         if (fgets(line,MAX_LINE,fp)!=NULL) {
             parse_line(line, (queue->sample_queue)[queue->head], NUM_MIC);
         } else { 

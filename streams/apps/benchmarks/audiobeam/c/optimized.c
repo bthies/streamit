@@ -804,8 +804,8 @@ int process_signal(FILE *fp, FILE *output_fp, struct Delays *delays, int num_mic
 #endif
    
 
-    // RMR { prime the sample queue (fill in max_delay entries)
-    for (i = 0; i < delays->max_delay; i++) {
+    // RMR { prime the sample queue (fill in max_delay-1 entries, the last entry is filled in the mail loop)
+    for (i = 0; i < delays->max_delay - 1; i++) {
         if (fgets(line,MAX_LINE,fp)!=NULL) {
             parse_line(line, (queue->sample_queue)[queue->head], NUM_MIC);
         } else { 

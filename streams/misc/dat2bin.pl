@@ -2,7 +2,7 @@
 #
 # dat2bin.pl: convert formatted data to binary
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: dat2bin.pl,v 1.3 2006-06-16 11:32:36 thies Exp $
+# $Id: dat2bin.pl,v 1.4 2006-06-16 17:10:03 thies Exp $
 #
 # Use this script to convert data from a text file to native binary
 # data for use with a StreamIt FileReader object.
@@ -61,6 +61,8 @@ while (<$in>)
       }
     if ($format eq "ppm")
       {
+        # remove leading whitespace, since it is interpreted as a 0 by split
+        $line =~ s/^\s+//;
         # ppms could really be byte's instead of int's, but StreamIt
         # doesn't have a byte primitive type yet...
 	my @ints = split /\s+/, $line;

@@ -72,8 +72,15 @@ public class FileReaderDevice extends IODevice {
         return "File Reader (" + getFileName() + ")";
     }
 
+    /**
+     * Return 1 for floating point or 0 for int.  Used for
+     * the raw file reader device. 
+     * 
+     * @return 1 for floating point or 0 for int.
+     */
     public String getTypeCode() {
-        assert getType().isFloatingPoint() || getType().isOrdinal() : "Invalid type for file reader: "
+        assert getType().isFloatingPoint() || getType().isOrdinal() : 
+            "Invalid type for file reader: "
             + getType();
         Integer i = new Integer(getType().isFloatingPoint() ? 1 : 0);
         return i.toString();

@@ -260,30 +260,34 @@ public class BCFile {
                 fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
                 fw.write("\tlocal f_readerpath_dyn = malloc(strlen(streamit_home) + 30);\n");
                 
-                fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file_raw.bc\");\n");
+                fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n");
                 fw.write("\tinclude(f_readerpath);\n");
-                
-                fw.write("\tsprintf(f_readerpath_dyn, \"%s%s\", streamit_home, \"/include/from_file_dyn_raw.bc\");\n");
-                fw.write("\tinclude(f_readerpath_dyn);\n");
             }
             while (frs.hasNext()) {
                 FileReaderDevice dev = (FileReaderDevice) frs.next();
                 //if this file reader is its own device or we don't have a communication simulator
                 //then use the dynamic network
+                int static_network = 1, destX = 0, destY = 0; 
                 if (dev.isDynamic() || 
                         ((SpdStaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator) {
                     dev.setDynamic();
-                    fw.write("\tdev_from_file_dyn_raw(\"" + dev.getFileName() + "\", " +
-                            dev.getPort().getY() + ", " + 
-                            dev.getPort().getX()  + ", " + 
-                            layout.getTile(dev.getDest()).getY() + ", " +  
-                            layout.getTile(dev.getDest()).getX() + ", " + 
-                            dev.getPort().getPortNumber() + ");\n");
+                    static_network = 0;
+                    //set the dest, only used for data over gdn
+                    destX = layout.getTile(dev.getDest()).getY();  
+                    destY = layout.getTile(dev.getDest()).getX(); 
                 }
-                else {
-                    fw.write("\tdev_from_file_raw(\"" + dev.getFileName() + "\", "
-                            + dev.getPort().getPortNumber() + ");\n");
-                }
+               
+                fw.write("\tdev_from_file(\"" + dev.getFileName() + "\", " +
+                        dev.getPort().getPortNumber() + ", " +
+                        static_network + ", " +
+                        (KjcOptions.asciifileio ? "0" : "1" ) + ", " +
+                        dev.getTypeCode() + ", " +
+                        "1, " + //wait for trigger
+                        dev.getPort().getY() + ", " + 
+                        dev.getPort().getX()  + ", " + 
+                        destY + ", " +  
+                        destX + 
+                        ");\n");
             }
             // generate the code for the file writers
             Iterator fws = streamGraph.getFileState().getFileWriterDevs()

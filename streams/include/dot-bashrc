@@ -1,3 +1,9 @@
+#
+# Assume we control exported symbols JAVA_HOME, TOPDIR, ATLAS_HOME, LEFTYPATH
+# Assume that exported symbols STREAMIT_HOME and PATH are already set by user.
+# Assume other symbols may or may not already be set.
+#
+
 # make sure STREAMIT_HOME is exported
 export STREAMIT_HOME
 
@@ -7,9 +13,8 @@ then
  export CLASSPATH=.
 fi
 
-# location of java and jikes
+# location of java
 export JAVA_HOME=/usr/uns/jdk1.5.0_01
-export JIKES_HOME=/home/bits8/streamit/jikes-1.22-customized
 
 # java classes
 CLASSPATH=${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
@@ -41,7 +46,7 @@ export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS
 # for running dotty
 export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
 
-# add STREAMIT_HOME to the path in order to find "knit"
+# add STREAMIT_HOME to the path in order to find "strc"
 if [ -z "$PATH" ]
 then
   export PATH=${STREAMIT_HOME}
@@ -49,18 +54,35 @@ else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
 
-# some libraries needed for jikes-1.22
+# libraries for FFTW Different versions of Linux vary as to whether they
+# use LD_LIBRARY_PATH or LPATH.
 if [ -z "$LD_LIBRARY_PATH" ]
 then
-  export LD_LIBRARY_PATH=/home/streamit/lib
+    export LD_LIBRARY_PATH=/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 else
-  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/home/streamit/lib
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
 fi
 
-# libraries for FFTW
-LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+if [ -z "$LPATH" ]
+then
+    export LPATH=/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+else
+    LPATH=${LPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw/.libs:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw/.libs
+fi
+
 
 # include files for FFTW.  (This variable only seems to be needed on RHEL-3).
+#  Different versions of Linux vary as to whether they use C_INCLUDE_PATH
+# or CPATH.
+
+ 
+if [ -z "$C_INCLUDE_PATH" ]
+then
+  export C_INCLUDE_PATH=/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+else
+  C_INCLUDE_PATH=${C_INCLUDE_PATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
+fi
+
 if [ -z "$CPATH" ]
 then
   export CPATH=/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
@@ -68,18 +90,26 @@ else
   CPATH=${CPATH}:/projects/streamit/3rdparty/fftw/fftw-2.1.5/rfftw:/projects/streamit/3rdparty/fftw/fftw-2.1.5/fftw
 fi
 
-# add java and jikes to path
-export PATH=${JAVA_HOME}/bin:${JIKES_HOME}/bin:${PATH}
+# add java to path
+export PATH=${JAVA_HOME}/bin:${PATH}
 
 # Perl on RHEL-3
-PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:${PERL5LIB}
-export PERL5LIB
+if [ -z "$PERL5LIB" ]
+then
+    export PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/
+else
+    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:${PERL5LIB}
+fi
 
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
-TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
-export TEXINPUTS
+if [ -z "$TEXINPUTS" ]
+then
+    export TEXINPUTS=${STREAMIT_HOME}/include/tex
+else 
+    TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
+fi
 
 #include builtin Eclipse plugins
 # export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins
@@ -97,6 +127,3 @@ export TEXINPUTS
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
 # CLASSPATH=${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
 # CLASSPATH=${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
-
-# on RHEL-3, LD_LIBRARY_PATH is called LPATH
-export LPATH=$LD_LIBRARY_PATH

@@ -1161,16 +1161,25 @@ public class FlatIRToCluster extends InsertTimers implements
 
                             int param_count = methods[t].getParameters().length;
 
+                            // declare variables for parameters
                             for (int a = 0; a < param_count; a++) {
-                                if (portal_method_params[a].toString().equals(
-                                                                              "int")) {
-                                    p.print("        int p" + a
-                                            + " = msg->get_int_param();\n");
-                                }
-                                if (portal_method_params[a].toString().equals(
-                                                                              "float")) {
-                                    p.print("        float p" + a
-                                            + " = msg->get_float_param();\n");
+                                p.print("        ");
+                                printDecl(portal_method_params[a], "p"+a);
+                                p.print(";\n");
+                            }
+
+                            // assign to parameters
+                            for (int a = 0; a < param_count; a++) {
+                                if (portal_method_params[a].isArrayType()) {
+                                    // read arrays by passing array pointer and length
+                                    CArrayType arrType = (CArrayType)portal_method_params[a];
+                                    p.print("        msg->get_" + arrType.getBaseType()
+                                            + "_array_param((" + arrType.getBaseType() + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
+                                } else {
+                                    // read primitives by calling function and assigning result 
+                                    p.print("        p" + a
+                                            + " = msg->get_" 
+                                            + portal_method_params[a] + "_param();\n");
                                 }
                             }
 
@@ -1264,16 +1273,25 @@ public class FlatIRToCluster extends InsertTimers implements
 
                             int param_count = methods[t].getParameters().length;
 
+                            // declare variables for parameters
                             for (int a = 0; a < param_count; a++) {
-                                if (portal_method_params[a].toString().equals(
-                                                                              "int")) {
-                                    p.print("    int p" + a
-                                            + " = sock->read_int();\n");
-                                }
-                                if (portal_method_params[a].toString().equals(
-                                                                              "float")) {
-                                    p.print("    float p" + a
-                                            + " = sock->read_float();\n");
+                                p.print("        ");
+                                printDecl(portal_method_params[a], "p"+a);
+                                p.print(";\n");
+                            }
+
+                            // assign to parameters
+                            for (int a = 0; a < param_count; a++) {
+                                if (portal_method_params[a].isArrayType()) {
+                                    // read arrays by passing array pointer and length
+                                    CArrayType arrType = (CArrayType)portal_method_params[a];
+                                    p.print("    sock->read_" + arrType.getBaseType()
+                                            + "_array((" + arrType.getBaseType() + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
+                                } else {
+                                    // read primitives by calling function and assigning result
+                                    p.print("    p" + a
+                                            + " = sock->read_" 
+                                            + portal_method_params[a] + "();\n");
                                 }
                             }
 
@@ -2169,8 +2187,14 @@ public class FlatIRToCluster extends InsertTimers implements
 
                 int size = 12; // size:4 mindex:4 exec_at:4
 
+                // determine how large parameters are
+                int param_size = 0;
+                for (int j = 0; j < params.length; j++) {
+                    param_size += params[i].getType().getSizeInC();
+                }
+
                 // int and float have size of 4 bytes
-                size += num_params * 4;
+                size += param_size;
 
                 for (int t = 0; t < methods.length; t++) {
 
@@ -2246,19 +2270,22 @@ public class FlatIRToCluster extends InsertTimers implements
                     p.print("-1);\n");
                 }
 
-                p.print("  __msg->alloc_params("+num_params*4+");\n");
+                p.print("  __msg->alloc_params("+param_size+");\n");
 
                 if (params != null) {
                     for (int t = 0; t < method_params.length; t++) {
-
-                        String method_params_string = method_params[t].toString();
-
-                        p.print("  __msg->push_" + method_params_string + "(");
-                        params[t].accept(this);
-
-                        //if (t < method_params.length - 1) { p.print(", "); }
-                        
-                        p.print(");\n");
+                        if (method_params[t].isArrayType()) {
+                            // push arrays by passing array pointer and length
+                            CArrayType arrType = (CArrayType)method_params[t];
+                            p.print("  __msg->push_" + arrType.getBaseType() + "_array((" + arrType.getBaseType() + "*)");
+                            params[t].accept(this);
+                            p.print(", " + arrType.getTotalNumElements() + ");\n");
+                        } else {
+                            // push primitives by passing only value
+                            p.print("  __msg->push_" + method_params[t] + "(");
+                            params[t].accept(this);
+                            p.print(");\n");
+                        }
                     }
                 }
 
@@ -2314,32 +2341,20 @@ public class FlatIRToCluster extends InsertTimers implements
                 if (params != null) {
                     for (int t = 0; t < method_params.length; t++) {
 
-                        String method_params_string = method_params[t]
-                            .toString();
-                        p.print("  __msg_sock_" + selfID + "_" + dst
-                                + "out->write_");
-                        if (method_params_string == "int"
-                            || method_params_string == "float") {
-                            p.print(method_params_string + "(");
+                        if (method_params[t].isArrayType()) {
+                            // write base pointer and length
+                            CArrayType arrType = (CArrayType)method_params[t];
+                            p.print("  __msg_sock_" + selfID + "_" + dst
+                                    + "out->write_" + arrType.getBaseType() + "_array((" + arrType.getBaseType() + "*)");
+                            params[t].accept(this);
+                            p.print(", " + ((CArrayType)method_params[t]).getTotalNumElements() + ");\n");
                         } else {
-                            p.print("unsupported/* " + method_params_string
-                                    + " */ (");
+                            // write plain value of parameter
+                            p.print("  __msg_sock_" + selfID + "_" + dst
+                                    + "out->write_" + method_params[t] + "(");
+                            params[t].accept(this);
+                            p.print(");\n");
                         }
-                        //          if (method_params[t].toString().equals("int")) {
-                        //              p.print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
-                        //          }
-                        //          if (method_params[t].toString().equals("float")) {
-                        //              p.print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
-                        //          }
-
-                        // print out the parameter!
-                        //                        PRINT_MSG_PARAM = t;
-                        //                        params[2].accept(this);
-                        //                        PRINT_MSG_PARAM = -1;
-                        params[t].accept(this);
-                        if (t < method_params.length - 1) { p.print(", "); }
-                        
-                        p.print(");\n");
                     }
                 }
 

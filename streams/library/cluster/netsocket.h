@@ -45,8 +45,17 @@ class netsocket : public mysocket {
     return a;
   }
 
+  void read_int_array(int* dst, int length) {
+    read_chunk((char*)dst, length*sizeof(int));
+  }
+
   void write_int(int a) {
     write_chunk((char*)&a, sizeof(int));
+    return;
+  }
+
+  void write_int_array(int* src, int length) {
+    write_chunk((char*)src, length*sizeof(int));
     return;
   }
 
@@ -67,13 +76,20 @@ class netsocket : public mysocket {
     return a;
   }
   
+  void read_float_array(float* dst, int length) {
+    read_chunk((char*)dst, length*sizeof(float));
+  }
+
   void write_float(float a) {
     write_chunk((char*)&a, sizeof(float));
     return;
   }
 
+  void write_float_array(float* src, int length) {
+    write_chunk((char*)src, length*sizeof(float));
+    return;
+  }
   
 };
 
 #endif
-

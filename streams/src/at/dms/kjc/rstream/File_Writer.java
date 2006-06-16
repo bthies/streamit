@@ -80,76 +80,71 @@ public class File_Writer extends SIRFilter
         SIRPopExpression pop = new SIRPopExpression(fw.getInputType());
     
     
-        /* RMR { rather than use fprintf, use fwrite to be consistent
-         * with the other backends which write in binary mode
-         *
-         *
-         * old code follows
-         *
-         *
+        // RMR { support ascii or binary file operations for reading
+        JMethodCallExpression fileio;
 
-         //the params for the fprintf call
-         JExpression[] fprintfParams = new JExpression[3];
-         fprintfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
-         file.getVariable().getIdent());
-         fprintfParams[1] = new JStringLiteral(null,
-         fw.getInputType().isFloatingPoint() ?
-         "%f\\n" : "%d\\n");
-         fprintfParams[2] = pop;
-    
-         JMethodCallExpression fprintf = 
-         new JMethodCallExpression(null, new JThisExpression(null),
-         Names.fprintf,
-         fprintfParams);
-         *
-         *
-         * new code follows
-         *
-         */
+        if (KjcOptions.asciifileio) {
+            //the params for the fprintf call
+            JExpression[] fprintfParams = new JExpression[3];
+            fprintfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                          file.getVariable().getIdent());
+            fprintfParams[1] = new JStringLiteral(null,
+                                                  fw.getInputType().isFloatingPoint() ?
+                                                  "%f\\n" : "%d\\n");
+            fprintfParams[2] = pop;
+            
+            JMethodCallExpression fprintf = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          Names.fprintf,
+                                          fprintfParams);
+            fileio = fprintf;
+        }
+        else {
+            // create the params for fwrite(&variable, sizeof(type), 1, file)
+            JExpression[] fwriteParams = new JExpression[4];
+            
+            // the first parameter: &(variable); treat the & operator as a function call
+            JExpression[] addressofParameters = new JExpression[1];
+            
+            addressofParameters[0] = pop;
+            
+            JMethodCallExpression addressofCall =
+                new JMethodCallExpression(null, Names.addressof, addressofParameters);
 
-        // create the params for fwrite(&variable, sizeof(type), 1, file)
-        JExpression[] fwriteParams = new JExpression[4];
+            fwriteParams[0] = addressofCall;
+            
+            // the second parameter: the call to sizeof(type)
+            JExpression[] sizeofParameters = new JExpression[1];
+            
+            sizeofParameters[0] = 
+                new JLocalVariableExpression(null, 
+                                             new JVariableDefinition(null, 0,
+                                                                     CStdType.Integer,
+                                                                     (fw.getInputType().isFloatingPoint() ? 
+                                                                      "float" : "int"),
+                                                                     null));
+            
+            JMethodCallExpression sizeofCall =
+                new JMethodCallExpression(null, Names.sizeof, sizeofParameters);
+            
+            fwriteParams[1] = sizeofCall;
+            
+            // the third parameter: read one element at a time
+            fwriteParams[2] = new JIntLiteral(1);
+            
+            // the last parameter: the file pointer
+            fwriteParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                         file.getVariable().getIdent());
+            
+            JMethodCallExpression fwrite = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          Names.fwrite,
+                                          fwriteParams);
 
-        // the first parameter: &(variable); treat the & operator as a function call
-        JExpression[] addressofParameters = new JExpression[1];
+            fileio = fwrite;
+        }
 
-        addressofParameters[0] = pop;
-    
-        JMethodCallExpression addressofCall =
-            new JMethodCallExpression(null, Names.addressof, addressofParameters);
-
-        fwriteParams[0] = addressofCall;
-
-        // the second parameter: the call to sizeof(type)
-        JExpression[] sizeofParameters = new JExpression[1];
-
-        sizeofParameters[0] = 
-            new JLocalVariableExpression(null, 
-                                         new JVariableDefinition(null, 0,
-                                                                 CStdType.Integer,
-                                                                 (fw.getInputType().isFloatingPoint() ? 
-                                                                  "float" : "int"),
-                                                                 null));
-
-        JMethodCallExpression sizeofCall =
-            new JMethodCallExpression(null, Names.sizeof, sizeofParameters);
-
-        fwriteParams[1] = sizeofCall;
-
-        // the third parameter: read one element at a time
-        fwriteParams[2] = new JIntLiteral(1);
-
-        // the last parameter: the file pointer
-        fwriteParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
-                                                     file.getVariable().getIdent());
-
-        JMethodCallExpression fwrite = 
-            new JMethodCallExpression(null, new JThisExpression(null),
-                                      Names.fwrite,
-                                      fwriteParams);
-        /* } RMR */
-
-        workBlock.addStatement(new JExpressionStatement(null, fwrite, null));
+        workBlock.addStatement(new JExpressionStatement(null, fileio, null));
         this.setWork(new JMethodDeclaration(null,
                                             at.dms.kjc.Constants.ACC_PUBLIC,
                                             CStdType.Void,

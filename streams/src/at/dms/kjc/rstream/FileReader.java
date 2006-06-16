@@ -89,79 +89,75 @@ public class FileReader extends SIRFilter
         workBlock.addStatement
             (new JVariableDeclarationStatement(null, value, null));
     
-        /* RMR { rather than use fscanf, use fread to be consistent
-         * with the other backends which read in binary mode
-         *
-         *
-         * old code follows
-         *
-         *
+        // RMR { support ascii or binary file operations for reading
+        JMethodCallExpression fileio;
 
-         //create a temp variable to hold the value we are reading
-         JExpression[] fscanfParams = new JExpression[3];
-         //create the params for fscanf
-         fscanfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
-                                                      file.getVariable().getIdent());
-         fscanfParams[1] = new JStringLiteral(null,
-                                              sirFR.getOutputType().isFloatingPoint() ?
-                                              "%f\\n" : "%d\\n");
-         fscanfParams[2] = new JLocalVariableExpression(null, value);
+        if (KjcOptions.asciifileio) {
+            //create a temp variable to hold the value we are reading
+            JExpression[] fscanfParams = new JExpression[3];
+            //create the params for fscanf
+            fscanfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                         file.getVariable().getIdent());
+            fscanfParams[1] = new JStringLiteral(null,
+                                                 sirFR.getOutputType().isFloatingPoint() ?
+                                                 "%f\\n" : "%d\\n");
+            fscanfParams[2] = new JLocalVariableExpression(null, value);
+            
+            //fscanf call
+            JMethodCallExpression fscanf = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          Names.fscanf,
+                                          fscanfParams);        
+            
+            fileio = fscanf;
+        }
+        else {
+            // create the params for fread(&variable, sizeof(type), 1, file)
+            JExpression[] freadParams = new JExpression[4];
+            
+            // the first parameter: &(variable); treat the & operator as a function call
+            JExpression[] addressofParameters = new JExpression[1];
+            
+            addressofParameters[0] = new JLocalVariableExpression(null, value);
+            
+            JMethodCallExpression addressofCall =
+                new JMethodCallExpression(null, Names.addressof, addressofParameters);
+            
+            freadParams[0] = addressofCall;
+            
+            // the second parameter: the call to sizeof(type)
+            JExpression[] sizeofParameters = new JExpression[1];
+            
+            sizeofParameters[0] = 
+                new JLocalVariableExpression(null, 
+                                             new JVariableDefinition(null, 0,
+                                                                     CStdType.Integer,
+                                                                     (sirFR.getOutputType().isFloatingPoint() ? 
+                                                                      "float" : "int"),
+                                                                     null));
+            
+            JMethodCallExpression sizeofCall =
+                new JMethodCallExpression(null, Names.sizeof, sizeofParameters);
+            
+            freadParams[1] = sizeofCall;
+            
+            // the third parameter: read one element at a time
+            freadParams[2] = new JIntLiteral(pushrate);
+            
+            // the last parameter: the file pointer
+            freadParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
+                                                        file.getVariable().getIdent());
+            
+            JMethodCallExpression fread = 
+                new JMethodCallExpression(null, new JThisExpression(null),
+                                          Names.fread,
+                                          freadParams);
 
-         //fscanf call
-         JMethodCallExpression fread = 
-             new JMethodCallExpression(null, new JThisExpression(null),
-                                       Names.fscanf,
-                                       fscanfParams);        
-         *
-         *
-         * new code follows
-         *
-         */
-
-        // create the params for fread(&variable, sizeof(type), 1, file)
-        JExpression[] freadParams = new JExpression[4];
+            fileio = fread;
+        }
+        // } RMR
     
-        // the first parameter: &(variable); treat the & operator as a function call
-        JExpression[] addressofParameters = new JExpression[1];
-    
-        addressofParameters[0] = new JLocalVariableExpression(null, value);
-    
-        JMethodCallExpression addressofCall =
-            new JMethodCallExpression(null, Names.addressof, addressofParameters);
-    
-        freadParams[0] = addressofCall;
-    
-        // the second parameter: the call to sizeof(type)
-        JExpression[] sizeofParameters = new JExpression[1];
-    
-        sizeofParameters[0] = 
-            new JLocalVariableExpression(null, 
-                                         new JVariableDefinition(null, 0,
-                                                                 CStdType.Integer,
-                                                                 (sirFR.getOutputType().isFloatingPoint() ? 
-                                                                  "float" : "int"),
-                                                                 null));
-    
-        JMethodCallExpression sizeofCall =
-            new JMethodCallExpression(null, Names.sizeof, sizeofParameters);
-    
-        freadParams[1] = sizeofCall;
-    
-        // the third parameter: read one element at a time
-        freadParams[2] = new JIntLiteral(pushrate);
-    
-        // the last parameter: the file pointer
-        freadParams[3] = new JFieldAccessExpression(null, new JThisExpression(null),
-                                                    file.getVariable().getIdent());
-    
-        JMethodCallExpression fread = 
-            new JMethodCallExpression(null, new JThisExpression(null),
-                                      Names.fread,
-                                      freadParams);
-    
-        /* } RMR */
-    
-        workBlock.addStatement(new JExpressionStatement(null, fread, null));
+        workBlock.addStatement(new JExpressionStatement(null, fileio, null));
     
         SIRPushExpression push = 
             new SIRPushExpression(new JLocalVariableExpression(null, value), 

@@ -1,7 +1,7 @@
 #!/usr/uns/bin/perl
 #
 # bin2dat.pl: convert binary to formatted data
-# $Id: bin2dat.pl,v 1.1 2006-06-16 11:32:36 thies Exp $
+# $Id: bin2dat.pl,v 1.2 2006-06-16 16:35:45 thies Exp $
 #
 # Use this script to convert data from a native binary (output by a
 # StreamIt FileWriter object) to a text or .ppm file.
@@ -50,7 +50,7 @@ if ($format eq "ppm") {
         $val = unpack("i*", $val);
         print $out "$val ";
         # newline every 15 values, since lines should not be longer than 70 chars in a .ppm file
-        if (($j*$ymax*3+$i*3+$k) % 15 == 14) {
+        if (($j*$xmax*3+$i*3+$k) % 15 == 14) {
           print $out "\n";
         }
       }

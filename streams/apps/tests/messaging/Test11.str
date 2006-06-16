@@ -1,0 +1,53 @@
+/**
+ * Tests passing arrays as message parameters.
+ *
+ *  cagfarm-50 % strc -library -i 10 Test11.str
+ *  0
+ *  3
+ *  6
+ *  9
+ *  12
+ *  15
+ *  18
+ *  21
+ *  24
+ *  27
+ *
+ */
+
+void->void pipeline Test11 {
+    portal<Receiver> p;
+    add Sender(p);
+    add Receiver() to p;
+    add Sink;
+}
+
+void->int filter Sender(portal<Receiver> p) {
+    int[2][2] A;
+    init {
+        A[0][1] = 1;
+        A[1][1] = 2;
+    }
+    work push 1 {
+        p.increment(A) [1:1];
+        push(0);
+    }
+}
+
+int->int filter Receiver {
+    int val = 0;
+    work push 1 pop 1 {
+        push(val+pop());
+    }
+    handler increment(int[2][2] A) {
+        val += A[0][1];
+        val += A[1][1];
+    }
+}
+
+int->void filter Sink() {
+    work pop 1 {
+        int val = pop();
+        println(val);
+    }
+}

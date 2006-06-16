@@ -51,6 +51,11 @@ Someone want to write a detailed description?
       <file class="source">Test10.str</file>
       <file class="output">Test10.out</file>
     </impl>
+    <impl lang="StreamIt" id="test11">
+      <desc>Tests sending arrays as message parameters.</desc>
+      <file class="source">Test11.str</file>
+      <file class="output">Test11.out</file>
+    </impl>
     <impl lang="StreamIt" id="test_upstream">
       <desc>Someone want to write a description of this test?</desc>
       <file class="source">Test_Upstream.str</file>

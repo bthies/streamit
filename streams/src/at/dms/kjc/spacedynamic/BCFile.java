@@ -11,6 +11,7 @@ import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.RawSimulatorPrint;
+import at.dms.kjc.spacetime.Util;
 import at.dms.util.Utils;
 
 /**
@@ -168,84 +169,6 @@ public class BCFile {
                 + "         gAUTOFLOPS, (450*gAUTOFLOPS)/steps);\n"
                 + "}\n" + "\n");
         
-        if (hasIO) {
-            // create preamble
-            fw
-            .write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\n");
-            fw.write("include(\"<dev/data_transmitter.bc>\");\n\n");
-            
-            // create the instrumentation function
-            fw.write("// instrumentation code\n");
-            fw.write("fn streamit_instrument(val, port){\n");
-            fw.write("  local a;\n");
-            fw.write("  local b;\n");
-            fw
-            .write("  Proc_GetCycleCounter(Machine_GetProc(machine,0), &a, &b);\n");
-            fw.write("  //printf(\"cycleHi %X, cycleLo %X\\n\", a, b);\n");
-            // use the same format string that generating a printf causes so we
-            // can use
-            // the same results script;
-            fw.write("  printf(\"[port %d: %08x%08x]: %x\\n\", port, a, b, val);\n");
-            fw.write("}\n\n");
-            
-            // create the function to write the data from the static network to a file
-            fw.write("fn dev_st_port_to_file_size(filename, size, port)\n{\n");
-            fw.write("  local receive_device_descriptor = hms_new();\n");
-            fw.write("  // open the file\n  ;");
-            fw.write("  receive_device_descriptor.fileName = filename;\n  ");
-            fw.write("  receive_device_descriptor.port = port;\n");
-            fw.write("  receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,\"w\");\n");
-            fw.write("  verify(receive_device_descriptor.theFile != NULL, \"### Failed to open output file\");\n");
-            fw.write("  receive_device_descriptor.calc =\n");
-            fw.write("    & fn(this)\n  {\n");
-            fw.write("    local theFile = this.theFile;\n");
-            fw.write("    local thePort = this.port;;\n");
-            fw.write("    while (1)\n {\n");
-            fw.write("      local value = this.receive();\n");
-            fw.write("      fwrite(&value, size, 1, theFile);\n");
-            fw.write("      streamit_instrument(value, thePort);\n");
-            fw.write("      fflush(theFile);\n");
-            fw.write("    }\n");
-            fw.write("  };\n");
-            fw.write("  return dev_data_transmitter_init(\"st_port_to_file\", port, 0, "
-                    + "  receive_device_descriptor, 0" + 
-            ");\n");
-            fw.write("}\n\n");
-            
-            //create the function to write data from the GDN to a file
-            fw.write("fn dev_gdn_port_to_file_size(filename, size, port)\n");
-            fw.write("{\n");
-            fw.write("  local receive_device_descriptor = hms_new();\n");
-            fw.write("  // open the file\n");
-            fw.write("  receive_device_descriptor.fileName = filename;\n");
-            fw.write("  receive_device_descriptor.port = port;\n");
-            fw.write("  receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,\"w\");\n");
-            fw.write("  verify(receive_device_descriptor.theFile != NULL, \"### Failed to open output file\");\n");
-            fw.write("  receive_device_descriptor.calc =\n");
-            fw.write("    & fn(this)\n");
-            fw.write("    {\n");
-            fw.write("      local theFile = this.theFile;\n");
-            fw.write("      local thePort = this.port;\n");
-            fw.write("      while (1)\n");
-            fw.write("      {\n");
-            fw.write("        local value = this.receive();\n");
-            fw.write("        local i, bogus, length, senderY, senderX, ourY, ourX, hdr;\n");
-            fw.write("\n");
-            fw.write("        DecodeDynHdr(value, &bogus, &length, &hdr,\n");
-            fw.write("                     &senderY, &senderX, &ourY, &ourX);\n");
-            fw.write("\n");
-            fw.write("        for (i = 0; i < length; i++) {\n");
-            fw.write("        value = this.receive();\n");
-            fw.write("        fwrite(&value, size, 1, theFile);\n");
-            fw.write("        streamit_instrument(value, thePort);\n");
-            fw.write("        fflush(theFile);\n");
-            fw.write("      }\n");
-            fw.write("    }\n");
-            fw.write("  };\n");
-            fw.write("  return dev_data_transmitter_init(\"gdn_port_to_file\", port, 0, receive_device_descriptor, 2);\n");
-            fw.write("}\n\n");
-        }
-        //
         fw.write("\n{\n");
         
         if (KjcOptions.magic_net)
@@ -255,14 +178,14 @@ public class BCFile {
             // generate the code for the fileReaders
             Iterator frs = streamGraph.getFileState().getFileReaderDevs()
             .iterator();
-            if (frs.hasNext()) {
-                // include the file reader devices
-                fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
-                fw.write("\tlocal f_readerpath_dyn = malloc(strlen(streamit_home) + 30);\n");
-                
-                fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n");
-                fw.write("\tinclude(f_readerpath);\n");
-            }
+            // include the file reader devices
+            fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");                
+            fw.write("\tlocal f_writerpath = malloc(strlen(streamit_home) + 30);\n");                
+            fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n");
+            fw.write("\tsprintf(f_writerpath, \"%s%s\", streamit_home, \"/include/to_file.bc\");\n");
+            fw.write("\tinclude(f_readerpath);\n");
+            fw.write("\tinclude(f_writerpath);\n");
+
             while (frs.hasNext()) {
                 FileReaderDevice dev = (FileReaderDevice) frs.next();
                 //if this file reader is its own device or we don't have a communication simulator
@@ -303,10 +226,14 @@ public class BCFile {
                     dev.setDynamic();
                 //now create the function call the creates the bc device, create the 
                 //appropriate device based on what network is used
-                fw.write("\tdev_" + ( dynamic ? "gdn" : "st") + "_port_to_file_size(\"" + 
+                fw.write("  dev_to_file(\"" + 
                         dev.getFileName()
-                        + "\", " + size + ", " + 
-                        dev.getPort().getPortNumber() + 
+                        + "\", " + dev.getPort().getPortNumber() + ", " +
+                        (dynamic ? "0, " : "1, ") + //network
+                        "0, " + //don't wait for trigger
+                        (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                        dev.getTypeCode() + ", " +
+                        size + 
                 ");\n");
             }
         }

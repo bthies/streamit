@@ -39,7 +39,8 @@ NAMES =		profiler \
 		mysocket \
 		netsocket \
 		memsocket \
-		fft
+		fft \
+                FileWriter
 
 #               data_consumer
 #               data_producer

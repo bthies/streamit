@@ -62,9 +62,11 @@ public class Util {
 
     }
 
-    /*
-     * for a given CType return the size (number of elements that need to be
-     * sent when routing).
+    /**
+     * For type return the number of words that it occupies.
+     * 
+     * @param type The type.
+     * @return The number of words occupied by type.
      */
     public static int getTypeSize(CType type) {
 

@@ -209,17 +209,26 @@ public class BCFile
                         }
                         if (dram.isFileWriter()) {
                             //if numbers call the ng file writer
-                            if (numbers) 
+                            if (numbers) {
                                 buf.append("  dev_NG_to_file(" + 
                                            ng.getID((FileOutputContent)dram.getFileWriter().getContent()) + 
                                            ", \"");
-                            else 
-                                buf.append("  dev_to_file(\"");
-                            
-                            buf.append(dram.getFileWriter().getFileName() +
-                                       "\", slavePort" + dram.getPort() + 
-                                       (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
-                                       ");\n");
+                                buf.append(dram.getFileWriter().getFileName() +
+                                        "\", slavePort" + dram.getPort() + 
+                                        (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
+                                ");\n");
+                            }
+                            else { 
+                                buf.append("  dev_to_file(\"" + 
+                                        dram.getFileWriter().getFileName() +
+                                        "\", slavePort" + dram.getPort() + ", " +
+                                        "1, " + //static network
+                                        "0, " + //don't wait for trigger
+                                        (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                                        (dram.getFileWriter().isFP() ? "1, " : "0, ") +
+                                        (4 * Util.getTypeSize(dram.getFileWriter().getContent().getInputType())) + 
+                                ");\n");
+                            }
                         }
                     }
                 }

@@ -280,7 +280,7 @@ public class Util {
     public static int initBufferSize(Edge edge) {
         return edge.initItems() * getTypeSize(edge.getType());
     }
-
+    
     public static int magicBufferSize(Edge edge) {
         // i don't remember why I have the + down there,
         // but i am not going to change

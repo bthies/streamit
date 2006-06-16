@@ -167,6 +167,22 @@ public class OutputTraceNode extends TraceNode {
         return getDestSet().size();
     }
     
+    /**
+     * Return a list of the edges with each edge appearing once
+     * and ordered by the order in which each edge appears in the
+     * split pattern.
+     * 
+     * @return The list.
+     */
+    public LinkedList<Edge> getDestSequence() {
+        LinkedList<Edge> list = new LinkedList<Edge>();
+        for (int i = 0; i < dests.length; i++) {
+            for (int j = 0; j < dests[i].length; j++) 
+                if (!list.contains(dests[i][j]))
+                    list.add(dests[i][j]);
+        }
+        return list;
+    }
     
     /**
      * return the number of items sent to this inputtracenode for on iteration

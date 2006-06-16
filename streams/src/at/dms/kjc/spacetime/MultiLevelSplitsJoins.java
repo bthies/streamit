@@ -42,7 +42,7 @@ public class MultiLevelSplitsJoins {
         this.rawChip = rawChip;
         this.partitioner = partitioner;
         //set max width to number of devices
-        maxWidth = 8;//rawChip.getNumDev();
+        maxWidth = rawChip.getNumDev();
         System.out.println("Maxwidth: " + maxWidth);
     }
     
@@ -64,7 +64,7 @@ public class MultiLevelSplitsJoins {
         //splits or joins that need to be reduced...
         for (int i = 0; i < partitioner.getTraceGraph().length; i++) {
             Trace trace = partitioner.getTraceGraph()[i];
-            
+           
             //see if the width of the joiner is too wide and 
             //keep breaking it up until it is, adding new levels...
             while (trace.getHead().getWidth() > maxWidth) {
@@ -72,17 +72,17 @@ public class MultiLevelSplitsJoins {
                         " width is " + trace.getHead().getWidth());
                 breakUpJoin(trace, traces);
             }
+            
             //add the original trace to the new list of traces
             traces.add(trace);
             
             //see if the width of the splitter is too wide
-            /*
             while (trace.getTail().getWidth() > maxWidth) {
                 System.out.println("Breaking up " + trace.getTail() + 
                         " width is " + trace.getTail().getWidth());
                 breakUpSplit(trace, traces);
             }
-           */
+            
         }
         //set the trace graph to the new list of traces that we have
         //calculated in this pass
@@ -198,6 +198,9 @@ public class MultiLevelSplitsJoins {
         trace.getHead().getNext().setPrevious(newInput);
         newInput.setParent(trace);
         trace.setHead(newInput);
+        
+        //set the multiplicities of the new identities of the new traces
+        setMultiplicitiesJoin(newTraces);
     }
     
     /**
@@ -226,9 +229,6 @@ public class MultiLevelSplitsJoins {
         FilterTraceNode filter = 
             new FilterTraceNode(new FilterContent(identity));
         
-        //set the multiplicity of the new identity filter
-        filter.getFilter().setSteadyMult(node.totalWeights());
-        
         //create the outputTraceNode
         Edge edge = new Edge(dest);
         OutputTraceNode output = new OutputTraceNode(new int[]{1}, 
@@ -249,6 +249,40 @@ public class MultiLevelSplitsJoins {
     }
     
     /**
+     * Set the multiplicities (init and steady) of the new identity
+     * based on the downstream filter, the original splitter trace, for the 
+     * steady state, and the upstream filters for the initialization multiplicity.
+     * 
+     * @param traces The new traces.
+     */
+    private void setMultiplicitiesJoin(Trace[] traces) {
+        for (int i = 0; i < traces.length; i++) {
+            Edge downEdge = traces[i].getTail().getSingleEdge();
+            
+            //the downstream filter
+            FilterContent next = downEdge.getDest().getNextFilter().getFilter();
+            //set the steady items based on the number of items the down stream 
+            //filter receives
+            int steadyItems = 
+                (int) ((next.getSteadyMult() * next.getPopInt()) * 
+                       downEdge.getDest().ratio(downEdge));
+                    
+            traces[i].getHead().getNextFilter().getFilter().setSteadyMult(steadyItems);
+            
+            int initItems = 0;
+            //set the init items baed on the number each of the upstream 
+            //filters push on to each incoming edge
+            InputTraceNode input = traces[i].getHead();
+            for (int s = 0; s < input.getSources().length; s++) {
+               Edge upEdge = input.getSources()[s];
+               FilterContent prev = upEdge.getSrc().getPrevFilter().getFilter();
+               initItems += (int) (input.ratio(upEdge) * prev.initItemsPushed());
+            }
+            traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
+        }
+    }
+    
+    /**
      * Do not add the trace itself to the list of traces, this done
      * by the main driver doit().
      * 
@@ -257,308 +291,201 @@ public class MultiLevelSplitsJoins {
      */
     private void breakUpSplit(Trace trace, LinkedList<Trace> traces) {
         OutputTraceNode output = trace.getTail();
-        
-        //the flattened connections of this output trace node
-        Edge[] connections = output.getDestList();
        
-        
         //do nothing if we have less than maxwidth connections
-        if (connections.length <= maxWidth)
+        if (output.getWidth() <= maxWidth)
             return;
         
-        int numNewTraces = connections.length / maxWidth + 
-            (connections.length % maxWidth > 0 ? 1 : 0);
+        int numNewTraces = output.getWidth() / maxWidth + 
+            (output.getWidth() % maxWidth > 0 ? 1 : 0);
+        
+        CType type = output.getType();
+        
+        //here are the weights and edges lists we will build for 
+        //each new trace's output trace node
+        LinkedList<Integer>[] newOutputsWeights = 
+            new LinkedList[numNewTraces];
+        LinkedList<LinkedList<Edge>>[] newOutputsDests = 
+            new LinkedList[numNewTraces];
+        //now init them
+        for (int i = 0; i < numNewTraces; i++) {
+            newOutputsWeights[i] = new LinkedList<Integer>();
+            newOutputsDests[i] = new LinkedList<LinkedList<Edge>>();
+        }
+        
         
         //these are for the new output trace that will be installed for the
-        //original trace
+        //original trace, we have to use the integer index at this time
+        //because during construction the edges are not created yet
         LinkedList<Integer> origTraceNewWeights = new LinkedList<Integer>();
-        LinkedList<LinkedList<Edge>> origTraceNewDests = 
-            new LinkedList<LinkedList<Edge>>();
+        LinkedList<LinkedList<Integer>> origTraceNewDests = 
+            new LinkedList<LinkedList<Integer>>();
         //the new output trace node for the original trace
         OutputTraceNode newOutput =  new OutputTraceNode();
         
-        //the new output trace nodes that will be created
-        OutputTraceNode[] newOutputs = createSplitOutputTraceNodes(numNewTraces,
-                output);
-        //create the new input trace nodes for the new trace and 
-        //the new output trace of the original trace
-        InputTraceNode[] newInputs = createSplitInputTraceNodes(numNewTraces,
-                output, origTraceNewWeights, origTraceNewDests, newOutput);
+        //assign the unique edges (dests) of the original outputtrace
+        //to the new outputtraces
+        HashMap<Edge, Integer> assignment = new HashMap<Edge, Integer>();
+        Iterator<Edge> dests = output.getDestSequence().iterator();
+        for (int i = 0; i < numNewTraces; i++) {
+            int count = maxWidth;
+            if (i == (numNewTraces - 1))
+                count = output.getWidth() % maxWidth;
+            for (int j = 0; j < count; j++) { 
+                Edge edge = dests.next();
+                //System.out.println("Assignment: " + edge + " " + i);
+                assignment.put(edge, new Integer(i));
+            }
+        }
         
-        //The new traces to create
+        //make sure we have assigned each of the edges
+        assert !dests.hasNext();
+        
+        //loop through the ports and construct the weights and edges of hte
+        //new output traces nodes and the new output trace node of the 
+        //original trace
+        for (int i = 0; i < output.getDests().length; i++) {
+            //store the distribution of edges of this port to the new output
+            //traces here
+            HashMap<Integer, LinkedList<Edge>> newEdges = 
+                new HashMap<Integer, LinkedList<Edge>>();
+            //the port as we construct it for the new output trace node
+            //of the original trace
+            LinkedList<Integer> origTracePort = new LinkedList<Integer>();
+                        
+            for (int j = 0; j < output.getDests()[i].length; j++) {
+                Edge edge = output.getDests()[i][j];
+                Integer index = assignment.get(edge);
+                if (newEdges.containsKey(index)) {
+                    //add to the existing linked list
+                    newEdges.get(index).add(edge);
+                }
+                else {
+                    //create a new linked list
+                    LinkedList<Edge> newlist = new LinkedList<Edge>();
+                    newlist.add(edge);
+                    newEdges.put(index, newlist);
+                }
+                //add to the new pattern splitting of the original trace
+                //but only add a destination if it has not been seen 
+                //already for this item, it will be duplicated as necessary
+                //but the new traces' output trace node
+                if (!origTracePort.contains(index))
+                    origTracePort.add(index);
+            }
+            
+            Iterator<Integer> indices = newEdges.keySet().iterator();
+            while (indices.hasNext()) {
+                int index = indices.next().intValue();
+                newOutputsWeights[index].add(new Integer(output.getWeights()[i]));
+                newOutputsDests[index].add(newEdges.get(new Integer(index)));
+            }
+            origTraceNewDests.add(origTracePort);
+            origTraceNewWeights.add(new Integer(output.getWeights()[i]));
+        }  
+        
         Trace[] newTraces = new Trace[numNewTraces];
-        
         
         //now create the new traces using the new outputTracennodes
         for (int n = 0; n < numNewTraces; n++) {
-            newTraces[n] = fixEdgesAndCreateTrace(newOutputs[n], newInputs[n], 
-                    output,  output.getType());
+            newTraces[n] = fixEdgesAndCreateTrace(newOutputsWeights[n],
+                    newOutputsDests[n], newOutput,  type);
             //add the new trace to the trace list
             traces.add(newTraces[n]);
         }
         
         //fix the outgoing edges of the trace node by creating 
         //a new output trace node
-        newOutput.set(origTraceNewWeights, origTraceNewDests);
+        LinkedList<LinkedList<Edge>> origTraceNewEdges = 
+            new LinkedList<LinkedList<Edge>>();
+        for (int i = 0; i < origTraceNewDests.size(); i++) {
+            LinkedList<Edge> port = new LinkedList<Edge>();
+            for (int j = 0; j < origTraceNewDests.get(i).size(); j++) {
+                //convert the index into the new trace array 
+                //into the single incoming edge of the new trace
+                //so that it connects to the original trace
+                port.add(newTraces[origTraceNewDests.get(i).get(j).intValue()].
+                        getHead().getSingleEdge());
+            }
+            //add the port the pattern of output of the original trace
+            origTraceNewEdges.add(port);
+        }
+        newOutput.set(origTraceNewWeights, origTraceNewEdges);
         
         //install the new output trace node
         newOutput.setPrevious(output.getPrevious());
         newOutput.getPrevious().setNext(newOutput);
         newOutput.setParent(trace);
         trace.setTail(newOutput);
-    }
-    
-    
-    /**
-     * Create all the new input trace nodes for the new traces that are 
-     * created when we break up an output trace node into multiple levels.  Also
-     * create the weights and pattern for the new output trace node 
-     * that will be installed for the original trace.
-     * 
-     * @param numNewTraces The number of new traces we are creating.
-     * @param output The original output trace.
-     * @param origTraceNewWeights The new weights for the original traces 
-     * output trace node.
-     * @param origTraceNewDests The new connection pattern for the 
-     * original trace's output trace node.
-     * 
-     * @return The new input traces.
-     */
-    private InputTraceNode[] createSplitInputTraceNodes(int numNewTraces,
-            OutputTraceNode output, 
-            LinkedList<Integer> origTraceNewWeights, 
-            LinkedList<LinkedList<Edge>> origTraceNewDests, 
-            OutputTraceNode origTraceNewOutput) {
+
         
-        InputTraceNode[] newInputs = new InputTraceNode[numNewTraces];
-        //the connections of the original output trace node 
-        Edge[][] edges = output.getDests();
-        
-        //the index into the original trace's outputtracenode's output edges
-        //a port is the collection of duplicated edges, 
-        //so output.getWeights()[port][edge] = an edge 
-        int port = 0, edge = 0;  
-        
-        for (int n = 0; n < numNewTraces; n++) {
-            int connected = 0;
-         
-            
-            boolean firstBroken = false;
-            boolean lastBroken = false;
-            
-            int middleWeight = 0, firstWeight = 0, lastWeight = 0;
-            
-            while (true) {
-                if (edge > 0) {
-                    //a port had to span multiple traces
-                    firstBroken = true;
-                    assert firstWeight == 0;
-                    firstWeight = output.getWeights()[port];
-                    //remember that the first weight should not count
-                    //toward the remainder of the weights, it is separate
-                    middleWeight -= firstWeight;
-                }
-                middleWeight +=  output.getWeights()[port];
-                for (int addMe = edge; addMe < edges[port].length; addMe++) {
-                    //we have added an edge
-                    edge++;
-                    //are we done 
-                    if (++connected >= maxWidth)
-                        break;
-                }
-                //if we have completed this port, then increment port
-                //and reset edge
-                if (edge >= edges[port].length) {
-                    port++;
-                    edge = 0;
-                }
-                //now check to make sure that we have not filled this trace
-                if (connected >= maxWidth || port >= edges.length) {
-                    if (edge > 0) {
-                        //a port is spanning multiple traces
-                        lastBroken = true;
-                        lastWeight = output.getWeights()[port];
-                        middleWeight -= lastWeight;
-                    }
-                    break;
-                }
-            }
-            //we are done this new trace
-            //set everything up
-            
-            //first handle the case where we don't have a port
-            //spanning multiple input trace nodes (new traces)...
-            if (!firstBroken && !lastBroken) {
-                assert firstWeight == 0 && lastWeight == 0;
-                //nothing broken, so just create the new inputtrace
-                newInputs[n] = new InputTraceNode(new int[]{1});
-                Edge singleEdge = new Edge(origTraceNewOutput, newInputs[n]);
-                newInputs[n].setSources(new Edge[]{singleEdge});
-                //and add it to the new outputtrace node of the original trace
-                origTraceNewWeights.add(new Integer(middleWeight));
-                LinkedList<Edge> newPort = new LinkedList<Edge>();
-                newPort.add(singleEdge);
-                origTraceNewDests.add(newPort);
-            }
-            else {
-                //if we get here, a port was broken, so the inputtrace node
-                //will have multiple inputs...
-                
-                //the weights and the srcs of the new input trace node
-                LinkedList<Integer> weights = new LinkedList<Integer>();
-                LinkedList<Edge> srcs = new LinkedList<Edge>();
-                InputTraceNode input = new InputTraceNode();
-                
-                if (firstWeight > 0) {
-                    weights.add(new Integer(firstWeight));
-                    Edge newEdge = new Edge(origTraceNewOutput, input);
-                    srcs.add(newEdge);
-                    //add edge to the last port that of the new ports for the
-                    //original trace's output trace
-                    origTraceNewDests.get(origTraceNewDests.size() - 1).add(newEdge);
-                    //no need to set the weight, has been already done during previous
-                    //input trace node 
-                }
-                if (middleWeight > 0) {
-                    weights.add(new Integer(middleWeight));
-                    Edge newEdge = new Edge(origTraceNewOutput, input);
-                    srcs.add(newEdge);
-                    //add the edge to a new port for the original trace's output
-                    LinkedList<Edge> newPort = new LinkedList<Edge>();
-                    newPort.add(newEdge);
-                    origTraceNewDests.add(newPort);
-                    //set the weight for this port
-                    origTraceNewWeights.add(new Integer(middleWeight));
-                }
-                if (lastWeight > 0) {
-                    weights.add(new Integer(lastWeight));
-                    Edge newEdge = new Edge(origTraceNewOutput, input);
-                    srcs.add(newEdge);
-                    //add the edge to a new port for the original trace's output
-                    LinkedList<Edge> newPort = new LinkedList<Edge>();
-                    newPort.add(newEdge);
-                    origTraceNewDests.add(newPort);
-                    //set the weight for this port
-                    origTraceNewWeights.add(new Integer(lastWeight));
-                    //this last port will be appended to during the next iteration of 
-                    //the loop (it will become the "first") 
-                }
-                
-                input.set(weights, srcs);
-                newInputs[n] = input;
-            }
-        }
-        return newInputs;
+        //set the multiplicities of the identity filter of the new trace
+        setMultiplicitiesSplit(newTraces);
     }
     
     /**
-     * Create all the new output trace nodes that are needed for the
-     * new traces that are created when we break an output trace node 
-     * into multiple levels.
+     * Set the multiplicities (init and steady) of the new identity
+     * based on the upstream filter, the original splitter trace.
      * 
-     * @param numNewTraces The number of new traces (all one level) we 
-     * need to create.
-     * @param output The original output trace node.
-     * 
-     * @return An array of the new output traces.
+     * @param traces The new traces.
      */
-    private OutputTraceNode[] createSplitOutputTraceNodes(int numNewTraces,
-            OutputTraceNode output
-           ) {
-        OutputTraceNode[] newOutputs = new OutputTraceNode[numNewTraces];
-        
-        //the connections of the original output trace node 
-        Edge[][] edges = output.getDests();
-        
-        //the index into the original trace's outputtracenode's output edges
-        //a port is the collection of duplicated edges, 
-        //so output.getWeights()[port][edge] = an edge 
-        int port = 0, edge = 0;
-                
-        //create all the output trace nodes of the new traces
-        for (int n = 0; n < numNewTraces; n++) {
-            //number of edges connected to this new trace so far...
-            int connected = 0;
+    private void setMultiplicitiesSplit(Trace[] traces) {
+        for (int i = 0; i < traces.length; i++) {
+            Edge edge = traces[i].getHead().getSingleEdge();
+     
+            //the last filter of the prev (original) trace 
+            FilterContent prev = 
+               edge.getSrc().getPrevFilter().getFilter();
             
-            LinkedList<Integer> newWeights = new LinkedList<Integer>();  
-            LinkedList<LinkedList<Edge>> newEdges = new LinkedList<LinkedList<Edge>>();
-            while (true) {
-                newWeights.add(new Integer(output.getWeights()[port]));
-                LinkedList<Edge> portEdges = new LinkedList<Edge>();
-                for (int addMe = edge; addMe < edges[port].length; addMe++) {
-                    portEdges.add(edges[port][addMe]);
-                    //increment the edge index because we just added one
-                    edge++;
-                    //check to make sure that we have not filled this new trace
-                    if (++connected >= maxWidth)
-                        break;
-                }
-                //add the "port" to the outgoing edges of this output trace 
-                newEdges.add(portEdges);
-                //if we have completed this port, then increment port
-                //and reset edge
-                if (edge >= edges[port].length) {
-                    port++;
-                    edge = 0;
-                }
-                //now check to make sure that we have not filled this trace
-                if (connected >= maxWidth) 
-                    break;
-             
-                //if we have reached the end of the original output trace, then break 
-                if (port >= edges.length)
-                    break;
-            }
-            //so now the LinkedLists are finished, so create the OutputTraceNode
-            //from them...
-            assert newWeights.size() == newEdges.size();
-            if (newWeights.size() == 1) {
-                //if we only have one port outgoing for this output trace node
-                //set the single weight to 1...
-                newWeights.remove(0);
-                newWeights.add(new Integer(1));
-            }
-            newOutputs[n] = new OutputTraceNode(newWeights, newEdges);
+            //calculate the number of items the original trace sends to this
+            //trace in the init stage
+            int initItems = 
+                (int) ((double) prev.initItemsPushed() * edge.getSrc().ratio(edge));
+            traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
+            
+            //calc the number of steady items
+            int steadyItems = (int) ((prev.getSteadyMult() * prev.getPushInt()) * ((double) edge.getSrc()
+                        .getWeight(edge) / edge.getSrc().totalWeights()));
+            traces[i].getHead().getNextFilter().getFilter().setSteadyMult(steadyItems);
         }
-        return newOutputs;
+        
     }
-    
+
     
     /**
      * Create a new trace given output as its outputtracenode and src as its upstream
      * trace's outputtracenode.  The trace will have a single filter which is an 
      * identity filter of type.
      * 
-     * @param output The new trace's output trace node.
-     * @param input The new trace's input trace node.
+     * @param weights The new trace's output weights.
+     * @param dests The new trace's output destination pattern.
      * @param src The src trace's output trace node.
      * @param type The type of the identity filter of the trace.
      */
-    private Trace fixEdgesAndCreateTrace(OutputTraceNode output, InputTraceNode input,
+    private Trace fixEdgesAndCreateTrace(LinkedList<Integer> weights,
+            LinkedList<LinkedList<Edge>> dests,
             OutputTraceNode src, CType type) {
+        //create the output trace node base on the calculated pattern
+        OutputTraceNode output = new OutputTraceNode(weights, dests); 
+        //create the input trace node that just receive from the 
+        //original trace
+        InputTraceNode input = new InputTraceNode(new int[]{1});
+        Edge edge = new Edge(src, input);
+        input.setSources(new Edge[]{edge});
         
         //make sure that all of the edges of this output trace node have
         //it as their source
         for (int p = 0; p < output.getDests().length; p++) 
             for (int e = 0; e < output.getDests()[p].length; e++)
                 output.getDests()[p][e].setSrc(output);
-
-        //make sure that all of the edges of this input trace node
-        //have it as there dest
-        for (int i = 0; i < input.getSources().length; i++)
-            input.getSources()[i].setDest(input);
-        
+                
 //      create the new identity filter using an sir identity...
         SIRFilter identity = new SIRIdentity(type);
         RenameAll.renameAllFilters(identity);
-        
-        
+                
         FilterTraceNode filter = 
             new FilterTraceNode(new FilterContent(identity));
-        
-        //set the multiplicity of the new identity filter
-        filter.getFilter().setSteadyMult(output.totalWeights());
-        
+                
         Trace trace = new Trace(input);
         
         //set up the intra-trace connections

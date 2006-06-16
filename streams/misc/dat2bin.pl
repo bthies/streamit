@@ -2,7 +2,7 @@
 #
 # dat2bin.pl: convert formatted data to binary
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: dat2bin.pl,v 1.2 2006-06-15 20:54:45 thies Exp $
+# $Id: dat2bin.pl,v 1.3 2006-06-16 11:32:36 thies Exp $
 #
 # Use this script to convert data from a text file to native binary
 # data for use with a StreamIt FileReader object.
@@ -14,6 +14,9 @@
 #     Reads <file> and writes default-length, default-endian binary.
 #   dat2bin.pl --float <file> <output>
 #     Reads <file> and writes default-format single-precision floats.
+#   dat2bin.pl --ppm <file> <output>
+#     Reads image .ppm <file> and writes RGB data as binary integers
+#     (.ppm header is ignored)
 #
 # For bit, all whitespace is ignored, and bits are written in big-endian
 # order.  For all other formats, words are whitespace-separated.

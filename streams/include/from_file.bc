@@ -9,9 +9,20 @@
 if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
   include("<dev/data_transmitter.bc>");
 
-fn dev_from_file(filename, port, type) 
+/**
+ * For binary == 0, type == 0 for int, and type == 1 for float 
+ * SpaceTime does not wait for trigger. SpaceDynamic waits for trigger.
+ * ourY, ourX, destY, destX only used for GDN header construction.
+ * 
+ * 
+ */
+fn dev_from_file(filename, port, static_network, 
+		 binary, type, wait_for_trigger, 
+		 ourY, ourX, destY, destX) 
 {
   local send_device_descriptor = hms_new();
+  //the network to use, 0 = static, 2 = gdn
+  local network = 0;
 
   //open the file
   send_device_descriptor.fileName = filename;
@@ -20,41 +31,128 @@ fn dev_from_file(filename, port, type)
   send_device_descriptor.format = "";
   send_device_descriptor.ioPort = port;
 
-  //set the format string
-  if (type == 0) //int 
-    send_device_descriptor.format = "%d\n";
-  else if (type == 1) //float
-    send_device_descriptor.format = "%f\n";
-  else {
-    printf("Invalid format arg passed to dev_from_file\n");
-    exit(-1);
+  //if static_network is false, use the GDN
+  if (static_network == 0)
+    network = 2;
+
+
+  //set the format string only if using ascii
+  if (binary == 0) {
   }
 
   verify(send_device_descriptor.theFile != NULL,
          "### Failed from open output file\n");
 
-  send_device_descriptor.calc = 
-    & fn(this) 
-  {
-    local theFile = this.theFile;
-    local format = this.format;
-    local ioPort = this.ioPort;
-    local fileName = this.fileName;
-    local value, i;
-    local r;
-    
-   while(fscanf(theFile, format, &value) == 1) {
-     this.send(value);
-   }
-    printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
-    while (1) {
-      //we are done, do nothing
-      yield;
+  //ascii and static network
+  if (binary == 0) {
+    if (type == 0) //int 
+      send_device_descriptor.format = "%d\n";
+    else if (type == 1) //float
+      send_device_descriptor.format = "%f\n";
+    else {
+      printf("Invalid format arg passed to dev_from_file\n");
+      exit(-1);
     }
-  };
+  }
 
+  //create the calc function for the device 
+  if (static_network == 1) {
+    send_device_descriptor.calc = 
+      & fn(this) 
+      {
+	local theFile = this.theFile;
+	local format = this.format;
+	local ioPort = this.ioPort;
+	local fileName = this.fileName;
+	local value, i;
+	local r;
+	
+        //send the word, depending on binary or ascii
+	if (binary == 0) {
+	  while(fscanf(theFile, format, &value) == 1) {
+	    this.send(value);
+	  }
+	} else {
+	   while(fread(&value, 4, 1, theFile) != 0) {
+	    this.send(value);
+	  }
+	}
+	printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
+	while (1) {
+	  //we are done, do nothing
+	  yield;
+	}
+      };
+  }
+  else  {  //gdn
+     send_device_descriptor.calc = 
+       & fn(this) 
+       {
+	 local theFile = this.theFile;
+	 local ioPort = this.ioPort;
+	 local fileName = this.fileName;
+	 local format = this.format;
+	 local value, i;
+	 
+	 local PKT_SIZE = 31;
+	 local pkt_remaining = 0;
+	 while (1) {
+	   //compose new pkt header if we cannot send anymore data in this 
+	   //pkt
+	   if (pkt_remaining == 0) {
+	     local packet_size, header, savepos, end, file_remaining;
+	     
+	     //save the current file pos
+	     savepos = ftell(theFile);
+	     //move to the end of the file
+	     fseek(theFile, 0, 2);
+	     //get the bytes from the beginning for the end
+	     end = ftell(theFile);
+	     //find the difference int bytes and convert to words
+	     file_remaining = (end - savepos) / 4;
+	     //restore the file pointer to the previous position
+	     fseek(theFile, savepos, 0);
+	     //choose either pkt_size or the number of works remaining
+	     packet_size = choose(file_remaining > PKT_SIZE, PKT_SIZE, file_remaining);
+	     //reset pkt_remaining!
+	     pkt_remaining = packet_size;
+	     //construct and send the header
+	     header = ConstructDynHdr(0, packet_size, 0, ourY, ourX, 
+				      destY, destX);
+	     this.send(header);
+	   }
+	   if (binary == 1) {
+	     if (fread(&value, 4, 1, theFile) != 0) {
+	       this.send(value);
+	       pkt_remaining -= 1;
+	     }
+	     else {
+	       //we have reached the end of the input
+	       break;
+	     }
+	   } else {  //ascii
+	     if (fscanf(theFile, format, &value) == 1) {
+	       this.send(value);
+	       pkt_remaining -= 1;
+	     }
+	     else {
+	       //we have reached the end of the input
+	       break;
+	     }
+	   }
+ 	 }
+	 
+	 printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
+	 while (1) {
+	   //we are done, do nothing
+	   yield;
+	 }
+       };
+  }
+  
   return dev_data_transmitter_init("from_file",
 				   port,
-				   0, // don't wait for trigger
-				   send_device_descriptor);
+				   wait_for_trigger,
+				   send_device_descriptor, 
+				   network);
 }

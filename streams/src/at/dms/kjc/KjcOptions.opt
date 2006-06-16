@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.77 2006-05-25 19:16:26 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.78 2006-06-16 18:01:54 mgordon Exp $
  */
 
 prefix Kjc
@@ -553,6 +553,17 @@ longname 		"slicethresh"
 	default		"5"
 	requireArgument
 	help 		"For the spacetime backend, set the slice threshold to be <int> percent."
+
+longname 		"asciifileio"
+	type 		boolean
+	default		"false"
+	help		"Use ascii format for file input and output."
+
+longname		"ssoutputs"
+	type 		int
+	default		"-1"
+	requireArgument		
+	help		"When using --numbers on a dynamic-rate app, specify outputs per steady state."
 
 /* remove: now default */
 /* longname 		"noverbose" */

@@ -672,7 +672,7 @@ public class StaticStreamGraph {
     }
 
     /** return a list of the flatnodes of this SSG * */
-    public List getFlatNodes() {
+    public List<FlatNode> getFlatNodes() {
         return flatNodes;
     }
 

@@ -869,35 +869,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-        CType type = null;
-
-        
-        try {
-            type = exp.getType();
-        }
-        catch (Exception e) {
-            System.err.println("Cannot get type for print statement");
-            type = CStdType.Integer;
-        }
-        
-        //if we have the number gathering stuff on, convert each print 
-        //to a magic instruction, there are only print statements in the sink
-        //all other prints have been removed...
-        if (KjcOptions.numbers > 0) {
-            //assign the expression to a dummy var do it does not get
-            //optimized out...
-            p.print("dummy");
-            if (type.isFloatingPoint())
-                p.print("Float");
-            else 
-                p.print("Int");
-            p.print(" = ");
-            exp.accept(this);
-            p.print(";\n");
-            p.print("__asm__ volatile (\"magc $0, $0, 2\");\n");
-            return;
-        }
-
         //handle the print statment using a magic instruction
         RawSimulatorPrint.visitPrintStatement(self, exp, p, this);
     } 

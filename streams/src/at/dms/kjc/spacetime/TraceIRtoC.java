@@ -25,7 +25,12 @@ import at.dms.util.SIRPrinter;
  */
 public class TraceIRtoC extends ToC
 {
-    
+    //for the first tile we encounter we are going to 
+    //create a magic instruction that tells the number-gathering
+    //stuff that everything is done snake booting, so if this is true
+    //don't generate the magic instruction
+    private static boolean gen_magc_done_boot = false;
+
     /** the name of the var that holds the dynamic message header */
     public static final String DYNMSGHEADER = "__DYNMSGHEADER__";
     /** a var name used to receive data from the dram on the compute proc 
@@ -97,6 +102,14 @@ public class TraceIRtoC extends ToC
         
         //generate the entry function for the simulator
         p.print("void begin(void) {\n");
+        
+        //for the first tile we encounter we are going to 
+        //create a magic instruction that tells the number-gathering
+        //stuff that everything is done snake booting, so if this is true
+        if (!gen_magc_done_boot && KjcOptions.numbers > 0) {
+            gen_magc_done_boot = true;
+            p.print("  __asm__ volatile (\"magc $0, $0, 5\");\n");
+        }
         //if we are using the magic network, 
         //use a magic instruction to initialize the magic fifos
         if (KjcOptions.magic_net)

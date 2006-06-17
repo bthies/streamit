@@ -214,8 +214,11 @@ public class BCFile
                                            ng.getID((FileOutputContent)dram.getFileWriter().getContent()) + 
                                            ", \"");
                                 buf.append(dram.getFileWriter().getFileName() +
-                                        "\", slavePort" + dram.getPort() + 
-                                        (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
+                                        "\", slavePort" + dram.getPort() + ", " +
+                                        "1, " + //always use static net
+                                        (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                                        (dram.getFileWriter().isFP() ? "1, " : "0, ") +
+                                        (4 * Util.getTypeSize(dram.getFileWriter().getContent().getInputType())) + 
                                 ");\n");
                             }
                             else { 
@@ -276,7 +279,7 @@ public class BCFile
              "{\n" +
              "  gAUTOFLOPS = 0;\n" +
              "  step(steps);\n" +
-             "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\n\",\n" +
+             "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\\n\",\n" +
              "         gAUTOFLOPS, (450*gAUTOFLOPS)/steps);\n" +
              "}\n" +
              "\n");     

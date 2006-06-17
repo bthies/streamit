@@ -4,14 +4,15 @@
 package at.dms.kjc.spacedynamic;
 
 import java.io.FileWriter;
+import java.nio.channels.GatheringByteChannel;
 import java.util.HashSet;
 import java.util.Iterator;
-
+import at.dms.kjc.flatgraph.*;
+import at.dms.kjc.flatgraph2.FileOutputContent;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.RawSimulatorPrint;
-import at.dms.kjc.spacetime.Util;
 import at.dms.util.Utils;
 
 /**
@@ -28,6 +29,10 @@ public class BCFile {
     private static Layout layout;
     /** the raw chip that we are compiling to */
     private static RawChip rawChip;
+    /** the statistics on the file writers of the application, used for 
+     * number gathering.
+     */
+    private static NumberGathering ng;
     
     /**
      * Create the bC machine file for the raw simulator that will
@@ -41,6 +46,8 @@ public class BCFile {
         BCFile.streamGraph = streamGraph;
         layout = streamGraph.getLayout();
         rawChip = streamGraph.getRawChip();
+        ng = new NumberGathering();
+       
         
         try {
             if (streamGraph.getFileState().foundReader
@@ -80,16 +87,14 @@ public class BCFile {
         
         // let the simulation know how many tiles are mapped to
         // filters or joiners
-        
-        fw.write("global gStreamItTilesUsed = " + layout.getTilesAssigned()
+        fw.write("global gMappedTiles = " + layout.getTilesAssigned()
                 + ";\n");
         fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() + ";\n");
-        fw.write("global gMHz_streamit = 450;\n");
+        fw.write("global gMHz = 450;\n");
         fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
         fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
         
         fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
-        
         // create the function to tell the simulator what tiles are mapped
         fw.write("fn mapped_tile(tileNumber) {\n");
         fw.write("if (0 ");
@@ -130,18 +135,8 @@ public class BCFile {
         
         // number gathering code
         if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {
-            fw.write("global printsPerCycle = " + KjcOptions.numbers + ";\n");
-            fw.write("global quitAfter = " + 10 + ";\n");
-            fw.write("{\n");
-            fw
-            .write("  local numberpath = malloc(strlen(streamit_home) + 30);\n");
-            fw
-            .write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/sd_numbers.bc\");\n");
-            // include the number gathering code and install the device file
-            fw.write("  include(numberpath);\n");
-            // call the number gathering initialization function
-            fw.write("  gather_numbers_init();\n");
-            fw.write("}\n");
+            ng.doit(streamGraph);
+            fw.write(numberGathering());
         }
         
         //generate the bc code for the magic print handler...
@@ -224,17 +219,26 @@ public class BCFile {
                 ((SpdStaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator;
                 if (dynamic)
                     dev.setDynamic();
-                //now create the function call the creates the bc device, create the 
-                //appropriate device based on what network is used
-                fw.write("  dev_to_file(\"" + 
-                        dev.getFileName()
-                        + "\", " + dev.getPort().getPortNumber() + ", " +
-                        (dynamic ? "0, " : "1, ") + //network
-                        "0, " + //don't wait for trigger
-                        (KjcOptions.asciifileio ? "0, " : "1, ") + 
-                        dev.getTypeCode() + ", " +
-                        size + 
-                ");\n");
+                if (KjcOptions.numbers > 0 &&  !IMEMEstimation.TESTING_IMEM) {
+                    fw.write("  dev_NG_to_file(" + 
+                            ng.index.get(dev.getFlatNode())+ "," + 
+                            "\"" + dev.getFileName() + "\", " + 
+                            dev.getPort().getPortNumber() + ", " +
+                            (dynamic ? "0, " : "1, ") + //network
+                            (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                            dev.getTypeCode() + ", " +
+                            size + ");\n");
+                }
+                else { 
+                    fw.write("  dev_to_file(\"" + 
+                            dev.getFileName()
+                            + "\", " + dev.getPort().getPortNumber() + ", " +
+                            (dynamic ? "0, " : "1, ") + //network
+                            "0, " + //don't wait for trigger
+                            (KjcOptions.asciifileio ? "0, " : "1, ") + 
+                            dev.getTypeCode() + ", " +
+                            size + ");\n");
+                }
             }
         }
         
@@ -242,6 +246,45 @@ public class BCFile {
         fw.close();
     }
     
+    /**
+     * If we are number gathering, then generate bc code
+     * to use the number gathering file output device and 
+     * generate the state of the number gathering variables.
+     */
+    private static String numberGathering() 
+    {
+        StringBuffer buf = new StringBuffer();
+        //include the device
+        buf.append("global gTotalSS = " + KjcOptions.numbers + ";\n");
+        buf.append("global to_file_numbers_path = malloc(strlen(streamit_home) + 40);\n"); 
+        buf.append("sprintf(to_file_numbers_path, \"%s%s\", streamit_home, \"/include/to_file_numbers.bc\");\n"); 
+        buf.append("include(to_file_numbers_path);\n"); 
+        buf.append("global gStreamItTiles = " + rawChip.getYSize() * rawChip.getXSize() + ";\n");
+        //define the vars
+        //define the number of items received so far and zero it
+        buf.append("global gNGItems;\n");
+        buf.append("global gNGskip;\n");
+        buf.append("global gNGsteady;\n");
+        buf.append("global gNGfws = " + ng.fileWriters.size() + ";\n");
+        buf.append("global gTotalSteadyItems = " + ng.totalSteadyItems + ";\n");
+        //malloc and set the arrays
+        buf.append("\n{ //Number Gathering \n");
+        buf.append("  gNGItems = malloc(gNGfws * 4);\n");
+        buf.append("  gNGskip = malloc(gNGfws * 4);\n");
+        buf.append("  gNGsteady = malloc(gNGfws * 4);\n\n");
+        Iterator<FlatNode> nodes = ng.fileWriters.iterator();
+        while(nodes.hasNext()) {
+            FlatNode fileW = nodes.next();
+            buf.append("  gNGskip[" + ng.index.get(fileW) + "] = " + 
+                    ng.skip.get(fileW) + ";\n");
+            buf.append("  gNGsteady[" + ng.index.get(fileW) + "] = " + 
+                    ng.steady.get(fileW) + ";\n");
+        }
+        //install the event handlers
+        buf.append("\n  install_event_handlers();\n");
+        buf.append("}\n");
+        return buf.toString();
+    }  
     
     /**
      * Given a type return the number of bytes it occupies.

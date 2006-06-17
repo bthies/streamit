@@ -68,6 +68,15 @@ public class FileOutputContent extends OutputContent {
     }
 
     /**
+     * Get the type of the file writer
+     * . 
+     * @return The type.
+     */
+    public CType getType() {
+        return getInputType();
+    }
+    
+    /**
      * Returns if output format of file is floating point.
      */
     public boolean isFP() 

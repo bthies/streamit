@@ -54,4 +54,13 @@ public class FileInputContent extends InputContent {
     {
         return getOutputType().isFloatingPoint();
     }
+    
+    /**
+     * Return the type of the file reader
+     *  
+     * @return The type.
+     */
+    public CType getType() {
+        return getOutputType();
+    }
 }

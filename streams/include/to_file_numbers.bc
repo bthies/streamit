@@ -19,6 +19,7 @@ global gNGlastSteady = 0;
 global gNGisSteady = 0;
 //for deadlock detection
 global gDEADLOCK_COUNT = 100000;
+global gRegDLDet = 0;
 global gLastInsCycle = 0;
 //
 global gFpuCount = 0;
@@ -41,12 +42,38 @@ if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NUL
 //open the file to dump the data to
 outputFile = fopen("results.out", "w");
 
+// instrumentation code
+fn screen(val, type, format, file_name) {
+  local a;
+  local b;
+  Proc_GetCycleCounter(Machine_GetProc(machine,0), &a, &b);
+  //printf("cycleHi %X, cycleLo %X\n", a, b);
+  printf("[%s at %d]: ", file_name, b);
 
-//type: 0 = int, 1 = float, can be extended
-fn dev_NG_to_file(id, filename, port, type)
+  if (type == 0)
+    printf(format, val);
+  else 
+    printf(format, double(val));
+
+  if (a != 0)
+    printf(" (Warning: cycle count overflow)");
+}
+
+
+/**
+ * static network = 1 for static net, 0 for gdn
+ * binary = 1 for binary, 0 for ascii
+ * type: 0 = int, 1 = float, can be extended
+ * size is number of bytes for each item received
+ */
+fn dev_NG_to_file(id, filename, port, static_network, binary, type, size)
 {
   local receive_device_descriptor = hms_new();
   local i;
+  local network = 0;
+
+  if (static_network == 0)
+    network = 2;
 
   // open the file
   receive_device_descriptor.fileName = filename;
@@ -65,61 +92,99 @@ fn dev_NG_to_file(id, filename, port, type)
     printf("Invalid format arg passed to dev_to_file\n");
     exit(-1);
   }
-    
+
   for (i = 0; i < gNGfws; i++) {
-      //make sure everyone is done the init/pp stage
     gNGItems[i] = 0;
+  }
+
+  //set the printf format for ascii data
+  if (type == 0)
+    receive_device_descriptor.format = "%d\n";
+  else if (type == 1)
+    receive_device_descriptor.format = "%f\n";
+  else {
+    printf("Invalid format arg passed to dev_to_file\n");
+    exit(-1);
   }
 
   verify(receive_device_descriptor.theFile != NULL,
          "### Failed to open output file\n");
 
-  receive_device_descriptor.calc =
-    & fn(this)
-  {
-    local theFile = this.theFile;
-    local format = this.format;
-    local filename = this.fileName;
-    local ioPort = this.ioPort;
-    local type = this.type;
-    
-    while (1)
-    {
-      local time_lo, time_hi;
-      local proc = Machine_GetProc(machine, 0);
-      local value = this.receive();
-      
-      //get the cycle
-      Proc_GetCycleCounter(proc, &time_hi, &time_lo);
-      //update the numbers gathering stuff
-      if (type == 0) {
-	//write to file
-	fprintf(theFile,format,value);
-	fflush(theFile);
-	//write to screen
-	printf("%s [%d]: ", filename, time_lo);
-	printf(format, value);
-      }
-      else if (type == 1) {
-	//write to file
-	fprintf(theFile,format,double(value));
-	fflush(theFile);
-	//write to screen
-	printf("%s [%d]: ", filename, time_lo);
-	printf(format, double(value));
-      }
-      else {
-	printf("Invalid format arg passed to dev_NG_to_file\n");
-	exit(-1);
-      }
-      NG_numbers_record_item(id);
-    }
-  };
+  if (static_network == 1) {
+    receive_device_descriptor.calc =
+      & fn(this)
+      {
+	local theFile = this.theFile;
+	local format = this.format;
+	local filename = this.fileName;
+	local ioPort = this.ioPort;
+	local type = this.type;
+	local id = this.id;
+	
+	while (1)
+	{
+	  local value = this.receive();
 
+	  //write to file
+	  if (binary == 0 && type == 1)
+	    fprintf(theFile,format,double(value));
+	  else if (binary == 0 && type == 0)
+	    fprintf(theFile,format,value);
+	  else 
+	    fwrite(&value, size, 1, theFile);
+	  fflush(theFile);
+	  //update the number gathering statistics
+	  NG_numbers_record_item(id);
+
+	  //write to screen
+	  screen(value, type, format, filename);
+	}
+      }; 
+  }
+  else {
+    receive_device_descriptor.calc =
+      & fn(this)
+      {
+	local theFile = this.theFile;
+	local format = this.format;
+	local filename = this.fileName;
+	local ioPort = this.ioPort;
+	local type = this.type;
+	local id = this.id;
+		
+	while (1)
+	{
+	  local value = this.receive();
+	  local i, bogus, length, senderY, senderX, ourY, ourX, hdr;
+	  
+	  DecodeDynHdr(value, &bogus, &length, &hdr,
+		       &senderY, &senderX, &ourY, &ourX);
+	  
+	  for (i = 0; i < length; i++) {
+	    value = this.receive();
+	    //write to the file
+	    if (binary == 1) 
+	      fwrite(&value, size, 1, theFile);
+	    else { //ascii, use type and format
+	      if (type == 1)
+		fprintf(theFile,format,double(value));
+	      else 
+		fprintf(theFile,format,value);
+	    }
+	    //flush and write to screen
+	    fflush(theFile);
+	    //update the number gathering statistics
+	    NG_numbers_record_item(id);
+	    screen(value, type, format, filename);
+	  }
+	}
+      };
+  }
   return dev_data_transmitter_init("NG_to_file",
 				   port,
 				   0, //don't wait for static trigger 
-				   receive_device_descriptor);
+				   receive_device_descriptor, 
+				   network);
 }
 
 //need to define 
@@ -235,10 +300,39 @@ fn NG_update() {
 fn install_event_handlers() {
   //install any devices that need to be installed
   //register the workcount event
+
+   //register the magic instruction handler the records the end of booting
+  //and installs the deadlock detection event
+  listi_add(gMagicInstrHMS.theList, & fn (procNum, rs, imm, result_ptr)
+  {
+    return reg_deadlock_detection(procNum, rs, imm, result_ptr);
+  });
+
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
   EventManager_RegisterHandler
     ("static_network_transfer", "__record_static_transfer");
+}
+
+//this function is a magic instruction handler that is called to 
+//register the deadlock detection event.  One of the filters
+//has the magc as its first ins in begin()
+fn reg_deadlock_detection(procNum, rs, imm, result_ptr) {
+  //check if this magic instruction is for us...
+  if (!((rs == 0) && (imm == 5)))
+    return 0;
+  
+  if (gRegDLDet == 1) {
+    printf("Error: magc that denotes end of booting executed twice.");
+  }
+
+  //printf("Done booting, register deadlock detection event...\n");
+  
+  //register the deadlock detection event
   EventManager_RegisterHandler("clock", "__check_deadlock");
+  gRegDLDet = 1;
+
+  //we handled this magic instruction
+  return 1;
 }
 
 //for deadlock detection, record that we have transfered a 
@@ -380,3 +474,4 @@ fn setup_bloodgraph(filename, cycles) {
   gBloodCycles = cycles;
   EventManager_RegisterHandler("clock", "update_bloodgraph"); 
 }
+

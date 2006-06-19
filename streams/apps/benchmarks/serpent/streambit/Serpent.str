@@ -285,7 +285,7 @@ bit->bit pipeline Serpent
   int N = 128;
 
 
-  add IP();  // perform initial permutation
+  //  add IP();  // perform initial permutation
 
   for (int i = 0; i < 31; i++) {
     add R(N, i);  // perform round i

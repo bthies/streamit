@@ -1,0 +1,122 @@
+// input:  integer
+// output: LSB first ... MSB last
+int->bit filter IntoBits() 
+{
+  work pop 1 push 32 {
+      int v = pop();
+      int m = 1;
+
+      for (int i = 0; i < 32; i++) {
+          if (((v & m) >> i) != 0)
+              push(1);
+          else
+              push(0);
+          m = m << 1;
+      }
+  }
+}
+
+// input:  LSB first ... MSB last
+// output: integer
+bit->int filter BitstoInts(int n) 
+{
+    work peek n pop n push 1 {
+        int v = 0;
+        for (int i = 0; i < n; i++) {
+            v = v | (pop() << i);
+        }
+        push(v);
+    }
+}
+
+// input:  w words x b bits/word
+// output: bit i from all w words, followed by i+1 for all b bits
+bit->bit splitjoin BitSlice(int w, int b)
+{
+    split roundrobin(1);
+    for (int l = 0; l < b; l++) {
+        add Identity<bit>;
+    }
+    join roundrobin(w);
+}
+
+// input:  LSB first ... MSB last
+// output: MSW first ... LSW last
+bit->void pipeline CipherTextPrinter(int N)
+{
+    int bits  = N;
+    int bytes = bits / 4;
+    
+    add BitstoInts(4);
+    add int->void filter {
+        work pop bytes {
+            for (int i = bytes - 1; i >= 0; i--) {
+                int v = peek(i);
+                if (v < 10) print(v);
+                else if (v == 10) print("A");
+                else if (v == 11) print("B");
+                else if (v == 12) print("C");
+                else if (v == 13) print("D");
+                else if (v == 14) print("E");
+                else if (v == 15) print("F");
+                else {
+                    print("ERROR: "); 
+                    println(v);
+                }
+            }
+            println("");
+
+            for (int i = 0; i < bytes; i++) 
+                pop();
+        }
+    }
+}
+
+bit->bit splitjoin ShowIntermediate(int N)
+{
+    int bits  = N;
+    int bytes = bits / 4;
+
+    split duplicate;
+    add Identity<bit>;
+    add pipeline {
+        add BitstoInts(4);
+        add int->void filter {
+            work pop bytes {
+                for (int i = bytes - 1; i >= 0; i--) {
+                    int v = peek(i);
+                    if (v < 10) print(v);
+                    else if (v == 10) print("a");
+                    else if (v == 11) print("b");
+                    else if (v == 12) print("c");
+                    else if (v == 13) print("d");
+                    else if (v == 14) print("e");
+                    else if (v == 15) print("f");
+                    else {
+                        print("ERROR: "); 
+                        println(v);
+                    }
+                }
+                println("");
+                
+                for (int i = 0; i < bytes; i++) 
+                    pop();
+            }
+        }
+    }
+    join roundrobin(1, 0);
+}
+
+/*
+void->void pipeline Utils
+{
+    add void->int filter {
+        work push 128 {
+            for (int i = 0; i < 128; i++) push(i);
+        }
+    }
+
+    add IntoBits();
+    add CipherTextPrinter(128);
+}
+*/

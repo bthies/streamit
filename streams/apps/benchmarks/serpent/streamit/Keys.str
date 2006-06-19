@@ -1,0 +1,105 @@
+void->bit pipeline KeySchedule(int round)
+{
+    // static {
+    int BITS_PER_WORD  = 32;
+    int USERKEY_LENGTH = 256; // bits
+    int[USERKEY_LENGTH / BITS_PER_WORD] USERKEY = {0x0, 0x0, 0x0, 0x0, 
+                                                   0x0, 0x0, 0x0, 0x0};
+    // } static
+
+    // output 128 bits intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+    add void->int filter {
+        int PHI = 0x9e3779b9;
+
+        int[8]   key;
+        int[140] w;
+
+        init {
+            for (int i = 0; i < USERKEY_LENGTH / BITS_PER_WORD; i++)
+                key[i] = USERKEY[i];
+            
+            // add 1 to MSB of user key
+            if (USERKEY_LENGTH < 256) {
+                int msb = key[USERKEY_LENGTH / BITS_PER_WORD];
+                key[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
+            }
+
+            // make prekeys w_-8 ... w_-1
+            for (int i = 0; i < 8; i++)
+                w[i] = key[i];
+
+            // calculate intermediate keys w_0 ... w_131
+            for (int i = 8; i < 140; i++) {
+                w[i] = w[i - 8] ^ w[i - 5] ^ w[i - 3] ^ w[i - 1] ^ PHI ^ (i - 8);
+                w[i] = LRotate(w[i], 11);
+            }
+        }
+
+        // push intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+        work push 4 {
+            /* verify keys {
+            for (int i = 8; i < 140; i++) {
+                print(w[i]);
+                print(" ");
+                if ((i+1)%8==0) println("");
+            }
+            println("");
+            */
+
+            int i = (4 * round) + 8;
+
+            push(w[i + 0]);
+            push(w[i + 1]);
+            push(w[i + 2]);
+            push(w[i + 3]);
+        }
+
+        int LRotate(int x, int n) {
+            // work around the lack of support for unsigned data types
+            // return ((x << n) | (x >> (BITS_PER_WORD - n)));
+            int[32] v;
+            int m = 1;
+            for (int i = 0; i < 32; i++) {
+                if (((x & m) >> i) != 0)
+                    v[i] = 1;
+                m = m << 1;
+            }
+
+            int[32] w;
+            for (int i = 0; i < 32; i++) {
+                w[i] = v[(i + 32 - 11) % 32];
+            }
+
+            int r = 0;
+            for (int i = 0; i < 32; i++) {
+                r = r | (w[i] << i);
+            }
+
+            return r;
+        }
+    }
+
+    add IntoBits();
+
+    // permute bits for Sbox
+    add BitSlice(4, 32);
+
+    // round  0: 3
+    // round  1: 2
+    // round  2: 1
+    // round  3: 0
+    // round  4: 7
+    // ...
+    // round 31: 4
+    // round 32: 3
+    int i = round + 4 / 8;
+    add Sbox(((8 * i) + (3 - round)) % 8);
+
+    // reverse the bit slicing
+    add BitSlice(32, 4);
+
+    add IP();
+
+    // for debugging
+    // add ShowIntermediate(128);
+}

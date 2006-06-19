@@ -1,0 +1,29 @@
+Submitter: Lars R. Knudsen
+Algorithm: Serpent
+
+An optimized ANSI C implementation of Serpent
+
+This floppy diskette contains the following files:
+
+
+Makefile		: explains how to test the C files
+
+serpent.h		: NIST Api header file for Serpent
+aes.h			: Symbolic link to serpent.h
+
+serpent.c		: Serpent code, conforming to the NIST C API
+serpentsboxes.h		: header file with macros (for serpent.c only)
+
+test.c			: test file with Serpent selftest
+
+Source codes for KAT tests: 
+
+ecb_vk.c		 
+ecb_vt.c
+
+Source codes for MCT tests: 
+
+ecb_e_m.c
+ecb_d_m.c
+cbc_e_m.c
+cbc_d_m.c		 

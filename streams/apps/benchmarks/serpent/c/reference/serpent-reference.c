@@ -1,5 +1,5 @@
 /*
-  $Id: serpent-reference.c,v 1.1 2006-06-19 23:33:20 rabbah Exp $
+  $Id: serpent-reference.c,v 1.2 2006-06-20 00:28:49 rabbah Exp $
 
   This is a reference implementation of the Serpent cipher invented by Ross
   Anderson, Eli Biham, Lars Knudsen. It is written for the human reader
@@ -29,7 +29,7 @@
 #include "serpent-aux.h"
 /* -------------------------------------------------- */
 EMBED_RCS(serpent_reference_c,
-          "$Id: serpent-reference.c,v 1.1 2006-06-19 23:33:20 rabbah Exp $")
+          "$Id: serpent-reference.c,v 1.2 2006-06-20 00:28:49 rabbah Exp $")
 
 /* NIST API functions */
 
@@ -552,10 +552,10 @@ void R(int i, BLOCK BHati, keySchedule KHat, BLOCK BHatiPlus1) {
        Naaah... */
   }
 
-  //#ifdef SHOW_INTERNALS
+#ifdef SHOW_INTERNALS
   printf("R[%d]", i);
   render("=", BHatiPlus1, WORDS_PER_BLOCK);
-  //#endif
+#endif
 }
 
 void RInverse(int i, BLOCK BHatiPlus1, keySchedule KHat, BLOCK BHati) {

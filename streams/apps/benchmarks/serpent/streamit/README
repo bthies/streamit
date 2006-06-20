@@ -1,17 +1,31 @@
-bTo edit the plain text: modify Source.str
-To edit the user key: modify Keys.str
-To run: only need to run 1 round of the top level pipeline
+Plaintext: 
+    - modify Source.str to change the input plaint text
 
-To compile: strc Serpent.str L.str Source.str Keys.str Utils.str -o serpent
-To run: ./serpent -i1
+Key: 
+    - modify Keys.str to edit the user key
+
+Compile:
+    - strc Serpent.str L.str Source.str Keys.str Utils.str -o serpent
+
+Run: 
+    - ./serpent -i1
+    - only need to run 1 iteration of the top level pipeline
+    - more iterations will just encrypt the same plaintext
+
+Expected output:
+    - default Plaintext and Key
+      Plaintext          = 00000003000000020000000100000000
+      Key                = 0000000000000000000000000000000000000000000000000000000000000000
+    - expected Ciphertext
+      Ciphertext^      1 = 7CA73BB083C31E69EC52BD8227A46120
 
 NOTES:
 - the user key belongs in the statics{} section but the compiler
 doesn't properly support propagation of contants from global arrays;
-hence the user key is defined in the KeySchedule pipeline in Keys.str
-- currently the function LRotate in Keys.str implement bit rotation by
-mapping an integer to an array of intergers first, then reverse
-mapping; this is because the compiler doesn't support operations on
-unsigned data types.
+hence the user key is defined in the KeySchedule pipeline in Keys.str.
 
+- currently the function LRotate in Keys.str implement bit rotation by
+mapping an integer to an array of bits first, then reverse mapping;
+this is because the compiler doesn't support operations on unsigned
+data types.
 

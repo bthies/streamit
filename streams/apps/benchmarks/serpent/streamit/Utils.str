@@ -93,12 +93,12 @@ bit->bit splitjoin ShowIntermediate(int N)
                 for (int i = bytes - 1; i >= 0; i--) {
                     int v = peek(i);
                     if (v < 10) print(v);
-                    else if (v == 10) print("a");
-                    else if (v == 11) print("b");
-                    else if (v == 12) print("c");
-                    else if (v == 13) print("d");
-                    else if (v == 14) print("e");
-                    else if (v == 15) print("f");
+                    else if (v == 10) print("A");
+                    else if (v == 11) print("B");
+                    else if (v == 12) print("C");
+                    else if (v == 13) print("D");
+                    else if (v == 14) print("E");
+                    else if (v == 15) print("F");
                     else {
                         print("ERROR: "); 
                         println(v);
@@ -115,8 +115,10 @@ bit->bit splitjoin ShowIntermediate(int N)
 }
 
 /*
-void->void pipeline Utils
-{
+ * pipeline to test the utility streams
+ *
+ void->void pipeline Utils
+ {
     add void->int filter {
         work push 128 {
             for (int i = 0; i < 128; i++) push(i);
@@ -125,5 +127,5 @@ void->void pipeline Utils
 
     add IntoBits();
     add CipherTextPrinter(128);
-}
+ }
 */

@@ -96,8 +96,7 @@ void->bit pipeline KeySchedule(int round)
     // ...
     // round 31: 4
     // round 32: 3
-    int i = round + 4 / 8;
-    add Sbox(((8 * i) + (3 - round)) % 8);
+    add Sbox((32 + 3 - round) % 8);
 
     // reverse the bit slicing
     add BitSlice(32, 4);

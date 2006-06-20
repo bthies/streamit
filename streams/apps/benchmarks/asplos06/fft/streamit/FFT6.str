@@ -2,8 +2,9 @@
 void->void pipeline FFT6() {
     int N = 512;
     
-    //add FileReader<float>("input");
-    add FFTTestSource(N);
+    
+    //    add FFTTestSource(N);
+    add FileReader<float>("FFT6.in");    
     add FFTReorder(N);
     for(int j=2; j<=N; j*=2)
 	add CombineDFT(j);

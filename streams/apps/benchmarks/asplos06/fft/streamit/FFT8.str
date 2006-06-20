@@ -2,8 +2,9 @@
 void->void pipeline FFT8() {
     int N = 2048;
     
-    //add FileReader<float>("input");
-    add FFTTestSource(N);
+
+//    add FFTTestSource(N);
+    add FileReader<float>("FFT8.in");
     add FFTReorder(N);
     for(int j=2; j<=N; j*=2)
 	add CombineDFT(j);

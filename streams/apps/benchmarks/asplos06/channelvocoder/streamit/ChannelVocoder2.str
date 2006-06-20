@@ -17,8 +17,8 @@
  * sound was unvoiced.
  **/
 void->void pipeline ChannelVocoder2 {
-    add DataSource();
-    //add FileReader<float>("input");
+//    add DataSource();
+    add FileReader<float>("input");
     // low pass filter to filter out high freq noise
     add LowPassFilter(1, (2*pi*5000)/8000, 64); 
     add MainSplitjoin();

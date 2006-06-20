@@ -253,7 +253,8 @@ void->void pipeline BitonicSort1
     /* true for UP sort and false for DOWN sort */ 
     boolean sortdir = true;  
  
-    add KeySource(N); 
+    //add KeySource(N);
+    add FileReader<int>("BitonicSort1.in");
     add BitonicSortKernel(N, sortdir); 
     //add BitonicSortKernel(N, !sortdir); 
     //add KeyPrinter(N);

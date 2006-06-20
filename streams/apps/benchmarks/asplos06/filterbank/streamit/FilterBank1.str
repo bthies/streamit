@@ -4,8 +4,8 @@
  * processing is yet to be determined, and then reconstructs them.
  **/
 void->void pipeline FilterBank1 {
-    add DataSource();
-    //add FileReader<float>("input");
+    //add DataSource();
+    add FileReader<float>("input");
     add FilterBankPipeline(2);
     add FileWriter<float>("FilterBank1.out");
     //add FileWriter<float>("output");

@@ -1,0 +1,17 @@
+<benchmark>
+  <name>serpent</name>
+  <desc>Serpent Encryption Algoritm</desc>
+  <description>
+  This benchmark implements the Serpent encryption algorithm.
+  </description>
+  <implementations>
+    <impl lang="C" dir="c/optimized">
+      <file>serpent.c test.c</file>
+      <desc>Optimized C version.</desc>
+    </impl>
+    <impl lang="StreamIt" dir="streamit" iters="1">
+      <desc>StreamIt benchmark as described above.</desc>
+      <file class="source">Serpent.str Source.str Keys.str L.str Utils.str</file>
+    </impl>
+  </implementations>
+</benchmark>

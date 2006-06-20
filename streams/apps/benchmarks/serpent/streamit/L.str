@@ -1,7 +1,11 @@
+// Implements Serpent linear transform
+// (see appendix of ../docs for algorithm details)
+// (rodric rabbah, <rabbah@mit.edu>)
+
 bit->bit filter rawL()
 {  
     work push 128 pop 128{
-        push(peek(16)^ peek(52)^peek(56)^peek(70)^peek(83)^peek(94)^peek(105));
+        push(peek(16)^peek(52)^peek(56)^peek(70)^peek(83)^peek(94)^peek(105));
         push(peek(72)^peek(114)^peek(125));
         push(peek(2)^peek(9)^peek(15)^peek(30)^peek(76)^peek(84)^peek(126) );
         push(peek(36)^peek(90)^peek(103));

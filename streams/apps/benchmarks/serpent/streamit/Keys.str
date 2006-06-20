@@ -1,3 +1,7 @@
+// Implements Serpent key schedule
+// (see section 4 of ../docs for algorithm details)
+// (rodric rabbah, <rabbah@mit.edu>)
+
 void->bit pipeline KeySchedule(int round)
 {
     // static {

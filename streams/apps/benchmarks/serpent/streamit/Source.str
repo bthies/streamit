@@ -1,11 +1,12 @@
+// Provides plain text for encryption
+// (rodric rabbah, <rabbah@mit.edu>)
+
 // plain text source
 void->bit pipeline PlainTextSource()
 {
     // test text: 0x00000000,0x00000001,0x00000002,0x00000003
     add void->int filter {
         work push 4 {
-            //push(0x13345779);
-            //push(0x9BBCDFF1);
             push(0x00000000);
             push(0x00000001);
             push(0x00000002);

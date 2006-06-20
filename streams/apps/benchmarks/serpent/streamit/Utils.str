@@ -1,3 +1,6 @@
+// Provides utility routine
+// (rodric rabbah, <rabbah@mit.edu>)
+
 // input:  integer
 // output: LSB first ... MSB last
 int->bit filter IntoBits() 
@@ -41,7 +44,8 @@ bit->bit splitjoin BitSlice(int w, int b)
 }
 
 // input:  LSB first ... MSB last
-// output: MSW first ... LSW last
+// output: none
+// prints: MSW first ... LSW last
 bit->void pipeline CipherTextPrinter(int N)
 {
     int bits  = N;
@@ -72,6 +76,9 @@ bit->void pipeline CipherTextPrinter(int N)
     }
 }
 
+// input:  LSB first ... MSB last
+// output: LSB first ... MSB last
+// prints: MSW first ... LSW last
 bit->bit splitjoin ShowIntermediate(int N)
 {
     int bits  = N;

@@ -126,7 +126,9 @@ public class MultiLevelSplitsJoins {
         Iterator<Edge> sources = input.getSourceSequence().iterator();
         for (int i = 0; i < numNewTraces; i++) {
             int count = maxWidth;
-            if (i == (numNewTraces - 1))
+            //account for remainder
+            if (input.getWidth() % maxWidth != 0 &&
+                    i == (numNewTraces - 1))
                 count = input.getWidth() % maxWidth;
             for (int j = 0; j < count; j++) { 
                 Edge edge = sources.next();
@@ -264,7 +266,7 @@ public class MultiLevelSplitsJoins {
             //set the steady items based on the number of items the down stream 
             //filter receives
             int steadyItems = 
-                (int) ((next.getSteadyMult() * next.getPopInt()) * 
+                (int) (((double)(next.getSteadyMult() * next.getPopInt())) * 
                        downEdge.getDest().ratio(downEdge));
                     
             traces[i].getHead().getNextFilter().getFilter().setSteadyMult(steadyItems);
@@ -276,9 +278,19 @@ public class MultiLevelSplitsJoins {
             for (int s = 0; s < input.getSources().length; s++) {
                Edge upEdge = input.getSources()[s];
                FilterContent prev = upEdge.getSrc().getPrevFilter().getFilter();
-               initItems += (int) (input.ratio(upEdge) * prev.initItemsPushed());
+               initItems += (int)(upEdge.getSrc().ratio(upEdge) * 
+                       ((double)prev.initItemsPushed()));
             }
             traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
+            
+            //this has to be greater than the requirement for the downstream filter
+            //on this edge
+            int initItemsNeeded = 
+                (int)(downEdge.getDest().ratio(downEdge) * 
+                        ((double)next.initItemsNeeded()));
+            assert initItems >= initItemsNeeded :
+               "The init mult for the Identity filter is not large enough, need " +
+               initItemsNeeded + ", producing " + initItems;
         }
     }
     
@@ -326,10 +338,13 @@ public class MultiLevelSplitsJoins {
         //assign the unique edges (dests) of the original outputtrace
         //to the new outputtraces
         HashMap<Edge, Integer> assignment = new HashMap<Edge, Integer>();
+        System.out.println(output.getDestSequence().size() + " ?= " + output.getWidth());
         Iterator<Edge> dests = output.getDestSequence().iterator();
         for (int i = 0; i < numNewTraces; i++) {
             int count = maxWidth;
-            if (i == (numNewTraces - 1))
+            //account for remainder if there is one
+            if (output.getWidth() % maxWidth != 0 &&
+                    i == (numNewTraces - 1))
                 count = output.getWidth() % maxWidth;
             for (int j = 0; j < count; j++) { 
                 Edge edge = dests.next();
@@ -440,7 +455,7 @@ public class MultiLevelSplitsJoins {
             //calculate the number of items the original trace sends to this
             //trace in the init stage
             int initItems = 
-                (int) ((double) prev.initItemsPushed() * edge.getSrc().ratio(edge));
+                (int) (((double) prev.initItemsPushed()) * edge.getSrc().ratio(edge));
             traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
             
             //calc the number of steady items

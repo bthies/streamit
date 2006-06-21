@@ -83,7 +83,7 @@ public class Edge {
                                                    .getPrevious());
         itemsReceived = (int) ((double) prev.initItemsSent() * src.ratio(this));
 
-        /*if (itemsSent != itemsReceived) {
+        if (itemsSent != itemsReceived) {
             System.out.println("*** Init: Items received != Items Sent!");
             System.out.println(prev + " -> " + next);
             System.out.println("Mult: " + prev.getMult(true, false) + " " +  
@@ -95,7 +95,7 @@ public class Edge {
             System.out.println("Items Received: " + next.initItemsReceived(true));
             System.out.println("Ratio received: " + dest.ratio(this));
             
-        }*/
+        }
         
         // see if they are different
         assert (itemsSent == itemsReceived) : "Calculating init stage: items received != items send on buffer: "

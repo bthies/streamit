@@ -89,8 +89,8 @@ public class AddBuffering {
             int itemsToBuffer = output.totalWeights() % filter.initItemsPushed();
             int itemsIDShouldPass = filter.initItemsPushed() - itemsToBuffer;
             Trace trace = output.getParent();
-            //System.out.println(" * Adding buffering after " + trace.getTail().getPrevious() + 
-            //        " to equalize output, buffer: " + itemsToBuffer);
+            System.out.println(" * Adding buffering after " + trace.getTail().getPrevious() + 
+                    " to equalize output, buffer: " + itemsToBuffer);
             //System.out.println("   " + filter.initItemsPushed() + " % " + 
             //        output.totalWeights() + " != 0");
             addIDToTrace(trace, itemsIDShouldPass);
@@ -188,8 +188,8 @@ public class AddBuffering {
             double myMult = mults.get(edge).doubleValue();
             //if the mult is not equal to the target mult, we must buffer
             if (myMult != minMult) {
-                ///System.out.println("For " + input + " change " + edge + " from "  + 
-                //mults.get(edge).doubleValue() + " to " + minMult);
+                System.out.println(" * For " + input + " change " + edge + " from "  + 
+                        mults.get(edge).doubleValue() + " to " + minMult);
                 
                 changes = true;
                 Trace trace = edge.getSrc().getParent();

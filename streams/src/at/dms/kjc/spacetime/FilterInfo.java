@@ -257,8 +257,9 @@ public class FilterInfo {
             if (debug)
                 System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
-            for (int i = 0; i < in.getWeights().length; i++) {
-                Edge incoming = in.getSources()[i];
+            Iterator<Edge> edges = in.getSourceSet().iterator();
+            while (edges.hasNext()) {
+                Edge incoming = edges.next();
                 upStreamItems += 
                     (int) 
                     ((double)FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())

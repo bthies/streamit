@@ -110,6 +110,7 @@ public class FilterContent {
      */
     public FilterContent(UnflatFilter unflat) {
         SIRFilter filter = unflat.filter;
+        assert filter != null;
         name = filter.getName();
         inputType = filter.getInputType();
         outputType = filter.getOutputType();
@@ -448,6 +449,37 @@ public class FilterContent {
             items += getInitPush();
         }
         return items;
+    }
+    
+    /**
+     * Return the number of items needed for this filter to fire 
+     * in the initialization schedule.
+     * 
+     * @return the number of items needed for this filter to fire 
+     * in the initialization schedule.
+     */
+    public int initItemsNeeded() {
+        if (getInitMult() < 1)
+            return 0;
+        //the number of items needed after the prework function
+        //executes and before the work function executes
+        int bottomPeek = 0;
+        //the init mult assuming everything is a two stage
+        int myInitMult = getInitMult();
+        int initPeek = 0;
+        
+        if (isTwoStage()) { 
+            bottomPeek = Math.max(0, peek - (getInitPeek() - getInitPop()));
+            //can't call init peek on non-twostages
+            initPeek = getInitPeek();
+        }
+        else //if it is not a two stage, fake it for the following calculation
+            myInitMult++;
+            
+        //(prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+        return 
+            initPeek + bottomPeek + Math.max((myInitMult - 2), 0) * 
+                 getPopInt(); 
     }
     
     /**

@@ -156,7 +156,7 @@ public class BufferedCommunication extends RawExecutionCode
             maxpeek = (filterInfo.prePeek > maxpeek) ? filterInfo.prePeek : maxpeek;
         
         
-            System.out.println(filterInfo.filter.getName() + " remaining: " + filterInfo.remaining);
+            SpaceTimeBackend.println(filterInfo.filter.getName() + " remaining: " + filterInfo.remaining);
             if (filterInfo.isSimple()) {
                 //simple filter (no remaining items)
                 if (KjcOptions.ratematch) {
@@ -899,7 +899,7 @@ public class BufferedCommunication extends RawExecutionCode
             receiveMethodName = structReceiveMethodPrefix  + type.toString();
         }
 
-        System.out.println(generatedVariables.recvBuffer);
+        SpaceTimeBackend.println(generatedVariables.recvBuffer.toString());
         //create the array access expression to access the buffer 
         JArrayAccessExpression arrayAccess = 
             new JArrayAccessExpression(null,

@@ -38,7 +38,8 @@ public class FilterTraceNode extends TraceNode
     
     public String toString(Layout layout) 
     {
-        return filter.toString() + " " + layout.getTile(this);   
+        return filter.toString() + " " + 
+        (layout != null ? layout.getTile(this) : "");   
     }
     
     

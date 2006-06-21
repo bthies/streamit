@@ -61,6 +61,14 @@ public class FilterInfo {
         canuse = true;
     }
 
+    /**
+     * Force the filter info to be recalculated.
+     *
+     */
+    public static void reset() {
+        filterInfos = new HashMap();
+    }
+    
     public static FilterInfo getFilterInfo(FilterTraceNode traceNode) {
         assert canuse;
         if (!filterInfos.containsKey(traceNode)) {
@@ -210,32 +218,68 @@ public class FilterInfo {
         return items;
     }
 
-    // return the number of items received in the init stage including
-    // the remaining items on the tape that are not consumed in the
-    // schedule
+    /**
+     * Return the number of items received in the init stage including
+     * the remaining items on the tape that are not consumed in the
+     * schedule.
+     * 
+     * @return The number of items received in the init stage.
+     */
     public int initItemsReceived() {
+        return initItemsReceived(false);
+    }
+    
+    /**
+     * Return the number of items received in the init stage including
+     * the remaining items on the tape that are not consumed in the
+     * schedule.
+     * 
+     * @param debug if true, print debug info.
+     * 
+     * @return The number of items received in the init stage.
+     */
+    public int initItemsReceived(boolean debug) {
         // the number of items produced by the upstream filter in
         // initialization
         int upStreamItems = 0;
 
+        if (debug)
+            System.out.println("*****  Init items received " + this + " *****");
+        
         if (traceNode.getPrevious().isFilterTrace()) {
-            upStreamItems = FilterInfo.getFilterInfo(
-                                                     (FilterTraceNode) traceNode.getPrevious()).initItemsSent();
+            upStreamItems = 
+                FilterInfo.getFilterInfo(
+                        (FilterTraceNode) traceNode.getPrevious()).initItemsSent();
+            if (debug)
+                System.out.println(" Upstream filter sends: " + upStreamItems);
         } else { // previous is an input trace
             InputTraceNode in = (InputTraceNode) traceNode.getPrevious();
-
+            if (debug)
+                System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
             for (int i = 0; i < in.getWeights().length; i++) {
                 Edge incoming = in.getSources()[i];
-                upStreamItems += (int) (FilterInfo.getFilterInfo(
-                                                                 (FilterTraceNode) incoming.getSrc().getPrevious())
-                                        .initItemsSent() * ((double) incoming.getSrc()
-                                                            .getWeight(incoming) / incoming.getSrc().totalWeights()));
+                upStreamItems += 
+                    (int) 
+                    ((double)FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                            .initItemsSent() * incoming.getSrc().ratio(incoming));
+                if (debug) {
+                    System.out.println("   " + incoming + ": sends " + 
+                            FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                            .initItemsSent() + ", at ratio " + incoming.getSrc().ratio(incoming) + " = " +
+                            (int) 
+                            ((double)FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                                    .initItemsSent() * incoming.getSrc().ratio(incoming)));
+                }
+                            //((double) incoming.getSrc()
+                            //        .getWeight(incoming) / incoming.getSrc().totalWeights()));
                 // upStreamItems +=
                 // (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
                 // ((double)out.getWeight(in) / out.totalWeights()));
             }
         }
+        if (debug)
+            System.out.println("*****");
         return upStreamItems;
     }
 

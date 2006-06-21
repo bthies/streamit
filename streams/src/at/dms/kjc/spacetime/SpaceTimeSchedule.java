@@ -118,14 +118,14 @@ public class SpaceTimeSchedule {
      */
     public void setPrimePumpSchedule(LinkedList preLoopSchedule) {
         //      convert into an array for easier access...
-        System.out.println("Setting primepump schedule:");   
+        SpaceTimeBackend.println("Setting primepump schedule:");   
         primePumpSchedule = new Trace[preLoopSchedule.size()][];
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
             LinkedList schStep = (LinkedList)preLoopSchedule.get(i);
             primePumpSchedule[i] = new Trace[schStep.size()];
             for (int j = 0; j < schStep.size(); j++) {
                 Trace current = (Trace)schStep.get(j);
-                System.out.println(current);
+                SpaceTimeBackend.println(current.toString());
                 primePumpSchedule[i][j] = current;
                 //generate the prime pump multiplicity map
                 if (!primePumpMult.containsKey(current))

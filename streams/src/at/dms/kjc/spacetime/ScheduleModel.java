@@ -70,7 +70,7 @@ public class ScheduleModel {
      * in the steady state on the tile to which is it assigned.
      */
     public int getFilterStart(FilterTraceNode node) {
-        System.out.println(node);
+        //System.out.println(node);
         return startTime.get(node).intValue();
     }
     
@@ -127,6 +127,7 @@ public class ScheduleModel {
             FilterTraceNode bottleNeck = null;
             int maxAvail = -1;
             int prevStart = 0;
+            int prevEnd = 0;
             int bottleNeckStart = 0;
             
             assert trace.getFilterNodes().length == 
@@ -140,24 +141,39 @@ public class ScheduleModel {
                 FilterTraceNode current = trace.getFilterNodes()[f];
                 
                 RawTile tile = layout.getTile(current);
+                //System.out.println("Tile Cost of " + tile.getTileNumber() + " is " + 
+                //tileCosts[tile.getTileNumber()]);
+                
+                //the current filter can start at the max of when the last filter
+                //has produced enough data for the current to start and when its
+                //tile is avail
                 int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
                         prevStart + spaceTime.partitioner.getFilterStartupCost(current));
-                int tileAvail = spaceTime.partitioner.getFilterWorkSteadyMult(current) +
-                   currentStart;
-                //System.out.println("Trying " + current + " start: " + currentStart +
-                 //       " end: " + tileAvail);
+                
+                //now the tile avail for this current tile is the max of the current
+                //start plus the current work and the previous end plus one iteration
+                //of the current, this is because the have to give the current enough
+                //cycles after the last filter completes to complete one iteration
+                int tileAvail = Math.max(spaceTime.partitioner.getFilterWorkSteadyMult(current) +
+                   currentStart, 
+                   prevEnd + spaceTime.partitioner.getWorkEstOneFiring(current));
+
                 //System.out.println("Checking start of " + current + " on " + tile + 
                 //        "start: " + currentStart + ", tile avail: " + tileAvail);
                 
-                //remember the start time
+                //remember the start time and end time
                 startTime.put(current, new Integer(currentStart));
-                
+                //we will over write the end time below for filters 
+                //downstream of bottleneck 
+                endTime.put(current, new Integer(tileAvail));
+                //remember the bottleneck
                 if (tileAvail > maxAvail) {
                     maxAvail = tileAvail;
                     bottleNeck = current;
                     bottleNeckStart = currentStart;
                 }
-                prevStart = currentStart;
+                prevStart = currentStart; 
+                prevEnd = tileAvail;
             }
                 
             assert bottleNeck != null : "Could not find bottleneck for " + trace ;
@@ -165,6 +181,12 @@ public class ScheduleModel {
             RawTile bottleNeckTile = layout.getTile(bottleNeck);
             
             //System.out.println("Found bottleneck: " + bottleNeck + " " + bottleNeckTile);
+            
+            //calculate when the bottle neck tile will finish, 
+            //and base everything off of that, traversing backward and 
+            //foward in the trace
+            tileCosts[bottleNeckTile.getTileNumber()] = 
+                maxAvail;
             
             if (bottleNeck.getPrevious().isInputTrace()) {
                 tileCosts[bottleNeckTile.getTileNumber()]+= DRAM_ISSUE_COST;
@@ -179,18 +201,8 @@ public class ScheduleModel {
                 }
             }
             
-           
-            
-            //calculate when the bottle neck tile will finish, 
-            //and base everything off of that, traversing backward and 
-            //foward in the trace
-            tileCosts[bottleNeckTile.getTileNumber()] = 
-                (bottleNeckStart +
-                spaceTime.partitioner.getFilterWorkSteadyMult(bottleNeck));
-            
-                        
             //System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
-             //       tileCosts[bottleNeckTile.getTileNumber()]);
+            //        tileCosts[bottleNeckTile.getTileNumber()]);
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
             int next1Iter = spaceTime.partitioner.getWorkEstOneFiring(bottleNeck);
@@ -212,7 +224,7 @@ public class ScheduleModel {
                 next1Iter = spaceTime.partitioner.getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
             }
-            
+            /*
             //traverse forwards and set the finish times of the traces
             current = bottleNeck.getNext();
             int prevFinish = tileCosts[bottleNeckTile.getTileNumber()];
@@ -228,7 +240,21 @@ public class ScheduleModel {
                 endTime.put(current.getAsFilter(), new Integer(prevFinish));
                 current = current.getNext();
             }
+            */
+            //some checks
+            for (int f = 0; f < trace.getFilterNodes().length; f++) {
+                assert getFilterStart(trace.getFilterNodes()[f]) <=
+                    (getFilterEnd(trace.getFilterNodes()[f]) - 
+                    spaceTime.partitioner.getFilterWorkSteadyMult(trace.getFilterNodes()[f])) :
+                        trace.getFilterNodes()[f] + " " + 
+                        getFilterStart(trace.getFilterNodes()[f]) + " <= " +
+                            getFilterEnd(trace.getFilterNodes()[f]) + " - " + 
+                                    spaceTime.partitioner.getFilterWorkSteadyMult(trace.getFilterNodes()[f]) +
+                                        " (bottleneck: " + bottleNeck + ")";
+            }
         }
+
+        
         //remember the bottleneck tile
         bottleNeckTile = -1;
         bottleNeckCost = -1; 

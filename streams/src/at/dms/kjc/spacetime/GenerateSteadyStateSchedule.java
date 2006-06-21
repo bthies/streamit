@@ -73,14 +73,15 @@ public class GenerateSteadyStateSchedule {
         // reverse the list
         Collections.reverse(sortedTraces);
 
-        System.out.println("Sorted Traces: ");
+        SpaceTimeBackend.println("Sorted Traces: ");
         Iterator it = sortedTraces.iterator();
         while (it.hasNext()) {
             Trace trace = (Trace) it.next();
-            System.out.println(" * " + trace + " (work: "
+            SpaceTimeBackend.println(" * " + trace + " (work: "
                                + spaceTime.partitioner.getTraceBNWork(trace) + ")");
         }
 
+        
         // start to schedule the traces
         while (!sortedTraces.isEmpty()) {
             //remove the first trace, the trace with the most work
@@ -116,7 +117,7 @@ public class GenerateSteadyStateSchedule {
     private void scheduleTrace(Trace trace,
                                LinkedList sortedList) {
         assert trace != null;
-        System.out.println("Scheduling Trace: " + trace + " at time "
+        SpaceTimeBackend.println("Scheduling Trace: " + trace + " at time "
                            + currentTime);
         // remove this trace from the list of traces to schedule
         sortedList.remove(trace);
@@ -139,9 +140,9 @@ public class GenerateSteadyStateSchedule {
                                                                         .getTileNumber()]) ? currentTime : tileAvail[tile
                                                                                                                      .getTileNumber()])
                 + spaceTime.partitioner.getTraceBNWork(trace);
-            System.out.println("   * new avail for " + tile + " = "
+            SpaceTimeBackend.println("   * new avail for " + tile + " = "
                                + tileAvail[tile.getTileNumber()]);
-            // System.out.println(" *(" + currentTime + ") Assigning " + node +
+            // SpaceTimeBackend.println(" *(" + currentTime + ") Assigning " + node +
             // " to " + tile +
             // "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
 
@@ -209,10 +210,10 @@ public class GenerateSteadyStateSchedule {
     private void printSchedule() {
         Iterator sch = schedule.iterator();
         Trace prev = null;
-        System.out.println("Schedule: ");
+        SpaceTimeBackend.println("Schedule: ");
         while (sch.hasNext()) {
             Trace trace = (Trace) sch.next();
-            System.out.println(" ** " + trace);
+            SpaceTimeBackend.println(" ** " + trace);
          
             prev = trace;
         }

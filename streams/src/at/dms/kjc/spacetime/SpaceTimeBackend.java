@@ -174,12 +174,15 @@ public class SpaceTimeBackend {
         
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
+        //Util.printExecutionCount(executionCounts[0]);
+        //Util.printExecutionCount(executionCounts[1]);
+        
         // flatten the graph by running (super?) synch removal
         FlattenGraph.flattenGraph(str, lfa, executionCounts);
         UnflatFilter[] topNodes = FlattenGraph.getTopLevelNodes();
-        System.out.println("Top Nodes:");
+        println("Top Nodes:");
         for (int i = 0; i < topNodes.length; i++)
-            System.out.println(topNodes[i]);
+            println(topNodes[i].toString());
 
         Trace[] traces = null;
         Trace[] traceGraph = null; 
@@ -189,7 +192,7 @@ public class SpaceTimeBackend {
         SimplePartitioner partitioner = new SimplePartitioner(topNodes,
                                                               executionCounts, lfa, work, rawChip);
         traceGraph = partitioner.partition();
-        System.out.println("UnPrunnedTraces: " + traceGraph.length);
+        System.out.println("Traces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
 
         //We have to create multilevel splits and/or joins if their width
@@ -223,17 +226,20 @@ public class SpaceTimeBackend {
         
         COMP_COMM_RATIO = CommCompRatio.ratio(partitioner);
         
-        System.out.println("\nMultiplying Steady-State...");
+        System.out.println("Multiplying Steady-State...");
         MultiplySteadyState.doit(partitioner.getTraceGraph());
      
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
-        
         //create the space/time schedule object to be filled in by the passes 
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
-        Layout layout = null;
+        //check to see if we need to add any buffering before splitters or joiners
+        //for correct execution of the init stage and steady state
+        AddBuffering.doit(spaceTimeSchedule);
+        
         //create the layout for each stage of the execution using simulated annealing
-         
+        //or manual
+        Layout layout = null;
         if (KjcOptions.manuallayout) {
             layout = new ManualTraceLayout(spaceTimeSchedule);
         } else {
@@ -243,17 +249,17 @@ public class SpaceTimeBackend {
                 
       
         
-        System.out.println("\nSpace/Time Scheduling Steady-State...");
+        System.out.println("Space/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
             new GenerateSteadyStateSchedule(spaceTimeSchedule, layout);
         spaceTimeScheduler.schedule();
   
                 
         //calculate preloop and initialization code
-        System.out.println("\nCreating Initialization Schedule...");
+        System.out.println("Creating Initialization Schedule...");
         spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph()));
         
-        System.out.println("\nCreating Pre-Loop Schedule...");
+        System.out.println("Creating Pre-Loop Schedule...");
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);
         preLoopSched.schedule();
         

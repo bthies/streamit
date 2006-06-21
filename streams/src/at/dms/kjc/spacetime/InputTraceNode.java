@@ -28,7 +28,10 @@ public class InputTraceNode extends TraceNode {
         if (weights.length != sources.length)
             Utils.fail("Add comment later");
         this.sources = sources;
-        this.weights = weights;
+        if (weights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = weights;
         ident = "input" + unique;
         unique++;
     }
@@ -41,7 +44,11 @@ public class InputTraceNode extends TraceNode {
         this.sources = new Edge[sources.length];
         for (int i = 0; i < sources.length; i++)
             this.sources[i] = new Edge(sources[i], this);
-        this.weights = weights;
+        
+        if (weights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = weights;
         ident = "input" + unique;
         unique++;
     }
@@ -49,7 +56,10 @@ public class InputTraceNode extends TraceNode {
     public InputTraceNode(int[] weights) {
         // this.parent = parent;
         sources = EMPTY_SRCS;
-        this.weights = weights;
+        if (weights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = weights;
         ident = "input" + unique;
         unique++;
     }
@@ -154,9 +164,11 @@ public class InputTraceNode extends TraceNode {
     public void set(LinkedList<Integer> weights, 
             LinkedList<Edge> edges) {
         int[] intArr = new int[weights.size()]; 
+        
         for (int i = 0; i < weights.size(); i++)
             intArr[i] = weights.get(i).intValue();
         setWeights(intArr);
+        
         setSources(edges.toArray(new Edge[edges.size()]));
     }
     
@@ -166,7 +178,10 @@ public class InputTraceNode extends TraceNode {
      * @param newWeights
      */
     public void setWeights(int[] newWeights) {
-        this.weights = newWeights;
+        if (newWeights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = newWeights;
     }
     
     public void setSources(Edge[] sources) {

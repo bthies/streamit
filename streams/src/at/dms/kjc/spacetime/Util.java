@@ -63,6 +63,21 @@ public class Util {
     }
 
     /**
+     * Print to screen the mapping of multiplicities
+     * 
+     * @param map The HashMap.
+     */
+    public static void printExecutionCount(HashMap map) {
+        Iterator keys = map.keySet().iterator();
+        System.out.println("  *******  ");
+        while(keys.hasNext()) {
+            Object obj = keys.next();
+            System.out.println(obj + " -> " + ((int[])map.get(obj))[0]);
+        }
+        System.out.println("  *******  ");
+    }
+    
+    /**
      * For type return the number of words that it occupies.
      * 
      * @param type The type.

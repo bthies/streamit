@@ -110,11 +110,12 @@ public class POVRAYScheduleRep {
                 heightScale;
             double lowerLeftZ =  
                 (double)(scheduleModel.getFilterEnd(filter) - 
-                        spaceTime.partitioner.getFilterWorkSteadyMult(filter));
+                        (double)spaceTime.partitioner.getFilterWorkSteadyMult(filter));
+                                    
+            assert lowerLeftZ >= (double)scheduleModel.getFilterStart(filter) : 
+		filter + " " + lowerLeftZ + " " + scheduleModel.getFilterStart(filter);
             
-            assert lowerLeftZ >= scheduleModel.getFilterStart(filter);
-            
-            lowerLeftZ *= heightScale;
+            lowerLeftZ = lowerLeftZ * heightScale;
             
             fw.write("box {\n");
             //create the coordinates of box in the following form:

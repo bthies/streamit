@@ -107,10 +107,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public void run() {
         //run the simulated annealing with 2 iterations, 
         //100 attempts per iteration
-        simAnnealAssign(2, 100);
+        simAnnealAssign(10, 20);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
-            System.out.println(filterList.get(i) + " is assigned to " + 
+            SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
                     assignment.get(filterList.get(i)));
     }
     
@@ -399,11 +399,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public double placementCost(boolean debug) {
    
-        int[] tileCosts = getTileWorks(true);
+        int[] tileCosts = getTileWorks(false);
         
         double workOfBottleNeckTile = (double)maxTileWork(tileCosts);
         
-        double cost = workOfBottleNeckTile;//standardDeviation(tileCosts);  
+        double cost = workOfBottleNeckTile; //standardDeviation(tileCosts);  
                    //+ (COMM_MULTIPLIER * (double)commEstimate(tileCosts));
         
         

@@ -128,6 +128,28 @@ public abstract class Partitioner {
     }
     
     /**
+     * Update all the necesary state to add node to trace.
+     * 
+     * @param node The node to add.
+     * @param trace The trace to add the node to.
+     */
+    public void addFilterToTrace(FilterTraceNode node, 
+            Trace trace) {
+        int workEst = MultiLevelSplitsJoins.IDENTITY_WORK *
+               node.getFilter().getSteadyMult();
+        
+        //add the node to the work estimation
+        if (!workEstimation.containsKey(node.getFilter()))
+            workEstimation.put(node.getFilter(),
+                    new Integer(workEst));
+        
+        if (workEst > traceBNWork.get(trace).intValue()) {
+            traceBNWork.put(trace, new Integer(workEst));
+            bottleNeckFilter.put(trace, node);
+        }
+    }
+    
+    /**
      * Set the trace graph to traces, where the only difference between the 
      * previous trace graph and the new trace graph is the addition of identity
      * traces (meaning traces with only an identities filter), used for 
@@ -251,7 +273,7 @@ public abstract class Partitioner {
                            
                 
                 //record the startup cost
-                System.out.println("StartupCost: " + node + " " + myLag);
+                //System.out.println("StartupCost: " + node + " " + myLag);
                 filterStartupCost.put(node, new Integer(myLag));
                 
                 //reset the prev node and the prev startup cost...

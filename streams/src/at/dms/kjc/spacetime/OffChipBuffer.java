@@ -55,6 +55,21 @@ public abstract class OffChipBuffer {
         setType();
     }
 
+    /**
+     * Reset the buffer store and create all number buffer objects.  
+     * Used if one wants to munge the trace graph.
+     */
+    public static void reset() {
+        unique_id = 0;
+        bufferStore = new HashMap();
+    }
+    
+    public static void printBuffers() {
+        Iterator<OffChipBuffer> bufs = bufferStore.values().iterator();
+        while (bufs.hasNext()) {
+            System.out.println(bufs.next());
+        }
+    }
     
     public abstract boolean redundant();
 
@@ -265,13 +280,13 @@ public abstract class OffChipBuffer {
       
         buffer.rotationLength = length;
         
-        System.out.println("Setting rotation length: " + buffer + " " + length);
+        //System.out.println("Setting rotation length: " + buffer + " " + length);
         
         //this is buffer is redundant, meaning it is just a copy of its its upstream 
         //output trace node, then we have to set the rotation for its upstream
         //output trace node!!
         if (length > 1 && buffer.redundant()) {
-            System.out.println("Setting upstream rotation length " + length);
+            //System.out.println("Setting upstream rotation length " + length);
             IntraTraceBuffer upstream = IntraTraceBuffer.getBuffer((FilterTraceNode)buffer.source.getPrevious(), 
                     (OutputTraceNode)buffer.source);
             upstream.rotationLength = length;
@@ -285,8 +300,16 @@ public abstract class OffChipBuffer {
     public static boolean areAllAssigned() {
         Iterator buffers = getBuffers().iterator();
         while (buffers.hasNext()) {
-            if (!((OffChipBuffer)buffers.next()).isAssigned())
+            OffChipBuffer buf = (OffChipBuffer)buffers.next();
+            if (!buf.isAssigned()) {
+                if (buf.isInterTrace()) {
+                    System.out.println("No assignment for : " + buf + ": " + 
+                            ((InterTraceBuffer)buf).getEdge().getSrc().getPrevious() + " -> " + 
+                            ((InterTraceBuffer)buf).getEdge().getDest().getNext());
+                    //printBuffers();
+                }
                 return false;
+            }
         }
         return true;
     }

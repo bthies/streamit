@@ -34,7 +34,7 @@ public class GeneratePrimePumpSchedule {
               
         //keep adding traces to the schedule until all traces can fire 
         while (!canEverythingFire(dataFlowTraversal)) {
-            System.out.println("Pre-loop Scheduling Step...");
+            SpaceTimeBackend.println("Pre-loop Scheduling Step...");
             //the traces that are firing in the current step...
             LinkedList currentStep = new LinkedList();
            
@@ -44,7 +44,7 @@ public class GeneratePrimePumpSchedule {
                 //if the trace can fire, then fire it in this init step
                 if (canFire(trace)) {
                     currentStep.add(trace);
-                    System.out.println("  Adding " + trace);
+                    SpaceTimeBackend.println("  Adding " + trace);
                 }
             }
             recordFired(currentStep);

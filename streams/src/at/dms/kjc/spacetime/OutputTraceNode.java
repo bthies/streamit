@@ -38,7 +38,10 @@ public class OutputTraceNode extends TraceNode {
         assert weights.length == dests.length : "weights must equal sources";
         ident = "output" + unique;
         unique++;
-        this.weights = weights;
+        if (weights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = weights;
         this.dests = dests;
     }
 
@@ -62,7 +65,10 @@ public class OutputTraceNode extends TraceNode {
         // this.parent = parent;
         ident = "output" + unique;
         unique++;
-        this.weights = weights;
+        if (weights.length == 1)
+            this.weights = new int[]{1};
+        else 
+            this.weights = weights;
         dests = EMPTY_DESTS;
     }
 
@@ -83,9 +89,13 @@ public class OutputTraceNode extends TraceNode {
      */
     public void set(LinkedList<Integer> weights, 
             LinkedList<LinkedList<Edge>> dests) {
-        this.weights = new int[weights.size()];
-        for (int i = 0; i < weights.size(); i++)
-            this.weights[i] = weights.get(i).intValue();
+        if (weights.size() == 1) 
+            this.weights = new int[]{1};
+        else {
+            this.weights = new int[weights.size()];
+            for (int i = 0; i < weights.size(); i++)
+                this.weights[i] = weights.get(i).intValue();
+        }
         //convert the dests list
         this.dests = new Edge[dests.size()][];
         for (int i = 0; i < dests.size(); i++) 
@@ -230,8 +240,8 @@ public class OutputTraceNode extends TraceNode {
      * 
      * @return The set of the outgoing edges of this OutputTraceNode.
      */
-    public Set getDestSet() {
-        HashSet set = new HashSet();
+    public Set<Edge> getDestSet() {
+        HashSet<Edge> set = new HashSet<Edge>();
         for (int i = 0; i < dests.length; i++) {
             for (int j = 0; j < dests[i].length; j++)
                 set.add(dests[i][j]);

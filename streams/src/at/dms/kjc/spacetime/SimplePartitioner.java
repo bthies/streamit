@@ -67,8 +67,8 @@ public class SimplePartitioner extends Partitioner {
                 Trace trace;
                 int filtersInTrace = 1;
 
-                System.out.println("** Creating trace with first filter = "
-                                   + filterContent);
+                //System.out.println("** Creating trace with first filter = "
+                //                   + filterContent);
 
                 // create the input trace node
                 if (unflatFilter.in != null && unflatFilter.in.length > 0) {
@@ -294,21 +294,21 @@ public class SimplePartitioner extends Partitioner {
             // going for
             // none-predefined nodes
             if (unflatFilter.filter instanceof SIRPredefinedFilter) {
-                System.out.println("Cannot continue trace: (Source) "
+                SpaceTimeBackend.println("Cannot continue trace: (Source) "
                                    + unflatFilter.filter + " is predefined");
                 return false;
             }
 
             // don't continue if the next filter is predefined
             if (dest.filter instanceof SIRPredefinedFilter) {
-                System.out.println("Cannot continue trace(Dest): "
+                SpaceTimeBackend.println("Cannot continue trace(Dest): "
                                    + dest.filter + " is predefined");
                 return false;
             }
 
             // cut out linear filters
             if (isLinear || dest.isLinear()) {
-                System.out
+                SpaceTimeBackend
                     .println("Cannot continue trace: Source and Dest are not congruent linearly");
                 return false;
             }
@@ -316,7 +316,7 @@ public class SimplePartitioner extends Partitioner {
             // check the size of the trace, the length must be less than number
             // of tiles + 1
             if (newTotalFilters > rawChip.getTotalTiles()) {
-                System.out
+                SpaceTimeBackend
                     .println("Cannot continue trace: Filters == number of tiles");
                 return false;
             }
@@ -441,8 +441,8 @@ public class SimplePartitioner extends Partitioner {
         if (((FilterTraceNode)node.getNext()).getFilter().getArray() != null)
             out.append("color=cornflowerblue, style=filled, ");
         
-        out.append("label=\"" + node.toString());
-                
+        out.append("label=\"" + node.getAsInput().debugString(true));//toString());
+        
         node = node.getNext();
         while (node != null ) {
             if (node.isFilterTrace()) {
@@ -451,8 +451,11 @@ public class SimplePartitioner extends Partitioner {
                         + "}");
             }
             else {
-                out.append("\\n" + node.toString());
+                out.append("\\n" + node.getAsOutput().debugString(true));
             }
+            /*else {
+                //out.append("\\n" + node.toString());
+            }*/
             node = node.getNext();
         }
         return out.toString();

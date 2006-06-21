@@ -61,38 +61,45 @@ public class Edge {
         return src + "->" + dest + "(" + hashCode() + ")";
     }
 
+    /**
+     * The number of items that traverse this edge in the initialization
+     * stage.
+     * 
+     * @return The number of items that traverse this edge in the initialization
+     * stage. 
+     */
     public int initItems() {
         int itemsReceived, itemsSent;
 
         // calculate the items the input trace receives
         FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode) dest
                                                    .getNext());
+        
         itemsSent = (int) ((double) next.initItemsReceived() * dest.ratio(this));
+        //System.out.println(next.initItemsReceived()  + " * " + dest.ratio(this));
+        
         // calculate the items the output trace sends
         FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode) src
                                                    .getPrevious());
         itemsReceived = (int) ((double) prev.initItemsSent() * src.ratio(this));
 
-        /*
-         * System.out.println(out); for (int i = 0; i < out.getWeights().length;
-         * i++) { System.out.println(" ---- Weight = " + out.getWeights()[i]);
-         * for (int j = 0; j < out.getDests()[i].length; j++)
-         * System.out.println(out.getDests()[i][j] + " " +
-         * out.getDests()[i][j].hashCode()); System.out.println(" ---- "); }
-         * //System.out.println(out.getWeight(edge)+ " / " +
-         * out.totalWeights());
-         * //System.out.println(((double)out.getWeight(edge) /
-         * out.totalWeights()));
-         * 
-         * System.out.println(in); //System.out.println(in.getWeights().length + " " +
-         * in.getWeights()[0]); System.out.println("-------"); for (int i = 0; i <
-         * in.getWeights().length; i++) { System.out.println(in.getSources()[i] + " " +
-         * in.getWeights()[i] + " " + in.getSources()[i].hashCode()); }
-         * System.out.println("-------");
-         */
+        /*if (itemsSent != itemsReceived) {
+            System.out.println("*** Init: Items received != Items Sent!");
+            System.out.println(prev + " -> " + next);
+            System.out.println("Mult: " + prev.getMult(true, false) + " " +  
+                    next.getMult(true, false));
+            System.out.println("Push: " + prev.prePush + " " + prev.push);
+            System.out.println("Pop: " + next.pop);
+            System.out.println("Init items Sent * Ratio: " + prev.initItemsSent() + " * " +
+                    src.ratio(this));
+            System.out.println("Items Received: " + next.initItemsReceived(true));
+            System.out.println("Ratio received: " + dest.ratio(this));
+            
+        }*/
+        
         // see if they are different
-        assert (itemsSent == itemsReceived) : "Calculating steady state: items received != items send on buffer: "
-            + src + " -> " + dest;
+        assert (itemsSent == itemsReceived) : "Calculating init stage: items received != items send on buffer: "
+            + src + " (" + itemsSent + ") -> (" + itemsReceived + ") "+ dest;
 
         return itemsSent;
     }

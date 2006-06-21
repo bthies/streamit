@@ -1847,7 +1847,8 @@ public class Rawify {
         }
         
         if (init)
-            System.out.println("REMAINING ITEMS: " + filterInfo.remaining);
+            SpaceTimeBackend.println("REMAINING ITEMS: " + filterInfo.remaining);
+        
         // now we must take care of the generating switch code for the remaining items 
         // on the input tape after the initialization phase if the upstream filter 
         // produces more than we consume in init 

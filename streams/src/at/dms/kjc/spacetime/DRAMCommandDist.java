@@ -135,9 +135,9 @@ public class DRAMCommandDist {
     
     public void printDramCommands() {
         for (int i = 0; i < intraReads.length; i++) {
-            System.out.println("intra DRAM " + i + ": " + 
+            SpaceTimeBackend.println("intra DRAM " + i + ": " + 
                     intraReads[i] + " reads " + intraWrites[i] + " writes.");
-            System.out.println("inter DRAM " + i + ": " + 
+            SpaceTimeBackend.println("inter DRAM " + i + ": " + 
                     interReads[i] + " reads " + interWrites[i] + " writes.");
         }
     }

@@ -119,6 +119,26 @@ public class FlatNode {
     }
 
     /**
+     * Return the ratio of itms that gets split to the node out.
+     * 
+     * @param out An outgoing node.
+     * @return The ratio.
+     */
+    public double splittingRatio(FlatNode out) {
+        return ((double)getWeight(out)) / ((double) getTotalOutgoingWeights());
+    }
+    
+    /**
+     * Return the ratio items that gets joined from the node in.
+     *  
+     * @param in An incoming node.
+     * @return The ratio.
+     */
+    public double joiningRatio(FlatNode in) {
+        return ((double)getIncomingWeight(in)) / ((double)getTotalIncomingWeights()); 
+    }
+    
+    /**
      * Remove the incoming edge to this Flatnode from from.  This removes 
      * both the edge and its associated weight.
      *  

@@ -137,6 +137,11 @@ public abstract class SimulatedAnnealing {
             // good initial layout. Some random layouts really kill the
             // algorithm
             for (int two = 0; two < iterations; two++) {
+                if (two > 0) {
+                    initialPlacement();
+                    currentCost = placementCost(false);
+                }
+                
                 System.out.print("\nRunning Annealing Step (" + currentCost
                                  + ", " + minCost + ")");
                 double t = annealMaxTemp();

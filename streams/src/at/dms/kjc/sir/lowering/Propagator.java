@@ -247,6 +247,11 @@ public class Propagator extends SLIRReplacingVisitor {
                                           CType type,
                                           String ident,
                                           JExpression expr) {
+        // RMR { this is not necessary as the functionality exists in
+        // recordArrayInit(); the code below precludes the method from 
+        // running and results in new arrays bound to the constants map
+        // with null entries
+        /*
         // visit static array dimensions
         if (type.isArrayType()) {
             JExpression[] dims = ((CArrayType)type).getDims();
@@ -289,43 +294,45 @@ public class Propagator extends SLIRReplacingVisitor {
                     constants.remove(self);
             } else
                 constants.remove(self);
-        } 
+        }
+        else
+        */
+        // } RMR
 
         // inspect initializer
-        else if (expr != null) {
+        if (expr != null) {
             JExpression newExp = (JExpression)expr.accept(this);
             // if we have a constant AND it's a final variable...
-            if(newExp.isConstant()) {
-                constants.put(self,((JLiteral)newExp).convertType(self.getType(),null));
-                added=true;
-                changed.put(self,Boolean.TRUE);
-                if(write)
+            if (newExp.isConstant()) {
+                if (write)
                     self.setExpression(newExp);
-            } else if (newExp!=expr) /*&& CModifier.contains(modifiers,
-                                       ACC_FINAL)*/ {
+                constants.put(self, ((JLiteral)newExp).convertType(self.getType(), null));
+                added = true;
+                changed.put(self, Boolean.TRUE);
+            } else if (newExp!=expr) /*&& CModifier.contains(modifiers, ACC_FINAL)*/ {
                 // reset the value
-                if(write)
+                if (write)
                     self.setExpression(newExp);
                 // remember the value for the duration of our visiting
                 constants.put(self, newExp);
-                added=true;
-                changed.put(self,Boolean.TRUE);
-            } else if(newExp instanceof JLocalVariableExpression) {
-                if(write)
+                added = true;
+                changed.put(self, Boolean.TRUE);
+            } else if (newExp instanceof JLocalVariableExpression) {
+                if (write)
                     self.setExpression(newExp);
                 constants.put(self, newExp);
-                added=true;
-                changed.put(self,Boolean.TRUE);
-            } else if(newExp instanceof SIRCreatePortal) {
+                added = true;
+                changed.put(self, Boolean.TRUE);
+            } else if (newExp instanceof SIRCreatePortal) {
                 if (!constants.containsKey(self)) {
-                    //System.out.println("\n[new Exp]Adding portal to constants, variable is: "+self.getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
+                    // System.out.println("\n[new Exp]Adding portal to constants, variable is: " +
+                    //                    self.getIdent() + " constants: " + constants + " at: " +
+                    //                    self.getTokenReference());
                     constants.put(self, new SIRPortal(type));
                 }
             } else if (newExp instanceof JArrayInitializer) {
-                recordArrayInit((JArrayInitializer)newExp, 
-                                self);
+                recordArrayInit((JArrayInitializer)newExp, self);
             }
-        
         }
         return self;
     }
@@ -367,6 +374,7 @@ public class Propagator extends SLIRReplacingVisitor {
                 }
                 constants.put(self, array);
                 added = true;
+                changed.put(self, Boolean.TRUE);
                 return;
             }
         }  //now look for 2 dimensional rectangular arrays
@@ -400,6 +408,7 @@ public class Propagator extends SLIRReplacingVisitor {
         
                 constants.put(self, array);
                 added = true;
+                changed.put(self, Boolean.TRUE);
                 return;
             }
         }

@@ -70,20 +70,6 @@ bit->bit filter FP()
 
 }
 
-// take N streams and Xor them together
-// the streams are assumed to be interleaved
-bit->bit filter Xor(int N)
-{
-    work push 1 pop N {
-        bit x = pop();
-        for (int i = 1; i < N; i++) {
-            bit y = pop();
-            x = x ^ y;
-        }
-		push(x);
-    }
-}
-
 // substitution boxes
 bit->bit filter Sbox(int round) 
 {

@@ -1,6 +1,20 @@
 // Provides utility routine
 // (rodric rabbah, <rabbah@mit.edu>)
 
+// take N streams and Xor them together
+// the streams are assumed to be interleaved
+bit->bit filter Xor(int n)
+{
+    work push 1 pop n {
+        bit x = pop();
+        for (int i = 1; i < n; i++) {
+            bit y = pop();
+            x = x ^ y;
+        }
+		push(x);
+    }
+}
+
 // input:  integer
 // output: LSB first ... MSB last
 int->bit filter IntoBits() 
@@ -46,9 +60,9 @@ bit->bit splitjoin BitSlice(int w, int b)
 // input:  LSB first ... MSB last
 // output: none
 // prints: MSW first ... LSW last
-bit->void pipeline CipherTextPrinter(int N)
+bit->void pipeline CipherTextPrinter(int n)
 {
-    int bits  = N;
+    int bits  = n;
     int bytes = bits / 4;
     
     add BitstoInts(4);
@@ -79,9 +93,9 @@ bit->void pipeline CipherTextPrinter(int N)
 // input:  LSB first ... MSB last
 // output: LSB first ... MSB last
 // prints: MSW first ... LSW last
-bit->bit splitjoin ShowIntermediate(int N)
+bit->bit splitjoin ShowIntermediate(int n)
 {
-    int bits  = N;
+    int bits  = n;
     int bytes = bits / 4;
 
     split duplicate;

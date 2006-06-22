@@ -3,7 +3,7 @@
 
 void->void pipeline DES
 {
-    int testvector = 3;
+    int testvector = 7;
 
     add PlainTextSource(testvector);
     add DEScoder(testvector);

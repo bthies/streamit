@@ -1,5 +1,5 @@
 SOURCES = DES.str Sboxes.str Utils.str Keys.str Source.str
-BACKEND = --simpleC
+BACKEND = 
 
 all: des
 
@@ -13,9 +13,9 @@ lib: ${SOURCES}
 	strc DES.str Sboxes.str Utils.str Keys.str Source.str --library -i1
 
 check:
-	@head -4 ../data/output | tail -1
-	@echo "assuming test vector #3 is used"
-	@echo "expected output can be found in ../data/output"
+	@head -8 ../output/output.txt | tail -1
+	@echo "assuming test vector #7 is used"
+	@echo "expected output can be found in ../output/output.txt"
 
 
 clean:

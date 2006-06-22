@@ -12,7 +12,7 @@
     </impl>
     <impl lang="StreamIt" dir="streamit" iters="19987">
       <desc>StreamIt benchmark as described above.</desc>
-      <file class="source">audiobeam.str</file>
+      <file class="source">Audiobeam.str</file>
       <file class="data" relative="true">../data/str-data/near-field/data2.bin</file>
     </impl>
   </implementations>

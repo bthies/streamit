@@ -1,0 +1,27 @@
+Plaintext: 
+    - modify Source.str to change the input plaint text
+    - currently includes 34 64-bit plain texts for encoding
+
+Key: 
+    - modify Keys.str to edit the user key
+    - currently includes 34 64-bit user keys for encoding
+
+Compile:
+    - strc DES.str Keys.str Source.str Utils.str Sboxes.str -o des
+
+Run: 
+    - ./des -i1
+    - only need to run 1 iteration of the top level pipeline
+    - more iterations will just encrypt the same plaintext
+    - top level pipeline currently programmed to encode N in 
+      [1..34] plain texts using N different keys (default N = 34)
+
+Expected output:
+    - see ../data/output
+
+NOTES:
+- the key schedule implementation (in Keys.str) is currently
+inefficient because at each round, it recalculates all previous
+intermediate keys; this is not necessary and should be done at init
+time instead (the current implementation is the most straightforward
+and hence the reason it is chosen)

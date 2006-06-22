@@ -1,0 +1,179 @@
+// Provides utility routine
+// (rodric rabbah, <rabbah@mit.edu>)
+
+// take N streams and Xor them together
+// the streams are assumed to be interleaved
+bit->bit filter Xor(int n)
+{
+    work push 1 pop n {
+        bit x = pop();
+        for (int i = 1; i < n; i++) {
+            bit y = pop();
+            x = x ^ y;
+        }
+		push(x);
+    }
+}
+
+// swap two input streams each of 32 bits
+bit->bit filter CrissCross()
+{
+    work pop 2 * 32 push 2 * 32 {
+        for (int i = 0; i < 32; i++) {
+                push(peek(32 + i));
+        }
+        for (int i = 0; i < 32; i++) {
+            push(pop());
+        }
+        for (int i = 0; i < 32; i++) {
+            pop();
+        }
+    }
+}
+
+// input:  integer
+// output: LSB first ... MSB last
+int->bit filter IntoBits() 
+{
+  work pop 1 push 32 {
+      int v = pop();
+      int m = 1;
+
+      for (int i = 0; i < 32; i++) {
+          if (((v & m) >> i) != 0)
+              push(1);
+          else
+              push(0);
+          m = m << 1;
+      }
+  }
+}
+
+// input:  LSB first ... MSB last
+// output: integer
+bit->int filter BitstoInts(int n) 
+{
+    work peek n pop n push 1 {
+        int v = 0;
+        for (int i = 0; i < n; i++) {
+            v = v | (pop() << i);
+        }
+        push(v);
+    }
+}
+
+// input:  w words x b bits/word
+// output: bit i from all w words, followed by i+1 for all b bits
+bit->bit splitjoin BitSlice(int w, int b)
+{
+    split roundrobin(1);
+    for (int l = 0; l < b; l++) {
+        add Identity<bit>;
+    }
+    join roundrobin(w);
+}
+
+// input:  LSB first ... MSB last
+// output: none (dummy output)
+// prints: MSW first ... LSW last
+bit->bit pipeline CipherTextPrinter(int n)
+{
+    int bits  = n;
+    int bytes = bits / 4;
+    
+    add BitstoInts(4);
+    add int->bit filter {
+        work pop bytes push 1 {
+            for (int i = bytes - 1; i >= 0; i--) {
+                int v = peek(i);
+                if (v < 10) print(v);
+                else if (v == 10) print("A");
+                else if (v == 11) print("B");
+                else if (v == 12) print("C");
+                else if (v == 13) print("D");
+                else if (v == 14) print("E");
+                else if (v == 15) print("F");
+                else {
+                    print("ERROR: "); 
+                    println(v);
+                }
+            }
+            println("");
+
+            for (int i = 0; i < bytes; i++) 
+                pop();
+
+            push(0); // dummy output
+        }
+    }
+}
+
+// input:  LSB first ... MSB last
+// output: LSB first ... MSB last (Identity)
+// prints: MSW first ... LSW last (HEX format)
+bit->bit splitjoin ShowIntermediate(int n)
+{
+    int bits  = n;
+    int bytes = bits / 4;
+
+    split duplicate;
+    add Identity<bit>;
+    add pipeline {
+        add BitstoInts(4);
+        add int->void filter {
+            work pop bytes {
+                for (int i = bytes - 1; i >= 0; i--) {
+                    int v = peek(i);
+                    if (v < 10) print(v);
+                    else if (v == 10) print("A");
+                    else if (v == 11) print("B");
+                    else if (v == 12) print("C");
+                    else if (v == 13) print("D");
+                    else if (v == 14) print("E");
+                    else if (v == 15) print("F");
+                    else {
+                        print("ERROR: "); 
+                        println(v);
+                    }
+                }
+                println("");
+                
+                for (int i = 0; i < bytes; i++) 
+                    pop();
+            }
+        }
+    }
+    join roundrobin(1, 0);
+}
+
+// input:  LSB first ... MSB last
+// output: LSB first ... MSB last (Identity)
+// prints: MSB first ... LSB last (BINARY format)
+bit->bit filter ShowBitStream(int n, int w)
+{
+    work pop n push n {
+        for (int i = n-1; i >= 0; i--) {
+            print(peek(i));
+            if ((i % w) == 0) print(" ");
+        }
+        println("");
+        for (int i = 0; i < n; i++) 
+            push(pop());
+    }
+}
+
+/*
+ * pipeline to test the utility streams
+ *
+ void->void pipeline Utils
+ {
+    add void->int filter {
+        work push 128 {
+            for (int i = 0; i < 128; i++) push(i);
+        }
+    }
+
+    add IntoBits();
+    add CipherTextPrinter(128);
+ }
+*/

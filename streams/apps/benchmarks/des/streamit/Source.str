@@ -1,0 +1,51 @@
+// Provides plain text for encryption
+// (rodric rabbah, <rabbah@mit.edu>)
+
+// plain text source
+// input: none (dummy input)
+bit->bit pipeline PlainTextSource(int vector)
+{
+    int[34][2] TEXT = {{0x00000000, 0x00000000},  // 0x0000000000000000
+                       {0xFFFFFFFF, 0xFFFFFFFF},  // 0xFFFFFFFFFFFFFFFF
+                       {0x10000000, 0x00000001},  // 0x1000000000000001
+                       {0x11111111, 0x11111111},  // 0x1111111111111111
+                       {0x11111111, 0x11111111},  // 0x1111111111111111
+                       {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
+                       {0x00000000, 0x00000000},  // 0x0000000000000000
+                       {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
+                       {0x01A1D6D0, 0x39776742},  // 0x01A1D6D039776742
+                       {0x5CD54CA8, 0x3DEF57DA},  // 0x5CD54CA83DEF57DA
+                       {0x0248D438, 0x06F67172},  // 0x0248D43806F67172
+                       {0x51454B58, 0x2DDF440A},  // 0x51454B582DDF440A
+                       {0x42FD4430, 0x59577FA2},  // 0x42FD443059577FA2
+                       {0x059B5E08, 0x51CF143A},  // 0x059B5E0851CF143A
+                       {0x0756D8E0, 0x774761D2},  // 0x0756D8E0774761D2
+                       {0x762514B8, 0x29BF486A},  // 0x762514B829BF486A
+                       {0x3BDD1190, 0x49372802},  // 0x3BDD119049372802
+                       {0x26955F68, 0x35AF609A},  // 0x26955F6835AF609A
+                       {0x164D5E40, 0x4F275232},  // 0x164D5E404F275232
+                       {0x6B056E18, 0x759F5CCA},  // 0x6B056E18759F5CCA
+                       {0x004BD6EF, 0x09176062},  // 0x004BD6EF09176062
+                       {0x480D3900, 0x6EE762F2},  // 0x480D39006EE762F2
+                       {0x437540C8, 0x698F3CFA},  // 0x437540C8698F3CFA
+                       {0x072D43A0, 0x77075292},  // 0x072D43A077075292
+                       {0x02FE5577, 0x8117F12A},  // 0x02FE55778117F12A
+                       {0x1D9D5C50, 0x18F728C2},  // 0x1D9D5C5018F728C2
+                       {0x30553228, 0x6D6F295A},  // 0x305532286D6F295A
+                       {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
+                       {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
+                       {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
+                       {0xFFFFFFFF, 0xFFFFFFFF},  // 0xFFFFFFFFFFFFFFFF
+                       {0x00000000, 0x00000000},  // 0x0000000000000000
+                       {0x00000000, 0x00000000},  // 0x0000000000000000
+                       {0xFFFFFFFF, 0xFFFFFFFF}}; // 0xFFFFFFFFFFFFFFFF
+
+    add bit->int filter {
+        work pop 1 push 2 {
+            pop(); // pop dummy input
+            push(TEXT[vector][1]); // LSW
+            push(TEXT[vector][0]); // MSW
+        }
+    }
+    add IntoBits(); 
+}

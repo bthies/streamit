@@ -1,0 +1,190 @@
+// Implements DES encyption algorithm
+// (rodric rabbah, <rabbah@mit.edu>)
+
+void->void pipeline DES
+{
+    int N = 34;
+    // encrypts N 64-bit plain texts
+    // using    N 64-bit user  keys
+    //
+    // set up N parallel pipelines
+    // each pipeline uses a index (vector)
+    // to access the appropriate plain text and keys 
+    //
+    // NOTE: compiler cannot handle top level pipeline
+    // with null splitters and joiners, hence push a dummy
+    // input into the source filter, and pop a dummy output
+    // from the sink filter
+    add void->bit filter { work push 1 { push(0); } } // push dummy input
+    add splitjoin {
+        split duplicate;
+        for (int i = 0; i < N; i++) {
+            add pipeline {
+                add PlainTextSource(i);
+                add DEScoder(i);
+                add CipherTextPrinter(64);
+            }
+        }
+        join roundrobin;
+    }
+    add bit->void filter { work pop 1 { pop(); } }    // pop dummy output
+}
+
+bit->bit pipeline DEScoder(int vector)
+{
+    // initial permutation of 64 bit plain text
+    add IP();
+
+    for (int i = 1; i <= 16; i++) {
+        add splitjoin {
+            split duplicate;
+            // R[i+1] = f(R[i]) xor L[i]
+            add nextR(vector, i);
+            // L[i+1] = R[i]
+            add nextL();
+            join roundrobin(32, 32);
+        }
+    }
+    add CrissCross();
+
+    add IPm1();
+}
+
+bit->bit filter IP()
+{
+    work push 64 pop 64 {
+        int[64] p = {58, 50, 42, 34, 26, 18, 10, 2,
+                     60, 52, 44, 36, 28, 20, 12, 4,
+                     62, 54, 46, 38, 30, 22, 14, 6,
+                     64, 56, 48, 40, 32, 24, 16, 8,
+                     57, 49, 41, 33, 25, 17,  9, 1,
+                     59, 51, 43, 35, 27, 19, 11, 3,
+                     61, 53, 45, 37, 29, 21, 13, 5,
+                     63, 55, 47, 39, 31, 23, 15, 7};
+
+        for (int i = 0; i < 64; i++) {
+            push(peek(p[i] - 1));
+        }
+        for (int i = 0; i < 64; i++) {
+            pop();
+        }
+    }
+}
+
+// L[i+1] is lower 32 bits of current 64 bit input
+// input  is LR[i]
+// output is  R[i]
+bit->bit pipeline nextL()
+{
+    add splitjoin {
+        split roundrobin(32, 32);
+        add Identity<bit>();                           // R[i] is forwarded to next round
+        add bit->void filter { work pop 1 { pop(); } } // L[i] is decimated
+        join roundrobin(32, 0);
+    }
+}
+
+// R[i+1] is f(R[i]) xor L[i]
+// R[i] is lower 32 bits of input stream
+// L[i] is upper 32 bits of input stream
+// input is LR[i]
+// output is f(R[i]) xor L[i]
+bit->bit pipeline nextR(int vector, int round)
+{
+    add splitjoin {
+        split roundrobin(32, 32);
+        add f(vector, round);
+        add Identity<bit>();
+        join roundrobin;
+    }
+    add Xor(2);
+}
+
+bit->bit pipeline f(int vector, int round)
+{
+    // expand R from 32 to 48 bits and xor with key
+    add splitjoin {
+        split roundrobin(32, 0);
+        add E(); 
+        add KeySchedule(vector, round); 
+        join roundrobin;
+    }
+    add Xor(2);
+
+    // apply substitutions to generate 32 bit cipher
+    add Sboxes();
+
+    // permute the bits
+    add P();
+}
+
+bit->bit filter E()
+{
+    work pop 32 push 48 {
+        int[48] p = { 32,  1,  2,  3,  4,  5,
+                       4,  5,  6,  7,  8,  9,
+                       8,  9, 10, 11, 12, 13,
+                      12, 13, 14, 15, 16, 17,
+                      16, 17, 18, 19, 20, 21,
+                      20, 21, 22, 23, 24, 25,
+                      24, 25, 26, 27, 28, 29,
+                      28, 29, 30, 31, 32, 1};
+    
+        for (int i = 0; i < 48; i++) {
+            push(peek(p[i] - 1));
+        }
+        for (int i = 0; i < 32; i++) {
+            pop();
+        }
+    }
+}
+
+bit->bit filter P()
+{
+    work pop 32 push 32 {
+        int[32] p = {16,  7, 20, 21,
+                     29, 12, 28, 17,
+                      1, 15, 23, 26,
+                      5, 18, 31, 10,
+                      2,  8, 24, 14,
+                     32, 27,  3,  9,
+                     19, 13, 30,  6,
+                     22, 11,  4, 25};
+
+        // input bit stream is from MSB ... LSB 
+        // that is LSB is head of FIFO, MSB is tail of FIFO
+        // as in b63 b62 b61 b60 ... b3  b2  b1  b0
+        // but P permutation requires bit numbering from left to right
+        // as in b1  b2  b3  b4  ... b61 b62 b63 b64
+        // (note indexing from 0 vs 1)
+        // permutation P permutes the bits and emits them
+        // in reverse order
+        for (int i = 31; i >= 0; i--) {
+            push(peek(32 - p[i]));
+        }
+        for (int i = 0; i < 32; i++) {
+            pop();
+        }
+    }
+}
+
+bit->bit filter IPm1()
+{
+    work push 64 pop 64 {
+        int[64] p = { 40, 8, 48, 16, 56, 24, 64, 32,
+                      39, 7, 47, 15, 55, 23, 63, 31,
+                      38, 6, 46, 14, 54, 22, 62, 30,
+                      37, 5, 45, 13, 53, 21, 61, 29,
+                      36, 4, 44, 12, 52, 20, 60, 28,
+                      35, 3, 43, 11, 51, 19, 59, 27,
+                      34, 2, 42, 10, 50, 18, 58, 26,
+                      33, 1, 41,  9, 49, 17, 57, 25};
+        
+        for (int i = 0; i < 64; i++) {
+            push(peek(p[i] - 1));
+        }
+        for (int i = 0; i < 64; i++) {
+            pop();
+        }
+    }
+}

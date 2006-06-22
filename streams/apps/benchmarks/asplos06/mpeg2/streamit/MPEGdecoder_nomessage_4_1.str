@@ -133,6 +133,17 @@ void->void pipeline MPEGdecoder_nomessage_4_1() {
             }
         }
         add BlockDecode();
+	/*
+	add int->int filter 
+	    {
+		work push 1 pop 1 
+		    {
+			int x = pop();
+			push(x);
+			println(x);
+		    }
+	    }
+	*/
         add FileWriter<int>("./dec_nm_blockdecode_1.int");
     } else if (parse_or_process == 5) {
         add FileReader<int>("../input/dec_nm_parsed.int");
@@ -5147,6 +5158,10 @@ float->float filter iDCT_1D_reference_fine(int size) {
             }
             push(tempsum);
         }
+	for (int i = 0; i < size; i++) {
+	    pop();
+	}
+	
     }
 }
 

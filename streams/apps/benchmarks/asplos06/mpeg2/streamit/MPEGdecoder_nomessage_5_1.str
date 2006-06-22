@@ -5147,6 +5147,8 @@ float->float filter iDCT_1D_reference_fine(int size) {
             }
             push(tempsum);
         }
+	for (int i = 0; i < size; i++)
+	    pop();
     }
 }
 

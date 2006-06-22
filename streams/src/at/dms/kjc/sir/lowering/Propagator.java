@@ -247,11 +247,6 @@ public class Propagator extends SLIRReplacingVisitor {
                                           CType type,
                                           String ident,
                                           JExpression expr) {
-        // RMR { this is not necessary as the functionality exists in
-        // recordArrayInit(); the code below precludes the method from 
-        // running and results in new arrays bound to the constants map
-        // with null entries
-        /*
         // visit static array dimensions
         if (type.isArrayType()) {
             JExpression[] dims = ((CArrayType)type).getDims();
@@ -264,30 +259,30 @@ public class Propagator extends SLIRReplacingVisitor {
 
             // ripped out of original propagator, looks like it's
             // initializing array entries to zero
-            changed.put(self,Boolean.TRUE);
-            if(dims.length==1) {
-                if(dims[0] instanceof JIntLiteral) {
+            changed.put(self, Boolean.TRUE);
+            if (dims.length == 1) {
+                if (dims[0] instanceof JIntLiteral) {
                     int dim1 = ((JIntLiteral)dims[0]).intValue();
                     // only propagate arrays if they are under a threshold size
                     if (dim1 < MAX_ARRAY_SIZE) {
-                        Object[] array=new Object[dim1];
-                        constants.put(self,array);
-                        added=true;
+                        Object[] array = new Object[dim1];
+                        constants.put(self, array);
+                        added = true;
                     } else
                         constants.remove(self);
                 } else
                     constants.remove(self);
-            } else if(dims.length==2) {
-                if((dims[0] instanceof JIntLiteral)&&(dims[1] instanceof JIntLiteral)) {
+            } else if (dims.length == 2) {
+                if ((dims[0] instanceof JIntLiteral) && (dims[1] instanceof JIntLiteral)) {
                     int dim1 = ((JIntLiteral)dims[0]).intValue();
                     int dim2 = ((JIntLiteral)dims[1]).intValue();
                     int numElements = dim1 * dim2;
 
                     // only propagate arrays if they are under a threshold size
                     if (numElements < MAX_ARRAY_SIZE) {
-                        Object[][] array=new Object[dim1][dim2];
-                        constants.put(self,array);
-                        added=true;
+                        Object[][] array = new Object[dim1][dim2];
+                        constants.put(self, array);
+                        added = true;
                     } else
                         constants.remove(self);
                 } else
@@ -295,9 +290,6 @@ public class Propagator extends SLIRReplacingVisitor {
             } else
                 constants.remove(self);
         }
-        else
-        */
-        // } RMR
 
         // inspect initializer
         if (expr != null) {
@@ -373,8 +365,6 @@ public class Propagator extends SLIRReplacingVisitor {
                     array[i] = arrInit.getElems()[i];
                 }
                 constants.put(self, array);
-                added = true;
-                changed.put(self, Boolean.TRUE);
                 return;
             }
         }  //now look for 2 dimensional rectangular arrays
@@ -407,8 +397,6 @@ public class Propagator extends SLIRReplacingVisitor {
                 }
         
                 constants.put(self, array);
-                added = true;
-                changed.put(self, Boolean.TRUE);
                 return;
             }
         }

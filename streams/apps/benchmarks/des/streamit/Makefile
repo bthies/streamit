@@ -7,10 +7,10 @@ des: ${SOURCES}
 	strc DES.str Sboxes.str Utils.str Keys.str Source.str -o des ${BACKEND}
 
 run: des
-	./des -i1
+	./des -i 1
 
 lib: ${SOURCES}
-	strc DES.str Sboxes.str Utils.str Keys.str Source.str --library -i1
+	strc DES.str Sboxes.str Utils.str Keys.str Source.str --library -i 1
 
 check:
 	@head -8 ../output/output.txt | tail -1

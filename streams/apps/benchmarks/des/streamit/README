@@ -14,7 +14,7 @@ Run:
     - only need to run 1 iteration of the top level pipeline
     - more iterations will just encrypt the same plaintext
     - top level pipeline currently programmed to encode N in 
-      [1..34] plain texts using N different keys (default N = 34)
+      [1..34] plain texts using 1 of N different keys
 
 Expected output:
     - see ../data/output

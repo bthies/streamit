@@ -3,31 +3,11 @@
 
 void->void pipeline DES
 {
-    int N = 34;
-    // encrypts N 64-bit plain texts
-    // using    N 64-bit user  keys
-    //
-    // set up N parallel pipelines
-    // each pipeline uses a index (vector)
-    // to access the appropriate plain text and keys 
-    //
-    // NOTE: compiler cannot handle top level pipeline
-    // with null splitters and joiners, hence push a dummy
-    // input into the source filter, and pop a dummy output
-    // from the sink filter
-    add void->bit filter { work push 1 { push(0); } } // push dummy input
-    add splitjoin {
-        split duplicate;
-        for (int i = 0; i < N; i++) {
-            add pipeline {
-                add PlainTextSource(i);
-                add DEScoder(i);
-                add CipherTextPrinter(64);
-            }
-        }
-        join roundrobin;
-    }
-    add bit->void filter { work pop 1 { pop(); } }    // pop dummy output
+    int testvector = 3;
+
+    add PlainTextSource(testvector);
+    add DEScoder(testvector);
+    add CipherTextPrinter(64);
 }
 
 bit->bit pipeline DEScoder(int vector)

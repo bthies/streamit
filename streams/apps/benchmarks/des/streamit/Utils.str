@@ -74,16 +74,16 @@ bit->bit splitjoin BitSlice(int w, int b)
 }
 
 // input:  LSB first ... MSB last
-// output: none (dummy output)
+// output: none
 // prints: MSW first ... LSW last
-bit->bit pipeline CipherTextPrinter(int n)
+bit->void pipeline CipherTextPrinter(int n)
 {
     int bits  = n;
     int bytes = bits / 4;
     
     add BitstoInts(4);
-    add int->bit filter {
-        work pop bytes push 1 {
+    add int->void filter {
+        work pop bytes {
             for (int i = bytes - 1; i >= 0; i--) {
                 int v = peek(i);
                 if (v < 10) print(v);
@@ -102,8 +102,6 @@ bit->bit pipeline CipherTextPrinter(int n)
 
             for (int i = 0; i < bytes; i++) 
                 pop();
-
-            push(0); // dummy output
         }
     }
 }

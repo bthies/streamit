@@ -2,8 +2,9 @@
 // (rodric rabbah, <rabbah@mit.edu>)
 
 // plain text source
-// input: none (dummy input)
-bit->bit pipeline PlainTextSource(int vector)
+// input: none
+// output: plain text in two words (LSW first then MSW)
+void->bit pipeline PlainTextSource(int vector)
 {
     int[34][2] TEXT = {{0x00000000, 0x00000000},  // 0x0000000000000000
                        {0xFFFFFFFF, 0xFFFFFFFF},  // 0xFFFFFFFFFFFFFFFF
@@ -40,9 +41,8 @@ bit->bit pipeline PlainTextSource(int vector)
                        {0x00000000, 0x00000000},  // 0x0000000000000000
                        {0xFFFFFFFF, 0xFFFFFFFF}}; // 0xFFFFFFFFFFFFFFFF
 
-    add bit->int filter {
-        work pop 1 push 2 {
-            pop(); // pop dummy input
+    add void->int filter {
+        work push 2 {
             push(TEXT[vector][1]); // LSW
             push(TEXT[vector][0]); // MSW
         }

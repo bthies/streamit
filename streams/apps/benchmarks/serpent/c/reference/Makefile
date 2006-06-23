@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 2006-06-23 18:16:37 rabbah Exp $
+# $Id: Makefile,v 1.3 2006-06-23 18:22:29 rabbah Exp $
 # Makefile for GNU make for the C reference implementation of Serpent
 
 # This file is part of the C reference implementation of Serpent.
@@ -169,5 +169,4 @@ cbc_e_m_fast: cbc_e_m.o serpent-bitslice.o serpent-aux.o
 	$(CC) -o $@ $(CFLAGS) $^
 cbc_d_m_fast: cbc_d_m.o serpent-bitslice.o serpent-aux.o
 	$(CC) -o $@ $(CFLAGS) $^
-
 

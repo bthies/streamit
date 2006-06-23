@@ -1,0 +1,17 @@
+// Define globals
+// (rodric rabbah, <rabbah@mit.edu>)
+
+static {
+    int BITS_PER_WORD  = 32;
+
+    // used for key schedule (golden ration)
+    int PHI            = 0x9e3779b9;
+
+    // used for printing descriptor in output
+    boolean PRINTINFO  = true;
+    int PLAINTEXT      = 0;
+    int USERKEY        = 1;
+    int CIPHERTEXT     = 2;
+
+    init {}
+}

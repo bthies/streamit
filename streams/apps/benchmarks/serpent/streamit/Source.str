@@ -2,16 +2,31 @@
 // (rodric rabbah, <rabbah@mit.edu>)
 
 // plain text source
-void->bit pipeline PlainTextSource()
+void->bit pipeline PlainTextSource(int vector)
 {
-    // test text: 0x00000000,0x00000001,0x00000002,0x00000003
+    int[5][4] TEXT = {{0x00000000, 0x00000000, 0x00000000, 0x00000000},  // 00000000000000000000000000000000
+                      {0x00000003, 0x00000002, 0x00000001, 0x00000000},  // 00000003000000020000000100000000
+                      {0x92efa3ca, 0x9477794d, 0x31f4df7b, 0xce23e60a},  // 92efa3ca9477794d31f4df7bce23e60a
+                      {0x41133a29, 0xb97e3b42, 0x31549e8c, 0x2d0af27e},  // 41133a29b97e3b4231549e8c2d0af27e
+                      {0x6ee8edc7, 0x4dcfefd0, 0xc7beaee4, 0xcbcbc9c2}}; // 6ee8edc74dcfefd0c7beaee4cbcbc9c2
+
+    // test text: 0x
     add void->int filter {
         work push 4 {
-            push(0x00000000);
-            push(0x00000001);
-            push(0x00000002);
-            push(0x00000003);
+            push(TEXT[vector][3]); // LSW
+            push(TEXT[vector][2]);
+            push(TEXT[vector][1]);
+            push(TEXT[vector][0]); // MSW
         }
     }
     add IntoBits();
+
+    if (PRINTINFO) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add HexPrinter(PLAINTEXT, 128);
+            join roundrobin(1, 0);
+        }
+    }
 }

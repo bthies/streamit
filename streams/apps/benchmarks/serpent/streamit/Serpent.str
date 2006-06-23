@@ -4,21 +4,21 @@
 
 void->void pipeline Serpent
 {
-    add PlainTextSource();
-    add SerpentEncoder();
-    add CipherTextPrinter(128);
+    int testvector = 2;
+
+    add PlainTextSource(testvector);
+    add SerpentEncoder(testvector);
+    add HexPrinter(CIPHERTEXT, 128);
 }
 
-bit->bit pipeline SerpentEncoder
+bit->bit pipeline SerpentEncoder(int vector)
 {
-    int N = 128;
-
     // perform initial permutation
     add IP();
-
+    
     for (int i = 0; i < 32; i++) {
         // perform round i
-        add R(N, i);  
+        add R(vector, i);  
     }
 
     // perform final permutation
@@ -97,12 +97,14 @@ bit->bit filter Sbox(int round)
 }
 
 // round functions
-bit->bit pipeline R(int N, int round)
+bit->bit pipeline R(int vector, int round)
 {
+    int N = 128 /* bits */;
+
     add bit->bit splitjoin {
         split roundrobin(N, 0);
         add Identity<bit>;
-        add KeySchedule(round);
+        add KeySchedule(vector, round);
         join roundrobin(1);
     }
 
@@ -110,21 +112,15 @@ bit->bit pipeline R(int N, int round)
     
     add Sbox(round % 8);
 
-    // for debugging
-    // add ShowIntermediate(128);
-
     if (round < 31) {
         add rawL();
     } else {
         add bit->bit splitjoin {
             split roundrobin(N, 0);
             add Identity<bit>;
-            add KeySchedule(32);
+            add KeySchedule(vector, 32);
             join roundrobin(1);
         }
         add Xor(2);
     }
-
-    // for debugging
-    // add ShowIntermediate(N);
 }

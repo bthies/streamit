@@ -18,7 +18,7 @@ void->bit pipeline KeySchedule(int vector, int round)
 
     // output 128 bits intermediate key {w_i, w_i+1, w_i+2, w_i+3}
     add void->int filter {
-        int[8]   key = {0};
+        int[8]   key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
         int[140] w;
 
         // precalculate key schedule

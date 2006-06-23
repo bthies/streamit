@@ -8,7 +8,7 @@ static {
     int PHI            = 0x9e3779b9;
 
     // used for printing descriptor in output
-    boolean PRINTINFO  = true;
+    boolean PRINTINFO  = false;
     int PLAINTEXT      = 0;
     int USERKEY        = 1;
     int CIPHERTEXT     = 2;

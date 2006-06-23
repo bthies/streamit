@@ -32,7 +32,7 @@
 
 void->void pipeline DCT4
 {
-    add FileReader<int>("idct-input-small.bin");
+    add FileReader<int>("../input/idct-input-small.bin");
     add iDCT8x8_ieee(64);
     /*        add float->float filter 
 	{

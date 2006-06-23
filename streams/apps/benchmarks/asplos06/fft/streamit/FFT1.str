@@ -4,7 +4,7 @@ void->void pipeline FFT1() {
     
 
 //    add FFTTestSource(N);
-    add FileReader<float>("FFT1.in");
+    add FileReader<float>("../input/FFT1.in");
     add FFTReorder(N);
     for(int j=2; j<=N; j*=2)
 	add CombineDFT(j);

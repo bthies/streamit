@@ -5,7 +5,7 @@
  **/
 void->void pipeline FilterBank4 {
     //add DataSource();
-    add FileReader<float>("input");
+    add FileReader<float>("../input/input");
     add FilterBankPipeline(2);
     add FileWriter<float>("FilterBank4.out");
     //add FileWriter<float>("output");

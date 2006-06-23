@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2006-06-19 23:33:20 rabbah Exp $
+# $Id: Makefile,v 1.2 2006-06-23 18:16:37 rabbah Exp $
 # Makefile for GNU make for the C reference implementation of Serpent
 
 # This file is part of the C reference implementation of Serpent.
@@ -43,9 +43,24 @@ zerotest: serpent-test
         -c 00000000000000000000000000000000
 # The correct answers to this are, respectively,
 # cipherText = A954AEBC22BBE85F60591526CC0287D7
-# plainText = 1F356DBD0829FFB383CBF6629551DBD7
+# plainText  = 1F356DBD0829FFB383CBF6629551DBD7
 
-
+strc: serpent-test
+	./$< -e \
+         -k 0000000000000000000000000000000000000000000000000000000000000000 \
+         -p 00000000000000000000000000000000
+	./$< -e \
+         -k 0000000000000000000000000000000000000000000000000000000000000000 \
+         -p 00000003000000020000000100000000
+	./$< -e \
+         -k 92efa3ca9477794d31f4df7bce23e60a6038d2d2710373f04fd30aaecea8aa43 \
+         -p 92efa3ca9477794d31f4df7bce23e60a
+	./$< -e \
+         -k d3fc99e32d09420f00a041f7e32914747731be4d4e5b5da518c2abe0a1239fa8 \
+         -p 41133a29b97e3b4231549e8c2d0af27e
+	./$< -e \
+         -k bd14742460c6addfc71eef1328e2ddb6ba5b8798bb66c3c4d380acb055cac569 \
+         -p 6ee8edc74dcfefd0c7beaee4cbcbc9c2
 
 %.txt: %
 	./$< > $@
@@ -111,7 +126,9 @@ ecb_tbl.diff: ecb_tbl.txt
 clean:
 	rm -f *.o *~ ecb_tbl_plaintext_only.txt
 veryclean: clean
-	rm -f *.exe
+		rm -f *.exe ecb_vk ecb_vt ecb_iv ecb_tbl \
+		ecb_e_m ecb_d_m cbc_e_m cbc_d_m \
+		serpent-test
 
 # --------------------------------------------------
 # (For internal development use, NIST may ignore this) 

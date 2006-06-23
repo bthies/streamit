@@ -39,7 +39,7 @@
 # Comments on the generated script files:
 # (1) Number gathering for the old raw requires prints rather than FileWriters
 #  $STREAMIT_HOME/misc/scripts/turnOffPrints.pl can take care of this for you.
-# (2) The number of steady state iterations used is 10, except for tda where
+# (2) The number of steady state iterations used is 10, except for tde where
 #  it is 1. 
 # (3) If you are generating bloodgraphs, uncomment the line that compresses
 #  the bloodgraphs for you.  The bloodgraph.ppm files are very large but
@@ -69,7 +69,7 @@ foreach (<>) {
     # $head is directory name up to '/streamit/'
     # $tail is file name without '.str' suffix
     my $numIters = 10;
-    #$numIters = 1 if $tail =~ /^tde.*/;
+    $numIters = 3 if $tail =~ /^tde.*/;
     my $emailAddress = 'mgordon@cag.csail.mit.edu';
     my $dirName = "$head/$tail.raw$argsext";
     system("mkdir", "$dirName") unless -e $dirName;

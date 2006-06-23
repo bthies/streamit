@@ -18,7 +18,7 @@
  **/
 void->void pipeline ChannelVocoder4 {
 //    add DataSource();
-    add FileReader<float>("input");
+    add FileReader<float>("../input/input");
     // low pass filter to filter out high freq noise
     add LowPassFilter(1, (2*pi*5000)/8000, 128); 
     add MainSplitjoin();

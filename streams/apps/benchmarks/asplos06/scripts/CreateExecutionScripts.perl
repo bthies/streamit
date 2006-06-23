@@ -8,8 +8,8 @@
 #
 # It also takes a second parameter: list of swtiches to the compiler.
 # The switches must be quoted if there are any spaces or characters subject
-# to shell substitution in the list.  The switch "-raw 4" is assumed and
-# should not be passed. If no other switches are passed, use ""
+# to shell substitution in the list.  The switch "-raw 4" and "-N $num_iters" 
+# is assumed and should not be passed. If no other switches are passed, use ""
 #
 # This is tailored to the structure of the apps/benchmarks/asplos06 directory:
 # There is a builtin assumption that the .str files are in directories named
@@ -69,8 +69,8 @@ foreach (<>) {
     # $head is directory name up to '/streamit/'
     # $tail is file name without '.str' suffix
     my $numIters = 10;
-    $numIters = 1 if $tail =~ /^tde.*/;
-    ##my $emailAddress = 'dimock@csail.mit.edu';
+    #$numIters = 1 if $tail =~ /^tde.*/;
+    my $emailAddress = 'mgordon@cag.csail.mit.edu';
     my $dirName = "$head/$tail.raw$argsext";
     system("mkdir", "$dirName") unless -e $dirName;
     (my $script = <<"EOT") =~ s/^\s+//gm;
@@ -87,8 +87,11 @@ foreach (<>) {
        exec >stdout 2>stderr
        . \$STREAMIT_HOME/include/dot-bashrc
        PATH=\${PATH}:/usr/local/bin:/usr/uns/bin:/usr/bin:/bin
-       nice strc -raw 4 -N $numIters $args ../streamit/$tail.str
+       cp ../streamit/$tail.str .
+       nice strc -raw 4 -N $numIters $args $tail.str
        nice make -f Makefile.streamit run
+       #check for correctness with library, appends to results.out if correct
+       \$STREAMIT_HOME/apps/benchmarks/asplos06/scripts/CheckCorrectness.perl $tail.str $numIters
        #convert bloodgraph.ppm bloodgraph.gif && rm bloodgraph.ppm && bzip2 bloodgraph.gif
        
 EOT

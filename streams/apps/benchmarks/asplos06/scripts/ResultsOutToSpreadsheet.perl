@@ -47,76 +47,79 @@ use warnings;
 use strict;
 
 # print header
-print " benchmark;options;throughput;utilization;MFLOPS\n";
+print " benchmark;options;throughput;utilization;MFLOPS;correct\n";
 
 foreach (<>) {
+  chomp;
+  my $filenameandpath = $_;
+  my ($fullfilename) = /.*\/([_A-Za-z0-9]+)\.raw(.*)\/results.out/;
+  next unless -s $filenameandpath; # ignore 0-length files.
+  my $benchmark = $1;
+  my $options = $2;
+  open (RESULTS, "< $filenameandpath") or next;
+  my @mflops = ();
+  my $tiles = "";
+  my $used_tiles = "";
+  my $throughput = "";
+  my $instrs_issued;
+  my $max_instrs_issued;
+  my $utilization = "";
+  my $mflops = "";
+  my $correct = 0;
+  while (<RESULTS>) {
     chomp;
-    my $filenameandpath = $_;
-    my ($fullfilename) = /.*\/([_A-Za-z0-9]+)\.raw(.*)\/results.out/;
-    next unless -s $filenameandpath;  # ignore 0-length files.
-    my $benchmark = $1;
-    my $options = $2;
-    $options = "-space" unless $options;
-    if ($options eq "-space") {
-	my $data = `(tail -1 "$filenameandpath")`;
-	chomp($data);
-	#print "$data\n";
-	#tiles;used;avg_cycles/steady;XX;XX;XX;outputs_per_steady;??;MFLOPS;instr_issued;XX;XX;XX%;XX;XX;max_instrs_issued
-	$data =~/^([0-9]*);([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*;([0-9]*);[0-9]*;([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*%;[0-9]*;[0-9]*;([0-9]*)$/;
-	my $tiles = $1;
-	my $used_tiles = $2;
-	my $cyc_per_steady = $3;
-	my $outputs_per_steady = $4;
-	my $mflops = $5;
-	my $instrs_issued = $6;
-	my $max_instrs_issued = $7;
-	my $throughput = "";
-	if (defined($cyc_per_steady) && defined($outputs_per_steady)) {
-	    $throughput = $cyc_per_steady / $outputs_per_steady;
-	}
-	my $utilization = "";
-	if (defined($instrs_issued) && defined($max_instrs_issued )) {
-	    $utilization = $instrs_issued / $max_instrs_issued;
-	}
-	$mflops = "" unless defined($mflops);
-	print "$benchmark;$options;$throughput;$utilization;$mflops\n";
-    } elsif ($options =~ /^-spacetime/) {
-	open (RESULTS, "< $filenameandpath") or next;
-	my @mflops = ();
-	my $tiles = "";
-	my $used_tiles = "";
-	my $throughput = "";
-        my $instrs_issued;
-	my $max_instrs_issued;
-	my $utilization = "";
-	my $mflops = "";
-	while (<RESULTS>) {
-	    chomp;
-	    if (/MFLOPS = ([0-9]+)/) {
-		push(@mflops, $1);
-	    } elsif (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);[0-9]+$/) {
-	        #tiles;assigned;throughput;work_cycles;total_cycles;bogus_mflops
-	        $tiles = $1;
-		$used_tiles = $2;
-		$throughput = $3;
-		$instrs_issued = $4;
-		$max_instrs_issued = $5;
-		if (defined($instrs_issued) && defined($max_instrs_issued )) {
-		    $utilization = $instrs_issued / $max_instrs_issued;
-		}
-	    }
-	}
-	close(RESULTS);
-        my $totalmflops = 0;
-        foreach (@mflops) {
-	    $totalmflops += $_ if defined($_);
-        }
-	my $ss_count = @mflops+0;
-	if ($ss_count) {
-	    $mflops = $totalmflops / $ss_count;
-	}
-	print "$benchmark;$options;$throughput;$utilization;$mflops\n";
-    } else {
-	print STDERR "unrecognized file format\n";
+    if (/MFLOPS = ([0-9]+)/) {
+      push(@mflops, $1);
+    } elsif (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);[0-9]+$/) {
+      #tiles;assigned;throughput;work_cycles;total_cycles;bogus_mflops
+      $tiles = $1;
+      $used_tiles = $2;
+      $throughput = $3;
+      $instrs_issued = $4;
+      $max_instrs_issued = $5;
+      if (defined($instrs_issued) && defined($max_instrs_issued )) {
+	$utilization = $instrs_issued / $max_instrs_issued;
+      }
+    } elsif (/PASSED/) {
+      $correct = 1;
     }
+  }
+  close(RESULTS);
+  my $totalmflops = 0;
+  foreach (@mflops) {
+    $totalmflops += $_ if defined($_);
+  }
+  my $ss_count = @mflops+0;
+  if ($ss_count) {
+    $mflops = $totalmflops / $ss_count;
+  }
+  print "$benchmark;$options;$throughput;$utilization;$mflops;$correct\n";
 }
+
+
+#old format!!!
+#  $options = "-space" unless $options;
+#     if ($options eq "-space") {
+# 	my $data = `(tail -1 "$filenameandpath")`;
+# 	chomp($data);
+# 	#print "$data\n";
+# 	#tiles;used;avg_cycles/steady;XX;XX;XX;outputs_per_steady;??;MFLOPS;instr_issued;XX;XX;XX%;XX;XX;max_instrs_issued
+# 	$data =~/^([0-9]*);([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*;([0-9]*);[0-9]*;([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*%;[0-9]*;[0-9]*;([0-9]*)$/;
+# 	my $tiles = $1;
+# 	my $used_tiles = $2;
+# 	my $cyc_per_steady = $3;
+# 	my $outputs_per_steady = $4;
+# 	my $mflops = $5;
+# 	my $instrs_issued = $6;
+# 	my $max_instrs_issued = $7;
+# 	my $throughput = "";
+# 	if (defined($cyc_per_steady) && defined($outputs_per_steady)) {
+# 	    $throughput = $cyc_per_steady / $outputs_per_steady;
+# 	}
+# 	my $utilization = "";
+# 	if (defined($instrs_issued) && defined($max_instrs_issued )) {
+# 	    $utilization = $instrs_issued / $max_instrs_issued;
+# 	}
+# 	$mflops = "" unless defined($mflops);
+# 	print "$benchmark;$options;$throughput;$utilization;$mflops\n";
+#     } elsif ($options =~ /^-spacetime/) {

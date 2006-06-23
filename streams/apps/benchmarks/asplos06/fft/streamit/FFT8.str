@@ -119,28 +119,6 @@ float->float filter Nothing
 	}
 }
 
-
-// void->void splitjoin FFTKernel2(int n) {
-
-//   split roundrobin(0);
-//   add pipeline {
-//       add FileReader<float>("input0");
-//       add FFTReorder(n);
-//       for(int j=2; j<=n; j*=2)
-// 	  add CombineDFT(j);
-//       add FileWriter<float>("output0");
-//   }
-//   add pipeline {
-//       add FileReader<float>("input1");
-//       add FFTReorder(n);
-//       for(int j=2; j<=n; j*=2)
-// 	  add CombineDFT(j);
-//       add FileWriter<float>("output1");
-//   }
-//   join roundrobin(0);
-// }
-
-
 void->float filter FFTTestSource(int N) {
 	
   float max = 1000.0;	

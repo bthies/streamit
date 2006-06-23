@@ -95,22 +95,7 @@ void->void pipeline MPEGdecoder_nomessage_4_2() {
     int height=240;
     int the_chroma_format = 1;
 
-    if (parse_or_process == 3) {
-        add FileReader<int>("../input/nomessage.m2v");
-        add IntStreamReorder();
-        add MPEGStreamParser_InternalBuffering(width, height, the_chroma_format);
-        add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_output.int");
-    } else if (parse_or_process == 1) {
-        add FileReader<int>("../input/nomessage.m2v");
-        add IntStreamReorder();
-        add MPEGStreamParser_InternalBuffering(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_parsed.int");
-    } else if (parse_or_process == 2) {
-        add FileReader<int>("../input/dec_nm_parsed.int");
-        add MPEGStream_to_rawImageStream(width, height, the_chroma_format);
-        add FileWriter<int>("./dec_nm_output.int");
-    } else if (parse_or_process == 4) {
+    if (parse_or_process == 4) {
         add FileReader<int>("../input/dec_nm_parsed.int");
         add int->int filter {
             work pop 64*6+19 push 64*6 {
@@ -134,80 +119,7 @@ void->void pipeline MPEGdecoder_nomessage_4_2() {
         }
         add BlockDecode();
         add FileWriter<int>("./dec_nm_blockdecode_2.int");
-    } else if (parse_or_process == 5) {
-        add FileReader<int>("../input/dec_nm_parsed.int");
-        add int->int splitjoin {
-            split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-            add BlockDecode();
-            add int->int pipeline {
-                add MotionVectorDecode();
-                add Repeat(8, blocks_per_macroblock[the_chroma_format]);
-            }
-            add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
-            join roundrobin(64, 8, 3);
-        } 
-        add FileWriter<int>("./dec_nm_color_channels_input.int");
-    } else if (parse_or_process == 6) {
-        add FileReader<int>("../input/dec_nm_color_channels_input.int");
-        add int->int splitjoin {
-            split roundrobin(4*75, 75, 75);
-            add pipeline {
-                add LuminanceChannelProcessing(width, height, the_chroma_format);
-                add FileWriter<int>("./dec_nm_lum_channel_output.int");
-            }
-            add pipeline {
-                add ChrominanceChannelProcessing(width, height, the_chroma_format);
-                add FileWriter<int>("./dec_nm_cb_channel_output.int");
-            }
-            add pipeline {
-                add ChrominanceChannelProcessing(width, height, the_chroma_format);
-                add FileWriter<int>("./dec_nm_cr_channel_output.int");
-            }
-            join roundrobin(0, 0, 0);
-        }
-    } else if (parse_or_process == 7) {
-        //MPEGStream_to_rawImageStream up to PictureReorder
-        add FileReader<int>("../input/dec_nm_parsed.int");
-        add int->int splitjoin {
-            split roundrobin(64*blocks_per_macroblock[the_chroma_format], 16, 3);
-            add BlockDecode();
-            add int->int pipeline {
-                add MotionVectorDecode();
-                add Repeat(8, blocks_per_macroblock[the_chroma_format]);
-            }
-            add Repeat(3, blocks_per_macroblock[the_chroma_format]); // macroblock_intra
-            join roundrobin(64, 8, 3);
-        }
-
-        // Each output channel is ordered left to right, top to bottom
-        add int->int splitjoin {
-            //    if (the_chroma_format == 1) {
-            split roundrobin(4*75, 2*75);
-            //    } else {
-            //      split roundrobin(4*75, 4*75);
-            //    }
-            add LuminanceChannelProcessing(width, height, the_chroma_format);
-            add int->int splitjoin {
-                split roundrobin(75);
-                add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-                add ChrominanceChannelProcessing(width, height, the_chroma_format);  
-                join roundrobin(1, 1);
-            }
-            join roundrobin(1, 2);
-        }
-        add FileWriter<int>("./dec_nm_pre_reorder.int");
-  
-    } else if (parse_or_process == 8) {
-        // just the PictureReorder phase of MPEGStream_to_rawImageStream
-        add FileReader<int>("../input/dec_nm_pre_reorder.int");
-        add PictureReorder(width, height);
-        add FileWriter<int>("./dec_nm_pre_colorSpaceConv.int");
-    } else if (parse_or_process == 9) {
-        // just the ColorSpaceConversion_YCbCrtoRGB phase of MPEGStream_to_rawImageStream
-        add FileReader<int>("../input/dec_nm_pre_colorSpaceConv.int");
-        add ColorSpaceConversion_YCbCrtoRGB;
-        add FileWriter<int>("./dec_nm_output.int");
-    }
+    } 
 }
 
 int->int pipeline MPEGStream_to_rawImageStream(int width, int height,

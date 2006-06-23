@@ -8,7 +8,6 @@ void->void pipeline FilterBank1 {
     add FileReader<float>("../input/input");
     add FilterBankPipeline(2);
     add FileWriter<float>("FilterBank1.out");
-    //add FileWriter<float>("output");
 }
 
 

@@ -63,6 +63,18 @@ void->void pipeline BeamFormer1 {
 	    join roundrobin(1);
 
     }
+    /*
+    add float->float filter 
+	{
+	    work push 1 pop 1 
+		{
+		    float x = pop();
+		    push(x);
+		    println(x);
+		}
+	}
+    */
+
     add FileWriter<float>("BeamFormer1.out");
 
 }

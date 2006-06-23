@@ -53,9 +53,18 @@ void->bit pipeline KeySchedule(int vector, int round)
 
     add IntoBits();
 
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add HexPrinter(USERKEY, 64);
+            join roundrobin(1, 0);
+        }
+    }
+
     add PC1();
 
-    for (int i = 0; i < round; i++) {
+    for (int i = 0; i < round+1; i++) {
         add splitjoin {
             split roundrobin(28, 28);
             add LRotate(i);

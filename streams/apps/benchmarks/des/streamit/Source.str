@@ -48,4 +48,13 @@ void->bit pipeline PlainTextSource(int vector)
         }
     }
     add IntoBits(); 
+
+    if (PRINTINFO) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add HexPrinter(PLAINTEXT, 64);
+            join roundrobin(1, 0);
+        }
+    }
 }

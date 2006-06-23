@@ -1,13 +1,23 @@
 // Implements DES encyption algorithm
 // (rodric rabbah, <rabbah@mit.edu>)
 
+static {
+    // used for printing descriptor in output
+    boolean PRINTINFO  = false;
+    int PLAINTEXT      = 0;
+    int USERKEY        = 1;
+    int CIPHERTEXT     = 2;
+
+    init {}
+}
+
 void->void pipeline DES
 {
     int testvector = 7;
 
     add PlainTextSource(testvector);
     add DEScoder(testvector);
-    add CipherTextPrinter(64);
+    add HexPrinter(CIPHERTEXT, 64);
 }
 
 bit->bit pipeline DEScoder(int vector)
@@ -15,7 +25,7 @@ bit->bit pipeline DEScoder(int vector)
     // initial permutation of 64 bit plain text
     add IP();
 
-    for (int i = 1; i <= 16; i++) {
+    for (int i = 0; i < 16; i++) {
         add splitjoin {
             split duplicate;
             // R[i+1] = f(R[i]) xor L[i]

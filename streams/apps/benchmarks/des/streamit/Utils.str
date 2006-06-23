@@ -76,7 +76,7 @@ bit->bit splitjoin BitSlice(int w, int b)
 // input:  LSB first ... MSB last
 // output: none
 // prints: MSW first ... LSW last
-bit->void pipeline CipherTextPrinter(int n)
+bit->void pipeline HexPrinter(int descriptor, int n)
 {
     int bits  = n;
     int bytes = bits / 4;
@@ -84,6 +84,15 @@ bit->void pipeline CipherTextPrinter(int n)
     add BitstoInts(4);
     add int->void filter {
         work pop bytes {
+            if (PRINTINFO) {
+                if (descriptor == PLAINTEXT) 
+                    print("P: ");
+                else if (descriptor == USERKEY)
+                    print("K: ");
+                else if (descriptor == CIPHERTEXT)
+                    print("C: ");
+            }
+
             for (int i = bytes - 1; i >= 0; i--) {
                 int v = peek(i);
                 if (v < 10) print(v);

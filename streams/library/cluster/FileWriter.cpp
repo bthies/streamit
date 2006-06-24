@@ -53,7 +53,7 @@ void FileWriter_setpos(int fs_ptr, int pos) {
 }
 
 template<class T>
-int FileWriter_write(int fs_ptr, T data) {
+void FileWriter_write(int fs_ptr, T data) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
     assert((sizeof(T) % 4) == 0);
@@ -98,3 +98,10 @@ int FileWriter_flush(int fs_ptr) {
 
     fs->buf_index = 0;
 }
+
+
+template void FileWriter_write<char>(int, char);
+template void FileWriter_write<short>(int, short);
+template void FileWriter_write<int>(int, int);
+template void FileWriter_write<float>(int, float);
+template void FileWriter_write<double>(int, double);

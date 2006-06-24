@@ -29,4 +29,4 @@ int FileWriter_getpos(int fs_ptr);
 void FileWriter_setpos(int fs_ptr, int pos);
 
 template<class T>
-int FileWriter_write(int fs_ptr, T data);
+void FileWriter_write(int fs_ptr, T data);

@@ -17,7 +17,7 @@ LIBRARY_ARM =   libcluster_arm.a
 
 # End of parameterizable stuff.
 
-NAMES =		profiler \
+NAMES =	profiler \
 		sock_dscr \
 		thread_info \
 		connection_info \
@@ -40,7 +40,7 @@ NAMES =		profiler \
 		netsocket \
 		memsocket \
 		fft \
-                FileWriter
+		FileWriter
 
 #               data_consumer
 #               data_producer

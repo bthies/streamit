@@ -99,9 +99,18 @@ int FileWriter_flush(int fs_ptr) {
     fs->buf_index = 0;
 }
 
+// RMR { instantiate writers for commonly used types
+typedef struct {
+    float x;
+    float y;
+} __Complex; // note that this name and structure
+             // has to the definitions generated
+             // by the compiler
 
 template void FileWriter_write<char>(int, char);
 template void FileWriter_write<short>(int, short);
 template void FileWriter_write<int>(int, int);
 template void FileWriter_write<float>(int, float);
 template void FileWriter_write<double>(int, double);
+template void FileWriter_write<__Complex>(int, __Complex);
+// } RMR

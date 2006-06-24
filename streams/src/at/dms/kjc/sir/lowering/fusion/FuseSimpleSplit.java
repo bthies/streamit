@@ -587,9 +587,15 @@ public class FuseSimpleSplit {
         // add a pop loop to statements that pops the right number of
         // times for the splitjoin
         if ((isDup || isURR) && rep.splitter > 0) {
-            newStatements.addStatement(
-                                       new JExpressionStatement(
-                                                                new SIRPopExpression(sj.getInputType(),rep.splitter)));
+            int itemsConsumed;
+            if (isDup) {
+                itemsConsumed = rep.splitter;
+            } else {
+                // in coarse-grained execution mode, each firing of RR
+                // consumes an item per parallel stream
+                itemsConsumed = rep.splitter * sj.size();
+            }
+            newStatements.addStatement(new JExpressionStatement(new SIRPopExpression(sj.getInputType(),itemsConsumed)));
                         
             // Utils.makeForLoop(new JExpressionStatement(null,
             //                new SIRPopExpression(sj.getInputType()), null),

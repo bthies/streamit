@@ -83,7 +83,11 @@ foreach (<>) {
        ##PBS -M $emailAddress
        ##PBS -m a
        ## mailed info is relatively useless, just mailing if aborted.
+
        cd $dirName
+       #record the job id and the host name for debugging
+       qsub ./${runName}.sh > ${runName}.pbsid
+       echo $HOSTNAME > $tail.hostname
        exec >stdout 2>stderr
        . \$STREAMIT_HOME/include/dot-bashrc
        PATH=\${PATH}:/usr/local/bin:/usr/uns/bin:/usr/bin:/bin

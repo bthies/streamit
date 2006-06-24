@@ -29,4 +29,20 @@ int FileWriter_getpos(int fs_ptr);
 void FileWriter_setpos(int fs_ptr, int pos);
 
 template<class T>
-void FileWriter_write(int fs_ptr, T data);
+static inline void FileWriter_write(int fs_ptr, T data) {
+    FileWriter_state *fs = (FileWriter_state*)fs_ptr;
+
+    assert((sizeof(T) % 4) == 0);
+
+    // Flush if adding data to the buffer would overflow the buffer
+    if (fs->buf_index + sizeof(T) > BUF_SIZE) FileWriter_flush(fs_ptr);
+
+    // RMR { note this code assume that the data is placed in 
+    // consecutive words; which is the case for the current
+    // defintion of the <complex> data type
+    for (int i = 0; i < sizeof(T); i += 4) {
+        *(int*)(fs->file_buf + fs->buf_index) = *((int*)((&data)+i));
+        fs->buf_index += 4;
+    }
+    // } RMR
+}

@@ -52,25 +52,6 @@ void FileWriter_setpos(int fs_ptr, int pos) {
     fs->file_offset = pos;
 }
 
-template<class T>
-void FileWriter_write(int fs_ptr, T data) {
-    FileWriter_state *fs = (FileWriter_state*)fs_ptr;
-
-    assert((sizeof(T) % 4) == 0);
-
-    // Flush if adding data to the buffer would overflow the buffer
-    if (fs->buf_index + sizeof(T) > BUF_SIZE) FileWriter_flush(fs_ptr);
-
-    // RMR { note this code assume that the data is placed in 
-    // consecutive words; which is the case for the current
-    // defintion of the <complex> data type
-    for (int i = 0; i < sizeof(T); i += 4) {
-        *(int*)(fs->file_buf + fs->buf_index) = *((int*)((&data)+i));
-        fs->buf_index += 4;
-    }
-    // } RMR
-}
-
 int FileWriter_flush(int fs_ptr) {
     FileWriter_state *fs = (FileWriter_state*)fs_ptr;
 
@@ -98,19 +79,3 @@ int FileWriter_flush(int fs_ptr) {
 
     fs->buf_index = 0;
 }
-
-// RMR { instantiate writers for commonly used types
-typedef struct {
-    float x;
-    float y;
-} __Complex; // note that this name and structure
-             // has to the definitions generated
-             // by the compiler
-
-template void FileWriter_write<char>(int, char);
-template void FileWriter_write<short>(int, short);
-template void FileWriter_write<int>(int, int);
-template void FileWriter_write<float>(int, float);
-template void FileWriter_write<double>(int, double);
-template void FileWriter_write<__Complex>(int, __Complex);
-// } RMR

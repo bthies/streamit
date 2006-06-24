@@ -40,6 +40,7 @@ NAMES =	profiler \
 		netsocket \
 		memsocket \
 		fft \
+		FileReader \
 		FileWriter
 
 #               data_consumer

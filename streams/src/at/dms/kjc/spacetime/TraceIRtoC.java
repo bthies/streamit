@@ -555,7 +555,9 @@ public class TraceIRtoC extends ToC
         p.print(ident);
 
         //we want single precision versions of the math functions raw
-        if (Utils.isMathMethod(prefix, ident)) 
+        //except for abs
+        if (Utils.isMathMethod(prefix, ident) &&
+                !ident.equals("abs")) 
             p.print("f");
 
         p.print("(");

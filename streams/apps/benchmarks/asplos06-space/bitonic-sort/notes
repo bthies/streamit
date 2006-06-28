@@ -1,0 +1,13 @@
+BitonicSort.str from bencmarks/bitonic-sort/streamit.
+Vary size to sort (N).
+
+file               N          filters
+BitonicSort.str   32          452
+BitonicSort1.str  16          170
+BitonicSort2.str   8           58
+BitonicSort3.str   4           14
+
+
+BitonicSortX.str creates BitonicSortX.out.
+There are versions generated with strc -library -i100 in the ../output 
+directory. 

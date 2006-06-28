@@ -1,0 +1,25 @@
+The ChannelVocoder code is micro04/channelvocoder/space.  This does not much
+resemble the current vocoder/streamit/VocoderTopLevel benchmark.
+
+The versions ChannelVocoder1 -- ChannelVocoder12 differ in NUM_FILTERS 
+parameter and in the number of taps on the LowPassFilter added at line 23 and
+the number of taps on the BandPassFilter added at line 107.
+
+                         NUM_FILTERS taps@lines23,106  filters
+ChannelVocoder1.str       4           64               19
+ChannelVocoder2.str       8           64               31
+ChannelVocoder3.str      12           64               43
+ChannelVocoder4.str       4          128               19
+ChannelVocoder5.str       8          128               31
+ChannelVocoder6.str      12          128               43
+ChannelVocoder7.str      16           64               55
+ChannelVocoder8.str      16          128               55
+ChannelVocoder9.str      20           64               67
+ChannelVocoder10.str     20          128               67               
+ChannelVocoder11.str     24           64               79
+ChannelVocoder12.str     24          128               79           
+
+The output of ChannelVocoderN.str is sent to ChannelVocoderN.out, and the 
+output directory contains uni reference output for 100 iterations. (Not library
+reference output since the library crashes with a claimed array bounds error
+in DataSource, although the code does not appear to have such an error.)

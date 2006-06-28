@@ -1,0 +1,8 @@
+The FFT code is taken from micro04/fft/space.  This looks like a version of
+fft/streamit/FFT6 or FFT7 hacked to use reals rather than complex.
+
+The versions FFT1 -- FFT9 differ only in the size of the FFT: from 32 to 4096
+resulting in a number of filters of 9, 11, 13, ..., 25.
+
+The output of FFTn.str is sent to FFTn.out, and the output directory contains
+library reference output for 100 iterations.

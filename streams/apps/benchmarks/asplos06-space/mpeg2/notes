@@ -1,0 +1,38 @@
+There are files named MPEGdecoder_nomessage_I_J.str in the streamit 
+subdirectory. These are derived from
+apps/benchmarks/mpeg2/streamit/MPEGdecoder_nomessage.str as of the
+morning of 03-Mar-2006, they include other .str files used in building
+MPEGdecoder_nomessage.  In particular they include the version of
+apps/benchmarks/dct_ieee/streamit/DCT.str as of the morning of 03-Mar-2006.
+
+I = 4: BlockDecode stream of mpeg2 decoder 
+I = 5: BlockDecode and MotionVectorDecode streams of mpeg2 decoder
+
+J = 0: DCT used by BlockDecode is coarse-grained reference implementation
+J = 1: DCT used by BlockDecode is parallel reference implementation
+J = 2: DCT used by BlockDecode is coarse-grained fast implementation
+J = 3: DCT used by BlockDecode is parallel fast implementation
+
+Number of filters (as per grep '^node[0-9]* \[' before-partition.dot | wc -l)
+
+MPEGdecoder_nomessage_4_0  16
+MPEGdecoder_nomessage_4_1  37
+MPEGdecoder_nomessage_4_2  17
+MPEGdecoder_nomessage_4_3  35
+
+MPEGdecoder_nomessage_5_0  20
+MPEGdecoder_nomessage_5_1  41
+MPEGdecoder_nomessage_5_2  21
+MPEGdecoder_nomessage_5_3  39
+
+MPEGdecoder_nomessage_4_J will read ../input/dec_nm_parsed.int 
+                          will write ./dec_nm_blockdecode_J.int
+                          compare to ../output/dec_nm_blockdecode_J.int
+MPEGdecoder_nomessage_5_J will read ../input/dec_nm_parsed.int
+                          will write ./dec_nm_color_channels_input_J.int
+                          compare to ../output/dec_nm_color_channels_input_J.int
+In all cases, running with -i 1320 should consume the entire input file. 
+
+Different versions of DCT round slightly differently.  The output
+files were build using -library so there may be some further
+differences since java seemed to round differently from C / C++.

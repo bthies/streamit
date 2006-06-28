@@ -1,6 +1,6 @@
 void->void pipeline FileTest {
     add FileReader<float>("input0");
-    add Adder(1.0);
+    add Adder(0.0);
     add FloatPrinter();
 }
 

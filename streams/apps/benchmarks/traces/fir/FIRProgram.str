@@ -9,9 +9,9 @@
  * Top level program. 
  **/
 void->void pipeline FIRProgram {
-    add FloatSource();
+    add FloatSource1();
     //add FileReader<float>("input");
-    add LowPassFilter(1, pi/3, 256);
+    add LowPassFilter(1, pi/3, 64);
     add FloatPrinter();
     //add FileWriter<float>("output");
 }
@@ -42,3 +42,8 @@ void->float filter FloatSource {
 
 
 
+void->float filter FloatSource1 {
+    work push 1 { 
+	push(1.0);
+    }
+}

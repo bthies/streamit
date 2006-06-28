@@ -8,10 +8,10 @@
 /**
  * Top level program. 
  **/
-void->void pipeline FIRProgram {
+void->void pipeline FIRProgramSpaceTime {
     //add FloatSource();
     add FileReader<float>("input");
-    add LowPassFilter(1, pi/3, 256);
+    add LowPassFilter(1, pi/3, 64);
     //add FloatPrinter();
     add FileWriter<float>("output");
 }

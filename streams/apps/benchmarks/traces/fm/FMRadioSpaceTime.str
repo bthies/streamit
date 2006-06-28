@@ -114,7 +114,7 @@ float->float splitjoin EqualizerSplitJoin(float rate, float low, float high, int
 
 float->float pipeline Equalizer(float rate) {
 
-  int bands = 10;
+  int bands = 9;
   float low = 55;
   float high = 1760;
 

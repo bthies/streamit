@@ -590,14 +590,14 @@ void->void pipeline dcalc {
 	//	add(new AddAHLAhA(W,Q,N,K,h,C));
 
 	add SourceAHL(W,Q,N,K,h,C);
-	add AhrdAhA(Q*N+W-1,K*N,K*N*(Q*N+W-1)+(K*N)*(K*N+1));
+	//add AhrdAhA(Q*N+W-1,K*N,K*N*(Q*N+W-1)+(K*N)*(K*N+1));
        	//      add(new LrL(K*N));
 	//      add(new backs(K*N));
-	add Ahrchold(K*N);
-	add LrL(K*N);
-	add backs(K*N);
-	add SinkD(K*N);
-	//add(new FileWriter("out",Float.TYPE));
+	//add Ahrchold(K*N);
+	//add LrL(K*N);
+	//add backs(K*N);
+		add SinkD(K*N);	
+//	add FileWriter<float>("input0");
 }
 
 

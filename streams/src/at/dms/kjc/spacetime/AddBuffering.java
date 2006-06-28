@@ -169,7 +169,7 @@ public class AddBuffering {
                 minMult = mult;
         }
        
-        //make the target minimum multiplicity the an integral number 
+        //make the target minimum multiplicity an integral number 
         minMult = Math.floor(minMult);
        
         //now add buffering so that the input trace node receives exactly the

@@ -323,9 +323,9 @@ public class SimplePartitioner extends Partitioner {
 
             // check the work estimation
             int destEst = getWorkEstimate(dest);
-            double ratio = (bottleNeckWork > destEst) ? (double) destEst
-                / (double) bottleNeckWork : (double) bottleNeckWork
-                / (double) destEst;
+            double ratio = (bottleNeckWork > destEst) ? 
+                    (double) destEst / (double) bottleNeckWork : 
+                    (double) bottleNeckWork / (double) destEst;
             ratio = Math.abs(ratio);
             // System.out.println("bottleNeckWork = " + bottleNeckWork + " / " +
             // "next = " + destEst + " = " + ratio);
@@ -382,7 +382,9 @@ public class SimplePartitioner extends Partitioner {
         for (int i = 0; i < traceGraph.length; i++) {
             Trace trace = traceGraph[i];
             assert trace != null;
-            buf.append(trace.hashCode() + " [ " + traceName(trace) + "\" ];\n");
+            buf.append(trace.hashCode() + " [ " + 
+                    traceName(trace) + 
+                    "\" ];\n");
             Trace[] next = getNext(trace/* ,parent */);
             for (int j = 0; j < next.length; j++) {
                 assert next[j] != null;
@@ -446,9 +448,17 @@ public class SimplePartitioner extends Partitioner {
         node = node.getNext();
         while (node != null ) {
             if (node.isFilterTrace()) {
+                FilterContent f = node.getAsFilter().getFilter();
                 out.append("\\n" + node.toString() + "{"
-                        + getWorkEstimate(((FilterTraceNode) node).getFilter())
+                        + getWorkEstimate(f)
                         + "}");
+                if (f.isTwoStage())
+                    out.append("\\npre:(peek, pop, push): (" + 
+                            f.getInitPeek() + ", " + f.getInitPop() + "," + f.getInitPush());
+                out.append(")\\n(peek, pop, push: (" + 
+                        f.getPeekInt() + ", " + f.getPopInt() + ", " + f.getPushInt() + ")");
+                out.append("\\nMult: init " + f.getInitMult() + ", steady " + f.getSteadyMult());
+                out.append("\\n *** ");
             }
             else {
                 out.append("\\n" + node.getAsOutput().debugString(true));

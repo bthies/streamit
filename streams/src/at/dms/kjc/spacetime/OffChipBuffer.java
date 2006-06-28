@@ -106,7 +106,7 @@ public abstract class OffChipBuffer {
     }
 
     public void setDRAM(StreamingDram DRAM) {
-        // assert !redundant() : "calling setDRAM() on redundant buffer";
+        //assert !redundant() : "calling setDRAM() on redundant buffer";
         this.dram = DRAM;
         
         SpaceTimeBackend.println("Assign " + this.toString() + " to " + DRAM);
@@ -120,9 +120,22 @@ public abstract class OffChipBuffer {
         return dram != null;
     }
 
+    /**
+     * Remove the dram assignment of this buffer. 
+     */
+    public void unsetDRAM() {
+        dram = null;
+    }
+    
+    /**
+     * Return the dram assignment of this buffer.
+     * 
+     * @return the dram assignment of this buffer.
+     */
     public StreamingDram getDRAM() {
         assert dram != null : "need to assign buffer to streaming dram "
             + this.toString();
+        
         // assert !redundant() : "calling getDRAM() on redundant buffer";
         return dram;
     }

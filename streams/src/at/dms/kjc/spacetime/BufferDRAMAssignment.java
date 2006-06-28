@@ -4,6 +4,7 @@ import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.HashMap;
+import java.util.Vector;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -346,6 +347,58 @@ public class BufferDRAMAssignment {
     }
     
     /**
+     * 
+     * @param TraceNode
+     * @return
+     */
+    private boolean valid(OutputTraceNode traceNode) {
+       Iterator<Edge> edges = traceNode.getDestSet().iterator();
+       HashSet<Integer> freePorts = new HashSet<Integer>();
+       //System.out.println(" * For " + traceNode);
+       while (edges.hasNext()) {
+           Edge edge = edges.next();
+           InputTraceNode input = edge.getDest();
+           
+           HashSet<Integer>ports = new HashSet<Integer>();
+           for (int i = 0; i < rawChip.getNumDev(); i++) 
+               ports.add(new Integer(i));
+           //System.out.println("      " + input + "is using:");
+           Iterator<Edge> inEdges = input.getSourceSet().iterator();
+           while (inEdges.hasNext()) {
+               Edge inEdge = inEdges.next();
+               InterTraceBuffer buffer = InterTraceBuffer.getBuffer(inEdge);
+               
+               if (buffer.isAssigned()) {
+                   ports.remove(new Integer(buffer.getDRAM().port));
+                   //System.out.println("        " + buffer.getDRAM().port);
+               }
+           }
+           /*System.out.print("    has free: ");
+           Iterator<Integer> ints = ports.iterator();
+           while (ints.hasNext())
+               System.out.print(ints.next() + " ");
+           System.out.println();
+           */
+           if (ports.size() == 0)
+               return false;
+           freePorts.addAll(ports);
+       }
+       if (freePorts.size() < traceNode.getWidth())
+           return false;
+       return true;
+    }
+    
+    private void assignRemaining(OutputTraceNode traceNode) {
+        //get all the edges of this output trace node
+        //sorted by their weight
+        List<Edge>edges = traceNode.getSortedOutputs();
+        
+        assert valid(traceNode);
+        
+        assignRemaining(edges, 0);
+    }
+    
+    /**
      * Now, take the remaining InterTraceBuffers that were not assigned in 
      * previous passes and assign them.  To do this we look at all the edges for 
      * the OutputtraceNode and if any are unassigned, we build a list of drams
@@ -357,34 +410,43 @@ public class BufferDRAMAssignment {
      * 
      * @param traceNode
      */
-    private void assignRemaining(OutputTraceNode traceNode) {
-        //get all the edges of this output trace node
-        Iterator edges = traceNode.getDestSet().iterator();
-        while (edges.hasNext()) {
-            Edge edge = (Edge)edges.next();
-            InputTraceNode input = edge.getDest();
-            //get the buffer that represents this edge
-            InterTraceBuffer buffer = InterTraceBuffer.getBuffer(edge);
-            //if it is already assigned, do nothing...
-            if (buffer.isAssigned())
-                continue;
+    private boolean assignRemaining(List<Edge> edgesToAssign, int index) {
+        //the end condition
+        if (index >= edgesToAssign.size())
+            return true;
+        
+        //get the edge
+        Edge edge = edgesToAssign.get(index);
+        OutputTraceNode traceNode = edge.getSrc();
+        InputTraceNode input = edge.getDest();
+        
+        //get the buffer that represents this edge
+        InterTraceBuffer buffer = InterTraceBuffer.getBuffer(edge);
+        
+        //if it is already assigned, do skip over this edge and move on
+        //with assigning...
+        if (buffer.isAssigned())
+            return assignRemaining(edgesToAssign, index + 1);
             
-            //get the order of ports in ascending order of distance from
-            //the src port + the dest port
-            Iterator order = assignmentOrder(edge);
-            StreamingDram dramToAssign = null;
-            while (order.hasNext()) {
-                StreamingDram current = ((PortDistance) order.next()).dram;
+        //get the order of ports in ascending order of distance from
+        //the src port + the dest port
+        Iterator order = assignmentOrder(edge);
+        while (order.hasNext()) {
+            StreamingDram current = ((PortDistance) order.next()).dram;
+                //System.out.println("     Trying " + current);
                 if (assignedInputDRAMs(input).contains(current) || 
                         assignedOutputDRAMs(traceNode).contains(current)) 
                     continue;
-                dramToAssign = current;
-                break;
-            }
-            assert dramToAssign != null : "Could not find a dram to assign to " +
-                  buffer + " during dram assignment.";
-            buffer.setDRAM(dramToAssign);
+                               
+                buffer.setDRAM(current);
+                if (assignRemaining(edgesToAssign, index + 1))
+                    return true;
         }
+        //we got here because we could not find an assignment for this 
+        //edge, so unset the buffer and return false and try another 
+        //assignment recursively
+        buffer.unsetDRAM();
+        return false;
     }
     
 
@@ -423,8 +485,11 @@ public class BufferDRAMAssignment {
         Iterator dests = output.getDestSet().iterator();
         while (dests.hasNext()) {
             Edge edge = (Edge)dests.next();
-            if (InterTraceBuffer.getBuffer(edge).isAssigned())
+            if (InterTraceBuffer.getBuffer(edge).isAssigned()) {
+                //System.out.println("     "  +
+                //        InterTraceBuffer.getBuffer(edge).getDRAM() + "(this output)");
                 set.add(InterTraceBuffer.getBuffer(edge).getDRAM());
+            }
         }
         return set;
     }
@@ -440,9 +505,13 @@ public class BufferDRAMAssignment {
     private Set assignedInputDRAMs(InputTraceNode input) {
         HashSet set = new HashSet();
         for (int i = 0; i < input.getSources().length; i++) {
-            if (InterTraceBuffer.getBuffer(input.getSources()[i]).isAssigned())
+            if (InterTraceBuffer.getBuffer(input.getSources()[i]).isAssigned()) {
+                //System.out.println("      " +         
+                //        InterTraceBuffer.getBuffer(input.getSources()[i])
+                //        .getDRAM() + " (downstream input)");
                 set.add(InterTraceBuffer.getBuffer(input.getSources()[i])
                         .getDRAM());
+            }
         }
         return set;
     }

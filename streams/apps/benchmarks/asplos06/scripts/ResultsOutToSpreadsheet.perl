@@ -32,12 +32,9 @@
 #  and replce the header line, but not worth the effort right now.)
 #
 # Notes:
-# (1) Because of a bug in the speed setting, we had to pull out the MFLOPS 
-#  field for spacetime from numbers for individual steady states and take
-#  the mean.  This bug may now be fixed.
-# (2) The results.out files for -raw  and -raw -spacetime are substantially
+# (1) The results.out files for -raw  and -raw -spacetime are substantially
 #  different.
-# (3) Mike Gordon says that the utilization numbers for -raw versus 
+# (2) Mike Gordon says that the utilization numbers for -raw versus 
 #  -raw -spacetime do not allow a fair comparison, since there is extra
 # code needed for -raw that is not needed for -raw -spacetime...
 # 
@@ -47,7 +44,7 @@ use warnings;
 use strict;
 
 # print header
-print " benchmark;options;throughput;utilization;MFLOPS;correct\n";
+print "benchmark;options;throughput;utilization;MFLOPS;filters;slices;correct\n";
 
 foreach (<>) {
   chomp;
@@ -68,15 +65,16 @@ foreach (<>) {
   my $correct = 0;
   while (<RESULTS>) {
     chomp;
-    if (/MFLOPS = ([0-9]+)/) {
-      push(@mflops, $1);
-    } elsif (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);[0-9]+$/) {
-      #tiles;assigned;throughput;work_cycles;total_cycles;bogus_mflops
+    if (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+)$/) {
+      #tiles;assigned;throughput;work_cycles;total_cycles;mflops
       $tiles = $1;
       $used_tiles = $2;
-      $throughput = $3;
-      $instrs_issued = $4;
-      $max_instrs_issued = $5;
+      $filters = $3
+      $slices = $4	
+      $throughput = $5;
+      $instrs_issued = $6;
+      $max_instrs_issued = $7;
+      $mflops = $8;
       if (defined($instrs_issued) && defined($max_instrs_issued )) {
 	$utilization = $instrs_issued / $max_instrs_issued;
       }
@@ -85,15 +83,7 @@ foreach (<>) {
     }
   }
   close(RESULTS);
-  my $totalmflops = 0;
-  foreach (@mflops) {
-    $totalmflops += $_ if defined($_);
-  }
-  my $ss_count = @mflops+0;
-  if ($ss_count) {
-    $mflops = $totalmflops / $ss_count;
-  }
-  print "$benchmark;$options;$throughput;$utilization;$mflops;$correct\n";
+  print "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
 }
 
 

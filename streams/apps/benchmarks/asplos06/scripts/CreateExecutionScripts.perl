@@ -68,7 +68,7 @@ foreach (<>) {
     next unless $2;
     # $head is directory name up to '/streamit/'
     # $tail is file name without '.str' suffix
-    my $numIters = 10;
+    my $numIters = 5;
     $numIters = 3 if $tail =~ /^tde.*/;
     my $emailAddress = 'mgordon@cag.csail.mit.edu';
     my $dirName = "$head/$tail.raw$argsext";
@@ -86,8 +86,8 @@ foreach (<>) {
 
        cd $dirName
        #record the job id and the host name for debugging
-       qsub ./${runName}.sh > ${runName}.pbsid
-       echo $HOSTNAME > $tail.hostname
+       #qsub ./\${runName}.sh > \${tail}.pbsid
+       echo \$HOSTNAME > $tail.hostname
        exec >stdout 2>stderr
        . \$STREAMIT_HOME/include/dot-bashrc
        PATH=\${PATH}:/usr/local/bin:/usr/uns/bin:/usr/bin:/bin

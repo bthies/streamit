@@ -27,7 +27,14 @@ void->void pipeline Serpent5
 
     add PlainTextSource(testvector);
     add SerpentEncoder(testvector);
-    add HexPrinter(CIPHERTEXT, 128);
+    add int->void filter 
+	{
+	    work pop 1 
+		{
+		    println(pop());
+		}
+	}    
+    //add HexPrinter(CIPHERTEXT, 128);
 }
 
 int->int pipeline SerpentEncoder(int vector)

@@ -163,8 +163,7 @@ void->void pipeline DES1
 {
     int testvector = 7;
 
-    //add PlainTextSource(testvector);
-    //add FileReader<int>("../input/input");
+    add PlainTextSource(testvector);
     add DEScoder(testvector);
     add int->void filter 
 	{

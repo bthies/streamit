@@ -1,6 +1,20 @@
 // Provides utility routine
 // (rodric rabbah, <rabbah@mit.edu>)
 
+// take stream of N bits and permute them accordingly to
+// specified permutation table
+bit->bit filter Permute(int N, int[N] permutation)
+{
+    work push N pop N {
+        for (int i = 0; i < N; i++) {
+            push(peek(permutation[i]));
+        }
+        for (int i = 0; i < N; i++) {
+            pop();
+        }
+    }
+}
+
 // take N streams and Xor them together
 // the streams are assumed to be interleaved
 bit->bit filter Xor(int n)

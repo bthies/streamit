@@ -1,7 +1,7 @@
 // Implements Serpent key schedule
 // (see section 4 of ../docs for algorithm details)
 // (rodric rabbah, <rabbah@mit.edu>)
-
+  
 void->bit pipeline KeySchedule(int vector, int round)
 {
     int[5][8] USERKEYS = {{0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -16,13 +16,15 @@ void->bit pipeline KeySchedule(int vector, int round)
     
     int USERKEY_LENGTH = 8 * BITS_PER_WORD;
 
-    // output 128 bits intermediate key {w_i, w_i+1, w_i+2, w_i+3}
-    add void->int filter {
-        int[8]   key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
-        int[140] w;
+    // output encryption key for current round
+    add void->bit filter {
+        bit[MAXROUNDS + 1][NBITS] keys;
 
         // precalculate key schedule
         init {
+            int[8]   key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
+            int[140] w;
+
             int words = USERKEY_LENGTH / BITS_PER_WORD;
             for (int i = words - 1; i >= 0; i--)
                 key[words - 1 - i] = USERKEYS[vector][i];
@@ -42,15 +44,44 @@ void->bit pipeline KeySchedule(int vector, int round)
                 w[i] = w[i - 8] ^ w[i - 5] ^ w[i - 3] ^ w[i - 1] ^ PHI ^ (i - 8);
                 w[i] = LRotate(w[i], 11);
             }
+
+            // calculate keys for round 0 - 32
+            for (int i = 0; i <= MAXROUNDS; i++) {
+                int[BITS_PER_WORD] sbox;
+                for (int b = 0; b < BITS_PER_WORD; b++) {
+                    // int to bits in slices
+                    int r  = (4 * i) + 8;
+                    bit b0 = (w[r + 0] & (1 << b)) >> b;
+                    bit b1 = (w[r + 1] & (1 << b)) >> b;
+                    bit b2 = (w[r + 2] & (1 << b)) >> b;
+                    bit b3 = (w[r + 3] & (1 << b)) >> b;
+
+                    int val = 0;
+                    if (b0 != 0) val = 1;
+                    if (b1 != 0) val = val | (1 << 1);
+                    if (b2 != 0) val = val | (1 << 2);
+                    if (b3 != 0) val = val | (1 << 3);
+                    
+                    sbox[b] = SBOXES[(32 + 3 - i) % 8][val];
+                }
+
+                // reverse bit slice and store bits
+                for (int k = 0; k < 4; k++) {
+                    for (int b = 0; b < BITS_PER_WORD; b++) {
+                        bit x = (sbox[b] & (1 << k)) >> k;
+                        if (x != 0) 
+                            keys[i][(k * BITS_PER_WORD) + b] = 1;
+                        else
+                            keys[i][(k * BITS_PER_WORD) + b] = 0;
+                    }
+                }
+            }
         }
-        
-        // push intermediate key {w_i, w_i+1, w_i+2, w_i+3}
-        work push 4 {
-            int i = (4 * round) + 8;
-            push(w[i + 0]);
-            push(w[i + 1]);
-            push(w[i + 2]);
-            push(w[i + 3]);
+
+        work push NBITS {
+            for (int i = 0; i < NBITS; i++) {
+                push(keys[round][i]);
+            }
         }
 
         int LRotate(int x, int n) {
@@ -78,25 +109,7 @@ void->bit pipeline KeySchedule(int vector, int round)
         }
     }
 
-    add IntoBits();
-
-    // permute bits for Sbox
-    add BitSlice(4, 32);
-
-    // round  0: 3
-    // round  1: 2
-    // round  2: 1
-    // round  3: 0
-    // round  4: 7
-    // ...
-    // round 31: 4
-    // round 32: 3
-    add Sbox((32 + 3 - round) % 8);
-
-    // reverse the bit slicing
-    add BitSlice(32, 4);
-
-    add IP();
+    add Permute(NBITS, IP);
 
     if (PRINTINFO && (round == 0)) {
         add splitjoin {
@@ -104,8 +117,8 @@ void->bit pipeline KeySchedule(int vector, int round)
             add Identity<bit>();
             add pipeline {
                 add bit->int filter {
-                    work pop 128 push 8 {
-                        for (int i = 0; i < 128; i++) pop();
+                    work pop NBITS push 8 {
+                        for (int i = 0; i < NBITS; i++) pop();
 
                         push(USERKEYS[vector][7]); // LSW
                         push(USERKEYS[vector][6]);

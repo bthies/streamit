@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.78 2006-06-16 18:01:54 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.79 2006-06-29 05:36:18 mgordon Exp $
  */
 
 prefix Kjc
@@ -564,6 +564,11 @@ longname		"ssoutputs"
 	default		"-1"
 	requireArgument		
 	help		"When using --numbers on a dynamic-rate app, specify outputs per steady state."
+
+longname		"noswpipe"
+	type		boolean
+	default		"false"
+	help		"For spacetime, do not software pipeline the steady state."
 
 /* remove: now default */
 /* longname 		"noverbose" */

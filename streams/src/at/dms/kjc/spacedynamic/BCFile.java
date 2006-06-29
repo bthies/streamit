@@ -11,6 +11,7 @@ import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.flatgraph2.FileOutputContent;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.RawSimulatorPrint;
 import at.dms.util.Utils;
@@ -85,6 +86,26 @@ public class BCFile {
         // workaround for magic instruction support...
         fw.write("include(\"<dev/magic_instruction.bc>\");\n");
         
+        //there are no slices
+        fw.write("global gNumSlices = 0;\n");
+        
+        //count the total number of filters, not including
+        //file readers and writers
+        
+        int numFilters = 0;
+        for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+            StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+            Iterator<FlatNode> nodes = ssg.getFlatNodes().iterator();
+            while (nodes.hasNext()) {
+                FlatNode node = nodes.next();
+                if (node.isFilter() && 
+                        !(node.contents instanceof SIRFileWriter ||
+                                node.contents instanceof SIRFileReader))
+                    numFilters++;
+            }
+        }
+        
+        fw.write("global gNumFilters = " + numFilters + ";\n");
         // let the simulation know how many tiles are mapped to
         // filters or joiners
         fw.write("global gMappedTiles = " + layout.getTilesAssigned()
@@ -118,7 +139,6 @@ public class BCFile {
             fw
             .write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
             fw.write("  gFilterNames = listi_new();\n");
-            Iterator it = tiles.iterator();
             for (int i = 0; i < rawChip.getTotalTiles(); i++) {
                 if (tiles.contains(rawChip.getTile(i))) {
                     fw.write("  listi_add(gFilterNames, \""

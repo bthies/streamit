@@ -823,7 +823,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(ident);
         
         //we want single precision versions of the math functions
-        if (Utils.isMathMethod(prefix, ident)) 
+        if (Utils.isMathMethod(prefix, ident) && 
+                !ident.equals("abs")) 
             p.print("f");
             
         p.print("(");

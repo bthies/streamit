@@ -82,10 +82,15 @@ public class Rawify {
         ComputeCodeStore.presynchAllDramsInInit();
         //the steady-state!!
         traces = schedule.getSchedule();
-        //iterate over the joiners then the filters then 
-        //the splitter, this will create a data-redistribution 
-        //stage between the iterations that will improve performance 
-        iterateJoinFiltersSplit(traces, false, false, rawChip);
+
+        if (SpaceTimeBackend.NO_SWPIPELINE) {
+            iterateInorder(traces, false, true, rawChip);
+        } else {
+            //iterate over the joiners then the filters then 
+            //the splitter, this will create a data-redistribution 
+            //stage between the iterations that will improve performance 
+            iterateJoinFiltersSplit(traces, false, false, rawChip);
+        }
         ComputeCodeStore.presynchEmptyTilesInSteady();
     }
 

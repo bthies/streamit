@@ -28,6 +28,8 @@ public class BCFile
     private boolean numbers;
     /** The name of file we are generating */
     public static final String BCFILE_NAME = "setup.bc";
+    /** The space time schedule of application */
+    private SpaceTimeSchedule spaceTime;
 
     /**
      * Generate the btl machine file that describes the application 
@@ -37,9 +39,10 @@ public class BCFile
      * @param rc The RawChip.
      * @param gn The NumberGathering structure.
      */
-    public static void generate(RawChip rc, NumberGathering gn) 
+    public static void generate(SpaceTimeSchedule sp, RawChip rc, 
+            NumberGathering gn) 
     {
-        (new BCFile(rc, gn)).doit();
+        (new BCFile(sp, rc, gn)).doit();
     }
     
     /**
@@ -48,8 +51,9 @@ public class BCFile
      * @param rc The rawchip,
      * @param g The number gathering structures.
      */
-    private BCFile(RawChip rc, NumberGathering g) 
+    private BCFile(SpaceTimeSchedule sp, RawChip rc, NumberGathering g) 
     {
+        spaceTime = sp;
         rawChip = rc;
         ng = g;
         //set numbers to true if we are given a number gathering object
@@ -143,6 +147,21 @@ public class BCFile
                     mappedTiles++;
                 }
             }
+        //append the number of filters and the number of slices
+        Trace traces[] = spaceTime.partitioner.getTraceGraph();
+        int numTraces = 0;
+        int numFilters = 0;
+        for (int i = 0; i < traces.length; i++) {
+            //don't count file reader and writers
+            if (traces[i].getHead().getNextFilter().isFileInput() || 
+                    traces[i].getHead().getNextFilter().isFileOutput())
+                continue;
+            numTraces++;
+            numFilters += traces[i].getNumFilters();
+        }
+        
+        buf.append("global gNumSlices = " + numTraces + ";\n");
+        buf.append("global gNumFilters = " + numFilters + ";\n");
         buf.append("global gMappedTiles = " + mappedTiles + ";\n");
         //define the vars
         //define the number of items received so far and zero it

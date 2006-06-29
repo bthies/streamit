@@ -22,8 +22,12 @@ import at.dms.util.SIRPrinter;
  * The entry to the space time backend for raw.
  */
 public class SpaceTimeBackend {
+    /** don't generate the work function code for a filter,
+     * instead produce debugging code.
+     */
     public static boolean FILTER_DEBUG_MODE = false;
-
+    /** should we not software pipeline the steady state */
+    public static boolean NO_SWPIPELINE = KjcOptions.noswpipe;
     public static boolean FISSION = true;
 
     public static SIRStructure[] structures;
@@ -309,9 +313,10 @@ public class SpaceTimeBackend {
         
         // generate the bc file depending on if we have number gathering enabled
         if (KjcOptions.numbers > 0)
-            BCFile.generate(rawChip, NumberGathering.doit(rawChip, partitioner.io));
+            BCFile.generate(spaceTimeSchedule, rawChip, 
+                    NumberGathering.doit(rawChip, partitioner.io));
         else
-            BCFile.generate(rawChip, null);
+            BCFile.generate(spaceTimeSchedule, rawChip, null);
         
         System.exit(1);
         

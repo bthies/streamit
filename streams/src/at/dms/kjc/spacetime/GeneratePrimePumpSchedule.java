@@ -30,6 +30,10 @@ public class GeneratePrimePumpSchedule {
      */
     public void schedule() {
         LinkedList preLoopSchedule = new LinkedList();
+        if (SpaceTimeBackend.NO_SWPIPELINE) {
+            spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
+        }
+        
         LinkedList dataFlowTraversal = DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph());
               
         //keep adding traces to the schedule until all traces can fire 

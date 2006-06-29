@@ -49,10 +49,15 @@ public class GenerateSteadyStateSchedule {
     
     
     public void schedule() {
-        //for now just call schedule work, may want other schemes later
-        scheduleWork();
-        spaceTime.setSchedule(schedule);
-        //      set up dependencies
+        if (SpaceTimeBackend.NO_SWPIPELINE) {
+            spaceTime.setSchedule(DataFlowOrder.getTraversal
+                    (spaceTime.partitioner.getTraceGraph()));
+        }
+        else {
+            //for now just call schedule work, may want other schemes later
+            scheduleWork();
+            spaceTime.setSchedule(schedule);
+        }
         printSchedule();
     }
     

@@ -1,49 +1,97 @@
 // Implements DES key schedule
 // (rodric rabbah, <rabbah@mit.edu>)
 
-// NOTE: current implementation of key schedule is inefficient 
-// because at any round i, it recalculates all keys for all previous 
-// round 1...i-1; this is the most trivial implementation of the key
-// scheduler, while a more efficient implementation calculates all the
-// keys during initialzation and stores them for later use
+// output encryption key for current round; fully
+// precalculates key schedules at init time, and 
+// emits the appropriate bits at run time
 void->bit pipeline KeySchedule(int vector, int round)
 {
-    // sample user keys
-    int[34][2] USERKEYS = {{0x00000000, 0x00000000},  // 0x0000000000000000
-                           {0xFFFFFFFF, 0xFFFFFFFF},  // 0xFFFFFFFFFFFFFFFF
-                           {0x30000000, 0x00000000},  // 0x3000000000000000
-                           {0x11111111, 0x11111111},  // 0x1111111111111111
-                           {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
-                           {0x11111111, 0x11111111},  // 0x1111111111111111
-                           {0x00000000, 0x00000000},  // 0x0000000000000000
-                           {0xFEDCBA98, 0x76543210},  // 0xFEDCBA9876543210
-                           {0x7CA11045, 0x4A1A6E57},  // 0x7CA110454A1A6E57
-                           {0x0131D961, 0x9DC1376E},  // 0x0131D9619DC1376E
-                           {0x07A1133E, 0x4A0B2686},  // 0x07A1133E4A0B2686
-                           {0x3849674C, 0x2602319E},  // 0x3849674C2602319E
-                           {0x04B915BA, 0x43FEB5B6},  // 0x04B915BA43FEB5B6
-                           {0x0113B970, 0xFD34F2CE},  // 0x0113B970FD34F2CE
-                           {0x0170F175, 0x468FB5E6},  // 0x0170F175468FB5E6
-                           {0x43297FAD, 0x38E373FE},  // 0x43297FAD38E373FE
-                           {0x07A71370, 0x45DA2A16},  // 0x07A7137045DA2A16
-                           {0x04689104, 0xC2FD3B2F},  // 0x04689104C2FD3B2F
-                           {0x37D06BB5, 0x16CB7546},  // 0x37D06BB516CB7546
-                           {0x1F08260D, 0x1AC2465E},  // 0x1F08260D1AC2465E
-                           {0x58402364, 0x1ABA6176},  // 0x584023641ABA6176
-                           {0x02581616, 0x4629B007},  // 0x025816164629B007
-                           {0x49793EBC, 0x79B3258F},  // 0x49793EBC79B3258F
-                           {0x4FB05E15, 0x15AB73A7},  // 0x4FB05E1515AB73A7
-                           {0x49E95D6D, 0x4CA229BF},  // 0x49E95D6D4CA229BF
-                           {0x018310DC, 0x409B26D6},  // 0x018310DC409B26D6
-                           {0x1C587F1C, 0x13924FEF},  // 0x1C587F1C13924FEF
-                           {0x01010101, 0x01010101},  // 0x0101010101010101
-                           {0x1F1F1F1F, 0x0E0E0E0E},  // 0x1F1F1F1F0E0E0E0E
-                           {0xE0FEE0FE, 0xF1FEF1FE},  // 0xE0FEE0FEF1FEF1FE
-                           {0x00000000, 0x00000000},  // 0x0000000000000000
-                           {0xFFFFFFFF, 0xFFFFFFFF},  // 0xFFFFFFFFFFFFFFFF
-                           {0x01234567, 0x89ABCDEF},  // 0x0123456789ABCDEF
-                           {0xFEDCBA98, 0x76543210}}; // 0xFEDCBA9876543210
+    add void->bit filter {
+        bit[MAXROUNDS][48] keys;
 
+        // precalculate key schedule
+        init {
+            bit[64] k64;
+            
+            for (int w = 1; w >= 0; w--) {
+                int v = USERKEYS[vector][w]; // LSW first then MSW
+                int m = 1;
+                for (int i = 0; i < 32; i++) {
+                    if (((v & m) >> i) != 0)
+                        k64[((1 - w) * 32) + i] = 1;
+                    else
+                        k64[((1 - w) * 32) + i] = 0;
+                    m = m << 1;
+                }
+            }
+
+            // apply PC1
+            bit[56] k56;
+            for (int i = 0; i < 56; i++) {
+                // input bit stream is from MSB ... LSB 
+                // that is LSB is head of FIFO, MSB is tail of FIFO
+                // as in b63 b62 b61 b60 ... b3  b2  b1  b0
+                // but PC1 permutation requires bit numbering from left to right
+                // as in b1  b2  b3  b4  ... b61 b62 b63 b64
+                // (note indexing from 0 vs 1)
+                k56[i] = k64[64 - PC1[i]];
+            }
+
+            for (int r = 0; r < MAXROUNDS; r++) {
+                // rotate left and right 28-bit bits chunks
+                // according to round number
+                bit[56] bits;
+                for (int i =  0; i < 28; i++) 
+                    bits[i] = k56[(i + RT[r]) % 28];
+                for (int i = 28; i < 56; i++) 
+                    bits[i] = k56[28 + ((i + RT[r]) % 28)];
+                for (int i =  0; i < 56; i++) 
+                    k56[i] = bits[i];
+                
+                // apply PC2 and store resultant key
+                for (int i = 47; i >= 0; i--) {
+                    // input bit stream is from MSB ... LSB
+                    // that is LSB is head of FIFO, MSB is tail of FIFO
+                    // as in b63 b62 b61 b60 ... b3  b2  b1  b0
+                    // permutation PC2 permutes the bits then emits them
+                    // in reverse order
+                    keys[r][47 - i] = k56[PC2[i] - 1];
+                }
+            }
+        }
+
+        work push 48 {
+            for (int i = 0; i < 48; i++) {
+                push(keys[round][i]);
+            }
+        }
+    }
+
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add pipeline {
+                add bit->int filter {
+                    work pop 48 push 2 {
+                        for (int i = 0; i < 48; i++) pop();
+
+                        push(USERKEYS[vector][1]); // LSW
+                        push(USERKEYS[vector][0]); // MSW
+                    }
+                }
+                add IntoBits();
+                add HexPrinter(USERKEY, 64);
+            }
+            join roundrobin(1, 0);
+        }
+    }
+}
+
+// inefficient but straightforward implementation of key schedule; it
+// recalculates all keys for all previous rounds 1...i-1
+void->bit pipeline slowKeySchedule(int vector, int round)
+{
     add void->int filter {
         work push 2 {
             push(USERKEYS[vector][1]); // LSW
@@ -53,17 +101,8 @@ void->bit pipeline KeySchedule(int vector, int round)
 
     add IntoBits();
 
-    if (PRINTINFO && (round == 0)) {
-        add splitjoin {
-            split duplicate;
-            add Identity<bit>();
-            add HexPrinter(USERKEY, 64);
-            join roundrobin(1, 0);
-        }
-    }
-
-    add PC1();
-
+    add doPC1();
+    
     for (int i = 0; i < round+1; i++) {
         add splitjoin {
             split roundrobin(28, 28);
@@ -71,20 +110,36 @@ void->bit pipeline KeySchedule(int vector, int round)
             add LRotate(i);
             join roundrobin(28, 28);
         }
+        // or more simply can do:
+        // add LRotate(i);
     }
+    
+    add doPC2();
+    
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add pipeline {
+                add bit->int filter {
+                    work pop 48 push 2 {
+                        for (int i = 0; i < 48; i++) pop();
 
-    add PC2();
+                        push(USERKEYS[vector][1]); // LSW
+                        push(USERKEYS[vector][0]); // MSW
+                    }
+                }
+                add IntoBits();
+                add HexPrinter(USERKEY, 64);
+            }
+            join roundrobin(1, 0);
+        }
+    }
 }
-
 
 // left rotate input stream of length 28-bits by RT[round]
 bit->bit filter LRotate(int round)
 {
-    int[16] RT  = {1, 1, 2, 2, 
-                   2, 2, 2, 2, 
-                   1, 2, 2, 2, 
-                   2, 2, 2, 1};
-
     int n = 28;
     int x = RT[round];
 
@@ -98,18 +153,8 @@ bit->bit filter LRotate(int round)
     }
 }
 
-
-bit->bit filter PC1()
+bit->bit filter doPC1()
 {
-    int[56] p = {57, 49, 41, 33, 25, 17,  9,
-                  1, 58, 50, 42, 34, 26, 18,
-                 10,  2, 59, 51, 43, 35, 27,
-                 19, 11,  3, 60, 52, 44, 36,
-                 63, 55, 47, 39, 31, 23, 15,
-                  7, 62, 54, 46, 38, 30, 22,
-                 14,  6, 61, 53, 45, 37, 29,
-                 21, 13,  5, 28, 20, 12,  4};
-
     work pop 64 push 56 {
         for (int i = 0; i < 56; i++) {
             // input bit stream is from MSB ... LSB 
@@ -118,7 +163,7 @@ bit->bit filter PC1()
             // but PC1 permutation requires bit numbering from left to right
             // as in b1  b2  b3  b4  ... b61 b62 b63 b64
             // (note indexing from 0 vs 1)
-            push(peek(64 - p[i]));
+            push(peek(64 - PC1[i]));
         }
         for (int i = 0; i < 64; i++) {
             pop();
@@ -126,17 +171,8 @@ bit->bit filter PC1()
     }
 }
        
-bit->bit filter PC2()
+bit->bit filter doPC2()
 {
-    int[48] p = {14, 17, 11, 24,  1,  5,
-                  3, 28, 15,  6, 21, 10,
-                 23, 19, 12,  4, 26,  8,
-                 16,  7, 27, 20, 13,  2,
-                 41, 52, 31, 37, 47, 55,
-                 30, 40, 51, 45, 33, 48,
-                 44, 49, 39, 56, 34, 53,
-                 46, 42, 50, 36, 29, 32};
-
     work pop 56 push 48 {
         // input bit stream is from MSB ... LSB
         // that is LSB is head of FIFO, MSB is tail of FIFO
@@ -144,7 +180,7 @@ bit->bit filter PC2()
         // permutation PC2 permutes the bits then emits them
         // in reverse order
         for (int i = 47; i >= 0; i--) {
-            push(peek(p[i] - 1));
+            push(peek(PC2[i] - 1));
         }
         for (int i = 0; i < 56; i++) {
             pop();

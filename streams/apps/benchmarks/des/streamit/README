@@ -3,11 +3,11 @@ Plaintext:
     - currently includes 34 64-bit plain texts for encoding
 
 Key: 
-    - modify Keys.str to edit the user key
+    - modify USERKEYS in Statics.str to edit the user key
     - currently includes 34 64-bit user keys for encoding
 
 Compile:
-    - strc DES.str Keys.str Source.str Utils.str Sboxes.str -o des
+    - strc DES.str Keys.str Source.str Utils.str Sboxes.str Statics.str -o des
 
 Run: 
     - ./des -i1

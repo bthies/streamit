@@ -1,4 +1,4 @@
-SOURCES = DES.str Sboxes.str Utils.str Keys.str Source.str
+SOURCES = DES.str Sboxes.str Utils.str Keys.str Source.str Statics.str
 BACKEND = -simpleC
 
 all: des

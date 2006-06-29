@@ -28,6 +28,7 @@ public class FuseAll implements StreamVisitor {
     public static SIRPipeline fuse(SIRStream str) {
         // try fusing toplevel separately since noone contains it
         SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+        wrapper.reclaimChildren();
         FuseAll fuseAll = new FuseAll();
         boolean hasFused = true;
         while (hasFused) {

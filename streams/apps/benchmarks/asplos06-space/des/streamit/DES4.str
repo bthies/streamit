@@ -20,7 +20,14 @@ void->void pipeline DES4
 
     add PlainTextSource(testvector);
     add DEScoder(testvector);
-    add HexPrinter(CIPHERTEXT, 64);
+    add int->void filter 
+	{
+	    work pop 1 
+		{
+		    println(pop());
+		}
+	} 
+    //add HexPrinter(CIPHERTEXT, 64);
 }
 
 int->int pipeline DEScoder(int vector)

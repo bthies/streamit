@@ -2,10 +2,10 @@ Plaintext:
     - modify Source.str to change the input plaint text
 
 Key: 
-    - modify Keys.str to edit the user key
+    - modify USERKEYS in Statics.str to edit the user key
 
 Compile:
-    - strc Serpent.str L.str Source.str Keys.str Utils.str -o serpent
+    - strc Serpent.str L.str Source.str Keys.str Statics.str Utils.str -o serpent
 
 Run: 
     - ./serpent -i1
@@ -14,16 +14,12 @@ Run:
 
 Expected output:
     - default Plaintext and Key
-      Plaintext          = 00000003000000020000000100000000
-      Key                = 0000000000000000000000000000000000000000000000000000000000000000
+      Plaintext          = 92efa3ca9477794d31f4df7bce23e60a
+      Key                = 92efa3ca9477794d31f4df7bce23e60a6038d2d2710373f04fd30aaecea8aa43
     - expected Ciphertext
-      Ciphertext^      1 = 7CA73BB083C31E69EC52BD8227A46120
+      Ciphertext^      1 = 12D7B766DC65D284EA6CBF4A4E1D440F
 
 NOTES:
-- the user key belongs in the statics{} section but the compiler
-doesn't properly support propagation of contants from global arrays;
-hence the user key is defined in the KeySchedule pipeline in Keys.str.
-
 - currently the function LRotate in Keys.str implement bit rotation by
 mapping an integer to an array of bits first, then reverse mapping;
 this is because the compiler doesn't support operations on unsigned

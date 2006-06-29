@@ -656,7 +656,7 @@ public class StaticsProp {
         while (stmtIter.hasNext() 
                && stmtIter.next() instanceof JVariableDeclarationStatement){}
         // add
-        body.addAllStatements(stmtIter.previousIndex(), theCode);
+        body.addAllStatements(stmtIter.nextIndex(), theCode);
     }
 
     /*

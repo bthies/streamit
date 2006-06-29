@@ -38,6 +38,8 @@ public class RawBackend {
     //onto its output tape
     public static boolean FILTER_DEBUG_MODE = false;
 
+    public static boolean ALT_CODE_GEN = true;
+    
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
                            SIRInterfaceTable[] interfaceTables,

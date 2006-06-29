@@ -320,8 +320,9 @@ public class ComputeCodeStore implements SIRCodeUnit{
         
         //now it is a read
         
-        //always presynch in the primepump stage!
-        if (init || primepump) 
+        //always presynch in the init && primepump stage and if we are not software
+        //pipeling!
+        if (init || primepump || SpaceTimeBackend.NO_SWPIPELINE) 
             return true;
         
         //now in steady
@@ -485,7 +486,8 @@ public class ComputeCodeStore implements SIRCodeUnit{
         assert bytes > 0 : "trying to generate a dram command of size 0";
         assert !buffer.redundant() : "Trying to generate a dram command for a redundant buffer!";
          
-        boolean shouldPreSynch = presynched && GEN_PRESYNCH && (init || primepump);
+        boolean shouldPreSynch = presynched && GEN_PRESYNCH && 
+                (init || primepump || SpaceTimeBackend.NO_SWPIPELINE);
         
         parent.setComputes();
         String functName = "raw_streaming_dram_gdn_request_read" + 

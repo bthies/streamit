@@ -84,7 +84,7 @@ public class Rawify {
         traces = schedule.getSchedule();
 
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            iterateInorder(traces, false, true, rawChip);
+            iterateInorder(traces, false, false, rawChip);
         } else {
             //iterate over the joiners then the filters then 
             //the splitter, this will create a data-redistribution 

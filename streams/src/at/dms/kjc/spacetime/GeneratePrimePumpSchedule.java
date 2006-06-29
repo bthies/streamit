@@ -32,6 +32,7 @@ public class GeneratePrimePumpSchedule {
         LinkedList preLoopSchedule = new LinkedList();
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
+            return;
         }
         
         LinkedList dataFlowTraversal = DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph());

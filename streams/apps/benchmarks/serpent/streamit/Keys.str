@@ -2,42 +2,32 @@
 // (see section 4 of ../docs for algorithm details)
 // (rodric rabbah, <rabbah@mit.edu>)
   
+// output encryption key for current round; fully
+// precalculates key schedules at init time, and 
+// emits the appropriate bits at run time
 void->bit pipeline KeySchedule(int vector, int round)
 {
-    int[5][8] USERKEYS = {{0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
-                          // 0000000000000000000000000000000000000000000000000000000000000000 (repeated purposefully)
-                          {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
-                          // 92efa3ca9477794d31f4df7bce23e60a6038d2d2710373f04fd30aaecea8aa43
-                          {0x92efa3ca, 0x9477794d, 0x31f4df7b, 0xce23e60a, 0x6038d2d2, 0x710373f0, 0x4fd30aae, 0xcea8aa43},
-                          // d3fc99e32d09420f00a041f7e32914747731be4d4e5b5da518c2abe0a1239fa8
-                          {0xd3fc99e3, 0x2d09420f, 0x00a041f7, 0xe3291474, 0x7731be4d, 0x4e5b5da5, 0x18c2abe0, 0xa1239fa8},
-                          // bd14742460c6addfc71eef1328e2ddb6ba5b8798bb66c3c4d380acb055cac569
-                          {0xbd147424, 0x60c6addf, 0xc71eef13, 0x28e2ddb6, 0xba5b8798, 0xbb66c3c4, 0xd380acb0, 0x55cac569}};
-    
-    int USERKEY_LENGTH = 8 * BITS_PER_WORD;
-
-    // output encryption key for current round
     add void->bit filter {
         bit[MAXROUNDS + 1][NBITS] keys;
 
         // precalculate key schedule
         init {
-            int[8]   key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
+            int[8]   userkey = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
             int[140] w;
 
             int words = USERKEY_LENGTH / BITS_PER_WORD;
             for (int i = words - 1; i >= 0; i--)
-                key[words - 1 - i] = USERKEYS[vector][i];
+                userkey[words - 1 - i] = USERKEYS[vector][i];
             
             // add 1 to MSB of user key
             if (USERKEY_LENGTH < 256) {
-                int msb = key[USERKEY_LENGTH / BITS_PER_WORD];
-                key[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
+                int msb = userkey[USERKEY_LENGTH / BITS_PER_WORD];
+                userkey[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
             }
             
             // make prekeys w_-8 ... w_-1
             for (int i = 0; i < 8; i++)
-                w[i] = key[i];
+                w[i] = userkey[i];
             
             // calculate intermediate keys w_0 ... w_131
             for (int i = 8; i < 140; i++) {
@@ -74,14 +64,20 @@ void->bit pipeline KeySchedule(int vector, int round)
                 }
 
                 // reverse bit slice and store bits
-                for (int k = 0; k < 4; k++) {
+                bit[NBITS] key;
+                for (int k = 0; k < NBITS / BITS_PER_WORD; k++) {
                     for (int b = 0; b < BITS_PER_WORD; b++) {
                         bit x = (sbox[b] & (1 << k)) >> k;
                         if (x != 0) 
-                            keys[i][(k * BITS_PER_WORD) + b] = 1;
+                            key[(k * BITS_PER_WORD) + b] = 1;
                         else
-                            keys[i][(k * BITS_PER_WORD) + b] = 0;
+                            key[(k * BITS_PER_WORD) + b] = 0;
                     }
+                }
+
+                // perform initial permutation (IP)
+                for (int b = 0; b < NBITS; b++) {
+                    keys[i][b] = key[IP[b]];
                 }
             }
         }
@@ -117,8 +113,6 @@ void->bit pipeline KeySchedule(int vector, int round)
         }
     }
 
-    add Permute(NBITS, IP);
-
     if (PRINTINFO && (round == 0)) {
         add splitjoin {
             split duplicate;
@@ -127,6 +121,120 @@ void->bit pipeline KeySchedule(int vector, int round)
                 add bit->int filter {
                     work pop NBITS push 8 {
                         for (int i = 0; i < NBITS; i++) pop();
+
+                        push(USERKEYS[vector][7]); // LSW
+                        push(USERKEYS[vector][6]);
+                        push(USERKEYS[vector][5]);
+                        push(USERKEYS[vector][4]);
+                        push(USERKEYS[vector][3]);
+                        push(USERKEYS[vector][2]);
+                        push(USERKEYS[vector][1]);
+                        push(USERKEYS[vector][0]); // MSW
+                    }
+                }
+                add IntoBits();
+                add HexPrinter(USERKEY, 256);
+            }
+            join roundrobin(1, 0);
+        }
+    }
+}
+
+// output encryption key for current round; partially
+// precalculates key schedules at init time
+void->bit pipeline slowKeySchedule(int vector, int round)
+{
+    // output 128 bits intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+    add void->int filter {
+        int[140] w;
+
+        // precalculate key schedule
+        init {
+            int[8] key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
+
+            int words = USERKEY_LENGTH / BITS_PER_WORD;
+            for (int i = words - 1; i >= 0; i--)
+                key[words - 1 - i] = USERKEYS[vector][i];
+            
+            // add 1 to MSB of user key
+            if (USERKEY_LENGTH < 256) {
+                int msb = key[USERKEY_LENGTH / BITS_PER_WORD];
+                key[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
+            }
+            
+            // make prekeys w_-8 ... w_-1
+            for (int i = 0; i < 8; i++)
+                w[i] = key[i];
+            
+            // calculate intermediate keys w_0 ... w_131
+            for (int i = 8; i < 140; i++) {
+                w[i] = w[i - 8] ^ w[i - 5] ^ w[i - 3] ^ w[i - 1] ^ PHI ^ (i - 8);
+                w[i] = LRotate(w[i], 11);
+            }
+        }
+        
+        // push intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+        work push 4 {
+            int i = (4 * round) + 8;
+            push(w[i + 0]);
+            push(w[i + 1]);
+            push(w[i + 2]);
+            push(w[i + 3]);
+        }
+
+        int LRotate(int x, int n) {
+            // work around the lack of support for unsigned data types
+            // return ((x << n) | (x >> (BITS_PER_WORD - n)));
+            int[32] v;
+            int m = 1;
+            for (int i = 0; i < 32; i++) {
+                if (((x & m) >> i) != 0)
+                    v[i] = 1;
+                m = m << 1;
+            }
+
+            int[32] w;
+            for (int i = 0; i < 32; i++) {
+                w[i] = v[(i + 32 - 11) % 32];
+            }
+
+            int r = 0;
+            for (int i = 0; i < 32; i++) {
+                r = r | (w[i] << i);
+            }
+
+            return r;
+        }
+    }
+
+    add IntoBits();
+
+    // permute bits for Sbox
+    add BitSlice(4, 32);
+
+    // round  0: 3
+    // round  1: 2
+    // round  2: 1
+    // round  3: 0
+    // round  4: 7
+    // ...
+    // round 31: 4
+    // round 32: 3
+    add Sbox((32 + 3 - round) % 8);
+
+    // reverse the bit slicing
+    add BitSlice(32, 4);
+
+    add Permute(NBITS, IP);
+
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<bit>();
+            add pipeline {
+                add bit->int filter {
+                    work pop 128 push 8 {
+                        for (int i = 0; i < 128; i++) pop();
 
                         push(USERKEYS[vector][7]); // LSW
                         push(USERKEYS[vector][6]);

@@ -19,6 +19,18 @@ static {
     int USERKEY        = 1;
     int CIPHERTEXT     = 2;
 
+    // sample user keys
+    int[5][8] USERKEYS = {{0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+                          // 0000000000000000000000000000000000000000000000000000000000000000 (repeated purposefully)
+                          {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+                          // 92efa3ca9477794d31f4df7bce23e60a6038d2d2710373f04fd30aaecea8aa43
+                          {0x92efa3ca, 0x9477794d, 0x31f4df7b, 0xce23e60a, 0x6038d2d2, 0x710373f0, 0x4fd30aae, 0xcea8aa43},
+                          // d3fc99e32d09420f00a041f7e32914747731be4d4e5b5da518c2abe0a1239fa8
+                          {0xd3fc99e3, 0x2d09420f, 0x00a041f7, 0xe3291474, 0x7731be4d, 0x4e5b5da5, 0x18c2abe0, 0xa1239fa8},
+                          // bd14742460c6addfc71eef1328e2ddb6ba5b8798bb66c3c4d380acb055cac569
+                          {0xbd147424, 0x60c6addf, 0xc71eef13, 0x28e2ddb6, 0xba5b8798, 0xbb66c3c4, 0xd380acb0, 0x55cac569}};
+    
+    int USERKEY_LENGTH = 8 * BITS_PER_WORD;
 
     // initial permutation
     int[128] IP = { 0, 32, 64, 96,   1, 33, 65, 97,   2, 34, 66, 98,   3, 35, 67, 99,

@@ -1,0 +1,65 @@
+// Provide math routines and utilities for printing streams
+// (rodric rabbah, <rabbah@mit.edu>)
+
+// convert a stream of complex to its complex conjugate
+complex->complex filter Conjugate(int n) 
+{
+    work pop n push n {
+        for (int i = 0; i < n; i++) {
+            complex out = pop();
+            out.imag = 0 - out.imag;
+            push(out);
+        }
+    }
+}
+
+// output is absoluate value of complex input
+complex->float filter complexAbsoluate 
+{
+    work pop 1 push 1 {
+        complex in = pop();
+        float  out = sqrt(pow(in.real, 2) +
+                          pow(in.imag, 2));
+        push(out);
+    }
+}
+
+// transpose matrix of floating point value
+float->float filter floatTranspose(int rows, int cols) {
+    work push rows*cols pop rows*cols {
+        for (int j = 0; j < cols; j++)
+            for (int i = 0; i < rows; i++)
+                push(peek(i * cols + j));
+        for (int i = 0; i < rows*cols; i++)
+            pop();
+    }
+}
+
+complex->void filter PrintComplex(int n, int m, boolean transpose)
+{
+    work pop n*m {
+        complex[n][m] t;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                t[i][j] = pop();
+            }
+        }
+
+        if (!transpose) {
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    println(t[i][j].real);
+            for (int i = 0; i < n; i++)
+                for (int j = 0; j < m; j++)
+                    println(t[i][j].imag);
+        }
+        else {
+            for (int j = 0; j < m; j++)
+                for (int i = 0; i < n; i++)
+                    println(t[i][j].real);
+            for (int j = 0; j < m; j++)
+                for (int i = 0; i < n; i++)
+                    println(t[i][j].imag);
+        }
+    }
+}

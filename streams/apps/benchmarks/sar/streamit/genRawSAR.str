@@ -229,15 +229,3 @@ int->complex pipeline FastTimeFilter(int n,
     add FTX1D(n);
     add Conjugate(n);
 }
-
-// convert a stream of complex to its complex conjugate
-complex->complex filter Conjugate(int n) 
-{
-    work pop n push n {
-        for (int i = 0; i < n; i++) {
-            complex out = pop();
-            out.imag = 0 - out.imag;
-            push(out);
-        }
-    }
-}

@@ -121,32 +121,31 @@ void->void pipeline SAR()
     add void->int filter { // NOTE: mock filter to ger around compiler limitation w.r.t. null splitters
         work push 1 { push(1); }
     }
-    add int->complex pipeline {
-        add int->complex splitjoin {
-            split duplicate;
-            add FastTimeFilter(n, t);
-            add pipeline {
-                /// generate s
-                add genRawSAR(Tf, n, m, mc, t, k, ku, uc);
-                /// s = ftx(s)
-                add FTX2D(n, mc);
-            }
-            join roundrobin(1, mc);
+
+    add int->complex splitjoin {
+        split duplicate;
+        add FastTimeFilter(n, t);
+        add pipeline {
+            /// generate s
+            add genRawSAR(Tf, n, m, mc, t, k, ku, uc);
+            /// s = ftx(s)
+            add FTX2D(n, mc);
         }
+        join roundrobin(1, mc);
+    }
         
-        add complex->complex filter {
-            work pop n+n*mc push n*mc {
-                for (int i = 0; i < n; i++) {
-                    complex ftf = pop();
-                    for (int j = 0; j < mc; j++) {
-                        complex s   = pop();
-                        complex out;
-                        
-                        out.real = s.real * ftf.real - s.imag * ftf.imag;
-                        out.imag = s.imag * ftf.real + s.real * ftf.imag;
-                        
-                        push(out);
-                    }
+    add complex->complex filter {
+        work pop n+n*mc push n*mc {
+            for (int i = 0; i < n; i++) {
+                complex ftf = pop();
+                for (int j = 0; j < mc; j++) {
+                    complex s   = pop();
+                    complex out;
+                    
+                    out.real = s.real * ftf.real - s.imag * ftf.imag;
+                    out.imag = s.imag * ftf.real + s.real * ftf.imag;
+                    
+                    push(out);
                 }
             }
         }
@@ -165,10 +164,6 @@ void->void pipeline SAR()
     //// fp=fty(cs);
     add FTY2D(n, mc);   
 
-    add PrintComplex(n, mc, false);
-
-    /* NOTE: rest of pipeline not verified against matlab code
-
     //// Zero-padding in ku domain for slow-time upsampling
     //// mz=m-mc;
     //// fcs=(m/mc)*[zeros(n,mz/2),fp,zeros(n,mz/2)];
@@ -177,7 +172,7 @@ void->void pipeline SAR()
     //// Transform to (omega,u) domain
     //// cs=ifty(fcs);
     add iFTY2D(n, m);
-    
+
     //// Decompression
     //// s=cs.*exp(-cj*2*(k(:)*ones(1,m)).*
     ////          (ones(n,1)*sqrt(Xc^2+(-u).^2))+
@@ -187,16 +182,15 @@ void->void pipeline SAR()
     //// Digitally-spotlighted SAR signal spectrum
     //// fs=fty(s);                 
     add FTY2D(n, m);
-  
+
     // SAR RECONSTRUCTION (multiple stages)
     // - 2D Fourier Matched Filtering and Interpolation
     // - Inverse 2D FFT for spatial domain image
-    //add Reconstruction(n, m, k, ku);
+    add Reconstruction(n, m, k, ku);
 
-    // add PrintComplex(n, mc, true);
-    //add PrintFloat();
-
-    */
+    // NOTE: to compate to MATLAB output, transpose again
+    // add floatTranspose(266, m);
+    add FileWriter<float>("image");
 }
 
 
@@ -246,8 +240,7 @@ complex->complex filter Compression(int n,
     init {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < mc; j++){
-                float value = 
-                    2 * (k[i] * (sqrt(pow(Xc, 2) + pow(uc[j], 2)) - Xc));
+                float value = 2 * (k[i] * (sqrt(pow(Xc, 2) + pow(uc[j], 2)) - Xc));
                 
                 cos_value[i][j] = cos(value);
                 sin_value[i][j] = sin(value);
@@ -290,8 +283,7 @@ complex->complex filter Decompression(int n,
     init {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++){
-                float value = 
-                    2 * (k[i] * (sqrt(pow(Xc, 2) + pow(u[j], 2)) - Xc));
+                float value = 2 * (k[i] * (sqrt(pow(Xc, 2) + pow(u[j], 2)) - Xc));
                 
                 cos_value[i][j] = cos(value);
                 sin_value[i][j] = sin(value);
@@ -365,53 +357,15 @@ complex->float pipeline Reconstruction(int n,
     //  % [I = subsampled index in ku domain]
     //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
     // end
-    add complex->complex splitjoin {
-	  split roundrobin(m);
-
-	  for (int i = 0; i < n; i++) {	  
-          add convolutionInterpolation(i, n, nx, m, k, ku);
-	  }
-
-	  join roundrobin(1);
-    }
-    // NOTE: replace with user programmable splitjoin
-    add complex->complex filter {
-	  work pop n push 1 {
-		complex out;
-
-		for (int i = 0; i < n; i++) {
-		    complex in = pop();
-		    out.real += in.real;
-		    out.imag += in.imag;
-		}
-		push(out);
-	  }
-    }
-
+    add convolutionInterpolation(n, nx, m, k, ku);
     /// Inverse 2D FFT for spatial domain image f(x,y) [p203 fig4.6]
     /// f=iftx(ifty(F)); 
     add iFTY2D(nx, m);
     add iFTX2D(nx, m);
     
     /// image=abs(f)';
-    add complex->float filter {
-        work push nx*m pop nx*m {
-            float[m][nx] X_image;
-            
-            for (int i = 0; i < nx; i++) {
-                for (int j = 0; j < m; j++){
-                    complex in = pop(); // f[i][j]
-                    X_image[j][i] = sqrt(pow(in.real, 2) +
-                                         pow(in.imag, 2));
-                }
-            }
-            for (int i = 0; i < nx; i++) {
-                for (int j = 0; j < m; j++){
-                    push(X_image[j][i]);
-                }
-            }
-        }
-    }
+    add complexAbsoluate();
+    add floatTranspose(nx, m);
 }
 
 // matchedFilterting (stage 1 of Reconstruction)
@@ -428,7 +382,7 @@ complex->complex filter matchedFiltering(int n,
                                          float[m] ku)
 {
     // NOTE: <kx> is redefined because of a lack of proper support
-    // for global arrays the array itself is too big to be fully 
+    // for global arrays; the array itself is too big to be fully 
     // unrolled since it leads to 1.4M lines of code and chokes gcc    
     float[n][m]   kx;
     complex[n][m] fs0;
@@ -499,7 +453,8 @@ complex->complex filter matchedFiltering(int n,
 // KX=kxmin+(-is-2:nx-is-3)*dkx;     % uniformly-spaced kx points where
 //                                   % interpolation is done
 // F=single(zeros(nx,m));                % initialize F(kx,ku) array for interpolation output        
-// (in parent splitjoin): for i=1:n                     % for each k loop
+// (NOTE: can move to a parent splitjoin): 
+// for i=1:n                     % for each k loop
 //  icKX=round((kx(i,:)-KX(1,1))/dkx)+1; % closest grid point in KX domain
 //  ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
 //  ikx=ikx+nx*ones(I,1)*[0:m-1];
@@ -509,16 +464,16 @@ complex->complex filter matchedFiltering(int n,
 //          %%%%%   Sinc Convolution (interpolation) follows  %%%%%%%%
 //  % [I = subsampled index in ku domain]
 //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
-// (in parent splitjoin): end
-complex->complex filter convolutionInterpolation(int streamIndex,
-                                                 int n,
+// (NOTE: can move to a parent splitjoin): 
+// end
+complex->complex filter convolutionInterpolation(int n,
                                                  int nx, 
                                                  int m, 
                                                  float[n] k, 
                                                  float[m] ku)
 {
     // NOTE: <kx> is redefined because of a lack of proper support
-    // for global arrays the array itself is too big to be fully 
+    // for global arrays; the array itself is too big to be fully 
     // unrolled since it leads to 1.4M lines of code and chokes gcc
     float[n][m] kx;
     float kxmin = 1e25;
@@ -578,44 +533,60 @@ complex->complex filter convolutionInterpolation(int streamIndex,
         for (int i = 0; i < nx; i++) {
             KX[i] = kxmin + ((0 - is) - 2 + i) * dkx;
         }
-
-        for (int j = 0; j < m; j++) {
-            // icKX=round((kx(i,:)-KX(1,1))/dkx)+1;
-            icKX[j] = (int) round((kx[streamIndex][j] - KX[0]) / dkx) + 1;
-            
-            for (int l = 0; l < I; l++) {
-                // ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
-                ikx[l][j] = icKX[j] + (l - is);
-                //  ikx=ikx+nx*ones(I,1)*[0:m-1];
-                ikx[l][j] = ikx[l][j] + nx * j;
-                //  nKX=KX(ikx);
-                nKX[l][j] = KX[ikx[l][j] % nx];
-                // SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);
-                if ((nKX[l][j] - kx[streamIndex][j]) / dkx == 0) {
-                    SINC[l][j] = 1;
-                }
-                else {
-                    SINC[l][j] = sin(PI * (nKX[l][j] - kx[streamIndex][j]) / dkx) / 
-                                  (PI * (nKX[l][j] - kx[streamIndex][j]) / dkx);
-                }
-                
-                // HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));
-                HAM[l][j] = 0.54 + 0.46 * cos((PI / kxs) * (nKX[l][j] - kx[streamIndex][j]));
-            }
-        }
     }
     
-    work push nx*m pop m {
-        for (int j = 0; j < I; j++) {
-            for(int l = 0; l < m; l++) {
-                //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
-                complex t = peek(l);
-
-                int ri = ikx[j][l] % nx;
-                int ci = (ikx[j][l] - ikx[j][l] % nx) / nx;
-
-                F[ri][ci].real += t.real * SINC[j][l] * HAM[j][l];
-                F[ri][ci].imag += t.imag * SINC[j][l] * HAM[j][l];
+    work push nx*m pop n*m {
+        // for i=1:n                     % for each k loop
+        //  icKX=round((kx(i,:)-KX(1,1))/dkx)+1; % closest grid point in KX domain
+        //  ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
+        //  ikx=ikx+nx*ones(I,1)*[0:m-1];
+        //  nKX=KX(ikx);
+        //  SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);             % interpolating sinc [p144(3/4),p204(1/7)]
+        //  HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));  % Hamming window [p204(4/7)]
+        //          %%%%%   Sinc Convolution (interpolation) follows  %%%%%%%%
+        //  % [I = subsampled index in ku domain]
+        //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
+        // (NOTE: can move to a parent splitjoin): 
+        // end
+        for (int i = 0; i < n; i++) {
+            for (int l = 0; l < I; l++) {
+                for (int j = 0; j < m; j++) {
+                    // icKX=round((kx(i,:)-KX(1,1))/dkx)+1;
+                    icKX[j] = (int) round((kx[i][j] - KX[0]) / dkx) + 1;
+                    
+                    // ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
+                    // ikx=ikx+nx*ones(I,1)*[0:m-1];
+                    ikx[l][j] = icKX[j] + (l - is);
+                    ikx[l][j] = ikx[l][j] + (nx * j);
+                    
+                    //  nKX=KX(ikx);
+                    nKX[l][j] = KX[(ikx[l][j] - 1) % nx];
+                    
+                    // SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);
+                    float x = (nKX[l][j] - kx[i][j]) / dkx;
+                    if (x == 0) {
+                        SINC[l][j] = 1;
+                    }
+                    else {
+                        SINC[l][j] = sin(PI * x) / (PI * x);
+                    }
+                    
+                    // HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));
+                    HAM[l][j] = 0.54 + (0.46 * cos((PI / kxs) * (nKX[l][j] - kx[i][j])));
+                }
+            }
+   
+            //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
+            for (int j = 0; j < I; j++) {
+                for(int l = 0; l < m; l++) {
+                    complex t = peek((i*m) + l);
+                    
+                    int ri = (ikx[j][l] - 1) % nx;
+                    int ci = (ikx[j][l] - 1) / nx;
+                    
+                    F[ri][ci].real += t.real * SINC[j][l] * HAM[j][l];
+                    F[ri][ci].imag += t.imag * SINC[j][l] * HAM[j][l];
+                }
             }
         }
 
@@ -624,60 +595,10 @@ complex->complex filter convolutionInterpolation(int streamIndex,
                 push(F[j][l]);
             }
         }
-        
-        for(int l = 0; l < m; l++) {
-            pop();
-        }
-    }
-}
-
-
-complex->void filter PrintComplex(int n, int m, boolean transpose)
-{
-    work pop n*m {
-        complex[n][m] t;
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++) {
-                t[i][j] = pop();
+        for (int j = 0; j < n; j++) {
+            for(int l = 0; l < m; l++) {
+                pop();
             }
         }
-
-        if (!transpose) {
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < m; j++)
-                    println(t[i][j].real);
-
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < m; j++)
-                    println(t[i][j].imag);
-        }
-        else {
-            for (int j = 0; j < m; j++)
-                for (int i = 0; i < n; i++)
-                    println(t[i][j].real);
-
-            for (int j = 0; j < m; j++)
-                for (int i = 0; i < n; i++)
-                    println(t[i][j].imag);
-        }
-    }
-}
-
-float->void filter PrintFloat()
-{
-    work pop 1 {
-	  println(pop());
-    }
-}
-
-complex->complex filter DebugComplex()
-{
-    work pop 1 push 1 {
-        complex t = pop();
-        print(t.real);
-        print("+");
-        print(t.imag);
-        println("i");
-        push(t);
     }
 }

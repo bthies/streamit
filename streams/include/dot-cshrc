@@ -34,6 +34,7 @@ setenv CXX gcc34
 
 # the current version of starsearch we're using
 setenv TOPDIR ${STREAMIT_HOME}/misc/raw
+# the following needed to use spacetime, but can clobber Mike's research
 #setenv TOPDIR /home/bits6/mgordon/starsearch
 
 # the path to ATLAS

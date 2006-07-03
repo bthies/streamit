@@ -48,7 +48,7 @@ if ($sizedu > 100000) {
     my $n = 0;
     foreach (@files) {
 	if ($n == 1) {
-	    print "removing old result $_\n";
+	    print "Removing old result $_\n";
 	    unlink("$attic/$_") || die "Cannot unlink $attic/$_: $!";
 	}
 	$n = 1 - $n;		# alternate value of $n between 1 and 0
@@ -76,8 +76,28 @@ closedir(BASE);
 # remaining in the list @dirs.
 foreach (@dirs) {
     print "Summarizing $_. ";
-    system("bzip2 -c $base/$_/streams/results.xml > /tmp/results.xml.$_.bz2")
-	&& do {print "error during bzip $!"; next;};
+    # do the bzip in a subshell of what `command` normally would provide.
+    # redirect the output 
+    my $errmes;
+    if ($errmes = `(bzip2 -c $base/$_/streams/results.xml > /tmp/results.xml.$_.bz2) 2>&1`) {
+       if ($errmes =~ /bzip2: Can.t open input file .+results.xml: No such file or directory\./) {
+	   # If can't open input file, the usual reason is disk overflow
+	   # so we want to delete the test directory despite the error.
+	   print "Error during bzip $errmes";
+	   print "Proceeding to delete\n";
+	   # delete here and 'next' so doesn't copy 0-length .bz2 file to attic
+	   print "Deleting $_\n";
+	   system "rm -rf $base/$_";	# not 'unlink' since recursive removal
+	   next;
+       } else {
+	   print "$?\n";
+	   # Other bzip error: report it and skip deletion.
+	   $! =~ s/(w+)/<$1>/g;
+	   print "Error during bzip $errmes";
+	   print "Omitting delete\n";
+	   next;
+       }
+    }
 
     print "Deleting $_\n";
     system "rm -rf $base/$_";	# not 'unlink' since recursive removal

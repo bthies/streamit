@@ -33,8 +33,8 @@ setenv CC gcc34
 setenv CXX gcc34
 
 # the current version of starsearch we're using
-#setenv TOPDIR ${STREAMIT_HOME}/misc/raw
-setenv TOPDIR /home/bits6/mgordon/starsearch
+setenv TOPDIR ${STREAMIT_HOME}/misc/raw
+#setenv TOPDIR /home/bits6/mgordon/starsearch
 
 # the path to ATLAS
 setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS

@@ -37,8 +37,9 @@ export CC=gcc34
 export CXX=gcc34
 
 # the current version of starsearch we're using
-#export TOPDIR=${STREAMIT_HOME}/misc/raw
-export TOPDIR=/home/bits6/mgordon/starsearch/
+export TOPDIR=${STREAMIT_HOME}/misc/raw
+# the following needed to use spacetime, but can clobber Mike's research
+#export TOPDIR=/home/bits6/mgordon/starsearch/
 
 # the path to ATLAS
 export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS

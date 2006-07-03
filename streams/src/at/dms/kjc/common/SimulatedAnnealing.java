@@ -31,6 +31,7 @@ public abstract class SimulatedAnnealing {
 
     protected SimulatedAnnealing() {
         assignment = new HashMap();
+        random = new Random(17);
     }
     
     /**
@@ -110,7 +111,7 @@ public abstract class SimulatedAnnealing {
         
 
         try {
-            random = new Random(17);
+            
 //          initialize
             initialize();
             
@@ -122,7 +123,7 @@ public abstract class SimulatedAnnealing {
             currentCost = placementCost(false);
             assert currentCost >= 0.0;
             System.out.println("Initial Cost: " + currentCost);
-
+            double lastInitialCost = currentCost;
          
             // as a little hack, we will cache the layout with the minimum cost
             // these two hashmaps store this layout
@@ -137,12 +138,13 @@ public abstract class SimulatedAnnealing {
             // good initial layout. Some random layouts really kill the
             // algorithm
             for (int two = 0; two < iterations; two++) {
-                /*
-                 * if (two > 0) {
+                if (two > 0 && lastInitialCost == currentCost) {
+                    System.out.println("Not using last layout.");
                     initialPlacement();
                     currentCost = placementCost(false);
                 }
-                */
+                lastInitialCost = currentCost;
+                
                 System.out.print("\nRunning Annealing Step (" + currentCost
                                  + ", " + minCost + ")");
                 double t = annealMaxTemp();
@@ -159,6 +161,8 @@ public abstract class SimulatedAnnealing {
 
                         if (accepted) {
                             nsucc++;
+                            configuration++;
+                            //System.out.println(currentCost);
                         }
                         
                         if (configuration % 500 == 0)
@@ -282,7 +286,7 @@ public abstract class SimulatedAnnealing {
         double P = 1.0;
         double R = random.nextDouble();
 
-        if (e_new >= e_old)
+        if (e_new > e_old)
             P = Math.exp((((double) e_old) - ((double) e_new)) / T);
 
         if (R < P) {

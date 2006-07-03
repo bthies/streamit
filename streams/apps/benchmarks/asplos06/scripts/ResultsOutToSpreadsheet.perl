@@ -21,7 +21,7 @@
 #
 # To use, do something like:
 #   
-# find . -name "results.out" -exec echo `pwd`/'{}' \; >! resultfiles
+# find . -name "results.out" -exec echo `pwd`/'{}' \; > resultfiles
 # $STREAMIT_HOME/apps/benchmarks/asplos06/scripts/ResultsToSpreadsheet.perl \
 #  resultfiles > results.csv
 #
@@ -42,8 +42,16 @@
 
 use warnings;
 use strict;
+use Getopt::Std;
 
-# print header
+my $spacetime = 1;
+
+my %options=();
+getopts("s", \%options) or die("ResultsOutToSpreadSheet [-s]");
+
+$spacetime = 0 if defined $options{s};
+
+# print header same for each backend
 print "benchmark;options;throughput;utilization;MFLOPS;filters;slices;correct\n";
 
 foreach (<>) {
@@ -53,63 +61,66 @@ foreach (<>) {
   next unless -s $filenameandpath; # ignore 0-length files.
   my $benchmark = $1;
   my $options = $2;
-  open (RESULTS, "< $filenameandpath") or next;
   my @mflops = ();
   my $tiles = "";
   my $used_tiles = "";
+  my $filters;
+  my $slices;
   my $throughput = "";
   my $instrs_issued;
   my $max_instrs_issued;
   my $utilization = "";
   my $mflops = "";
   my $correct = 0;
-  while (<RESULTS>) {
-    chomp;
-    if (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+)$/) {
-      #tiles;assigned;throughput;work_cycles;total_cycles;mflops
-      $tiles = $1;
-      $used_tiles = $2;
-      $filters = $3
-      $slices = $4	
-      $throughput = $5;
-      $instrs_issued = $6;
-      $max_instrs_issued = $7;
-      $mflops = $8;
-      if (defined($instrs_issued) && defined($max_instrs_issued )) {
-	$utilization = $instrs_issued / $max_instrs_issued;
+  if ($spacetime == 1) {
+    open (RESULTS, "< $filenameandpath") or next;
+    while (<RESULTS>) {
+      chomp;
+      #we are looking at a spacetime file
+      if (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+)$/) {
+	#tiles;assigned;num_filters;num_slices;throughput;work_cycles;total_cycles;mflops
+	$tiles = $1;
+	$used_tiles = $2;
+	$filters = $3;
+	$slices = $4;	
+	$throughput = $5;
+	$instrs_issued = $6;
+	$max_instrs_issued = $7;
+	$mflops = $8;
+	if (defined($instrs_issued) && defined($max_instrs_issued )) {
+	  $utilization = $instrs_issued / $max_instrs_issued;
+	}
+      } elsif (/PASSED/) {
+	$correct = 1;
       }
-    } elsif (/PASSED/) {
-      $correct = 1;
-    }
+    }				  
+    print "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
+    close(RESULTS);
   }
-  close(RESULTS);
-  print "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
+  else {
+    my $data = `(tail -1 "$filenameandpath")`;
+    chomp($data);
+    #print "$data\n";
+    #tiles;used;avg_cycles/steady;XX;XX;XX;outputs_per_steady;??;MFLOPS;instr_issued;XX;XX;XX%;XX;XX;max_instrs_issued
+    $data =~/^([0-9]*);([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*;([0-9]*);[0-9]*;([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*%;[0-9]*;[0-9]*;([0-9]*)$/;
+    my $tiles = $1;
+    my $used_tiles = $2;
+    my $cyc_per_steady = $3;
+    my $outputs_per_steady = $4;
+    my $mflops = $5;
+    my $instrs_issued = $6;
+    my $max_instrs_issued = $7;
+    my $throughput = "";
+    if (defined($cyc_per_steady) && defined($outputs_per_steady)) {
+      $throughput = $cyc_per_steady / $outputs_per_steady;
+    }
+    my $utilization = "";
+    if (defined($instrs_issued) && defined($max_instrs_issued )) {
+      $utilization = $instrs_issued / $max_instrs_issued;
+    }
+    $mflops = "" unless defined($mflops);
+    print "$benchmark;$options;$throughput;$utilization;$mflops;$used_tiles;0;NA\n";
+  }
 }
 
 
-#old format!!!
-#  $options = "-space" unless $options;
-#     if ($options eq "-space") {
-# 	my $data = `(tail -1 "$filenameandpath")`;
-# 	chomp($data);
-# 	#print "$data\n";
-# 	#tiles;used;avg_cycles/steady;XX;XX;XX;outputs_per_steady;??;MFLOPS;instr_issued;XX;XX;XX%;XX;XX;max_instrs_issued
-# 	$data =~/^([0-9]*);([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*;([0-9]*);[0-9]*;([0-9]*);([0-9]*);[0-9]*;[0-9]*;[0-9]*%;[0-9]*;[0-9]*;([0-9]*)$/;
-# 	my $tiles = $1;
-# 	my $used_tiles = $2;
-# 	my $cyc_per_steady = $3;
-# 	my $outputs_per_steady = $4;
-# 	my $mflops = $5;
-# 	my $instrs_issued = $6;
-# 	my $max_instrs_issued = $7;
-# 	my $throughput = "";
-# 	if (defined($cyc_per_steady) && defined($outputs_per_steady)) {
-# 	    $throughput = $cyc_per_steady / $outputs_per_steady;
-# 	}
-# 	my $utilization = "";
-# 	if (defined($instrs_issued) && defined($max_instrs_issued )) {
-# 	    $utilization = $instrs_issued / $max_instrs_issued;
-# 	}
-# 	$mflops = "" unless defined($mflops);
-# 	print "$benchmark;$options;$throughput;$utilization;$mflops\n";
-#     } elsif ($options =~ /^-spacetime/) {

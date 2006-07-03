@@ -68,7 +68,7 @@ foreach (<>) {
     next unless $2;
     # $head is directory name up to '/streamit/'
     # $tail is file name without '.str' suffix
-    my $numIters = 5;
+    my $numIters = 3;
     $numIters = 3 if $tail =~ /^tde.*/;
     my $emailAddress = 'mgordon@cag.csail.mit.edu';
     my $dirName = "$head/$tail.raw$argsext";
@@ -78,7 +78,7 @@ foreach (<>) {
        #PBS -S /bin/sh
        #PBS -k n
        #PBS -N $tail
-       #PBS -q short
+       #PBS -q long
        #PBS -v STREAMIT_HOME
        ##PBS -M $emailAddress
        ##PBS -m a

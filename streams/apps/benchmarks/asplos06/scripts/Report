@@ -1,0 +1,53 @@
+#! /bin/bash
+
+#find all script files
+script_files=$(find . -name "script")
+let passed=0
+let non_verified=0
+let failed=0
+let run_not_ver=0
+
+#for each see if there is a results.out
+for script in $script_files ; do
+    dir=${script%\/*}
+    benchmark=${dir##/*/}
+    if [ -f $dir/results.out ] ; then
+	if grep Performance $dir/results.out > /dev/null
+	then
+	    space="1"  #true
+	else
+	    space="0"  #false
+	fi
+    	if grep PASSED $dir/results.out > /dev/null
+        then
+	    echo "$benchmark passed."
+	    let passed=passed+1
+	else
+	    if [ -s $dir/results.out ]; then
+		if [ $space == "1" ]; 
+		then 
+		    echo "$benchmark completed (not verified)."
+		    let run_not_ver=run_not_ver+1
+		else 	
+		    echo "$benchmark failed verify."
+		    let non_verified=non_verified+1
+		fi
+	    else
+	        echo "$benchmark has zero length results.out"
+                let failed=failed+1
+	    fi
+	    
+	fi    
+    else
+	echo "$benchmark failed to execute ($(cat $dir/*.hostname))"
+	let failed=failed+1
+    fi
+done
+
+#now print some stats...
+echo
+echo "$passed passed."
+echo "$run_not_ver complete but un-verified."    
+echo "$non_verified ran but did not pass verification."
+echo "$failed failed to execute."
+echo "$(($failed+$non_verified+$passed+$run_not_ver)) total."

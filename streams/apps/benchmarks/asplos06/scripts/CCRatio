@@ -1,0 +1,12 @@
+#! /bin/bash
+
+stdoutFiles=$(find . -name "stdout" -exec echo `pwd`/'{}' \;)
+
+for file in $stdoutFiles; do
+    benchmark=${file%/*}
+    benchmark=${benchmark##/*/}
+    benchmark=${benchmark%%.*}
+    output=$(grep 'Computation / Communication Ratio:' $file) 
+    ratio=${output##Com*Ratio: }
+    echo "$benchmark;$ratio"
+done

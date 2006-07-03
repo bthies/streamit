@@ -22,6 +22,8 @@ foreach (<>) {
   } 
 }
 
+die("Found No add FileWriter statement.") unless defined($addFileStmt);
+
 #get the type and the file name
 my ($type) = ($addFileStmt =~ /.+\<(.+)\>.+/);
 my ($outFile) = ($addFileStmt =~ /.+\"(.+)\".+/);

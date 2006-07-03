@@ -288,7 +288,7 @@ class ClusterCodeGenerator {
         p.println("");
 
 	if (! KjcOptions.standalone) {
-	p.println("#ifndef __CLUSTER_STANDALONE\n");
+	//p.println("#ifndef __CLUSTER_STANDALONE\n");
         p.println("void __write_thread__"+id+"(object_write_buffer *buf) {");
 
         for (Iterator i = data_in.iterator(); i.hasNext();) {
@@ -642,7 +642,7 @@ class ClusterCodeGenerator {
 
         p.println("}");
 
-	p.println("#endif // __CLUSTER_STANDALONE\n");
+	//p.println("#endif // __CLUSTER_STANDALONE\n");
 
         p.println("");
 	}
@@ -682,7 +682,7 @@ class ClusterCodeGenerator {
         }
         
 	if (! KjcOptions.standalone) {
-	r.add("#ifndef __CLUSTER_STANDALONE\n");
+	//r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void __init_state_"+id+"() {\n");
 
         if (!isEliminated) {
@@ -701,7 +701,7 @@ class ClusterCodeGenerator {
         //r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
 
         r.add("}\n");
-	r.add("#endif // __CLUSTER_STANDALONE\n");
+	//r.add("#endif // __CLUSTER_STANDALONE\n");
         r.add("\n");
 	}
 
@@ -897,11 +897,12 @@ class ClusterCodeGenerator {
         r.add("}\n");
         r.add("\n");
 
-        //  +=============================+
-        //  | Run Function                |
-        //  +=============================+
+        //  +======================================+
+        //  | Run Function (not in standalone mode)|
+        //  +======================================+
 
-	r.add("#ifndef __CLUSTER_STANDALONE\n");
+        if (! KjcOptions.standalone) {
+        //r.add("#ifndef __CLUSTER_STANDALONE\n");
         r.add("void run_"+id+"() {\n");
 
         r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
@@ -950,7 +951,7 @@ class ClusterCodeGenerator {
 
         r.add("}\n");
 	r.add("#endif // __CLUSTER_STANDALONE\n");
-
+        }
         return r;
     }
 }

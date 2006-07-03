@@ -150,7 +150,7 @@ class FusionCode {
         p.newLine();
 
         if (KjcOptions.standalone) {
-        p.print("#define __CLUSTER_STANDALONE\n");
+        //p.print("#define __CLUSTER_STANDALONE\n");
         // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
         

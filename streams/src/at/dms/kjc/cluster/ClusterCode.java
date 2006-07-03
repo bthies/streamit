@@ -385,7 +385,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	if (! KjcOptions.standalone) { 
 
-	p.print("#ifndef __CLUSTER_STANDALONE\n");
+	//p.print("#ifndef __CLUSTER_STANDALONE\n");
 
         p.print(baseType.toString()+" "+in.push_buffer()+"["+sum_of_weights+"];\n");
         p.print("int "+in.push_index()+" = 0;\n");
@@ -491,7 +491,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
             p.newLine();
         }
     
-	p.print("#endif // __CLUSTER_STANDALONE\n");
+	//p.print("#endif // __CLUSTER_STANDALONE\n");
 	}
 
         //  +=============================+

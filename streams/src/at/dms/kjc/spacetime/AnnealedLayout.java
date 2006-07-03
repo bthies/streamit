@@ -112,9 +112,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * Calculate the assignment of filters of slices to tiles. 
      */
     public void run() {
-        //run the simulated annealing with 2 iterations, 
-        //100 attempts per iteration
-        simAnnealAssign(5, 50);
+        simAnnealAssign(5, 200);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
@@ -129,6 +127,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public RawTile getTile(FilterTraceNode filter) {
         assert assignment.containsKey(filter) : 
             "AnnealedLayout does have a mapping for " + filter;
+        //assert !partitioner.isIO(filter.getParent());
         return (RawTile)assignment.get(filter);
     }
         
@@ -197,10 +196,19 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public void swapAssignmentLegal() {
         Trace[] traces = partitioner.getTraceGraph();
+        
+        
         Trace reassignMe = traces[getRandom(traces.length)];
+        while (partitioner.isIO(reassignMe)) { 
+            reassignMe = traces[getRandom(traces.length)];
+        }
+        
+        //System.out.print("Reassigning " + reassignMe + " from "
+        //        + getTile(reassignMe.getHead().getNextFilter()));
         
         assert newTraceAssignment(reassignMe.getHead().getNextFilter()) :
             "Error: could not find a legal layout for " + reassignMe + " during layout";
+        //System.out.println(" to " + getTile(reassignMe.getHead().getNextFilter()));
     }
    
     
@@ -444,8 +452,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private void legalInitialPlacement() {
         Trace[] traces = partitioner.getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
-            assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
-                "Error: could not find a legal layout for " + traces[i] + " during initial layout";
+            if (!partitioner.isIO(traces[i]))
+                assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
+                    "Error: could not find a legal layout for " + traces[i] + " during initial layout";
         }
     }
     

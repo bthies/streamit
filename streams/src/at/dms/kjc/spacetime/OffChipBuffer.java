@@ -312,6 +312,7 @@ public abstract class OffChipBuffer {
      */
     public static boolean areAllAssigned() {
         Iterator buffers = getBuffers().iterator();
+        boolean returnVal = true;
         while (buffers.hasNext()) {
             OffChipBuffer buf = (OffChipBuffer)buffers.next();
             if (!buf.isAssigned()) {
@@ -321,9 +322,9 @@ public abstract class OffChipBuffer {
                             ((InterTraceBuffer)buf).getEdge().getDest().getNext());
                     //printBuffers();
                 }
-                return false;
+                returnVal = false;;
             }
         }
-        return true;
+        return returnVal;
     }
 }

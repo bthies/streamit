@@ -32,6 +32,8 @@ public class BufferDRAMAssignment {
     private RawChip rawChip;
     /** the layout we are using */
     private Layout layout;
+    private SpaceTimeSchedule spaceTime;
+    
     
     /**
      * Assign the buffers to DRAM ports.
@@ -41,7 +43,7 @@ public class BufferDRAMAssignment {
      */
     public void run(SpaceTimeSchedule spaceTime, Layout layout) {
         OffChipBuffer.resetDRAMAssignment();
-        
+        this.spaceTime = spaceTime;
         this.layout = layout;
         
         rawChip = spaceTime.getRawChip();
@@ -362,7 +364,7 @@ public class BufferDRAMAssignment {
            HashSet<Integer>ports = new HashSet<Integer>();
            for (int i = 0; i < rawChip.getNumDev(); i++) 
                ports.add(new Integer(i));
-           //System.out.println("      " + input + "is using:");
+           System.out.println("      " + input + "is using:");
            Iterator<Edge> inEdges = input.getSourceSet().iterator();
            while (inEdges.hasNext()) {
                Edge inEdge = inEdges.next();
@@ -370,15 +372,15 @@ public class BufferDRAMAssignment {
                
                if (buffer.isAssigned()) {
                    ports.remove(new Integer(buffer.getDRAM().port));
-                   //System.out.println("        " + buffer.getDRAM().port);
+                   System.out.println("        " + buffer.getDRAM().port);
                }
            }
-           /*System.out.print("    has free: ");
+           System.out.print("    has free: ");
            Iterator<Integer> ints = ports.iterator();
            while (ints.hasNext())
                System.out.print(ints.next() + " ");
            System.out.println();
-           */
+           
            if (ports.size() == 0)
                return false;
            freePorts.addAll(ports);
@@ -389,11 +391,12 @@ public class BufferDRAMAssignment {
     }
     
     private void assignRemaining(OutputTraceNode traceNode) {
+        //System.out.println("Calling assignRemaining for: " + traceNode);
         //get all the edges of this output trace node
         //sorted by their weight
         List<Edge>edges = traceNode.getSortedOutputs();
         
-        assert valid(traceNode);
+        //assert valid(traceNode);
         
         assignRemaining(edges, 0);
     }
@@ -437,7 +440,9 @@ public class BufferDRAMAssignment {
                 if (assignedInputDRAMs(input).contains(current) || 
                         assignedOutputDRAMs(traceNode).contains(current)) 
                     continue;
-                               
+                
+                //System.out.println(" * Assigning " + edge + " to " + current);
+                
                 buffer.setDRAM(current);
                 if (assignRemaining(edgesToAssign, index + 1))
                     return true;
@@ -446,6 +451,7 @@ public class BufferDRAMAssignment {
         //edge, so unset the buffer and return false and try another 
         //assignment recursively
         buffer.unsetDRAM();
+        //System.out.println(" * Unsetting " + edge);
         return false;
     }
     

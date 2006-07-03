@@ -268,9 +268,12 @@ public class SimplePartitioner extends Partitioner {
         int idx = 0;
         for (int i = 0; i < len; i++) {
             Trace trace = traceGraph[i];
-            if (((FilterTraceNode) trace.getHead().getNext()).isPredefined())
+            if (((FilterTraceNode) trace.getHead().getNext()).isPredefined()) {
                 io[idx++] = trace;
+                System.out.println(trace + " is i/o trace.");
+            }
         }
+        
     }
 
     /**

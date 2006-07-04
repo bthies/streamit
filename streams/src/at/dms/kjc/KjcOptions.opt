@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.79 2006-06-29 05:36:18 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.80 2006-07-04 17:30:31 mgordon Exp $
  */
 
 prefix Kjc
@@ -550,7 +550,7 @@ longname 		"backendvalues"
 
 longname 		"slicethresh"
 	type 		int
-	default		"5"
+	default		"0"
 	requireArgument
 	help 		"For the spacetime backend, set the slice threshold to be <int> percent."
 

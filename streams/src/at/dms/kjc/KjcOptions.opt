@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.80 2006-07-04 17:30:31 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.81 2006-07-05 20:26:48 mgordon Exp $
  */
 
 prefix Kjc
@@ -570,8 +570,16 @@ longname		"noswpipe"
 	default		"false"
 	help		"For spacetime, do not software pipeline the steady state."
 
+longname 		"st_cyc_per_wd"
+	type 		int
+	default		"1"	
+	requireArgument
+	help		"For spacetime, define the bandwidth in cycles per word for the streaming memories attached to the raw chip."
+
 /* remove: now default */
 /* longname 		"noverbose" */
 /* 	type		boolean */
 /* 	default		"false" */
 /* 	help		"For cluster, do not print out code in ifdefs that are not true for the compiled configuration." */
+
+

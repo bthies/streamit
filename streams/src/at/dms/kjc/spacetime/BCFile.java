@@ -72,11 +72,15 @@ public class BCFile
         if (KjcOptions.magic_net) 
             buf.append("gTurnOffNativeCompilation = 1;\n");
 
+        //set the bandwidth of the streaming memories
+        buf.append("global gStreamingDRAMCyclesPerWord = " + KjcOptions.st_cyc_per_wd + ";\n");
+        
         buf.append("include(\"<dev/basic.bc>\");\n");
 
         //workaround for magic instruction support...
         buf.append("include(\"<dev/magic_instruction.bc>\");\n");
         
+                
         //let the simulation know how many tiles are mapped to 
         //filters or joiners
         buf.append("global gMHz = 450;\n");

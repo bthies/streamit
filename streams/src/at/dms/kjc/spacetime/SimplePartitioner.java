@@ -35,6 +35,7 @@ public class SimplePartitioner extends Partitioner {
         super(topFilters, exeCounts, lfa, work, rawChip);
         workEstimation = new HashMap<FilterContent, Integer>();
         TRASHOLD = (double)KjcOptions.slicethresh / (double)100.0;
+        System.out.println("Trace Work Threshold: " + TRASHOLD + "(" + KjcOptions.slicethresh + ")");
     }
 
     public Trace[] partition() {
@@ -332,9 +333,11 @@ public class SimplePartitioner extends Partitioner {
             ratio = Math.abs(ratio);
             // System.out.println("bottleNeckWork = " + bottleNeckWork + " / " +
             // "next = " + destEst + " = " + ratio);
-            if (!IGNORE_WORK_EST && ratio < TRASHOLD)
+            if (!IGNORE_WORK_EST && ratio < TRASHOLD) {
+                //System.out.println("Cannot continue trace: " + ratio + " < " + TRASHOLD +
+                //        " for " + dest);
                 return false;
-
+            }
             // everything passed
             return true;
         }

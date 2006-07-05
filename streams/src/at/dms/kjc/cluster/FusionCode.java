@@ -462,8 +462,13 @@ class FusionCode {
                 p.print("extern void "+initWork+"();\n");
             }
 
-            p.print("extern void __init_sdep_"+id+"();\n");
-            p.print("extern void check_messages__"+id+"();\n");
+            if (node.contents instanceof SIRStream && SIRPortal.getPortalsWithSender((SIRStream)node.contents).length > 0) {
+                p.print("extern void __init_sdep_"+id+"();\n");
+            }
+            
+            if (node.contents instanceof SIRStream && SIRPortal.getPortalsWithReceiver((SIRStream)node.contents).length > 0) {
+                p.print("extern void check_messages__"+id+"();\n");
+            }
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
 
 	    if ((node.contents instanceof SIRFileReader) ||
@@ -603,8 +608,10 @@ class FusionCode {
                             //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); "); else p.print("  ");
                             p.print("  ");
                             p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"(); ");
-			    p.print("  __init_sdep_"+id+"();");
-                
+                            if (SIRPortal.getPortalsWithSender((SIRFilter)oper).length > 0) {
+                                //p.print(" /* " + SIRPortal.getPortalsWithSender((SIRFilter)oper).length + "*/ ");
+                                p.print("  __init_sdep_"+id+"();");
+                            }                
                         } else {
                             p.print("  ");
                         }
@@ -632,10 +639,10 @@ class FusionCode {
                         if (oper instanceof SIRFilter) {        
                 
                             //if (ph > 0) p.print("  __init_pop_buf__"+id+"(); ");
-                            p.print("  ");
                             p.print(((SIRFilter)oper).getInit().getName()+"__"+id+"();");
-			    p.print("  __init_sdep_"+id+"();");
-
+                            if (SIRPortal.getPortalsWithSender((SIRFilter)oper).length > 0) {
+                                p.print("  __init_sdep_"+id+"();");
+                            }
                             p.newLine();
                         }
                     }

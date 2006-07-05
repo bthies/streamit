@@ -661,7 +661,7 @@ class ClusterCodeGenerator {
 
 
     public Vector<String> generateRunFunction(String init_f, String main_f,
-                                      List/*String*/ cleanupCode) {
+                                      List<String> cleanupCode) {
     
         Vector<String> r = new Vector<String>();
 
@@ -708,7 +708,7 @@ class ClusterCodeGenerator {
         //  +=============================+
         //  | Main Function               |
         //  +=============================+
-
+	if (! KjcOptions.standalone) {
         r.add("void __main__"+id+"() {\n");
         r.add("  int _tmp; // modified\n");
         r.add("  int _steady = __steady_"+id+";\n");
@@ -804,8 +804,10 @@ class ClusterCodeGenerator {
         r.add("  }\n");
         r.add("}\n");
         r.add("\n");
+        }
 
 
+        if (msg_to.size() > 0) {
         r.add("void __init_sdep_"+id+"() {\n");
 	
 	for (Iterator i = msg_to.iterator(); i.hasNext(); ) {
@@ -896,7 +898,8 @@ class ClusterCodeGenerator {
 
         r.add("}\n");
         r.add("\n");
-
+        }
+        
         //  +======================================+
         //  | Run Function (not in standalone mode)|
         //  +======================================+
@@ -907,8 +910,9 @@ class ClusterCodeGenerator {
 
         r.add("  __init_sockets_"+id+"(check_status_during_io__"+id+");\n");
 
-        r.add("  __init_sdep_"+id+"();\n");
-
+        if (msg_to.size() > 0) {
+            r.add("  __init_sdep_"+id+"();\n");
+        }
         //r.add("  __steady_"+id+" = __init_iter;\n");
         r.add("  __init_state_"+id+"();\n");
 

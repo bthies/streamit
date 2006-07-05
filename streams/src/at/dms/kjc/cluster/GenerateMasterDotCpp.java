@@ -192,7 +192,9 @@ public class GenerateMasterDotCpp {
         p.print("    if (argc > a + 1 && strcmp(argv[a], \"-init\") == 0) {\n"); 
         p.print("       int tmp;\n");
         p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
+        p.println("#ifdef VERBOSE");
         p.print("       fprintf(stderr,\"Initial Iteration: %d\\n\", tmp);\n"); 
+        p.println("#endif");
         p.print("       __init_iter = tmp;"); 
         p.print("       init_instance::set_start_iter(__init_iter);"); 
         p.print("    }\n");
@@ -200,17 +202,23 @@ public class GenerateMasterDotCpp {
         p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
         p.print("       int tmp;\n");
         p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
+        p.println("#ifdef VERBOSE");
         p.print("       fprintf(stderr,\"Number of Iterations: %d\\n\", tmp);\n"); 
+        p.println("#endif");
         p.print("       __max_iteration = tmp;"); 
         p.print("    }\n");
 
         p.print("    if (strcmp(argv[a], \"-t\") == 0) {\n"); 
+        p.println("#ifdef VERBOSE");
         p.print("       fprintf(stderr,\"Timer enabled.\\n\");\n"); 
+        p.println("#endif");
         p.print("       __timer_enabled = 1;"); 
         p.print("    }\n");
 
         p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");
+        p.println("#ifdef VERBOSE");
         p.print("       fprintf(stderr,\"CCP address: %s\\n\", argv[a + 1]);\n"); 
+        p.println("#endif");
         p.print("       __ccp_ip = lookup_ip(argv[a + 1]);\n");
         p.print("    }\n");
 
@@ -219,7 +227,9 @@ public class GenerateMasterDotCpp {
         p.print("      if (argc > a + 1 && argv[a+1][0] >= '1' &&  argv[a+1][0] <= '9' ) {\n");
         p.print("        sscanf(argv[a + 1], \"%d\", &tmp);\n");
         p.print("      }\n");
-        p.print("      printf(\"RUNCCP number of init nodes is: %d\\n\", tmp);\n");
+        p.println("#ifdef VERBOSE");
+        p.print("      fprintf(stderr,\"RUNCCP number of init nodes is: %d\\n\", tmp);\n");
+        p.println("#endif");
         p.print("      ccp c(thread_list, tmp);\n");
         p.print("      if (__init_iter > 0) c.set_init_iter(__init_iter);\n");
         p.print("      (new delete_chkpts())->start();\n");

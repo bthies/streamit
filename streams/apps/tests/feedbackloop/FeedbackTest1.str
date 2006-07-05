@@ -1,0 +1,27 @@
+/* Based on feedback loop in benchmarks/fhr/streamit/FHRFeedback.str 
+ * compile as 
+strc -library -i 10 FeedbackTest1.str ../../libraries/FloatSeqSource.str ../../libraries/FloatPrinter.str
+*/
+
+void->void pipeline FeedbackTest1 {
+    int N = 3;
+    add FloatSeqSource(1.0,1.0);
+
+    add float->float feedbackloop {
+	join roundrobin(2*N,N);
+	body float->float filter {
+	    work push 1 pop 1 {
+		push(- pop());
+	    }
+	}
+	loop Identity<float>;
+	split roundrobin(2,1);
+
+	for (int i=0; i<6*N; i++) {
+	    enqueue(0.0);
+	}
+
+    }
+    add FloatPrinter();
+}
+

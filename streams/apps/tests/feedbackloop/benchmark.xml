@@ -1,0 +1,14 @@
+<benchmark>
+  <name>feedbackloop</name>
+  <desc>Tests of feedbackloops</desc>
+  <description>
+    This set of tests checks the ability of compiling feedbackloop's correctly.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="feedbacktest1">
+     <desc>Example extracted from FHRFeedback</desc>
+     <file class="source">FeedbackTest1.str ../../libraries/FloatSeqSource.str ../../libraries/FloatPrinter.str</file>
+     <file class="output">FeedbackTest1.out</file>
+    </impl>
+  </implementations>
+</benchmark>

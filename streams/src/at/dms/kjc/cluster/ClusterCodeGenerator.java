@@ -799,7 +799,7 @@ class ClusterCodeGenerator {
         r.add("#ifdef __CHECKPOINT_FREQ\n");
         r.add("    if (_steady % __CHECKPOINT_FREQ == 0)\n");
         r.add("      save_state::save_to_file(__thread_"+id+", _steady, __write_thread__"+id+");\n");
-        r.add("#endif\n");
+        r.add("#endif // __CHECKPOINT_FREQ\n");
     
         r.add("  }\n");
         r.add("}\n");
@@ -950,7 +950,7 @@ class ClusterCodeGenerator {
         r.add("  pthread_exit(NULL);\n");
 
         r.add("}\n");
-	r.add("#endif // __CLUSTER_STANDALONE\n");
+	//r.add("#endif // __CLUSTER_STANDALONE\n");
         }
         return r;
     }

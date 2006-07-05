@@ -194,6 +194,9 @@ class FusionCode {
                 //if (no_peek) p.print("#define __NOMOD_"+src+"_"+dst+"\n");
                 //p.print("#define __NOMOD_"+src+"_"+dst+"\n");
 
+                /*
+                 * Set a maximum buffer size for a connection
+                 */
                 int source_init_items = 0;
                 int source_steady_items = 0;
                 int dest_init_items = 0;

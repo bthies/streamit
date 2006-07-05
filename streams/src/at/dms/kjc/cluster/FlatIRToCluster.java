@@ -2238,7 +2238,9 @@ public class FlatIRToCluster extends InsertTimers implements
                   }
                 */
 
-                p.print("\n{\n#ifdef __CLUSTER_STANDALONE\n\n");
+                p.println("\n{");
+	      if (KjcOptions.standalone) {
+		//p.println("#ifdef __CLUSTER_STANDALONE\n\n");
 
                 p.print("  message* __msg = new message("+size+", "+index+", ");
 
@@ -2292,7 +2294,8 @@ public class FlatIRToCluster extends InsertTimers implements
 
                 p.print("  __msg_stack_"+dst+" = __msg->push_on_stack(__msg_stack_"+dst+");\n");
 
-                p.print("\n#else\n\n");
+	      } else { 
+		//p.print("\n#else // __CLUSTER_STANDALONE\n\n");
 
                 p.print("  __msg_sock_" + selfID + "_" + dst + "out->write_int("
                         + size + ");\n");
@@ -2357,8 +2360,9 @@ public class FlatIRToCluster extends InsertTimers implements
                         }
                     }
                 }
-
-                p.print("\n#endif\n}\n");
+	      }
+              //  p.print("\n#endif // __CLUSTER_STANDALONE\n");
+	      p.println("}");
 
             }
         }

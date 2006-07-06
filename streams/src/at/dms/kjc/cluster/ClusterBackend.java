@@ -405,9 +405,6 @@ public class ClusterBackend {
         graphFlattener.top.accept(new NodeEnumerator(), new HashSet(), true);
         graphFlattener.top.accept(new RegisterStreams(), new HashSet(), true);
 
-        DiscoverSchedule d_sched = new DiscoverSchedule();
-        d_sched.findPhases(graphFlattener.top.contents);
-
         /*
         // Remove globals pass is broken in cluster !!!
         if (KjcOptions.removeglobals) {
@@ -439,6 +436,9 @@ public class ClusterBackend {
                 },
                 null,
                 true);
+
+        DiscoverSchedule d_sched = new DiscoverSchedule();
+        d_sched.findPhases(graphFlattener.top.contents);
 
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(graphFlattener.top);

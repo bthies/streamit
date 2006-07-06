@@ -12,6 +12,9 @@ import java.util.*;
  * Constructs a list of input and output tapes for each stream operator.
  * Stores this information in static fields and provides static access methods.
  * 
+ * Note: only flatgraph edges are included.  0-weight edges of splitters and joiners
+ * do not show up in the flatgraph, and there are no tapes for these edges. 
+ * 
  * @author Janis
  *
  */

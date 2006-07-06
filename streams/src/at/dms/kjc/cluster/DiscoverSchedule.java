@@ -30,6 +30,8 @@ class DiscoverSchedule
     // feedback loop splitters that have not yet finished processing loop
     // so the continuation of the feedbackloop should not be scheduled.
     HashSet<SIROperator> feedbackSplittersLoop = new HashSet<SIROperator>();
+    // non-feedback-loop joiners: may be encountered several times.
+    HashMap<SIROperator,Integer> splitjoinJoiners = new HashMap<SIROperator,Integer>();
     
     int number_of_phases = 0;
 
@@ -83,7 +85,10 @@ class DiscoverSchedule
             number_of_phases++;
 
         } while (current_ops.size() != 0);
-    
+        
+        assert splitjoinJoiners.isEmpty();
+        assert feedbackSplittersBody.isEmpty();
+        assert feedbackSplittersLoop.isEmpty();
     }
 
     /**
@@ -102,6 +107,33 @@ class DiscoverSchedule
             SIROperator oper = (SIROperator)i.next();
             Vector<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
 
+            // case: splitjoin splitter, make sure to schedule 0-weight edges, which will not
+            // be found by RegisterStreams.getNodeOutStreams.  Also record the number of
+            // incoming edges to the associated joiner so that the joiner's continuation will
+            // not be processed until all of the joiner's predecessors have been processed.
+            if (oper instanceof SIRSplitter && ! (oper.getParent() instanceof SIRFeedbackLoop)) {
+                assert oper.getParent() instanceof SIRSplitJoin;
+                SIRSplitter splitter = (SIRSplitter)oper;
+                SIRJoiner joiner = ((SIRSplitJoin)splitter.getParent()).getJoiner();
+                assert (! splitjoinJoiners.containsKey(joiner));
+                int join_ways = RegisterStreams.getNodeInStreams(
+                        joiner).size();
+                if (join_ways > 0) {
+                    splitjoinJoiners.put(joiner, join_ways);
+                }                       
+                
+                List<SIROperator> splitterChildren = ((SIRSplitJoin)(splitter.getParent())).getChildren();
+                int[] splitterWeights = splitter.getWeights();
+                int j = 0;
+                for (SIROperator child : splitterChildren) {
+                    // getChildren includes the splitter and joiner as well as the
+                    // stream children.  We are only interested in the stream children
+                    if (child instanceof SIRStream && splitterWeights[j++] == 0) {
+                        next_ops.add(child);
+                    }
+                }
+            }
+
             // check all nodes that are downstream from nodes in current phase
             for (int a = 0; a < out.size(); a++) {
         
@@ -119,6 +151,9 @@ class DiscoverSchedule
                 // check if no phase assigned yet
                 if (!phases.containsKey(next)) { 
 
+                    // case: next is joiner at top of feedbackloop.
+                    // we need to remember its splitter so as to not process the continuation
+                    // of the feedbackloop before _both_ the body and loop portions are processed.
                     if (next instanceof SIRJoiner && next.getParent() instanceof SIRFeedbackLoop) {
                         // first encounter with feedbackloop joiner (or would have had phases.containsKey(next))
                         SIRSplitter loopSplitter = ((SIRFeedbackLoop)next.getParent()).getSplitter();
@@ -132,6 +167,8 @@ class DiscoverSchedule
                         }
                     }
                      
+                    // case: next is splitter at bottom of feedbackloop and body has been processed
+                    // indicate that loop now needs to be processed.
                     if (next instanceof SIRSplitter && next.getParent() instanceof SIRFeedbackLoop
                             && feedbackSplittersBody.contains(next)) {
                         // if encounter splitter of non-degenerate feedbackloop, we "discover it"
@@ -140,24 +177,51 @@ class DiscoverSchedule
                         feedbackSplittersLoop.add(next);
                     }
 
-                    // if still processing feedbackloop, do not "discover" loop's continuation.  
+                    // case: oper (parent of next) is the splitter at the bottom of a feedback loop.     
+                    // if still processing feedbackloop, do not "discover" loop's continuation (the
+                    // the first child of the splitter)
                     if (a == 0 && oper instanceof SIRSplitter && feedbackSplittersLoop.contains(oper)) {
                         continue;
                     }
 
-
+                    // case: splitjoin joiner: do not process until all paths into joiner are 
+                    // processed.  (So should never be 'discovered' more than once.)
+                    if (next instanceof SIRJoiner
+                            && !(next.getParent() instanceof SIRFeedbackLoop)) {
+                        assert next.getParent() instanceof SIRSplitJoin;
+                        SIRJoiner joiner = (SIRJoiner) next;
+                        assert splitjoinJoiners.containsKey(joiner);
+                        int join_ways_remaining = splitjoinJoiners.get(joiner);
+                        if (join_ways_remaining > 1) {
+                            splitjoinJoiners.put(joiner, join_ways_remaining - 1);
+                            continue;
+                        } else {
+                            splitjoinJoiners.remove(joiner);
+                        }
+                    }
+                    
+                    // case? can it occur:
+                    // feedbackloop with split (1,0) == no execution of loop (back edge) portion.
                 } else {
+                    
+                    // case: joiner at top of feedback loop is seen twice: once at entry to feedback loop
+                    // and once after processing the loop.
                     assert next instanceof SIRJoiner && next.getParent() instanceof SIRFeedbackLoop
                       && (feedbackSplittersLoop.contains(((SIRFeedbackLoop)next.getParent()).getSplitter())
                               || RegisterStreams.getNodeInStreams(((SIRFeedbackLoop)next.getParent()).getSplitter()).size() < 2 )
                         : "Node " + next + "is not the joiner of a FeedBackLoop being processed" ;
                       // have processed body and loop, continuation is next
                       SIRSplitter loopSplitter = ((SIRFeedbackLoop)next.getParent()).getSplitter();
-                      feedbackSplittersLoop.remove(loopSplitter);
-                      Vector<NetStream> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
-                      next = NodeEnumerator.getOperator(
-                              nexts.elementAt(0).getDest());
-     
+                      if (feedbackSplittersLoop.remove(loopSplitter)) {
+                          Vector<NetStream> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
+                          next = NodeEnumerator.getOperator(
+                                  nexts.elementAt(0).getDest());
+                      } else {
+                          // case: there is no continuation (saw joiner twice since processed loop
+                          // but no entry in feedbackSplittersLoop since didn't have both loop and
+                          // continuation.
+                          continue;
+                      }
                 }
                 phases.put(next, number_of_phases + 1);
                 next_ops.add(next);

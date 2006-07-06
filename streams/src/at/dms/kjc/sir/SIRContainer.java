@@ -55,8 +55,8 @@ public abstract class SIRContainer extends SIRStream {
      * objects that are contained within this.  Should be over-ridden
      * by subclasses to include splitters/joiners etc.
      */
-    public List getChildren() {
-        List result = new LinkedList();
+    public List<SIROperator> getChildren() {
+        List<SIROperator> result = new LinkedList<SIROperator>();
         for (int i=0; i<size(); i++) {
             result.add(get(i));
         }

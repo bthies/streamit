@@ -170,9 +170,9 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * Returns a list of the children of this.  The children are
      * stream objects that are contained within this.
      */
-    public List getChildren() {
+    public List<SIROperator> getChildren() {
         // build result
-        LinkedList result = new LinkedList();
+        LinkedList<SIROperator> result = new LinkedList<SIROperator>();
         // add the children: the joiner, splitter, body, and loop
         result.add(joiner);
         result.add(getBody());

@@ -192,9 +192,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * ordered from left to right, and the final element is the
      * joiner(SIRJoiner).
      */
-    public List getChildren() {
+    public List<SIROperator> getChildren() {
         // build result from child streams
-        List result = super.getChildren();
+        List<SIROperator> result = super.getChildren();
         // add splitter and joiner
         result.add(0, splitter);
         result.add(joiner);

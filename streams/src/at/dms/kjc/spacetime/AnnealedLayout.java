@@ -112,11 +112,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * Calculate the assignment of filters of slices to tiles. 
      */
     public void run() {
-        simAnnealAssign(5, 200);
+        simAnnealAssign(10, 1000);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
                     assignment.get(filterList.get(i)));
+        //run assignbuffers at the end!
+        assignBuffers.run(spaceTime, this);
     }
     
     /**
@@ -140,7 +142,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public void setAssignment(HashMap newAssignment) {
         assignment = newAssignment;
 //      reassign buffers.
-        assignBuffers.run(spaceTime, this);
+        //assignBuffers.run(spaceTime, this);
     }
     
     public void dumpLayout() {
@@ -187,7 +189,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //swap filters...
         swapAssignmentLegal();
         //reassign buffers.
-        assignBuffers.run(spaceTime, this);
+        //assignBuffers.run(spaceTime, this);
     }
     
     /** 
@@ -221,7 +223,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         legalInitialPlacement();
         //dumpLayout();
         //assign buffers...
-        assignBuffers.run(spaceTime, this);
+        //assignBuffers.run(spaceTime, this);
     }
     
     /**

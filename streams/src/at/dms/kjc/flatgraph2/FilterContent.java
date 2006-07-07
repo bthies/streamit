@@ -560,6 +560,15 @@ public class FilterContent {
     }
     
     /**
+     * Set the init work of this filter to meth.
+     * 
+     * @param meth The new init work method.
+     */
+    public void setInitWork(JMethodDeclaration meth) {
+        init[0] = meth;
+    }
+    
+    /**
      * Returns list of paramters.
      */
     public List getParams() {

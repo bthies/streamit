@@ -32,6 +32,8 @@ public class FilterInfo {
 
     public int peek;
 
+    public int initItemsNeeded;
+    
     private boolean linear;
 
     public FilterTraceNode traceNode;
@@ -167,16 +169,26 @@ public class FilterInfo {
                     upstreamInitItems -= filterC.getPushInt();
                     upstreamInitItems += filterC.getInitPush();
                 }
-                initItemsRec += (int) ((double) upstreamInitItems * incoming
+                /*
+                 * System.out.println("Upstream: " + filterC);
+                 System.out.println("push: " + filterC.getPushInt() + 
+                 " init Mult: " + filterC.getInitMult());
+                 System.out.println("Upstream: " + upstreamInitItems + " Ratio: " + 
+                 incoming.getSrc().ratio(incoming));
+                 */
+                initItemsRec += (int) (((double) upstreamInitItems) * incoming
                                        .getSrc().ratio(incoming));
             }
         }
+        
+        initItemsNeeded = (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop); 
+        
         remaining = initItemsRec
-            - (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+            - initItemsNeeded;
 
         assert remaining >= 0 : filter.getName()
             + ": Error calculating remaining " + initItemsRec + " < "
-            + (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+            + initItemsNeeded;
         return remaining;
     }
 
@@ -344,6 +356,8 @@ public class FilterInfo {
         else 
             return steadyMult; 
     }
+    
+    
     
     /**
      * @param exeCount The iteration we are querying. 

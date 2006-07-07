@@ -293,6 +293,20 @@ public class InputTraceNode extends TraceNode {
         return false;
     }
 
+    /**
+     * In the sources array for the input, replace all instances of 
+     * oldEdge with newEdge.
+     * 
+     * @param oldEdge The edge to replace.
+     * @param newEdge The edge to install.
+     */
+    public void replaceEdge(Edge oldEdge, Edge newEdge) {
+        for (int i = 0; i < sources.length; i++) {
+            if (sources[i] == oldEdge)
+                sources[i] = newEdge;
+        }
+    }
+    
     /**         
      * @return true if this input trace node reads from a single source
      * and the source is a file device.

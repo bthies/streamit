@@ -76,9 +76,8 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
         JPrefixExpression increment = 
             new JPrefixExpression(null, 
                                   OPE_PREINC,
-                                  new JFieldAccessExpression
-                                  (null, new JThisExpression(null), 
-                                   generatedVariables.simpleIndex.getIdent()));
+                                  new JLocalVariableExpression
+                                  (null,generatedVariables.simpleIndex));
         
         //create the array access expression
         JArrayAccessExpression bufferAccess = 
@@ -113,9 +112,9 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
         
         JAddExpression index = 
             new JAddExpression(null,
-                               new JFieldAccessExpression
-                               (null, new JThisExpression(null),  
-                                generatedVariables.simpleIndex.getIdent()),
+                               new JLocalVariableExpression
+                               (null, 
+                                generatedVariables.simpleIndex),
                                argIncrement);
 
         //create the array access expression

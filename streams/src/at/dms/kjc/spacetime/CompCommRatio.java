@@ -1,6 +1,10 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Iterator;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.partition.*; 
+import java.util.*;
 
 /**
  * Calculate the computation to communication ratio.  Poorly named class,
@@ -9,8 +13,60 @@ import java.util.Iterator;
  * @author mgordon
  *
  */
-public class CommCompRatio {
+public class CompCommRatio {
     
+   
+    private static int comp = 0;
+    private static int comm = 0;
+    private static WorkEstimate work;
+    private static HashMap<SIRStream, int[]> mults;
+    
+    public static double ratio(SIRStream str, WorkEstimate work,
+            HashMap<SIRStream, int[]> executionCounts) {
+        
+        comp = 0;
+        comm = 0;
+        CompCommRatio.work = work;
+        mults = executionCounts;
+        walkSTR(str);
+        
+        return ((double)comp)/((double)comm);
+ 
+    }
+//  The following structure appears all over the place.  It needs to be abstracted somehow.
+    // Walk SIR structure to get down to 
+    private static void walkSTR(SIRStream str) {
+        if (str instanceof SIRFeedbackLoop) {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
+            walkSTR(fl.getBody());
+            walkSTR(fl.getLoop());
+        }
+        if (str instanceof SIRPipeline) {
+            SIRPipeline pl = (SIRPipeline) str;
+            Iterator iter = pl.getChildren().iterator();
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                walkSTR(child);
+            }
+        }
+        if (str instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin) str;
+            Iterator iter = sj.getParallelStreams().iterator();
+            if (mults.containsKey(sj)) {
+                comm += sj.getSplitter().getSumOfWeights() * mults.get(sj)[0];
+                comm += sj.getJoiner().getSumOfWeights() * mults.get(sj)[0];
+            }
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                walkSTR(child);
+            }
+        }
+        //update the comm and comp numbers...
+        if (str instanceof SIRFilter) {
+           comp += work.getWork((SIRFilter)str);
+           comm += ((SIRFilter)str).getPushInt();
+        }
+    } 
     /**
      * Calculate the computation to communication ratio of the 
      * application.  Where the computation is total work of all the filters

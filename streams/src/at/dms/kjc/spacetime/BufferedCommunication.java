@@ -86,6 +86,12 @@ public class BufferedCommunication extends RawExecutionCode
         if (filterInfo.isSimple()) {
             convert = 
                 new ConvertCommunicationSimple(generatedVariables, filterInfo);
+
+            //now add the declaration for the simple index to the work function
+            filterInfo.filter.getWork().addStatementFirst(
+                    new JVariableDeclarationStatement(generatedVariables.simpleIndex));
+            
+            
         }
         else
             convert = new ConvertCommunication(generatedVariables, filterInfo);
@@ -181,7 +187,9 @@ public class BufferedCommunication extends RawExecutionCode
         
                 //remember the JVarDef for latter (in the raw main function)
                 generatedVariables.simpleIndex = simpleIndexVar;
-                decls.add(new JFieldDeclaration(null, simpleIndexVar, null, null));
+                //don't add the simple index, it is going to be added as a 
+                //local of work!
+                //decls.add(new JFieldDeclaration(null, simpleIndexVar, null, null));
             }
             else { //filter with remaing items on the buffer after initialization 
                 buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
@@ -349,6 +357,7 @@ public class BufferedCommunication extends RawExecutionCode
      */
     public JMethodDeclaration[] getHelperMethods() 
     {
+        
         Vector methods = new Vector();
 
         //add all helper methods, except work function and initWork
@@ -362,8 +371,28 @@ public class BufferedCommunication extends RawExecutionCode
         */
     
         //add all methods
-        for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+        for (int i = 0; i < filterInfo.filter.getMethods().length; i++) {
+            //if we are inlining don't generate the code for the work function.
+            if (INLINE_WORK && 
+                    filterInfo.filter.getMethods()[i] == filterInfo.filter.getWork())
+                continue;
+            
+            if (filterInfo.isTwoStage() && filterInfo.filter.getMethods()[i] ==
+                filterInfo.filter.getInitWork()) {
+                //if the filter is a two stage, then add the var decl of 
+                //the simple index to the body and then clone the body to 
+                //get a new simple index
+                JMethodDeclaration initWork = filterInfo.filter.getInitWork();
+                JBlock newBody = initWork.getBody();
+                newBody.addStatementFirst(
+                        new JVariableDeclarationStatement(generatedVariables.simpleIndex));
+                newBody = (JBlock)ObjectDeepCloner.deepCopy(newBody);
+                initWork.setBody(newBody);
+                filterInfo.filter.setInitWork(initWork);
+            }
+            
             methods.add(filterInfo.filter.getMethods()[i]);
+        }
         return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);
     }
 
@@ -443,6 +472,8 @@ public class BufferedCommunication extends RawExecutionCode
             //now inline the init work body
             statements.addStatement(new JExpressionStatement(null, initWorkCall, null));
             //if a simple filter, reset the simpleIndex
+            /* no longer needed, simple index is set to -1 in the var def at the beginning
+             * of work?
             if (filterInfo.isSimple()) {
                 statements.addStatement
                     (new JExpressionStatement(null,
@@ -453,6 +484,7 @@ public class BufferedCommunication extends RawExecutionCode
                                                  generatedVariables.simpleIndex.getIdent()),
                                                 new JIntLiteral(-1))), null));
             }
+            */
         }
     
         if (initFire - 1 > 0) {
@@ -534,10 +566,7 @@ public class BufferedCommunication extends RawExecutionCode
                       
         JStatement workBlock = 
             getWorkFunctionCall(filter);
-    
-        //if we are compressing the switch code, then send the rates to the switch
-        sendRatesToSwitch(filterInfo, block);
-                
+        /* Now done inside of the work function itself, see convertCommExprs()
         //reset the simple index
         if (filterInfo.isSimple()) {
             block.addStatement
@@ -549,6 +578,11 @@ public class BufferedCommunication extends RawExecutionCode
                                              generatedVariables.simpleIndex.getIdent()),
                                             new JIntLiteral(-1))), null));
         }
+        */
+        //if we are compressing the switch code, then send the rates to the switch
+        sendRatesToSwitch(filterInfo, block);
+                
+       
     
         //add the statements to receive pop into the buffer
         //execute this before the for loop that has the work function
@@ -653,6 +687,7 @@ public class BufferedCommunication extends RawExecutionCode
         JBlock block = new JBlock(null, new JStatement[0], null);
     
         //if a simple filter, reset the simpleIndex
+        /*
         if (filterInfo.isSimple()) {
             block.addStatement
                 (new JExpressionStatement(null,
@@ -663,7 +698,7 @@ public class BufferedCommunication extends RawExecutionCode
                                              generatedVariables.simpleIndex.getIdent()),
                                             new JIntLiteral(-1))), null));
         }
-    
+        */
         JStatement innerReceiveLoop = 
             makeForLoopFieldIndex(receiveCode(filter, filter.getInputType(),
                                     generatedVariables),
@@ -719,7 +754,7 @@ public class BufferedCommunication extends RawExecutionCode
         Utils.fail("This is not supported");
     
         JBlock block = new JBlock(null, new JStatement[0], null);
-
+        /*
         //reset the simple index
         if (filterInfo.isSimple()){
             block.addStatement
@@ -730,7 +765,7 @@ public class BufferedCommunication extends RawExecutionCode
                                             (null, generatedVariables.simpleIndex),
                                             new JIntLiteral(-1))), null));
         }
-        
+        */
     
         //should be at least peek - pop items in the buffer, so
         //just receive pop * filterInfo.steadyMult in the buffer and we can

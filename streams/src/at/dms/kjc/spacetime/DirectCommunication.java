@@ -273,8 +273,13 @@ public class DirectCommunication extends RawExecutionCode
         if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
         methods.add(filterInfo.filter.getMethods()[i]);
         */
-        for (int i = 0; i < filterInfo.filter.getMethods().length; i++)
+        for (int i = 0; i < filterInfo.filter.getMethods().length; i++) {
+            //don't generate code for the work function if we are inlining!
+            if (INLINE_WORK && 
+                    filterInfo.filter.getMethods()[i] == filterInfo.filter.getWork())
+                continue;
             methods.add(filterInfo.filter.getMethods()[i]);
+        }
     
         return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);    
     }

@@ -152,8 +152,7 @@ public abstract class Partitioner {
     /**
      * Set the trace graph to traces, where the only difference between the 
      * previous trace graph and the new trace graph is the addition of identity
-     * traces (meaning traces with only an identities filter), used for 
-     * reducing the width of splits and joins.
+     * traces (meaning traces with only an identities filter).
      *  
      * @param traces The new trace graph.
      */
@@ -163,7 +162,7 @@ public abstract class Partitioner {
             if (!containsTrace(traces[i])) {
                 assert traces[i].getFilterNodes().length == 1;
                 assert traces[i].getFilterNodes()[0].toString().startsWith("Identity");
-                
+                                
                 if (!workEstimation.containsKey(traces[i].getFilterNodes()[0])) {
                     //for a work estimation of an identity filter
                     //multiple the estimated cost of on item by the number

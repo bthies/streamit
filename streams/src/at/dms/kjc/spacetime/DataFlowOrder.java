@@ -22,7 +22,7 @@ public class DataFlowOrder {
      * 
      * @return A LinkedList of traces in data-flow order
      */
-    public static LinkedList getTraversal(Trace[] topTraces) {
+    public static LinkedList<Trace> getTraversal(Trace[] topTraces) {
         LinkedList schedule = new LinkedList();
         HashSet visited = new HashSet();
         LinkedList queue = new LinkedList();

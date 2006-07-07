@@ -17,7 +17,7 @@ import java.util.*;
 
 /**
  * the class finds splitters / joiners that need to be fused with filters.
- * 
+ * <br/>
  * (Not exactly: AD.  allows manual fusing, also has something to do with 
  * creating partition numbers a.k.a. threads.)
  */
@@ -30,33 +30,34 @@ public class ClusterFusion
      * Seems to be used to pass in info about nodes already in partitions
      * to prevent further fusing.
      */
-    private static Map partitionMap;
+    private static Map<SIROperator,Integer> partitionMap;
 
     /** FlatNode (slave) -&gt; FlatNode (node master).
      * 
      * Each fused node has a single master node and possibly multiple slave nodes
      */
-    private static Map nodeMaster = new HashMap();
+    private static Map<FlatNode,FlatNode> nodeMaster = new HashMap<FlatNode,FlatNode>();
 
     /** FlatNode (slave) -&gt; FlatNode (local master).
      * 
      * each fused node has a local master this way it knows who is driving the execution
      */
-    private static Map localMaster = new HashMap();
+    private static Map<FlatNode,FlatNode> localMaster = new HashMap<FlatNode,FlatNode>();
 
     /** a set of all slave nodes (second parameter's to calls to "fuseTo'). */
-    private static Set eliminatedNodes = new HashSet();
+    private static Set<FlatNode> eliminatedNodes = new HashSet<FlatNode>();
 
 
     /**
      * Clobber 'partitionmap'. 
      * 
-     * Seems to be used in {@link ClusterBackend} to record results og cachopts.
+     * Seems to be used in {@link ClusterBackend} to record results of cachopts
+     * and other partitioners.
      * 
-     * @param pmap  a map from SIROperators to numbers.  (Help Janis!)
+     * @param pmap  a map from SIROperators to partition numbers.
      */
     
-    public static void setPartitionMap(HashMap pmap) {
+    public static void setPartitionMap(HashMap<SIROperator,Integer> pmap) {
         partitionMap = pmap;
     }
 
@@ -80,8 +81,8 @@ public class ClusterFusion
         assert !isEliminated(master_node);  // why not "while" above instead of "if"? so added assert AD.
         assert !isEliminated(slave_node) : "Attempting to fuse already-fused node as slave";
     
-        Set inherited_slaves = fusedWith(slave_node);
-        Iterator i = inherited_slaves.iterator();
+        Set<FlatNode> inherited_slaves = fusedWith(slave_node);
+        Iterator<FlatNode> i = inherited_slaves.iterator();
         while (i.hasNext()) {
             nodeMaster.put(i.next(), master_node);
         }
@@ -108,9 +109,9 @@ public class ClusterFusion
      * @param node f FlatNode
      * @return Set of all nodes passed node is fused with, not including passed node.A
      */
-    public static Set fusedWith(FlatNode node) {
+    public static Set<FlatNode> fusedWith(FlatNode node) {
 
-        HashSet res = new HashSet();
+        HashSet<FlatNode> res = new HashSet<FlatNode>();
         FlatNode master;
 
         if (isEliminated(node)) {
@@ -185,7 +186,8 @@ public class ClusterFusion
             // splitter
 
             SIRSplitter splitter = (SIRSplitter)node.contents;
-            if (splitter.getSumOfWeights() == 0) return;
+            if (splitter.getSumOfWeights() == 0) 
+                return;
 
             if (partition == null) {
         
@@ -201,7 +203,8 @@ public class ClusterFusion
             // joiner
 
             SIRJoiner joiner = (SIRJoiner)node.contents;
-            if (joiner.getSumOfWeights() == 0) return;
+            if (joiner.getSumOfWeights() == 0) 
+                return;
 
             if (partition == null) {
 
@@ -236,7 +239,7 @@ public class ClusterFusion
      *  If a filter, return partition number for it + 1 as string.
      *  If a joiner followed by a filter, return the filter's partition.
      *    else do something with preceeding operators to get partition... (Janis?)
-     *  If a splitter and at top of progrm, return "1"
+     *  If a splitter and at top of program, return "1"
      *    else if a splitter preceeded by a filter, return partition of filter.
      *    else do something with following operators to get partition... (Janis?)
      */
@@ -251,7 +254,7 @@ public class ClusterFusion
             SIROperator op = node.contents;
     
             if (op instanceof SIRFilter) {
-                int partition = ((Integer)partitionMap.get(op)).intValue() + 1;
+                int partition = (partitionMap.get(op)) + 1;
                 return new String(""+partition);
             }
 

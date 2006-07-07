@@ -1,4 +1,4 @@
-
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.94 2006-07-07 20:31:23 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -46,18 +46,19 @@ public class ClusterBackend {
     /**
      * Map filters (also presumably splitters and joiners) to FlatNodes.
      * 
-     * <br/> Also read by ClusterExecutionCode
+     * <br/> Set up here but used by {@link ClusterExecutionCode}
      */
     public static HashMap<SIROperator,FlatNode> filter2Node;
 
     /**
-     * Result of call to SIRScheduler.getExecutionCounts.
+     * Result of call to {@link SIRScheduler.getExecutionCounts}.
+     * <br/>
      * (not generic since mixing generics and arrays not allowed)
      */
     private static HashMap/*<FlatNode,int[]>*/[] executionCounts;
     
     /**
-     * Holds passed structures until they can be handeed off to StructureIncludeFile.
+     * Holds passed structures until they can be handeed off to {@link StructureIncludeFile}.
      */
     private static SIRStructure[] structures;
 
@@ -70,7 +71,7 @@ public class ClusterBackend {
 
     /**
      * Used to iterate over str structure ignoring flattening.
-     * <br/> Also used in ClusterCodeGenerator and FlatIrToCluster2
+     * <br/> Also used in {@link ClusterCodeGenerator} and {@link FlatIrToCluster2}
      */
     public static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
@@ -79,6 +80,10 @@ public class ClusterBackend {
      */
 
     private static HashMap<FlatNode,int[]> filter_steady_counts;
+
+    /**
+     * This provides a way for cache partitioner to access filter execution counts.
+     */
 
     public static int getExecCounts(SIROperator oper) {
         int c[] = (int[])filter_steady_counts.get(oper);
@@ -450,15 +455,18 @@ public class ClusterBackend {
             graphFlattener.top.accept(new ClusterFusion(), new HashSet(), true);
         }
 
-        //ClusterCode.setPartitionMap(partitionMap);   // legacy code now no-op
-        ClusterCode.generateCode(graphFlattener.top);
+        //ClusterCode.setPartitionMap(partitionMap);    // legacy code now no-op
 
-        FusionCode.generateFusionHeader(str, doCacheOptimization);
-        FusionCode.generateFusionFile(d_sched /*, implicit_mult*/);
+        ClusterCode.generateCode(graphFlattener.top);   // thread*.cpp
 
-        GenerateGlobal.generateGlobal(global, helpers); // global.h, global.cpp
-
-        GenerateMasterDotCpp.generateMasterDotCpp();    // master.cpp
+        FusionCode.generateFusionHeader(str, doCacheOptimization); // fusion.h
+        GenerateGlobalDotH.generateGlobalDotH(global, helpers); // global.h
+        if (KjcOptions.standalone) {
+            FusionCode.generateFusionFile(d_sched /*, implicit_mult*/); // fusion.cpp
+        } else {
+            GenerateMasterDotCpp.generateMasterDotCpp();    // master.cpp
+            GenerateGlobalDotCpp.generateGlobalDotCpp(global, helpers); // global.cpp
+        }
         GenerateClusterDotH.generateClusterDotH();      // master.h
 
         GenerateMakefile.generateMakefile(helpers);     // Makefile.cluster

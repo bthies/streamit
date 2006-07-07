@@ -1,3 +1,4 @@
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.6 2006-07-07 20:31:24 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -78,7 +79,7 @@ public class GenerateMakefile {
 
 
         p.print("clean:\n");
-        p.println("\trm -f master*.o fusion*.o thread*.o " + executablename);
+        p.println("\trm -f master*.o fusion*.o global*.o thread*.o " + executablename);
         p.newLine();
         p.newLine();
 
@@ -87,7 +88,7 @@ public class GenerateMakefile {
         } else {
             p.print(executablename + ": master.o global.o ");
         }
-            for (int y = 0; y < helpers.length; y++) {
+        for (int y = 0; y < helpers.length; y++) {
             if (helpers[y].isNative()) {
                 p.print(helpers[y].getIdent() + ".o ");
             }

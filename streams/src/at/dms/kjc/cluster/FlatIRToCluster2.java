@@ -21,8 +21,12 @@ import java.util.*;
 /**
  * This class contains code generation for speculative execution,
  * where individual threads are represented by c++ classes.
+ * <br/>
+ * Unfortunately, this experimental version is not full-featured.
+ * 
+ * @deprecated
  */
-public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements StreamVisitor, CodeGenerator
+@Deprecated public class FlatIRToCluster2 extends at.dms.kjc.common.ToCCommon implements StreamVisitor, CodeGenerator
 {
     private boolean DEBUG = false;
 

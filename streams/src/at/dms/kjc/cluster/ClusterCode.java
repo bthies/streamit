@@ -46,24 +46,28 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         if (node.contents instanceof SIRSplitter) {
 
             generateSplitter(node);
-            generateSplitter2(node); // new codegen
+//            generateSplitter2(node); // new codegen
 
         }
 
         if (node.contents instanceof SIRJoiner) {
 
             generateJoiner(node);
-            generateJoiner2(node); // new codegen
+//            generateJoiner2(node); // new codegen
 
         }
     }
 
 
     /**
-     *  Generate and emit code for a splitter using new codegen
+     *  Generate and emit code for a splitter using new codegen allowing speculative execution.
+     *  <br/>
+     *  Unfortunately, this experimental version is not full-featured.
+     * 
+     * @deprecated
      */
     
-     public static void generateSplitter2(FlatNode node) {
+     @Deprecated public static void generateSplitter2(FlatNode node) {
         
         SIRSplitter splitter = (SIRSplitter)node.contents;
 
@@ -199,10 +203,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 
     /**
-     *  Generate and emit code for a joiner using new codegen
+     *  Generate and emit code for a joiner using new codegen allowing speculative execution.
+     *  <br/>
+     *  Unfortunately, this experimental version is not full-featured.
+     * 
+     * @deprecated
      */
 
-    public static void generateJoiner2(FlatNode node) {
+    @Deprecated public static void generateJoiner2(FlatNode node) {
         
         SIRJoiner joiner = (SIRJoiner)node.contents;
 
@@ -318,7 +326,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
     /**
-     *  Generate and emit code for a splitter
+     *  Generate and emit code for a splitter.
      */
 
     public static void generateSplitter(FlatNode node) {

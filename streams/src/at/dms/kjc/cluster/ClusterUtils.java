@@ -1,3 +1,4 @@
+// $Header
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.SIRFilter;
@@ -7,11 +8,13 @@ import at.dms.kjc.common.CommonUtils;
 
 class ClusterUtils {
 
-    // the the name of a work function given a filter and a unique id.
-    // 
-    // If not a predefined filter then the work method should have a useful
-    // unique name. 
-    //
+    /** 
+     * Return the the name of a work function given a filter and a unique id.
+    *<br/>
+    * If not a predefined filter then the work method should have a useful
+    * unique name. 
+    *
+     */
     //  If a predefined filter, the work method may be called
     // "UNINITIALIZED DUMMY METHOD" (A Kopi2Sir bug?) so give it a reasonable
     // name.  (The raw backend does not seem to have this problem, but I 

@@ -1,3 +1,4 @@
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateClusterDotH.java,v 1.2 2006-07-07 20:31:24 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;

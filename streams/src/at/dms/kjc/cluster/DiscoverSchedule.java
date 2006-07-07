@@ -129,7 +129,7 @@ class DiscoverSchedule
                     // getChildren includes the splitter and joiner as well as the
                     // stream children.  We are only interested in the stream children
                     if (child instanceof SIRStream && splitterWeights[j++] == 0) {
-                        next_ops.add(child);
+                            next_ops.add(streamChild(child));   
                     }
                 }
             }
@@ -230,5 +230,24 @@ class DiscoverSchedule
                 // (number_of_phases+1));
             }
         }
+    }
+    
+    //  only call with SIRStream types that could be children of a SIRContainer.
+    private SIROperator streamChild(SIROperator s) { 
+        if (s instanceof SIRPipeline) {
+            return streamChild(((SIRPipeline)s).get(0));
+        }
+        if (s instanceof SIRSplitJoin) {
+            return (((SIRSplitJoin)s).getSplitter());
+        }
+        if (s instanceof SIRFeedbackLoop) {
+            return (((SIRFeedbackLoop)s).getJoiner());
+        }
+        // placed after containers to handle Filter, PhasedFilter
+        if (s instanceof SIRStream) {
+            return s;
+        }
+        assert false: "Cannot handle operator type " + s.getClass().getName();
+        return null;
     }
 }

@@ -404,6 +404,34 @@ public class ManualPartition {
     }
 
     /**
+     * Tries to convert 'sj' into a pipeline.  If the operation is
+     * successful, mutates the parent of 'sj' (if any) in the stream
+     * graph to contain the pipeline and returns the new pipeline.
+     * Otherwise, does not change anything and returns the original
+     * splitjoin.
+     */
+    public static SIRStream convertToPipeline(SIRSplitJoin sj) {
+        checkNull(sj);
+
+        // try converting
+        SIRStream str = RefactorSplitJoin.convertToPipeline(sj);
+
+        // if conversion failed, we get back the original
+        if (str == sj) {
+            return sj;
+        }
+        // otherwise, we got a pipeline
+        SIRPipeline pipe = (SIRPipeline)str;
+
+        // replace <sj> with <pipe>
+        if (sj.getParent()!=null) {
+            sj.getParent().replace(sj, pipe);
+        }
+
+        return pipe;
+    }
+
+    /**
      * Exits with nice error if 'str' is null.
      */
     private static void checkNull(SIRStream str) {

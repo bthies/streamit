@@ -87,7 +87,12 @@ public class SpaceTimeBackend {
  
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
-
+        
+        if (str instanceof SIRContainer)
+            ((SIRContainer)str).reclaimChildren();
+        
+        (new DuplicateBottleneck()).duplicate(str);
+        
         Lifter.liftAggressiveSync(str);
 
         if (KjcOptions.fission > 1) {
@@ -175,14 +180,20 @@ public class SpaceTimeBackend {
         // for the pop expression before the push expression and that may cause 
         // deadlock...
         at.dms.kjc.common.SeparatePushPop.doit(str);
+        
+       
+        
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
+        
+        
         
         System.out.println("Comp/Comm Ratio of SIR graph: " + 
                 CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str), 
                         executionCounts[1]));
-        
-     
+       
+       
+      
         //Util.printExecutionCount(executionCounts[0]);
         //Util.printExecutionCount(executionCounts[1]);
         

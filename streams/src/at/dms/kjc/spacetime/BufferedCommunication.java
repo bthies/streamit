@@ -377,8 +377,8 @@ public class BufferedCommunication extends RawExecutionCode
                     filterInfo.filter.getMethods()[i] == filterInfo.filter.getWork())
                 continue;
             
-            if (filterInfo.isTwoStage() && filterInfo.filter.getMethods()[i] ==
-                filterInfo.filter.getInitWork()) {
+            if (filterInfo.isSimple() && filterInfo.isTwoStage() && 
+                    filterInfo.filter.getMethods()[i] == filterInfo.filter.getInitWork()) {
                 //if the filter is a two stage, then add the var decl of 
                 //the simple index to the body and then clone the body to 
                 //get a new simple index

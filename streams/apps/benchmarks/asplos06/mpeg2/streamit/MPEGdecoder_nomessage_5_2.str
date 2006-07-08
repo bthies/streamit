@@ -4799,12 +4799,8 @@ int->int pipeline iDCT_2D_reference_fine(int size) {
     }
     add iDCT_1D_Y_reference_fine(size);
     add iDCT_1D_X_reference_fine(size);
-    add float->int filter {
-        work pop 1 push 1 {
-            push((int) floor(pop() + 0.5));
-        }
-    }
 }
+
 
 /**
  * Transforms a 2D signal from the frequency domain to the signal domain
@@ -4864,10 +4860,18 @@ int->int pipeline DCT_2D_reference_fine(int size) {
 /**
  * @internal
  */
-float->float splitjoin iDCT_1D_X_reference_fine(int size) {
+float->int splitjoin iDCT_1D_X_reference_fine(int size) {
     split roundrobin(size);
     for (int i = 0; i < size; i++) {
-        add iDCT_1D_reference_fine(size); 
+	add pipeline 
+	    {
+		add iDCT_1D_reference_fine(size); 
+		add float->int filter {
+		    work pop 1 push 1 {
+			push((int) floor(pop() + 0.5));
+		    }
+		}
+	    }
     }
     join roundrobin(size);
 }

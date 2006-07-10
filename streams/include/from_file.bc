@@ -26,9 +26,9 @@ fn dev_from_file(filename, port, static_network,
   local cyclesPerWord = 1;
 
   //set the cycles per word based on the presence of this global variable
-  if (LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord") != NULL) {
+  if (LookupSymbolHash(gSymbolTable, "gFileDevCyclesPerWord") != NULL) {
     local cpw = 0;
-    cpw = LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord");
+    cpw = LookupSymbolHash(gSymbolTable, "gFileDevCyclesPerWord");
     cyclesPerWord = **(cpw);
   }
 

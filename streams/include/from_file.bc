@@ -23,6 +23,17 @@ fn dev_from_file(filename, port, static_network,
   local send_device_descriptor = hms_new();
   //the network to use, 0 = static, 2 = gdn
   local network = 0;
+  local cyclesPerWord = 1;
+
+  //set the cycles per word based on the presence of this global variable
+  if (LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord") != NULL) {
+    local cpw = 0;
+    cpw = LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord");
+    cyclesPerWord = **(cpw);
+  }
+
+  printf(" ** File Reader on port %d with %d cycles per word.\n", 
+	 port, cyclesPerWord);
 
   //open the file
   send_device_descriptor.fileName = filename;
@@ -30,6 +41,7 @@ fn dev_from_file(filename, port, static_network,
 					 "r");
   send_device_descriptor.format = "";
   send_device_descriptor.ioPort = port;
+  send_device_descriptor.cyclesPerWord = cyclesPerWord;
 
   //if static_network is false, use the GDN
   if (static_network == 0)
@@ -61,6 +73,7 @@ fn dev_from_file(filename, port, static_network,
       & fn(this) 
       {
 	local theFile = this.theFile;
+	local cyclesPerWord = this.cyclesPerWord;
 	local format = this.format;
 	local ioPort = this.ioPort;
 	local fileName = this.fileName;
@@ -70,11 +83,13 @@ fn dev_from_file(filename, port, static_network,
         //send the word, depending on binary or ascii
 	if (binary == 0) {
 	  while(fscanf(theFile, format, &value) == 1) {
+	    limit_bandwidth(cyclesPerWord);
 	    this.send(value);
 	  }
 	} else {
 	   while(fread(&value, 4, 1, theFile) != 0) {
-	    this.send(value);
+	     limit_bandwidth(cyclesPerWord);
+	     this.send(value);
 	  }
 	}
 	printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
@@ -93,7 +108,8 @@ fn dev_from_file(filename, port, static_network,
 	 local fileName = this.fileName;
 	 local format = this.format;
 	 local value, i;
-	 
+	 local cyclesPerWord = this.cyclesPerWord;
+
 	 local PKT_SIZE = 31;
 	 local pkt_remaining = 0;
 	 while (1) {
@@ -119,10 +135,12 @@ fn dev_from_file(filename, port, static_network,
 	     //construct and send the header
 	     header = ConstructDynHdr(0, packet_size, 0, ourY, ourX, 
 				      destY, destX);
+	     limit_bandwidth(cyclesPerWord);
 	     this.send(header);
 	   }
 	   if (binary == 1) {
 	     if (fread(&value, 4, 1, theFile) != 0) {
+	       limit_bandwidth(cyclesPerWord);
 	       this.send(value);
 	       pkt_remaining -= 1;
 	     }
@@ -132,6 +150,7 @@ fn dev_from_file(filename, port, static_network,
 	     }
 	   } else {  //ascii
 	     if (fscanf(theFile, format, &value) == 1) {
+	       limit_bandwidth(cyclesPerWord);
 	       this.send(value);
 	       pkt_remaining -= 1;
 	     }
@@ -155,4 +174,13 @@ fn dev_from_file(filename, port, static_network,
 				   wait_for_trigger,
 				   send_device_descriptor, 
 				   network);
+}
+
+//send the word, accounting for bandwidth
+fn limit_bandwidth(cyclesPerWord) {
+  local i = 0;
+  for (i = 0; i < (cyclesPerWord - 1); i++) {
+    yield;
+  }
+  return;
 }

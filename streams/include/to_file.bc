@@ -38,9 +38,20 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 {
   local receive_device_descriptor = hms_new();
   local network = 0;
+  local cyclesPerWord = 1;
+
+  //set the cycles per word based on the presence of this global variable
+  if (LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord") != NULL) {
+    local cpw = 0;
+    cpw = LookupSymbolHash(gSymbolTable, "gStreamingDRAMCyclesPerWord");
+    cyclesPerWord = **(cpw);
+  }
 
   if (static_network == 0)
     network = 2;
+
+  printf(" ** File Writer on port %d with %d cycles per word.\n", 
+	 port, cyclesPerWord); 
 
   // open the file
   receive_device_descriptor.fileName = filename;
@@ -49,6 +60,7 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
   receive_device_descriptor.format = "";
   receive_device_descriptor.ioPort = port;
   receive_device_descriptor.type = type;
+  receive_device_descriptor.cyclesPerWord = cyclesPerWord;
   
   //set the printf format for ascii data
   if (type == 0)
@@ -72,13 +84,16 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 	local filename = this.fileName;
 	local ioPort = this.ioPort;
 	local type = this.type;
-	
+	local cyclesPerWord = this.cyclesPerWord;
 
 	while (1)
 	{
 	  local time_lo, time_hi;
 	  local proc = Machine_GetProc(machine, 0);
-	  local value = this.receive();
+	  local value;
+
+	  limit_bandwidth(cyclesPerWord);
+	  value = this.receive();
 
 	  //write to file
 	  if (binary == 0 && type == 1)
@@ -103,16 +118,22 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 	local filename = this.fileName;
 	local ioPort = this.ioPort;
 	local type = this.type;
-		
+	local cyclesPerWord = this.cyclesPerWord;
+	
 	while (1)
 	{
-	  local value = this.receive();
+	  local value;
 	  local i, bogus, length, senderY, senderX, ourY, ourX, hdr;
 	  
+	  limit_bandwidth(cyclesPerWord);
+	  
+	  value = this.receive();
+
 	  DecodeDynHdr(value, &bogus, &length, &hdr,
 		       &senderY, &senderX, &ourY, &ourX);
 	  
 	  for (i = 0; i < length; i++) {
+	    limit_bandwidth(cyclesPerWord);
 	    value = this.receive();
 	    //write to the file
 	    if (binary == 1) 
@@ -136,4 +157,13 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 				   wait_for_trigger, 
 				   receive_device_descriptor,
 				   network);
+}
+
+//send the word, accounting for bandwidth
+fn limit_bandwidth(cyclesPerWord) {
+  local i = 0;
+  for (i = 0; i < (cyclesPerWord - 1); i++) {
+    yield;
+  }
+  return;
 }

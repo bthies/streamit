@@ -8,5 +8,4 @@
   <option target="raw4">-space</option>
   <option target="cluster">-O2</option>
   <option target="raw4">-O2</option>
-  <option target="raw4">-spacetime</option>
 </regtest>

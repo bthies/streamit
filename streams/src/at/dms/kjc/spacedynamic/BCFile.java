@@ -82,7 +82,7 @@ public class BCFile {
             fw.write("gTurnOffNativeCompilation = 1;\n");
         
         //set the bandwidth of the streaming memories
-        fw.write("global gStreamingDRAMCyclesPerWord = " + 
+        fw.write("global gFileDevCyclesPerWord = " + 
                 KjcOptions.st_cyc_per_wd + ";\n");
         
         fw.write("include(\"<dev/basic.bc>\");\n");

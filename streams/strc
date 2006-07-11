@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.87 2006-07-05 20:25:50 mgordon Exp $
+# $Id: strc,v 1.88 2006-07-11 04:25:49 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -267,6 +267,7 @@ Usage: strc [options] file.str ...
 *                     threshold
 * --noswpipe          For the SpaceTime backend, do not software pipeline the 
 *                     steady-state.
+* --hwic              When targeting the raw simulator, enable H/W icaching.
 * --st_cyc_per_wd n   For the SpaceTime backend, define the bandwidth in
 *                     cycles per word for the streaming memories attached
 *                     to the raw chip.
@@ -391,6 +392,7 @@ sub get_options
 			    "unroll|u=i",
 			    "wbs!",
 			    "noswpipe",
+			    "hwic",
 			    "cluster=i",
 			    "steadymult=i",
 			    "slicethresh=i",
@@ -783,6 +785,7 @@ sub get_compiler_opts
     $opts{peekratio} && ($copts .= " --peekratio " . $opts{peekratio});
     $opts{wbs} && ($copts .= " --wbs");
     $opts{noswpipe} && ($copts .= " --noswpipe");
+    $opts{hwic} && ($copts .= " --hwic");
     $opts{spacetime} && ($copts .= " --spacetime");
     $opts{space} && ($copts .= " --space");
     $opts{absarray} && ($copts .= " --absarray");

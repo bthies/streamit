@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.54 2006-07-07 20:31:23 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.55 2006-07-11 21:22:11 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -709,7 +709,7 @@ class ClusterCodeGenerator {
         //  | Main Function               |
         //  +=============================+
 	if (! KjcOptions.standalone) {
-        r.add("void __main__"+id+"() {\n");
+        r.add("static void __main__"+id+"() {\n");
         r.add("  int _tmp; // modified\n");
         r.add("  int _steady = __steady_"+id+";\n");
         r.add("  int _number = __max_iteration;\n");
@@ -720,7 +720,11 @@ class ClusterCodeGenerator {
             r.add("  send_credits__"+id+"();\n");
         }
         r.add("  if (_steady == 0) {\n");
-    
+
+        if (oper instanceof SIRJoiner && ClusterCode.feedbackJoineersNeedingPrep.contains(oper)) {
+            r.add ("  __feedbackjoiner_"+ id +"_prep();\n");
+        }
+
         if (oper instanceof SIRFilter) {
             r.add("  __init_pop_buf__"+id+"();\n");
         }

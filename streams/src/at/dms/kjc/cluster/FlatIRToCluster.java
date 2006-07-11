@@ -15,7 +15,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.*;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.common.CommonConstants;
-import at.dms.kjc.common.RawUtil;
+//import at.dms.kjc.common.RawUtil;
 
 /**
  * This class dumps the tile code for each filter into a file based on the tile
@@ -46,7 +46,7 @@ public class FlatIRToCluster extends InsertTimers implements
     // true if generating code for global struct
     protected boolean global = false;
 
-    // true if push and pop from provided buffers!!
+    // true if push and pop from provided buffers *(___in++) and *(___out++)
     protected boolean mod_push_pop = false;
 
     // ?? set up in ClusterCode.generateGlobal
@@ -94,10 +94,19 @@ public class FlatIRToCluster extends InsertTimers implements
     //        return 0;
     //    }
 
+    /**
+     * Enable / disable code generation for a static section.
+     */
     public void setGlobal(boolean g) {
         global = g;
     }
 
+    /**
+     * Code generation for a SIRFilter FlatNode.
+     * <br/>
+     * For splitter and joiner see {@link ClusterCode}
+     * @param node
+     */
     public static void generateCode(FlatNode node) {
         SIRFilter contentsAsFilter = (SIRFilter) node.contents;
         // make sure SIRPopExpression's only pop one element
@@ -622,7 +631,8 @@ public class FlatIRToCluster extends InsertTimers implements
             int s = in.getSource();
             int d = in.getDest();
 
-            p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
+            if (FixedBufferTape.isFixedBuffer(s,d)) {
+            //p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
 
             // the filter is fused with its source
 
@@ -633,9 +643,6 @@ public class FlatIRToCluster extends InsertTimers implements
 
             p.print("  extern volatile int HEAD_" + s + "_" + d + ";\n");
             p.print("  extern volatile int TAIL_" + s + "_" + d + ";\n");
-
-            // p.print(" extern int HEAD_"+s+"_"+d+";\n");
-            // p.print(" extern int TAIL_"+s+"_"+d+";\n");
 
             p.newLine();
 
@@ -648,10 +655,12 @@ public class FlatIRToCluster extends InsertTimers implements
                     + " res=BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
                     + "];\n");
             p.print("    TAIL_" + s + "_" + d + "++;\n");
-            p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
+            if (FixedBufferTape.needsModularBuffer(s,d)) { 
+            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
             p.print("    TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
                     + d + ";\n");
-            p.print("    #endif\n");
+            //p.print("    #endif\n");
+            }
             p.print("    return res;\n");
 
             p.print("  }\n");
@@ -666,10 +675,12 @@ public class FlatIRToCluster extends InsertTimers implements
                     + " res=BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
                     + "];\n");
             p.print("    TAIL_" + s + "_" + d + "+=n;\n");
-            p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
+            if (FixedBufferTape.needsModularBuffer(s,d)) {
+            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
             p.print("    TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
                     + d + ";\n");
-            p.print("    #endif\n");
+            //p.print("    #endif\n");
+            }
             p.print("    return res;\n");
 
             p.print("  }\n");
@@ -679,20 +690,22 @@ public class FlatIRToCluster extends InsertTimers implements
 
             p.print("  inline " + ClusterUtils.CTypeToString(input_type) + " "
                     + ClusterUtils.peekName(selfID) + "(int offs) {\n");
-            p.print("    #ifdef __NOMOD_" + s + "_" + d + "\n");
+            if (! FixedBufferTape.needsModularBuffer(s,d)) {
+            //p.print("    #ifdef __NOMOD_" + s + "_" + d + "\n");
             p.print("    return BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
                     + "+offs];\n");
-            p.print("    #else\n");
+            //p.print("    #else\n");
+            } else {
             p.print("    return BUFFER_" + s + "_" + d + "[(TAIL_" + s + "_"
                     + d + "+offs)&__BUF_SIZE_MASK_" + s + "_" + d + "];\n");
-            p.print("    #endif\n");
-
+            //p.print("    #endif\n");
+            }
             p.print("  }\n");
             p.newLine();
-
+            } else { // isFusedBuffer
             // pop (the source is not fused)
 
-            p.print("#else //!__FUSED_" + s + "_" + d + "\n");
+            //p.print("#else //!__FUSED_" + s + "_" + d + "\n");
             p.newLine();
 
             p.print("  inline " + ClusterUtils.CTypeToString(input_type)
@@ -757,10 +770,10 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("  }\n");
             p.newLine();
 
-            p.print("#endif\n");
+            //p.print("#endif\n");
             p.newLine();
-
-        } else {
+            } // ifFusedBuffer
+        } else { // (in == null) here:
 
             p.print("inline " + ClusterUtils.CTypeToString(input_type)
                     + " __init_pop_buf__" + selfID + "() {}\n");
@@ -789,8 +802,8 @@ public class FlatIRToCluster extends InsertTimers implements
             int d = out.getDest();
 
             // check if the destination node is fused
-
-            p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
+            if (FixedBufferTape.isFixedBuffer(s,d)) {
+            //p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
 
             p.newLine();
             p.print("  extern " + ClusterUtils.CTypeToString(output_type)
@@ -805,19 +818,20 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("    BUFFER_" + s + "_" + d + "[HEAD_" + s + "_" + d
                     + "]=data;\n");
             p.print("    HEAD_" + s + "_" + d + "++;\n");
-            p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
+            if (FixedBufferTape.needsModularBuffer(s,d)) {
+            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
             p.print("    HEAD_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
                     + d + ";\n");
-            p.print("    #endif\n");
-
+            //p.print("    #endif\n");
+            }
             p.print("  }\n");
             p.newLine();
 
             // if not fused use the producer's push function
 
-            p.print("#else //!__FUSED_" + s + "_" + d + "\n");
+            //p.print("#else //!__FUSED_" + s + "_" + d + "\n");
             p.newLine();
-
+            } else { 
             p.print("  inline void " + ClusterUtils.pushName(selfID) + "("
                     + ClusterUtils.CTypeToString(output_type) + " data) {\n");
 
@@ -833,8 +847,9 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("  }\n");
 
             p.newLine();
-            p.print("#endif");
-            p.newLine();
+            //p.print("#endif");
+            //p.newLine();
+            }
 
         }
 
@@ -975,13 +990,17 @@ public class FlatIRToCluster extends InsertTimers implements
         // +=============================+
         // | Work Function (int ____n) |
         // +=============================+
-        
-        p.println("\n\n#ifdef BUFFER_MERGE\n");
+
+        boolean printed_BUFFER_MERGE = false;
         
         if (!(self instanceof SIRFileReader) &&
             !(self instanceof SIRFileWriter) &&
             (in != null && out != null)) {
             
+            if (! printed_BUFFER_MERGE) {
+                p.println("\n\n#ifdef BUFFER_MERGE\n");
+                printed_BUFFER_MERGE = true;
+            }
             p.println();
             p.println("void "+work.getName()+"__"+selfID+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out) {");
             p.print("  for (; (0 < ____n); ____n--)\n");
@@ -998,6 +1017,10 @@ public class FlatIRToCluster extends InsertTimers implements
             !(self instanceof SIRFileWriter) &&
             (in != null && out != null)) {
             
+            if (! printed_BUFFER_MERGE) {
+                p.println("\n\n#ifdef BUFFER_MERGE\n");
+                printed_BUFFER_MERGE = true;
+            }
             p.println();
             p.println("void "+work.getName()+"__"+selfID+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2) {");
             p.print("  for (; (0 < ____n); (____n--, ____in+=s1, ____out+=s2))\n");
@@ -1010,7 +1033,9 @@ public class FlatIRToCluster extends InsertTimers implements
             
         }
         
+        if (printed_BUFFER_MERGE) {
         p.println("\n#endif // BUFFER_MERGE\n\n");
+        }
         
         JBlock block = new JBlock(null, new JStatement[0], null);
         

@@ -154,186 +154,35 @@ class FusionCode {
         // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
         
-            SIROperator oper = NodeEnumerator.getOperator(t);
-            Vector out = RegisterStreams.getNodeOutStreams(oper);
-
+           SIROperator oper = NodeEnumerator.getOperator(t);
+           Vector<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
             for (int i = 0; i < out.size(); i++) {
-                NetStream stream = (NetStream)out.elementAt(i);
+                NetStream stream = out.elementAt(i);
                 int src = stream.getSource();
                 int dst = stream.getDest();
-
-                p.print("#define __FUSED_"+src+"_"+dst+"\n");
-
-                SIROperator src_oper = NodeEnumerator.getOperator(src);
-                SIROperator dst_oper = NodeEnumerator.getOperator(dst);
-
-                boolean no_peek = false;
-
-                int extra = 0;
-
-                if (dst_oper instanceof SIRJoiner ||
-                    dst_oper instanceof SIRSplitter) { no_peek = true; }
-        
-                if (dst_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)dst_oper;
-                    extra = f.getPeekInt() - f.getPopInt();
-                    if (f.getPeekInt() == f.getPopInt()) { no_peek = true; }
+              
+                if (FixedBufferTape.isFixedBuffer(src,dst)) {
+                    p.print("#define __FUSED_"+src+"_"+dst+"\n");
                 }
-
-                if (extra > 0) {
-                    p.print("#define __PEEK_BUF_SIZE_"+src+"_"+dst+" "+extra+"\n");
+                
+                int extraPeeks = FixedBufferTape.getExtraPeeks(src,dst);
+                if (extraPeeks > 0) {
+                    p.print("//destination peeks: "+(extraPeeks)+" extra items\n");
+                    p.print("#define __PEEK_BUF_SIZE_" + src + "_" + dst
+                                + " " + extraPeeks + "\n");
                 }
-
-
                 //if (KjcOptions.peekratio == 1024 || no_peek) {
-        
-                if (no_peek || KjcOptions.modfusion == false) {
+
+                if (! FixedBufferTape.needsModularBuffer(src,dst)) {
                     p.print("#define __NOMOD_"+src+"_"+dst+"\n");
                 }
+
+                FixedBufferTape.calcSizes(src, dst, p, true);
         
-                //if (no_peek) p.print("#define __NOMOD_"+src+"_"+dst+"\n");
-                //p.print("#define __NOMOD_"+src+"_"+dst+"\n");
-
-                /*
-                 * Set a maximum buffer size for a connection
-                 */
-                int source_init_items = 0;
-                int source_steady_items = 0;
-                int dest_init_items = 0;
-                int dest_steady_items = 0;
-                int dest_peek = 0;
-
-                // steady state, source
-        
-                if (src_oper instanceof SIRJoiner) {
-                    SIRJoiner j = (SIRJoiner)src_oper;
-                    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-                    int steady_int = 0;
-                    if (steady != null) { steady_int = (steady).intValue(); }
-                    int push_n = j.getSumOfWeights();
-                    int total = (steady_int * push_n);
-                    p.print("//source pushes: "+total+" items during steady state\n");
-
-                    source_steady_items = total;
-                }
-
-                if (src_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)src_oper;
-                    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-                    int steady_int = 0;
-                    if (steady != null) { steady_int = (steady).intValue(); }
-                    int push_n = f.getPushInt();
-                    int total = (steady_int * push_n);
-                    p.print("//source pushes: "+total+" items during steady state\n");
-
-                    source_steady_items = total;
-                }
-
-                // init sched, source
-
-                if (src_oper instanceof SIRJoiner) {
-                    SIRJoiner j = (SIRJoiner)src_oper;
-                    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-                    int init_int = 0;
-                    if (init != null) { init_int = (init).intValue(); }
-                    int push_n = j.getSumOfWeights();
-                    int total = (init_int * push_n);
-                    p.print("//source pushes: "+total+" items during init schedule\n");
-
-                    source_init_items = total;
-                }
-
-                if (src_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)src_oper;
-                    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-                    int init_int = 0;
-                    if (init != null) { init_int = (init).intValue(); }
-                    int push_n = f.getPushInt();
-                    int total = (init_int * push_n);
-                    p.print("//source pushes: "+total+" items during init schedule\n");
-
-                    source_init_items = total;
-                }
-
-
-                // destination peek
-
-                if (dst_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)dst_oper;
-                    int pop_n = f.getPopInt();
-                    int peek_n = f.getPeekInt();
-                    if (peek_n > pop_n) {
-                        dest_peek = peek_n - pop_n;
-                        p.print("//destination peeks: "+(peek_n - pop_n)+" extra items\n");
-                    }
-                }
-
-                // steady state, dest
-
-                if (dst_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)dst_oper;
-                    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-                    int steady_int = 0;
-                    if (steady != null) { steady_int = (steady).intValue(); }
-                    int pop_n = f.getPopInt();
-                    int total = (steady_int * pop_n);
-                    p.print("//destination pops: "+total+" items during steady state\n");    
-                    dest_steady_items = total;
-                }
-
-                if (dst_oper instanceof SIRSplitter) {
-                    SIRSplitter s = (SIRSplitter)dst_oper;
-                    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-                    int steady_int = 0;
-                    if (steady != null) { steady_int = (steady).intValue(); }
-                    int pop_n = s.getSumOfWeights();
-                    if (s.getType().isDuplicate()) pop_n = 1;
-                    int total = (steady_int * pop_n);
-                    p.print("//destination pops: "+total+" items during steady state\n");
-                    dest_steady_items = total;
-                }
-
-                // init sched, dest
-
-                if (dst_oper instanceof SIRFilter) {
-                    SIRFilter f = (SIRFilter)dst_oper;
-                    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-                    int init_int = 0;
-                    if (init != null) { init_int = (init).intValue(); }
-                    int pop_n = f.getPopInt();
-                    int total = (init_int * pop_n);
-                    p.print("//destination pops: "+total+" items during init schedule\n");    
-                    dest_init_items = total;
-                }
-
-                if (dst_oper instanceof SIRSplitter) {
-                    SIRSplitter s = (SIRSplitter)dst_oper;
-                    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-                    int init_int = 0;
-                    if (init != null) { init_int = (init).intValue(); }
-                    int pop_n = s.getSumOfWeights();
-                    if (s.getType().isDuplicate()) pop_n = 1;
-                    int total = (init_int * pop_n);
-                    p.print("//destination pops: "+total+" items during init_schedule\n");
-                    dest_init_items = total;
-                }
-
-                int steady_items = 0;
-                int init_items = 0;
-
-                if (source_steady_items > dest_steady_items) {
-                    steady_items = source_steady_items;
-                } else {
-                    steady_items = dest_steady_items;
-                }
-
-                if (source_init_items > dest_init_items) {
-                    init_items = source_init_items;
-                } else {
-                    init_items = dest_init_items;
-                }
-        
-                p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" (pow2ceil(max("+init_items+","+steady_items+"*__MULT)+"+dest_peek+")-1)\n");
+                p.print("#define __BUF_SIZE_MASK_" + src + "_" + dst
+                            + " (pow2ceil(max(" + FixedBufferTape.getInitItems()
+                            + "," + FixedBufferTape.getSteadyItems() + "*__MULT)+"
+                            + FixedBufferTape.getExtraPeeks(src,dst) + ")-1)\n");
 
                 p.print("\n");
 
@@ -357,7 +206,7 @@ class FusionCode {
     /**
      * creates the fusion.cpp file
      * 
-     * @param d_schedule reference to {@link DiscoverSchedule} with a schedule
+     * @param d_sched reference to {@link DiscoverSchedule} with a schedule
      */
 
     public static void generateFusionFile(DiscoverSchedule d_sched) {
@@ -389,7 +238,7 @@ class FusionCode {
         p.print("#include <object_write_buffer.h>\n");
         p.print("#include <read_setup.h>\n");
         p.print("#include <ccp.h>\n");
-        p.print("#include <read_setup.h>\n");
+        //p.print("#include <read_setup.h>\n");
         p.print("#include <timer.h>\n");
         p.print("#include \"fusion.h\"\n");
         p.println("#include \"structs.h\"");
@@ -432,16 +281,23 @@ class FusionCode {
                 NetStream stream = (NetStream)out.elementAt(s);
                 int src = stream.getSource();
                 int dst = stream.getDest();
-                String type = ClusterUtils.CTypeToString(stream.getType());
+                if (FixedBufferTape.isFixedBuffer(src, dst)) {
+                    String type = ClusterUtils.CTypeToString(stream.getType());
 
-                p.print(type+" BUFFER_"+src+"_"+dst+"[__BUF_SIZE_MASK_"+src+"_"+dst+" + 1];\n");
-                //p.print(type+" PEEK_BUFFER_"+src+"_"+dst+"[__PEEK_BUF_SIZE_"+src+"_"+dst+"];\n");
-                p.print("int HEAD_"+src+"_"+dst+" = 0;\n");
-                p.print("int TAIL_"+src+"_"+dst+" = 0;\n");
+                    p.print(type + " BUFFER_" + src + "_" + dst
+                            + "[__BUF_SIZE_MASK_" + src + "_" + dst
+                            + " + 1];\n");
+                    p.print("int HEAD_" + src + "_" + dst + " = 0;\n");
+                    p.print("int TAIL_" + src + "_" + dst + " = 0;\n");
 
-		p.newLine();
+                    p.newLine();
+                }
             }
 
+        }
+
+        for (SIRJoiner j : ClusterCode.feedbackJoineersNeedingPrep) {
+            p.println("extern void __feedbackjoiner_"+ NodeEnumerator.getSIROperatorId(j) +"_prep();");
         }
 
         for (int i = 0; i < threadNumber; i++) {
@@ -471,8 +327,8 @@ class FusionCode {
             }
             p.print("extern void "+get_work_function(node.contents)+"(int);\n");
 
-	    if ((node.contents instanceof SIRFileReader) ||
-		(node.contents instanceof SIRFileWriter)) {
+	    if ((node.contents instanceof SIRFileReader)
+	            || (node.contents instanceof SIRFileWriter)) {
 		p.print("extern void "+get_work_function(node.contents)+"__close();\n");
 	    }
 
@@ -528,7 +384,7 @@ class FusionCode {
         p.print("  }\n");
 
 // implicit_mult used to be a parameter, but entire peek-scaling
-// feature has been turned off since muck more likely to be a pessimization
+// feature has been turned off since much more likely to be a pessimization
 // than an optimization
 //        p.print("  if ("+implicit_mult+" > 1) {\n");
 //        p.println("#ifdef VERBOSE");
@@ -577,8 +433,13 @@ class FusionCode {
         p.newLine();
         p.newLine();
         p.print("  // ============= Initialization =============\n");
-        p.newLine();
 
+        for (SIRJoiner j : ClusterCode.feedbackJoineersNeedingPrep) {
+            p.println("__feedbackjoiner_"+ NodeEnumerator.getSIROperatorId(j) +"_prep();");
+        }
+
+        p.newLine();
+        
         for (int ph = 0; ph < n_phases; ph++) {
     
             //p.print("  // ============= Phase: "+ph+" =============\n");
@@ -688,29 +549,42 @@ class FusionCode {
                 if (steady != null) steady_int = (steady).intValue();
 
                 if (steady_int > 0) {
-
                     Vector out = RegisterStreams.getNodeOutStreams(oper);
                     for (int i = 0; i < out.size(); i++) {
                         NetStream s = (NetStream)out.elementAt(i);
                         int _s = s.getSource();
                         int _d = s.getDest();
-                        p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                        p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
+                        if (FixedBufferTape.isFixedBuffer(_s,_d)) {
+                        if (!FixedBufferTape.needsModularBuffer(_s,_d)) {
+                            // p.print(" #ifdef __NOMOD_"+_s+"_"+_d+"\n");
+                            if (FixedBufferTape.hasExtraPeeks(_s,_d)) {
+                                // p.print(" #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
-                        p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
-                        p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
-                        p.print("      }\n");
-                        p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
-                        p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-            
-                        p.print("    #else\n");
+                                p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"
+                                                + _s
+                                                + "_"
+                                                + _d
+                                                + "; __y++) {\n");
+                                p.print("        BUFFER_" + _s + "_" + _d
+                                        + "[__y] = BUFFER_" + _s + "_" + _d
+                                        + "[__y + TAIL_" + _s + "_" + _d
+                                        + "];\n");
+                                p.print("      }\n");
+                                p.print("      HEAD_" + _s + "_" + _d
+                                        + " -= TAIL_" + _s + "_" + _d + ";\n");
+                                p.print("      TAIL_" + _s + "_" + _d
+                                        + " = 0;\n");
+                                //p.print("    #else\n");
+                            } else {
 
-                        p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
-                        p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-
-                        p.print("    #endif\n");
-                        p.print("    #endif\n");
-
+                                p.print("      HEAD_" + _s + "_" + _d
+                                        + " = 0;\n");
+                                p.print("      TAIL_" + _s + "_" + _d
+                                        + " = 0;\n");
+                                //p.print("    #endif\n");
+                            }
+                            //p.print("    #endif\n");
+                        }
 
             
                         /*
@@ -722,7 +596,7 @@ class FusionCode {
                         p.print("    }\n");
                         */
                     }
-
+                    }
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
                 }
@@ -765,30 +639,33 @@ class FusionCode {
 
 
                 if (steady_int > 0) {
-
                     Vector out = RegisterStreams.getNodeOutStreams(oper);
                     for (int i = 0; i < out.size(); i++) {
                         NetStream s = (NetStream)out.elementAt(i);
                         int _s = s.getSource();
                         int _d = s.getDest();
-                        p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                        p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
+                        if (FixedBufferTape.isFixedBuffer(_s,_d)) {
+                        if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
+                        //p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
+                        if (FixedBufferTape.getExtraPeeks(_s,_d) > 0) {
+                        //p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
-                        //p.println("// FusionCode_1");
+                        // //p.println("// FusionCode_1");
                         p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
                         p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
                         p.print("      }\n");
                         p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
                         p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
             
-                        p.print("    #else\n");
-
+                        //p.print("    #else\n");
+                        } else { 
                         p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
                         p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
 
-                        p.print("    #endif\n");
-                        p.print("    #endif\n");
-              
+                        //p.print("    #endif\n");
+                        }
+                        //p.print("    #endif\n");
+                        }
                         /*
 
                         p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
@@ -798,7 +675,8 @@ class FusionCode {
                         p.print("    }\n");
                         */
                     }
-            
+                    }
+
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
                     p.print("    "+get_work_function(oper)+"("+steady_int+"*rem);");
                     

@@ -19,11 +19,11 @@ import java.util.*;
  */
 public class NodeEnumerator implements FlatVisitor {
 
-    static int counter = 0;
+    private static int counter = 0;
     
-    static HashMap<SIROperator,Integer> nodeIds; // SIROperator --> int
-    static HashMap<Integer,SIROperator> idToOperator; // int --> SIROperator
-    static HashMap<Integer,FlatNode> idToFlatNode; // int --> FlatNode
+    private static HashMap<SIROperator,Integer> nodeIds; // SIROperator --> int
+    private static HashMap<Integer,SIROperator> idToOperator; // int --> SIROperator
+    private static HashMap<Integer,FlatNode> idToFlatNode; // int --> FlatNode
 
     public static void reset() {
         counter = 0;

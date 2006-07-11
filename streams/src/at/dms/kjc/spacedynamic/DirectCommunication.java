@@ -330,6 +330,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
 
         public void visitPushExpression(SIRPushExpression self, CType tapeType,
                                         JExpression arg) {
+            arg.accept(this);
             sawPush = true;
         }
 

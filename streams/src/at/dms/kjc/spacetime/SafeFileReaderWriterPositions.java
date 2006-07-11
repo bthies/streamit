@@ -112,8 +112,8 @@ public class SafeFileReaderWriterPositions {
                 CType outputType = self.getOutputType();
                 SIRContainer parent = (SIRContainer)iter.getParent().getStream();
                 LinkedList pipeChildren = new LinkedList();
-                //SIRFilter id = makeIdentityFilter(outputType);
-                SIRFilter id = new SIRIdentity(outputType);
+                SIRFilter id = makeIdentityFilter(outputType);
+                //SIRFilter id = new SIRIdentity(outputType);
                 RenameAll.renameAllFilters(id);
                 pipeChildren.add(self);
                 pipeChildren.add(id);
@@ -123,8 +123,8 @@ public class SafeFileReaderWriterPositions {
                 CType inputType = self.getInputType();
                 SIRContainer parent = (SIRContainer)iter.getParent().getStream();
                 LinkedList pipeChildren = new LinkedList();
-                //SIRFilter id = makeIdentityFilter(inputType);
-                SIRFilter id = new SIRIdentity(inputType);
+                SIRFilter id = makeIdentityFilter(inputType);
+                //SIRFilter id = new SIRIdentity(inputType);
                 RenameAll.renameAllFilters(id);
                 pipeChildren.add(id);
                 pipeChildren.add(self);

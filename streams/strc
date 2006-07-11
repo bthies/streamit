@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.88 2006-07-11 04:25:49 mgordon Exp $
+# $Id: strc,v 1.89 2006-07-11 19:38:19 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -271,6 +271,8 @@ Usage: strc [options] file.str ...
 * --st_cyc_per_wd n   For the SpaceTime backend, define the bandwidth in
 *                     cycles per word for the streaming memories attached
 *                     to the raw chip.
+* --dup n             For the SpaceTime Backend, duplicate all stateless 
+*                     filters n times.
 * --malloczeros       For default backend, generate malloc instead of calloc 
 *                     (this malloc will zero)
 * --nopartition       For default backend, do not attempt to partition each 
@@ -397,6 +399,7 @@ sub get_options
 			    "steadymult=i",
 			    "slicethresh=i",
 			    "st_cyc_per_wd=i",
+			    "dup=i",
 			    "ssoutputs=i",
 			    "asciifileio",
 			    "malloczeros!",
@@ -796,6 +799,7 @@ sub get_compiler_opts
     $opts{steadymult} && ($copts .= " --steadymult ". $opts{steadymult});
     $opts{slicethresh} && ($copts .= " --slicethresh ". $opts{slicethresh});
     $opts{st_cyc_per_wd} && ($copts .= " --st_cyc_per_wd ". $opts{st_cyc_per_wd});
+    $opts{dup} && ($copts .= " --dup ". $opts{dup});
     $opts{ssoutputs} && ($copts .= " --ssoutputs ". $opts{ssoutputs});
     $opts{layoutfile} && ($copts .= " --layoutfile ". $opts{layoutfile});
     $opts{devassignfile} && ($copts .= " --devassignfile ". $opts{devassignfile});

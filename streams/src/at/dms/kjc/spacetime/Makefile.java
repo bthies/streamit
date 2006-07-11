@@ -104,7 +104,11 @@ public class Makefile
     private void makeHeader() 
     {
         buf.append("#-*-Makefile-*-\n\n");
+        //buf.append("ATTRIBUTES = IMEM_EXTRA_LARGE HWIC\n");
         buf.append("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+        if (KjcOptions.hwic) {
+            buf.append("ATTRIBUTES += HWIC\n");
+        }
         //I don't think we can use the print service any more...
         //  buf.append("ATTRIBUTES += USES_PRINT_SERVICE\n")
         ;

@@ -13,6 +13,7 @@ import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import java.util.*;
+import at.dms.kjc.*;
 
 /**
  * @author mgordon
@@ -33,7 +34,8 @@ public class DuplicateBottleneck {
         //while (duplicateBottleneck(str));
         percentStateless(str);
         //duplicateFilters(str, rawChip.getTotalTiles());
-        //duplicateFilters(str, 4);
+        assert KjcOptions.dup > 1;
+        duplicateFilters(str, KjcOptions.dup);
     }
     
     private void percentStateless(SIRStream str) {

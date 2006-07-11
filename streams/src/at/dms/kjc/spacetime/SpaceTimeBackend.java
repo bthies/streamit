@@ -91,7 +91,9 @@ public class SpaceTimeBackend {
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         
-        (new DuplicateBottleneck()).duplicate(str, rawChip);
+        if (KjcOptions.dup > 1) {
+            (new DuplicateBottleneck()).duplicate(str, rawChip);
+        }
         
         Lifter.liftAggressiveSync(str);
 

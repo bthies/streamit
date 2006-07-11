@@ -66,6 +66,10 @@ public class MakefileGenerator {
                 //fw.write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
             }
 
+            if (KjcOptions.hwic) {
+                fw.write("ATTRIBUTES += HWIC\n");
+            }
+            
             //magic instruction support for printing...
             fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 

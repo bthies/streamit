@@ -17,7 +17,7 @@ public class MakefileGenerator
 {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
     //true if we want to use hardware icaching in the raw simulator
-    public static final boolean HWIC = false;
+    public static final boolean ISCA_CONFIG = false;
 
     public static void createMakefile() 
     {
@@ -53,7 +53,7 @@ public class MakefileGenerator
             */
         
             //if (!IMEMEstimation.TESTING_IMEM) {
-            if (HWIC) {
+            if (ISCA_CONFIG) {
                 //fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
                 fw.write("BTL-DEVICES += -dram_freq 100\n");
                 fw.write("ATTRIBUTES += HWIC\n");
@@ -65,6 +65,10 @@ public class MakefileGenerator
                 fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
             }
                 
+            if (KjcOptions.hwic) {
+               fw.write("ATTRIBUTES += HWIC\n");
+            }
+            
             //enable magic instructions for printing...            
             fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
                     

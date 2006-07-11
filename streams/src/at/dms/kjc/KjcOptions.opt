@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.82 2006-07-11 04:26:15 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.83 2006-07-11 19:38:37 mgordon Exp $
  */
 
 prefix Kjc
@@ -581,6 +581,12 @@ longname 		"hwic"
 	default		"false"
 	help		"When targeting the raw simulator, enable H/W icaching."
 
+longname 		"dup"
+	type 		int
+	default		"-1"
+	requireArgument
+	help 		"For the SpaceTime Backend, duplicate all stateless filters n times."
+	
 /* remove: now default */
 /* longname 		"noverbose" */
 /* 	type		boolean */

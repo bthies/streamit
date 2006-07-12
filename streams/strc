@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.89 2006-07-11 19:38:19 mgordon Exp $
+# $Id: strc,v 1.90 2006-07-12 00:11:38 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -210,7 +210,7 @@ Usage: strc [options] file.str ...
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
-+ --countops          Iinstrumentat to count arith ops (library or cluster)
++ --countops          Instrument to count arith ops (library or cluster)
 + --debug             Output debugging information in the compiler
 + --fusion            Fuse entire program to a single filter
 + --fission n         Do vertical fission up to limit of argument

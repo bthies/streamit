@@ -1,5 +1,5 @@
-#ifndef __CONSUMER2_H
-#define __CONSUMER2_H
+#ifndef __CONSUMER2P_H
+#define __CONSUMER2P_H
 /*
  * consumer2p<tapeType> represents the downstream end of some tape.
  *

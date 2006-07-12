@@ -205,7 +205,7 @@ void init_instance::initialize_sockets() {
 
       // create pipe
 
-      fprintf(stderr,"Creataing memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
+      fprintf(stderr,"Creating memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
       //fprintf(stderr,".");
       fflush(stderr);
       

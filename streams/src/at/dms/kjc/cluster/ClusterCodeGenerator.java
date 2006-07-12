@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.55 2006-07-11 21:22:11 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.56 2006-07-12 20:19:26 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -7,7 +7,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.common.CodegenPrintWriter;
-import at.dms.kjc.common.RawUtil;
+//import at.dms.kjc.common.RawUtil;
 
 
 /**
@@ -22,8 +22,8 @@ class ClusterCodeGenerator {
     
     private int id;
     
-    private Vector data_in;
-    private Vector data_out;
+    private Vector<NetStream> data_in;
+    private Vector<NetStream> data_out;
 
     private Vector<SIRStream> msg_from;
     private Vector<SIRStream> msg_to;
@@ -46,7 +46,7 @@ class ClusterCodeGenerator {
      * A constructor
      *
      * @param oper a {@link SIROperator}
-     * @param fileds an array of (@link JFieldDeclaration}s
+     * @param fields an array of {@link JFieldDeclaration}s
      */
 
     public ClusterCodeGenerator(SIROperator oper, 
@@ -79,8 +79,8 @@ class ClusterCodeGenerator {
         isEliminated = ClusterFusion.isEliminated(node);
         fusedWith = ClusterFusion.fusedWith(node);
 
-        data_in = (Vector)RegisterStreams.getNodeInStreams(oper);
-        data_out = (Vector)RegisterStreams.getNodeOutStreams(oper);
+        data_in = RegisterStreams.getNodeInStreams(oper);
+        data_out = RegisterStreams.getNodeOutStreams(oper);
 
         if (oper instanceof SIRStream) {
             SIRStream stream = (SIRStream)oper;
@@ -168,8 +168,9 @@ class ClusterCodeGenerator {
         p.println("#include <message.h>");
         p.println("#include <timer.h>");
         p.println("#include <thread_info.h>");
-        p.println("#include <consumer2.h>");
-        p.println("#include <producer2.h>");
+        p.println("#include <consumer2.h>");          // for cluster edge incoming
+        p.println("#include <consumer2p.h>");         // for cluster feedback edge incoming with >0 enqueues
+        p.println("#include <producer2.h>");          // foe cluster edge outgoing
         // only include fft.h if we did a frequency transformation
         if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform) {
             p.println("#include <fft.h>");
@@ -189,7 +190,8 @@ class ClusterCodeGenerator {
     
         p.println("extern int __max_iteration;");
         p.println("extern int __init_iter;");
-        p.println("extern int __timer_enabled;");
+        // any Operator with no successor is assumed to be last and will print timer
+        if (!data_out.iterator().hasNext())  p.println("extern int __timer_enabled;");
         p.println("extern int __frequency_of_chkpts;");
         p.println("extern volatile int __vol;");
         p.println("message *__msg_stack_"+id+";");
@@ -222,25 +224,34 @@ class ClusterCodeGenerator {
         //  | Communication Variables     |
         //  +=============================+
 
-        for (Iterator i = data_in.iterator(); i.hasNext();) {
-            NetStream in = (NetStream)i.next();
-            p.println("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";");
-            p.println("extern "+ClusterUtils.CTypeToString(in.getType())+" "+in.pop_name()+"();");
-
+        for (NetStream in : data_in) {
+            if (! FixedBufferTape.isFixedBuffer(in.getSource(),in.getDest())) {
+                if (oper instanceof SIRJoiner
+                        && oper.getParent() instanceof SIRFeedbackLoop
+                        && ((SIRFeedbackLoop)oper.getParent()).getDelayInt() > 0
+                        && NodeEnumerator.getFlatNode(in.getSource()) ==
+                            NodeEnumerator.getFlatNode(id).incoming[1]) {
+                    p.println("consumer2p<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";");
+                } else {
+                    p.println("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";");
+                }
+                p.println("extern "+ClusterUtils.CTypeToString(in.getType())+" "+in.pop_name()+"();");
             /*
               if (oper instanceof SIRFilter) {
               String type = ((SIRFilter)oper).getInputType().toString();
               p.println("peek_stream<"+type+"> "+in.name()+"in(&"+in.consumer_name()+");");
               }
             */
+            }
         }
     
-        for (Iterator i = data_out.iterator(); i.hasNext();) {
-            NetStream out = (NetStream)i.next();
-            p.println("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+out.producer_name()+";");
-            p.println("extern void "+out.push_name()+"("+ClusterUtils.CTypeToString(out.getType())+" data);");
-            p.println("    // this-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(id))+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"");
-        }
+        for (NetStream out : data_out) {
+            if (! FixedBufferTape.isFixedBuffer(out.getSource(),out.getDest())) {
+                p.println("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+out.producer_name()+";");
+                p.println("extern void "+out.push_name()+"("+ClusterUtils.CTypeToString(out.getType())+" data);");
+                p.println("    // this-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(id))+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"");
+            }
+        }   
     
         for (Iterator i = msg_from.iterator(); i.hasNext();) {
             int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());

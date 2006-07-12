@@ -564,33 +564,28 @@ public class ClusterCode {
         FlatNode source = NodeEnumerator.getFlatNode(in.getSource());
 
         if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-
-            p.print("  "+baseType.toString()+" tmp;\n");    
-
             _s = in.getSource();
             _d = in.getDest();      
 
-            p.newLine();
-
-            if (FixedBufferTape.isFixedBuffer(_s,_d)) {
-            //p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
-            if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
-            //p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-            p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;\n");
-            //p.print("    #else\n");
+            if (FixedBufferTape.isFixedBuffer(_s, _d)) {
+                if (!FixedBufferTape.needsModularBuffer(_s, _d)) {
+                    p.print("    tmp = BUFFER_" + _s + "_" + _d + "[TAIL_" + _s
+                            + "_" + _d + "];TAIL_" + _s + "_" + _d + "++;\n");
+                } else {
+                    p.print("    tmp = BUFFER_" + _s + "_" + _d + "[TAIL_" + _s
+                            + "_" + _d + "];TAIL_" + _s + "_" + _d + "++;TAIL_"
+                            + _s + "_" + _d + "&=__BUF_SIZE_MASK_" + _s + "_"
+                            + _d + ";\n");
+                }
             } else {
-            p.print("    tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
-            //p.print("    #endif\n");
-            }
-            //p.print("  #else\n");
-            } else { 
-            if (ClusterFusion.fusedWith(node).contains(source)) {
-                p.print("  tmp = "+in.pop_name()+"();\n");
-            } else {        
-                p.print("  tmp = "+in.consumer_name()+".pop();\n");     
-            }
+                p.print("  " + baseType.toString() + " tmp;\n");
+                p.newLine();
 
-            //p.print("  #endif\n");
+                if (ClusterFusion.fusedWith(node).contains(source)) {
+                    p.print("  tmp = " + in.pop_name() + "();\n");
+                } else {
+                    p.print("  tmp = " + in.consumer_name() + ".pop();\n");
+                }
             }
             p.newLine();
 
@@ -599,20 +594,19 @@ public class ClusterCode {
 
                 _s = s.getSource();
                 _d = s.getDest();
-                if (FixedBufferTape.isFixedBuffer(_s,_d)) {
-                //p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
-                if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
-                //p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;\n    HEAD_"+_s+"_"+_d+"++;\n");
-                //p.print("    #else\n");
-                } else { 
-                p.print("    BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;\n    HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
-                //p.print("    #endif\n");
-                }
-                //p.print("  #else\n");
+                if (FixedBufferTape.isFixedBuffer(_s, _d)) {
+                    if (!FixedBufferTape.needsModularBuffer(_s, _d)) {
+                        p.print("    BUFFER_" + _s + "_" + _d + "[HEAD_" + _s
+                                + "_" + _d + "]=tmp;\n    HEAD_" + _s + "_"
+                                + _d + "++;\n");
+                    } else {
+                        p.print("    BUFFER_" + _s + "_" + _d + "[HEAD_" + _s
+                                + "_" + _d + "]=tmp;\n    HEAD_" + _s + "_"
+                                + _d + "++;HEAD_" + _s + "_" + _d
+                                + "&=__BUF_SIZE_MASK_" + _s + "_" + _d + ";\n");
+                    }
                 } else {
-                p.print("  "+s.producer_name()+".push(tmp);\n");
-                //p.print("  #endif\n");
+                    p.print("  " + s.producer_name() + ".push(tmp);\n");
                 }
             }
         
@@ -1001,7 +995,7 @@ public class ClusterCode {
         //  | Joiner Pop                  |
         //  +=============================+
 
-
+        if (! FixedBufferTape.isFixedBuffer(out.getSource(),out.getDest())) {
         int sum_of_weights = joiner.getSumOfWeights();
 
         p.print(baseType.toString()+" "+out.pop_buffer()+"["+sum_of_weights+"];\n");
@@ -1036,7 +1030,8 @@ public class ClusterCode {
         p.print("  return "+out.pop_buffer()+"["+out.pop_index()+"++];\n");
         p.print("}\n");
         p.newLine();
-
+        }
+        
         //  +=============================+
         //  | Init Path                   |
         //  +=============================+
@@ -1044,9 +1039,6 @@ public class ClusterCode {
 
         if (joiner.getParent() instanceof SIRFeedbackLoop) {
         
-            p.print("int __init_counter_"+thread_id+" = 0;\n"); // INVALID
-            p.newLine();
-
             SIRFeedbackLoop floop = (SIRFeedbackLoop)joiner.getParent();
 
             p.print("//delay = "+((JIntLiteral)floop.getDelay()).intValue());

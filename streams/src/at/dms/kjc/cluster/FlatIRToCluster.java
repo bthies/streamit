@@ -355,8 +355,13 @@ public class FlatIRToCluster extends InsertTimers implements
         NetStream in = RegisterStreams.getFilterInStream(self);
         NetStream out = RegisterStreams.getFilterOutStream(self);
 
-        int out_pop_buffer_size = 10240;
+        // updated to correct size later if needed.
+        int peek_buf_size = 1;
         int out_pop_num_iters = 0;
+
+      if (! KjcOptions.standalone) {
+
+        int out_pop_buffer_size = 10240;
         if (push_n != 0) {
             out_pop_num_iters = out_pop_buffer_size / push_n;
         }
@@ -374,8 +379,9 @@ public class FlatIRToCluster extends InsertTimers implements
             p.newLine();
         }
 
+      }
         if (in != null) {
-
+      if (! KjcOptions.standalone) { 
             FlatNode source_node = NodeEnumerator.getFlatNode(in.getSource());
             FlatNode my_node = NodeEnumerator.getFlatNode(selfID);
 
@@ -391,7 +397,6 @@ public class FlatIRToCluster extends InsertTimers implements
             // pop_expr = in.consumer_name()+".pop";
             // }
 
-            int peek_buf_size = 1;
 
             while (peek_buf_size < peek_n) {
                 peek_buf_size *= 2;
@@ -627,154 +632,144 @@ public class FlatIRToCluster extends InsertTimers implements
 
             p.print("}\n");
             p.newLine();
-
+        }
             int s = in.getSource();
             int d = in.getDest();
 
-            if (FixedBufferTape.isFixedBuffer(s,d)) {
-            //p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
+            if (FixedBufferTape.isFixedBuffer(s, d)) {
+                p.newLine();
+                p.println("extern " + ClusterUtils.CTypeToString(input_type)
+                        + " BUFFER_" + s + "_" + d + "[];");
+                p.println("extern volatile int HEAD_" + s + "_" + d + ";");
+                p.println("extern volatile int TAIL_" + s + "_" + d + ";");
+                p.newLine();
 
-            // the filter is fused with its source
+                // pop from fusion buffer
 
-            p.newLine();
+                p.println("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " __pop__" + selfID + "() {");
+                p.indent();
+                p.println(ClusterUtils.CTypeToString(input_type) + " res=BUFFER_"
+                        + s + "_" + d + "[TAIL_" + s + "_" + d + "];");
+                p.println("TAIL_" + s + "_" + d + "++;");
+                if (FixedBufferTape.needsModularBuffer(s, d)) {
+                    p.println("TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s
+                            + "_" + d + ";");
+                }
+                p.println("return res;");
+                p.outdent();
+                p.println("}");
+                p.newLine();
 
-            p.print("  extern " + ClusterUtils.CTypeToString(input_type)
-                    + " BUFFER_" + s + "_" + d + "[];\n");
+                // pop from fusion buffer with argument
 
-            p.print("  extern volatile int HEAD_" + s + "_" + d + ";\n");
-            p.print("  extern volatile int TAIL_" + s + "_" + d + ";\n");
+                p.print("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " __pop__" + selfID + "(int n) {\n");
+                p.indent();
+                p.print(ClusterUtils.CTypeToString(input_type) + " res=BUFFER_"
+                        + s + "_" + d + "[TAIL_" + s + "_" + d + "];\n");
+                p.print("TAIL_" + s + "_" + d + "+=n;\n");
+                if (FixedBufferTape.needsModularBuffer(s, d)) {
+                    p.print("TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s
+                            + "_" + d + ";\n");
+                }
+                p.print("return res;\n");
+                p.outdent();
+                p.print("}\n");
+                p.newLine();
 
-            p.newLine();
+                // peek from fusion buffer
 
-            // pop from fusion buffer
-
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
-                    + " __pop__" + selfID + "() {\n");
-
-            p.print("    " + ClusterUtils.CTypeToString(input_type)
-                    + " res=BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
-                    + "];\n");
-            p.print("    TAIL_" + s + "_" + d + "++;\n");
-            if (FixedBufferTape.needsModularBuffer(s,d)) { 
-            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
-            p.print("    TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
-                    + d + ";\n");
-            //p.print("    #endif\n");
-            }
-            p.print("    return res;\n");
-
-            p.print("  }\n");
-            p.newLine();
-
-            // pop from fusion buffer with argument
-
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
-                    + " __pop__" + selfID + "(int n) {\n");
-
-            p.print("    " + ClusterUtils.CTypeToString(input_type)
-                    + " res=BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
-                    + "];\n");
-            p.print("    TAIL_" + s + "_" + d + "+=n;\n");
-            if (FixedBufferTape.needsModularBuffer(s,d)) {
-            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
-            p.print("    TAIL_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
-                    + d + ";\n");
-            //p.print("    #endif\n");
-            }
-            p.print("    return res;\n");
-
-            p.print("  }\n");
-            p.newLine();
-
-            // peek from fusion buffer
-
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type) + " "
-                    + ClusterUtils.peekName(selfID) + "(int offs) {\n");
-            if (! FixedBufferTape.needsModularBuffer(s,d)) {
-            //p.print("    #ifdef __NOMOD_" + s + "_" + d + "\n");
-            p.print("    return BUFFER_" + s + "_" + d + "[TAIL_" + s + "_" + d
-                    + "+offs];\n");
-            //p.print("    #else\n");
-            } else {
-            p.print("    return BUFFER_" + s + "_" + d + "[(TAIL_" + s + "_"
-                    + d + "+offs)&__BUF_SIZE_MASK_" + s + "_" + d + "];\n");
-            //p.print("    #endif\n");
-            }
-            p.print("  }\n");
-            p.newLine();
+                p.print("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " " + ClusterUtils.peekName(selfID)
+                        + "(int offs) {\n");
+                p.indent();
+                if (!FixedBufferTape.needsModularBuffer(s, d)) {
+                    p.print("return BUFFER_" + s + "_" + d + "[TAIL_" + s + "_"
+                            + d + "+offs];\n");
+                } else {
+                    p.print("return BUFFER_" + s + "_" + d + "[(TAIL_" + s
+                            + "_" + d + "+offs)&__BUF_SIZE_MASK_" + s + "_" + d
+                            + "];\n");
+                }
+                p.outdent();
+                p.print("}\n");
+                p.newLine();
             } else { // isFusedBuffer
-            // pop (the source is not fused)
+                // pop (the source is not fused)
+                p.newLine();
 
-            //p.print("#else //!__FUSED_" + s + "_" + d + "\n");
-            p.newLine();
+                p.print("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " __pop__" + selfID + "() {\n");
+                p.indent();
+                if (peek_n <= pop_n) {
+                    p.print("return __pop_buf__" + selfID + "[__tail__"
+                            + selfID + "++];\n");
+                } else {
+                    p.print(ClusterUtils.CTypeToString(input_type)
+                            + " res=__pop_buf__" + selfID + "[__tail__"
+                            + selfID + "];");
+                    p.print("__tail__" + selfID + "++;");
+                    p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
+                            + ";\n");
+                    p.print("return res;\n");
+                }
+                p.outdent();
+                // p.print(" return
+                // __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
+                p.print("}\n");
+                p.newLine();
 
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
-                    + " __pop__" + selfID + "() {\n");
+                // pop with argument (the source is not fused)
 
-            if (peek_n <= pop_n) {
-                p.print("    return __pop_buf__" + selfID + "[__tail__"
-                        + selfID + "++];\n");
-            } else {
-                p.print("    " + ClusterUtils.CTypeToString(input_type)
-                        + " res=__pop_buf__" + selfID + "[__tail__" + selfID
-                        + "];");
-                p.print("__tail__" + selfID + "++;");
-                p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
-                        + ";\n");
-                p.print("    return res;\n");
-            }
+                p.print("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " __pop__" + selfID + "(int n) {\n");
+                p.indent();
+                if (peek_n <= pop_n) {
+                    p.print("" + ClusterUtils.CTypeToString(input_type)
+                            + " result = __pop_buf__" + selfID + "[__tail__"
+                            + selfID + "];\n");
+                    p.print("__tail__" + selfID + "+=n;\n");
+                    p.print("return result;\n");
+                } else {
+                    p.print(ClusterUtils.CTypeToString(input_type)
+                            + " res=__pop_buf__" + selfID + "[__tail__"
+                            + selfID + "];");
+                    p.print("__tail__" + selfID + "+=n;");
+                    p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
+                            + ";\n");
+                    p.print("return res;\n");
+                }
+                p.outdent();
+                // p.print(" return
+                // __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
+                p.print("}\n");
+                p.newLine();
 
-            // p.print(" return
-            // __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
-            p.print("  }\n");
-            p.newLine();
+                p.print("inline " + ClusterUtils.CTypeToString(input_type)
+                        + " " + ClusterUtils.peekName(selfID)
+                        + "(int offs) {\n");
+                p.indent();
+                if (peek_n <= pop_n) {
+                    p.print("return __pop_buf__" + selfID + "[(__tail__"
+                            + selfID + "+offs)];\n");
+                } else {
+                    p
+                            .print("return __pop_buf__" + selfID + "[(__tail__"
+                                    + selfID + "+offs)&" + (peek_buf_size - 1)
+                                    + "];\n");
+                }
+                p.outdent();
+                // p.print(" return __pop_buf__"+selfID
+                // +"[__pop_index__"+selfID+" + offs];\n");
+                p.print("  }\n");
+                p.newLine();
 
-            // pop with argument (the source is not fused)
-
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type)
-                    + " __pop__" + selfID + "(int n) {\n");
-
-            if (peek_n <= pop_n) {
-                p.print("    " + ClusterUtils.CTypeToString(input_type) + " result = __pop_buf__" + selfID + "[__tail__"
-                        + selfID + "];\n");
-                p.print("    __tail__" + selfID + "+=n;\n");
-                p.print("    return result;\n");
-            } else {
-                p.print("    " + ClusterUtils.CTypeToString(input_type)
-                        + " res=__pop_buf__" + selfID + "[__tail__" + selfID
-                        + "];");
-                p.print("__tail__" + selfID + "+=n;");
-                p.print("__tail__" + selfID + "&=" + (peek_buf_size - 1)
-                        + ";\n");
-                p.print("    return res;\n");
-            }
-
-            // p.print(" return
-            // __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
-            p.print("  }\n");
-            p.newLine();
-
-            p.print("  inline " + ClusterUtils.CTypeToString(input_type) + " "
-                    + ClusterUtils.peekName(selfID) + "(int offs) {\n");
-
-            if (peek_n <= pop_n) {
-                p.print("    return __pop_buf__" + selfID + "[(__tail__"
-                        + selfID + "+offs)];\n");
-            } else {
-                p.print("    return __pop_buf__" + selfID + "[(__tail__"
-                        + selfID + "+offs)&" + (peek_buf_size - 1) + "];\n");
-            }
-
-            // p.print(" return __pop_buf__"+selfID
-            // +"[__pop_index__"+selfID+" + offs];\n");
-            p.print("  }\n");
-            p.newLine();
-
-            //p.print("#endif\n");
-            p.newLine();
+                //p.print("#endif\n");
+                p.newLine();
             } // ifFusedBuffer
         } else { // (in == null) here:
-
+      if (! KjcOptions.standalone) {  
             p.print("inline " + ClusterUtils.CTypeToString(input_type)
                     + " __init_pop_buf__" + selfID + "() {}\n");
             p.print("inline " + ClusterUtils.CTypeToString(input_type)
@@ -786,6 +781,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     + "(object_write_buffer *buf) {}\n");
 
             p.newLine();
+      }
         }
 
         if (out != null) {
@@ -802,67 +798,68 @@ public class FlatIRToCluster extends InsertTimers implements
             int d = out.getDest();
 
             // check if the destination node is fused
-            if (FixedBufferTape.isFixedBuffer(s,d)) {
-            //p.print("#ifdef __FUSED_" + s + "_" + d + "\n");
+            if (FixedBufferTape.isFixedBuffer(s, d)) {
+                p.newLine();
+                p.print("extern " + ClusterUtils.CTypeToString(output_type)
+                        + " BUFFER_" + s + "_" + d + "[];\n");
+                p.print("extern int HEAD_" + s + "_" + d + ";\n");
+                p.print("extern int TAIL_" + s + "_" + d + ";\n");
+                p.newLine();
 
-            p.newLine();
-            p.print("  extern " + ClusterUtils.CTypeToString(output_type)
-                    + " BUFFER_" + s + "_" + d + "[];\n");
-            p.print("  extern int HEAD_" + s + "_" + d + ";\n");
-            p.print("  extern int TAIL_" + s + "_" + d + ";\n");
-            p.newLine();
+                p.print("inline void " + ClusterUtils.pushName(selfID) + "("
+                        + ClusterUtils.CTypeToString(output_type)
+                        + " data) {\n");
+                p.indent();
+                p.print("BUFFER_" + s + "_" + d + "[HEAD_" + s + "_" + d
+                        + "]=data;\n");
+                p.print("HEAD_" + s + "_" + d + "++;\n");
+                if (FixedBufferTape.needsModularBuffer(s, d)) {
+                    p.print("HEAD_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s
+                            + "_" + d + ";\n");
+                }
+                p.outdent();
+                p.print("}\n");
+                p.newLine();
 
-            p.print("  inline void " + ClusterUtils.pushName(selfID) + "("
-                    + ClusterUtils.CTypeToString(output_type) + " data) {\n");
+                // if not fused use the producer's push function
 
-            p.print("    BUFFER_" + s + "_" + d + "[HEAD_" + s + "_" + d
-                    + "]=data;\n");
-            p.print("    HEAD_" + s + "_" + d + "++;\n");
-            if (FixedBufferTape.needsModularBuffer(s,d)) {
-            //p.print("    #ifndef __NOMOD_" + s + "_" + d + "\n");
-            p.print("    HEAD_" + s + "_" + d + "&=__BUF_SIZE_MASK_" + s + "_"
-                    + d + ";\n");
-            //p.print("    #endif\n");
-            }
-            p.print("  }\n");
-            p.newLine();
-
-            // if not fused use the producer's push function
-
-            //p.print("#else //!__FUSED_" + s + "_" + d + "\n");
-            p.newLine();
-            } else { 
-            p.print("  inline void " + ClusterUtils.pushName(selfID) + "("
-                    + ClusterUtils.CTypeToString(output_type) + " data) {\n");
-
-            if (dst_master != null && dst_master.equals(my_node)) {
-                p.print("  " + out.push_name() + "(data);\n");
-            } else if (my_master != null && my_master.equals(dst_node)) {
-                p.print("  " + out.pop_buffer() + "[" + out.pop_index()
-                        + "++] = data;\n");
+                // p.print("#else //!__FUSED_" + s + "_" + d + "\n");
+                p.newLine();
             } else {
-                p.print("  " + out.producer_name() + ".push(data);\n");
-            }
+                p.print("inline void " + ClusterUtils.pushName(selfID) + "("
+                        + ClusterUtils.CTypeToString(output_type)
+                        + " data) {\n");
+                p.indent();
+                if (dst_master != null && dst_master.equals(my_node)) {
+                    p.print(out.push_name() + "(data);\n");
+                } else if (my_master != null && my_master.equals(dst_node)) {
+                    p.print(out.pop_buffer() + "[" + out.pop_index()
+                            + "++] = data;\n");
+                } else {
+                    p.print(out.producer_name() + ".push(data);\n");
+                }
+                p.outdent();
+                p.print("}\n");
 
-            p.print("  }\n");
-
-            p.newLine();
-            //p.print("#endif");
-            //p.newLine();
+                p.newLine();
+                //p.print("#endif");
+                //p.newLine();
             }
 
         }
 
         if (in != null) {
+	    if (! KjcOptions.standalone) {
             p.print("void " + in.push_name() + "("
                     + ClusterUtils.CTypeToString(input_type) + " data) {}\n");
             p.newLine();
+	    }
         }
 
         p.newLine();
 
         if (out != null) {
-
+          if (! KjcOptions.standalone) {
             // p.print("void
             // "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
             p.print("void " + ClusterUtils.getWorkName(self, selfID)
@@ -923,6 +920,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
             p.print("}\n");
             p.newLine();
+          }
         }
 
         // +=============================+

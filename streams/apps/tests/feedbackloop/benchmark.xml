@@ -15,5 +15,9 @@
      <file class="source">FeedbackTest2.str</file>
      <file class="output">FeedbackTest2.out</file>
     </impl>
+    <impl lang="StreamIt" id="feedbacktest3">
+     <desc>Should fail in compile! Would be nice if we eventually had reasonable message</desc>
+     <file class="source">FeedbackTest3.str</file>
+    </impl>
   </implementations>
 </benchmark>

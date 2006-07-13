@@ -1,0 +1,28 @@
+/* What happens if back edge is unused? 
+ * Hopefully does not work:
+ * in compilers gives a type error in RenameAll, 
+ * in library gives a divide by 0 in scheduling 
+ * in library -nosched actually puts out a sequence of numbers,
+ * but what we want to check is that compilers reject this program
+ * since none are set up to have no loop edge back to joiner.
+ */
+
+void->void pipeline FeedbackTest3 {
+    add IntSeqSource(0,1);
+
+    add int->int feedbackloop {
+	join roundrobin(1,0);
+	body int->int filter {
+	    work push 1 pop 1 peek 1 {
+		println(peek(0));
+		push(pop() + 1);
+	    }
+	}
+	loop int->int filter {
+	    work push 0 pop 0 {
+	    }
+	}
+	split roundrobin(1,0);
+    }
+    add IntPrinter();
+}

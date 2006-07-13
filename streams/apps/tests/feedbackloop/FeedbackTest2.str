@@ -1,0 +1,14 @@
+/* Simplest top-level feedback loop that I can think of */
+
+void->void feedbackloop FeedbackTest2 {
+    join roundrobin(0,1);
+    body int->int filter {
+	work push 1 pop 1 peek 1 {
+	    println(peek(0));
+	    push(pop() + 1);
+	}
+    }
+    loop Identity<int>;
+    split roundrobin(0,1);
+    enqueue 0;
+}

@@ -10,5 +10,10 @@
      <file class="source">FeedbackTest1.str ../../libraries/FloatSeqSource.str ../../libraries/FloatPrinter.str</file>
      <file class="output">FeedbackTest1.out</file>
     </impl>
+    <impl lang="StreamIt" id="feedbacktest2">
+     <desc>Simple feedbackloop printing sequence of ints</desc>
+     <file class="source">FeedbackTest2.str</file>
+     <file class="output">FeedbackTest2.out</file>
+    </impl>
   </implementations>
 </benchmark>

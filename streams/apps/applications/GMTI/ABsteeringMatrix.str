@@ -189,29 +189,70 @@ void->float pipeline createT1_init(int x, int y, int Ns, float val) {
 // input: none
 // output: x float
 
-void->float splitjoin compute_T1_col(int x, int index_val, int Ns) {
+void->float pipeline compute_T1_col(int x, int index_val, int Ns) {
 
   int rest = x-Ns-index_val;
 
-  split roundrobin(0);
-
-  if(index_val!=0)
-    add zeros(index_val);
-
-  add Hamming(Ns);
-
-  if(rest!=0)
-    add zeros(rest);
-
-  if((index_val!=0)&&(rest!=0))
-    join roundrobin(index_val, Ns, rest);
-  else {
-    if(index_val == 0)
-      join roundrobin(Ns, rest);
-    else  // rest == 0
-      join roundrobin(index_val, Ns);
+  if ((index_val!=0)&&(rest!=0)) {
+      add compute_T1_cola(index_val, Ns, rest);
+  } else if ((index_val == 0)&&(rest!=0)) {
+      add compute_T1_colb(Ns, rest);
+  } else if ((index_val!=0)&&(rest==0)) {
+      add compute_T1_colc(index_val, Ns);
+  } else {
+      add Hamming(Ns);		// (index_val==0)&&(rest==0)
   }
-} 
+}
+
+// three possible splitjoins for compute_T1_col
+
+void->float splitjoin compute_T1_cola(int index_val, int Ns, int rest) {
+   split roundrobin(0);
+   add zeros(index_val);
+   add Hamming(Ns);
+   add zeros(rest);
+   join roundrobin(index_val, Ns, rest);
+}
+void->float splitjoin compute_T1_colb(int Ns, int rest) {
+   split roundrobin(0);
+   add Hamming(Ns);
+   add zeros(rest);
+   join roundrobin(Ns, rest);
+}
+void->float splitjoin compute_T1_colc(int index_val, int Ns) {
+   split roundrobin(0);
+   add zeros(index_val);
+   add Hamming(Ns);
+   join roundrobin(index_val, Ns);
+}
+
+// This version with different joins confuses compiler: don't know if it has
+// problem with different weights, but definitely join arity of 2 or 3 causes
+// errors.
+//
+// void->float splitjoin compute_T1_col(int x, int index_val, int Ns) {
+//
+//   int rest = x-Ns-index_val;
+//
+//   split roundrobin(0);
+//
+//   if(index_val!=0)
+//     add zeros(index_val);
+//
+//   add Hamming(Ns);
+//
+//   if(rest!=0)
+//     add zeros(rest);
+//
+//   if((index_val!=0)&&(rest!=0))
+//     join roundrobin(index_val, Ns, rest);
+//   else {
+//     if(index_val == 0)
+//       join roundrobin(Ns, rest);
+//     else  // rest == 0
+//       join roundrobin(index_val, Ns);
+//   }
+// } 
 
 
 // generates Vs matrix, used to calculate T1

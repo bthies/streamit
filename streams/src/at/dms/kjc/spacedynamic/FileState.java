@@ -68,7 +68,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         fileNodes = new HashSet();
         
         readerPort = 0;
-        writerPort = rawChip.getNumPorts() / 2;
+        writerPort = (rawChip.getNumPorts() / 2) + (rawChip.getXSize());
 
         if (KjcOptions.devassignfile != null) {
             try { // read from the file specified...

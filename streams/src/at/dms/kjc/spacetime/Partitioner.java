@@ -256,20 +256,24 @@ public abstract class Partitioner {
         Trace[] traces = getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
             Trace trace = traces[i];
-            //start off with the bottleneck
-            //the bottleneck of the trace
-            FilterTraceNode bottleNeck = 
-                bottleNeckFilter.get(trace);
+            //start off with the first filter
+            //and go forwards to find pipelining effects
             
-            int prevWork = getFilterWorkSteadyMult(bottleNeck);
+            //FilterTraceNode bottleNeck = 
+            //    bottleNeckFilter.get(trace);
             
-            //set the bottleneck
-            filterOccupancy.put(bottleNeck, prevWork);
-            SpaceTimeBackend.println("Setting occupancy for " + bottleNeck + " " + prevWork);
+            TraceNode prev = trace.getHead().getNextFilter();
+            int prevWork = getFilterWorkSteadyMult((FilterTraceNode)prev);
+            
+            //set the first filter
+            filterOccupancy.put((FilterTraceNode)prev, prevWork);
+            
+            SpaceTimeBackend.println("Setting occupancy (forward) for " + 
+                    prev + " " + prevWork);
             
             //for forward from the bottleneck
-            TraceNode current = bottleNeck.getNext();
-            TraceNode prev = bottleNeck;
+            TraceNode current = prev.getNext();
+            
             while (current.isFilterTrace()) {
                 int occ = 
                     filterOccupancy.get((FilterTraceNode)prev).intValue() - 
@@ -280,26 +284,55 @@ public abstract class Partitioner {
                     filterStartupCost.get((FilterTraceNode)current).intValue() + " + " +  
                     getWorkEstOneFiring((FilterTraceNode)current));
                 
-                assert occ > 0 && occ > getFilterWorkSteadyMult((FilterTraceNode)current);
-                filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
-                SpaceTimeBackend.println("Setting occupancy (forward) for " + current + " " + occ);
+                assert occ > 0;
+                //record either the occupany based on the previous filter, 
+                //or this filter's work in the steady-state, whichever is greater
+                filterOccupancy.put((FilterTraceNode)current, 
+                        (getFilterWorkSteadyMult((FilterTraceNode)current) > occ) ?
+                                getFilterWorkSteadyMult((FilterTraceNode)current) : 
+                                    occ);
+                                
+                SpaceTimeBackend.println("Setting occupancy (forward) for " + current + " " + 
+                        filterOccupancy.get((FilterTraceNode)current));
+                
                 prev = current;
                 current = current.getNext();
             }
             
-            //go back from the bottleNeck
-            current = bottleNeck.getPrevious();
-            TraceNode next = bottleNeck;
+            //go back from the tail
+            
+            TraceNode next = trace.getTail().getPrevFilter();
+            //if the work of the last filter is more than the occupancy calculated
+            //by the forward traversal, set he occupancy to the filter's total work
+            if (getFilterWorkSteadyMult((FilterTraceNode)next) > 
+                getFilterOccupancy((FilterTraceNode)next))
+                filterOccupancy.put((FilterTraceNode)next, 
+                        getFilterWorkSteadyMult((FilterTraceNode)next));
+            //set the current to the next before the last filter
+            current = next.getPrevious();
+            
             while (current.isFilterTrace()) {
                 int occ = 
                     filterOccupancy.get((FilterTraceNode)next).intValue() + 
                     filterStartupCost.get((FilterTraceNode)next).intValue() - 
                     getWorkEstOneFiring((FilterTraceNode)next);
-                SpaceTimeBackend.println("Setting occupancy (back) for " + current + " " + occ);   
-                assert occ > 0 && occ > getFilterWorkSteadyMult((FilterTraceNode)current);
-                filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
+                
+                assert occ > 0;
+                //now if the backward occupancy is more than the forward occupancy, 
+                //use the backward occupancy
+                if (occ > getFilterOccupancy((FilterTraceNode)current)) {
+                    SpaceTimeBackend.println("Setting occupancy (back) for " + current + " " + occ);   
+                    filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
+                }
                 next = current;
                 current = current.getPrevious();
+            }
+            //check to see if everything is correct
+            current = trace.getHead().getNext();
+            while (current.isFilterTrace()) {
+                assert  (getFilterOccupancy((FilterTraceNode)current) >=
+                    getFilterWorkSteadyMult((FilterTraceNode)current)) : current;
+                current = current.getNext();    
             }
         }
     }

@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.lowering.RenameAll;
 
 /**
  * Intended to reflect all the content of a filter needed by a
@@ -110,7 +111,7 @@ public class FilterContent {
      */
     public FilterContent(UnflatFilter unflat) {
         SIRFilter filter = unflat.filter;
-        assert filter != null;
+        assert filter != null : unflat.toString();
         name = filter.getName();
         inputType = filter.getInputType();
         outputType = filter.getOutputType();

@@ -559,6 +559,7 @@ public class ClusterCode {
         p.newLine();
 
         p.print("void __splitter_"+thread_id+"_work(int ____n) {\n");
+        p.print("  " + baseType.toString() + " tmp;\n");
         p.print("  for (;____n > 0; ____n--) {\n");
     
         FlatNode source = NodeEnumerator.getFlatNode(in.getSource());

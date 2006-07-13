@@ -113,6 +113,17 @@ public class ScheduleModel {
      * of a slice.
      */
     public void createModel() {
+        createModel(false);
+    }
+    
+    /**
+     * Calculate the amount of work that is performed by each
+     * tile in the steady-state.  This calculation will use the work
+     * estimation for each filter and will account for pipeline lag inside 
+     * of a slice.
+     */
+    public void createModel(boolean debug) {
+        //debug = true;
         tileCosts = new int[rawChip.getTotalTiles()];
         Iterator traces = scheduleOrder.iterator();
         
@@ -122,27 +133,27 @@ public class ScheduleModel {
             //don't do anything for predefined filters...
             if (trace.getHead().getNextFilter().isPredefined()) 
                 continue;
-            //find the bottleneck filter based on the filter work estimates
-            //and the tile avail for each filter
-            FilterTraceNode bottleNeck = null;
-            int maxAvail = -1;
+        
             int prevStart = 0;
             int prevEnd = 0;
-            int bottleNeckStart = 0;
-            
+          
             assert trace.getFilterNodes().length == 
                 trace.getNumFilters();
             
-         //   System.out.println("Scheduling: " + trace);
+            if (debug)
+                System.out.println("Scheduling: " + trace);
             
+            if (debug)
+                System.out.println("Finding correct times for last filter: ");
             
-         //   System.out.println("Finding bottleNeck: ");
+            //find the correct starting & ending time for the last filter of the trace
             for (int f = 0; f < trace.getFilterNodes().length; f++) {
                 FilterTraceNode current = trace.getFilterNodes()[f];
                 
                 RawTile tile = layout.getTile(current);
-                //System.out.println("Tile Cost of " + tile.getTileNumber() + " is " + 
-                //tileCosts[tile.getTileNumber()]);
+                if (debug)
+                    System.out.println("  Tile Cost of " + tile.getTileNumber() + " is " + 
+                            tileCosts[tile.getTileNumber()]);
                 
                 //the current filter can start at the max of when the last filter
                 //has produced enough data for the current to start and when its
@@ -150,43 +161,56 @@ public class ScheduleModel {
                 int currentStart =  Math.max(tileCosts[tile.getTileNumber()], 
                         prevStart + spaceTime.partitioner.getFilterStartupCost(current));
                 
+                if (debug)
+                    System.out.println("  prev start + startUp Cost: " + 
+                            (prevStart + spaceTime.partitioner.getFilterStartupCost(current)));
+                
                 //now the tile avail for this current tile is the max of the current
-                //start plus the current work and the previous end plus one iteration
+                //start plus the current occupancy and the previous end plus one iteration
                 //of the current, this is because the have to give the current enough
                 //cycles after the last filter completes to complete one iteration
-                int tileAvail = Math.max(spaceTime.partitioner.getFilterWorkSteadyMult(current) +
-                   currentStart, 
-                   prevEnd + spaceTime.partitioner.getWorkEstOneFiring(current));
-
-                //System.out.println("Checking start of " + current + " on " + tile + 
-                //        "start: " + currentStart + ", tile avail: " + tileAvail);
+                int tileAvail = 
+                    Math.max(spaceTime.partitioner.getFilterOccupancy(current) +
+                            currentStart, 
+                            prevEnd + spaceTime.partitioner.getWorkEstOneFiring(current));
+                if (debug)
+                    System.out.println("  Occ + start = " + 
+                            spaceTime.partitioner.getFilterOccupancy(current) + " " +
+                            currentStart);
+                if (debug)
+                    System.out.println("  PrevEnd + One firing = " + 
+                            prevEnd + " " + spaceTime.partitioner.getWorkEstOneFiring(current));
+                
+                if (debug)
+                    System.out.println("Checking start of " + current + " on " + tile + 
+                            "start: " + currentStart + ", tile avail: " + tileAvail);
                 
                 //remember the start time and end time
                 startTime.put(current, new Integer(currentStart));
                 //we will over write the end time below for filters 
-                //downstream of bottleneck 
+                //downstream of bottleneck (the last guy)
                 endTime.put(current, new Integer(tileAvail));
-                //remember the bottleneck
-                if (tileAvail > maxAvail) {
-                    maxAvail = tileAvail;
-                    bottleNeck = current;
-                    bottleNeckStart = currentStart;
-                }
+
+                assert tileAvail > prevEnd : "Impossible state reached in schedule model " + 
+                  tileAvail + " should be > " + prevEnd;
+                
                 prevStart = currentStart; 
                 prevEnd = tileAvail;
             }
-                
-            assert bottleNeck != null : "Could not find bottleneck for " + trace ;
-                
-            RawTile bottleNeckTile = layout.getTile(bottleNeck);
             
-            //System.out.println("Found bottleneck: " + bottleNeck + " " + bottleNeckTile);
+            //when finished prev avail will have the ending time of the last filter!
+            
+            //the last filter is always the bottleneck of the filter, meaning
+            //it finishes last and base everyone else on it
+            FilterTraceNode bottleNeck = trace.getTail().getPrevFilter();
+                           
+            RawTile bottleNeckTile = layout.getTile(bottleNeck);
             
             //calculate when the bottle neck tile will finish, 
             //and base everything off of that, traversing backward and 
             //foward in the trace
             tileCosts[bottleNeckTile.getTileNumber()] = 
-                maxAvail;
+                prevEnd;
             
             if (bottleNeck.getPrevious().isInputTrace()) {
                 tileCosts[bottleNeckTile.getTileNumber()]+= DRAM_ISSUE_COST;
@@ -200,9 +224,9 @@ public class ScheduleModel {
                             GDN_PUSH_COST);
                 }
             }
-            
-            //System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
-            //        tileCosts[bottleNeckTile.getTileNumber()]);
+            if (debug)
+                System.out.println("Setting bottleneck finish: " + bottleNeck + " " + 
+                        tileCosts[bottleNeckTile.getTileNumber()]);
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
             int next1Iter = spaceTime.partitioner.getWorkEstOneFiring(bottleNeck);
@@ -214,13 +238,15 @@ public class ScheduleModel {
             while (current.isFilterTrace()) {
                 RawTile tile = layout.getTile(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
-                //get ready for next iteration
-                //System.out.println("Setting " + tile + " " + current + " to " + 
-                //        tileCosts[tile.getTileNumber()]);
+                
+                if (debug)
+                    System.out.println("Setting " + tile + " " + current + " to " + 
+                            tileCosts[tile.getTileNumber()]);
                 
                 nextFinish = tileCosts[tile.getTileNumber()];
                 //record the end time of this filter on the tile
                 endTime.put(current.getAsFilter(), new Integer(nextFinish));
+                //get ready for next iteration
                 next1Iter = spaceTime.partitioner.getWorkEstOneFiring(current.getAsFilter());
                 current = current.getPrevious();
             }
@@ -246,6 +272,7 @@ public class ScheduleModel {
                 assert getFilterStart(trace.getFilterNodes()[f]) <=
                     (getFilterEnd(trace.getFilterNodes()[f]) - 
                     spaceTime.partitioner.getFilterWorkSteadyMult(trace.getFilterNodes()[f])) :
+   
                         trace.getFilterNodes()[f] + " " + 
                         getFilterStart(trace.getFilterNodes()[f]) + " <= " +
                             getFilterEnd(trace.getFilterNodes()[f]) + " - " + 

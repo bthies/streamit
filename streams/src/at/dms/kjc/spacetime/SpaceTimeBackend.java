@@ -189,12 +189,12 @@ public class SpaceTimeBackend {
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
         
         
-        
+        double CCRatio = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str), 
+                executionCounts[1]);
         System.out.println("Comp/Comm Ratio of SIR graph: " + 
-                CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str), 
-                        executionCounts[1]));
+                CCRatio);
        
-       
+        new CalculateParams(str, CCRatio).doit();
       
         //Util.printExecutionCount(executionCounts[0]);
         //Util.printExecutionCount(executionCounts[1]);

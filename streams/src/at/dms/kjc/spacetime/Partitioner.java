@@ -2,6 +2,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 import java.io.FileWriter;
+import java.io.FilterWriter;
+
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
@@ -21,7 +23,7 @@ public abstract class Partitioner {
     protected HashMap<Trace, Integer> traceBNWork;
 
     /** The startup cost of a filter when starting a slice */
-    protected HashMap filterStartupCost;
+    protected HashMap<FilterTraceNode, Integer> filterStartupCost;
     
     // the completed trace graph
     protected Trace[] traceGraph;
@@ -44,12 +46,20 @@ public abstract class Partitioner {
      */ 
     protected HashMap<Trace, FilterTraceNode> bottleNeckFilter;
     
+    /**
+     * This hashmap store the filters work plus any blocking that is
+     * caused by the pipeline imbalance of the slice.
+     */  
+    protected HashMap<FilterTraceNode, Integer> filterOccupancy;
+    
     public Trace[] io;
 
-    // filtercontent -> work estimation
+//  filtercontent -> work estimation
     protected HashMap<FilterContent, Integer> workEstimation;
 
     protected int steadyMult;
+    
+    
     
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
                        LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
@@ -61,8 +71,9 @@ public abstract class Partitioner {
         topTraces = new Trace[topFilters.length];
         traceBNWork = new HashMap<Trace, Integer>();
         steadyMult = KjcOptions.steadymult;
-        filterStartupCost = new HashMap();
+        filterStartupCost = new HashMap<FilterTraceNode, Integer>();
         bottleNeckFilter = new HashMap<Trace, FilterTraceNode>();
+        filterOccupancy = new HashMap<FilterTraceNode, Integer>();
     }
 
     /**
@@ -217,12 +228,80 @@ public abstract class Partitioner {
     }
     
     /**
+     * This hashmap store the filters work plus any blocking that is
+     * caused by the pipeline imbalance of the slice. 
+     */
+    public int getFilterOccupancy(FilterTraceNode filter) {
+        assert filterOccupancy.containsKey(filter);
+        return filterOccupancy.get(filter).intValue();
+    }
+     
+    
+    /**
      * @param trace
      * @return Return the filter of trace that does the most work. 
      */
     public FilterTraceNode getTraceBNFilter(Trace trace) {
         assert bottleNeckFilter.containsKey(trace);
         return (FilterTraceNode)bottleNeckFilter.get(trace);
+    }
+    
+    
+    public void calculateWorkStats() {
+        calcStartupCost();
+        calcOccupancy();
+    }
+
+    private void calcOccupancy() {
+        Trace[] traces = getTraceGraph();
+        for (int i = 0; i < traces.length; i++) {
+            Trace trace = traces[i];
+            //start off with the bottleneck
+            //the bottleneck of the trace
+            FilterTraceNode bottleNeck = 
+                bottleNeckFilter.get(trace);
+            
+            int prevWork = getFilterWorkSteadyMult(bottleNeck);
+            
+            //set the bottleneck
+            filterOccupancy.put(bottleNeck, prevWork);
+            SpaceTimeBackend.println("Setting occupancy for " + bottleNeck + " " + prevWork);
+            
+            //for forward from the bottleneck
+            TraceNode current = bottleNeck.getNext();
+            TraceNode prev = bottleNeck;
+            while (current.isFilterTrace()) {
+                int occ = 
+                    filterOccupancy.get((FilterTraceNode)prev).intValue() - 
+                    filterStartupCost.get((FilterTraceNode)current).intValue() + 
+                    getWorkEstOneFiring((FilterTraceNode)current);
+                
+                SpaceTimeBackend.println(filterOccupancy.get((FilterTraceNode)prev).intValue() + " - " +  
+                    filterStartupCost.get((FilterTraceNode)current).intValue() + " + " +  
+                    getWorkEstOneFiring((FilterTraceNode)current));
+                
+                assert occ > 0 && occ > getFilterWorkSteadyMult((FilterTraceNode)current);
+                filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
+                SpaceTimeBackend.println("Setting occupancy (forward) for " + current + " " + occ);
+                prev = current;
+                current = current.getNext();
+            }
+            
+            //go back from the bottleNeck
+            current = bottleNeck.getPrevious();
+            TraceNode next = bottleNeck;
+            while (current.isFilterTrace()) {
+                int occ = 
+                    filterOccupancy.get((FilterTraceNode)next).intValue() + 
+                    filterStartupCost.get((FilterTraceNode)next).intValue() - 
+                    getWorkEstOneFiring((FilterTraceNode)next);
+                SpaceTimeBackend.println("Setting occupancy (back) for " + current + " " + occ);   
+                assert occ > 0 && occ > getFilterWorkSteadyMult((FilterTraceNode)current);
+                filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
+                next = current;
+                current = current.getPrevious();
+            }
+        }
     }
     
     /**
@@ -238,7 +317,7 @@ public abstract class Partitioner {
      * where work(fi) returns the work estimation of 1 firing of the filter.
      *
      */
-    public void calculateWorkStats() {
+    private void calcStartupCost() {
         Trace[] traces = getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
             int maxWork;
@@ -272,7 +351,7 @@ public abstract class Partitioner {
                            
                 
                 //record the startup cost
-                //System.out.println("StartupCost: " + node + " " + myLag);
+                SpaceTimeBackend.println("StartupCost: " + node + " " + myLag);
                 filterStartupCost.put(node, new Integer(myLag));
                 
                 //reset the prev node and the prev startup cost...
@@ -286,11 +365,14 @@ public abstract class Partitioner {
     }
     
     /**
+     * The cost of 1 firing of the filter, to be run after the steady multiplier
+     * has been accounted for in the steady multiplicity of each filter content.
+     * 
      * @param node
-     * @return The cost of 1 firing of the filter.
+     * @return 
      */
     public int getWorkEstOneFiring(FilterTraceNode node) {
-        return (getFilterWork(node) / node.getFilter().getSteadyMult()) * steadyMult;
+        return (getFilterWork(node) / (node.getFilter().getSteadyMult() / steadyMult));
     }
     
     /**

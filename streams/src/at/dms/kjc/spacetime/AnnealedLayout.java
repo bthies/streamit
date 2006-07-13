@@ -1,5 +1,6 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.SimulatedAnnealing;
 
 import java.util.Arrays;
@@ -119,6 +120,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     assignment.get(filterList.get(i)));
         //run assignbuffers at the end!
         assignBuffers.run(spaceTime, this);
+        
+        /*
+        ScheduleModel model = new ScheduleModel(spaceTime, this, 
+                scheduleOrder);
+        
+        model.createModel(true);
+        */
     }
     
     /**

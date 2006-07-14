@@ -68,6 +68,8 @@ public class BCFile
     private void doit() 
     {
         buf = new StringBuffer();
+        if (KjcOptions.malloczeros)
+            buf.append("global gMEM_INIT_VAL = 0x0;\n");
         
         if (KjcOptions.magic_net) 
             buf.append("gTurnOffNativeCompilation = 1;\n");

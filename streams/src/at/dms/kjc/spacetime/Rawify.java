@@ -27,13 +27,17 @@ public class Rawify {
     // if true try to compress the switch code by creating loops
     public static boolean SWITCH_COMP = true;
 
-    // any filter that executes more than SC_THRESHOLD times in the primepump
+    // any joiner or splitter that passes more than SC_THRESHOLD times in the primepump
     // or steady will have its switch instructions placed in a loop
-    public static int SC_THRESHOLD = 5;
-
+    public static int SC_THRESHOLD = 10;
+        
     // a filter that pushes or pops more than SC_INS_THRESH will have these
     // instruction placed in a loop on the switch
-    public static int SC_INS_THRESH = 5;
+    public static int SC_INS_THRESH = 10;
+    
+    //any filter that pushes and popes more than this number of items per
+    //steady-state (or per primepump) will be compressed!
+    public static int SC_FILTER_THRESH = 100;
 
     // regs on the switch that are used for various loops
     private static SwitchReg POP_LOOP_REG = SwitchReg.R0;
@@ -60,6 +64,9 @@ public class Rawify {
     public static void run(SpaceTimeSchedule schedule, RawChip rawChip, Layout layout) {
         Trace traces[];
 
+        if (KjcOptions.noswitchcomp)
+            SWITCH_COMP = false;
+        
         Rawify.layout = layout;
         
         //determine the number of dram reads and writes to each port in
@@ -1812,7 +1819,9 @@ public class Rawify {
 
 
         // should we compress the switch code??
-        boolean switchCompression = SWITCH_COMP && mult > SC_THRESHOLD && !init;
+        boolean switchCompression = 
+            compressFilterSwitchIns(mult, filterInfo.pop, filterInfo.push, init); 
+            //SWITCH_COMP && mult > SC_THRESHOLD && !init;
 
         if (!(init || primePump || !linear)) { // Linear switch code in
             // steadystate
@@ -1833,7 +1842,6 @@ public class Rawify {
             createLinearSwitchCode(node, filterInfo, mult, tile, rawChip);
             sentItems += mult;
         } else if (switchCompression) {
-            assert mult > 1;
             sentItems = filterInfo.push * mult;
 
             filterSwitchCodeCompressed(mult, node, filterInfo, init, primePump,
@@ -1886,6 +1894,24 @@ public class Rawify {
         }
     }
 
+    /**
+     * Return true if we should compress the switch instructions of the filter
+     * with mult, pop, and push.
+     * @param mult The multiplicity.
+     * @param pop The pop rate.
+     * @param push The push rate.
+     * @param init Are we in the init stage?
+     * @return True if we should compress the switch instructions. 
+     */
+    public static boolean compressFilterSwitchIns(int mult, int pop, int push, boolean init) {
+        if (init || !SWITCH_COMP)
+            return false;
+        
+        int totalItems = mult * (push + pop);
+        //return true if the filter has a comm rate > SC_FILTER_THRESH
+        return totalItems > SC_FILTER_THRESH;
+    }
+    
     /**
      * Create compressed switch code for filter execution (intra-trace).
      * 
@@ -2167,7 +2193,7 @@ public class Rawify {
      */
     private static void sendBoundProcToSwitch(int mult, RawTile tile,
                                               boolean init, boolean primePump, SwitchReg reg) {
-        assert mult > 1;
+        assert mult > 0;
         // don't have a condition at the header of the loop
         tile.getComputeCode().sendConstToSwitch(mult - 1, (init || primePump));
         recConstOnSwitch(tile, init, primePump, reg);

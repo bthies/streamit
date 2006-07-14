@@ -387,7 +387,9 @@ public abstract class RawExecutionCode
     protected void sendRatesToSwitch(FilterInfo filterInfo, JBlock workBlock) {
         //if we are compressing the sends and receives on the switch for this
         //filter, we must send them now
-        if (Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
+        if (Rawify.compressFilterSwitchIns(filterInfo.steadyMult, filterInfo.pop, 
+                filterInfo.push, false)) {
+                //Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
             //if we are compressing the receives, send the trip count to the switch
             //don't do this if are using the gdn
             if (filterInfo.itemsNeededToFire(0, false) > Rawify.SC_INS_THRESH &&

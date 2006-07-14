@@ -106,7 +106,11 @@ public class SpaceTimeBackend {
             Lifter.lift(str);
             System.out.println("Done Vertical Fission...");
         }
-
+        /*
+        KjcOptions.partition_dp = true;
+        str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
+                32, false, false);
+        */
         // run user-defined transformations if enabled
         if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");

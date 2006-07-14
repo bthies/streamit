@@ -114,6 +114,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public void run() {
         simAnnealAssign(10, 1000);
+        //simAnnealAssign(3, 1000);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 

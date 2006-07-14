@@ -635,9 +635,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 p.print(" = 0");
             else if (type.isFloatingPoint())
                 p.print(" = 0.0f");
-            else if (type.isArrayType()) 
+            else if (type.isArrayType()) { 
                 p.print(" = {0}");
-
+            }
             p.print(";/* " + type + " */");
         }
     }

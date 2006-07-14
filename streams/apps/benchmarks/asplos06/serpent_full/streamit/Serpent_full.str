@@ -1,0 +1,720 @@
+
+// Implements Serpent key schedule
+// (see section 4 of ../docs for algorithm details)
+// (rodric rabbah, <rabbah@mit.edu>)
+  
+// output encryption key for current round; fully
+// precalculates key schedules at init time, and 
+// emits the appropriate bits at run time
+void->int pipeline KeySchedule(int vector, int round)
+{
+    add void->int filter {
+        int[MAXROUNDS + 1][NBITS] keys;
+
+        // precalculate key schedule
+        init {
+            int[8]   userkey = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
+            int[140] w;
+
+            int words = USERKEY_LENGTH / BITS_PER_WORD;
+            for (int i = words - 1; i >= 0; i--)
+                userkey[words - 1 - i] = USERKEYS[vector][i];
+            
+            // add 1 to MSB of user key
+            if (USERKEY_LENGTH < 256) {
+                int msb = userkey[USERKEY_LENGTH / BITS_PER_WORD];
+                userkey[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
+            }
+            
+            // make prekeys w_-8 ... w_-1
+            for (int i = 0; i < 8; i++)
+                w[i] = userkey[i];
+            
+            // calculate intermediate keys w_0 ... w_131
+            for (int i = 8; i < 140; i++) {
+                w[i] = w[i - 8] ^ w[i - 5] ^ w[i - 3] ^ w[i - 1] ^ PHI ^ (i - 8);
+                w[i] = LRotate(w[i], 11);
+            }
+
+            // calculate keys for round 0 - 32
+            for (int i = 0; i <= MAXROUNDS; i++) {
+                int[BITS_PER_WORD] sbox;
+                for (int b = 0; b < BITS_PER_WORD; b++) {
+                    // int to bits in slices
+                    int r  = (4 * i) + 8;
+                    int b0 = (w[r + 0] & (1 << b)) >> b;
+                    int b1 = (w[r + 1] & (1 << b)) >> b;
+                    int b2 = (w[r + 2] & (1 << b)) >> b;
+                    int b3 = (w[r + 3] & (1 << b)) >> b;
+
+                    int val = 0;
+                    if (b0 != 0) val = 1;
+                    if (b1 != 0) val = val | (1 << 1);
+                    if (b2 != 0) val = val | (1 << 2);
+                    if (b3 != 0) val = val | (1 << 3);
+                    
+                    // round  0: use sbox 3
+                    // round  1: use sbox 2
+                    // round  2: use sbox 1
+                    // round  3: use sbox 0
+                    // round  4: use sbox 7
+                    // ...
+                    // round 31: use sbox 4
+                    // round 32: use sbox 3
+                    sbox[b] = SBOXES[(32 + 3 - i) % 8][val];
+                }
+
+                // reverse bit slice and store bits
+                int[NBITS] key;
+                for (int k = 0; k < NBITS / BITS_PER_WORD; k++) {
+                    for (int b = 0; b < BITS_PER_WORD; b++) {
+                        int x = (sbox[b] & (1 << k)) >> k;
+                        if (x != 0) 
+                            key[(k * BITS_PER_WORD) + b] = 1;
+                        else
+                            key[(k * BITS_PER_WORD) + b] = 0;
+                    }
+                }
+
+                // perform initial permutation (IP)
+                for (int b = 0; b < NBITS; b++) {
+                    keys[i][b] = key[IP[b]];
+                }
+            }
+        }
+
+        work push NBITS {
+            for (int i = 0; i < NBITS; i++) {
+                push(keys[round][i]);
+            }
+        }
+
+        int LRotate(int x, int n) {
+            // work around the lack of support for unsigned data types
+            // return ((x << n) | (x >> (BITS_PER_WORD - n)));
+            int[32] v;
+            int m = 1;
+            for (int i = 0; i < 32; i++) {
+                if (((x & m) >> i) != 0)
+                    v[i] = 1;
+                m = m << 1;
+            }
+
+            int[32] w;
+            for (int i = 0; i < 32; i++) {
+                w[i] = v[(i + 32 - 11) % 32];
+            }
+
+            int r = 0;
+            for (int i = 0; i < 32; i++) {
+                r = r | (w[i] << i);
+            }
+
+            return r;
+        }
+    }
+
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<int>();
+            add pipeline {
+                add int->int filter {
+                    work pop NBITS push 8 {
+                        for (int i = 0; i < NBITS; i++) pop();
+
+                        push(USERKEYS[vector][7]); // LSW
+                        push(USERKEYS[vector][6]);
+                        push(USERKEYS[vector][5]);
+                        push(USERKEYS[vector][4]);
+                        push(USERKEYS[vector][3]);
+                        push(USERKEYS[vector][2]);
+                        push(USERKEYS[vector][1]);
+                        push(USERKEYS[vector][0]); // MSW
+                    }
+                }
+                add IntoBits();
+                add HexPrinter(USERKEY, 256);
+            }
+            join roundrobin(1, 0);
+        }
+    }
+}
+
+// output encryption key for current round; partially
+// precalculates key schedules at init time
+void->int pipeline slowKeySchedule(int vector, int round)
+{
+    // output 128 bits intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+    add void->int filter {
+        int[140] w;
+
+        // precalculate key schedule
+        init {
+            int[8] key = {0, 0, 0, 0, 0, 0, 0, 0}; // initialize to 0
+
+            int words = USERKEY_LENGTH / BITS_PER_WORD;
+            for (int i = words - 1; i >= 0; i--)
+                key[words - 1 - i] = USERKEYS[vector][i];
+            
+            // add 1 to MSB of user key
+            if (USERKEY_LENGTH < 256) {
+                int msb = key[USERKEY_LENGTH / BITS_PER_WORD];
+                key[USERKEY_LENGTH / BITS_PER_WORD] = msb | 1 << (USERKEY_LENGTH % BITS_PER_WORD);
+            }
+            
+            // make prekeys w_-8 ... w_-1
+            for (int i = 0; i < 8; i++)
+                w[i] = key[i];
+            
+            // calculate intermediate keys w_0 ... w_131
+            for (int i = 8; i < 140; i++) {
+                w[i] = w[i - 8] ^ w[i - 5] ^ w[i - 3] ^ w[i - 1] ^ PHI ^ (i - 8);
+                w[i] = LRotate(w[i], 11);
+            }
+        }
+        
+        // push intermediate key {w_i, w_i+1, w_i+2, w_i+3}
+        work push 4 {
+            int i = (4 * round) + 8;
+            push(w[i + 0]);
+            push(w[i + 1]);
+            push(w[i + 2]);
+            push(w[i + 3]);
+        }
+
+        int LRotate(int x, int n) {
+            // work around the lack of support for unsigned data types
+            // return ((x << n) | (x >> (BITS_PER_WORD - n)));
+            int[32] v;
+            int m = 1;
+            for (int i = 0; i < 32; i++) {
+                if (((x & m) >> i) != 0)
+                    v[i] = 1;
+                m = m << 1;
+            }
+
+            int[32] w;
+            for (int i = 0; i < 32; i++) {
+                w[i] = v[(i + 32 - 11) % 32];
+            }
+
+            int r = 0;
+            for (int i = 0; i < 32; i++) {
+                r = r | (w[i] << i);
+            }
+
+            return r;
+        }
+    }
+
+    add IntoBits();
+
+    // permute bits for Sbox
+    add BitSlice(4, 32);
+
+    // round  0: 3
+    // round  1: 2
+    // round  2: 1
+    // round  3: 0
+    // round  4: 7
+    // ...
+    // round 31: 4
+    // round 32: 3
+    add Sbox((32 + 3 - round) % 8);
+
+    // reverse the bit slicing
+    add BitSlice(32, 4);
+
+    add Permute(NBITS, IP);
+
+    if (PRINTINFO && (round == 0)) {
+        add splitjoin {
+            split duplicate;
+            add Identity<int>();
+            add pipeline {
+                add int->int filter {
+                    work pop 128 push 8 {
+                        for (int i = 0; i < 128; i++) pop();
+
+                        push(USERKEYS[vector][7]); // LSW
+                        push(USERKEYS[vector][6]);
+                        push(USERKEYS[vector][5]);
+                        push(USERKEYS[vector][4]);
+                        push(USERKEYS[vector][3]);
+                        push(USERKEYS[vector][2]);
+                        push(USERKEYS[vector][1]);
+                        push(USERKEYS[vector][0]); // MSW
+                    }
+                }
+                add IntoBits();
+                add HexPrinter(USERKEY, 256);
+            }
+            join roundrobin(1, 0);
+        }
+    }
+}
+// Implements Serpent linear transform
+// (see appendix of ../docs for algorithm details)
+// (rodric rabbah, <rabbah@mit.edu>)
+
+int->int filter rawL()
+{  
+    work push 128 pop 128{
+        push(peek(16)^peek(52)^peek(56)^peek(70)^peek(83)^peek(94)^peek(105));
+        push(peek(72)^peek(114)^peek(125));
+        push(peek(2)^peek(9)^peek(15)^peek(30)^peek(76)^peek(84)^peek(126) );
+        push(peek(36)^peek(90)^peek(103));
+        push(peek(20)^peek(56)^peek(60)^peek(74)^peek(87)^peek(98)^peek(109) );
+        push(peek(1)^peek(76)^peek(118) );
+        push(peek(2)^peek(6)^peek(13)^peek(19)^peek(34)^peek(80)^peek(88) );
+        push(peek(40)^peek(94)^peek(107));
+        push(peek(24)^peek(60)^peek(64)^peek(78)^peek(91)^peek(102)^peek(113) );
+        push(peek(5)^peek(80)^peek(122) );
+        push(peek(6)^peek(10)^peek(17)^peek(23)^peek(38)^peek(84)^peek(92) );
+        push(peek(44)^peek(98)^peek(111));
+        push(peek(28)^peek(64)^peek(68)^peek(82)^peek(95)^peek(106)^peek(117) );
+        push(peek(9)^peek(84)^peek(126) );
+        push(peek(10)^peek(14)^peek(21)^peek(27)^peek(42)^peek(88)^peek(96) );
+        push(peek(48)^peek(102)^peek(115));
+        push(peek(32)^peek(68)^peek(72)^peek(86)^peek(99)^peek(110)^peek(121) );
+        push(peek(2)^peek(13)^peek(88) );
+        push(peek(14)^peek(18)^peek(25)^peek(31)^peek(46)^peek(92)^peek(100) );
+        push(peek(52)^peek(106)^peek(119));
+        push(peek(36)^peek(72)^peek(76)^peek(90)^peek(103)^peek(114)^peek(125) );
+        push(peek(6)^peek(17)^peek(92) );
+        push(peek(18)^peek(22)^peek(29)^peek(35)^peek(50)^peek(96)^peek(104) );
+        push(peek(56)^peek(110)^peek(123));
+        push(peek(1)^peek(40)^peek(76)^peek(80)^peek(94)^peek(107)^peek(118) );
+        push(peek(10)^peek(21)^peek(96) );
+        push(peek(22)^peek(26)^peek(33)^peek(39)^peek(54)^peek(100)^peek(108) );
+        push(peek(60)^peek(114)^peek(127));
+        push(peek(5)^peek(44)^peek(80)^peek(84)^peek(98)^peek(111)^peek(122) );
+        push(peek(14)^peek(25)^peek(100) );
+        push(peek(26)^peek(30)^peek(37)^peek(43)^peek(58)^peek(104)^peek(112) );
+        push(peek(3)^peek(118));
+        push(peek(9)^peek(48)^peek(84)^peek(88)^peek(102)^peek(115)^peek(126) );
+        push(peek(18)^peek(29)^peek(104) );
+        push(peek(30)^peek(34)^peek(41)^peek(47)^peek(62)^peek(108)^peek(116) );
+        push(peek(7)^peek(122));
+        push(peek(2)^peek(13)^peek(52)^peek(88)^peek(92)^peek(106)^peek(119) );
+        push(peek(22)^peek(33)^peek(108) );
+        push(peek(34)^peek(38)^peek(45)^peek(51)^peek(66)^peek(112)^peek(120) );
+        push(peek(11)^peek(126));
+        push(peek(6)^peek(17)^peek(56)^peek(92)^peek(96)^peek(110)^peek(123));
+        push(peek(26)^peek(37)^peek(112));
+        push(peek(38)^peek(42)^peek(49)^peek(55)^peek(70)^peek(116)^peek(124));
+        push(peek(2)^peek(15)^peek(76));
+        push(peek(10)^peek(21)^peek(60)^peek(96)^peek(100)^peek(114)^peek(127));
+        push(peek(30)^peek(41)^peek(116));
+        push(peek(0)^peek(42)^peek(46)^peek(53)^peek(59)^peek(74)^peek(120));
+        push(peek(6)^peek(19)^peek(80));
+        push(peek(3)^peek(14)^peek(25)^peek(100)^peek(104)^peek(118));
+        push(peek(34)^peek(45)^peek(120));
+        push(peek(4)^peek(46)^peek(50)^peek(57)^peek(63)^peek(78)^peek(124));
+        push(peek(10)^peek(23)^peek(84));
+        push(peek(7)^peek(18)^peek(29)^peek(104)^peek(108)^peek(122));
+        push(peek(38)^peek(49)^peek(124));
+        push(peek(0)^peek(8)^peek(50)^peek(54)^peek(61)^peek(67)^peek(82));
+        push(peek(14)^peek(27)^peek(88));
+        push(peek(11)^peek(22)^peek(33)^peek(108)^peek(112)^peek(126));
+        push(peek(0)^peek(42)^peek(53));
+        push(peek(4)^peek(12)^peek(54)^peek(58)^peek(65)^peek(71)^peek(86));
+        push(peek(18)^peek(31)^peek(92));
+        push(peek(2)^peek(15)^peek(26)^peek(37)^peek(76)^peek(112)^peek(116));
+        push(peek(4)^peek(46)^peek(57));
+        push(peek(8)^peek(16)^peek(58)^peek(62)^peek(69)^peek(75)^peek(90));
+        push(peek(22)^peek(35)^peek(96));
+        push(peek(6)^peek(19)^peek(30)^peek(41)^peek(80)^peek(116)^peek(120));
+        push(peek(8)^peek(50)^peek(61));
+        push(peek(12)^peek(20)^peek(62)^peek(66)^peek(73)^peek(79)^peek(94));
+        push(peek(26)^peek(39)^peek(100));
+        push(peek(10)^peek(23)^peek(34)^peek(45)^peek(84)^peek(120)^peek(124));
+        push(peek(12)^peek(54)^peek(65));
+        push(peek(16)^peek(24)^peek(66)^peek(70)^peek(77)^peek(83)^peek(98));
+        push(peek(30)^peek(43)^peek(104));
+        push(peek(0)^peek(14)^peek(27)^peek(38)^peek(49)^peek(88)^peek(124));
+        push(peek(16)^peek(58)^peek(69));
+        push(peek(20)^peek(28)^peek(70)^peek(74)^peek(81)^peek(87)^peek(102));
+        push(peek(34)^peek(47)^peek(108));
+        push(peek(0)^peek(4)^peek(18)^peek(31)^peek(42)^peek(53)^peek(92));
+        push(peek(20)^peek(62)^peek(73));
+        push(peek(24)^peek(32)^peek(74)^peek(78)^peek(85)^peek(91)^peek(106));
+        push(peek(38)^peek(51)^peek(112));
+        push(peek(4)^peek(8)^peek(22)^peek(35)^peek(46)^peek(57)^peek(96));
+        push(peek(24)^peek(66)^peek(77));
+        push(peek(28)^peek(36)^peek(78)^peek(82)^peek(89)^peek(95)^peek(110));
+        push(peek(42)^peek(55)^peek(116));
+        push(peek(8)^peek(12)^peek(26)^peek(39)^peek(50)^peek(61)^peek(100));
+        push(peek(28)^peek(70)^peek(81));
+        push(peek(32)^peek(40)^peek(82)^peek(86)^peek(93)^peek(99)^peek(114));
+        push(peek(46)^peek(59)^peek(120));
+        push(peek(12)^peek(16)^peek(30)^peek(43)^peek(54)^peek(65)^peek(104));
+        push(peek(32)^peek(74)^peek(85));
+        push(peek(36)^peek(90)^peek(103)^peek(118));
+        push(peek(50)^peek(63)^peek(124));
+        push(peek(16)^peek(20)^peek(34)^peek(47)^peek(58)^peek(69)^peek(108));
+        push(peek(36)^peek(78)^peek(89));
+        push(peek(40)^peek(94)^peek(107)^peek(122));
+        push(peek(0)^peek(54)^peek(67));
+        push(peek(20)^peek(24)^peek(38)^peek(51)^peek(62)^peek(73)^peek(112));
+        push(peek(40)^peek(82)^peek(93));
+        push(peek(44)^peek(98)^peek(111)^peek(126));
+        push(peek(4)^peek(58)^peek(71));
+        push(peek(24)^peek(28)^peek(42)^peek(55)^peek(66)^peek(77)^peek(116));
+        push(peek(44)^peek(86)^peek(97));
+        push(peek(2)^peek(48)^peek(102)^peek(115));
+        push(peek(8)^peek(62)^peek(75));
+        push(peek(28)^peek(32)^peek(46)^peek(59)^peek(70)^peek(81)^peek(120));
+        push(peek(48)^peek(90)^peek(101));
+        push(peek(6)^peek(52)^peek(106)^peek(119));
+        push(peek(12)^peek(66)^peek(79));
+        push(peek(32)^peek(36)^peek(50)^peek(63)^peek(74)^peek(85)^peek(124));
+        push(peek(52)^peek(94)^peek(105));
+        push(peek(10)^peek(56)^peek(110)^peek(123));
+        push(peek(16)^peek(70)^peek(83));
+        push(peek(0)^peek(36)^peek(40)^peek(54)^peek(67)^peek(78)^peek(89));
+        push(peek(56)^peek(98)^peek(109));
+        push(peek(14)^peek(60)^peek(114)^peek(127));
+        push(peek(20)^peek(74)^peek(87));
+        push(peek(4)^peek(40)^peek(44)^peek(58)^peek(71)^peek(82)^peek(93));
+        push(peek(60)^peek(102)^peek(113));
+        push(peek(3)^peek(18)^peek(72)^peek(114)^peek(118)^peek(125));
+        push(peek(24)^peek(78)^peek(91));
+        push(peek(8)^peek(44)^peek(48)^peek(62)^peek(75)^peek(86)^peek(97));
+        push(peek(64)^peek(106)^peek(117));
+        push(peek(1)^peek(7)^peek(22)^peek(76)^peek(118)^peek(122));
+        push(peek(28)^peek(82)^peek(95));
+        push(peek(12)^peek(48)^peek(52)^peek(66)^peek(79)^peek(90)^peek(101));
+        push(peek(68)^peek(110)^peek(121));
+        push(peek(5)^peek(11)^peek(26)^peek(80)^peek(122)^peek(126));
+        push(peek(32)^peek(86)^peek(99));
+        for (int i = 0; i < 128; i++) {
+            pop();
+        }
+    }
+}
+// Implements Serpent encoder 
+// (see section 2 of ../docs for algorithm details)
+// (rodric rabbah, <rabbah@mit.edu>)
+
+void->void pipeline Serpent_full
+{
+    int testvector = 2;
+
+    //add PlainTextSource(testvector);
+    add FileReader<int>("../input/input");
+    add SerpentEncoder(testvector);
+    add FileWriter<int>("serpent_full.out");
+    //add HexPrinter(CIPHERTEXT, NBITS);
+}
+
+int->int pipeline SerpentEncoder(int vector)
+{
+    // perform initial permutation
+    add Permute(NBITS, IP);
+    
+    for (int i = 0; i < MAXROUNDS; i++) {
+        // perform round i
+        add R(vector, i);  
+    }
+
+    // perform final permutation
+    add Permute(NBITS, FP);
+}
+
+
+// substitution boxes
+int->int filter Sbox(int round) 
+{
+    work push 4 pop 4 {
+        int val = pop();
+        val = (pop() << 1) | val;
+        val = (pop() << 2) | val;
+        val = (pop() << 3) | val;
+
+        int out = SBOXES[round][val];
+        push((int)((out & 0x1) >> 0));
+        push((int)((out & 0x2) >> 1));
+        push((int)((out & 0x4) >> 2));
+        push((int)((out & 0x8) >> 3));
+    }
+}
+
+// round functions
+int->int pipeline R(int vector, int round)
+{
+    add int->int splitjoin {
+        split roundrobin(NBITS, 0);
+        add Identity<int>;
+        add slowKeySchedule(vector, round);
+        join roundrobin(1);
+    }
+
+    add Xor(2);
+
+    add Sbox(round % 8);
+
+    if (round < MAXROUNDS - 1) {
+        add rawL();
+    } else {
+        add int->int splitjoin {
+            split roundrobin(NBITS, 0);
+            add Identity<int>;
+            add KeySchedule(vector, MAXROUNDS);
+            join roundrobin(1);
+        }
+        add Xor(2);
+    }
+}
+// Provides plain text for encryption
+// (rodric rabbah, <rabbah@mit.edu>)
+
+// plain text source
+void->int pipeline PlainTextSource(int vector)
+{
+    int[5][4] TEXT = {{0x00000000, 0x00000000, 0x00000000, 0x00000000},  // 00000000000000000000000000000000
+                      {0x00000003, 0x00000002, 0x00000001, 0x00000000},  // 00000003000000020000000100000000
+                      {0x92efa3ca, 0x9477794d, 0x31f4df7b, 0xce23e60a},  // 92efa3ca9477794d31f4df7bce23e60a
+                      {0x41133a29, 0xb97e3b42, 0x31549e8c, 0x2d0af27e},  // 41133a29b97e3b4231549e8c2d0af27e
+                      {0x6ee8edc7, 0x4dcfefd0, 0xc7beaee4, 0xcbcbc9c2}}; // 6ee8edc74dcfefd0c7beaee4cbcbc9c2
+
+    // test text: 0x
+    add void->int filter {
+        work push 4 {
+            push(TEXT[vector][3]); // LSW
+            push(TEXT[vector][2]);
+            push(TEXT[vector][1]);
+            push(TEXT[vector][0]); // MSW
+        }
+    }
+    add IntoBits();
+
+    if (PRINTINFO) {
+        add splitjoin {
+            split duplicate;
+            add Identity<int>();
+            add HexPrinter(PLAINTEXT, 128);
+            join roundrobin(1, 0);
+        }
+    }
+}
+// Define globals, permutation tables, and sboxes
+// (rodric rabbah, <rabbah@mit.edu>)
+
+static {
+    int BITS_PER_WORD  = 32;
+
+    // length of plain text, and cipher text
+    int NBITS          = 128;
+
+    // used for key schedule (golden ration)
+    int PHI            = 0x9e3779b9;
+
+    // algorithm has 32 total rounds
+    int MAXROUNDS      = 8;
+
+    // used for printing descriptor in output
+    boolean PRINTINFO  = false;
+    int PLAINTEXT      = 0;
+    int USERKEY        = 1;
+    int CIPHERTEXT     = 2;
+
+    // sample user keys
+    int[5][8] USERKEYS = {// 0000000000000000000000000000000000000000000000000000000000000000
+                          {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+                          // 0000000000000000000000000000000000000000000000000000000000000000 (repeated purposefully for testing)
+                          {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
+                          // 92efa3ca9477794d31f4df7bce23e60a6038d2d2710373f04fd30aaecea8aa43
+                          {0x92efa3ca, 0x9477794d, 0x31f4df7b, 0xce23e60a, 0x6038d2d2, 0x710373f0, 0x4fd30aae, 0xcea8aa43},
+                          // d3fc99e32d09420f00a041f7e32914747731be4d4e5b5da518c2abe0a1239fa8
+                          {0xd3fc99e3, 0x2d09420f, 0x00a041f7, 0xe3291474, 0x7731be4d, 0x4e5b5da5, 0x18c2abe0, 0xa1239fa8},
+                          // bd14742460c6addfc71eef1328e2ddb6ba5b8798bb66c3c4d380acb055cac569
+                          {0xbd147424, 0x60c6addf, 0xc71eef13, 0x28e2ddb6, 0xba5b8798, 0xbb66c3c4, 0xd380acb0, 0x55cac569}};
+    
+    int USERKEY_LENGTH = 8 * BITS_PER_WORD;
+
+    // initial permutation
+    int[128] IP = { 0, 32, 64, 96,   1, 33, 65, 97,   2, 34, 66, 98,   3, 35, 67, 99,
+                    4, 36, 68, 100,  5, 37, 69, 101,  6, 38, 70, 102,  7, 39, 71, 103,
+                    8, 40, 72, 104,  9, 41, 73, 105, 10, 42, 74, 106, 11, 43, 75, 107,
+                   12, 44, 76, 108, 13, 45, 77, 109, 14, 46, 78, 110, 15, 47, 79, 111,
+                   16, 48, 80, 112, 17, 49, 81, 113, 18, 50, 82, 114, 19, 51, 83, 115,
+                   20, 52, 84, 116, 21, 53, 85, 117, 22, 54, 86, 118, 23, 55, 87, 119,
+                   24, 56, 88, 120, 25, 57, 89, 121, 26, 58, 90, 122, 27, 59, 91, 123,
+                   28, 60, 92, 124, 29, 61, 93, 125, 30, 62, 94, 126, 31, 63, 95, 127};
+
+    // final permutation
+    int[128] FP = { 0,  4,  8, 12, 16, 20, 24, 28, 32,  36,  40,  44,  48,  52,  56,  60,
+                   64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124,
+                    1,  5,  9, 13, 17, 21, 25, 29, 33,  37,  41,  45,  49,  53,  57,  61,
+                   65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109, 113, 117, 121, 125,
+                    2,  6, 10, 14, 18, 22, 26, 30, 34,  38,  42,  46,  50,  54,  58,  62,
+                   66, 70, 74, 78, 82, 86, 90, 94, 98, 102, 106, 110, 114, 118, 122, 126,
+                    3,  7, 11, 15, 19, 23, 27, 31, 35,  39,  43,  47,  51,  55,  59,  63,
+                   67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107, 111, 115, 119, 123, 127};
+
+    // substitution boxes
+    int[8][16] SBOXES = {{ 3,  8, 15,  1, 10,  6,  5, 11, 14, 13,  4,  2,  7,  0,  9, 12 }, /* S0: */
+                         {15, 12,  2,  7,  9,  0,  5, 10,  1, 11, 14,  8,  6, 13,  3,  4 }, /* S1: */
+                         { 8,  6,  7,  9,  3, 12, 10, 15, 13,  1, 14,  4,  0, 11,  5,  2 }, /* S2: */
+                         { 0, 15, 11,  8, 12,  9,  6,  3, 13,  1,  2,  4, 10,  7,  5, 14 }, /* S3: */
+                         { 1, 15,  8,  3, 12,  0, 11,  6,  2,  5,  4, 10,  9, 14,  7, 13 }, /* S4: */
+                         {15,  5,  2, 11,  4, 10,  9, 12,  0,  3, 14,  8, 13,  6,  7,  1 }, /* S5: */
+                         { 7,  2, 12,  5,  8,  4,  6, 11, 14,  9,  1, 15, 13,  3, 10,  0 }, /* S6: */
+                         { 1, 13, 15,  0, 14,  8,  2, 11,  7,  4, 12, 10,  9,  3,  5,  6 }};/* S7: */
+
+     init {}
+}
+// Provides utility routine
+// (rodric rabbah, <rabbah@mit.edu>)
+
+// take stream of N bits and permute them accordingly to
+// specified permutation table
+int->int filter Permute(int N, int[N] permutation)
+{
+    work push N pop N {
+        for (int i = 0; i < N; i++) {
+            push(peek(permutation[i]));
+        }
+        for (int i = 0; i < N; i++) {
+            pop();
+        }
+    }
+}
+
+// take N streams and Xor them together
+// the streams are assumed to be interleaved
+int->int filter Xor(int n)
+{
+    work push 1 pop n {
+        int x = pop();
+        for (int i = 1; i < n; i++) {
+            int y = pop();
+            x = x ^ y;
+        }
+		push(x);
+    }
+}
+
+// input:  integer
+// output: LSB first ... MSB last
+int->int filter IntoBits() 
+{
+  work pop 1 push 32 {
+      int v = pop();
+      int m = 1;
+
+      for (int i = 0; i < 32; i++) {
+          if (((v & m) >> i) != 0)
+              push(1);
+          else
+              push(0);
+          m = m << 1;
+      }
+  }
+}
+
+// input:  LSB first ... MSB last
+// output: integer
+int->int filter BitstoInts(int n) 
+{
+    work peek n pop n push 1 {
+        int v = 0;
+        for (int i = 0; i < n; i++) {
+            v = v | (pop() << i);
+        }
+        push(v);
+    }
+}
+
+// input:  w words x b bits/word
+// output: bit i from all w words, followed by i+1 for all b bits
+int->int splitjoin BitSlice(int w, int b)
+{
+    split roundrobin(1);
+    for (int l = 0; l < b; l++) {
+        add Identity<int>;
+    }
+    join roundrobin(w);
+}
+
+// input:  LSB first ... MSB last
+// output: none
+// prints: MSW first ... LSW last
+int->void pipeline HexPrinter(int descriptor, int n)
+{
+    int bits  = n;
+    int bytes = bits / 4;
+    
+    add BitstoInts(4);
+    add int->void filter {
+        work pop bytes {
+            if (PRINTINFO) {
+                if (descriptor == PLAINTEXT) 
+                    print("P: ");
+                else if (descriptor == USERKEY)
+                    print("K: ");
+                else if (descriptor == CIPHERTEXT)
+                    print("C: ");
+            }
+
+            for (int i = bytes - 1; i >= 0; i--) {
+                int v = peek(i);
+                if (v < 10) print(v);
+                else if (v == 10) print("A");
+                else if (v == 11) print("B");
+                else if (v == 12) print("C");
+                else if (v == 13) print("D");
+                else if (v == 14) print("E");
+                else if (v == 15) print("F");
+                else {
+                    print("ERROR: "); 
+                    println(v);
+                }
+            }
+            println("");
+
+            for (int i = 0; i < bytes; i++) 
+                pop();
+        }
+    }
+}
+
+// input:  LSB first ... MSB last
+// output: LSB first ... MSB last
+// prints: MSW first ... LSW last
+int->int splitjoin ShowIntermediate(int n)
+{
+    int bits  = n;
+    int bytes = bits / 4;
+
+    split duplicate;
+    add Identity<int>;
+    add pipeline {
+        add BitstoInts(4);
+        add int->void filter {
+            work pop bytes {
+                for (int i = bytes - 1; i >= 0; i--) {
+                    int v = peek(i);
+                    if (v < 10) print(v);
+                    else if (v == 10) print("A");
+                    else if (v == 11) print("B");
+                    else if (v == 12) print("C");
+                    else if (v == 13) print("D");
+                    else if (v == 14) print("E");
+                    else if (v == 15) print("F");
+                    else {
+                        print("ERROR: "); 
+                        println(v);
+                    }
+                }
+                println("");
+                
+                for (int i = 0; i < bytes; i++) 
+                    pop();
+            }
+        }
+    }
+    join roundrobin(1, 0);
+}

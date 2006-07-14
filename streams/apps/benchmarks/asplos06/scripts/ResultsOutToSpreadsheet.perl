@@ -73,6 +73,7 @@ foreach (<>) {
   my $mflops = "";
   my $correct = 0;
   if ($spacetime == 1) {
+    my $results;
     open (RESULTS, "< $filenameandpath") or next;
     while (<RESULTS>) {
       chomp;
@@ -94,7 +95,13 @@ foreach (<>) {
 	$correct = 1;
       }
     }				  
-    print "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
+    $results =  "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
+    #make options sort
+    $results =~ s/steadymult(\d)(\D)/steadymult00$1$2/;
+    $results =~ s/steadymult(\d)(\d)(\D)/steadymult0$1$2$3/;
+    $results =~ s/slicethresh(\d)(\D)/slicethresh00$1$2/;
+    $results =~ s/slicethresh(\d)(\d)(\D)/slicethresh0$1$2$3/;
+    print $results;
     close(RESULTS);
   }
   else {

@@ -17,7 +17,7 @@
     </impl>
     <impl lang="StreamIt" id="feedbacktest3">
      <desc>Should fail in compile! Would be nice if we eventually had reasonable message</desc>
-     <file class="source">FeedbackTest3.str</file>
+     <file class="source">FeedbackTest3.str ../../libraries/IntSeqSource.str ../../libraries/IntPrinter.str</file>
     </impl>
   </implementations>
 </benchmark>

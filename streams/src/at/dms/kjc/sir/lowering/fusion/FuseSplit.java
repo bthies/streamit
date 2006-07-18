@@ -484,6 +484,17 @@ public class FuseSplit {
             partialSumExpression[i] = new JIntLiteral(partialSum[i]);
             weightsExpression[i] = new JIntLiteral(weights[i]);
         }
+
+        // check whether or not all weights are the same int literal
+        boolean sameWeights = true; // whether or not all weights have the same int literal value
+        int sameWeightsVal = weights[0];    // the value of all the weights, if they are the same
+        for (int i=1; i<weights.length; i++) {
+            if (weights[i] != sameWeightsVal) {
+                sameWeights = false;
+                break;
+            }
+        }
+
         // get total weights
         int sumOfWeights = split.getSumOfWeights();
         // calculate number of times the split executes in this mode
@@ -594,8 +605,16 @@ public class FuseSplit {
                     }
                     JExpression peekVal = new SIRPeekExpression(index, type);
                     JStatement assign = new JExpressionStatement(null, makeBufferPush(childInfo[k].peekBuffer, peekVal), null);
-                    // add i loop
-                    JStatement jLoop = Utils.makeForLoop(assign, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JIntLiteral(k)), _j);
+                    // get loop bound on j loop...
+                    JExpression loopBound;
+                    if (sameWeights) {
+                        // if all weights same, just loop up to that weight
+                        loopBound = new JIntLiteral(sameWeightsVal);
+                    } else {
+                        // else, need to index into array of weights for loop bound
+                        loopBound = new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JIntLiteral(k));
+                    }
+                    JStatement jLoop = Utils.makeForLoop(assign, loopBound, _j);
                     JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(numExec), _i);
                     list.add(iLoop);
                 }

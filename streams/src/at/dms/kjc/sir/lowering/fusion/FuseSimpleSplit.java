@@ -306,6 +306,17 @@ public class FuseSimpleSplit {
             partialSumExpression[i] = new JIntLiteral(partialSum[i]);
             weightsExpression[i] = new JIntLiteral(weights[i]);
         }
+
+        // check whether or not all weights are the same int literal
+        boolean sameWeights = true; // whether or not all weights have the same int literal value
+        int sameWeightsVal = weights[0];    // the value of all the weights, if they are the same
+        for (int i=1; i<weights.length; i++) {
+            if (weights[i] != sameWeightsVal) {
+                sameWeights = false;
+                break;
+            }
+        }
+
         // get total weights
         int sumOfWeights = split.getSumOfWeights();
         // make list of statements for work function
@@ -378,8 +389,18 @@ public class FuseSimpleSplit {
 
                                                                               type),
                                                         null);
+            // get loop bound on j loop...
+            JExpression loopBound;
+            if (sameWeights) {
+                // if all weights same, just loop up to that weight
+                loopBound = new JIntLiteral(sameWeightsVal);
+            } else {
+                // else, need to index into array of weights for loop bound
+                loopBound = new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _k));
+            }
+            
             // add k loop
-            JStatement jLoop = Utils.makeForLoop(inner, new JArrayAccessExpression(null, new JLocalVariableExpression(null, _weights), new JLocalVariableExpression(null, _k)), _j);
+            JStatement jLoop = Utils.makeForLoop(inner, loopBound, _j);
             JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(rep.splitter), _i);
             JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(weights.length), _k);
             list.add(kLoop);
@@ -417,6 +438,18 @@ public class FuseSimpleSplit {
             partialSumExpression[i] = new JIntLiteral(partialSum[i]);
             weightsExpression[i] = new JIntLiteral(weights[i]);
         }
+
+
+        // check whether or not all weights are the same int literal
+        boolean sameWeights = true; // whether or not all weights have the same int literal value
+        int sameWeightsVal = weights[0];    // the value of all the weights, if they are the same
+        for (int i=1; i<weights.length; i++) {
+            if (weights[i] != sameWeightsVal) {
+                sameWeights = false;
+                break;
+            }
+        }
+
         // get total weights
         int sumOfWeights = join.getSumOfWeights();
         // make list of statements for work function
@@ -492,11 +525,21 @@ public class FuseSimpleSplit {
                                                                                                     type),
 
                                                                               type), null);
+            // get loop bound on j loop...
+            JExpression loopBound;
+            if (sameWeights) {
+                // if all weights same, just loop up to that weight
+                loopBound = new JIntLiteral(sameWeightsVal);
+            } else {
+                // else, need to index into array of weights for loop bound
+                loopBound = new JArrayAccessExpression(null,
+                                                       new JLocalVariableExpression(null, _weights),
+                                                       new JLocalVariableExpression(null, _i));
+            }
+
             // add k loop
             JStatement jLoop = Utils.makeForLoop(inner,
-                                                 new JArrayAccessExpression(null,
-                                                                            new JLocalVariableExpression(null, _weights),
-                                                                            new JLocalVariableExpression(null, _i)), _j);
+                                                 loopBound, _j);
             JStatement iLoop = Utils.makeForLoop(jLoop, new JIntLiteral(
                                                                         weights.length), _i);
             JStatement kLoop = Utils.makeForLoop(iLoop, new JIntLiteral(

@@ -60,8 +60,9 @@ public class Util extends at.dms.util.Utils {
     /**
      * Given a filter flatnode <node>, return the closest upstream node 
      * that is assigned to a tile or ioport. 
-     * @param node
-     * @return
+     * @param layout: needed to find whether the node is assigned
+     * @param node: must be a SIRFilter
+     * @return a FlatNode or null if could not find an upstream node.
      */
     public static FlatNode getFilterUpstreamAssigned(Layout layout, FlatNode node) {
         assert node.isFilter();
@@ -73,6 +74,25 @@ public class Util extends at.dms.util.Utils {
         }
         
         return upstream;    
+    }
+    
+    /**
+     * Given a filter flatnode <node>, return the closest downstream node 
+     * that is assigned to a tile or ioport. 
+     * @param layout: needed to find whether the node is assigned
+     * @param node: must be a SIRFilter
+     * @return a FlatNode or null if could not find a downstream node.
+     */
+    public static FlatNode getFilterDownstreamAssigned(Layout layout, FlatNode node) {
+        assert node.isFilter();
+        FlatNode downstream = node.edges[0];
+        while (!Layout.assignToAComputeNode(downstream)) {
+            if (downstream.ways < 1)
+                return null;
+            downstream = downstream.edges[0];
+        }
+        
+        return downstream;    
     }
     
     public static int nextPow2(int i) {

@@ -799,8 +799,18 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             FlatNode dst = ssg.getNext(src);
             int typeSize = Util.getTypeSize(ssg.getOutputType(src));
 
-            ComputeNode srcTile = getComputeNode(src);
-            ComputeNode dstTile = getComputeNode(dst);
+            ComputeNode srcTile;
+            try {
+                srcTile = getComputeNode(src);
+            } catch (AssertionError e) {
+                srcTile = getComputeNode(Util.getFilterUpstreamAssigned(this,src));
+            }
+            ComputeNode dstTile;
+            try {
+                dstTile = getComputeNode(dst);
+            } catch (AssertionError e) {
+                dstTile = getComputeNode(Util.getFilterDownstreamAssigned(this,dst));
+            }
 
             Iterator route = XYRouter.getRoute(ssg, srcTile, dstTile)
                 .iterator();

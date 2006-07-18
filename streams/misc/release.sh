@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.52 2006-06-14 22:47:58 dimock Exp $
+# $Id: release.sh,v 1.53 2006-07-18 16:36:20 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -162,7 +162,18 @@ rm -rf $WORKING/streams/apps/examples/sample-trellis
 rm -rf $WORKING/streams/apps/examples/toy-trellis
 rm -rf $WORKING/streams/apps/examples/updown
 rm -rf $WORKING/streams/apps/examples/vectadd/VectAdd1.*
+# why the following?
 rm -rf $WORKING/streams/apps/tests/portals
+# remove tests that are StreamIt 1.0 only:
+rm -rf $WORKING/streams/apps/tests/simple-split
+rm -rf $WORKING/streams/apps/tests/script-ratios
+rm -rf $WORKING/streams/apps/tests/peek-pipe
+rm -rf $WORKING/streams/apps/tests/{hello-splits,hello-simple,hello-separate,hello-message}
+rm -rf $WORKING/streams/apps/tests/fuse-test
+rm -rf $WORKING/streams/apps/tests/fuse
+rm -rf $WORKING/streams/apps/tests/flybit
+rm -rf $WORKING/streams/apps/tests/fir-test
+rm -rf $WORKING/streams/apps/tests/field-init
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
 # don't release applications directory except GMTI

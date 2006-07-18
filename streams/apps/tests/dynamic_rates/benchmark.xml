@@ -1,0 +1,23 @@
+<benchmark>
+  <name>dynamicrates</name>
+  <desc>Tests of dynamic rates</desc>
+  <description>
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="dynamicrates" iters="10">
+      <desc>second filter sums data-dependent number of items</desc>
+      <file class="source">DynamicRates.str</file>
+      <file class="output">DynamicRates.out</file>
+    </impl>
+    <impl lang="StreamIt" id="dynamicratescomp" iters="10">
+      <desc>dynamic rate in splitjoin arms, joins roundrobin 1, further work</desc>
+      <file class="source">DynamicRatesComp.str</file>
+      <file class="output">DynamicRatesComp.out</file>
+    </impl>
+    <impl lang="StreamIt" id="dynamicratescomp1" iters="10">
+      <desc>dynamic rate in splitjoin arms, joins roundrobin 0</desc>
+      <file class="source">DynamicRatesComp1.str</file>
+      <file class="output">DynamicRatesComp1.out</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -21,20 +21,22 @@ import at.dms.kjc.spacedynamic.Util;
  */
 
 public class StaticStreamGraph {
-    /** these Hashmaps map flatnode -> flatnode * */
-    /** prevs maps the input of this SSG to the output of its upstream SSG * */
-    /** nexts stores the converse * */
+    /** These Hashmaps map flatnode -> flatnode.
+    /* <br/>prevs maps the input of this SSG to the output of its upstream SSG
+    /* <br/>nexts stores the converse
+     */
     private HashMap<FlatNode,FlatNode> prevs, nexts;
 
-    /** the inter-SSG communication edges of this SSG, both incoming and outgoing * */
+    /** the inter-SSG communication edges of this SSG, both incoming and outgoing */
     private SSGEdge[] inputSSGEdges, outputSSGEdges;
 
-    private List<StaticStreamGraph> prevSSGs/*, nextSSGs*/;
+    /** SSGs with edges to this SSG */
+    private List<StaticStreamGraph> prevSSGs;
+    /** SSGs that this SSG has edges to */
     protected List<StaticStreamGraph> nextSSGs;
-    // arrays representing the inputs and output of this ssg
-    // from top to bottom (left to right)...
-    private FlatNode[] inputs;
 
+    /** arrays representing the inputs and output of this ssg from top to bottom (left to right)... */
+    private FlatNode[] inputs;
     private FlatNode[] outputs;
 
     // the output type of the ssg output
@@ -57,13 +59,23 @@ public class StaticStreamGraph {
      */
     protected GraphFlattener graphFlattener;
 
-    // the rate declaration of the output of this SSG
-    public JExpression pushRate;
-
-    // the rate declarations of the input of this SSG
-    public JExpression popRate;
-
-    public JExpression peekRate;
+// input and output rate expressions can not be kept per SSG as
+// SSG may have multiple entrances and exits.
+//
+//    /** 
+//     * the push rate declaration of the output of this SSG
+//     */
+//    public JExpression pushRate;
+//
+//    /** 
+//     * the pop rate declaration of the input of this SSG
+//     */
+//    public JExpression popRate;
+//
+//    /**
+//     * the peek rate declaration of the input of this SSG
+//     */
+//    public JExpression peekRate;
 
     private FlatNode bottomLevel;
 
@@ -85,6 +97,8 @@ public class StaticStreamGraph {
     /**
      * create a static stream graph with realTop as the first node that the
      * implicit splitter points to
+     * @param StreamGraph sg: the StreamGraph that the created StaticStreamGraph will be part of.
+     * @param realTop: the top node for the StaticStreamGraph (there is an internal fake top node)
      */
     public StaticStreamGraph(StreamGraph sg, FlatNode realTop) {
         this.streamGraph = sg;
@@ -107,22 +121,34 @@ public class StaticStreamGraph {
         addTopLevelFlatNode(realTop);
     }
 
-    /** add a source node to this SSG and add it to the toplevel * */
+    /** add a source node to this SSG and add it to the toplevel.
+     * <br/>May be called from constructor, or may be called from StreamGraph on
+     * encountering an upstream connection to a dynamic node.
+     * @param node node to add.
+     */
     public void addTopLevelFlatNode(FlatNode node) {
         // System.out.println("AddTopLevelNode " + node + " to " + id) ;
-        assert node.isFilter() || node.isNullSplitter();
+        assert node.isFilter() || node.isNullSplitter() || node.isFeedbackJoiner();
         
-        //nothing to do for a null splitter!!!
+        //nothing to do for a null splitter: there is no way to
+        // go from a null splitter...
         if (node.isNullSplitter()) {
             topLevel = node;
             return;
         }
         
-        SIRFilter filter = (SIRFilter) node.contents;
-        // checks on the filter
-        assert filter.getPopInt() == 0 && filter.getPeekInt() == 0;
-        // checks on the flatgraph
-        assert node.inputs == 0 && node.incoming.length == 0;
+        if (node.isFeedbackJoiner()) {
+            //SIRJoiner joiner = (SIRJoiner)node.contents;
+            // checks on flatgraph: should have set no input to body.
+            assert node.inputs == 2 && node.incoming[0] == null;
+            node.currentIncoming = 0;  // attach  null splitter to null incoming edge.
+        } else if (node.isFilter()) {
+            SIRFilter filter = (SIRFilter) node.contents;
+            // checks on the filter
+            assert filter.getPopInt() == 0 && filter.getPeekInt() == 0;
+            // checks on the flatgraph
+            assert node.inputs == 0 && node.incoming.length == 0;
+        }
         // add the flatnodes to various structures
         addFlatNode(node);
 
@@ -151,7 +177,9 @@ public class StaticStreamGraph {
         FlatNode.addEdges(topLevel, node);
     }
 
-    /** when constructing this SSG, add <pre>node</pre> to it * */
+    /** when constructing this SSG, add <pre>node</pre> to it 
+     * @param FlatNode node: node to add to flatNodes in this subgraph
+     */
     public void addFlatNode(FlatNode node) {
         // System.out.println("Adding " + node + " to " + id);
         flatNodes.add(node);
@@ -170,29 +198,31 @@ public class StaticStreamGraph {
         // check that we have cuts in the correct places
         // remove edges that connect to flatnodes not in this ssg
         topLevel.accept(new FlatVisitor() {
-                public void visitNode(FlatNode node) {
-                    if (!flatNodes.contains(node))
-                        return;
+            public void visitNode(FlatNode node) {
+                if (!flatNodes.contains(node))
+                    return;
 
-                    if (node.inputs > 0) {
-                        for (int i = 0; i < node.incoming.length; i++) {
-                            assert node.incoming[i] != null;
-                            if (!flatNodes.contains(node.incoming[i])) {
-                                node.removeBackEdge(node.incoming[i]);
-                            }
-                        }
-                    }
-                    if (node.ways > 0) {
-                        for (int i = 0; i < node.edges.length; i++) {
-                            assert node.edges[i] != null;
-
-                            if (!(flatNodes.contains(node.edges[i]))) {
-                                node.removeForwardEdge(node.edges[i]);
-                            }
+                if (node.inputs > 0) {
+                    for (int i = 0; i < node.incoming.length; i++) {
+                        assert node.incoming[i] != null;
+                        if (!flatNodes.contains(node.incoming[i])) {
+                            node.removeBackEdge(node.incoming[i]);
                         }
                     }
                 }
-            }, null, true);
+                if (node.ways > 0) {
+                    for (int i = 0; i < node.edges.length; i++) {
+                        if (node.edges[i] == null) {
+                            assert i == 0
+                                    && (node.contents instanceof SIRSplitter || node.contents instanceof SIRJoiner)
+                                    && node.contents.getParent() instanceof SIRFeedbackLoop;
+                        } else if (!(flatNodes.contains(node.edges[i]))) {
+                            node.removeForwardEdge(node.edges[i]);
+                        }
+                    }
+                }
+            }
+        }, null, true);
 
         // make sure all nodes have correct number of connections...
         topLevel.accept(new FlatVisitor() {
@@ -223,13 +253,23 @@ public class StaticStreamGraph {
                         }
                     } else {
                         SIRSplitter splitter = (SIRSplitter) node.contents;
-                        assert splitter.getWays() == node.ways : "Invalid Splitter: "
-                            + node
-                            + " "
-                            + splitter.getWays()
-                            + " != "
-                            + node.ways;
-
+                        if (splitter.getWays() != node.ways) {
+                            int [] weights = splitter.getWeights();
+                            int nonzero_weights = 0;
+                            for (int i = 0; i < weights.length; i++) {
+                                if (weights[i] > 0) nonzero_weights++;
+                            }
+                            int nonnull_ways = 0;
+                            for (int i = 0; i < node.ways; i++) {
+                                if (node.edges[i] != null) nonnull_ways++;
+                            }
+                            assert nonzero_weights == nonnull_ways : "Invalid Splitter: "
+                                + node
+                                + " "
+                                + nonzero_weights + " (" + splitter.getWays() + ") "
+                                + " != "
+                                + nonnull_ways + " (" + node.ways + ") ";
+                        }
                     }
                 }
             }, null, true);
@@ -474,7 +514,7 @@ public class StaticStreamGraph {
 
     /**
      * set a new TopLevelSIR stream and flatten it, can only be called before
-     * layout!*
+     * layout!
      */
     public void setTopLevelSIR(SIRStream newTop) {
 
@@ -584,8 +624,8 @@ public class StaticStreamGraph {
     }
 
     /**
-     * when constructing this SSG, add a new connection from node->next to the
-     * nexts hash map and add the <pre>node</pre> to the outputs array
+     * When constructing this SSG, add a new connection from node->next to the
+     * nexts hash map and add the <pre>node</pre> to the outputs array.
      */
     public void addNext(FlatNode node, FlatNode next) {
         assert flatNodes.contains(node);
@@ -710,23 +750,24 @@ public class StaticStreamGraph {
         }
     }
 
-    /**
-     * Called right after construction to set the rates of the endpoints of the
-     * SSG (push = 0 for sink, peek = pop = 0 for source) and remember true
-     * rates..
-     */
-    public void fixEndpoints() {
-        SIRFilter source = Util.getSourceFilter(topLevelSIR);
-        SIRFilter sink = Util.getSinkFilter(topLevelSIR);
-
-        pushRate = sink.getPush();
-        popRate = source.getPop();
-        peekRate = source.getPeek();
-
-        source.setPop(new JIntLiteral(0));
-        source.setPeek(new JIntLiteral(0));
-        sink.setPush(new JIntLiteral(0));
-    }
+// Never called: in fact can not be correct since a SSG may have multiple entrances or exits.
+//    /**
+//     * Called right after construction to set the rates of the endpoints of the
+//     * SSG (push = 0 for sink, peek = pop = 0 for source) and remember true
+//     * rates..
+//     */
+//    public void fixEndpoints() {
+//        SIRFilter source = Util.getSourceFilter(topLevelSIR);
+//        SIRFilter sink = Util.getSinkFilter(topLevelSIR);
+//
+//        pushRate = sink.getPush();
+//        popRate = source.getPop();
+//        peekRate = source.getPeek();
+//
+//        source.setPop(new JIntLiteral(0));
+//        source.setPeek(new JIntLiteral(0));
+//        sink.setPush(new JIntLiteral(0));
+//    }
 
     /** get the parent stream graph of SSG * */
     public StreamGraph getStreamGraph() {

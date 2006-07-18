@@ -399,6 +399,21 @@ public class FlatNode {
             return true;
         return false;
     }
+    
+    /**
+     * Return True if the the underlying SIROperator is a 
+     * SIRFilter and could be at the top of a program
+     * 
+     * @return True if the the underlying SIROperator is a 
+     * SIRFilter and the filter neither peeks nor pops.
+     */
+    public boolean isTopFilter() {
+        if (! ( contents instanceof SIRFilter)) {
+            return false;
+        }
+        SIRFilter filter = (SIRFilter)contents;
+        return filter.getPopInt() == 0 && filter.getPeekInt() == 0;
+    }
 
     /**
      * Return True if the underlying SIROperator is an SIRJoiner 
@@ -466,6 +481,9 @@ public class FlatNode {
     public boolean isFeedbackJoiner() {
         if (contents instanceof SIRJoiner
             && contents.getParent() instanceof SIRFeedbackLoop) {
+            // oddly enough, a feedback joiner has a with no incoming edge from
+            // the outside has incoming[0] = null, rather than having only one
+            // incoming edge.
             assert inputs == 2 : "Feedback Joiner without 2 inputs in flat graph";
             return true;
         }
@@ -478,11 +496,15 @@ public class FlatNode {
      * is directly contained in an SIRFeedbackLoop and the incoming edge at i is the
      * feed-back path.
      * 
+     * @param int i: the edge number.
      * @return True if the underlying SIROperator is a joiner and that joiner
      * is directly contained in an SIRFeedbackLoop and the incoming edge at i is the
-     * feed-back path.
+     * feed-back path.  
      */
     public boolean isFeedbackIncomingEdge(int i) {
+        // oddly enough, a feedback joiner has a with no incoming edge from
+        // the outside has incoming[0] = null, rather than having only one
+        // incoming edge.
         return isFeedbackJoiner() && i == 1;
     }
 

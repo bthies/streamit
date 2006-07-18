@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.37 2006-06-01 20:25:30 dimock Exp $
+ * $Id: Utils.java,v 1.38 2006-07-18 22:20:55 thies Exp $
  */
 
 package at.dms.util;
@@ -667,6 +667,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
             }
         }
 
+        // from here on out, we will explicitly assign the loop index
+        // to be zero in the initializer of the for loop, so do not do
+        // it in the var decl (might result in double assignment)
+        loopIndex.setInitializer(null);
+        
         // make a test if our variable is less than <pre>count</pre>
         JExpression cond = 
             new JRelationalExpression(null,
@@ -700,13 +705,14 @@ public abstract class Utils implements Serializable, DeepCloneable {
             System.err.println(caller);
 
         }
-        
+
         // make the for statement
         JStatement forStatement = 
             new JForStatement(/* tokref */ null,
                               //for rstream put the vardecl in the init of the for loop
                               /* init */ (KjcOptions.rstream ? (JStatement) varDecl : 
-                                          (JStatement) new JEmptyStatement(null, null)),
+                                          // otherwise, put an assignment in the init section so that the work estimate can detect how many times this for loop fires
+                                          new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(loopIndex), new JIntLiteral(0)))),
                               cond,
                               incr,
                               body,
@@ -752,6 +758,11 @@ public abstract class Utils implements Serializable, DeepCloneable {
             }
         }
 
+        // from here on out, we will explicitly assign the loop index
+        // to be count-1 in the initializer of the for loop, so do not
+        // do it in the var decl (might result in double assignment)
+        loopIndex.setInitializer(null);
+        
         // make a test if our variable is less than <pre>count</pre>
         JExpression cond = 
             new JRelationalExpression(null,
@@ -790,7 +801,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
         // make the for statement
         JStatement forStatement = 
             new JForStatement(/* tokref */ null,
-                              /* init */ new JEmptyStatement(null, null),
+                              /* init */ new JExpressionStatement(new JAssignmentExpression(new JLocalVariableExpression(loopIndex), new JMinusExpression(null, count, new JIntLiteral(1)))),
                               cond,
                               incr,
                               body,

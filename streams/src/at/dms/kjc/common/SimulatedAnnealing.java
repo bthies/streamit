@@ -169,11 +169,14 @@ public abstract class SimulatedAnnealing {
                             System.out.print(".");
                           
                         // keep the layout with the minimum cost
-                        if (currentCost < minCost) {
+                        // or if this layout has the same minimun cost
+                        // call keepNewEqualMin to decide if we should keep it
+                        if (currentCost < minCost) { 
                             minCost = currentCost;
                             // save the layout with the minimum cost
                             assignMin = (HashMap)assignment.clone();
-                        }
+                        } 
+                       
 
                         // this will be the final layout
                         if (currentCost == 0.0)
@@ -184,7 +187,7 @@ public abstract class SimulatedAnnealing {
 
                     if (nsucc == 0)
                         break;
-                    if (currentCost == 0)
+                    if (currentCost == 0.0)
                         break;
                     if (t <= tFinal)
                         break;
@@ -206,6 +209,17 @@ public abstract class SimulatedAnnealing {
         }
     }
 
+    /**
+     * Decide if we should keep a configuration that has a 
+     * cost that is EQUAL to the current minimum of the search.  
+     * By default, don't keep it. Override if you want other behavior.
+     * 
+     * @return Should we set the min config to this config (they have the same
+     * cost). 
+     */
+    protected abstract boolean keepNewEqualMin();
+        
+    
     private final double annealMaxTemp() throws Exception {
         double T = 1.0;
         int total = 0, accepted = 0;

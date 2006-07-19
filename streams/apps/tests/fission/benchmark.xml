@@ -1,0 +1,14 @@
+<benchmark>
+  <name>fission</name>
+  <desc>Tests relating to fission passes.</desc>
+  <description>
+Tests that backend can execute stream graphs resulting from fission transformations.
+  </description>
+  <implementations>
+    <impl lang="StreamIt" id="fissiontest1">
+      <desc>Stateless duplicate of a stateless filter in 2:1 work ratio</desc>
+      <file class="source">FissionTest1.str</file>
+      <file class="output">FissionTest1.out</file>
+    </impl>
+  </implementations>
+</benchmark>

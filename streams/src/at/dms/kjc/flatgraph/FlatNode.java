@@ -651,4 +651,23 @@ public class FlatNode {
         return (SIRFilter) contents;
     }
 
+    /**
+     * Return the number of items pushed from *from* to *to*
+     * on each iteration of *from*.
+     * If *from* is a splitter take this into account.
+     * @param from : the node pushing the items
+     * @param to : the node receiving the pushed items
+     * @return the number of items pushed.
+     */
+    public static int getItemsPushed(FlatNode from, FlatNode to) {
+        if (from.isFilter())
+            return ((SIRFilter) from.contents).getPushInt();
+        else if (from.isJoiner())
+            return from.getTotalIncomingWeights();
+        else if (from.isSplitter())
+            return from.getWeight(to);
+        assert false : "Invalid FlatNode type" + from.toString();
+        return -1;
+    }
+
 }

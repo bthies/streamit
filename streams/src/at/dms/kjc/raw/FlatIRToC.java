@@ -191,7 +191,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
         
         //if there are structures in the code, include
         //the structure definition header files
-        if (RawBackend.structures.length > 0) 
+        SIRStructure[] structs = RawBackend.structures;
+        if (RawWorkEstimator.SIMULATING_WORK)
+            structs = RawWorkEstimator.structures;
+        
+        if (structs.length > 0) 
             p.print("#include \"structs.h\"\n");
 
         //print the extern for the function to init the 
@@ -222,6 +226,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
         for (int i =0; i < methods.length; i++) {
             methods[i].accept(this);    
         }
+        
+        if (KjcOptions.decoupled) {
+            p.print("void raw_init2() {}");
+        }
+            
         
         //if we are generating raw code print the begin
         //method for the simulator

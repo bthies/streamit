@@ -11,6 +11,8 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
+import at.dms.kjc.spacedynamic.SpaceDynamicBackend;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.Utils;
@@ -19,6 +21,8 @@ import java.io.*;
 
 public class RawWorkEstimator extends EmptyStreamVisitor
 {
+    public static SIRStructure[] structures;
+    
     /**
      * Global indicator that we're in the process of simulating work.
      * Avoids threading some information through multiple levels.
@@ -42,6 +46,10 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
         int oldOutputsValue = KjcOptions.outputs;
+        int oldCols = RawBackend.rawColumns;
+        int oldRows = RawBackend.rawRows;
+        RawBackend.rawColumns = 4;
+        RawBackend.rawRows = 4;
 
         int work = 0;
         //clone the Filter and create a dummy pipeline with just this
@@ -97,8 +105,17 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             RemoveGlobals.doit(top);
         }
 
-        // make structures header file in this directory
-        StructureIncludeFile.doit(RawBackend.structures, top, dir);
+        if (KjcOptions.spacetime) {
+            structures = SpaceTimeBackend.structures;
+        }
+        else if (KjcOptions.space) {
+            structures = RawBackend.structures;
+        }
+        else {
+            structures = SpaceDynamicBackend.structures;
+        }
+        System.out.println(structures);
+        StructureIncludeFile.doit(structures, top, dir);
 
         SIMULATING_WORK = true;
         TileCode.generateCode(top);
@@ -210,7 +227,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             Utils.fail("Error running the raw simulator for work estimation");
         }
     
-
+        RawBackend.rawColumns = oldCols;
+        RawBackend.rawRows = oldRows;
         KjcOptions.decoupled = oldDecoupledValue;
         KjcOptions.magic_net = oldMagicNetValue;
         KjcOptions.ratematch = oldRateMatchValue;

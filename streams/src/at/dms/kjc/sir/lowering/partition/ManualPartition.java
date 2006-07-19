@@ -290,6 +290,18 @@ public class ManualPartition {
     }
     
     /**
+     * Splits 'filter' into a 'reps'-way splitjoin, and divides work
+     * among the resulting filters according to 'workRatio'.  For
+     * example, if workRatio = {1, 2}, then the second fission product
+     * will do twice as much work as the first fission product.
+     * Requires that isFissable('filter') is true.
+     */
+    public static SIRSplitJoin fission(SIRFilter filter, int reps, int[] workRatio) {
+        checkNull(filter);
+        return StatelessDuplicate.doit(filter, reps, workRatio);
+    }
+    
+    /**
      * Returns a new pipeline that is like 'pipe' but replaces
      * children at indices first...last with a pipeline that contains
      * those children.

@@ -33,27 +33,52 @@ public class StatelessDuplicate {
     private int reps;
 
     /**
+     * The desired ratio of work between the fissed children.
+     * Invariant: workRatio.length = reps.
+     */
+    private int[] workRatio;
+
+    /**
      * The list of resulting filters
      */
     private LinkedList newFilters;
     
-    private StatelessDuplicate(SIRFilter origFilter, int reps) {
+    private StatelessDuplicate(SIRFilter origFilter, int reps, int[] workRatio) {
         this.origFilter = origFilter;
         this.reps = reps;
+        this.workRatio = workRatio;
         this.newFilters = new LinkedList();
     }
 
     /**
      * Duplicates <filter> into a <reps>-way SplitJoin and replaces
-     * the filter with the new construct in the parent.
+     * the filter with the new construct in the parent.  The new
+     * filters will be load-balanced according to 'workRatio'.  For
+     * example, if workRatio = {1, 2}, then the second child will do
+     * twice as much work as the first child.
+     *
+     * Requires workRatio.length == reps.
      */
-    public static SIRSplitJoin doit(SIRFilter origFilter, int reps) {
+    public static SIRSplitJoin doit(SIRFilter origFilter, int reps, int[] workRatio) {
         if (isFissable(origFilter)) {
-            return new StatelessDuplicate(origFilter, reps).doit();
+            return new StatelessDuplicate(origFilter, reps, workRatio).doit();
         } else {
             Utils.fail("Trying to split an un-fissable filter: " + origFilter);
             return null;
         }
+    }
+    /**
+     * Duplicates <filter> into a <reps>-way SplitJoin and replaces
+     * the filter with the new construct in the parent.  The resulting
+     * children will all do the same amount of work.
+     */
+    public static SIRSplitJoin doit(SIRFilter origFilter, int reps) {
+        // init workRatio to {1, 1, ..., 1}
+        int[] workRatio = new int[reps];
+        for (int i=0; i<reps; i++) {
+            workRatio[i] = 1;
+        }
+        return doit(origFilter, reps, workRatio);
     }
 
     /**
@@ -165,7 +190,9 @@ public class StatelessDuplicate {
      */
     private SIRSplitJoin doit() {
         // make new filters
-        makeDuplicates();
+        for (int i=0; i<reps; i++) {
+            newFilters.add(makeDuplicate(i));
+        }
 
         // make result
         SIRSplitJoin result = new SIRSplitJoin(origFilter.getParent(), origFilter.getIdent() + "_Fiss");
@@ -178,10 +205,13 @@ public class StatelessDuplicate {
 
         // create the splitter
         if (USE_ROUNDROBIN_SPLITTER && origFilter.getPeekInt()==origFilter.getPopInt()) {
-            // without peeking, it's a round-robin 
-            JExpression splitWeight = new JIntLiteral(origFilter.getPopInt());
-            result.setSplitter(SIRSplitter.
-                               createUniformRR(result, splitWeight));
+            // without peeking, it's a round-robin..
+            // assign split weights according to workRatio and pop rate of filter
+            JExpression[] splitWeights = new JExpression[reps];
+            for (int i=0; i<reps; i++) {
+                splitWeights[i] = new JIntLiteral(workRatio[i] * origFilter.getPopInt());
+            }
+            result.setSplitter(SIRSplitter.createWeightedRR(result, splitWeights));
         } else {
             // with peeking, it's just a duplicate splitter
             result.setSplitter(SIRSplitter.
@@ -189,18 +219,21 @@ public class StatelessDuplicate {
         }
 
         // create the joiner
-        int pushCount = origFilter.getPushInt();
-        if (pushCount > 0) {
-            JExpression joinWeight = new JIntLiteral(pushCount);
-            result.setJoiner(SIRJoiner.
-                             createUniformRR(result, joinWeight));
+        if (origFilter.getPushInt() > 0) {
+            // assign join weights according to workRatio and push rate of filter
+            JExpression[] joinWeights = new JExpression[reps];
+            for (int i=0; i<reps; i++) {
+                joinWeights[i] = new JIntLiteral(workRatio[i] * origFilter.getPushInt());
+            }
+            result.setJoiner(SIRJoiner.createWeightedRR(result, joinWeights));
         } else {
             result.setJoiner(SIRJoiner.create(result,
                                               SIRJoinType.NULL, 
                                               reps));
+            // rescale the joiner to the appropriate width
+            result.rescale();
         }
-        // rescale the joiner to the appropriate width
-        result.rescale();
+
         // set the init function
         result.setInit(init);
 
@@ -245,83 +278,65 @@ public class StatelessDuplicate {
     }
 
     /**
-     * Fills <newFilters> with the duplicate filters for the result.
-     */
-    private void makeDuplicates() {
-        // make the first one just a copy of the original, since
-        // otherwise we have a stage in the two-stage filter that
-        // doesn't consume anything at all
-        //newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
-        //System.err.println("Duplicating " + origFilter.getName() + " into a " + reps + "-way SplitJoin.");
-        for (int i=0; i<reps; i++) {
-            newFilters.add(makeDuplicate(i));
-        }
-    }
-
-    /**
      * Makes the <i>'th duplicate filter in this.
      */
     private SIRFilter makeDuplicate(int i) {
         // start by cloning the original filter, and copying the state
-        // into a new two-stage filter.
+        // into a new filter.
         SIRFilter cloned = (SIRFilter)ObjectDeepCloner.deepCopy(origFilter);
         // if there is no peeking, then we can returned <cloned>.
-        // Otherwise, we need a two-stage filter.
         if (USE_ROUNDROBIN_SPLITTER && origFilter.getPeekInt()==origFilter.getPopInt()) {
             return cloned;
         } else {
-            SIRTwoStageFilter result = new SIRTwoStageFilter();
-            result.copyState(cloned);
-            // make the work function
-            makeDuplicateWork(result);
-            // set I/O rates
-            setRates(result, i);
-            // make the initial work function for the two-staged filter
-            makeDuplicateInitWork(result, i);
+            // wrap work function with pop statements for extra items
+            wrapWorkFunction(cloned, i);
             // return result
-            return result;
+            return cloned;
         }
     }
 
-    private void setRates(SIRTwoStageFilter filter, int i) { 
-        // set the peek, pop, and push ratios...
+    // For the i'th child in the fissed splitjoin, does two things:
+    // 
+    // 1. wraps the work function in a loop corresponding to the
+    // workRatio of the filter
+    //
+    // 2. adds pop statements before and after the loop to eliminate
+    // items destined for other filters
+    // 
+    // Also adjusts the I/O rates to match this behavior.  Note that
+    // this function only applies to duplication utilizing a duplicate
+    // splitter.
+    private void wrapWorkFunction(SIRFilter filter, int i) {
+        JMethodDeclaration work = filter.getWork();
+        // if we have a workRatio of 0, we'll get a class cast
+        // exception from JEmptyStatement to JBlock on the next line
+        assert workRatio[i] > 0 : "Require workRatio > 0 in horizontal fission.";
+        // wrap existing work function according to its work ratio
+        work.setBody((JBlock)Utils.makeForLoop(work.getBody(), workRatio[i]));
 
-        int origPop = filter.getPopInt();
-        int extraPopCount = (reps-1)*origPop;
+        // calculate the pops that should come before and after
+        int popsBefore = 0;
+        int popsAfter = 0;
+        for (int j=0; j<i; j++) {
+            popsBefore += workRatio[j] * filter.getPopInt();
+        }
+        for (int j=i+1; j<reps; j++) {
+            popsAfter += workRatio[j] * filter.getPopInt();
+        }
 
-        // the push amount stays the same
-        // change the peek and pop amount
-        filter.setPeek(Math.max(filter.getPeekInt(), extraPopCount+filter.getPopInt()));
-        filter.setPop(extraPopCount+filter.getPopInt());
+        // add pop statements to beginning and end of filter
+        work.getBody().addStatementFirst(makePopLoop(popsBefore));
+        work.getBody().addStatement(makePopLoop(popsAfter));
 
-        // we push zero, since we're just clearing the input line
-        filter.setInitPush(0);
-        // we pop <i> * the original pop amount
-        filter.setInitPop(i*origPop);
-        // we peek the original peek amount (plus the pop)
-        filter.setInitPeek(filter.getInitPopInt()+filter.getPeekInt()-filter.getPopInt());
-    }
-
-    /**
-     * Install an initWork function, along with init pop/push/peek
-     * ratios, for filter <filter> that is the <i>'th to be
-     * duplicated.
-     */
-    private void makeDuplicateInitWork(SIRTwoStageFilter filter, int i) {
-        // the number of items to pop
-        int count = i*origFilter.getPopInt();
-        // the body of init work
-        JStatement[] body = { makePopLoop(count) };
-        // set init work
-        filter.setInitWork(new JMethodDeclaration(null,
-                                                  at.dms.kjc.Constants.ACC_PUBLIC,
-                                                  CStdType.Void,
-                                                  FusePipe.INIT_WORK_NAME, 
-                                                  JFormalParameter.EMPTY,
-                                                  CClassType.EMPTY,
-                                                  new JBlock(null, body, null),
-                                                  null,
-                                                  null));
+        // SET NEW I/O RATES FOR FILTER:
+        // pop items destined for any splitjoins
+        filter.setPop(getTotalPops());
+        // push items according to work ratio
+        filter.setPush(workRatio[i] * origFilter.getPushInt());
+        // peek the same as the pop rate, unless the last execution
+        // peeked even further
+        filter.setPeek(Math.max(getTotalPops(),
+                                popsBefore+(workRatio[i]-1)*origFilter.getPopInt()+origFilter.getPeekInt()));
     }
 
     /**
@@ -336,13 +351,16 @@ public class StatelessDuplicate {
     }
 
     /**
-     * Mutate the steady-state work function of <filter> so that it is
-     * appropriate for inclusion in the <reps>-way splitjoin.  This
-     * involves simply popping an extra (reps-1)*POP at the end.
+     * Returns the total number of items popped by the fissed filters.
      */
-    private void makeDuplicateWork(SIRTwoStageFilter filter) {
-        int extraPopCount = (reps-1)*filter.getPopInt();
-        // append the popLoop to the statements in the work function
-        filter.getWork().getBody().addStatement(makePopLoop(extraPopCount));
+    private int totalPops = 0;
+    private int getTotalPops() {
+        // memoize the sum
+        if (totalPops > 0) return totalPops;
+        // otherwise compute it
+        for (int i=0; i<reps; i++) {
+            totalPops += workRatio[i] * origFilter.getPopInt();
+        }
+        return totalPops;
     }
 }

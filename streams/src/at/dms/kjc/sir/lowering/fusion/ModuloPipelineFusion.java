@@ -430,7 +430,10 @@ class ModuloPipelineFusion {
             // ignore buffer and pop index for first filter, as it
             // reads from the input with peek/pop operations
             if (i!=0) {
-                result.add(info.buffer);
+                // do not add buffer if it is empty
+                if (info.bufferSize > 0) {
+                    result.add(info.buffer);
+                }
                 result.add(info.popIndex);
             }
             // don't add push counter for last filter, as it writes

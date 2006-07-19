@@ -632,7 +632,10 @@ class ShiftPipelineFusion {
         int i=0;
         for (ListIterator it = filterInfo.listIterator(); it.hasNext(); i++) {
             FilterInfo info = (FilterInfo)it.next();
-            result.add(info.peekBuffer);
+            // do not add the peek buffer field if there is no peeking
+            if (info.peekBufferSize>0) {
+                result.add(info.peekBuffer);
+            }
             result.addAll(Arrays.asList(info.filter.getFields()));
         }
         // return result

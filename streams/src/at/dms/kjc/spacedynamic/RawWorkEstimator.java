@@ -5,11 +5,13 @@ import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
+import at.dms.kjc.raw.RawBackend;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.Utils;
@@ -18,6 +20,7 @@ import java.io.*;
 
 public class RawWorkEstimator extends EmptyStreamVisitor
 {
+    public static SIRStructure[] structures;
     /**
      * Global indicator that we're in the process of simulating work.
      * Avoids threading some information through multiple levels.
@@ -40,9 +43,11 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         boolean oldMagicNetValue = KjcOptions.magic_net;
         boolean oldRateMatchValue = KjcOptions.ratematch;
         boolean oldSimulateWorkValue = KjcOptions.simulatework;
-                
+                 
         int oldOutputsValue = KjcOptions.outputs;
-
+        RawChip oldRawChip = SpaceDynamicBackend.rawChip;
+        SpaceDynamicBackend.rawChip = new RawChip(4, 4);
+        
         int work = 0;
         //clone the Filter and create a dummy pipeline with just this
         //new cloned filter
@@ -104,7 +109,17 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         }
     
         // make structures header file in this directory
-        StructureIncludeFile.doit(SpaceDynamicBackend.structures, streamGraph, dir);
+        if (KjcOptions.spacetime) {
+            structures = SpaceTimeBackend.structures;
+        }
+        else if (KjcOptions.space) {
+            structures = RawBackend.structures;
+        }
+        else {
+            structures = SpaceDynamicBackend.structures;
+        }
+        
+        StructureIncludeFile.doit(structures, streamGraph, dir);
 
         TileCode.generateCode(streamGraph);
         MakefileGenerator.createMakefile(streamGraph);
@@ -216,6 +231,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
             Utils.fail("Error running the raw simulator for work estimation");
         }
     
+        SpaceDynamicBackend.rawChip = oldRawChip;
         KjcOptions.simulatework = oldSimulateWorkValue;
         KjcOptions.magic_net = oldMagicNetValue;
         KjcOptions.ratematch = oldRateMatchValue;

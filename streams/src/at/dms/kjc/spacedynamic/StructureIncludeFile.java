@@ -37,7 +37,7 @@ public class StructureIncludeFile {
      * Create structures include file in directory <pre>dir</pre>.
      */
     public static void doit(SIRStructure[] structs, StreamGraph sg, String dir) {
-        if (structs.length == 0)
+        if (structs == null || structs.length == 0)
             return;
 
         new StructureIncludeFile(structs, sg, dir);

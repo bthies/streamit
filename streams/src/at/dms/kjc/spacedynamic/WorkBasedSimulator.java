@@ -192,7 +192,7 @@ public class WorkBasedSimulator extends Simulator
     
         //the simulation loop
         do {
-            /*      
+                  /*
                    System.out.println("-----------------------");
                    System.out.println("Pending:");
                    Iterator pit = pendingQueue.iterator();
@@ -231,10 +231,10 @@ public class WorkBasedSimulator extends Simulator
               Iterator it = pendingQueue.iterator();
               while (it.hasNext()) {
               SimulatorEvent e = (SimulatorEvent)it.next();
-              System.out.println(e.node + " " + e.time + " " + e.isLast);
+              System.out.println(e.node + " "+ e.time + " " + e.isLast);
               }
               } 
-            */    
+              */ 
         } while (!eventHeap.isEmpty() || !pendingQueue.isEmpty());
     
         //  System.out.println(firingNodes);
@@ -531,7 +531,8 @@ public class WorkBasedSimulator extends Simulator
 
 
             //check if it can fire
-            if ((layout.isAssigned(node) || node.contents instanceof SIRFileReader) &&
+            if ((layout.isAssigned(node) || node.contents instanceof SIRFileReader ||
+                    node.contents instanceof SIRFileWriter) &&
                 canFire(node, exeCounts, sCounters) &&
                 !firingNodes.contains(node)) 
                 if (node.ways == 0 || 

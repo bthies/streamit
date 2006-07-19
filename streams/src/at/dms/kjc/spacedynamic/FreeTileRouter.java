@@ -143,7 +143,7 @@ public class FreeTileRouter implements Router
     
         //only try the y direction if the x direction has an occupied tile
         //and we need to route in that direction
-        if (takeX.occupied > 0 && yDir != 0) {
+        if (yDir != 0) {
             takeY = findBestRoute(ssg, layout,
                                   rawChip.getTile(src.getX(),
                                                   src.getY() + yDir),

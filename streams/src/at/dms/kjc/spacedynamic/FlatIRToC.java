@@ -253,8 +253,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
             p.print("}\n\n");
         }
         
-
-        p.print("#include \"structs.h\"\n");
+        
+        if (RawWorkEstimator.SIMULATING_WORK) {
+            if (RawWorkEstimator.structures != null && 
+                    RawWorkEstimator.structures.length > 0)
+                p.print("#include \"structs.h\"\n");    
+        }
+        else 
+            p.print("#include \"structs.h\"\n");
 
 
         //print the extern for the function to init the 

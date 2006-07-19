@@ -396,7 +396,110 @@ public abstract class Partitioner {
             //on to the next trace
         }
     }
+    // dump the the completed partition to a dot file
+    public void dumpGraph(String filename) {
+        StringBuffer buf = new StringBuffer();
+        buf.append("digraph Flattend {\n");
+        buf.append("size = \"8, 10.5\";\n");
+
+        for (int i = 0; i < traceGraph.length; i++) {
+            Trace trace = traceGraph[i];
+            assert trace != null;
+            buf.append(trace.hashCode() + " [ " + 
+                    traceName(trace) + 
+                    "\" ];\n");
+            Trace[] next = getNext(trace/* ,parent */);
+            for (int j = 0; j < next.length; j++) {
+                assert next[j] != null;
+                buf.append(trace.hashCode() + " -> " + next[j].hashCode()
+                           + ";\n");
+            }
+        }
+
+        buf.append("}\n");
+        // write the file
+        try {
+            FileWriter fw = new FileWriter(filename);
+            fw.write(buf.toString());
+            fw.close();
+        } catch (Exception e) {
+            System.err.println("Could not print extracted traces");
+        }
+    }
     
+    // get the downstream traces we cannot use the edge[] of trace
+    // because it is for execution order and this is not determined yet.
+    protected Trace[] getNext(Trace trace) {
+        TraceNode node = trace.getHead();
+        if (node instanceof InputTraceNode)
+            node = node.getNext();
+        while (node != null && node instanceof FilterTraceNode) {
+            node = node.getNext();
+        }
+        if (node instanceof OutputTraceNode) {
+            Edge[][] dests = ((OutputTraceNode) node).getDests();
+            ArrayList output = new ArrayList();
+            for (int i = 0; i < dests.length; i++) {
+                Edge[] inner = dests[i];
+                for (int j = 0; j < inner.length; j++) {
+                    // Object next=parent.get(inner[j]);
+                    Object next = inner[j].getDest().getParent();
+                    if (!output.contains(next))
+                        output.add(next);
+                }
+            }
+            Trace[] out = new Trace[output.size()];
+            output.toArray(out);
+            return out;
+        }
+        return new Trace[0];
+    }
+
+    //return a string with all of the names of the filtertracenodes
+    // and blue if linear
+    protected  String traceName(Trace trace) {
+        TraceNode node = trace.getHead();
+
+        StringBuffer out = new StringBuffer();
+
+        //do something fancy for linear traces!!!
+        if (((FilterTraceNode)node.getNext()).getFilter().getArray() != null)
+            out.append("color=cornflowerblue, style=filled, ");
+        
+        out.append("label=\"" + node.getAsInput().debugString(true));//toString());
+        
+        node = node.getNext();
+        while (node != null ) {
+            if (node.isFilterTrace()) {
+                FilterContent f = node.getAsFilter().getFilter();
+                out.append("\\n" + node.toString() + "{"
+                        + getWorkEstimate(f)
+                        + "}");
+                if (f.isTwoStage())
+                    out.append("\\npre:(peek, pop, push): (" + 
+                            f.getInitPeek() + ", " + f.getInitPop() + "," + f.getInitPush());
+                out.append(")\\n(peek, pop, push: (" + 
+                        f.getPeekInt() + ", " + f.getPopInt() + ", " + f.getPushInt() + ")");
+                out.append("\\nMult: init " + f.getInitMult() + ", steady " + f.getSteadyMult());
+                out.append("\\n *** ");
+            }
+            else {
+                out.append("\\n" + node.getAsOutput().debugString(true));
+            }
+            /*else {
+                //out.append("\\n" + node.toString());
+            }*/
+            node = node.getNext();
+        }
+        return out.toString();
+    }
+    
+    protected int getWorkEstimate(FilterContent fc) {
+        assert workEstimation.containsKey(fc);
+        return ((Integer) workEstimation.get(fc)).intValue();
+    }
+
+
     /**
      * The cost of 1 firing of the filter, to be run after the steady multiplier
      * has been accounted for in the steady multiplicity of each filter content.

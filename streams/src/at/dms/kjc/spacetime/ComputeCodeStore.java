@@ -775,9 +775,16 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 (RawExecutionCode.gdnDisregardIncoming(1));
             }
         }
-        
     }
 
+    /**
+     * Create a barrier.
+     * @param chip
+     */
+    public static void barrier(RawChip chip) {
+        
+    }
+    
     /**
      * This function will create a presynch read command for every dram that is
      * used in the program and add it to the current position in the init

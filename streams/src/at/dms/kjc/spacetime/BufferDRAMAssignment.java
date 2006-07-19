@@ -532,6 +532,7 @@ public class BufferDRAMAssignment {
      * 
      * @return A set of tiles that this splitter, output, occupies.
      */
+    /*
     public Set tilesOccupiedSplit(OutputTraceNode output, HashMap assignment) {
         HashSet tiles = new HashSet();
         Iterator edges = assignment.keySet().iterator();
@@ -545,7 +546,7 @@ public class BufferDRAMAssignment {
         }
         return tiles;
     }
-
+    */
     /**
      * Not used currently. 
      * 
@@ -556,6 +557,7 @@ public class BufferDRAMAssignment {
      * 
      * @return A set of RawTiles.
      */
+    /*
     public Set tilesOccupiedJoin(InputTraceNode input) {
         HashSet tiles = new HashSet();
         StreamingDram dest = IntraTraceBuffer.getBuffer(input,
@@ -566,7 +568,8 @@ public class BufferDRAMAssignment {
         }
         return tiles;
     }
-
+    */
+    
     /**
      * Given a Edge, edge, return an order iterator of PortDistances
      * that is ordered in increase cost of communication for assigning 

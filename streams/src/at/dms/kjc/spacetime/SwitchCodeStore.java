@@ -124,14 +124,14 @@ public class SwitchCodeStore {
     
     
     //return a list of all the raw tiles used in routing from source to dests
-    public static HashSet getTilesInRoutes(ComputeNode source, ComputeNode[] dests) 
+    public static HashSet getTilesInRoutes(Router router, ComputeNode source, ComputeNode[] dests) 
     {
         HashSet tiles = new HashSet();
 
         for (int i = 0; i < dests.length; i++) {
             ComputeNode dest = dests[i];
 
-            LinkedList route = Router.getRoute(source, dest);
+            LinkedList route = router.getRoute(source, dest);
 
             Iterator it = route.iterator();
             while (it.hasNext()) {
@@ -158,8 +158,9 @@ public class SwitchCodeStore {
      * @param stage 0 is communicate address stage, 1 is init or primepump,
      * 2 is steady-state
      */
-    public static void generateSwitchCode(ComputeNode source, ComputeNode[] dests,
-                                          int stage)
+    public static void generateSwitchCode(Router router, 
+            ComputeNode source, ComputeNode[] dests,
+            int stage)
     {
         RouteIns[] ins = new RouteIns[source.getRawChip().getXSize() *
                                       source.getRawChip().getYSize()];
@@ -167,7 +168,7 @@ public class SwitchCodeStore {
         for (int i = 0; i < dests.length; i++) {
             ComputeNode dest = dests[i];
         
-            LinkedList route = Router.getRoute(source, dest);
+            LinkedList route = router.getRoute(source, dest);
             //append the dest again to the end of route 
             //so we can place the item in the processor queue
             route.add(dest);

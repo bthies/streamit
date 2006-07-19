@@ -84,6 +84,7 @@ public class CommunicateAddrs
      */
     private CommunicateAddrs(RawChip chip, SpaceTimeSchedule stSchedule)
     {
+        Router xyRouter = new XYRouter();
         this.chip = chip;
         fields = new HashMap();
         functions = new HashMap();
@@ -189,7 +190,7 @@ public class CommunicateAddrs
                     RawTile[] dest = {homeTile};
                     
                     //now for the steady
-                    SwitchCodeStore.generateSwitchCode(allocatingTile, 
+                    SwitchCodeStore.generateSwitchCode(xyRouter, allocatingTile, 
                             dest, 0);
                     
                     

@@ -32,6 +32,9 @@ public class SpaceTimeBackend {
 
     public static SIRStructure[] structures;
 
+    public static GreedyBinPacking greedyBinPacking;
+    
+    
     private static RawChip rawChip;
   
     public static double COMP_COMM_RATIO;
@@ -92,8 +95,19 @@ public class SpaceTimeBackend {
             ((SIRContainer)str).reclaimChildren();
         
         if (KjcOptions.dup > 1) {
-            (new DuplicateBottleneck()).duplicate(str, rawChip);
+            (new DuplicateBottleneck()).smartDuplication(str, rawChip);
         }
+        
+        if (KjcOptions.partition_greedier) {
+            str = GranularityAdjust.doit(str, rawChip);
+        }
+        
+        /*
+        KjcOptions.partition_dp = true;
+        str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
+                16, true, false);
+        KjcOptions.partition_dp = false;
+        */
         
         Lifter.liftAggressiveSync(str);
 
@@ -106,11 +120,8 @@ public class SpaceTimeBackend {
             Lifter.lift(str);
             System.out.println("Done Vertical Fission...");
         }
-        /*
-        KjcOptions.partition_dp = true;
-        str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
-                32, false, false);
-        */
+        
+      
         // run user-defined transformations if enabled
         if (KjcOptions.optfile != null) {
             System.err.println("Running User-Defined Transformations...");
@@ -187,14 +198,26 @@ public class SpaceTimeBackend {
         // deadlock...
         at.dms.kjc.common.SeparatePushPop.doit(str);
         
-       
+    
+        /*KjcOptions.partition_dp = true;
+        SIRStream partitionedStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
+            partitionedStr = at.dms.kjc.sir.lowering.partition.Partitioner.doit(partitionedStr,
+                rawChip.getTotalTiles(), true, false);
+        KjcOptions.partition_dp = false;
+        */
         
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
+
+        WorkEstimate workEstimate = WorkEstimate.getWorkEstimate(str); 
         
+        greedyBinPacking = new GreedyBinPacking(str, rawChip.getTotalTiles(), 
+                workEstimate);
+        greedyBinPacking.pack();
         
-        double CCRatio = CompCommRatio.ratio(str, WorkEstimate.getWorkEstimate(str), 
+        double CCRatio = CompCommRatio.ratio(str, workEstimate,
                 executionCounts[1]);
+        
         System.out.println("Comp/Comm Ratio of SIR graph: " + 
                 CCRatio);
        
@@ -213,10 +236,15 @@ public class SpaceTimeBackend {
         Trace[] traces = null;
         Trace[] traceGraph = null; 
         
-        // get the work estimation
-        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-        SimplePartitioner partitioner = new SimplePartitioner(topNodes,
-                                                              executionCounts, lfa, work, rawChip);
+        
+        Partitioner partitioner = null;
+        
+        partitioner = new SimplePartitioner(topNodes,
+                executionCounts, lfa, workEstimate, rawChip);
+        
+        //partitioner = new AdaptivePartitioner(topNodes,
+        //       executionCounts, lfa, workEstimate, rawChip);
+        
         traceGraph = partitioner.partition();
         System.out.println("Traces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
@@ -226,10 +254,15 @@ public class SpaceTimeBackend {
         new MultiLevelSplitsJoins(partitioner, rawChip).doit();
         partitioner.dumpGraph("traces_after_multi.dot");
         
+     
+            
+        
+        
         /*
          * System.gc(); System.out.println("MEM:
          * "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
          */
+        /*
         StreaMITMain.clearParams();
         FlattenGraph.clear();
         AutoCloner.clear();
@@ -244,7 +277,7 @@ public class SpaceTimeBackend {
         executionCounts = null;
         topNodes = null;
         System.gc();
-
+        */
         // ----------------------- This Is The Line -----------------------
         // No Structure, No SIRStreams, Old Stuff Restricted Past This Point
         // Violators Will Be Garbage Collected
@@ -263,23 +296,36 @@ public class SpaceTimeBackend {
         //for correct execution of the init stage and steady state
         AddBuffering.doit(spaceTimeSchedule);
         
+        //generate the schedule modeling values for each filter/slice 
+        partitioner.calculateWorkStats();
+        
         //create the layout for each stage of the execution using simulated annealing
         //or manual
         Layout layout = null;
         if (KjcOptions.manuallayout) {
             layout = new ManualTraceLayout(spaceTimeSchedule);
+        } else if (KjcOptions.greedysched) {
+            //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
+            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip);
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
         }
+        
         layout.run();
                 
-      
-        
         System.out.println("Space/Time Scheduling Steady-State...");
         GenerateSteadyStateSchedule spaceTimeScheduler = 
             new GenerateSteadyStateSchedule(spaceTimeSchedule, layout);
         spaceTimeScheduler.schedule();
   
+        /*
+        if (partitioner instanceof AdaptivePartitioner &&
+                ((AdaptivePartitioner)partitioner).useSpace
+                (partitionedStr, spaceTimeSchedule, layout)) { 
+            System.out.println("\n\n USE SPACE!");
+            //System.exit(0);
+        }
+        */
                 
         //calculate preloop and initialization code
         System.out.println("Creating Initialization Schedule...");

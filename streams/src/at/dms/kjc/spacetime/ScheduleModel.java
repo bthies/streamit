@@ -6,6 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * This class models the calculated schedule and layout using the 
@@ -95,6 +96,23 @@ public class ScheduleModel {
      */
     public int getBottleNeckCost() {
         return bottleNeckCost;
+    }
+    
+    /**
+     * Return the set of tiles that are within threshold of the bottleneck tile.
+     * 
+     * @param threshold The threshold that defines a bottleneck tile.
+     * @return the set of tiles that are within threshold of the bottleneck tile.
+     */
+    public HashSet<RawTile> getBottleneckTiles(double threshold) {
+        HashSet<RawTile> bns = new HashSet<RawTile>();
+        
+        for (int i = 0; i < tileCosts.length; i++) {
+            if (((double)tileCosts[i]) / ((double)bottleNeckCost) > threshold) {
+                bns.add(rawChip.getTile(i));
+            }
+        }
+        return bns;
     }
     
     /**

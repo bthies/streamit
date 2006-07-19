@@ -169,6 +169,8 @@ public class BCFile
         buf.append("global gNumSlices = " + numTraces + ";\n");
         buf.append("global gNumFilters = " + numFilters + ";\n");
         buf.append("global gMappedTiles = " + mappedTiles + ";\n");
+        buf.append("global gOffChipBufferSizeBytes = " + 
+                OffChipBuffer.totalBufferSizeInBytes().toString() + ";\n");
         //define the vars
         //define the number of items received so far and zero it
         buf.append("global gNGItems;\n");

@@ -414,4 +414,48 @@ public class Util {
         tile.getSwitchCode().appendIns(moveIns, (init || primePump));
     }
 
+    /**
+     * Calculate the number of items the file writers write to files in
+     * the schedule exeCounts.
+     * 
+     * @param str The toplevel container.
+     * @param exeCounts The schedule.
+     * @return the number of items the file writers write to files in
+     * the schedule exeCounts.
+     */
+    public static int outputsPerSteady(SIRStream str, HashMap exeCounts) {
+        if (str instanceof SIRFeedbackLoop) {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
+            return outputsPerSteady(fl.getBody(), exeCounts) + 
+            outputsPerSteady(fl.getLoop(), exeCounts);
+        }
+        if (str instanceof SIRPipeline) {
+            SIRPipeline pl = (SIRPipeline) str;
+            Iterator iter = pl.getChildren().iterator();
+            int outputs = 0;
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                outputs += outputsPerSteady(child, exeCounts);
+            }
+            return outputs;
+        }
+        if (str instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin) str;
+            Iterator iter = sj.getParallelStreams().iterator();
+            int outputs = 0;
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                outputs += outputsPerSteady(child, exeCounts);
+            }
+            return outputs;
+        }
+        //update the comm and comp numbers...
+        if (str instanceof SIRFilter) {
+            if (str instanceof SIRFileWriter)
+                return ((int[])exeCounts.get(str))[0];
+            else
+                return 0;
+        }
+        return 0;
+    }
 }

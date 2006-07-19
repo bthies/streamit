@@ -12,6 +12,7 @@ import at.dms.kjc.sir.SIRSplitJoin;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+import at.dms.kjc.sir.lowering.partition.WorkList;
 import java.util.*;
 import at.dms.kjc.*;
 
@@ -58,6 +59,52 @@ public class DuplicateBottleneck {
                 (((double)statefulWork)) / (((double)totalWork)));
         
       
+    }
+    
+    public SIRStream smartDuplication(SIRStream str, RawChip chip) {
+        percentStateless(str);
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        WorkList workList = work.getSortedFilterWork();
+                //find the total work
+        int totalWork = 0;
+        for (int i = 0; i < workList.size(); i++) {
+            SIRFilter filter = workList.getFilter(i);
+            int filterWork = work.getWork(filter); 
+            System.out.println("Sorted Work " + i + ": " + filter + " work " 
+                    + filterWork + ", is fissable: " + StatelessDuplicate.isFissable(filter));
+            totalWork += filterWork;
+        }
+        //find the ideal work distribution
+        int idealWork = totalWork / chip.getTotalTiles();
+        boolean change = false;
+        System.out.println("Ideal Work: " + idealWork);
+        
+        for (int i = workList.size() - 1; i >= 0; i--) {
+            SIRFilter filter = workList.getFilter(i);
+            int filterWork = work.getWork(filter);
+            if (!StatelessDuplicate.isFissable(filter))
+                continue;
+            System.out.println("Analyzing " + filter + " work = " + filterWork);
+            if (filterWork >= 2 * idealWork) {
+                int fissAmount = (int)Math.ceil(((double)filterWork) / ((double)idealWork));
+                System.out.println("Fissing " + filter  + " " + fissAmount + 
+                        " times (work was " + filterWork + ")");
+                StatelessDuplicate.doit(filter, fissAmount);
+                change = true;
+            }
+            else {
+                System.out.println("Stop fissing, current filter work = " + filterWork);
+                //since the list is sorted, nothing else will be over 
+                //the threshold
+                break;
+            }
+        }
+        
+        if (!change) {
+            System.exit(0);
+        }
+        
+        return str;
     }
     
     private boolean duplicateBottleneck(SIRStream str) {

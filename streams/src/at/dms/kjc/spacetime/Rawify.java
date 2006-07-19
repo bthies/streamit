@@ -53,6 +53,8 @@ public class Rawify {
     /** the layout we are using */
     private static Layout layout;
     
+    private static Router router;
+    
     /**
      *  The entry of the rawify pass.  This function iterates over the 
      *  schedules for the 3 phases (init, priming, steady) and generates the
@@ -68,6 +70,13 @@ public class Rawify {
             SWITCH_COMP = false;
         
         Rawify.layout = layout;
+        
+        ScheduleModel model = 
+            new ScheduleModel(schedule, layout, schedule.getScheduleList());
+        model.createModel();
+        
+        
+        router = new SmarterRouter(model.getTileCosts(), rawChip);
         
         //determine the number of dram reads and writes to each port in
         //the steady state, this is necessary to throttle the issuing
@@ -89,8 +98,9 @@ public class Rawify {
         ComputeCodeStore.presynchAllDramsInInit();
         //the steady-state!!
         traces = schedule.getSchedule();
-
+        
         if (SpaceTimeBackend.NO_SWPIPELINE) {
+            ComputeCodeStore.barrier(rawChip);
             iterateInorder(traces, false, false, rawChip);
         } else {
             //iterate over the joiners then the filters then 
@@ -682,7 +692,7 @@ public class Rawify {
                 
         //generate the switch code to send the item from the owner 
         //to the srcTile of the data
-        SwitchCodeStore.generateSwitchCode(buffer.getOwner(), 
+        SwitchCodeStore.generateSwitchCode(router, buffer.getOwner(), 
                 new ComputeNode[]{srcTile}, ((init || primepump) ? 1 : 2));
     }
     
@@ -818,7 +828,7 @@ public class Rawify {
                 // get the source buffer, pass thru redundant buffer(s)
                 StreamingDram source = InterTraceBuffer.getBuffer(
                                                                   traceNode.getSources()[j]).getNonRedundant().getDRAM();
-                tiles.addAll(SwitchCodeStore.getTilesInRoutes(source, dest));
+                tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, source, dest));
             }
             // generate the loop header on all tiles involved
             HashMap labels = SwitchCodeStore.switchLoopHeader(tiles,
@@ -830,7 +840,7 @@ public class Rawify {
                                                                   traceNode.getSources()[j]).getNonRedundant().getDRAM();
                 for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                     for (int q = 0; q < typeSize; q++)
-                        SwitchCodeStore.generateSwitchCode(source, dest, stage);
+                        SwitchCodeStore.generateSwitchCode(router, source, dest, stage);
                 }
             }
             // generate the loop trailer
@@ -844,7 +854,7 @@ public class Rawify {
                         .getDRAM();
                     for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                         for (int q = 0; q < typeSize; q++)
-                            SwitchCodeStore.generateSwitchCode(source, dest,
+                            SwitchCodeStore.generateSwitchCode(router, source, dest,
                                                                stage);
                     }
                 }
@@ -1062,7 +1072,7 @@ public class Rawify {
                             dests[d] = InterTraceBuffer.getBuffer(
                                                                   traceNode.getDests()[j][d]).getDRAM();
                         for (int q = 0; q < typeSize; q++)
-                            SwitchCodeStore.generateSwitchCode(sourcePort,
+                            SwitchCodeStore.generateSwitchCode(router, sourcePort,
                                                                dests, stage);
                     }
                 }
@@ -1124,7 +1134,7 @@ public class Rawify {
                 ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
                 for (int d = 0; d < dests.length; d++)
                     dests[d] = InterTraceBuffer.getBuffer(traceNode.getDests()[j][d]).getDRAM();
-                tiles.addAll(SwitchCodeStore.getTilesInRoutes(sourcePort, dests));
+                tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, sourcePort, dests));
             }
         }
         return tiles;

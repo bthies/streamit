@@ -138,6 +138,33 @@ public class SpaceTimeSchedule {
     }
 
     /**
+     * Return the number of outputs that are written to file writers during the 
+     * steady-state.
+     *  
+     * @return the number of outputs that are written to file writers during the 
+     * steady-state.
+     */
+    public int outputsPerSteady() {
+        int outputs = 0;
+        
+        //get all the file writers
+        Vector<Trace> fileWriters = new Vector<Trace>();
+        for (int i = 0; i < partitioner.io.length; i++) 
+            if (partitioner.io[i].getHead().isFileOutput())
+                fileWriters.add(partitioner.io[i]);
+        
+        for (int i = 0; i < fileWriters.size(); i++) {
+            FilterTraceNode node = (FilterTraceNode)fileWriters.get(i).getHead().getNext();
+            FilterInfo fi = FilterInfo.getFilterInfo(node);
+            assert node.getFilter().getInputType().isNumeric() :
+                "non-numeric type for input to filewriter";
+        
+            outputs += fi.totalItemsReceived(false, false);
+        }
+        return outputs;
+    }
+    
+    /**
      * @param f
      * @return The total number of times this filter fires in the prime pump stage
      * so this accounts for the number number of times that a trace if called in the

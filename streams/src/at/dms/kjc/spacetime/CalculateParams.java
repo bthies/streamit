@@ -28,10 +28,14 @@ public class CalculateParams {
         calcAvgMaxSliceSize();
         System.out.println("Average Max Slice Size based on SIR graph: " + 
                 avgMaxSliceSize);
-        if (false) {
+        
+        if (KjcOptions.autoparams) {
             calcSteadyMult();
             calcSliceThresh();
         }
+        
+        System.out.println("Using SteadyMult: " + KjcOptions.steadymult);
+        System.out.println("Using SliceThresh: " + KjcOptions.slicethresh);
     }
     
     private void calcSliceThresh() {
@@ -48,7 +52,13 @@ public class CalculateParams {
     
     private void calcSteadyMult() {
         if (traces == 1) {
-            KjcOptions.steadymult = 512;
+            if (avgMaxSliceSize <= 16)
+                KjcOptions.steadymult = 16;
+            else 
+                KjcOptions.steadymult = 512;
+        }
+        else {
+            KjcOptions.steadymult = 16;
         }
     }
     

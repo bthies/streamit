@@ -334,6 +334,29 @@ public class RawChip {
         return false;
     }
  
+    /***************************************************************************
+     * get the direction in X from src to dst, -1 for west 0 for same X, and 1
+     * for east
+     **************************************************************************/
+    public int getXDir(ComputeNode src, ComputeNode dst) {
+        if (dst.getX() - src.getX() < 0)
+            return -1;
+        if (dst.getX() - src.getX() > 0)
+            return 1;
+        return 0;
+    }
+
+    /**
+     * get the direction in Y from src to dst, -1 for North 0 for same and 1 for
+     * south.
+     */
+    public int getYDir(ComputeNode src, ComputeNode dst) {
+        if (dst.getY() - src.getY() < 0)
+            return -1;
+        if (dst.getY() - src.getY() > 0)
+            return 1;
+        return 0;
+    }
     
     /**
      * Get the tile that is at the specified <pre>dir</pre> from <pre>tile</pre>.

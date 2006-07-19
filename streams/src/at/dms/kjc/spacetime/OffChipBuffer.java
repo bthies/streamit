@@ -327,4 +327,24 @@ public abstract class OffChipBuffer {
         }
         return returnVal;
     }
+    
+    /**
+     * Return the total number of bytes used by the offchip buffers.
+     * 
+     * @return the total number of bytes used by the offchip buffers.
+     */
+    public static Address totalBufferSizeInBytes() {
+        Address bytes = Address.ZERO;
+        
+        Iterator keys = bufferStore.keySet().iterator();
+        while (keys.hasNext()) {
+            OffChipBuffer buf = (OffChipBuffer)bufferStore.get(keys.next());
+            
+            if (!buf.redundant()) {
+                bytes = bytes.add(buf.sizeSteady.mult(buf.rotationLength));
+            }
+        }
+        
+        return bytes;
+    }
 }

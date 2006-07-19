@@ -73,6 +73,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private BufferDRAMAssignment assignBuffers;
     /** the total work all the tiles for the current layout */
     private int totalWork;
+    /** As we perform the annealing, this stores the communication cost of 
+     * the current minimum, used to compare to equal minimums during the 
+     * search.
+     */
+    private double currentMinCommCost;
     
     /**
      * Create a new Annealed layout object that will assign filters of 
@@ -91,7 +96,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             tiles[i] = rawChip.getTile(i);
         //get the schedule order of the graph!
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            //if we are not software pipelining then use then respect
+            //if we are not software pipelining then then respect
             //dataflow dependencies
             scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getTraceGraph());
         } else {
@@ -99,14 +104,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
             Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
             scheduleOrder = new LinkedList(Arrays.asList(tempArray));
+            //reverse the list, we want the list in descending order!
+            Collections.reverse(scheduleOrder);
         }
-        
-        // reverse the list, we want the list in descending order!
-        Collections.reverse(scheduleOrder);
         
         //init the buffer to dram assignment pass
         assignBuffers = new BufferDRAMAssignment();
         //COMM_MULTIPLIER = COMP_COMM_RATIO / 
+        currentMinCommCost = Double.MAX_VALUE;
     }
 
     /**
@@ -114,7 +119,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public void run() {
         simAnnealAssign(10, 1000);
+        //simAnnealAssign(5, 1000);
         //simAnnealAssign(3, 1000);
+        //simAnnealAssign(3, 50);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
@@ -348,6 +355,42 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         }
     }
 
+    
+    protected boolean keepNewEqualMin() {
+        return false;
+        /*
+        int[] tileCosts = getTileWorks(false);
+        
+        //find the communication cost of this configuration
+        HashMap<ComputeNode, Integer> commCosts = 
+            commEstimate(tileCosts);
+        
+        Iterator<ComputeNode> nodes = commCosts.keySet().iterator();
+        while (nodes.hasNext()) {
+            RawTile node = (RawTile)nodes.next();
+            tileCosts[node.getTileNumber()] += 
+                commCosts.get(node).intValue();
+        }
+        */
+        /*
+        double cost = (double)reorgCrossRoutes();
+        
+        //double cost = maxTileWork(getTileWorks(false));
+        
+        if (cost < currentMinCommCost) {
+            System.out.println("Keeping new config as min: " + 
+                    cost + " < " + currentMinCommCost);
+            //keep this new configuration as the overall min config 
+            //because it has lower communication cost
+            currentMinCommCost = cost;
+            return true;
+        }
+        //don't set this layout as the overall min.
+             
+        return false;
+        */
+    }
+    
     /**
      * Return true if other filters that this filter's upstream
      * slice splits to are mapped to tile.  Return false if it is ok
@@ -580,12 +623,82 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }    
     
     /**
+     * Return the number of cross routes that occur during the reorganization stage
+     * between software pipelined steady states.
+     * 
+     * @return the number of cross routes that occur during the reorganization stage
+     * between software pipelined steady states.
+     */
+    /*
+    private int reorgCrossRoutes() {
+        Trace[] traces = partitioner.getTraceGraph();
+        int crossed = 0;
+        
+        assignBuffers.run(spaceTime, this);
+        
+        //buffer edges are assigned drams by the buffer dram assignment,
+        //so we can get a fairly accurate picture of the communication
+        //of the graph...
+        HashSet<ComputeNode> routersUsed = new HashSet<ComputeNode>();
+        
+        for (int i = 0; i < traces.length; i++) {
+            Trace trace = traces[i];
+            Iterator edges = trace.getTail().getDestSet().iterator();
+            while (edges.hasNext()) {
+                Edge edge = (Edge)edges.next();
+               // System.out.println(" Checking if " + edge + " crosses.");
+                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
+                
+                //nothing is transfered for this buffer.
+                if (buf.redundant())
+                    continue;
+                
+                OutputTraceNode output = edge.getSrc();
+                InputTraceNode input = edge.getDest();
+                StreamingDram bufDRAM = buf.getDRAM();
+               
+                
+                
+                if (!IntraTraceBuffer.unnecessary(output)) {
+                    StreamingDram outputDRAM = 
+                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
+                    
+                    Iterator<ComputeNode> route = Router.getRoute(outputDRAM, bufDRAM).iterator();
+                    while (route.hasNext()) {
+                        ComputeNode hop = route.next();
+                        if (routersUsed.contains(hop)) 
+                            crossed++;
+                        else 
+                            routersUsed.add(hop);
+                    }
+                }
+                
+                if (!IntraTraceBuffer.unnecessary(input)) {
+                    StreamingDram inputDRAM = 
+                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                    Iterator<ComputeNode>route = Router.getRoute(bufDRAM, inputDRAM).iterator();
+                    while (route.hasNext()) {
+                        ComputeNode hop = route.next();
+                        if (routersUsed.contains(hop)) 
+                            crossed++;
+                        else 
+                            routersUsed.add(hop);
+                    }
+                }
+            }
+        }
+        
+        return crossed;
+    }
+    */
+    /**
      * Calculate a measure of the communication cost of the current 
      * assignment.  This method changes frequently, see the method itself 
      * for implementation.
      * 
      * @return An estimate of the cost of communication for this layout.
      */
+    /*
     private HashMap<ComputeNode, Integer> commEstimate(int tileCosts[]) {
         int estimate = 0;
         Trace[] traces = partitioner.getTraceGraph();
@@ -649,6 +762,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         }
         return commCost;
     }
+    */
     
     /**
      * Add together the integer entries of map2 to the entries of map1 and
@@ -685,6 +799,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * and the pass through a tile in the <bigWorkers> tile set.
      * 
      */
+    /*
     private HashMap<ComputeNode, Integer> itemsThroughBigWorkers
            (HashSet<ComputeNode> bigWorker, Edge edge, 
             StreamingDram src, StreamingDram dst) {
@@ -740,7 +855,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         
         return commCost;
     }
-    
+    */
     /**
      * Return the max element of tileCosts.
      * 
@@ -811,88 +926,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return tileCosts;
     }
     
-    /**
-     * Not used anymore.
-     * 
-     * @return Got me?
-     */
-    private int[] getTileWorksOld() {
-        int[] tileCosts = new int[rawChip.getTotalTiles()];
-        Iterator traces = scheduleOrder.iterator();
-        
-        while (traces.hasNext()) {
-            Trace trace = (Trace)traces.next();
-            FilterTraceNode node = trace.getFilterNodes()[0];
-            RawTile tile = (RawTile)assignment.get(node);
-            //the cost of the previous node, not used for first filter 
-            int prevStart = tileCosts[tile.getTileNumber()];
-                    
-            //the first filter does not have to account for startup lag
-            tileCosts[tile.getTileNumber()] += 
-                partitioner.getFilterWorkSteadyMult(node);
-
-            //now cycle thru the rest of the nodes...
-            for (int f = 1; f < trace.getFilterNodes().length; f++) {
-                node = trace.getFilterNodes()[f];
-                //get this node's assignment;
-                tile = (RawTile)assignment.get(node);
-                //accounting for pipeling lag, when is the earliest I can start?
-                
-                //offset is the offset between the last filter's start time
-                //and this tile's current work load, if it is positive,
-                //this tile is free after the last time, so we should,
-                //account for this time in the pipeline lag
-                //if negative, this tile is free before the last tile was free
-                //so it does not help, so set to zero
-                int offSet = tileCosts[tile.getTileNumber()] - 
-                   prevStart;
-                
-                offSet = Math.max(0, offSet);
-                
-                //now when is the earliest I can start in relation to the last tile
-                //and the work of this tile
-                int pipeLag = 
-                    Math.max((partitioner.getFilterStartupCost(node) - offSet),
-                            0);
-                
-                //set the prev start to when I started, for the next iteration
-                prevStart = tileCosts[tile.getTileNumber()];
-                //the new work for this tile, is my work + my startup cost...
-                tileCosts[tile.getTileNumber()] += (pipeLag + 
-                    partitioner.getFilterWorkSteadyMult(node));
-
-               
-            }
-            //account for the cost of issuing its load dram commands 
-            RawTile inputTile = 
-                (RawTile)assignment.get(trace.getHead().getNextFilter());
-            tileCosts[inputTile.getTileNumber()]+= ScheduleModel.DRAM_ISSUE_COST;
-                        
-            //account for the
-            //cost of sending an item over the gdn if it uses it...
-            RawTile outputTile = 
-                (RawTile)assignment.get(trace.getTail().getPrevFilter());
-            if (LogicalDramTileMapping.mustUseGdn(outputTile)) {
-                tileCosts[outputTile.getTileNumber()] += (node.getFilter().getPushInt() * 
-                        node.getFilter().getSteadyMult() * 
-                        ScheduleModel.GDN_PUSH_COST);
-            }
-            
-            //account for the cost of issuing its store dram command
-            tileCosts[outputTile.getTileNumber()]+= ScheduleModel.DRAM_ISSUE_COST;
-        }
-         
-        return tileCosts;
-    }
-    
     /**    
      * This method initalizes the simulated annealing algorithm.  It will
      * setup the file reading and writing structures and determine which 
      * filters need to be assigned to tiles.
      */
     public void initialize() {
-        //generate the startup cost of each filter...         
-        partitioner.calculateWorkStats();
+       
         totalWork = 0;
         
         //create the filter list

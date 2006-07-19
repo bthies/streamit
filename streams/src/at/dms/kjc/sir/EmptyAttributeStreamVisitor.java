@@ -93,10 +93,15 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration initPath) {
+        // visit joiner 
+        self.getJoiner().accept(this);
         // visit the body
         self.getBody().accept(this);
         // visit the loop
         self.getLoop().accept(this);
+        // visit splitter
+        self.getSplitter().accept(this);
+
         return self;
     }
 }

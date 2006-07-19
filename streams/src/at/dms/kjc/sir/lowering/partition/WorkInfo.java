@@ -49,7 +49,7 @@ class WorkInfo {
             // otherwise, calculate exact work
             if (KjcOptions.simulatework) {
                 // if simulation is enabled, then call raw simluator, call the correct work estimation pass
-                if (KjcOptions.spacedynamic)
+                if (KjcOptions.spacedynamic || KjcOptions.spacetime)
                     result.workExact = at.dms.kjc.spacedynamic.RawWorkEstimator.estimateWork(filter); 
                 else
                     

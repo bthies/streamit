@@ -16,6 +16,8 @@ import at.dms.kjc.cluster.CodeEstimate;
  */
 public class WorkEstimate {
     
+    private HashMap executionCounts;
+    
     /**
      * Maps stream constructs to a WorkInfo node.
      */
@@ -44,6 +46,17 @@ public class WorkEstimate {
         return buildWorkList(workMap);
     }
 
+    /**
+     * Return the execution counts that were used to create this
+     * work estimation.
+     * 
+     * @return the execution counts that were used to create this
+     * work estimation.
+     */
+    public HashMap getExecutionCounts() {
+        return executionCounts;   
+    }
+    
     /**
      * Builds a worklist out of <pre>map</pre>
      */
@@ -200,7 +213,7 @@ public class WorkEstimate {
      */
     private void doit(SIRStream str) {
         // get execution counts for filters in <pre>str</pre>
-        HashMap executionCounts = SIRScheduler.getExecutionCounts(str)[1];
+        executionCounts = SIRScheduler.getExecutionCounts(str)[1];
         // for each filter, build a work count
         for (Iterator it = executionCounts.keySet().iterator();
              it.hasNext(); ){

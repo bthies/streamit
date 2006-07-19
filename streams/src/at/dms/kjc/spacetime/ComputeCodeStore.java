@@ -778,11 +778,30 @@ public class ComputeCodeStore implements SIRCodeUnit{
     }
 
     /**
-     * Create a barrier.
-     * @param chip
+     * Create a barrier in the init stage at this point in code generation.
+     * 
+     * @param chip The raw chip.
      */
-    public static void barrier(RawChip chip) {
-        
+    public static void barrierInInit(RawChip chip) {
+        Router router = new XYRouter();
+        for (int i = 0; i < chip.getTotalTiles(); i++) {
+            RawTile tile = chip.getTile(i);
+            tile.getComputeCode().initBlock.addStatement(RawExecutionCode.boundToSwitchStmt(100));
+            ComputeNode[] dests =  new ComputeNode[chip.getTotalTiles() - 1];
+            int index = 0;
+            for (int x = 0; x < chip.getTotalTiles(); x++) {
+                RawTile dest = chip.getTile(x);
+                if (dest != tile) {
+                    JStatement rec = 
+                        new JExpressionStatement(
+                                new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
+                                        new JFieldAccessExpression(Util.CSTIINTVAR)));
+                    dest.getComputeCode().initBlock.addStatement(rec);
+                    dests[index++] = chip.getTile(x);
+                }
+            }
+            SwitchCodeStore.generateSwitchCode(router, tile, dests, 1);
+        }
     }
     
     /**

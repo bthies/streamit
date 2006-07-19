@@ -100,7 +100,7 @@ public class Rawify {
         traces = schedule.getSchedule();
         
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            ComputeCodeStore.barrier(rawChip);
+            ComputeCodeStore.barrierInInit(rawChip);
             iterateInorder(traces, false, false, rawChip);
         } else {
             //iterate over the joiners then the filters then 

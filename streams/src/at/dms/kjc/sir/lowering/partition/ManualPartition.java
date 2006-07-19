@@ -270,6 +270,15 @@ public class ManualPartition {
     }
 
     /**
+     * Fuses stateless components of pipelines in 'str' as much as
+     * possible, returning the new stream.
+     */
+    public static SIRStream fuseStatelessPipelines(SIRStream str) {
+        checkNull(str);
+        return FuseStatelessPipelines.doit(str);
+    }
+
+    /**
      * Returns whether or not 'filter' is fissable by the StreamIt
      * compiler.  Currently, we can fiss only "stateless" filters that
      * have no internal fields.

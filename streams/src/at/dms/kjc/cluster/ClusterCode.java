@@ -1075,8 +1075,7 @@ public class ClusterCode {
             feedbackJoineersNeedingPrep.add(joiner);
             Vector<NetStream> instreams = RegisterStreams
                     .getNodeInStreams(joiner);
-            assert instreams.size() == 2;
-            NetStream looptape = instreams.elementAt(1);
+            NetStream looptape = instreams.size() > 1 ? instreams.elementAt(1) : instreams.elementAt(0);
             int s = looptape.getSource();
             int enqueue_count = ((SIRFeedbackLoop) joiner.getParent())
                     .getDelayInt();

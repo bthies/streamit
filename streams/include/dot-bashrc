@@ -107,7 +107,7 @@ fi
 # a blank entry as "the default path".)
 if [ -z "$TEXINPUTS" ]
 then
-    export TEXINPUTS=${STREAMIT_HOME}/include/tex
+    export TEXINPUTS=${STREAMIT_HOME}/include/tex:
 else 
     TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi

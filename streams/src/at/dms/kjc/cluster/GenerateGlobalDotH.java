@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateGlobalDotH.java,v 1.1 2006-07-07 17:40:01 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateGlobalDotH.java,v 1.2 2006-07-21 19:42:36 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -45,6 +45,8 @@ public class GenerateGlobalDotH {
         // Writing global.h
         // ================================
 
+        str += "#ifndef __GLOBAL_H\n";
+        str += "#define __GLOBAL_H\n\n";
         str += "#include <math.h>\n";
         str += "#include \"structs.h\"\n";
         str += "#include <StreamItVectorLib.h>\n";
@@ -78,6 +80,8 @@ public class GenerateGlobalDotH {
             str += "extern " + ClusterUtils.declToString(type, "__global__" + ident) + ";\n";
         }
 
+        str += "#endif // __GLOBAL_H\n";
+        
         try {
             FileWriter fw = new FileWriter("global.h");
             fw.write(str.toString());
@@ -85,6 +89,7 @@ public class GenerateGlobalDotH {
         }
         catch (Exception e) {
             System.err.println("Unable to write <global.h>");
+            System.exit(1);
         }
     }
 }

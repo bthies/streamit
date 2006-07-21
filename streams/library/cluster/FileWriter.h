@@ -1,3 +1,5 @@
+#ifndef __FILEWRITER_H
+#define __FILEWRITER_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,15 +20,17 @@ public:
   int buf_index;
 };
 
-int FileWriter_open(char *pathname);
+/* Routines that are independent of <T>, make them not be in class */
 
-void FileWriter_close(int fs_ptr);
+extern int FileWriter_open(char *pathname);
 
-int FileWriter_flush(int fs_ptr);
+extern void FileWriter_close(int fs_ptr);
 
-int FileWriter_getpos(int fs_ptr);
+extern int FileWriter_flush(int fs_ptr);
 
-void FileWriter_setpos(int fs_ptr, int pos);
+extern int FileWriter_getpos(int fs_ptr);
+
+extern void FileWriter_setpos(int fs_ptr, int pos);
 
 template<class T>
 static inline void FileWriter_write(int fs_ptr, T data) {
@@ -46,3 +50,4 @@ static inline void FileWriter_write(int fs_ptr, T data) {
     }
     // } RMR
 }
+#endif

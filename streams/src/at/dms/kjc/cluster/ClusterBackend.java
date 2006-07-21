@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.94 2006-07-07 20:31:23 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.95 2006-07-21 19:42:36 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -51,7 +51,7 @@ public class ClusterBackend {
     public static HashMap<SIROperator,FlatNode> filter2Node;
 
     /**
-     * Result of call to {@link SIRScheduler.getExecutionCounts}.
+     * Result of call to {@link SIRScheduler#getExecutionCounts(SIRStream)}.
      * <br/>
      * (not generic since mixing generics and arrays not allowed)
      */
@@ -386,6 +386,7 @@ public class ClusterBackend {
         //create the execution counts for other passes
         createExecutionCounts(str, graphFlattener);
 
+        
         if (debugPrint) {
             SIRGlobal[] globals;
             if (global != null) {
@@ -397,6 +398,7 @@ public class ClusterBackend {
             System.err.println("// END str before Cluster-specific code");
         }
 
+        
         // if going to standalone without fusion, expand the main
         // method names to include the filter name, so we can identify them
         if (KjcOptions.standalone && !KjcOptions.fusion) {
@@ -568,8 +570,8 @@ public class ClusterBackend {
         HashMap[] result = { initExecutionCounts = new HashMap<FlatNode,Integer>(), 
                              steadyExecutionCounts = new HashMap<FlatNode,Integer>()} ;
 
-        // then filter the results to wrap every filter in a flatnode,
-        // and ignore splitters
+        // Set up initExecutionCounts, steadyExecutionCounts to map FlatNodes
+        // to execution counts stored in executionCounts[0], [1]
         for (int i=0; i<2; i++) {
             for (Iterator it = executionCounts[i].keySet().iterator();
                  it.hasNext(); ){
@@ -583,6 +585,20 @@ public class ClusterBackend {
         }
     
         //Schedule the new Identities and Splitters introduced by GraphFlattener
+        //
+        // Go over the needstoBeSched list:
+        // If a node's predecessor has an execution count (init / steady) from
+        // {init,steady}Executioncounts use that count.  Otherwise use the 
+        // nodes' predecessor's execution count from executioncounts[0] / [1]
+        //
+        // if SIRIdentity node, put this execution count in {init,steady}Executioncounts
+        //
+        // if SIRSplitter, put in this execution count and push it, (weighted
+        // appropriately) to the successors of the splitter.
+        //
+        // if  SIRJoiner and oldcontents has an execution count in executioncounts[0] / [1]
+        // use that execution count.
+       
         for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
             FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
             int initCount=-1;

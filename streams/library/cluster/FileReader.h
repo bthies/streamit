@@ -1,3 +1,5 @@
+#ifndef __FILEREADER_H
+#define __FILEREADER_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,13 +20,15 @@ public:
     int buf_index;
 };
 
-int FileReader_open(char *pathname);
+/* Routines that are independent of <T>, make them not be in class */
 
-void FileReader_close(int fs_ptr);
+extern int FileReader_open(char *pathname);
 
-int FileReader_getpos(int fs_ptr);
+extern void FileReader_close(int fs_ptr);
 
-void FileReader_setpos(int fs_ptr, int pos);
+extern int FileReader_getpos(int fs_ptr);
+
+extern void FileReader_setpos(int fs_ptr, int pos);
 
 template<class T>
 static inline T FileReader_read(int fs_ptr) {
@@ -75,3 +79,4 @@ static inline T FileReader_read(int fs_ptr) {
 
     return res;
 }
+#endif

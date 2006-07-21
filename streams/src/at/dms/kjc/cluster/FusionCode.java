@@ -2,6 +2,7 @@ package at.dms.kjc.cluster;
 
 import java.io.*;
 import java.util.*;
+
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
@@ -16,6 +17,7 @@ import at.dms.kjc.common.CodegenPrintWriter;
  */
 
 class FusionCode {
+    public static int mult = 1;
 
     /**
      * estimates a multiplicity for execution scaling using cache sizes
@@ -35,7 +37,7 @@ class FusionCode {
 
         int histogram[] = new int[threadCount];
 
-	// create a histogram of multipicities for individual operators
+    // create a histogram of multipicities for individual operators
 
         for (int t = 0; t < threadCount; t++) {
         
@@ -142,13 +144,15 @@ class FusionCode {
         //p.print("#define __ITERS 10000\n");
 
         //int mult = bestMult(16000,65000,work_est); // estimating best multiplicity 
-        int mult = bestMult(8500,65000); // estimating best multiplicity 
+        mult = bestMult(8500,65000); // estimating best multiplicity 
 
         if (KjcOptions.nomult || !inc_mult) mult = 1;
 
-        p.print("#define __MULT "+mult+"\n");
-        p.newLine();
-
+        if (mult != 1) {
+            p.print("#define __MULT " + mult + "\n");
+            p.newLine();
+        }
+        
         if (KjcOptions.standalone) {
         //p.print("#define __CLUSTER_STANDALONE\n");
         // threadcount is the number of operators after fusion/cacheopts
@@ -165,7 +169,7 @@ class FusionCode {
                     p.print("#define __FUSED_"+src+"_"+dst+"\n");
                 }
                 
-                int extraPeeks = FixedBufferTape.getExtraPeeks(src,dst);
+                int extraPeeks = FixedBufferTape.getRemaining(src,dst);
                 if (extraPeeks > 0) {
                     p.print("//destination peeks: "+(extraPeeks)+" extra items\n");
                     p.print("#define __PEEK_BUF_SIZE_" + src + "_" + dst
@@ -177,12 +181,12 @@ class FusionCode {
                     p.print("#define __NOMOD_"+src+"_"+dst+"\n");
                 }
 
-                FixedBufferTape.calcSizes(src, dst, p, true);
+                int buffersize = FixedBufferTape.bufferSize(src, dst, p, true);
         
                 p.print("#define __BUF_SIZE_MASK_" + src + "_" + dst
-                            + " (pow2ceil(max(" + FixedBufferTape.getInitItems()
-                            + "," + FixedBufferTape.getSteadyItems() + "*__MULT)+"
-                            + FixedBufferTape.getExtraPeeks(src,dst) + ")-1)\n");
+                            + " (pow2ceil(" /*max(" + FixedBufferTape.getInitItems()
+                            + "," + FixedBufferTape.getSteadyItems()*/ + buffersize + (mult == 1? "" : "*__MULT") /*+ ")"*/ + "+"
+                            +  extraPeeks + ")-1)\n");
 
                 p.print("\n");
 
@@ -221,6 +225,12 @@ class FusionCode {
             System.exit(1);
         }
     
+        // math.h is not needed in fusion.cpp, but 
+        // when concatenating threads, having math.h included later 
+        // leads to some syntax errors -- presumably one of our header files
+        // clobbers some name (that does not affect the correctness of 
+        // execution of our compiled programs) that math.h uses.
+        p.println("#include <math.h>");
         p.print("#include <pthread.h>\n");
         p.print("#include <unistd.h>\n");
         //p.print("#include <signal.h>\n");
@@ -519,7 +529,7 @@ class FusionCode {
         p.println("  if (__timer_enabled) {");
         p.println("    tt.start();");
         p.println("  }");
-        p.print("  for (int n = 0; n < (__max_iteration / __MULT); n++) {\n");
+        p.print("  for (int n = 0; n < (__max_iteration " + (mult == 1? "" : " / __MULT") +  " ); n++) {\n");
 
         for (int ph = 0; ph < n_phases; ph++) {
     
@@ -557,7 +567,7 @@ class FusionCode {
                         if (FixedBufferTape.isFixedBuffer(_s,_d)) {
                         if (!FixedBufferTape.needsModularBuffer(_s,_d)) {
                             // p.print(" #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                            if (FixedBufferTape.hasExtraPeeks(_s,_d)) {
+                            if (FixedBufferTape.getRemaining(_s,_d) > 0) {
                                 // p.print(" #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
                                 p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"
@@ -598,7 +608,7 @@ class FusionCode {
                     }
                     }
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
-                    p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
+                    p.print("    "+get_work_function(oper)+"("+steady_int + (mult == 1? "" : "*__MULT") + " );");
                 }
                 
                 p.newLine();
@@ -608,7 +618,8 @@ class FusionCode {
         p.print("  }\n");
 
 
-
+        if (mult != 1) {
+        
         //p.print("  for (int n = 0; n < (__max_iteration % __MULT); n++) {\n");
         p.print("  int rem = (__max_iteration % __MULT);\n\n");
 
@@ -647,7 +658,7 @@ class FusionCode {
                         if (FixedBufferTape.isFixedBuffer(_s,_d)) {
                         if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
                         //p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                        if (FixedBufferTape.getExtraPeeks(_s,_d) > 0) {
+                        if (FixedBufferTape.getRemaining(_s,_d) > 0) {
                         //p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
 
                         // //p.println("// FusionCode_1");
@@ -711,7 +722,7 @@ class FusionCode {
                 p.newLine();
             }
         }
-    
+        }
         //p.print("  }\n");
 
         p.indent();

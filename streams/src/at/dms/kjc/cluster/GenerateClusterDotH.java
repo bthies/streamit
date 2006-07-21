@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateClusterDotH.java,v 1.2 2006-07-07 20:31:24 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateClusterDotH.java,v 1.3 2006-07-21 19:42:36 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -25,13 +25,12 @@ public class GenerateClusterDotH {
 
         CodegenPrintWriter p = new CodegenPrintWriter();
 
-        p.newLine();
-        p.newLine();
-
-        p.print("//#define __CHECKPOINT_FREQ 10000");
-        p.newLine();
-        p.newLine();
-
+        p.println("#ifndef __CLUSTER_H");
+        p.println("#define __CLUSTER_H");
+        
+        p.println("//#define __CHECKPOINT_FREQ 10000");
+        
+        p.println("#endif // __CLUSTER_H");
         try {
             FileWriter fw = new FileWriter("cluster.h");
             fw.write(p.getString());
@@ -39,6 +38,7 @@ public class GenerateClusterDotH {
         }
         catch (Exception e) {
             System.err.println("Unable to write cluster.h");
+            System.exit(1);
         }   
     }
 

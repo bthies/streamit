@@ -251,7 +251,7 @@ public class FlatIRToCluster extends InsertTimers implements
         HashSet sendsCreditsTo = LatencyConstraints
             .getOutgoingConstraints(self);
         boolean restrictedExecution = LatencyConstraints.isRestricted(self);
-        boolean sendsCredits = (sendsCreditsTo.size() > 0);
+        boolean sendsCredits = ! sendsCreditsTo.isEmpty();
 
         SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
         SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
@@ -339,10 +339,13 @@ public class FlatIRToCluster extends InsertTimers implements
 
         p.newLine();
         p.print("inline void check_status__" + selfID + "();\n");
-        p.print("void check_messages__" + selfID + "();\n");
-        p.print("void handle_message__" + selfID + "(netsocket *sock);\n");
-        p.print("void send_credits__" + selfID + "();\n");
-
+        if (SIRPortal.getPortalsWithReceiver(filter).length > 0) { 
+            p.print("void check_messages__" + selfID + "();\n");
+            p.print("void handle_message__" + selfID + "(netsocket *sock);\n");
+        }
+        if (sendsCredits) {
+            p.print("void send_credits__" + selfID + "();\n");
+        }
         p.newLine();
 
         // +=============================+
@@ -884,13 +887,14 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("    " + out.pop_index() + " = 0;\n");
 
             if (out_pop_num_iters > 0) {
-                //p.println("// FlatIRToCluster_5");
                 if (out_pop_num_iters > 1) {
                     p.print("    for (_tmp = 0; _tmp < " + out_pop_num_iters
                             + "; _tmp++) {\n");
                 }
                 p.print("      //check_status__" + selfID + "();\n");
-                p.print("      check_messages__" + selfID + "();\n");
+                if (SIRPortal.getPortalsWithReceiver(filter).length > 0) {
+                    p.print("      check_messages__" + selfID + "();\n");
+                }
                 p.print("      __update_pop_buf__" + selfID + "();\n");
                 p.print("      " + ClusterUtils.getWorkName(self, selfID)
                         + "(1);\n");
@@ -1117,6 +1121,8 @@ public class FlatIRToCluster extends InsertTimers implements
         // | Check Messages |
         // +=============================+
 
+        if (SIRPortal.getPortalsWithReceiver(filter).length > 0) {
+        
         p.print("\nvoid check_messages__" + selfID + "() {\n");
 
         p.print("  message *msg, *last = NULL;\n");
@@ -1146,7 +1152,6 @@ public class FlatIRToCluster extends InsertTimers implements
             p.print("  } // while \n");
         }
 
-        //p.println("// FlatIRToCluster_6");
         p.print("  for (msg = __msg_stack_" + selfID
                 + "; msg != NULL; msg = msg->next) {\n");
         p.print("    if (msg->execute_at <= __counter_" + selfID + ") {\n");
@@ -1334,11 +1339,12 @@ public class FlatIRToCluster extends InsertTimers implements
         }
 
         p.print("}\n");
-
+        }
         // +=============================+
         // | Send Credits |
         // +=============================+
 
+        if (sendsCredits) {
         Iterator constrIter;
         constrIter = sendsCreditsTo.iterator();
         while (constrIter.hasNext()) {
@@ -1449,7 +1455,8 @@ public class FlatIRToCluster extends InsertTimers implements
         }
 
         p.print("}\n");
-
+        }
+        
         // +=============================+
         // | Cluster Main |
         // +=============================+

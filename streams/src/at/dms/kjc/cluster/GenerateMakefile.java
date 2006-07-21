@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.6 2006-07-07 20:31:24 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.7 2006-07-21 19:42:36 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -79,21 +79,32 @@ public class GenerateMakefile {
 
 
         p.print("clean:\n");
-        p.println("\trm -f master*.o fusion*.o global*.o thread*.o " + executablename);
-        p.newLine();
+        p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o" + executablename);
         p.newLine();
 
+        p.print("combined_threads.cpp : ");
         if (KjcOptions.standalone) {
-            p.print(executablename + ": fusion.o ");
+            p.print("fusion.cpp ");
         } else {
-            p.print(executablename + ": master.o global.o ");
+            p.print("master.cpp global.cpp ");
         }
+        p.println(" ${SOURCES}");
+        p.println("\t@${STREAMIT_HOME}/misc/concat_cluster_threads_cpp.pl $^");
+        p.newline();
+        
+//        if (KjcOptions.standalone) {
+//            p.print(executablename + ": fusion.o ");
+//        } else {
+//            p.print(executablename + ": master.o global.o ");
+//        }
+        p.print(executablename + " : combined_threads.o ");
         for (int y = 0; y < helpers.length; y++) {
             if (helpers[y].isNative()) {
                 p.print(helpers[y].getIdent() + ".o ");
             }
         }
-        p.print("$(OBJS)\n");
+        //p.print("$(OBJS)\);
+        p.newline();
         // link against FFTW if we need an FFT library
         String fftLib = (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform ?
                          " -lsrfftw -lsfftw" : "");

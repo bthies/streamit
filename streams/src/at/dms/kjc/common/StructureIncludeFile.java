@@ -93,6 +93,8 @@ public class StructureIncludeFile implements FlatVisitor
     private void createStructureDefs(SIRStructure[] structs, 
                                      FileWriter fw) throws Exception
     {
+        fw.write("#ifndef __STRUCTS_H\n");
+        fw.write("#define __STRUCTS_H\n");
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
             fw.write("typedef struct __" + current.getIdent() + " {\n");
@@ -120,6 +122,7 @@ public class StructureIncludeFile implements FlatVisitor
         fw.write("typedef int bit;\n");
         /* } RMR */
         fw.write("#ifndef round\n#define round(x) (floor((x)+0.5))\n#endif\n");
+        fw.write("#endif // __STRUCTS_H\n");
     }
 
     private void createPushPopFunctions(SIRStructure[] structs,

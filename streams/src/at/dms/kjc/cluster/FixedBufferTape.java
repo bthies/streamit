@@ -6,13 +6,16 @@ import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 
 /**
- * Calculate buffer sizes for an edge in standalone mode.
+ * Calculate buffer sizes for an edge (a tape) that uses a fixed-length buffer.
  * <br/>
- * Calculates sizes of buffers for init and steady state.  
+ * Calculates buffer size.  
  * Separately, calculates extra size needed for peeks (as int, boolean).
  * Separately calculates whether to use modular buffers.
  * <br/> TODO: determine if ever need size for init and size for steady separately.
- * @author janis (pulled out of line from Fusioncode by Allyn)
+ * <br/>This code is specific to the cluster backend.  To generalize would have
+ * to make all backends inherit from a common ancestor defining initExecutionCounts and steadyExecutionCounts:
+ * doable, but not today.
+ * @author allyn from code by mike for rstream
  *
  */
 public class FixedBufferTape {
@@ -29,65 +32,196 @@ public class FixedBufferTape {
         return KjcOptions.standalone;
     }
     
-    static private int init_items;   // max number of items in buffer in init
-    static private int steady_items; // max number of items in buffer in steady state
-
     /**
-     * Return size of init buffer in items. 
-     * <br/> Call only after {@link #calcSizes()}
-     * @return size
+     * Get execution multiplicity of a FlatNode.
+     * <br/> Implicit parameters {@link ClusterBackend#initExecutionCounts}, {@link ClusterBackend#steadyExecutionCounts}
+     * @param node : a FlatNode.
+     * @param init : true to get init multiplicity, false for work multiplicity
+     * @return requested multiplicity or 0 if not found.
      */
-    static public int getInitItems() {return init_items;}
+    private static int getMult(FlatNode node, boolean init) 
+    {
+        Integer mult;
+        if (init) 
+            mult = (Integer)ClusterBackend.initExecutionCounts.get(node);
+        else 
+            mult = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
 
+        if (mult == null) {
+            return 0;
+        }
+    
+        return mult.intValue();
+    }
+   
     /**
-     * Return size of steady state buffer in items. 
-     * <br/> Call only after {@link #calcSizes()}
-     * @return size
+     * calculate required size of a tape buffer for an edge.
+     * <br/>stolen from mikes code in descendants of rstream.FusionState,
+     * theaked to handle TwoStageFilter's
+     * @param src upstream FlatNode
+     * @param dst downstream FlatNode
+     * @return necessary size of buffer in items.
      */
-    static public int getSteadyItems() {return steady_items;}
-
-    /**
-     * Determine the need for an extra peek buffer for a tape based on the destination.
-     *<br/>TODO: May want to remove use of this since complexity is same as {@link getExtraPeeks(dst)}.
-      * @param src the NetStream number of a SIROperator for the source of the tape
-     * @param dst the NetStream number of a SIROperator for the destination of the tape
-     * @return true if the SIROperator is a filter that peeks morethan it pops.
-     */
-    static public boolean hasExtraPeeks(int src, int dst) {
-        return getExtraPeeks(src, dst) > 0;
+    static private int calcBufferSize(FlatNode src, FlatNode dst) {
+        if (src == null || dst == null)
+            return 0;
+        int size = 0;
+        if (dst.isFilter())        size = sizeFilter(src, dst);
+        else if (dst.isSplitter()) size = sizeSplitter(src, dst);
+        else if (dst.isJoiner())   size = sizeJoiner(src, dst);
+        else { assert false; size = -1; }
+        return size;
     }
     
+    // for a filter: max number of items popped in init or steady phases.
+    // of a two stage filter, then check to see if prework pops more.
+    static private int sizeFilter(FlatNode src, FlatNode dst) {
+        SIRFilter f = (SIRFilter)dst.contents;
+        // the maximum number of items popped in init or steady phases
+        int size = Math.max(getMult(dst,true), getMult(dst,false)) 
+                    * f.getPopInt();
+        if (f instanceof SIRTwoStageFilter) {
+            // if f is a two stage filter, it is possible that 
+            // the single execution of prework will pop more than
+            // init or steady phases.
+            SIRTwoStageFilter t = (SIRTwoStageFilter)f;
+            size = Math.max(size, t.getInitPopInt()); 
+        }
+        return size + leftoveritems(src,dst);
+    }
+   
+    // for a splitter: max iterations in init or steady * total weight (if roundrobin)
+    //  or * 1 (if duplicate).
+    static private int sizeSplitter(FlatNode src, FlatNode dst) {
+        // the maximum number of items popped in init or steady phases
+        int size = Math.max(getMult(dst,true), getMult(dst,false)) 
+                    * distinctRoundRobinItems(dst);
+        return size + leftoveritems(src,dst);
+    }
+    
+    // for a joiner: max iterations in init or steady * incoming weight.
+    // for a feedback edge, take max with number or enqueued items.
+    static private int sizeJoiner(FlatNode src, FlatNode dst) {
+        int incomingWeight = dst.getIncomingWeight(src);  // or error if no connection.
+        int size =  Math.max(getMult(dst,true), getMult(dst,false)) 
+                     *  incomingWeight;
+        int enqueued = 0;
+        if (dst.isFeedbackJoiner() && src == dst.incoming[1]) {
+            // if feedback edge on feedback loop then account for enqueued values
+            enqueued = ((SIRFeedbackLoop)((SIRJoiner)dst.contents).getParent())
+                            .getDelayInt();
+        }
+        // Buffer has to have room for enqueued values, but will pop
+        // incomingWeight of these on first iteration.
+        return Math.max(size, enqueued);
+    }
+     
     /**
-     * Determine the size size of an extra peek buffer.for a tape based on the destination
+     * {@link #getRemaining(int, int)} for FlatNode's. 
+     * @param src : upstream FlatNode
+     * @param dst : downstream FlatNode
+     * @return max number of items that may be on tape before first (or any) execution of work phase.
+     */
+    // assume: either src is null or dst is null (resulting in value of 0)
+    // or src is connected to dst (resulting in calculated value)
+    // else (no such edge) likely assertion error from some called method.
+    //
+    // if result < 0 then there is a problem with the push / pop / multiplicity
+    // or weight data so assert that there is an error.
+    static private int leftoveritems (FlatNode src, FlatNode dst) {
+       if (src == null || dst == null) return 0;
+       int remaining;
+       if (dst.isFilter())        remaining = leftoveritemsFilter(src,dst);
+       else if (dst.isSplitter()) remaining = leftoveritemsSplitter(src,dst);
+       else if (dst.isJoiner())   remaining = leftoveritemsJoiner(src,dst);
+       else {assert false; remaining = -1;}
+       
+       // If src is a two-stage filter then its pre-work function is executed once
+       // after init but before work.  The execution of a pre-work function may
+       // increase or decrease number of remaining items for the dst's work (or pre-work).
+       // Since we are looking for the worst case excess after init or after pre-work,
+       // we only care if pre-work increases the number of remaining items.
+       if (src.contents instanceof SIRTwoStageFilter) {
+           SIRTwoStageFilter f = (SIRTwoStageFilter)src.contents;
+           remaining += f.getInitPushInt();
+           // this is a safe overestimate.  In fact, dst may consume some items
+           // before src pushes these items.
+       }
+       return remaining;
+    }
+    
+   // filter: leftover that must be accounted for =
+   // number produced by all iterations of init at src 
+   //   - number consumed by all iterations of init at dst.
+    static private int leftoveritemsFilter(FlatNode src, FlatNode dst) {
+        assert dst.incoming[0] == src;
+        SIRFilter f = (SIRFilter)dst.contents;
+        int dstConsume = getMult(dst, true) * f.getPopInt();
+        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        int remaining = srcProduce - dstConsume;
+       // assertion should be true since if work peeks more than it pops then
+        // it requires an init phase. 
+        assert (remaining >= f.getPeekInt() - f.getPopInt()) && remaining >= 0 :
+            remaining +"," + f.getPeekInt() + "," + f.getPopInt();
+        return remaining;
+    }
+
+    // splitter: leftover that must be accounted for = 
+    // number produced by all iterations of init at src 
+    //  - number passed on by splitter * iterations of splitter.
+    // assumes dst.isSplitter()
+    static private int leftoveritemsSplitter(FlatNode src, FlatNode dst) {
+        assert dst.incoming[0] == src;
+        int dstConsume = getMult(dst, true) * distinctRoundRobinItems(dst);
+        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        int remaining = srcProduce - dstConsume;
+        assert remaining >= 0;
+        return remaining;
+    }
+    
+    // joiner: leftover that must be accounted for = 
+    // number produced by all iterations of init at src 
+    // + number produced by enqueues if dst is joiner for feedback loop
+    // - number of init iterations of joiner * weight of edge.
+    // assumes dst.isJoiner()
+    static private int leftoveritemsJoiner(FlatNode src, FlatNode dst) {
+        int incomingWeight = dst.getIncomingWeight(src);  // or error if no connection.
+        int dstConsume = getMult(dst, true) * incomingWeight;
+        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        int enqueued = 0;
+        if (dst.isFeedbackJoiner() && src == dst.incoming[1]) {
+            // if feedback edge on feedback loop then account for enqueued values
+            enqueued = ((SIRFeedbackLoop)((SIRJoiner)dst.contents).getParent())
+                            .getDelayInt();
+        }
+        int remaining = (srcProduce + enqueued) - dstConsume;
+        assert remaining >= 0;
+        return remaining;
+    }
+    
+    /** 
+     * determine number of items splitter buffers in one iteration of work.
+     * <br/>assumes splitter.contents instanceof SIRSplitter.  GIGO.
+     * @param splitter : a splitter
+     * @return number of items splitter buffers
+     */
+    static int distinctRoundRobinItems(FlatNode splitter) {
+        return (splitter.isDuplicateSplitter() ? 1 : splitter.getTotalOutgoingWeights());
+    }
+        
+    /**
+     * Determine the size of largest number of items that may be on a tape before an execution of
+     * a work function.
      * @param src the NetStream number of a SIROperator for the source of the tape
      * @param dst the NetStream number of a SIROperator for the destination of the tape
      * @return max(peeks-pops, 0) for a filter, 0 otherwise, for a joiner: number of enqueues not processed in first execution.
      */
-    static public int getExtraPeeks(int src, int dst) {
-        SIROperator dst_oper = NodeEnumerator.getOperator(dst);
-        if (dst_oper instanceof SIRFilter) {
-            SIRFilter f = (SIRFilter)dst_oper;
-            return Math.max(f.getPeekInt() - f.getPopInt(), 0);
-        } else if (dst_oper instanceof SIRJoiner) {
-            SIRJoiner j = (SIRJoiner)dst_oper;
-            SIROperator p1 = j.getParent();
-            if (! (p1 instanceof SIRFeedbackLoop)) {
-                return 0;
-            }
-            SIRFeedbackLoop p = (SIRFeedbackLoop)p1;
-            if (! (NodeEnumerator.getFlatNode(src) == NodeEnumerator.getFlatNode(dst).incoming[1])) {
-                return 0;
-            }
-            int enqueued = p.getDelayInt();
-            Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(dst_oper);
-            int steady_int = 0;
-            if (steady != null) { steady_int = (steady).intValue(); }
-            return Math.max(enqueued - steady_int * j.getWeight(1), 0);
-        } else {
-            return 0;
-        }
+    static public int getRemaining(int src, int dst) {
+        int remaining = leftoveritems(NodeEnumerator.getFlatNode(src),
+                                      NodeEnumerator.getFlatNode(dst));
+        return remaining;
     }
-    
+        
 
     /**
      * Return whether a tape buffer should be modular based on destination.
@@ -113,149 +247,19 @@ public class FixedBufferTape {
      * Static method to calculate a buffer size for standalone mode.
      * <br/>
      * Retrieve the calculated info using getters.
+     * <br.>Implicit parameters are {@link ClusterBackend.initExecutionCounts} and {@link ClusterBackend.steadyExecutionCounts}
      * @param src from getSource on a NetStream
      * @param dst from getDest on the same NetStream
      * @param p  a CodeGenPrintWriter for generating comments or null.
      * @param printComments whether to generate comments: should be false if p is null.
+     * @return max number of items that will be bufferred on this edge. 
      */
-    static public void calcSizes (int src, int dst,
+    static public int bufferSize (int src, int dst,
             CodegenPrintWriter p, boolean printComments) {
-        
+        // printing comments is an artifact from Janis' code that this replaces.
+        int size = calcBufferSize(NodeEnumerator.getFlatNode(src),NodeEnumerator.getFlatNode(dst));
 
-        SIROperator src_oper = NodeEnumerator.getOperator(src);
-        SIROperator dst_oper = NodeEnumerator.getOperator(dst);
-
-        /*
-         * Set a maximum buffer size for a connection
-         */
-        int source_init_items = 0;
-        int source_steady_items = 0;
-        int dest_init_items = 0;
-        int dest_steady_items = 0;
-
-        // steady state, source
-
-        if (src_oper instanceof SIRJoiner) {
-            SIRJoiner j = (SIRJoiner)src_oper;
-            Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-            int steady_int = 0;
-            if (steady != null) { steady_int = (steady).intValue(); }
-            int push_n = j.getSumOfWeights();
-            int total = (steady_int * push_n);
-            if (printComments) p.print("//source pushes: "+total+" items during steady state\n");
-
-            source_steady_items = total;
-        }
-
-        if (src_oper instanceof SIRFilter) {
-            SIRFilter f = (SIRFilter)src_oper;
-            Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-            int steady_int = 0;
-            if (steady != null) { steady_int = (steady).intValue(); }
-            int push_n = f.getPushInt();
-            int total = (steady_int * push_n);
-            if (printComments) p.print("//source pushes: "+total+" items during steady state\n");
-
-            source_steady_items = total;
-        }
-
-        // init sched, source
-
-        if (src_oper instanceof SIRJoiner) {
-            SIRJoiner j = (SIRJoiner)src_oper;
-            Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-            int init_int = 0;
-            if (init != null) { init_int = (init).intValue(); }
-            int push_n = j.getSumOfWeights();
-            int total = (init_int * push_n);
-            if (printComments) p.print("//source pushes: "+total+" items during init schedule\n");
-
-            source_init_items = total;
-        }
-
-        if (src_oper instanceof SIRFilter) {
-            SIRFilter f = (SIRFilter)src_oper;
-            Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
-            int init_int = 0;
-            if (init != null) { init_int = (init).intValue(); }
-            int push_n = f.getPushInt();
-            int total = (init_int * push_n);
-            if (printComments) p.print("//source pushes: "+total+" items during init schedule\n");
-
-            source_init_items = total;
-        }
-
-
-        // steady state, dest
-
-        if (dst_oper instanceof SIRFilter) {
-            SIRFilter f = (SIRFilter)dst_oper;
-            Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-            int steady_int = 0;
-            if (steady != null) { steady_int = (steady).intValue(); }
-            int pop_n = f.getPopInt();
-            int total = (steady_int * pop_n);
-            if (printComments) p.print("//destination pops: "+total+" items during steady state\n");    
-            dest_steady_items = total;
-        }
-
-        if (dst_oper instanceof SIRSplitter) {
-            SIRSplitter s = (SIRSplitter)dst_oper;
-            Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-            int steady_int = 0;
-            if (steady != null) { steady_int = (steady).intValue(); }
-            int pop_n = s.getSumOfWeights();
-            if (s.getType().isDuplicate()) pop_n = 1;
-            int total = (steady_int * pop_n);
-            if (printComments) p.print("//destination pops: "+total+" items during steady state\n");
-            dest_steady_items = total;
-        }
-
-        // init sched, dest
-
-        if (dst_oper instanceof SIRFilter) {
-            SIRFilter f = (SIRFilter)dst_oper;
-            Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-            int init_int = 0;
-            if (init != null) { init_int = (init).intValue(); }
-            int pop_n = f.getPopInt();
-            int total = (init_int * pop_n);
-            if (printComments) p.print("//destination pops: "+total+" items during init schedule\n");    
-            dest_init_items = total;
-        }
-
-        if (dst_oper instanceof SIRSplitter) {
-            SIRSplitter s = (SIRSplitter)dst_oper;
-            Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
-            int init_int = 0;
-            if (init != null) { init_int = (init).intValue(); }
-            int pop_n = s.getSumOfWeights();
-            if (s.getType().isDuplicate()) pop_n = 1;
-            int total = (init_int * pop_n);
-            if (printComments) p.print("//destination pops: "+total+" items during init_schedule\n");
-            dest_init_items = total;
-        }
-        
-        if (dst_oper instanceof SIRJoiner) {
-            SIRJoiner j = (SIRJoiner)dst_oper;
-            SIRStream parent = j.getParent();
-            if (parent instanceof SIRFeedbackLoop) {
-                FlatNode srcNode = NodeEnumerator.getFlatNode(src);
-                FlatNode dstNode = NodeEnumerator.getFlatNode(dst);
-                FlatNode[] incoming = dstNode.incoming;
-                // if this is the tape from the loop back to feedbackloop joiner
-                if (incoming.length == 2 && srcNode == incoming[1]) {
-                    SIRFeedbackLoop f = (SIRFeedbackLoop)parent;
-                    // then add in number of enqueued items.
-                    dest_init_items = source_init_items + f.getDelayInt();
-                    if (printComments) p.println("//destiniation enqueues: " + f.getDelayInt() + " items during init_schedule");
-                }
-            }
-        }
-
-        steady_items = source_steady_items> dest_steady_items ? source_steady_items 
-                : dest_steady_items;
-        init_items = source_init_items > dest_init_items ? source_init_items
-                : dest_init_items;
+        return size;
     }
+        
 }

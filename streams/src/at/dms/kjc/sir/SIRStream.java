@@ -177,7 +177,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * null if this is a top-level stream; returns an empty list if
      * the parameters haven't been resolved yet.
      */
-    public List getParams() {
+    public List<JExpression> getParams() {
         if (parent==null) {
             return null;
         } else {

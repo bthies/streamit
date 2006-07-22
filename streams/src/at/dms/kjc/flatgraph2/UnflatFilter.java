@@ -2,6 +2,7 @@ package at.dms.kjc.flatgraph2;
 
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Intermediate file used in (super) synch removal. Represents filter
@@ -92,6 +93,36 @@ public class UnflatFilter {
         name=null;
     }
 
+    public int inWeight(UnflatEdge edge) {
+        int sum = 0;
+        for (int i = 0; i < inWeights.length; i++) {
+            if (in[i] == edge)
+                sum += inWeights[i];
+        }
+        return sum;
+    }
+    
+    public int totalInWeights() {
+        int sum = 0;
+        for (int i = 0; i < inWeights.length; i++) {
+            sum += inWeights[i];
+        }
+        return sum;
+    }
+    
+    public double inRatio(UnflatEdge edge) {
+        return ((double)inWeight(edge)) / ((double)totalInWeights());
+    }
+    
+    public HashSet<UnflatEdge> getInEdgeSet(){
+        HashSet<UnflatEdge> inEdges = new HashSet<UnflatEdge>();
+        for (int i = 0; i < in.length; i++) {
+            inEdges.add(in[i]);
+        }
+        return inEdges;
+    }
+    
+    
     /**
      * Construct new UnflatFilter from filter.
      * @param filter The SIRStream used to construct this UnflatFilter.

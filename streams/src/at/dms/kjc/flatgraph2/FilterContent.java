@@ -6,6 +6,7 @@ import at.dms.kjc.*;
 import java.util.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.RenameAll;
+import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
 
 /**
  * Intended to reflect all the content of a filter needed by a
@@ -24,7 +25,7 @@ public class FilterContent {
     private CType inputType,outputType; //Input and output types
     private int initMult, steadyMult; //Multiplicities from scheduler
     private JMethodDeclaration[] methods; //Other method declarations
-    private List paramList; //List of parameters
+    //private List paramList; //List of parameters
     private JMethodDeclaration initFunction; //Init function for two-stage filters
     private boolean is2stage; //Is true when two-stage filter
     private JFieldDeclaration[] fields; //Field declarations
@@ -67,7 +68,7 @@ public class FilterContent {
         initMult = content.initMult;
         steadyMult = content.steadyMult;
         methods = content.methods;
-        paramList = content.paramList;
+        //paramList = content.paramList;
         initFunction = content.initFunction;
         is2stage = content.is2stage;
         fields = content.fields;
@@ -94,7 +95,7 @@ public class FilterContent {
         outputType = filter.getOutputType();
         methods = filter.getMethods();
         fields  =  filter.getFields();
-        paramList = filter.getParams();
+        //paramList = filter.getParams();
         initFunction  =  filter.getInit();
         assert init.length < 2 && steady.length == 1;
         //if this filter is two stage, then it has the 
@@ -111,13 +112,27 @@ public class FilterContent {
      */
     public FilterContent(UnflatFilter unflat) {
         SIRFilter filter = unflat.filter;
-        assert filter != null : unflat.toString();
+        //assert filter != null : unflat.toString();
+        if (filter == null) {
+            UnflatFilter upstream = unflat.in[0].src;
+            CType type = upstream.filter.getOutputType();
+            filter = SafeFileReaderWriterPositions.makeIdentityFilter(type);
+            RenameAll.renameAllFilters(filter);
+            unflat.filter = filter;
+            unflat.initMult = calculateIDInitMult(unflat);
+            unflat.steadyMult = calculateIDSteadyMult(unflat);
+            System.out.println("Creating ID with " + unflat.initMult + " iniMult " + 
+                    unflat.steadyMult + " steadyMult");
+        }
+        
         name = filter.getName();
         inputType = filter.getInputType();
         outputType = filter.getOutputType();
+
         initMult = unflat.initMult;
         steadyMult = unflat.steadyMult;
         array = unflat.array;
+        
         //we have found a linear filter if it has an array
         if (array != null) { 
             //removed by Mgordon
@@ -171,7 +186,7 @@ public class FilterContent {
             steady = filter.getPhases();
             methods = filter.getMethods();
             fields = filter.getFields();
-            paramList = filter.getParams();
+            //paramList = filter.getParams();
             initFunction = filter.getInit();
             assert init.length < 2 && steady.length == 1;
             //if this filter is two stage, then it has the 
@@ -180,6 +195,67 @@ public class FilterContent {
 
             //is2stage = steady.length > 1;
         }
+    }
+    
+    private int calculateIDInitMult(UnflatFilter id) {
+        int initMult = 0;
+        if (id.in.length == 1) {
+            UnflatFilter upstream = id.in[0].src;
+            initMult = upstream.filter.getPushInt() * upstream.initMult;
+            if (upstream.filter instanceof SIRTwoStageFilter) {
+                initMult -= upstream.filter.getPushInt();
+                initMult += ((SIRTwoStageFilter)upstream.filter).getInitPushInt();
+            }
+        } else {
+            //this identity filter joins, 
+            //find the multiplicity of the join, but finding the min multiplicity
+            //that is possible given the multiplicity of the upstream guys
+            int minMult = 0;
+            Iterator<UnflatEdge> edges = id.getInEdgeSet().iterator();
+            while (edges.hasNext()) {
+                UnflatEdge edge = edges.next();
+                UnflatFilter upstream = edge.src;
+                System.out.println(upstream);
+                int itemsProduced = upstream.initMult * upstream.filter.getPushInt();
+                if (upstream.filter instanceof SIRTwoStageFilter) {
+                    itemsProduced -= upstream.filter.getPushInt();
+                    itemsProduced += ((SIRTwoStageFilter)upstream.filter).getInitPushInt();
+                }
+                int mult = 
+                    (int)Math.floor(((double)itemsProduced) / ((double)id.inWeight(edge)));
+                if (mult < minMult)
+                    minMult = mult;
+            }
+            //the init mult is the min mult * the total weight
+            initMult = (minMult * id.totalInWeights());
+        }
+        return initMult;
+    }
+    
+    private int calculateIDSteadyMult(UnflatFilter id) {
+        int steadyMult = 0;
+        if (id.in.length == 1) {
+            UnflatFilter upstream = id.in[0].src;
+            steadyMult = upstream.filter.getPushInt() * upstream.steadyMult;
+        } else {
+            //this identity filter joins, 
+            //find the multiplicity of the join, but finding the min multiplicity
+            //that is possible given the multiplicity of the upstream guys
+            int mult = -1;
+            Iterator<UnflatEdge> edges = id.getInEdgeSet().iterator();
+            while (edges.hasNext()) {
+                UnflatEdge edge = edges.next();
+                UnflatFilter upstream = edge.src;
+                int itemsProduced = upstream.steadyMult * upstream.filter.getPushInt();
+                int myMult = (int)Math.floor(((double)itemsProduced) / ((double)id.inWeight(edge)));
+                /*if (mult != -1)
+                    assert myMult == mult; */
+                mult = myMult;
+            }
+            //the init mult is the min mult * the total weight
+            steadyMult = (mult * id.totalInWeights());
+        }
+        return steadyMult;
     }
     
     /**
@@ -571,8 +647,9 @@ public class FilterContent {
     
     /**
      * Returns list of paramters.
-     */
+     
     public List getParams() {
         return paramList;
     }
+    */
 }

@@ -38,7 +38,8 @@ public class SpaceDynamicBackend {
                            SIRStructure[] structs,
                            SIRHelper[] helpers,
                            SIRGlobal global) {
-
+        WorkEstimate.UNROLL_FOR_WORK_EST = KjcOptions.workestunroll;
+        
         System.out.println("Entry to RAW Backend (spacedynamic)");
     
         //alt code gen has to be enabled for this pass to work

@@ -92,6 +92,7 @@ public class BCFile {
         
         //there are no slices
         fw.write("global gNumSlices = 0;\n");
+        fw.write("global gOffChipBufferSizeBytes = 0x0;\n");
         
         //count the total number of filters, not including
         //file readers and writers
@@ -158,7 +159,7 @@ public class BCFile {
         }
         
         // number gathering code
-        if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {
+        if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM && !RawWorkEstimator.SIMULATING_WORK) {
             ng.doit(streamGraph);
             fw.write(numberGathering());
         }

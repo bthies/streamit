@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.33 2006-06-14 22:29:24 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.34 2006-07-22 06:11:54 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -86,17 +86,32 @@ public class SIRToStreamIt
                            SIRStructure[] structs) {
         SIRToStreamIt s2s = new SIRToStreamIt();
 
-        for (int i = 0; i < structs.length; i++)
-            {
-                assert structs[i] != null;
-                if (!(structs[i].getIdent().equals("Complex")))
-                    structs[i].accept(s2s);
-            }
-        for (int i = 0; i < interfaces.length; i++)
-            interfaces[i].accept(s2s);
+        // allow null structs for simplicity
+        if (structs!=null) {
+            for (int i = 0; i < structs.length; i++)
+                {
+                    assert structs[i] != null;
+                    if (!(structs[i].getIdent().equals("Complex")))
+                        structs[i].accept(s2s);
+                }
+        }
+
+        // allow null interfaces for simplicity
+        if (interfaces!=null) {
+            for (int i = 0; i < interfaces.length; i++)
+                interfaces[i].accept(s2s);
+        }
+
         s2s.visitAnyStream(str);
         System.err.println(s2s.getPrinter().getString());
         s2s.close();
+    }
+
+    /**
+     * Entry point for a stream without interfaces or structs.
+     */
+    public static void run(SIRStream str) {
+        run(str, null, null, null);
     }
 
     /**

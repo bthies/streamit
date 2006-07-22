@@ -73,9 +73,16 @@ public class Unroller extends SLIRReplacingVisitor {
     }
     
     /**
-     * Unrolls <filter> up to a factor of 100000.
+     * Unrolls <filter> up to a factor of 100,000.
      */
     public static void unrollFilter(SIRFilter filter) {
+        unrollFilter(filter, 100000);
+    }
+    
+    /**
+     * Unrolls <filter> up to a factor of unrollFactor.
+     */
+    public static void unrollFilter(SIRFilter filter, int unrollFactor) {
         // set all loops to be unrolled again
         IterFactory.createFactory().createIter(filter).accept(new EmptyStreamVisitor() {
                 public void preVisitStream(SIRStream filter, SIRIterator iter) {
@@ -93,7 +100,7 @@ public class Unroller extends SLIRReplacingVisitor {
         int origUnroll = KjcOptions.unroll;
         boolean origLimitNoTapeLoops = limitNoTapeLoops;
 
-        KjcOptions.unroll = 100000;
+        KjcOptions.unroll = unrollFactor;
         limitNoTapeLoops = false;
         FieldProp.doPropagate(filter, true);
 

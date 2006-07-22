@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.92 2006-07-19 03:00:05 mgordon Exp $
+# $Id: strc,v 1.93 2006-07-22 22:44:36 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -270,6 +270,8 @@ Usage: strc [options] file.str ...
 * --hwic              When targeting the raw simulator, enable H/W icaching.
 * --greedysched       For the SpaceTime Backend, use a greedy bin packing
 *                     algorithm to calculate the schedule.
+* --workestunroll     For the SpaceTime Backend, perform unrolling on filters
+*                     for work estimation.
 * --autoparams        For the SpaceTime Backend, automatically calculate 
 *                     parameters.
 * --noswitchcomp      For the SpaceTime Backend, turn off switch instruction
@@ -404,6 +406,7 @@ sub get_options
 			    "autoparams",
 			    "hwic",
 			    "greedysched",
+			    "workestunroll",
 			    "cluster=i",
 			    "steadymult=i",
 			    "slicethresh=i",
@@ -799,6 +802,7 @@ sub get_compiler_opts
     $opts{noswpipe} && ($copts .= " --noswpipe");
     $opts{hwic} && ($copts .= " --hwic");
     $opts{greedysched} && ($copts .= " --greedysched");
+    $opts{workestunroll} && ($copts .= " --workestunroll");
     $opts{noswitchcomp} && ($copts .= " --noswitchcomp");
     $opts{autoparams} && ($copts .= " --autoparams");
     $opts{spacetime} && ($copts .= " --spacetime");

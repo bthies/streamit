@@ -284,6 +284,7 @@ public class SimplePartitioner extends Partitioner {
     private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear,
                                   int bottleNeckWork, int newTotalFilters) {
         //always start a new trace if we only want one filter traces...
+        //System.out.println("Continue Trace: " + unflatFilter.filter);
         if (ONE_FILTER_TRACES)
             return false;
         // if this is not connected to anything or
@@ -345,17 +346,7 @@ public class SimplePartitioner extends Partitioner {
         return false;
     }
 
-    private FilterContent getFilterContent(UnflatFilter f) {
-        FilterContent content;
-
-        if (f.filter instanceof SIRFileReader)
-            content = new FileInputContent(f);
-        else if (f.filter instanceof SIRFileWriter)
-            content = new FileOutputContent(f);
-        else
-            content = new FilterContent(f);
-        return content;
-    }
+   
 
     // get the work estimation for a filter and multiple it by the
     // number of times a filter executes in the steady-state
@@ -368,8 +359,14 @@ public class SimplePartitioner extends Partitioner {
     }
 
     private int getWorkEstimate(SIRFilter filter) {
+        //System.out.println(filter);
+        if (filter.getIdent().startsWith("generatedIdFilter") && 
+                genIdWorks.containsKey(filter))
+            return genIdWorks.get(filter).intValue();
+                
         if (filter instanceof SIRPredefinedFilter)
             return 0;
+        
         assert work.getReps(filter) == ((int[]) exeCounts[1].get(filter))[0] : "Multiplicity for work estimation does not match schedule of flat graph";
         return work.getWork(filter);
     }

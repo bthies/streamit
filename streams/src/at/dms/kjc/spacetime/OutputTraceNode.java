@@ -266,7 +266,7 @@ public class OutputTraceNode extends TraceNode {
      * return an iterator that iterates over the inputtracenodes in descending
      * order of the number of items sent to the inputtracenode
      */
-    public List getSortedOutputs() {
+    public List<Edge> getSortedOutputs() {
         if (sortedOutputs == null) {
             // if there are no dest just return an empty iterator
             if (weights.length == 0) {
@@ -275,8 +275,8 @@ public class OutputTraceNode extends TraceNode {
             }
             // just do a simple linear insert over the dests
             // only has to be done once
-            Vector sorted = new Vector();
-            Iterator dests = getDestSet().iterator();
+            Vector<Edge> sorted = new Vector();
+            Iterator<Edge> dests = getDestSet().iterator();
             // add one element
             sorted.add(dests.next());
             while (dests.hasNext()) {

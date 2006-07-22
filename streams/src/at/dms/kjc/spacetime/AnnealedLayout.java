@@ -79,6 +79,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     private double currentMinCommCost;
     
+    /** true if we are in the communication cost phase of the annealing */
+    private boolean COMM_PHASE = false;
+    
     /**
      * Create a new Annealed layout object that will assign filters of 
      * the slices of the slice graph of spaceTime to tiles of the Raw Chip.
@@ -118,10 +121,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * Calculate the assignment of filters of slices to tiles. 
      */
     public void run() {
-        simAnnealAssign(10, 1000);
-        //simAnnealAssign(5, 1000);
-        //simAnnealAssign(3, 1000);
-        //simAnnealAssign(3, 50);
+        System.out.println("Minimizing Critical Path Work...");
+        COMM_PHASE = false;
+        simAnnealAssign(5, 1000);
+        COMM_PHASE = true;
+        System.out.println("Minimizing Synchronization Cost...");
+        simAnnealAssign(3, 50);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
@@ -201,11 +206,47 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * something around.
      */
     public void swapAssignment() {
-        //swapAssignmentIllegal();
-        //swap filters...
-        swapAssignmentLegal();
-        //reassign buffers.
-        //assignBuffers.run(spaceTime, this);
+        if (!COMM_PHASE)
+            swapAssignmentLegal();
+        else {
+            swapAssignmentCommPhase();
+        }
+    }
+   
+    
+    /** 
+     * Find a new assignment for a trace that does not increase the
+     * critical path.
+     *
+     */
+    private void swapAssignmentCommPhase() {
+        int oldMaxWork = maxTileWork(getTileWorks(false));
+        
+        Trace trace = null;
+        int attempts = 0;
+        while (true) {
+            attempts++;
+            trace = partitioner.getTraceGraph()[getRandom(partitioner.getTraceGraph().length)];
+            if (partitioner.isIO(trace))
+                continue;
+            
+            HashMap oldAssign = (HashMap)assignment.clone();
+            
+            newTraceAssignment(trace.getHead().getNextFilter());
+            
+            int newMaxWork = maxTileWork(getTileWorks(false));
+            if (newMaxWork <= oldMaxWork) {
+                break;
+            }
+            else {
+                assignment = oldAssign;
+            }
+            //make sure we can always make forward progress
+            if (attempts > 100) 
+                return;
+        }
+        
+        assert trace != null;
     }
     
     /** 
@@ -318,7 +359,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         else {
             //we are not the first tile so choose some
             RawTile prevTile = (RawTile)assignment.get(node.getPrevious());
-            int dirVec = getRandom(24);
+            int dirVec = getRandom(dirStrings.length);
             for (int i = 0; i < 4; i++) {
                 //get the next direction to try...
                 RawTile tile = rawChip.getTile(prevTile, dirStrings[dirVec].charAt(i));
@@ -358,37 +399,6 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     protected boolean keepNewEqualMin() {
         return false;
-        /*
-        int[] tileCosts = getTileWorks(false);
-        
-        //find the communication cost of this configuration
-        HashMap<ComputeNode, Integer> commCosts = 
-            commEstimate(tileCosts);
-        
-        Iterator<ComputeNode> nodes = commCosts.keySet().iterator();
-        while (nodes.hasNext()) {
-            RawTile node = (RawTile)nodes.next();
-            tileCosts[node.getTileNumber()] += 
-                commCosts.get(node).intValue();
-        }
-        */
-        /*
-        double cost = (double)reorgCrossRoutes();
-        
-        //double cost = maxTileWork(getTileWorks(false));
-        
-        if (cost < currentMinCommCost) {
-            System.out.println("Keeping new config as min: " + 
-                    cost + " < " + currentMinCommCost);
-            //keep this new configuration as the overall min config 
-            //because it has lower communication cost
-            currentMinCommCost = cost;
-            return true;
-        }
-        //don't set this layout as the overall min.
-             
-        return false;
-        */
     }
     
     /**
@@ -519,30 +529,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      *  
      */
     public double placementCost(boolean debug) {
-   
+        double cost;
         int[] tileCosts = getTileWorks(false);
-        /*
-        HashMap<ComputeNode, Integer> commCosts = 
-            commEstimate(tileCosts);
-        
-        Iterator<ComputeNode> nodes = commCosts.keySet().iterator();
-        while (nodes.hasNext()) {
-            RawTile node = (RawTile)nodes.next();
-            tileCosts[node.getTileNumber()] += 
-                commCosts.get(node).intValue();
+        if (!COMM_PHASE) {
+            cost = (double)maxTileWork(tileCosts);
         }
-        */
-        double cost = (double)maxTileWork(tileCosts);
-        
-                
-        //int wastedWork = Util.sum(tileCosts) - totalWork;
-       
-        //cost += (double)wastedWork * 0.15; 
-            
-        /*
-        if (!isLegalLayout())
-            cost += ILLEGAL_COST;
-        */
+        else {
+            cost = reorgCrossRoutes(tileCosts);
+        }
         return cost;
     }
 
@@ -629,12 +623,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return the number of cross routes that occur during the reorganization stage
      * between software pipelined steady states.
      */
-    /*
-    private int reorgCrossRoutes() {
+    
+    private int reorgCrossRoutes(int[] tileCosts) {
         Trace[] traces = partitioner.getTraceGraph();
         int crossed = 0;
         
         assignBuffers.run(spaceTime, this);
+        Router router = new SmarterRouter(tileCosts, rawChip);
         
         //buffer edges are assigned drams by the buffer dram assignment,
         //so we can get a fairly accurate picture of the communication
@@ -663,7 +658,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     StreamingDram outputDRAM = 
                         IntraTraceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
-                    Iterator<ComputeNode> route = Router.getRoute(outputDRAM, bufDRAM).iterator();
+                    Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
@@ -676,7 +671,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 if (!IntraTraceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
                         IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
-                    Iterator<ComputeNode>route = Router.getRoute(bufDRAM, inputDRAM).iterator();
+                    Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
                         if (routersUsed.contains(hop)) 
@@ -690,7 +685,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         
         return crossed;
     }
-    */
+    
     /**
      * Calculate a measure of the communication cost of the current 
      * assignment.  This method changes frequently, see the method itself 

@@ -100,8 +100,8 @@ public class Rawify {
         traces = schedule.getSchedule();
         
         if (SpaceTimeBackend.NO_SWPIPELINE) {
-            ComputeCodeStore.barrierInInit(rawChip);
-            iterateInorder(traces, false, false, rawChip);
+            ComputeCodeStore.barrier(rawChip, false, false);
+            iterateNoSWPipe(schedule.getScheduleList(), false, false, rawChip);
         } else {
             //iterate over the joiners then the filters then 
             //the splitter, this will create a data-redistribution 
@@ -110,7 +110,36 @@ public class Rawify {
         }
         ComputeCodeStore.presynchEmptyTilesInSteady();
     }
+   
+    /**
+     * Iterate over the schedule of traces and over each node of each trace and 
+     * generate the code necessary to fire the schedule.  Generate splitters and 
+     * joiners intermixed with the trace execution...
+     * 
+     * @param traces The schedule to execute.
+     * @param init True if the init stage.
+     * @param primepump True if the primepump stage
+     * @param rawChip The raw chip
+     */
+    private static void iterateInorder(Trace traces[], boolean init,
+                                boolean primepump, RawChip rawChip) {
+        Trace trace;
 
+        for (int i = 0; i < traces.length; i++) {
+            trace = (Trace) traces[i];
+            //create code for joining input to the trace
+            processInputTraceNode((InputTraceNode)trace.getHead(),
+                    init, primepump, rawChip);
+            //create the compute code and the communication code for the
+            //filters of the trace
+            processFilterTraces(trace, init, primepump, rawChip);
+            //create communication code for splitting the output
+            processOutputTraceNode((OutputTraceNode)trace.getTail(),
+                    init, primepump, rawChip);
+            
+        }
+    }
+    
     /**
      * Iterate over the schedule of traces and over each node of each trace and 
      * generate the code necessary to fire the schedule.  Generate splitters and 
@@ -158,23 +187,113 @@ public class Rawify {
      * @param primepump True if the primepump stage
      * @param rawChip The raw chip
      */
-    private static void iterateInorder(Trace traces[], boolean init,
+    private static void iterateNoSWPipe(LinkedList<Trace> schedule, boolean init,
                                 boolean primepump, RawChip rawChip) {
-        Trace trace;
-
-        for (int i = 0; i < traces.length; i++) {
-            trace = (Trace) traces[i];
-            //create code for joining input to the trace
-            processInputTraceNode((InputTraceNode)trace.getHead(),
-                    init, primepump, rawChip);
-            //create the compute code and the communication code for the
-            //filters of the trace
-            processFilterTraces(trace, init, primepump, rawChip);
-            //create communication code for splitting the output
-            processOutputTraceNode((OutputTraceNode)trace.getTail(),
-                    init, primepump, rawChip);
+        
+        HashSet<OutputTraceNode> hasBeenSplit = new HashSet<OutputTraceNode>();
+        HashSet<InputTraceNode> hasBeenJoined = new HashSet<InputTraceNode>();
+        LinkedList<Trace> scheduled = new LinkedList<Trace>();
+        LinkedList<Trace> needToSchedule = (LinkedList<Trace>)schedule.clone();  
+        
+        while (needToSchedule.size() != 0) {
+            {
+                //join everyone that can be joined
+                for (int n = 0; n < needToSchedule.size(); n++) {
+                    Trace notSched = needToSchedule.get(n);
+                    if (notSched.getHead().noInputs()) {
+                        hasBeenJoined.add(notSched.getHead());
+                        continue;
+                    }
+                    if (notSched.getHead().hasFileInput()) {
+                        assert notSched.getHead().oneInput();
+                        hasBeenJoined.add(notSched.getHead());
+                    }
+                        
+                    Iterator<Edge> inEdges = notSched.getHead().getSourceSet().iterator();
+                    boolean canJoin = true;
+                    while (inEdges.hasNext()) {
+                        Edge inEdge = inEdges.next();
+                        if (!hasBeenSplit.contains(inEdge.getSrc())) {
+                            canJoin = false;
+                            break;
+                        }
+                    }
+                    if (canJoin) {
+                        //create code for joining input to the trace
+                        hasBeenJoined.add(notSched.getHead());
+                        System.out.println("Scheduling join of " + notSched.getHead().getNextFilter());
+                        processInputTraceNode(notSched.getHead(),
+                                init, primepump, rawChip);
+                    }
+                }
+                
+                
+                //create the compute code and the communication code for the
+                //filters of the trace
+                while (needToSchedule.size() != 0) {
+                    Trace trace = needToSchedule.get(0);
+                    if (hasBeenJoined.contains(trace.getHead())) {
+                        scheduled.add(trace);
+                        processFilterTraces(trace, init, primepump, rawChip);
+                        System.out.println("Scheduling " + trace.getHead().getNextFilter());
+                        needToSchedule.removeFirst();
+                    }
+                    else {
+                        break;
+                    }
+                }
+                
+                //split anyone that can be split
+                for (int t = 0; t < scheduled.size(); t++) {
+                    if (!hasBeenSplit.contains(scheduled.get(t).getTail())) {
+                        OutputTraceNode output = 
+                            scheduled.get(t).getTail();
+                        System.out.println("Scheduling split of " + output.getPrevFilter()); 
+                        processOutputTraceNode(output,
+                                init, primepump, rawChip);
+                        hasBeenSplit.add(output);
+                    }
+                }
+            }
             
+           
+            
+           
         }
+        
+        
+        //schedule any splits that have not occured!
+        if (hasBeenSplit.size() != scheduled.size()) {
+            for (int t = 0; t < scheduled.size(); t++) {
+                if (!hasBeenSplit.contains(scheduled.get(t).getTail())) {
+                    OutputTraceNode output = 
+                        scheduled.get(t).getTail();
+                    System.out.println("Scheduling split of " + output.getPrevFilter()); 
+                    processOutputTraceNode(output,
+                            init, primepump, rawChip);
+                    hasBeenSplit.add(output);
+                }
+            }
+        }
+        
+        //schedule any joins that have not occured
+        if (hasBeenJoined.size() != scheduled.size()) {
+            for (int t = 0; t < scheduled.size(); t++) {
+                if (!hasBeenJoined.contains(scheduled.get(t).getHead())) {
+                    InputTraceNode input  = 
+                        scheduled.get(t).getHead();
+                    System.out.println("Scheduling join of " + input.getNextFilter()); 
+                    processInputTraceNode(input,
+                            init, primepump, rawChip);
+                    hasBeenJoined.add(input);
+                }
+            }
+        }
+        
+        
+        assert hasBeenJoined.size() == scheduled.size();
+        assert hasBeenSplit.size() == scheduled.size();
+        assert scheduled.size() == schedule.size();
     }
     
     /**

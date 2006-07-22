@@ -41,6 +41,8 @@ public abstract class Partitioner {
 
     protected Trace[] topTraces;
 
+    protected HashMap<SIRFilter, Integer> genIdWorks; 
+    
     /** This hashmap maps a Trace to the FilterTraceNode that
      * has the most work;
      */ 
@@ -59,7 +61,7 @@ public abstract class Partitioner {
 
     protected int steadyMult;
     
-    
+    protected HashMap <SIRFilter, FilterContent> sirToContent;
     
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
                        LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
@@ -74,6 +76,8 @@ public abstract class Partitioner {
         filterStartupCost = new HashMap<FilterTraceNode, Integer>();
         bottleNeckFilter = new HashMap<Trace, FilterTraceNode>();
         filterOccupancy = new HashMap<FilterTraceNode, Integer>();
+        genIdWorks = new HashMap<SIRFilter, Integer>();
+        sirToContent = new HashMap<SIRFilter, FilterContent>();
     }
 
     /**
@@ -455,6 +459,33 @@ public abstract class Partitioner {
         return new Trace[0];
     }
 
+    protected FilterContent getFilterContent(UnflatFilter f) {
+        FilterContent content;
+
+        if (f.filter instanceof SIRFileReader)
+            content = new FileInputContent(f);
+        else if (f.filter instanceof SIRFileWriter)
+            content = new FileOutputContent(f);
+        else {
+            if (f.filter == null) {
+                content = new FilterContent(f);
+                genIdWorks.put(f.filter, MultiLevelSplitsJoins.IDENTITY_WORK *
+                        f.steadyMult);
+                
+            } else 
+                content = new FilterContent(f);
+        }
+        
+        sirToContent.put(f.filter, content);
+        return content;
+    }
+
+    public FilterContent getContent(SIRFilter f) {
+        return sirToContent.get(f);
+    }
+    
+   
+    
     //return a string with all of the names of the filtertracenodes
     // and blue if linear
     protected  String traceName(Trace trace) {

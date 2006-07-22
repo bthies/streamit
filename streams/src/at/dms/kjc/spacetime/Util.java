@@ -8,6 +8,8 @@ import at.dms.util.Utils;
 import java.util.List;
 import java.util.Collection;
 import at.dms.kjc.sir.lowering.*;
+
+import java.util.Collections;
 import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -414,6 +416,40 @@ public class Util {
         tile.getSwitchCode().appendIns(moveIns, (init || primePump));
     }
 
+    /**
+     * Return a sorted list of filter trace nodes for time only that does not 
+     * include io traces.
+     * 
+     * @param partitioner
+     * @return a sorted list of filter trace nodes for time only that does not 
+     * include io traces.
+     */
+    public static LinkedList<FilterTraceNode> sortedFilterTracesTime(Partitioner partitioner) {
+        //now sort the filters by work
+        LinkedList<FilterTraceNode> sortedList = new LinkedList<FilterTraceNode>();
+        LinkedList<Trace> scheduleOrder;
+ 
+  
+
+        Trace[] tempArray = (Trace[]) partitioner.getTraceGraph().clone();
+        Arrays.sort(tempArray, new CompareTraceBNWork(partitioner));
+        scheduleOrder = new LinkedList(Arrays.asList(tempArray));
+        //reverse the list, we want the list in descending order!
+        Collections.reverse(scheduleOrder);
+  
+        for (int i = 0; i < scheduleOrder.size(); i++) {
+            Trace trace = scheduleOrder.get(i);
+            //don't add io traces!
+            if (partitioner.isIO(trace)) {
+                continue;
+            }
+            assert trace.getNumFilters() == 1 : "Only works for Time!";
+            sortedList.add(trace.getHead().getNextFilter());
+        }
+        
+        return sortedList;
+    }
+    
     /**
      * Calculate the number of items the file writers write to files in
      * the schedule exeCounts.

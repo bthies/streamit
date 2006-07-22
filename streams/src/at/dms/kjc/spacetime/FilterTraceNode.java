@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.*;
+import java.util.*;
 /** 
  *
  **/
@@ -12,10 +13,21 @@ public class FilterTraceNode extends TraceNode
     private boolean predefined;
     private boolean laidout;
 
+    private static HashMap<FilterContent, FilterTraceNode> contentToNode;
+    
+    static {
+        contentToNode = new HashMap<FilterContent, FilterTraceNode>();
+    }
+    
     public FilterTraceNode(FilterContent filter) {
         predefined = (filter instanceof PredefinedContent);
         this.filter = filter;
         laidout = false;
+        contentToNode.put(filter, this);
+    }
+    
+    public static FilterTraceNode getFilterNode(FilterContent f) {
+        return contentToNode.get(f);
     }
     
     public boolean isPredefined() 

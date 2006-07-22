@@ -176,7 +176,7 @@ public class SafeFileReaderWriterPositions {
      * @return     a new identity filter of the requested type
      *             that will need a setParent before being usable.
      */
-    private static SIRFilter makeIdentityFilter(CType typ) {
+    public static SIRFilter makeIdentityFilter(CType typ) {
         JMethodDeclaration init = makeInit();
         String suffix = makeNewSuffix();
         JVariableDefinition vdefn =

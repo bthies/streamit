@@ -45,7 +45,7 @@ public class GranularityAdjust {
             //find the percentage change in work between the two 
             workChange = ((double)oldWork) / ((double)newWork);
             //remember this as the old work for the next (possible) iteration
-            System.out.println(newWork + " / " + oldWork + " = " + workChange);
+            System.out.println(oldWork + " / " + newWork + " = " + workChange);
             oldWork = newWork;
         } while (workChange >= threshold);
         

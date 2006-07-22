@@ -4,6 +4,7 @@
 package at.dms.kjc.spacetime;
 
 import java.util.*;
+import at.dms.kjc.sir.*;
 
 import at.dms.kjc.common.SimulatedAnnealing;
 
@@ -20,12 +21,15 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
     private Router router;
     private int[] tileCosts;
     private Random rand;
+    private StreamlinedDuplicate duplicate;
     
-    public AnnealedGreedyLayout(SpaceTimeSchedule spaceTime, RawChip chip) {
+    public AnnealedGreedyLayout(SpaceTimeSchedule spaceTime, RawChip chip, 
+            StreamlinedDuplicate duplicate) {
         this.chip = chip;
         this.spaceTime = spaceTime;
         this.partitioner = spaceTime.partitioner;
         rand = new Random(17);
+        this.duplicate = duplicate;
     }
     
     public RawTile getTile(FilterTraceNode node) {
@@ -221,16 +225,68 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         return false;
     }
     
+    
+    private void duplicateLayout() {
+        System.out.println("Reconstructing Streamlined Duplicate Packing...");
+        tileCosts = new int[16]; 
+        for (int t = 0; t < chip.getTotalTiles(); t++) {
+            for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
+                SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
+                FilterTraceNode node = 
+                    FilterTraceNode.getFilterNode(spaceTime.partitioner.getContent(filter));
+                assignment.put(node, chip.getTile(t));
+                tileCosts[t] += partitioner.getFilterWorkSteadyMult(node); 
+            }
+        }
+        
+        Iterator<FilterTraceNode> nodes = 
+            Util.sortedFilterTracesTime(spaceTime.partitioner).iterator();
+        while (nodes.hasNext()) {
+            FilterTraceNode node = nodes.next();
+            //already assigned above
+            if (assignment.containsKey(node))
+                continue;
+            System.out.println("  *Packing additional node " + node);
+            //otherwise put it in the min bin
+            int tile = minIndex(tileCosts);
+            assignment.put(node, chip.getTile(tile));
+            tileCosts[tile] += partitioner.getFilterWorkSteadyMult(node);
+        }
+        
+    }
+    
+    private int minIndex(int[] arr) {
+        int min = Integer.MAX_VALUE;
+        int minIndex = -1;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] < min) {
+                min = arr[i];
+                minIndex = i;
+            }
+        }
+        return minIndex;
+    }
+    
     public void run() {
-        greedyLayout = new GreedyLayout(spaceTime, chip);
-        greedyLayout.run();
         
-        tileCosts = greedyLayout.getBinWeights();
-        assignment = (HashMap)greedyLayout.getAssignment().clone();
         
+        if (duplicate != null)  {
+            //if we have used StreamlinedDuplicate, then we want to start with its
+            //layout
+            duplicateLayout();
+        } else {
+            greedyLayout = new GreedyLayout(spaceTime, chip);
+            greedyLayout.run();
+            //otherwise, start with a greedy bin packing!
+            tileCosts = greedyLayout.getBinWeights();
+            assignment = (HashMap)greedyLayout.getAssignment().clone();
+        }
+        
+        /*
         for (int i = 0; i < tileCosts.length; i++) {
             //System.out.println("Bin " + i + " = " + tileCosts[i]);
         }
+        */
         
         assignBuffers = new BufferDRAMAssignment();
         

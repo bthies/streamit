@@ -209,8 +209,8 @@ public class ScheduleModel {
                 //downstream of bottleneck (the last guy)
                 endTime.put(current, new Integer(tileAvail));
 
-                assert tileAvail > prevEnd : "Impossible state reached in schedule model " + 
-                  tileAvail + " should be > " + prevEnd;
+                assert tileAvail >= prevEnd : "Impossible state reached in schedule model " + 
+                  tileAvail + " should be >= " + prevEnd;
                 
                 prevStart = currentStart; 
                 prevEnd = tileAvail;

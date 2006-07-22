@@ -96,9 +96,18 @@ public class BufferDRAMAssignment {
         
         //now go through the remaining inter trace buffer's and 
         //assign them according to distance from their source, dest
+        boolean forgetOpt = false;
         for (int i = 0; i < traceNodes.length; i++) {
             if (traceNodes[i].isOutputTrace())
-                assignRemaining(traceNodes[i].getAsOutput());
+                if (!assignRemaining(traceNodes[i].getAsOutput())) {
+                    forgetOpt = true;
+                    break;
+                }
+        }
+        
+        if (forgetOpt) {
+            System.out.println("Running force placement...");
+            forceAssignment(traceNodes);
         }
         
         //this is overly strong right now, but lets see if it gets tripped!
@@ -111,6 +120,68 @@ public class BufferDRAMAssignment {
             "Some buffers remain unassigned after BufferDRAMAssignment.";
     }
 
+    private void forceAssignment(TraceNode[] traceNodes) {
+        //sort the input and output trace nodes of the graph according 
+        //to their width
+        LinkedList<TraceNode> sortedTraceNodes = new LinkedList<TraceNode>();
+        for (int i = 0; i < traceNodes.length; i++) {
+            int width = 0;
+            if (traceNodes[i].isOutputTrace() || traceNodes[i].isInputTrace())
+                width = getWidth(traceNodes[i]);
+            else //do nothing for filters
+                continue;
+            
+            //unset all the assignments for the buffers!
+            unsetDramAssignment(traceNodes[i]);
+            
+            if (sortedTraceNodes.size() == 0 || 
+                    width >= getWidth(sortedTraceNodes.get(0)))
+                sortedTraceNodes.addFirst(traceNodes[i]);
+            else {
+                for (int j = 0; j < sortedTraceNodes.size(); j++) {
+                    if (width >= getWidth(sortedTraceNodes.get(j))) {
+                        sortedTraceNodes.add(j, traceNodes[i]); 
+                        break;
+                    }
+                }
+            }
+        }
+        Iterator<TraceNode> tns= sortedTraceNodes.iterator();
+        while (tns.hasNext()) {
+            TraceNode tn = tns.next();
+            List<Edge> edges;
+            if (tn.isOutputTrace())
+                edges = tn.getAsOutput().getSortedOutputs();
+            else 
+                edges = tn.getAsInput().getSourceSequence();
+            //System.out.println("Assigning edges for " + tn + " (" + edges.size() + ")");
+            if (!assignRemaining(edges,0))
+                assert false;
+        }
+    }
+    
+    private void unsetDramAssignment(TraceNode tn) {
+        List<Edge> edges;
+        if (tn.isOutputTrace())
+            edges = tn.getAsOutput().getSortedOutputs();
+        else 
+            edges = tn.getAsInput().getSourceSequence();
+        for (int i = 0; i < edges.size(); i++) {
+            InterTraceBuffer.getBuffer(edges.get(i)).unsetDRAM();
+        }
+    }
+    
+    private int getWidth(TraceNode node) {
+        assert node.isOutputTrace() || node.isInputTrace();
+        int width;
+        if (node.isOutputTrace()) 
+            width = node.getAsOutput().getWidth();
+        else //(node.isInputTrace())
+            width = node.getAsInput().getWidth();
+        
+        return width;
+    }
+    
     /**
      * Return True if two or more different tiles issue a store command to the same 
      * dram using the gdn, this is bad, it could lead to a race condition.  But right
@@ -390,7 +461,7 @@ public class BufferDRAMAssignment {
        return true;
     }
     
-    private void assignRemaining(OutputTraceNode traceNode) {
+    private boolean assignRemaining(OutputTraceNode traceNode) {
         //System.out.println("Calling assignRemaining for: " + traceNode);
         //get all the edges of this output trace node
         //sorted by their weight
@@ -398,7 +469,7 @@ public class BufferDRAMAssignment {
         
         //assert valid(traceNode);
         
-        assignRemaining(edges, 0);
+        return assignRemaining(edges, 0);
     }
     
     /**
@@ -418,6 +489,9 @@ public class BufferDRAMAssignment {
         if (index >= edgesToAssign.size())
             return true;
         
+        /*System.out.println("Assigning edges for " + edgesToAssign.get(0).getSrc().getPrevFilter() + 
+                " " + index);*/
+        
         //get the edge
         Edge edge = edgesToAssign.get(index);
         OutputTraceNode traceNode = edge.getSrc();
@@ -428,6 +502,7 @@ public class BufferDRAMAssignment {
         
         //if it is already assigned, do skip over this edge and move on
         //with assigning...
+        
         if (buffer.isAssigned())
             return assignRemaining(edgesToAssign, index + 1);
             
@@ -436,7 +511,7 @@ public class BufferDRAMAssignment {
         Iterator order = assignmentOrder(edge);
         while (order.hasNext()) {
             StreamingDram current = ((PortDistance) order.next()).dram;
-                //System.out.println("     Trying " + current);
+                //System.out.println("     Trying " + current + " for " + edge);
                 if (assignedInputDRAMs(input).contains(current) || 
                         assignedOutputDRAMs(traceNode).contains(current)) 
                     continue;

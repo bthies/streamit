@@ -310,7 +310,7 @@ public class AddBuffering {
      * @return True if we can add the required buffering to the inside of the trace.
      */
     private boolean legalToAddBufferingInSlice(Trace trace, int initItemsSent) {
-        if (KjcOptions.greedysched)
+        if (KjcOptions.greedysched || KjcOptions.noswpipe)
             return false;
         if (trace.getFilterNodes().length >=
                 spaceTime.getRawChip().getTotalTiles())

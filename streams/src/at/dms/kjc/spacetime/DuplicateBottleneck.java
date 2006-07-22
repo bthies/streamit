@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import at.dms.kjc.sir.SIRFeedbackLoop;
 import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.sir.SIRContainer;
 import at.dms.kjc.sir.SIRPipeline;
 import at.dms.kjc.sir.SIRSplitJoin;
 import at.dms.kjc.sir.SIRStream;
@@ -29,17 +30,127 @@ public class DuplicateBottleneck {
         
     }
     
-    public void duplicate(SIRStream str, RawChip rawChip) {
-        //keep duplicating until we cannot anymore!!
-        //duplicateBottleneck(str);
-        //while (duplicateBottleneck(str));
-        percentStateless(str);
-        //duplicateFilters(str, rawChip.getTotalTiles());
-        assert KjcOptions.dup > 1;
-        duplicateFilters(str, KjcOptions.dup);
+    
+    public SIRStream smarterDuplicateStreamline(SIRStream str, RawChip chip) {
+        double threshold = 0.9;
+        SIRStream oldStr;
+        //get the first work estimate
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        //bin pack the shits
+        GreedyBinPacking binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+        binPacker.pack();
+        //get the max bin weight for the packing
+        int oldWork = binPacker.maxBinWeight();
+        //the work of the new partitioning
+        int newWork = 0;
+        int oldOutputsPerSteady = Util.outputsPerSteady(str, work.getExecutionCounts());
+        int newOutputsPerSteady = 0;
+        //the percentage change
+        double workChange;
+        
+        do {
+            oldStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
+            //StreamItDot.printGraph(oldStr, "oldstr.dot");
+            WorkList workList = work.getSortedFilterWork();
+            SIRFilter bigDup = null;
+            int bigDupWork = 0;
+            for (int i = workList.size() - 1; i >= 0; i--) {
+                if (StatelessDuplicate.isFissable(workList.getFilter(i))) {
+                    bigDup = workList.getFilter(i);
+                    break;
+                }
+            }
+            
+//          nothing to duplicate so just return the str
+            if (bigDup == null) 
+                return str;
+            
+            bigDupWork = work.getWork(bigDup);
+            LinkedList<SIRFilter> duplicateMe = new LinkedList<SIRFilter>();
+            for (int i = workList.size() - 1; i >= 0; i--) {
+                if (!StatelessDuplicate.isFissable(workList.getFilter(i)))
+                     continue;
+
+                if ((((double)work.getWork(workList.getFilter(i))) / ((double)bigDupWork)) > .9)
+                    duplicateMe.add(workList.getFilter(i));
+                else 
+                    break;
+            }
+            
+            //don't break symmetry
+            if (duplicateMe.size() == 16)
+                return str;
+            
+            for (int i = 0; i < duplicateMe.size(); i++) {
+                System.out.println("Duplicating " + duplicateMe.get(i) + " work: " + 
+                        work.getWork(duplicateMe.get(i)));
+                StatelessDuplicate.doit(duplicateMe.get(i), 16);
+            }
+            
+            //get the new work estimate
+            work = WorkEstimate.getWorkEstimate(str);
+            //greedy bin pack the shits
+            binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+            binPacker.pack();
+            newWork = binPacker.maxBinWeight();
+            newOutputsPerSteady = Util.outputsPerSteady(str, work.getExecutionCounts());
+            
+            //find the percentage change in work between the two
+            double oldCyclesPerOut = (((double)oldWork) / ((double)oldOutputsPerSteady));
+            double newCyclesPerOut = (((double)newWork) / ((double)newOutputsPerSteady)); 
+            workChange =  newCyclesPerOut / oldCyclesPerOut; 
+            
+            
+            //remember this as the old work for the next (possible) iteration
+            System.out.println(newCyclesPerOut + " / " + oldCyclesPerOut + " = " + workChange);
+            oldWork = newWork;
+            oldOutputsPerSteady = newOutputsPerSteady;
+        } while (workChange <= threshold);
+        
+        str = oldStr;
+        return str;
     }
     
-    private void percentStateless(SIRStream str) {
+    private int getNumCousins(SIRFilter filter) {
+        int cousins = 1;
+        SIRContainer container = filter.getParent();
+        while (container != null) {
+            if (container instanceof SIRSplitJoin) {
+                cousins *= (((SIRSplitJoin)container).getParallelStreams().size());
+            }
+            container = container.getParent();
+        }
+        return cousins;
+    }
+    
+    public void smarterDuplicate(SIRStream str) {
+        
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        WorkList workList = work.getSortedFilterWork();
+        
+        for (int i = workList.size() - 1; i >= 0; i--) {
+            SIRFilter filter = workList.getFilter(i);
+            if (!StatelessDuplicate.isFissable(filter))
+                continue;
+            int filterWork = work.getWork(filter);
+            int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
+                (filter.getPushInt() + filter.getPopInt());
+            if (filterWork / commRate > 10) {
+                int cousins = getNumCousins(filter); 
+                System.out.println("Cousins of " + filter + ": " + cousins);
+                if (cousins < 16) {
+                    StatelessDuplicate.doit(filter, (int)Math.ceil(16.0 / ((double)cousins)));
+                }
+            }
+            else {
+                break;
+            }
+        }
+        
+        
+    }
+    
+    public void percentStateless(SIRStream str) {
         sortedWorkEsts = new Vector<Integer>();
         sortedFilters = new Vector<SIRFilter>();
         //get the work estimate

@@ -47,6 +47,8 @@ public class SpaceTimeBackend {
                            SIRGlobal global) {
         structures = structs;
     
+        WorkEstimate.UNROLL_FOR_WORK_EST = KjcOptions.workestunroll;
+        
         //first of all enable altcodegen by default
         //KjcOptions.altcodegen = true;
 
@@ -94,8 +96,19 @@ public class SpaceTimeBackend {
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         
+        StreamlinedDuplicate duplicate = null;
+        
         if (KjcOptions.dup > 1) {
-            (new DuplicateBottleneck()).smartDuplication(str, rawChip);
+            DuplicateBottleneck dup = new DuplicateBottleneck();
+            dup.percentStateless(str);
+            if (KjcOptions.noswpipe) {
+                str = FuseStatelessPipelines.doit(str);
+                dup.smarterDuplicate(str);
+            }
+            else {
+                duplicate = new StreamlinedDuplicate();
+                duplicate.doit(str, rawChip);
+            }
         }
         
         if (KjcOptions.partition_greedier) {
@@ -238,13 +251,14 @@ public class SpaceTimeBackend {
         
         
         Partitioner partitioner = null;
-        
-        partitioner = new SimplePartitioner(topNodes,
-                executionCounts, lfa, workEstimate, rawChip);
-        
-        //partitioner = new AdaptivePartitioner(topNodes,
-        //       executionCounts, lfa, workEstimate, rawChip);
-        
+        if (KjcOptions.autoparams) {
+            partitioner = new AdaptivePartitioner(topNodes,
+                    executionCounts, lfa, workEstimate, rawChip);
+        } else { 
+            partitioner = new SimplePartitioner(topNodes,
+                    executionCounts, lfa, workEstimate, rawChip);
+        }
+
         traceGraph = partitioner.partition();
         System.out.println("Traces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
@@ -302,11 +316,13 @@ public class SpaceTimeBackend {
         //create the layout for each stage of the execution using simulated annealing
         //or manual
         Layout layout = null;
-        if (KjcOptions.manuallayout) {
+        if (KjcOptions.noswpipe) {
+            layout = new NoSWPipeLayout(spaceTimeSchedule); 
+        } else if (KjcOptions.manuallayout) {
             layout = new ManualTraceLayout(spaceTimeSchedule);
-        } else if (KjcOptions.greedysched) {
+        } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
             //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
-            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip);
+            layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
         } else {
             layout = new AnnealedLayout(spaceTimeSchedule);
         }

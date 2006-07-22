@@ -41,10 +41,11 @@ public class GreedyBinPacking {
         //now sort the filters by work
         Iterator<FlatNode> sorted = 
             WorkSorted.getSortedList(topLevel, workEstimates).iterator();
-        
+        int filters = 0;
         //perform the packing
         while (sorted.hasNext()) {
             FlatNode node = sorted.next();
+            filters++;
             if (node.contents instanceof SIRFileReader || 
                     node.contents instanceof SIRFileWriter)
                 continue;
@@ -55,7 +56,7 @@ public class GreedyBinPacking {
             bins[bin].add((SIRFilter)node.contents);
             binWeight[bin] += workEstimates.getWork((SIRFilter)node.contents);
         }
-        
+        System.out.println("Packed " + filters + " filters.");
         maxBinWeight = -1;
         //find max bin
         for (int i = 0; i < numBins; i++)

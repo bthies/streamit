@@ -623,19 +623,22 @@ public class ComputeCodeStore implements SIRCodeUnit{
     private void addInitFunctionCall(FilterInfo filterInfo) {
         // create the params list, for some reason
         // calling toArray() on the list breaks a later pass
+       /*
         List paramList = filterInfo.filter.getParams();
+       
         JExpression[] paramArray;
         if (paramList == null || paramList.size() == 0)
             paramArray = new JExpression[0];
         else
             paramArray = (JExpression[]) paramList.toArray(new JExpression[0]);
-
+            */
         JMethodDeclaration init = filterInfo.filter.getInit();
         if (init != null)
-            rawMain.addStatementFirst(new JExpressionStatement(null,
-                                                               new JMethodCallExpression(null, new JThisExpression(null),
-                                                                                         filterInfo.filter.getInit().getName(), paramArray),
-                                                               null));
+            rawMain.addStatementFirst
+            (new JExpressionStatement(null,
+                    new JMethodCallExpression(null, new JThisExpression(null),
+                            filterInfo.filter.getInit().getName(), new JExpression[0]),
+                            null));
         else
             System.out.println(" ** Warning: Init function is null");
 
@@ -782,11 +785,20 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * 
      * @param chip The raw chip.
      */
-    public static void barrierInInit(RawChip chip) {
+    public static void barrier(RawChip chip, boolean init, boolean primepump) {
         Router router = new XYRouter();
+        
+        boolean steady = !init && !primepump;
+        int stage = 1;
+        if (steady)
+            stage = 2;
+        
         for (int i = 0; i < chip.getTotalTiles(); i++) {
             RawTile tile = chip.getTile(i);
-            tile.getComputeCode().initBlock.addStatement(RawExecutionCode.boundToSwitchStmt(100));
+            if (steady)
+                tile.getComputeCode().steadyLoop.addStatement(RawExecutionCode.boundToSwitchStmt(100));
+            else
+                tile.getComputeCode().initBlock.addStatement(RawExecutionCode.boundToSwitchStmt(100));
             ComputeNode[] dests =  new ComputeNode[chip.getTotalTiles() - 1];
             int index = 0;
             for (int x = 0; x < chip.getTotalTiles(); x++) {
@@ -796,11 +808,14 @@ public class ComputeCodeStore implements SIRCodeUnit{
                         new JExpressionStatement(
                                 new JAssignmentExpression(new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE),
                                         new JFieldAccessExpression(Util.CSTIINTVAR)));
-                    dest.getComputeCode().initBlock.addStatement(rec);
+                    if (steady) 
+                        dest.getComputeCode().steadyLoop.addStatement(rec);
+                    else 
+                        dest.getComputeCode().initBlock.addStatement(rec);
                     dests[index++] = chip.getTile(x);
                 }
             }
-            SwitchCodeStore.generateSwitchCode(router, tile, dests, 1);
+            SwitchCodeStore.generateSwitchCode(router, tile, dests, stage);
         }
     }
     

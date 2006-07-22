@@ -403,6 +403,9 @@ public class MultiLevelSplitsJoins {
         
         //now create the new traces using the new outputTracennodes
         for (int n = 0; n < numNewTraces; n++) {
+            if (n < numNewTraces -1) {
+                
+            }
             newTraces[n] = fixEdgesAndCreateTrace(newOutputsWeights[n],
                     newOutputsDests[n], newOutput,  type);
             //add the new trace to the trace list
@@ -481,8 +484,8 @@ public class MultiLevelSplitsJoins {
             LinkedList<LinkedList<Edge>> dests,
             OutputTraceNode src, CType type) {
         //create the output trace node base on the calculated pattern
-        OutputTraceNode output = new OutputTraceNode(weights, dests); 
-        //create the input trace node that just receive from the 
+        OutputTraceNode output = new OutputTraceNode(weights, dests);
+                //create the input trace node that just receive from the 
         //original trace
         InputTraceNode input = new InputTraceNode(new int[]{1});
         Edge edge = new Edge(src, input);
@@ -497,7 +500,9 @@ public class MultiLevelSplitsJoins {
 //      create the new identity filter using an sir identity...
         SIRFilter identity = new SIRIdentity(type);
         RenameAll.renameAllFilters(identity);
-                
+        //System.out.println(identity + " has " + weights.size());
+
+        
         FilterTraceNode filter = 
             new FilterTraceNode(new FilterContent(identity));
                 

@@ -560,18 +560,6 @@ public class AdaptivePartitioner extends Partitioner {
         return cost;
     }
     
-    private FilterContent getFilterContent(UnflatFilter f) {
-        FilterContent content;
-
-        if (f.filter instanceof SIRFileReader)
-            content = new FileInputContent(f);
-        else if (f.filter instanceof SIRFileWriter)
-            content = new FileOutputContent(f);
-        else
-            content = new FilterContent(f);
-        return content;
-    }
-
     // get the work estimation for a filter and multiple it by the
     // number of times a filter executes in the steady-state
     // return 0 for linear filters or predefined filters
@@ -583,8 +571,13 @@ public class AdaptivePartitioner extends Partitioner {
     }
 
     private int getWorkEstimate(SIRFilter filter) {
-        if (filter instanceof SIRPredefinedFilter)
+        if (filter.getIdent().startsWith("generatedIdFilter") && 
+                genIdWorks.containsKey(filter))
+            return genIdWorks.get(filter).intValue();
+    
+        if (filter instanceof SIRPredefinedFilter) 
             return 0;
+        
         assert work.getReps(filter) == ((int[]) exeCounts[1].get(filter))[0] : "Multiplicity for work estimation does not match schedule of flat graph";
         return work.getWork(filter);
     }

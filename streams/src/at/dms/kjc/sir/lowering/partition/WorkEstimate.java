@@ -15,7 +15,8 @@ import at.dms.kjc.cluster.CodeEstimate;
  * once, then pass it around and share it.
  */
 public class WorkEstimate {
-    
+    /** If true, attempt to fully unroll the filter before we estimate its work */
+    public static boolean UNROLL_FOR_WORK_EST = false;
     private HashMap executionCounts;
     
     /**
@@ -35,7 +36,7 @@ public class WorkEstimate {
         result.doit(str);
         return result;
     }
-
+    
     /**
      * Returns a sorted worklist corresponding to a given work
      * estimate.  The entries will be sorted by increasing values of
@@ -220,8 +221,18 @@ public class WorkEstimate {
             SIROperator obj = (SIROperator)it.next();
             if (obj instanceof SIRFilter) {
                 int reps = ((int[])executionCounts.get(obj))[0];
-                //int work = RawWorkEstimator.estimateWork((SIRFilter)obj); 
-                int workEstimate = WorkVisitor.getWork((SIRFilter)obj);
+                //int work = RawWorkEstimator.estimateWork((SIRFilter)obj);
+                int workEstimate;
+                
+                if (UNROLL_FOR_WORK_EST) {
+                    SIRFilter newFilter = (SIRFilter)ObjectDeepCloner.deepCopy((SIRStream)obj); 
+                    Unroller.unrollFilter(newFilter, 256);
+                    workEstimate = WorkVisitor.getWork(newFilter);
+                }
+                else {
+                    workEstimate = WorkVisitor.getWork((SIRFilter)obj);
+                }
+            
                 WorkInfo wi = WorkInfo.create((SIRFilter)obj,reps,workEstimate);
                 workMap.put(obj, wi);
             }
@@ -238,7 +249,7 @@ public class WorkEstimate {
          * The filter we're looking at.
          */
         private SIRFilter theFilter;
-
+        
         private WorkVisitor(SIRFilter theFilter) {
             this.work = 0;
             this.theFilter = theFilter;
@@ -249,7 +260,7 @@ public class WorkEstimate {
          */
         public static int getWork(SIRFilter filter) {
             // if no work function (e.g., identity filters?) return 0
-            if (!filter.needsWork ()) {
+            if (!filter.needsWork () && !(filter instanceof SIRIdentity)) {
                 return 0;
             } else if (filter.getWork()==null) {
                 //System.err.println("this filter has null work function: " + filter);

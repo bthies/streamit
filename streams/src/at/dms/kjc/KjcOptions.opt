@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.85 2006-07-19 02:57:24 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.86 2006-07-22 22:44:24 mgordon Exp $
  */
 
 prefix Kjc
@@ -601,6 +601,11 @@ longname 		"greedysched"
 	type 		boolean
 	default		"false"
 	help		"For the SpaceTime Backend, use a greedy bin packing algorithm to calculate the schedule."
+
+longname		"workestunroll"
+	type 		boolean
+	default		"false"
+	help		"For the SpaceTime Backend, perform unrolling on filters for work estimation."
 
 /* remove: now default */
 /* longname 		"noverbose" */

@@ -290,7 +290,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         
         assignBuffers = new BufferDRAMAssignment();
         
-        //simAnnealAssign(3, 50);
+        simAnnealAssign(3, 50);
         System.out.println("Computation Cost: " + maxBinWeight());
         assignBuffers.run(spaceTime, this);
     }

@@ -440,9 +440,9 @@ public class Util {
         for (int i = 0; i < scheduleOrder.size(); i++) {
             Trace trace = scheduleOrder.get(i);
             //don't add io traces!
-            if (partitioner.isIO(trace)) {
+            /*if (partitioner.isIO(trace)) {
                 continue;
-            }
+            }*/
             assert trace.getNumFilters() == 1 : "Only works for Time!";
             sortedList.add(trace.getHead().getNextFilter());
         }

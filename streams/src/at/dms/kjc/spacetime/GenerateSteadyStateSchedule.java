@@ -73,7 +73,7 @@ public class GenerateSteadyStateSchedule {
 
         // schedule predefined filters first, but don't put them in the
         // schedule just assign them tiles...
-        removePredefined(sortedTraces);
+        //removePredefined(sortedTraces);
 
         // reverse the list
         Collections.reverse(sortedTraces);
@@ -151,11 +151,12 @@ public class GenerateSteadyStateSchedule {
             // " to " + tile +
             // "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
 
-            assert !(((FilterTraceNode) node).isFileInput() || ((FilterTraceNode) node)
-                     .isFileInput());
+            //assert !(((FilterTraceNode) node).isFileInput() || ((FilterTraceNode) node)
+            //         .isFileInput());
 
             // if this trace has file input take care of it,
             // assign the file reader and record that the tile reads a file...
+            /*
             if (node.getPrevious().isInputTrace()) {
                 InputTraceNode in = (InputTraceNode) node.getPrevious();
                 // if this trace reads a file, make sure that we record that
@@ -167,9 +168,10 @@ public class GenerateSteadyStateSchedule {
                     assert layout.getTile(in.getSingleEdge().getSrc().getPrevFilter()) == tile;
                 }
             }
-
+            */
             // writes to a file, set tile for writer and record that the tile
             // writes a file
+            /*
             if (node.getNext().isOutputTrace()) {
                 OutputTraceNode out = (OutputTraceNode) node.getNext();
                 if (out.hasFileOutput()) {
@@ -182,7 +184,7 @@ public class GenerateSteadyStateSchedule {
                     
                 }
             }
-
+            */
             // set file reading and writing
             // set the space time schedule?? Jasper's stuff
             // don't do it for the first node
@@ -219,7 +221,7 @@ public class GenerateSteadyStateSchedule {
         while (sch.hasNext()) {
             Trace trace = (Trace) sch.next();
             SpaceTimeBackend.println(" ** " + trace);
-         
+            //System.out.println(" ** " + trace);
             prev = trace;
         }
 

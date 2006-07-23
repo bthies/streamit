@@ -107,8 +107,8 @@ public class ComputeCodeStore implements SIRCodeUnit{
         assert !buffer.redundant() : "trying to generate a file command for a redundant buffer.";
         assert words > 0 : "trying to generate a file dram command of size 0";
 
-        assert buffer.getRotationLength() == 1 : 
-            "The buffer connected to a file reader / writer cannot rotate!";
+        //assert buffer.getRotationLength() == 1 : 
+        //    "The buffer connected to a file reader / writer cannot rotate!";
         parent.setComputes();
         String functName = "raw_streaming_dram" + 
             (staticNet ? "" : "_gdn") + 

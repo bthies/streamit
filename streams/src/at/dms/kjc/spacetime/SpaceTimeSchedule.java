@@ -17,10 +17,6 @@ public class SpaceTimeSchedule {
     private Trace[] schedule;
     //the raw chip that we are compiling to
     private RawChip rawChip;
-    //true if the tile reads from a file
-    private boolean[] readsFile;
-    //true if the tile writes a file
-    private boolean[] writesFile;
     //the initialization schedule
     private Trace[] initSchedule;
     //the preloop schedule!
@@ -32,13 +28,9 @@ public class SpaceTimeSchedule {
     public SpaceTimeSchedule(Partitioner p, RawChip r) {
         rawChip = r;
         partitioner = p;
-        readsFile = new boolean[rawChip.getTotalTiles()];
-        writesFile = new boolean[rawChip.getTotalTiles()];
+    
         primePumpMult = new HashMap();
-        for (int i = 0; i < rawChip.getTotalTiles(); i++) {
-            readsFile[i] = false;
-            writesFile[i] = false;
-        }
+      
     }
      
     /**
@@ -184,13 +176,5 @@ public class SpaceTimeSchedule {
         return ((Integer)primePumpMult.get(trace)).intValue();
     }
     
-    public void setWritesFile(int tileNum) {
-        assert rawChip.isValidTileNumber(tileNum);
-        writesFile[tileNum] = true;
-    }
-    
-    public void setReadsFile(int tileNum) {
-        assert rawChip.isValidTileNumber(tileNum);
-        readsFile[tileNum] = true;
-    }
+  
 }

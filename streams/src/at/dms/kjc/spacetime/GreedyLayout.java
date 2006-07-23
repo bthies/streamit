@@ -75,7 +75,7 @@ public class GreedyLayout implements Layout {
         pack();
         System.out.println("Greedy max tile Work Cost = " + maxBinWeight);
         //assign buffers!
-        new BufferDRAMAssignment().run(spaceTime, this);
+        //new BufferDRAMAssignment().run(spaceTime, this);
     }
     
     private void pack() {
@@ -84,6 +84,7 @@ public class GreedyLayout implements Layout {
         LinkedList<Trace> scheduleOrder;
         
         //get the schedule order of the graph!
+        //System.out.println(SpaceTimeBackend.NO_SWPIPELINE);
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then use then respect
             //dataflow dependencies
@@ -92,18 +93,21 @@ public class GreedyLayout implements Layout {
             //if we are software pipelining then sort the traces by work
             Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
             Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
+           // System.out.println(tempArray.length);
             scheduleOrder = new LinkedList(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
         }
+
         
         for (int i = 0; i < scheduleOrder.size(); i++) {
             Trace trace = scheduleOrder.get(i);
+            
             //don't add io traces!
-            if (spaceTime.partitioner.isIO(trace)) {
+            /*if (spaceTime.partitioner.isIO(trace)) {
                 System.out.println("don't add " + trace.getHead().getNextFilter());
                 continue;
-            }
+            }*/
             assert trace.getNumFilters() == 1 : "The greedy partitioner only works for Time!";
             sortedList.add(trace.getHead().getNextFilter());
         }

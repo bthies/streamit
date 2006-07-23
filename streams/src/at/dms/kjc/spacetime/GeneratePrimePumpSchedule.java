@@ -97,7 +97,8 @@ public class GeneratePrimePumpSchedule {
      * @return True if the trace can fire.
      */
     private boolean canFire(Trace trace) {
-        assert  (!spaceTimeSchedule.partitioner.isIO(trace));
+        if (!shouldFire(trace))
+            return false;
                    
         Trace[] depends = trace.getDependencies();
         
@@ -125,9 +126,36 @@ public class GeneratePrimePumpSchedule {
         Iterator it = dataFlowTraversal.iterator();
         while (it.hasNext()) {
             Trace trace = (Trace)it.next();
+            if (!shouldFire(trace))
+                continue;
             if (!canFire(trace))
                 return false;
         }
         return true;
+    }
+    
+    
+    /**
+     * We only need to schedule io traces that split or join.  Otherwise
+     * their function is folded in to the neighboring trace.
+     * 
+     * @param trace The trace
+     * @return should this be counted as a trace that needs to fire.
+     */
+    private boolean shouldFire(Trace trace) {
+        if (!spaceTimeSchedule.partitioner.isIO(trace))
+            return true;
+        if (trace.getHead().getNextFilter().isFileOutput()) {
+            if (trace.getHead().oneInput())
+                return false;
+            else 
+                return true;
+        }
+        else {
+            if (trace.getTail().oneOutput())
+                return false;
+            else
+                return true;
+        }
     }
 }

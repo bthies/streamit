@@ -41,20 +41,19 @@ public class TraceDotGraph {
     public static void dumpGraph(SpaceTimeSchedule spaceTime, Trace[] schedule, String fileName,
                                  Layout layout, boolean DRAM, boolean label) {
         
-        Trace[] io = spaceTime.partitioner.io;
+        
         List steadyTrav = Arrays.asList(schedule);
         Partitioner partitioner = spaceTime.partitioner;
         RawChip rawChip = spaceTime.getRawChip();
         
-        SpaceTimeBackend.println("Creating Trace Dot Graph...");
+        System.out.println("Creating Trace Dot Graph...");
         try {
             int order = 1;
             FileWriter fw = new FileWriter(fileName);
             fw.write("digraph TraceDotGraph {\n");
             fw.write("size = \"8, 10.5\";\n");
             LinkedList tracesList = new LinkedList(steadyTrav);
-            for (int i = 0; i < io.length; i++)
-                tracesList.add(io[i]);
+         
             // HashSet traceSet = new HashSet();
             // Util.addAll(traceSet, steadyTrav);
             // add the file readers and writes if they exist
@@ -64,7 +63,9 @@ public class TraceDotGraph {
             Iterator traces = tracesList.iterator();
             while (traces.hasNext()) {
                 Trace trace = (Trace) traces.next();
+                System.out.println(trace);
                 TraceNode node = trace.getHead();
+                
                 fw.write("subgraph cluster" + trace.hashCode() + " {\n");
                 fw.write("  color=blue;\n");
                 if (label) {
@@ -72,6 +73,7 @@ public class TraceDotGraph {
                          + partitioner.getTraceBNWork(trace) + "\";\n");
                 }
                 while (node != null) {
+                    System.out.println("   " + node);
                     if (node.isFilterTrace() && !node.getNext().isOutputTrace())
                         fw.write("  " + node.hashCode() + " -> "
                                  + node.getNext().hashCode() + ";\n");
@@ -111,6 +113,7 @@ public class TraceDotGraph {
                     }
 
                     if (label && node.isFilterTrace()) {
+                        System.out.println("  * info for " + node);
                         fw.write("  " + node.hashCode() + "[ label=\""
                                  + ((FilterTraceNode) node).toString(layout));
                         FilterInfo filter = FilterInfo

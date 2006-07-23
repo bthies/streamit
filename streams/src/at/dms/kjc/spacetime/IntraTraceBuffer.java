@@ -23,6 +23,7 @@ public class IntraTraceBuffer extends OffChipBuffer {
     public static IntraTraceBuffer getBuffer(FilterTraceNode src,
                                              OutputTraceNode dst) {
         if (!bufferStore.containsKey(src)) {
+            //System.out.println("Creating Buffer from " + src + " to " + dst);
             bufferStore.put(src, new IntraTraceBuffer(src, dst));
         }
         assert (((IntraTraceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
@@ -34,7 +35,7 @@ public class IntraTraceBuffer extends OffChipBuffer {
                                              FilterTraceNode dst) {
         if (!bufferStore.containsKey(src)) {
             bufferStore.put(src, new IntraTraceBuffer(src, dst));
-
+            //System.out.println("Creating Buffer from " + src + " to " + dst);
         }
         assert (((IntraTraceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
 

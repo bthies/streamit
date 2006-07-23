@@ -52,9 +52,9 @@ public class DataFlowOrder {
                                 queue.add(current);
                         }
                     }
-                    if (!trace.getHead().getNextFilter().isPredefined()) {
-                        schedule.add(trace);
-                    }
+                    //if (!trace.getHead().getNextFilter().isPredefined()) {
+                    schedule.add(trace);
+                    //}
                 }
             }
         }

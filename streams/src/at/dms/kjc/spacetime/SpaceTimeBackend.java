@@ -27,7 +27,7 @@ public class SpaceTimeBackend {
      */
     public static boolean FILTER_DEBUG_MODE = false;
     /** should we not software pipeline the steady state */
-    public static boolean NO_SWPIPELINE = KjcOptions.noswpipe;
+    public static boolean NO_SWPIPELINE;
     public static boolean FISSION = true;
 
     public static SIRStructure[] structures;
@@ -46,7 +46,9 @@ public class SpaceTimeBackend {
                            SIRHelper[] helpers,
                            SIRGlobal global) {
         structures = structs;
-    
+        
+        NO_SWPIPELINE = KjcOptions.noswpipe;
+        
         WorkEstimate.UNROLL_FOR_WORK_EST = KjcOptions.workestunroll;
         
         //first of all enable altcodegen by default
@@ -196,7 +198,7 @@ public class SpaceTimeBackend {
         // no joiner directly precede a FileWriter.
 	//        System.err.println("Before SafeFileReaderWriterPositions"); 
 	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
-        SafeFileReaderWriterPositions.doit(str);
+        //SafeFileReaderWriterPositions.doit(str);
 	//        System.err.println("After SafeFileReaderWriterPositions");
 	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
         

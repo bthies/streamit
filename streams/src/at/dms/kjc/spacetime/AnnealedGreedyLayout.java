@@ -90,18 +90,18 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         recalculateBinWeights();
         
         while (true) {
-            while (true) {
-                trace1 =  traces[rand.nextInt(traces.length)];
-                //break when we have found a non-io trace
-                if (!partitioner.isIO(trace1))
-                    break;
-            }
+            //while (true) {
+            trace1 =  traces[rand.nextInt(traces.length)];
+            //break when we have found a non-io trace
+            //if (!partitioner.isIO(trace1))
+            //    break;
+           // }
             
-            while (true) {
-                trace2 = traces[rand.nextInt(traces.length)];
-                if (!partitioner.isIO(trace2))
-                    break;
-            }
+           
+            trace2 = traces[rand.nextInt(traces.length)];
+            //if (!partitioner.isIO(trace2))
+            //    break;
+            
             
             if (trace1 == trace2)
                 continue;
@@ -290,7 +290,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         
         assignBuffers = new BufferDRAMAssignment();
         
-        simAnnealAssign(3, 50);
+        //simAnnealAssign(3, 50);
         System.out.println("Computation Cost: " + maxBinWeight());
         assignBuffers.run(spaceTime, this);
     }

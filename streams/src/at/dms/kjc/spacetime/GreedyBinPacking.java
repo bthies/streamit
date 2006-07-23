@@ -46,10 +46,10 @@ public class GreedyBinPacking {
         while (sorted.hasNext()) {
             FlatNode node = sorted.next();
             filters++;
-            if (node.contents instanceof SIRFileReader || 
+            /*if (node.contents instanceof SIRFileReader || 
                     node.contents instanceof SIRFileWriter)
                 continue;
-            
+            */
             assert node.isFilter();
             
             int bin = findMinBin();

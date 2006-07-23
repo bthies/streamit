@@ -256,14 +256,18 @@ public class BufferDRAMAssignment {
                 .getNext();
 
             if (files[i].getHead().isFileOutput()) {
-                assert files[i].getHead().oneInput() : 
-                    "buffer assignment of a joined file writer not implemented ";
+               
+                //    "buffer assignment of a joined file writer not implemented ";
                 //get the tile assigned to the file writer by the layout stage?
-                
-                RawTile tile = 
-                    layout.getTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
-                //set the filter tile to be the tile of the upstream tile
-                layout.setTile(files[i].getHead().getNextFilter(), tile);
+                RawTile tile;
+                if (files[i].getHead().oneInput()) {
+//                 set the filter tile to be the tile of the upstream tile
+                    tile = layout.getTile(files[i].getHead().getSingleEdge().getSrc().getPrevFilter());
+                    layout.setTile(files[i].getHead().getNextFilter(), tile);
+                } else {
+                    tile = layout.getTile(filter); 
+                }
+                    
                 
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i]
                                                                   .getHead(), filter);
@@ -286,13 +290,20 @@ public class BufferDRAMAssignment {
                         + " " + dram);*/
                 dram.setFileWriter((FileOutputContent)filter.getFilter());
             } else if (files[i].getTail().isFileInput()) {
-                assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
+                
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
                 //get the tile assigned to the next
-                RawTile tile = 
-                    layout.getTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                RawTile tile;
+                //if there is only one output, then force its assignment to the 
+                //filter that the tile is assigned to so that there is no copying
+                if (files[i].getTail().oneOutput()) {
+                    tile = layout.getTile(files[i].getTail().getSingleEdge().getDest().getNextFilter());
+                    layout.setTile(files[i].getHead().getNextFilter(), tile);                
+                } else {
+                    tile = layout.getTile(filter);
+                }
                 
-                layout.setTile(files[i].getHead().getNextFilter(), tile);
+
                 
                 IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,
                                                                   files[i].getTail());

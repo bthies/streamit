@@ -55,6 +55,8 @@ public class Rawify {
     
     private static Router router;
     
+    private static SpaceTimeSchedule spaceTimeSchedule;
+    
     /**
      *  The entry of the rawify pass.  This function iterates over the 
      *  schedules for the 3 phases (init, priming, steady) and generates the
@@ -66,6 +68,8 @@ public class Rawify {
     public static void run(SpaceTimeSchedule schedule, RawChip rawChip, Layout layout) {
         Trace traces[];
 
+        spaceTimeSchedule = schedule;
+        
         if (KjcOptions.noswitchcomp)
             SWITCH_COMP = false;
         
@@ -308,6 +312,9 @@ public class Rawify {
      */
     private static void processFilterTraces(Trace trace, boolean init, boolean primepump,
             RawChip rawChip) {
+        //don't do anything for io because it is handled at other levels
+        if (spaceTimeSchedule.partitioner.isIO(trace))
+            return;
         //create the DRAM commands for trace input and output 
         //this is done before we create the compute code for the filters of the
         //trace
@@ -377,8 +384,8 @@ public class Rawify {
         
         assert StreamingDram.differentDRAMs(traceNode) : 
             "outputs for a single OutputTraceNode going to same DRAM";
-        handleFileOutput(traceNode, init,
-                primepump, rawChip);
+        //handleFileOutput(traceNode, init,
+        //        primepump, rawChip);
         // create the switch code to perform the splitting
         splitOutputTrace(traceNode, init,
                 primepump);
@@ -406,8 +413,8 @@ public class Rawify {
 //            return; 
         assert StreamingDram.differentDRAMs(traceNode) : 
             "inputs for a single InputTraceNode coming from same DRAM";
-        handleFileInput(traceNode, init,
-                primepump, rawChip);
+        //handleFileInput(traceNode, init,
+        //        primepump, rawChip);
         // create the switch code to perform the joining
         joinInputTrace(traceNode, init, primepump);
         // generate the dram command to execute the joining
@@ -563,9 +570,10 @@ public class Rawify {
         // generate the command to write to the dest of the input trace node
         OffChipBuffer destBuffer = IntraTraceBuffer.getBuffer(input, filter);
         int writeWords = items * typeSize;
-        if (input.isFileOutput() && OffChipBuffer.unnecessary(input))
+        if (input.isFileOutput()) {  // && OffChipBuffer.unnecessary(input))
             destBuffer.getOwner().getComputeCode().addFileCommand(false,
                     init || primepump, writeWords, destBuffer, true);
+        }
         else
             destBuffer.getOwner().getComputeCode().addDRAMCommand(false, init,
                     primepump, Util.cacheLineDiv(writeWords * 4), 
@@ -600,9 +608,10 @@ public class Rawify {
             // in the primepump stage a real output trace always reads from the
             // init buffers
             // never use stage 2 for reads
-            if (output.isFileInput() && OffChipBuffer.unnecessary(output))
+            if (output.isFileInput()) {// && OffChipBuffer.unnecessary(output))
                 srcBuffer.getOwner().getComputeCode().addFileCommand(true,
                         init || primepump, readWords, srcBuffer, true);
+            }
             else
                 srcBuffer.getOwner().getComputeCode().addDRAMCommand(true,
                         init, primepump, 

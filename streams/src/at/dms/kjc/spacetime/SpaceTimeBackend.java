@@ -315,6 +315,10 @@ public class SpaceTimeBackend {
         //generate the schedule modeling values for each filter/slice 
         partitioner.calculateWorkStats();
         
+        if (KjcOptions.stats) {
+            BenchChar.doit(spaceTimeSchedule, str);
+        }
+        
         //create the layout for each stage of the execution using simulated annealing
         //or manual
         Layout layout = null;

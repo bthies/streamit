@@ -75,8 +75,8 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         while (traces.hasNext()) {
             
           Trace trace = traces.next();
-          if (spaceTime.partitioner.isIO(trace))
-              continue;
+          //if (spaceTime.partitioner.isIO(trace))
+          //    continue;
           assert trace.getFilterNodes().length == 1 : "NoSWPipeLayout only works for Time! "  + 
                trace;
           //System.out.println("init assiging " + trace.getHead().getNextFilter() + " to " + tile);

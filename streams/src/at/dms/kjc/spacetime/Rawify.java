@@ -225,7 +225,7 @@ public class Rawify {
                     if (canJoin) {
                         //create code for joining input to the trace
                         hasBeenJoined.add(notSched.getHead());
-                        System.out.println("Scheduling join of " + notSched.getHead().getNextFilter());
+                        //System.out.println("Scheduling join of " + notSched.getHead().getNextFilter());
                         processInputTraceNode(notSched.getHead(),
                                 init, primepump, rawChip);
                     }
@@ -239,7 +239,7 @@ public class Rawify {
                     if (hasBeenJoined.contains(trace.getHead())) {
                         scheduled.add(trace);
                         processFilterTraces(trace, init, primepump, rawChip);
-                        System.out.println("Scheduling " + trace.getHead().getNextFilter());
+                        //System.out.println("Scheduling " + trace.getHead().getNextFilter());
                         needToSchedule.removeFirst();
                     }
                     else {
@@ -252,7 +252,7 @@ public class Rawify {
                     if (!hasBeenSplit.contains(scheduled.get(t).getTail())) {
                         OutputTraceNode output = 
                             scheduled.get(t).getTail();
-                        System.out.println("Scheduling split of " + output.getPrevFilter()); 
+                        //System.out.println("Scheduling split of " + output.getPrevFilter()); 
                         processOutputTraceNode(output,
                                 init, primepump, rawChip);
                         hasBeenSplit.add(output);
@@ -272,7 +272,7 @@ public class Rawify {
                 if (!hasBeenSplit.contains(scheduled.get(t).getTail())) {
                     OutputTraceNode output = 
                         scheduled.get(t).getTail();
-                    System.out.println("Scheduling split of " + output.getPrevFilter()); 
+                    //System.out.println("Scheduling split of " + output.getPrevFilter()); 
                     processOutputTraceNode(output,
                             init, primepump, rawChip);
                     hasBeenSplit.add(output);
@@ -286,7 +286,7 @@ public class Rawify {
                 if (!hasBeenJoined.contains(scheduled.get(t).getHead())) {
                     InputTraceNode input  = 
                         scheduled.get(t).getHead();
-                    System.out.println("Scheduling join of " + input.getNextFilter()); 
+                    //System.out.println("Scheduling join of " + input.getNextFilter()); 
                     processInputTraceNode(input,
                             init, primepump, rawChip);
                     hasBeenJoined.add(input);

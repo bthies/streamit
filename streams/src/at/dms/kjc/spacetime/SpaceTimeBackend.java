@@ -236,7 +236,7 @@ public class SpaceTimeBackend {
         System.out.println("Comp/Comm Ratio of SIR graph: " + 
                 CCRatio);
        
-        new CalculateParams(str, CCRatio).doit();
+        new CalculateParams(str, CCRatio, executionCounts[1]).doit();
       
         //Util.printExecutionCount(executionCounts[0]);
         //Util.printExecutionCount(executionCounts[1]);

@@ -958,8 +958,7 @@ public class Rawify {
         // because transfers must be cache line size divisible...
         // generate dummy values to fill the cache line!
         if ((items * typeSize) % RawChip.cacheLineWords != 0
-            && !(traceNode.isFileOutput() && OffChipBuffer
-                 .unnecessary(traceNode))) {
+            && !traceNode.isFileOutput()) {
             int dummy = RawChip.cacheLineWords
                 - ((items * typeSize) % RawChip.cacheLineWords);
             SwitchCodeStore.dummyOutgoing(dest[0], dummy, init || primepump);

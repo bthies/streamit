@@ -242,6 +242,19 @@ public class BCFile {
                 //then use the dynamic network
                 boolean dynamic = dev.isDynamic() || 
                 ((SpdStaticStreamGraph)streamGraph.getParentSSG(dev.getFlatNode())).simulator instanceof NoSimulator;
+
+                //now see if the port that this file writer is attached to also has a 
+                //file reader, if so, we have to ignore the first word on the queue because
+                //it is generated to start the file reader...
+                int ignore_first = 0;
+                for (int r = 0; 
+                     r < dev.getPort().getNeighboringTile().getAttachedFileReaders().size(); r++) {
+                    FileReaderDevice frd = dev.getPort().getNeighboringTile().getAttachedFileReaders().get(r);
+                    if (frd.getPort() == dev.getPort()) {
+                        ignore_first = 1;
+                        break;
+                    }
+                }
                 if (dynamic)
                     dev.setDynamic();
                 if (KjcOptions.numbers > 0 &&  !IMEMEstimation.TESTING_IMEM) {
@@ -252,7 +265,9 @@ public class BCFile {
                             (dynamic ? "0, " : "1, ") + //network
                             (KjcOptions.asciifileio ? "0, " : "1, ") + 
                             dev.getTypeCode() + ", " +
-                            size + ");\n");
+                            size + ", " +
+                            ignore_first + 
+                            ");\n");
                 }
                 else { 
                     fw.write("  dev_to_file(\"" + 
@@ -262,7 +277,9 @@ public class BCFile {
                             "0, " + //don't wait for trigger
                             (KjcOptions.asciifileio ? "0, " : "1, ") + 
                             dev.getTypeCode() + ", " +
-                            size + ");\n");
+                            size +  ", " +
+                            ignore_first +         
+                            ");\n");
                 }
             }
         }

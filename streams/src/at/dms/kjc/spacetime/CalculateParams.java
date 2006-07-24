@@ -69,7 +69,7 @@ public class CalculateParams {
         //to be divisible by 8
         int modeOfRates = findRateMode();
         if (modeOfRates < 8) {
-            KjcOptions.steadymult = 8;//8 / modeOfRates; 
+            KjcOptions.steadymult = SpaceTimeBackend.getRawChip().cacheLineWords;//8 / modeOfRates; 
             System.out.println("** Setting steadymult to " + KjcOptions.steadymult);
         }
     }

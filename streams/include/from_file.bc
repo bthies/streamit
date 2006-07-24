@@ -94,8 +94,11 @@ fn dev_from_file(filename, port, static_network,
 	}
 	printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
 	while (1) {
-	  //we are done, do nothing
-	  yield;
+	  //we are done
+	  //this should exit!!!!!
+	  gInterrupted = 1;
+	  //this will exit the thread
+	  exit_now(0);
 	}
       };
   }
@@ -163,8 +166,11 @@ fn dev_from_file(filename, port, static_network,
 	 
 	 printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
 	 while (1) {
-	   //we are done, do nothing
-	   yield;
+	   //we are done
+	   //this should exit!!!!!
+	   gInterrupted = 1;
+	   //this will exit the thread
+	   exit_now(0);
 	 }
        };
   }

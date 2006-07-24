@@ -27,14 +27,23 @@ fn screen(val, type, format, file_name) {
 }
 
 
+/**
+   call the below method but do not ignore the first word.
+*/
+fn dev_to_file(filename, port, static_network, wait_for_trigger,
+	       binary, type, size) {
+  dev_to_file(filename, port, static_network, wait_for_trigger,
+	      binary, type, size, 0);
+}
+
 /** 
  * type: 0 = int, 1 = float, 
  * wait_for_trigger = 0 for spacetime, = 1 for spacedynamic
  * size is size of type
- * 
+ * ignore_first
  **/
 fn dev_to_file(filename, port, static_network, wait_for_trigger,
-	       binary, type, size)
+	       binary, type, size, ignore_first)
 {
   local receive_device_descriptor = hms_new();
   local network = 0;
@@ -61,6 +70,7 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
   receive_device_descriptor.ioPort = port;
   receive_device_descriptor.type = type;
   receive_device_descriptor.cyclesPerWord = cyclesPerWord;
+  receive_device_descriptor.ignore_first = ignore_first;
   
   //set the printf format for ascii data
   if (type == 0)
@@ -85,6 +95,12 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 	local ioPort = this.ioPort;
 	local type = this.type;
 	local cyclesPerWord = this.cyclesPerWord;
+	local ignore_first = this.ignore_first;
+
+        //ignore the first word
+	if (ignore_first == 1) {
+	  this.receive();
+	}
 
 	while (1)
 	{
@@ -119,7 +135,13 @@ fn dev_to_file(filename, port, static_network, wait_for_trigger,
 	local ioPort = this.ioPort;
 	local type = this.type;
 	local cyclesPerWord = this.cyclesPerWord;
+	local ignore_first = this.ignore_first;
 	
+        //ignore the first word
+	if (ignore_first == 1) {
+	  this.receive();
+	}
+
 	while (1)
 	{
 	  local value;

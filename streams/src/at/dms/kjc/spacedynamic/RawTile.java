@@ -42,20 +42,23 @@ public class RawTile extends ComputeNode {
     }
     
     /** Function that returns the device connected to this tile
-        it will die if there isn't a device or if there is two devices **/
-    public IODevice getAttachedDevice() 
+        it will die if there isn't a device or if there are two devices **/
+    public LinkedList<FileReaderDevice> getAttachedFileReaders() 
     {
+        LinkedList<FileReaderDevice> frs = new LinkedList<FileReaderDevice>();
         assert IOPorts.length > 0 : "Calling getAttachedDevice() on a non-border tile";
-        IODevice dev1 = IOPorts[0].getDevice();
-        IODevice dev2 = IOPorts.length > 1 ? IOPorts[1].getDevice() : null;
-    
-        assert !(dev1 == null && dev2 == null) : "Calling getAttachedDevice() on tile with no devices";
-        assert !(dev1 != null && dev2 != null) : "Calling getAttachedDevice() on tile with two devices";
-    
-        return dev1 != null ? dev1 : dev2;
+        
+        for (int i = 0; i < IOPorts.length; i++) {
+            for (int d = 0; d < IOPorts[i].getDevices().length; d++) {
+                if (IOPorts[i].getDevices()[d] instanceof FileReaderDevice)
+                    frs.add((FileReaderDevice)IOPorts[i].getDevices()[d]);
+            }
+        }
+        
+        return frs;
     }
     
-
+        
     public String toString() {
         return "Tile["+X+", "+Y+"]";
     }

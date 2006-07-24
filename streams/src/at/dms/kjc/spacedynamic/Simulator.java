@@ -100,6 +100,7 @@ public abstract class Simulator {
     protected void asm(ComputeNode fire, HashMap previous, HashMap next) 
     {
         assert fire != null;
+        //System.out.println("asm: " + fire);
         //generate the sends
         if (!switchSchedules.containsKey(fire))
             switchSchedules.put(fire, new StringBuffer());
@@ -148,12 +149,10 @@ public abstract class Simulator {
     protected void generateSwitchCode(FlatNode fire, List dests) 
     {
         assert !(layout.getIdentities().contains(fire));
-    
+        
         //should only have one previous
         HashMap prev = new HashMap();
         HashMap next = new HashMap();
-
-        //  System.out.println("Firing: " + fire + " " + layout.getComputeNode(fire));
 
         ListIterator destsIt = dests.listIterator();
         while (destsIt.hasNext()) {
@@ -165,6 +164,7 @@ public abstract class Simulator {
                 (ComputeNode[])layout.router.
                 getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
 
+            
             assert hops.length > 1 : "Error: Bad Layout (could not find route from " + fire.toString() + " -> " +
                 dest.toString();
 

@@ -70,6 +70,7 @@ public class FreeTileRouter implements Router
         else
             dstTile = (RawTile)dst;
 
+        
 
         //only try this scheme if the rawchip isn't too filled with assigned tiles
         //if (((double)layout.getTilesAssigned()) / ((double)layout.getRawChip().getTotalTiles()) >

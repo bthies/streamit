@@ -156,6 +156,7 @@ public class SwitchCode extends at.dms.util.Utils {
             while (tileIterator.hasNext()) {
                 System.gc();
                 ComputeNode cn = (ComputeNode) tileIterator.next();
+                System.out.println(cn);
                 assert cn != null;
                 // ignore ioports because we do not generate switch code for
                 // them
@@ -265,11 +266,12 @@ public class SwitchCode extends at.dms.util.Utils {
     private static void printIOStartUp(RawTile tile, FileWriter fw)
         throws Exception {
         if (streamGraph.getFileState().isConnectedToFileReader(tile)) {
-            FileReaderDevice dev = (FileReaderDevice) tile.getAttachedDevice();
-            fw.write("\tnop\troute $csto->$c"
-                     + rawChip.getDirection(tile, dev.getPort()) + "o\n");
+            LinkedList<FileReaderDevice> frs = tile.getAttachedFileReaders();
+            for (int i = 0; i < frs.size(); i++) {
+                fw.write("\tnop\troute $csto->$c"
+                        + rawChip.getDirection(tile, frs.get(i).getPort()) + "o\n");
+            }
         }
-
     }
 
     // receives the constants from the tile processor

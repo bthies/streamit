@@ -67,8 +67,14 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         fileWriters = new HashMap();
         fileNodes = new HashSet();
         
-        readerPort = 0;
-        writerPort = (rawChip.getNumPorts() / 2) + (rawChip.getXSize());
+        if (rawChip.getTotalTiles() == 1) {
+            readerPort = 0;
+            writerPort = 0;
+        }
+        else {
+            readerPort = 0;
+            writerPort = (rawChip.getNumPorts() / 2) + (rawChip.getXSize());
+        }
 
         if (KjcOptions.devassignfile != null) {
             try { // read from the file specified...
@@ -95,6 +101,13 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
             System.exit(1);
         }
 
+        if (rawChip.getTotalTiles() == 1) {
+            assert fileReaders.keySet().size() < 2 && 
+                fileWriters.keySet().size() < 2 &&
+                fileReaders.keySet().size() + fileWriters.keySet().size() <= 2 :
+                    "Too many file devices for chip!";
+        }
+        
         // add everything to the fileNodes hashset
         SpaceDynamicBackend.addAll(fileNodes, fileReaders.keySet());
         SpaceDynamicBackend.addAll(fileNodes, fileWriters.keySet());
@@ -210,11 +223,13 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     }
 
     public boolean isConnectedToFileReader(RawTile tile) {
-        for (int i = 0; i < tile.getIOPorts().length; i++)
-            if (tile.getIOPorts()[i].hasDevice()
-                && tile.getIOPorts()[i].getDevice().isFileReader()) {
-                return true;
+        for (int i = 0; i < tile.getIOPorts().length; i++) {
+            for (int d = 0; d < tile.getIOPorts()[i].getDevices().length; d++) {
+                if (tile.getIOPorts()[i].getDevices()[d] != null &&
+                        tile.getIOPorts()[i].getDevices()[d] instanceof FileReaderDevice)
+                    return true;
             }
+        }
         return false;
     }
 

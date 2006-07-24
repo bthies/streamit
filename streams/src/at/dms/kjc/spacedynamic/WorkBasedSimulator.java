@@ -244,6 +244,8 @@ public class WorkBasedSimulator extends Simulator
 
     private void sendItemUpdate(FlatNode src, List dests, HashMap counts, SimulationCounter counters) 
     {
+        //System.out.println("send item update: " + src);
+        
         //create the joiner schedule node that will place this item on the switch processor
         //extracting it from the proper buffer...
         if (src.isJoiner()) {
@@ -263,7 +265,9 @@ public class WorkBasedSimulator extends Simulator
         //identity filters in the dests list, get the real (non-identity) destinations
         //for this item...
         List realDests = updateDestinations(src, dests.iterator(), counters);
-
+        
+        //System.out.println("  dest: " + realDests.get(0));
+        
         if (KjcOptions.magic_net) {
             //generating code for the raw magic network
             //appendMagicNetNodes(src, realDests);
@@ -531,7 +535,7 @@ public class WorkBasedSimulator extends Simulator
 
 
             //check if it can fire
-            if ((layout.isAssigned(node) || node.contents instanceof SIRFileReader ||
+            if ((layout.isAssigned(node) || node.contents instanceof SIRFileReader || 
                     node.contents instanceof SIRFileWriter) &&
                 canFire(node, exeCounts, sCounters) &&
                 !firingNodes.contains(node)) 
@@ -779,7 +783,6 @@ public class WorkBasedSimulator extends Simulator
             //         itemsNeededToFire(node, counters) );
             //}
         
-
             //check if this node has fired the number of times given by
             //the schedule
             Integer count = (Integer)executionCounts.get(node);

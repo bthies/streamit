@@ -22,7 +22,7 @@ public class YXRouter implements Router {
         RawChip rawChip = ((SpdStreamGraph)ssg.getStreamGraph()).getRawChip();
         Layout layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
         RawTile srcTile, dstTile;
-
+        
         // if the source or dest is an iodevice we have to
         // route the item to/from neighboring tiles
         if (src.isPort())
@@ -34,6 +34,7 @@ public class YXRouter implements Router {
         else
             dstTile = (RawTile) dst;
 
+        
         LinkedList route = new LinkedList();
         route.add(srcTile);
 

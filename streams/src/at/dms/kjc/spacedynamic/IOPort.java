@@ -12,11 +12,11 @@ public class IOPort extends ComputeNode {
     private int port;
 
     // the device attached to this port
-    private IODevice device;
+    private IODevice[] devices;
 
     public IOPort(RawChip chip, int index) {
         super(chip);
-        device = null;
+        devices = new IODevice[2];
         port = index;
         assert !(port < 0 || port >= (2 * rawChip.getXSize() + 2 * rawChip
                                       .getYSize())) : "invalid port number for io device";
@@ -45,19 +45,35 @@ public class IOPort extends ComputeNode {
 
     /** should only be called by RawChip * */
     public void addDevice(IODevice device) {
-        this.device = device;
+        for (int i = 0; i < devices.length; i++) {
+            if (devices[i] == null) {
+                this.devices[i] = device;
+                return;
+            }
+        }
+        assert false : "Trying to add too many devices to port " + this;
     }
 
-    public IODevice getDevice() {
-        return device;
+    public IODevice[] getDevices() {
+        return devices;
     }
 
     public boolean hasDevice() {
-        return device != null;
+        for (int i = 0; i < devices.length; i++)
+            if (devices[i] != null) 
+                    return true;
+        return false;
     }
-
-    public void removeDevice() {
-        device = null;
+    
+        
+    public void removeDevice(IODevice io) {
+        for (int i = 0; i < devices.length; i++) {
+            if (devices[i] == io) {
+                devices[i] = null;
+                return;
+            }
+        }
+        assert false : "Error: Trying to remove a device that is not connected.";
     }
 
     public int getPortNumber() {

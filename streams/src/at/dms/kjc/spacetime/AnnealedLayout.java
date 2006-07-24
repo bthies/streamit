@@ -227,9 +227,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         while (true) {
             attempts++;
             trace = partitioner.getTraceGraph()[getRandom(partitioner.getTraceGraph().length)];
-            if (partitioner.isIO(trace))
-                continue;
-            
+                    
             HashMap oldAssign = (HashMap)assignment.clone();
             
             newTraceAssignment(trace.getHead().getNextFilter());
@@ -516,9 +514,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     private void legalInitialPlacement() {
         Trace[] traces = partitioner.getTraceGraph();
         for (int i = 0; i < traces.length; i++) {
-            if (!partitioner.isIO(traces[i]))
-                assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
-                    "Error: could not find a legal layout for " + traces[i] + " during initial layout";
+            //if (!partitioner.isIO(traces[i]))
+            assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
+                "Error: could not find a legal layout for " + traces[i] + " during initial layout";
         }
     }
     
@@ -954,18 +952,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //or write directly to a file (not the file readers and writers themselves).
         for (int i = 0; i < partitioner.io.length; i++) {
             Trace trace = partitioner.io[i];
-            if (trace.getHead().isFileOutput()) {
-                assert trace.getHead().getSourceSet().size() == 1 :
-                    "We don't support joined file writers yet.";
+            if (trace.getHead().isFileOutput() && trace.getHead().oneInput()) {
                 fileWriters.add(trace.getHead().getSingleEdge().getSrc().getPrevFilter());
             }
-            else if (trace.getTail().isFileInput()) {
-                assert trace.getTail().getDestSet().size() == 1 :
-                    "We don't support split file readers right now.";
+            else if (trace.getTail().isFileInput() && trace.getTail().oneOutput()) {
                 fileReaders.add(trace.getTail().getSingleEdge().getDest().getNextFilter());
             }
-            else 
-                assert false : "Trace in io[] is not a file trace.";
          }
 
     }

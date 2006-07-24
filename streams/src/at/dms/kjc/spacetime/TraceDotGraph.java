@@ -46,7 +46,7 @@ public class TraceDotGraph {
         Partitioner partitioner = spaceTime.partitioner;
         RawChip rawChip = spaceTime.getRawChip();
         
-        System.out.println("Creating Trace Dot Graph...");
+        //System.out.println("Creating Trace Dot Graph...");
         try {
             int order = 1;
             FileWriter fw = new FileWriter(fileName);
@@ -63,7 +63,7 @@ public class TraceDotGraph {
             Iterator traces = tracesList.iterator();
             while (traces.hasNext()) {
                 Trace trace = (Trace) traces.next();
-                System.out.println(trace);
+                //System.out.println(trace);
                 TraceNode node = trace.getHead();
                 
                 fw.write("subgraph cluster" + trace.hashCode() + " {\n");
@@ -73,7 +73,7 @@ public class TraceDotGraph {
                          + partitioner.getTraceBNWork(trace) + "\";\n");
                 }
                 while (node != null) {
-                    System.out.println("   " + node);
+                    //System.out.println("   " + node);
                     if (node.isFilterTrace() && !node.getNext().isOutputTrace())
                         fw.write("  " + node.hashCode() + " -> "
                                  + node.getNext().hashCode() + ";\n");
@@ -113,7 +113,7 @@ public class TraceDotGraph {
                     }
 
                     if (label && node.isFilterTrace()) {
-                        System.out.println("  * info for " + node);
+                        //System.out.println("  * info for " + node);
                         fw.write("  " + node.hashCode() + "[ label=\""
                                  + ((FilterTraceNode) node).toString(layout));
                         FilterInfo filter = FilterInfo

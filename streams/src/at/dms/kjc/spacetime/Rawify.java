@@ -479,40 +479,6 @@ public class Rawify {
         }
     }
 
-    /**
-     * When we visit an output trace node and it is connected to a file writer (downstream)
-     * generate the dram commands necessary to send the output to the port's file.  This is 
-     * necessary because the file writers do not appear in the schedules. 
-     * 
-     * @param output
-     * @param init
-     * @param primepump
-     * @param chip
-     */
-    private static void handleFileOutput(OutputTraceNode output, boolean init,
-                                         boolean primepump, RawChip chip) {
-        // if there are no files, do nothing
-        if (!output.hasFileOutput())
-            return;
-
-      
-        Iterator dests = output.getDestSet().iterator();
-        while (dests.hasNext()) {
-            Edge edge = (Edge) dests.next();
-            if (!edge.getDest().isFileOutput())
-                continue;
-            InputTraceNode fileI = edge.getDest();
-
-            assert fileI.getNextFilter().getFilter() instanceof FileOutputContent : "File Writer shoudlbe a FileOutputContent";
-
-            if (!OffChipBuffer.unnecessary(fileI)) {
-                // generate the dram commands
-                generateInputDRAMCommands(fileI, init, primepump);
-                // generate the switch code
-                joinInputTrace(fileI, init, primepump);
-            }
-        }
-    }
 
     /**
      * Generate the dram commands (on the compute tiles associated with each dram port)
@@ -1002,6 +968,8 @@ public class Rawify {
         Iterator<Edge> edges = traceNode.getSourceSet().iterator();
         while (edges.hasNext()) {
             Edge edge = edges.next();
+            if (edge.getSrc().isFileInput())
+                continue;
             int remainder = ((iterations * typeSize * traceNode.getItems(edge)) % 
                     RawChip.cacheLineWords);
             if (remainder > 0
@@ -1136,8 +1104,7 @@ public class Rawify {
         int mod = (((iterations) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
         // don't cache align file readers
         if (mod > 0
-            && !(traceNode.isFileInput() && OffChipBuffer
-                 .unnecessary(traceNode))) {
+            && !traceNode.isFileInput()) {
             int remainder = RawChip.cacheLineWords - mod;
             // System.out.println("Remainder for disregarding input on split
             // trace: " + remainder);
@@ -1230,6 +1197,8 @@ public class Rawify {
             Iterator it = traceNode.getDestSet().iterator();
             while (it.hasNext()) {
                 Edge edge = (Edge) it.next();
+                if (edge.getDest().isFileOutput())
+                    continue;
                 int remainder = ((typeSize * iterations * traceNode
                                   .getWeight(edge)) % RawChip.cacheLineWords);
                 // don't fill cache line for files

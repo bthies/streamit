@@ -231,7 +231,7 @@ public abstract class SimulatedAnnealing {
             accepted = 0;
             for (int j = 0; j < 100; j++) {
                 // c_old <- c_init
-                assignment = assignInit;
+                assignment = (HashMap)assignInit.clone();
                 if (perturbConfiguration(T))
                     accepted++;
                 total++;
@@ -240,7 +240,7 @@ public abstract class SimulatedAnnealing {
                 break;
         }
         // c_old <- c_init
-        assignment = assignInit;
+        assignment = (HashMap)assignInit.clone();
         return T;
     }
 
@@ -255,7 +255,7 @@ public abstract class SimulatedAnnealing {
             accepted = 0;
             for (int j = 0; j < 100; j++) {
                 // c_old <- c_init
-                assignment = assignInit;
+                assignment = (HashMap)assignInit.clone();
                 if (perturbConfiguration(T))
                     accepted++;
                 total++;
@@ -264,7 +264,7 @@ public abstract class SimulatedAnnealing {
                 break;
         }
         // c_old <- c_init
-        assignment = assignInit;
+        assignment = (HashMap)assignInit.clone();
         return T;
     }
     
@@ -290,7 +290,7 @@ public abstract class SimulatedAnnealing {
 
             if (e_new < 0.0) {
                 // illegal tile assignment so revert the assignment
-                setAssignment(oldAssignment);
+                setAssignment((HashMap)oldAssignment.clone());
                 continue;
             } else
                 // found a successful new layout

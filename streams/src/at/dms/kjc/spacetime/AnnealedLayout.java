@@ -161,6 +161,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @param newAssignment The assignment to use.
      */
     public void setAssignment(HashMap newAssignment) {
+        if (COMM_PHASE)
+            System.out.println("setAssignment");
         assignment = newAssignment;
 //      reassign buffers.
         //assignBuffers.run(spaceTime, this);
@@ -214,6 +216,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
    
     
+    
     /** 
      * Find a new assignment for a trace that does not increase the
      * critical path.
@@ -221,30 +224,36 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     private void swapAssignmentCommPhase() {
         int oldMaxWork = maxTileWork(getTileWorks(false));
+        HashMap oldAssign = (HashMap)assignment.clone();
         
+        int newMaxWork = 0;
+        System.out.println("Current Layout Cost: " + oldMaxWork);
         Trace trace = null;
         int attempts = 0;
         while (true) {
             attempts++;
             trace = partitioner.getTraceGraph()[getRandom(partitioner.getTraceGraph().length)];
                     
-            HashMap oldAssign = (HashMap)assignment.clone();
-            
             newTraceAssignment(trace.getHead().getNextFilter());
             
-            int newMaxWork = maxTileWork(getTileWorks(false));
+            newMaxWork = maxTileWork(getTileWorks(false));
+            
+            System.out.println("   " + newMaxWork + " (" + trace.getHead().getNextFilter() + ')');
+            
             if (newMaxWork <= oldMaxWork) {
                 break;
             }
             else {
-                assignment = oldAssign;
+                assignment = (HashMap)oldAssign.clone();
             }
             //make sure we can always make forward progress
             if (attempts > 100) 
                 return;
         }
-        
+        System.out.println("Reassign: " + trace.getHead().getNextFilter());
+        System.out.println(" old <= new, " + oldMaxWork + " <= " + newMaxWork);
         assert trace != null;
+        
     }
     
     /** 
@@ -273,6 +282,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * Create the initial assignment of filters of slices to tiles. 
      */
     public void initialPlacement() {
+        //if we are in the comm phse don't create a random layout,
+        //use the one last calculated by the work phase
+        if (COMM_PHASE)
+            return;
+        
        //try a random layout! nope
         //randomInitialPlacement();
         legalInitialPlacement();
@@ -926,6 +940,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     public void initialize() {
        
+        //no initialization needed for comm stage...
+        if (COMM_PHASE)
+            return;
+        
         totalWork = 0;
         
         //create the filter list

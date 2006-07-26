@@ -231,7 +231,7 @@ public class GreedierPartitioner {
                     }
                 } else {
                     pairs.remove(newPair);
-                    ltemp.add(newPair);
+                    temp.add(newPair);
                 }
             }
         } while(cont && pairs.size()>0);

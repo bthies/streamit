@@ -203,8 +203,9 @@ public class GreedierPartitioner {
         int work=smallest.work;
         ArrayList temp=new ArrayList();
 	/* There may be several filters with smallest work though. If
-	 * there are prefer the ones near the middle of the
-	 * container. This seems to help keep the graph balanced. */
+	 * there are prefer the ones near the top of the container.
+	 * This guarantees that we come out even if there is a
+	 * perfect fusion option. */
         boolean cont;
         do {
             cont=false;
@@ -213,22 +214,27 @@ public class GreedierPartitioner {
             Pair newPair=(Pair)pairs.firstKey();
             int newWork=newPair.work;
             if(newWork==work) { //There are several filters with smallest work
+                cont=true;
                 SIRContainer parent1=smallest.n1.filter.getParent();
                 SIRContainer parent2=newPair.n1.filter.getParent();
                 if(parent1==parent2) {
 		    //If there are several smallest in same parent
-		    //prefer the ones near the middle
-                    double half=((double)(parent1.size()-1))/2;
-                    double dist1=Math.abs(half-parent1.indexOf(smallest.n1.filter));
-                    double dist2=Math.abs(half-parent1.indexOf(newPair.n1.filter));
-                    if(dist1<dist2) {
-                        cont=true;
+		    //prefer the ones at the top (this will let us
+		    //come out even if we need to fuse 32 down to 16)
+                    if(parent1.indexOf(newPair.n1.filter) < parent1.indexOf(smallest.n1.filter)) {
                         smallest=newPair;
                         work=newWork;
+                    } else {
+                        // remove the pair we just considered
+                        pairs.remove(newPair);
+                        temp.add(newPair);
                     }
+                } else {
+                    pairs.remove(newPair);
+                    ltemp.add(newPair);
                 }
             }
-        } while(cont);
+        } while(cont && pairs.size()>0);
 	//Restore the Pairs temporarily removed from pairs
         Object[] fix=temp.toArray();
         for(int i=0;i<fix.length;i++)

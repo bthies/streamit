@@ -32,9 +32,9 @@
 
 void->void pipeline DCT2
 {
-    add FileReader<float>("../input/idct-input-float.bin");
+    add FileReader<int>("../input/idct-input-small.bin");
     add iDCT8x8_ieee(16);
-    add FileWriter<float>("idct-output2.bin");
+    add FileWriter<int>("idct-output2.bin");
 }
 
 
@@ -54,7 +54,7 @@ void->void pipeline DCT2
  *        mode == 2: fast, coarse implementation
  *        mode == 3: fast, fine (parallel) implementation
  */
-float->float pipeline iDCT8x8_ieee(int x) {
+int->int pipeline iDCT8x8_ieee(int x) {
     add iDCT_2D_reference_fine(x);
 }
 
@@ -91,15 +91,19 @@ int->int pipeline DCT8x8_ieee(int mode) {
  * @output size x size values representing an array of values in the signal
  *         domain, ordered by row and then column.
  */
-float->float pipeline iDCT_2D_reference_fine(int size) {
-  
+int->int pipeline iDCT_2D_reference_fine(int size) {
+    add int->float filter {
+        work pop 1 push 1 {
+            push((float) pop());
+        }
+    }
     add iDCT_1D_Y_reference_fine(size);
     add iDCT_1D_X_reference_fine(size);
-    /*    add float->int filter {
+    add float->int filter {
         work pop 1 push 1 {
             push((int) floor(pop() + 0.5));
         }
-	}*/
+    }
 }
 
 /**

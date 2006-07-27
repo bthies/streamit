@@ -129,7 +129,7 @@ float->float pipeline FMRadioCore {
     // determine where equalizer cuts.  Note that <eqBands> is the
     // number of CUTS; there are <eqBands>-1 bands, with parameters
     // held in slots 1..<eqBands> of associated arrays.
-    int eqBands = 9;
+    int eqBands = 8;
     float[eqBands] eqCutoff;
     float[eqBands] eqGain;
     float low = 55;

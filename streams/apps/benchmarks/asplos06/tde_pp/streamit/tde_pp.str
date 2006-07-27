@@ -38,7 +38,7 @@ void->void pipeline tde_pp {	// pipeline-parallel tde
                 // Data is [N_CH][N_RG][N_PRI][2]
     float mult = 0.00390625; // multiplier
     int DataParallelism = 1; // any number 0 < DataParallelism <= N
-    int FFTDataParallelism = 2; // any number < number of DFTs calculated 
+    int FFTDataParallelism = 1; // any number < number of DFTs calculated 
 
     // CH * M gives you the whole source for a single iteration
     //add source (CH * M); 

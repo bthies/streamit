@@ -100,6 +100,10 @@ public class SpaceTimeBackend {
         
         StreamlinedDuplicate duplicate = null;
         
+        if (!KjcOptions.noswpipe) {
+            DuplicateBottleneck.duplicateHeavyFilters(str);
+        }
+        
         if (KjcOptions.dup > 1) {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);

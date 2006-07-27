@@ -5,6 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.*;
 
 import at.dms.kjc.common.SimulatedAnnealing;
 
@@ -270,7 +271,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
     public void run() {
         
         
-        if (duplicate != null)  {
+        if (duplicate != null && !KjcOptions.partition_greedier)  {
             //if we have used StreamlinedDuplicate, then we want to start with its
             //layout
             duplicateLayout();
@@ -290,7 +291,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         
         assignBuffers = new BufferDRAMAssignment();
         
-        simAnnealAssign(3, 50);
+        simAnnealAssign(3, 100);
         System.out.println("Computation Cost: " + maxBinWeight());
         assignBuffers.run(spaceTime, this);
     }

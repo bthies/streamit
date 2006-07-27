@@ -9,6 +9,7 @@ import at.dms.kjc.sir.SIRFeedbackLoop;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRContainer;
 import at.dms.kjc.sir.SIRPipeline;
+import at.dms.kjc.sir.SIRPredefinedFilter;
 import at.dms.kjc.sir.SIRSplitJoin;
 import at.dms.kjc.sir.SIRStream;
 import at.dms.kjc.sir.lowering.fission.StatelessDuplicate;
@@ -218,30 +219,72 @@ public class DuplicateBottleneck {
         return str;
     }
     
-    private boolean duplicateBottleneck(SIRStream str) {
-        sortedWorkEsts = new Vector<Integer>();
+    public static void duplicateHeavyFilters(SIRStream str) { 
+        while (duplicateHeavyFiltersRound(str));
+    }
+    
+    private static boolean duplicateHeavyFiltersRound(SIRStream str) {
+        boolean change = false;
+        //get the work estimate
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        //find the ordering of filters
+        WorkList sortedFilters = work.getSortedFilterWork();
+        int totalWork = 0;
+        for (int i = 0; i < sortedFilters.size(); i++) {
+            totalWork += sortedFilters.getWork(i);
+        }
+        
+        int idealWork = totalWork / SpaceTimeBackend.getRawChip().getTotalTiles();
+        
+        System.out.println("Ideal Work: " + idealWork);
+        
+        for (int i = sortedFilters.size() -1 ; i >= 0; i--) {
+            if (sortedFilters.getWork(i) >= (int)(1.5 * ((double)idealWork)) &&
+                    StatelessDuplicate.isFissable(sortedFilters.getFilter(i))) {
+                change = true;
+                int reps = Math.max(2, 
+                        Math.round(sortedFilters.getWork(i) / idealWork));
+                StatelessDuplicate.doit(sortedFilters.getFilter(i), reps);
+                System.out.println("Duplicating " + sortedFilters.getFilter(i) + " " +
+                        (((double)sortedFilters.getWork(i)) / ((double)idealWork)) + " " + reps);
+            }
+            else        
+                break;
+        }
+        
+        return change;
+    }
+    
+    
+    public boolean duplicateBottleneck(SIRStream str) {
         sortedFilters = new Vector<SIRFilter>();
         //get the work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //find the ordering of filters
-        walkSTR(str, work);
-        //return false if we cannot duplicate the bottleneck
-        if (!StatelessDuplicate.isFissable(sortedFilters.get(0)))
+        WorkList sortedFilters = work.getSortedFilterWork();
+        
+        if (sortedFilters.size() < 2)
             return false;
         
-        for (int i = 0; i < sortedWorkEsts.size(); i++) {
-            System.out.println(sortedFilters.get(i) + " = " + sortedWorkEsts.get(i));
-        }
+        SIRFilter bottleNeck = sortedFilters.getFilter(sortedFilters.size() - 1);
+        SIRFilter nextFilter = sortedFilters.getFilter(sortedFilters.size() - 2);
+        
+        if (nextFilter instanceof SIRPredefinedFilter)
+            return false;
+        
+        //return false if we cannot duplicate the bottleneck
+        if (!StatelessDuplicate.isFissable(bottleNeck))
+            return false;
         
         //so the bottleneck if stateless, duplicate it as many times so 
         //that it is not the bottleneck anymore!
         
-        int reps = (int)Math.round(0.5 + ((double)sortedWorkEsts.get(0)) / ((double)sortedWorkEsts.get(1)));
+        int reps = (int)Math.round(0.5 + ((double)work.getWork(bottleNeck)) / 
+                ((double)work.getWork(nextFilter)));
         
-        StatelessDuplicate.doit(sortedFilters.get(0), reps);
-        
-        System.out.println(reps);
-        
+        System.out.println("Duplicating bottleneck: " + bottleNeck + " " + reps);
+        StatelessDuplicate.doit(bottleNeck, reps);
+                
         //might be good for another round?
         return true;
     }

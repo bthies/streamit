@@ -21,6 +21,7 @@ public class GreedyLayout implements Layout {
     private int[] binWeight;
     private int maxBinWeight;
     private int[] searchOrder; 
+    private int totalWork;
     
     public GreedyLayout(SpaceTimeSchedule spaceTime, RawChip chip) {
         this.chip = chip;
@@ -73,6 +74,7 @@ public class GreedyLayout implements Layout {
     public void run() {
         assignment = new HashMap<FilterTraceNode, RawTile>();
         pack();
+        System.out.println("IdealWork = " + totalWork / chip.getTotalTiles());
         System.out.println("Greedy max tile Work Cost = " + maxBinWeight);
         //assign buffers!
         //new BufferDRAMAssignment().run(spaceTime, this);
@@ -122,6 +124,7 @@ public class GreedyLayout implements Layout {
             bins[bin].add(node);
             assignment.put(node, chip.getTile(bin));
             binWeight[bin] += spaceTime.partitioner.getFilterWorkSteadyMult(node);
+            totalWork += spaceTime.partitioner.getFilterWorkSteadyMult(node);
             System.out.println(" Placing: " + node + " work = " + 
                     spaceTime.partitioner.getFilterWorkSteadyMult(node) + 
                             " on bin " + bin + ", bin work = " + binWeight[bin]);

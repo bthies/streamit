@@ -16,6 +16,7 @@ public class GranularityAdjust {
     public final static double threshold = .9;
     
     public static SIRStream doit(SIRStream str, RawChip chip) {
+        assert KjcOptions.partition_greedier;
         SIRStream oldStr;
         //get the first work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -29,7 +30,7 @@ public class GranularityAdjust {
         //the percentage change
         double workChange;
         
-        KjcOptions.partition_greedier = true;
+        //KjcOptions.partition_greedier = true;
         do {
             oldStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
             StreamItDot.printGraph(oldStr, "oldstr.dot");
@@ -51,7 +52,7 @@ public class GranularityAdjust {
         
         str = oldStr;
         StreamItDot.printGraph(str, "str.dot");
-        KjcOptions.partition_greedier = false;
+        //KjcOptions.partition_greedier = false;
         return str;
     }
 }

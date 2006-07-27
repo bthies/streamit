@@ -158,10 +158,9 @@ class FusionCode {
         // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
         
-           SIROperator oper = NodeEnumerator.getOperator(t);
-           Vector<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
-            for (int i = 0; i < out.size(); i++) {
-                NetStream stream = out.elementAt(i);
+            SIROperator oper = NodeEnumerator.getOperator(t);
+            for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                if (stream != null) {
                 int src = stream.getSource();
                 int dst = stream.getDest();
               
@@ -189,7 +188,7 @@ class FusionCode {
                             +  extraPeeks + ")-1)\n");
 
                 p.print("\n");
-
+                }
             }
         }
 
@@ -285,10 +284,9 @@ class FusionCode {
         for (int i = 0; i < threadNumber; i++) {
             FlatNode node = NodeEnumerator.getFlatNode(i);
             SIROperator oper = (SIROperator)node.contents;
-            Vector out = RegisterStreams.getNodeOutStreams(oper);
-        
-            for (int s = 0; s < out.size(); s++) {
-                NetStream stream = (NetStream)out.elementAt(s);
+
+            for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                if (stream != null) {
                 int src = stream.getSource();
                 int dst = stream.getDest();
                 if (FixedBufferTape.isFixedBuffer(src, dst)) {
@@ -303,7 +301,7 @@ class FusionCode {
                     p.newLine();
                 }
             }
-
+            }
         }
 
         for (SIRJoiner j : ClusterCode.feedbackJoineersNeedingPrep) {
@@ -559,11 +557,11 @@ class FusionCode {
                 if (steady != null) steady_int = (steady).intValue();
 
                 if (steady_int > 0) {
-                    Vector out = RegisterStreams.getNodeOutStreams(oper);
-                    for (int i = 0; i < out.size(); i++) {
-                        NetStream s = (NetStream)out.elementAt(i);
-                        int _s = s.getSource();
-                        int _d = s.getDest();
+
+                    for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                        if (stream != null) {
+                        int _s = stream.getSource();
+                        int _d = stream.getDest();
                         if (FixedBufferTape.isFixedBuffer(_s,_d)) {
                         if (!FixedBufferTape.needsModularBuffer(_s,_d)) {
                             // p.print(" #ifdef __NOMOD_"+_s+"_"+_d+"\n");
@@ -605,6 +603,7 @@ class FusionCode {
                         p.print("      assert(1 == 0);\n");
                         p.print("    }\n");
                         */
+                    }
                     }
                     }
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");
@@ -650,33 +649,24 @@ class FusionCode {
 
 
                 if (steady_int > 0) {
-                    Vector out = RegisterStreams.getNodeOutStreams(oper);
-                    for (int i = 0; i < out.size(); i++) {
-                        NetStream s = (NetStream)out.elementAt(i);
-                        int _s = s.getSource();
-                        int _d = s.getDest();
+
+                    for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                      if (stream == null) continue;
+                        int _s = stream.getSource();
+                        int _d = stream.getDest();
                         if (FixedBufferTape.isFixedBuffer(_s,_d)) {
-                        if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
-                        //p.print("    #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                        if (FixedBufferTape.getRemaining(_s,_d) > 0) {
-                        //p.print("    #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
-
-                        // //p.println("// FusionCode_1");
-                        p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
-                        p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
-                        p.print("      }\n");
-                        p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
-                        p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-            
-                        //p.print("    #else\n");
-                        } else { 
-                        p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
-                        p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-
-                        //p.print("    #endif\n");
-                        }
-                        //p.print("    #endif\n");
-                        }
+                            if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
+                                if (FixedBufferTape.getRemaining(_s,_d) > 0) {
+                                    p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
+                                    p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
+                                    p.print("      }\n");
+                                    p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
+                                    p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
+                                } else { 
+                                    p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
+                                    p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
+                                }
+                            }
                         /*
 
                         p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
@@ -685,7 +675,7 @@ class FusionCode {
                         p.print("      assert(1 == 0);\n");
                         p.print("    }\n");
                         */
-                    }
+                        }
                     }
 
                     if (rcv_msg) p.print("    check_messages__"+id+"();\n");

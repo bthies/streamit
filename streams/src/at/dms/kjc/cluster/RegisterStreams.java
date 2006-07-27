@@ -5,6 +5,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
+import at.dms.kjc.CStdType;
 import at.dms.kjc.common.CommonUtils;
 import java.util.*;
 
@@ -12,110 +13,107 @@ import java.util.*;
  * Constructs a list of input and output tapes for each stream operator.
  * Stores this information in static fields and provides static access methods.
  * 
- * Note: only flatgraph edges are included.  0-weight edges of splitters and joiners
- * do not show up in the flatgraph, and there are no tapes for these edges. 
- * 
+ * TODO: would be nice to create a NetStream only once rather than twice.
  * @author Janis
  *
  */
-public class RegisterStreams implements FlatVisitor {
+public class RegisterStreams {
 
-    static HashMap<SIROperator,Vector<NetStream>> filterInStreams = 
-        new HashMap<SIROperator,Vector<NetStream>>(); 
     // input tapes coresponding to an operator
+    static HashMap<SIROperator,List<NetStream>> filterInStreams = null;
 
-    static HashMap<SIROperator,Vector<NetStream>> filterOutStreams = 
-        new HashMap<SIROperator,Vector<NetStream>>();
     // output tapes coresponding to an operator
+    static HashMap<SIROperator,List<NetStream>> filterOutStreams = null;
 
     /**
-     * Sets up some internal data static structures for use by static methods in this class.
-     * Must create instance of RegisterStreams and pass it to the top level stream.
-     *
+     * Clean up static data structures (also before using, to allocae)
      */
-    public void visitNode(FlatNode node) {
-
-	// visit a flat node that coresponds to an operator
-
-        /*
-          System.out.print("RegisterStreams: Visiting node name:" + 
-          node.getName() + 
-          " getNodeid:"+
-          NodeEnumerator.getNodeId(node)+
-          "\n");
-        */
     
-        CType input_t = null, output_t = null;
+    public static void reset() {
+        filterInStreams = new HashMap<SIROperator,List<NetStream>>();
+        filterOutStreams = new HashMap<SIROperator,List<NetStream>>();
+    }
+    
+    /**
+     * Set up netStream objects for all non-0-weight edges and set up vectors of
+     * edges (including nulls for 0-weight edges) for all incoming and outgoing edges
+     * for all filters, splitters, and joiners in graph.
+     *  
+     * @param graphFlattener a GraphFlattener which, when visited will give us all nodes. 
+     */
+    public static void init(GraphFlattener graphFlattener) {
+        graphFlattener.top.accept(new FlatVisitor() {
 
-        SIROperator operator = node.contents;
+            public void visitNode(FlatNode node) {
 
-	// get the input and output types of the operator
+                CType input_t = null, output_t = null;
 
-        try {
-            if (operator instanceof SIRJoiner) {
-                input_t = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
-                output_t = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
-            }
-        } catch (Exception ex) {}
+                SIROperator operator = node.contents;
 
-        try {
-            if (operator instanceof SIRSplitter) {
-                input_t = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
-                output_t = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
-            }
-        } catch (Exception ex) {}
+            // get the input and output types of the operator
 
-        if (operator instanceof SIRStream) {
-            SIRStream stream = (SIRStream)operator;
-            input_t = stream.getInputType();
-            output_t = stream.getOutputType();
-        }
+                try {
+                    if (operator instanceof SIRJoiner) {
+                        input_t = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
+                        output_t = input_t;
+                    }
+                } catch (Exception ex) {}
 
-	// create a vector of input tapes
+                try {
+                    if (operator instanceof SIRSplitter) {
+                        input_t = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
+                        output_t = input_t;
+                    }
+                } catch (Exception ex) {}
 
-        Vector<NetStream> v = new Vector<NetStream>();
-        int i;
-
-        if (node.incoming != null) {
-
-            int dest = NodeEnumerator.getNodeId(node);
-            for (i = 0; i < node.incoming.length; i++) {
-        
-                if (node.incoming[i] != null) {
-            
-                    int source = NodeEnumerator.getNodeId(node.incoming[i]);
-            
-                    if (source != -1 && dest != -1) {
-                        v.add(new NetStream(source, dest, input_t));
-            
-                    }   
+                if (operator instanceof SIRStream) {
+                    SIRStream stream = (SIRStream)operator;
+                    input_t = stream.getInputType();
+                    output_t = stream.getOutputType();
                 }
-            }
-        }
 
-        filterInStreams.put(node.contents, v);
+            // create a vector of input tapes
 
-	// create a vector of output tapes
-
-        v = new Vector<NetStream>();
-
-        if (node.edges != null) {
-
-            int source = NodeEnumerator.getNodeId(node);
-            for (i = 0; i < node.edges.length; i++) {
-
-                if (node.edges[i] != null) {
-
-                    int dest = NodeEnumerator.getNodeId(node.edges[i]);
-
-                    if (source != -1 && dest != -1) {
-                        v.add(new NetStream(source, dest, output_t));
+                if (node.incoming != null) {
+                    int dest = NodeEnumerator.getNodeId(node);
+                    if (dest != -1) {
+                        NetStream[] incomings = new NetStream[node.incoming.length];
+                        for (int i = 0; i < node.incoming.length; i++) {
+                            if (node.incoming[i] == null) {
+                                incomings[i] = null;
+                            } else if (node.incomingWeights[i] == 0 || input_t == CStdType.Void) {
+                                incomings[i] = null;  // don't track edges with no tapes.
+                            } else {
+                                int source = NodeEnumerator.getNodeId(node.incoming[i]);
+                                assert source >= 0; // if have incoming edge, it should have a number.
+                                incomings[i] = new NetStream(source, dest, input_t);
+                            }
+                        }
+                        filterInStreams.put(node.contents,Arrays.asList(incomings));
                     }
                 }
-            }
-        }
 
-        filterOutStreams.put(node.contents, v);
+            // create a vector of output tapes
+
+                if (node.edges != null) {
+                    int source = NodeEnumerator.getNodeId(node);
+                    if (source != -1) {
+                        NetStream[] outgoings = new NetStream[node.edges.length];
+                        for (int i = 0; i < node.edges.length; i++) {
+                            if (node.edges[i] == null) {
+                                outgoings[i] = null;
+                            } else if (node.weights[i] == 0 || output_t == CStdType.Void) {
+                                outgoings[i] = null;  // don't track edges with no tapes.
+                            } else {
+                                int dest = NodeEnumerator.getNodeId(node.edges[i]);
+                                assert dest >= 0; // if have outgoing edge, it should have a number.
+                                outgoings[i] = new NetStream(source, dest, output_t);
+                            }
+                        }
+                        filterOutStreams.put(node.contents, Arrays.asList(outgoings));
+                    }
+                } 
+            } } , new HashSet(), true);
     }
 
     /**
@@ -128,8 +126,8 @@ public class RegisterStreams implements FlatVisitor {
      * @see NetStream 
      */
     public static NetStream getFilterInStream(SIRFilter filter) {
-        Vector<NetStream> v = filterInStreams.get(filter);
-        if (v.size() == 0) return null; else return v.elementAt(0);
+        List<NetStream> v = filterInStreams.get(filter);
+        if (v.size() == 0) return null; else return v.get(0);
     }
 
     /**
@@ -142,31 +140,32 @@ public class RegisterStreams implements FlatVisitor {
      * @see NetStream 
      */
      public static NetStream getFilterOutStream(SIRFilter filter) {
-        Vector<NetStream> v = filterOutStreams.get(filter);
-        if (v.size() == 0) return null; else return v.elementAt(0);
+        List<NetStream> v = filterOutStreams.get(filter);
+        if (v.size() == 0) return null; else return v.get(0);
     }
 
 
     /**
-     * Return a Vector containing input tapes as NetStream objects
-     * 
+     * Return a Vector containing input tapes as NetStream objects.
+     * <br/>0-weight (joiner) edges are represented as null.
      * @param op a SIROperator
      * @return Vector of FlatGraph inputs to <op> in NetStream format
      * @see NetStream 
      */
-    public static Vector<NetStream> getNodeInStreams(SIROperator op) {
+    public static List<NetStream> getNodeInStreams(SIROperator op) {
     
         return filterInStreams.get(op);
     }
 
     /**
      * Return a Vector containing output tapes as NetStream objects
+     * <br/>0-weight (splitter) edges are represented as null.
      * 
      * @param op a SIROperator
      * @return Vector of FlatGraph outputs from <op> in NetStream format
      * @see NetStream 
      */
-    public static Vector<NetStream> getNodeOutStreams(SIROperator op) {
+    public static List<NetStream> getNodeOutStreams(SIROperator op) {
     
         return filterOutStreams.get(op);
     }

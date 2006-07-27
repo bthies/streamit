@@ -31,8 +31,13 @@ public class GenerateWorkEst {
 
 	    SIROperator oper = NodeEnumerator.getOperator(i);	   
 	    FlatNode node = NodeEnumerator.getFlatNode(i);	    
-	    int steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 
+        // case found where joiner with only 0 weights caused NullPointerException
+        int steady_counts = 0;
+        try {
+            steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+        } catch (NullPointerException e) {}
+        
 	    int w = 0;
 
 	    if (oper instanceof SIRFilter) {

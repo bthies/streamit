@@ -3,15 +3,23 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.*;
 import java.util.*;
+import at.dms.kjc.flatgraph.FlatNode;
 
 /**
  * A class that finds an execution schedule for a stream graph
  * using breadth first search. Usage:
  *   DiscoverSchedule d = new DiscoverSchedule();
  *   d.findPhases(graphFlattener.top.contents);
- * Note that this will not work if there are feedback loops.
- * The result is a set of phases, where an operator from
- * phase a should be executed before operator from phase b if a<b.
+ * The result is a set of phases, where the initializer for
+ * phase a should be executed before initializer for phase b if a<b.
+ * <br/>
+ * This is overkill: we just need a topological sort of nodes where
+ * the continuation of a feedback loop is not listed until after all
+ * nodes in the feedback loop.
+ * <br/>
+ * TODO: we should be doing this in the FlatGraph, not on
+ * the NetStream since the NetStream does not contain 0-weight edges so
+ * we might miss nodes after a 0-weight splitter edge.
  */
 
 class DiscoverSchedule
@@ -99,46 +107,55 @@ class DiscoverSchedule
 
     private void findNextPhase() {
 
-        Iterator i = current_ops.iterator();
-
         // iterate over nodes in current phase
-        while (i.hasNext()) {
+        for (SIROperator oper : current_ops) {
 
-            SIROperator oper = (SIROperator)i.next();
-            Vector<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
+            List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
 
-            // case: splitjoin splitter, make sure to schedule 0-weight edges, which will not
-            // be found by RegisterStreams.getNodeOutStreams.  Also record the number of
-            // incoming edges to the associated joiner so that the joiner's continuation will
-            // not be processed until all of the joiner's predecessors have been processed.
+            // case: splitjoin splitter, make sure to schedule nodes at end of 0-weight edges, 
+            // which will not be found by RegisterStreams.getNodeOutStreams.  Also record the 
+            // number of incoming edges to the associated joiner so that the joiner's continuation
+            // will not be processed until all of the joiner's predecessors have been processed.
             if (oper instanceof SIRSplitter && ! (oper.getParent() instanceof SIRFeedbackLoop)) {
                 assert oper.getParent() instanceof SIRSplitJoin;
                 SIRSplitter splitter = (SIRSplitter)oper;
                 SIRJoiner joiner = ((SIRSplitJoin)splitter.getParent()).getJoiner();
                 assert (! splitjoinJoiners.containsKey(joiner));
-                int join_ways = RegisterStreams.getNodeInStreams(
-                        joiner).size();
+                int join_ways = 0;
+                for (NetStream in : RegisterStreams.getNodeInStreams(joiner)) {
+                    if (in != null) {join_ways++;}
+                }
                 if (join_ways > 0) {
                     splitjoinJoiners.put(joiner, join_ways);
                 }                       
                 
-                List<SIROperator> splitterChildren = ((SIRSplitJoin)(splitter.getParent())).getChildren();
-                int[] splitterWeights = splitter.getWeights();
-                int j = 0;
-                for (SIROperator child : splitterChildren) {
-                    // getChildren includes the splitter and joiner as well as the
-                    // stream children.  We are only interested in the stream children
-                    if (child instanceof SIRStream && splitterWeights[j++] == 0) {
-                            next_ops.add(streamChild(child));   
+                FlatNode splitterNode = NodeEnumerator.getFlatNode(NodeEnumerator.getSIROperatorId(oper));
+                FlatNode[] children = splitterNode.edges;
+                int [] weights = splitterNode.weights;
+                for (int i = 0; i < children.length; i++) {
+                    if (weights[i] == 0) {
+                        next_ops.add(children[i].contents);
                     }
                 }
+                
+//                List<SIROperator> splitterChildren = ((SIRSplitJoin)(splitter.getParent())).getChildren();
+//                int[] splitterWeights = splitter.getWeights();
+//                int j = 0;
+//                for (SIROperator child : splitterChildren) {
+//                    // getChildren includes the splitter and joiner as well as the
+//                    // stream children.  We are only interested in the stream children
+//                    if (child instanceof SIRStream && splitterWeights[j++] == 0) {
+//                            next_ops.add(streamChild(child));   
+//                    }
+//                }
             }
 
             // check all nodes that are downstream from nodes in current phase
             for (int a = 0; a < out.size(); a++) {
-        
-                SIROperator next = 
-                    NodeEnumerator.getOperator(out.elementAt(a).getDest());
+                NetStream ns = out.get(a);
+                if (ns == null) continue;
+                
+                SIROperator next = NodeEnumerator.getOperator(ns.getDest());
                 
                 /*
                  * Here: if phases.containsKey, would be very surprised unless it is the
@@ -213,9 +230,8 @@ class DiscoverSchedule
                       // have processed body and loop, continuation is next
                       SIRSplitter loopSplitter = ((SIRFeedbackLoop)next.getParent()).getSplitter();
                       if (feedbackSplittersLoop.remove(loopSplitter)) {
-                          Vector<NetStream> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
-                          next = NodeEnumerator.getOperator(
-                                  nexts.elementAt(0).getDest());
+                          List<NetStream> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
+                          next = NodeEnumerator.getOperator(nexts.get(0).getDest());
                       } else {
                           // case: there is no continuation (saw joiner twice since processed loop
                           // but no entry in feedbackSplittersLoop since didn't have both loop and
@@ -232,22 +248,22 @@ class DiscoverSchedule
         }
     }
     
-    //  only call with SIRStream types that could be children of a SIRContainer.
-    private SIROperator streamChild(SIROperator s) { 
-        if (s instanceof SIRPipeline) {
-            return streamChild(((SIRPipeline)s).get(0));
-        }
-        if (s instanceof SIRSplitJoin) {
-            return (((SIRSplitJoin)s).getSplitter());
-        }
-        if (s instanceof SIRFeedbackLoop) {
-            return (((SIRFeedbackLoop)s).getJoiner());
-        }
-        // placed after containers to handle Filter, PhasedFilter
-        if (s instanceof SIRStream) {
-            return s;
-        }
-        assert false: "Cannot handle operator type " + s.getClass().getName();
-        return null;
-    }
+//    //  only call with SIRStream types that could be children of a SIRContainer.
+//    private SIROperator streamChild(SIROperator s) { 
+//        if (s instanceof SIRPipeline) {
+//            return streamChild(((SIRPipeline)s).get(0));
+//        }
+//        if (s instanceof SIRSplitJoin) {
+//            return (((SIRSplitJoin)s).getSplitter());
+//        }
+//        if (s instanceof SIRFeedbackLoop) {
+//            return (((SIRFeedbackLoop)s).getJoiner());
+//        }
+//        // placed after containers to handle Filter, PhasedFilter
+//        if (s instanceof SIRStream) {
+//            return s;
+//        }
+//        assert false: "Cannot handle operator type " + s.getClass().getName();
+//        return null;
+//    }
 }

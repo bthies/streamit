@@ -4,8 +4,8 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.sir.*;
 import java.util.*;
 
-/*
- * A greedy implementation of a constrained scheduler!
+/**
+ * A greedy implementation of a constrained scheduler.
  * (This should actually be optimal in number of phases generated!)
  */
 
@@ -63,12 +63,11 @@ class Greedy {
             credit.put(oper, new Integer(-1));
             iteration.put(oper, new Integer(0));
 
-            Vector out = RegisterStreams.getNodeOutStreams(oper);
-
-            for (int z = 0; z < out.size(); z++) {
-                NetStream ns = (NetStream)out.get(z);
+            for (NetStream ns : RegisterStreams.getNodeOutStreams(oper)) {
+              if (ns != null) {
                 SIROperator dst = NodeEnumerator.getOperator(ns.getDest());
                 queue_size.put(makeVector(oper, dst), new Integer(0));
+              }
             }
         }
 
@@ -115,52 +114,52 @@ class Greedy {
     }
 
 
-    static int getPeek(SIROperator oper, int id) {
-        assert(id >= 0);
+    static int getPeek(SIROperator oper, int way) {
+        assert(way >= 0);
         if (oper instanceof SIRFilter) {
-            assert(id == 0);
+            assert(way == 0);
             return ((SIRFilter)oper).getPeekInt();
         }
-        return getPop(oper, id);
+        return getPop(oper, way);
     }
 
-    static int getPop(SIROperator oper, int id) {
-        assert(id >= 0);
+    static int getPop(SIROperator oper, int way) {
+        assert(way >= 0);
         if (oper instanceof SIRFilter) {
-            assert(id == 0);
+            assert(way == 0);
             return ((SIRFilter)oper).getPopInt();
         }
         if (oper instanceof SIRSplitter) {
-            assert(id == 0);
+            assert(way == 0);
             SIRSplitter s = (SIRSplitter)oper;
             if (s.getType().isDuplicate()) return 1;
             return ((SIRSplitter)oper).getSumOfWeights();
         }
         if (oper instanceof SIRJoiner) {
             SIRJoiner joiner = (SIRJoiner)oper;
-            assert(id < joiner.getWays());
-            return joiner.getWeight(id);
+            assert(way < joiner.getWays());
+            return joiner.getWeight(way);
         }
-        assert(1 == 0);
+        assert false;
         return 0;
     }
 
-    static int getPush(SIROperator oper, int id) {
-        assert(id >= 0);
+    static int getPush(SIROperator oper, int way) {
+        assert(way >= 0);
         if (oper instanceof SIRFilter) {
-            assert(id == 0);
+            assert(way == 0);
             return ((SIRFilter)oper).getPushInt();
         }
         if (oper instanceof SIRJoiner) {
-            assert(id == 0);
+            assert(way == 0);
             return ((SIRJoiner)oper).getSumOfWeights();
         }
         if (oper instanceof SIRSplitter) {
             SIRSplitter s = (SIRSplitter)oper;
-            assert(id < s.getWays());
-            return s.getWeight(id);
+            assert(way < s.getWays());
+            return s.getWeight(way);
         }
-        assert(1 == 0);
+        assert false;
         return 0;
     }
 
@@ -190,11 +189,13 @@ class Greedy {
 
                 int input = 2000000000;
 
-                Vector in = RegisterStreams.getNodeInStreams(oper);
-                Vector out = RegisterStreams.getNodeOutStreams(oper);
+//                List in = RegisterStreams.getNodeInStreams(oper);
+//                List out = RegisterStreams.getNodeOutStreams(oper);
         
-                for (int z = 0; z < in.size(); z++) {
-                    NetStream ns = (NetStream)in.get(z);
+                {
+                int z = 0;
+                for (NetStream ns : RegisterStreams.getNodeInStreams(oper)) {
+                  if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
                     int peek = getPeek(oper, z);
@@ -205,30 +206,44 @@ class Greedy {
                     int can = (qsize-extra)/pop;
                     if (can < 0) can = 0;
                     if (can < input) input = can;
+                  }
+                  z++;
                 }
-
+                }
+                
                 if (input < exec) exec = input;
 
                 //System.out.println("CREDIT = "+_credit+" INPUT = "+input+" EXEC = "+exec);
         
-                for (int z = 0; z < in.size(); z++) {
-                    NetStream ns = (NetStream)in.get(z);
+                {
+                int z = 0;
+                for (NetStream ns : RegisterStreams.getNodeInStreams(oper)) {
+                  if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
                     qsize -= getPop(oper, z) * exec;
                     queue_size.put(makeVector(src, oper), 
                                    new Integer(qsize));
+                  }
+                  z++;
+                  
                 }
-
-                for (int z = 0; z < out.size(); z++) {
-                    NetStream ns = (NetStream)out.get(z);
+                }
+                
+                {
+                int z = 0;
+                for (NetStream ns : RegisterStreams.getNodeOutStreams(oper)) {
+                  if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                     int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
                     qsize += getPush(oper, z) * exec;
                     queue_size.put(makeVector(oper, dst), 
                                    new Integer(qsize));
+                  }
+                  z++;
                 }
-
+                }
+                
                 if (ClusterBackend.debugPrint)
                     System.out.println(oper.getName()+" Exec = "+exec+"/"+steady_count);
 
@@ -378,25 +393,29 @@ class Greedy {
 
                     int _iter = ((Integer)iteration.get(oper)).intValue();
 
-                    Vector in = RegisterStreams.getNodeInStreams(oper);
-                    Vector out = RegisterStreams.getNodeOutStreams(oper);
+                    List<NetStream> in = RegisterStreams.getNodeInStreams(oper);
+                    List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
 
                     for (int z = 0; z < in.size(); z++) {
-                        NetStream ns = (NetStream)in.get(z);
+                      NetStream ns = in.get(z);
+                      if (ns != null) {
                         SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                         int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
                         qsize -= getPop(oper, z) * exec;
                         queue_size.put(makeVector(src, oper), 
                                        new Integer(qsize));
+                      }
                     }
-            
+                    
                     for (int z = 0; z < out.size(); z++) {
-                        NetStream ns = (NetStream)out.get(z);
+                      NetStream ns = out.get(z); 
+                      if (ns != null) {  
                         SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                         int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
                         qsize += getPush(oper, z) * exec;
                         queue_size.put(makeVector(oper, dst), 
                                        new Integer(qsize));
+                      }
                     }
 
                     for (int z = 0; z < exec; z++, _iter++) {
@@ -489,11 +508,12 @@ class Greedy {
 
                 int input = 2000000000;
 
-                Vector in = RegisterStreams.getNodeInStreams(oper);
-                Vector out = RegisterStreams.getNodeOutStreams(oper);
+                List<NetStream> in = RegisterStreams.getNodeInStreams(oper);
+                List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
         
                 for (int z = 0; z < in.size(); z++) {
-                    NetStream ns = (NetStream)in.get(z);
+                  NetStream ns = in.get(z);
+                  if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
                     int peek = getPeek(oper, z);
@@ -504,28 +524,33 @@ class Greedy {
                     int can = (qsize-extra)/pop;
                     if (can < 0) can = 0;
                     if (can < input) input = can;
+                  }
                 }
-
+                
                 if (input < exec) exec = input;
 
                 //System.out.println("CREDIT = "+_credit+" INPUT = "+input+" EXEC = "+exec);
         
                 for (int z = 0; z < in.size(); z++) {
-                    NetStream ns = (NetStream)in.get(z);
+                  NetStream ns = in.get(z);
+                  if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
                     qsize -= getPop(oper, z) * exec;
                     queue_size.put(makeVector(src, oper), 
                                    new Integer(qsize));
+                  }
                 }
 
                 for (int z = 0; z < out.size(); z++) {
-                    NetStream ns = (NetStream)out.get(z);
+                  NetStream ns = out.get(z);
+                  if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                     int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
                     qsize += getPush(oper, z) * exec;
                     queue_size.put(makeVector(oper, dst), 
                                    new Integer(qsize));
+                  }
                 }
 
                 if (ClusterBackend.debugPrint)

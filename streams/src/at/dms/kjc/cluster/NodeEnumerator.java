@@ -8,33 +8,69 @@ import at.dms.kjc.*;
 import java.util.*;
 
 /**
- * Maintain mappings from stream operator to number. These numbers 
- * are used in NetStream objects and also in code generation to enumerate 
- * the threads from 0..(N-1)
+ * Create a mapping from SIROperators and FlatNodes to unique numbers [0..n] used for thread ids.
  * 
  * Also provides the service of getting an estimate of the stack size needed to execute a given node.
  * 
  * @author Janis
  *
  */
-public class NodeEnumerator implements FlatVisitor {
+public class NodeEnumerator {
 
     private static int counter = 0;
     
-    private static HashMap<SIROperator,Integer> nodeIds; // SIROperator --> int
+    private static HashMap<SIROperator,Integer> opToId;       // SIROperator --> int
+    private static HashMap<FlatNode,Integer> flatToId;        // FlatNode -> int
     private static HashMap<Integer,SIROperator> idToOperator; // int --> SIROperator
-    private static HashMap<Integer,FlatNode> idToFlatNode; // int --> FlatNode
+    private static HashMap<Integer,FlatNode> idToFlatNode;    // int --> FlatNode
 
+    /**
+     * NodeEnumerator uses static data structures that need to be cleaned out.
+     */
     public static void reset() {
         counter = 0;
-        nodeIds = new HashMap<SIROperator,Integer>();
+        opToId = new HashMap<SIROperator,Integer>();
+        flatToId = new HashMap<FlatNode,Integer>();
         idToFlatNode = new HashMap<Integer,FlatNode>();
         idToOperator = new HashMap<Integer,SIROperator>();
     }
 
     /**
+     * Set up static data structures for NodeEnumerator
      * 
-     * @return number of nodes visited by visitNode
+     * @param graphFlattener : we visit the nodes of the associated graph to set up our data structures.
+     */
+    public static void init(at.dms.kjc.flatgraph.GraphFlattener graphFlattener) {
+        
+        graphFlattener.top.accept(new FlatVisitor() {
+
+
+        /**
+         * Needs to have root FlatNode of graph accept a NodeEnumerator to set up numbers to nodes associations.
+         */
+        public void visitNode(FlatNode node) {
+
+            Integer _int = new Integer(counter); 
+
+            flatToId.put(node,_int);
+            idToFlatNode.put(_int, node);
+            if (! (node.contents == null)) {
+                opToId.put(node.contents, _int);
+                idToOperator.put(_int, node.contents);
+            } else if (!(node.oldContents == null)) {
+                opToId.put(node.oldContents, _int);
+                idToOperator.put(_int, node.oldContents);
+            }
+
+            counter++;
+        
+        } } , new HashSet(), true);
+ 
+
+        
+    }
+    /**
+     * @return number of nodes for which ids were created.
      */
     public static int getNumberOfNodes() {
         return counter;
@@ -109,10 +145,10 @@ public class NodeEnumerator implements FlatVisitor {
     }
     
     /**
-     * Used to get the SIROperator associated with a thread id.
+     * Used to get the SIROperator (filter, splitter, joiner) associated with ann id number.
      * 
      * @param nodeID (thread id)
-     * @return  SIROperator associated with the id
+     * @return  SIROperator associated with the id, or null if no association.
      */
 
     public static SIROperator getOperator(int nodeID) {
@@ -123,7 +159,7 @@ public class NodeEnumerator implements FlatVisitor {
      * Get the FlatNode associated with a number.
      * 
      * @param nodeID  number.
-     * @return        associated FlatNode
+     * @return        associated FlatNode, or null if no association.
      */
 
     public static FlatNode getFlatNode(int nodeID) {
@@ -131,53 +167,29 @@ public class NodeEnumerator implements FlatVisitor {
     }
 
     /**
-     * Used to provide number assigned to SIROperator
+     * Get the id number assigned to SIROperator (filter, splitter, or joiner)
      * 
      * @param f
      * @return  number associated with f, or -1 if f has no association
      */
     public static int getSIROperatorId(SIROperator f) {
     
-        Integer i = nodeIds.get(f);
+        Integer i = opToId.get(f);
         if (i == null) return -1;
         return i.intValue();
     }
-        
 
     /**
-     * Needs to have root FlatNode of graph accept a NodeEnumerator to set up numbers to nodes associations.
+     * Get the id number assigned to a FlatNode
+     * 
+     * @param f
+     * @return  number associated with f, or -1 if f has no association
      */
-    public void visitNode(FlatNode node) {
-
-        /*
-          System.out.print("NodeEnumerator: Visiting node name:" + 
-          node.getName() + 
-          " id:"+
-          (counter)+
-          "\n");
-        */
-
-        if (node.contents instanceof SIRSplitter) {
-            if (((SIRSplitter)node.contents).getSumOfWeights() == 0) {
-                // The splitter is not doing any work
-                return;
-            }
-        }
-
-        if (node.contents instanceof SIRJoiner) {
-            if (((SIRJoiner)node.contents).getSumOfWeights() == 0) {
-                // The joiner is not doing any work
-                return;
-            }
-        }
-
-        Integer _int = new Integer(counter); 
-
-        nodeIds.put(node.contents, _int);
-        idToFlatNode.put(_int, node);
-        idToOperator.put(_int, node.contents);
-
-        counter++;
+    public static int getFlatNodeId(FlatNode f) {
     
+        Integer i = flatToId.get(f);
+        if (i == null) return -1;
+        return i.intValue();
     }
+
 }

@@ -3,6 +3,7 @@ package at.dms.kjc.cluster;
 
 //import java.lang.*;
 import at.dms.kjc.CType;
+import java.util.HashSet;
 
 /**
  * A class that represents a tape with input and output operators and object type.
@@ -29,6 +30,7 @@ public class NetStream {
         this.dest = dest;
         this.type = type;
     }
+
 
     /** 
      * Get number representing the input operator

@@ -8,7 +8,9 @@
 
 use strict;
 use warnings;
-my %includes;
+my %includes = ("message.h", 1);
+my @top_includes = ("#include <message.h>");
+my %move_to_top;
 
 unless (@ARGV > 0 && ($ARGV[0] =~ "fusion.cpp" || $ARGV[0] =~ "master.cpp")) {
     print STDERR
@@ -20,8 +22,43 @@ unless (@ARGV > 0 && ($ARGV[0] =~ "fusion.cpp" || $ARGV[0] =~ "master.cpp")) {
 
 my $first_file = shift(@ARGV);
 
+#####
+# First pass: collect lines that must be moved up out of threadXXX.cpp files
+#####
+
+my @saved_ARGV = @ARGV;
+
+while (<>) {
+    # this data declration needs to be moved and then eliminated in pass 2
+    if (/^(message \*__msg_stack_[0-9]+;\s+)$/) {
+	$move_to_top{$1} = 1;
+    }
+    # these templates may occur in threadXXX.cpp files if strc is run
+    # -cluster 10 -fusion
+    # non-extern version of template should be moved up.
+    if (/^extern (void __declare_sockets_[0-9]+\(\);\s+)$/
+	|| /^extern (void __init_sockets_1\(void \(\*cs_fptr\)\(\)\);\s+)$/
+	|| /^extern (void __flush_sockets_1\(\);\s+)$/
+	|| /^extern (void __peek_sockets_1\(\);\s+)$/
+	|| /^extern (void __init_thread_info_1\(thread_info \*\);\s+)$/
+	|| /^extern (void __init_state_[0-9]+\(\);\s+)$/
+	|| /^extern (void __push_[0-9]+_[0-9]+\([a-zA-Z0-9_\*\(\)\[\]]+\);\s+)$/  ) {
+	$move_to_top{$1} = 1;
+    }
+}
+
+@ARGV = @saved_ARGV;
+
+#####
+# second pass
+#####
+
 open (FUSION, $first_file)
     or die "Can not open $first_file file for input: $!";
+
+#
+# copy initial file removing initial "extern "
+#
 
 open (COMBINED, "> combined_threads.cpp") 
     or die "Can not open combined_threads.cpp: $!\n";
@@ -34,12 +71,32 @@ while (<FUSION>) {
     } 
 }
 
+#
+# put out moved lines and the includes that they need.
+#
+
+print COMBINED "\n// moved or inserted by concat_cluster_threads.pl\n";
+for (@top_includes) {
+    print COMBINED "$_\n";
+} 
+
+for (keys(%move_to_top)) {
+    print COMBINED "$_";
+}
+print COMBINED "\n// end of moved or inserted by concat_cluster_threads.pl\n\n";
+
+#
+# concatenate to output removing redundancies.
+#
 while(<>) {
     $_ = proc_include($_);
     print COMBINED $_  unless /^\s*extern\s+(.*)$/;
 }
 
-
+#
+# subroutine to remove redundant #include lines.
+# and lines from move_to_top.
+#
 sub proc_include {
     my $line = shift;
 
@@ -49,6 +106,9 @@ sub proc_include {
 	} else {
 	    $includes{$1} = 1;
 	}
+    }
+    if ($move_to_top{$line}) {
+	return "";
     }
     return $line;
 }

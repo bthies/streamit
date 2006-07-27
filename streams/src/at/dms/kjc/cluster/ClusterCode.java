@@ -8,6 +8,7 @@ import at.dms.kjc.sir.*;
 import java.util.Vector;
 import at.dms.kjc.common.CodegenPrintWriter;
 import java.util.HashSet;
+import java.util.List;
 import java.io.*;
 import at.dms.kjc.common.CommonUtils;
 
@@ -115,9 +116,9 @@ public class ClusterCode {
         CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
         int id = NodeEnumerator.getSIROperatorId(node.contents);
 
-        Vector in_v = (Vector)RegisterStreams.getNodeInStreams(node.contents);
-        NetStream in = (NetStream)in_v.elementAt(0);
-        Vector out = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
+        List<NetStream> in_v = RegisterStreams.getNodeInStreams(node.contents);
+        NetStream in = in_v.get(0);
+        List<NetStream> out = RegisterStreams.getNodeOutStreams(node.contents);
 
         int sum_of_weights = splitter.getSumOfWeights();
     
@@ -136,13 +137,15 @@ public class ClusterCode {
         p.println("    add_input("+in.getSource()+");");
 
         for (int i = 0; i < out.size(); i++) {
-            NetStream s = (NetStream)out.elementAt(i);      
+          NetStream s = out.get(i);
+          if (s != null) {
             int num;
             if (splitter.getType().equals(SIRSplitType.DUPLICATE))
                 num = sum_of_weights;
             else 
                 num = splitter.getWeight(i);    
             p.println("    add_output_rate("+s.getDest()+","+num+");");
+          }
         }
     
         p.println("  }");
@@ -163,8 +166,8 @@ public class ClusterCode {
         p.println("    consumer_array["+in.getSource()+"]->pop_items(buf, "+sum_of_weights+");");
         int offs = 0;
         for (int i = 0; i < out.size(); i++) {
-            NetStream s = (NetStream)out.elementAt(i);      
-        
+          NetStream s = out.get(i);      
+          if (s != null) {
             int num;
             if (splitter.getType().equals(SIRSplitType.DUPLICATE))
                 num = sum_of_weights;
@@ -174,6 +177,7 @@ public class ClusterCode {
             p.println("    producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
 
             if (!splitter.getType().equals(SIRSplitType.DUPLICATE)) offs += num;
+          }
         }
         p.println("  }");
         p.newLine();
@@ -183,8 +187,8 @@ public class ClusterCode {
         p.println("      consumer_array["+in.getSource()+"]->pop_items(buf, "+sum_of_weights+");");
         offs = 0;
         for (int i = 0; i < out.size(); i++) {
-            NetStream s = (NetStream)out.elementAt(i);      
-
+          NetStream s = out.get(i);      
+          if (s != null) {
             int num;
             if (splitter.getType().equals(SIRSplitType.DUPLICATE))
                 num = sum_of_weights;
@@ -194,6 +198,7 @@ public class ClusterCode {
             p.println("      producer_array["+s.getDest()+"]->push_items(buf+"+offs+", "+num+");");
 
             if (!splitter.getType().equals(SIRSplitType.DUPLICATE)) offs += num;
+          }
         }
         p.println("    }");
         p.println("  }");
@@ -258,9 +263,9 @@ public class ClusterCode {
         CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
         int id = NodeEnumerator.getSIROperatorId(node.contents);
 
-        Vector in = (Vector)RegisterStreams.getNodeInStreams(node.contents);
-        Vector out_v = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
-        NetStream out = (NetStream)out_v.elementAt(0);
+        List<NetStream> in = RegisterStreams.getNodeInStreams(node.contents);
+        List<NetStream> out_v = RegisterStreams.getNodeOutStreams(node.contents);
+        NetStream out = out_v.get(0);
 
         int sum_of_weights = joiner.getSumOfWeights();
     
@@ -278,9 +283,11 @@ public class ClusterCode {
         p.println("  thread"+id+"() : stream_node<"+baseType+","+baseType+">("+id+","+NodeEnumerator.getNumberOfNodes()+","+sum_of_weights+","+sum_of_weights+","+sum_of_weights+") {");
 
         for (int i = 0; i < in.size(); i++) {
-            NetStream s = (NetStream)in.elementAt(i);       
+          NetStream s = in.get(i);
+          if (s != null) {
             int num = joiner.getWeight(i);  
             p.println("    add_input_rate("+s.getSource()+","+num+");");
+          }
         }
 
         p.println("    add_output("+out.getDest()+");");
@@ -302,7 +309,8 @@ public class ClusterCode {
         p.println("  void work() {");
         int offs = 0;
         for (int i = 0; i < in.size(); i++) {
-            NetStream s = (NetStream)in.elementAt(i);       
+            NetStream s = in.get(i); 
+            if (s == null) continue;
             int num = joiner.getWeight(i);  
             p.println("    consumer_array["+s.getSource()+"]->pop_items(buf+"+offs+", "+num+");");
             offs += num;
@@ -315,7 +323,8 @@ public class ClusterCode {
         p.println("    for (int y = 0; y < __n; y++) {");
         offs = 0;
         for (int i = 0; i < in.size(); i++) {
-            NetStream s = (NetStream)in.elementAt(i);       
+            NetStream s = in.get(i); 
+            if (s == null) continue;
             int num = joiner.getWeight(i);  
             p.println("      consumer_array["+s.getSource()+"]->pop_items(buf+"+offs+", "+num+");");
             offs += num;
@@ -381,9 +390,9 @@ public class ClusterCode {
         CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
-        Vector in_v = (Vector)RegisterStreams.getNodeInStreams(node.contents);
-        NetStream in = (NetStream)in_v.elementAt(0);
-        Vector out = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
+        List<NetStream> in_v = RegisterStreams.getNodeInStreams(node.contents);
+        NetStream in = in_v.get(0);
+        List<NetStream> out = RegisterStreams.getNodeOutStreams(node.contents);
     
         CodegenPrintWriter p = null;
         try {
@@ -430,8 +439,8 @@ public class ClusterCode {
         p.print("void "+in.push_name()+"("+baseType.toString()+" data) {\n");
 
         if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
-            for (int i = 0; i < out.size(); i++) {
-                NetStream s = (NetStream)out.elementAt(i);      
+            for (NetStream s : out) {
+              if (s != null) {      
                 FlatNode dest = NodeEnumerator.getFlatNode(s.getDest());
 
                 if (ClusterFusion.fusedWith(node).contains(dest)) {
@@ -439,6 +448,7 @@ public class ClusterCode {
                 } else {
                     p.print("  "+s.producer_name()+".push(data);\n");
                 }
+              }
             }       
         } else {
             p.print("  "+in.push_buffer()+"["+in.push_index()+"++] = data;\n");
@@ -446,8 +456,9 @@ public class ClusterCode {
             int offs = 0;
         
             for (int i = 0; i < out.size(); i++) {
-                int num = splitter.getWeight(i);
-                NetStream s = (NetStream)out.elementAt(i);
+              int num = splitter.getWeight(i);
+              if (num != 0) {
+                NetStream s = out.get(i);
                 FlatNode dest = NodeEnumerator.getFlatNode(s.getDest());
 
                 if (ClusterFusion.fusedWith(node).contains(dest)) {
@@ -458,6 +469,7 @@ public class ClusterCode {
                     p.print("    "+s.producer_name()+".push_items(&"+in.push_buffer()+"["+offs+"], "+num+");\n");
                 }
                 offs += num;
+              }
             }
 
             p.print("    "+in.push_index()+" = 0;\n");
@@ -474,12 +486,10 @@ public class ClusterCode {
         for (int ch = 0; ch < split_ways; ch++) {
 
             int weight = splitter.getWeight(ch);
-            if (weight == 0) { // this deals with the odd case of a 0 weight 
-                ch--;          // which will have no coresponding output edge
-                split_ways--;  // in the graph.
+            if (weight == 0) { 
                 continue;
             }
-            NetStream _out = (NetStream)out.elementAt(ch);
+            NetStream _out = out.get(ch);
 
             p.print(baseType.toString()+" "+_out.pop_buffer()+"["+weight+"];\n");
             p.print("int "+_out.pop_index()+" = "+weight+";\n");
@@ -492,7 +502,7 @@ public class ClusterCode {
                 p.print("    "+baseType.toString()+" tmp = "+in.consumer_name()+".pop();\n");
                 for (int y = 0; y < splitter.getWays(); y++) {
                     if (y != ch) {
-                        p.print("    "+((NetStream)out.elementAt(y)).producer_name()+".push(tmp);\n");
+                        p.print("    "+ out.get(y).producer_name()+".push(tmp);\n");
                     }
                 }
                 p.print("    return tmp;\n");
@@ -508,14 +518,16 @@ public class ClusterCode {
                 p.print("    "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
         
                 for (int y = 0; y < out.size(); y++) {
-                    int num = splitter.getWeight(y);
-                    NetStream s = (NetStream)out.elementAt(y);
+                  int num = splitter.getWeight(y);
+                  NetStream s = out.get(y);
+                  if (s != null) {
                     if (y == ch) {
                         p.print("    memcpy(&tmp["+offs+"], "+_out.pop_buffer()+", "+num+" * sizeof("+baseType.toString()+"));\n");
                     } else {
                         p.print("    "+s.producer_name()+".push_items(&tmp["+offs+"], "+num+");\n");
                     }
                     offs += num;
+                  }
                 }
 
                 p.print("    "+_out.pop_index()+" = 0;\n");
@@ -544,9 +556,10 @@ public class ClusterCode {
         //p.print("#endif\n");
         }
         
-        for (int o = 0; o < out.size(); o++) {
-            _s = ((NetStream)out.elementAt(o)).getSource();
-            _d = ((NetStream)out.elementAt(o)).getDest();
+        for (NetStream ns : out) {
+          if (ns != null) {
+            _s = ns.getSource();
+            _d = ns.getDest();
             if (FixedBufferTape.isFixedBuffer(_s,_d)) {
             //p.print("#ifdef __FUSED_"+_s+"_"+_d+"\n");
             p.print("extern "+baseType.toString()+" BUFFER_"+_s+"_"+_d+"[];\n");
@@ -554,6 +567,7 @@ public class ClusterCode {
             p.print("extern int TAIL_"+_s+"_"+_d+";\n");
             //p.print("#endif\n");
             }
+          }
         }
 
         p.newLine();
@@ -590,9 +604,8 @@ public class ClusterCode {
             }
             p.newLine();
 
-            for (int i = 0; i < out.size(); i++) {
-                NetStream s = (NetStream)out.elementAt(i);      
-
+            for (NetStream s : out) {
+              if (s != null) {
                 _s = s.getSource();
                 _d = s.getDest();
                 if (FixedBufferTape.isFixedBuffer(_s, _d)) {
@@ -609,6 +622,7 @@ public class ClusterCode {
                 } else {
                     p.print("  " + s.producer_name() + ".push(tmp);\n");
                 }
+              }
             }
         
         } else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN) ||
@@ -629,14 +643,15 @@ public class ClusterCode {
 
                 for (int i = 0; i < out.size(); i++) {
                     int num = splitter.getWeight(i);
-                    NetStream s = (NetStream)out.elementAt(i);      
-            
+                    NetStream s = out.get(i);      
+                    if (s == null) continue;
+                    
                     int _s2 = s.getSource();
                     int _d2 = s.getDest();
         
                     //p.println("// ClusterCode_2");
 		    
-		    int step = 8;
+                    int step = 8;
 
                     p.print("  for (int k = 0; k < "+num/step+"; k++) {\n");
             
@@ -793,8 +808,9 @@ public class ClusterCode {
 
                 for (int i = 0; i < out.size(); i++) {
                     int num = splitter.getWeight(i);
-                    NetStream s = (NetStream)out.elementAt(i);      
-            
+                    NetStream s = out.get(i);      
+                    if (s == null) continue;
+                    
                     int _s2 = s.getSource();
                     int _d2 = s.getDest();
             
@@ -939,9 +955,9 @@ public class ClusterCode {
         CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
-        Vector in = (Vector)RegisterStreams.getNodeInStreams(node.contents);
-        Vector out_v = (Vector)RegisterStreams.getNodeOutStreams(node.contents);
-        NetStream out = (NetStream)out_v.elementAt(0);
+        List<NetStream> in = RegisterStreams.getNodeInStreams(node.contents);
+        List<NetStream> out_v = RegisterStreams.getNodeOutStreams(node.contents);
+        NetStream out = out_v.get(0);
 
         CodegenPrintWriter p = null;
         try {
@@ -980,15 +996,17 @@ public class ClusterCode {
             p.print("extern int TAIL_" + _s + "_" + _d + ";\n");
         }   
 
-        for (int o = 0; o < in.size(); o++) {
-            _s = ((NetStream)in.elementAt(o)).getSource();
-            _d = ((NetStream)in.elementAt(o)).getDest();
+        for (NetStream ns : in) {
+          if (ns != null) {
+            _s = ns.getSource();
+            _d = ns.getDest();
             if (FixedBufferTape.isFixedBuffer(_s, _d)) {
                 p.print("extern " + baseType.toString() + " BUFFER_" + _s + "_"
                         + _d + "[];\n");
                 p.print("extern int HEAD_" + _s + "_" + _d + ";\n");
                 p.print("extern int TAIL_" + _s + "_" + _d + ";\n");
             }
+          }
         }
 
 
@@ -1010,9 +1028,9 @@ public class ClusterCode {
         
         //int ways = joiner.getWays();
         for (int i = 0; i < in.size(); i++) {
-            int num = joiner.getWeight(i);
-            
-            NetStream s = (NetStream)in.elementAt(i);
+          int num = joiner.getWeight(i);
+          if (num != 0) {  
+            NetStream s = in.get(i);
             FlatNode source = NodeEnumerator.getFlatNode(s.getSource());
 
             if (ClusterFusion.fusedWith(node).contains(source)) {
@@ -1024,6 +1042,7 @@ public class ClusterCode {
             }
 
             _offs += num;
+          }
         }
         p.print("    "+out.pop_index()+" = 0;\n");
         p.print("  }\n");
@@ -1073,9 +1092,7 @@ public class ClusterCode {
             //
 
             feedbackJoineersNeedingPrep.add(joiner);
-            Vector<NetStream> instreams = RegisterStreams
-                    .getNodeInStreams(joiner);
-            NetStream looptape = instreams.size() > 1 ? instreams.elementAt(1) : instreams.elementAt(0);
+            NetStream looptape = RegisterStreams.getNodeInStreams(joiner).get(1);
             int s = looptape.getSource();
             int enqueue_count = ((SIRFeedbackLoop) joiner.getParent())
                     .getDelayInt();
@@ -1134,8 +1151,9 @@ public class ClusterCode {
                 // unroll fully!
 
                 for (int i = 0; i < in.size(); i++) {
-                    int num = joiner.getWeight(i);
-                    NetStream s = (NetStream) in.elementAt(i);
+                  int num = joiner.getWeight(i);
+                  if (num != 0) {
+                    NetStream s = in.get(i);
 
                     int _s1 = s.getSource();
                     int _d1 = s.getDest();
@@ -1204,6 +1222,7 @@ public class ClusterCode {
                                     + ";\n");
                         }
                     }
+                  }
                 }
 
                 if (FixedBufferTape.isFixedBuffer(_s2, _d2)) {
@@ -1222,7 +1241,8 @@ public class ClusterCode {
 
 		    for (int i = 0; i < in.size(); i++) {
 			int num = joiner.getWeight(i);
-			NetStream s = (NetStream)in.elementAt(i);       
+            if (num != 0) {
+			NetStream s = in.get(i);       
 			
 			int _s1 = s.getSource();
 			int _d1 = s.getDest();
@@ -1378,6 +1398,7 @@ public class ClusterCode {
                                     + ";\n");
                         }
                     }
+            }
 
                 }
             }

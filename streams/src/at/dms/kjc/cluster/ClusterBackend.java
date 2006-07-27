@@ -1,9 +1,9 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.95 2006-07-21 19:42:36 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.96 2006-07-27 23:31:11 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.util.IRPrinter;
 //import at.dms.util.SIRPrinter;
@@ -43,12 +43,12 @@ public class ClusterBackend {
      */
     public static HashMap<FlatNode,Integer> steadyExecutionCounts;
 
-    /**
-     * Map filters (also presumably splitters and joiners) to FlatNodes.
-     * 
-     * <br/> Set up here but used by {@link ClusterExecutionCode}
-     */
-    public static HashMap<SIROperator,FlatNode> filter2Node;
+//    /**
+//     * Map filters (also presumably splitters and joiners) to FlatNodes.
+//     * 
+//     * <br/> Set up here but used by {@link ClusterExecutionCode}
+//     */
+//    public static HashMap<SIROperator,FlatNode> filter2Node;
 
     /**
      * Result of call to {@link SIRScheduler#getExecutionCounts(SIRStream)}.
@@ -256,9 +256,9 @@ public class ClusterBackend {
 
         // should really be hosts -- how many systems
         // will be running this code.
-        int threads = KjcOptions.cluster;
+        int hosts = KjcOptions.cluster;
 
-        HashMap partitionMap = new HashMap();
+        HashMap<SIROperator,Integer> partitionMap = new HashMap<SIROperator,Integer>();
 
         if ( doCacheOptimization ) {
             str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
@@ -284,7 +284,7 @@ public class ClusterBackend {
             //RemoveMultiPops.doit(str);
         }
 
-        System.err.println("Running Partitioning... target number of threads: "+threads);
+        System.err.println("Running Partitioning... target number of threads: "+hosts);
 
         StreamItDot.printGraph(str, "before-partition.dot");
 
@@ -298,7 +298,7 @@ public class ClusterBackend {
             if ( doCacheOptimization ) {
                 str = CachePartitioner.doit(str, code_cache, data_cache);
             } else {        
-                str = Partitioner.doit(str, 0, threads, false, false);
+                str = Partitioner.doit(str, 0, hosts, false, false);
                 // from now on, target however many threads were
                 // produced by the partitioner
                 KjcOptions.cluster = Partitioner.countFilters(str);
@@ -319,19 +319,19 @@ public class ClusterBackend {
             str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
 
             str.setParent(null); 
-            str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);   
+            str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), hosts, false, false).calcPartitions(partitionMap);   
 
         } else {
             // if mapping to 1 machine, then just map everyone to
             // partition 0 as an optimization (the partitioner would
             // do the same thing, but would take longer)
-            if (threads==1) {
+            if (hosts==1) {
                 mapToPartitionZero(str, partitionMap);
             } else {
                 // Fix up a bug that might be caused by previous 
                 // pass of partitioner
                 str.setParent(null); 
-                str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);   
+                str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), hosts, false, false).calcPartitions(partitionMap);   
             }
         }
     
@@ -409,14 +409,14 @@ public class ClusterBackend {
         // the cluster specific code begins here
 
         NodeEnumerator.reset();
-        graphFlattener.top.accept(new NodeEnumerator(), new HashSet(), true);
-        graphFlattener.top.accept(new RegisterStreams(), new HashSet(), true);
+        NodeEnumerator.init(graphFlattener);    // xlate between node numbers and SIROperators / FlatNodes 
 
+        RegisterStreams.reset();
+        RegisterStreams.init(graphFlattener);   // set up NetStreams and associate vectors of NetStreams with node numbers
+        
         /*
         // Remove globals pass is broken in cluster !!!
-        if (KjcOptions.removeglobals) {
-        RemoveGlobals.doit(graphFlattener.top);
-        }
+        if (KjcOptions.removeglobals) { RemoveGlobals.doit(graphFlattener.top); }
         */
 
         StructureIncludeFile.doit(structures, graphFlattener.top);
@@ -433,16 +433,16 @@ public class ClusterBackend {
         //VarDecl Raise to move array assignments down?
         new VarDeclRaiser().raiseVars(str);
 
-        // creating filter2Node
-        filter2Node = new HashMap<SIROperator,FlatNode>();
-        graphFlattener.top.accept(
-                new FlatVisitor() {
-                  public void visitNode(FlatNode node) {
-                      filter2Node.put(node.contents,node);
-                  }
-                },
-                null,
-                true);
+//        // creating filter2Node
+//        filter2Node = new HashMap<SIROperator,FlatNode>();
+//        graphFlattener.top.accept(
+//                new FlatVisitor() {
+//                  public void visitNode(FlatNode node) {
+//                      filter2Node.put(node.contents,node);
+//                  }
+//                },
+//                null,
+//                true);
 
         DiscoverSchedule d_sched = new DiscoverSchedule();
         d_sched.findPhases(graphFlattener.top.contents);

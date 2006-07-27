@@ -23,7 +23,7 @@ import java.util.*;
  */
 
 public class ClusterFusion
-    extends at.dms.util.Utils implements FlatVisitor {
+    /*extends at.dms.util.Utils*/ implements FlatVisitor {
 
     /**
      * Maps SIROperator to int.  that's all I know AD.
@@ -242,6 +242,9 @@ public class ClusterFusion
      *  If a splitter and at top of program, return "1"
      *    else if a splitter preceeded by a filter, return partition of filter.
      *    else do something with following operators to get partition... (Janis?)
+     *    
+     *    @param node ??
+     *    @return ??
      */
     public static String getPartition(FlatNode node) {
 
@@ -270,7 +273,7 @@ public class ClusterFusion
                 // integrate backwards to partition that is communicating
                 // most with this one.
                 SIRJoiner join = (SIRJoiner)op;
-                HashMap map = new HashMap(); // String partition->Integer sum
+                HashMap<String,Integer> map = new HashMap<String,Integer>(); // String partition->Integer sum
                 int[] weights = join.getWeights();
                 for (int i=0; i<weights.length; i++) {
                     String part = getPartition(node.incoming[i]);
@@ -316,7 +319,7 @@ public class ClusterFusion
                 // most with this one.
 
                 SIRSplitter split = (SIRSplitter)op;
-                HashMap map = new HashMap(); // String partition->Integer sum
+                HashMap<String,Integer> map = new HashMap<String,Integer>(); // String partition->Integer sum
                 int[] weights = split.getWeights();
                 for (int i=0; i<weights.length; i++) {
                     String part = getPartition(node.edges[i]);

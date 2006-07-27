@@ -7,7 +7,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
 
 /**
- * Attempts to find a path between two stream nodes. Uses informtaion 
+ * Attempts to find a path between two stream nodes. Uses information 
  * about output tapes maintained by RegisterStreams. The search
  * starts at the source operator and performs breadth first search. 
  *
@@ -16,18 +16,21 @@ import at.dms.kjc.KjcOptions;
 public class FindPath {
 
     static void find(int src_id, int dst_id) {
+        Set<Integer> examined = new HashSet<Integer>();
     
         if (ClusterBackend.debugPrint) {
             System.out.println("============================================================");
             System.out.println("Finding path from:"+src_id+" to:"+dst_id);
         }
 
-        LinkedList list = new LinkedList();
-        list.add(new Integer(src_id));
+        LinkedList<Integer> list = new LinkedList<Integer>();
+        list.add(src_id);
     
-        while (list.size() > 0) {
+        while (! list.isEmpty()) {
         
-            int node = ((Integer)list.getFirst()).intValue();
+            int node = list.removeFirst();
+            examined.add(node);
+            
             if (ClusterBackend.debugPrint)
                 System.out.print("visiting node:"+node);
 
@@ -44,20 +47,25 @@ public class FindPath {
                     { System.out.print(" [splitter]"); }
             }
 
-            Vector v = RegisterStreams.getNodeOutStreams(oper);
             try {
-            for (int y = 0; y < v.size(); y++) {
-                NetStream n =(NetStream)v.get(y);
-                list.addLast(new Integer(n.getDest()));
+            for (NetStream n : RegisterStreams.getNodeOutStreams(oper)) {
+              if (n != null) {
+                int dest = n.getDest();
+                if (! examined.contains(dest)) {
+                    list.addLast(dest);
+                }
+              }
             }
             } catch (NullPointerException e) {
+                // WTF: a NullPointerException would indicate that oper is not a valid 
+                // thread number.  Could only happen on src_id, but then caller would
+                // have been unable to get src_id to call this method.
                 if (KjcOptions.fusion) {
                     assert false : "-cluster -fusion does not support messaging. Try -cluster -standalone instead.";
                 } else {
                     throw e;
                 }
             }
-            list.removeFirst();
 
             if (ClusterBackend.debugPrint)
                 System.out.println();

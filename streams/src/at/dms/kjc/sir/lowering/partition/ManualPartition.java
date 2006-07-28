@@ -270,16 +270,29 @@ public class ManualPartition {
     }
 
     /**
-     * Fuses any two adjacent filters in 'str' so long as:
+     * Fuses any two adjacent FILTERS in 'str' so long as:
      *  - the shared parent of the filter is a pipeline
      *  - the result of fusion will be stateless
      *
      * If a complete pipeline is fused, then it is treated as a single
      * filter in considering fusion within the pipeline's parent.
      */
-    public static SIRStream fuseStatelessPipelines(SIRStream str) {
+    public static SIRStream fusePipelinesOfStatelessFilters(SIRStream str) {
         checkNull(str);
-        return FusePipelines.fuseStatelessPipelines(str);
+        return FusePipelines.fusePipelinesOfStatelessFilters(str);
+    }
+
+    /**
+     * Fuses any two adjacent STREAMS in 'str' so long as:
+     *  - the shared parent of the filter is a pipeline
+     *  - the result of fusion will be stateless
+     *
+     * If a complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
+     */
+    public static SIRStream fusePipelinesOfStatelessStreams(SIRStream str) {
+        checkNull(str);
+        return FusePipelines.fusePipelinesOfStatelessStreams(str);
     }
 
     /**
@@ -287,9 +300,9 @@ public class ManualPartition {
      * complete pipeline is fused, then it is treated as a single
      * filter in considering fusion within the pipeline's parent.
      */
-    public static SIRStream fusePipelines(SIRStream str) {
+    public static SIRStream fusePipelinesOfFilters(SIRStream str) {
         checkNull(str);
-        return FusePipelines.fusePipelines(str);
+        return FusePipelines.fusePipelinesOfFilters(str);
     }
 
     /**

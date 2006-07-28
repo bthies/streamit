@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.7 2006-07-21 19:42:36 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.8 2006-07-28 15:47:30 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -6,7 +6,7 @@ import java.io.FileWriter;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.sir.SIRHelper;
-
+import at.dms.kjc.flatgraph.FlatNode;
 
 
 
@@ -45,7 +45,7 @@ public class GenerateMakefile {
         p.newline();
         p.println("# Unsupported target machines");
         p.print("CC_IA64 = ecc\n");
-        p.print("CC_ARM = /u/janiss/bin/arm343 #arm-linux-gcc\n");
+        p.print("CC_ARM = arm343 #arm-linux-gcc\n");
         p.print("CCFLAGS_IA64 = -O3\n");
         p.print("CCFLAGS_ARM = -O3\n");
 
@@ -54,12 +54,18 @@ public class GenerateMakefile {
     
         {
             int i;
-            for (i = 0; i < threadNumber - 1; i++) {
-                p.print("\tthread"+i+" \\");
-                p.newLine();
+            for (i = 0; i < threadNumber/*-1*/; i++) {
+                // check for thread that we might not have made: 0-weight splitter or joiner
+                // do not try to include threadXXX.cpp files for these since those files may
+                // not have been created, and would not contain any useful code.
+                FlatNode f = NodeEnumerator.getFlatNode(i);
+                if ((f.isJoiner() && f.getTotalIncomingWeights() == 0)
+                        || (f.isSplitter() && f.getTotalOutgoingWeights() == 0)) {continue;}
+                p.println("\tthread"+i+" \\");
             }
-            p.print("\tthread"+i);
-            p.newLine();
+            p.newline();
+//            p.print("\tthread"+i);
+//            p.newLine();
         }
 
         p.newLine();

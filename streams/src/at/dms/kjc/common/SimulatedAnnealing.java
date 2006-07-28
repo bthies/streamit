@@ -300,6 +300,8 @@ public abstract class SimulatedAnnealing {
         double P = 1.0;
         double R = random.nextDouble();
 
+        //System.out.println(" old: " + e_old + " new: " + e_new);
+        
         if (e_new > e_old)
             P = Math.exp((((double) e_old) - ((double) e_new)) / T);
 
@@ -308,6 +310,7 @@ public abstract class SimulatedAnnealing {
         } else {
             //don't accept the new state,
             //revert..
+            //System.out.println("  Don't accept: calling set assignment()");
             setAssignment(oldAssignment);
             return false;
         }

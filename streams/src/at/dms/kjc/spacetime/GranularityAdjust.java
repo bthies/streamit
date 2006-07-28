@@ -13,7 +13,7 @@ import at.dms.kjc.*;
  *
  */
 public class GranularityAdjust {
-    public final static double threshold = .9;
+    public final static double threshold = .90;
     
     public static SIRStream doit(SIRStream str, RawChip chip) {
         assert KjcOptions.partition_greedier;

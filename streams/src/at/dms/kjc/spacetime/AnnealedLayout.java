@@ -117,7 +117,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public void run() {
         System.out.println("Minimizing Critical Path Work...");
         //simAnnealAssign(5, 1000);
-        simAnnealAssign(3, 100);
+        simAnnealAssign(5, 300);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
             SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
@@ -172,7 +172,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public void printLayoutStats() {
         int[] tileCosts = getTileWorks(false);
         
-        System.out.println("Placement cost: " + placementCost(false));
+        System.out.println("Placement cost: " + placementCost(true));
         
         System.out.println("Max Work Tile of layout is " + maxWorkTile + 
                 ", it has work: " + maxTileWork(tileCosts));
@@ -494,10 +494,25 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     public double placementCost(boolean debug) {
         double cost;
         int[] tileCosts = getTileWorks(false);
+//      find the max
         
-        cost = (double)maxTileWork(tileCosts) + commCost(tileCosts);
+        int max = 0;
+        int maxTile = -1;
+        for (int i = 0; i < tileCosts.length; i++) {
+            if (tileCosts[i] > max) {
+                max = tileCosts[i];
+                maxWorkTile = i;
+            }
+        }
+        double commCost = commCost(tileCosts, rawChip.getTile(maxWorkTile));
         
-        return cost;
+        if (debug)
+            System.out.println("work cost: " + max + " comm cost: " + commCost);
+        
+        //cost = max + 
+        //   commCost; 
+        
+        return commCost;
     }
 
     /** 
@@ -576,22 +591,15 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         return cost;
     }    
     
-    private int commCost(int[] tileCosts) {
+    private double commCost(int[] tileCosts, RawTile tile) {
         Trace[] traces = partitioner.getTraceGraph();
-        
         
         assignBuffers.run(spaceTime, this);
         Router router = new SmarterRouter(tileCosts, rawChip);
         HashMap<RawTile, Integer> commCosts = new HashMap<RawTile, Integer>();
-        HashSet<RawTile> bigWorkers = new HashSet<RawTile>();
-       
-        //create a hashset of tiles that do a bunch of work...
-        for (int i = 0; i < tileCosts.length; i++) {
-            if ((double)tileCosts[i] / (double)tileCosts[maxWorkTile] >= 
-                BIG_WORKER) {
-                bigWorkers.add(rawChip.getTile(i));
-                commCosts.put(rawChip.getTile(i), 0);
-            }
+        
+        for (int i = 0; i < rawChip.getTotalTiles(); i++) {
+            commCosts.put(rawChip.getTile(i), 0);
         }
         
         for (int i = 0; i < traces.length; i++) {
@@ -619,7 +627,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
-                        if (bigWorkers.contains(hop)) 
+                        if (hop instanceof RawTile)
                             commCosts.put((RawTile)hop, 
                                     commCosts.get((RawTile)hop) + edge.steadyItems());
                     }
@@ -631,22 +639,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
-                        if (bigWorkers.contains(hop)) 
+                        if (hop instanceof RawTile)
                             commCosts.put((RawTile)hop, 
                                     commCosts.get((RawTile)hop) + edge.steadyItems());
                     }
                 }
             }
         }
-        //return the max comm cost
-        Iterator<RawTile> bigs = bigWorkers.iterator();
-        int max = 0;
-        while (bigs.hasNext()) {
-            RawTile big = bigs.next();
-            if (commCosts.get(big) > max)
-                max = commCosts.get(big); 
+        //return the comm cost
+        int max = 0; 
+        for (int i = 0; i < rawChip.getTotalTiles(); i++) {
+            int cost = commCosts.get(rawChip.getTile(i)) + tileCosts[i];
+            if (cost > max)
+                max = cost;
         }
-        
         return max;
     }
         

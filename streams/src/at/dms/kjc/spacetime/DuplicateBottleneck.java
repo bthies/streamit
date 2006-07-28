@@ -124,7 +124,25 @@ public class DuplicateBottleneck {
         return cousins;
     }
     
-    public void smarterDuplicate(SIRStream str) {
+    public void duplicateFilters(SIRStream str, int reps) {
+        
+        WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+        WorkList workList = work.getSortedFilterWork();
+        
+        for (int i = workList.size() - 1; i >= 0; i--) {
+            SIRFilter filter = workList.getFilter(i);
+            if (!StatelessDuplicate.isFissable(filter))
+                continue;
+            int filterWork = work.getWork(filter);
+            int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
+                (filter.getPushInt() + filter.getPopInt());
+            if (filterWork / commRate > 10) {
+                StatelessDuplicate.doit(filter, reps);
+            }
+        }
+    }
+    
+  public void smarterDuplicate(SIRStream str) {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
@@ -289,35 +307,7 @@ public class DuplicateBottleneck {
         return true;
     }
     
-    private void duplicateFilters(SIRStream str, int reps) {
-        if (str instanceof SIRFeedbackLoop) {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
-            duplicateFilters(fl.getBody(), reps);
-            duplicateFilters(fl.getLoop(), reps);
-        }
-        if (str instanceof SIRPipeline) {
-            SIRPipeline pl = (SIRPipeline) str;
-            Iterator iter = pl.getChildren().iterator();
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                duplicateFilters(child, reps);
-            }
-        }
-        if (str instanceof SIRSplitJoin) {
-            SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                duplicateFilters(child, reps);
-            }
-        }
-        if (str instanceof SIRFilter) {
-            SIRFilter filter = (SIRFilter)str;
-            if (StatelessDuplicate.isFissable(filter))
-                StatelessDuplicate.doit(filter, reps);
-        }
-    } 
-    
+       
     private void walkSTR(SIRStream str, WorkEstimate work) {
         if (str instanceof SIRFeedbackLoop) {
             SIRFeedbackLoop fl = (SIRFeedbackLoop) str;

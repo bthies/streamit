@@ -99,17 +99,20 @@ public class SpaceTimeBackend {
             ((SIRContainer)str).reclaimChildren();
         
         StreamlinedDuplicate duplicate = null;
-        
+        /*
         if (!KjcOptions.noswpipe) {
             DuplicateBottleneck.duplicateHeavyFilters(str);
         }
-        
+        */
         if (KjcOptions.dup > 1) {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             if (KjcOptions.noswpipe) {
-                str = FusePipelines.fuseStatelessPipelines(str);
-                dup.smarterDuplicate(str);
+                //str = FuseStatelessPipelines.doit(str);
+                //str = FuseAll.fuse(str);
+                dup.duplicateFilters(str, rawChip.getTotalTiles());
+                //dup.smarterDuplicate(str);
+
             }
             else {
                 duplicate = new StreamlinedDuplicate();
@@ -117,6 +120,12 @@ public class SpaceTimeBackend {
             }
         }
         
+        //StreamItDot.printGraph(str, "before-fusepipe.dot");
+        if (KjcOptions.noswpipe) {
+            str = FusePipelines.fusePipelines(str);
+        }
+        
+        //StreamItDot.printGraph(str, "after-fusepipe.dot");
         if (KjcOptions.partition_greedier) {
             str = GranularityAdjust.doit(str, rawChip);
         }

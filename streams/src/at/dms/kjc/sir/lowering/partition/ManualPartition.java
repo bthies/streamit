@@ -270,12 +270,26 @@ public class ManualPartition {
     }
 
     /**
-     * Fuses stateless components of pipelines in 'str' as much as
-     * possible, returning the new stream.
+     * Fuses any two adjacent filters in 'str' so long as:
+     *  - the shared parent of the filter is a pipeline
+     *  - the result of fusion will be stateless
+     *
+     * If a complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
      */
     public static SIRStream fuseStatelessPipelines(SIRStream str) {
         checkNull(str);
-        return FuseStatelessPipelines.doit(str);
+        return FusePipelines.fuseStatelessPipelines(str);
+    }
+
+    /**
+     * Fuses all adjacent filters whos parent is a pipeline.  If a
+     * complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
+     */
+    public static SIRStream fusePipelines(SIRStream str) {
+        checkNull(str);
+        return FusePipelines.fusePipelines(str);
     }
 
     /**

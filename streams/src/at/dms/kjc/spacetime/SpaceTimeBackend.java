@@ -108,7 +108,7 @@ public class SpaceTimeBackend {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
             if (KjcOptions.noswpipe) {
-                str = FuseStatelessPipelines.doit(str);
+                str = FusePipelines.fuseStatelessPipelines(str);
                 dup.smarterDuplicate(str);
             }
             else {

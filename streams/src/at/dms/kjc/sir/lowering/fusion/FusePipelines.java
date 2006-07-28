@@ -28,6 +28,8 @@ public class FusePipelines {
      * filter in considering fusion within the pipeline's parent.
      */
     public static SIRStream fuseStatelessPipelines(SIRStream str) {
+        // first eliminate wrapper pipelines
+        Lifter.lift(str);
         PipelineFuser fuser = new PipelineFuser(true);
         return (SIRStream)str.accept(fuser);
     }
@@ -38,6 +40,8 @@ public class FusePipelines {
      * filter in considering fusion within the pipeline's parent.
      */
     public static SIRStream fusePipelines(SIRStream str) {
+        // first eliminate wrapper pipelines
+        Lifter.lift(str);
         PipelineFuser fuser = new PipelineFuser(false);
         return (SIRStream)str.accept(fuser);
     }

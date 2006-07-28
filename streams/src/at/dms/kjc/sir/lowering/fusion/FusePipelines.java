@@ -28,7 +28,8 @@ public class FusePipelines {
      * filter in considering fusion within the pipeline's parent.
      */
     public static SIRStream fuseStatelessPipelines(SIRStream str) {
-        // first eliminate wrapper pipelines
+        // first eliminate wrapper pipelines, as they obscure
+        // continuous pipeline sections
         Lifter.lift(str);
         PipelineFuser fuser = new PipelineFuser(true);
         return (SIRStream)str.accept(fuser);
@@ -40,7 +41,8 @@ public class FusePipelines {
      * filter in considering fusion within the pipeline's parent.
      */
     public static SIRStream fusePipelines(SIRStream str) {
-        // first eliminate wrapper pipelines
+        // first eliminate wrapper pipelines, as they obscure
+        // continuous pipeline sections
         Lifter.lift(str);
         PipelineFuser fuser = new PipelineFuser(false);
         return (SIRStream)str.accept(fuser);
@@ -108,11 +110,18 @@ public class FusePipelines {
 
             // 2. PERFORM FUSION:
             if (partitions.size()==1) {
-                // if we are fusing everything, call fuse all due to the
-                // bad interface in FusePipe
-                SIRPipeline wrapper = FuseAll.fuse(self);
-                // should get back a wrapper with a single component
-                return wrapper.get(0);
+                // don't need to fuse if we have only one child --
+                // that would end up fusing splitjoin children too
+                if (self.size() > 1) {
+                    // if we are fusing everything, call fuse all due to the
+                    // bad interface in FusePipe
+                    SIRPipeline wrapper = FuseAll.fuse(self);
+                    // should get back a wrapper with a single component
+                    return wrapper.get(0);
+                } else {
+                    // return the child itself to remove wrapper pipelines
+                    return self.get(0);
+                }
             } else {
                 // fuse the pipeline according to the recorded partitions
                 int[] partitionArr = new int[partitions.size()];

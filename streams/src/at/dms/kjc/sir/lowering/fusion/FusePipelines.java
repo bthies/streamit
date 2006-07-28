@@ -18,18 +18,46 @@ import java.util.ArrayList;
  * If an entire pipeline is fused, then it may be fused further with
  * neighbors in a higher-level pipeline.
  */
-public class FuseStatelessPipelines {
+public class FusePipelines {
     /**
-     * Fuses stateless (sub-)pipelines as much as possible in 'str'
-     * and returns new stream.
+     * Fuses any two adjacent filters in 'str' so long as:
+     *  - the shared parent of the filter is a pipeline
+     *  - the result of fusion will be stateless
+     *
+     * If a complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
      */
-    public static SIRStream doit(SIRStream str) {
-        StatelessFuser fuser = new StatelessFuser();
+    public static SIRStream fuseStatelessPipelines(SIRStream str) {
+        PipelineFuser fuser = new PipelineFuser(true);
+        return (SIRStream)str.accept(fuser);
+    }
+
+    /**
+     * Fuses all adjacent filters whos parent is a pipeline.  If a
+     * complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
+     */
+    public static SIRStream fusePipelines(SIRStream str) {
+        PipelineFuser fuser = new PipelineFuser(false);
         return (SIRStream)str.accept(fuser);
     }
 
     // visitor to actually do the work
-    static class StatelessFuser extends ReplacingStreamVisitor {
+    static class PipelineFuser extends ReplacingStreamVisitor {
+        /**
+         * If true, then only apply fusion when the result will be
+         * stateless.
+         */
+        private boolean onlyStateless;
+
+        /**
+         * If 'onlyStateless' is true, then only fuses adjacent
+         * filters if the result of fusion will be stateless.
+         */
+        public PipelineFuser(boolean onlyStateless) {
+            this.onlyStateless = onlyStateless;
+        }
+
         public Object visitPipeline(SIRPipeline self,
                                     JFieldDeclaration[] fields,
                                     JMethodDeclaration[] methods,
@@ -55,10 +83,8 @@ public class FuseStatelessPipelines {
                     child instanceof SIRFilter &&
                     // must be able to fuse child
                     FusePipe.isFusable(child) &&
-                    // child must be stateless
-                    !StatelessDuplicate.hasMutableState((SIRFilter)child) &&
-                    // only first filter can peek
-                    (count==0 || !doesPeeking((SIRFilter)child))) {
+                    // if only fusing stateless, test for stateless result
+                    (!onlyStateless || statelessResult((SIRFilter)child, count))) {
                     // keep looping if the partition has room to grow
                     if (pos+count+1 < self.size()) {
                         count++;
@@ -97,8 +123,23 @@ public class FuseStatelessPipelines {
             }
         }
         
-        // returns whether or not 'filter' does any peeking (in either
-        // init or steady stage).
+        /**
+         * Given that filter 'child' is the i'th to be fused in a
+         * pipeline, returns if the resulting fused filter would be
+         * stateless (assuming it is fused with a stateless filter
+         * higher in the pipeline).
+         */
+        boolean statelessResult(SIRFilter child, int i) {
+            return (// child must be stateless
+                    !StatelessDuplicate.hasMutableState((SIRFilter)child) &&
+                    // only first filter can peek
+                    (i==0 || !doesPeeking((SIRFilter)child)));
+        }
+
+        /**
+         * Returns whether or not 'filter' does any peeking (in either
+         * init or steady stage).
+         */
         boolean doesPeeking(SIRFilter filter) {
             // calculate amount of peeking in init stage (if any)
             boolean initPeek;

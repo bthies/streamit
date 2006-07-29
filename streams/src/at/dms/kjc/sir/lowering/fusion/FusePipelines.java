@@ -186,10 +186,13 @@ public class FusePipelines {
                 // if we are fusing everything, call fuse all due to the
                 // bad interface in FusePipe
                 SIRPipeline wrapper = FuseAll.fuse(self);
-                // check that fusion product stateless
-                checkState((SIRFilter)wrapper.get(0));
                 // should get back a wrapper with a single component
-                return wrapper.get(0);
+                SIRStream child = wrapper.get(0);
+                // setup parent-child relationship
+                child.setParent(wrapper.getParent());
+                // check that fusion product stateless
+                checkState((SIRFilter)child);
+                return child;
             } else {
                 // fuse the pipeline according to the recorded partitions
                 int[] partitionArr = new int[partitions.size()];
@@ -221,7 +224,10 @@ public class FusePipelines {
             // I'm not sure that FuseAll.fuse removes the wrapper when
             // it mutates 'pipe', so I'm removing it myself
             SIRPipeline wrapper = FuseAll.fuse(pipe.get(i));
-            pipe.set(i, wrapper.get(0));
+            SIRStream child = wrapper.get(0);
+            // setup parent-child relationship
+            pipe.set(i, child);
+            child.setParent(pipe);
         }
 
         /**

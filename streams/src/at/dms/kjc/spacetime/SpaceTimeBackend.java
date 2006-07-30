@@ -122,7 +122,7 @@ public class SpaceTimeBackend {
         
         //StreamItDot.printGraph(str, "before-fusepipe.dot");
         if (KjcOptions.noswpipe) {
-            str = FusePipelines.fusePipelines(str);
+            str = FusePipelines.fusePipelinesOfFilters(str);
         }
         
         //StreamItDot.printGraph(str, "after-fusepipe.dot");

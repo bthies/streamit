@@ -112,6 +112,12 @@ public class DuplicateBottleneck {
         return str;
     }
     
+    /**
+     * Returns number of parallel streams that are at same nesting
+     * depth as <filter> relative to the top-level splitjoin.  Assumes
+     * that the splitjoin widths on the path from <filter> to the
+     * top-level splitjoin are symmetric across other siblings.
+     */
     private int getNumCousins(SIRFilter filter) {
         int cousins = 1;
         SIRContainer container = filter.getParent();
@@ -123,7 +129,42 @@ public class DuplicateBottleneck {
         }
         return cousins;
     }
-    
+
+    /**
+     * Estimates the percentage of work performed by 'filter' in
+     * relation to all of its cousins.  Works by ascending through
+     * stream graph hierarchy.  Whenever a splitjoin is encountered,
+     * the average work of filters on each branch is used to guide the
+     * division of work between children.  Such fractions are
+     * accumulated multiplicatively until reaching the top-level
+     * splitjoin.
+     */
+    private double estimateWorkFraction(SIRFilter filter, HashMap<SIRStream, Double> averageWork) {
+        double fraction = 1.0;
+        SIRContainer parent = filter.getParent();
+        SIRStream child = filter;
+        while (parent != null) {
+            if (parent instanceof SIRSplitJoin) {
+                // work done by other streams
+                double otherWork = 0.0;
+                // work done by stream containing <filter>
+                double myWork = 0.0;
+                for (int i=0; i<parent.size(); i++) {
+                    double work = averageWork.get(parent.get(i));
+                    if (parent.get(i)==child) {
+                        myWork = work;
+                    } else {
+                        otherWork += work;
+                    }
+                }
+                // accumulate the fraction of work that we do as part of this splitjoin
+                fraction *= myWork / (myWork + otherWork);
+            }
+            child = parent;
+            parent = parent.getParent();
+        }
+        return fraction;
+    }
     
     public void duplicateFilters(SIRStream str, int reps) {
         
@@ -155,9 +196,9 @@ public class DuplicateBottleneck {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
-        HashMap<SIRContainer, Integer> containerWork = 
-            new HashMap<SIRContainer, Integer>(); 
-        findContainerWork(str, work, containerWork);
+        HashMap<SIRStream, Double> averageWork = 
+            new HashMap<SIRStream, Double>(); 
+        findAverageWork(str, work, averageWork);
         int tiles = SpaceTimeBackend.getRawChip().getTotalTiles();
         
         for (int i = workList.size() - 1; i >= 0; i--) {
@@ -170,35 +211,20 @@ public class DuplicateBottleneck {
             int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
                  (filter.getPushInt() + filter.getPopInt());
             int filterWork = work.getWork(filter);
-            if (filterWork / commRate <= 10) 
+            if (filterWork / commRate <= 10) {
                 continue;
-            if (filter.getParent() instanceof SIRPipeline)
-                filterWork = containerWork.get(filter.getParent());
+            }
           
             int cousins = getNumCousins(filter); 
             if (cousins == 1) {
                 StatelessDuplicate.doit(filter, tiles);
             }
             else {
-                //find top most splitjoin
-                SIRContainer parent = filter.getParent();
-                SIRSplitJoin topMostSJ = null;
-                while (parent != null) {
-                    if (parent instanceof SIRSplitJoin) 
-                        topMostSJ = (SIRSplitJoin)parent;
-                    parent = parent.getParent();
-                }
-                //total work of cousins
-                int totalCousinWork = containerWork.get(topMostSJ);
-                
-                int workPerCousin = totalCousinWork / cousins;
-                
-                System.out.println("Cousins of " + filter + ": " + cousins);
-               
+                // esimate work fraction of this filter vs. cousins
+                double workFraction = estimateWorkFraction(filter, averageWork);
+                System.out.println("Filter " + filter + " has " + cousins + " cousins and does " + workFraction + " of the work.");
                 if (cousins < tiles) {
-                    int reps =  
-                        (int)Math.ceil((((double)tiles) / ((double)cousins)) * 
-                                (((double)filterWork) / ((double)workPerCousin)));
+                    int reps = (int)Math.ceil(workFraction * ((double)tiles));
                     reps = Math.min(tiles - cousins + 1, reps);
                    
                     System.out.println("Calling dup with: " + reps);
@@ -388,43 +414,53 @@ public class DuplicateBottleneck {
         }
     }
     
-    
-    private int findContainerWork(SIRStream str, WorkEstimate work, 
-            HashMap<SIRContainer, Integer> containerWork) {
-        if (str instanceof SIRFeedbackLoop) {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
-            int sum = findContainerWork(fl.getBody(), work, containerWork)
-                    + findContainerWork(fl.getLoop(), work, containerWork);
-            containerWork.put(fl, sum);
-            return sum;
-        }
-        if (str instanceof SIRPipeline) {
-            SIRPipeline pl = (SIRPipeline) str;
-            Iterator iter = pl.getChildren().iterator();
-            int sum = 0;
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                sum += findContainerWork(child, work, containerWork);
-            }
-            containerWork.put(pl, sum);
-            return sum;
-        }
-        if (str instanceof SIRSplitJoin) {
-            SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
-            int sum = 0;
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                sum += findContainerWork(child, work, containerWork);
-            }
-            containerWork.put(sj, sum);
-            return sum;
-        }
+    /**
+     * Mutates 'averageWork' into a mapping from filters to the
+     * average amount of work for all filters deeply nested within
+     * 'str'.
+     */
+    private void findAverageWork(SIRStream str, WorkEstimate work, 
+            HashMap<SIRStream, Double> averageWork) {
+        // the total amount of fissable work per container
+        HashMap<SIRStream, Integer> sum = new HashMap<SIRStream, Integer>();
+        // the number of fissable filters per container
+        HashMap<SIRStream, Integer> count = new HashMap<SIRStream, Integer>();
+
+        findWork(str, work, count, sum, averageWork);
+    }
+
+    /**
+     * Counts the number of filters in each container and stores
+     * result in 'count'.  Also accumulates 'sum' of work in
+     * containers, as well as 'average' of work across all filters in
+     * container.
+     */
+    private void findWork(SIRStream str, WorkEstimate work, 
+                          HashMap<SIRStream, Integer> count,
+                          HashMap<SIRStream, Integer> sum,
+                          HashMap<SIRStream, Double> average) {
         if (str instanceof SIRFilter) {
-            SIRFilter filter = (SIRFilter)str; 
-            return work.getWork(filter);
+            SIRFilter filter = (SIRFilter)str;
+            count.put(filter, 1);
+            sum.put(filter, work.getWork(filter));
+            average.put(filter, (double)work.getWork(filter));
+        } else {
+            SIRContainer cont = (SIRContainer)str;
+            int mysum = 0;
+            int mycount = 0;
+            // visit children to accumulate sum, count
+            for (int i=0; i<cont.size(); i++) {
+                SIRStream child = (SIRStream) cont.get(i);
+                findWork(child, work, count, sum, average);
+                mysum += sum.get(child);
+                mycount += count.get(child);
+            }
+            // calculate average
+            double myaverage= ((double)mysum) / ((double)mycount);
+            // store results
+            sum.put(cont, mysum);
+            count.put(cont, mycount);
+            average.put(cont, myaverage);
         }
-        assert false;
-        return 0;
-    } 
+    }
 }

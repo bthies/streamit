@@ -1,0 +1,19 @@
+<benchmark>
+  <name>sar</name>
+  <desc>form SAR image</desc>
+  <description>
+Modified companion code to Mehrdad Soumekh's text book "Synthetic Aperture
+Radar Signal Processing with Matlab Algorithms", Wiley, New York, NY, 1999.
+
+This function digitally reconstructs the SAR image using spatial frequency
+interpolation (see noted text, Section 4.5).
+  </description>
+  <implementations>
+    <impl lang="C" dir="c">
+    </impl>
+    <impl lang="StreamIt" dir="streamit" iters="1">
+      <file class="source">SAR.str genRawSAR.str FFT.str Statics.str Utils.str</file>
+      <file class="output">../output/image</file>
+    </impl>
+  </implementations>
+</benchmark>

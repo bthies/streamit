@@ -314,26 +314,26 @@ fn NG_update() {
     }
     
     if (gSSNumber == gTotalSS) {
-      fprintf(outputFile, "tiles ; tiles assigned ; filters ; slices ; cycles/output ; Work Cycles ; Total Cycles ; mflops ; OC BufSize Bytes\n");
-      printf("tiles ; tiles assigned ; filters ; slices ; cycles/output ; Work Cycles ; Total Cycles ; mflops ; OC BufSize Bytes\n");
+      fprintf(outputFile, "tiles ; tiles assigned ; filters ; slices ; cycles; outputs ; Work Cycles ; Total Cycles ; mflops ; OC BufSize Bytes\n");
+      printf("tiles ; tiles assigned ; filters ; slices ; cycles; outputs ; Work Cycles ; Total Cycles ; mflops ; OC BufSize Bytes\n");
 
-      fprintf(outputFile,"%d;%d;%d;%d;%d;%d;%d;%d;%d\n", 
+      fprintf(outputFile,"%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n", 
 	      gStreamItTiles, 
 	      gMappedTiles,
 	      gNumFilters,
 	      gNumSlices,
-	      gTotalDif / gTotalOutputs, 
+	      gTotalDif,  gTotalOutputs, 
 	      gWorkCountTotal, 
 	      gStreamItTiles * gTotalDif, 
 	      (gMHz*gFpuCountTotal)/gTotalDif,
 	      gOffChipBufferSizeBytes);
       
-      printf("%d;%d;%d;%d;%d;%d;%d;%d;d\n", 
+      printf("%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n", 
 	     gStreamItTiles, 
 	     gMappedTiles,
 	     gNumFilters,
 	     gNumSlices, 
-	     gTotalDif / gTotalOutputs, 
+	     gTotalDif, gTotalOutputs, 
 	     gWorkCountTotal, 
 	     gStreamItTiles * gTotalDif, 
 	     (gMHz*gFpuCountTotal)/gTotalDif,

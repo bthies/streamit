@@ -310,4 +310,55 @@ public class ScheduleModel {
             }
         }
     }
+    /**
+    * The placement cost (energy) of the configuration.
+    * 
+    * @param debug Might want to do some debugging...
+    * @return placement cost
+    */
+   public void createModelNoSWPipe() {
+       int tileCosts[] = new int[rawChip.getTotalTiles()];
+       
+       Iterator<Trace> traces = scheduleOrder.iterator();
+       //HashMap<FilterTraceNode, Double> endTime = new HashMap<FilterTraceNode, Double>();
+       while (traces.hasNext()) {
+           Trace trace = traces.next();
+           RawTile tile = layout.getTile(trace.getHead().getNextFilter());
+           int traceWork = spaceTime.partitioner.getTraceBNWork(trace); 
+           int myStart = 0;
+           //now find the start time
+           
+           //find the max end times of all the traces that this trace depends on
+           int maxDepStartTime = 0;
+           InputTraceNode input = trace.getHead();
+           Iterator<Edge> inEdges = input.getSourceSet().iterator();
+           while (inEdges.hasNext()) {
+               Edge edge = inEdges.next();
+               if (spaceTime.partitioner.isIO(edge.getSrc().getParent()))
+                   continue;
+               FilterTraceNode upStream = edge.getSrc().getPrevFilter();
+               
+               RawTile upTile = layout.getTile(upStream);
+               assert endTime.containsKey(upStream);
+               if (endTime.get(upStream).doubleValue() > maxDepStartTime)
+                   maxDepStartTime = endTime.get(upStream);
+           }
+           
+           myStart = (int)Math.max(maxDepStartTime, tileCosts[tile.getTileNumber()]);
+           
+           //add the start time to the trace work (one filter)!
+           tileCosts[tile.getTileNumber()] = myStart + traceWork;
+           endTime.put(trace.getHead().getNextFilter(), tileCosts[tile.getTileNumber()]);
+           startTime.put(trace.getHead().getNextFilter(), myStart);
+       }
+       
+       bottleNeckCost = -1;
+       for (int i = 0; i < tileCosts.length; i++) {
+           System.out.println("tile " + i + " = " + tileCosts[i]);
+           if (tileCosts[i] > bottleNeckCost) {
+               bottleNeckCost = tileCosts[i];
+               bottleNeckTile = i;
+           }
+       }
+    }
 }

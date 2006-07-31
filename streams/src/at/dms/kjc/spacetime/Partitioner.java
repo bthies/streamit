@@ -70,7 +70,8 @@ public abstract class Partitioner {
         this.exeCounts = exeCounts;
         this.lfa = lfa;
         this.work = work;
-        topTraces = new Trace[topFilters.length];
+        if (topFilters != null)
+            topTraces = new Trace[topFilters.length];
         traceBNWork = new HashMap<Trace, Integer>();
         steadyMult = KjcOptions.steadymult;
         filterStartupCost = new HashMap<FilterTraceNode, Integer>();

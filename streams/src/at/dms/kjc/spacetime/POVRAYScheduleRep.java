@@ -6,6 +6,8 @@ package at.dms.kjc.spacetime;
 import java.io.*;
 import java.util.*;
 
+import at.dms.kjc.KjcOptions;
+
 /**
  * This class will create a 3D representation of the Space-Time 
  * schedule to be rendered by the POVRAY rendering program installed
@@ -45,7 +47,10 @@ public class POVRAYScheduleRep {
         scheduleModel = new ScheduleModel(spaceTime, layout, 
                 spaceTime.getScheduleList());
         //create the model
-        scheduleModel.createModel();
+        if (KjcOptions.noswpipe)
+            scheduleModel.createModelNoSWPipe();
+        else 
+            scheduleModel.createModel();
         
         try {
             fw = new FileWriter(file);
@@ -82,6 +87,7 @@ public class POVRAYScheduleRep {
      * calculate the scaling factor.
      */
     private void calculateHeightScale() {
+        System.out.println(MAX_HEIGHT  + " / " + (double)scheduleModel.getBottleNeckCost());
         heightScale = MAX_HEIGHT / (double)scheduleModel.getBottleNeckCost();
     }
     

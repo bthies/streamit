@@ -224,8 +224,10 @@ public class MultiLevelSplitsJoins {
             node.getSources()[i].setDest(node);
         }
         
+        
         SIRFilter identity = new SIRIdentity(type);
         RenameAll.renameAllFilters(identity);
+        //System.out.println("Creating " + identity + " for joining.");
         
         //create the identity filter node...
         FilterTraceNode filter = 
@@ -263,15 +265,20 @@ public class MultiLevelSplitsJoins {
             
             //the downstream filter
             FilterContent next = downEdge.getDest().getNextFilter().getFilter();
+            //System.out.println(next + " receives " + next.getSteadyMult() * next.getPopInt());
+            
             //set the steady items based on the number of items the down stream 
             //filter receives
             int steadyItems = 
                 (int) (((double)(next.getSteadyMult() * next.getPopInt())) * 
                        downEdge.getDest().ratio(downEdge));
                     
+            //System.out.println("Setting steady items " + steadyItems + " " + 
+            //        traces[i].getHead().getNextFilter().getFilter());
             traces[i].getHead().getNextFilter().getFilter().setSteadyMult(steadyItems);
             
             int initItems = 0;
+            int steadyItemsOther = 0;
             //set the init items baed on the number each of the upstream 
             //filters push on to each incoming edge
             InputTraceNode input = traces[i].getHead();
@@ -280,6 +287,8 @@ public class MultiLevelSplitsJoins {
                FilterContent prev = upEdge.getSrc().getPrevFilter().getFilter();
                initItems += (int)(upEdge.getSrc().ratio(upEdge) * 
                        ((double)prev.initItemsPushed()));
+               steadyItemsOther += (int)(upEdge.getSrc().ratio(upEdge) * 
+                       ((double)(prev.getPushInt() * prev.getSteadyMult())));
             }
             traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
             
@@ -448,12 +457,15 @@ public class MultiLevelSplitsJoins {
      * @param traces The new traces.
      */
     private void setMultiplicitiesSplit(Trace[] traces) {
+        
         for (int i = 0; i < traces.length; i++) {
             Edge edge = traces[i].getHead().getSingleEdge();
      
             //the last filter of the prev (original) trace 
             FilterContent prev = 
                edge.getSrc().getPrevFilter().getFilter();
+            //System.out.println("Source Total Items Steady: " + 
+            //        prev.getSteadyMult() * prev.getPushInt() + " " + prev);
             
             //calculate the number of items the original trace sends to this
             //trace in the init stage
@@ -462,8 +474,11 @@ public class MultiLevelSplitsJoins {
             traces[i].getHead().getNextFilter().getFilter().setInitMult(initItems);
             
             //calc the number of steady items
-            int steadyItems = (int) ((prev.getSteadyMult() * prev.getPushInt()) * ((double) edge.getSrc()
-                        .getWeight(edge) / edge.getSrc().totalWeights()));
+            int steadyItems = (int) ((((double)prev.getSteadyMult()) * ((double)prev.getPushInt())) * 
+                    (((double) edge.getSrc().getWeight(edge)) / ((double)edge.getSrc().totalWeights())));
+            
+            //System.out.println("Setting Steady Items: " + steadyItems + " " + 
+            //        traces[i].getHead().getNextFilter().getFilter());
             traces[i].getHead().getNextFilter().getFilter().setSteadyMult(steadyItems);
         }
         
@@ -501,7 +516,7 @@ public class MultiLevelSplitsJoins {
         SIRFilter identity = new SIRIdentity(type);
         RenameAll.renameAllFilters(identity);
         //System.out.println(identity + " has " + weights.size());
-
+        //System.out.println("Creating " + identity + " for splitting.");
         
         FilterTraceNode filter = 
             new FilterTraceNode(new FilterContent(identity));

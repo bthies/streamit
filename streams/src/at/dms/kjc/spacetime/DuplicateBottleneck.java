@@ -124,6 +124,7 @@ public class DuplicateBottleneck {
         return cousins;
     }
     
+    
     public void duplicateFilters(SIRStream str, int reps) {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -138,35 +139,78 @@ public class DuplicateBottleneck {
                 (filter.getPushInt() + filter.getPopInt());
             if (filterWork / commRate > 10) {
                 StatelessDuplicate.doit(filter, reps);
+                System.out.println("Dup  " + filter + " comp/comm is " + (filterWork / commRate));
+            }
+            else {
+                System.out.println("Don't dup  " + filter + " comp/comm is " + (filterWork / commRate));
             }
         }
     }
     
-  public void smarterDuplicate(SIRStream str) {
+    /**
+     * Use the cousins 
+     * @param str
+     */
+    public void smarterDuplicate(SIRStream str) {
         
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         WorkList workList = work.getSortedFilterWork();
+        HashMap<SIRContainer, Integer> containerWork = 
+            new HashMap<SIRContainer, Integer>(); 
+        findContainerWork(str, work, containerWork);
+        int tiles = SpaceTimeBackend.getRawChip().getTotalTiles();
         
         for (int i = workList.size() - 1; i >= 0; i--) {
             SIRFilter filter = workList.getFilter(i);
-            if (!StatelessDuplicate.isFissable(filter))
+            System.out.println(filter + " work " + work.getWork(filter));
+            if (!StatelessDuplicate.isFissable(filter)) {
+                System.out.println("  not fissible");
                 continue;
-            int filterWork = work.getWork(filter);
+            }
             int commRate = ((int[])work.getExecutionCounts().get(filter))[0] * 
-                (filter.getPushInt() + filter.getPopInt());
-            if (filterWork / commRate > 10) {
-                int cousins = getNumCousins(filter); 
-                System.out.println("Cousins of " + filter + ": " + cousins);
-                if (cousins < 16) {
-                    StatelessDuplicate.doit(filter, (int)Math.ceil(16.0 / ((double)cousins)));
-                }
+                 (filter.getPushInt() + filter.getPopInt());
+            int filterWork = work.getWork(filter);
+            if (filterWork / commRate <= 10) 
+                continue;
+            if (filter.getParent() instanceof SIRPipeline)
+                filterWork = containerWork.get(filter.getParent());
+          
+            int cousins = getNumCousins(filter); 
+            if (cousins == 1) {
+                StatelessDuplicate.doit(filter, tiles);
             }
             else {
-                break;
+                //find top most splitjoin
+                SIRContainer parent = filter.getParent();
+                SIRSplitJoin topMostSJ = null;
+                while (parent != null) {
+                    if (parent instanceof SIRSplitJoin) 
+                        topMostSJ = (SIRSplitJoin)parent;
+                    parent = parent.getParent();
+                }
+                //total work of cousins
+                int totalCousinWork = containerWork.get(topMostSJ);
+                
+                int workPerCousin = totalCousinWork / cousins;
+                
+                System.out.println("Cousins of " + filter + ": " + cousins);
+               
+                if (cousins < tiles) {
+                    int reps =  
+                        (int)Math.ceil((((double)tiles) / ((double)cousins)) * 
+                                (((double)filterWork) / ((double)workPerCousin)));
+                    reps = Math.min(tiles - cousins + 1, reps);
+                   
+                    System.out.println("Calling dup with: " + reps);
+                    if (reps > 1)
+                        StatelessDuplicate.doit(filter, reps);
+                }
             }
         }
-        
-        
+    }
+    
+    private int nextPow2(int x) {
+        return (int)Math.pow(2, Math.ceil(Math.log(10) / Math.log(2)));
     }
     
     public void percentStateless(SIRStream str) {
@@ -342,5 +386,45 @@ public class DuplicateBottleneck {
             sortedFilters.add(i, filter);
             sortedWorkEsts.add(i, workEst);
         }
+    }
+    
+    
+    private int findContainerWork(SIRStream str, WorkEstimate work, 
+            HashMap<SIRContainer, Integer> containerWork) {
+        if (str instanceof SIRFeedbackLoop) {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
+            int sum = findContainerWork(fl.getBody(), work, containerWork)
+                    + findContainerWork(fl.getLoop(), work, containerWork);
+            containerWork.put(fl, sum);
+            return sum;
+        }
+        if (str instanceof SIRPipeline) {
+            SIRPipeline pl = (SIRPipeline) str;
+            Iterator iter = pl.getChildren().iterator();
+            int sum = 0;
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                sum += findContainerWork(child, work, containerWork);
+            }
+            containerWork.put(pl, sum);
+            return sum;
+        }
+        if (str instanceof SIRSplitJoin) {
+            SIRSplitJoin sj = (SIRSplitJoin) str;
+            Iterator iter = sj.getParallelStreams().iterator();
+            int sum = 0;
+            while (iter.hasNext()) {
+                SIRStream child = (SIRStream) iter.next();
+                sum += findContainerWork(child, work, containerWork);
+            }
+            containerWork.put(sj, sum);
+            return sum;
+        }
+        if (str instanceof SIRFilter) {
+            SIRFilter filter = (SIRFilter)str; 
+            return work.getWork(filter);
+        }
+        assert false;
+        return 0;
     } 
 }

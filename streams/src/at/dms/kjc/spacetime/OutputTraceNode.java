@@ -80,6 +80,10 @@ public class OutputTraceNode extends TraceNode {
         dests = EMPTY_DESTS;
     }
 
+    public void setWeights(int[] newW) {
+        this.weights = newW;
+    }
+    
     /**
      * Set the weights and dests of this input trace node to 
      * weights and dests.

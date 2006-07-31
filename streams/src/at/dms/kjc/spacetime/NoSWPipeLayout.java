@@ -75,6 +75,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         while (traces.hasNext()) {
             
           Trace trace = traces.next();
+          //System.out.println(trace.getHead().getNextFilter());
           //if (spaceTime.partitioner.isIO(trace))
           //    continue;
           assert trace.getFilterNodes().length == 1 : "NoSWPipeLayout only works for Time! "  + 
@@ -108,7 +109,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
             //now find the start time
             
             //find the max end times of all the traces that this trace depends on
-            double maxDepStartTime = -1;
+            double maxDepStartTime = 0;
             InputTraceNode input = trace.getHead();
             Iterator<Edge> inEdges = input.getSourceSet().iterator();
             while (inEdges.hasNext()) {
@@ -164,7 +165,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         
     public void run() { 
         //initialPlacement();
-        simAnnealAssign(3, 50);
+        simAnnealAssign(1, 2000);
         new BufferDRAMAssignment().run(spaceTime, this);
     }
 }

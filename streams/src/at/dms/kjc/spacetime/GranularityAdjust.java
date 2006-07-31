@@ -18,6 +18,7 @@ public class GranularityAdjust {
     public static SIRStream doit(SIRStream str, RawChip chip) {
         assert KjcOptions.partition_greedier;
         SIRStream oldStr;
+        //WorkEstimate.UNROLL_FOR_WORK_EST = true;
         //get the first work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //bin pack the shits
@@ -53,6 +54,7 @@ public class GranularityAdjust {
         str = oldStr;
         StreamItDot.printGraph(str, "str.dot");
         //KjcOptions.partition_greedier = false;
+        //WorkEstimate.UNROLL_FOR_WORK_EST = false;
         return str;
     }
 }

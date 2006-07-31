@@ -98,6 +98,10 @@ public class SpaceTimeBackend {
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         
+        //fuse entire str to one filter if possible
+        if (KjcOptions.fusion)
+            str = FuseAll.fuse(str);
+        
         StreamlinedDuplicate duplicate = null;
         /*
         if (!KjcOptions.noswpipe) {
@@ -107,6 +111,9 @@ public class SpaceTimeBackend {
         if (KjcOptions.dup > 1) {
             DuplicateBottleneck dup = new DuplicateBottleneck();
             dup.percentStateless(str);
+            str = FusePipelines.fusePipelinesOfStatelessStreams(str);
+            dup.smarterDuplicate(str);
+            /*
             if (KjcOptions.noswpipe) {
                 //str = FuseStatelessPipelines.doit(str);
                 //str = FuseAll.fuse(str);
@@ -117,13 +124,15 @@ public class SpaceTimeBackend {
             else {
                 duplicate = new StreamlinedDuplicate();
                 duplicate.doit(str, rawChip);
-            }
+            }*/
         }
-        
-        //StreamItDot.printGraph(str, "before-fusepipe.dot");
-        if (KjcOptions.noswpipe) {
+       
+        if (KjcOptions.noswpipe)
             str = FusePipelines.fusePipelinesOfFilters(str);
-        }
+        
+        Lifter.liftAggressiveSync(str);
+
+        //StreamItDot.printGraph(str, "before-fusepipe.dot");
         
         //StreamItDot.printGraph(str, "after-fusepipe.dot");
         if (KjcOptions.partition_greedier) {
@@ -137,8 +146,10 @@ public class SpaceTimeBackend {
         KjcOptions.partition_dp = false;
         */
         
-        Lifter.liftAggressiveSync(str);
-
+       
+     
+        
+        
         if (KjcOptions.fission > 1) {
             str = Flattener.doLinearAnalysis(str);
             str = Flattener.doStateSpaceAnalysis(str);
@@ -255,12 +266,14 @@ public class SpaceTimeBackend {
         //Util.printExecutionCount(executionCounts[1]);
         
         // flatten the graph by running (super?) synch removal
-        FlattenGraph.flattenGraph(str, lfa, executionCounts);
-        UnflatFilter[] topNodes = FlattenGraph.getTopLevelNodes();
-        println("Top Nodes:");
-        for (int i = 0; i < topNodes.length; i++)
-            println(topNodes[i].toString());
-
+        UnflatFilter[] topNodes = null;
+        if (!KjcOptions.nopartition) {
+            FlattenGraph.flattenGraph(str, lfa, executionCounts);
+            topNodes = FlattenGraph.getTopLevelNodes();
+            println("Top Nodes:");
+            for (int i = 0; i < topNodes.length; i++)
+                println(topNodes[i].toString());
+        }    
         Trace[] traces = null;
         Trace[] traceGraph = null; 
         
@@ -269,7 +282,12 @@ public class SpaceTimeBackend {
         if (KjcOptions.autoparams) {
             partitioner = new AdaptivePartitioner(topNodes,
                     executionCounts, lfa, workEstimate, rawChip);
-        } else { 
+        } if (KjcOptions.nopartition) {
+            partitioner = new FlattenAndPartition(topNodes,
+                    executionCounts, lfa, workEstimate, rawChip);
+            ((FlattenAndPartition)partitioner).flatten(str, executionCounts);
+        }
+        else { 
             partitioner = new SimplePartitioner(topNodes,
                     executionCounts, lfa, workEstimate, rawChip);
         }

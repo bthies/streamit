@@ -36,7 +36,10 @@ public class Edge {
         if (type != null)
             return type;
         assert src.getPrevFilter().getFilter().getOutputType() == dest
-            .getNextFilter().getFilter().getInputType() : "Error calculating type";
+        .getNextFilter().getFilter().getInputType() : "Error calculating type: " + 
+        src.getPrevFilter().getFilter() + " -> " + 
+        dest.getNextFilter().getFilter();
+        
         type = src.getPrevFilter().getFilter().getOutputType();
         return type;
     }

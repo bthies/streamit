@@ -174,7 +174,7 @@ public class UnflatFilter {
      * connections.
      * @param filter The SIRStream used to construct this UnflatFilter.
      */
-    UnflatFilter(SIRStream filter) {
+    public UnflatFilter(SIRStream filter) {
         this(filter,null,null,new UnflatEdge[0],new UnflatEdge[0][0]);
     }
 

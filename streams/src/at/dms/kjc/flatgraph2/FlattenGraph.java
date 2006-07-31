@@ -372,7 +372,9 @@ public class FlattenGraph {
         //while(change) {
         //change=false;
         //first=false;
+        
         removeSimple(); //Remove any new simple null filters created
+        
         //}
         //dumpGraph("newmiddle3.dot");
         //coalesce();
@@ -449,7 +451,9 @@ public class FlattenGraph {
      */
     private static void removeSimple() {
         Object[] nulls=simpleNull.keySet().toArray();
+        
         for(int i=0;i<nulls.length;i++) {
+            //System.out.println("Null: " + i);
             UnflatFilter filter=(UnflatFilter)nulls[i];
             int[] inW=filter.inWeights;
             int[] outW=filter.outWeights;
@@ -525,6 +529,7 @@ public class FlattenGraph {
                                 curTimes++;
                                 targetIndex=0;
                             }
+                            //System.out.println(-1);
                             while(curTimes<times&&!mergePts[targetIndex]) {
                                 curWeights.next=new IntList(prevW[targetIndex]);
                                 curWeights=curWeights.next;
@@ -535,6 +540,7 @@ public class FlattenGraph {
                                     targetIndex=0;
                                 }
                             }
+                            //System.out.println(1);
                             targetW=prevW[targetIndex];
                             targetEdge=prevOut[targetIndex];
                         } else if(curW>targetW) {
@@ -557,6 +563,7 @@ public class FlattenGraph {
                                     targetIndex=0;
                                 }
                             }
+                            //System.out.println(2);
                             targetW=prevW[targetIndex];
                             targetEdge=prevOut[targetIndex];
                         } else {
@@ -590,6 +597,7 @@ public class FlattenGraph {
                                 targetIndex=0;
                             }
                         }
+                        //System.out.println(3);
                         targetW=prevW[targetIndex];
                         targetEdge=prevOut[targetIndex];
                     }
@@ -617,6 +625,7 @@ public class FlattenGraph {
                                     targetIndex=0;
                                 }
                             }
+                            //System.out.println(4);
                             targetW=prevW[targetIndex];
                             targetEdge=prevOut[targetIndex];
                         } else if(curW>targetW) {
@@ -639,6 +648,7 @@ public class FlattenGraph {
                                     targetIndex=0;
                                 }
                             }
+                            //System.out.println(5);
                             targetW=prevW[targetIndex];
                             targetEdge=prevOut[targetIndex];
                         } else {
@@ -675,6 +685,7 @@ public class FlattenGraph {
                         curEdges=curEdges.next;
                         curWeights=curWeights.next;
                     }
+                    //System.out.println(6);
                     int[] finalWeights=new int[length];
                     UnflatEdge[][] finalEdges=new UnflatEdge[length][0];
                     int offset=0;
@@ -686,6 +697,7 @@ public class FlattenGraph {
                         tempWeights=tempWeights.next;
                         tempEdges=tempEdges.next;
                     }
+                    //System.out.println(7);
                     prevFilter.outWeights=finalWeights;
                     prevFilter.out=finalEdges;
                     simpleNull.remove(filter);
@@ -784,6 +796,7 @@ public class FlattenGraph {
                             newWeights=newWeights.next;
                             newEdges=newEdges.next;
                         }
+                        //System.out.println(8);
                         formedWeights=formedWeights.next;
                         formedEdges=formedEdges.next;
                         int length=1;
@@ -808,6 +821,7 @@ public class FlattenGraph {
                             formedEdges=formedEdges.next;
                             formedWeights=formedWeights.next;
                         }
+                        //System.out.println(9);
                         int[] finalWeights=new int[length];
                         UnflatEdge[] finalEdges=new UnflatEdge[length];
                         int offset=0;
@@ -818,6 +832,7 @@ public class FlattenGraph {
                             tempWeights=tempWeights.next;
                             tempEdges=tempEdges.next;
                         }
+                        //System.out.println(10);
                         nextFilter.inWeights=finalWeights;
                         nextFilter.in=finalEdges;
                     }

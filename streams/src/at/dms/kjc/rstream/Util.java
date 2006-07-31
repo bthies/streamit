@@ -128,12 +128,6 @@ public class Util extends at.dms.util.Utils {
         return -1;
     }
 
-    /** return the output type of the node, for joiner and splitters
-        this relies on the surrounding filters **/
-    public static CType getOutputType(FlatNode node) 
-    {
-        return at.dms.kjc.common.CommonUtils.getOutputType(node);
-    }
     
     /** convert an IR tree to a string of C code **/
     public static String JPhylumToC(JPhylum top) 

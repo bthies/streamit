@@ -184,48 +184,50 @@ public class CommonUtils {
     }
     /**
      * Get the output type of a joiner in a Flatnode representation.
-     * 
+     * <br/>
      * The type of a joiner is the output type of the first filter found searching
-     * back from the joiner.
+     * back from the joiner.  (Actually a bit more complicated: it searches back in
+     * the flat graph for a non-void input to the joiner, and returns that as the
+     * joiner type.  Only id all inputs to the joiner have output type of void, or 
+     * are null, will getJoinerType return a void type for the joiner.  This complexity
+     * is to deal with split-joins that decimiate the initial portion of the data, in which
+     * case the initial input to the joiner would be void, where some other input would
+     * be non-void.)
      * 
-     * Edge cases: If you pass this method a filter, you will get back the output
-     * type of the filter.  If you pass this a null joiner, you will get back void.
+     * Edge cases: If you pass this a null joiner, you will get back void.
+     * If you pass this method a FlatNode that is not a joiner, the output
+     * and side effects are undefined.
      * 
      * @param joiner a joiner in a FlatNode representation
      * @return a CType
      */
        public static CType getJoinerType(FlatNode joiner) 
        {
-           boolean found;
-           //search backward until we find the first filter
-           while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
-               found = false;
-               for (int i = 0; i < joiner.inputs; i++) {
-                   if (joiner.incoming[i] != null) {
-                       joiner = joiner.incoming[i];
-                       found = true;
+           if (joiner == null) {return CStdType.Void;}
+           for (int i = 0; i < joiner.inputs; i++) {
+               if (joiner.incoming[i] != null) {
+                   CType typ = getOutputType(joiner.incoming[i]);
+                   if (typ != CStdType.Void) {
+                       return typ;
                    }
                }
-               assert found :
-                   "Cannot find any upstream filter from " 
-                   + joiner.contents.getName();
            }
-           if (joiner != null) 
-               return ((SIRFilter)joiner.contents).getOutputType();
-           else 
-               return CStdType.Void;
+           return CStdType.Void;
        }
        
        /**
         * Get the output type of any FlatNode element (filter, splitter, joiner).
         *
         * The output type of a filter is stored in the filter.
+        *
         * The output type of a splitter is the output type of its incoming edge:
-        * fix or do not use this method fot null splitters!
+        * If the splitter has 0 total outgoing weight then its incoming edge,
+        * if any, should be null, so return the Void type.
+        * 
         * The output type of a joiner is that of the first filter found above the
         * joiner.
         *
-        * @param node a FlatNode
+        * @param node a FlatNode (and not null)
         * @return a CType
         */
        public static CType getOutputType(FlatNode node) {
@@ -233,9 +235,12 @@ public class CommonUtils {
                return ((SIRFilter)node.contents).getOutputType();
            else if (node.contents instanceof SIRJoiner)
                return getJoinerType(node);
-           else if (node.contents instanceof SIRSplitter)
+           else if (node.contents instanceof SIRSplitter) {
+               if (node.getTotalOutgoingWeights() == 0) {
+                   return CStdType.Void;
+               }
                return getOutputType(node.incoming[0]);
-           else {
+           } else {
                assert false: "Cannot get output type for this node";
                return null;
            }

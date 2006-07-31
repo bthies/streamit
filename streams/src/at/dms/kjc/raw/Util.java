@@ -119,20 +119,6 @@ public class Util extends at.dms.util.Utils {
         return 0;
     }
 
-    public static CType getJoinerType(FlatNode joiner) 
-    {
-        return CommonUtils.getJoinerType(joiner);
-    }
-    
-    public static CType getOutputType(FlatNode node) {
-        return CommonUtils.getOutputType(node);
-    }
-
-    public static CType getBaseType (CType type) 
-    {
-        return CommonUtils. getBaseType(type);
-    }
-
 //    public static String[] makeString(JExpression[] dims) {
 //        String[] ret = new String[dims.length];
 //    

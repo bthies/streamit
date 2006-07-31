@@ -5,6 +5,7 @@ import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.common.CommonConstants;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.util.Utils;
 import java.util.List;
 import java.util.ListIterator;
@@ -923,7 +924,7 @@ public class RawExecutionCode extends at.dms.util.Utils
                   (null,
                    localVariables.exeIndex)));
         
-            pushExp.setTapeType(Util.getBaseType(filter.getOutputType()));
+            pushExp.setTapeType(CommonUtils.getBaseType(filter.getOutputType()));
         
             JExpressionStatement send = new JExpressionStatement(null, pushExp, null);
         

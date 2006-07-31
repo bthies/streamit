@@ -1,10 +1,9 @@
 package at.dms.kjc.rstream;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import java.util.HashMap;
 import java.util.Vector;
 import at.dms.kjc.*;
-import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 
@@ -420,7 +419,7 @@ public class SplitterFusionState extends FusionState
             return null;
     
         return makeBuffer(itemsAccessed,
-                          Util.getOutputType(node),
+                          CommonUtils.getOutputType(node),
                           BUFFERNAME + myUniqueID);
     }
     /** return the items remaining on the incoming buffer after the init stage **/

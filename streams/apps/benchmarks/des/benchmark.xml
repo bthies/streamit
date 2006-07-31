@@ -7,7 +7,8 @@
   <implementations>
     <impl lang="StreamIt" dir="streamit" iters="1">
       <desc>StreamIt benchmark as described above.</desc>
-      <file class="source">DES.str Sboxes.str Source.str Keys.str Utils.str</file>
+      <file class="source">DES.str Sboxes.str Utils.str Keys.str Source.str Statics.str</file>
+      <file class="output">../output/output.txt</file>
     </impl>
   </implementations>
 </benchmark>

@@ -111,8 +111,8 @@ class DiscoverSchedule
         for (SIROperator oper : current_ops) {
 
             List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
-
-            // case: splitjoin splitter, make sure to schedule nodes at end of 0-weight edges, 
+            
+           // case: splitjoin splitter, make sure to schedule nodes at end of 0-weight edges, 
             // which will not be found by RegisterStreams.getNodeOutStreams.  Also record the 
             // number of incoming edges to the associated joiner so that the joiner's continuation
             // will not be processed until all of the joiner's predecessors have been processed.
@@ -123,18 +123,22 @@ class DiscoverSchedule
                 assert (! splitjoinJoiners.containsKey(joiner));
                 int join_ways = 0;
                 for (NetStream in : RegisterStreams.getNodeInStreams(joiner)) {
-                    if (in != null) {join_ways++;}
+                    if (in != null) {
+                        join_ways++;
+                    }
                 }
                 if (join_ways > 0) {
                     splitjoinJoiners.put(joiner, join_ways);
-                }                       
+                }   
                 
                 FlatNode splitterNode = NodeEnumerator.getFlatNode(NodeEnumerator.getSIROperatorId(oper));
                 FlatNode[] children = splitterNode.edges;
                 int [] weights = splitterNode.weights;
                 for (int i = 0; i < children.length; i++) {
                     if (weights[i] == 0) {
+                        SIROperator next = children[i].contents;
                         next_ops.add(children[i].contents);
+                        phases.put(next, number_of_phases + 1);
                     }
                 }
                 
@@ -149,6 +153,7 @@ class DiscoverSchedule
 //                    }
 //                }
             }
+
 
             // check all nodes that are downstream from nodes in current phase
             for (int a = 0; a < out.size(); a++) {

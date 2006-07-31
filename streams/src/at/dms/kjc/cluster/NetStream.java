@@ -3,7 +3,7 @@ package at.dms.kjc.cluster;
 
 //import java.lang.*;
 import at.dms.kjc.CType;
-import java.util.HashSet;
+//import java.util.HashSet;
 
 /**
  * A class that represents a tape with input and output operators and object type.

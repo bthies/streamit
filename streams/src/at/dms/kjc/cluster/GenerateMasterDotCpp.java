@@ -13,6 +13,20 @@ import at.dms.kjc.flatgraph.FlatNode;
  * @author Janis
  */
 public class GenerateMasterDotCpp {
+
+    /**
+     * is code (threadNNN.cpp) generated for this NNN?
+     * <br/> assumes input is in range of generated numbers from {@link NodeEnumerator} 
+     * @param i : a node (thread) number
+     * @return true if code was not generated for the thread, false otherwise.
+     */
+    public static boolean isEliminated(int i) {
+        FlatNode f = NodeEnumerator.getFlatNode(i);
+        return ClusterFusion.isEliminated(f)
+            || (f.isJoiner() && f.getTotalIncomingWeights() == 0)
+            || (f.isSplitter() && f.getTotalOutgoingWeights() == 0);
+    }
+    
     /**
      * Generate "master.cpp"
      * 
@@ -64,18 +78,15 @@ public class GenerateMasterDotCpp {
         p.newLine();
 
         for (int i = 0; i < threadNumber; i++) {
-
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {     
-                p.print("extern void __declare_sockets_"+i+"();\n");
-                p.print("extern thread_info *__get_thread_info_"+i+"();\n");
-                p.print("extern void run_"+i+"();\n");
-                p.print("pthread_attr_t __pthread_attr_"+i+";\n");
-                p.print("pthread_t __pthread_"+i+";\n");
-                p.print("static void *run_thread_"+i+"(void *param) {\n");
-                p.print("  run_"+i+"();\n");
-                p.print("}\n");
-            }
+            if (isEliminated(i)) {continue;}
+            p.print("extern void __declare_sockets_" + i + "();\n");
+            p.print("extern thread_info *__get_thread_info_" + i + "();\n");
+            p.print("extern void run_" + i + "();\n");
+            p.print("pthread_attr_t __pthread_attr_" + i + ";\n");
+            p.print("pthread_t __pthread_" + i + ";\n");
+            p.print("static void *run_thread_" + i + "(void *param) {\n");
+            p.print("  run_" + i + "();\n");
+            p.print("}\n");
 
         }
 
@@ -84,14 +95,11 @@ public class GenerateMasterDotCpp {
         p.print("static void *run_join(void *param) {\n");
 
         for (int i = 0; i < threadNumber; i++) {
-
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {     
-                p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
-                p.print("    pthread_join(__pthread_"+i+", NULL);\n");
-		p.print("    __get_thread_info_"+i+"()->set_active(false);\n");
-                p.print("  }\n");
-            }
+            if (isEliminated(i)) {continue;}
+            p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
+            p.print("    pthread_join(__pthread_"+i+", NULL);\n");
+            p.print("    __get_thread_info_"+i+"()->set_active(false);\n");
+            p.print("  }\n");
         }
         p.print("  sleep(1);\n");
         p.print("  if (__ccp_ip != 0) for(;;) sleep(1);\n");
@@ -124,12 +132,10 @@ public class GenerateMasterDotCpp {
         p.print("void init() {\n");
     
         for (int i = 0; i < threadNumber; i++) {
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {     
-                p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
-                p.print("    __declare_sockets_"+i+"();\n");
-                p.print("  }\n");
-            }
+            if (isEliminated(i)) {continue;}
+            p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
+            p.print("    __declare_sockets_"+i+"();\n");
+            p.print("  }\n");
         }
 
         p.print("  init_instance::initialize_sockets();\n");
@@ -137,21 +143,21 @@ public class GenerateMasterDotCpp {
         //p.print("  pthread_t id;\n");
 
         for (int i = 0; i < threadNumber; i++) {
-
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {
-                // estimate stack size needed by this thread
-                int stackSize = NodeEnumerator.getStackSize(i);
-                p.print("  if (myip == init_instance::get_thread_ip("+i+")) {\n");
-                p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
-                p.print("    int *state = info->get_state_flag();\n");
-                p.print("    *state = RUN_STATE;\n");
-                p.print("    pthread_attr_setstacksize(&__pthread_attr_"+i+", PTHREAD_STACK_MIN+"+stackSize+");\n");
-                p.print("    pthread_create(&__pthread_"+i+", &__pthread_attr_"+i+", run_thread_"+i+", (void*)\"thread"+i+"\");\n");
-                p.print("    info->set_pthread(__pthread_"+i+");\n");
-                p.print("    info->set_active(true);\n");
-                p.print("  }\n");
-            }
+            if (isEliminated(i)) {continue;}
+            // estimate stack size needed by this thread
+            int stackSize = NodeEnumerator.getStackSize(i);
+            p.print("  if (myip == init_instance::get_thread_ip(" + i + ")) {\n");
+            p.print("    thread_info *info = __get_thread_info_" + i + "();\n");
+            p.print("    int *state = info->get_state_flag();\n");
+            p.print("    *state = RUN_STATE;\n");
+            p.print("    pthread_attr_setstacksize(&__pthread_attr_" + i 
+                    + ", PTHREAD_STACK_MIN+" + stackSize + ");\n");
+            p.print("    pthread_create(&__pthread_" + i + ", &__pthread_attr_" 
+                    + i + ", run_thread_" + i + ", (void*)\"thread" + i
+                    + "\");\n");
+            p.print("    info->set_pthread(__pthread_" + i + ");\n");
+            p.print("    info->set_active(true);\n");
+            p.print("  }\n");
         }
 
         p.print("  pthread_t id;\n");
@@ -166,11 +172,9 @@ public class GenerateMasterDotCpp {
         p.print("  thread_info *t_info;\n");
 
         for (int i = 0; i < threadNumber; i++) {
-            FlatNode tmp = NodeEnumerator.getFlatNode(i);
-            if (!ClusterFusion.isEliminated(tmp)) {     
-                p.print("  t_info = __get_thread_info_"+i+"();\n"); 
-                p.print("  thread_list.push_back(t_info);\n");  
-            }    
+            if (isEliminated(i)) {continue;}
+            p.print("  t_info = __get_thread_info_"+i+"();\n"); 
+            p.print("  thread_list.push_back(t_info);\n");  
         }
 
         p.print("\n  myip = get_myip();\n");

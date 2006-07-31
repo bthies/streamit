@@ -650,7 +650,7 @@ public class FlatNode {
         assert isFilter();
         return (SIRFilter) contents;
     }
-
+    
     /**
      * Return the number of items pushed from *from* to *to*
      * on each iteration of *from*.

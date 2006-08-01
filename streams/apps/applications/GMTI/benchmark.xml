@@ -13,7 +13,7 @@ parameter sizes have been cut down from the original.
 For more inforation see readme.txt.
   </description>
   <implementations>
-    <impl lang="StreamIt" id="gmti" iters="1">
+    <impl lang="StreamIt" id="gmti" iters="1" compile_time="4800">
     <file class="source">Tester.str DataStruct.str lqHouse.str WienerHopfSolution.str qr.str matlabFunctions.str AdaptiveBeamform.str ABsteeringMatrix.str Stap.str DopplerFilter.str Cfar.str Detection.str Pulse.str DFT.str</file>
       <file class="data">data.bin</file>
     </impl>

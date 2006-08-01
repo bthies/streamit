@@ -11,7 +11,8 @@
     </impl>
     <impl lang="StreamIt" dir="streamit" iters="1">
       <desc>StreamIt benchmark as described above.</desc>
-      <file class="source">Serpent.str Source.str Keys.str L.str Utils.str</file>
+      <file class="source">Serpent.str Source.str Keys.str L.str Utils.str Statics.str</file>
+      <file class="output">../output/output.txt</file>
     </impl>
   </implementations>
 </benchmark>

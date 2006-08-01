@@ -1,0 +1,14 @@
+<benchmark>
+  <name>802.11a</name>
+  <desc>802.11a wireless lan protocol transmitter</desc>
+  <description>
+  802.11a wireless lan protocol transmitter
+  </description>
+  <implementations>
+    <impl lang="StreamIt" dir="streamit" id="transmit">
+      <desc>StreamIt benchmark as described above.</desc>
+      <make>Makefile</make>
+      <file class="source">transmit.str FFT6.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -51,8 +51,10 @@ complex->void filter output_c() {
 
   work push 0 pop 1 {
     complex c = pop();
-    println(c.real);
-    println(c.imag);
+    float r = c.real;		// 8/1/06: simpleC could not println(c.real)
+    float i = c.imag;
+    println(r);
+    println(i);
   }
 }
 

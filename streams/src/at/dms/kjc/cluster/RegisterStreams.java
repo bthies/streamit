@@ -83,10 +83,10 @@ public class RegisterStreams {
                         if (node.incoming[i] == null
                                 || node.incomingWeights[i] == 0
                                 || input_t == CStdType.Void) {
-                            System.err.print(node.contents.toString() +  " given null edge [" + i + "] because ");
-                            if (node.incoming[i] == null) System.err.println("incoming == null");
-                            else if (node.incomingWeights[i] == 0) System.err.println("weight == 0");
-                            else if (input_t == CStdType.Void) System.err.println("void");
+                            //System.err.print(node.contents.toString() +  " given null edge [" + i + "] because ");
+                            //if (node.incoming[i] == null) System.err.println("incoming == null");
+                            //else if (node.incomingWeights[i] == 0) System.err.println("weight == 0");
+                            //else if (input_t == CStdType.Void) System.err.println("void");
                             incomings[i] = null;
                         } else {
                             int source = NodeEnumerator

@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.26 2006-05-26 21:41:31 dimock Exp $
+# $Id: streamit.py,v 1.27 2006-08-01 22:11:25 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -332,6 +332,7 @@ class CompareResultsTest(qm.test.test.Test):
 
         #result['CompareResultsTest.outputfilename'] = os.path.join(test_home_dir,self.output)
         # First off, read the expected results file:
+        expected = []
         try:
             f = open(os.path.join(test_home_dir,self.expected), 'r')
             expected = f.readlines()
@@ -341,6 +342,7 @@ class CompareResultsTest(qm.test.test.Test):
                         os.path.join(test_home_dir,self.expected) + '"')
             
         # Next, read the actual results file:
+        actual = []
         try:
             f = open(os.path.join(test_home_dir,self.output), 'r')
             actual = f.readlines()

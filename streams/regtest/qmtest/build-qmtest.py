@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.17 2006-06-15 03:23:14 dimock Exp $
+# $Id: build-qmtest.py,v 1.18 2006-08-01 22:11:25 dimock Exp $
 #
 
 import os
@@ -485,8 +485,8 @@ def GetVerifyDOM(target, fileset, extras):
     argument = doc.createElement('argument')
     extension.appendChild(argument)
     argument.setAttribute('name', 'expected')
-    CreateTextElement(doc, argument, 'text', fileset['output'][0])
-    
+    CreateTextElement(doc, argument, 'text', \
+                      os.path.basename(fileset['output'][0]))
     return doc
 
 def CreateRunOpts(doc, parent, iters=100, output=''):

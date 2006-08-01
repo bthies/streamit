@@ -398,7 +398,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                                             "opening up the <filename>.java file and searching for this identifier,\n" +
                                             "or by refactoring your program to give the splitjoin its own name.\n";
                                     }
-                                    ERROR(msg);
+                                    assert false : msg;
                                 }
                         }
                 }

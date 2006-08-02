@@ -182,13 +182,14 @@ public class FlatGraphToSIR
                     reSIR(pipeline, current.edges[0], visited);
                 } // else end this recursion at end of loop portion
             } else {
-                // end of existing splitjoin.
+              // end of existing splitjoin: update joiner and
+              // reSIR continuation.
+              if (! visited.contains(current)) {
                 SIRContainer splitJoin = parent;
                 while (!(splitJoin instanceof SIRSplitJoin)) {
                     splitJoin = splitJoin.getParent();
                 }
                 assert splitJoin != null;
-                assert !(visited.contains(current));
 
                 // record that we have added this Joiner
                 visited.add(current);
@@ -200,7 +201,8 @@ public class FlatGraphToSIR
                     && current.edges[0] != null;
                     reSIR(((SIRSplitJoin) splitJoin).getParent(),
                             current.edges[0], visited);
-                }   
+                }
+              }
             }
 
         } else {

@@ -345,7 +345,7 @@ float->float filter iDCT_1D_reference_fine(int size) {
         }
     }
 
-    work pop size push size {
+    work peek size pop size push size {
         for (int x = 0; x < size; x++) {
             float tempsum = 0;
             for (int u = 0; u < size; u++) {
@@ -353,6 +353,7 @@ float->float filter iDCT_1D_reference_fine(int size) {
             }
             push(tempsum);
         }
+	for (int u = 0; u < size; u++) { pop();	}
     }
 }
 

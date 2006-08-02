@@ -24,11 +24,14 @@ public class JoinerScheduleNode {
     private CType ctype;
     
     public JoinerScheduleNode(CType channelType) {
+        assert channelType != null;
         this.ctype = channelType;
     }
 
     // create an initPath call node...
-    public JoinerScheduleNode(int index, String buf) {
+    public JoinerScheduleNode(int index, String buf, CType channelType) {
+        assert channelType != null;
+        this.ctype = channelType;
         type = INITPATH;
         initPathIndex = index;
         buffer = buf;

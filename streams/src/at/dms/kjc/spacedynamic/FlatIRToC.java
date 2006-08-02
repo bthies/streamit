@@ -803,12 +803,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 visitArgs(args,0);
                 p.print(" = ");
                 p.print(Util.networkReceive
-                        (dynamicInput, Util.getBaseType(filter.getInputType())));
+                        (dynamicInput, CommonUtils.getBaseType(filter.getInputType())));
                 
             }
             else {
                 p.print(Util.networkReceive
-                        (dynamicInput, Util.getBaseType(filter.getInputType())));
+                        (dynamicInput, CommonUtils.getBaseType(filter.getInputType())));
             }
             return;
         }
@@ -968,7 +968,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
 //        if(KjcOptions.altcodegen || KjcOptions.decoupled) {
             p.print("{\n");
-            p.print(Util.networkSendPrefix(dynamicOutput, Util.getBaseType(tapeType)));
+            p.print(Util.networkSendPrefix(dynamicOutput, CommonUtils.getBaseType(tapeType)));
             val.accept(this);
             for (int i = 0; i < dims.length; i++) {
                 p.print("[" + ARRAY_INDEX + i + "]");

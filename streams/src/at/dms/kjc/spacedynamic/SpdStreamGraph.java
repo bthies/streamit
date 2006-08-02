@@ -82,14 +82,6 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
     }
 
     
-    /**
-     * Use in place of "new StreamGraph" for subclassing.
-     * 
-     */
-   @Override protected static SpdStreamGraph new_StreamGraph(FlatNode top) {
-        return new SpdStreamGraph(top, new RawChip(1, 1));
-    }
-
    /** 
      * @return True if the graph is laid out with no overlapping routes, no
      * routing tiles, and each joiner has at most 3 incoming nodes with no
@@ -252,19 +244,19 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
         }
     }
 
-    /** create a stream graph with only one filter (thus one SSG) * */
+    /** create a stream graph with only one filter (thus one SSG). */
     public static SpdStreamGraph constructStreamGraph(SIRFilter filter) {
         return constructStreamGraph(new FlatNode(filter));
     }
 
     /**
      * create a stream graph with only one filter (thus one SSG), it's not laid
-     * out yet*
+     * out yet.
      */
     public static SpdStreamGraph constructStreamGraph(FlatNode node) {
         assert node.isFilter();
 
-        SpdStreamGraph streamGraph = new_StreamGraph(node);
+        SpdStreamGraph streamGraph = new SpdStreamGraph(node, new RawChip(1, 1));
         streamGraph.createStaticStreamGraphs();
         streamGraph.tileAssignmentOneFilter();
 

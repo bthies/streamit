@@ -834,8 +834,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
             try {
                 t = exp.getType();
             } catch (Exception e) {
-                System.err.println("Cannot get type for print statement");
+                System.err.println("Cannot get type for print statement" + exp.toString());
                 printedOK = false;
+                continue;
+            }
+            if (t == null) {
+                System.err.println("Null type for print statement " + exp.toString());
+                printedOK = false;
+                continue;
             }
             String typeString = t.toString();
             String printPrefix = (String)(printPrefixMap.get(typeString));

@@ -4,10 +4,11 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.util.Utils;
+//import at.dms.kjc.sir.lowering.*;
+//import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import java.io.*;
-import java.util.List;
+//import java.util.List;
 import java.util.*;
 import java.util.LinkedList;
 import java.util.HashMap;
@@ -768,7 +769,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
                     items = ssg.getMult(src, false) * push;
                 }
 
-                items *= Util.getTypeSize(Util.getOutputType(src));
+                items *= Util.getTypeSize(CommonUtils.getOutputType(src));
                 // calculate communication cost of this node and add it to the
                 // cost sum
 

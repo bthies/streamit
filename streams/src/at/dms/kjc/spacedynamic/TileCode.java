@@ -5,12 +5,13 @@ import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import java.util.List;
-import at.dms.kjc.sir.lowering.*;
-import java.util.ListIterator;
+import at.dms.kjc.common.CommonUtils;
+//import java.util.List;
+//import at.dms.kjc.sir.lowering.*;
+//import java.util.ListIterator;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.TreeSet;
+//import java.util.LinkedList;
+//import java.util.TreeSet;
 import java.util.HashSet;
 import java.io.*;
 
@@ -107,8 +108,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
             if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
                 fw.write("void static_send_print(");
-                fw.write(Util.getJoinerType(joiner) + " f) {\n");
-                if (Util.getJoinerType(joiner).isFloatingPoint())
+                fw.write(CommonUtils.getJoinerType(joiner) + " f) {\n");
+                if (CommonUtils.getJoinerType(joiner).isFloatingPoint())
                     fw.write("print_float(f);\n");
                 else
                     fw.write("print_int(f);\n");
@@ -149,7 +150,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
             // initialize the dummy network receive value
             if (KjcOptions.decoupled) {
-                if (Util.getJoinerType(joiner).isFloatingPoint())
+                if (CommonUtils.getJoinerType(joiner).isFloatingPoint())
                     fw.write("  " + Util.CSTIFPVAR + " = 1.0;\n");
                 else
                     fw.write("  " + Util.CSTIINTVAR + " = 1;\n");
@@ -189,7 +190,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
                                   joiner);
         // get the type, since this joiner is guaranteed to be connected to a
         // filter
-        CType type = Util.getBaseType(Util.getJoinerType(joiner)); // ??
+        CType joinerType = CommonUtils.getJoinerType(joiner);
+        CType type = CommonUtils.getBaseType(joinerType); // ??
 
         ret.append("#define __BUFSIZE__ " + buffersize + "\n");
         ret.append("#define __MINUSONE__ " + (buffersize - 1) + "\n\n");
@@ -200,9 +202,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         // print the index vars if the type is an array type
         // and the duplication var for duplicate splitjoins with identities
         // inside
-        if (Util.getJoinerType(joiner).isArrayType()) {
-            String dims[] = Util.makeString(((CArrayType) Util
-                                             .getJoinerType(joiner)).getDims());
+        if (joinerType.isArrayType()) {
+            String dims[] = Util.makeString(((CArrayType) joinerType).getDims());
             ret.append("  int ");
             for (int i = 0; i < dims.length - 1; i++)
                 ret.append(ARRAY_INDEX + i + ", ");
@@ -228,9 +229,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append("int __first" + current + " = 0;\n");
             ret.append("int __last" + current + " = 0;\n");
             ret.append(type + " __buffer" + current + "[__BUFSIZE__]");
-            if (Util.getJoinerType(joiner).isArrayType()) {
-                String dims[] = Util.makeString(((CArrayType) Util
-                                                 .getJoinerType(joiner)).getDims());
+            if (joinerType.isArrayType()) {
+                String dims[] = Util.makeString(((CArrayType)joinerType).getDims());
                 for (int i = 0; i < dims.length; i++)
                     ret.append("[" + dims[i] + "]");
             }

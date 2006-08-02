@@ -530,12 +530,12 @@ public class TraceIRtoC extends ToC
                 visitArgs(args,0);
                 p.print(" = ");
                 p.print(Util.networkReceive
-                        (dynamicInput, Util.getBaseType(self.getType())));
+                        (dynamicInput, CommonUtils.getBaseType(self.getType())));
                 
             }
             else {
                 p.print(Util.networkReceive
-                        (dynamicInput, Util.getBaseType(self.getType())));
+                        (dynamicInput, CommonUtils.getBaseType(self.getType())));
             }
                         
             return;  

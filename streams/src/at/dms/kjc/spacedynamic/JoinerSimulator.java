@@ -1,18 +1,20 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
-import at.dms.kjc.*;
+//import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.*;
+import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.util.Utils;
+//import at.dms.kjc.sir.lowering.*;
+//import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import java.util.HashSet;
-import java.math.BigInteger;
+//import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.Vector;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.ListIterator;
+//import java.util.Vector;
+//import java.util.List;
+//import java.util.LinkedList;
+//import java.util.ListIterator;
 import java.util.Iterator;
 
 
@@ -54,20 +56,22 @@ public class JoinerSimulator
     
     private void buildJoinerSchedule(FlatNode node) 
     {
-        JoinerCounter counters = new JoinerCounter();
-        JoinerScheduleNode first = new JoinerScheduleNode(Util.getJoinerType(node));
-        JoinerScheduleNode current, temp;
-        current = first;
-
         //see if joiner has no inputs
         if (node.inputs == 0)
             return;
-        do {
+ 
+        JoinerCounter counters = new JoinerCounter();
+        CType joinerType = CommonUtils.getJoinerType(node);
+        JoinerScheduleNode first = new JoinerScheduleNode(joinerType);
+        JoinerScheduleNode current, temp;
+        current = first;
+
+       do {
             simulateDataItem(node, current, counters, "");
             if (counters.checkAllZero())
                 break;
         
-            temp = new JoinerScheduleNode(Util.getJoinerType(node));
+            temp = new JoinerScheduleNode(CommonUtils.getJoinerType(node));
             current.next = temp;
             current = temp;
         }while(true);

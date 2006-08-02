@@ -8,7 +8,8 @@ import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import java.util.*;
-import at.dms.kjc.spacedynamic.Util;
+import at.dms.kjc.common.CommonUtils;
+
 
 /**
  * A representation of a portion of a FlatGraph whre all comunication is
@@ -644,7 +645,7 @@ public class StaticStreamGraph {
         outputTypes = new CType[oldOutputTypes.length + 1];
         for (int i = 0; i < oldOutputTypes.length; i++)
             outputTypes[i] = oldOutputTypes[i];
-        outputTypes[outputTypes.length - 1] = Util.getOutputType(node);
+        outputTypes[outputTypes.length - 1] = CommonUtils.getOutputType(node);
 
         nexts.put(node, next);
     }

@@ -14,11 +14,11 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.spacedynamic.Util;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;
-import at.dms.kjc.sir.lowering.partition.*;
+//import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * @author mgordon
@@ -229,7 +229,7 @@ class SIRToTraceNodes implements FlatVisitor {
                 content = new FilterContent(node.getFilter());
 
         } else if (node.isSplitter()) {
-            CType type = at.dms.kjc.spacedynamic.Util.getOutputType(node);
+            CType type = CommonUtils.getOutputType(node);
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
             content = new FilterContent(id);
@@ -238,7 +238,7 @@ class SIRToTraceNodes implements FlatVisitor {
 
         } else {
             // joiner
-            CType type = at.dms.kjc.spacedynamic.Util.getOutputType(node);
+            CType type = CommonUtils.getOutputType(node);
             SIRIdentity id = new SIRIdentity(type);
             RenameAll.renameAllFilters(id);
             content = new FilterContent(id);

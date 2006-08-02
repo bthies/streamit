@@ -1,6 +1,6 @@
 package at.dms.kjc.spacedynamic;
 
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -27,11 +27,11 @@ import at.dms.kjc.JFieldDeclaration;
 import at.dms.kjc.JFormalParameter;
 import at.dms.kjc.JIfStatement;
 import at.dms.kjc.JIntLiteral;
-import at.dms.kjc.JLocalVariable;
+//import at.dms.kjc.JLocalVariable;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JMethodDeclaration;
-import at.dms.kjc.JNewArrayExpression;
+//import at.dms.kjc.JNewArrayExpression;
 import at.dms.kjc.JParenthesedExpression;
 import at.dms.kjc.JPostfixExpression;
 import at.dms.kjc.JPrefixExpression;
@@ -45,10 +45,11 @@ import at.dms.kjc.JWhileStatement;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.ObjectDeepCloner;
 import at.dms.kjc.SLIRReplacingVisitor;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * Create SIR code for a static-rate-input filter that requires a buffer (it
@@ -683,7 +684,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                                                                                          accessBufferVar(localVariables.sendBuffer),
                                                                                          accessBufferVar(localVariables.exeIndex)));
                             
-            pushExp.setTapeType(Util.getBaseType(filter.getOutputType()));
+            pushExp.setTapeType(CommonUtils.getBaseType(filter.getOutputType()));
 
             JExpressionStatement send = new JExpressionStatement(null, pushExp,
                                                                  null);

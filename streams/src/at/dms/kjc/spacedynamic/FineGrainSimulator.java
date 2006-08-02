@@ -1,18 +1,19 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import java.util.HashSet;
-import java.math.BigInteger;
+//import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.List;
 import java.util.LinkedList;
-import java.util.ListIterator;
+//import java.util.ListIterator;
 import java.util.Iterator;
 
 /**
@@ -122,6 +123,7 @@ public class FineGrainSimulator extends Simulator {
                 int delay = loop.getDelayInt();
                 JoinerScheduleNode current = ((JoinerScheduleNode) JoinerSimulator.schedules
                                               .get(joiner));
+                CType joinerType = CommonUtils.getJoinerType(joiner);
                 for (int i = 0; i < delay; i++) {
                     // for each init path call find the correct buffer to place
                     // it in.
@@ -131,8 +133,8 @@ public class FineGrainSimulator extends Simulator {
                             // schedule
                             JoinerScheduleNode prev = (JoinerScheduleNode) currentJoinerCode
                                 .get(joiner);
-                            JoinerScheduleNode code = new JoinerScheduleNode(i,
-                                                                             current.buffer);
+                            JoinerScheduleNode code = 
+                                new JoinerScheduleNode(i,current.buffer,joinerType);
                             if (prev == null) {
                                 // first node in joiner code
                                 // this will add it to the joiner code hashmap
@@ -254,7 +256,7 @@ public class FineGrainSimulator extends Simulator {
 
         // else, this joiner fired because it has data that can be sent
         // downstream
-        JoinerScheduleNode current = new JoinerScheduleNode(Util
+        JoinerScheduleNode current = new JoinerScheduleNode(CommonUtils
                                                             .getJoinerType(fire));
         current.buffer = counters.getJoinerBuffer(fire);
         current.type = JoinerScheduleNode.FIRE;
@@ -288,7 +290,7 @@ public class FineGrainSimulator extends Simulator {
             // as determined by the simulation
             counters.incrementJoinerBufferCount(dest, joinerBuffer);
             // add to the joiner code for this dest
-            JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(dest));
+            JoinerScheduleNode current = new JoinerScheduleNode(CommonUtils.getJoinerType(dest));
             current.buffer = joinerBuffer;
             if (visited.contains(dest))
                 current.type = JoinerScheduleNode.DUPLICATE;

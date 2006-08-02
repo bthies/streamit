@@ -6,6 +6,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 //import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import java.util.HashSet;
 //import java.math.BigInteger;
 import java.util.HashMap;
@@ -196,7 +197,7 @@ public abstract class Simulator {
         }
     
         //create the appropriate amount of routing instructions
-        int elements = Util.getTypeSize(Util.getOutputType(fire));
+        int elements = Util.getTypeSize(CommonUtils.getOutputType(fire));
         for (int i = 0; i < elements; i++)
             asm(layout.getComputeNode(fire), prev, next);
     }

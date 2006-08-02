@@ -37,12 +37,16 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
       * regenerating the flatgraph *
       */
      public void createSIRGraph() {
+         //int suffix = Double.valueOf(Math.random() * 1000).intValue();
          (new DumpGraph()).dumpGraph(topLevel, Utils
-                                     .makeDotFileName("beforeFGtoSIR", topLevelSIR),
+                                     .makeDotFileName("beforeFGtoSIR"/* + suffix*/, topLevelSIR),
                                      initExecutionCounts, steadyExecutionCounts);
-         // do we want this here?!!
+
          setTopLevelSIR((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
-         // topLevelSIR = (new FlatGraphToSIR(topLevel)).getTopLevelSIR();
+
+         (new DumpGraph()).dumpGraph(topLevel, Utils
+                 .makeDotFileName("afterFGtoSIR"/* + suffix*/, topLevelSIR),
+                 initExecutionCounts, steadyExecutionCounts);
      }
      /**
       * call the scheduler on the toplevel SIR node and create the execution

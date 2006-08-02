@@ -55,20 +55,7 @@ public class StreamGraph {
     }
 
     
-    /**
-     * Use in place of "new StreamGraph" for subclassing.
-     * <br/>Does this work: compiler lets me get away with @ Override in subclasses.
-     * Overriding a static method is not supposed to work, but @ Override is supposed
-     * to cause compiler to issue error if not overridable. 
-     * @param top: see {@link #StreamGraph(FlatNode)}
-     */
-   protected static StreamGraph new_StreamGraph(FlatNode top) {
-        return new StreamGraph(top);
-    }
-    
-
-    
-    /**
+     /**
      * This method creates the static subgraphs of the StreamGraph by cutting
      * the stream graph at dynamic rate boundaries.
      * <br/>

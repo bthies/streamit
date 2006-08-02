@@ -1,20 +1,21 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.util.Utils;
 import java.util.HashSet;
-import java.math.BigInteger;
+//import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.Vector;
+//import java.util.Vector;
 import java.util.List;
 import java.util.LinkedList;
-import java.util.ListIterator;
+//import java.util.ListIterator;
 import java.util.Iterator;
-import at.dms.kjc.sir.lowering.partition.WorkEstimate;
+//import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 /**
  * This class generates a schedule for the switch code by simulating the 
@@ -136,6 +137,7 @@ public class WorkBasedSimulator extends Simulator
                 SIRFeedbackLoop loop = (SIRFeedbackLoop)((SIRJoiner)joiner.contents).getParent();
                 int delay = loop.getDelayInt();
                 JoinerScheduleNode current = ((JoinerScheduleNode)JoinerSimulator.schedules.get(joiner));
+                CType joinerType = CommonUtils.getJoinerType(joiner);
         
                 for (int i = 0; i < delay; i++) {
                     //for each init path call find the correct buffer to place it in.
@@ -144,7 +146,7 @@ public class WorkBasedSimulator extends Simulator
                             //create the joinerCode Node and put it in the init schedule
                             JoinerScheduleNode prev = 
                                 (JoinerScheduleNode)currentJoinerCode.get(joiner);
-                            JoinerScheduleNode code = new JoinerScheduleNode(i, current.buffer);
+                            JoinerScheduleNode code = new JoinerScheduleNode(i, current.buffer,joinerType);
                             if (prev == null) {
                                 //first node in joiner code
                                 //this will add it to the joiner code hashmap
@@ -250,7 +252,7 @@ public class WorkBasedSimulator extends Simulator
         //extracting it from the proper buffer...
         if (src.isJoiner()) {
             //this joiner fired because it has data that can be sent downstream
-            JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(src));
+            JoinerScheduleNode current = new JoinerScheduleNode(CommonUtils.getJoinerType(src));
             current.buffer = counters.getJoinerBuffer(src);
             current.type = JoinerScheduleNode.FIRE;
             addJoinerCode(src, current);
@@ -359,7 +361,7 @@ public class WorkBasedSimulator extends Simulator
         //record that the data was placed in this buffer...
         counters.incrementJoinerBufferCount(dest, joinerBuffer);
         //add to the joiner code for this dest
-        JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(dest));
+        JoinerScheduleNode current = new JoinerScheduleNode(CommonUtils.getJoinerType(dest));
         current.buffer = joinerBuffer;
         //if we have seen this dest already, then we are passing
         //thru a duplicate splitter with identity filters...
@@ -645,7 +647,7 @@ public class WorkBasedSimulator extends Simulator
     
         if (false) {
             //this joiner fired because it has data that can be sent downstream
-            JoinerScheduleNode current = new JoinerScheduleNode(Util.getJoinerType(fire));
+            JoinerScheduleNode current = new JoinerScheduleNode(CommonUtils.getJoinerType(fire));
             current.buffer = counters.getJoinerBuffer(fire);
             current.type = JoinerScheduleNode.FIRE;
             addJoinerCode(fire, current);

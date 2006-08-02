@@ -21,14 +21,4 @@ public class ScheduledStreamGraph extends StreamGraph {
     @Override protected ScheduledStaticStreamGraph new_StaticStreamGraph(StreamGraph sg, FlatNode realTop) {
         return new ScheduledStaticStreamGraph(sg,realTop);
     }
-
-    /**
-     * Use in place of "new StaticStreamGraph" for subclassing.
-     * 
-     */
-   @Override protected static ScheduledStreamGraph new_StreamGraph(FlatNode top) {
-        return new ScheduledStreamGraph(top);
-    }
-    
-  
 }

@@ -298,7 +298,16 @@ public class StaticStreamGraph {
             assert topLevel.ways == 1 && topLevel.edges.length == 1
                 && topLevel.edges[0] != null;
             topLevel = topLevel.edges[0];
-            topLevel.removeBackEdge(oldTopLevel);
+            if (topLevel.isFeedbackJoiner()) {
+                // old top level was feedbackloop joiner
+                // restore its old configuration with
+                // null first incoming edge rather than
+                // removing the edge
+                topLevel.incoming[0] = null;
+                topLevel.currentIncoming= 2;
+            } else {
+                topLevel.removeBackEdge(oldTopLevel);
+            }
             flatNodes.remove(oldTopLevel);
         }
 
@@ -455,10 +464,10 @@ public class StaticStreamGraph {
      * and outputs arrays and the input and output edges
      */
     private void updateIOArrays() {
-        assert topLevel != null && bottomLevel != null;
-
+        
         // set input[] to store the new inputs (sources) for this SSG
         if (prevs.size() > 0) {
+            assert topLevel != null;
             // if a filter, then just set the inputs[0] to it
             if (topLevel.isFilter()) {
                 assert prevs.size() == 1 && inputs.length == 1;
@@ -480,6 +489,7 @@ public class StaticStreamGraph {
 
         // set output[] to store the new outputs of the SSG
         if (nexts.size() > 0) {
+            assert bottomLevel != null;
             if (bottomLevel.isFilter()) {
                 assert nexts.size() == 1 && outputs.length == 1;
                 outputs[0] = bottomLevel;

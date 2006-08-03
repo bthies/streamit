@@ -160,7 +160,9 @@ public class FlatGraphToSIR
               SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++);
               ((SIRFeedbackLoop)fbloop).setLoop(pipeline);
               reSIR(pipeline,current.edges[1],visited);
-              reSIR(((SIRFeedbackLoop)fbloop).getParent(), current.edges[0], visited);
+              if (current.edges[0] != null) {
+                  reSIR(((SIRFeedbackLoop)fbloop).getParent(), current.edges[0], visited);
+              }
           }
           
         } else if (current.isJoiner()) {

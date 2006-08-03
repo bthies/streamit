@@ -22,12 +22,12 @@ causes the I/O rates of the filters to be much larger.
       <file>beamformer.c</file>
       <desc>Reference implementation, based on the StreamIt version.  Always serializes outputs and is fine-grained -- does not provide "coarse" option.</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="beamformer">
       <make>Makefile</make>
       <file>BeamFormer.str</file>
       <desc>StreamIt benchmark as described above, with parallel outputs.</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
+    <impl lang="StreamIt" dir="streamit" id="serializedbeamformer">
       <make>Makefile</make>
       <file>SerializedBeamFormer.str</file>
       <file class="output">SerializedBeamFormer.out</file>

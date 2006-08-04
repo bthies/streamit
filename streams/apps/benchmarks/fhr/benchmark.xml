@@ -6,7 +6,7 @@ Frequency-hopping radio, a case study of the teleport messaging system
 described in the PPoPP'05 paper.
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" id="fhr">
+    <impl lang="StreamIt" dir="streamit" compile_time="2400" id="fhr">
       <desc>StreamIt version using teleport messaging.</desc>
       <file class="source">FHR.str</file>
       <file class="output">FHRFeedback.out</file>

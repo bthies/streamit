@@ -2,7 +2,7 @@
 #
 # streamitqm: Prepare the StreamIt tree for QMTest
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamitqm,v 1.3 2006-05-26 15:19:24 dimock Exp $
+# $Id: streamitqm,v 1.4 2006-08-07 21:21:01 dimock Exp $
 #
 
 cd "$STREAMIT_HOME"
@@ -15,7 +15,8 @@ case "$1" in
 	if [ -z "$2" ]; then
 	    ./regtest/qmtest/build-qmtest.py ./regtest/qmtest/regtest.xml
         else
-            ./regtest/qmtest/build-qmtest.py "$2"
+	    shift
+            ./regtest/qmtest/build-qmtest.py "$@"
         fi
 	;;
 
@@ -23,12 +24,13 @@ case "$1" in
 	rm -rf QMTest apps.qms results.qmr
 	;;
 
-    commit)
-	cp QMTest/* regtest/qmtest
-	;;
+#     commit)
+# 	cp QMTest/* regtest/qmtest
+# 	;;
 
     *)
-	echo "Usage: streamitqm [setup|clean|commit]" >&2
+#	echo "Usage: streamitqm [setup|clean|commit]" >&2
+	echo "Usage: streamitqm [setup|clean]" >&2
 	exit 1
 	;;
 esac

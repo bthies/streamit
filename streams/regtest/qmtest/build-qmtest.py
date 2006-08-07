@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.18 2006-08-01 22:11:25 dimock Exp $
+# $Id: build-qmtest.py,v 1.19 2006-08-07 21:21:01 dimock Exp $
 #
 
 import os
@@ -16,14 +16,19 @@ import xml.dom.minidom
 # TODO: some option parsing.
 # For now, assume sys.argv[1] has the path to the regtest control file,
 # and that we're in STREAMIT_HOME.
+# If sys.argv[2] exists, prefix it to the 'root' attribute of <test>
+# generally "../" if building in a subdirectory.
 
 def main():
     # Read the regtest control file.
     controlfileName = sys.argv[1]
-    control = ReadControlFile(controlfileName)
+    prefix = ""
+    if len(sys.argv) > 2:
+         prefix = sys.argv[2]
+    control = ReadControlFile(controlfileName,prefix)
     BuildQMTestTree(control)
 
-def ReadControlFile(fn):
+def ReadControlFile(fn,prefix):
     """Read a regtest XML control file.
 
     Reads an XML file, and looks for <test> and <option> tags in it.
@@ -45,7 +50,7 @@ def ReadControlFile(fn):
     testroots = []
     tests = dom.getElementsByTagName('test')
     for node in tests:
-        testroots.append(node.getAttribute('root'))
+        testroots.append(prefix + node.getAttribute('root'))
     # And the set of targets, as pairs of (target, options).
     targets = []
     options = dom.getElementsByTagName('option')
@@ -69,7 +74,8 @@ def ReadControlFile(fn):
     dom.unlink()
     return { 'testroots': testroots,
              'targets': targets,
-             'whichtypes' : whichtypes }
+             'whichtypes' : whichtypes,
+             'prefix' : prefix}
 
 def BuildQMTestTree(control):
     """Build a QMTest XML tree.
@@ -112,8 +118,14 @@ def DoQMTestDir(path, control):
     and whichtypes is a list of benchmark 'types' to execute."""
 
     benchmarkname = os.path.join(path, 'benchmark.xml')
-    qmname = '.'.join(map(lambda p: QMSanitize(p), SplitAll(path)))
-    qmdir = DirToQMDir(path)
+
+    #print >>sys.stderr, "Path " + path
+
+    prefix = control['prefix']
+    outpath = path[len(prefix):len(path)]
+    qmname = '.'.join(map(lambda p: QMSanitize(p), SplitAll(outpath)))
+    qmdir = DirToQMDir(outpath)
+    
     #print >> sys.stderr, "Benchmark name " + benchmarkname
     dom = xml.dom.minidom.parse(benchmarkname)
     # We basically want to ignore the entire benchmark.xml file, except
@@ -298,6 +310,7 @@ def ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control, compile_ti
                 else:
                     dst = os.path.join(testdir, os.path.basename(fn))
                 try:
+                    #print >>sys.stderr, "Trying to copy from " + src + " to " + dst
                     if may_need_dir:
                         if not os.path.exists(os.path.dirname(dst)):
                             os.makedirs(os.path.dirname(dst))

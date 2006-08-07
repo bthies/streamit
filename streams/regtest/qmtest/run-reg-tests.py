@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.36 2006-06-16 15:28:02 dimock Exp $
+# $Id: run-reg-tests.py,v 1.37 2006-08-07 21:21:01 dimock Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -239,7 +239,7 @@ class RunRegTests:
     def run_tests(self):
         # set to run several tests at once if sufficient cpus.
         # we should probably also check for sufficient virtual memory
-        cpu_count = 0
+        cpu_count = 1
         re_pattern=re.compile('^processor\s+:')
         try:
             f = open('/proc/cpuinfo', 'r')
@@ -257,7 +257,8 @@ class RunRegTests:
         #    run_command = run_command + ' -j' + str(cpu_count)
         # ok, now run with thread count as set above
         os.chdir(self.streamit_home)
-        self.run_and_log('qmtest create-target -a processes=4 p4 '
+        self.run_and_log('qmtest create-target -a processes='
+                         + str(cpu_count) + ' p' + str(cpu_count) + ' '
                          + 'process_target.ProcessTarget p',
                          'qmtestTargetLog', 'Setting Process target')
         self.starttime = time.localtime()

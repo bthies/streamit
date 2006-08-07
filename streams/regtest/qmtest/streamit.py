@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.27 2006-08-01 22:11:25 dimock Exp $
+# $Id: streamit.py,v 1.28 2006-08-07 21:21:01 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -203,7 +203,7 @@ class RunStrcTest(qm.test.test.Test):
       else:
           result['RunStrcTest.stdout'] = e.stdout
 
-      InterpretExitCode(result, status, self.exit_code, 'RunStrcTest')
+      InterpretExitCode(result, status, 0, 'RunStrcTest')
 
                   
 class RunProgramTest(qm.test.test.Test):
@@ -261,7 +261,7 @@ class RunProgramTest(qm.test.test.Test):
         f.write(e.stdout)
         f.close()
 
-        InterpretExitCode(result, status, None, 'RunProgramTest')
+        InterpretExitCode(result, status, 0, 'RunProgramTest')
 
     def _RunNamedFile(self, context, result, filename):
         # then run_cluster with path and -i
@@ -283,7 +283,7 @@ class RunProgramTest(qm.test.test.Test):
         result['RunProgramTest.stderr'] = e.stderr
 
         # Mostly, note if the program died an unholy death.
-        InterpretExitCode(result, status, None, 'RunProgramTest')
+        InterpretExitCode(result, status, 0, 'RunProgramTest')
         
         
     def _RunUni(self, context, result):

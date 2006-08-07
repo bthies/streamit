@@ -1890,17 +1890,20 @@ public class FlatIRToCluster extends InsertTimers implements
             // also insert profiling code for math functions
             wrapping = true;
             super.beginWrapper("FUNC_" + ident.toUpperCase());
-            // RMR { math functions are converted to use their floating-point counterparts;
-            // to do this, some function names are prepended with a 'f', and others have an
-            // 'f' appended to them
-            if (Utils.mathMethodRequiresFloatPrefix(prefix, ident)) {
-                p.print("f");
-                p.print(ident);
-            } else { // by fault emit a float prefix on math functions
-                p.print(ident);
-                p.print("f");
+            // RMR { math functions are converted to use their floating-point
+            // counterparts; to do this, some function names are prepended 
+            // with a 'f', and others have an 'f' appended to them
+            if (Utils.isMathMethod(prefix, ident)) {
+                if (Utils.cppMathMethodRequiresFloatPrefix(prefix, ident)) {
+                    p.print("f");
+                    p.print(ident);
+                } else { // by default emit a float 'f' suffix on math
+                            // functions
+                    p.print(ident);
+                    p.print("f");
+                }
             }
-            // } RMR
+
         } else {
             p.print(ident);
         }

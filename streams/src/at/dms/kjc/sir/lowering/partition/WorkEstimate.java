@@ -146,6 +146,8 @@ public class WorkEstimate {
 
     /**
      * Returns estimate of instruction code for <pre>filter</pre>
+     * <br/>
+     * This is cluster backend specific
      */
     public int getICodeSize(SIRFilter filter) {
 
@@ -627,6 +629,11 @@ public class WorkEstimate {
             else if (ident.equals("tanh")) work += 288;
             // not from profiling: round(x) is currently macro for floor((x)+0.5)
             else if (ident.equals("round")) work += (58 + FLOAT_ARITH_OP);
+            // not from profiling: just stuck in here to keep compilation of gmti 
+            // from spewing warnings.
+            else if (ident.equals("abs")) work += 60;
+            else if (ident.equals("max")) work += 60;
+            else if (ident.equals("min")) work += 60;
             else
                 {
                     JMethodDeclaration target = findMethod(ident);

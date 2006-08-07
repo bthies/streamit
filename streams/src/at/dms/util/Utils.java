@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.38 2006-07-18 22:20:55 thies Exp $
+ * $Id: Utils.java,v 1.39 2006-08-07 20:06:05 dimock Exp $
  */
 
 package at.dms.util;
@@ -164,6 +164,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
              ident.equals("abs") ||
              ident.equals("max") ||
              // } RMR
+             ident.equals("min") ||
              ident.equals("modf") ||
              ident.equals("fmod") ||
              ident.equals("frexp") ||
@@ -196,6 +197,25 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
     /* } RMR */
     
+    /**
+     * Determine whether a math function whould be prefixed with 'f' if the emitted code is C++.
+     * <br/>
+     * The compiler currently uses the floating-point versions
+     * of the math functions and hence the math routines are renamed to
+     * their floating point counterparts:  some math functions require a prefix 'f'.
+     * <br/>
+     * Currently, any math functions that do not require a prefix 'f' require a suxxif 'f'.
+     */
+    public static boolean cppMathMethodRequiresFloatPrefix(JExpression prefix, String ident) 
+    {
+        if (prefix instanceof JTypeNameExpression &&
+            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+       
+            (ident.equals("abs") || ident.equals("max") || ident.equals("min")))
+            return true;
+        return false;
+    }
+  
     /**
      * Returns <pre>val</pre> as a percentage with maximum of 4 digits
      */

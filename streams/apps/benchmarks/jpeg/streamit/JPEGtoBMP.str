@@ -3,6 +3,7 @@
 void->void pipeline JPEGtoBMP {
     add FileReader<int>("./input.jpg.int");
     add JPEGByteStream_Parser;
+    add Identity<float>;  // ensure dynamic rate boundary is between filters 
     add ChannelUnencoding;
     add YCbCrtoRGB;
 
@@ -10,6 +11,7 @@ void->void pipeline JPEGtoBMP {
     add BlockDescrambler;
     add FlipVertically;    
 
+    add Identity<int>; // ensure dynamic rate boundary is between filters
     add BMPByteStream_Creator;
     add FileWriter<int>("./output.bmp.int");
 }
@@ -278,7 +280,7 @@ int->int feedbackloop IntegerDifferenceEncoder{
 int->int feedbackloop IntegerDifferenceDecoder {
   join roundrobin;
   body int->int filter {
-    work pop 2 push 2 {
+    work pop 2 push 1 {
       push(peek(0) + peek(1));
       pop(); pop();
     }

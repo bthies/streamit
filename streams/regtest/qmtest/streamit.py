@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.28 2006-08-07 21:21:01 dimock Exp $
+# $Id: streamit.py,v 1.29 2006-08-08 17:17:31 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -351,16 +351,6 @@ class CompareResultsTest(qm.test.test.Test):
             result.Fail('Missing program run results file "' +  \
                         os.path.join(test_home_dir,self.output) + '"')
             
-        # Optimizations may change the meaning of "n steady-state iterations"
-        # So we accept actual results with length different from expected
-        # The one thing we don't allow is no actual output where some output
-        # is expected
-        if len(actual) == 0 and len(expected) > 0:
-            tag = 'CompareResultsTest.line_0'
-            result[tag + '.expected'] = 'some output'
-            result[tag + '.actual'] = 'no output'
-            failed = 1
-            
         # For the RAW backend, cook 'actual'.
         # [21: 00001b444]: 0.098017   ==> 0.098017
         # with -spacetime format is: decimal, hex, float: 1.23 or 1 or -1e-08
@@ -374,6 +364,16 @@ class CompareResultsTest(qm.test.test.Test):
             actual = filter(lambda p: p[1] > 0, actual)
             actual = map(lambda p: p[0], actual)
 
+        # Optimizations may change the meaning of "n steady-state iterations"
+        # So we accept actual results with length different from expected
+        # The one thing we don't allow is no actual output where some output
+        # is expected
+        if len(actual) == 0 and len(expected) > 0:
+            tag = 'CompareResultsTest.line_0'
+            result[tag + '.expected'] = 'some output'
+            result[tag + '.actual'] = 'no output'
+            failed = 1
+            
         # Build pairs of values, converted to floats.
         pairs = []
         for i in range(min(len(expected), len(actual))):

@@ -42,7 +42,8 @@ public class FlatGraphToSIR
         id = 0;
 
 
-        toplevelSIR = new SIRPipeline("TopLevel" + globalID++);
+        toplevelSIR = new SIRPipeline("TopLevel" + globalID++
+                + suffix(top.contents));
         reSIR(toplevelSIR, toplevel, new HashSet<FlatNode>());
     }
 
@@ -76,7 +77,8 @@ public class FlatGraphToSIR
             SIRPipeline pipeline;
 
             if (!(parent instanceof SIRPipeline)) {
-                pipeline = new SIRPipeline(parent, "Pipeline" + id++);
+                pipeline = new SIRPipeline(parent, "Pipeline" + id++
+                        + parentSuffix(current.contents));
                 pipeline.setInit(SIRStream.makeEmptyInit());
                 parent.add(pipeline);
             }
@@ -112,12 +114,18 @@ public class FlatGraphToSIR
         if (current.isSplitter()) {
           // splitter: 2 cases original parent should tell us
           // if this is a top of a splitjoin or bottom of a feedbackloop
-
-          if (((SIRSplitter)(current.contents)).getParent() instanceof SIRSplitJoin) {  
+          //
+          // If splitter does not have a parent, then we assume that this
+          // is a splitjoin that has been broken across different dynamic regions
+          // (rather than a feedbackloop being brofen across dynamic regions)
+          SIRSplitter splitter = (SIRSplitter)current.contents;
+          if (splitter.getParent() instanceof SIRSplitJoin
+                  || splitter.getParent() == null) {  
 
             // Splitjoin splitter
             // create splitjoin with dummy joiner and recur on branches of split.
-            SIRSplitJoin splitJoin = new SIRSplitJoin(parent, "SplitJoin" + id++);
+            SIRSplitJoin splitJoin = new SIRSplitJoin(parent, "SplitJoin" + id++
+                    + parentSuffix(splitter));
             splitJoin.setInit(SIRStream.makeEmptyInit());
             //add this splitjoin to the parent!
             parent.add(splitJoin);
@@ -134,7 +142,8 @@ public class FlatGraphToSIR
             for (int i = 0; i < current.edges.length; i++) {
                 if (current.edges[i] != null) {
                     //wrap all parallel splitter edges in a pipeline
-                    SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++);
+                    SIRPipeline pipeline = new SIRPipeline(splitJoin, "Pipeline" + id++ 
+                            + parentSuffix(current.edges[i].contents));
                     pipeline.setInit(SIRStream.makeEmptyInit());
                     splitJoin.add(pipeline);
                     reSIR(pipeline, current.edges[i], visited);
@@ -157,7 +166,8 @@ public class FlatGraphToSIR
               visited.add(current);
               ((SIRFeedbackLoop)fbloop).setSplitter((SIRSplitter)current.contents);
               assert current.ways == 2 && current.edges[1] != null;
-              SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++);
+              SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
+                      + suffix(current.edges[1].contents));
               ((SIRFeedbackLoop)fbloop).setLoop(pipeline);
               reSIR(pipeline,current.edges[1],visited);
               if (current.edges[0] != null) {
@@ -171,7 +181,8 @@ public class FlatGraphToSIR
                     visited.add(current);
                     //new feedback loop.  Assume that splitter is in same graph.
                     // Set both up now.
-                    SIRFeedbackLoop fbloop = new SIRFeedbackLoop(parent,"FBLoop" + id++);
+                    SIRFeedbackLoop fbloop = new SIRFeedbackLoop(parent,"FBLoop" + id++ 
+                            + parentSuffix(current.contents));
                     SIRFeedbackLoop oldparent = (SIRFeedbackLoop)current.contents.getParent();
                     fbloop.setInit(SIRStream.makeEmptyInit());
                     fbloop.setDelay(oldparent.getDelay());
@@ -179,7 +190,8 @@ public class FlatGraphToSIR
                     fbloop.setJoiner((SIRJoiner)current.contents);
                     parent.add(fbloop);
                     assert current.ways == 1 && current.edges[0] != null;
-                    SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++);
+                    SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
+                            + suffix(current.edges[0].contents));
                     fbloop.setBody(pipeline);
                     reSIR(pipeline, current.edges[0], visited);
                 } // else end this recursion at end of loop portion
@@ -212,4 +224,22 @@ public class FlatGraphToSIR
         }
         return;
     }
+    
+    // Attach suffixes from old SIR to allow reasonable identification of
+    // SIR operators after new names are created.  It is sufficient to
+    // use ident() rather than name() since the new names will already
+    // be unique, but name() gives better correspondence with contents
+    // of previously generated .dot files
+    
+    private static String suffix(SIROperator op) {
+        if (op != null) {
+            return "_" + op.getName();
+        }
+        return "";
+    }
+    
+    private static String parentSuffix(SIROperator op) {
+        return suffix (op.getParent());
+    }
+    
 }

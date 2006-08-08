@@ -93,6 +93,9 @@ public class StaticStreamGraph {
 
     // the parent stream graph
     private StreamGraph streamGraph;
+    
+    // for delaying error exits found in inner classes
+    //final boolean[] deferred_error = {false};
 
     protected StaticStreamGraph() {}
     /**
@@ -196,6 +199,7 @@ public class StaticStreamGraph {
         assert topLevel.isSplitter();
         assert ((SIRSplitter) topLevel.contents).getWays() > 0;
 
+        final boolean[] deferred_errors = {false};
         // check that we have cuts in the correct places
         // remove edges that connect to flatnodes not in this ssg
         topLevel.accept(new FlatVisitor() {
@@ -229,19 +233,36 @@ public class StaticStreamGraph {
         topLevel.accept(new FlatVisitor() {
                 public void visitNode(FlatNode node) {
                     if (node.isFilter()) {
-                        SIRFilter filter = (SIRFilter) node.contents;
+                    SIRFilter filter = (SIRFilter) node.contents;
+                    if (filter.getPop() instanceof SIRRangeExpression) {
+                        System.err
+                                .println("Error: Dynamic rate found where not expected"
+                                        + " check that "
+                                        + filter.toString()
+                                        + " is only added after another filter.");
+                        deferred_errors[0] = true;
+                    } else {
                         if (filter.getPopInt() > 0)
                             assert node.inputs == 1;
                         else // doesn't pop
-                            if (node.inputs == 1)
-                                assert node.incoming[0].getWeight(node) == 0;
-
+                        if (node.inputs == 1)
+                            assert node.incoming[0].getWeight(node) == 0;
+                    }
+                    if (filter.getPush() instanceof SIRRangeExpression) {
+                        System.err
+                                .println("Error: Dynamic rate found where not expected"
+                                        + " check that "
+                                        + filter.toString()
+                                        + " is only added before another filter.");
+                        deferred_errors[0] = true;
+                    } else {
                         if (filter.getPushInt() > 0)
                             assert node.ways == 1;
                         else // doesn't push
-                            if (node.ways == 1)
-                                assert node.edges[0].getIncomingWeight(node) == 0;
-                    } else if (node.isJoiner()) {
+                        if (node.ways == 1)
+                            assert node.edges[0].getIncomingWeight(node) == 0;
+                    }
+                } else if (node.isJoiner()) {
                         SIRJoiner joiner = (SIRJoiner) node.contents;
                         if (joiner.getWays() != node.inputs) {
                             // System.out.println(joiner.getWays() + " != " +
@@ -274,6 +295,8 @@ public class StaticStreamGraph {
                     }
                 }
             }, null, true);
+        
+        assert ! deferred_errors[0] : "Error(s) found in dynamic rate boundary positioning." ;
 
         // check if the number of splitters and joiners is balanced (==)
         splitterBalance = 0;

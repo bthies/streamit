@@ -221,7 +221,15 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
                 .divide(bodyPop)
                 .equals(bodyFrac))
                 {
+                  if (feedbackLoop instanceof at.dms.kjc.iterator.SIRFeedbackLoopIter) {
+                    assert false : ((at.dms.kjc.iterator.SIRFeedbackLoopIter)feedbackLoop).getStream().getIdent()
+                    + " joiner has inconsistent rates - cannot be scheduled without growing buffers infinitely!"
+                    + "\n" + joinFrac.toString() + " * " + joinPush.toString() + " / " + bodyPop.toString() 
+                    + " != " + bodyFrac.toString();
+                  } else {
+                    // use from library: what data structures do we need for better error?
                     ERROR("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
+                  }
                 }
 
             // compute a minimal multiplier for all the fractions

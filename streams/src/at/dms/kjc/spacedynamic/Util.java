@@ -142,7 +142,7 @@ public class Util extends at.dms.util.Utils {
             sumWeights += prev.weights[i];
         int thisWeight = -1;
         for (int i = 0; i < prev.ways; i++) {
-            if (prev.edges[i].equals(node)) {
+            if (prev.edges[i] != null && prev.edges[i].equals(node)) {
                 thisWeight = prev.weights[i];
                 break;
             }

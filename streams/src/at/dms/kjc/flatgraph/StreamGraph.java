@@ -189,7 +189,10 @@ public class StreamGraph {
         } else if (current.isSplitter()) {
             // if a splitter continue downstream search for each way...
             for (int i = 0; i < current.ways; i++) {
-                assert current.edges[i] != null;
+                //assert current.edges[i] != null;
+                //case of splitting to allow some outside stream to join.
+                // usual case.
+                if (current.edges[i] == null) continue;
                 searchDownstream(current.edges[i], ssg, visited,
                                  dynamicBoundary);
             }

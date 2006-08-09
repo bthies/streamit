@@ -285,7 +285,7 @@ public class GenerateCCode {
                     //variable that is a structure.  So just visit the expression
                     //and construct a new field access
                     if (!(left instanceof JThisExpression))
-                        return new JFieldAccessExpression(null, (JExpression) left.accept(this), ident, null);
+                        return new JFieldAccessExpression(null, (JExpression) left.accept(this), ident, self.getField());
 
                     assert 
                         (stringVarDef.containsKey(ident)) && 

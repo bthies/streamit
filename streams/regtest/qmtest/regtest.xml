@@ -1,11 +1,10 @@
 <regtest>
   <test root="apps"/>
-  <option target="cluster">-standalone</option>
+  <option target="cluster"></option>
   <option target="raw4"/>
   <option target="library"/>
-  <option target="cluster"></option>
-  <option target="simpleC"/>
-  <option target="raw4">-space</option>
   <option target="cluster">-O2</option>
+  <option target="simpleC"/>
   <option target="raw4">-O2</option>
+  <option target="cluster">-standalone</option>
 </regtest>

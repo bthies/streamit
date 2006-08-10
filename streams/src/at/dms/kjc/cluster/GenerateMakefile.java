@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.8 2006-07-28 15:47:30 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.9 2006-08-10 23:24:16 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -85,7 +85,7 @@ public class GenerateMakefile {
 
 
         p.print("clean:\n");
-        p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o" + executablename);
+        p.println("\trm -f master*.o fusion*.o global*.o thread*.o combined_threads.o " + executablename);
         p.newLine();
 
         p.print("combined_threads.cpp : ");

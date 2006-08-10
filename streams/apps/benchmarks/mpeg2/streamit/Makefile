@@ -5,8 +5,10 @@
 # PARSER = Parser.str
 PARSER = Parser_alt_preserved_state.str
 
-COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
-# COLOR_CHANNEL_PROCESSING = ColorChannelProcessing_opt_splitjoin.str
+#COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
+COLOR_CHANNEL_PROCESSING = ColorChannelProcessing_opt_splitjoin.str
+# the previous line is needed while StreamIt fails to handle splitter selection
+# inside a conditional
 # COLOR_CHANNEL_PROCESSING = 
 # Note - this last (null) option is for the alternate decoder
 

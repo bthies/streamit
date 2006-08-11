@@ -23,6 +23,20 @@ public class ConstructSIRTree {
     private static RuntimeException nonConstantArgError = null;
 
     public static void doit(SIRStream str) {
+        // do collapse data parallelism from here, since its contract
+        // depends on wrapping around ConstructSIRTree
+        if (CollapseDataParallelism.ENABLED) {
+            CollapseDataParallelism cdp = new CollapseDataParallelism();
+            cdp.detectEligible(str);
+            doMyWork(str);
+            cdp.doTransformations(str);
+        } else {
+            doMyWork(str);
+        }
+    }
+
+    // the actual construction of SIR tree.  Not main entry point.
+    private static void doMyWork(SIRStream str) {
         // visit the hoister in all containers
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 /* pre-visit a pipeline */
@@ -178,5 +192,4 @@ public class ConstructSIRTree {
                     ((JLocalVariableExpression)arg).getType().isArrayType());
         }
     }
-
 }

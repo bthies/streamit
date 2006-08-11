@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.96 2006-07-27 23:31:11 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.97 2006-08-11 08:11:54 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -128,9 +128,6 @@ public class ClusterBackend {
         }
         structures = structs;
     
-        //this must be run now, FlatIRToC relies on it!!!
-        RenameAll.renameAllFilters(str);
-
         // Introduce Multiple Pops where programmer
         // didn't take advantage of them
         IntroduceMultiPops.doit(str);
@@ -183,6 +180,9 @@ public class ClusterBackend {
 
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
+
+        //this must be run now, FlatIRToC relies on it!!!
+        RenameAll.renameAllFilters(str);
 
         //SIRPrinter printer1 = new SIRPrinter();
         //str.accept(printer1);

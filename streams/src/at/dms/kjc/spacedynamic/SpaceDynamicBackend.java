@@ -62,11 +62,6 @@ public class SpaceDynamicBackend {
         //create the RawChip
         rawChip = new RawChip(rawColumns, rawRows);
         
-     
-        
-        //this must be run now, FlatIRToC relies on it!!!
-        RenameAll.renameAllFilters(str);
-    
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set theStatics = new HashSet();
@@ -88,6 +83,9 @@ public class SpaceDynamicBackend {
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
 
+        //this must be run now, FlatIRToC relies on it!!!
+        RenameAll.renameAllFilters(str);
+    
         FieldProp.doPropagate(str);
 
         // expand array initializers loaded from a file

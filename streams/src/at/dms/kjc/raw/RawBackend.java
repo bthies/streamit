@@ -67,9 +67,6 @@ public class RawBackend {
         else 
             simulator = new FineGrainSimulator();
 
-        //this must be run now, FlatIRToC relies on it!!!
-        RenameAll.renameAllFilters(str);
-    
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set theStatics = new HashSet();
@@ -87,6 +84,9 @@ public class RawBackend {
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
 
+        //this must be run now, FlatIRToC relies on it!!!
+        RenameAll.renameAllFilters(str);
+    
         if (Flattener.hasDynamicRates(str)) {
             System.err.println("Failure: Dynamic rates are not yet supported in the Raw backend.");
             System.exit(1);

@@ -86,11 +86,6 @@ public class StrToRStream {
 
         structures = structs;
     
-        //rename all variables/functions in each filter to be
-        //exclusive over all filters...
-        //this must be run now, FlatIRToRS relies on it!!!
-        RenameAll.renameAllFilters(str);
-    
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set theStatics = new HashSet();
@@ -108,6 +103,11 @@ public class StrToRStream {
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
 
+        //rename all variables/functions in each filter to be
+        //exclusive over all filters...
+        //this must be run now, FlatIRToRS relies on it!!!
+        RenameAll.renameAllFilters(str);
+    
         if (Flattener.hasDynamicRates(str)) {
             System.err.println("Failure: Dynamic rates are not yet supported in the RStream backend.");
             System.exit(1);

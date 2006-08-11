@@ -59,7 +59,9 @@ public class FuseSimpleSplit {
             newFilter.setInit(newInit);
         } else {
             // if all children identities, need an expander in the
-            // case of a duplicate splitter and nothing otherwise
+            // case of a duplicate splitter and nothing otherwise (of
+            // course with identities we still might need splitter and
+            // joiner substitutes below, in makeFusedPipe)
             if (sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
                 newFilter = buildExpander(sj.size(), rep.child[0], sj.getInputType());
             } else {
@@ -75,7 +77,7 @@ public class FuseSimpleSplit {
         replaceInParent(sj, fused);
 
         // uncomment this if you want to see what the output of fusion looks like
-        SIRToStreamIt.run(fused);
+        //SIRToStreamIt.run(fused);
 
         return fused;
     }
@@ -107,11 +109,12 @@ public class FuseSimpleSplit {
         //     push(peek(j));
         //   }
         // }
-        // pop(N*k);
+        // pop(k);
         // -------------
-        // push(peek(j));
-        JVariableDefinition j = new JVariableDefinition(type, "j");
-        JStatement push = new JExpressionStatement(new SIRPushExpression(new SIRPeekExpression(new JLocalVariableExpression(j), type)));
+        
+        // construct push(peek(j));
+        JVariableDefinition j = new JVariableDefinition(CStdType.Integer, "j");
+        JStatement push = new JExpressionStatement(new SIRPushExpression(new SIRPeekExpression(new JLocalVariableExpression(j), type), type));
         // for (int j=0; j<k; j++) { push(peek(j)); }
         JStatement innerLoop = Utils.makeForLoop(push, new JIntLiteral(k), j);
         // { j=0; innerLoop; }
@@ -195,10 +198,9 @@ public class FuseSimpleSplit {
 
         // do not make a filter for a splitter if:
         //  - it's a duplicate
-        //  - it's a roundrobin(1,1,...,1)
         //  - it's a null split
+        //  - it only executes once
         if (!(sj.getSplitter().getType()==SIRSplitType.DUPLICATE ||
-              sj.getSplitter().isUnaryRoundRobin() ||
               rep.splitter==0 ||
               // don't need a splitter filter if the splitter only
               // executes once, since it would preserve the order of the items
@@ -261,7 +263,16 @@ public class FuseSimpleSplit {
         } else {
             // if <fused> has just one filter, add it in place of <sj>
             if (fused.size()==1) {
-                parent.replace(sj, fused.get(0));
+                // if <fused> has only an identity filter and parent
+                // is pipeline with at least one more filter, remove
+                // sj from parent if it's a pipeline
+                if (fused.get(0) instanceof SIRIdentity && 
+                    parent instanceof SIRPipeline &&
+                    parent.size() > 1) {
+                    parent.remove(sj);
+                } else {
+                    parent.replace(sj, fused.get(0));
+                }
             } else {
                 // otherwise, just add <fused> to parent in place of <sj>
                 parent.replace(sj, fused);

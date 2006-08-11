@@ -29,11 +29,9 @@ public class SIRPopExpression extends JExpression {
 
     /**
      * Construct a node that pops N items, and returns an undefined
-     * value.  For quick advances of the tape.
-     *
-     * !!!!!!!!! WARNING !!!!!!!!!!  There is extremely limited
-     * support for this in the IR.  Right now it just has the correct
-     * code generated for it in the uniprocessor backend.
+     * value.  For quick advances of the tape.  (While this does not
+     * generate optimized code on all backends, it does generate
+     * correct code on all backends.)
      */
     public SIRPopExpression(CType tapeType, int N)
     {

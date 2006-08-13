@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.40 2006-08-13 17:08:24 thies Exp $
+ * $Id: Utils.java,v 1.41 2006-08-13 22:57:29 thies Exp $
  */
 
 package at.dms.util;
@@ -874,16 +874,27 @@ public abstract class Utils implements Serializable, DeepCloneable {
     }
 
     /**
+     * Record the number of subgraphs for future dot filenames.
+     */
+    public static void setupDotFileName(int _numSubGraphs) 
+    {
+        numSubGraphs = _numSubGraphs;
+    }
+    private static int numSubGraphs = 1;
+    /**
      * Make a name for a dot file from a supplied prefix and the name
      * of the top-level SIRStream.
-     * 
      */
-    
     public static String makeDotFileName(String prefix, SIRStream strName) 
     {
-        return prefix + (strName != null ? strName.getIdent() : "") + ".dot";
+        if (numSubGraphs == 1) {
+            // if only one graph, don't print "Toplevel0" -- be
+            // consistent with other backends compiling static rates
+            return prefix + ".dot";
+        } else {
+            return prefix + (strName != null ? strName.getIdent() : "") + ".dot";
+        }
     }
-
     
     // ----------------------------------------------------------------------
     // DATA MEMBERS

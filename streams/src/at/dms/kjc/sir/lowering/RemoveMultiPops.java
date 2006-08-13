@@ -4,7 +4,9 @@
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.SLIRReplacingVisitor;
+import at.dms.kjc.SLIREmptyVisitor;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.*;
@@ -40,50 +42,51 @@ public class RemoveMultiPops extends SLIRReplacingVisitor {
     
     public static void doit(SIRStream str) {
         new RemoveMultiPops().removeMultiProps(str);
+        checkEliminated(str);
     }
     
-    // The following structure appears all over the place.  It needs to be abstracted somehow.
-    // Walk SIR structure to get down to 
     private void removeMultiProps(SIRStream str) {
-        if (str instanceof SIRFeedbackLoop) {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop) str;
-            removeMultiProps(fl.getBody());
-            removeMultiProps(fl.getLoop());
-        }
-        if (str instanceof SIRPipeline) {
-            SIRPipeline pl = (SIRPipeline) str;
-            Iterator iter = pl.getChildren().iterator();
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                removeMultiProps(child);
-            }
-        }
-        if (str instanceof SIRSplitJoin) {
-            SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
-            while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
-                removeMultiProps(child);
-            }
-        }
-        if (str instanceof SIRFilter) {
-            for (int i = 0; i < str.getMethods().length; i++) {
-                str.getMethods()[i].accept(this);
-            }
-        }
+        final SLIRReplacingVisitor visitor =this;
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    for (int i = 0; i < self.getMethods().length; i++) {
+                        self.getMethods()[i].accept(visitor);
+                    }
+                }});
     }
-    
+
     public Object visitExpressionStatement(JExpressionStatement self,
                                            JExpression expr) {
         if (expr instanceof SIRPopExpression) {
             SIRPopExpression popExp = (SIRPopExpression) expr;
-            return Utils.makeForLoop(new JExpressionStatement(null,
-                                                              new SIRPopExpression(popExp.getType()), null), 
+            return Utils.makeForLoop(new JExpressionStatement(new SIRPopExpression(popExp.getType())), 
                                      popExp.getNumPop());
         } else {
             return self;
         }
     }
-        
+
+    /**
+     * Checks that all the multi-pops have been eliminated.
+     */
+    private static void checkEliminated(SIRStream str) {
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self,
+                                        SIRFilterIter iter) {
+                    for (int i = 0; i < self.getMethods().length; i++) {
+                        // for each method...
+                        self.getMethods()[i].accept(new SLIREmptyVisitor() {
+                                // and each pop expression...
+                                public void visitPopExpression(SIRPopExpression self,
+                                                               CType tapeType) {
+                                    // throw an error if the pop is for more than 1 item
+                                    if (self.getNumPop()>1) {
+                                        Utils.fail("Failed to expand multi-pop expression.");
+                                    }
+                                }});
+                    }
+                }
+            });
+    }
 }
-    

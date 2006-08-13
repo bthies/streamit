@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.34 2006-07-22 06:11:54 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.35 2006-08-13 20:27:29 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -346,6 +346,9 @@ public class SIRToStreamIt
     }
     
     /* visit a filter */
+    private boolean inInit = false;
+    private boolean inWork = false;
+    private boolean inInitWork = false;
     public Object visitFilter(SIRFilter self,
                               JFieldDeclaration[] fields,
                               JMethodDeclaration[] methods,
@@ -359,8 +362,23 @@ public class SIRToStreamIt
         p.indent();
         for (int i = 0; i < fields.length; i++)
             fields[i].accept(this);
-        for (int i=0; i < methods.length; i++)
+        for (int i=0; i < methods.length; i++) {
+            // small hack to detect init, initwork, work functions.
+            // Can't go just based on name because they are sometimes
+            // renamed.
+            if (methods[i]==init) {
+                inInit = true;
+            } else if (methods[i] == work) {
+                inWork = true;
+            } else if (self instanceof SIRTwoStageFilter &&
+                       methods[i]==((SIRTwoStageFilter)self).getInitWork()) {
+                inInitWork = true;
+            }
             methods[i].accept(this);
+            inInit = false;
+            inWork = false;
+            inInitWork = false;
+        }
         p.outdent();
         p.newLine();
         p.print("}");
@@ -797,36 +815,32 @@ public class SIRToStreamIt
         // (phase, handler, helper are special).
 
         // Treat init and work functions specially.
-        if (ident.equals("init") || ident.equals("work"))
-            {
-                p.print(ident);
-            }
-        else if (ident.equals("initWork")) 
-            {
-                // initWork is the compiler's name for "prework"
-                p.print("prework");
-            }
-        else
-            {
-                // p.print(CModifier.toString(modifiers));
-                printType(returnType);
-                p.print(" ");
-                p.print(ident);
-                p.print("(");
-                int count = 0;
+        if (inInit) {
+            p.print("init");
+        } else if (inWork) {
+            p.print("work");
+        } else if (inInitWork) {
+            p.print("prework");
+        } else {
+            // p.print(CModifier.toString(modifiers));
+            printType(returnType);
+            p.print(" ");
+            p.print(ident);
+            p.print("(");
+            int count = 0;
             
-                for (int i = 0; i < parameters.length; i++) {
-                    if (count != 0) {
-                        p.print(", ");
-                    }
-                
-                    // if (!parameters[i].isGenerated()) {
-                    parameters[i].accept(this);
-                    count++;
-                    // }
+            for (int i = 0; i < parameters.length; i++) {
+                if (count != 0) {
+                    p.print(", ");
                 }
-                p.print(")");
+                
+                // if (!parameters[i].isGenerated()) {
+                parameters[i].accept(this);
+                count++;
+                // }
             }
+            p.print(")");
+        }
 
         // Print I/O rates if they're available
         if (self.doesIO()) {

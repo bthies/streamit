@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.39 2006-08-07 20:06:05 dimock Exp $
+ * $Id: Utils.java,v 1.40 2006-08-13 17:08:24 thies Exp $
  */
 
 package at.dms.util;
@@ -661,7 +661,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
      * Note that <pre>loopIndex</pre> should not appear in a different variable
      * decl; it will get one in this routine.
      */
-    public static JStatement makeForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
+    public static JStatement makeForLoop(JStatement body, JExpression count, final JVariableDefinition loopIndex) {
         // make sure we start counting from 0
         loopIndex.setInitializer(new JIntLiteral(0));
         // make a declaration statement for our new variable
@@ -680,10 +680,17 @@ public abstract class Utils implements Serializable, DeepCloneable {
                 // statement there.
                 return (KjcOptions.rstream ? (JStatement)(new JEmptyStatement()) : (JStatement)varDecl);
             } else if (intCount==1) {
-                // if the count is one, then return the decl and the
-                // body (but rstream doesn't need the decl).
-                return (KjcOptions.rstream ? body :
-                        new JBlock(null, new JStatement[] { varDecl, body }, null));
+                // replace references to the loop counter with the
+                // constant 0.  (while constant prop does this
+                // automatically in other backends, causes problems in
+                // rstream, who doesn't want a var decl included.)
+                body.accept(new SLIRReplacingVisitor() {
+                        public Object visitLocalVariableExpression(JLocalVariableExpression self,
+                                                                   String ident) {
+                            if (self.getVariable()==loopIndex) { return new JIntLiteral(0); }
+                            return self;
+                        }});
+                return body;
             }
         }
 

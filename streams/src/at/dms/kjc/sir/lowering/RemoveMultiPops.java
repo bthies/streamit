@@ -39,10 +39,19 @@ public class RemoveMultiPops extends SLIRReplacingVisitor {
      * 
      * @param str  a stream to work on
      */
-    
     public static void doit(SIRStream str) {
         new RemoveMultiPops().removeMultiProps(str);
         checkEliminated(str);
+    }
+
+    /**
+     * Replace multiple pops with single pop expression in a kopi IR
+     * construct, and returns the result (also mutates the argument).
+     */
+    public static JPhylum doit(JPhylum phylum) {
+        JPhylum result = (JPhylum)phylum.accept(new RemoveMultiPops());
+        checkEliminated(phylum);
+        return result;
     }
     
     private void removeMultiProps(SIRStream str) {
@@ -68,7 +77,7 @@ public class RemoveMultiPops extends SLIRReplacingVisitor {
     }
 
     /**
-     * Checks that all the multi-pops have been eliminated.
+     * Checks that all the multi-pops have been eliminated from a stream.
      */
     private static void checkEliminated(SIRStream str) {
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
@@ -76,17 +85,23 @@ public class RemoveMultiPops extends SLIRReplacingVisitor {
                                         SIRFilterIter iter) {
                     for (int i = 0; i < self.getMethods().length; i++) {
                         // for each method...
-                        self.getMethods()[i].accept(new SLIREmptyVisitor() {
-                                // and each pop expression...
-                                public void visitPopExpression(SIRPopExpression self,
-                                                               CType tapeType) {
-                                    // throw an error if the pop is for more than 1 item
-                                    if (self.getNumPop()>1) {
-                                        Utils.fail("Failed to expand multi-pop expression.");
-                                    }
-                                }});
+                        checkEliminated(self.getMethods()[i]);
                     }
-                }
-            });
+                }});
+    }
+
+    /**
+     * Checks that all the multi-pops have been eliminated from a JPhylum.
+     */
+    private static void checkEliminated(JPhylum phylum) {
+        phylum.accept(new SLIREmptyVisitor() {
+                // and each pop expression...
+                public void visitPopExpression(SIRPopExpression self,
+                                               CType tapeType) {
+                    // throw an error if the pop is for more than 1 item
+                    if (self.getNumPop()>1) {
+                        Utils.fail("Failed to expand multi-pop expression.");
+                    }
+                }});
     }
 }

@@ -68,10 +68,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
     {
         assert Layout.assignToATile(node);
         SIRFilter str = (SIRFilter)node.contents;
-        // make sure SIRPopExpression's only pop one element
-        // code generation doesn't handle generating multiple pops
-        // from a single SIRPopExpression
-        RemoveMultiPops.doit(str);
         
         FlatIRToC toC = new FlatIRToC(str);
         toC.flatNode = node;

@@ -120,7 +120,10 @@ public class SpaceDynamicBackend {
         //dump a dot representation of the graph
         streamGraph.dumpStaticStreamGraph();
     
-        for (int k = 0; k < streamGraph.getStaticSubGraphs().length; k++) {
+        int numSubGraphs = streamGraph.getStaticSubGraphs().length;
+        // for good dot output, record how many subgraphs we have
+        Utils.setupDotFileName(numSubGraphs);
+        for (int k = 0; k < numSubGraphs; k++) {
             SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
             System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
         
@@ -207,7 +210,6 @@ public class SpaceDynamicBackend {
                     System.err.println("Running User-Defined Transformations...");
                     ssg.setTopLevelSIR(ManualPartition.doit(ssg.getTopLevelSIR()));
                     System.err.println("Done User-Defined Transformations...");
-                    RemoveMultiPops.doit(str);
                 }
 
                 if (partitioning) {
@@ -279,9 +281,9 @@ public class SpaceDynamicBackend {
                     fitsInIMEM = true;
                 }
         
-            } while (!fitsInIMEM);    
+            } while (!fitsInIMEM);
         }
-    
+
         //see if we can remove any joiners, doesn't run in the old space backend...
         //JoinerRemoval.run(ssg.getTopLevel());
     

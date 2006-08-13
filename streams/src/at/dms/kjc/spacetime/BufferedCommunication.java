@@ -80,9 +80,20 @@ public class BufferedCommunication extends RawExecutionCode
     private void convertCommExprs() 
     {
         SLIRReplacingVisitor convert;
-    
+
         ConvertPushesToMethCall.doit(filterInfo, gdnOutput);
         
+        // before converting pop/peek communication, make sure that
+        // multiple pop statements are resolved into single pop
+        // statement (since this backend doesn't deal with multipops
+        // yet)
+        JMethodDeclaration[] methods = filterInfo.filter.getMethods();
+        if (methods!=null) {
+            for (int i = 0; i < methods.length; i++) {
+                RemoveMultiPops.doit(methods[i]);
+            }
+        }
+
         if (filterInfo.isSimple()) {
             convert = 
                 new ConvertCommunicationSimple(generatedVariables, filterInfo);
@@ -96,8 +107,6 @@ public class BufferedCommunication extends RawExecutionCode
         else
             convert = new ConvertCommunication(generatedVariables, filterInfo);
     
-        JMethodDeclaration[] methods = filterInfo.filter.getMethods();
-
         if(methods!=null)
             for (int i = 0; i < methods.length; i++) {
                 //iterate over the statements and call the ConvertCommunication

@@ -4,6 +4,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
 import at.dms.util.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
@@ -137,7 +138,11 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
     public void visitNode(FlatNode node) {
         if (node.isFilter()) {
             SIRFilter filter = (SIRFilter) node.contents;
-            
+
+            // remove any multi-pop statement, as communication code
+            // we are about to generate does not handle it
+            RemoveMultiPops.doit(ssg.getTopLevelSIR());
+
             if (!Layout.assignToATile(node))
                 return;
             //calculate various stats of the filter            

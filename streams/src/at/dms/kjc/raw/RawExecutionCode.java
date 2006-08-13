@@ -4,6 +4,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.common.CommonConstants;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.util.Utils;
@@ -91,6 +92,11 @@ public class RawExecutionCode extends at.dms.util.Utils
     {
         if (node.isFilter()){
             SIRFilter filter = (SIRFilter)node.contents;
+            
+            // remove any multi-pop statement, as communication code
+            // we are about to generate does not handle it
+            RemoveMultiPops.doit(filter);
+
             //Skip Identities now
             if(filter instanceof SIRIdentity ||
                filter instanceof SIRFileWriter ||

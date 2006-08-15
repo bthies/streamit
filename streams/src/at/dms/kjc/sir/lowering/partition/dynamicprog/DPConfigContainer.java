@@ -291,8 +291,10 @@ abstract class DPConfigContainer extends DPConfig {
     protected DPCost get(int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner) {
         boolean debug = x1==0 && x2==2 && y1==3 && y2==5;// && tileLimit==5 && nextToJoiner==1;
         indent++;
-        String callStr = cont.getName() + ".get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
-        debugMessage("calling " + callStr); 
+        if (KjcOptions.debug) {
+            String callStr = cont.getName() + ".get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
+            debugMessage("calling " + callStr); 
+        }
 
         assert x1<maxWidth[y1][y2]:
             "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] +
@@ -641,8 +643,10 @@ abstract class DPConfigContainer extends DPConfig {
     protected SIRStream traceback(LinkedList partitions, PartitionRecord curPartition,
                                   int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner, SIRStream str) {
         indent++;
-        String callStr = cont.getName() + ".traceback(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
-        debugMessage("calling " + callStr); 
+        if (KjcOptions.debug) {
+            String callStr = cont.getName() + ".traceback(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
+            debugMessage("calling " + callStr); 
+        }
 
         assert x1<maxWidth[y1][y2]:
             "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] +

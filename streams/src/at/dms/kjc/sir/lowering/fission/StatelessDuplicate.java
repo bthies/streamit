@@ -167,6 +167,22 @@ public class StatelessDuplicate {
                         right.accept(this);
                     }
 
+                    // need to count i++ as mutated state if i is a field
+                    public void visitPostfixExpression(JPostfixExpression self,
+                                                       int oper,
+                                                       JExpression expr) {
+                        wrapVisit(expr);
+                    }
+
+                    // need to count ++i as mutated state if i is a field
+                    public void visitPrefixExpression(JPrefixExpression self,
+                                                      int oper,
+                                                      JExpression expr) {
+                        wrapVisit(expr);
+                    }
+
+
+
                     public void visitFieldExpression(JFieldAccessExpression self,
                                                      JExpression left,
                                                      String ident) {
@@ -264,12 +280,17 @@ public class StatelessDuplicate {
             newFilters.add(makeDuplicate(i));
         }
 
+System.out.println("1");
         // make result
         SIRSplitJoin result = new SIRSplitJoin(origFilter.getParent(), origFilter.getIdent() + "_Fiss");
 
+System.out.println("2");
         // replace in parent
+        StreamItDot.printGraph(origFilter.getParent(), "0.dot");
+        System.err.println("parent0: " + origFilter.getParent());
         origFilter.getParent().replace(origFilter, result);
 
+System.out.println("3");
         // make an init function
         JMethodDeclaration init = makeSJInit(result);
 
@@ -288,6 +309,7 @@ public class StatelessDuplicate {
                                create(result, SIRSplitType.DUPLICATE, reps));
         }
 
+System.out.println("4");
         // create the joiner
         if (origFilter.getPushInt() > 0) {
             // assign join weights according to workRatio and push rate of filter
@@ -316,6 +338,9 @@ public class StatelessDuplicate {
         }
         ConstantProp.propagateAndUnroll(toplevel);
         */
+        System.err.println("parent1: " + origFilter.getParent());
+        StreamItDot.printGraph(origFilter.getParent(), "1.dot");
+System.out.println("5");
         return result;
     }
 

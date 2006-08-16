@@ -343,12 +343,23 @@ public class FeedbackLoop
                         // loop, as it is not possible to schedule it!
                     }
 
+                if (feedbackLoop instanceof at.dms.kjc.iterator.SIRFeedbackLoopIter) {
+                    assert false : 
+                        "Couldn't schedule a feedback loop "
+                        + ((at.dms.kjc.iterator.SIRFeedbackLoopIter)feedbackLoop).getStream().getIdent()
+                        + ".\nThis loop is not necessarily impossible to schedule, \n"
+                        + "but the children's schedules may need to be more fine-grained.\n"
+                        + "Problem discovered in loop portion: "
+                        + utility.getChildNextPhase(feedback).getOverallPeek() + " > "
+                        + preLoopBuffer[0];
+                } else {
                 ERROR(
                       "Couldn't schedule a feedback loop (if need to find out name,\n"
                       + "ask karczma, and I'll try to add the capability to display it.\n"
                       + "This loop is not necessarily impossible to schedule, \n"
                       + "but the children's schedules may need to be more fine-grained\n");
-            }
+                }
+        }
 
         // okay, it is possible that I just added stuff to the phase, but
         // it didn't get automagically added to the real schedule

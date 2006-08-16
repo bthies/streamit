@@ -83,10 +83,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     /**
      * Set statmentContext to true in statements, false in expressions.
      * 
-     * Used to control parentheses:  Specifically, an assignment
+     * Used to control parentheses: Specifically, an assignment
      * expression used in a statment context should not be wrapped
-     * with parentheses since some assignments in staement context
-     * are rewritten to multple statements.
+     * with parentheses since some assignments in statement context
+     * are rewritten to multiple statements.
      */
     protected boolean statementContext = true;
 
@@ -116,18 +116,18 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * Print a left parenthesis if not in statement context.
      */
     protected void printLParen() {
-        if (! statementContext) {
-            p.print("(");
-        }
+        //        if (! statementContext) {
+        p.print("(");
+        //        }
     }
 
     /**
      * Print a right parenthesis if not in statement context.
      */
     protected void printRParen() {
-        if (! statementContext) {
-            p.print(")");
-        }
+        //        if (! statementContext) {
+        p.print(")");
+        //        }
     }
 
     /**

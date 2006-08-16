@@ -9,6 +9,7 @@
       <desc>StreamIt benchmark as described above.</desc>
       <make>Makefile</make>
       <file class="source">transmit.str FFT6.str</file>
+      <file class="data">data1.bin</file>
     </impl>
   </implementations>
 </benchmark>

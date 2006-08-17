@@ -232,7 +232,6 @@ public class CollapseDataParallelism {
         sj2.rescale();
 
         // make the overall pipeline
-        StreamItDot.printGraph(sj1, "debug0.dot");
         SIRPipeline result = new SIRPipeline(null, "CollapsedDataParallel");
         result.setInit(SIRStream.makeEmptyInit());
         result.add(sj1);
@@ -253,11 +252,24 @@ public class CollapseDataParallelism {
      * splitjoin, returns an array 'weights' satisfying:
      *
      *  weights[i] = reps(sj.get(i)) * k
+     *
+     * However, if all the weights are the same, then collapses all
+     * the values down to "k".
      */
     private JExpression[] createWeights(SIRSplitJoin sj, HashMap reps, int k) {
         JExpression[] weights = new JExpression[sj.size()];
         for (int i=0; i<sj.size(); i++) {
             weights[i] = new JIntLiteral(((int[])reps.get(sj.get(i)))[0] * k);
+        }
+        // collapse down to array of "k" if uniform (this decreases
+        // the granularity slightly in common cases while maintaining
+        // legality of the transformation.)
+        if (Utils.isUniform(weights) && 
+            // make sure the values are already bigger than k before collapsing
+            ((JIntLiteral)weights[0]).intValue() > k) {
+            for (int i=0; i<sj.size(); i++) {
+                weights[i] = new JIntLiteral(k);
+            }
         }
         return weights;
     }

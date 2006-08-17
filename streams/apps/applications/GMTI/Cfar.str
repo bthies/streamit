@@ -61,6 +61,8 @@ float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, i
     Td = Ncfar;    
 
   add new_sum(x,y,z,G,Ncfar,j);
+
+  if(j<y)
   add splitjoin {
     split duplicate();
 
@@ -73,11 +75,29 @@ float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, i
       }
       add FindTargets(x,z,mu,Td);  
     }
-    if(j<y) 
+//    if(j<y) 
         add get_prelim_recurs(x,y,z,G,Ncfar,mu,j+1);
-    else 
-        add remove(x*z+x*y*z);
+//    else 
+//        add remove(x*z+x*y*z);
+    join roundrobin(x*z, x*z*(y-j));
+  }
+  else
+  add splitjoin {
+    split duplicate();
 
+    add pipeline { // outputs NPslice,PrelimTarget portion from Sum,DatPow
+      add splitjoin {  // outputs Sum,DatPowSlice from Sum,DatPow
+        split roundrobin(x*z,x*y*z);
+        add iden(x*z);
+        add getCol3D(x,y,z,j-1);  // outputs DatPowSlice from DatPow
+        join roundrobin(x*z,x*z);
+      }
+      add FindTargets(x,z,mu,Td);  
+    }
+//    if(j<y) 
+//        add get_prelim_recurs(x,y,z,G,Ncfar,mu,j+1);
+//    else 
+        add remove(x*z+x*y*z);
     join roundrobin(x*z, x*z*(y-j));
   }
 }

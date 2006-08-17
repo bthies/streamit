@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.41 2006-08-13 22:57:29 thies Exp $
+ * $Id: Utils.java,v 1.42 2006-08-17 19:54:51 thies Exp $
  */
 
 package at.dms.util;
@@ -216,6 +216,28 @@ public abstract class Utils implements Serializable, DeepCloneable {
         return false;
     }
   
+    /**
+     * Returns whether all elements of an array of JExpressions are
+     * JLiterals with the same value.
+     */
+    public static boolean isUniform(JExpression[] arr) {
+        // ok to be empty
+        if (arr.length == 0) return true;
+        // get first val
+        JExpression val = arr[0];
+        if (!(val instanceof JLiteral)) {
+            return false;
+        }
+        // check rest of vals are equal
+        for (int i=1; i<arr.length; i++) {
+            if (!(arr[i] instanceof JLiteral) ||
+                !((JLiteral)arr[i]).equals((JLiteral)val)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Returns <pre>val</pre> as a percentage with maximum of 4 digits
      */

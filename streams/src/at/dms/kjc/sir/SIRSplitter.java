@@ -110,8 +110,10 @@ public class SIRSplitter extends SIROperator {
      */
     public static SIRSplitter createWeightedRR(SIRContainer parent, 
                                                JExpression[] weights) {
-        return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights, 
-                               false);
+        return new SIRSplitter(parent, 
+                               SIRSplitType.WEIGHTED_RR, 
+                               weights, 
+                               Utils.isUniform(weights));
     }
 
     /**

@@ -110,7 +110,10 @@ public class SIRJoiner extends SIROperator {
      */
     public static SIRJoiner createWeightedRR(SIRContainer parent, 
                                              JExpression[] weights) {
-        return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights, false);
+        return new SIRJoiner(parent, 
+                             SIRJoinType.WEIGHTED_RR, 
+                             weights, 
+                             Utils.isUniform(weights));
     }
 
     /**

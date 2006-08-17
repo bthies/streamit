@@ -173,11 +173,14 @@ public class CollapseDataParallelism {
      *      filter pop O push U
      *  join origJoin
      *
+     * And let reps = r1 ... rn represent the repetitions of each
+     * occurrence of the filter in the original schedule.
+     *
      * Transformed:
      *  split origSplit
      *    for i = 1 to N
      *      identity
-     *  join O
+     *  join (r1*O, r2*O, ..., rn*O)
      *
      *    |
      *   \./
@@ -187,7 +190,7 @@ public class CollapseDataParallelism {
      *    |
      *   \./
      *
-     *  split U
+     *  split (r1*U, r2*U, ..., rn*U)
      *    for i = 1 to N
      *      identity
      *  join origJoin
@@ -204,6 +207,7 @@ public class CollapseDataParallelism {
         int U = filter.getPushInt();
         SIRSplitter origSplit = sj.getSplitter();
         SIRJoiner origJoin = sj.getJoiner();
+        HashMap reps = SIRScheduler.getExecutionCounts(sj)[1];
 
         // make new first splitjoin
         SIRSplitJoin sj1 = new SIRSplitJoin(null, "CollapsedDataParallel_1");
@@ -212,7 +216,8 @@ public class CollapseDataParallelism {
             sj1.add(new SIRIdentity(sj.getInputType()));
         }
         sj1.setSplitter(origSplit);
-        sj1.setJoiner(SIRJoiner.createUniformRR(sj1, new JIntLiteral(O)));
+        JExpression[] weights = createWeights(sj, reps, O);
+        sj1.setJoiner(SIRJoiner.createWeightedRR(sj1, weights));
         sj1.rescale();
 
         // make the second splitjoin
@@ -221,11 +226,13 @@ public class CollapseDataParallelism {
         for (int i=0; i<N; i++) {
             sj2.add(new SIRIdentity(sj.getInputType()));
         }
-        sj2.setSplitter(SIRSplitter.createUniformRR(sj2, new JIntLiteral(U)));
+        weights = createWeights(sj, reps, U);
+        sj2.setSplitter(SIRSplitter.createWeightedRR(sj2, weights));
         sj2.setJoiner(origJoin);
         sj2.rescale();
 
         // make the overall pipeline
+        StreamItDot.printGraph(sj1, "debug0.dot");
         SIRPipeline result = new SIRPipeline(null, "CollapsedDataParallel");
         result.setInit(SIRStream.makeEmptyInit());
         result.add(sj1);
@@ -241,6 +248,20 @@ public class CollapseDataParallelism {
         return result;
     }
 
+    /**
+     * Given a splitjoin and the scheduling multiplicities for that
+     * splitjoin, returns an array 'weights' satisfying:
+     *
+     *  weights[i] = reps(sj.get(i)) * k
+     */
+    private JExpression[] createWeights(SIRSplitJoin sj, HashMap reps, int k) {
+        JExpression[] weights = new JExpression[sj.size()];
+        for (int i=0; i<sj.size(); i++) {
+            weights[i] = new JIntLiteral(((int[])reps.get(sj.get(i)))[0] * k);
+        }
+        return weights;
+    }
+    
     /**
      * Returns whether or not the i'th child of 'sj' is eligible for
      * the collapsing, given the rules documented above.

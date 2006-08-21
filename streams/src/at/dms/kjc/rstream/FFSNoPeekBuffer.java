@@ -287,8 +287,11 @@ public class FFSNoPeekBuffer extends FilterFusionState
             //was performed
             ConvertChannelExprsMIV tryMIV = new ConvertChannelExprsMIV(this, isInit);
             if (!StrToRStream.GENERATE_MIVS || !tryMIV.tryMIV((JDoLoopStatement)body)) {
-                if (StrToRStream.GENERATE_MIVS)
-                    System.out.println("Could not generate MIV indices for " + getNode().contents);
+                if (StrToRStream.GENERATE_MIVS && KjcOptions.doloops) {  
+                    // A.D. assume that since something to do with doloops, should check KjcOptions.doloops
+                    // extra guard needed: otherwise get a bunch of confusing messages from what
+                    // we call the simpleC backend.
+                    System.out.println("Could not generate MIV indices for " + getNode().contents); }
                 //using incrementing index expressions for the buffer accesses
                 body.accept(new ConvertChannelExprs(this, isInit));
                 //now add the declaration of the pop index and the push index

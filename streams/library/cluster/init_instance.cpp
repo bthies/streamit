@@ -31,6 +31,8 @@ unsigned init_instance::get_thread_start_iter(int thread) {assert(1==0);}
 #include <fcntl.h>
 #include <stdio.h>
 
+bool debugging = false;
+
 int init_instance::start_iter = 0;
 
 pthread_mutex_t init_instance::accept_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -93,9 +95,9 @@ void init_instance::read_config_file() {
   char name[1024];
 
   FILE *f = fopen("cluster-config.txt", "r");
-
-  fprintf(stderr,"Reading cluster config file...\n");
-
+  if (debugging) {
+    fprintf(stderr,"Reading cluster config file...\n");
+  }
   for (;;) {
   
     fscanf(f, "%d %s", &node, name);
@@ -105,8 +107,9 @@ void init_instance::read_config_file() {
     string s(name);
     thread_machines[node] = lookup_ip(s.c_str());
     threadInfo[node].t_host_ip = lookup_ip(s.c_str());
-    fprintf(stderr,"thread:%d machine:%s\n", node, name);
-
+    if (debugging) {
+      fprintf(stderr,"thread:%d machine:%s\n", node, name);
+    }
   }
 
   fprintf(stderr,"\n");
@@ -186,10 +189,11 @@ void init_instance::initialize_sockets() {
 
   // create local socket pair where applicable
 
-  //fprintf(stderr,"Creating kernel level pipes");
-  fprintf(stderr,"Creating shared memory sockets...\n");
-  fflush(stderr);
-  
+  if (debugging) {
+    fprintf(stderr,"Creating shared memory sockets...\n");
+    fflush(stderr);
+  }
+
   for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
   
     sock_dscr sd = *i;
@@ -205,9 +209,10 @@ void init_instance::initialize_sockets() {
 
       // create pipe
 
-      fprintf(stderr,"Creating memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
-      //fprintf(stderr,".");
-      fflush(stderr);
+      if (debugging) {
+	fprintf(stderr,"Creating memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
+	fflush(stderr);
+      }
       
       //int pfd[2];
       //int retval = pipe(pfd);
@@ -250,7 +255,9 @@ void init_instance::initialize_sockets() {
     }
   }
 
-  fprintf(stderr,"done\n");
+  if (debugging) {
+    fprintf(stderr,"done\n");
+  }
 
   for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   
@@ -337,17 +344,18 @@ void init_instance::initialize_sockets() {
 
   }
 
-  fprintf(stderr,"All outgoing connections created!\n");
-
-  // wait for accept thread to finnish
+  if (debugging) {
+    fprintf(stderr,"All outgoing connections created!\n");
+  }
+  // wait for accept thread to finish
 
   //fprintf(stderr, "init_instance:6 %s\n", "LOCK(&accept_lock);");
   LOCK(&accept_lock);
   //fprintf(stderr, "init_instance:7 %s\n", "UNLOCK(&accept_lock);");
   UNLOCK(&accept_lock);
-
-  fprintf(stderr,"\n");
-  
+  if (debugging) {
+    fprintf(stderr,"\n");
+  }
 }
 
 mysocket* init_instance::get_incoming_socket(int from, int to, int type) {

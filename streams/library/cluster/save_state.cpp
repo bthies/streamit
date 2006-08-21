@@ -22,6 +22,8 @@ int gettid() { return 0; }
 
 #endif
 
+bool debugging = false;
+
 
 void save_state::observe_jiffies(thread_info *t_info) {
   
@@ -143,7 +145,9 @@ int save_state::load_from_file(int thread,
     //fprintf(stderr,"read data (4 bytes)\n");
   }
 
-  fprintf(stderr,"thread: %d file: %s size: %d bytes\n", thread, fname, count);
+  if (debugging) {
+    fprintf(stderr,"thread: %d file: %s size: %d bytes\n", thread, fname, count);
+  }
   close(fd);
   
   buf->set_read_offset(0);
@@ -158,8 +162,10 @@ int save_state::load_from_file(int thread,
 int save_state::load_state(int thread, int *steady, void (*read_object)(object_write_buffer *)) {
   
   unsigned iter = init_instance::get_thread_start_iter(thread);
-  fprintf(stderr,"thread: %d iteration: %d\n", thread, iter);
-  
+  if (debugging) {
+    fprintf(stderr,"thread: %d iteration: %d\n", thread, iter);
+  }
+
   if (iter > 0) {
     *steady = iter;
     if (save_state::load_from_file(thread, iter, read_object) == -1) return -1;

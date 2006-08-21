@@ -13,10 +13,12 @@ import at.dms.kjc.sir.*;
  * item from the pop buffer to the push buffer after the filter has fired,
  * before the filter fires, the peek buffer was copied into the pop buffer.
  * But it is no longer maintained.
- *
+ * @deprecated
+ * 
  * @author Michael Gordon
  * 
  */
+@Deprecated
 public class FFSPeekBuffer extends FilterFusionState
 {
     private static String PEEKBUFFERNAME = "__PEEK_BUFFER_";

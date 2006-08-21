@@ -20,6 +20,8 @@ import at.dms.kjc.flatgraph.*;
 public class StructureIncludeFile implements FlatVisitor
 {
     private HashSet passedTypes;
+
+    public static boolean debugging = false;
     
     /**
      * Create structures include file in current directory.
@@ -75,13 +77,13 @@ public class StructureIncludeFile implements FlatVisitor
     {
         if (node.isFilter()) {
             SIRFilter fnode = (SIRFilter)node.contents;
-            // Rewrote so I didn't just get random types printed.
-            // Why is this not debugging only?
+            if (debugging) {
             System.err.println(this.getClass().getName() + " processing filter " 
                     + fnode.getName() + ": " 
                     +  fnode.getInputType() + "->" + fnode.getOutputType());
             passedTypes.add(fnode.getOutputType());
             passedTypes.add(fnode.getInputType());
+            }
         }
     }
     

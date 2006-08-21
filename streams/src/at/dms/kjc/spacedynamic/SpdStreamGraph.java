@@ -133,7 +133,10 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
             if (assignedNodes < 1)
                 continue;
             
-            while (true) {
+            int allowedErrors = 5;  // used in batch mode to keep from infinite loop
+                                    // if stdin = /dev/null, or if predefined inputs incorrect
+            
+            while (allowedErrors > 0) {
                 System.out.print("Number of tiles for " + current + " ("
                                  + numTilesToAssign + " tiles left, " + assignedNodes
                                  + " nodes in subgraph): ");
@@ -141,15 +144,18 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
                     num = Integer.valueOf(inputBuffer.readLine()).intValue();
                 } catch (Exception e) {
                     System.out.println("Bad number!");
+                    allowedErrors--;
                     continue;
                 }
 
                 if (num <= 0) {
+                    allowedErrors--;
                     System.out.println("Enter number > 0!");
                     continue;
                 }
 
                 if ((numTilesToAssign - num) < 0) {
+                    allowedErrors--;
                     System.out.println("Too many tiles desired!");
                     continue;
                 }
@@ -157,6 +163,10 @@ public class SpdStreamGraph extends at.dms.kjc.flatgraph.StreamGraph {
                 current.setNumTiles(num);
                 numTilesToAssign -= num;
                 break;
+            }
+            if (allowedErrors == 0) {
+                System.err.println("Too many errors reading number of tiles");
+                System.exit(1);
             }
         }
     }

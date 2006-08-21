@@ -13,4 +13,8 @@
 # Run the "nightly" regression tests under OpenPBS.  Submit this script
 # using 'qsub', possibly via cron.
 umask 002
+alias gcc='gcc34'
+alias g++='gcc34'
+export CC=gcc34
+export CXX=gcc34
 $STREAMIT_HOME/regtest/qmtest/run-reg-tests.py nightly

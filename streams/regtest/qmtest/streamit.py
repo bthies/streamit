@@ -3,7 +3,7 @@
 # streamit.py: Python extensions to QMTest for StreamIt
 # original author    David Maze <dmaze@cag.lcs.mit.edu>
 # maintained by      Allyn Dimock <dimock@csail.mit.edu>
-# $Id: streamit.py,v 1.29 2006-08-08 17:17:31 dimock Exp $
+# $Id: streamit.py,v 1.30 2006-08-22 16:43:38 dimock Exp $
 #
 
 # TODO: implement own_output to spec:
@@ -29,6 +29,9 @@ import re
 import socket
 import shutil
 #from time import sleep
+import time
+import traceback
+
 
 TIMEOUT = 20 * 60
 
@@ -190,7 +193,29 @@ class RunStrcTest(qm.test.test.Test):
 #      print >> sys.stderr, "path = " + path
 #      print >> sys.stderr, "arguments: " + (" ".join(arguments))
       e = qm.executable.RedirectedExecutable(self.timeout)
-      status = e.Run(arguments, dir=test_home_dir, path=path)
+
+      ###
+      ### All this retry and exception printing business:
+      ### qmtest will raise an attribute not found error on __Executable__child
+      ### if the system is out of file handles, as can be the case when a
+      ### large cluster program is running.  Such an exception should be
+      ### recoverable by waiting for the program to release the file handles.
+      ### Other exceptions require eventual handling.
+      ###
+      status = None
+      hasRun = 0
+      attemptsLeft = 20
+      while hasRun==0:
+          try:
+              status = e.Run(arguments, dir=test_home_dir, path=path)
+              hasRun = 1
+          except:
+              exctype, value = sys.exc_info()[:2]
+              traceback.print_exception(exctype,value,None,None,sys.stderr)
+              time.sleep(60)
+              attemptsLeft = attemptsLeft - 1
+              if attemptsLeft == 0:
+                  raise exctype, value
 
       # In all cases, save stderr.
       result['RunStrcTest.stderr'] = e.stderr
@@ -252,7 +277,31 @@ class RunProgramTest(qm.test.test.Test):
 
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
-        status = e.Run(['make', '-f', 'Makefile.streamit', 'run'], dir=test_home_dir)
+
+        ###
+        ### All this retry and exception printing business:
+        ### qmtest will raise an attribute not found error on __Executable__child
+        ### if the system is out of file handles, as can be the case when a
+        ### large cluster program is running.  Such an exception should be
+        ### recoverable by waiting for the program to release the file handles.
+        ### Other exceptions require eventual handling.
+        ###
+        status = None
+        hasRun = 0
+        attemptsLeft = 20
+        while hasRun==0:
+          try:
+              status = e.Run(['make', '-f', 'Makefile.streamit', 'run'],
+                             dir=test_home_dir)
+              hasRun = 1
+          except:
+              exctype, value = sys.exc_info()[:2]
+              traceback.print_exception(exctype,value,None,None,sys.stderr)
+              time.sleep(60)
+              attemptsLeft = attemptsLeft - 1
+              if attemptsLeft == 0:
+                  raise exctype, value
+
         result['RunProgramTest.stderr'] = e.stderr
         #result['RunProgramTest.outputfilename'] = os.path.join(test_home_dir,self.own_output)
 
@@ -274,7 +323,30 @@ class RunProgramTest(qm.test.test.Test):
         arguments = [path, '-i ' + str(self.iters)]
         #e = TimedExecutable()
         e = qm.executable.RedirectedExecutable(self.timeout)
-        status = e.Run(arguments, dir=test_home_dir, path=path)
+
+        ###
+        ### All this retry and exception printing business:
+        ### qmtest will raise an attribute not found error on __Executable__child
+        ### if the system is out of file handles, as can be the case when a
+        ### large cluster program is running.  Such an exception should be
+        ### recoverable by waiting for the program to release the file handles.
+        ### Other exceptions require eventual handling.
+        ###
+        status = None
+        hasRun = 0
+        attemptsLeft = 20
+        while hasRun==0:
+          try:
+              status = e.Run(arguments, dir=test_home_dir, path=path)
+              hasRun = 1
+          except:
+              exctype, value = sys.exc_info()[:2]
+              traceback.print_exception(exctype,value,None,None,sys.stderr)
+              time.sleep(60)
+              attemptsLeft = attemptsLeft - 1
+              if attemptsLeft == 0:
+                  raise exctype, value
+
 
         # Dump stdout to the file; ignore stderr.
         f = open(os.path.join(test_home_dir,self.own_output), 'w')

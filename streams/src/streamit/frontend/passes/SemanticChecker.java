@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.36 2006-08-23 23:01:10 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.37 2006-08-23 23:53:42 thies Exp $
  */
 public class SemanticChecker
 {
@@ -317,7 +317,9 @@ public class SemanticChecker
                     }
                 if (spec.getType() == StreamSpec.STREAM_FILTER && !hasWork)
                     report(spec, "missing work function");
-                if (spec.getType() != StreamSpec.STREAM_FILTER && !hasInit)
+                if (spec.getType() != StreamSpec.STREAM_FILTER && 
+                    spec.getType() != StreamSpec.STREAM_GLOBAL &&
+                    !hasInit)
                     report(spec, "missing init function");
             }
     }

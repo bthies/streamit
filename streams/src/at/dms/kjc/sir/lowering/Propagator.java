@@ -750,30 +750,6 @@ public class Propagator extends SLIRReplacingVisitor {
       }*/
 
     /**
-     * Visits a phase invocation statement.
-     */
-    public Object visitPhaseInvocation(SIRPhaseInvocation self,
-                                       JMethodCallExpression call,
-                                       JExpression peek,
-                                       JExpression pop,
-                                       JExpression push)
-    {
-        JMethodCallExpression newCall =
-            (JMethodCallExpression)call.accept(this);
-        JExpression newPeek = (JExpression)peek.accept(this);
-        JExpression newPop = (JExpression)pop.accept(this);
-        JExpression newPush = (JExpression)push.accept(this);
-        if (write)
-            {
-                if (newCall != call) self.setCall(newCall);
-                if (newPeek != peek) self.setPeek(newPeek);
-                if (newPop != pop) self.setPop(newPop);
-                if (newPush != push) self.setPush(newPush);
-            }
-        return self;
-    }
-
-    /**
      * Visits a print statement.
      */
     public Object visitPrintStatement(SIRPrintStatement self,

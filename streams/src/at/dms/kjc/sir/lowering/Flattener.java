@@ -256,12 +256,6 @@ public class Flattener {
             FieldProp.doPropagate(str);
             if (printStatus) { System.err.println("done."); }
 
-        /* dzm -- note phase ordering issue here.  In particular, we
-         * probably want to form filter phases before fusing the world, but we need
-         * to run field prop before forming phases. */
-        // resolve phases in phased filters
-        //FilterPhaser.resolvePhasedFilters(str);
-        
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
 

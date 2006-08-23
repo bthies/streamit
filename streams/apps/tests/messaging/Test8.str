@@ -1,4 +1,4 @@
-/**
+ /**
  * A test of messaging with dynamic rates and phases.
  *
  * Correct output:
@@ -60,21 +60,21 @@ int->void filter SomeReceiver  {
    int[4] temp;
    work pop 4 {
        if (message_value == 0)
-           popPhase();
+           phase1();
        else
-           popPhase2();
+           phase2();
        for (int i = 0; i < 4; i++) {
            println(temp[i]);
        }
    }
 
-   phase popPhase pop 4 {
+   void phase1() pop 4 {
        for (int i = 0; i < 4; i++) {
            temp[i] = pop();
        }
    }
 
-   phase popPhase2 pop 4 {
+   void phase2() pop 4 {
        for (int i = 0; i < 4; i++) {
            temp[3-i] = pop();
        }

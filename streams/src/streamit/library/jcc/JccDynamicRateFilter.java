@@ -3,13 +3,13 @@ package streamit.library.jcc;
 import streamit.library.Filter;
 
 /**
- * This class implements a filter with a dynamic peek rate. All phased filters
- * must also be run as dynamic rate filters.
+ * This class implements a filter with a dynamic peek rate. 
  * 
- * The implementation is based on PhasedFilter. The real work function is
- * repeatedly run in a separate thread which blocks whenever more input data is
- * needed. This essentially tries to implement a pull model on top of JCC's push
- * model, which may not be a good idea.
+ * The implementation was based on the old (removed from CVS)
+ * PhasedFilter implementation. The real work function is repeatedly
+ * run in a separate thread which blocks whenever more input data is
+ * needed. This essentially tries to implement a pull model on top of
+ * JCC's push model, which may not be a good idea.
  * 
  * Because JCC expects everything to be run in the same vat thread, the worker
  * thread blocks whenever a data item is output. The vat thread picks up the

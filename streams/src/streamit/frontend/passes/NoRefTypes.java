@@ -31,7 +31,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.9 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: NoRefTypes.java,v 1.10 2006-08-23 23:01:10 thies Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -115,7 +115,10 @@ public class NoRefTypes extends FEReplacer
                                                 func.getName(),
                                                 returnType,
                                                 newParams,
-                                                func.getBody()));
+                                                func.getBody(),
+                                                func.getPeekRate(),
+                                                func.getPopRate(),
+                                                func.getPushRate()));
     }
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.112 2006-06-14 21:01:04 dimock Exp $
+ * $Id: LIRToC.java,v 1.113 2006-08-23 23:00:56 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1476,17 +1476,6 @@ public class LIRToC
         p.print("))");
     }
     
-    public void visitPhaseInvocation(SIRPhaseInvocation self,
-                                     JMethodCallExpression call,
-                                     JExpression peek,
-                                     JExpression pop,
-                                     JExpression push)
-    {
-        p.print("/* phase invocation: ");
-        call.accept(this);
-        p.print("; */");
-    }
-
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
                                           JExpression portal,
                                           SIRStream receiver, 

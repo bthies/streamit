@@ -184,22 +184,6 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
-     * Visits a phase-invocation statement.
-     */
-    public Object visitPhaseInvocation(SIRPhaseInvocation self,
-                                       JMethodCallExpression call,
-                                       JExpression peek,
-                                       JExpression pop,
-                                       JExpression push)
-    {
-        call.accept(this);
-        peek.accept(this);
-        pop.accept(this);
-        push.accept(this);
-        return call;
-    }
-
-    /**
      * Visits a register-receiver statement.
      */
     public Object visitRegReceiverStatement(SIRRegReceiverStatement self,

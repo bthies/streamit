@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * init function.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InitMunger.java,v 1.4 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: InitMunger.java,v 1.5 2006-08-23 23:01:13 thies Exp $
  */
 abstract public class InitMunger extends FEReplacer
 {
@@ -64,7 +64,9 @@ abstract public class InitMunger extends FEReplacer
         Statement newBody = new StmtBlock(oldBody.getContext(), newStmts);
         init = new Function(init.getContext(), init.getCls(),
                             init.getName(), init.getReturnType(),
-                            init.getParams(), newBody);
+                            init.getParams(), newBody,
+                            init.getPeekRate(), init.getPopRate(),
+                            init.getPushRate());
         fns.add(init);
         return fns;
     }

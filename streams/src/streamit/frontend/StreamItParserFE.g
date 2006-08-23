@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.63 2006-02-09 19:50:42 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.64 2006-08-23 23:01:03 thies Exp $
  */
 
 header {
@@ -241,8 +241,6 @@ work_decl returns [FuncWork f]
 	:	(	tw:TK_work { c = getContext(tw); type = Function.FUNC_WORK; }
 		|	tpw:TK_prework { c = getContext(tpw);
 							 type = Function.FUNC_PREWORK; }
-		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText();
-			                    type = Function.FUNC_PHASE;}
 		)
 		(	TK_push push=rate_expr
 		|	TK_pop pop=rate_expr
@@ -484,17 +482,27 @@ variable_decl returns [Statement s] { s = null; Type t; Expression x = null;
 		// We explicitly use the context of the first identifier.
 	;
 
-function_decl returns [Function f] { Type t; List l; Statement s; f = null;
-int cls = Function.FUNC_HELPER; }
-	:	t=data_type id:ID l=param_decl_list s=block
-		{ f = new Function(getContext(id), cls, id.getText(), t, l, s); }
+function_decl returns [Function f] 
+{ 
+    Type t; List l; Statement s; f = null;
+    int cls = Function.FUNC_HELPER;
+	Expression pop = null, peek = null, push = null;
+}
+	:	t=data_type id:ID 
+        l=param_decl_list 
+		(	TK_push push=rate_expr
+		|	TK_pop pop=rate_expr
+		|	TK_peek peek=rate_expr
+		)*
+        s=block
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, s, peek, pop, push); }
 	;
 
 handler_decl returns [Function f] { List l; Statement s; f = null;
 Type t = new TypePrimitive(TypePrimitive.TYPE_VOID);
 int cls = Function.FUNC_HANDLER; }
 	:	TK_handler id:ID l=param_decl_list s=block
-		{ f = new Function(getContext(id), cls, id.getText(), t, l, s); }
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, s, null, null, null); }
 	;
 
 param_decl_list returns [List l] { l = new ArrayList(); Parameter p; }
@@ -813,7 +821,7 @@ struct_decl returns [TypeStruct ts]
 native_function_decl returns [Function f] { Type t; List l; Statement s; f = null;
 int cls = Function.FUNC_NATIVE; }
 	:	t=data_type id:ID l=param_decl_list SEMI
-		{ f = new Function(getContext(id), cls, id.getText(), t, l, null); }
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, null, null, null, null); }
 	;
 	
 native_decl returns [TypeHelper th]

@@ -54,9 +54,10 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
                                  int height,
                                  int the_chroma_format) {
     // FEATURETODO
-    // When phases can take parameters, get rid of this definition and
-    // uncomment the definition in the filter work function, and change
-    // the phase PushMacroblock() to use the parameter. 
+    // When helper functions can express their I/O rates as a function
+    // of their parameters, get rid of this definition and uncomment
+    // the definition in the filter work function, and change the
+    // phase PushMacroblock() to use the parameter.
     int b_per_m = blocks_per_macroblock[the_chroma_format];
     int[12][64] QFS; // Should be b_per_m, but b_per_m gets assigned later for some reason.
     int picture_coding_type;
@@ -95,7 +96,7 @@ bit->int filter MPEGStreamParser(portal<InverseQuantization_AC_Coeff> UpdatePort
         next_cfg_node = 0;
     } 
 
-    phase PushMacroblock push (b_per_m*64+19) {
+    void PushMacroblock() push (b_per_m*64+19) {
         for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
             for (int j = 0; j < 64; j++) {
                 push(QFS[i][j]);

@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.31 2006-01-25 17:01:24 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.32 2006-08-23 23:00:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -106,15 +106,6 @@ public interface SLIRVisitor extends KjcVisitor
     void visitPushExpression(SIRPushExpression self,
                              CType tapeType,
                              JExpression arg);
-
-    /**
-     * Visits a phase-invocation statement.
-     */
-    void visitPhaseInvocation(SIRPhaseInvocation self,
-                              JMethodCallExpression call,
-                              JExpression peek,
-                              JExpression pop,
-                              JExpression push);
 
     /**
      * Visits a register-receiver statement.

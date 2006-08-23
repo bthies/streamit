@@ -1,7 +1,7 @@
 /**
  * This example file performs some entropy coding using dynamic rate
- * pop statements in the work body and static rate push statements from within
- * a phase called by the work function.
+ * pop statements in the work body and static rate push statements
+ * from within a helper function called by the work function.
  * @author Matthew Drake (madrake@gmail.com)
  */
 
@@ -45,17 +45,8 @@ int->int filter EntropyCoder {
     }
   }
 
-  phase outputPhase push 2 {
+ void outputPhase() push 2 {
     push(count);   
     push(val);
   }
 }
-
-
-
-
-
-
-
-
-

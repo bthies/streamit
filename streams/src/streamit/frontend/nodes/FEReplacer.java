@@ -54,7 +54,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.40 2006-03-25 00:08:00 dimock Exp $
+ * @version $Id: FEReplacer.java,v 1.41 2006-08-23 23:01:08 thies Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -330,7 +330,9 @@ public class FEReplacer implements FEVisitor
         if (newBody == func.getBody()) return func;
         return new Function(func.getContext(), func.getCls(),
                             func.getName(), func.getReturnType(),
-                            func.getParams(), newBody);
+                            func.getParams(), newBody,
+                            func.getPeekRate(), func.getPopRate(),
+                            func.getPushRate());
     }
     
     public Object visitFuncWork(FuncWork func)
@@ -539,20 +541,6 @@ public class FEReplacer implements FEVisitor
         return new StmtLoop(stmt.getContext(), newCreator);
     }
 
-    public Object visitStmtPhase(StmtPhase stmt)
-    {
-        Expression newFc = doExpression(stmt.getFunCall());
-        if (newFc == stmt.getFunCall())
-            return stmt;
-        // We lose if the new expression isn't a function call.
-        if (!(newFc instanceof ExprFunCall))
-            return stmt;
-        return new StmtPhase(stmt.getContext(), (ExprFunCall)newFc);
-    }
-
-    //    public Object visitStmtAddPhase(StmtAddPhase stmt) {
-    //        Expression peek = 
-    //    }
     public Object visitStmtPush(StmtPush stmt)
     {
         Expression newValue = doExpression(stmt.getValue());
@@ -681,57 +669,38 @@ public class FEReplacer implements FEVisitor
     
         
         // streamit.frontend.tojava.StmtIODecl: has rate declaration 
-        // expressions getRate1(), getRate2()
+        // expressions peek, pop, push
         if (node instanceof StmtIODecl) {
             boolean changed = false;
-            Expression oldRate1 = ((StmtIODecl)node).getRate1();
-            Expression newRate1 = null;
-            if (oldRate1 != null) {
-                newRate1 = (Expression)oldRate1.accept(this);
-                if (oldRate1 != newRate1) { changed = true; }
-            }
-            Expression oldRate2 = ((StmtIODecl)node).getRate2();
-            Expression newRate2 = null;
-            if (oldRate2 != null) {
-                newRate2 = (Expression)oldRate2.accept(this);
-                if (oldRate2 != newRate2) { changed = true; }
-            }
-            if (! changed) return node;
-            return new StmtIODecl(node.getContext(),
-                                  ((StmtIODecl)node).getName(),
-                                  ((StmtIODecl)node).getType(),
-                                  newRate1, newRate2);
-        }
-        // streamit.frontend.tojava.StmtAddPhase:
-        // need to visit expressions getPeek(), getPop(), getPush()
-        if (node instanceof StmtAddPhase) {
-            boolean changed = false;
-            Expression oldPeek = ((StmtAddPhase)node).getPeek();
+            Expression oldPeek = ((StmtIODecl)node).getPeek();
             Expression newPeek = null;
             if (oldPeek != null) {
                 newPeek = (Expression)oldPeek.accept(this);
                 if (oldPeek != newPeek) { changed = true; }
             }
-            Expression oldPop = ((StmtAddPhase)node).getPop();
+            Expression oldPop = ((StmtIODecl)node).getPop();
             Expression newPop = null;
             if (oldPop != null) {
                 newPop = (Expression)oldPop.accept(this);
                 if (oldPop != newPop) { changed = true; }
             }
-            Expression oldPush = ((StmtAddPhase)node).getPush();
+            Expression oldPush = ((StmtIODecl)node).getPush();
             Expression newPush = null;
             if (oldPush != null) {
                 newPush = (Expression)oldPush.accept(this);
                 if (oldPush != newPush) { changed = true; }
             }
-            if (! changed) return node;
-            return new StmtAddPhase(node.getContext(),
-                                    ((StmtAddPhase)node).isInit(),
-                                    newPeek, newPop, newPush, 
-                                    ((StmtAddPhase)node).getName());
+            if (!changed) return node;
+            return new StmtIODecl(node.getContext(),
+                                  ((StmtIODecl)node).isPrework(),
+                                  ((StmtIODecl)node).isWork(),
+                                  newPeek,
+                                  newPop,
+                                  newPush,
+                                  ((StmtIODecl)node).getName());
         }
+
         // Some other case of visitOther that we have not seen yet
-        
         System.err.println(this.getClass().getName() 
                            + " visitOther for "
                            + node.getClass().getName()

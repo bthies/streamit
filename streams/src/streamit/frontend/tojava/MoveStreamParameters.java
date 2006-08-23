@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.16 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.17 2006-08-23 23:01:13 thies Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -80,7 +80,9 @@ public class MoveStreamParameters extends InitMunger
         
         // Too many parts here, don't use Function.newInit().
         return new Function(context, init.getCls(), init.getName(),
-                            init.getReturnType(), newParams, newBody);
+                            init.getReturnType(), newParams, newBody,
+                            init.getPeekRate(), init.getPopRate(),
+                            init.getPushRate());
     }
 
     // Return a function just like init, but with params as its
@@ -119,7 +121,8 @@ public class MoveStreamParameters extends InitMunger
         Statement newBody = new StmtBlock(oldBody.getContext(), body);
         
         return new Function(context, init.getCls(), init.getName(),
-                            init.getReturnType(), newParams, newBody);
+                            init.getReturnType(), newParams, newBody,
+                            init.getPeekRate(), init.getPopRate(), init.getPushRate());
     }
 
     public Object visitStreamSpec(StreamSpec spec)

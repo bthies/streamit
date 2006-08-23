@@ -19,86 +19,135 @@ package streamit.frontend.tojava;
 import streamit.frontend.nodes.*;
 
 /**
- * An old-syntax I/O rate declaration.  This has a name, a type, and one
- * or two integer rates.  It gets translated to a statement like
- * <pre>
- * name = new Channel(type.class, rate1, rate2);
- * </pre>
+ * This statement is used to indicate that a given function has a
+ * given I/O rate.  It also keeps track of whether the given function
+ * serves as the work function for either that init or steady-state.
+ *
+ * If a function serves as a work function, it is translated into a
+ * <code>addInitPhase</code> or an <code>addSteadyPhase</code> call.
+ * Note that we used to support multiple phases, but now we only
+ * support one per execution epoch (init and steady).  
+ *
+ * Other functions that do I/O are translated into a
+ * <code>annotateIORate</code> call.
+ * 
+ * Both calls have peek, pop, and push rates and the name of a method
+ * to call.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtIODecl.java,v 1.5 2006-05-26 19:05:50 thies Exp $
+ * @version $Id: StmtIODecl.java,v 1.6 2006-08-23 23:01:13 thies Exp $
  */
-public class StmtIODecl extends streamit.frontend.nodes.Statement
+public class StmtIODecl extends Statement
 {
+    private boolean prework, work;
+    private Expression peek, pop, push;
     private String name;
-    private Type type;
-    private Expression rate1, rate2;
-    
+
     /**
-     * Creates a new I/O rate declaration.  The name should be either
-     * "inputChannel" or "outputChannel".  If it is "outputChannel",
-     * <code>rate1</code> is the push rate.  If the name is
-     * "inputChannel", <code>rate1</code> is the pop rate, and
-     * <code>rate2</code> is the peek rate.  The second rate can be
-     * <code>null</code> if it is unnecessary or it is equal to the
-     * first rate.
+     * Create an IO-declaring statement from scratch.  You may want
+     * one of the constructors below; this is mainly done while
+     * replacing.
+     *
+     * Note that prework=true for prework functions; work=true for
+     * work functions, and prework=work=false for helper functions.
      *
      * @param context  Context this statement appears in
-     * @param name     Name of the channel
-     * @param type     Type of objects on this channel
-     * @param rate1    Push or pop rate
-     * @param rate2    Peek rate or null
+     * @param prework  Whether this represents prework function
+     * @param work     Whether this represents work function
+     * @param peek     Peek rate of this function
+     * @param pop      Pop rate of this function
+     * @param push     Push rate of this function
+     * @param name     Name of this function
      */
-    public StmtIODecl(FEContext context, String name, Type type,
-                      Expression rate1, Expression rate2)
+    public StmtIODecl(FEContext context, boolean prework, boolean work,
+                      Expression peek, Expression pop, Expression push,
+                      String name) {
+        super(context);
+        this.prework = prework;
+        this.work = work;
+        this.peek = peek;
+        this.pop = pop;
+        this.push = push;
+        this.name = name;
+    }
+
+    /**
+     * Create an IO-declaring statement from a helper function.
+     *
+     * @param context  Context this statement appears in
+     * @param helper   Helper function itself
+     */
+    public StmtIODecl(FEContext context, Function helper)
     {
         super(context);
-        this.name = name;
-        this.type = type;
-        this.rate1 = rate1;
-        this.rate2 = rate2;
+        // this is a helper function, so it is neither prework nor work
+        this.prework = false;
+        this.work = false;
+        this.peek = helper.getPeekRate();
+        this.pop = helper.getPopRate();
+        this.push = helper.getPushRate();
+        this.name = helper.getName();
     }
     
     /**
-     * Creates a new I/O rate declaration with a single rate.
+     * Create an IO-declaring statement from a work function.
      *
      * @param context  Context this statement appears in
-     * @param name     Name of the channel
-     * @param type     Type of objects on this channel
-     * @param rate     Push or pop rate
+     * @param init     true if the function is prework; otherwise it is work
+     * @param work     Work function itself
      */
-    public StmtIODecl(FEContext context, String name, Type type,
-                      Expression rate)
+    public StmtIODecl(FEContext context, boolean init, FuncWork work)
     {
-        this(context, name, type, rate, null);
+        super(context);
+        this.prework = init;
+        this.work = !init;
+        this.peek = work.getPeekRate();
+        this.pop = work.getPopRate();
+        this.push = work.getPushRate();
+        if (work.getName() != null)
+            this.name = work.getName();
+        else if (init)
+            this.name = "prework";
+        else
+            this.name = "work";
     }
     
-    /** Returns the name of the channel being declared. */
+    /** Returns whether this corresponds to the prework function. */
+    public boolean isPrework()
+    {
+        return prework;
+    }
+
+    /** Returns whether this corresponds to the work function. */
+    public boolean isWork()
+    {
+        return work;
+    }
+
+    /** Returns the peek rate of the function. */
+    public Expression getPeek()
+    {
+        return peek;
+    }
+    
+    /** Returns the pop rate of the function. */
+    public Expression getPop()
+    {
+        return pop;
+    }
+    
+    /** Returns the push rate of the function. */
+    public Expression getPush()
+    {
+        return push;
+    }
+
+    /** Returns the name of the function. */
     public String getName()
     {
         return name;
     }
-    
-    /** Returns the type of items on the channel. */
-    public Type getType()
-    {
-        return type;
-    }
-    
-    /** Returns the pop or push rate of the stream. */
-    public Expression getRate1()
-    {
-        return rate1;
-    }
-    
-    /** Returns the peek rate of the stream.  Returns null if this is an
-     * output channel or if the peek rate is undeclared and implicitly
-     * equal to the pop rate. */
-    public Expression getRate2()
-    {
-        return rate2;
-    }
-    
+
     public Object accept(FEVisitor v)
     {
         return v.visitOther(this);

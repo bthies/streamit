@@ -2,7 +2,6 @@
 # Performance / Modes / Options Variables
 # --------------------------------------------------------------------
 
-# PARSER = Parser.str
 PARSER = Parser_alt_preserved_state.str
 
 #COLOR_CHANNEL_PROCESSING = ColorChannelProcessing.str
@@ -16,6 +15,7 @@ DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate.str
 # DESCRAMBLE_AND_MOTION_COMPENSATE = DescrambleAndMotionCompensate_opt_handfused.str
 
 MOTION_PREDICTION = MotionPrediction.str
+# change to alt_blocked for messaging version
 # MOTION_PREDICTION = MotionPrediction_alt_blocked.str
 # MOTION_PREDICTION = MotionPrediction_alt_blocked_parallel.str
 

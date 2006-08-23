@@ -19,52 +19,27 @@ package streamit.frontend.nodes;
 import java.util.Collections;
 
 /**
- * A StreamIt work or phase function.  A work function always returns
- * void and may or may not have a name.  It takes no parameters.
- * Additionally, it has rate declarations; there are expressions
- * corresponding to the number of items peeked at, popped, and pushed
- * per steady-state execution.
+ * A StreamIt work or prework function.  A work function always
+ * returns void and may or may not have a name.  It takes no
+ * parameters.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FuncWork.java,v 1.6 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: FuncWork.java,v 1.7 2006-08-23 23:01:08 thies Exp $
  */
 public class FuncWork extends Function
 {
-    private Expression peekRate, popRate, pushRate;
-    
     /** Creates a new work function given its name (or null), body,
-     * and I/O rates.  The I/O rates may be null if declarations are
-     * omitted from the original source. */
+     * and I/O rates.*/
     public FuncWork(FEContext context, int cls,
                     String name, Statement body,
                     Expression peek, Expression pop, Expression push)
     {
         super(context, cls, name,
               new TypePrimitive(TypePrimitive.TYPE_VOID),
-              Collections.EMPTY_LIST, body);
-        peekRate = peek;
-        popRate = pop;
-        pushRate = push;
+              Collections.EMPTY_LIST, body,
+              peek, pop, push);
     }
 
-    /** Gets the peek rate of this. */
-    public Expression getPeekRate() 
-    {
-        return peekRate;
-    }
-    
-    /** Gets the pop rate of this. */
-    public Expression getPopRate()
-    {
-        return popRate;
-    }
-    
-    /** Gets the push rate of this. */
-    public Expression getPushRate()
-    {
-        return pushRate;
-    }
-    
     /** Accepts a front-end visitor. */
     public Object accept(FEVisitor v)
     {

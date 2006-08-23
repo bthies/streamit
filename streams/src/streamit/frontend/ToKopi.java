@@ -32,7 +32,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.11 2006-01-25 17:04:21 thies Exp $
+ * @version $Id: ToKopi.java,v 1.12 2006-08-23 23:01:03 thies Exp $
  */
 public class ToKopi
 {
@@ -89,7 +89,6 @@ public class ToKopi
         prog = (Program)prog.accept(new NoRefTypes());
         prog = (Program)prog.accept(new RenameBitVars());
         prog = (Program)prog.accept(new FindFreeVariables());
-        prog = (Program)prog.accept(new NoticePhasedFilters(false));
         prog = (Program)prog.accept(new DoComplexProp(varGen));
         prog = (Program)prog.accept(new ComplexToStruct());
         prog = (Program)prog.accept(new SeparateInitializers());

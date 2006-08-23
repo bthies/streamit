@@ -74,7 +74,7 @@ int->int filter MotionPrediction(int width, int height) {
         count++;
     }
 
-    phase readIPicture pop datarate push pushrate {
+    void readIPicture() pop datarate push pushrate {
         lastSeenFrame = 1;
         int[width][height] temp_picture;
  
@@ -102,7 +102,7 @@ int->int filter MotionPrediction(int width, int height) {
         }
     }
 
-    phase readPPicture pop datarate push pushrate {
+    void readPPicture() pop datarate push pushrate {
         lastSeenFrame = 2;
         int[width][height] temp_picture;
         int[width/8][height/8][2][2][2] vector;
@@ -149,7 +149,7 @@ int->int filter MotionPrediction(int width, int height) {
         }
     }
 
-    phase readBPicture pop datarate push pushrate {
+    void readBPicture() pop datarate push pushrate {
         lastSeenFrame = 3;
         int[width][height] temp_picture;
         int[width/8][height/8][2][2][2] vector;

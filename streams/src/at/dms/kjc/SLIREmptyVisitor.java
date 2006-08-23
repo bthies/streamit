@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.19 2006-01-25 17:01:24 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.20 2006-08-23 23:00:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -130,21 +130,6 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
                                     CType tapeType,
                                     JExpression arg) {
         arg.accept(this);
-    }
-
-    /**
-     * Visits a phase-invocation statement.
-     */
-    public void visitPhaseInvocation(SIRPhaseInvocation self,
-                                     JMethodCallExpression call,
-                                     JExpression peek,
-                                     JExpression pop,
-                                     JExpression push)
-    {
-        call.accept(this);
-        peek.accept(this);
-        pop.accept(this);
-        push.accept(this);
     }
 
     /**

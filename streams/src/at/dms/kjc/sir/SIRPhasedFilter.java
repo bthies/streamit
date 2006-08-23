@@ -12,6 +12,9 @@ import java.util.HashMap;
  * where the execution model for a normal filter is "wait until the
  * peek rate for the entire filter can be satisfied", or a phased
  * filter we only wait until the current phase can execute.
+ *
+ * As of Aug 2006, phases have been removed from the StreamIt
+ * language, so the full generality of this class is not utilized.
  */
 public class SIRPhasedFilter extends SIRStream implements Cloneable, SIRCodeUnit 
 {

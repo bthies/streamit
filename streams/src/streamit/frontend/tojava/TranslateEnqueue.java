@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.10 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.11 2006-08-23 23:01:13 thies Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -106,7 +106,8 @@ public class TranslateEnqueue extends FEReplacer
         Parameter param =
             new Parameter(new TypePrimitive(TypePrimitive.TYPE_INT), "n");
         return Function.newHelper(context, name, returnType,
-                                  Collections.singletonList(param), body);
+                                  Collections.singletonList(param), body,
+                                  null, null, null);
     }
 
     public Object visitStreamSpec(StreamSpec ss)
@@ -150,7 +151,9 @@ public class TranslateEnqueue extends FEReplacer
                 body = new StmtBlock(body.getContext(), stmts);
                 fnNew = new Function(fnNew.getContext(), fnNew.getCls(),
                                      fnNew.getName(), fnNew.getReturnType(),
-                                     fnNew.getParams(), body);
+                                     fnNew.getParams(), body,
+                                     fnNew.getPeekRate(), fnNew.getPopRate(),
+                                     fnNew.getPushRate());
             }
         return fnNew;
     }

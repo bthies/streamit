@@ -20,9 +20,9 @@ public class JccFilter extends JccStream {
 	protected int lastSourceRunCount = 0;
 
 	/**
-	 * Creates a JCC filter that wraps around a StreamIt library Filter. The
-	 * filter must be single-phase with work/prework functions that have static
-	 * peek rates.
+	 * Creates a JCC filter that wraps around a StreamIt library
+	 * Filter. The filter must have work/prework functions that
+	 * have static peek rates.
 	 * 
 	 * @param peekRate
 	 *            The peek rate of the filter's work function.

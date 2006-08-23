@@ -206,7 +206,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     public boolean isToplevelStream(String name) {
         return (name.equals("StreamIt") ||
                 name.equals("StreamItFilter") ||
-                name.equals("StreamItPhasedFilter") ||
                 name.equals("StreamItPipeline") ||
                 name.equals("StreamItSplitJoin") ||
                 name.equals("StreamItFeedbackLoop"));
@@ -304,8 +303,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
-        if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter") ||
-            TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
+        if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter")) {
             SIRFilter current;
             if (hasMethod(clazz, "prework")) {
                 // this is a two-stage filter
@@ -321,21 +319,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             parentStream = current;
             return current;
         }
-        /* Conversion from filter to phased filter should now be done within IR.
-           if (TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
-           if (hasMethod(clazz, "prework")) {
-           // we don't yet support both stages and phases in the same filter
-           Utils.fail("Don't yet support filters that have both stages (prework/work) and phases (phase1, phase2, etc.)");
-           }
-           SIRPhasedFilter current = new SIRPhasedFilter();
-           current.setParent((SIRContainer)parentStream);
-           current.setIdent(clazz.getIdent());
-           current.setInputType(CStdType.Void);
-           current.setOutputType(CStdType.Void);
-           parentStream = current;
-           return current;
-           }
-        */
         if (TYPE.equals("FeedbackLoop") || TYPE.equals("StreamItFeedbackLoop")) {
             SIRFeedbackLoop current = new SIRFeedbackLoop();
             current.setParent((SIRContainer)parentStream);
@@ -921,10 +904,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
         /*Install work function*/
         if (ident.equals("work")) {
-            if (parentStream instanceof SIRPhasedFilter && 
-                !(parentStream instanceof SIRFilter)) {
-                System.err.println("Current Kopi2SIR should not construct plain PhasedFilters.");
-            }
             if (parentStream instanceof SIRFilter)
                 ((SIRFilter)parentStream).setWork
                     (new JMethodDeclaration(null,
@@ -2036,7 +2015,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             //we want to ignore remove this method from the block
             return null;
         }
-        else if (ident.equals("addSteadyPhase") || ident.equals("addInitPhase")) {
+        else if (ident.equals("addSteadyPhase") || ident.equals("addInitPhase") || ident.equals("annotateIORate")) {
             // parsing this:  addPhase(peek, pop, push, phaseName)
             JExpression peek = (JExpression)args[0].accept(this);
             JExpression pop = (JExpression)args[1].accept(this);
@@ -2050,14 +2029,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             return null;
         }
         else if (ident.equals("setIOTypes")) {
-            // Phased filter syntax for setting I/O types.  This has
-            // two arguments, which are null or Class objects.
+            // New syntax (originally driven by phased filters) for
+            // setting I/O types.  This has two arguments, which are
+            // null or Class objects.
             args[0] = (JExpression)args[0].accept(this);
             args[1] = (JExpression)args[1].accept(this);
-            if (parentStream instanceof SIRPhasedFilter)
+            if (parentStream instanceof SIRFilter)
                 {
-                    SIRPhasedFilter filter = (SIRPhasedFilter)parentStream;
-
+                    SIRFilter filter = (SIRFilter)parentStream;
                     // input type
                     if (args[0] instanceof JClassExpression) 
                         filter.setInputType(((JClassExpression)args[0]).getClassType());
@@ -2118,58 +2097,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                 at.dms.util.Utils.fail(printLine(self) +
                                        "setIOTypes() outside a filter");
             return null;
-        }
-        else if (ident.equals("phase")) {
-            // This is special.  There should be one parameter, which
-            // is an anonymous stream creator; we need to get information
-            // out of this.
-            if (!(parentStream instanceof SIRPhasedFilter))
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "Phase creation outside a phased filter");
-            if (args.length > 1)
-                at.dms.util.Utils.fail(printLine(self) + 
-                                       "Too many args to phase");
-            JExpression expr = args[0];
-            if (expr instanceof JUnaryPromote)
-                expr = ((JUnaryPromote)expr).getExpr();
-            // This could go inside a try...catch (ClassCastException) block.
-            // This appears to be the right type.  cf. JLS 15.9
-            JUnqualifiedAnonymousCreation uac =
-                (JUnqualifiedAnonymousCreation)(expr);
-            // uac should have three parameters; these are the peek, pop,
-            // and push rates, respectively.
-            JExpression[] pparams = uac.getParams();
-            if (pparams.length != 3)
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "WorkFunction constructor needs exactly 3 params");
-            JExpression peek = pparams[0];
-            JExpression pop = pparams[1];
-            JExpression push = pparams[2];
-            
-            // Also, we need to look inside the class body to find the
-            // function being called:
-            JClassDeclaration decl = uac.getDecl();
-            JMethodDeclaration[] methods = decl.getMethods();
-            if (methods.length != 1)
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "WorkFunction body can only have one function");
-            if (!(methods[0].getName().equals("work")))
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "WorkFunction must contain work function");
-            // pass on validating other attributes of work()
-            JBlock body = methods[0].getBody();
-            if (body.size() != 1)
-                at.dms.util.Utils.fail(printLine(self) +
-                                       "WorkFunction work function must have exactly one statement");
-            JExpressionStatement stmt =
-                (JExpressionStatement)body.getStatement(0);
-            JMethodCallExpression fc =
-                (JMethodCallExpression)stmt.getExpression();
-            // At this point, we've won; we kind of want to search ourself
-            // to find the right function to turn into a phase, but we
-            // can do that later.
-            return new SIRPhaseInvocation(self.getTokenReference(),
-                                          fc, peek, pop, push, null);
         }
         //There are two cases for portal calls
         //Message send to a portal using a local var to store the portal

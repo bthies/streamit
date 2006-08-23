@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.76 2006-03-25 00:08:00 dimock Exp $
+ * @version $Id: ToJava.java,v 1.77 2006-08-23 23:01:03 thies Exp $
  */
 public class ToJava
 {
@@ -206,7 +206,7 @@ public class ToJava
      * "new" syntax to the "old" Java syntax understood by the main
      * StreamIt compiler.  Conversion directed towards the StreamIt
      * Java library, as opposed to the compiler, has slightly
-     * different output, mostly centered around phased filters.
+     * different output.
      *
      * @param prog  the complete IR tree to lower
      * @param libraryFormat  true if the program is being converted
@@ -231,14 +231,13 @@ public class ToJava
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
         prog = (Program)prog.accept(new NameAnonymousStreams(varGen));
-        prog = (Program)prog.accept(new NoticePhasedFilters(libraryFormat));
         //prog = (Program)prog.accept(new GenerateCopies(varGen));
         prog = (Program)prog.accept(new DoComplexProp(varGen));
         prog = (Program)prog.accept(new DoCompositeProp(varGen));
         prog = (Program)prog.accept(new ComplexToStruct());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new EnqueueToFunction());
-        prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
+        prog = (Program)prog.accept(new InsertIODecls());
 
         //prog = (Program)prog.accept(new InsertInitConstructors(varGen));
         // separate field initializers after init constructors so that

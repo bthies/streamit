@@ -216,7 +216,7 @@ int->int filter MPEGStreamParser_InternalBuffering(int width,
         ran = 0;
     } 
 
-    phase I_Pops pop * {
+    void I_Pops() pop * {
         if (i_buf_pos < i_amount) {
             int ipt = i_amount - i_buf_pos;
             if (ipt == 32) {
@@ -241,7 +241,7 @@ int->int filter MPEGStreamParser_InternalBuffering(int width,
         i_buf_pos -= i_amount;
     }
 
-    phase I_Peeks pop * {
+    void I_Peeks() pop * {
         if (i_buf_pos <= i_amount) {
             int ipt = i_amount - i_buf_pos;
             if (i_buf_pos == 32) {
@@ -265,7 +265,7 @@ int->int filter MPEGStreamParser_InternalBuffering(int width,
     }
 
 
-    phase PushMacroblock push (b_per_m*64+19) {
+    void PushMacroblock() push (b_per_m*64+19) {
         for (int i = 0; i < blocks_per_macroblock[the_chroma_format]; i++) {
             for (int j = 0; j < 64; j++) {
                 push(QFS[i][j]);
@@ -2465,7 +2465,7 @@ int->int filter MotionPrediction(int width, int height) {
         count++;
     }
 
-    phase readIPicture pop datarate push pushrate {
+    void readIPicture() pop datarate push pushrate {
         lastSeenFrame = 1;
         int[width][height] temp_picture;
  
@@ -2493,7 +2493,7 @@ int->int filter MotionPrediction(int width, int height) {
         }
     }
 
-    phase readPPicture pop datarate push pushrate {
+    void readPPicture() pop datarate push pushrate {
         lastSeenFrame = 2;
         int[width][height] temp_picture;
         int[width/8][height/8][2][2][2] vector;
@@ -2538,7 +2538,7 @@ int->int filter MotionPrediction(int width, int height) {
         }
     }
 
-    phase readBPicture pop datarate push pushrate {
+    void readBPicture() pop datarate push pushrate {
         lastSeenFrame = 3;
         int[width][height] temp_picture;
         int[width/8][height/8][2][2][2] vector;

@@ -26,7 +26,7 @@ import java.util.List;
  * with StmtBlocks if they are a different sort of statement.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MakeBodiesBlocks.java,v 1.5 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: MakeBodiesBlocks.java,v 1.6 2006-08-23 23:01:08 thies Exp $
  */
 public class MakeBodiesBlocks extends FEReplacer
 {
@@ -45,7 +45,9 @@ public class MakeBodiesBlocks extends FEReplacer
         if (newBody == func.getBody()) return func;
         return new Function(func.getContext(), func.getCls(),
                             func.getName(), func.getReturnType(),
-                            func.getParams(), newBody);
+                            func.getParams(), newBody,
+                            func.getPeekRate(), func.getPopRate(),
+                            func.getPushRate());
     }
     
     public Object visitFuncWork(FuncWork func)

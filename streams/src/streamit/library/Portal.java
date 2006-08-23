@@ -20,7 +20,8 @@ import streamit.scheduler2.SDEPData;
 import streamit.scheduler2.constrained.Scheduler;
 import streamit.scheduler2.constrained.NoPathException;
 import streamit.library.iriter.Iterator;
-import streamit.library.iriter.SDEPIterFactory;
+import streamit.library.iriter.IterFactory;
+import streamit.library.iriter.BasicIterFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ import java.util.HashSet;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.19 2006-03-24 16:31:46 dimock Exp $
+ * @version $Id: Portal.java,v 1.20 2006-08-23 23:01:15 thies Exp $
  */
 public abstract class Portal
 {
@@ -190,8 +191,9 @@ public abstract class Portal
         for (java.util.Iterator i = upstreamReceivers.iterator(); i.hasNext(); ) {
             Stream receiver = (Stream)i.next();
 
-            // make factory to represent this node as possibly phased
-            SDEPIterFactory factory = new SDEPIterFactory(sender, receiver, false);
+            // make factory (this used to be used for phased filters,
+            // but now is more general than really needed.)
+            IterFactory factory = new BasicIterFactory();
             Scheduler scheduler = Scheduler.createForSDEP(new Iterator(Stream.toplevel, factory));
 
             // compute dependences upstream
@@ -212,67 +214,27 @@ public abstract class Portal
      * Returns list of HashSets of receivers that are downstream of
      * the sender.  Each set is safe to calculate in parallel.
      *
-     * Currently two SDEP receivers can be calculated
-     * together if:
-     *  1. they are both downstream of the sender
-     *  2. Either:
-     *      - the receiver closest to the sender is not phased
-     *     Or:
-     *      - they are in parallel in the stream graph
+     * Currently two SDEP receivers can be calculated together if they
+     * are both downstream of the sender. This procedure was
+     * simplified considerably when phased filters were removed from
+     * the language.
      *
      * Requires that upstream/downstream info has been calculated.
      */
     private List getDownstreamReceiverSets(boolean[] downstream) {
         LinkedList result = new LinkedList();
 
-        // first build set of phased, non-phased downstream filters
-        HashSet notPhased = new HashSet();
-        HashSet phased = new HashSet();
+        // build set downstream filters
+        HashSet filters = new HashSet();
         for (int i=0; i<receivers.size(); i++) {
             if (downstream[i]) {
-                if (((Stream)receivers.get(i)) instanceof PhasedFilter) {
-                    phased.add(receivers.get(i));
-                } else {
-                    notPhased.add(receivers.get(i));
-                }
+                filters.add(receivers.get(i));
             }
         }
-
-        // build list of sets for phased filters that can be computed in parallel
-        if (phased.size()>0) {
-            PhasedFilter str[] = (PhasedFilter[])phased.toArray(new PhasedFilter[0]);
-            result.add(new HashSet());
-
-            for (int i=0; i<str.length; i++) {
-                // find a set for str[i]
-                for (java.util.Iterator iter = result.iterator(); iter.hasNext(); ) {
-                    HashSet set = (HashSet)iter.next();
-                    // test to see if str[i] runs in parallel with all
-                    // elements of <pre>set</pre>
-                    boolean parallel = true;
-                    for (java.util.Iterator setIter = set.iterator(); setIter.hasNext(); ) {
-                        PhasedFilter other = (PhasedFilter)setIter.next();
-                        parallel = Operator.compareStreamPosition(str[i], other)==0;
-                        // if not in parallel, can't be in same set
-                        if (!parallel) break;
-                    }
-                    // if current stream runs in parallel with everyone in
-                    // current set, add stream to set
-                    if (parallel) {
-                        set.add(str[i]);
-                    } else if (!iter.hasNext()) {
-                        // if we reached the last set to try, make a new set
-                        HashSet newSet = new HashSet();
-                        newSet.add(str[i]);
-                        result.add(newSet);
-                    }
-                }
-            }
-        }
-
-        // prepend the list of non-phased filters to the list of sets
-        if (notPhased.size()>0) {
-            result.addFirst(notPhased);
+        
+        // prepend the list the list of sets (we only maintain non-empty sets)
+        if (filters.size()>0) {
+            result.addFirst(filters);
         }
         
         return result;
@@ -293,8 +255,9 @@ public abstract class Portal
             HashSet receiverSet = (HashSet)i.next();
             assert receiverSet.size() > 0;
 
-            // make factory to represent receivers as possibly phased
-            SDEPIterFactory factory = new SDEPIterFactory(sender, receiverSet, true);
+            // make factory (this used to be used for phased filters,
+            // but now is more general than really needed.)
+            IterFactory factory = new BasicIterFactory();
             Scheduler scheduler = Scheduler.createForSDEP(new Iterator(Stream.toplevel, factory));
 
             // map receiverSet (holds Streams) to receiverIters (holds Iterators)

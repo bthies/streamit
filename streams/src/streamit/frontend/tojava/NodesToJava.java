@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.124 2006-05-26 19:05:50 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.125 2006-08-23 23:01:13 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -1233,30 +1233,6 @@ public class NodesToJava implements FEVisitor
         return doStreamCreator("setLoop", stmt.getCreator());
     }
 
-    public Object visitStmtPhase(StmtPhase stmt)
-    {
-        ExprFunCall fc = stmt.getFunCall();
-        // ASSERT: the target is always a phase function.
-        FuncWork target = (FuncWork)ss.getFuncNamed(fc.getName());
-        StmtExpr call = new StmtExpr(stmt.getContext(), fc);
-        String peek, pop, push;
-        if (target.getPeekRate() == null)
-            peek = "0";
-        else
-            peek = (String)target.getPeekRate().accept(this);
-        if (target.getPopRate() == null)
-            pop = "0";
-        else
-            pop = (String)target.getPopRate().accept(this);
-        if (target.getPushRate() == null)
-            push = "0";
-        else
-            push = (String)target.getPushRate().accept(this);
-        
-        return "phase(new WorkFunction(" + peek + "," + pop + "," + push +
-            ") { public void work() { " + call.accept(this) + "; } })";
-    }
-
     public Object visitStmtPush(StmtPush stmt)
     {
         return pushFunction(ss.getStreamType()) + "(" +
@@ -1573,27 +1549,23 @@ public class NodesToJava implements FEVisitor
                     addIndent();
                 } else {
                     result += "class " + spec.getName() + " extends ";
-                    if (spec.getType() == StreamSpec.STREAM_FILTER) {
-                        // Need to notice now if this is a phased filter.
-                        if (spec.getPhasedFuncs().size() > 0)
-                            result += "PhasedFilter";
-                        else
-                            result += "Filter";
-                    } else
-                        switch (spec.getType()) {
-                        case StreamSpec.STREAM_PIPELINE:
-                            result += "Pipeline";
-                            break;
-                        case StreamSpec.STREAM_SPLITJOIN:
-                            result += "SplitJoin";
-                            break;
-                        case StreamSpec.STREAM_FEEDBACKLOOP:
-                            result += "FeedbackLoop";
-                            break;
-                        case StreamSpec.STREAM_GLOBAL:
-                            result += "Global";
-                            break;
-                        }
+                    switch (spec.getType()) {
+                    case StreamSpec.STREAM_FILTER:
+                        result += "Filter";
+                        break;
+                    case StreamSpec.STREAM_PIPELINE:
+                        result += "Pipeline";
+                        break;
+                    case StreamSpec.STREAM_SPLITJOIN:
+                        result += "SplitJoin";
+                        break;
+                    case StreamSpec.STREAM_FEEDBACKLOOP:
+                        result += "FeedbackLoop";
+                        break;
+                    case StreamSpec.STREAM_GLOBAL:
+                        result += "Global";
+                        break;
+                    }
                     result += ifaces + " // " + spec.getContext() + "\n" + indent
                         + "{\n";
                     addIndent();
@@ -1653,8 +1625,6 @@ public class NodesToJava implements FEVisitor
                 if (countops) {
                     result += indent + "Profiler.summarize();\n";
                 }
-                // explicitly exit to terminate possible phased filter threads
-                result += indent + "System.exit(0);\n";
             }
             unIndent();
             result += indent + "}\n";
@@ -1702,22 +1672,16 @@ public class NodesToJava implements FEVisitor
             }
         if (node instanceof StmtIODecl)
             {
-                StmtIODecl io = (StmtIODecl)node;
-                String result = io.getName() + " = new Channel(" +
-                    typeToClass(io.getType()) + ", " +
-                    (String)io.getRate1().accept(this);
-                if (io.getRate2() != null)
-                    result += ", " + (String)io.getRate2().accept(this);
-                result += ")";
-                return result;
-            }
-        if (node instanceof StmtAddPhase)
-            {
-                StmtAddPhase ap = (StmtAddPhase)node;
+                StmtIODecl ap = (StmtIODecl)node;
                 String result;
-                if (ap.isInit())
+                if (ap.isPrework()) {
                     result = "addInitPhase";
-                else result = "addSteadyPhase";
+                } else if (ap.isWork()) {
+                    result = "addSteadyPhase";
+                } else {
+                    // helper function
+                    result = "annotateIORate";
+                }
                 result += "(";
                 if (ap.getPeek() == null) {
                     // by default, peek==pop

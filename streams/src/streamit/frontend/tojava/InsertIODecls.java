@@ -31,25 +31,14 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.13 2006-02-11 03:05:20 thies Exp $
+ * @version $Id: InsertIODecls.java,v 1.14 2006-08-23 23:01:13 thies Exp $
  */
 public class InsertIODecls extends InitMunger
 {
-    private boolean libraryFormat;
-    
     /**
-     * Creates a new pass object.  If <code>library</code> is true,
-     * create code suitable for the Java library.  This affects the
-     * output of phased filters; a filter's work function must either
-     * declare I/O rates or consist entirely of phase calls for
-     * library-form output.
-     *
-     * @param library  Generate code for the Java library
+     * Creates a new pass object.
      */
-    public InsertIODecls(boolean library)
-    {
-        libraryFormat = library;
-    }
+    public InsertIODecls() {}
 
     /**
      * Given a list of functions, find a work function.  If the list
@@ -90,8 +79,9 @@ public class InsertIODecls extends InitMunger
         StreamType st = spec.getStreamType();
         List newStmts = new ArrayList();
         newStmts.add(new StmtSetTypes(spec.getContext(), st));
-        translateWork(spec, (FuncWork)findWork(fns, true), true, newStmts);
-        translateWork(spec, (FuncWork)findWork(fns, false), false, newStmts);
+        translateWork((FuncWork)findWork(fns, true), true, newStmts);
+        translateWork((FuncWork)findWork(fns, false), false, newStmts);
+        translateHelpers(spec.getHelperIOFuncs(), newStmts);
         fns = replaceInitWithPrepended(spec.getContext(), fns, newStmts);
         
         return new StreamSpec(spec.getContext(), spec.getType(),
@@ -99,39 +89,20 @@ public class InsertIODecls extends InitMunger
                               spec.getParams(), spec.getVars(), fns);
     }
 
-    private void translateWork(StreamSpec spec, FuncWork work,
-                               boolean init, List newStmts)
+    private void translateWork(FuncWork work, boolean init, List newStmts)
     {
         // Do nothing if we didn't actually find the function.
         if (work == null)
             return;
-
-        final List phaseList = new ArrayList(); 
-        final StreamSpec specfinal = spec;
-        {
-            StmtBlock body = (StmtBlock) work.getBody();
-            body.accept(new FEReplacer() {
-                    public Object visitExprFunCall(ExprFunCall exp) {
-                        Function aFunction = specfinal.getFuncNamed(exp.getName());
-                        if (aFunction != null && aFunction.getCls() == Function.FUNC_PHASE) {
-                            phaseList.add(aFunction);
-                        }
-                        return exp;
-                    }
-                });    
-        }
-
-        // We need to add phases.  Is this a phased filter?
-        if (phaseList.size() > 0)
-            {
-                // This will ignore control flow in the work function which may cause
-                // problems outside of the library.
-                for (Iterator iter = phaseList.iterator(); iter.hasNext();) {
-                    newStmts.add(new StmtAddPhase(work.getContext(), init, (FuncWork) iter.next())); 
-                }
-            }
-        // Also add the work function as a phase.  Be sure to add it
-        // last (library relies on this).
-        newStmts.add(new StmtAddPhase(work.getContext(), init, work));
+        newStmts.add(new StmtIODecl(work.getContext(), init, work));
     }
+
+    private void translateHelpers(List helpers, List newStmts)
+    {
+        for (Iterator iter = helpers.iterator(); iter.hasNext(); ) {
+            Function helper = (Function)iter.next();
+            newStmts.add(new StmtIODecl(helper.getContext(), helper));
+        }
+    }
+
 }

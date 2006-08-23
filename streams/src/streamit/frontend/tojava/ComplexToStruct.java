@@ -28,7 +28,7 @@ import java.util.List;
  * parameters with the correct actual structure type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexToStruct.java,v 1.6 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: ComplexToStruct.java,v 1.7 2006-08-23 23:01:13 thies Exp $
  */
 public class ComplexToStruct extends FEReplacer
 {
@@ -134,7 +134,10 @@ public class ComplexToStruct extends FEReplacer
                                                 func.getName(),
                                                 returnType,
                                                 newParams,
-                                                func.getBody()));
+                                                func.getBody(),
+                                                func.getPeekRate(),
+                                                func.getPopRate(),
+                                                func.getPushRate()));
     }
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)

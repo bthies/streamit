@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.35 2006-08-13 20:27:29 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.36 2006-08-23 23:00:58 thies Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -2225,17 +2225,6 @@ public class SIRToStreamIt
         p.print(")");
     }
     
-    public void visitPhaseInvocation(SIRPhaseInvocation self,
-                                     JMethodCallExpression call,
-                                     JExpression peek,
-                                     JExpression pop,
-                                     JExpression push)
-    {
-        p.print("/* phase invocation: ");
-        call.accept(this);
-        p.print("; */");
-    }
-
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
                                           JExpression portal,
                                           SIRStream receiver, 

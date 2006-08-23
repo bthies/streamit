@@ -551,6 +551,44 @@ public abstract class Filter extends Stream
         addInitPhase(new RateStatic(e), o, u, name);
     }
 
+    /**
+     * Annotates the I/O rate of a function.  This is for helper
+     * functions that are called by work or prework.  Right now the
+     * library does not do anything with this information (but the
+     * compiler relies on it, so we support the API).
+     */
+    public void annotateIORate(Rate e, Rate o, Rate u, String name)
+    {
+    }
+    /**
+     * Same as above, for fixed I/O rates (and backwards compatibility
+     * with old Java benchmarks).  It's slightly easier to write all
+     * these signatures here and have the compiler recognize an int
+     * literal as being a static rate than it is to recognize a static
+     * rate in the compiler.
+     */
+    public void annotateIORate(int e, int o, int u, String name) {
+        annotateIORate(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
+    }
+    public void annotateIORate(Rate e, int o, int u, String name) {
+        annotateIORate(e, new RateStatic(o), new RateStatic(u), name);
+    }
+    public void annotateIORate(int e, Rate o, int u, String name) {
+        annotateIORate(new RateStatic(e), o, new RateStatic(u), name);
+    }
+    public void annotateIORate(int e, int o, Rate u, String name) {
+        annotateIORate(new RateStatic(e), new RateStatic(o), u, name);
+    }
+    public void annotateIORate(Rate e, int o, Rate u, String name) {
+        annotateIORate(e, new RateStatic(o), u, name);
+    }
+    public void annotateIORate(Rate e, Rate o, int u, String name) {
+        annotateIORate(e, o, new RateStatic(u), name);
+    }
+    public void annotateIORate(int e, Rate o, Rate u, String name) {
+        annotateIORate(new RateStatic(e), o, u, name);
+    }
+
     public int getNumInitPhases()
     {
         return initPhases.size();

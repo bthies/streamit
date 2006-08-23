@@ -777,7 +777,6 @@ public abstract class Stream extends Operator
             if (useJcc)
                 {
 					scheduledRun = false;
-                    PhasedFilter.jccLibrary = true;
                     new StreamItToJcc().convertAndRun(this, nIters);
                     return;
                 }

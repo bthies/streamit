@@ -24,7 +24,7 @@ import streamit.frontend.nodes.*;
  * work and init functions.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousFunctions.java,v 1.7 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: NameAnonymousFunctions.java,v 1.8 2006-08-23 23:01:13 thies Exp $
  */
 public class NameAnonymousFunctions extends FEReplacer
 {
@@ -44,7 +44,9 @@ public class NameAnonymousFunctions extends FEReplacer
             }
         return new Function(func.getContext(), func.getCls(),
                             name, func.getReturnType(),
-                            func.getParams(), func.getBody());
+                            func.getParams(), func.getBody(),
+                            func.getPeekRate(), func.getPopRate(),
+                            func.getPushRate());
     }
     
     public Object visitFuncWork(FuncWork func)

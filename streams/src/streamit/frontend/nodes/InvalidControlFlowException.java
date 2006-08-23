@@ -19,26 +19,13 @@ package streamit.frontend.nodes;
 /**
  * Exception thrown when invalid control flow exists.  The primary use
  * of this exception is to indicate dynamic control flow in regions
- * where only static control flow is allowed, such as in a phased work
- * function:
- *
- * <pre>
- * float-&gt;float filter Foo {
- *   int count;
- *   work {
- *     getCount();
- *     for (int i = 0; i &lt; count; i++) doIt();
- *   }
- *   phase getCount pop 1 { ... }
- *   phase doIt pop 1 push 1 { ... }
- * }
- * </pre>
- *
- * This may also be thrown by passes unable to handle any control flow
- * at all.
+ * where only static control flow is allowed (previously intended for
+ * phased filters, but since discontinued).  This may also be thrown
+ * by passes unable to handle any control flow at all (e.g., for code
+ * surrounding enqueue statements).
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InvalidControlFlowException.java,v 1.2 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: InvalidControlFlowException.java,v 1.3 2006-08-23 23:01:08 thies Exp $
  */
 public class InvalidControlFlowException extends RuntimeException
 {

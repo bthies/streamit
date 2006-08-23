@@ -28,7 +28,7 @@ package streamit.frontend.nodes;
  * <code>FENode.accept()</code> method of the object in question.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEVisitor.java,v 1.18 2005-06-27 21:08:51 janiss Exp $
+ * @version $Id: FEVisitor.java,v 1.19 2006-08-23 23:01:08 thies Exp $
  */
 public interface FEVisitor
 {
@@ -76,7 +76,6 @@ public interface FEVisitor
     public Object visitStmtIfThen(StmtIfThen stmt);
     public Object visitStmtJoin(StmtJoin stmt);
     public Object visitStmtLoop(StmtLoop stmt);
-    public Object visitStmtPhase(StmtPhase stmt);
     public Object visitStmtPush(StmtPush stmt);
     public Object visitStmtReturn(StmtReturn stmt);
     public Object visitStmtSendMessage(StmtSendMessage stmt);

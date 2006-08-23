@@ -311,7 +311,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
                     continue;
                 meths.add(jdecl);
                 cmeths.add(jMethodToCMethod(jdecl, cclass));
-                // To consider: phase functions.  --dzm
+                // To consider: functions that do I/O
                 if (func.getCls() == Function.FUNC_WORK) {
                     result.setWork(jdecl);
                     FuncWork fw = (FuncWork)func;
@@ -894,57 +894,6 @@ public class FEIRToSIR implements FEVisitor, Constants {
         return result;
     }
 
-    public Object visitPhasedFilterSpec(StreamSpec spec) {
-        int i;
-        List list;
-        SIRPhasedFilter result = new SIRPhasedFilter(spec.getName());
-        SIRStream oldParent = parent;
-        CClass owner = null;
-        CSourceClass cclass = new CSourceClass(owner, // owner
-                                               contextToReference(spec),
-                                               0, // modifiers
-                                               spec.getName(),
-                                               spec.getName(), // qualified
-                                               false); // deprecated
-        Hashtable fields = new Hashtable();
-
-        debug("In visitPhasedFilterSpec\n");
-
-        parent = result;
-    
-        setStreamFields(result, fields, spec.getVars());
-    
-        List meths = new ArrayList();
-        List cmeths = new ArrayList();
-
-        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
-            {
-                Function func = (Function)iter.next();
-                JMethodDeclaration jdecl = (JMethodDeclaration)visitFunction(func);
-                if (jdecl == null)
-                    continue;
-                meths.add(jdecl);
-                cmeths.add(jMethodToCMethod(jdecl, cclass));
-                if (func.getCls() == Function.FUNC_INIT) {
-                    result.setInit(jdecl);
-                }
-            }
-        JMethodDeclaration[] methods =
-            (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
-        result.setMethods(methods);
-
-        CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
-        cclass.close(CClassType.EMPTY, // interfaces
-                     null, // superclass
-                     fields,
-                     cmethods);
-        cclassTable.put(spec.getName(), cclass);
-
-        parent = oldParent;
-
-        return result;
-    }
-
     public Object visitExpression(Expression exp) {
         debug("In visitExpression\n");
         debug("  UNIMPLEMENTED\n");
@@ -1196,12 +1145,6 @@ public class FEIRToSIR implements FEVisitor, Constants {
         if (parent instanceof SIRFeedbackLoop) {
             ((SIRFeedbackLoop) parent).setLoop((SIRStream) stmt.getCreator().accept(this));
         }
-        return null;
-    }
-
-    public Object visitStmtPhase(StmtPhase stmt) {
-        debug("In visitStmtPhase\n");
-        /* unimplemented */
         return null;
     }
 

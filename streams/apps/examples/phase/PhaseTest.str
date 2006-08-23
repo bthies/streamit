@@ -1,31 +1,32 @@
 /*
- * PhaseTest.str: phased filter test code
+ * PhaseTest.str: test doing filter I/O from helper functions.
  */
 
-/* Concept: input is a stream of integers.  The first set of n integers
- * is data; the second set of n integers is in the range 0..n-1, and
- * specifies which integer from the first n is selected. */
+/* Concept: input is a stream of integers.  The first set of n
+ * integers is data; the second set of n integers is in the range
+ * 0..n-1, and specifies which integer from the first n is
+ * selected. */
 int->int filter IntSelector(int count)
 {
     int[count] values;
-    work 
+    work pop 2*count push count
         {
             readValues();
 	    copyValue();
         }
     
-    phase readValues pop count
-        {
-	    int i;
-            for (i = 0; i < count; i++)
-                values[i] = pop();
-        }
-    
-    phase copyValue pop count push count
+    void copyValue() pop count push count
         {
 	    for (int i=0; i<count; i++) {
 		push(values[pop()]);
 	    }
+        }
+
+    void readValues() pop count
+        {
+	    int i;
+            for (i = 0; i < count; i++)
+                values[i] = pop();
         }
 }
 

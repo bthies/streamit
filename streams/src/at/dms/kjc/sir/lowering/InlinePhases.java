@@ -7,17 +7,18 @@ import java.util.List;
 import java.util.LinkedList;
 
 /**
- * This class inlines each phase of a filter into the call site of
- * that phase.  This is useful because some transformations (e.g.,
- * fusion) do not support I/O from within helper functions.  By
- * inlining the phases, all of the I/O is moved to the work function.
+ * This class inlines each phase (i.e., a helper function that does
+ * I/O) of a filter into the call site of that phase.  This is useful
+ * because some transformations (e.g., fusion) do not support I/O from
+ * within helper functions.  By inlining the phases, all of the I/O is
+ * moved to the work function.
  *
  * This class currently operates on SIRFilter's, assuming that any
  * phases are represented as plain methods that have I/O rates.  It
  * does not deal with SIRPhasedFilters, which explicitly represent the
- * phases separately(because at the time of this writing,
- * SIRPhasedFilters are not generated in the IR) but it should be
- * straightforward to extend it to do so.
+ * phases separately -- this generality is not needed in the current
+ * version of StreamIt, which does not include phases at the language
+ * level (Aug 2006).
  *
  * This assumes there are no recursive functions that do I/O.
  */

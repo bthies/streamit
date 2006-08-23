@@ -569,7 +569,6 @@ public class CloneGenerator {
         "at.dms.kjc.sir.SIROperator",
         "at.dms.kjc.sir.SIRPeekExpression",
         "at.dms.kjc.sir.SIRPhasedFilter",
-        "at.dms.kjc.sir.SIRPhaseInvocation",
         "at.dms.kjc.sir.SIRPipeline",
         "at.dms.kjc.sir.SIRPopExpression",
         "at.dms.kjc.sir.SIRPredefinedFilter",

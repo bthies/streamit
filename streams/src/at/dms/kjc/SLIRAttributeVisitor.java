@@ -102,15 +102,6 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
                                JExpression arg);
 
     /**
-     * Visits a phase-invocation statement.
-     */
-    Object visitPhaseInvocation(SIRPhaseInvocation self,
-                                JMethodCallExpression call,
-                                JExpression peek,
-                                JExpression pop,
-                                JExpression push);
-
-    /**
      * Visits a register-receiver statement.
      */
     Object visitRegReceiverStatement(SIRRegReceiverStatement self,

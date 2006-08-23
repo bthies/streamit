@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.35 2006-03-27 21:42:56 dimock Exp $
+ * @version $Id: SemanticChecker.java,v 1.36 2006-08-23 23:01:10 thies Exp $
  */
 public class SemanticChecker
 {
@@ -172,9 +172,6 @@ public class SemanticChecker
                                     case Function.FUNC_HELPER:
                                         report(func, "helper functions must have names");
                                         break;
-                                    case Function.FUNC_PHASE:
-                                        report(func, "phase functions must have names");
-                                        break;
                                     default:
                                         // is BUILTIN_HELPER and CONST_HELPER.  Ignore
                                     }
@@ -287,10 +284,10 @@ public class SemanticChecker
 
     /**
      * Check that functions do not exist in context they are required
-     * to, and that all required functions exist.  In particular,
-     * work functions are required in filters and init functions
-     * are required in not-filters; work, prework, and phase functions
-     * are not allowed in not-filters.
+     * to, and that all required functions exist.  In particular, work
+     * functions are required in filters and init functions are
+     * required in not-filters; work and prework functions are not
+     * allowed in not-filters.
      *
      * @param prog  parsed program object to check
      */
@@ -316,10 +313,6 @@ public class SemanticChecker
                         if (func.getCls() == Function.FUNC_PREWORK)
                             if (spec.getType() != StreamSpec.STREAM_FILTER)
                                 report(func, "prework functions only allowed " +
-                                       "in filters");
-                        if (func.getCls() == Function.FUNC_PHASE)
-                            if (spec.getType() != StreamSpec.STREAM_FILTER)
-                                report(func, "phase functions only allowed " +
                                        "in filters");
                     }
                 if (spec.getType() == StreamSpec.STREAM_FILTER && !hasWork)
@@ -432,37 +425,37 @@ public class SemanticChecker
 
                 public Object visitExprPeek(ExprPeek expr)
                 {
-                    if ((func.getCls() != Function.FUNC_PHASE &&
+                    if ((func.getCls() != Function.FUNC_HELPER &&
                          func.getCls() != Function.FUNC_PREWORK &&
                          func.getCls() != Function.FUNC_WORK) ||
                         (spec.getType() != StreamSpec.STREAM_FILTER))
                         report(expr,
                                "peek expression only allowed " +
-                               "in filter work functions");
+                               "in filter work and helper functions");
                     return super.visitExprPeek(expr);
                 }
 
                 public Object visitExprPop(ExprPop expr)
                 {
-                    if ((func.getCls() != Function.FUNC_PHASE &&
+                    if ((func.getCls() != Function.FUNC_HELPER &&
                          func.getCls() != Function.FUNC_PREWORK &&
                          func.getCls() != Function.FUNC_WORK) ||
                         (spec.getType() != StreamSpec.STREAM_FILTER))
                         report(expr,
                                "pop expression only allowed " +
-                               "in filter work functions");
+                               "in filter work and helper functions");
                     return super.visitExprPop(expr);
                 }
 
                 public Object visitStmtPush(StmtPush stmt)
                 {
-                    if ((func.getCls() != Function.FUNC_PHASE &&
+                    if ((func.getCls() != Function.FUNC_HELPER &&
                          func.getCls() != Function.FUNC_PREWORK &&
                          func.getCls() != Function.FUNC_WORK) ||
                         (spec.getType() != StreamSpec.STREAM_FILTER))
                         report(stmt,
                                "push statement only allowed " +
-                               "in filter work functions");
+                               "in filter work and helper functions");
                     return super.visitStmtPush(stmt);
                 }
 
@@ -1304,10 +1297,10 @@ public class SemanticChecker
     }
 
     /**
-     * Checks that work and phase function I/O rates are valid for
-     * their stream types, and that push, pop, and peek statements are
-     * used correctly.  A statement can has a pop or peek rate of 0
-     * (or null) iff its input type is void, and a push rate of 0 (or
+     * Checks that work function I/O rates are valid for their stream
+     * types, and that push, pop, and peek statements are used
+     * correctly.  A statement can has a pop or peek rate of 0 (or
+     * null) iff its input type is void, and a push rate of 0 (or
      * null) iff its output type is void; in these cases, the
      * corresponding statement or expression may not appear in the
      * work function code.
@@ -1341,6 +1334,19 @@ public class SemanticChecker
 
                 public Object visitFuncWork(FuncWork func)
                 {
+                    checkFunction(func);
+                    return super.visitFuncWork(func);
+                }
+
+                public Object visitFunction(Function func)
+                {
+                    // only need to check I/O properties for functions that do I/O
+                    if (func.doesIO()) checkFunction(func);
+                    return super.visitFunction(func);
+                }
+
+                private void checkFunction(Function func)
+                {
                     // These can't be nested, which simplifies life.
                     // In fact, there are really two things we care
                     // about: if popping/peeking is allowed, and if
@@ -1354,13 +1360,11 @@ public class SemanticChecker
                     // this is used only to determine if a function
                     // is peeking without popping.)
 
-                    // If this is a work or prework function,
-                    // rather than a phase function, then
-                    // it's possible to have neither push nor
-                    // pop rates even with non-void types.
-                    boolean isInit = (func.getCls() == Function.FUNC_PREWORK);
-                    boolean isPhase = (func.getCls() == Function.FUNC_PHASE);
-                    boolean phased = (!canPop) && (!canPeek) && (!isPhase);
+                    // If this is a prework or helper function, then
+                    // it's possible to have neither push nor pop
+                    // rates even with non-void types.
+                    boolean isHelper = (func.getCls() == Function.FUNC_PREWORK ||
+                                        func.getCls() == Function.FUNC_HELPER);
                     
                     // Check for consistency with the stream type.
                     StreamType st = spec.getStreamType();
@@ -1369,8 +1373,7 @@ public class SemanticChecker
                         report(func,
                                "filter declared void input type, but " +
                                "non-zero pop rate");
-                    if (!typeIsVoid(st.getIn()) && !canPop && !phased &&
-                        !isPhase && !isInit)
+                    if (!typeIsVoid(st.getIn()) && !canPop && !isHelper)
                         report(func,
                                "filter declared non-void input type, but "+
                                "has zero pop rate");
@@ -1378,19 +1381,16 @@ public class SemanticChecker
                         report(func,
                                "filter declared void output type, but " +
                                "non-zero push rate");
-                    if (!typeIsVoid(st.getOut()) && !canPush && !phased &&
-                        !isPhase && !isInit)
+                    if (!typeIsVoid(st.getOut()) && !canPush && !isHelper)
                         report(func,
                                "filter declared non-void output type, but " +
                                "has zero push rate");
-                    // If this isn't a phase function, and it has a
-                    // peek rate, then it must have a pop rate.
-                    if (!isPhase && !isInit && !canPop && canPeek)
+                    // If this has a peek rate, then it must have a
+                    // pop rate.
+                    if (!isHelper && !canPop && canPeek)
                         report(func,
                                "filter declared a peek rate but not a " +
                                "pop rate");
-                    
-                    return super.visitFuncWork(func);
                     // To consider: check that, if the function has
                     // a push rate, then at least one push happens.
                     // Don't need this for popping since we have

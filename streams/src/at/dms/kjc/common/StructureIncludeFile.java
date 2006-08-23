@@ -78,12 +78,12 @@ public class StructureIncludeFile implements FlatVisitor
         if (node.isFilter()) {
             SIRFilter fnode = (SIRFilter)node.contents;
             if (debugging) {
-            System.err.println(this.getClass().getName() + " processing filter " 
-                    + fnode.getName() + ": " 
-                    +  fnode.getInputType() + "->" + fnode.getOutputType());
+                System.err.println(this.getClass().getName() + " processing filter " 
+                                   + fnode.getName() + ": " 
+                                   +  fnode.getInputType() + "->" + fnode.getOutputType());
+            }
             passedTypes.add(fnode.getOutputType());
             passedTypes.add(fnode.getInputType());
-            }
         }
     }
     

@@ -5,10 +5,11 @@ import java.util.*;
 
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.CType;
+//import at.dms.kjc.CType;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.cluster.ClusterUtils;
 import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * A class that generates code for the --cluster --standalone, where
@@ -159,35 +160,36 @@ class FusionCode {
         for (int t = 0; t < threadCount; t++) {
         
             SIROperator oper = NodeEnumerator.getOperator(t);
-            for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+            for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                 if (stream != null) {
-                int src = stream.getSource();
-                int dst = stream.getDest();
-              
-                if (FixedBufferTape.isFixedBuffer(src,dst)) {
-                    p.print("#define __FUSED_"+src+"_"+dst+"\n");
-                }
-                
-                int extraPeeks = FixedBufferTape.getRemaining(src,dst);
-                if (extraPeeks > 0) {
-                    p.print("//destination peeks: "+(extraPeeks)+" extra items\n");
-                    p.print("#define __PEEK_BUF_SIZE_" + src + "_" + dst
-                                + " " + extraPeeks + "\n");
-                }
-                //if (KjcOptions.peekratio == 1024 || no_peek) {
+//                int src = stream.getSource();
+//                int dst = stream.getDest();
+//              
+//                if (FixedBufferTape.isFixedBuffer(src,dst)) {
+//                    p.print("#define __FUSED_"+src+"_"+dst+"\n");
+//                }
+//                
+//                int extraPeeks = FixedBufferTape.getRemaining(src,dst);
+//                if (extraPeeks > 0) {
+//                    p.print("//destination peeks: "+(extraPeeks)+" extra items\n");
+//                    p.print("#define __PEEK_BUF_SIZE_" + src + "_" + dst
+//                                + " " + extraPeeks + "\n");
+//                }
+//                //if (KjcOptions.peekratio == 1024 || no_peek) {
+//
+//                if (! FixedBufferTape.needsModularBuffer(src,dst)) {
+//                    p.print("#define __NOMOD_"+src+"_"+dst+"\n");
+//                }
+//
+//                int buffersize = FixedBufferTape.bufferSize(src, dst, p, true);
+//        
+//                p.print("#define __BUF_SIZE_MASK_" + src + "_" + dst
+//                            + " (pow2ceil(" /*max(" + FixedBufferTape.getInitItems()
+//                            + "," + FixedBufferTape.getSteadyItems()*/ + buffersize + (mult == 1? "" : "*__MULT") /*+ ")"*/ + "+"
+//                            +  extraPeeks + ")-1)\n");
 
-                if (! FixedBufferTape.needsModularBuffer(src,dst)) {
-                    p.print("#define __NOMOD_"+src+"_"+dst+"\n");
-                }
-
-                int buffersize = FixedBufferTape.bufferSize(src, dst, p, true);
-        
-                p.print("#define __BUF_SIZE_MASK_" + src + "_" + dst
-                            + " (pow2ceil(" /*max(" + FixedBufferTape.getInitItems()
-                            + "," + FixedBufferTape.getSteadyItems()*/ + buffersize + (mult == 1? "" : "*__MULT") /*+ ")"*/ + "+"
-                            +  extraPeeks + ")-1)\n");
-
-                p.print("\n");
+                    p.print(stream.dataDeclarationH());
+                    p.print("\n");
                 }
             }
         }
@@ -285,22 +287,23 @@ class FusionCode {
             FlatNode node = NodeEnumerator.getFlatNode(i);
             SIROperator oper = (SIROperator)node.contents;
 
-            for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+            for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                 if (stream != null) {
-                int src = stream.getSource();
-                int dst = stream.getDest();
-                if (FixedBufferTape.isFixedBuffer(src, dst)) {
-                    String type = ClusterUtils.CTypeToString(stream.getType());
-
-                    p.print(type + " BUFFER_" + src + "_" + dst
-                            + "[__BUF_SIZE_MASK_" + src + "_" + dst
-                            + " + 1];\n");
-                    p.print("int HEAD_" + src + "_" + dst + " = 0;\n");
-                    p.print("int TAIL_" + src + "_" + dst + " = 0;\n");
-
-                    p.newLine();
+                    p.print(stream.dataDeclaration());
+//                int src = stream.getSource();
+//                int dst = stream.getDest();
+//                if (FixedBufferTape.isFixedBuffer(src, dst)) {
+//                    String type = ClusterUtils.CTypeToString(stream.getType());
+//
+//                    p.print(type + " BUFFER_" + src + "_" + dst
+//                            + "[__BUF_SIZE_MASK_" + src + "_" + dst
+//                            + " + 1];\n");
+//                    p.print("int HEAD_" + src + "_" + dst + " = 0;\n");
+//                    p.print("int TAIL_" + src + "_" + dst + " = 0;\n");
+//
+//                    p.newLine();
+//                }
                 }
-            }
             }
         }
 
@@ -344,12 +347,13 @@ class FusionCode {
 		!(node.contents instanceof SIRFileReader) &&
 		!(node.contents instanceof SIRFileWriter)) {
 		
-		CType input_type = ((SIRFilter)node.contents).getInputType();
-		CType output_type = ((SIRFilter)node.contents).getOutputType();
+		String input_type = CommonUtils.CTypeToString(((SIRFilter)node.contents).getInputType(),true);
+		String output_type = CommonUtils.CTypeToString(((SIRFilter)node.contents).getOutputType(), true);
 
+                p.println("#ifdef BUFFER_MERGE");
 		p.println("extern void "+get_work_function(node.contents)+"__mod(int ____n, "+input_type+" *____in, "+output_type+" *____out);");
 		p.println("extern void "+get_work_function(node.contents)+"__mod2(int ____n, "+input_type+" *____in, "+output_type+" *____out, int s1, int s2);");
-
+		p.println("#endif");
 	    }
 
             /*
@@ -558,58 +562,22 @@ class FusionCode {
 
                 if (steady_int > 0) {
 
-                    for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                    for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                         if (stream != null) {
-                        int _s = stream.getSource();
-                        int _d = stream.getDest();
-                        if (FixedBufferTape.isFixedBuffer(_s,_d)) {
-                        if (!FixedBufferTape.needsModularBuffer(_s,_d)) {
-                            // p.print(" #ifdef __NOMOD_"+_s+"_"+_d+"\n");
-                            if (FixedBufferTape.getRemaining(_s,_d) > 0) {
-                                // p.print(" #ifdef __PEEK_BUF_SIZE_"+_s+"_"+_d+"\n");
+                            // do an tape / buffer managment needed at beginning
+                            // of iteration
+                            // e.g. copying down read-ahead in a non-circular
+                            // buffer.
+                            p.print(stream.topOfWorkIteration());
 
-                                p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"
-                                                + _s
-                                                + "_"
-                                                + _d
-                                                + "; __y++) {\n");
-                                p.print("        BUFFER_" + _s + "_" + _d
-                                        + "[__y] = BUFFER_" + _s + "_" + _d
-                                        + "[__y + TAIL_" + _s + "_" + _d
-                                        + "];\n");
-                                p.print("      }\n");
-                                p.print("      HEAD_" + _s + "_" + _d
-                                        + " -= TAIL_" + _s + "_" + _d + ";\n");
-                                p.print("      TAIL_" + _s + "_" + _d
-                                        + " = 0;\n");
-                                //p.print("    #else\n");
-                            } else {
-
-                                p.print("      HEAD_" + _s + "_" + _d
-                                        + " = 0;\n");
-                                p.print("      TAIL_" + _s + "_" + _d
-                                        + " = 0;\n");
-                                //p.print("    #endif\n");
-                            }
-                            //p.print("    #endif\n");
                         }
-
-            
-                        /*
-
-                        p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
-                        p.print("      fprintf(stderr,\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
-                        p.print("      fprintf(stderr,\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
-                        p.print("      assert(1 == 0);\n");
-                        p.print("    }\n");
-                        */
                     }
-                    }
-                    }
-                    if (rcv_msg) p.print("    check_messages__"+id+"();\n");
-                    p.print("    "+get_work_function(oper)+"("+steady_int + (mult == 1? "" : "*__MULT") + " );");
+                    if (rcv_msg)
+                        p.print("    check_messages__" + id + "();\n");
+                    p.print("    " + get_work_function(oper) + "(" + steady_int
+                            + (mult == 1 ? "" : "*__MULT") + " );");
                 }
-                
+
                 p.newLine();
             }
         }
@@ -650,31 +618,11 @@ class FusionCode {
 
                 if (steady_int > 0) {
 
-                    for (NetStream stream : RegisterStreams.getNodeOutStreams(oper)) {
+                    for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                       if (stream == null) continue;
-                        int _s = stream.getSource();
-                        int _d = stream.getDest();
-                        if (FixedBufferTape.isFixedBuffer(_s,_d)) {
-                            if (! FixedBufferTape.needsModularBuffer(_s,_d)) {
-                                if (FixedBufferTape.getRemaining(_s,_d) > 0) {
-                                    p.print("      for (int __y = 0; __y < __PEEK_BUF_SIZE_"+_s+"_"+_d+"; __y++) {\n");
-                                    p.print("        BUFFER_"+_s+"_"+_d+"[__y] = BUFFER_"+_s+"_"+_d+"[__y + TAIL_"+_s+"_"+_d+"];\n");
-                                    p.print("      }\n");
-                                    p.print("      HEAD_"+_s+"_"+_d+" -= TAIL_"+_s+"_"+_d+";\n");
-                                    p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-                                } else { 
-                                    p.print("      HEAD_"+_s+"_"+_d+" = 0;\n");
-                                    p.print("      TAIL_"+_s+"_"+_d+" = 0;\n");
-                                }
-                            }
-                        /*
-
-                        p.print("    if (HEAD_"+_s+"_"+_d+" - TAIL_"+_s+"_"+_d+" != __PEEK_BUF_SIZE_"+_s+"_"+_d+") {\n");
-                        p.print("      fprintf(stderr,\"head: %d\\n\", HEAD_"+_s+"_"+_d+");\n");
-                        p.print("      fprintf(stderr,\"tail: %d\\n\", TAIL_"+_s+"_"+_d+");\n");
-                        p.print("      assert(1 == 0);\n");
-                        p.print("    }\n");
-                        */
+                        // do an tape / buffer managment needed at beginning of iteration
+                        // e.g. copying down read-ahead in a non-circular buffer.
+                        p.print(stream.topOfWorkIteration());
                         }
                     }
 
@@ -694,7 +642,7 @@ class FusionCode {
 
                 Vector out = RegisterStreams.getNodeOutStreams(oper);
                 for (int i = 0; i < out.size(); i++) {
-                NetStream s = (NetStream)out.elementAt(i);
+                Tape s = (Tape)out.elementAt(i);
                 int _s = s.getSource();
                 int _d = s.getDest();
 
@@ -712,7 +660,7 @@ class FusionCode {
                 p.newLine();
             }
         }
-        }
+        
         //p.print("  }\n");
 
         p.indent();

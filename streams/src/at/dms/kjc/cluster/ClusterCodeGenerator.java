@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.57 2006-07-27 23:31:12 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.58 2006-08-23 19:24:59 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -22,8 +22,8 @@ class ClusterCodeGenerator {
     
     private int id;
     
-    private List<NetStream> data_in;
-    private List<NetStream> data_out;
+    private List<Tape> data_in;
+    private List<Tape> data_out;
 
     private Vector<SIRStream> msg_from;
     private Vector<SIRStream> msg_to;
@@ -192,7 +192,7 @@ class ClusterCodeGenerator {
         p.println("extern int __init_iter;");
         // any Operator with no successor is assumed to be last and will print timer
         boolean timer_print = true;
-        for (NetStream succ : data_out) { 
+        for (Tape succ : data_out) { 
             if (succ != null) {
                 timer_print = true;
                 break;
@@ -228,35 +228,35 @@ class ClusterCodeGenerator {
         //  | Communication Variables     |
         //  +=============================+
 
-        for (NetStream in : data_in) {
-          if (in != null) {
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
             if (! FixedBufferTape.isFixedBuffer(in.getSource(),in.getDest())) {
                 if (oper instanceof SIRJoiner
                         && oper.getParent() instanceof SIRFeedbackLoop
                         && ((SIRFeedbackLoop)oper.getParent()).getDelayInt() > 0
                         && NodeEnumerator.getFlatNode(in.getSource()) ==
-                            NodeEnumerator.getFlatNode(id).incoming[1]) {
-                    p.println("consumer2p<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";");
+                            node.incoming[1]) {
+                    p.println("consumer2p<"+ClusterUtils.CTypeToString(in.getType())+"> "+((TapeCluster)in).getConsumerName()+";");
                 } else {
-                    p.println("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+in.consumer_name()+";");
+                    p.println("consumer2<"+ClusterUtils.CTypeToString(in.getType())+"> "+((TapeCluster)in).getConsumerName()+";");
                 }
-                p.println("extern "+ClusterUtils.CTypeToString(in.getType())+" "+in.pop_name()+"();");
+                p.println("extern "+ClusterUtils.CTypeToString(in.getType())+" "+((TapeCluster)in).getPopName()+"();");
             /*
               if (oper instanceof SIRFilter) {
               String type = ((SIRFilter)oper).getInputType().toString();
-              p.println("peek_stream<"+type+"> "+in.name()+"in(&"+in.consumer_name()+");");
+              p.println("peek_stream<"+type+"> "+in.name()+"in(&"+in.getConsumerName()+");");
               }
             */
             }
           }
         }
     
-        for (NetStream out : data_out) {
-          if (out != null) {
+        for (Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
             if (! FixedBufferTape.isFixedBuffer(out.getSource(),out.getDest())) {
-                p.println("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+out.producer_name()+";");
-                p.println("extern void "+out.push_name()+"("+ClusterUtils.CTypeToString(out.getType())+");");
-                p.println("    // this-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(id))+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"");
+                p.println("producer2<"+ClusterUtils.CTypeToString(out.getType())+"> "+((TapeCluster)out).getProducerName()+";");
+                p.println("extern void "+((TapeCluster)out).getPushName()+"("+ClusterUtils.CTypeToString(out.getType())+");");
+                p.println("    // this-part:"+ClusterFusion.getPartition(node)+" dst-part:"+ClusterFusion.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"");
             }
           }
         }   
@@ -300,19 +300,28 @@ class ClusterCodeGenerator {
         //  | Read / Write Thread         |
         //  +=============================+
 
-        p.println("void save_peek_buffer__"+id+"(object_write_buffer *buf);");
-        p.println("void load_peek_buffer__"+id+"(object_write_buffer *buf);");
-        p.println("void save_file_pointer__"+id+"(object_write_buffer *buf);");
-        p.println("void load_file_pointer__"+id+"(object_write_buffer *buf);");
-        p.println("");
-
+        if (node.isFilter()) {
+            if (node.inputs > 0 && node.incoming[0] != null) {
+                p.println("void save_peek_buffer__" + id
+                        + "(object_write_buffer *buf);");
+                p.println("void load_peek_buffer__" + id
+                        + "(object_write_buffer *buf);");
+            }
+            p.println("void save_file_pointer__" + id
+                    + "(object_write_buffer *buf);");
+            p.println("void load_file_pointer__" + id
+                    + "(object_write_buffer *buf);");
+            p.println("");
+        }
+        
 	if (! KjcOptions.standalone) {
 	//p.println("#ifndef __CLUSTER_STANDALONE\n");
         p.println("void __write_thread__"+id+"(object_write_buffer *buf) {");
 
-        for (NetStream in : data_in) {
-          if (in != null) {
-            p.println("  "+in.consumer_name()+".write_object(buf);");
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
+              TapeCluster inc = (TapeCluster)in;
+            p.println("  "+inc.getConsumerName()+".write_object(buf);");
         
 
             /*
@@ -323,9 +332,13 @@ class ClusterCodeGenerator {
           }
         }
 
-        p.println("  save_peek_buffer__"+id+"(buf);");
-        p.println("  save_file_pointer__"+id+"(buf);");
-
+        if (node.isFilter()) {
+                if (node.inputs > 0 && node.incoming[0] != null) {
+                    p.println("  save_peek_buffer__" + id + "(buf);");
+                }
+                p.println("  save_file_pointer__" + id + "(buf);");
+            }
+        
         for (int f = 0; f < fields.length; f++) {
             CType type = fields[f].getType();
             String ident = fields[f].getVariable().getIdent();
@@ -348,9 +361,9 @@ class ClusterCodeGenerator {
             }
         }
 
-        for (NetStream out : data_out) {
-          if (out != null) {
-            p.println("  "+out.producer_name()+".write_object(buf);");
+        for (Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
+            p.println("  "+((TapeCluster)out).getProducerName()+".write_object(buf);");
           }
         }
 
@@ -361,9 +374,9 @@ class ClusterCodeGenerator {
         p.println("void __read_thread__"+id+"(object_write_buffer *buf) {");
 
     
-        for (NetStream in : data_in) {
-          if (in != null) {
-            p.println("  "+in.consumer_name()+".read_object(buf);");
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
+            p.println("  "+((TapeCluster)in).getConsumerName()+".read_object(buf);");
 
             /*
               if (oper instanceof SIRFilter) {
@@ -372,9 +385,13 @@ class ClusterCodeGenerator {
             */
           }
         }
-
-        p.println("  load_peek_buffer__"+id+"(buf);");
-        p.println("  load_file_pointer__"+id+"(buf);");
+        
+        if (node.isFilter()) {
+            if (node.inputs > 0 && node.incoming[0] != null) {
+                p.println("  load_peek_buffer__" + id + "(buf);");
+            }
+            p.println("  load_file_pointer__" + id + "(buf);");
+        }
 
         for (int f = 0; f < fields.length; f++) {
             CType type = fields[f].getType();
@@ -398,9 +415,9 @@ class ClusterCodeGenerator {
             }
         }
 
-        for (NetStream out : data_out) {
-          if (out != null) {
-            p.println("  "+out.producer_name()+".read_object(buf);");
+        for (Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
+            p.println("  "+((TapeCluster)out).getProducerName()+".read_object(buf);");
           }
         }
 
@@ -432,7 +449,7 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("extern void __declare_sockets_"+fid+"();");
                 p.println("extern void __init_sockets_"+fid+"(void (*cs_fptr)());");
                 p.println("extern void __flush_sockets_"+fid+"();");
@@ -448,15 +465,15 @@ class ClusterCodeGenerator {
 
         p.println("void __init_thread_info_"+id+"(thread_info *info) {");
 
-        for (NetStream in : data_in) {
-          if (in != null) {
-            p.println("  info->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",&"+in.consumer_name()+"));");
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
+            p.println("  info->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",&"+((TapeCluster)in).getConsumerName()+"));");
           }
         }
     
-        for(NetStream out : data_out) {
-          if (out != null) {
-            p.println("  info->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",&"+out.producer_name()+"));");
+        for(Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
+            p.println("  info->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",&"+((TapeCluster)out).getProducerName()+"));");
           }
         }
 
@@ -466,7 +483,7 @@ class ClusterCodeGenerator {
             Iterator _i = fusedWith.iterator();
             while (_i.hasNext()) {
                 FlatNode tmp = (FlatNode)_i.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("  __init_thread_info_"+fid+"(info);");
             }
         }
@@ -494,12 +511,12 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("  __declare_sockets_"+fid+"();");
             }
         }
 
-        for (NetStream in : data_in) {
+        for (Tape in : data_in) {
           if (in != null) {
             FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
             if (!fusedWith.contains(tmp)) { 
@@ -508,7 +525,7 @@ class ClusterCodeGenerator {
           }
         }
 
-        for (NetStream out : data_out) {
+        for (Tape out : data_out) {
           if (out != null) {
             FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
             if (!fusedWith.contains(tmp)) {     
@@ -543,34 +560,34 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("  __init_sockets_"+fid+"(cs_fptr);");
             }
         }
 
-        for (NetStream in : data_in) {
-          if (in != null) {
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
             if (!fusedWith.contains(tmp)) {
                 p.println("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);");
                 p.println("  sock->set_check_thread_status(cs_fptr);");
                 //p.println("  sock->set_item_size(sizeof("+in.getType()+"));");
-                p.println("  "+in.consumer_name()+".set_socket(sock);");
-                p.println("  "+in.consumer_name()+".init();");
+                p.println("  "+((TapeCluster)in).getConsumerName()+".set_socket(sock);");
+                p.println("  "+((TapeCluster)in).getConsumerName()+".init();");
                 p.println("");
             }
           }
         }
 
-        for (NetStream out : data_out) {
-          if (out != null) {
+        for (Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
             if (!fusedWith.contains(tmp)) {
                 p.println("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);");
                 p.println("  sock->set_check_thread_status(cs_fptr);");
                 //p.println("  sock->set_item_size(sizeof("+out.getType()+"));");
-                p.println("  "+out.producer_name()+".set_socket(sock);");
-                p.println("  "+out.producer_name()+".init();");
+                p.println("  "+((TapeCluster)out).getProducerName()+".set_socket(sock);");
+                p.println("  "+((TapeCluster)out).getProducerName()+".init();");
                 p.println("");
             }
           }
@@ -602,36 +619,35 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("  __flush_sockets_"+fid+"();");
             }
         }
 
-        for(NetStream out : data_out) {
-          if (out != null) {
-
+        for(Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
             if (!fusedWith.contains(tmp)) {
-                p.println("  "+out.producer_name()+".flush();");
-                p.println("  "+out.producer_name()+".get_socket()->close();");
+                p.println("  "+((TapeCluster)out).getProducerName()+".flush();");
+                p.println("  "+((TapeCluster)out).getProducerName()+".get_socket()->close();");
             }
           }
         }
 
-        for(NetStream out : data_out) {
-          if (out != null) {
+        for(Tape out : data_out) {
+          if (out != null && out instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
             if (!fusedWith.contains(tmp)) {
-                p.println("  "+out.producer_name()+".delete_socket_obj();");
+                p.println("  "+((TapeCluster)out).getProducerName()+".delete_socket_obj();");
             }
           }
         }
 
-        for (NetStream in : data_in) {
-          if (in != null) {
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
             if (!fusedWith.contains(tmp)) {
-                p.println("  "+in.consumer_name()+".delete_socket_obj();");
+                p.println("  "+((TapeCluster)in).getConsumerName()+".delete_socket_obj();");
             }
           }
         }
@@ -650,16 +666,16 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 p.println("  __peek_sockets_"+fid+"();");
             }
         }
 
-        for (NetStream in : data_in) {
-          if (in != null) {
+        for (Tape in : data_in) {
+          if (in != null && in instanceof TapeCluster) {
             FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
             if (!fusedWith.contains(tmp)) {
-                p.println("  "+in.consumer_name()+".peek(0);");
+                p.println("  "+((TapeCluster)in).getConsumerName()+".peek(0);");
             }
           }
         }
@@ -699,7 +715,7 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 r.add("extern void __init_state_"+fid+"();\n");
                 r.add("\n");
             }
@@ -713,7 +729,7 @@ class ClusterCodeGenerator {
             Iterator iter2 = fusedWith.iterator();
             while (iter2.hasNext()) {
                 FlatNode tmp = (FlatNode)iter2.next();
-                int fid = NodeEnumerator.getNodeId(tmp);
+                int fid = NodeEnumerator.getFlatNodeId(tmp);
                 r.add("  __init_state_"+fid+"();\n");
             }
         }
@@ -749,7 +765,7 @@ class ClusterCodeGenerator {
             r.add ("  __feedbackjoiner_"+ id +"_prep();\n");
         }
 
-        if (oper instanceof SIRFilter) {
+        if (oper instanceof SIRFilter && node.inputs > 0 && node.incoming[0] != null) {
             r.add("  __init_pop_buf__"+id+"();\n");
         }
     
@@ -759,7 +775,6 @@ class ClusterCodeGenerator {
         }
 
         if (init_counts > 0) {
-            //r.add("// ClusterCodeGenerator_1\n");
             r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
             if (oper instanceof SIRFilter) {
 
@@ -772,7 +787,9 @@ class ClusterCodeGenerator {
                 if (msg_from.size() > 0) {
                     r.add("      check_messages__"+id+"();\n");
                 }
-                r.add("      __update_pop_buf__"+id+"();\n");
+                if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null) {
+                    r.add("      __update_pop_buf__"+id+"();\n");
+                }
             }
             r.add("      "+work_function+"(1);\n");
             if (oper instanceof SIRFilter) {
@@ -806,7 +823,9 @@ class ClusterCodeGenerator {
             if (msg_from.size() > 0) {
                 r.add("      check_messages__"+id+"();\n");
             }
-            r.add("      __update_pop_buf__"+id+"();\n");
+            if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null) {
+                r.add("      __update_pop_buf__"+id+"();\n");
+            }
         }
         r.add("      "+work_function+"(1);\n");
         if (oper instanceof SIRFilter) {
@@ -946,7 +965,7 @@ class ClusterCodeGenerator {
 
         r.add("\n");
 
-        for (NetStream out : data_out) {
+        for (Tape out : data_out) {
           if (out != null) {
             r.add("  timer t1;\n");
 
@@ -954,8 +973,8 @@ class ClusterCodeGenerator {
               r.add("  //peek one item from all incoming data streams\n");
               i = data_in.iterator();
               while (i.hasNext()) {
-              NetStream in = (NetStream)i.next();
-              r.add("  "+in.consumer_name()+".peek(0);\n");
+              Tape in = (Tape)i.next();
+              r.add("  "+in.getConsumerName()+".peek(0);\n");
               }
             */
 
@@ -969,7 +988,7 @@ class ClusterCodeGenerator {
 
         r.add("  __main__"+id+"();\n");
 
-        for (NetStream out : data_out) {
+        for (Tape out : data_out) {
           if (out != null) {
             r.add("  t1.stop();\n");
             r.add("  if (__timer_enabled) t1.output(stderr);\n");

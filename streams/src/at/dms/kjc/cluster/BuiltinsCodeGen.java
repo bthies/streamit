@@ -180,7 +180,7 @@ class BuiltinsCodeGen {
         }
 
         // get source and destination ids of outgoing tape
-        NetStream out = RegisterStreams.getFilterOutStream(filter);
+        Tape out = RegisterStreams.getFilterOutStream(filter);
         int s = out.getSource();
         int d = out.getDest();
 

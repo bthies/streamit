@@ -48,7 +48,7 @@ public class FindPath {
             }
 
             try {
-            for (NetStream n : RegisterStreams.getNodeOutStreams(oper)) {
+            for (Tape n : RegisterStreams.getNodeOutStreams(oper)) {
               if (n != null) {
                 int dest = n.getDest();
                 if (! examined.contains(dest)) {

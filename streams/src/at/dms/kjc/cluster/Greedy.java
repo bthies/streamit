@@ -63,7 +63,7 @@ class Greedy {
             credit.put(oper, new Integer(-1));
             iteration.put(oper, new Integer(0));
 
-            for (NetStream ns : RegisterStreams.getNodeOutStreams(oper)) {
+            for (Tape ns : RegisterStreams.getNodeOutStreams(oper)) {
               if (ns != null) {
                 SIROperator dst = NodeEnumerator.getOperator(ns.getDest());
                 queue_size.put(makeVector(oper, dst), new Integer(0));
@@ -194,7 +194,7 @@ class Greedy {
         
                 {
                 int z = 0;
-                for (NetStream ns : RegisterStreams.getNodeInStreams(oper)) {
+                for (Tape ns : RegisterStreams.getNodeInStreams(oper)) {
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
@@ -217,7 +217,7 @@ class Greedy {
         
                 {
                 int z = 0;
-                for (NetStream ns : RegisterStreams.getNodeInStreams(oper)) {
+                for (Tape ns : RegisterStreams.getNodeInStreams(oper)) {
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
@@ -232,7 +232,7 @@ class Greedy {
                 
                 {
                 int z = 0;
-                for (NetStream ns : RegisterStreams.getNodeOutStreams(oper)) {
+                for (Tape ns : RegisterStreams.getNodeOutStreams(oper)) {
                   if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                     int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
@@ -393,11 +393,11 @@ class Greedy {
 
                     int _iter = ((Integer)iteration.get(oper)).intValue();
 
-                    List<NetStream> in = RegisterStreams.getNodeInStreams(oper);
-                    List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
+                    List<Tape> in = RegisterStreams.getNodeInStreams(oper);
+                    List<Tape> out = RegisterStreams.getNodeOutStreams(oper);
 
                     for (int z = 0; z < in.size(); z++) {
-                      NetStream ns = in.get(z);
+                      Tape ns = in.get(z);
                       if (ns != null) {
                         SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                         int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
@@ -408,7 +408,7 @@ class Greedy {
                     }
                     
                     for (int z = 0; z < out.size(); z++) {
-                      NetStream ns = out.get(z); 
+                      Tape ns = out.get(z); 
                       if (ns != null) {  
                         SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                         int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
@@ -508,11 +508,11 @@ class Greedy {
 
                 int input = 2000000000;
 
-                List<NetStream> in = RegisterStreams.getNodeInStreams(oper);
-                List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
+                List<Tape> in = RegisterStreams.getNodeInStreams(oper);
+                List<Tape> out = RegisterStreams.getNodeOutStreams(oper);
         
                 for (int z = 0; z < in.size(); z++) {
-                  NetStream ns = in.get(z);
+                  Tape ns = in.get(z);
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
@@ -532,7 +532,7 @@ class Greedy {
                 //System.out.println("CREDIT = "+_credit+" INPUT = "+input+" EXEC = "+exec);
         
                 for (int z = 0; z < in.size(); z++) {
-                  NetStream ns = in.get(z);
+                  Tape ns = in.get(z);
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
                     int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
@@ -543,7 +543,7 @@ class Greedy {
                 }
 
                 for (int z = 0; z < out.size(); z++) {
-                  NetStream ns = out.get(z);
+                  Tape ns = out.get(z);
                   if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
                     int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();

@@ -76,17 +76,6 @@ public class NodeEnumerator {
         return counter;
     }
 
-   /**
-    * Get the number for a FlatNode.
-    * 
-    * @param node  a FlatNode
-    * @return      number for node or -1 if node has no association
-    */ 
-    public static int getNodeId(FlatNode node) {
-    
-        return getSIROperatorId(node.contents);
-    }
-
     /**
      * Returns an estimate of the maximum stack size needed to execute
      * a given node.
@@ -145,7 +134,7 @@ public class NodeEnumerator {
     }
     
     /**
-     * Used to get the SIROperator (filter, splitter, joiner) associated with ann id number.
+     * Used to get the SIROperator (filter, splitter, joiner) associated with an id number.
      * 
      * @param nodeID (thread id)
      * @return  SIROperator associated with the id, or null if no association.
@@ -192,4 +181,15 @@ public class NodeEnumerator {
         return i.intValue();
     }
 
+    /**
+     * Get offset of node in array or -1 if not there.
+     */
+    public static int getIdOffset(int nodeID, FlatNode[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            if (getFlatNodeId(arr[i]) == nodeID) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }

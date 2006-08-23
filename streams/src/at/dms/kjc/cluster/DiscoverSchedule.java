@@ -110,7 +110,7 @@ class DiscoverSchedule
         // iterate over nodes in current phase
         for (SIROperator oper : current_ops) {
 
-            List<NetStream> out = RegisterStreams.getNodeOutStreams(oper);
+            List<Tape> out = RegisterStreams.getNodeOutStreams(oper);
             
            // case: splitjoin splitter, make sure to schedule nodes at end of 0-weight edges, 
             // which will not be found by RegisterStreams.getNodeOutStreams.  Also record the 
@@ -122,7 +122,7 @@ class DiscoverSchedule
                 SIRJoiner joiner = ((SIRSplitJoin)splitter.getParent()).getJoiner();
                 assert (! splitjoinJoiners.containsKey(joiner));
                 int join_ways = 0;
-                for (NetStream in : RegisterStreams.getNodeInStreams(joiner)) {
+                for (Tape in : RegisterStreams.getNodeInStreams(joiner)) {
                     if (in != null) {
                         join_ways++;
                     }
@@ -157,7 +157,7 @@ class DiscoverSchedule
 
             // check all nodes that are downstream from nodes in current phase
             for (int a = 0; a < out.size(); a++) {
-                NetStream ns = out.get(a);
+                Tape ns = out.get(a);
                 if (ns == null) continue;
                 
                 SIROperator next = NodeEnumerator.getOperator(ns.getDest());
@@ -235,7 +235,7 @@ class DiscoverSchedule
                       // have processed body and loop, continuation is next
                       SIRSplitter loopSplitter = ((SIRFeedbackLoop)next.getParent()).getSplitter();
                       if (feedbackSplittersLoop.remove(loopSplitter)) {
-                          List<NetStream> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
+                          List<Tape> nexts = RegisterStreams.getNodeOutStreams(loopSplitter);
                           next = NodeEnumerator.getOperator(nexts.get(0).getDest());
                       } else {
                           // case: there is no continuation (saw joiner twice since processed loop

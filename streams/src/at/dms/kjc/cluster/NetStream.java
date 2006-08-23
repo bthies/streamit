@@ -62,38 +62,43 @@ public class NetStream {
         return type;
     }
 
-    public String name() {
-        return new String("__stream_"+source+"_"+dest); 
-    }
+//    public String name() {
+//        return new String("__stream_"+source+"_"+dest); 
+//    }
 
     public String producer_name() {
         return new String("__producer_"+source+"_"+dest);   
-    }
+   }
 
     public String consumer_name() {
         return new String("__consumer_"+source+"_"+dest);   
-    }
+   }
 
     public String pop_name() {
         return new String("__pop_"+source+"_"+dest);    
     }
 
+    /** name of a push routine */
     public String push_name() {
         return new String("__push_"+source+"_"+dest);   
     }
 
+    /** a buffer name */
     public String pop_buffer() {
         return new String("__pop_buffer_"+source+"_"+dest); 
     }
 
+    /** a buffer name */
     public String push_buffer() {
         return new String("__push_buffer_"+source+"_"+dest);    
     }
 
+    /** a variable name for a tape offset */
     public String pop_index() {
         return new String("__pop_index_"+source+"_"+dest);  
     }
 
+    /** a variable name for a tape offset */
     public String push_index() {
         return new String("__push_index_"+source+"_"+dest); 
     }

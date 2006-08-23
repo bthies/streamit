@@ -31,7 +31,7 @@ unsigned init_instance::get_thread_start_iter(int thread) {assert(1==0);}
 #include <fcntl.h>
 #include <stdio.h>
 
-bool debugging = false;
+static bool debugging = false;
 
 int init_instance::start_iter = 0;
 

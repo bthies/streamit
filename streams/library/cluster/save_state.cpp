@@ -22,7 +22,7 @@ int gettid() { return 0; }
 
 #endif
 
-bool debugging = false;
+static bool debugging = false;
 
 
 void save_state::observe_jiffies(thread_info *t_info) {

@@ -2285,14 +2285,11 @@ import java.util.*;
             /*
             // if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft = left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
             }

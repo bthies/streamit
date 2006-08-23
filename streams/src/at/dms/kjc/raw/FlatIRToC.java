@@ -328,9 +328,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //be careful, if you return prematurely, decrement me
         forLoopHeader++;
 
-        boolean oldStatementContext = statementContext;
         p.print("for (");
-        statementContext = false;
         if (init != null) {
             init.accept(this);
             //the ; will print in a statement visitor
@@ -358,13 +356,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
         p.print(") ");
 
         p.print("{");
-        statementContext = true;
         p.indent();
         body.accept(this);
         p.outdent();
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
    
@@ -569,14 +565,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //print the correct code for array assignment
         //this must be run after renaming!!!!!!
         if (left.getType() == null || right.getType() == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft=left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
         }
@@ -595,14 +588,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
             /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft=left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
             }
@@ -631,14 +621,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
             return;
         }
 
-        boolean oldStatementContext = statementContext;
         lastLeft=left;
         printLParen();
-        statementContext = false;
         left.accept(this);
         p.print(" = ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
         // would it catch other bugs to put lastLeft=null here?
     }
@@ -650,11 +637,8 @@ public class FlatIRToC extends ToC implements StreamVisitor
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         /*
           if (ident != null && ident.equals(JAV_INIT)) {
-          statementContext = oldStatementContext;
           return; // we do not want generated methods in source code
           }
         */
@@ -666,7 +650,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
             visitArgs(args,0);
             p.print(RawUtil.staticNetworkReceiveSuffix
                     (CommonUtils.getBaseType(filter.getInputType())));
-            statementContext = oldStatementContext;
             return;  
         }
 
@@ -674,14 +657,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //we are receiving an array type, call the popArray method
         if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
         popArray(args[0]);
-        statementContext = oldStatementContext;
         return;
         }
         */
         /*
           if (ident.equals(RawExecutionCode.rateMatchSendMethod)) {
           rateMatchPush(args);
-          statementContext = oldStatementContext;
           return;
           }
         */
@@ -709,7 +690,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
         */
         visitArgs(args, i);
         p.print(")");
-        statementContext = oldStatementContext;
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {

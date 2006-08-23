@@ -167,12 +167,9 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                  JStatement thenClause,
                                  JStatement elseClause) {
 
-        boolean oldStatementContext = statementContext;
         p.print("if (");
-        statementContext = false;
         cond.accept(this);
         p.print(") {");
-        statementContext = true;
         if (!(thenClause instanceof JBlock)) {p.indent(); }
         thenClause.accept(this);
         if (!(thenClause instanceof JBlock)) {p.outdent(); }
@@ -190,7 +187,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                   || elseClause instanceof JIfStatement)) { p.outdent(); }
         }
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
     /*
@@ -267,8 +263,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         p.print("(");
         left.accept(this);
         switch (oper) {
@@ -289,7 +283,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         }
         right.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
     }
 
 
@@ -318,8 +311,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
     public void visitNameExpression(JNameExpression self, JExpression prefix,
             String ident) {
 
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         p.print("(");
         if (prefix != null) {
             prefix.accept(this);
@@ -327,7 +318,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
         }
         p.print(ident);
         p.print(")");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -338,14 +328,11 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                       JExpression left,
                                       JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         left.accept(this);
         p.print(" ");
         p.print(oper);
         p.print(" ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -357,11 +344,8 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                      JExpression left,
                                      String ident)
     {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
             p.print(left.getType().getCClass().getOwner().getType() + "->this");
-            statementContext = oldStatementContext;
             return;
         }
         int index = ident.indexOf("_$");
@@ -376,7 +360,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             p.print(ident);
             p.print(")");
         }
-        statementContext = oldStatementContext;
     }
 
 
@@ -388,7 +371,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                        JExpression left,
                                        JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -404,7 +386,6 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
             Utils.fail("Unknown relational expression"); // only difference with LIRToC
         }
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -426,13 +407,10 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
                                            JExpression prefix,
                                            JExpression accessor) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         prefix.accept(this);
         p.print("[(int)");  // cast to int is only difference with LIRToC
         accessor.accept(this);
         p.print("]");
-        statementContext = oldStatementContext;
         printRParen();
     }
     

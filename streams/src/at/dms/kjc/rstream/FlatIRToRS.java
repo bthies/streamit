@@ -73,14 +73,11 @@ public class FlatIRToRS extends ToC
             return;
         }
 
-        boolean oldStatementContext = statementContext;
         lastLeft=left;
         printLParen();
-        statementContext = false;
         left.accept(this);
         p.print(" = ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -357,13 +354,11 @@ public class FlatIRToRS extends ToC
     {
         assert self.countUp() : "Currently we only handle doloops with positive increment";
 
-        boolean oldStatementContext = statementContext;
         doLoops++;
         if (self.staticBounds())
             staticDoLoops++;
 
         p.print("doloop (");
-        statementContext = false; // expressions here
         p.print(self.getInduction().getType() + " ");
         p.print(self.getInduction().getIdent());
         p.print(" = ");
@@ -387,13 +382,11 @@ public class FlatIRToRS extends ToC
         p.print(") ");
 
     
-        statementContext = true; // statement(s) here 
         p.newLine();
         p.indent();
         self.getBody().accept(this);
         p.outdent();
         p.newLine();
-        statementContext = oldStatementContext;
     }
     
 
@@ -414,8 +407,6 @@ public class FlatIRToRS extends ToC
         //be careful, if you return prematurely, decrement me
         forLoopHeader++;
 
-        boolean oldStatementContext = statementContext;
-        statementContext = false; // initially expressions, then statement
 
         p.print("for (");
     
@@ -446,7 +437,6 @@ public class FlatIRToRS extends ToC
         forLoopHeader--;
         p.print(") ");
     
-        statementContext = true;
         //p.print("{");
         p.newLine();
         p.indent();
@@ -454,7 +444,6 @@ public class FlatIRToRS extends ToC
         p.outdent();
         p.newLine();
         //p.print("}");
-        statementContext = oldStatementContext;
     }
 
 
@@ -721,15 +710,12 @@ public class FlatIRToRS extends ToC
     
         
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         p.print("(");
         printType(type);
         p.print(")");
         p.print("(");
         expr.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
         printRParen();
     }
     

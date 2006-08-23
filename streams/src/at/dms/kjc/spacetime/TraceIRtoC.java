@@ -252,8 +252,6 @@ public class TraceIRtoC extends ToC
                                   JStatement body) {
         p.print("for (");
 
-        boolean oldStatementContext = statementContext;
-        statementContext = false; // initially exprs, with ';' forced
 
         if (init != null) {
             init.accept(this);
@@ -286,14 +284,12 @@ public class TraceIRtoC extends ToC
 
         p.print(") ");
 
-        statementContext = true;
         p.print("{");
         p.indent();
         body.accept(this);
         p.outdent();
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
     
     /**
@@ -426,14 +422,11 @@ public class TraceIRtoC extends ToC
         //print the correct code for array assignment
         //this must be run after renaming!!!!!!
         if (left.getType() == null || right.getType() == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft=left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
         }
@@ -451,14 +444,11 @@ public class TraceIRtoC extends ToC
             /*
             //if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft=left;
             printLParen();  // parenthesize if expr, not if stmt
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
             }
@@ -486,14 +476,11 @@ public class TraceIRtoC extends ToC
             return;
         }
 
-        boolean oldStatementContext = statementContext;
         lastLeft=left;
         printLParen();  // parenthesize if expr, not if stmt
-        statementContext = false;
         left.accept(this);
         p.print(" = ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 

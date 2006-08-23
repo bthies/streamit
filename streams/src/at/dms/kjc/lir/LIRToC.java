@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.113 2006-08-23 23:00:56 thies Exp $
+ * $Id: LIRToC.java,v 1.114 2006-08-23 23:17:11 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -667,12 +667,9 @@ public class LIRToC
                                  JExpression cond,
                                  JStatement thenClause,
                                  JStatement elseClause) {
-        boolean oldStatementContext = statementContext;
         p.print("if (");
-        statementContext = false;
         cond.accept(this);
         p.print(") ");
-        statementContext = true;
         if (!(thenClause instanceof JBlock)) p.indent();
         thenClause.accept(this);
         if (!(thenClause instanceof JBlock)) p.outdent();
@@ -689,7 +686,6 @@ public class LIRToC
             if (!(elseClause instanceof JBlock 
                   || elseClause instanceof JIfStatement)) p.outdent();
         }
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -700,10 +696,8 @@ public class LIRToC
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
-        boolean oldStatementContext = statementContext;
         forLoopHeader++;
         p.print("for (");
-        statementContext = false;
         //forInit = true;
         if (init != null) {
             init.accept(this);
@@ -734,13 +728,11 @@ public class LIRToC
         p.print(") {");
         p.newLine();
           
-        statementContext = true;
         p.indent();
         body.accept(this);
         p.outdent();
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
     /*
@@ -831,8 +823,6 @@ public class LIRToC
                                           int oper,
                                           JExpression left,
                                           JExpression right) {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         p.print("(");
         left.accept(this);
         switch (oper) {
@@ -853,7 +843,6 @@ public class LIRToC
         }
         right.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -952,14 +941,11 @@ public class LIRToC
                                       JExpression left,
                                       JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         left.accept(this);
         p.print(" ");
         p.print(oper);
         p.print(" ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -1055,7 +1041,6 @@ public class LIRToC
                                        JExpression left,
                                        JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
         left.accept(this);
         switch (oper) {
         case OPE_BAND:
@@ -1071,7 +1056,6 @@ public class LIRToC
             throw new InconsistencyException(); // only difference with ToC
         }
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -1100,7 +1084,6 @@ public class LIRToC
             p.print(findSize((JArrayInitializer)right) + " * sizeof(");
             printType(findBaseType((JArrayInitializer)right));
             p.print("))");
-            if (statementContext) { p.print(";"); }
             return;
         } 
 
@@ -1138,14 +1121,11 @@ public class LIRToC
 
         }
 
-        boolean oldStatementContext = statementContext;
         lastLeft=left;
         printLParen();
-        statementContext = false;
         left.accept(this);
         p.print(" = ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
         lastLeft=null;
     }
@@ -1166,13 +1146,10 @@ public class LIRToC
                                            JExpression prefix,
                                            JExpression accessor) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         prefix.accept(this);
         p.print("[");
         accessor.accept(this);
         p.print("]");
-        statementContext = oldStatementContext;
         printRParen();
     }
 

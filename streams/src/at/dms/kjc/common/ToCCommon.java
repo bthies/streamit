@@ -81,16 +81,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public CodegenPrintWriter getPrinter() { return p; }
 
     /**
-     * Set statmentContext to true in statements, false in expressions.
-     * 
-     * Used to control parentheses: Specifically, an assignment
-     * expression used in a statment context should not be wrapped
-     * with parentheses since some assignments in statement context
-     * are rewritten to multiple statements.
-     */
-    protected boolean statementContext = true;
-
-    /**
      * For C code generation, the Java type 'boolean' will be printed as 'int'
      * For C++ code generation, set hasBoolType = true; to print the Java
      * type 'boolean' as 'bool'
@@ -116,18 +106,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * Print a left parenthesis if not in statement context.
      */
     protected void printLParen() {
-        //        if (! statementContext) {
         p.print("(");
-        //        }
     }
 
     /**
      * Print a right parenthesis if not in statement context.
      */
     protected void printRParen() {
-        //        if (! statementContext) {
         p.print(")");
-        //        }
     }
 
     /**
@@ -279,15 +265,11 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitWhileStatement(JWhileStatement self,
                                     JExpression cond,
                                     JStatement body) {
-        boolean oldStatementContext = statementContext;
         p.newLine();
         p.print("while (");
-        statementContext = false;
         cond.accept(this);
         p.print(") ");
-        statementContext = true;
         body.accept(this);
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -295,12 +277,9 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                   JVariableDefinition[] vars) {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         for (int i = 0; i < vars.length; i++) {
             vars[i].accept(this);
         }
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -309,18 +288,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitSwitchStatement(JSwitchStatement self,
                                      JExpression expr,
                                      JSwitchGroup[] body) {
-        boolean oldStatementContext = statementContext;
         p.print("switch (");
-        statementContext = false;
         expr.accept(this);
         p.print(") {");
-        statementContext = true;
         for (int i = 0; i < body.length; i++) {
             body[i].accept(this);
         }
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -328,15 +303,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
-        boolean oldStatementContext = statementContext;
         p.print("return");
         if (expr != null) {
             p.print(" ");
-            statementContext = false;
             expr.accept(this);
         }
         p.print(";");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -354,10 +326,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitCompoundStatement(JCompoundStatement self,
                                        JStatement[] body) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
         visitCompoundStatement(body);
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -365,11 +334,8 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitExpressionStatement(JExpressionStatement self,
                                          JExpression expr) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
         expr.accept(this);
         p.print(";");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -377,17 +343,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitExpressionListStatement(JExpressionListStatement self,
                                              JExpression[] expr) {
-        boolean oldStatementContext = statementContext;
         // Want expressions parenthesized here to not have problems with
         // relative precedence with ","
-        statementContext = false;
         for (int i = 0; i < expr.length; i++) {
             if (i != 0) {
                 p.print(", ");
             }
             expr[i].accept(this);
         }
-        statementContext = oldStatementContext;
         p.print(";");
     }
 
@@ -397,17 +360,13 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitDoStatement(JDoStatement self,
                                  JExpression cond,
                                  JStatement body) {
-        boolean oldStatementContext = statementContext;
         p.newLine();
         p.print("do ");
-        statementContext = true;
         body.accept(this);
         p.print("");
         p.print("while (");
-        statementContext = false;
         cond.accept(this);
         p.print(");");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -441,14 +400,11 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      * prints a compound statement
      */
     public void visitCompoundStatement(JStatement[] body) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
         for (int i = 0; i < body.length; i++) {
             if (!(body[i] instanceof JEmptyStatement))
                 p.newLine();
             body[i].accept(this);
         }
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -456,15 +412,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitBlockStatement(JBlock self,
                                     JavaStyleComment[] comments) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
         p.print("{");
         p.indent();
         visitCompoundStatement(self.getStatementArray());
         p.outdent();
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
     /**
@@ -473,10 +426,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     public void visitTypeDeclarationStatement(JTypeDeclarationStatement self,
                                               JTypeDeclaration decl) {
     
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         decl.accept(this);
-        statementContext = oldStatementContext;
     }
 
     // ----------------------------------------------------------------------
@@ -569,15 +519,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                       int oper,
                                       JExpression expr) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         if (oper == OPE_PREINC) {
             p.print("++");
         } else {
             p.print("--");
         }
         expr.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -588,15 +535,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                        int oper,
                                        JExpression expr) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         expr.accept(this);
         if (oper == OPE_POSTINC) {
             p.print("++");
         } else {
             p.print("--");
         }
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -605,12 +549,9 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
      */
     public void visitParenthesedExpression(JParenthesedExpression self,
                                            JExpression expr) {
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         p.print("(");
         expr.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
     }
 
 
@@ -629,12 +570,9 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                         JExpression left,
                                         JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         left.accept(this);
         p.print(equal ? " == " : " != ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -646,14 +584,11 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                            JExpression left,
                                            JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         cond.accept(this);
         p.print(" ? ");
         left.accept(this);
         p.print(" : ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -665,9 +600,7 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                                   JExpression left,
                                                   JExpression right) {
         printLParen();
-        boolean oldStatementContext = statementContext;
         left.accept(this);
-        statementContext = false;
         switch (oper) {
         case OPE_STAR:
             p.print(" *= ");
@@ -704,7 +637,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
             break;
         }
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -716,8 +648,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                     CType type)
     {
         printLParen();
-        boolean oldStatementContext = statementContext;
-        statementContext = false;
         //suppress generation of casts for multidimensional arrays
         //when generating C code because they are meaningless
         //and if we try to access a multi-dim array after it has been cast to 
@@ -731,7 +661,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         p.print("(");
         expr.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
         printRParen();
     }
     
@@ -742,16 +671,13 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                                             JExpression expr,
                                             CType type)
     {
-        boolean oldStatementContext = statementContext;
         printLParen();
-        statementContext = false;
         p.print("(");
         printType(type);
         p.print(")");
         p.print("(");
         expr.accept(this);
         p.print(")");
-        statementContext = oldStatementContext;
         printRParen();
     }
 
@@ -806,8 +732,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     }
 
     protected boolean printExp(JExpression expr) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
 
         List exps = splitForPrint(expr);
 
@@ -860,7 +784,6 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
                 p.print(printPostfix);
             }
         }
-        statementContext = oldStatementContext;
         return printedOK;
     }
     

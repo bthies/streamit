@@ -1149,9 +1149,7 @@ public class FlatIRToCluster extends InsertTimers implements
         // be careful, if you return prematurely, decrement me
         forLoopHeader++;
 
-        boolean oldStatementContext = statementContext;
         p.print("for (");
-        statementContext = false; // expressions here separated by ';'
         if (init != null) {
             init.accept(this);
             // the ; will print in a statement visitor
@@ -1180,13 +1178,11 @@ public class FlatIRToCluster extends InsertTimers implements
         p.print(") ");
 
         p.print("{");
-        statementContext = true;
         p.indent();
         body.accept(this);
         p.outdent();
         p.newLine();
         p.print("}");
-        statementContext = oldStatementContext;
     }
 
     /*
@@ -1197,8 +1193,6 @@ public class FlatIRToCluster extends InsertTimers implements
      * prints a compound statement
      */
     public void visitCompoundStatement(JStatement[] body) {
-        boolean oldStatementContext = statementContext;
-        statementContext = true;
         for (int i = 0; i < body.length; i++) {
             if (body[i] instanceof JIfStatement && i < body.length - 1
                 && !(body[i + 1] instanceof JReturnStatement)) {
@@ -1217,7 +1211,6 @@ public class FlatIRToCluster extends InsertTimers implements
                 p.newLine();
             }
         }
-        statementContext = oldStatementContext;
     }
 
     /*
@@ -1488,14 +1481,11 @@ public class FlatIRToCluster extends InsertTimers implements
         // print the correct code for array assignment
         // this must be run after renaming!!!!!!
         if (left.getType() == null || right.getType() == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft = left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
         }
@@ -1514,14 +1504,11 @@ public class FlatIRToCluster extends InsertTimers implements
             /*
             // if we cannot find the dim, just create a pointer copy
             if (dims == null) {
-            boolean oldStatementContext = statementContext;
             lastLeft = left;
             printLParen();
-            statementContext = false;
             left.accept(this);
             p.print(" = ");
             right.accept(this);
-            statementContext = oldStatementContext;
             printRParen();
             return;
             }
@@ -1600,14 +1587,11 @@ public class FlatIRToCluster extends InsertTimers implements
         if (right instanceof JUnqualifiedInstanceCreation)
             return;
 
-        boolean oldStatementContext = statementContext;
         lastLeft = left;
         printLParen();
-        statementContext = false;
         left.accept(this);
         p.print(" = ");
         right.accept(this);
-        statementContext = oldStatementContext;
         printRParen();
 
         p.print("/*" + left.getType() + "*/");

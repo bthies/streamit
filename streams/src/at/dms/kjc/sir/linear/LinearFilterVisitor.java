@@ -21,7 +21,7 @@ import at.dms.kjc.sir.*;
  * the linear function that is computed by that IR node. LinearForms are
  * used to represent linear combinations of the input plus a constant.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.17 2006-05-24 03:39:26 rabbah Exp $
+ * $Id: LinearFilterVisitor.java,v 1.18 2006-08-24 01:39:11 thies Exp $
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
@@ -213,7 +213,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
         // check the flag (which is set when we hit a non linear function in a push expression)
         // and check that we have seen the correct number of pushes.
         boolean enoughPushesSeen = (this.pushSize == this.pushOffset); // last push was to pushSize-1
-        if (!(enoughPushesSeen)) {LinearPrinter.warn("Insufficient pushes detected in filter" + this.filterName);}
+        if (!enoughPushesSeen && 
+            // we exit early on finding something non-linear, so we
+            // might not have seen all pushes
+            !this.nonLinearFlag) {
+            LinearPrinter.warn("Insufficient pushes detected in filter" + this.filterName);
+        }
         // if both the non linear flag is unset and there are enough pushes, return true
         return ((!this.nonLinearFlag) && enoughPushesSeen);
     }

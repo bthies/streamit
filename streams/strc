@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.94 2006-08-11 08:11:21 thies Exp $
+# $Id: strc,v 1.95 2006-08-24 03:28:30 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -431,12 +431,17 @@ sub get_options
     # determine back-end:
     
     # if no backend specified, then cluster -1
-    backend_defined() || ($opts{cluster} = 1 &&  $opts{standalone} = 1);
+    backend_defined() || ($opts{cluster} = 1 && $opts{standalone} = 1);
 
     # if simpleC specified then rstream, ignoring ignore doloops, absarray
     if ($opts{simpleC}) {
 	$opts{doloops} = 0;
 	$opts{absarray} = 0;
+    }
+
+    # if targetting more than one cluster host, then turn on partitioning
+    if ($opts{cluster} > 1) {
+        $opts{partition} = 1;
     }
 
     # Figure out which partitioning is in use, if any:

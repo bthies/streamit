@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.58 2006-08-23 19:24:59 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.59 2006-08-24 14:23:01 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -9,7 +9,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.common.CodegenPrintWriter;
-
+import at.dms.kjc.common.CommonUtils;
 /**
  * A class that generates part of the threadX.cpp files that is shared
  * among splitters, joiners and filters.
@@ -301,7 +301,7 @@ class ClusterCodeGenerator {
         //  +=============================+
 
         if (node.isFilter()) {
-            if (node.inputs > 0 && node.incoming[0] != null) {
+            if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                 p.println("void save_peek_buffer__" + id
                         + "(object_write_buffer *buf);");
                 p.println("void load_peek_buffer__" + id
@@ -333,7 +333,7 @@ class ClusterCodeGenerator {
         }
 
         if (node.isFilter()) {
-                if (node.inputs > 0 && node.incoming[0] != null) {
+                if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                     p.println("  save_peek_buffer__" + id + "(buf);");
                 }
                 p.println("  save_file_pointer__" + id + "(buf);");
@@ -387,7 +387,7 @@ class ClusterCodeGenerator {
         }
         
         if (node.isFilter()) {
-            if (node.inputs > 0 && node.incoming[0] != null) {
+            if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                 p.println("  load_peek_buffer__" + id + "(buf);");
             }
             p.println("  load_file_pointer__" + id + "(buf);");
@@ -765,7 +765,7 @@ class ClusterCodeGenerator {
             r.add ("  __feedbackjoiner_"+ id +"_prep();\n");
         }
 
-        if (oper instanceof SIRFilter && node.inputs > 0 && node.incoming[0] != null) {
+        if (oper instanceof SIRFilter && node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
             r.add("  __init_pop_buf__"+id+"();\n");
         }
     
@@ -787,7 +787,7 @@ class ClusterCodeGenerator {
                 if (msg_from.size() > 0) {
                     r.add("      check_messages__"+id+"();\n");
                 }
-                if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null) {
+                if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                     r.add("      __update_pop_buf__"+id+"();\n");
                 }
             }
@@ -823,7 +823,7 @@ class ClusterCodeGenerator {
             if (msg_from.size() > 0) {
                 r.add("      check_messages__"+id+"();\n");
             }
-            if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null) {
+            if (node.isFilter() && node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                 r.add("      __update_pop_buf__"+id+"();\n");
             }
         }

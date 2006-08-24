@@ -4,8 +4,10 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.CType;
+import at.dms.kjc.CStdType;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.common.CommonUtils;
 import java.util.*;
 
 /**
@@ -125,13 +127,34 @@ public class TapeCluster extends TapeBase implements Tape {
         s.append("int "); s.append(tailName); s.append(";\n");
         s.append("\n");
 
-        int extra = FixedBufferTape.getRemaining(src,dst);
+	// problem between "extra" and init_pop_count
+        //int extra = FixedBufferTape.getRemaining(src,dst);
+	// going back to old method:
+	int extra = f.getPeekInt() - f.getPopInt();
+	// end :going back to old method:"
 
         s.append("inline void __init_pop_buf__"); s.append(dst); s.append("() {\n");
 
-        if (extra > 0) {
-            if (extra > 1) {
-                s.append("  for (int i=0; i<"); s.append(extra); s.append("; i++) {\n    ");
+	int init_pop_count = extra;
+	{
+	    if (f instanceof SIRTwoStageFilter) {
+
+                SIRTwoStageFilter ff = (SIRTwoStageFilter)f;
+
+                int init_peek = ff.getInitPeekInt();
+                int init_pop = ff.getInitPopInt();
+                if (init_pop > init_peek) init_peek = init_pop;
+
+                init_pop_count = init_peek;
+
+                if (extra > (init_peek - init_pop))
+                    init_pop_count += extra - (init_peek - init_pop);
+            }
+	}
+
+        if (init_pop_count > 0) {
+            if (init_pop_count > 1) {
+                s.append("  for (int i=0; i<"); s.append(init_pop_count); s.append("; i++) {\n    ");
                 s.append(bufName); s.append("[i]=");
                   s.append(popExpr()); s.append(";\n");
                 s.append("  }\n");
@@ -141,7 +164,7 @@ public class TapeCluster extends TapeBase implements Tape {
             }
         }
         s.append("  "); s.append(tailName); s.append("=0;\n");
-        s.append("  "); s.append(headName); s.append("="); s.append(extra); s.append(";\n");
+        s.append("  "); s.append(headName); s.append("="); s.append(init_pop_count); s.append(";\n");
         s.append("}\n");
         s.append("\n");
 
@@ -422,7 +445,7 @@ public class TapeCluster extends TapeBase implements Tape {
                 if (SIRPortal.getPortalsWithReceiver(f).length > 0) {
                     s.append("      check_messages__" + src + "();\n");
                 }
-                if (node.inputs > 0 && node.incoming[0] != null) {
+                if (node.inputs > 0 && node.incoming[0] != null && CommonUtils.getOutputType(node.incoming[0]) != CStdType.Void) {
                     s.append("      __update_pop_buf__" + src + "();\n");
                 }
                 s.append("      " + ClusterUtils.getWorkName(f, src)

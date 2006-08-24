@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.87 2006-08-11 08:11:19 thies Exp $
+ * $Id: KjcOptions.opt,v 1.88 2006-08-24 15:01:38 dimock Exp $
  */
 
 prefix Kjc
@@ -324,6 +324,29 @@ longname		"cacheopt"
 	type		boolean
 	default		"false"
 	help		"Perform cache optimization"
+
+
+longname		"l1i"
+	type		int
+	default		"8"
+	requireArgument
+	help		"Level 1 i-cache size in K for cache optimizations"
+
+
+longname		"l1d"
+	type		int
+	default		"8"
+	requireArgument
+	help		"Level 1 d-cache size in K for cache optmizations"
+
+
+longname		"l2"
+	type		int
+	default		"256"
+	requireArgument
+	help		"Level 2 cache size in K for cache optimizations"
+
+
 
 longname		"peekratio"
 	type		int

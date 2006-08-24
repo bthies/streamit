@@ -3,35 +3,24 @@
  *
  * Correct output:
  *
- * strc -library -nosched Test8.str
+ * strc -library -i 3 Test8.str
  *
  * got the message 0
- * value: 0
- * value: 1
- * value: 2
- * value: 3
+ * 0
+ * 1
+ * 2
+ * 3
  * got the message 1
- * value: 7
- * value: 6
- * value: 5
- * value: 4
+ * 7
+ * 6
+ * 5
+ * 4
  * got the message 2
- * value: 11
- * value: 10
- * value: 9
- * value: 8
- * got the message 0
- * value: 12
- * value: 13
- * value: 14
- * value: 15
- * got the message 1
- * value: 19
- * value: 18
- * value: 17
- * value: 16
+ * 11
+ * 10
+ * 9
+ * 8
  */
-
 void->void pipeline Test8 {
    portal<SomeReceiver> thePortal;
 
@@ -39,10 +28,9 @@ void->void pipeline Test8 {
        int count = 0;
        work push 4 {
            thePortal.getTheMessage(count % 3);
-           if (count < 20)
-               for (int i = 0; i < 4; i++) {
-                   push(count++);
-               }
+           for (int i = 0; i < 4; i++) {
+               push(count++);
+           }
        }
    }
 

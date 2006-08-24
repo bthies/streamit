@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.98 2006-08-24 01:22:51 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.99 2006-08-24 03:31:00 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -288,28 +288,19 @@ public class ClusterBackend {
 
         StreamItDot.printGraph(str, "before-partition.dot");
 
-        // actually fuse components if fusion flag is enabled
-        if (KjcOptions.fusion) {
-            // turn on dynamic programming if no other partitioning is turned on
-            if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
-                KjcOptions.partition_dp = true;
-            }
-        
-            if ( doCacheOptimization ) {
-                str = CachePartitioner.doit(str, code_cache, data_cache);
-            } else {        
-                str = Partitioner.doit(str, 0, hosts, false, false);
-                // from now on, target however many threads were
-                // produced by the partitioner
-                KjcOptions.cluster = Partitioner.countFilters(str);
-            }
-
-            /*
-              if (str instanceof SIRContainer) {
-              ((SIRContainer)str).reclaimChildren();
-              }
-              str.setParent(null);
-            */
+        if ( doCacheOptimization ) {
+            // this performs the Cache Aware Fusion (CAF) pass from
+            // LCTES'05.  This fuses filters for targetting a uniprocessor.
+            str = CachePartitioner.doit(str, code_cache, data_cache);
+        } else if (KjcOptions.partition_dp || 
+                   KjcOptions.partition_greedy || 
+                   KjcOptions.partition_greedier) {
+            // if these are turned on, then fuse filters as if
+            // targetting a multiprocessor
+            str = Partitioner.doit(str, 0, hosts, false, false);
+            // from now on, target however many threads were
+            // produced by the partitioner
+            KjcOptions.cluster = Partitioner.countFilters(str);
         }
 
         //HashMap partitionMap = new HashMap();

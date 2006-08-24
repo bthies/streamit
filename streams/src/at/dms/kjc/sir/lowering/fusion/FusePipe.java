@@ -304,9 +304,12 @@ public class FusePipe {
             return false;
         }
 
-        // don't fuse message receivers because they have a lot of communication overhead
-        SIRPortal[] portal = SIRPortal.getPortalsWithReceiver(filter);
-        if (portal.length>=1) {
+        // don't fuse message senders or receivers because message
+        // timing breaks down after fusion (need standalone filter for
+        // proper SDEP and message delivery in cluster backend)
+        SIRPortal[] receivesFrom = SIRPortal.getPortalsWithReceiver(filter);
+        SIRPortal[] sendsTo = SIRPortal.getPortalsWithSender(filter);
+        if (receivesFrom.length>=1 || sendsTo.length>=1) {
             return false;
         }
 

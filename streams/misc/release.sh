@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.54 2006-07-21 19:42:36 dimock Exp $
+# $Id: release.sh,v 1.55 2006-08-24 01:43:56 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -139,6 +139,7 @@ rm -rf $WORKING/streams/apps/benchmarks/micro04
 # do we want to trim down mpeg inputs, outputs?
 rm -rf $WORKING/streams/apps/benchmarks/traces
 rm -rf $WORKING/streams/apps/benchmarks/asplos06
+rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
 # JPEGtoBMP was not working at time of release
 #rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
 # this is only relevant for spacedynamic backend, so don't release

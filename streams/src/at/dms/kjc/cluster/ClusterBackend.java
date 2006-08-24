@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.97 2006-08-11 08:11:54 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.98 2006-08-24 01:22:51 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -475,7 +475,16 @@ public class ClusterBackend {
         GenerateConfigFile.generateConfigFile();        // cluster-config.txt
         GenerateSetupFile.generateSetupFile();          // cluster-setup.txt
 
-        GenerateWorkEst.generateWorkEst();        // work-estimate.txt
+        if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform) {
+            // if we are referencing FFTW functions, don't bother
+            // generating a work estimate because we haven't profiled
+            // those functions for an accurate count.  Delete the file
+            // to avoid confusion on part of user.
+            GenerateWorkEst.clearWorkEst();
+        } else {
+            // otherwise generate file
+            GenerateWorkEst.generateWorkEst();        // work-estimate.txt
+        }
 
         System.err.println(" done.");    
 

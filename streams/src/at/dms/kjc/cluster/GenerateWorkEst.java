@@ -2,6 +2,7 @@ package at.dms.kjc.cluster;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -21,7 +22,6 @@ public class GenerateWorkEst {
     /**
      * Generate the work-estimate.txt file
      */
-
     public static void generateWorkEst() {
 
         int threadNumber = NodeEnumerator.getNumberOfNodes();
@@ -76,4 +76,20 @@ public class GenerateWorkEst {
             System.err.println("Unable to write work estimation file");
         }   
     }
+
+    /**
+     * Delete the work-estimate.txt file
+     */
+    public static void clearWorkEst() {
+        try {
+            File f = new File("work-estimate.txt");
+            if (f.exists()) {
+                f.delete();
+            }
+        }
+        catch (Exception e) {
+            System.err.println("Unable to delete work-estimate.txt");
+        }   
+    }
+
 }

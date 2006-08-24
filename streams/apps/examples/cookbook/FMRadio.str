@@ -47,11 +47,15 @@ float->float splitjoin EqSplit(float rate, int bands, float[bands] cutoffs,
   for (int i = 1; i < bands; i++)
     add pipeline {
       add BandPassFilter(rate, cutoffs[i-1], cutoffs[i], taps);
-      add float->float filter {
-        work pop 1 push 1 { push(pop() * gains[i]); }
-      };
+      add Amplify(gains[i]);
     };
   join roundrobin;
+}
+
+float->float filter Amplify(float k) {
+    work pop 1 push 1 { 
+        push(pop() * k); 
+    }
 }
 
 float->float filter LowPassFilter(float rate, float cutoff, int taps, int decimation) {

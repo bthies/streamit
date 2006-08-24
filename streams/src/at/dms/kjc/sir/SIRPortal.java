@@ -43,7 +43,6 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     /*
      * Finds send message statements in stream structure
      */
-
     public static void findMessageStatements(SIRStream str) {
     
         SIRPortal tmp = new SIRPortal(null, false);
@@ -53,7 +52,6 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     /*
      * Returns array of all portals found
      */
-
     public static SIRPortal[] getPortals() {
         SIRPortal[] array = new SIRPortal[portals.size()];
         return (SIRPortal[])portals.toArray(array);
@@ -62,7 +60,6 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     /*
      * Returns array of all portals with a specific sender
      */
-
     public static SIRPortal[] getPortalsWithSender(SIRStream sender) {
         LinkedList list = new LinkedList();
         for (int t = 0; t < portals.size(); t++) {
@@ -76,7 +73,6 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     /*
      * Returns array of all portals with a specific receiver
      */
-
     public static SIRPortal[] getPortalsWithReceiver(SIRStream receiver) {
         LinkedList list = new LinkedList();
         for (int t = 0; t < portals.size(); t++) {

@@ -32,7 +32,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.125 2006-08-23 23:01:13 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.126 2006-08-25 18:02:26 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -247,7 +247,7 @@ public class NodesToJava implements FEVisitor
                 switch (((TypePrimitive)type).getType())
                     {
                     case TypePrimitive.TYPE_BOOLEAN:
-                        suffix = "Boolean";
+                        suffix = "Bool";
                         break;
                     case TypePrimitive.TYPE_BIT:
                         suffix = "Int";

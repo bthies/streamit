@@ -351,15 +351,35 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         // we need documentation for helper functions that 
         // any identifier starting with push, peek, pop, (initPath)
         // is reserved.
-        if (exp.getIdent().startsWith("push") ||
-            exp.getIdent().startsWith("pop")  ||
-            exp.getIdent().startsWith("peek") ||
+        if (matchesPrefix(exp.getIdent(), "push") ||
+            matchesPrefix(exp.getIdent(), "pop")  ||
+            matchesPrefix(exp.getIdent(), "peek") ||
             exp.getIdent().equals("print") ||
-            exp.getIdent().equals("println") )
+            exp.getIdent().equals("println"))
             return true;
-    
+        
         return false;
     }
+
+    /**
+     * Returns whether str1 equals str2+suffix, where suffix is one of
+     * the types accepted by StreamIt.
+     */
+    static String[] suffixes = { "Int", "Float", "", "Bool" };
+    private boolean matchesPrefix(String str1, String str2) {
+        // beginning of str1 must match str2
+        if (str1.startsWith(str2)) {
+            // rest of str1 must match one of the type suffixes
+            String rest = str1.substring(str2.length());
+            for (int i=0; i<suffixes.length; i++) {
+                if (rest.equals(suffixes[i])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
 
     /* Given a method call expression, this function will create/return a 
        SIR Expression if the method call orignally denoted one. */
@@ -376,7 +396,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         else
             args[0] = (JExpression) args[0].accept(this);
     
-        if (exp.getIdent().startsWith("push")) {
+        if (matchesPrefix(exp.getIdent(), "push")) {
             /*      if (!args[0].getType().equals(parentStream.getOutputType()))
                     Utils.fail(printLine(exp) + 
                     "Type of push argument does not match filter output type "); */
@@ -384,20 +404,19 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      
             ((SIRPushExpression)newExp).setTapeType(parentStream.getOutputType());
         }
-        if (exp.getIdent().startsWith("pop")) {
+        if (matchesPrefix(exp.getIdent(), "pop")) {
             newExp = new SIRPopExpression();
             ((SIRPopExpression)newExp).setTapeType(parentStream.getInputType());
         }
-        if (exp.getIdent().startsWith("peek")) {
+        if (matchesPrefix(exp.getIdent(), "peek")) {
             newExp = new SIRPeekExpression(args[0]);
             ((SIRPeekExpression)newExp).setTapeType(parentStream.getInputType()); 
         }
-        if (exp.getIdent().startsWith("print")) {
-            if (exp.getIdent().startsWith("println")) {
-                newExp = new SIRPrintStatement(null, args[0], true, null);
-            } else {
-                newExp = new SIRPrintStatement(null, args[0], false, null);
-            }
+        if (exp.getIdent().equals("print")) {
+            newExp = new SIRPrintStatement(null, args[0], false, null);
+        } 
+        if (exp.getIdent().equals("println")) {
+            newExp = new SIRPrintStatement(null, args[0], true, null);
         }
     
         return newExp;

@@ -975,7 +975,7 @@ import java.util.*;
             Iterator i = receives_from.iterator();
             while (i.hasNext()) {
                 int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-                print("  if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
+                print("  while (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
             }
         }
 
@@ -985,7 +985,7 @@ import java.util.*;
 
 
         print("  for (msg = __msg_stack_"+selfID+"; msg != NULL; msg = msg->next) {\n");
-        print("    if (msg->execute_at <= __counter_"+selfID+") {\n");
+        print("    if (msg->execute_at == __counter_"+selfID+") {\n");
 
 
         //SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
@@ -1052,7 +1052,11 @@ import java.util.*;
 
         }
 
-        print("    } else { last = msg; }\n");
+        print("    } else if (msg->execute_at > __counter_" + selfID + ") {\n");
+        print("      last = msg;\n");
+        print("    } else { // msg->execute_at < __counter_" + selfID + "\n");
+        print("      message::missed_delivery();\n");
+        print("    }");
         print("  } // for \n");
 
         print("}\n");

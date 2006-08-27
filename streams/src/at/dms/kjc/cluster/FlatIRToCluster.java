@@ -616,7 +616,7 @@ public class FlatIRToCluster extends InsertTimers implements
                 Iterator i = receives_from.iterator();
                 while (i.hasNext()) {
                     int src = NodeEnumerator.getSIROperatorId((SIRStream) i.next());
-                    p.print("  if (__msg_sock_" + src + "_" + selfID
+                    p.print("  while (__msg_sock_" + src + "_" + selfID
                             + "in->data_available()) {\n    handle_message__"
                             + selfID + "(__msg_sock_" + src + "_" + selfID
                             + "in);\n  } // if\n");
@@ -631,7 +631,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
         p.print("  for (msg = __msg_stack_" + selfID
                 + "; msg != NULL; msg = msg->next) {\n");
-        p.print("    if (msg->execute_at <= __counter_" + selfID + ") {\n");
+        p.print("    if (msg->execute_at == __counter_" + selfID + ") {\n");
 
         SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
 
@@ -711,7 +711,11 @@ public class FlatIRToCluster extends InsertTimers implements
 
         }
 
-        p.print("    } else { last = msg; }\n");
+        p.print("    } else if (msg->execute_at > __counter_" + selfID + ") {\n");
+        p.print("      last = msg;\n");
+        p.print("    } else { // msg->execute_at < __counter_" + selfID + "\n");
+        p.print("      message::missed_delivery();\n");
+        p.print("    }");
         p.print("  } // for \n");
 
         p.print("}\n");

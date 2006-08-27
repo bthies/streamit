@@ -3,6 +3,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
+import at.dms.kjc.iterator.*;
 import at.dms.compiler.PositionedError;
 import at.dms.kjc.sir.lowering.Propagator;
 import at.dms.kjc.sir.lowering.LoweringConstants;
@@ -41,12 +42,22 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     }
 
     /*
-     * Finds send message statements in stream structure
+     * Finds send message statements in a stream, registering the
+     * senders with their associated portals.  Returns whether or not
+     * any message statements were found.
      */
-    public static void findMessageStatements(SIRStream str) {
-    
-        SIRPortal tmp = new SIRPortal(null, false);
-        tmp.traverse(str);
+    public static boolean findMessageStatements(SIRStream str) {
+        final FindMessageStatements finder = new FindMessageStatements();
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void preVisitStream(SIRStream self, SIRIterator iter) {
+                    finder.setSender(self);
+                    JMethodDeclaration[] methods = self.getMethods();
+                    for (int i=0; i<methods.length; i++) {
+                        methods[i].accept(finder);
+                    }
+                }
+            });
+        return finder.foundMessageStatement();
     }
 
     /*
@@ -119,51 +130,22 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
         return (SIRPortalSender[])senders.toArray(array);
     }
 
-    private void traverse(SIRStream str)
-    {
-        // First, visit children (if any).
-        if (str instanceof SIRFeedbackLoop)
-            {
-                SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
-                traverse(fl.getBody());
-                traverse(fl.getLoop());
-            }
-        if (str instanceof SIRPipeline)
-            {
-                SIRPipeline pl = (SIRPipeline)str;
-                Iterator iter = pl.getChildren().iterator();
-                while (iter.hasNext())
-                    {
-                        SIRStream child = (SIRStream)iter.next();
-                        traverse(child);
-                    }
-            }
-        if (str instanceof SIRSplitJoin)
-            {
-                SIRSplitJoin sj = (SIRSplitJoin)str;
-                Iterator iter = sj.getParallelStreams().iterator();
-                while (iter.hasNext())
-                    {
-                        SIRStream child = (SIRStream)iter.next();
-                        traverse(child);
-                    }
-            }
+    static class FindMessageStatements extends SLIRReplacingVisitor {
+        /**
+         * Current stream we're registering as the sender.
+         */
+        private SIRStream sender;
+        /**
+         * Whether or not we found any message statements.
+         */
+        private boolean foundMessageStatement = false;
         
-        if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
-            {
-                if (str.needsWork()) {
-                    FindMessageStatements find = new FindMessageStatements(str);
-                    str.getWork().accept(find);
-                }
-            }
-    }
+        public void setSender(SIRStream sender) {
+            this.sender = sender;
+        }
 
-    class FindMessageStatements extends SLIRReplacingVisitor {
-
-        SIRStream stream;
-
-        public FindMessageStatements(SIRStream stream) {
-            this.stream = stream;
+        public boolean foundMessageStatement() {
+            return foundMessageStatement;
         }
 
         public Object visitMessageStatement(SIRMessageStatement self, 
@@ -172,12 +154,13 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
                                             java.lang.String ident, 
                                             JExpression[] args, 
                                             SIRLatency latency) {
+            foundMessageStatement = true;
             if (self.getPortal() instanceof SIRPortal) {
-                SIRPortalSender sender = new SIRPortalSender(stream, self.getLatency());
-                ((SIRPortal)self.getPortal()).addSender(sender);
+                SIRPortalSender ps = new SIRPortalSender(sender, self.getLatency());
+                ((SIRPortal)self.getPortal()).addSender(ps);
             }
             return self;
-        }   
+        }
     }
 
     //############################

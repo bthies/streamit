@@ -5,6 +5,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
 import at.dms.kjc.flatgraph.DumpGraph;
 import at.dms.util.IRPrinter;
+import at.dms.util.Utils;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
@@ -88,8 +89,11 @@ public class RawBackend {
         RenameAll.renameAllFilters(str);
     
         if (Flattener.hasDynamicRates(str)) {
-            System.err.println("Failure: Dynamic rates are not yet supported in the Raw backend.");
-            System.exit(1);
+            Utils.fail("Dynamic rates are not yet supported in the Raw backend.");
+        }
+
+        if (SIRPortal.findMessageStatements(str)) {
+            Utils.fail("Teleport messaging is not yet supported in the Raw backend.");
         }
 
         //SIRPrinter printer1 = new SIRPrinter();

@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.util.Utils;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import at.dms.kjc.iterator.*;
@@ -95,6 +96,10 @@ public class SpaceTimeBackend {
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
         
+        if (SIRPortal.findMessageStatements(str)) {
+            Utils.fail("Teleport messaging is not yet supported in the Raw backend.");
+        }
+
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         

@@ -6,6 +6,7 @@ import at.dms.kjc.flatgraph.FlatGraphToSIR;
 import at.dms.kjc.flatgraph.GraphFlattener;
 import at.dms.kjc.flatgraph.DumpGraph;
 import at.dms.util.IRPrinter;
+import at.dms.util.Utils;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
@@ -98,6 +99,10 @@ public class SpaceDynamicBackend {
           }
         */
     
+        if (SIRPortal.findMessageStatements(str)) {
+            Utils.fail("Teleport messaging is not yet supported in the Raw backend.");
+        }
+
         //first of all, flatten the graph to make it easier to deal with...
         GraphFlattener graphFlattener = new GraphFlattener(str);
         //  FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);

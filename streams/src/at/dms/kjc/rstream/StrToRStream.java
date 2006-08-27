@@ -5,6 +5,7 @@ import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
+import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
@@ -109,8 +110,11 @@ public class StrToRStream {
         RenameAll.renameAllFilters(str);
     
         if (Flattener.hasDynamicRates(str)) {
-            System.err.println("Failure: Dynamic rates are not yet supported in the RStream backend.");
-            System.exit(1);
+            Utils.fail("Dynamic rates are not yet supported in the RStream backend.");
+        }
+
+        if (SIRPortal.findMessageStatements(str)) {
+            Utils.fail("Teleport messaging is not yet supported in the Raw backend.");
         }
 
         //VarDecl Raise to move array assignments up

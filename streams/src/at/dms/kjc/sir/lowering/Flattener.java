@@ -9,6 +9,7 @@ import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.linear.frequency.*; 
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
+import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
@@ -81,6 +82,10 @@ public class Flattener {
             SIRDynamicRateManager.pushConstantPolicy(1000000);
             //      System.err.println("Failure: Dynamic rates are not yet supported in the uniprocessor backend.");
             //      System.exit(1);
+        }
+
+        if (SIRPortal.findMessageStatements(str)) {
+            Utils.fail("Teleport messaging is not supported in the old uniprocessor backend.");
         }
 
         lowerFilterContents(str, true);

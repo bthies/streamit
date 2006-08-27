@@ -737,84 +737,10 @@ public class FlatIRToCluster extends InsertTimers implements
                    + selfID
                    + ", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
-        p.print("  if (iteration > 0) {\n");
-        p.print("    message *msg = new message(size, index, iteration);\n");
-        p.print("    msg->read_params(sock);\n");
-        p.print("    __msg_stack_" + selfID
+        p.print("  message *msg = new message(size, index, iteration);\n");
+        p.print("  msg->read_params(sock);\n");
+        p.print("  __msg_stack_" + selfID
                 + " = msg->push_on_stack(__msg_stack_" + selfID + ");\n");
-        p.print("    return;\n");
-        p.print("  }\n");
-
-        // SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
-
-        // this block will need to be adjusted to receive from
-        // multiple portals of different types (different interfaces)
-        if (portals.length > 0) {
-
-            CClass pclass = portals[0].getPortalType().getCClass();
-
-            CMethod pmethods[] = pclass.getMethods();
-
-            for (int i = 0; i < pmethods.length; i++) {
-
-                CMethod portal_method = pmethods[i];
-                CType portal_method_params[] = portal_method.getParameters();
-
-                String method_name = portal_method.getIdent();
-
-                int length = method_name.length();
-
-                if (!method_name.startsWith("<") && !method_name.endsWith(">")) {
-
-                    p.print("  if (index == " + i + ") {\n");
-
-                    for (int t = 0; t < methods.length; t++) {
-
-                        String thread_method_name = methods[t].getName();
-
-                        if (thread_method_name.startsWith(method_name)
-                            && thread_method_name.charAt(length) == '_'
-                            && thread_method_name.charAt(length + 1) == '_') {
-
-                            int param_count = methods[t].getParameters().length;
-
-                            // declare variables for parameters
-                            for (int a = 0; a < param_count; a++) {
-                                p.print("        ");
-                                printDecl(portal_method_params[a], "p"+a);
-                                p.print(";\n");
-                            }
-
-                            // assign to parameters
-                            for (int a = 0; a < param_count; a++) {
-                                if (portal_method_params[a].isArrayType()) {
-                                    // read arrays by passing array pointer and length
-                                    CArrayType arrType = (CArrayType)portal_method_params[a];
-                                    p.print("    sock->read_" + arrType.getBaseType()
-                                            + "_array((" + arrType.getBaseType() + "*)p" + a + ", " + arrType.getTotalNumElements() + ");\n");
-                                } else {
-                                    // read primitives by calling function and assigning result
-                                    p.print("    p" + a
-                                            + " = sock->read_" 
-                                            + portal_method_params[a] + "();\n");
-                                }
-                            }
-
-                            p.print("    " + thread_method_name + "__" + selfID
-                                    + "(");
-                            for (int a = 0; a < param_count; a++) {
-                                if (a > 0)
-                                    p.print(", ");
-                                p.print("p" + a);
-                            }
-                            p.print(");\n");
-                        }
-                    }
-                    p.print("  }\n");
-                }
-            }
-        }
-
         p.print("}\n");
         }
         // +=============================+

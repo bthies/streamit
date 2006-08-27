@@ -1076,71 +1076,10 @@ import java.util.*;
         print("  int iteration = sock->read_int();\n");
         print("  printf(\"//Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
-        print("  if (iteration > 0) {\n");
-        print("    message *msg = new message(size, index, iteration);\n");
-        print("    msg->read_params(sock,16);\n");
-        print("    __msg_stack_"+selfID+" = msg->push_on_stack(__msg_stack_"+selfID+");\n");
-        print("    return;\n");
-        print("  }\n");
-
-        //SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
-
-        // this block will need to be adjusted to receive from
-        // multiple portals of different types (different interfaces)
-        if (portals.length > 0) {
-        
-            CClass pclass = portals[0].getPortalType().getCClass();
-
-            CMethod pmethods[] = pclass.getMethods();
-
-            for (int i = 0 ; i < pmethods.length; i++) {
-
-                CMethod portal_method = pmethods[i];
-                CType portal_method_params[] = portal_method.getParameters();
-
-                String method_name = portal_method.getIdent();
-
-                int length = method_name.length();
-
-                if (!method_name.startsWith("<") && 
-                    !method_name.endsWith(">")) {
-
-                    print("  if (index == "+i+") {\n");
-
-                    for (int t = 0; t < methods.length; t++) {
-            
-                        String thread_method_name = methods[t].getName();
-            
-                        if (thread_method_name.startsWith(method_name) &&
-                            thread_method_name.charAt(length) == '_' &&
-                            thread_method_name.charAt(length + 1) == '_') {
-                
-                            int param_count = methods[t].getParameters().length;
-
-                            for (int a = 0; a < param_count; a++) {
-                                if (portal_method_params[a].toString().equals("int")) {
-                                    print("    int p"+a+" = sock->read_int();\n");
-                                }
-                                if (portal_method_params[a].toString().equals("float")) {
-                                    print("    float p"+a+" = sock->read_float();\n");
-                                }
-                            }
-
-                            print("    "+thread_method_name+"__"+selfID+"(");
-                            for (int a = 0; a < param_count; a++) {
-                                if (a > 0) print(", ");
-                                print("p"+a);
-                            }
-                            print(");\n");
-                        }
-                    }
-                    print("  }\n");
-                }
-            }
-        }
-
+        print("  message *msg = new message(size, index, iteration);\n");
+        print("  msg->read_params(sock,16);\n");
+        print("  __msg_stack_"+selfID+" = msg->push_on_stack(__msg_stack_"+selfID+");\n");
         print("}\n");
-
     
         //  +=============================+
         //  | Send Credits                |

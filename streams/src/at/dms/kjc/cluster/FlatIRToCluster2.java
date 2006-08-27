@@ -968,14 +968,21 @@ import java.util.*;
 
 
         if (restrictedExecution) {
-            print("  while (__credit_"+selfID+" <= __counter_"+selfID+") {\n");
+            print("  while (");
+            Iterator i = receives_from.iterator();
+            while (i.hasNext()) {
+                int src = NodeEnumerator.getSIROperatorId((SIRStream) i.next());
+                print("__credit_" + src + "_" + selfID + " <= __counter_" + selfID);
+                if (i.hasNext()) print(" || ");
+            }
+            print(") {\n");
         }
     
         {
             Iterator i = receives_from.iterator();
             while (i.hasNext()) {
                 int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-                print("  while (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n  } // if\n");
+                print("  while (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n    handle_message__"+selfID+"(__msg_sock_"+src+"_"+selfID+"in, &__credit_" + src + "_" + selfID +");\n  } // if\n");
             }
         }
 
@@ -1066,12 +1073,12 @@ import java.util.*;
         //  +=============================+
 
     
-        print("\nvoid handle_message__"+selfID+"(netsocket *sock) {\n");
+        print("\nvoid handle_message__"+selfID+"(netsocket *sock, int* credit) {\n");
         print("  int size = sock->read_int();\n");
     
         if (restrictedExecution) {
             print("  if (size == -1) { // a credit message received\n");
-            print("    __credit_"+selfID+" = sock->read_int();\n");
+            print("    *credit = sock->read_int();\n");
             print("    return;\n");
             print("  };\n");
         }

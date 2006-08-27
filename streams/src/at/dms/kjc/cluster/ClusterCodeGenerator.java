@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.59 2006-08-24 14:23:01 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.60 2006-08-27 22:44:56 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -214,7 +214,10 @@ class ClusterCodeGenerator {
         p.println("thread_info *__thread_"+id+" = NULL;");
 
         if (restrictedExecution) {
-            p.println("int __credit_"+id+" = "+initCredit+";");
+            for (Iterator i = msg_from.iterator(); i.hasNext();) {
+                int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+                p.println("int __credit_"+src+"_"+id+" = "+initCredit+";");
+            }
         }
     
         for (Iterator i = msg_to.iterator(); i.hasNext();) {

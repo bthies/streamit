@@ -341,7 +341,7 @@ public class FlatIRToCluster extends InsertTimers implements
         p.print("inline void check_status__" + selfID + "();\n");
         if (SIRPortal.getPortalsWithReceiver(filter).length > 0) { 
             p.print("void check_messages__" + selfID + "();\n");
-            p.print("void handle_message__" + selfID + "(netsocket *sock);\n");
+            p.print("void handle_message__" + selfID + "(netsocket *sock, int* credit);\n");
         }
         if (sendsCredits) {
             p.print("void send_credits__" + selfID + "();\n");
@@ -605,8 +605,14 @@ public class FlatIRToCluster extends InsertTimers implements
         p.print("  message *msg, *last = NULL;\n");
 
         if (restrictedExecution) {
-            p.print("  while (__credit_" + selfID + " <= __counter_" + selfID
-                    + ") {\n");
+            p.print("  while (");
+            Iterator i = receives_from.iterator();
+            while (i.hasNext()) {
+                int src = NodeEnumerator.getSIROperatorId((SIRStream) i.next());
+                p.print("__credit_" + src + "_" + selfID + " <= __counter_" + selfID);
+                if (i.hasNext()) p.print(" || ");
+            }
+            p.print(") {\n");
         }
 
         if (! KjcOptions.standalone) { 
@@ -619,7 +625,7 @@ public class FlatIRToCluster extends InsertTimers implements
                     p.print("  while (__msg_sock_" + src + "_" + selfID
                             + "in->data_available()) {\n    handle_message__"
                             + selfID + "(__msg_sock_" + src + "_" + selfID
-                            + "in);\n  } // if\n");
+                            + "in, &__credit_" + src + "_" + selfID +");\n  } // if\n");
                 }
             }
 
@@ -724,12 +730,12 @@ public class FlatIRToCluster extends InsertTimers implements
         // | Handle Message |
         // +=============================+
 
-        p.print("\nvoid handle_message__" + selfID + "(netsocket *sock) {\n");
+        p.print("\nvoid handle_message__" + selfID + "(netsocket *sock, int* credit) {\n");
         p.print("  int size = sock->read_int();\n");
 
         if (restrictedExecution) {
             p.print("  if (size == -1) { // a credit message received\n");
-            p.print("    __credit_" + selfID + " = sock->read_int();\n");
+            p.print("    *credit = sock->read_int();\n");
             p.print("    return;\n");
             p.print("  }\n");
         }

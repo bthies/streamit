@@ -245,7 +245,12 @@ public class FlatIRToCluster extends InsertTimers implements
 
         HashSet sendsCreditsTo = LatencyConstraints
             .getOutgoingConstraints(self);
-        boolean restrictedExecution = LatencyConstraints.isRestricted(self);
+        
+        // execution can only be restricted in the multi-threaded
+        // cluster case; in standalone mode, the schedule is fixed, so
+        // waiting for credits leads to infinite loop
+        boolean restrictedExecution = (LatencyConstraints.isRestricted(self) &&
+                                       !KjcOptions.standalone);
         boolean sendsCredits = ! sendsCreditsTo.isEmpty();
 
         SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
@@ -728,7 +733,7 @@ public class FlatIRToCluster extends InsertTimers implements
         p.print("  int index = sock->read_int();\n");
         p.print("  int iteration = sock->read_int();\n");
         p
-            .print("  fprintf(stderr,\"Message receieved! thread: "
+            .print("  //fprintf(stderr,\"Message receieved! thread: "
                    + selfID
                    + ", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
@@ -1744,17 +1749,19 @@ public class FlatIRToCluster extends InsertTimers implements
 
                     if (LatencyConstraints.isMessageDirectionDownstream(sender,
                                                                         receiver)) {
-
                         p.print("sdep_" + selfID + "_" + dst
                                 + "->getDstPhase4SrcPhase(__counter_" + selfID
-                                + "+" + max + "+1)-1);\n");
-
+                                + "+" + max + "+1)");
+                        // subtract 1 in the downstream direction
+                        // because message is delivered BEFORE given iter
+                        p.print("-1);\n");
                     } else {
-
                         p.print("sdep_" + selfID + "_" + dst
                                 + "->getSrcPhase4DstPhase(__counter_" + selfID
-                                + "+" + max + "+1)-1);\n");
-
+                                + "+" + max + "+1)");
+                        // do not subtract 1 in the upstream direction
+                        // because message is delivered AFTER given iter
+                        p.print(");\n");
                     }
 
                 } else {
@@ -1805,19 +1812,21 @@ public class FlatIRToCluster extends InsertTimers implements
 
                     if (LatencyConstraints.isMessageDirectionDownstream(sender,
                                                                         receiver)) {
-
                         p.print("  __msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getDstPhase4SrcPhase(__counter_" + selfID
-                                + "+" + max + "+1)-1);\n");
-
+                                + "+" + max + "+1)");
+                        // subtract 1 in the downstream direction
+                        // because message is delivered BEFORE given iter
+                        p.print("-1);\n");
                     } else {
-
                         p.print("  __msg_sock_" + selfID + "_" + dst
                                 + "out->write_int(sdep_" + selfID + "_" + dst
                                 + "->getSrcPhase4DstPhase(__counter_" + selfID
-                                + "+" + max + "+1)-1);\n");
-
+                                + "+" + max + "+1)");
+                        // do not subtract 1 in the upstream direction
+                        // because message is delivered AFTER given iter
+                        p.print(");\n");
                     }
 
                 } else {

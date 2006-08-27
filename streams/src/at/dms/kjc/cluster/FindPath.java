@@ -11,8 +11,11 @@ import at.dms.kjc.KjcOptions;
  * about output tapes maintained by RegisterStreams. The search
  * starts at the source operator and performs breadth first search. 
  *
+ * Aug 2006: UNCLEAR WHAT THE PURPOSE OF THIS CLASS IS.  It appears to
+ * have no side-effects, and caused a performance bottleneck in MPEG.
+ * Was it only for debugging?  Removing the only call to it, from
+ * LatencyConstraints.
  */
-
 public class FindPath {
 
     static void find(int src_id, int dst_id) {
@@ -61,6 +64,7 @@ public class FindPath {
                 // thread number.  Could only happen on src_id, but then caller would
                 // have been unable to get src_id to call this method.
                 if (KjcOptions.fusion) {
+                    // unclear that this error message is still accurate or relevant
                     assert false : "-cluster -fusion does not support messaging. Try -cluster -standalone instead.";
                 } else {
                     throw e;

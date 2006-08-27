@@ -254,7 +254,9 @@ public class LatencyConstraints {
                     int n1 = NodeEnumerator.getSIROperatorId(f1);
                     int n2 = NodeEnumerator.getSIROperatorId(f2);
 
-                    FindPath.find(n1,n2);
+                    // seems to have no side effects, and causes a
+                    // performance bottleneck in MPEG.
+                    //FindPath.find(n1,n2);
 
                     streamit.scheduler2.constrained.Scheduler cscheduler2 =
                         streamit.scheduler2.constrained.Scheduler.
@@ -407,13 +409,12 @@ public class LatencyConstraints {
                     // take care of upstream messages
 
                     if (upstream && any_latency_found && min_latency < 0) {
-
                         AssertedClass.ASSERT(topStreamIter, false, 
                                              "Error: an upstream message is being sent with a negative latency.");
             
                     }
             
-                    if (upstream && any_latency_found && min_latency > 0) {
+                    if (upstream && any_latency_found && min_latency >= 0) {
             
                         int init_credit;
                         int iter = 1;
@@ -423,7 +424,7 @@ public class LatencyConstraints {
                         restrictedExecutionFilters.add(receiver);
 
                         init_credit = 
-                            sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
+                            sdep2.getSrcPhase4DstPhase(1 + min_latency); // - 1; (delivered AFTER iter in upstream dir)
 
                         //setInitCredit((SIRFilter)receiver, init_credit);
 
@@ -452,7 +453,7 @@ public class LatencyConstraints {
                 
                             int credit = 
                                 sdep2.getSrcPhase4DstPhase(offset + 
-                                                           2 + min_latency)- 1;
+                                                           2 + min_latency); // - 1; (delivered AFTER iter in upstream dir)
                             if (credit > credit_sent) { 
 
                                 constraint.setDependencyData(offset, 

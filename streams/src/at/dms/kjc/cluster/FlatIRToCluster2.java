@@ -1074,7 +1074,7 @@ import java.util.*;
 
         print("  int index = sock->read_int();\n");
         print("  int iteration = sock->read_int();\n");
-        print("  printf(\"Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
+        print("  printf(\"//Message receieved! thread: "+selfID+", method_index: %d excute at iteration: %d\\n\", index, iteration);\n");
 
         print("  if (iteration > 0) {\n");
         print("    message *msg = new message(size, index, iteration);\n");
@@ -2573,12 +2573,16 @@ import java.util.*;
 
                     if (LatencyConstraints.isMessageDirectionDownstream(sender, receiver)) {
             
-                        print("  sock->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(iteration+"+max+"));\n");
+                        // subtract 1 at end in downstream direction
+                        // because message is delivred BEFORE given iter
+                        print("  sock->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(iteration+"+max+"+1)-1);\n");
 
                     } else {
-            
-                        
-                        print("  sock->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(iteration+"+max+"));\n");
+
+                        // do not subtract 1 at end in upstream
+                        // direction because message is delivred
+                        // AFTER given iter
+                        print("  sock->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(iteration+"+max+"+1));\n");
             
                     }
 

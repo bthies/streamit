@@ -342,7 +342,15 @@ public class LatencyConstraints {
             
                     // take care of negative latency downstream messages
 
-                    if (min_latency < 0 && !upstream) {
+                    // we actually need to send credits no matter what
+                    // the latency is, because in a parallel
+                    // execution, the messages are sent via a
+                    // different socket than the data.  So the credits
+                    // handle the case where the messages themselves
+                    // are delayed in route.
+
+                    //if (min_latency < 0 && !upstream) {
+                    if (!upstream) {
                 
                         int last_dep;
                         int iter;

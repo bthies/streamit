@@ -91,3 +91,18 @@ message *message::remove_from_stack(message *stack_top) {
   */
 }
 
+/**
+ * Called to indicate that a message delivery deadline has been missed.
+ */
+void message::missed_delivery() {
+    fprintf(stderr, "ERROR:\n");
+    fprintf(stderr, "Missed a message delivery deadline.  If you are running under -cluster,\n");
+    fprintf(stderr, "this means that your program is invalid due to an impossibly tight\n");
+    fprintf(stderr, "message constraint (or there is a bug in our messaging system.)\n");
+    fprintf(stderr, "If you are running under default strc, then the default schedule does\n");
+    fprintf(stderr, "not respect one of your constraints.  Try running under -cluster\n");
+    fprintf(stderr, "or -library.\n");
+    fprintf(stderr, "Exiting...\n");
+    exit(1);
+}
+

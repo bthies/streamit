@@ -39,6 +39,10 @@ public:
   message *push_on_stack(message *top); // returns the new stack
   message *remove_from_stack(message *top); // returns the new stack
 
+  /**
+   * Called to indicate that a message delivery deadline has been missed.
+   */
+  static void missed_delivery();
 };
 
 #endif

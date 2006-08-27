@@ -1,0 +1,46 @@
+void->void pipeline Test12 {
+    portal<Counter> p;
+    add Source(p);
+    add BlockRate(20);
+    add Counter to p;
+    add Output;
+}
+
+void->int filter Source(portal<Counter> p) {
+    int i=1;
+    work push 1 {
+	push(i);
+        if (i%10==0) {
+	    p.setVal() [0:0];
+	}
+	i++;
+    }
+}
+
+int->int filter BlockRate(int N) {
+    work push N pop N {
+	for (int i=0; i<N; i++) {
+	    push(pop());
+	}
+    }
+}
+
+int->int filter Counter {
+    int val = 0;
+    
+    work push 1 pop 1 {
+        println(val);
+        val = pop();
+        push(val);
+    }
+
+    handler setVal() {
+	val = 100;
+    }
+}
+
+int->void filter Output {
+  work pop 1 {
+    pop();
+  }
+}

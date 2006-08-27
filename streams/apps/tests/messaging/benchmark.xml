@@ -41,6 +41,11 @@ Someone want to write a detailed description?
       <file class="source">Test7.str</file>
       <file class="output">Test7.out</file>
     </impl>
+    <impl lang="StreamIt" id="test8">
+      <desc>Tests multiple portals to same filter.</desc>
+      <file class="source">Test8.str</file>
+      <file class="output">Test8.out</file>
+    </impl>
     <impl lang="StreamIt" id="test9">
       <desc>Tests multiple receivers in a pipeline.</desc>
       <file class="source">Test9.str</file>
@@ -65,12 +70,6 @@ Someone want to write a detailed description?
       <desc>Someone want to write a description of this test? 
             No output: -library does not seem to terminate</desc>
       <file class="source">Test_dynamic.str</file>
-    </impl>
-    <impl lang="StreamIt" id="test_dynamic2">
-      <desc>Someone want to write a description of this test? 
-            No output: -library -nosched does not seem to terminate
-                       -library without -nosched crashes</desc>
-      <file class="source">Test_dynamic2.str</file>
     </impl>
   </implementations>
 </benchmark>

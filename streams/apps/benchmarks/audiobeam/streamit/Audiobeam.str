@@ -7,7 +7,7 @@ static {
     float   SAMPLING_RATE = 16000;
 
     int   NUM_MICS = 15;
-    float[NUM_MICS][3] MIC_LOCATIONS;
+    float[15      ][3] MIC_LOCATIONS;
     float[3]           SOURCE_LOCATION;
     
     init{
@@ -54,7 +54,8 @@ void->void pipeline Audiobeam
     if (MODE == 0) {
         int num_beams = 1;
         add calculate_single_position(NUM_MICS, MIC_LOCATIONS, SOURCE_LOCATION);
-        add Printer(num_beams);
+	  add Printer(num_beams);
+	  //add FileWriter<float>("output");
     }
     else {
         // add other beamforming algorithms here

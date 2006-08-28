@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
 #ifndef __DYNTAPE
 #define __DYNTAPE
 #include <stdlib.h>		// malloc
@@ -58,7 +73,7 @@ public:
    * push an item onto the tape
    */
   inline void push(T item) {
-    if ((tail == 0 && head == mask) || tail == head - 1) {
+    if ((tail == 0 && head == mask) || head == tail - 1) {
       makeRoom();
       push(item);
     } else {

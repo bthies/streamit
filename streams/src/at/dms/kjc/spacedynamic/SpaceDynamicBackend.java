@@ -122,20 +122,23 @@ public class SpaceDynamicBackend {
         else  //otherwise ask user...
             streamGraph.handTileAssignment();
         
-        //dump a dot representation of the graph
-        streamGraph.dumpStaticStreamGraph();
-    
         int numSubGraphs = streamGraph.getStaticSubGraphs().length;
+
+        //dump a dot representation of the sub-graphs
+        if (numSubGraphs > 1) {
+            streamGraph.dumpStaticStreamGraph();
+        }
+    
         // for good dot output, record how many subgraphs we have
         Utils.setupDotFileName(numSubGraphs);
         for (int k = 0; k < numSubGraphs; k++) {
             SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
-            System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
+            if (numSubGraphs>1) {
+                System.out.println("Compiling static sub-graph " + k + "(" + ssg.toString() + ")...");
+            }
         
             //VarDecl Raise to move array assignments up
             new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
-
-
         
             // loop to decrease unroll factor until everything fits in IMEM
             SIRStream strOrig = null;
@@ -219,11 +222,14 @@ public class SpaceDynamicBackend {
 
                 if (partitioning) {
                     System.err.println("Running Partitioning...");
-                    System.err.println("  Do not fuse: ");
                     HashSet doNotHorizFuse = ssg.getIOFilters();
-                    Iterator it = doNotHorizFuse.iterator();
-                    while (it.hasNext())
-                        System.out.println("   * " + it.next());
+
+                    //if (doNotHorizFuse.size() > 0) {
+                    //    Iterator it = doNotHorizFuse.iterator();
+                    //    System.err.println("  Do not fuse: ");
+                    //    while (it.hasNext())
+                    //        System.out.println("   * " + it.next());
+                    //}
             
                     ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, 
                                                         numTiles, true, false, true, doNotHorizFuse));
@@ -294,7 +300,7 @@ public class SpaceDynamicBackend {
     
         // layout the components (assign filters to tiles)  
         streamGraph.layoutGraph();
-        System.out.println("Assign End.");
+        System.out.println("Done with tile assignment.");
     
         //if rate matching is requested, check if we can do it
         //if we can, then keep KjcOptions.rateMatch as true, 

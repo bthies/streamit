@@ -63,7 +63,7 @@ public class StreaMITMain {
             at.dms.util.Utils.fail("To use --countops, you must also use --standalone.");
         }
         
-        System.err.println("Starting Kopi2SIR..");
+        System.err.print("Starting Kopi2SIR...");
 
         Kopi2SIR k2s = new Kopi2SIR(app);
         SIRStream stream = null;
@@ -75,11 +75,9 @@ public class StreaMITMain {
             }
         }
 
-        System.err.println("Done Kopi2SIR..");
+        System.err.println(" done.");
 
         SemanticChecker.doCheck(stream);
-
-        System.err.println("Done Semantic Check..");
 
         String backendClass = null;
         String backendMethod = "run";

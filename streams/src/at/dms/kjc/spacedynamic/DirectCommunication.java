@@ -74,7 +74,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
         if (filter instanceof SIRTwoStageFilter)
             return false;
         if (PeekFinder.findPeek(filter.getWork())) {
-            System.out.println("*** Found Peek! ***");
+            //System.out.println("*** Found Peek! ***");
             return false;
         }
         if (filter.getPeekInt() > filter.getPopInt())

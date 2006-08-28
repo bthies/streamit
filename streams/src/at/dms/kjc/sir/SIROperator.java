@@ -180,6 +180,23 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     }
 
     /**
+     * Returns the name of this, truncated to 'n' characters.  If the
+     * name overflows, the last three characters will be replaced by ...
+     */
+    public String getShortIdent(int n) {
+        String ident = getIdent();
+        if (ident.length()>n) {
+            if (n>3) {
+                return ident.substring(0,n-3) + "...";
+            } else {
+                return ident.substring(0,3);
+            }
+        } else {
+            return ident;
+        }
+    }
+
+    /**
      * Returns a UNIQUE integer for this.  That is, if a given stream
      * operator was added in multiple positions of the stream graph,
      * then this will return a different name for each instantiation.

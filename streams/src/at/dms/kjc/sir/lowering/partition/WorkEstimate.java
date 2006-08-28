@@ -186,16 +186,10 @@ public class WorkEstimate {
         }
         for (int i=sorted.size()-1; i>=0; i--) {
             SIRFilter obj = sorted.getFilter(i);
-            String objName = obj.getIdent();
+            String shortIdent = obj.getShortIdent(30);
+            int length = shortIdent.length();
             System.err.print("    ");
-            int length;
-            if (objName.length()>30) {
-                System.err.print(objName.substring(0,27) + "...");
-                length=30;
-            } else {
-                length = objName.length();
-                System.err.print(objName);
-            }
+            System.err.print(shortIdent);
             for (int j=length; j<35; j++) {
                 System.err.print(" ");
             }

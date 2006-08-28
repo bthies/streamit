@@ -69,7 +69,7 @@ public class CachePartitioner extends ListPartitioner {
         work = WorkEstimate.getWorkEstimate(str);
         work.printGraph(str, "work-after-partition.dot");
         work.getSortedFilterWork().writeToFile("work-after-partition.txt");
-        work.printWork();
+        //work.printWork();
 
         return str;
     }

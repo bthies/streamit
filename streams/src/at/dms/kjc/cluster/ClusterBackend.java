@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.101 2006-08-28 02:23:29 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.102 2006-08-28 05:27:24 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -243,7 +243,6 @@ public class ClusterBackend {
             System.err.println("Warning: Cache optimizations do not currently work correctly with dynamic rates.");
         }
 
-
         // Cumulative partition information over all SSGs
         HashMap<SIROperator,Integer> partitionMap = new HashMap<SIROperator,Integer>();
         // Cumulative schedule information over all SSGs
@@ -290,6 +289,7 @@ public class ClusterBackend {
         if ( doCacheOptimization ) {
             // this performs the Cache Aware Fusion (CAF) pass from
             // LCTES'05.  This fuses filters for targeting a uniprocessor.
+            System.err.println("Running cache partition 1:");
             ssg.setTopLevelSIR(CachePartitioner.doit(ssg.getTopLevelSIR(), code_cache, data_cache));
         } else if (KjcOptions.partition_dp || 
                    KjcOptions.partition_greedy || 
@@ -308,6 +308,7 @@ public class ClusterBackend {
         ssgPartitionMap.clear();
 
         if ( doCacheOptimization ) {
+            System.err.println("Running cache partition 2:");
             ssg.setTopLevelSIR(new CachePartitioner(ssg.getTopLevelSIR(), 
                     WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), 0, code_cache, 
                     data_cache).calcPartitions(ssgPartitionMap));
@@ -318,7 +319,6 @@ public class ClusterBackend {
             ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(),
                     WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
                     false).calcPartitions(ssgPartitionMap));   
-
         } else {
             // if mapping to 1 machine, then just map everyone to
             // partition 0 as an optimization (the partitioner would
@@ -411,7 +411,6 @@ public class ClusterBackend {
 
         // end constrained scheduler
 
-        
         if (debugPrint) {
             SIRGlobal[] globals;
             if (global != null) {
@@ -462,7 +461,7 @@ public class ClusterBackend {
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(top);
 
-        System.err.println("Generating cluster code...");
+        System.err.print("Generating cluster code...");
 
         ClusterCode.generateCode(strTop);   // thread*.cpp
 
@@ -510,7 +509,7 @@ public class ClusterBackend {
         }
         */
     
-        System.out.println("Exiting");
+        System.out.println("Exiting.");
         System.exit(0);
     }
 

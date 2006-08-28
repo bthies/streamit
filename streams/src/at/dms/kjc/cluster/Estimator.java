@@ -28,7 +28,7 @@ class Estimator implements StreamVisitor {
         Estimator est = new Estimator();
         System.err.print("Estimating Code size of Filters...");
         IterFactory.createFactory().createIter(str).accept(est);
-        System.err.println("done.");
+        System.err.println(" done.");
     }
 
     /**

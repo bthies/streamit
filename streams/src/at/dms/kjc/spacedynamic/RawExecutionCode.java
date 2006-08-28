@@ -148,8 +148,8 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             //calculate various stats of the filter            
             calculateItems(filter);
 
-            System.out.print("Generating Raw Code: "
-                             + node.contents.getName() + " ");
+            //System.out.print("Generating Raw Code: "
+            //                 + node.contents.getName() + " ");
 
             //          attempt to generate direct communication code
             // (no buffer), if this returns true it was sucessful
@@ -245,10 +245,10 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
         remaining = upStreamItems
             - (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
 
-        System.out.println("Remaining for " + filter + " " + remaining + "("
-                           + upStreamItems + " >>> "
-                           + (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop)
-                           + ")");
+        //System.out.println("Remaining for " + filter + " " + remaining + "("
+        //                   + upStreamItems + " >>> "
+        //                   + (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop)
+        //                   + ")");
     }
 
     /*

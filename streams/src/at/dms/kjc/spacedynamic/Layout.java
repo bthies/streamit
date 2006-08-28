@@ -120,7 +120,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         // find out exactly what we should layout !!!
         ((SpdStaticStreamGraph)streamGraph.getTopLevel()).accept(this, null, true);
 
-        System.out.println("Tiles layout.assigned: " + assigned.size());
+        System.out.println("Tiles assigned in layout: " + assigned.size());
 
         if (assigned.size() > (rawChip.getXSize() * rawChip.getYSize())) {
             System.err.println("\nLAYOUT ERROR: Need " + assigned.size()
@@ -865,7 +865,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
 
             currentCost = placementCost(false);
             assert currentCost >= 0.0;
-            System.out.println("Initial Cost: " + currentCost);
+            System.out.print("Initial Cost: " + currentCost);
 
             if (KjcOptions.manuallayout || KjcOptions.decoupled) {
                 dumpLayout("noanneal.dot");
@@ -937,8 +937,8 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             }
 
             currentCost = placementCost(false);
-            System.out.println("\nFinal Cost: " + currentCost + " Min Cost : "
-                               + minCost + " in  " + j + " iterations.");
+            System.out.println("\nFinal Cost = " + currentCost + "; Min Cost = "
+                               + minCost + " in " + j + " iterations.");
             if (minCost < currentCost) {
                 SIRassignment = sirMin;
                 tileAssignment = tileMin;

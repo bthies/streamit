@@ -156,7 +156,7 @@ public class SwitchCode extends at.dms.util.Utils {
             while (tileIterator.hasNext()) {
                 System.gc();
                 ComputeNode cn = (ComputeNode) tileIterator.next();
-                System.out.println(cn);
+                //System.out.println(cn);
                 assert cn != null;
                 // ignore ioports because we do not generate switch code for
                 // them
@@ -171,10 +171,8 @@ public class SwitchCode extends at.dms.util.Utils {
 
                 tilesGenerated.add(tile);
 
-                System.out.println("Generating Switch for for tile "
-                                   + tile.getTileNumber() + "...");
-
-               
+                //System.out.println("Generating Switch for tile "
+                //                   + tile.getTileNumber() + "...");
 
                 try {
                     // true if we are compressing the switch code
@@ -183,7 +181,7 @@ public class SwitchCode extends at.dms.util.Utils {
                     // get the code
                     String steadyCode = "";
                     String initCode = "";
-                    System.out.println("Converting switch code to string ...");
+                    //System.out.println("Converting switch code to string ...");
                     if (ssg.simulator.initSchedules.get(tile) != null)
                         initCode = ((StringBuffer) ssg.simulator.initSchedules
                                     .get(tile)).toString();
@@ -197,13 +195,13 @@ public class SwitchCode extends at.dms.util.Utils {
                     Repetition[] big3init = null;
                     Repetition[] big3work = null;
 
-                    System.out.println("Compressing? ...");
+                    //System.out.println("Compressing? ...");
                     int codeSize = getCodeLength(steadyCode);
                     codeSize += getCodeLength(initCode);
                     System.gc();
                     if (codeSize > 5000) {
-                        System.out.println("Compression needed.  Code size = "
-                                           + codeSize);
+                        //System.out.println("Compression needed.  Code size = "
+                        //                   + codeSize);
                         compression = true;
                         if (USE_BETTER_COMP) {
                             // use the more heavyweight compression algorithm...
@@ -249,8 +247,8 @@ public class SwitchCode extends at.dms.util.Utils {
                      * threeBiggest[2].length + "\n"); }
                      */
 
-                    System.out.println("sw" + tile.getTileNumber()
-                                       + ".s written");
+                    //System.out.println("sw" + tile.getTileNumber()
+                    //                   + ".s written");
                 } catch (Exception e) {
                     e.printStackTrace();
 

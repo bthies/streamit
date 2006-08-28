@@ -112,7 +112,9 @@ void init_instance::read_config_file() {
     }
   }
 
-  fprintf(stderr,"\n");
+  if (debugging) {
+      fprintf(stderr,"\n");
+  }
   
   fclose(f);
 }
@@ -345,7 +347,7 @@ void init_instance::initialize_sockets() {
   }
 
   if (debugging) {
-    fprintf(stderr,"All outgoing connections created!\n");
+    fprintf(stderr,"All outgoing connections created.\n");
   }
   // wait for accept thread to finish
 
@@ -353,9 +355,6 @@ void init_instance::initialize_sockets() {
   LOCK(&accept_lock);
   //fprintf(stderr, "init_instance:7 %s\n", "UNLOCK(&accept_lock);");
   UNLOCK(&accept_lock);
-  if (debugging) {
-    fprintf(stderr,"\n");
-  }
 }
 
 mysocket* init_instance::get_incoming_socket(int from, int to, int type) {
@@ -455,7 +454,7 @@ int init_instance::listen() {
     return -1;
   }
 
-  fprintf(stderr,"init_instance: Socket bound and listening....done\n");
+  fprintf(stderr,"Socket bound and listening... done.\n");
   
   //fprintf(stderr, "init_instance:8 %s\n", "UNLOCK(&bind_lock);");
   UNLOCK(&bind_lock);
@@ -523,7 +522,7 @@ int init_instance::listen() {
 
 	  if (i == in_done.end()) {
 	  
-	    fprintf(stderr,"error: socket data is undefined! %d %d %d\n", data[0], data[1], data[2]);
+	    fprintf(stderr,"Error: socket data is undefined. %d %d %d\n", data[0], data[1], data[2]);
 	    close(sock);
 	    
 	  } else {
@@ -539,7 +538,7 @@ int init_instance::listen() {
 	      socks_accepted++;
 	    } else {
 
-	      fprintf(stderr,"Warning! socket data already seen!\n");
+	      fprintf(stderr,"Warning: socket data already seen.\n");
 	      close(sock);
 	      
 	    }
@@ -548,7 +547,7 @@ int init_instance::listen() {
 
 	  if (socks_accepted >= in_connections.size()) { 
 	    
-	    fprintf(stderr,"All incoming connections created!\n");
+	    fprintf(stderr, "All incoming connections created.\n");
 
 	    close(listenfd);
 

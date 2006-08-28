@@ -446,20 +446,14 @@ public class StreamGraph {
         StaticStreamGraph current = topLevel;
         for (int i = 0; i < staticSubGraphs.length; i++) {
             current = staticSubGraphs[i];
-            System.out.println("******* StaticStreamGraph ********");
-            System.out.println("Dynamic rate input = "
-                               + dynamicEntry(current.getTopLevelSIR()));
-            System.out.println("InputType = "
-                               + current.getTopLevelSIR().getInputType());
-            System.out.println(current.toString());
-            System.out.println("OutputType = "
-                               + current.getTopLevelSIR().getOutputType());
-            System.out.println("Dynamic rate output = "
-                               + dynamicExit(current.getTopLevelSIR()));
+            System.out.println("Static Stream Graph " + i + ":  " + current.toString());
+            System.out.println("  Type signature: " + current.getTopLevelSIR().getInputType() + " -> " + current.getTopLevelSIR().getOutputType() + ".");
+            System.out.println("  " + 
+                               (dynamicEntry(current.getTopLevelSIR()) ? "Dynamic" : "Static") + " input rate, " +
+                               (dynamicExit(current.getTopLevelSIR()) ? "dynamic" : "static") + " output rate.");
             StreamItDot.printGraph(current.getTopLevelSIR(), current
                                    .getTopLevelSIR().getIdent()
                                    + ".dot");
-            System.out.println("**********************************");
         }
     }
 

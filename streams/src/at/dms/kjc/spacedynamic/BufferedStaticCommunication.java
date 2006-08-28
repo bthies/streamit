@@ -158,6 +158,7 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
 
         JBlock block = new JBlock(null, new JStatement[0], null);
 
+        /*
         if (isSimple(filter))
             System.out.print("(simple) ");
         else if (noBuffer(filter))
@@ -167,9 +168,9 @@ public class BufferedStaticCommunication extends at.dms.util.Utils implements
                 System.out.print("(remaining) ");
             if (filter.getPeekInt() > filter.getPopInt())
                 System.out.print("(peeking)");
-
         }
         System.out.println();
+        */
 
         createBufferVariables(node, block, localVariables);
         convertCommExps(filter, isSimple(filter), localVariables);

@@ -45,7 +45,7 @@ public class FineGrainSimulator extends Simulator {
         this.initialize(true);
         initSchedules = this.goInit(initExecutionCounts, counters, null);
         testExecutionCounts(initExecutionCounts);
-        System.out.println("End of init simulation");
+        //System.out.println("End of init simulation");
 
         // System.out.println("\n\nSteady Execution Counts");
         // SpaceDynamicBackend.printCounts(SpaceDynamicBackend.steadyExecutionCounts);
@@ -60,7 +60,7 @@ public class FineGrainSimulator extends Simulator {
         joinerCode = steadyJoinerCode;
         steadySchedules = this.go(steadyExecutionCounts, counters, null);
         testExecutionCounts(steadyExecutionCounts);
-        System.out.println("End of steady-state simulation");
+        //System.out.println("End of steady-state simulation");
     }
 
     public FineGrainSimulator(SpdStaticStreamGraph ssg, JoinerSimulator js) {

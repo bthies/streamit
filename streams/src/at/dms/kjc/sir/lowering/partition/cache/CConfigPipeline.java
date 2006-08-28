@@ -56,7 +56,7 @@ class CConfigPipeline extends CConfigContainer {
 
         num_tiles = numberOfTiles(0, cont.size()-1);
     
-        System.out.println("pipeline num tiles: "+num_tiles);
+        //System.out.println("pipeline num tiles: "+num_tiles);
 
         //System.out.println("Pipeline (0,"+(cont.size()-1)+") Greedy Cuts:");
 
@@ -77,7 +77,7 @@ class CConfigPipeline extends CConfigContainer {
 
         num_tiles += recombine_partitions();
 
-        System.out.println("pipeline FINAL num tiles: "+num_tiles);
+        //System.out.println("pipeline FINAL num tiles: "+num_tiles);
         return num_tiles;
     }
 
@@ -137,9 +137,9 @@ class CConfigPipeline extends CConfigContainer {
                     !does_peek(curr_cut+1)) {
             
                     greedyCuts[curr_cut] = false;
-                    System.out.println("recombining adjacent partitions!");
-                    System.out.println("recomb: ["+(last_cut+1)+
-                                       ","+curr_cut+","+i+"]");
+                    //System.out.println("recombining adjacent partitions!");
+                    //System.out.println("recomb: ["+(last_cut+1)+
+                    //                   ","+curr_cut+","+i+"]");
 
                     curr_cut = i;
                     result--;
@@ -158,9 +158,9 @@ class CConfigPipeline extends CConfigContainer {
             !does_peek(curr_cut+1)) {
             greedyCuts[curr_cut] = false;
 
-            System.out.println("recombining adjacent partitions!");
-            System.out.println("recomb: ["+(last_cut+1)+
-                               ","+curr_cut+","+(cont.size()-1)+"]");
+            //System.out.println("recombining adjacent partitions!");
+            //System.out.println("recomb: ["+(last_cut+1)+
+            //                   ","+curr_cut+","+(cont.size()-1)+"]");
 
             result--;
         }
@@ -170,7 +170,7 @@ class CConfigPipeline extends CConfigContainer {
 
     private int refactor(int from, int to) {
 
-        System.out.println("refactor from:"+from+" to:"+to);
+        //System.out.println("refactor from:"+from+" to:"+to);
 
         int new_cuts = 0;
 
@@ -213,13 +213,13 @@ class CConfigPipeline extends CConfigContainer {
                     //double amortize_break = f_extra / ClusterBackend.getExecCounts(filter);
                     //double amortize_fuse = f_extra / mult[i];
         
-                    System.out.print("[refactor extra:"+f_extra+"("+(f_pop * mult[i] * 4)+") pop:"+f_pop+" m:"+mult[i]+" ]");
+                    //System.out.print("[refactor extra:"+f_extra+"("+(f_pop * mult[i] * 4)+") pop:"+f_pop+" m:"+mult[i]+" ]");
             
 
                     // break if peek rate < 25% of (peek-pop)
                     //if (f_extra > f_pop * mult[i] * 4) {
             
-                    System.out.print("Cutting partition!!");
+                    //System.out.print("Cutting partition!!");
                     greedyCuts[i-1] = true;
                     new_cuts++;
                     //} 
@@ -229,13 +229,13 @@ class CConfigPipeline extends CConfigContainer {
 
                       // break if amortize_break * 2 < amortize_fuse
 
-                      System.out.print("Cutting partition!!");
+                      //System.out.print("Cutting partition!!");
                       greedyCuts[i-1] = true;
                       new_cuts++;
                       }
                     */
             
-                    System.out.println();
+                    //System.out.println();
             
                 }
             }
@@ -244,7 +244,7 @@ class CConfigPipeline extends CConfigContainer {
                 CConfigSplitJoin sj = (CConfigSplitJoin)child;
                 if (sj.getPeek()) {
 
-                    System.out.print("Cutting partition!!");
+                    //System.out.print("Cutting partition!!");
                     greedyCuts[i-1] = true;
                     new_cuts++;
 
@@ -259,7 +259,7 @@ class CConfigPipeline extends CConfigContainer {
 
     private int numberOfTiles(int from, int to) {
 
-        System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
+        //System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
 
         if (from > to) return 0;
         if (from == to) return childConfig(from).numberOfTiles();
@@ -283,11 +283,11 @@ class CConfigPipeline extends CConfigContainer {
 
         FusionInfo f_all = getFusionInfo(from, to);
 
-        System.out.println("try one tile ["+f_all.getCost().getCost()+","+f_all.getWorkEstimateNoPenalty()+"]");
+        //System.out.println("try one tile ["+f_all.getCost().getCost()+","+f_all.getWorkEstimateNoPenalty()+"]");
 
         if (f_all.getCost().getCost() <= f_all.getWorkEstimateNoPenalty()) {
 
-            System.out.println("pipeline segnemt fits into one tile!");
+            //System.out.println("pipeline segnemt fits into one tile!");
             return 1;
         }
 

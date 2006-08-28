@@ -546,7 +546,7 @@ public class StaticStreamGraph {
      */
     public void setTopLevelSIR(SIRStream newTop) {
 
-        System.err.println(" ****  CALLING SETTOPLEVELSIR **** ");
+        //System.err.println(" ****  CALLING SETTOPLEVELSIR **** ");
 
         topLevelSIR = newTop;
         // dump the graph
@@ -759,7 +759,7 @@ public class StaticStreamGraph {
     public String toString() {
         // if (topLevel != null)
         // return topLevel.toString();
-        return topLevelSIR.toString();
+        return topLevelSIR.getIdent();
     }
 
     public void check() {

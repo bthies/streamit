@@ -82,9 +82,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //Optimizations
         
         
-            System.out.println
-                ("Optimizing "+
-                 ((SIRFilter)node.contents).getName()+"...");
+        //System.out.println
+        //    ("Optimizing "+
+        //     ((SIRFilter)node.contents).getName()+"...");
 
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
@@ -443,7 +443,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     }
 
     private void createFile() {
-        System.out.println("Code for " + filter.getName() +
+        System.out.println("Code for " + filter.getShortIdent(30) +
                            " written to tile" + layout.getTileNumber(filter) +
                            ".c");
         try {
@@ -453,7 +453,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         }
         catch (Exception e) {
             System.err.println("Unable to write tile code file for filter " +
-                               filter.getName());
+                               filter.getShortIdent(30));
         }
     }
 

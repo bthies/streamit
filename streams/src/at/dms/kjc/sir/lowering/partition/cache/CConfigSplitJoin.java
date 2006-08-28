@@ -60,7 +60,7 @@ class CConfigSplitJoin extends CConfigContainer {
 
         boolean penalty = (fi.getCost().getCost() > fi.getWorkEstimateNoPenalty());
 
-        System.out.println("SplitJoin num.chan("+cont.size()+") penalty:"+penalty);
+        //System.out.println("SplitJoin num.chan("+cont.size()+") penalty:"+penalty);
 
         if (fi.getCost().getCost() == fi.getWorkEstimateNoPenalty()) {
         

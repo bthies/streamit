@@ -37,7 +37,7 @@ public class GranularityAdjust {
             StreamItDot.printGraph(oldStr, "oldstr.dot");
             int tilesNeeded = at.dms.kjc.sir.lowering.partition.Partitioner.countFilters(str);
             str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
-                    tilesNeeded - 1, false, false);
+                    tilesNeeded - 1, false, false, true);
             StreamItDot.printGraph(str, "newstr.dot");
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits

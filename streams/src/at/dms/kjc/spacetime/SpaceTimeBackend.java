@@ -147,7 +147,7 @@ public class SpaceTimeBackend {
         /*
         KjcOptions.partition_dp = true;
         str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
-                16, true, false);
+                16, true, false, true);
         KjcOptions.partition_dp = false;
         */
         
@@ -246,7 +246,7 @@ public class SpaceTimeBackend {
         /*KjcOptions.partition_dp = true;
         SIRStream partitionedStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
             partitionedStr = at.dms.kjc.sir.lowering.partition.Partitioner.doit(partitionedStr,
-                rawChip.getTotalTiles(), true, false);
+                rawChip.getTotalTiles(), true, false, true);
         KjcOptions.partition_dp = false;
         */
         

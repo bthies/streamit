@@ -226,7 +226,7 @@ public class SpaceDynamicBackend {
                         System.out.println("   * " + it.next());
             
                     ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, 
-                                                        numTiles, true, false, doNotHorizFuse));
+                                                        numTiles, true, false, true, doNotHorizFuse));
                     System.err.println("Done Partitioning...");
                     //restore user specified partition_dp val
                     KjcOptions.partition_dp = oldKjcDP;

@@ -185,7 +185,7 @@ public class RawBackend {
 
             if (partitioning) {
                 System.err.println("Running Partitioning...");
-                str = Partitioner.doit(str, count, numTiles, true, false);
+                str = Partitioner.doit(str, count, numTiles, true, false, true);
                 System.err.println("Done Partitioning...");
                 RemoveMultiPops.doit(str);
             }

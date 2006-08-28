@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.99 2006-08-24 03:31:00 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.100 2006-08-28 01:50:38 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.StructureIncludeFile;
@@ -284,8 +284,6 @@ public class ClusterBackend {
             //RemoveMultiPops.doit(str);
         }
 
-        System.err.println("Running Partitioning... target number of threads: "+hosts);
-
         StreamItDot.printGraph(str, "before-partition.dot");
 
         if ( doCacheOptimization ) {
@@ -295,11 +293,12 @@ public class ClusterBackend {
         } else if (KjcOptions.partition_dp || 
                    KjcOptions.partition_greedy || 
                    KjcOptions.partition_greedier) {
+            System.err.println("Running Partitioning... target number of threads: "+hosts);
             // if these are turned on, then fuse filters as if
             // targetting a multiprocessor
-            str = Partitioner.doit(str, 0, hosts, false, false);
-            // from now on, target however many threads were
-            // produced by the partitioner
+            str = Partitioner.doit(str, 0, hosts, false, false, false);
+            // from now on, target however many threads were produced
+            // by the partitioner (some may have been unfusable.)
             KjcOptions.cluster = Partitioner.countFilters(str);
         }
 

@@ -469,7 +469,9 @@ int init_instance::listen() {
     return -1;
   }
 
-  fprintf(stderr,"Socket bound and listening... done.\n");
+  if (debugging) {
+      fprintf(stderr,"Socket bound and listening... done.\n");
+  }
   
   //fprintf(stderr, "init_instance:8 %s\n", "UNLOCK(&bind_lock);");
   UNLOCK(&bind_lock);
@@ -561,9 +563,11 @@ int init_instance::listen() {
 	  }
 
 	  if (socks_accepted >= in_connections.size()) { 
-	    
-	    fprintf(stderr, "All incoming connections created.\n");
-
+              
+            if (debugging) {
+              fprintf(stderr, "All incoming connections created.\n");
+            }
+                  
 	    close(listenfd);
 
 	    return 0;

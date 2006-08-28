@@ -79,12 +79,10 @@ int->complex filter genRawSAR(float Tf,
     int   ntarget = 0;
     // NOTE: to statically resolve the value of ntarget requires aggressive
     // constant propagation of kx[][] which is 70K elements in size; so
-    // use MAX_TARGET to cap the size of the arrays then calculate the loop 
-    // bounds (currently MAX_TARGET == ntarget)
-    int   MAX_TARGETS = 48;
-    float[MAX_TARGETS] xn;
-    float[MAX_TARGETS] yn;
-    float[MAX_TARGETS] fn;
+    // hardcode ntarget = 48 for now
+    float[48] xn;
+    float[48] yn;
+    float[48] fn;
     
     init {
         // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

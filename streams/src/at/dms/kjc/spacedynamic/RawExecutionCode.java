@@ -156,7 +156,7 @@ public class RawExecutionCode extends at.dms.util.Utils implements FlatVisitor,
             // and the code was produced
             if (bottomPeek == 0 && remaining == 0
                 && DirectCommunication.doit(ssg, node)) {
-                System.out.println("(Direct Communication)");
+                //System.out.println("(Direct Communication)");
 
                 return;
             }

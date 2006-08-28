@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.103 2006-08-28 14:37:10 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.104 2006-08-28 21:31:48 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -236,7 +236,10 @@ public class ClusterBackend {
         //ClusterStaticStreamGraph[] ssgs = (ClusterStaticStreamGraph [])(streamGraph.getStaticSubGraphs());
         int numSsgs = streamGraph.getStaticSubGraphs().length;
         Utils.setupDotFileName(numSsgs);
-        streamGraph.dumpStaticStreamGraph();
+
+        if (numSsgs > 1 && debugPrint) {
+            streamGraph.dumpStaticStreamGraph();
+        }
 
         if (doCacheOptimization && numSsgs > 1) {
             System.err.println("Warning: Cache optimizations do not currently work correctly with dynamic rates.");
@@ -250,7 +253,9 @@ public class ClusterBackend {
 
         for (int k = 0; k < numSsgs; k++) {
             ClusterStaticStreamGraph ssg = (ClusterStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
-            System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
+            if (numSsgs>1) {
+                System.out.println("\nCompiling static sub-graph " + k + " (" + ssg.toString() + ")...");
+            }
 
             // Schedule the Static-rate subgraph
             ssg.scheduleAndCreateMults();
@@ -461,7 +466,7 @@ public class ClusterBackend {
         //generating code for partitioned nodes
         //ClusterExecutionCode.doit(top);
 
-        System.err.print("Generating cluster code...");
+        System.err.println("Generating cluster code...");
 
         ClusterCode.generateCode(strTop);   // thread*.cpp
 
@@ -493,7 +498,7 @@ public class ClusterBackend {
             GenerateWorkEst.generateWorkEst();        // work-estimate.txt
         }
 
-        System.err.println(" done.");    
+        System.err.println("Done generating cluster code.");
 
         /*
         // attempt to find constrained schedule!
@@ -508,8 +513,6 @@ public class ClusterBackend {
         g.combineInit();
         }
         */
-    
-        System.out.println("Exiting.");
         System.exit(0);
     }
 

@@ -121,7 +121,7 @@ public class DirectCommunication extends at.dms.util.Utils implements Constants 
 
         // create the params list, for some reason
         // calling toArray() on the list breaks a later pass
-        System.out.println(filter.getParent());
+        //System.out.println(filter.getParent());
         List paramList = filter.getParams();
         JExpression[] paramArray;
         if (paramList == null || paramList.size() == 0)

@@ -125,7 +125,7 @@ public class SpaceDynamicBackend {
         int numSubGraphs = streamGraph.getStaticSubGraphs().length;
 
         //dump a dot representation of the sub-graphs
-        if (numSubGraphs > 1) {
+        if (numSubGraphs > 1 && KjcOptions.debug) {
             streamGraph.dumpStaticStreamGraph();
         }
     
@@ -134,7 +134,7 @@ public class SpaceDynamicBackend {
         for (int k = 0; k < numSubGraphs; k++) {
             SpdStaticStreamGraph ssg = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[k];
             if (numSubGraphs>1) {
-                System.out.println("Compiling static sub-graph " + k + "(" + ssg.toString() + ")...");
+                System.out.println("\nCompiling static sub-graph " + k + " (" + ssg.toString() + ")...");
             }
         
             //VarDecl Raise to move array assignments up

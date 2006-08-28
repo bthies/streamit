@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.102 2006-08-28 05:27:24 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.103 2006-08-28 14:37:10 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -218,8 +218,7 @@ public class ClusterBackend {
         // set up for future estimateCode / estimateLocals calls.
         Estimator.estimate(str);
 
-        // should really be hosts -- how many systems
-        // will be running this code.
+        // How many systems will be running this code.
         int hosts = KjcOptions.cluster;
         // XXX: yecch but don't want to trace down references.
         // will change KjcOptions.cluster based on partitioning.
@@ -297,7 +296,8 @@ public class ClusterBackend {
             System.err.println("Running Partitioning... target number of threads: "+hosts);
             // if these are turned on, then fuse filters as if
             // targeting a multiprocessor
-            // TODO: previous number (2'nd parameter) should not remain 0
+            // TODO: cah we use curcount (param2) and targetCount (param3) to make partitioning
+            // interact with dynamic regions?
             ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false));
             // from now on, KjcOptions.cluster is used to count the number of filters in
             // the graph.  Used where??

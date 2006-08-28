@@ -1307,6 +1307,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         return self;
     }
 
+    public Object visitEmittedText(JEmittedText self) {
+        assert false: "Did not expect JEmittedText: " + self;
+        return self;
+    }
     /**
      * visits a do statement
      */

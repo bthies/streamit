@@ -23,25 +23,31 @@ import at.dms.kjc.common.CommonUtils;
 
 public class StaticStreamGraph {
     /** These Hashmaps map flatnode -> flatnode.
-    /* <br/>prevs maps the input of this SSG to the output of its upstream SSG
-    /* <br/>nexts stores the converse
+     * <br/>prevs maps the input of this SSG to the output of its upstream SSG
+     * <br/>nexts stores the converse.
+     * <br/>Note: only used in building graph.  no longer valid after setTopLevelSIR.
      */
-    private HashMap<FlatNode,FlatNode> prevs, nexts;
+    protected HashMap<FlatNode,FlatNode> prevs, nexts;
 
-    /** the inter-SSG communication edges of this SSG, both incoming and outgoing */
+    /** The inter-SSG communication edges of this SSG, both incoming and outgoing. 
+     *  In sync with prevs, nexts, call updateSSGEdges when prevs, nexts change. */
     private SSGEdge[] inputSSGEdges, outputSSGEdges;
 
-    /** SSGs with edges to this SSG */
+    /** SSGs with edges to this SSG.  Assumed immutible after SSG construction */
     private List<StaticStreamGraph> prevSSGs;
-    /** SSGs that this SSG has edges to */
+    /** SSGs that this SSG has edges to.   Assumed immutible after SSG construction */
     protected List<StaticStreamGraph> nextSSGs;
 
-    /** arrays representing the inputs and output of this ssg from top to bottom (left to right)... */
-    private FlatNode[] inputs;
-    private FlatNode[] outputs;
+    /** arrays representing the inputs and output of this ssg from top to bottom (left to right)... 
+     * <br/>Note: very delicate if graph structure changes: remember to call updateIOArrays: done from setTopLevelSIR.
+     */
+    protected FlatNode[] inputs;
+    protected FlatNode[] outputs;
 
-    // the output type of the ssg output
-    private CType[] outputTypes;
+    /** the output type of the ssg output
+     * <br/>Note: ordered in sync with outputs; very delicate if graph structure changes.
+     */
+    protected CType[] outputTypes;
 
     /** the top level SIR node.
      * 
@@ -59,24 +65,6 @@ public class StaticStreamGraph {
      * 
      */
     protected GraphFlattener graphFlattener;
-
-// input and output rate expressions can not be kept per SSG as
-// SSG may have multiple entrances and exits.
-//
-//    /** 
-//     * the push rate declaration of the output of this SSG
-//     */
-//    public JExpression pushRate;
-//
-//    /** 
-//     * the pop rate declaration of the input of this SSG
-//     */
-//    public JExpression popRate;
-//
-//    /**
-//     * the peek rate declaration of the input of this SSG
-//     */
-//    public JExpression peekRate;
 
     private FlatNode bottomLevel;
 
@@ -194,6 +182,10 @@ public class StaticStreamGraph {
     /***************************************************************************
      * remove toplevel splitter if not needed!!! and perform some other checks
      * on the SSG
+     * 
+     * XXX: problem in DynamicRatesComp1, null joiner at end will match null
+     * splitter at top so both are left.  This may be the cause of a scheduler
+     * crash.
      **************************************************************************/
     public void cleanUp() {
         assert topLevel.isSplitter();
@@ -313,8 +305,10 @@ public class StaticStreamGraph {
 
         // splitters and joiners are balanced so return...
         if (splitterBalance == 0)
+        {
             return;
-
+        }
+        
         // remove the splitter because it is not needed!!!
         if (((SIRSplitter) topLevel.contents).getWays() == 1) {
             FlatNode oldTopLevel = topLevel;
@@ -506,7 +500,7 @@ public class StaticStreamGraph {
                     inputs[i] = topLevel.edges[i];
                 }
             } else
-                // can't be a joiner
+                // can't be a joiner if there are any previous nodes!
                 assert false : "Entry point to SSG cannot be a joiner";
         }
 
@@ -853,14 +847,14 @@ public class StaticStreamGraph {
         final int[] filters = { 0 };
 
         IterFactory.createFactory().createIter(getTopLevelSIR()).accept(
-                                                                        new EmptyStreamVisitor() {
-                                                                            public void visitFilter(SIRFilter self, SIRFilterIter iter) {
-                                                                                if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
-                                                                                    filters[0]++;
-                                                                                }
-
-                                                                            }
-
+                new EmptyStreamVisitor() {
+                    public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+                        if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
+                            filters[0]++;
+                        }
+                        
+                    }
+                    
                                                                         });
         return filters[0];
     }
@@ -880,6 +874,43 @@ public class StaticStreamGraph {
         while (nextsIt.hasNext()) {
             StaticStreamGraph ssg = (StaticStreamGraph) nextsIt.next();
             ssg.accept(s, visited, false);
+        }
+    }
+    
+    /** connect flatgraph with weight-1 edges to nodes in other ssg's flatgraphs based on this ssg's outputs. 
+     * Restore types in filters being connected.  Restore dynamic rate info. */
+    public void reconnectOutputs() {
+        for (SSGEdge edge : outputSSGEdges) {
+            FlatNode upstream = edge.outputNode;
+            FlatNode downstream = edge.inputNode;
+            CType t = outputTypes[edge.getOutputNum()];
+            if (upstream.edges.length > 0) {
+                assert upstream.edges.length == 1 && upstream.edges[0].isNullJoiner();
+                upstream.edges[0].removeBackEdge(upstream);
+                upstream.removeEdges();
+            }
+            if (downstream.incoming.length > 0) {
+                assert downstream.incoming.length == 1 && downstream.incoming[0].isNullSplitter();
+                try {
+                    downstream.incoming[0].removeBackEdge(downstream);
+                } catch (NullPointerException e) {
+                    // TODO: this shouldn't happen but it does
+                }
+                downstream.removeIncoming();
+            }
+            FlatNode.addEdges(upstream,downstream);
+            if (upstream.isFilter()) {
+                SIRFilter f = (SIRFilter)upstream.contents;
+                f.setOutputType(t);
+                f.setPush(new SIRRangeExpression(new SIRDynamicToken(), new SIRDynamicToken(),new SIRDynamicToken()));
+            }
+            if (downstream.isFilter()) {
+                SIRFilter f = (SIRFilter)downstream.contents;
+                f.setInputType(t);
+                f.setPop(new SIRRangeExpression(new SIRDynamicToken(), new SIRDynamicToken(),new SIRDynamicToken()));
+                f.setPeek(new SIRRangeExpression(new SIRDynamicToken(), new SIRDynamicToken(),new SIRDynamicToken()));
+            }
+
         }
     }
 

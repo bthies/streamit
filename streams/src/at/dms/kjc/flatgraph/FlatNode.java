@@ -661,7 +661,7 @@ public class FlatNode {
      */
     public static int getItemsPushed(FlatNode from, FlatNode to) {
         if (from.isFilter())
-            return ((SIRFilter) from.contents).getPushInt();
+            return ((SIRFilter) from.contents).getPushEstimate();
         else if (from.isJoiner())
             return from.getTotalIncomingWeights();
         else if (from.isSplitter())

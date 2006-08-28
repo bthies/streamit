@@ -38,11 +38,11 @@ public class NodeEnumerator {
     /**
      * Set up static data structures for NodeEnumerator
      * 
-     * @param graphFlattener : we visit the nodes of the associated graph to set up our data structures.
+     * @param first node in a flatgraph
      */
-    public static void init(at.dms.kjc.flatgraph.GraphFlattener graphFlattener) {
+    public static void init(FlatNode top) {
         
-        graphFlattener.top.accept(new FlatVisitor() {
+        top.accept(new FlatVisitor() {
 
 
         /**

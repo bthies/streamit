@@ -6,6 +6,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.CType;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.flatgraph.FlatNode;
 
 
 /**
@@ -53,23 +54,46 @@ public abstract class TapeBase implements Tape {
      */
     public static Tape newTape(int src, int dest, CType type) {
         Tape t = null;
+        FlatNode srcNode = NodeEnumerator.getFlatNode(src);
+        FlatNode destNode = NodeEnumerator.getFlatNode(dest);
+        
+        // Need dynamic rate tape if src and dest are in different
+        // static-rate regions and if they will not be connected by
+        // a cluster tape (both dynamic rate and cluster tapes allow
+        // the src and dest nodes to run at different rates, but use
+        // different mechanisms).
+        if (ClusterBackend.streamGraph.parentMap.get(srcNode) 
+                != ClusterBackend.streamGraph.parentMap.get(destNode)) {
+// Commenting out the following will make --cluster n fail for n > 1!!
+// Done here, now, because have not hacked in ability of cluster tapes
+// to deal with dynamic rates: setting up fixed peek buffer sizes!!! XXX
+//            if (KjcOptions.standalone ||
+//                    ClusterFusion.fusedWith(srcNode).
+//                    contains(destNode)) {
+                return new TapeDynrate(src,dest,type);
+//            }
+        }
         if (KjcOptions.standalone) {
-            // if crosses between ssgs
-            //   ...
-            // else
+        // If the --standalone option has been given, then a schedule
+        // is precomputed for each static-rate region and communication
+        // between src and dest within a static-rate region is over a
+        // tape implemented as a buffer of fixed size.
             if (FixedBufferTape.needsModularBuffer(src,dest)) {
                 t = new TapeFixedCircular(src,dest,type);
-            } else {
+            } else {    
                 t = new TapeFixedCopydown(src,dest,type);
             }
-        } else {
-            if (ClusterFusion.fusedWith(NodeEnumerator.getFlatNode(src)).
-                    contains(NodeEnumerator.getFlatNode(dest))) {
+        } else 
+        // Compiling for a cluster.  Either use one thread per
+        // node and communicate through a a socket, or if the 
+        // src and dest threads are fused, communicate via a
+        // fixed-length buffer (which should eventually be replaced
+        // with one of the fixed-length buffer implementations above).
+            if (ClusterFusion.fusedWith(srcNode).contains(destNode)) {
                 t = new TapeClusterFused(src,dest,type);   
             } else {
                 t = new TapeCluster(src,dest,type);
             }
-        }
         return t;
     }
 

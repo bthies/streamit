@@ -88,16 +88,22 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
         return 1;
     }
 
+    /** Get number of peeks for phase. Has never handled the phase input. Now returns estimate if number not available. */
     public int getPeekPhase (int phase) {
         return obj.getPeekInt();
-    }
+        //return obj.getPeekEstimate(); // getPeekInt();
+   }
 
+    /** Get number of peeks for phase. Has never handled the phase input. Now returns estimate if number not available. */
     public int getPopPhase (int phase) {
         return obj.getPopInt();
+        //return obj.getPopEstimate(); // getPopInt();
     }
 
+    /** Get number of peeks for phase. Has never handled the phase input. Now returns estimate if number not available. */
     public int getPushPhase (int phase) {
         return obj.getPushInt();
+        //return obj.getPushEstimate(); // getPushInt();
     }
 
     public Object getWorkFunctionPhase (int phase) {

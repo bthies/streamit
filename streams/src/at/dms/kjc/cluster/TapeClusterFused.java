@@ -19,6 +19,8 @@ public class TapeClusterFused extends TapeCluster implements Tape {
     
     TapeClusterFused(int source, int dest, CType type) {
         super(source,dest,type);
+        tapeName = "clusterFused_"+source+"_"+dest;
+
         FlatNode src_node = NodeEnumerator.getFlatNode(source);
         FlatNode src_master = ClusterFusion.getLocalMaster(src_node);
         FlatNode dst_node = NodeEnumerator.getFlatNode(dest);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.10 2006-01-25 17:01:22 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.11 2006-08-28 02:23:29 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -425,6 +425,12 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     public Object visitEmptyStatement(JEmptyStatement self) {
         return self;
     }
+    
+    /** visiting emitted tex. */
+    public Object visitEmittedText(JEmittedText self) {
+        return self;
+    }
+   
 
     /**
      * prints a do statement

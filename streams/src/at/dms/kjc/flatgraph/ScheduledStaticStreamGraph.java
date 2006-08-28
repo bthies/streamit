@@ -17,14 +17,24 @@ import at.dms.kjc.sir.*;
  * 
  */
 public class ScheduledStaticStreamGraph extends StaticStreamGraph {
-    // given a flatnode map to the execution count for desired stage
+
+    // setTopLevelSIR runs a graph flattenner, which will obsolete any
+    // mapping of flatgraph nodes to values
+    
+    // Given a flatnode map to the execution count for desired stage
     protected HashMap<FlatNode,Integer> initExecutionCounts;
 
     protected HashMap<FlatNode,Integer> steadyExecutionCounts;
 
-    // stores the multiplicities as returned by the scheduler...
+    protected boolean executionCountsValid = false;
+    
+    // Stores the multiplicities as returned by the scheduler...
+    // An optimization that creates new SIROperator's may cause this
+    // information to becom partial:
     private HashMap<SIROperator,int[]>[] executionCounts;
 
+    
+    
     /**
      * create a static stream graph with realTop as the first node.
      */
@@ -37,31 +47,37 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
       * regenerating the flatgraph *
       */
      public void createSIRGraph() {
-         //int suffix = Double.valueOf(Math.random() * 1000).intValue();
+         int suffix = Double.valueOf(Math.random() * 1000).intValue();
          (new DumpGraph()).dumpGraph(topLevel, Utils
-                                     .makeDotFileName("beforeFGtoSIR"/* + suffix*/, topLevelSIR),
-                                     initExecutionCounts, steadyExecutionCounts);
+                 .makeDotFileName("beforeFGtoSIR", topLevelSIR),
+                 initExecutionCounts, steadyExecutionCounts);
 
          setTopLevelSIR((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
 
          (new DumpGraph()).dumpGraph(topLevel, Utils
-                 .makeDotFileName("afterFGtoSIR"/* + suffix*/, topLevelSIR),
+                 .makeDotFileName("afterFGtoSIR", topLevelSIR),
                  initExecutionCounts, steadyExecutionCounts);
      }
+
+     public void setTopLevelSIR(SIRStream topLevelStream) {
+         executionCountsValid = false;
+         super.setTopLevelSIR(topLevelStream);
+     }
+     
      /**
       * call the scheduler on the toplevel SIR node and create the execution
-      * counts *
+      * counts
       */
      public void scheduleAndCreateMults() {
          // get the multiplicities from the scheduler
          executionCounts = SIRScheduler.getExecutionCounts(topLevelSIR);
-         PartitionDot.printScheduleGraph(topLevelSIR, Utils
-                                         .makeDotFileName("schedule", topLevelSIR), executionCounts);
+         //PartitionDot.printScheduleGraph(topLevelSIR, Utils
+         //                                .makeDotFileName("schedule", topLevelSIR), executionCounts);
 
          // create the multiplicity maps
          createExecutionCounts();
          // print the flat graph
-         dumpFlatGraph();
+         //dumpFlatGraph();
      }
 
      /** dump a dot rep of the flat graph * */
@@ -110,8 +126,24 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
              }
          }
 
-         // Schedule the new Identities and Splitters introduced by
-         // GraphFlattener
+       // Schedule the new Identities and Splitters introduced by
+       // GraphFlattener
+       //
+       // Go over the needstoBeSched list:
+       // If a node's predecessor has an execution count (init / steady) from
+       // {init,steady}Executioncounts use that count. Otherwise use the
+       // nodes' predecessor's execution count from executioncounts[0] / [1]
+       //
+       // if SIRIdentity node, put this execution count in
+       // {init,steady}Executioncounts
+       //
+       // if SIRSplitter, put in this execution count and push it, (weighted
+       // appropriately) to the successors of the splitter.
+       //
+       // if SIRJoiner and oldcontents has an execution count in
+       // executioncounts[0] / [1]
+       // use that execution count.
+
          for (int i = 0; i < GraphFlattener.needsToBeSched.size(); i++) {
              FlatNode node = (FlatNode) GraphFlattener.needsToBeSched.get(i);
              int initCount = -1;
@@ -169,16 +201,54 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
              }
          }
      }
-     /** get the multiplicity map for the give stage * */
-     public HashMap getExecutionCounts(boolean init) {
+     
+     /** get the multiplicity map for the give stage as FlatNode -> int */
+     public HashMap<FlatNode,Integer> getExecutionCounts(boolean init) {
+         if (! executionCountsValid) {
+             executionCountsValid = true;
+             scheduleAndCreateMults();
+         }
          return init ? initExecutionCounts : steadyExecutionCounts;
      }
 
+     /** get the multiplicity map for the give stage as SIROperator -> int[] */
+     public HashMap<SIROperator,int[]> getSIRExecutions(boolean init) {
+         if (! executionCountsValid) {
+             executionCountsValid = true;
+             scheduleAndCreateMults();
+         }
+        return init ? executionCounts[0] : executionCounts[1];
+     }
+     
+     /** get the multiplicity map for a given stage as FlatNode -> int[] */
+     public HashMap<FlatNode,int[]> getFlatNodeExecutions(boolean init) {
+         if (! executionCountsValid) {
+             executionCountsValid = true;
+             scheduleAndCreateMults();
+         }
+
+         final HashMap<SIROperator,int[]> strmap = init ? executionCounts[0] : executionCounts[1];
+         final HashMap<FlatNode,int[]> nodemap = new HashMap<FlatNode,int[]>();
+         topLevel.accept(new FlatVisitor(){
+             public void visitNode(FlatNode node) {
+                 if (strmap.containsKey(node.contents)) {
+                     nodemap.put(node,strmap.get(node.contents));
+                 }
+             }
+         }, null, true);
+         return nodemap;
+     }
+     
      /**
       * get the multiplicity for <pre>node</pre> in the given stage, if <pre>init</pre> then init
-      * stage *
+      * stage 
       */
      public int getMult(FlatNode node, boolean init) {
+         if (! executionCountsValid) {
+             executionCountsValid = true;
+             scheduleAndCreateMults();
+         }
+
          assert !(!init && !steadyExecutionCounts.containsKey(node)) : "Asking for steady mult for a filter that is not in the steady schedule "
              + node;
 
@@ -189,7 +259,8 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
          else
              return val.intValue();
      }
-     /** accept a stream graph visitor * */
+ 
+     /** accept a stream graph visitor  */
      public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) {
          if (newHash)
              visited = new HashSet();

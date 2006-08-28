@@ -74,7 +74,7 @@ public class LatencyConstraints {
     }
 
     /**
-     * Returns maximum latency associatew with a {@link SIRLatency} object
+     * Returns maximum latency associated with a {@link SIRLatency} object
      * @param latency the latency object
      * @return the maximum latency as integer
      */
@@ -131,7 +131,7 @@ public class LatencyConstraints {
     }
 
     /**
-     * Given a top stream iterator and an array of portals detecta and
+     * Given a top stream iterator and an array of portals detect and
      * register all pairwise latency constraints.
      * @param topStreamIter top stream iterator
      * @param portals an array of all portals

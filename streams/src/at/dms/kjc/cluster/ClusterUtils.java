@@ -1,8 +1,7 @@
 // $Header
 package at.dms.kjc.cluster;
 
-import at.dms.kjc.sir.SIRFilter;
-import at.dms.kjc.sir.SIRPredefinedFilter;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
 import at.dms.kjc.common.CommonUtils;
 
@@ -20,11 +19,16 @@ class ClusterUtils {
     // name.  (The raw backend does not seem to have this problem, but I 
     // don't know exactly how they handle pre-defined filters.)
 
-    public static String getWorkName(SIRFilter f, int id) {
+    public static String getWorkName(SIROperator f, int id) {
         if (f instanceof SIRPredefinedFilter) {
             return f.getName() + "__work__" + id;
+        } else if (f instanceof SIRFilter) {
+            return ((SIRFilter)f).getWork().getName() + "__" + id;
+        } else if (f instanceof SIRSplitter) {
+            return "__splitter_" + id + "_work";
         } else {
-            return f.getWork().getName() + "__" + id;
+            assert f instanceof SIRJoiner;
+            return "__joiner_"  + id + "_work";
         }
     }
     

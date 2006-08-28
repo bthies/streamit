@@ -4,7 +4,7 @@ package at.dms.kjc.cluster;
 import at.dms.kjc.sir.*;
 
 /**
- * Reprecents a pairwise constraint due to a latency constrained message
+ * Represents a pairwise constraint due to a latency constrained message
  * between a source and destination filters. Note that source will
  * have to send credit messages to the destination. Destination will
  * have to check credit messages and make sure it does not execute past

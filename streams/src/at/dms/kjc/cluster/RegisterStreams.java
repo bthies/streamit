@@ -30,7 +30,7 @@ public class RegisterStreams {
     static HashMap<SIROperator,List<Tape>> filterOutStreams = null;
 
     /**
-     * Clean up static data structures (also before using, to allocae)
+     * Clean up static data structures (also before using, to allocate)
      */
     
     public static void reset() {
@@ -43,10 +43,10 @@ public class RegisterStreams {
      * edges (including nulls for 0-weight edges) for all incoming and outgoing edges
      * for all filters, splitters, and joiners in graph.
      *  
-     * @param graphFlattener a GraphFlattener which, when visited will give us all nodes. 
+     * @param first node in a flatgraph
      */
-    public static void init(GraphFlattener graphFlattener) {
-        graphFlattener.top.accept(new FlatVisitor() {
+    public static void init(FlatNode top) {
+        top.accept(new FlatVisitor() {
 
             public void visitNode(FlatNode node) {
 

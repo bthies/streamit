@@ -94,7 +94,7 @@ public abstract class TapeFixedBase extends TapeBase implements Tape {
         if (NodeEnumerator.getFlatNode(dst).isFilter()) {
             // pop from fusion buffer
 
-            s.append("inline " + typeString + " __pop__" + dst + "() {\n");
+            s.append("inline " + typeString + " " + ClusterUtils.popName(dst) + "() {\n");
             // p.indent();
             s.append(typeString + " res=" + bufferName + "[" + tailName
                     + "];\n");
@@ -106,7 +106,7 @@ public abstract class TapeFixedBase extends TapeBase implements Tape {
 
             // pop from fusion buffer with argument
 
-            s.append("inline " + typeString + " __pop__" + dst + "(int n) {\n");
+            s.append("inline " + typeString + " " + ClusterUtils.popName(dst) + "(int n) {\n");
             // p.indent();
             s.append(typeString + " res=" + bufferName + "[" + tailName
                     + "];\n");

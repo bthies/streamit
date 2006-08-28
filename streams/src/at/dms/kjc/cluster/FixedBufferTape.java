@@ -79,7 +79,7 @@ public class FixedBufferTape {
         SIRFilter f = (SIRFilter)dst.contents;
         // the maximum number of items popped in init or steady phases
         int size = Math.max(getMult(dst,true), getMult(dst,false)) 
-                    * f.getPopInt();
+                    * f.getPopEstimate();
         if (f instanceof SIRTwoStageFilter) {
             // if f is a two stage filter, it is possible that 
             // the single execution of prework will pop more than
@@ -156,13 +156,13 @@ public class FixedBufferTape {
     static private int leftoveritemsFilter(FlatNode src, FlatNode dst) {
         assert dst.incoming[0] == src;
         SIRFilter f = (SIRFilter)dst.contents;
-        int dstConsume = getMult(dst, true) * f.getPopInt();
+        int dstConsume = getMult(dst, true) * f.getPopEstimate();
         int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
         int remaining = srcProduce - dstConsume;
        // assertion should be true since if work peeks more than it pops then
         // it requires an init phase. 
-        assert (remaining >= f.getPeekInt() - f.getPopInt()) && remaining >= 0 :
-            remaining +"," + f.getPeekInt() + "," + f.getPopInt();
+        assert (remaining >= f.getPeekEstimate() - f.getPopEstimate()) && remaining >= 0 :
+            remaining +"," + f.getPeekEstimate() + "," + f.getPopEstimate();
         return remaining;
     }
 
@@ -238,7 +238,7 @@ public class FixedBufferTape {
         SIROperator dst_oper = NodeEnumerator.getOperator(dst);
         if (dst_oper instanceof SIRFilter) {
             SIRFilter f = (SIRFilter)dst_oper;
-            if (f.getPeekInt() != f.getPopInt()) { return true; }
+            if (f.getPeekInt() != f.getPopEstimate()) { return true; }
         }
         return false;
     }

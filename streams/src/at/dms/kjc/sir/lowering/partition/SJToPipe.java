@@ -22,6 +22,10 @@ public class SJToPipe implements StreamVisitor {
 
     /**
      * Lift everything we can in <pre>str</pre> and its children
+     * <br/>
+     * Will not convert the top-level SIRStream with which it is called.
+     * Replaces children as possible in a bottom-up fashion.
+     * Therefore, it does not need to return a new Stream.
      */
     public static void doit(SIRStream str) {
         IterFactory.createFactory().createIter(str).accept(new SJToPipe());

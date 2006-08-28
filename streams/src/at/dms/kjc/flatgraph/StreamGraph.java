@@ -17,7 +17,7 @@ import java.util.*;
 
 public class StreamGraph {
     /** The toplevel stream container * */
-    private FlatNode topLevelFlatNode;
+    protected FlatNode topLevelFlatNode;
 
     /** A list of all the static sub graphs * */
     protected StaticStreamGraph[] staticSubGraphs;
@@ -25,7 +25,8 @@ public class StreamGraph {
     /** the entry point static subgraph * */
     private StaticStreamGraph topLevel;
 
-    /** map of flat nodes to parent ssg * */
+    /** map of flat nodes to parent ssg.
+     * <br/>this needs to be updated whenever a node is added or deleted. */
     public HashMap<FlatNode,StaticStreamGraph> parentMap;
 
     /**
@@ -233,7 +234,7 @@ public class StreamGraph {
      * peek and pop rates, and the edge is removed between the FlatNode's.
      * The edge is between StaticSubgraph's and can be found in the nexts (or prevs) field
      * of the appropriate StaticSubgraph, and the original type (replaced here with void)
-     * can be cound by calling getInputType / getOutputType for the node in the correct SSG
+     * can be found by calling getInputType / getOutputType for the node in the correct SSG
      * - - assuming that addNexts has been called before the call to cutGraph.
      * @param upstream: Node upstream of boundary, assumed to have 1 outgoing edge.
      * @param downstream: Node downstream of boundary, assumed to have 1 incoming edge.
@@ -244,9 +245,16 @@ public class StreamGraph {
         //The downstream has to be a null splitter 
         assert (upstream.isFilter() || upstream.isNullJoiner()) && 
                 (downstream.isFilter() || (downstream.isNullSplitter()));
-      
+
+        // if node structure changes, try to at least have hook to SIR structure.
+        upstream.contents.setAttribute("edge", downstream.contents);
+        downstream.contents.setAttribute("incoming",upstream.contents);
+
         if (upstream.isFilter()) {
             SIRFilter upFilter = (SIRFilter) upstream.contents;
+            // store removed data as attributes in upFilter
+            upFilter.setAttribute("push",upFilter.getPush());
+            upFilter.setAttribute("outtype", upFilter.getOutputType());
             // reset upstream
             upFilter.setPush(new JIntLiteral(0));
             upFilter.setOutputType(CStdType.Void);
@@ -256,6 +264,10 @@ public class StreamGraph {
         // reset downstream
         if (downstream.isFilter()) {
             SIRFilter downFilter = (SIRFilter) downstream.contents;
+            // store removed data as attributes in downFilter
+            downFilter.setAttribute("pop",downFilter.getPop());
+            downFilter.setAttribute("peek",downFilter.getPeek());
+            downFilter.setAttribute("intype",downFilter.getInputType());
             downFilter.setPop(new JIntLiteral(0));
             downFilter.setPeek(new JIntLiteral(0));
             downFilter.setInputType(CStdType.Void);
@@ -468,4 +480,19 @@ public class StreamGraph {
 //        return streamGraph;
 //    }
 
+    
+    /**
+     * The current version pastes together the topLevelSIR graphs
+     * for all StaticStreamGraphs.  Be sure that you do not want to
+     * continue to use the individual graphs.
+     */
+    public SIRStream recreateSIR() {
+        topLevel.accept(new StreamGraphVisitor(){
+            public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+                ssg.reconnectOutputs();
+            }
+        }, null,true);
+        return (new FlatGraphToSIR(topLevel.topLevel)).getTopLevelSIR();
+
+    }
 }

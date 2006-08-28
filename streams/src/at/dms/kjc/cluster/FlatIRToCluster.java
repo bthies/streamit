@@ -291,13 +291,10 @@ public class FlatIRToCluster extends InsertTimers implements
             }
         }
 
-        int pop_n, peek_n, push_n;
 
-        pop_n = self.getPopInt();
-        peek_n = self.getPeekInt();
-        push_n = self.getPushInt();
-
-        p.print("// peek: " + peek_n + " pop: " + pop_n + " push " + push_n
+        p.print("// peek: " + self.getPeekString() 
+                + " pop: " + self.getPopString() 
+                + " push " + self.getPushString()
                 + "\n");
         p.print("// init counts: " + init_counts + " steady counts: "
                 + steady_counts + "\n");

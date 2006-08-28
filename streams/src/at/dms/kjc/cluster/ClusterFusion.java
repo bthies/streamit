@@ -22,13 +22,15 @@ import java.util.*;
  * creating partition numbers a.k.a. threads.)
  */
 
-public class ClusterFusion
-    /*extends at.dms.util.Utils*/ implements FlatVisitor {
+public class ClusterFusion implements FlatVisitor {
 
     /**
      * Maps SIROperator to int.  that's all I know AD.
      * Seems to be used to pass in info about nodes already in partitions
      * to prevent further fusing.
+     * 
+     * Partitions in this map seem to be numbered from 0, but
+     * getPartition adds 1 to the retrieved number.
      */
     private static Map<SIROperator,Integer> partitionMap;
 
@@ -93,7 +95,7 @@ public class ClusterFusion
 
 
     /**
-     * Has passed node been eliminated in favor of some other representativue of fused region?
+     * Has passed node been eliminated in favor of some other representative of fused region?
      * 
      * @param node  a FlatNode
      * @return true if this node has been fused to another node (by being second argument to 'fuseTo')
@@ -151,14 +153,26 @@ public class ClusterFusion
         if (!localMaster.containsKey(node)) return null;
         return (FlatNode)localMaster.get(node);
     }
+    
+    /**
+     * Get node that the passed node was fused to.
+     * <br/>this should be the transitive closure of @{link #getLocalMaster}
+     * @param node
+     * @return a FlatNode or null if the passed node was never fused.
+     */
+    
+    public static FlatNode getMaster(FlatNode node) {
+            return nodeMaster.get(node);
+    }
+   
 
     /**
      *   Cluster partitioning.
      *   
      *   Does nothing if partitionMap already assigns a node to a partition.
      *   Otherwise:
-     *    (1) If splitter -- with somOfWeights != 0 -- is preceeded by filter, fuse it to filter.
-     *    (2) If joiner -- with somOfWeights != 0 -- is followed by filter, splitter or joiner,
+     *    (1) If splitter -- with sumOfWeights != 0 -- is preceeded by filter, fuse it to filter.
+     *    (2) If joiner -- with sumOfWeights != 0 -- is followed by filter, splitter or joiner,
      *       fuse it to the following filter splitter or joiner.
      * 
      *   if (KjcOptions.fusion) {

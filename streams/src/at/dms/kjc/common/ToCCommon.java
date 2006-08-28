@@ -429,6 +429,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         decl.accept(this);
     }
 
+    public void visitEmittedText(JEmittedText self) {
+        p.print(self.getText());
+    }
+    
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------

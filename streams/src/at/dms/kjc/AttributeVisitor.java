@@ -258,6 +258,9 @@ public interface AttributeVisitor {
      */
     Object visitTypeDeclarationStatement(JTypeDeclarationStatement self,
                                          JTypeDeclaration decl);
+    
+    /** Visit text to be emitted unchanged in a compiler backend. */
+    Object visitEmittedText(JEmittedText self);
 
     // ----------------------------------------------------------------------
     // EXPRESSION

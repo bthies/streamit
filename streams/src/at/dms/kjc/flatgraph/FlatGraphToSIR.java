@@ -44,7 +44,9 @@ public class FlatGraphToSIR
 
         toplevelSIR = new SIRPipeline("TopLevel" + globalID++
                 + suffix(top.contents));
+        toplevelSIR.setInit(SIRStream.makeEmptyInit());
         reSIR(toplevelSIR, toplevel, new HashSet<FlatNode>());
+        
     }
 
     /**
@@ -168,6 +170,7 @@ public class FlatGraphToSIR
               assert current.ways == 2 && current.edges[1] != null;
               SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
                       + suffix(current.edges[1].contents));
+              pipeline.setInit(SIRStream.makeEmptyInit());
               ((SIRFeedbackLoop)fbloop).setLoop(pipeline);
               reSIR(pipeline,current.edges[1],visited);
               if (current.edges[0] != null) {
@@ -183,6 +186,7 @@ public class FlatGraphToSIR
                     // Set both up now.
                     SIRFeedbackLoop fbloop = new SIRFeedbackLoop(parent,"FBLoop" + id++ 
                             + parentSuffix(current.contents));
+                    fbloop.setInit(SIRStream.makeEmptyInit());
                     SIRFeedbackLoop oldparent = (SIRFeedbackLoop)current.contents.getParent();
                     fbloop.setInit(SIRStream.makeEmptyInit());
                     fbloop.setDelay(oldparent.getDelay());
@@ -192,6 +196,7 @@ public class FlatGraphToSIR
                     assert current.ways == 1 && current.edges[0] != null;
                     SIRPipeline pipeline = new SIRPipeline(fbloop, "Pipeline" + id++
                             + suffix(current.edges[0].contents));
+                    pipeline.setInit(SIRStream.makeEmptyInit());
                     fbloop.setBody(pipeline);
                     reSIR(pipeline, current.edges[0], visited);
                 } // else end this recursion at end of loop portion

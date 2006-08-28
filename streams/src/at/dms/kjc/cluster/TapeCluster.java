@@ -30,6 +30,7 @@ public class TapeCluster extends TapeBase implements Tape {
     protected final String push_index;
     protected final String producer_name;
     protected final String consumer_name;
+    protected String tapeName; // for debugging 
     
     TapeCluster(int source, int dest, CType type) {
         super(source,dest,type);
@@ -41,6 +42,7 @@ public class TapeCluster extends TapeBase implements Tape {
         pop_index = "__pop_index_"+source+"_"+dest;
         producer_name = "__producer_"+source+"_"+dest;
         consumer_name = "__consumer_"+source+"_"+dest;
+        tapeName = "cluster_"+source+"_"+dest;
     }
 
     /**
@@ -73,7 +75,7 @@ public class TapeCluster extends TapeBase implements Tape {
     @Override
     public String dataDeclarationH() {
         // TODO Auto-generated method stub
-        return "";
+        return "// dataDeclarationH " + tapeName + "\n";
     }
 
     /* (non-Javadoc)
@@ -82,7 +84,7 @@ public class TapeCluster extends TapeBase implements Tape {
     @Override
     public String dataDeclaration() {
         // TODO Auto-generated method stub
-        return "";
+        return "// dataDeclaration " + tapeName + "\n";
     }
 
     /* (non-Javadoc)
@@ -90,7 +92,7 @@ public class TapeCluster extends TapeBase implements Tape {
      */
     @Override
     public String downstreamDeclarationExtern() {
-        return "";
+        return "// downstreamDeclarationExtern " + tapeName + "\n";
     }
 
     /* (non-Javadoc)
@@ -99,8 +101,9 @@ public class TapeCluster extends TapeBase implements Tape {
     @Override
     public String downstreamDeclaration() {
         StringBuffer s = new StringBuffer();
-        
-        FlatNode source_node = NodeEnumerator.getFlatNode(src);
+        s.append("// downstreamDeclaration " + tapeName + ":\n");
+
+ //       FlatNode source_node = NodeEnumerator.getFlatNode(src);
         FlatNode my_node = NodeEnumerator.getFlatNode(dst);
       if (my_node.contents instanceof SIRFilter) {
           SIRFilter f = (SIRFilter)my_node.contents;
@@ -388,7 +391,7 @@ public class TapeCluster extends TapeBase implements Tape {
         if (NodeEnumerator.getFlatNode(src).isFilter()) {
         }
         // TODO Auto-generated method stub
-        return "";
+        return "// upstreamDeclarationExtern " + tapeName + "\n";
     }
 
     /* (non-Javadoc)
@@ -397,6 +400,7 @@ public class TapeCluster extends TapeBase implements Tape {
     @Override
     public String upstreamDeclaration() {
         StringBuffer s = new StringBuffer();
+        s.append("// upstreamDeclaration " + tapeName + "\n");
         FlatNode node = NodeEnumerator.getFlatNode(src);
         
         if (node.isFilter()) {
@@ -577,7 +581,7 @@ public class TapeCluster extends TapeBase implements Tape {
      * @see at.dms.kjc.cluster.Tape#topOfWorkIteration(at.dms.kjc.common.CodegenPrintWriter)
      */
     public String topOfWorkIteration() {
-        return null;
+        return "// topOfWorkIteration " + tapeName + "\n";
     }
     
 

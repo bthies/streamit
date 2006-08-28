@@ -145,7 +145,7 @@ class FusionCode {
         //p.print("#define __ITERS 10000\n");
 
         //int mult = bestMult(16000,65000,work_est); // estimating best multiplicity 
-        mult = bestMult(8500,65000); // estimating best multiplicity 
+        mult = bestMult(KjcOptions.l1d * 1024,KjcOptions.l2 * 1024); // estimating best multiplicity 
 
         if (KjcOptions.nomult || !inc_mult) mult = 1;
 
@@ -154,47 +154,20 @@ class FusionCode {
             p.newLine();
         }
         
-        if (KjcOptions.standalone) {
-        //p.print("#define __CLUSTER_STANDALONE\n");
+ //       if (KjcOptions.standalone) {
         // threadcount is the number of operators after fusion/cacheopts
         for (int t = 0; t < threadCount; t++) {
         
             SIROperator oper = NodeEnumerator.getOperator(t);
             for (Tape stream : RegisterStreams.getNodeOutStreams(oper)) {
                 if (stream != null) {
-//                int src = stream.getSource();
-//                int dst = stream.getDest();
-//              
-//                if (FixedBufferTape.isFixedBuffer(src,dst)) {
-//                    p.print("#define __FUSED_"+src+"_"+dst+"\n");
-//                }
-//                
-//                int extraPeeks = FixedBufferTape.getRemaining(src,dst);
-//                if (extraPeeks > 0) {
-//                    p.print("//destination peeks: "+(extraPeeks)+" extra items\n");
-//                    p.print("#define __PEEK_BUF_SIZE_" + src + "_" + dst
-//                                + " " + extraPeeks + "\n");
-//                }
-//                //if (KjcOptions.peekratio == 1024 || no_peek) {
-//
-//                if (! FixedBufferTape.needsModularBuffer(src,dst)) {
-//                    p.print("#define __NOMOD_"+src+"_"+dst+"\n");
-//                }
-//
-//                int buffersize = FixedBufferTape.bufferSize(src, dst, p, true);
-//        
-//                p.print("#define __BUF_SIZE_MASK_" + src + "_" + dst
-//                            + " (pow2ceil(" /*max(" + FixedBufferTape.getInitItems()
-//                            + "," + FixedBufferTape.getSteadyItems()*/ + buffersize + (mult == 1? "" : "*__MULT") /*+ ")"*/ + "+"
-//                            +  extraPeeks + ")-1)\n");
-
                     p.print(stream.dataDeclarationH());
                     p.print("\n");
                 }
             }
         }
 
-        }
+//        }
         p.print("#endif\n"); 
         
         try {

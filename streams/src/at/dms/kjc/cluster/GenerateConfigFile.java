@@ -70,7 +70,7 @@ public class GenerateConfigFile {
         }
         // print warning    
         System.err.println("NOTE: Missing or empty $STREAMIT_HOME/cluster-machines.txt file,");
-        System.err.println(" so all threads assigned to " + currentHostName + " in cluster-config.txt.");
+        System.err.println("  so all threads assigned to " + currentHostName + " in cluster-config.txt.");
     }
 
     /**

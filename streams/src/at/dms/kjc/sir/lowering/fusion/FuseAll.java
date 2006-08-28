@@ -19,17 +19,29 @@ import java.util.ListIterator;
  * don't get confused.
  */
 public class FuseAll implements StreamVisitor {
-    private FuseAll() {}
+    /**
+     * If true, then we will give error message and exit if we don't
+     * succeed in fusing down to 1 filter.  Otherwise we will just do
+     * our best.
+     */
+    private boolean strict;
+
+    private FuseAll(boolean strict) {
+        this.strict = strict;
+    }
 
     /**
      * Fuse everything we can in <str>.  Returns new fused segment,
-     * which is also mutated in the stream graph.
+     * which is also mutated in the stream graph.  If 'strict' is
+     * true, then prints an error message and exits if it can't
+     * succeed in fusing down to 1 filter; otherwise it just does its
+     * best (i.e., with respect to feedbackloops).
      */
-    public static SIRPipeline fuse(SIRStream str) {
+    public static SIRPipeline fuse(SIRStream str, boolean strict) {
         // try fusing toplevel separately since noone contains it
         SIRPipeline wrapper = SIRContainer.makeWrapper(str);
         wrapper.reclaimChildren();
-        FuseAll fuseAll = new FuseAll();
+        FuseAll fuseAll = new FuseAll(strict);
         boolean hasFused = true;
         while (hasFused) {
             try {
@@ -44,6 +56,14 @@ public class FuseAll implements StreamVisitor {
         }
         return wrapper;
     }
+
+    /**
+     * As above, with strict=true.
+     */
+    public static SIRPipeline fuse(SIRStream str) {
+        return fuse(str, true);
+    }
+
 
     /**
      * PLAIN-VISITS 
@@ -79,7 +99,10 @@ public class FuseAll implements StreamVisitor {
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
                                      SIRFeedbackLoopIter iter) {
-        Utils.fail("Don't yet support fusion of feedback loops.");
+        // if we had to fuse things down, then fail if we can't
+        if (strict) {
+            Utils.fail("Don't yet support fusion of feedback loops.");
+        }
     }
 
     /**

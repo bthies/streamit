@@ -14,25 +14,28 @@ public class Partitioner {
     /**
      * Tries to adjust 'str' into 'targetCount' pieces of equal work,
      * and return new stream. Indicate whether or not
-     * 'joinersNeedTiles' in the graph, or if they count for free.
+     * 'joinersNeedTiles' in the graph, or if they count for free.  If
+     * 'strict' is true, we will fail with an error message if we
+     * can't succeed in fusing down to the target count; otherwise we
+     * will just do our best.
      */
-    public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
+    public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode, boolean strict) {
         // detect number of tiles we have
         int curCount = new GraphFlattener(str).getNumTiles();
-        return doit(str, curCount, targetCount, joinersNeedTiles, limitICode);
+        return doit(str, curCount, targetCount, joinersNeedTiles, limitICode, strict);
     }
     /**
      * As above, with 'curCount' indicating the number of tiles that
      * 'str' currently requires.
      */
-    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
-        return doit(str, curCount, targetCount, joinersNeedTiles, limitICode, new HashSet());
+    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode, boolean strict) {
+        return doit(str, curCount, targetCount, joinersNeedTiles, limitICode, strict, new HashSet());
     }
     /**
      * As above, with <noHorizFuse> denoting a set of SIRFilters that
      * cannot be fused horizontally.
      */
-    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode, HashSet noHorizFuse) {
+    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode, boolean strict, HashSet noHorizFuse) {
         // horizontal fusion constraints only respected by dynamic programming partitioner
         if (!KjcOptions.partition_dp && noHorizFuse.size()>0) {
             System.err.println("WARNING:  The partitioner you are using (greedy?) does not support horizontal\n" + 
@@ -49,10 +52,10 @@ public class Partitioner {
         // optimization for fusing a lot: if the number of tiles
         // requested is only one more than the number of non-fusable
         // filters, then just run fuse-all
-        int numUnfusable = countUnfusableFilters(str);
-        if (targetCount <= numUnfusable + 1) {
-            System.out.println("  Detected target is max fusion, running fuseall...");
-            str = FuseAll.fuse(str);
+        int fuseAllResult = estimateFuseAllResult(str);
+        if (targetCount <= fuseAllResult + 1) {
+            System.out.println("  Detected target is max fusion, " + (strict ? "running fuseall..." : "fusing as much as possible..."));
+            str = FuseAll.fuse(str, strict);
         } else {
             // make work estimate
             WorkEstimate work = WorkEstimate.getWorkEstimate(str);
@@ -139,14 +142,25 @@ public class Partitioner {
     }
 
     /**
-     * Returns how many unfusable filters are in 'str'.
+     * Estimates how many filters would be in <str> following maximal
+     * fusion.  There needs to be a distinct filter for each unfusable
+     * filter, and (as long as feedbackloop fusion is unimplemented)
+     * there need to be at least one filter on each side of a feedback
+     * loop.
      */
-    static int countUnfusableFilters(SIRStream str) {
+    static int estimateFuseAllResult(SIRStream str) {
         // Should this count identity filters or not?  Unclear,
         // depending on backend, so for now be conservative and count
         // them.
         final int[] count = { 0 };
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+                                                 SIRFeedbackLoopIter iter) {
+                    // this is overly conservative -- if some of the
+                    // children are not fusable, will count those
+                    // results twice.
+                    count[0]+=2;
+                }
                 public void visitFilter(SIRFilter self,
                                         SIRFilterIter iter) {
                     if (!FusePipe.isFusable(self)) {
@@ -155,6 +169,7 @@ public class Partitioner {
                 }});
         return count[0];
     }
+    
 
     /**
      * Returns the number of filters in the graph.

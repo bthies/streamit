@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.41 2006-08-28 02:23:30 dimock Exp $
+ * @version $Id: SIRFilter.java,v 1.42 2006-08-28 21:40:14 dimock Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -132,52 +132,6 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
         return steadyCount * getPopInt();
     }
     
-    /** Get estimated number of pops for size / work estimation.  Handles dynamic rates. */
-    public int getPopEstimate() {
-        return getEstimate(getPop());
-    }
-
-    /** Get estimated number of pushes for size / work estimation.  Handles dynamic rates. */
-    public int getPushEstimate() {
-        return getEstimate(getPush());
-    }
-    
-    /** Get estimated number of peeks for size / work estimation.  Handles dynamic rates. */
-    public int getPeekEstimate() {
-        return getEstimate(getPeek());
-    }
-   
-   
-    // return number if we have it.
-    // else return average from a range if we have it.
-    // else return (max - min) / 2 from a range if we have it.
-    // else guess min * 2 or max / 2 if only have min or max from a range.
-    // return 1 if we have no information.
-    private int getEstimate(JExpression e) {
-        if (e instanceof JIntLiteral) {
-            return ((JIntLiteral)e).intValue();
-        }
-        if (e instanceof SIRRangeExpression) {
-            SIRRangeExpression r = (SIRRangeExpression)e;
-            if (r.getAve() instanceof JIntLiteral) {
-                return ((JIntLiteral)r.getAve()).intValue();
-            }
-            JExpression min = r.getMin();
-            JExpression max = r.getMax();
-            if (min instanceof JIntLiteral) {
-                if (max instanceof JIntLiteral) {
-                    return Math.min( (((JIntLiteral)min).intValue()
-                            + ((JIntLiteral)max).intValue()) / 2, 1);
-                } else {
-                    return ((JIntLiteral)min).intValue() * 2;
-                }
-            }
-            if (max instanceof JIntLiteral) {
-                return Math.min( ((JIntLiteral)max).intValue() / 2, 1);
-            }
-        }
-        return 1;  // no info, allow estimators to underestimate.
-    }
     
     /**
      * Returns how many items are popped.  This will throw an

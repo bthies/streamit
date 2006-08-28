@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.104 2006-08-28 21:31:48 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.105 2006-08-28 21:40:13 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -384,7 +384,11 @@ public class ClusterBackend {
         
       
         }  // end of operations on individual Static Stream Graphs
-    
+
+        // Any future reference to a dynamic rate should xlate
+        // to a static rate of 1.
+        SIRDynamicRateManager.pushConstantPolicy(1);
+
         if (KjcOptions.fusion) { streamGraph.cleanupForFused(); }
 
         // The str and flatgraph representations are not allowed to change from
@@ -396,6 +400,7 @@ public class ClusterBackend {
        
         StreamItDot.printGraph(str,"recreated_str.dot");
         
+
         // optionally print a version of the source code that we're
         // sending to the scheduler
         if (KjcOptions.print_partitioned_source) {
@@ -403,7 +408,6 @@ public class ClusterBackend {
         }
 
         System.err.println("Done Partitioning...");
-
 
         //run constrained scheduler
 
@@ -514,6 +518,11 @@ public class ClusterBackend {
         }
         */
         System.exit(0);
+    }
+    
+
+    static private void klugeDynamicRates(SIRStream str) {
+        
     }
 
 //    private static void mapToPartitionZero(SIRStream str, final HashMap<SIROperator,Integer> partitionMap) {

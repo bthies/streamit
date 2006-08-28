@@ -20,8 +20,16 @@ public class TapeDynrate extends TapeBase implements Tape {
     
     @Override
     public String dataDeclarationH() {
-        // a bit of a hack, but I don't have tim eto pur the initialization
+        // a bit of a hack, but I don't have time to put the initialization
         // into the init function.
+        
+        int bufsize = 256;
+        try {
+            bufsize = FixedBufferTape.bufferSize(src,dst,null,false);
+        } catch (AssertionError e) {
+            /* with given SIRDynamicRatePolicy the sizes just do not make sense */
+        }
+        
         StringBuffer s = new StringBuffer();
         FlatNode srcnode = NodeEnumerator.getFlatNode(src);
         StaticStreamGraph ssg = ClusterBackend.streamGraph.parentMap.get(srcnode);
@@ -36,7 +44,7 @@ public class TapeDynrate extends TapeBase implements Tape {
         s.append(
                 " = " 
                 + className  + "<" + typeString + ">("
-                + FixedBufferTape.bufferSize(src,dst,null,false)
+                + bufsize
                 + ", "
                 + workname
                 + ");\n");

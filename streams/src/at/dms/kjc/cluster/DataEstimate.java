@@ -129,9 +129,9 @@ public class DataEstimate {
             SIRFilter filter = (SIRFilter)oper;
             CType input_type = filter.getInputType();
             CType output_type = filter.getOutputType();
-            int pop_n = filter.getPopEstimate();
+            int pop_n = filter.getPopInt();
             //int peek_n = filter.getPeekInt();
-            int push_n = filter.getPushEstimate();
+            int push_n = filter.getPushInt();
             return steady_int*pop_n*getTypeSize(input_type)+
                 //(peek_n-pop_n)*getTypeSize(input_type)+
                 steady_int*push_n*getTypeSize(output_type);

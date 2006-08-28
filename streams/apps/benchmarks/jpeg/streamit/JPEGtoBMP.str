@@ -3,7 +3,7 @@
 void->void pipeline JPEGtoBMP {
     add FileReader<int>("./input.jpg.int");
     add JPEGByteStream_Parser;
-    add Identity<float>;  // ensure dynamic rate boundary is between filters 
+    add Identity<int>;  // ensure dynamic rate boundary is between filters 
     add ChannelUnencoding;
     add YCbCrtoRGB;
 

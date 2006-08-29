@@ -69,6 +69,7 @@ foreach (<>) {
     # $head is directory name up to '/streamit/'
     # $tail is file name without '.str' suffix
     my $numIters = 3;
+    my $rawside = 4;
     $numIters = 3 if $tail =~ /^tde.*/;
     my $emailAddress = 'mgordon@cag.csail.mit.edu';
     my $dirName = "$head/$tail.raw$argsext";
@@ -92,7 +93,7 @@ foreach (<>) {
        . \$STREAMIT_HOME/include/dot-bashrc
        PATH=\${PATH}:/usr/local/bin:/usr/uns/bin:/usr/bin:/bin
        cp ../streamit/$tail.str .
-       nice strc -raw 4 -N $numIters $args $tail.str
+       nice strc -raw $rawside -N $numIters $args $tail.str
        nice make -f Makefile.streamit run
        #check for correctness with library, appends to results.out if correct
        \$STREAMIT_HOME/apps/benchmarks/asplos06/scripts/CheckCorrectness.perl $tail.str $numIters

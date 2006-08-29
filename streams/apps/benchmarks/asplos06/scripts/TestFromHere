@@ -2,23 +2,25 @@
 
 #expects arg of options to compiler!
 
-benchmarks="BeamFormer7 BitonicSort2 ChannelVocoder8 DCT2 DES2 FFT5 FilterBank2 FilterBank6 FMRadio5 MPEGdecoder_nomessage_4_1 MPEGdecoder_nomessage_5_1 Serpent3 VocoderTopLevel DESKeys1 BubbleSort1 tde_pp dcalc"
+benchmarks="BeamFormer1 BitonicSort2 ChannelVocoder7 DCT2 DES2 FFT5 FilterBank6 FMRadio5 MPEGdecoder_nomessage_5_3 VocoderTopLevel tde_pp Serpent_full"
 
 oldspace=""
 dir_prefix=""
 
-while getopts ":o:n:s" opt; do
+while getopts ":o:n:sd:" opt; do
     case $opt in
 	 o) options=$OPTARG;;
 	 n) dir_prefix=${OPTARG}_;;
 	 s) oldspace="-space";;
-	\?) echo "Usage: RunFromHere -o \"options\" <-s>"
+	 d) dir_name=${OPTARG};;
+	\?) echo "Usage: RunFromHere -o \"options\" <-s> <-d dir> <-n dir_prefix>"
             exit 1j
     esac
 done
 shift $(($OPTIND -1))
 
-dir_name=${dir_prefix}subset_raw4${options// /}
+dir_name=${dir_name:-subset_raw4${options// /}}
+dir_name=${dir_prefix}${dir_name}
 echo ${dir_name}
 if [ -d $dir_name ]; then
     echo "Directory $dir_name already exists..."

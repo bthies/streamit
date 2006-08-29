@@ -52,7 +52,7 @@ getopts("s", \%options) or die("ResultsOutToSpreadSheet [-s]");
 $spacetime = 0 if defined $options{s};
 
 # print header same for each backend
-print "benchmark;options;throughput;utilization;MFLOPS;filters;slices;correct\n";
+print "benchmark;options;throughput;utilization;MFLOPS;filters;slices;BufSizeBytes;correct\n";
 
 foreach (<>) {
   chomp;
@@ -66,11 +66,14 @@ foreach (<>) {
   my $used_tiles = "";
   my $filters;
   my $slices;
-  my $throughput = "";
+  my $throughput; 
+  my $cycles = "";
+  my $outputs = "";
   my $instrs_issued;
   my $max_instrs_issued;
   my $utilization = "";
   my $mflops = "";
+  my $buf_size;
   my $correct = 0;
   if ($spacetime == 1) {
     my $results;
@@ -78,16 +81,19 @@ foreach (<>) {
     while (<RESULTS>) {
       chomp;
       #we are looking at a spacetime file
-      if (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+)$/) {
-	#tiles;assigned;num_filters;num_slices;throughput;work_cycles;total_cycles;mflops
+      if (/^([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+);([0-9]+)$/) {
+	#tiles;assigned;num_filters;num_slices;throughput;work_cycles;total_cycles;mflops;buf_size
 	$tiles = $1;
 	$used_tiles = $2;
 	$filters = $3;
 	$slices = $4;	
-	$throughput = $5;
-	$instrs_issued = $6;
-	$max_instrs_issued = $7;
-	$mflops = $8;
+	$cycles = $5;
+        $outputs = $6;
+	$instrs_issued = $7;
+	$max_instrs_issued = $8;
+	$mflops = $9;
+        $buf_size = $10;
+        $throughput = $cycles / $outputs;
 	if (defined($instrs_issued) && defined($max_instrs_issued )) {
 	  $utilization = $instrs_issued / $max_instrs_issued;
 	}
@@ -95,7 +101,7 @@ foreach (<>) {
 	$correct = 1;
       }
     }				  
-    $results =  "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$correct\n";
+    $results =  "$benchmark;$options;$throughput;$utilization;$mflops;$filters;$slices;$buf_size;$correct\n";
     #make options sort
     $results =~ s/steadymult(\d)(\D)/steadymult00$1$2/;
     $results =~ s/steadymult(\d)(\d)(\D)/steadymult0$1$2$3/;

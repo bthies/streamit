@@ -1,10 +1,10 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.12 2006-07-21 19:42:36 dimock Exp $
+dnl $Id: configure.in,v 1.13 2006-08-29 20:53:57 dimock Exp $
 dnl
 
-AC_INIT([StreamIt], [2.0], [streamit@cag.lcs.mit.edu])
+AC_INIT([StreamIt], [2.1], [streamit@cag.lcs.mit.edu])
 
 dnl which release is this?
 AC_MSG_CHECKING([for source release])
@@ -53,7 +53,7 @@ AC_CHECK_TOOL(AR, ar)
 if test -z "$RANLIB" || test -z "$CC" || test -z "$AR"; then
 AC_MSG_WARN(
 [Some components of your C compiler's toolchain are missing.
-Ths StreamIt compiler should still run fine compileing to C or C++, 
+Ths StreamIt compiler should still run fine compiling to C or C++, 
 but you may not be able to use the output of the backends.])
 fi
 

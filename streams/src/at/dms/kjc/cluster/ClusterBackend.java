@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.107 2006-08-29 05:42:35 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.108 2006-08-29 20:31:15 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -482,7 +482,10 @@ public class ClusterBackend {
         GenerateClusterDotH.generateClusterDotH();      // master.h
 
         GenerateMakefile.generateMakefile(helpers);     // Makefile.cluster
-        GenerateConfigFile.generateConfigFile();        // cluster-config.txt
+        // not needed in standalone mode
+        if (!KjcOptions.standalone) {
+            GenerateConfigFile.generateConfigFile();        // cluster-config.txt
+        }
         GenerateSetupFile.generateSetupFile();          // cluster-setup.txt
 
         if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform) {

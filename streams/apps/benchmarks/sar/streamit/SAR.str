@@ -16,17 +16,6 @@ void->void pipeline SAR()
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // %% u domain parameters and arrays for compressed SAR signal %%
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //
-    // duc=(Xc*lambda_min)/(4*Y0)/1.2;   % sample spacing in aperture domain
-    //                                   % for compressed SAR signal
-    //                                   % 10 percent guard band; this guard band
-    //                                   % would not be sufficient for targets
-    //                                   % outside digital spotlight filter (use
-    //                                   % a larger guard band, i.e., PRF)
-    // mc=2*ceil(L/duc);                 % number of samples on aperture
-    // dku=pi2/(mc*duc);                 % sample spacing in ku domain
-    // uc=duc*(-mc/2:mc/2-1);            % synthetic aperture array
-    // kuc=dku*(-mc/2:mc/2-1);           % kuc array
     
     float duc = ((Xc * lambda_min) / (4 * Y0)) / 1.2;
 
@@ -47,17 +36,6 @@ void->void pipeline SAR()
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // %%    u domain parameters and arrays for SAR signal     %%
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    // 
-    // theta_min=atan((-Y0-L)/(Xc-X0));  % minimum aspect angle
-    // theta_max=atan((Y0+L)/(Xc-X0));   % max aspect angle [p79(3/7)]
-    // du=lambda_min/(1.4*2*( sin(theta_max)- sin(theta_min) ));
-    //                                   % sample spacing in aperture
-    //                                   % domain for SAR signal [Delta u, p79(4/7)]
-    //                                   % 20 percent guard band
-    // m=2*ceil(pi/(du*dku));            % number of samples on aperture
-    // du=pi2/(m*dku);                   % readjust du
-    // u=du*(-m/2:m/2-1);                % synthetic aperture array
-    // ku=dku*(-m/2:m/2-1);              % ku array
     
     float theta_min = atan((0 - Y0 - L) / (Xc - X0));
     float theta_max = atan((Y0 + L) / (Xc - X0)); 
@@ -80,18 +58,6 @@ void->void pipeline SAR()
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     // %%       Fast-time domain parmeters and arrays          %%
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    //
-    // Ts=(2/c)*Rmin;                 % start time of sampling [p19(2/6)]
-    // Tf=(2/c)*Rmax+Tp;              % end time of sampling [p19(3/6)]
-    // T=Tf-Ts;                       % fast-time interval of measurement
-    // Ts = Ts - 0.1*T;
-    // Tf = Tf + 0.1*T;
-    // T=Tf-Ts;
-    // Tmin=max(T,(4*X0)/(c*cos(theta_max)));  % Minimum required T
-    // dt=1/(4*f0);                 % Time domain sampling (guard band factor 2)
-    // n=2*ceil((.5*Tmin)/dt);      % number of time samples
-    // t=Ts+(0:n-1)*dt;             % time array for data acquisition
-    // k = (pi2/c)*(fc + 4*f0*(-n/2:n/2-1)/n);  % Wavenumber array
     
     float Ts   = (2 / c) * Rmin; 
     float Tf   = (2 / c) * Rmax + Tp;
@@ -114,10 +80,7 @@ void->void pipeline SAR()
         k[i] = (PI2 / c) * (fc + 4 * f0 * (((float) i) - ((float) n) / 2.0) / n);
     }
     
-    // NOTE: the last three stages of of genRawSAR appear in genRawSAR.str
-
     // Generate Raw Image
-    /// s=ftx(s).*fast_time_filter;
     add void->int filter { // NOTE: mock filter to ger around compiler limitation w.r.t. null splitters
         work push 1 { push(1); }
     }
@@ -126,9 +89,7 @@ void->void pipeline SAR()
         split duplicate;
         add FastTimeFilter(n, t);
         add pipeline {
-            /// generate s
             add genRawSAR(Tf, n, m, mc, t, k, ku, uc);
-            /// s = ftx(s)
             add FTX2D(n, mc);
         }
         join roundrobin(1, mc);
@@ -155,32 +116,21 @@ void->void pipeline SAR()
     // via Slow-time Compression and Decompression
 
     //// Compression
-    //// cs=s.*exp(cj*2*(k(:)*ones(1,mc)).*
-    ////           (ones(n,1)*sqrt(Xc^2+(-uc).^2))-
-    ////           cj*2*k(:)*Xc*ones(1,mc));
     add Compression(n, mc, k, uc);    
 
     //// Narrow-bandwidth Polar Format Processed reconstruction
-    //// fp=fty(cs);
     add FTY2D(n, mc);   
 
     //// Zero-padding in ku domain for slow-time upsampling
-    //// mz=m-mc;
-    //// fcs=(m/mc)*[zeros(n,mz/2),fp,zeros(n,mz/2)];
     add ZeroPadding(n, m, mc);
     
     //// Transform to (omega,u) domain
-    //// cs=ifty(fcs);
     add iFTY2D(n, m);
 
     //// Decompression
-    //// s=cs.*exp(-cj*2*(k(:)*ones(1,m)).*
-    ////          (ones(n,1)*sqrt(Xc^2+(-u).^2))+
-    ////          cj*2*k(:)*Xc*ones(1,m));
     add Decompression(n, m, k, u);
 
     //// Digitally-spotlighted SAR signal spectrum
-    //// fs=fty(s);                 
     add FTY2D(n, m);
 
     // SAR RECONSTRUCTION (multiple stages)
@@ -195,7 +145,6 @@ void->void pipeline SAR()
 
 
 // Zero-padding
-// fcs=(m/mc)*[zeros(n,mz/2),fp,zeros(n,mz/2)];
 complex->complex filter ZeroPadding(int n, 
                                     int m, 
                                     int mc)
@@ -216,8 +165,8 @@ complex->complex filter ZeroPadding(int n,
                 } else {
                     complex in = pop();
                     complex out;
-                    out.real = q * in.real; //fp[i][j-mz/2].real;
-                    out.imag = q * in.imag; //fp[i][j-mz/2].imag;
+                    out.real = q * in.real;
+                    out.imag = q * in.imag;
                     push(out);
                 }
             }
@@ -226,9 +175,6 @@ complex->complex filter ZeroPadding(int n,
 }
 
 // Compression
-// cs=s.*exp(cj*2*(k(:)*ones(1,mc)).*
-//           (ones(n,1)*sqrt(Xc^2+(-uc).^2))-
-//           cj*2*k(:)*Xc*ones(1,mc));
 complex->complex filter Compression(int n, 
                                     int mc, 
                                     float[n] k, 
@@ -251,7 +197,7 @@ complex->complex filter Compression(int n,
     work push n*mc pop n*mc {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < mc; j++){
-                complex in = pop(); // s[i][j]
+                complex in = pop();
                 complex out;
                 
                 out.real = 
@@ -269,9 +215,6 @@ complex->complex filter Compression(int n,
 }
 
 // Decompression
-// s=cs.*exp(-cj*2*(k(:)*ones(1,m)).*
-//          (ones(n,1)*sqrt(Xc^2+(-u).^2))+
-//          cj*2*k(:)*Xc*ones(1,m));
 complex->complex filter Decompression(int n, 
                                       int m, 
                                       float[n] k, 
@@ -294,7 +237,7 @@ complex->complex filter Decompression(int n,
     work push n*m pop n*m {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++){
-                complex in = pop(); // cs[i][j]
+                complex in = pop();
                 complex out;
                 
                 out.real = 
@@ -317,65 +260,20 @@ complex->float pipeline Reconstruction(int n,
                                        float[n] k, 
                                        float[m] ku)
 {
-    // ku=ones(n,1)*ku;                    % ku array
-    // kx=(4*k(:).^2)*ones(1,m)-ku.^2;     % [p197(1/6), p200(1/6)(3/6)]
-    // kx=sqrt(kx.*(kx > 0));              % kx array
-    // % 2D Matched filtering [p203, fast-time and slow-time domains]
-    // fs0=(kx > 0).*exp(cj*kx*Xc+cj*ku+cj*.25*pi ...
-    //            -cj*2*k(:)*ones(1,m)*Xc); % reference signal complex conjugate
-    // fsm=fs.*fs0;
     add matchedFiltering(n, m, k, ku);
 
-    // kxmin=min(min(kx));
-    // kxmax=max(max(kx));
-    // dkx=pi/X0;           % Nyquist sample spacing in kx domain
-    // nx=2*ceil((.5*(kxmax-kxmin))/dkx); % Required number of
-    //                      % samples in kx domain;
-    //                      % This value will be increased slightly
-    //                      % to avoid negative array index
-    // is=single(8);        % number of neighbors (sidelobes) used for sinc interpolator
-    // nx=nx+2*is+4;        % increase number of samples to avoid negative
-    //                      % array index during interpolation in kx domain
-    // NOTE: <nx> is predefined because it cannot be practically
-    // resolved at compile time (requires a 70K element to be 
-    // unrolled, which in turns leads to 1.4M LOC that choke gcc)
     int nx  = 266;
-
-    // I=2*is+1;
-    // KX=kxmin+(-is-2:nx-is-3)*dkx;     % uniformly-spaced kx points where
-    //                                   % interpolation is done
-    // kxs=is*dkx; % plus/minus size of interpolation neighborhood in KX domain
-    // F=single(zeros(nx,m));         % initialize F(kx,ku) array for interpolation output        
-    // for i=1:n                      % for each k loop
-    //  icKX=round((kx(i,:)-KX(1,1))/dkx)+1; % closest grid point in KX domain
-    //  ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
-    //  ikx=ikx+nx*ones(I,1)*[0:m-1];
-    //  nKX=KX(ikx);
-    //  SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);             % interpolating sinc [p144(3/4),p204(1/7)]
-    //  HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));  % Hamming window [p204(4/7)]
-    //          %%%%%   Sinc Convolution (interpolation) follows  %%%%%%%%
-    //  % [I = subsampled index in ku domain]
-    //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
-    // end
     add convolutionInterpolation(n, nx, m, k, ku);
+
     /// Inverse 2D FFT for spatial domain image f(x,y) [p203 fig4.6]
-    /// f=iftx(ifty(F)); 
     add iFTY2D(nx, m);
     add iFTX2D(nx, m);
     
-    /// image=abs(f)';
     add complexAbsoluate();
     add floatTranspose(nx, m);
 }
 
 // matchedFilterting (stage 1 of Reconstruction)
-// ku=ones(n,1)*ku;                    % ku array
-// kx=(4*k(:).^2)*ones(1,m)-ku.^2;     % [p197(1/6), p200(1/6)(3/6)]
-// kx=sqrt(kx.*(kx > 0));              % kx array
-// % 2D Matched filtering [p203, fast-time and slow-time domains]
-// fs0=(kx > 0).*exp(cj*kx*Xc+cj*ku+cj*.25*pi ...
-//            -cj*2*k(:)*ones(1,m)*Xc); % reference signal complex conjugate
-// fsm=fs.*fs0;
 complex->complex filter matchedFiltering(int n,
                                          int m, 
                                          float[n] k, 
@@ -388,9 +286,6 @@ complex->complex filter matchedFiltering(int n,
     complex[n][m] fs0;
 
     init {
-        // ku=ones(n,1)*ku;                    % ku array
-        // kx=(4*k(:).^2)*ones(1,m)-ku.^2;     % [p197(1/6), p200(1/6)(3/6)]
-        // kx=sqrt(kx.*(kx > 0));              % kx array
         for (int i = 0; i < n; i++) {
             for(int j = 0; j < m; j++) {
                 float val = (4 * (k[i] * k[i])) - (ku[j] * ku[j]);
@@ -404,8 +299,6 @@ complex->complex filter matchedFiltering(int n,
             }
         }
 
-        // fs0=(kx > 0).*exp(cj*kx*Xc+cj*ku+cj*.25*pi ...
-        //            -cj*2*k(:)*ones(1,m)*Xc); % reference signal complex conjugate
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
                 if (kx[i][j] > 0) {
@@ -413,13 +306,11 @@ complex->complex filter matchedFiltering(int n,
                     fs0[i][j].real = cos(value);
                     fs0[i][j].imag = sin(value);
                 }
-                // else{ fs0[i][j].real=0; fs0[i][j].imag=0; }
             }
         }
     }
     
     work pop n*m push n*m {
-        // fsm=fs.*fs0;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
                 complex fs = pop();
@@ -434,38 +325,6 @@ complex->complex filter matchedFiltering(int n,
 }
 
 // convolutionInterpolation (stage 2 of Reconstruction)
-// ku=ones(n,1)*ku;                    % ku array
-// kx=(4*k(:).^2)*ones(1,m)-ku.^2;     % [p197(1/6), p200(1/6)(3/6)]
-// kx=sqrt(kx.*(kx > 0));              % kx array
-// kxmin=min(min(kx));
-// kxmax=max(max(kx));
-// dkx=pi/X0;           % Nyquist sample spacing in kx domain
-// nx=2*ceil((.5*(kxmax-kxmin))/dkx); % Required number of
-//                      % samples in kx domain;
-//                      % This value will be increased slightly
-//                      % to avoid negative array index
-// is=single(8);        % number of neighbors (sidelobes) used for sinc interpolator
-// nx=nx+2*is+4;        % increase number of samples to avoid negative
-//                      % array index during interpolation in kx domain
-// I=2*is+1;
-// kxs=is*dkx; % plus/minus size of interpolation neighborhood in KX domain
-
-// KX=kxmin+(-is-2:nx-is-3)*dkx;     % uniformly-spaced kx points where
-//                                   % interpolation is done
-// F=single(zeros(nx,m));                % initialize F(kx,ku) array for interpolation output        
-// (NOTE: can move to a parent splitjoin): 
-// for i=1:n                     % for each k loop
-//  icKX=round((kx(i,:)-KX(1,1))/dkx)+1; % closest grid point in KX domain
-//  ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
-//  ikx=ikx+nx*ones(I,1)*[0:m-1];
-//  nKX=KX(ikx);
-//  SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);             % interpolating sinc [p144(3/4),p204(1/7)]
-//  HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));  % Hamming window [p204(4/7)]
-//          %%%%%   Sinc Convolution (interpolation) follows  %%%%%%%%
-//  % [I = subsampled index in ku domain]
-//  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
-// (NOTE: can move to a parent splitjoin): 
-// end
 complex->complex filter convolutionInterpolation(int n,
                                                  int nx, 
                                                  int m, 
@@ -478,19 +337,11 @@ complex->complex filter convolutionInterpolation(int n,
     float[n][m] kx;
     float kxmin = 1e25;
     float kxmax = 0;
-    // dkx=pi/X0;  % Nyquist sample spacing in kx domain
+
     float dkx = PI / X0;
     int   is  = 8;
-    // nx=2*ceil((.5*(kxmax-kxmin))/dkx); % Required number of
-    //                      % samples in kx domain;
-    //                      % This value will be increased slightly
-    //                      % to avoid negative array index
-    // nx=nx+2*is+4;        % increase number of samples to avoid negative
-    //                      % array index during interpolation in kx domain
-    // NOTE: <nx> is predefined, see comment in parent pipeline
-    // I=2*is+1;
     int   I   = 2 * is + 1;
-    // kxs=is*dkx; % plus/minus size of interpolation neighborhood in KX domain
+
     float kxs = (float) is * dkx;
     float[nx] KX;
 
@@ -503,11 +354,6 @@ complex->complex filter convolutionInterpolation(int n,
     complex[nx][m] F;
 
     init {
-        // ku=ones(n,1)*ku;                    % ku array
-        // kx=(4*k(:).^2)*ones(1,m)-ku.^2;     % [p197(1/6), p200(1/6)(3/6)]
-        // kx=sqrt(kx.*(kx > 0));              % kx array
-        // kxmin=min(min(kx));
-        // kxmax=max(max(kx));
         for (int i = 0; i < n; i++) {
             for(int j = 0; j < m; j++) {
                 float val = (4 * (k[i] * k[i])) - (ku[j] * ku[j]);
@@ -528,41 +374,22 @@ complex->complex filter convolutionInterpolation(int n,
             }
         }
 
-        // KX=kxmin+(-is-2:nx-is-3)*dkx;     % uniformly-spaced kx points where
-        // 
         for (int i = 0; i < nx; i++) {
             KX[i] = kxmin + ((0 - is) - 2 + i) * dkx;
         }
     }
     
     work push nx*m pop n*m {
-        // for i=1:n                     % for each k loop
-        //  icKX=round((kx(i,:)-KX(1,1))/dkx)+1; % closest grid point in KX domain
-        //  ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
-        //  ikx=ikx+nx*ones(I,1)*[0:m-1];
-        //  nKX=KX(ikx);
-        //  SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);             % interpolating sinc [p144(3/4),p204(1/7)]
-        //  HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));  % Hamming window [p204(4/7)]
-        //          %%%%%   Sinc Convolution (interpolation) follows  %%%%%%%%
-        //  % [I = subsampled index in ku domain]
-        //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
-        // (NOTE: can move to a parent splitjoin): 
-        // end
         for (int i = 0; i < n; i++) {
             for (int l = 0; l < I; l++) {
                 for (int j = 0; j < m; j++) {
-                    // icKX=round((kx(i,:)-KX(1,1))/dkx)+1;
                     icKX[j] = (int) round((kx[i][j] - KX[0]) / dkx) + 1;
                     
-                    // ikx=ones(I,1)*icKX+[-is:is]'*ones(1,m);
-                    // ikx=ikx+nx*ones(I,1)*[0:m-1];
                     ikx[l][j] = icKX[j] + (l - is);
                     ikx[l][j] = ikx[l][j] + (nx * j);
                     
-                    //  nKX=KX(ikx);
                     nKX[l][j] = KX[(ikx[l][j] - 1) % nx];
                     
-                    // SINC=sinc((nKX-ones(I,1)*kx(i,:))/dkx);
                     float x = (nKX[l][j] - kx[i][j]) / dkx;
                     if (x == 0) {
                         SINC[l][j] = 1;
@@ -571,12 +398,10 @@ complex->complex filter convolutionInterpolation(int n,
                         SINC[l][j] = sin(PI * x) / (PI * x);
                     }
                     
-                    // HAM=.54+.46*cos((pi/kxs)*(nKX-ones(I,1)*kx(i,:)));
                     HAM[l][j] = 0.54 + (0.46 * cos((PI / kxs) * (nKX[l][j] - kx[i][j])));
                 }
             }
    
-            //  F(ikx)=F(ikx)+(single(ones(I,1))*fsm(i,:)).*(SINC.*HAM);
             for (int j = 0; j < I; j++) {
                 for(int l = 0; l < m; l++) {
                     complex t = peek((i*m) + l);

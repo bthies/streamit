@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.100 2006-08-29 18:49:30 dimock Exp $
+# $Id: strc,v 1.101 2006-08-29 23:39:48 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -187,17 +187,17 @@ Usage: strc [options] file.str ...
   --more-help         Include extra options
 * --much-more-help    Include internal-only options
 
-  --cluster n         Compile for a networked cluster with n nodes
+  --cluster n         Compile for a cluster or multicore with n nodes
   --library           Run in the Java library instead of compiling
+  --simpleC           Use basic backend (not full-featured) to generate C output
   --raw n, -r n       Compile for Raw, with an n-by-n grid
-  --rstream, -R       Generate C file to be compiled by RStream compiler 
-  --simpleC           Uses basic backend (not full-featured) generates C output
+  --rstream, -R       Generate C-like file to be compiled by RStream compiler 
 * --standalone, -S    Use Raw backend to generate C file for uniprocessor
 * --streamit          Output of the compiler is a StreamIt program
 * --uni               Compile for uniprocessor with C library (deprecated)
     If none of the above, compile for uniprocessor. 
 
-  --memory, -Xmx      Specify Java heap limit (applies to library and compiler)
++ --memory, -Xmx      Specify Java heap limit (applies to library and compiler)
 * --noexecutable      Do not create an executable (for configurations that 
 *                     might otherwise)
   --output, -o file   Write a binary to given filename
@@ -210,7 +210,7 @@ Usage: strc [options] file.str ...
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
-+ --countops          Instrument to count arith ops (library or cluster)
++ --countops          Instrument to count arith ops (library, uniproc, cluster)
 + --debug             Output debugging information in the compiler
 + --fusion            Fuse entire program to a single filter
 + --fission n         Do vertical fission up to limit of argument
@@ -225,8 +225,7 @@ Usage: strc [options] file.str ...
 * --nodatacollapse    Do not collapse splitjoins of data-parallel filters
 * --nolinearcollapse
 *                     Do not combine filters with linear replacement
-+ --optfile class     Specify a user-defined Java class for performing IR 
-*                     transformations
+* --optfile class     Specify a user-defined Java class for transforming IR 
 + --print-partitioned-source
 +                     Print StreamIt source after partitioning
 * --redundantreplacement
@@ -240,8 +239,19 @@ Usage: strc [options] file.str ...
 * --sync              Turn on splitter/joiner coalescing (space/spacedynamic)
   --unroll n, -u n    Specify loop unrolling limit
 
+ Options specific to Uniprocessor and Cluster backends:
+  --cacheopt          Optimize for cache sizes
+  --l1d n             Level 1 d-cache size in KB for --cacheopt (default 8)
+  --l1i n             Level 1 i-cache size in KB for --cacheopt (default 8)
+  --l2  n             Level 2 cache size in KB for --cacheopt (default 256)
+  --linearpartition, -L
+                      Automatically select targets of linear analyses
+* --numult            Do not increase multiplicity of partitions
+* --peekratio n       Expand filters so that (pops * n) >= (peeks - pops)
++ --profile           Add a timer for each filter body (cluster)
+
  Options specific to Raw backend:
-  --partition, -p     Automatically partition stream graph
++ --partition, -p     Automatically partition stream graph
 +   --partition-dp       Dynamic programming partitioner (default)
 +   --partition-greedy   Greedy partitioner (fuse lightest streams first)
 +   --partition-greedier Greedier partitioner (fuse lightest filter pairs)
@@ -252,7 +262,7 @@ Usage: strc [options] file.str ...
 + --manuallayout      Do not run simulated annealing for layout; 
 +                     ask user for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
-  --ssoutputs         With --numbers on a dynamic-rate app, specify
+  --ssoutputs n       With --numbers on a dynamic-rate app, specify n
                       outputs per steady state.
 * --ratematch         Turn on rate matching
   --rawcol n, -c n    Specify number of columns; --raw has number of rows
@@ -289,30 +299,11 @@ Usage: strc [options] file.str ...
 *                     separated list of tiles)
 * --devassignfile f   For default backend, specify a device-to-port assignment
 *                     file (a new-line separated list of tiles)
-+
-+Options specific to Cluster backend:
-+ --cacheopt          Optimize for cache sizes
-+ --l1d n             Level 1 d-cache size in KB for --cacheopt (default 8)
-+ --l1i n             Level 1 i-cache size in KB for --cacheopt (default 8)
-+ --l2  n             Level 2 cache size in KB for --cacheopt (default 256)
-+ --linearpartition, -L
-+                     Automatically selecting targets of linear analyses
-* --numult            Do not increase multiplicity of partitions
-* --peekratio n       Expand filters so that (pops * n) >= (peeks - pops)
-+ --profile           Add a timer for each filter body (cluster)
 *
-*Options specific to deprecated uniprocessor backend:
-* --frequencyreplacement, -F
-*                     Convert FIR filters to frequency
-* --linearpartition, -L
-*                     Automatically selecting targets of linear analyses
-* --atlas             Use ATLAS for generated matrix multiplies
-* --poptopeek         Convert all pop expressions into peeks
-+
-+Options specific to the RStream backend:
-+ --absarray          Generate abstract arrays instead of C arrays (default)
-+ --doloops           Generate doloops instead of for loops where possible 
-+                     (default)
+*Options specific to the RStream backend:
+* --absarray          Generate abstract arrays instead of C arrays (default)
+* --doloops           Generate doloops instead of for loops where possible 
+*                     (default)
 +
 +Options specific to Java library backend:
 * --norun             Schedule but do not run the program
@@ -321,6 +312,14 @@ Usage: strc [options] file.str ...
 + --printreps         Print number of times filters execute in schedule
 + --printsched        Print the full program schedule
 * --jcc               Use the JCC library (experimental)
+*
+*Options specific to deprecated uniprocessor backend:
+* --frequencyreplacement, -F
+*                     Convert FIR filters to frequency
+* --linearpartition, -L
+*                     Automatically select targets of linear analyses
+* --atlas             Use ATLAS for generated matrix multiplies
+* --poptopeek         Convert all pop expressions into peeks
 EOT
     $text =~ s/^\*/ /mg if $more >= 2;
     $text =~ s/^\+/ /mg if $more >= 1;

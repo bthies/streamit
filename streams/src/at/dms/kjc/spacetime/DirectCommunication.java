@@ -79,7 +79,7 @@ public class DirectCommunication extends RawExecutionCode
             return false;
         }
         
-        if (!dynamicInput && at.dms.kjc.common.PeekPopPushInHelper.check(fi.filter))
+        if (!dynamicInput && at.dms.kjc.flatgraph2.PeekPopPushInHelper.check(fi.filter))
             return false;
         
         // for a filter with dynamic input we don't care if the pushes and

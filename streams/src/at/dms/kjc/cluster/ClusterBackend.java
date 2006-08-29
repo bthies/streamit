@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.106 2006-08-29 04:53:21 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.107 2006-08-29 05:42:35 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -219,9 +219,6 @@ public class ClusterBackend {
 
         // How many systems will be running this code.
         int hosts = KjcOptions.cluster;
-        // XXX: yecch but don't want to trace down references.
-        // will change KjcOptions.cluster based on partitioning.
-        KjcOptions.cluster = 0;
         
         // put markers on operator boundaries before we mung the names
         // too much.
@@ -268,118 +265,120 @@ public class ClusterBackend {
             // TODO: interaction of partitioners with StreamGraph: how to
             // partition n ways given m StaticStreamGraph's
         
-        System.err.println("Running Partitioning... target number of threads: "+hosts);
-
-        StreamItDot.printGraph(ssg.getTopLevelSIR(), 
-                Utils.makeDotFileName("before-partition", ssg.getTopLevelSIR()));
-
-        HashMap<SIROperator,Integer> ssgPartitionMap = new HashMap<SIROperator,Integer>();
-
-//        // sets filter steady counts, which are needed by cache partitioner
-//        filter_steady_counts = ssg.getFlatNodeExecutions(false);
-
-        if ( doCacheOptimization ) {
-            ssg.setTopLevelSIR(new CachePartitioner(ssg.getTopLevelSIR(), 
-                    WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), 0, code_cache, 
-                    data_cache).calcPartitions(ssgPartitionMap));
-//            filter_steady_counts = ssg.getFlatNodeExecutions(false); 
-            // Calculate SIRSchedule after increasing multiplicity (Does CachePartitioner do this?)
-            StreamItDot.printGraph(ssg.getTopLevelSIR(), 
-                    Utils.makeDotFileName("after-peekmult",ssg.getTopLevelSIR()));
-            // code relating to IncreaseFilterMult removed here.
-        }
-
-        if ( doCacheOptimization ) {
-            // this performs the Cache Aware Fusion (CAF) pass from
-            // LCTES'05.  This fuses filters for targeting a uniprocessor.
-            System.err.println("Running cache partition 1:");
-            ssg.setTopLevelSIR(CachePartitioner.doit(ssg.getTopLevelSIR(), code_cache, data_cache));
-        } else if (KjcOptions.partition_dp || 
-                   KjcOptions.partition_greedy || 
-                   KjcOptions.partition_greedier) {
             System.err.println("Running Partitioning... target number of threads: "+hosts);
-            // if these are turned on, then fuse filters as if
-            // targeting a multiprocessor
-            // TODO: cah we use curcount (param2) and targetCount (param3) to make partitioning
-            // interact with dynamic regions?
-            ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false));
-            // from now on, KjcOptions.cluster is used to count the number of filters in
-            // the graph.  Used where??
-            KjcOptions.cluster += Partitioner.countFilters(ssg.getTopLevelSIR());
-        }
 
-        //HashMap partitionMap = new HashMap();
-        ssgPartitionMap.clear();
+            StreamItDot.printGraph(ssg.getTopLevelSIR(), 
+                                   Utils.makeDotFileName("before-partition", ssg.getTopLevelSIR()));
 
-        if ( doCacheOptimization ) {
-            System.err.println("Running cache partition 2:");
-            ssg.setTopLevelSIR(new CachePartitioner(ssg.getTopLevelSIR(), 
-                    WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), 0, code_cache, 
-                    data_cache).calcPartitions(ssgPartitionMap));
+            HashMap<SIROperator,Integer> ssgPartitionMap = new HashMap<SIROperator,Integer>();
 
-            // Still needed? 
-            ssg.getTopLevelSIR().setParent(null); 
+            //        // sets filter steady counts, which are needed by cache partitioner
+            //        filter_steady_counts = ssg.getFlatNodeExecutions(false);
+
+            if ( doCacheOptimization ) {
+                ssg.setTopLevelSIR(new CachePartitioner(ssg.getTopLevelSIR(), 
+                                                        WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), 0, code_cache, 
+                                                        data_cache).calcPartitions(ssgPartitionMap));
+                //            filter_steady_counts = ssg.getFlatNodeExecutions(false); 
+                // Calculate SIRSchedule after increasing multiplicity (Does CachePartitioner do this?)
+                StreamItDot.printGraph(ssg.getTopLevelSIR(), 
+                                       Utils.makeDotFileName("after-peekmult",ssg.getTopLevelSIR()));
+                // code relating to IncreaseFilterMult removed here.
+            }
+
+            if ( doCacheOptimization ) {
+                // this performs the Cache Aware Fusion (CAF) pass from
+                // LCTES'05.  This fuses filters for targeting a uniprocessor.
+                System.err.println("Running cache partition 1:");
+                ssg.setTopLevelSIR(CachePartitioner.doit(ssg.getTopLevelSIR(), code_cache, data_cache));
+            } else if (KjcOptions.partition_dp || 
+                       KjcOptions.partition_greedy || 
+                       KjcOptions.partition_greedier) {
+                System.err.println("Running Partitioning... target number of threads: "+hosts);
+                // if these are turned on, then fuse filters as if
+                // targeting a multiprocessor
+                // TODO: cah we use curcount (param2) and targetCount (param3) to make partitioning
+                // interact with dynamic regions?
+                ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), 0, hosts, false, false, false));
+                // from now on, 'hosts' is used to count the number of
+                // filters in the graph.  (For if we fused further than
+                // needed?)
+                hosts = Partitioner.countFilters(ssg.getTopLevelSIR());
+            }
+
+            //HashMap partitionMap = new HashMap();
+            ssgPartitionMap.clear();
+
+            if ( doCacheOptimization ) {
+                System.err.println("Running cache partition 2:");
+                ssg.setTopLevelSIR(new CachePartitioner(ssg.getTopLevelSIR(), 
+                                                        WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), 0, code_cache, 
+                                                        data_cache).calcPartitions(ssgPartitionMap));
+
+                // Still needed? 
+                ssg.getTopLevelSIR().setParent(null); 
             
-            ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(),
-                    WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
-                    false).calcPartitions(ssgPartitionMap));   
-        } else {
-            // if mapping to 1 machine, then just map everyone to
-            // partition 0 as an optimization (the partitioner would
-            // do the same thing, but would take longer)
- //           if (hosts==1) {
- //               mapToPartitionZero(str, partitionMap);
- //           } else {
-                // Fix up a bug that might be caused by previous 
-                // pass of partitioner
-            ssg.getTopLevelSIR().setParent(null); 
-            ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(), 
-                    WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
-                            false).calcPartitions(ssgPartitionMap));   
-            ssg.getTopLevelSIR().setParent(null); 
-        }
+                ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(),
+                                                              WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
+                                                              false).calcPartitions(ssgPartitionMap));   
+            } else {
+                // if mapping to 1 machine, then just map everyone to
+                // partition 0 as an optimization (the partitioner would
+                // do the same thing, but would take longer)
+                if (hosts==1) {
+                    mapToPartitionZero(ssg.getTopLevelSIR(), ssgPartitionMap);
+                } else {
+                    // Fix up a bug that might be caused by previous 
+                    // pass of partitioner
+                    ssg.getTopLevelSIR().setParent(null); 
+                    ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(), 
+                                                                  WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
+                                                                  false).calcPartitions(ssgPartitionMap));   
+                    ssg.getTopLevelSIR().setParent(null); 
+                }
+            }
 
-	//VarDecl Raise to move array assignments down?
-        new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
+            //VarDecl Raise to move array assignments down?
+            new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
-        // Accumulate partition info for later code generation.
-        partitionMap.putAll(ssgPartitionMap);
-        ClusterFusion.setPartitionMap(partitionMap);
+            // Accumulate partition info for later code generation.
+            partitionMap.putAll(ssgPartitionMap);
+            ClusterFusion.setPartitionMap(partitionMap);
 
-        if (KjcOptions.fusion) {
-            FlatNode TopBeforeFusion = ssg.getTopLevel();
-            TopBeforeFusion.accept(new ClusterFusion(), new HashSet(), true);
-            // needed before next use of this ssg: ssg.cleanupForFused();
-            // streamGraph.cleanupForFused() will clean up all.
-        }
+            if (KjcOptions.fusion) {
+                FlatNode TopBeforeFusion = ssg.getTopLevel();
+                TopBeforeFusion.accept(new ClusterFusion(), new HashSet(), true);
+                // needed before next use of this ssg: ssg.cleanupForFused();
+                // streamGraph.cleanupForFused() will clean up all.
+            }
 
-        // OK: why set this here?
-        Unroller.setLimitNoTapeLoops(false, 0);
+            // OK: why set this here?
+            Unroller.setLimitNoTapeLoops(false, 0);
 
-        if (KjcOptions.sjtopipe) {
-            // may replace SIROperators!
-            // might be safer to update this to understand
-            // dynamic boundaries, and never update border
-            // SIROperators.
-            SJToPipe.doit(ssg.getTopLevelSIR());
-        }
+            if (KjcOptions.sjtopipe) {
+                // may replace SIROperators!
+                // might be safer to update this to understand
+                // dynamic boundaries, and never update border
+                // SIROperators.
+                SJToPipe.doit(ssg.getTopLevelSIR());
+            }
 
-        StreamItDot.printGraph(ssg.getTopLevelSIR(), Utils.makeDotFileName("after-partition", ssg.getTopLevelSIR()));
+            StreamItDot.printGraph(ssg.getTopLevelSIR(), Utils.makeDotFileName("after-partition", ssg.getTopLevelSIR()));
 
-        //VarDecl Raise to move array assignments up
-        new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
+            //VarDecl Raise to move array assignments up
+            new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
     
-        //VarDecl Raise to move peek index up so
-        //constant prop propagates the peek buffer index
-        new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
+            //VarDecl Raise to move peek index up so
+            //constant prop propagates the peek buffer index
+            new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
-        // Accumulate schedule info for later code generation.
-        // Note that any use of ssg.setTopLevelSIR rewrites nodes and
-        // thus invalidates mappings from nodes to execution counts!
-        // so put at end.
-        initExecutionCounts.putAll(ssg.getExecutionCounts(true));
-        steadyExecutionCounts.putAll(ssg.getExecutionCounts(false));
+            // Accumulate schedule info for later code generation.
+            // Note that any use of ssg.setTopLevelSIR rewrites nodes and
+            // thus invalidates mappings from nodes to execution counts!
+            // so put at end.
+            initExecutionCounts.putAll(ssg.getExecutionCounts(true));
+            steadyExecutionCounts.putAll(ssg.getExecutionCounts(false));
         
       
         }  // end of operations on individual Static Stream Graphs
@@ -518,26 +517,21 @@ public class ClusterBackend {
         System.exit(0);
     }
     
-
-    static private void klugeDynamicRates(SIRStream str) {
-        
+    private static void mapToPartitionZero(SIRStream str, final HashMap<SIROperator,Integer> partitionMap) {
+        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+                public void preVisitStream(SIRStream self,
+                                           SIRIterator iter) {
+                    partitionMap.put(self, new Integer(0));
+                    if (self instanceof SIRSplitJoin) {
+                        partitionMap.put(((SIRSplitJoin)self).getSplitter(), new Integer(0));
+                        partitionMap.put(((SIRSplitJoin)self).getJoiner(), new Integer(0));
+                    } else if (self instanceof SIRFeedbackLoop) {
+                        partitionMap.put(((SIRFeedbackLoop)self).getSplitter(), new Integer(0));
+                        partitionMap.put(((SIRFeedbackLoop)self).getJoiner(), new Integer(0));
+                    }
+                }
+            });
     }
-
-//    private static void mapToPartitionZero(SIRStream str, final HashMap<SIROperator,Integer> partitionMap) {
-//        IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-//                public void preVisitStream(SIRStream self,
-//                                           SIRIterator iter) {
-//                    partitionMap.put(self, new Integer(0));
-//                    if (self instanceof SIRSplitJoin) {
-//                        partitionMap.put(((SIRSplitJoin)self).getSplitter(), new Integer(0));
-//                        partitionMap.put(((SIRSplitJoin)self).getJoiner(), new Integer(0));
-//                    } else if (self instanceof SIRFeedbackLoop) {
-//                        partitionMap.put(((SIRFeedbackLoop)self).getSplitter(), new Integer(0));
-//                        partitionMap.put(((SIRFeedbackLoop)self).getJoiner(), new Integer(0));
-//                    }
-//                }
-//            });
-//    }
 
 //    /**
 //     * Just some debugging output.

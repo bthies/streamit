@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.108 2006-08-29 20:31:15 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.109 2006-08-29 21:41:28 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -237,8 +237,13 @@ public class ClusterBackend {
             streamGraph.dumpStaticStreamGraph();
         }
 
-        if (doCacheOptimization && numSsgs > 1) {
-            System.err.println("Warning: Cache optimizations do not currently work correctly with dynamic rates.");
+        if (doCacheOptimization) {
+            if (numSsgs > 1) {
+                System.err.println("Warning: Cache optimizations do not currently work correctly with dynamic rates.");
+            }
+            if (hosts > 1) {
+                System.err.println("Warning: Cache optimizations not designed for executing on multiple cluster nodes.");
+            }
         }
 
         // Cumulative partition information over all SSGs

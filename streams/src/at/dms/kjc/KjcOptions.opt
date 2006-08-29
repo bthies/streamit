@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.88 2006-08-24 15:01:38 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.89 2006-08-29 16:40:19 dimock Exp $
  */
 
 prefix Kjc
@@ -260,7 +260,6 @@ longname		"nolinearcollapse"
 	help		"If linear analysis is on, do NOT collapse adjacent linear nodes into one.  Just replace individual filters."
 
 longname		"linearreplacement"
-	shortcut	"l"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformations based on linear analysis."

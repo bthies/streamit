@@ -1,0 +1,30 @@
+#! /bin/bash
+
+#expects arg of options to compiler!
+
+oldspace=""
+while getopts ":o:s" opt; do
+    case $opt in
+	 o) options=$OPTARG;;
+	 s) oldspace="-space";;
+	\?) echo "Usage: RunFromHere -o \"options\" <-s>"
+	    exit 1
+    esac
+done
+shift $(($OPTIND -1))
+
+dir_name=raw4${options// /}
+echo ${dir_name}
+
+if [ -d $dir_name ]; then
+    echo "Directory $dir_name already exists..."
+    exit 1
+fi
+
+mkdir ${dir_name}
+cd ${dir_name}
+cp -R ${STREAMIT_HOME}/apps/benchmarks/asplos06${oldspace} .
+find . -name "*.str" -exec echo `pwd`/'{}' \; > files
+${STREAMIT_HOME}/apps/benchmarks/asplos06/scripts/CreateExecutionScripts.perl files "$options"
+find . -name "script" -exec qsub -l nodes=1:dual2.2GHz {} \;
+#find . -name "script" -exec qsub {} \;

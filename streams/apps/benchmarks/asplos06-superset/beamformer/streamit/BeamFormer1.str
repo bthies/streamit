@@ -1,0 +1,405 @@
+void->void pipeline BeamFormer1 {
+    int numChannels           = 12; 
+    int numSamples            = 256; 
+    int numBeams              = 4; 
+    int numCoarseFilterTaps   = 64; 
+    int numFineFilterTaps     = 64; 
+     
+     
+    int coarseDecimationRatio = 1;
+    int fineDecimationRatio   = 2;
+    int numSegments           = 1;
+    int numPostDec1           = numSamples/coarseDecimationRatio;
+    int numPostDec2           = numPostDec1/fineDecimationRatio;
+    int mfSize                = numSegments*numPostDec2;
+    int pulseSize             = numPostDec2/2;
+    int predecPulseSize       = pulseSize*coarseDecimationRatio*fineDecimationRatio;
+    int targetBeam            = numBeams/4;
+    int targetSample          = numSamples/4;
+     
+     
+    int targetSamplePostDec   = targetSample/coarseDecimationRatio/fineDecimationRatio;
+    float dOverLambda         = 0.5;
+    float cfarThreshold       = 0.95 * dOverLambda*numChannels* (0.5*pulseSize);
+
+    add splitjoin {
+	split roundrobin(0);
+	for (int i=0; i<numChannels; i++) {
+	    add pipeline {
+		add InputGenerate(i, numSamples, targetBeam, targetSample, cfarThreshold);
+
+
+		add BeamFirFilter(numCoarseFilterTaps, numSamples, coarseDecimationRatio);
+
+
+
+
+		add BeamFirFilter(numFineFilterTaps, numPostDec1, fineDecimationRatio);
+
+	    }
+	}
+	join roundrobin(2);
+    }
+
+    add splitjoin {
+	split duplicate;
+	for (int i=0; i<numBeams; i++) {
+	    add pipeline {
+		add BeamForm(i, numChannels);
+		 
+
+
+		add BeamFirFilter(mfSize, numPostDec2, 1);
+
+		add Magnitude();
+		 
+		 
+		 
+		add Detector(i, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
+	    }
+	}
+
+
+	    join roundrobin(1);
+
+    }
+    /*
+    add float->float filter 
+	{
+	    work push 1 pop 1 
+		{
+		    float x = pop();
+		    push(x);
+		    println(x);
+		}
+	}
+    */
+
+    add FileWriter<float>("BeamFormer1.out");
+
+}
+
+void->float filter InputGenerate (int myChannel, int numberOfSamples, int tarBeam, int targetSample, float thresh) {
+    int curSample;
+    boolean holdsTarget;
+
+    init {
+	curSample = 0;
+	holdsTarget = (tarBeam == myChannel);
+    }
+
+    work push 2 {
+	if( holdsTarget && (curSample == targetSample) ) {
+
+	     
+	    push(sqrt(curSample*myChannel));
+	    push(sqrt(curSample*myChannel)+1);
+
+
+	} else {
+
+	     
+	    push(-sqrt(curSample*myChannel));
+	    push(-(sqrt(curSample*myChannel)+1));
+
+
+	}
+
+	 
+	curSample++;
+
+	if (curSample >= numberOfSamples) {
+	    curSample = 0;
+	}
+    }
+}
+
+float->void filter FloatPrinter {
+    work pop 1 { println ( pop() ); }
+}
+
+float->float filter BeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
+    float[numTaps] real_weight;
+    float[numTaps] imag_weight;
+    int numTapsMinusOne;
+    float[numTaps] realBuffer;
+    float[numTaps] imagBuffer;
+     
+    int count;
+     
+    int pos;
+
+    init {
+	int i;
+	numTapsMinusOne = numTaps-1;
+	pos = 0;
+
+	 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	 
+	 
+	for (int j=0; j<numTaps; j++) {
+	    int idx = j + 1;
+	     
+	    real_weight[j] = sin(idx) / ((float)idx);
+	    imag_weight[j] = cos(idx) / ((float)idx);
+	}
+
+
+    }
+
+    work pop 2*decimationRatio push 2 {
+	float real_curr = 0;
+	float imag_curr = 0;
+	int i;
+	int modPos;
+
+	 
+	realBuffer[numTapsMinusOne - pos] = pop();
+	 
+
+
+
+
+	imagBuffer[numTapsMinusOne - pos] = pop();
+
+	 
+	modPos = numTapsMinusOne - pos;
+	for (i = 0; i < numTaps; i++) {
+	    real_curr += 
+		realBuffer[modPos] * real_weight[i] + imagBuffer[modPos] * imag_weight[i];
+	    imag_curr +=
+		imagBuffer[modPos] * real_weight[i] + realBuffer[modPos] * imag_weight[i];
+	     
+	    modPos = (modPos + 1) & numTapsMinusOne;
+	}
+	
+	 
+	pos = (pos + 1) & numTapsMinusOne;
+
+	 
+	push (real_curr);
+	push (imag_curr);
+
+	 
+	for (i = 2; i < 2*decimationRatio; i++) {
+	    pop();
+	}
+
+	 
+	count+=decimationRatio;
+
+	 
+	if (count==inputLength) {
+	    count = 0;
+	    pos = 0;
+	    for (i=0; i<numTaps; i++) {
+		realBuffer[i] = 0;
+		imagBuffer[i] = 0;
+	    }
+	}
+    }
+}
+
+float->float filter Decimator(int decimationFactor) {
+    init {}
+    work pop 2*decimationFactor push 2 {
+	push(pop());
+	push(pop());
+	for (int i=1; i<decimationFactor; i++) {
+	    pop();
+	    pop();
+	}
+    }
+}
+
+float->float filter CoarseBeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
+    float[numTaps] real_weight;
+    float[numTaps] imag_weight;
+
+    init {
+	int i;
+
+
+	 
+	 
+	for (int j=0; j<numTaps; j++) {
+	    int idx = j + 1;
+	     
+	    real_weight[j] = sin(idx) / ((float)idx);
+	    imag_weight[j] = cos(idx) / ((float)idx);
+	}
+
+
+    }
+
+    work pop 2*inputLength push 2*inputLength {
+	 
+	int min;
+	if (numTaps < inputLength) {
+	    min = numTaps;
+	} else {
+	    min = inputLength;
+	}
+	for (int i=1; i<=min; i++) {
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<i; j++) {
+		int realIndex = 2*(i-j-1);
+		int imagIndex = realIndex+1;
+		real_curr += real_weight[j] * peek(realIndex) + imag_weight[j] * peek(imagIndex);
+		imag_curr += real_weight[j] * peek(imagIndex) + imag_weight[j] * peek(realIndex);
+		 
+		 
+	    }
+	     
+	     
+	    push(real_curr);
+	    push(imag_curr);
+	}
+
+	 
+	for (int i=0; i<inputLength-numTaps; i++) {
+	     
+	    pop();
+	    pop();
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<numTaps; j++) {
+		int realIndex = 2*(numTaps-j-1);
+		int imagIndex = realIndex+1;
+		real_curr += real_weight[j] * peek(realIndex) + imag_weight[j] * peek(imagIndex);
+		imag_curr += real_weight[j] * peek(imagIndex) + imag_weight[j] * peek(realIndex);
+	    }
+	    push(real_curr);
+	    push(imag_curr);
+	}
+
+	 
+	 
+	for (int i=0; i<min; i++) {
+	    pop();
+	    pop();
+	}
+    }
+}
+
+float->float filter BeamForm (int myBeamId, int numChannels) {
+    float[numChannels] real_weight;
+    float[numChannels] imag_weight;
+
+    init {
+
+	 
+	 
+	for (int j=0; j<numChannels; j++) {
+	    int idx = j + 1;
+	     
+	    real_weight[j] = sin(idx) / ((float)(myBeamId+idx));
+	    imag_weight[j] = cos(idx) / ((float)(myBeamId+idx));
+	}
+
+
+    }
+
+    work pop 2*numChannels push 2 {
+	float real_curr = 0;
+	float imag_curr = 0;
+	for (int i=0; i<numChannels; i++) {
+	    float real_pop = pop();
+	    float imag_pop = pop();
+	     
+	    real_curr += 
+		real_weight[i] * real_pop - imag_weight[i] * imag_pop;
+	    imag_curr +=
+		real_weight[i] * imag_pop + imag_weight[i] * real_pop;
+	}
+	push (real_curr);
+	push (imag_curr);
+    }
+}
+
+float->float filter Magnitude {
+    init {}
+    work pop 2 push 1 {
+	float f1 = pop();
+	float f2 = pop();
+	push (mag(f1, f2));
+    }
+
+     
+
+
+    float mag(float real, float imag) {
+	return (float) sqrt(real*real + imag*imag);
+    }
+}
+
+
+
+float->float
+
+    filter Detector (int _myBeam, int numSamples, int targetBeam, int targetSample, float cfarThreshold) {
+    int curSample;
+    int myBeam;
+    boolean holdsTarget;
+    float thresh;
+    
+    init {
+	curSample = 0;
+	holdsTarget = (_myBeam == targetBeam);
+	myBeam = _myBeam+1;
+	thresh = 0.1;
+    }
+
+    work pop 1 push 1
+
+	{
+	    float inputVal = pop();
+	    float outputVal;
+	    if(holdsTarget && targetSample == curSample) {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
+		} else {
+		    outputVal = myBeam;
+		}
+	    } else {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
+		} else {
+		    outputVal = -myBeam;
+		}
+	    }
+
+	    outputVal = inputVal;
+
+
+
+	    //println (outputVal);
+	    push(outputVal);
+
+	    curSample++;
+	    
+	    if( curSample >= numSamples )
+		curSample = 0;
+	}
+}

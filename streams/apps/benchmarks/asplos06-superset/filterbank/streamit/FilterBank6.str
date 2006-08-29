@@ -1,0 +1,262 @@
+/**
+ * This is a generic filter bank that decomposes an incoming stream into
+ * M frequency bands. It then performs some processing on them (the exact
+ * processing is yet to be determined, and then reconstructs them.
+ **/
+void->void pipeline FilterBank6 {
+    //    add DataSource();
+    add FileReader<float>("../input/input");
+    add FilterBankPipeline(8);
+    add FileWriter<float>("FilterBank6.out");
+}
+
+
+/** 
+ * Total FilterBank structure -- the splitjoin and the final adder.
+ **/
+float->float pipeline FilterBankPipeline(int M) {
+  add FilterBankSplitJoin(M);
+  add Adder(M);
+}
+
+
+/**
+ * Filterbank splitjoin (everything before the final adder. )
+ **/
+float->float splitjoin FilterBankSplitJoin(int M) {
+  split duplicate;
+  for (int i=0; i<M; i++) {
+    add ProcessingPipeline(M,i);
+  }
+  join roundrobin;
+}
+
+/** 
+ * The main processing pipeline: analysis, downsample, process, upsample, synthesis.
+ * I use simple bandpass filters for the Hi(z) and Fi(z).
+ **/
+float->float pipeline ProcessingPipeline(int M, int i) {
+  /* analysis pipeline */
+  add pipeline {
+    /* take the subband from i*pi/M to (i+1)*pi/M */
+    add BandPassFilter(1, (i*pi/M), ((i+1)*pi/M), 128);
+    /* decimate by M */
+    add Compressor(M);
+  };
+
+  /* process the subband */
+  add ProcessFilter(i);
+  
+  /* synthesis pipeline */
+  add pipeline {
+    /* upsample by M */
+    add Expander(M);
+    /* synthesize (eg interpolate) */
+    add BandStopFilter(M, (i*pi/M), ((i+1)*pi/M), 128);
+  };
+}
+
+
+/* This is (obviously) the data source. */
+void->float filter DataSource() {
+  int n = 0;
+  float w1 = pi/10;
+  float w2 = pi/20;
+  float w3 = pi/30;
+  work push 1 {
+    push(cos(w1*n) + cos(w2*n) + cos(w3*n));
+    n++;
+  }
+}
+
+/* this is the filter that we are processing the sub bands with. */
+float->float filter ProcessFilter(int order) {
+  work pop 1 push 1 {
+    push(pop());
+  }
+}
+/**
+ * A simple adder which takes in N items and
+ * pushes out the sum of them.
+ **/
+float->float filter Adder(int N) {
+  work pop N push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += pop();
+    }
+    push(sum);
+  }
+}
+
+/* This is a bandpass filter with the rather simple implementation of
+ * a low pass filter cascaded with a high pass filter. The relevant parameters
+ * are: end of stopband=ws and end of passband=wp, such that 0<=ws<=wp<=pi
+ * gain of passband and size of window for both filters. Note that the high 
+ * pass and low pass filters currently use a rectangular window.
+ **/
+float->float pipeline BandPassFilter(float gain, float ws, float wp, int numSamples) {
+  add LowPassFilter(1, wp, numSamples);
+  add HighPassFilter(gain, ws, numSamples);
+}
+/* This is a bandstop filter with the rather simple implementation of
+ * a low pass filter cascaded with a high pass filter. The relevant parameters
+ * are: end of passband=wp and end of stopband=ws, such that 0<=wp<=ws<=pi
+ * gain of passband and size of window for both filters. Note that the high 
+ * pass and low pass filters currently use a rectangular window.
+ *
+ * We take the signal, run both the low and high pass filter separately and then
+ * add the results back together.
+ **/
+float->float pipeline BandStopFilter(float gain, float wp, float ws, int numSamples) {
+  add splitjoin {
+    split duplicate;
+    add LowPassFilter(gain, wp, numSamples);
+    add HighPassFilter(gain, ws, numSamples);
+    join roundrobin;
+  };
+  /* sum the two outputs together. */
+  add Adder(2); 
+}
+/**
+ * This filter compresses the signal at its input by a factor M.
+ * Eg it inputs M samples, and only outputs the first sample.
+ **/
+float->float filter Compressor(int M) {
+  work peek M pop M push 1 {
+    push(pop());
+    for (int i=0; i<(M-1); i++) {
+      pop();
+    }
+  }
+}
+/**
+ * This filter expands the input by a factor L. Eg in takes in one
+ * sample and outputs L samples. The first sample is the input
+ * and the rest of the samples are zeros. 
+ **/
+float->float filter Expander(int L) {
+  work peek 1 pop 1 push L {
+    push(pop());
+    for (int i=0; i<(L-1); i++) {
+      push(0);
+    }
+  }
+}
+    
+/**
+ * Simple sink that just prints the data that is fed to it.
+ **/
+float->void filter FloatPrinter {
+  work pop 1 {
+    println(pop());
+  }
+}
+/**
+ * Simple StreamIt filter that simply absorbs floating 
+ * point numbers without printing them. 
+ **/
+float->void filter FloatSink {
+  work pop 1 {
+    pop();
+  }
+}
+/** 
+ * Simple FIR high pass filter with gain=g, stopband ws(in radians) and N samples.
+ *
+ * Eg
+ *                 ^ H(e^jw)
+ *                 |
+ *     --------    |    -------
+ *     |      |    |    |     |
+ *     |      |    |    |     |
+ *    <-------------------------> w
+ *                   pi-wc pi pi+wc
+ *
+ *
+ * This implementation is a FIR filter is a rectangularly windowed sinc function 
+ * (eg sin(x)/x) multiplied by e^(j*pi*n)=(-1)^n, which is the optimal FIR high pass filter in 
+ * mean square error terms.
+ *
+ * Specifically, h[n] has N samples from n=0 to (N-1)
+ * such that h[n] = (-1)^(n-N/2) * sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * where cutoffFreq is pi-ws
+ * and the field h holds h[-n].
+ */
+float->float filter HighPassFilter(float g, float ws, int N) {
+  float[N] h;
+
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    int OFFSET = N/2;
+    float cutoffFreq = pi - ws;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      /* flip signs every other sample (done this way so that it gets array destroyed) */
+      int sign = ((i%2) == 0) ? 1 : -1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = sign * g * cutoffFreq / pi; 
+      else 
+	h[i] = sign * g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+
+  }
+
+  /* implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+/** 
+ * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
+ * Eg:
+ *                 ^ H(e^jw)
+ *                 |
+ *          ---------------
+ *          |      |      |
+ *          |      |      |
+ *    <-------------------------> w
+ *         -wc            wc
+ *
+ * This implementation is a FIR filter is a rectangularly windowed sinc function 
+ * (eg sin(x)/x), which is the optimal FIR low pass filter in 
+ * mean square error terms.
+ *
+ * Specifically, h[n] has N samples from n=0 to (N-1)
+ * such that h[n] = sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * and the field h holds h[-n].
+ */
+float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
+  float[N] h;
+
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    int OFFSET = N/2;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = g * cutoffFreq / pi; 
+      else 
+	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+  }
+
+  /* Implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}

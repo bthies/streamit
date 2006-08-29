@@ -1,0 +1,19 @@
+
+
+#first parameter is list of machine numbers to loop, i.e. "39 41"
+nums_to_loop=$1
+mach_num=${HOSTNAME#cagfarm-}
+
+echo $nums_to_loop
+echo $mach_num
+
+IFS=" "
+
+for num in $nums_to_loop
+do
+  if [ $num = $mach_num ]; then 
+    while [ 1 -eq 1 ]; do
+	echo "looping"
+    done 
+  fi
+done  

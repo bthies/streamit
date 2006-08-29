@@ -1,0 +1,11 @@
+#! /bin/bash
+
+results=$(grep Bytes `find . -name "setup.bc"`)
+IFS=";"
+for result in $results; 
+do
+    benchmark=${result%%.raw*}
+    benchmark=${benchmark##*/*/}
+    hexvalue=${result##* = }
+    printf "$benchmark;%d\n" $hexvalue
+done

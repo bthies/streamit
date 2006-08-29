@@ -1,0 +1,15 @@
+#! /usr/local/bin/perl
+
+use strict;
+use warnings;
+
+my $file = shift;
+
+local @ARGV = ($file);
+
+foreach (<>) {
+  s/steadymult(\d)\D/steadymult00$1/;
+  s/steadymult(\d)(\d)\D/steadymult0$1$2/;
+  s/slicethresh(\d)\D/slicethresh00$1/;
+  s/slicethresh(\d)(\d)\D/slicethresh0$1$2/;
+}

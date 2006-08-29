@@ -1,0 +1,12 @@
+#! /bin/bash
+
+stdoutFiles=$(find . -name "stdout" -exec echo `pwd`/'{}' \;)
+echo "benchmark;Comp_Comm Ratio"
+for file in $stdoutFiles; do
+    benchmark=${file%/*}
+    benchmark=${benchmark##/*/}
+    benchmark=${benchmark%%.*}
+    output=$(grep 'Comp/Comm Ratio of SIR graph' $file) 
+    ratio=${output##Com*graph: }
+    echo "$benchmark;$ratio"
+done

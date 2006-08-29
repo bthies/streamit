@@ -1,0 +1,20 @@
+The FilterBank code is micro04/filterbank/space. This differs from
+both filterbank/FilterBankNew.str and from
+filterbank/FilterBankLatency.str
+
+The versions differ in the value of the parameter to add FilterBankPipeline at
+line 9 (affecting the number of filters) and the value for the number of taps
+for BandPassFilter added at line 43 and the BandStopFilter added at line 56
+which affect the amout of work done but not the number of filters.
+
+                      pipeline@9 taps@43,56       filters
+FilterBank.str           3         100             35
+FilterBank1.str          2          64             25
+FilterBank2.str          4          64             45
+FilterBank3.str          8          64             85
+FilterBank4.str          2         128             25
+FilterBank5.str          4         128             45
+FilterBank6.str          8         128             85
+
+The output of FilterBankX.str is sent to FilterBankX.out, and the
+output directory contains library reference output for 100 iterations.

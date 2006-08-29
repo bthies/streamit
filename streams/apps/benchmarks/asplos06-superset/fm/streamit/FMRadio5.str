@@ -1,0 +1,164 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+float->float pipeline BandPassFilter (float rate, float low, float high, int taps) {
+  add BPFCore(rate, low, high, taps);
+  add Subtracter();
+}
+float->float splitjoin BPFCore (float rate, float low, float high, int taps) {
+  split duplicate;
+  add LowPassFilter(rate, low, taps, 0);
+  add LowPassFilter(rate, high, taps, 0);
+  join roundrobin;
+}
+float->float filter Subtracter {
+  work pop 2 push 1 {
+    push(peek(1) - peek(0));
+    pop(); pop();
+  }
+}
+
+float->float pipeline Equalizer(float rate, int bands, float[bands] cutoffs,
+                                float[bands] gains, int taps) {
+  add EqSplit(rate, bands, cutoffs, gains, taps);
+  add float->float filter {
+    work pop bands-1 push 1 {
+      float sum = 0;
+      for (int i = 0; i < bands-1; i++)
+        sum += pop();
+      push(sum);
+    }
+  };
+}
+float->float splitjoin EqSplit(float rate, int bands, float[bands] cutoffs,
+                               float[bands] gains, int taps) {
+  split duplicate;
+  for (int i = 1; i < bands; i++)
+    add pipeline {
+      add BandPassFilter(rate, cutoffs[i-1], cutoffs[i], taps);
+      add float->float filter {
+        work pop 1 push 1 { push(pop() * gains[i]); }
+      };
+    };
+  join roundrobin;
+}
+
+float->float filter LowPassFilter(float rate, float cutoff, int taps, int decimation) {
+  float[taps] coeff;
+  init {
+    int i;
+    float m = taps - 1;
+    float w = 2 * pi * cutoff / rate;
+    for (i = 0; i < taps; i++) {
+      if (i - m/2 == 0)
+        coeff[i] = w/pi;
+      else
+        coeff[i] = sin(w*(i-m/2)) / pi / (i-m/2) *
+          (0.54 - 0.46 * cos(2*pi*i/m));
+    }
+  }
+  work pop 1+decimation push 1 peek taps {
+    float sum = 0;
+    for (int i = 0; i < taps; i++)
+      sum += peek(i) * coeff[i];
+    push(sum);
+    for (int i=0; i<decimation; i++)
+	pop();
+    pop();
+  }
+}
+
+
+float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
+  float mGain;
+
+  init {
+    mGain = max*(sampRate/(bandwidth*pi));
+  }
+
+  work push 1 pop 1 peek 2 {
+    float temp = 0;
+    //may have to switch to complex?
+    temp = (float)(peek(0) * peek(1));
+    //if using complex, use atan2
+    temp = (float)(mGain * atan(temp));
+
+    pop();
+    push(temp);
+  }
+}
+
+
+void->float filter FloatOneSource {
+  float x;
+
+  init {
+    x = 0;
+  }
+
+  work push 1 pop 0 {
+    push(x++);
+  }
+}
+
+
+float->void filter FloatPrinter {
+  work push 0 pop 1 {
+    println(pop());
+  }
+}
+
+float->float pipeline FMRadioCore {
+    float samplingRate = 250000000; // 250 MHz sampling rate is sensible
+    float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
+    int numberOfTaps = 128;
+    float maxAmplitude = 27000;
+    float bandwidth = 10000;
+    
+    // determine where equalizer cuts.  Note that <eqBands> is the
+    // number of CUTS; there are <eqBands>-1 bands, with parameters
+    // held in slots 1..<eqBands> of associated arrays.
+    int eqBands = 7;
+    float[eqBands] eqCutoff;
+    float[eqBands] eqGain;
+    float low = 55;
+    float high = 1760;
+
+    for (int i=0; i<eqBands; i++) {
+	// have exponentially spaced cutoffs
+	eqCutoff[i] = (float)exp(i*(log(high)-log(low))/(eqBands-1) + log(low));
+    }
+
+    // first gain doesn't really correspond to a band
+    eqGain[0] = 0;
+    for (int i=1; i<eqBands; i++) {
+	// the gain grows linearly towards the center bands
+	float val = (((float)(i-1))-(((float)(eqBands-2))/2.0)) / 5.0;
+	eqGain[i] = val > 0 ? 2.0-val : 2.0+val;
+    }
+    
+    //decimate 4 samples after outputting 1
+    add LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 4);
+    add FMDemodulator(samplingRate, maxAmplitude, bandwidth);
+    add Equalizer(samplingRate, eqBands, eqCutoff, eqGain, numberOfTaps);
+}
+
+
+void->void pipeline FMRadio5 {
+
+    //  add FloatOneSource();
+    add FileReader<float>("../input/input");
+    add FMRadioCore();
+    add FileWriter<float>("FMRadio5.out");
+}

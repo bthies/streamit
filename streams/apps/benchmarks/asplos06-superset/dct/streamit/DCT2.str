@@ -1,0 +1,649 @@
+
+/*
+ * Copyright 2005 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/**
+ * @description
+ * This file contains functions that implement Discrete Cosine Transforms and
+ * their inverses.  When reference is made to the IEEE DCT specification, it
+ * is refering to the IEEE DCT specification used by both MPEG and JPEG.
+ * A definition of what makes an 8x8 DCT conform to the IEEE specification, as well
+ * as a pseudocode implementation, can be found in Appendix A of the MPEG-2 specification
+ * (ISO/IEC 13818-2) on P. 125. 
+ *
+ * @author <a href="mailto:madrake@gmail.com">Matthew Drake</a>
+ * @author <a href="mailto:rodric@gmail.com">Rodric Rabbah</a>
+ * @file DCT.str
+ * @version 1.0
+ */
+
+void->void pipeline DCT2
+{
+    add FileReader<int>("../input/idct-input-small.bin");
+    add iDCT8x8_ieee(16);
+    add FileWriter<int>("idct-output2.bin");
+}
+
+
+/**
+ * Transforms an 8x8 signal from the frequency domain to the signal domain
+ * using an inverse Discrete Cosine Transform in accordance with
+ * the IEEE specification for a 2-dimensional 8x8 iDCT.
+ * @input 64 values representing an 8x8 array of values in the 
+ *        frequency domain, ordered
+ *        by row and then column. Vertical frequency increases 
+ *        along each row and horizontal frequency along each column.
+ * @output 64 values representing an 8x8 array of values in the
+ *        signal domain, ordered by row and then column.
+ * @param mode indicates algorithm to use;
+ *        mode == 0: reference, coarse implementation
+ *        mode == 1: reference, fine (parallel) implementation
+ *        mode == 2: fast, coarse implementation
+ *        mode == 3: fast, fine (parallel) implementation
+ */
+int->int pipeline iDCT8x8_ieee(int x) {
+    add iDCT_2D_reference_fine(x);
+}
+
+/**
+ * Transforms an 8x8 signal from the signal domain to the frequency domain
+ * using a Discrete Cosine Transform in accordance with the IEEE
+ * specification for a 2-dimensional 8x8 DCT.
+ * @input 64 values representing an 8x8 array of values in the signal
+ *        domain, ordered by row and then column.
+ * @output 64 values representing an 8x8 array of values in the 
+ *         frequency domain, ordered by row and then column. Vertical frequency
+ *         increases along each row and horizontal frequency along each column.
+ * @param mode indicates algorithm to use;
+ *        mode == 0: reference, coarse implementation,
+ *        mode == 1: reference, fine (parallel) implementation
+ */
+int->int pipeline DCT8x8_ieee(int mode) {
+    // modes:
+    // 0: reference, coarse
+    // 1: reference, fine (parallel)
+    if (mode == 0)
+        add DCT_2D_reference_coarse(8);
+    else
+        add DCT_2D_reference_fine(8);
+}
+
+/**
+ * Transforms a 2D signal from the frequency domain to the signal domain
+ * using an inverse Discrete Cosine Transform.
+ * @param size The number of elements in each dimension of the signal.
+ * @input size x size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size x size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int pipeline iDCT_2D_reference_fine(int size) {
+    add int->float filter {
+        work pop 1 push 1 {
+            push((float) pop());
+        }
+    }
+    add iDCT_1D_Y_reference_fine(size);
+    add iDCT_1D_X_reference_fine(size);
+    add float->int filter {
+        work pop 1 push 1 {
+            push((int) floor(pop() + 0.5));
+        }
+    }
+}
+
+/**
+ * Transforms a 2D signal from the frequency domain to the signal domain
+ * using a FAST inverse Discrete Cosine Transform.
+ * @input size x size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size x size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int pipeline iDCT8x8_2D_fast_coarse() {
+    add iDCT8x8_1D_row_fast(); 
+    add iDCT8x8_1D_col_fast();
+}
+
+/**
+ * Transforms a 2D signal from the frequency domain to the signal domain
+ * using a FAST inverse Discrete Cosine Transform.
+ * @input size x size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size x size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int pipeline iDCT8x8_2D_fast_fine() {
+    add iDCT8x8_1D_X_fast_fine(); 
+    add iDCT8x8_1D_Y_fast_fine();
+}
+
+/**
+ * Transforms a 2D signal from the signal domain to the frequency domain
+ * using a Discrete Cosine Transform. 
+ * @param size The number of elements in each dimension of the signal. 
+ * @input size x size values, representing an array of values in the signal
+ *        domain, ordered by row and then column.
+ * @output size x size values representing an array of values in the 
+ *         frequency domain, ordered by row and then column. Vertical frequency
+ *         increases along each row and horizontal frequency along each column.
+ */
+int->int pipeline DCT_2D_reference_fine(int size) {
+    add int->float filter {
+        work pop 1 push 1 {
+            int v = pop();
+            push((float) v);
+        }
+    }
+    add DCT_1D_X_reference_fine(size);
+    add DCT_1D_Y_reference_fine(size);
+    add float->int filter {
+        work pop 1 push 1 {
+            float v =  floor(pop() + 0.5);
+            push((int) v);
+        }
+    }
+}
+
+/**
+ * @internal
+ */
+float->float splitjoin iDCT_1D_X_reference_fine(int size) {
+    split roundrobin(size);
+    for (int i = 0; i < size; i++) {
+        add iDCT_1D_reference_fine(size); 
+    }
+    join roundrobin(size);
+}
+
+/**
+ * @internal
+ */
+float->float splitjoin iDCT_1D_Y_reference_fine(int size) {
+    split roundrobin(1);
+    for (int i = 0; i < size; i++) {
+        add iDCT_1D_reference_fine(size); 
+    }
+    join roundrobin(1);
+}
+
+/**
+ * @internal
+ */
+int->int splitjoin iDCT8x8_1D_X_fast_fine() {
+    split roundrobin(8);
+    for (int i = 0; i < 8; i++) {
+        add iDCT8x8_1D_row_fast(); 
+    }
+    join roundrobin(8);
+}
+
+/**
+ * @internal
+ */
+int->int splitjoin iDCT8x8_1D_Y_fast_fine() {
+    split roundrobin(1);
+    for (int i = 0; i < 8; i++) {
+        add iDCT8x8_1D_col_fast_fine(); 
+    }
+    join roundrobin(1);
+}
+
+/**
+ * @internal
+ */
+float->float splitjoin DCT_1D_X_reference_fine(int size) {
+    split roundrobin(size);
+    for (int i = 0; i < size; i++) {
+        add DCT_1D_reference_fine(size);
+    }
+    join roundrobin(size);
+}
+
+/**
+ * @internal
+ */
+float->float splitjoin DCT_1D_Y_reference_fine(int size) {
+    split roundrobin(1);
+    for (int i = 0; i < size; i++) {
+        add DCT_1D_reference_fine(size);
+    }
+    join roundrobin(1);
+}
+
+/**
+ * @internal
+ * Based on the implementation given in the C MPEG-2 reference implementation
+ */
+int->int filter iDCT_2D_reference_coarse(int size) {
+    float[size][size] coeff;
+    
+    init {
+        for (int freq = 0; freq < size; freq++) {
+            float scale = (freq == 0) ? sqrt(0.125) : 0.5;
+            for (int time = 0; time < size; time++)
+                coeff[freq][time] = scale * cos((pi/(float)size) * freq * (time + 0.5));
+        }
+    }
+    
+    work pop size*size push size*size {
+        float[size][size] block_x;
+        int i, j, k;
+
+        for (i = 0; i < size; i++)
+            for (j = 0; j < size; j++) {
+                block_x[i][j] = 0;
+                for (k = 0; k < size; k++) {
+                    block_x[i][j] += coeff[k][j] * peek(size*i + k /* that is buffer[i][k] */);
+                }
+            }
+
+        for (i = 0; i < size; i++) {
+            for (j = 0; j < size; j++) {
+                float block_y = 0.0;
+                for (k = 0; k < size; k++) {
+                    block_y += coeff[k][i] * block_x[k][j];
+                }
+                block_y = floor(block_y + 0.5);
+                push((int) block_y);
+            }
+        }
+
+        for (i = 0; i < size*size; i++) pop();
+    }
+}
+
+/**
+ * Transforms a 2D signal from the signal domain to the frequency domain
+ * using a Discrete Cosine Transform. 
+ * @param size The number of elements in each dimension of the signal. 
+ * @input size values, representing an array of values in the signal
+ *        domain, ordered by row and then column.
+ * @output size values representing an array of values in the 
+ *         frequency domain, ordered by row and then column. Vertical frequency
+ *         increases along each row and horizontal frequency along each column.
+ */
+int->int filter DCT_2D_reference_coarse(int size) {
+    float[size][size] coeff;
+    
+    init {
+        for (int i = 0; i < size; i++) {
+            float s = (i == 0) ? sqrt(0.125) : 0.5;
+            for (int j = 0; j < size; j++)
+                coeff[i][j] = s * cos((pi / size) * i * (j + 0.5));
+        }
+    }
+
+    work pop size*size push size*size {
+        float[size][size] block_x;
+        int i, j, k;
+
+
+        for (i = 0; i < size; i++)
+            for (j = 0; j < size; j++) {
+                block_x[i][j] = 0.0;
+                for (k = 0; k < size; k++) {
+                    block_x[i][j] += coeff[j][k] * peek(size*i + k);
+                }
+            }
+
+        for (i = 0; i < size; i++) {
+            for (j = 0; j < size; j++) {
+                float block_y = 0.0;
+                for (k = 0; k < size; k++) {
+                    block_y += coeff[i][k] * block_x[k][j];
+                }
+                block_y = floor(block_y + 0.5);
+                push((int) block_y);
+            }
+        }
+
+        for (i = 0; i < size*size; i++) pop();
+    }
+}
+
+/**
+ * Transforms a 1D signal from the frequency domain to the signal domain
+ * using an inverse Discrete Cosine Transform.
+ * @param size The number of elements in each dimension of the signal.
+ * @input size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+float->float filter iDCT_1D_reference_fine(int size) {
+    float[size][size] coeff;
+    
+    init {
+        for (int x = 0; x < size; x++) {
+            for (int u = 0; u < size; u++) {
+                float Cu = 1;
+                if (u == 0) Cu = 1/sqrt(2);
+                coeff[x][u] = 0.5 * Cu * cos(u * pi * (2.0 * x+1) / (2.0 * size));
+            }
+        }
+    }
+
+    work pop size push size {
+        for (int x = 0; x < size; x++) {
+            float tempsum = 0;
+            for (int u = 0; u < size; u++) {
+                tempsum += coeff[x][u] * peek(u);
+            }
+            push(tempsum);
+        }
+	//added by mgordon
+	for (int i = 0; i < size; i++)
+	    pop();
+    }
+}
+
+/**
+ * Transforms a 1D horizontal signal from the frequency domain to the signal
+ * domain using a FAST inverse Discrete Cosine Transform.
+ * @input size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int filter iDCT8x8_1D_row_fast() {
+    int size = 8;
+
+    int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
+    int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */
+    int W3 = 2408; /* 2048*sqrt(2)*cos(3*pi/16) */
+    int W5 = 1609; /* 2048*sqrt(2)*cos(5*pi/16) */
+    int W6 = 1108; /* 2048*sqrt(2)*cos(6*pi/16) */
+    int W7 = 565;  /* 2048*sqrt(2)*cos(7*pi/16) */
+    
+    work pop size push size {
+        int x0 = peek(0);
+        int x1 = peek(4) << 11;
+        int x2 = peek(6);
+        int x3 = peek(2);
+        int x4 = peek(1);
+        int x5 = peek(7);
+        int x6 = peek(5);
+        int x7 = peek(3);
+        int x8;
+
+        /* shortcut */
+        if ((x1 == 0) && (x2 == 0) && (x3 == 0) && 
+            (x4 == 0) && (x5 == 0) && (x6 == 0) && (x7 == 0)) {
+            x0 = x0 << 3;
+            for (int i = 0; i < size; i++) {
+                push(x0);
+            }
+        }
+        else {
+            /* for proper rounding in the fourth stage */
+            x0 = (x0 << 11) + 128; 
+
+            /* first stage */
+            x8 = W7 * (x4 + x5);
+            x4 = x8 + (W1 - W7) * x4;
+            x5 = x8 - (W1 + W7) * x5;
+            x8 = W3 * (x6 + x7);
+            x6 = x8 - (W3 - W5) * x6;
+            x7 = x8 - (W3 + W5) * x7;
+
+            /* second stage */
+            x8 = x0 + x1;
+            x0 = x0 - x1;
+            x1 = W6 * (x3 + x2);
+            x2 = x1 - (W2 + W6) * x2;
+            x3 = x1 + (W2 - W6) * x3;
+            x1 = x4 + x6;
+            x4 = x4 - x6;
+            x6 = x5 + x7;
+            x5 = x5 - x7;
+
+            /* third stage */
+            x7 = x8 + x3;
+            x8 = x8 - x3;
+            x3 = x0 + x2;
+            x0 = x0 - x2;
+            x2 = (181 * (x4 + x5) + 128) >> 8;
+            x4 = (181 * (x4 - x5) + 128) >> 8;
+
+            /* fourth stage */
+            push((x7 + x1) >> 8);
+            push((x3 + x2) >> 8);
+            push((x0 + x4) >> 8);
+            push((x8 + x6) >> 8);
+            push((x8 - x6) >> 8);
+            push((x0 - x4) >> 8);
+            push((x3 - x2) >> 8);
+            push((x7 - x1) >> 8);
+        }
+        for (int i = 0; i < size; i++) pop();
+    }
+}
+
+
+/**
+ * Transforms a 1D vertical signal from the frequency domain to the signal
+ * domain using a FAST inverse Discrete Cosine Transform.
+ * @input size*size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int filter iDCT8x8_1D_col_fast() {
+    int size = 8;
+    int[8*8] buffer;
+
+    int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
+    int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */
+    int W3 = 2408; /* 2048*sqrt(2)*cos(3*pi/16) */
+    int W5 = 1609; /* 2048*sqrt(2)*cos(5*pi/16) */
+    int W6 = 1108; /* 2048*sqrt(2)*cos(6*pi/16) */
+    int W7 = 565;  /* 2048*sqrt(2)*cos(7*pi/16) */
+    
+    work pop size*size push size*size {
+        for (int c = 0; c < size; c++) {
+            int x0 = peek(c + size * 0);
+            int x1 = peek(c + size * 4) << 8;
+            int x2 = peek(c + size * 6);
+            int x3 = peek(c + size * 2);
+            int x4 = peek(c + size * 1);
+            int x5 = peek(c + size * 7);
+            int x6 = peek(c + size * 5);
+            int x7 = peek(c + size * 3);
+            int x8;
+
+            /* shortcut */
+            if ((x1 == 0) && (x2 == 0) && (x3 == 0) && 
+                (x4 == 0) && (x5 == 0) && (x6 == 0) && (x7 == 0)) {
+                x0 = (x0 + 32) >> 6;
+                for (int i = 0; i < size; i++) {
+                    buffer[c + size * i] = x0;
+                }
+            }
+            else {
+                /* for proper rounding in the fourth stage */
+                x0 = (x0 << 8) + 8192; 
+                
+                /* first stage */
+                x8 = W7 * (x4 + x5) + 4;
+                x4 = (x8 + (W1 - W7) * x4) >> 3;
+                x5 = (x8 - (W1 + W7) * x5) >> 3;
+                x8 = W3 * (x6 + x7) + 4;
+                x6 = (x8 - (W3 - W5) * x6) >> 3;
+                x7 = (x8 - (W3 + W5) * x7) >> 3;
+                
+                /* second stage */
+                x8 = x0 + x1;
+                x0 = x0 - x1;
+                x1 = W6 * (x3 + x2) + 4;
+                x2 = (x1 - (W2 + W6) * x2) >> 3;
+                x3 = (x1 + (W2 - W6) * x3) >> 3;
+                x1 = x4 + x6;
+                x4 = x4 - x6;
+                x6 = x5 + x7;
+                x5 = x5 - x7;
+                
+                /* third stage */
+                x7 = x8 + x3;
+                x8 = x8 - x3;
+                x3 = x0 + x2;
+                x0 = x0 - x2;
+                x2 = (181 * (x4 + x5) + 128) >> 8;
+                x4 = (181 * (x4 - x5) + 128) >> 8;
+                
+                /* fourth stage */
+                buffer[c + size * 0] = ((x7 + x1) >> 14);
+                buffer[c + size * 1] = ((x3 + x2) >> 14);
+                buffer[c + size * 2] = ((x0 + x4) >> 14);
+                buffer[c + size * 3] = ((x8 + x6) >> 14);
+                buffer[c + size * 4] = ((x8 - x6) >> 14);
+                buffer[c + size * 5] = ((x0 - x4) >> 14);
+                buffer[c + size * 6] = ((x3 - x2) >> 14);
+                buffer[c + size * 7] = ((x7 - x1) >> 14);
+            }
+        }
+        for (int i = 0; i < size*size; i++) {
+            pop();
+            push(buffer[i]);
+        }
+    }
+}
+
+/**
+ * Transforms a 1D vertical signal from the frequency domain to the signal
+ * domain using a FAST inverse Discrete Cosine Transform.
+ * @param size The number of elements in each dimension of the signal.
+ * @input size values, representing an array of values in the frequency 
+ *        domain, ordered by row and then column. Vertical frequency increases
+ *        along each row and horizontal frequency along each column.
+ * @output size values representing an array of values in the signal
+ *         domain, ordered by row and then column.
+ */
+int->int filter iDCT8x8_1D_col_fast_fine() {
+    int size = 8;
+
+    int W1 = 2841; /* 2048*sqrt(2)*cos(1*pi/16) */
+    int W2 = 2676; /* 2048*sqrt(2)*cos(2*pi/16) */
+    int W3 = 2408; /* 2048*sqrt(2)*cos(3*pi/16) */
+    int W5 = 1609; /* 2048*sqrt(2)*cos(5*pi/16) */
+    int W6 = 1108; /* 2048*sqrt(2)*cos(6*pi/16) */
+    int W7 = 565;  /* 2048*sqrt(2)*cos(7*pi/16) */
+    
+    work pop size push size {
+        int x0 = peek(0);
+        int x1 = peek(4) << 8;
+        int x2 = peek(6);
+        int x3 = peek(2);
+        int x4 = peek(1);
+        int x5 = peek(7);
+        int x6 = peek(5);
+        int x7 = peek(3);
+        int x8;
+
+        /* shortcut */
+        if ((x1 == 0) && (x2 == 0) && (x3 == 0) && 
+            (x4 == 0) && (x5 == 0) && (x6 == 0) && (x7 == 0)) {
+            x0 = (x0 + 32) >> 6;
+            for (int i = 0; i < size; i++) {
+                push(x0);
+            }
+        }
+        else {
+            /* for proper rounding in the fourth stage */
+            x0 = (x0 << 8) + 8192; 
+
+            /* first stage */
+            x8 = W7 * (x4 + x5) + 4;
+            x4 = (x8 + (W1 - W7) * x4) >> 3;
+            x5 = (x8 - (W1 + W7) * x5) >> 3;
+            x8 = W3 * (x6 + x7) + 4;
+            x6 = (x8 - (W3 - W5) * x6) >> 3;
+            x7 = (x8 - (W3 + W5) * x7) >> 3;
+
+            /* second stage */
+            x8 = x0 + x1;
+            x0 = x0 - x1;
+            x1 = W6 * (x3 + x2) + 4;
+            x2 = (x1 - (W2 + W6) * x2) >> 3;
+            x3 = (x1 + (W2 - W6) * x3) >> 3;
+            x1 = x4 + x6;
+            x4 = x4 - x6;
+            x6 = x5 + x7;
+            x5 = x5 - x7;
+
+            /* third stage */
+            x7 = x8 + x3;
+            x8 = x8 - x3;
+            x3 = x0 + x2;
+            x0 = x0 - x2;
+            x2 = (181 * (x4 + x5) + 128) >> 8;
+            x4 = (181 * (x4 - x5) + 128) >> 8;
+
+            /* fourth stage */
+            push((x7 + x1) >> 14);
+            push((x3 + x2) >> 14);
+            push((x0 + x4) >> 14);
+            push((x8 + x6) >> 14);
+            push((x8 - x6) >> 14);
+            push((x0 - x4) >> 14);
+            push((x3 - x2) >> 14);
+            push((x7 - x1) >> 14);
+        }
+        for (int i = 0; i < size; i++) pop();
+    }
+}
+
+
+/**
+ * Transforms a 1D signal from the signal domain to the frequency domain
+ * using a Discrete Cosine Transform. 
+ * @param size The number of elements in each dimension of the signal. 
+ * @input size values, representing an array of values in the signal
+ *        domain, ordered by row and then column.
+ * @output size values representing an array of values in the 
+ *         frequency domain, ordered by row and then column. Vertical frequency
+ *         increases along each row and horizontal frequency along each column.
+ */
+float->float filter DCT_1D_reference_fine(int size) {
+    float[size][size] coeff;
+
+    init {
+        for (int u = 0; u < size; u++) {
+            float Cu = 1;
+            if (u == 0) Cu = 1/sqrt(2);
+
+            for (int x = 0; x < size; x++) {
+                coeff[u][x] = 0.5 * Cu * cos(u * pi * (2.0 * x+1) / (2.0 * size));
+            }
+        }
+    }
+    
+    work pop size push size {
+        for (int u = 0; u < size; u++) {
+            float tempsum = 0;
+            for (int x = 0; x < size; x++) {
+                tempsum += peek(x) * coeff[u][x];
+            }
+            push(tempsum);
+        }
+    }
+}

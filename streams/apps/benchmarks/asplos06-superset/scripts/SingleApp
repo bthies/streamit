@@ -1,0 +1,33 @@
+benchmark="Serpent_full"
+other_opts="--hwic"
+SMs="1 2 4 8 16"
+STs="0 33 66 101"
+
+dir_name=$benchmark
+echo ${dir_name}
+if [ -d $dir_name ]; then
+    echo "Directory $dir_name already exists..."
+    exit 1
+fi
+
+mkdir ${dir_name}
+cd ${dir_name}
+cp -R ${STREAMIT_HOME}/apps/benchmarks/asplos06 .
+
+rm -rf file
+
+find . -name "${benchmark}.str" -exec echo `pwd`/'{}' \; > file
+
+${STREAMIT_HOME}/apps/benchmarks/asplos06/scripts/CreateExecutionScripts.perl file "$other_opts"
+
+for SM in $SMs;
+do
+    for ST in $STs;
+    do
+	options="--spacetime --steadymult $SM --slicethresh $ST $other_opts"
+	echo $options
+	${STREAMIT_HOME}/apps/benchmarks/asplos06/scripts/CreateExecutionScripts.perl file "$options"
+    done
+done
+
+find . -name "script" -exec qsub {} \;

@@ -1,0 +1,13 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -k n
+#PBS -N LoopMe
+#PBS -q short
+#PBS -v STREAMIT_HOME
+##PBS -M $emailAddress
+##PBS -m a
+## mailed info is relatively useless, just mailing if aborted.
+#script to loop a machine
+
+#first parameter is list of machine numbers to loop, i.e. "39 41"
+/home/bits6/mgordon/streams/apps/benchmarks/asplos06/scripts/LoopMe "39"

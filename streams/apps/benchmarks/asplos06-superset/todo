@@ -1,0 +1,28 @@
+* create a list of all the places where one could keep adding to a slice
+	* rank them by amount of wasted work that would be added vs
+	off chip communication saved.
+	* how to calculate the wasted work?
+	* assume that we have slices that are as large as possible
+	* then start cutting at places with the highest saving in terms of wasted work
+	* when to stop?  
+
+
+* find the total size of the buffers!!!
+	Could remove the need to go off chip!
+
+* get some bandwidth vs ops numbers for different processors!
+
+* Try different steadymults with adaptive  
+ 
+* Try different slice threshs around 66...
+
+* Finish up calc params
+
+* FFT no complex 
+ 
+* try beamformer with multiple file writers
+
+* Applications:
+  * Can add anything else?  (without structs?)
+
+* We take advantage of outer loops

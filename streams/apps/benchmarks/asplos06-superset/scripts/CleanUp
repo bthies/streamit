@@ -1,0 +1,22 @@
+#! /bin/bash
+
+files=$(find . -name "*" -exec echo `pwd`/'{}' \;)
+
+for file in $files; do
+    if [ -f "$file" ]; then
+	#get just the files name
+	fileName=${file##/*/}
+	dir=${file%/*}
+	if [ $fileName != "results.out" ] && [ $fileName != "script" ] &&
+	    [ $fileName = ${fileName%.hostname} ]  &&
+	    [ $fileName != "stdout.tail" ] && [ $fileName != "stderr.tail" ]; then 
+	    #tail the stdout and stderr -1000
+	    if [ $fileName = stdout ] || [ $fileName = stderr ]; then
+		tail -n 1000 $file > "${file}.tail"
+	    fi 
+	    #remove the files
+	    rm -rf $file
+	fi
+    fi	
+done
+

@@ -1,3 +1,5 @@
+include $(STREAMIT_HOME)/misc/Makefile.vars
+
 # --------------------------------------------------------------------
 # Performance / Modes / Options Variables
 # --------------------------------------------------------------------
@@ -110,6 +112,10 @@ docs:	${STREAMITDOC}
 
 ${LIBDCT}:
 	pushd ${DCT_HOME} && make && popd
+
+MPEGdecoder_nomessage.str: MPEGdecoder_nomessage.str.pre ${PREPROCESS}
+	${PREPROCESS} $@.pre -o $@
+	perl -p -i -e 's/blocks_per_macroblock\[the_chroma_format\]/\/\*blocks_per_macroblock\[the_chroma_format\]\*\/6/' $@
 
 %.str: %.str.pre ${PREPROCESS}
 	${PREPROCESS} $@.pre -o $@

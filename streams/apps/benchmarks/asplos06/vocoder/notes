@@ -1,0 +1,20 @@
+VocoderTopLevel from benchmarks/vocoder/streamit.
+The number of filters depends on 
+DFT_LENGTH_NOM controls a splitjoin size in MagnitudeStuff, PhaseStuff
+DFT_LENGTH_NOM * GLOTTAL_EXPANSION / FREQUENCY_FACTOR controlls adding Duplicator in PhaseStuff
+
+
+                     DFT_LENGTH_NOM FREQUENCY_FACTOR GLOTTAL_EXPANSION filters
+
+VocoderTopLevel.str   28             0.6               1/1.2            116
+VocoderTopLevel2.str  22             0.6               1/1.2            101
+VocoderTopLevel4.str   8             0.6               1/1.2             66
+VocoderTopLevel5.str   4             0.6               1/1.2             56
+
+The following combinations have been removed because they caused the wrong pop rate in Padder.
+VocoderTopLevell.str  52             0.6               1/1.2            177
+VocoderTopLevel3.str  18             0.6               1/1.2             92
+VocoderTopLevel6.str   4             0.8               1/1.2             46
+
+VocoderTopLevelX.str produces VocoderTopLevelX.out
+outputs from compiling with library -i 100  are in ../output 

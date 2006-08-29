@@ -1,0 +1,790 @@
+void->void pipeline VocoderTopLevel() {
+
+    int DFT_LENGTH_NOM = 28;
+    int DFT_LENGTH = DFT_LENGTH_NOM/2 + 1;
+    /*
+    FREQUENCY_FACTOR_ARGS[0] = 1.0;
+    FREQUENCY_FACTOR_ARGS[1] = 1.0;
+    FREQUENCY_FACTOR_ARGS[2] = 1.0;
+    FREQUENCY_FACTOR_ARGS[3] = 1.8;
+    FREQUENCY_FACTOR_ARGS[4] = 0.6;
+    */
+    float FREQUENCY_FACTOR = 0.6;
+    /*
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.2;
+    GLOTTAL_EXPANSION_ARGS[0] = 1.0/1.2;
+    */
+    float GLOTTAL_EXPANSION = 1/1.2;
+    int NEW_LENGTH = (int)(DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
+    /*
+    DFT_LENGTH_REDUCED_ARGS[0] = 1;
+    DFT_LENGTH_REDUCED_ARGS[1] = 1;
+    DFT_LENGTH_REDUCED_ARGS[2] = 1;
+    DFT_LENGTH_REDUCED_ARGS[3] = 3;
+    DFT_LENGTH_REDUCED_ARGS[4] = 3;
+    */
+    int DFT_LENGTH_REDUCED = 3;
+    /*
+    NEW_LENGTH_REDUCED_ARGS[0] = 1;
+    NEW_LENGTH_REDUCED_ARGS[1] = 1;
+    NEW_LENGTH_REDUCED_ARGS[2] = 1;
+    NEW_LENGTH_REDUCED_ARGS[3] = 2;
+    NEW_LENGTH_REDUCED_ARGS[4] = 4;
+    */
+    int NEW_LENGTH_REDUCED = 4;
+    /*
+    SPEED_FACTOR_ARGS[0] = 1.0;
+    SPEED_FACTOR_ARGS[1] = 2.0;
+    SPEED_FACTOR_ARGS[2] = 0.5;
+    SPEED_FACTOR_ARGS[3] = 1.0;
+    SPEED_FACTOR_ARGS[4] = 1.0;
+    */
+    float SPEED_FACTOR = 1.0;
+    /*
+    n_LENGTH_ARGS[0] = 1;
+    n_LENGTH_ARGS[1] = 1;
+    n_LENGTH_ARGS[2] = 2;
+    n_LENGTH_ARGS[3] = 1;
+    n_LENGTH_ARGS[4] = 1;
+    */
+    int n_LENGTH = 1;
+    /*
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 2.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    m_LENGTH_ARGS[0] = 1.0; 
+    */
+    int m_LENGTH = 1;
+
+    add StepSource(100);
+    add IntToFloat();
+
+    add Delay(DFT_LENGTH_NOM);
+
+    add FilterBank(DFT_LENGTH_NOM);
+    add RectangularToPolar();
+
+    add float->float splitjoin {
+      split roundrobin();
+      add MagnitudeStuff(DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,m_LENGTH,n_LENGTH,DFT_LENGTH,NEW_LENGTH,SPEED_FACTOR);
+      add PhaseStuff(n_LENGTH,m_LENGTH,DFT_LENGTH_REDUCED,NEW_LENGTH_REDUCED,DFT_LENGTH,NEW_LENGTH,FREQUENCY_FACTOR,SPEED_FACTOR);
+      join roundrobin();
+
+    }
+
+    add PolarToRectangular();
+    add SumReals(NEW_LENGTH);
+
+    add InvDelay((DFT_LENGTH - 2) * m_LENGTH / n_LENGTH);
+
+    add FloatToShort();
+    //add ShortPrinter();
+    //add ShortVoid();
+    add FileWriter<int>("VocoderTopLevel.out");
+}
+
+float->float filter FIRSmoothingFilter(int DFTLen) {
+
+  int cosWinLength = 15;
+  float[cosWinLength] cosWin = {0.1951, 0.3827, 0.5556, 0.7071, 0.8315, 0.9239, 0.9808, 1.0000, 0.9808, 0.9239, 0.8315, 0.7071, 0.5556, 0.3827, 0.1951 };
+  int offset = (int)(cosWinLength / 2);
+
+  work push DFTLen pop DFTLen peek cosWinLength {
+
+    //note that h[k] = h[i + off]
+    for(int n=0; n < DFTLen; n++) {
+      float y = 0;
+      for(int k = 0; k < cosWinLength; k++) {
+	int i = k - offset; //so that when i = 0, k will be at the center
+	if (((n - i) >= 0) && ((n - i) < DFTLen))
+	  y += peek(n-i) * cosWin[k];
+      }
+      push(y);
+    }
+      
+    for(int i=0; i < DFTLen; i++) 
+      pop();
+  }
+}
+
+
+float->float filter HanningWindow(int DFTLen) {
+
+  work push 2*DFTLen pop 2*DFTLen {
+
+    float real = 0;
+    float imag = 0;
+    //convolution with the series {-1/4, 1/2, -1/4}
+    //first and last have to be dealt with specially
+    // Note that every index is doubled (real and imag) 
+
+    push((peek(0) - peek(2))/2);
+    push((peek(1) - peek(3))/2);
+
+    for(int i=1; i < DFTLen - 1; i++) {
+      int n = i * 2;
+      real = peek(n)/2;
+      real -= (peek(n-2)+peek(n+2))/4;
+      push(real);
+      imag = peek(n+1)/2;
+      imag -= (peek(n-1)+peek(n+3))/4;
+      push(imag);
+    }
+
+    int n = (DFTLen - 1) * 2;
+
+    push((peek(n) - peek(n-2))/2);
+    push((peek(n+1) - peek(n-1))/2);
+
+    for(int i=0; i < DFTLen; i++) {
+      pop(); pop();
+    }
+  }
+}
+
+
+float->float filter Deconvolve() {
+
+  work push 2 pop 2 {
+
+    float den = pop();
+    float num = pop();
+    push(den);
+    if (den == 0.0)
+      push(0.0);
+    else
+      push(num / den);
+  }
+}
+
+
+float->float filter DFTFilter(int DFTLen, float range) {
+
+//the rate by which to deteriorate, assuring stability
+  float deter; 
+  //since the previous complex value is multiplied by the deter each
+  //time, by the time the last time sample is windowed out it's
+  //effect will have been multiplied by deter DFTLen times, hence it
+  //needs to be multiplied by deter^DFTLen before being subtracted
+  float detern;
+  float prevR, prevI;
+  float nextR, nextI;
+  float wR, wI; //represents w^(-k)
+
+  init {
+    deter = 0.999999;
+    detern = 1.0;
+    wR = cos(range);
+    wI = -sin(range);
+    prevR = 0; prevI = 0;
+  }
+
+  work push 2 pop 1 peek DFTLen+1 {
+
+    float nextVal = peek(DFTLen);
+    float current = pop();
+
+    prevR = prevR * deter + (nextVal - (detern * current));
+    prevI = prevI * deter;
+    nextR = prevR * wR - prevI * wI;
+    nextI = prevR * wI + prevI * wR;
+    prevR = nextR; prevI = nextI;
+
+    push(prevR);
+    push(prevI);
+  }
+}
+
+
+float->float splitjoin FilterBank(int channels) {
+  float range;
+
+  split duplicate();
+  for(int k=0; k<= channels/2; k++) {
+      range = 2*pi*k/channels;
+      add DFTFilter(channels,range);
+  }
+  join roundrobin(2);
+
+}
+
+
+
+float->float filter DFTChannel(int DFTLen, float range) {
+
+//the rate by which to deteriorate, assuring stability
+  float deter; 
+  //since the previous complex value is multiplied by the deter each
+  //time, by the time the last time sample is windowed out it's
+  //effect will have been multiplied by deter DFTLen times, hence it
+  //needs to be multiplied by deter^DFTLen before being subtracted
+  float detern;
+  boolean first; 
+  float prevR, prevI;
+  float nextR, nextI;
+  float wR, wI; //represents w^(-k)
+
+  init {
+    first = true;
+    deter = 0.999999;
+    detern = 1.0;
+    wR = cos(range);
+    wI = -sin(range);
+    prevR = 0; prevI = 0;
+  }
+
+  work push 2 pop 1 peek DFTLen+1 {
+      
+    if(first) {
+      first = false;
+      //note: this w = w^k, not w^(-k)
+      float wkR, wkI;
+      wkR = cos(range); wkI = sin(range);
+      float wkiR, wkiI; //this represents w^(k*i)
+      float nwkiR, nwkiI;
+      wkiR = 1.0; wkiI = 0.0;
+
+      for (int i=0; i < DFTLen; i++) {
+	float nextVal = peek(i);
+      
+	prevR = (prevR + wkiR * nextVal) * deter;
+	prevI = (prevI + wkiI * nextVal) * deter;
+
+	nwkiR = wkiR * wkR - wkiI * wkI;
+	nwkiI = wkiR * wkI + wkiI * wkR;
+	wkiR = nwkiR;
+	wkiI = nwkiI;
+	detern *= deter;
+      }
+    }
+      
+    float nextVal = peek(DFTLen);
+    float current = pop();
+
+    prevR = prevR * deter + (nextVal - (detern * current));
+    prevI = prevI * deter;// + (nextVal - (detern * current));
+
+    nextR = prevR * wR - prevI * wI;
+    nextI = prevR * wI + prevI * wR;
+    prevR = nextR; prevI = nextI;
+      
+
+    push(prevR);
+    push(prevI);
+    //println("range: " + range + " real: " + prevR + " imag: " + prevI);
+  }
+}
+
+
+float->float splitjoin TransformBank(int channels, int window) {
+
+    float range;
+
+    split duplicate();
+    for(int k=0; k<channels; k++) {
+	range = pi*k/channels;
+	add DFTChannel(window,range);
+    }
+    join roundrobin(2);
+}
+
+
+float->float filter Multiplier() {
+
+    work push 1 pop 2 {
+	push(pop()*pop());
+    }
+}
+
+
+float->float filter ConstMultiplier(float mult) {
+
+    work push 1 pop 1 {
+	push(pop()*mult);
+    }
+}
+
+
+float->float filter Accumulator {
+
+    float val;
+
+    init {
+	val = 0.0;
+    }
+
+    work push 1 pop 1 {
+	val += pop();
+	push(val);
+    }
+}
+
+
+float->float filter Doubler {
+
+    work push 1 pop 1 {
+	push(peek(0)+peek(0));
+	pop();
+    }
+}
+
+
+float->float filter Adder(int length) {
+
+    work push 1 pop length {
+	float val = 0.0;
+	for(int i=0; i<length; i++)
+	    val += pop();
+	push(val);
+    }
+}
+
+
+float->float filter Subtractor {
+    work push 1 pop 2 {
+	push(peek(0) - peek(1));
+	pop();
+	pop();
+    }
+}
+
+
+float->float pipeline Summation(int length) {
+
+    if(length==1)
+	add Identity<float>;
+    else {
+	add float->float splitjoin {
+	    split roundrobin();
+	    add Summation((length+1)/2);
+	    add Summation(length/2);
+	    join roundrobin();
+	}
+	add Adder(2);
+    }
+}
+
+
+float->float filter SumReals2(int len) {
+
+    work push 1 pop 2*len {
+
+      float sum = 0;
+      int i = 0;
+      float first = pop(); pop();
+
+      for(i=1; i < len - 1; i++) {
+        if (i % 2 == 0)
+	  sum += pop();
+        else
+	  sum -= pop();
+        pop();
+      }
+      sum += sum; //double the internal ones
+      sum += first; 
+      if (i % 2 == 0)
+        sum += pop(); 
+      else
+        sum -= pop();
+      pop();
+      sum /= ((len - 1) * 2);
+      push(sum);
+    }
+}
+
+
+float->float pipeline SumRealsRealHandler(int DFTLen) {
+
+    add float->float splitjoin {
+	split roundrobin(1,DFTLen-2,1);
+	add Identity<float>;
+	add Doubler();
+	add Identity<float>;
+	join roundrobin(1,DFTLen-2,1);
+    }
+    if((DFTLen % 2) != 0)
+	add Padder(DFTLen,0,1);
+
+    add float->float splitjoin {
+	split roundrobin();
+	add Adder((DFTLen+1)/2);
+	add Adder((DFTLen+1)/2);
+	join roundrobin();
+    }
+
+    add Subtractor();
+    add ConstMultiplier(1.0/((DFTLen-1)*2));
+}
+
+float->float splitjoin SumReals(int DFTLen) {
+
+    split roundrobin();
+    add SumRealsRealHandler(DFTLen);
+    add FloatVoid();
+    join roundrobin(1,0);
+}
+
+
+float->void filter FloatVoid() {
+
+    work push 0 pop 1 {
+	pop();
+    }
+}
+
+
+float->float filter Padder(int length, int front, int back) {
+
+    work push length pop length+front+back {
+
+      for(int i=0;i < front; i++)
+        push(0.0);
+
+      for(int i=0; i < length; i++)
+        push(pop());
+
+      for(int i=0; i < back; i++)
+        push(0.0);
+  }
+}
+
+
+
+// Linear Interpolater just takes two neighbouring points and creates
+// <interp - 1> points linearly between the two 
+float->float filter LinearInterpolator(int interp) {
+
+    work push interp pop 1 peek 2 {
+
+      float base = pop();
+      float diff = peek(0) - base;
+      float interp_f = (float)interp;
+      float i_f;
+
+      push(base);
+      //already pushed 1, so just push another (interp - 1) floats
+      for(int i = 1; i < interp; i++) {
+        i_f = (float)i;
+        push(base + (i_f/interp_f) * diff);
+      }
+    }
+}
+
+
+// Linear Decimator just passes on one point and pops the next
+// decimFactor - 1 
+
+float->float filter Decimator(int decim) {
+
+    work push 1 pop decim {
+	push(pop());
+	//for(int goal=decim-1; goal>0; goal--)
+	//    pop();
+	for (int goal = 0; goal < decim - 1; goal++) 
+	    pop();
+    }
+}
+
+
+// Remapper is a combination interpolator/decimator.  It's goal is to
+// map one stream from size n (oldLen) to size m (newLen).
+// 
+// To do this, it calculates [c = gcd(m,n)], interpolates linearly by
+// m/c, and then decimates by n/c.
+//
+float->float pipeline Remapper(int oldLen, int newLen) {
+
+    if (newLen == oldLen) {
+	add Identity<float>;
+    } 
+    else {
+      if (newLen != 1)
+	add LinearInterpolator(newLen);
+      if (oldLen != 1)
+	add Decimator(oldLen);
+    }
+}
+
+
+float->float filter Duplicator(int oldLen, int newLen) {
+
+    work push newLen pop oldLen {
+
+      if (newLen <= oldLen) {
+        for(int i=0; i < newLen; i++)
+	  push(pop());
+        for(int i = newLen; i < oldLen; i++) {
+	  pop();
+        }
+      } 
+      else {
+        float[oldLen] orig;
+
+        for(int i=0; i < oldLen; i++)
+	  orig[i] = pop();
+        for(int i=0; i < newLen; i++)
+	  push(orig[i % oldLen]);
+      }
+    }
+}
+
+
+float->float pipeline MagnitudeStuff(int DFTLen_red, int newLen_red, int n_len, int m_len, int DFTLen, int newLen, float speed) {
+
+  if(DFTLen != newLen) {
+      add float->float splitjoin {
+	split duplicate();
+	add FIRSmoothingFilter(DFTLen);
+	add Identity<float>;
+	join roundrobin();
+      } 
+      add Deconvolve(); 
+      add float->float splitjoin {
+	split roundrobin();
+	add Duplicator(DFTLen_red, newLen_red);
+	add Remapper(DFTLen_red, newLen_red);
+	join roundrobin();
+      } 
+      add Multiplier();
+  }
+  if(speed != 1.0) {
+    add float->float splitjoin {
+       split roundrobin();
+       for(int i=0; i<DFTLen; i++)
+         add Remapper(n_len, m_len);
+	 join roundrobin();
+    } 
+  }
+  else 
+    add Identity<float>;
+    
+}
+
+
+float->float filter PhaseUnwrapper() {
+    float estimate, previous;
+
+    init {
+	estimate = 0.0;
+	previous = 0.0;
+    }
+
+    work push 1 pop 1 {
+      float unwrapped = pop();
+      float delta = unwrapped - previous;
+
+      while (delta > 2 * pi * (11.0 / 16.0)) {
+        unwrapped -= 2 * pi;
+        delta -= 2 * pi;
+        estimate -= 2 * pi;
+      }
+      while (delta < -2 * pi * (11.0 / 16.0)) {
+        unwrapped += 2 * pi;
+        delta += 2 * pi;
+        estimate += 2 * pi;
+      }
+      previous = unwrapped;
+      push(unwrapped);
+    }
+}
+
+
+float->float filter FirstDifference() {
+
+  float prev;
+
+  init {
+      prev = 0.0;
+  }
+
+  work push 1 pop 1 {
+    push(peek(0) - prev);
+    prev = pop();
+  }
+}
+
+
+float->float pipeline InnerPhaseStuff(int n_len, int m_len, float c, float speed) {
+
+    add PhaseUnwrapper();
+    add FirstDifference();
+
+    if(c != 1.0)
+	add ConstMultiplier(c);
+    if(speed != 1.0)
+	add Remapper(n_len, m_len);
+
+    add Accumulator();
+}
+
+
+float->float pipeline PhaseStuff(int n_len, int m_len, int DFTLen_red, int newLen_red, int DFTLen, int newLen, float c, float speed) {
+
+    if(speed != 1.0 || c != 1.0) {
+	add float->float splitjoin {
+	    split roundrobin();
+	    for(int i=0; i<DFTLen; i++)
+		add InnerPhaseStuff(n_len,m_len,c,speed);
+	    join roundrobin();
+	}
+	if(newLen != DFTLen)
+	    add Duplicator(DFTLen_red, newLen_red);
+	else 
+	    add Identity<float>;
+    }
+}
+
+
+float->float filter Delay(int N) {
+    float[N] delay;
+
+    init {
+	for(int i=0; i<N; i++)
+	    delay[i] = 0.0;
+    }
+
+    work push 1 pop 1 {
+	push(delay[0]);
+	for(int i=0; i<N-1; i++)
+	    delay[i] = delay[i+1];
+	delay[N-1] = pop();
+    }
+}
+
+
+float->float filter InvDelay(int N) {
+
+    work push 1 pop 1 peek N+1 {
+	push(peek(N));
+	pop();
+    }
+}
+
+
+// RecToPolar
+float->float filter RectangularToPolar {
+
+  work push 2 pop 2 {
+    float x, y;
+    float r, theta;
+
+    x = pop(); y = pop();
+
+    r = sqrt(x * x + y * y);
+    theta = atan2(y, x);
+   
+    push(r);
+    push(theta);
+  }
+}
+
+
+float->float filter PolarToRectangular {
+
+  work push 2 pop 2 {
+    float r, theta;
+    r = pop(); theta = pop();
+
+    push(r * cos(theta));
+    push(r * sin(theta));
+  }
+}
+
+
+int->float filter IntToFloat {
+
+    work push 1 pop 1 {
+        int z = pop();
+        float x = (float)z;
+	push(x);
+    }
+}
+
+
+int->int filter ShortPrinter() {
+
+    work push 1 pop 1 {
+
+	int i = pop();
+	println(i);
+	push(i);
+    }
+}
+
+
+int->void filter ShortVoid() {
+
+    work push 0 pop 1 {
+	pop();
+    }
+}
+
+
+float->int filter FloatToShort() {
+
+  work push 1 pop 1 {
+
+    int s;
+    float fs = pop() + 0.5;
+    fs = (fs > 32767.0 ? 32767.0 : (fs < -32767.0 ? -32767.0 : fs));
+    s = (int)fs;
+    push(s);
+  }
+}
+
+
+void->int filter StepSource(int length) {
+
+    int x, up;
+
+    init {
+	up = 1;
+	x = 0;
+    }
+
+    work push 1 pop 0 {
+
+      push(x);
+      if (x == length)  
+        up = 0; 
+      else if (x == 0)  
+        up = 1; 
+
+      if (up == 1) 
+        x += 1;
+      else 
+        x -= 1;
+    }
+}
+
+
+
+
+float->float filter print_pop() {
+
+  work push 1 pop 1 {
+
+    float x = pop(); 
+    println(x);
+    push(x);
+  }
+}
+
+
+int->int filter print_pop_int() {
+
+  work push 1 pop 1 {
+
+    int y = pop();
+print(111);
+    println(y);
+    push(y);
+  }
+}
+
+
+

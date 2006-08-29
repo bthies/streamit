@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.56 2006-08-29 19:48:11 mgordon Exp $
+# $Id: release.sh,v 1.57 2006-08-29 23:43:02 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -12,16 +12,16 @@ set -x
 # Interesting/configurable variables:
 
 # For a version release
-#VERSION=2.1
+VERSION=2.1
 #TAG=streamit-2-1
 
 # For a snapshot release
-VERSION=2.0.`date +%Y%m%d`
+#VERSION=2.0.`date +%Y%m%d`
 TAG=HEAD
 
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
-CVSROOT2=
+CVSROOT="-d /projects/raw/cvsroot"
 
 usage() {
   cat >&2 <<EOF
@@ -48,7 +48,7 @@ do
     --version|-v) VERSION="$1"; shift;;
     --tag|-r) TAG="$1"; shift;;
     --tmpdir) TMPDIR="$1"; shift;;
-    --cvsroot|-d) CVSROOT="$1"; export CVSROOT; CVSROOT2="-d $1" shift;;
+    -d) CVSROOT="$1" shift;;    #trick: CVS needs the "-d"
     --precious|-k) PRECIOUS=yes;;
     *) usage; exit 1;;
   esac
@@ -79,14 +79,23 @@ builddirs streams/docs cookbook implementation-notes release syntax
 builddirs streams/docs index.html
 mkdir $WORKING/streams/javadoc
 
-cvs $CVSROOT2 export -r $TAG -d $WORKING $DIRS
+cvs $CVSROOT export -r $TAG -d $WORKING $DIRS
+
+###############################################################################
+# autoconf, and any supporting changes to our files (generating .in files)
+#
+# since our perl is in a non-standard place, every new perl script needs
+# to be mentioned below, and in configure.in
+###############################################################################
 
 # Run autoconf to get a configure script.
 autoconf $WORKING/streams/configure.in > $WORKING/streams/configure
 chmod 0755 $WORKING/streams/configure
 
+###
 # Generate .in files.  
 # See also the tail of configure.in to process the generated .in files.
+###
 INFILES="strc Makefile library/c/Makefile misc/Makefile.vars misc/dat2bin.pl misc/scripts/preprocess.perl misc/scripts/streamitdoc misc/scripts/turnOffPrints.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl"
 for f in $INFILES; do
   if test -f "$WORKING/streams/$f"; then
@@ -95,7 +104,13 @@ for f in $INFILES; do
 done
 rm -fr $WORKING/streams/misc/make-dot-in.pl
 
+###############################################################################
+# remove files that we do not want to release
+###############################################################################
+
+###
 # Don't release CPLEX jar file or anything that depends on it
+###
 rm -rf $WORKING/streams/3rdparty/cplex/
 rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
@@ -118,46 +133,58 @@ rm -rf $WORKING/streams/misc/dat2bin.pl
 rm -rf $WORKING/streams/misc/check-javadoc-errors
 rm -rf $WORKING/streams/misc/c
 
+###
 # Some benchmarks we can't (or won't) export; trim those here.
-# Streamit code not currently working.
-rm -rf $WORKING/streams/apps/benchmarks/audiobeam
-rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
-rm -rf $WORKING/streams/apps/benchmarks/cfar
-rm -rf $WORKING/streams/apps/benchmarks/gsm/c
-rm -rf $WORKING/streams/apps/benchmarks/gsm
-rm -rf $WORKING/streams/apps/benchmarks/nokia
-rm -rf $WORKING/streams/apps/benchmarks/perftest4
-# still in debugging
-rm -rf $WORKING/streams/apps/benchmarks/sar
-# no streamit code being built currently:
-rm -rf $WORKING/streams/apps/benchmarks/serpent
-rm -rf $WORKING/streams/apps/benchmarks/viram
-#rm -rf $WORKING/streams/apps/benchmarks/vocoder
-rm -rf $WORKING/streams/apps/benchmarks/micro04
-#rm -rf $WORKING/streams/apps/benchmarks/pldi03
-#rm -rf $WORKING/streams/apps/benchmarks/mpeg2
-# do we want to trim down mpeg inputs, outputs?
-rm -rf $WORKING/streams/apps/benchmarks/traces
-#set up the asplos06 directory, just delete script
-rm -rf $WORKING/streams/apps/benchmarks/asplos06/scripts
-#delete the unused asplos06 benchmarks
-rm -rf $WORKING/streams/apps/benchmarks/asplos06-superset
-rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
-# JPEGtoBMP was not working at time of release
-#rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/JPEGtoBMP.str
-# this is only relevant for spacedynamic backend, so don't release
-rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
+###
 
+### benchmarks
+
+# remove the proprietary codes (???)
+# remove the code that would be examples of bad programming practice (tde)
+# remove some code that drives too many bugs.
+# remove contributed code or other code that we do not want to maintain.
+# remove benchmark collections for papers old enough that people are unlikely
+#  to try to reproduce results.
+rm -rf $WORKING/streams/apps/benchmarks/serpent/{c,streambit,docs}
+rm -rf $WORKING/streams/apps/benchmarks/sar/{c,matlab}
+rm -rf $WORKING/streams/apps/benchmarks/des/{c,streambit}
+rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
+
+# should asplos06 benchmarks be released separately?
+#rm -rf $WORKING/streams/apps/benchmarks/asplos06
+rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
+rm -rf $WORKING/streams/apps/benchmarks/cfar
 # remove the 500MB of input and output for DCT
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/input
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/output
-
+rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/streamit/iDCTcompare.str
 # complex FIR is fine but was a simple benchmarking exercise, 
-# seems redundant with "fir"
+#   seems redundant with "fir"
 rm -rf $WORKING/streams/apps/benchmarks/complex-fir
+rm -rf $WORKING/streams/apps/benchmarks/fhr
+# too many FFTs
+rm -fr $WORKING/streams/apps/benchmarks/fft/FFT6.*
+# actually, fir contains examples of how not to code, so it goes too
+rm -rf $WORKING/streams/apps/benchmarks/fir
 # FIR bank might be proprietary, and besides it has 5 MB
 # of coefficients and we don't compile it well yet
 rm -rf $WORKING/streams/apps/benchmarks/firbank
+rm -rf $WORKING/streams/apps/benchmarks/gsm/c
+# this is only relevant for spacedynamic backend, so don't release
+rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
+rm -rf $WORKING/streams/apps/benchmarks/micro04
+# do we want to trim down mpeg2 inputs, outputs?
+rm -rf $WORKING/streams/apps/benchmarks/nokia
+rm -rf $WORKING/streams/apps/benchmarks/perftest4
+rm -rf $WORKING/streams/apps/benchmarks/pldi03
+# remove purely data-parallel code as somethong we do not want emulated.
+rm -rf $WORKING/streams/apps/benchmarks/tde/streamit/tde.str
+rm -rf $WORKING/streams/apps/benchmarks/traces
+# these modifications of bitonic and fft for testing unreleased viram backend:
+rm -rf $WORKING/streams/apps/benchmarks/viram
+rm -rf $WORKING/streams/apps/benchmarks/vocoder
+
+### examples
 
 rm -rf $WORKING/streams/apps/examples/chol-para
 rm -rf $WORKING/streams/apps/examples/median
@@ -166,43 +193,90 @@ rm -rf $WORKING/streams/apps/examples/sample-trellis
 rm -rf $WORKING/streams/apps/examples/toy-trellis
 rm -rf $WORKING/streams/apps/examples/updown
 rm -rf $WORKING/streams/apps/examples/vectadd/VectAdd1.*
-# why the following?
-rm -rf $WORKING/streams/apps/tests/portals
-# remove tests that are StreamIt 1.0 only:
-rm -rf $WORKING/streams/apps/tests/simple-split
-rm -rf $WORKING/streams/apps/tests/script-ratios
-rm -rf $WORKING/streams/apps/tests/peek-pipe
-rm -rf $WORKING/streams/apps/tests/{hello-splits,hello-simple,hello-separate,hello-message}
-rm -rf $WORKING/streams/apps/tests/fuse-test
-rm -rf $WORKING/streams/apps/tests/fuse
-rm -rf $WORKING/streams/apps/tests/flybit
-rm -rf $WORKING/streams/apps/tests/fir-test
-rm -rf $WORKING/streams/apps/tests/field-init
+
+### tests
+
+# return to previous decision to not release tests directory
+rm -rf $WORKING/streams/apps/tests
+
+# remove tests that are obsolete, especially StreamIt 1.0 no longer supported
+# rm -rf $WORKING/streams/apps/tests/portals
+# # remove tests that are StreamIt 1.0 only:
+# rm -rf $WORKING/streams/apps/tests/simple-split
+# rm -rf $WORKING/streams/apps/tests/script-ratios
+# rm -rf $WORKING/streams/apps/tests/peek-pipe
+# rm -rf $WORKING/streams/apps/tests/{hello-splits,hello-simple,hello-separate,hello-message}
+# rm -rf $WORKING/streams/apps/tests/fuse-test
+# rm -rf $WORKING/streams/apps/tests/fuse
+# rm -rf $WORKING/streams/apps/tests/flybit
+# rm -rf $WORKING/streams/apps/tests/fir-test
+# rm -rf $WORKING/streams/apps/tests/field-init
+
+### sorts -- now released under examples directory
+
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
+
+### applications
+
 # don't release applications directory except GMTI
-rm -rf $WORKING/streams/apps/applications/802.11a
-rm -rf $WORKING/streams/apps/applications/crc
-rm -rf $WORKING/streams/apps/applications/DCT
-rm -rf $WORKING/streams/apps/applications/FAT
-rm -rf $WORKING/streams/apps/applications/FAT-new
-rm -rf $WORKING/streams/apps/applications/hdtv
-rm -rf $WORKING/streams/apps/applications/nokia
-rm -rf $WORKING/streams/apps/applications/nokia-fine
-rm -rf $WORKING/streams/apps/applications/nokia-new
-rm -rf $WORKING/streams/apps/applications/raytracer
-rm -rf $WORKING/streams/apps/applications/raytracer-new
-rm -rf $WORKING/streams/apps/applications/reed-solomon
-rm -rf $WORKING/streams/apps/applications/video
-# GMTI: remove internal-only README file, remove internal-only generator of 
-# intermediate results for use with GMTI_Fragment testing.
-rm -rf $WORKING/streams/apps/applications/GMTI/README
-rm -rf $WORKING/streams/apps/applications/GMTI/Tester_Intermediate_Results.str
+# -- don't release GMTI either yet...
+rm -rf $WORKING/streams/apps/applications
+## GMTI: remove internal-only README file, remove internal-only generator of 
+## intermediate results for use with GMTI_Fragment testing.
+#rm -rf $WORKING/streams/apps/applications/GMTI/README
+#rm -rf $WORKING/streams/apps/applications/GMTI/Tester_Intermediate_Results.str
+## remove all except GMTI:
+#rm -rf $WORKING/streams/apps/applications/802.11a
+#rm -rf $WORKING/streams/apps/applications/crc
+#rm -rf $WORKING/streams/apps/applications/DCT
+#rm -rf $WORKING/streams/apps/applications/FAT
+#rm -rf $WORKING/streams/apps/applications/FAT-new
+#rm -rf $WORKING/streams/apps/applications/hdtv
+#rm -rf $WORKING/streams/apps/applications/nokia
+#rm -rf $WORKING/streams/apps/applications/nokia-fine
+#rm -rf $WORKING/streams/apps/applications/nokia-new
+#rm -rf $WORKING/streams/apps/applications/raytracer
+#rm -rf $WORKING/streams/apps/applications/raytracer-new
+#rm -rf $WORKING/streams/apps/applications/reed-solomon
+#rm -rf $WORKING/streams/apps/applications/video
+
+### libraries
+
 # don't release some C++ software radio thing (?)
 rm -rf $WORKING/streams/apps/libraries/SoftRadio
 
+#
+# restructure 
+#
+
+### library_only gets jpeg, mpeg2 (except MPEGdecoder_nomessage)
+mkdir $WORKING/streams/apps/library_only
+mv $WORKING/streams/apps/benchmarks/jpeg $WORKING/streams/apps/library_only/
+mv $WORKING/streams/apps/benchmarks/mpeg2 $WORKING/streams/apps/library_only/
+
+mkdir -p $WORKING/streams/apps/benchmarks/mpeg2/streamit
+cp $WORKING/streams/apps/library_only/mpeg2/streamit/{Makefile,MPEGdecoder_nomessage.str.pre,MPEGglobal.str.pre,ColorSpace.str,Misc.str,BinaryFile.str.pre} $WORKING/streams/apps/benchmarks/mpeg2/streamit/
+
+### anything under examples other than cookbook becomes examples/misc
+mkdir -p $WORKING/streams/apps/examples/misc
+for d in $WORKING/streams/apps/examples/*; do
+  f=$(echo $d | sed -e 's/^.*\///')   # csh :t does not apply to vars in sh ??
+  if [ $f != "cookbook" ]; then
+    if [ $f != "misc" ]; then
+      mv $d $WORKING/streams/apps/examples/misc/$f
+    fi
+  fi
+done
+
+### now move sorts to examples/sorts
+mv $WORKING/streams/apps/sorts $WORKING/streams/apps/examples/
+
+###
 # Some parts of the compiler aren't useful to release; trim those here.
-#rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
+###
+
+rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org
@@ -213,7 +287,9 @@ rm -rf $WORKING/streams/src/at/dms/kjc/raw
 # remove dependencies on raw:
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/stats
 
-perl -pi -e's/at.dms.kjc.raw.RawWorkEstimator/at.dms.kjc.spacedynamic.RawWorkEstimator/'  $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/WorkInfo.java
+perl -pi -e's/at\.dms\.kjc\.raw\.RawWorkEstimator/at.dms.kjc.spacedynamic.RawWorkEstimator/'  $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/WorkInfo.java
+
+perl -ni -e'print unless /RawBackend/ || /SpaceTimeBackend/' $WORKING/streams/src/at/dms/kjc/spacedynamic/RawWorkEstimator.java
 
 perl -pi -e's/StatisticsGathering\.doit\(str\);/\/\*StatisticsGathering.doit(str);\*\//' $WORKING/streams/src/at/dms/kjc/cluster/ClusterBackend.java
 perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import at.dms.kjc.sir.stats.StatisticsGathering;\*\//' $WORKING/streams/src/at/dms/kjc/cluster/ClusterBackend.java
@@ -224,19 +300,12 @@ perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import a
 perl -pi -e's/StatisticsGathering\.doit\(ssg\.getTopLevelSIR\(\)\);/\/\*StatisticsGathering.doit(ssg.getTopLevelSIR());\*\//' $WORKING/streams/src/at/dms/kjc/spacedynamic/SpaceDynamicBackend.java
 perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import at.dms.kjc.sir.stats.StatisticsGathering;\*\//' $WORKING/streams/src/at/dms/kjc/spacedynamic/SpaceDynamicBackend.java
 
-## experimantal backend: jcc
+# experimental backend: jcc
 rm -rf $WORKING/streams/src/streamit/library/jcc
 perl -pi -e's/new StreamItToJcc\(\)\.convertAndRun\(this, nIters\);/\/\*new StreamItToJcc().convertAndRun(this, nIters);\*\/ assert false:"jcc library support removed";/' $WORKING/streams/src/streamit/library/Stream.java
 perl -pi -e's/import streamit\.library\.jcc\.StreamItToJcc;/\/\*import streamit.library.jcc.StreamItToJcc;\*\//' $WORKING/streams/src/streamit/library/Stream.java
 # not yet finished backends. neatly modularized, thank goodness.
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
-
-#Put out javadoc for released version
-#All source directories that are going to be removed must be removed before
-# this.
-$WORKING/streams/misc/build-javadoc $WORKING/streams/javadoc
-
-
 
 # A release does not need to build a release
 rm -rf $WORKING/streams/misc/release.sh
@@ -258,7 +327,19 @@ rm -f $WORKING/streams/docs/implementation-notes/portals.txt
 # Release 2.1 version of language
 mv $WORKING/streams/docs/syntax/streamit-lang-2.1.tex $WORKING/streams/docs/syntax/streamit-lang.tex 
 
-# Build interesting bits of the documentation; they go in both releases.
+###############################################################################
+# Put out javadoc for released version.
+# All source directories that are going to be removed must be removed before
+# this.
+##############################################################################
+
+$WORKING/streams/misc/build-javadoc $WORKING/streams/javadoc
+
+###############################################################################
+# Build interesting bits of the documentation; they go in both binary
+# and source  releases.
+###############################################################################
+
 for d in release cookbook syntax; do
   make -C $WORKING/streams/docs/$d
 done
@@ -276,11 +357,16 @@ $WORKING/streams/misc/build-bench-doc
 rm $WORKING/streams/apps/benchall.xml
 rm $WORKING/streams/misc/{build-bench-doc,build-bench-xml.py,benchall.xsl}
 
-# clean up misc, scripts
+###############################################################################
+# Make tarballs
+##############################################################################
 
+###
+# Make a stripped down tree for binary release in $BINDIR:
+# no src, no javadoc, no sources for docs
+# keep only the .in version of the files that configure will update.
+###
 
-# Make stable copies for all of the trees.  Clean the binary tree a little
-# in the process.
 cp -R $WORKING/streams $BINDIR
 rm -rf $BINDIR/javadoc
 rm -rf $BINDIR/src $BINDIR/README.source
@@ -294,12 +380,23 @@ for f in $INFILES; do
   rm -f "$BINDIR/$f"
 done
 
+###
 # Build the source tarball:
+# keep only the .in version of the files that configure will update.
+# all other files as set up in $WORKING.
+###
+
 cp -R $WORKING/streams $WORKING/streamit-src-$VERSION
 for f in $INFILES; do
   rm -f "$WORKING/streamit-src-$VERSION/$f"
 done
-tar cf $SRCTAR -C $WORKING streamit-src-$VERSION
+tar czf $SRCTAR -C $WORKING streamit-src-$VERSION
+
+###
+# Create a fresh src/3rdparty/antlr.jar for our build, then
+# use src/Makefile to build src/streamit.jar and copy it into $BINDIR
+# finally, make tarball for binary release from $BINDIR.
+###
 
 # Use the build magic to get an ANTLR jar file.
 $SRCDIR/misc/get-antlr $SRCDIR/3rdparty/antlr.jar
@@ -312,10 +409,10 @@ make -C $SRCDIR/src jar CAG_BUILD=0
 
 # Build binary jar file:
 cp $SRCDIR/src/streamit.jar $BINDIR
-tar cf $BINTAR -C $WORKING streamit-$VERSION
+tar czf $BINTAR -C $WORKING streamit-$VERSION
 
 # gzip the tarball and move it here.
-gzip $SRCTAR $BINTAR
+#gzip $SRCTAR $BINTAR
 mv $SRCTAR.gz $BINTAR.gz .
 
 # Clean up.

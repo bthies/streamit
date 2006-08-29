@@ -2,7 +2,7 @@
 ###############################################################################
 # build-javadoc: creates a Javadoc tree from the StreamIt sources
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-javadoc,v 1.9 2006-06-12 15:05:47 dimock Exp $
+# $Id: build-javadoc,v 1.10 2006-08-29 23:43:02 dimock Exp $
 #
 # Takes as implicit input the shell variable $STREAMIT_HOME, which 
 #  is the root of the StreamIt directory heirarchy.
@@ -23,7 +23,7 @@ else
   OUTDIR=$STREAMIT_HOME/javadoc
 fi
 
-echo "creating Javadoc documentation fot StreamIt in $OUTDIR"
+echo "creating Javadoc documentation for StreamIt in $OUTDIR"
 
 rm -rf $OUTDIR
 mkdir $OUTDIR

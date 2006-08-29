@@ -1,0 +1,88 @@
+% simplemargins.sty
+%
+%   by Jonathan Kamens (jik@GZA.COM)
+%   March 15, 1993
+%
+% This is something that non-hacker-type \LaTeX users have needed for
+% a long time.  It's just really stupid to have to explain how all of
+% the page dimensions work, and how to use \setlength and \addtolength
+% to change them, evey time someone who doesn't really care about it
+% wants to change their margins.  This file gives them the ability to
+% do that easily.
+%
+% \setleftmargin{dimen} sets the left margin to that width
+% \setrightmargin{dimen} sets the right margin to that width
+% \settopmargin{dimen} sets the top margin to that width
+% \setbottommargin{dimen} sets the bottommargin to that width
+% \setallmargins{dimen} sets all four margins to that width
+% 
+% \setpagewidth{dimen} sets the page width to that width
+% \setpageheight{dimen} sets the page height to that width
+% 
+% The page is assumed to be 8.5 x 11 when this file is initially
+% loaded.  If this is not the case, then use
+% 
+% 	\setlength{\smpagewidth}{dimen}
+%	\setlength{\smpageheight}{dimen}
+% 
+% after loading simplemargins to set the actual page width and height,
+% before using any of the other simplemargins command (*including*
+% \setpagewidth or \setpageheight, which depend on the previous values
+% for \smpagewidth and \smpageheight).
+
+\typeout{Simplemargins margin control commands <15 Mar 93>.}
+
+\newlength{\smpagewidth}
+\newlength{\smpageheight}
+
+\setlength{\smpagewidth}{8.5in}
+\setlength{\smpageheight}{11in}
+
+\newcommand{\setpagewidth}[1]{
+	\addtolength{\smpagewidth}{-#1}
+	\addtolength{\textwidth}{-\smpagewidth}
+	\setlength{\smpagewidth}{#1}
+}
+\newcommand{\setpageheight}[1]{
+	\addtolength{\smpageheight}{-#1}
+	\addtolength{\textheight}{-\smpageheight}
+	\setlength{\smpageheight}{#1}
+}
+\newcommand{\setleftmargin}[1]{
+	\addtolength{\textwidth}{\oddsidemargin}
+	\addtolength{\textwidth}{1in}
+	\addtolength{\textwidth}{-#1}
+	\setlength{\oddsidemargin}{-1in}
+	\addtolength{\oddsidemargin}{#1}
+	\setlength{\evensidemargin}{\oddsidemargin}
+}
+\newcommand{\setrightmargin}[1]{
+	\setlength{\textwidth}{\smpagewidth}
+	\addtolength{\textwidth}{-\oddsidemargin}
+	\addtolength{\textwidth}{-1in}
+	\addtolength{\textwidth}{-#1}
+}
+\newcommand{\settopmargin}[1]{
+	\addtolength{\textheight}{\topmargin}
+	\addtolength{\textheight}{1in}
+	\addtolength{\textheight}{\headheight}
+	\addtolength{\textheight}{\headsep}
+	\addtolength{\textheight}{-#1}
+	\setlength{\topmargin}{-1in}
+	\addtolength{\topmargin}{-\headheight}
+	\addtolength{\topmargin}{-\headsep}
+	\addtolength{\topmargin}{#1}
+}
+\newcommand{\setbottommargin}[1]{
+	\setlength{\textheight}{\smpageheight}
+	\addtolength{\textheight}{-\topmargin}
+	\addtolength{\textheight}{-1in}
+	\addtolength{\textheight}{-\footskip}
+	\addtolength{\textheight}{-#1}
+}
+\newcommand{\setallmargins}[1]{
+	\settopmargin{#1}
+	\setbottommargin{#1}
+	\setleftmargin{#1}
+	\setrightmargin{#1}
+}

@@ -57,8 +57,8 @@ public class CachePartitioner extends ListPartitioner {
 
         // make work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-        work.printGraph(str, "work-before-partition.dot");
-        work.getSortedFilterWork().writeToFile("work-before-partition.txt");
+        work.printGraph(str, "work-before-cache-partition.dot");
+        work.getSortedFilterWork().writeToFile("work-before-cache-partition.txt");
 
         str = new CachePartitioner(str, work, 0, code_cache, data_cache).toplevel();
 
@@ -67,8 +67,8 @@ public class CachePartitioner extends ListPartitioner {
 
         // get the final work estimate
         work = WorkEstimate.getWorkEstimate(str);
-        work.printGraph(str, "work-after-partition.dot");
-        work.getSortedFilterWork().writeToFile("work-after-partition.txt");
+        work.printGraph(str, "work-after-cache-partition.dot");
+        work.getSortedFilterWork().writeToFile("work-after-cache-partition.txt");
         //work.printWork();
 
         return str;

@@ -30,6 +30,7 @@ public class ConstructSIRTree {
             cdp.detectEligible(str);
             doMyWork(str);
             cdp.doTransformations(str);
+            StreamItDot.printGraph(str, "after-collapse-sjs.dot");
         } else {
             doMyWork(str);
         }
@@ -65,7 +66,8 @@ public class ConstructSIRTree {
                 }
             });
         // dump the dot graph of <str>
-        SimpleDot.printGraph(str, "first-sir-tree.dot");
+        StreamItDot.printGraph(str, "stream-graph.dot");
+        SimpleDot.printGraph(str, "stream-graph-simple.dot");
         // if we had an exception, throw it
         if (nonConstantArgError!=null) {
             throw nonConstantArgError;

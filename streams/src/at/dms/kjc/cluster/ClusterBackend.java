@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.105 2006-08-28 21:40:13 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.106 2006-08-29 04:53:21 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -197,7 +197,6 @@ public class ClusterBackend {
 
         // canonicalize stream graph, reorganizing some splits and joins
         Lifter.liftAggressiveSync(str);
-        //StreamItDot.printGraph(str, "before-partition.dot");
 
         // gather application-characterization statistics
         if (KjcOptions.stats) {
@@ -228,7 +227,7 @@ public class ClusterBackend {
         // too much.
         MarkFilterBoundaries.doit(str);
 
-        StreamItDot.printGraph(str, "before-ssg.dot");
+        StreamItDot.printGraph(str, "before-subgraphs.dot");
 
         streamGraph = new ClusterStreamGraph((new GraphFlattener(str)).top);
         //create the static stream graphs cutting at dynamic rate boundaries
@@ -272,7 +271,7 @@ public class ClusterBackend {
         System.err.println("Running Partitioning... target number of threads: "+hosts);
 
         StreamItDot.printGraph(ssg.getTopLevelSIR(), 
-                Utils.makeDotFileName("before-partition",ssg.getTopLevelSIR()));
+                Utils.makeDotFileName("before-partition", ssg.getTopLevelSIR()));
 
         HashMap<SIROperator,Integer> ssgPartitionMap = new HashMap<SIROperator,Integer>();
 
@@ -365,7 +364,7 @@ public class ClusterBackend {
             SJToPipe.doit(ssg.getTopLevelSIR());
         }
 
-        StreamItDot.printGraph(ssg.getTopLevelSIR(), Utils.makeDotFileName("after-partition",ssg.getTopLevelSIR()));
+        StreamItDot.printGraph(ssg.getTopLevelSIR(), Utils.makeDotFileName("after-partition", ssg.getTopLevelSIR()));
 
         //VarDecl Raise to move array assignments up
         new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
@@ -398,8 +397,7 @@ public class ClusterBackend {
         //topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
         FlatNode strTop = streamGraph.getTopLevel().getTopLevel();
        
-        StreamItDot.printGraph(str,"recreated_str.dot");
-        
+        StreamItDot.printGraph(str, "after-subgraphs.dot");
 
         // optionally print a version of the source code that we're
         // sending to the scheduler

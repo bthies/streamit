@@ -108,7 +108,7 @@ public class SpaceDynamicBackend {
         //  FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);
     
         streamGraph = new SpdStreamGraph(graphFlattener.top, rawChip);
-        (new DumpGraph()).dumpGraph(graphFlattener.top, "pre-SSG-FG.dot", null, null);
+        (new DumpGraph()).dumpGraph(graphFlattener.top, "before-subgraphs.dot", null, null);
 
         //create the static stream graphs cutting at dynamic rate boundaries
         streamGraph.createStaticStreamGraphs();
@@ -161,7 +161,6 @@ public class SpaceDynamicBackend {
                     //new BranchAnalyzer().analyzeBranches(ssg.getTopLevelSIR());
         
                 Lifter.liftAggressiveSync(ssg.getTopLevelSIR());
-                NumberDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("numbered", ssg.getTopLevelSIR()));
                 StreamItDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("before-partition", ssg.getTopLevelSIR()));
         
                 // gather application-characterization statistics

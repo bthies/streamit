@@ -342,7 +342,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         // make canonical representation
         str = RefactorSplitJoin.addDeepRectangularSyncPoints(str);
         // dump to graph
-        StreamItDot.printGraph(str, "dp-partition-input.dot");
+        //StreamItDot.printGraph(str, "dp-partition-input.dot");
         return (DPConfig)str.accept(new ConfigBuilder());
     }
 

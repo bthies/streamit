@@ -84,11 +84,11 @@ public class FlattenGraph {
                 topLevelNodes.add(node.dest);
         }
         extractLinear(); //Create linear rep
-        dumpGraph("newbefore.dot");
+        //dumpGraph("newbefore.dot");
         System.out.println("Done Flattening, Starting Sync Removal..");
         syncRemove(); //Run sync removal
         System.out.println("Done Sync Removal..");
-        dumpGraph("newafter.dot");
+        //dumpGraph("newafter.dot");
     }
 
     /**
@@ -364,10 +364,10 @@ public class FlattenGraph {
             change=false;
             removeSimple();
         }
-        dumpGraph("newmiddle.dot");
+        //dumpGraph("newmiddle.dot");
 	//Then attempt complex null filters
         removeComplex();
-        dumpGraph("newmiddle2.dot");
+        //dumpGraph("newmiddle2.dot");
         //change=true;
         //while(change) {
         //change=false;

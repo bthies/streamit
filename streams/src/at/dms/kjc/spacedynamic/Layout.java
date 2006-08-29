@@ -444,7 +444,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         }
 
         double cost = placementCost(true);
-        dumpLayout("file_layout.dot");
+        dumpLayout("layout-from-file.dot");
         System.out.println("Layout cost: " + cost);
         assert cost >= 0.0 : "Illegal Layout";
 
@@ -508,7 +508,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
         }
 
         double cost = placementCost(true);
-        dumpLayout("hand_layout.dot");
+        dumpLayout("hand-layout.dot");
         System.out.println("Layout cost: " + cost);
         assert cost >= 0.0 : "Illegal Layout";
     }
@@ -868,7 +868,7 @@ public class Layout extends at.dms.util.Utils implements StreamGraphVisitor,
             System.out.print("Initial Cost: " + currentCost);
 
             if (KjcOptions.manuallayout || KjcOptions.decoupled) {
-                dumpLayout("noanneal.dot");
+                dumpLayout("layout-without-annealing.dot");
                 return;
             }
             // as a little hack, we will cache the layout with the minimum cost

@@ -141,7 +141,9 @@ public class SpaceTimeBackend {
         
         //StreamItDot.printGraph(str, "after-fusepipe.dot");
         if (KjcOptions.partition_greedier) {
+            StreamItDot.printGraph(str, "before-granularity-adjust.dot");
             str = GranularityAdjust.doit(str, rawChip);
+            StreamItDot.printGraph(str, "after-granularity-adjust.dot");
         }
         
         /*
@@ -304,11 +306,7 @@ public class SpaceTimeBackend {
         //We have to create multilevel splits and/or joins if their width
         //is greater than the number of memories of the chip...
         new MultiLevelSplitsJoins(partitioner, rawChip).doit();
-        partitioner.dumpGraph("traces_after_multi.dot");
-        
-     
-            
-        
+        partitioner.dumpGraph("traces-after-multi.dot");
         
         /*
          * System.gc(); System.out.println("MEM:

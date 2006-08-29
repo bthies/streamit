@@ -280,17 +280,12 @@ public class StatelessDuplicate {
             newFilters.add(makeDuplicate(i));
         }
 
-System.out.println("1");
         // make result
         SIRSplitJoin result = new SIRSplitJoin(origFilter.getParent(), origFilter.getIdent() + "_Fiss");
 
-System.out.println("2");
         // replace in parent
-        StreamItDot.printGraph(origFilter.getParent(), "0.dot");
-        System.err.println("parent0: " + origFilter.getParent());
         origFilter.getParent().replace(origFilter, result);
 
-System.out.println("3");
         // make an init function
         JMethodDeclaration init = makeSJInit(result);
 
@@ -309,7 +304,6 @@ System.out.println("3");
                                create(result, SIRSplitType.DUPLICATE, reps));
         }
 
-System.out.println("4");
         // create the joiner
         if (origFilter.getPushInt() > 0) {
             // assign join weights according to workRatio and push rate of filter
@@ -338,9 +332,6 @@ System.out.println("4");
         }
         ConstantProp.propagateAndUnroll(toplevel);
         */
-        System.err.println("parent1: " + origFilter.getParent());
-        StreamItDot.printGraph(origFilter.getParent(), "1.dot");
-System.out.println("5");
         return result;
     }
 

@@ -92,7 +92,6 @@ public class Flattener {
 
         Lifter.liftAggressiveSync(str);
         // dump the original graph to a dot format
-        NumberDot.printGraph(str, "numbered.dot");
         StreamItDot.printGraph(str, "before-partition.dot");
 
         // gather application-characterization statistics

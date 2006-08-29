@@ -34,11 +34,11 @@ public class GranularityAdjust {
         //KjcOptions.partition_greedier = true;
         do {
             oldStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
-            StreamItDot.printGraph(oldStr, "oldstr.dot");
+            //StreamItDot.printGraph(oldStr, "oldstr.dot");
             int tilesNeeded = at.dms.kjc.sir.lowering.partition.Partitioner.countFilters(str);
             str = at.dms.kjc.sir.lowering.partition.Partitioner.doit(str,
                     tilesNeeded - 1, false, false, true);
-            StreamItDot.printGraph(str, "newstr.dot");
+            //StreamItDot.printGraph(str, "newstr.dot");
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits
             binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
@@ -52,7 +52,7 @@ public class GranularityAdjust {
         } while (workChange >= threshold);
         
         str = oldStr;
-        StreamItDot.printGraph(str, "str.dot");
+        //StreamItDot.printGraph(str, "str.dot");
         //KjcOptions.partition_greedier = false;
         //WorkEstimate.UNROLL_FOR_WORK_EST = false;
         return str;

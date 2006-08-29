@@ -135,15 +135,7 @@ public class StrToRStream {
         //sirfilters, not predefined filters
         ConvertFileFilters.doit(str);
 
-        if (KjcOptions.print_partitioned_source) {
-            StreamItDot.printGraph(str, "before-synch.dot");
-        }
-
         Lifter.liftAggressiveSync(str);
-
-        if (KjcOptions.print_partitioned_source) {
-            StreamItDot.printGraph(str, "before-partition.dot");
-        }
 
         //mgordon: I don't know, I could forsee the linear analysis 
         //and the statespace analysis being useful to Reservoir in the 

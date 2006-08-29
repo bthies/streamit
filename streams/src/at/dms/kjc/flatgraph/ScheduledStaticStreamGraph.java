@@ -48,15 +48,19 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
       */
      public void createSIRGraph() {
          int suffix = Double.valueOf(Math.random() * 1000).intValue();
+         /*
          (new DumpGraph()).dumpGraph(topLevel, Utils
                  .makeDotFileName("beforeFGtoSIR", topLevelSIR),
                  initExecutionCounts, steadyExecutionCounts);
+         */
 
          setTopLevelSIR((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
 
+         /*
          (new DumpGraph()).dumpGraph(topLevel, Utils
                  .makeDotFileName("afterFGtoSIR", topLevelSIR),
                  initExecutionCounts, steadyExecutionCounts);
+         */
      }
 
      public void setTopLevelSIR(SIRStream topLevelStream) {

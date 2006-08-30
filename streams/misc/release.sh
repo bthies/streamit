@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.59 2006-08-30 18:09:56 dimock Exp $
+# $Id: release.sh,v 1.60 2006-08-30 19:53:41 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -89,8 +89,10 @@ cvs $CVSROOT export -r $TAG -d $WORKING $DIRS
 ###############################################################################
 
 # Run autoconf to get a configure script.
-autoconf $WORKING/streams/configure.in > $WORKING/streams/configure
+cat $WORKING/streams/misc/ac_java_macros.m4 $WORKING/streams/configure.in > $WORKING/streams/configure.in2
+autoconf $WORKING/streams/configure.in2 > $WORKING/streams/configure
 chmod 0755 $WORKING/streams/configure
+rm $WORKING/streams/misc/ac_java_macros.m4 $WORKING/streams/configure.in2
 
 ###
 # Generate .in files.  

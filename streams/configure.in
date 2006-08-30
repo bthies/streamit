@@ -1,10 +1,15 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.13 2006-08-29 20:53:57 dimock Exp $
+dnl $Id: configure.in,v 1.14 2006-08-30 19:53:41 dimock Exp $
+dnl
+dnl use:
+dnl cat misc/ac_java_macros.m4 configure.in > configure.in2
+dnl autoconf configure.in2 > configure
+dnl chmod 755 configure
 dnl
 
-AC_INIT([StreamIt], [2.1], [streamit@cag.lcs.mit.edu])
+AC_INIT([StreamIt], [2.1], [streamit@csail.mit.edu])
 
 dnl which release is this?
 AC_MSG_CHECKING([for source release])
@@ -31,6 +36,12 @@ AC_MSG_ERROR(
 [Could not find a Java virtual machine.  This is needed to run the
 compiler.  If your JVM is not named 'java', please re-run configure,
 adding JAVA=jvmname to the end of the command line.])
+fi
+
+AC_CHECK_CLASS(java.lang.EnumConstantNotPresentException)
+if test x"`eval 'echo $ac_cv_class_java_lang_EnumConstantNotPresentException'`" == xno ; then
+AC_MSG_ERROR(
+[Can not find Java version 1.5 methods in your CLASSPATH. You will need Java version 1.5 to run StreamIt. Your CLASSPATH is currently set to $CLASSPATH.])
 fi
 
 AC_CHECK_PROGS(JAVAC, [javac])
@@ -145,3 +156,4 @@ AC_CONFIG_FILES([strc], [chmod +x strc])
 AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ])
 AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl])
 AC_OUTPUT
+

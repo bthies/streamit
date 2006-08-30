@@ -2,12 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.58 2006-08-30 00:20:29 thies Exp $
+# $Id: release.sh,v 1.59 2006-08-30 18:09:56 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
 set -v
-set -x
+#set -x
 
 # Interesting/configurable variables:
 
@@ -59,9 +59,9 @@ WORKING=$TMPDIR/streamit-$USER-$$
 mkdir $WORKING
 SRCDIR=$WORKING/streams
 STREAMIT_HOME=$SRCDIR
-SRCTAR=$WORKING/streamit-src-$VERSION.tar
+SRCTAR=$WORKING/streamit-src-$VERSION.tgz
 BINDIR=$WORKING/streamit-$VERSION
-BINTAR=$WORKING/streamit-$VERSION.tar
+BINTAR=$WORKING/streamit-$VERSION.tgz
 export STREAMIT_HOME
 
 # Helper function to add a list of directories to $DIRS
@@ -155,8 +155,9 @@ rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition1.java
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition2.java
 
 # should asplos06 benchmarks be released separately?
-#rm -rf $WORKING/streams/apps/benchmarks/asplos06
+rm -rf $WORKING/streams/apps/benchmarks/asplos06
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
+# but including apps/benchmarks/asplos06-superset
 rm -rf $WORKING/streams/apps/benchmarks/cfar
 # remove the 500MB of input and output for DCT
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/input
@@ -180,8 +181,8 @@ rm -rf $WORKING/streams/apps/benchmarks/micro04
 # do we want to trim down mpeg2 inputs, outputs?
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
-rm -rf $WORKING/streams/apps/benchmarks/pldi03
-# remove purely data-parallel code as somethong we do not want emulated.
+rm -rf $WORKING/streams/apps/benchmarks/pldi-03
+# remove purely data-parallel code as something we do not want emulated.
 rm -rf $WORKING/streams/apps/benchmarks/tde/streamit/tde.str
 rm -rf $WORKING/streams/apps/benchmarks/traces
 # these modifications of bitonic and fft for testing unreleased viram backend:
@@ -383,6 +384,8 @@ rm -f $BINDIR/misc/htmlformat.pl
 for f in $INFILES; do
   rm -f "$BINDIR/$f"
 done
+rm -rf $BIDIR/include/tex
+rm -rf $BIDIR/misc/Makefile.docs
 
 ###
 # Build the source tarball:
@@ -415,9 +418,8 @@ make -C $SRCDIR/src jar CAG_BUILD=0
 cp $SRCDIR/src/streamit.jar $BINDIR
 tar czf $BINTAR -C $WORKING streamit-$VERSION
 
-# gzip the tarball and move it here.
-#gzip $SRCTAR $BINTAR
-mv $SRCTAR.gz $BINTAR.gz .
+# move the tarball here.
+mv $SRCTAR $BINTAR .
 
 # Clean up.
 if test -n "$PRECIOUS"

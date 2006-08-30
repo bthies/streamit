@@ -4,11 +4,9 @@
 package at.dms.kjc.spacedynamic;
 
 import java.io.FileWriter;
-import java.nio.channels.GatheringByteChannel;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.flatgraph.*;
-import at.dms.kjc.flatgraph2.FileOutputContent;
 import at.dms.kjc.CStdType;
 import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.89 2006-08-29 16:40:19 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.90 2006-08-30 15:37:39 dimock Exp $
  */
 
 prefix Kjc
@@ -118,6 +118,11 @@ longname		"output"
 	help		"Name of output (executable) file."
 // if null should default to "a.out" if producing an executable (in a Makefile)
 // if producing a single c or cpp file, name at your discretion if null. 
+
+longname		"havefftw"
+	type		boolean
+	default		"false"
+	help		"Assume existence of sfftw and srfftw libries"
 
 longname		"countops"
 	type		boolean

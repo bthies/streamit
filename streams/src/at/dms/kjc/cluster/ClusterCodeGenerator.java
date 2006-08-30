@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.60 2006-08-27 22:44:56 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.61 2006-08-30 15:47:48 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -172,7 +172,7 @@ class ClusterCodeGenerator {
         p.println("#include <consumer2p.h>");         // for cluster feedback edge incoming with >0 enqueues
         p.println("#include <producer2.h>");          // foe cluster edge outgoing
         // only include fft.h if we did a frequency transformation
-        if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform) {
+        if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform && KjcOptions.havefftw) {
             p.println("#include <fft.h>");
         }
         p.println("#include \"cluster.h\"");

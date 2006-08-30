@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.9 2006-08-10 23:24:16 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.10 2006-08-30 15:47:48 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -112,7 +112,7 @@ public class GenerateMakefile {
         //p.print("$(OBJS)\);
         p.newline();
         // link against FFTW if we need an FFT library
-        String fftLib = (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform ?
+        String fftLib = (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform  && KjcOptions.havefftw ?
                          " -lsrfftw -lsfftw" : "");
         p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
         p.newLine();

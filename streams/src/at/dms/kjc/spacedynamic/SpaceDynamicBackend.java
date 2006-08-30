@@ -161,6 +161,7 @@ public class SpaceDynamicBackend {
                     //new BranchAnalyzer().analyzeBranches(ssg.getTopLevelSIR());
         
                 Lifter.liftAggressiveSync(ssg.getTopLevelSIR());
+                StreamItDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("canonical-graph", ssg.getTopLevelSIR()));
                 StreamItDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("before-partition", ssg.getTopLevelSIR()));
         
                 // gather application-characterization statistics

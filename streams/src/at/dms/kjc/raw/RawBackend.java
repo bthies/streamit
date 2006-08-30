@@ -127,6 +127,7 @@ public class RawBackend {
             ArrayInitExpander.doit(str);
 
             Lifter.liftAggressiveSync(str);
+            StreamItDot.printGraph(str, "canonical-graph.dot");
             StreamItDot.printGraph(str, "before-partition.dot");
         
             // gather application-characterization statistics

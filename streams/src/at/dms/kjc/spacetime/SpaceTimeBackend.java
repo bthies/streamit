@@ -136,6 +136,7 @@ public class SpaceTimeBackend {
             str = FusePipelines.fusePipelinesOfFilters(str);
         
         Lifter.liftAggressiveSync(str);
+        StreamItDot.printGraph(str, "canonical-graph.dot");
 
         //StreamItDot.printGraph(str, "before-fusepipe.dot");
         

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.57 2006-08-29 23:43:02 dimock Exp $
+# $Id: release.sh,v 1.58 2006-08-30 00:20:29 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -149,6 +149,10 @@ rm -rf $WORKING/streams/apps/benchmarks/serpent/{c,streambit,docs}
 rm -rf $WORKING/streams/apps/benchmarks/sar/{c,matlab}
 rm -rf $WORKING/streams/apps/benchmarks/des/{c,streambit}
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
+
+# remove manual partition files
+rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition1.java
+rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition2.java
 
 # should asplos06 benchmarks be released separately?
 #rm -rf $WORKING/streams/apps/benchmarks/asplos06

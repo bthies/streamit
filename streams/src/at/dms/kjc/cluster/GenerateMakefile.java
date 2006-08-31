@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.10 2006-08-30 15:47:48 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/GenerateMakefile.java,v 1.11 2006-08-31 02:07:52 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.io.FileWriter;
@@ -112,8 +112,16 @@ public class GenerateMakefile {
         //p.print("$(OBJS)\);
         p.newline();
         // link against FFTW if we need an FFT library
-        String fftLib = (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform  && KjcOptions.havefftw ?
-                         " -lsrfftw -lsfftw" : "");
+        boolean needFFTW = at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform;
+        String fftLib = (needFFTW ? " -lsrfftw -lsfftw" : "");
+        // if we need an FFT library but we don't have one, throw an error
+        if (needFFTW && !KjcOptions.havefftw) {
+            System.err.println("ERROR:\n" +
+                               "You compiled with frequency transformations that require an\n" +
+                               "installation of FFTW, but no FFTW installation was found.\n" +
+                               "Without FFTW, you can still use --linearreplacement.\n");
+            System.exit(1);
+        }
         p.print("\t$(CXX) $(CCFLAGS) -o $@ $^ -L$(LIB_CLUSTER) -lpthread -lcluster -lstdc++" + fftLib + "\n");
         p.newLine();
         

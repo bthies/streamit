@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.61 2006-08-30 15:47:48 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.62 2006-08-31 02:07:51 thies Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -172,8 +172,17 @@ class ClusterCodeGenerator {
         p.println("#include <consumer2p.h>");         // for cluster feedback edge incoming with >0 enqueues
         p.println("#include <producer2.h>");          // foe cluster edge outgoing
         // only include fft.h if we did a frequency transformation
-        if (at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform && KjcOptions.havefftw) {
-            p.println("#include <fft.h>");
+        boolean needFFTW = at.dms.kjc.sir.linear.frequency.LEETFrequencyReplacer.didTransform;
+        if (needFFTW) {
+            if (KjcOptions.havefftw) {
+                p.println("#include <fft.h>");
+            } else {
+                System.err.println("ERROR:\n" +
+                                   "You compiled with frequency transformations that require an\n" +
+                                   "installation of FFTW, but no FFTW installation was found.\n" +
+                                   "Without FFTW, you can still use --linearreplacement.\n");
+                System.exit(1);
+            }
         }
         p.println("#include \"cluster.h\"");
         p.println("#include \"fusion.h\"");

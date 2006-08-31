@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.60 2006-08-30 19:53:41 dimock Exp $
+# $Id: release.sh,v 1.61 2006-08-31 14:58:21 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -157,9 +157,10 @@ rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition1.java
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition2.java
 
 # should asplos06 benchmarks be released separately?
-rm -rf $WORKING/streams/apps/benchmarks/asplos06
+#rm -rf $WORKING/streams/apps/benchmarks/asplos06
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
-# but including apps/benchmarks/asplos06-superset
+# internal testing.
+rm -rf $WORKING/streams/apps/benchmarks/asplos06-superset
 rm -rf $WORKING/streams/apps/benchmarks/cfar
 # remove the 500MB of input and output for DCT
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/input

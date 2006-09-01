@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.14 2006-08-30 19:53:41 dimock Exp $
+dnl $Id: configure.in,v 1.15 2006-09-01 21:37:42 dimock Exp $
 dnl
 dnl use:
 dnl cat misc/ac_java_macros.m4 configure.in > configure.in2
@@ -26,14 +26,14 @@ dnl These are essential, without them nothing goes.
 AC_PATH_PROG(PERL, perl)
 if test -z "$PERL"; then
 AC_MSG_ERROR(
-[Could not find perl.  This is needed to run the main strc compiler script;
+[Can not find perl.  This is needed to run the main strc compiler script;
 please install perl on your system and re-run configure.])
 fi
 
 AC_CHECK_PROGS(JAVA, [java])dnl can add more JVMs here
 if test -z "$JAVA"; then
 AC_MSG_ERROR(
-[Could not find a Java virtual machine.  This is needed to run the
+[Can not find a Java virtual machine.  This is needed to run the
 compiler.  If your JVM is not named 'java', please re-run configure,
 adding JAVA=jvmname to the end of the command line.])
 fi
@@ -47,7 +47,7 @@ fi
 AC_CHECK_PROGS(JAVAC, [javac])
 if test -z "$JAVAC"; then
 AC_MSG_WARN(
-[Could not find a Java compiler.  The StreamIt compiler should still
+[Can not find a Java compiler.  The StreamIt compiler should still
 run fine, but you may not be able to test programs separately under
 the StreamIt Java runtime library.])
 fi
@@ -56,21 +56,50 @@ dnl This needs an install-sh:
 dnl AC_PROG_INSTALL
 AC_PROG_LN_S
 
-dnl Uniprocessor bits:
-AC_PROG_RANLIB
-AC_PROG_CC
+dnl Back end toolchain:
 AC_PROG_CXX
+if test -z "$CXX"; then
+AC_MSG_WARN(
+[Can not find a C++ compiler.  The StreamIt compiler should still
+run fine compiling to C or C++, but you may not be able to use the 
+output of the uniprocessor and cluster back ends.])
+fi
+AC_PROG_CC
+if test -z "$CC"; then
+AC_MSG_WARN(
+[Can not find a C compiler.  The StreamIt compiler should still
+run fine compiling to C or C++, but you may not be able to use the 
+output of the simpleC back end.])
+fi
+AC_PROG_RANLIB
+if test -z "$RANLIB"; then
+AC_MSG_WARN(
+[The "ranlib" component of your C compiler's toolchain are missing.
+The StreamIt compiler should still run fine compiling to C or C++, 
+but you may not be able to use the output of the backends.])
+fi
 AC_CHECK_TOOL(AR, ar)
-if test -z "$RANLIB" || test -z "$CC" || test -z "$AR"; then
+AC_CHECK_TOOL(RM, rm)
+AC_CHECK_TOOL(MAKE, make)
+if test -z "$AR"; then
 AC_MSG_WARN(
 [Some components of your C compiler's toolchain are missing.
-Ths StreamIt compiler should still run fine compiling to C or C++, 
+The StreamIt compiler should still run fine compiling to C or C++, 
 but you may not be able to use the output of the backends.])
 fi
 
 dnl AC_PATH_PROG(PYTHON, python)dnl what uses this?
 
 if test "$STREAMIT_SRC" = 1; then
+dnl makefile bits
+AC_CHECK_TOOL(SED, sed)
+AC_CHECK_TOOL(FIND, find)
+AC_CHECK_TOOL(XARGS, xargs)
+if test -z "$JAVAC" || test -z "$SED" || test -z "$FIND" || \
+  test -z "$XARGS"; then
+AC_MSG_WARN(
+[You are missing some programs needed to compile the src tree.])
+fi
 dnl Documentation bits:
 CAN_DOC=1
 AC_CHECK_PROGS(LATEX, latex)
@@ -138,7 +167,8 @@ AC_MSG_WARN(
 [You don't seem to have the fftw library installed, or maybe
 it's not built properly for single-precision floats.  The uniprocessor
 C library will be built to not use fftw for Fourier transforms, but this
-means that the frequency replacement option will fail.])
+means that the --frequencyreplacement ans --linearreplacement options
+will fail.])
 fi
 
 dnl checks for types
@@ -151,7 +181,7 @@ dnl disable building things that only work in inhouse (inlab?) setting
 CAG_BUILD=0
 AC_SUBST([CAG_BUILD])
 
-AC_CONFIG_FILES([Makefile library/c/Makefile misc/Makefile.vars])
+AC_CONFIG_FILES([misc/Makefile.vars])
 AC_CONFIG_FILES([strc], [chmod +x strc])
 AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ])
 AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl])

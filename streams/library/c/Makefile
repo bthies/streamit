@@ -1,15 +1,11 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.13 2003-09-25 20:05:53 dmaze Exp $
+# $Id: Makefile,v 1.14 2006-09-01 21:37:42 dimock Exp $
 #
+include $(STREAMIT_HOME)/misc/Makefile.vars
 
-# AUTOCONFISCATE VAR =	@VAR@
-HAVE_FFTW =	1
-CC =		gcc
 CFLAGS =	-O2
 AR =		ar
-RANLIB =	ranlib
-# END AUTOCONFISCATE
 
 LIBRARY =	libstreamit.a
 LIBRARYP =	libstreamit_p.a

@@ -1,9 +1,8 @@
+# build the cluster library
 
-# AUTOCONFISCATE VAR =	@VAR@
-AR =            ar
-RANLIB =        ranlib
+include $(STREAMIT_HOME)/misc/Makefile.vars
+
 CFLAGS = 	-O2
-# END AUTOCONFISCATE
 CFLAGS += 	-I.
 LIBRARY =       libcluster.a
 LIBRARYP =      libcluster_p.a

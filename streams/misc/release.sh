@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.61 2006-08-31 14:58:21 dimock Exp $
+# $Id: release.sh,v 1.62 2006-09-01 21:37:42 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -98,7 +98,7 @@ rm $WORKING/streams/misc/ac_java_macros.m4 $WORKING/streams/configure.in2
 # Generate .in files.  
 # See also the tail of configure.in to process the generated .in files.
 ###
-INFILES="strc Makefile library/c/Makefile misc/Makefile.vars misc/dat2bin.pl misc/scripts/preprocess.perl misc/scripts/streamitdoc misc/scripts/turnOffPrints.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl"
+INFILES="strc Makefile misc/Makefile.vars misc/dat2bin.pl misc/scripts/preprocess.perl misc/scripts/streamitdoc misc/scripts/turnOffPrints.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl"
 for f in $INFILES; do
   if test -f "$WORKING/streams/$f"; then
     $WORKING/streams/misc/make-dot-in.pl "$WORKING/streams/$f"

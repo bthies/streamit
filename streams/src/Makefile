@@ -30,15 +30,14 @@
 #    by Andrew, Dave , and Bill.
 ###############################################################################
 
+include $(STREAMIT_HOME)/misc/Makefile.vars
+
 JAVAC           = javac
 DEBUG_OPT       = -g
 JAVA_VERSION    = -source 1.5 -target 1.5
 JAVA_OPT        = -nowarn $(JAVA_VERSION) 
 JAVAC_FLAGS     = $(JAVA_OPT) $(DEBUG_OPT)
 RM              = rm -f
-SED		= sed
-FIND            = find
-XARGS		= xargs
 
 ###############################################################################
 # The usual targets...

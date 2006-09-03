@@ -13,13 +13,13 @@ BMPtoMPEG converts a few pictures to a short mpeg file.
     <impl lang="StreamIt" dir="streamit" id="nomessage" iters="1">
       <desc>The decoder without messaging</desc>
       <make>Makefile MPEGdecoder_nomessage.str MPEGglobal.str BinaryFile.str InverseQuantization.str</make>
-      <file class="source">MPEGdecoder_nomessage.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ../../dct_ieee/streamit/DCT.str</file>
+      <file class="source">MPEGdecoder_nomessage.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ../benchmarks/../../dct_ieee/streamit/DCT.str</file>
       <file class="data" relative="true">../input/nomessage.m2v</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="mpegtobmp" iters="1" compile_time="2400">
       <desc>The decoder with messaging</desc>
       <make>Makefile MPEGdecoder.str Parser_alt_preserved_state.str MotionPrediction.str MPEGglobal.str BinaryFile.str InverseQuantization.str BMP.str</make>
-      <file class="source">MPEGtoBMP.str MPEGdecoder.str Parser_alt_preserved_state.str ChannelUpsampling.str MotionVectorDecode.str PictureReorder.str  BlockDecode.str ColorChannelProcessing_opt_splitjoin.str DescrambleAndMotionCompensate.str MotionPrediction.str BlockDescrambler.str MacroBlockDescrambler.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str InverseQuantization.str BMP.str ../../dct_ieee/streamit/DCT.str</file>
+      <file class="source">MPEGtoBMP.str MPEGdecoder.str Parser_alt_preserved_state.str ChannelUpsampling.str MotionVectorDecode.str PictureReorder.str  BlockDecode.str ColorChannelProcessing_opt_splitjoin.str DescrambleAndMotionCompensate.str MotionPrediction.str BlockDescrambler.str MacroBlockDescrambler.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str InverseQuantization.str BMP.str ../../../benchmarks/dct_ieee/streamit/DCT.str</file>
       <file class="data" relative="true">../input/cact_015.m2v</file>
     </impl>
   </implementations>

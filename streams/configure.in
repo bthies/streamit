@@ -1,9 +1,14 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.15 2006-09-01 21:37:42 dimock Exp $
+dnl $Id: configure.in,v 1.16 2006-09-03 16:59:14 dimock Exp $
 dnl
-dnl use:
+dnl use without java macros (current):
+dnl autoconf configure.in > configure
+dnl chmod 755 configure
+dnl 
+dnl
+dnl use with java macros::
 dnl cat misc/ac_java_macros.m4 configure.in > configure.in2
 dnl autoconf configure.in2 > configure
 dnl chmod 755 configure
@@ -38,11 +43,30 @@ compiler.  If your JVM is not named 'java', please re-run configure,
 adding JAVA=jvmname to the end of the command line.])
 fi
 
-AC_CHECK_CLASS(java.lang.EnumConstantNotPresentException)
-if test x"`eval 'echo $ac_cv_class_java_lang_EnumConstantNotPresentException'`" == xno ; then
-AC_MSG_ERROR(
-[Can not find Java version 1.5 methods in your CLASSPATH. You will need Java version 1.5 to run StreamIt. Your CLASSPATH is currently set to $CLASSPATH.])
+dnl
+dnl The following will not work since java 1.5 class file format is different
+dnl and the java tests' reaction to having the class file rejected is to
+dnl try to recompile it.  But we do not require a java compiler for binary
+dnl distrib. 
+dnl
+dnl AC_CHECK_CLASS(java.lang.EnumConstantNotPresentException)
+dnl if test x"`eval 'echo $ac_cv_class_java_lang_EnumConstantNotPresentException'`" == xno ; then
+dnl AC_MSG_ERROR(
+dnl [Can not find Java version 1.5 methods in your CLASSPATH. You will need Java version 1.5 to run StreamIt. Your CLASSPATH is currently set to $CLASSPATH.])
+dnl fi
+dnl
+dnl The following works to identify versions of Hotspot only:
+dnl If they hava a java compiler, we could do better
+if java -version 3>&1 1>&2 2>&3 | grep -q 1\\\.2 > /dev/null; then
+dnl OK: have sun java 1.5 -- sun java takes -version and outpts to stderr
+JAVA5=1
+else
+JAVA5=0
+AC_MSG_WARN(
+[Can not confirm that your compiler accepts Java version 1.5. \
+If it does not, then you will not be able to use the StreamIt compiler.])
 fi
+
 
 AC_CHECK_PROGS(JAVAC, [javac])
 if test -z "$JAVAC"; then

@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.18 2006-09-03 17:36:36 dimock Exp $
+dnl $Id: configure.in,v 1.19 2006-09-03 19:43:59 dimock Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -99,7 +99,7 @@ AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(MAKE, make)
-if test -z "$AR" || text -z "$RM" || test -z "$MAKE" || if test -z "$RANLIB"; then
+if test -z "$AR" || text -z "$RM" || test -z "$MAKE" || test -z "$RANLIB"; then
 AC_MSG_WARN(
 [Some components of your C compiler's toolchain are missing.
 The StreamIt compiler should still run fine compiling to C or C++, 
@@ -203,7 +203,7 @@ AC_SUBST([CAG_BUILD])
 
 AC_CONFIG_FILES([Makefile misc/Makefile.vars])
 AC_CONFIG_FILES([strc], [chmod +x strc])
-AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ])
+AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ], [chmod +x misc/concat_cluster_threads_cpp.pl])
 AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl])
 AC_OUTPUT
 

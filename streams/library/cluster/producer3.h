@@ -16,6 +16,7 @@
 #ifndef __PRODUCER3_H
 #define __PRODUCER3_H
 
+#include<assert.h>
 #include <socket_holder.h>
 #include <serializable.h>
 #include <netsocket.h>

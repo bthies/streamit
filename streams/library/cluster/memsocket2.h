@@ -17,6 +17,7 @@
 #ifndef __MEMSOCKET_H
 #define __MEMSOCKET_H
 
+#include <assert.h>
 #include <mysocket.h>
 #include <pthread.h>
 #include <stdlib.h>

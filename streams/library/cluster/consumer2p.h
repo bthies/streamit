@@ -29,6 +29,7 @@
 #include <serializable.h>
 #include <netsocket.h>
 #include <memsocket.h>
+#include <assert.h>
 
 template <class T>
 class consumer2p : public socket_holder, public serializable {

@@ -16,6 +16,7 @@
 #ifndef __STREAM_NODE_H
 #define __STREAM_NODE_H
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

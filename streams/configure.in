@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.16 2006-09-03 16:59:14 dimock Exp $
+dnl $Id: configure.in,v 1.17 2006-09-03 17:10:58 dimock Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -57,13 +57,13 @@ dnl fi
 dnl
 dnl The following works to identify versions of Hotspot only:
 dnl If they hava a java compiler, we could do better
-if java -version 3>&1 1>&2 2>&3 | grep -q 1\\\.2 > /dev/null; then
+if java -version 2>&1 | grep -q 1\\\.5 > /dev/null; then
 dnl OK: have sun java 1.5 -- sun java takes -version and outpts to stderr
 JAVA5=1
 else
 JAVA5=0
 AC_MSG_WARN(
-[Can not confirm that your compiler accepts Java version 1.5. \
+[Can not confirm that your default java accepts Java version 1.5. \
 If it does not, then you will not be able to use the StreamIt compiler.])
 fi
 

@@ -59,7 +59,7 @@ class proc_timer {
   }
 
   // inline to help avoid big overhead
-  inline void proc_timer::stop() {
+  inline void stop() {
     times(&t_end);
     
     // add to cumulative

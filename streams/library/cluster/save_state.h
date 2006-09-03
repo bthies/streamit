@@ -27,7 +27,7 @@ class save_state {
   
  public:
 
-  static void save_state::observe_jiffies(thread_info *t_info);
+  static void observe_jiffies(thread_info *t_info);
   static void save_to_file(thread_info *t_info, 
 			   int steady_iter, 
 			   void (*write_object)(object_write_buffer *));

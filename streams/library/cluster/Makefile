@@ -38,7 +38,6 @@ NAMES =	profiler \
 		mysocket \
 		netsocket \
 		memsocket \
-		fft \
 		FileReader \
 		FileWriter
 
@@ -46,6 +45,10 @@ NAMES =	profiler \
 #               data_producer
 #               network_connection
 #               network_manager
+
+ifeq ($(HAVE_FFTW), 1)
+NAMES +=	fft
+endif
 
 SOURCES = 	$(NAMES:%=%.cpp)
 DEPS = 		$(NAMES:%=%.d)

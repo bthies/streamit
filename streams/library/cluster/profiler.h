@@ -99,7 +99,7 @@ class profiler {
   static int FUNC_TANH;
   static int FUNC_TAN;
   // make sure you set this to be the maximum number of operations
-  static int profiler::NUM_OPCODES();
+  static int NUM_OPCODES();
 
   /**
    * One of the main callbacks from the instrumented StreamIt code.

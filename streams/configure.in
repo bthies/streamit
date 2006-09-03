@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.17 2006-09-03 17:10:58 dimock Exp $
+dnl $Id: configure.in,v 1.18 2006-09-03 17:36:36 dimock Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -95,21 +95,17 @@ AC_MSG_WARN(
 run fine compiling to C or C++, but you may not be able to use the 
 output of the simpleC back end.])
 fi
-AC_PROG_RANLIB
-if test -z "$RANLIB"; then
-AC_MSG_WARN(
-[The "ranlib" component of your C compiler's toolchain are missing.
-The StreamIt compiler should still run fine compiling to C or C++, 
-but you may not be able to use the output of the backends.])
-fi
+AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(MAKE, make)
-if test -z "$AR"; then
+if test -z "$AR" || text -z "$RM" || test -z "$MAKE" || if test -z "$RANLIB"; then
 AC_MSG_WARN(
 [Some components of your C compiler's toolchain are missing.
 The StreamIt compiler should still run fine compiling to C or C++, 
-but you may not be able to use the output of the backends.])
+but you may not be able to use the output of the backends.
+Furthermore, you will have to edit Makefile to have it not attempt
+to make library/cluster, which needs these tools.])
 fi
 
 dnl AC_PATH_PROG(PYTHON, python)dnl what uses this?
@@ -191,7 +187,7 @@ AC_MSG_WARN(
 [You don't seem to have the fftw library installed, or maybe
 it's not built properly for single-precision floats.  The uniprocessor
 C library will be built to not use fftw for Fourier transforms, but this
-means that the --frequencyreplacement ans --linearreplacement options
+means that the --frequencyreplacement and --linearreplacement options
 will fail.])
 fi
 
@@ -205,7 +201,7 @@ dnl disable building things that only work in inhouse (inlab?) setting
 CAG_BUILD=0
 AC_SUBST([CAG_BUILD])
 
-AC_CONFIG_FILES([misc/Makefile.vars])
+AC_CONFIG_FILES([Makefile misc/Makefile.vars])
 AC_CONFIG_FILES([strc], [chmod +x strc])
 AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ])
 AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl])

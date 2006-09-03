@@ -7,7 +7,7 @@ MPEGdecoder_nomessage does not use message passing.
 MPEGtoBMP converts a mpeg file to a bmp file
 MPEGplayer plays a mpeg file, but needs screen output only available in the
  library version of StreamIt.
-BMPtoMPEG converts a few pictures to a short mpeg file.
+BMPtoMPEG converts a few pictures to a short mpeg file. 
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit" id="nomessage" iters="1">

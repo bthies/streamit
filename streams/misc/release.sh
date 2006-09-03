@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.62 2006-09-01 21:37:42 dimock Exp $
+# $Id: release.sh,v 1.63 2006-09-03 19:45:25 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -292,6 +292,7 @@ rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
 # desupported backends:
 rm -rf $WORKING/streams/src/at/dms/kjc/raw
+rm -rf $WORKING/streams/library/c
 # remove dependencies on raw:
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/stats
 
@@ -312,7 +313,7 @@ perl -pi -e's/import at\.dms\.kjc\.sir\.stats\.StatisticsGathering;/\/\*import a
 rm -rf $WORKING/streams/src/streamit/library/jcc
 perl -pi -e's/new StreamItToJcc\(\)\.convertAndRun\(this, nIters\);/\/\*new StreamItToJcc().convertAndRun(this, nIters);\*\/ assert false:"jcc library support removed";/' $WORKING/streams/src/streamit/library/Stream.java
 perl -pi -e's/import streamit\.library\.jcc\.StreamItToJcc;/\/\*import streamit.library.jcc.StreamItToJcc;\*\//' $WORKING/streams/src/streamit/library/Stream.java
-# not yet finished backends. neatly modularized, thank goodness.
+# not yet finished backends. reasonably well modularized, thank goodness.
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 
 # A release does not need to build a release

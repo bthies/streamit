@@ -5,10 +5,18 @@ import at.dms.kjc.sir.lowering.partition.*;
 /**
  * Manual partitioning for the FFT2 program.  This is intended as a
  * demo only; it is not intended to be particularly optimized.
+ *
+ * To use this, do as follows:
+ * javac ManualOpt.java
+ * strc -optfile ManualOpt FFT2.str
  */
 public class ManualOpt {
 
     public static SIRStream manualPartition(SIRStream str) {
+        // print out dot graph of streams with numbers, so we can
+        // easily refer to them below
+        ManualPartition.printGraph(str, "numbered.dot");
+
 	// get the small-numbered CombineDFT streams
 	LinkedList dft = new LinkedList();
 	for (int i=37; i<=40; i++) {

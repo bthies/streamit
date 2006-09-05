@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.63 2006-09-03 19:45:25 dimock Exp $
+# $Id: release.sh,v 1.64 2006-09-05 19:19:19 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -72,7 +72,9 @@ builddirs() {
 
 # Get a checked-out copy of the source tree.
 mkdir $WORKING/streams
-DIRS="streams/strc streams/Makefile streams/README.source"
+# remove README.source until it can bu updated to reflect the current compiler
+#DIRS="streams/strc streams/Makefile streams/README.source"
+DIRS="streams/strc streams/Makefile"
 builddirs streams 3rdparty src library include misc configure.in
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes release syntax

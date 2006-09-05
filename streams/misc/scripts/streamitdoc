@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/uns/bin/perl
 
 # Copyright 2005 by the Massachusetts Institute of Technology.
 #
@@ -27,6 +27,8 @@
 # directly to the Javadoc stylesheet for now. If you want to generate
 # your own streamitdocs for publishing we'll need to touch up our
 # source code and use our own style sheet.
+
+use warnings;
 
 $numArgs = $#ARGV + 1;
 if ($numArgs == 1) {

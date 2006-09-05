@@ -1,4 +1,4 @@
-#!/usr/uns/bin/perl -w
+#!/usr/uns/bin/perl
 ###############################################################################
 # Preprocess a .str.pre file.
 #
@@ -21,6 +21,8 @@
 #                 variable_length_code_dct
 #
 ###############################################################################
+
+use warnings;
 use strict;
 
 my $numArgs = $#ARGV + 1;

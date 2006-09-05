@@ -1,0 +1,15 @@
+package streamit.library.jcc;
+
+/**
+ * This is a dummy version of this file, for use in release packages
+ * that do not include JCC.
+ */
+public class StreamItToJcc {
+    /**
+     * Signals an error that this method is unsupported.
+     */
+    public void convertAndRun(final Stream program, final int iterations) {
+        System.err.println("Error: JCC is not supported in this release.");
+        System.exit(1);
+    }
+}

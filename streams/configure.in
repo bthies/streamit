@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.20 2006-09-05 17:27:50 dimock Exp $
+dnl $Id: configure.in,v 1.21 2006-09-05 19:40:19 dimock Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -203,7 +203,9 @@ AC_SUBST([CAG_BUILD])
 
 AC_CONFIG_FILES([Makefile misc/Makefile.vars])
 AC_CONFIG_FILES([strc], [chmod +x strc])
-AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ], [chmod +x misc/concat_cluster_threads_cpp.pl])
-AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl], [chmod +x misc/scripts/preprocess.perl])
+AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl])
+AC_CONFIG_FILES([misc/concat_cluster_threads_cpp.pl], [chmod +x misc/concat_cluster_threads_cpp.pl])
+AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/turnOffPrints.pl])
+AC_CONFIG_FILES([misc/scripts/preprocess.perl], [chmod +x misc/scripts/preprocess.perl])
 AC_OUTPUT
 

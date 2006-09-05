@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.65 2006-09-05 20:52:35 thies Exp $
+# $Id: release.sh,v 1.66 2006-09-05 21:51:10 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -182,7 +182,7 @@ rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/streamit/iDCTcompare.str
 rm -rf $WORKING/streams/apps/benchmarks/complex-fir
 rm -rf $WORKING/streams/apps/benchmarks/fhr
 # too many FFTs
-rm -fr $WORKING/streams/apps/benchmarks/fft/FFT6.*
+rm -fr $WORKING/streams/apps/benchmarks/fft/streamit/FFT6.*
 # actually, fir contains examples of how not to code, so it goes too
 rm -rf $WORKING/streams/apps/benchmarks/fir
 # FIR bank might be proprietary, and besides it has 5 MB

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.64 2006-09-05 19:19:19 dimock Exp $
+# $Id: release.sh,v 1.65 2006-09-05 20:52:35 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -120,6 +120,15 @@ rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
 # lpsolve is only used by removed code.
 rm -fr $WORKING/streams/3rdparty/lpsolve/
+
+###
+# Don't release JCC or anything that depends on it
+###
+# remove JCC jar file
+rm -rf $WORKING/streams/3rdparty/jcc
+# replace the JCC function with an error message
+rm -rf $WORKING/streams/src/streamit/library/jcc/*.java
+mv $WORKING/streams/src/streamit/library/jcc/StreamItToJcc.dummy $WORKING/streams/src/streamit/library/jcc/StreamItToJcc.java
 
 # Remove .cvsignore files
 rm -rf `find $WORKING -name ".cvsignore"`

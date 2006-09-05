@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.19 2006-09-03 19:43:59 dimock Exp $
+dnl $Id: configure.in,v 1.20 2006-09-05 17:27:50 dimock Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -57,14 +57,14 @@ dnl fi
 dnl
 dnl The following works to identify versions of Hotspot only:
 dnl If they hava a java compiler, we could do better
-if java -version 2>&1 | grep -q 1\\\.5 > /dev/null; then
+if $JAVA -version 2>&1 | grep -q 1\\\.5 > /dev/null; then
 dnl OK: have sun java 1.5 -- sun java takes -version and outpts to stderr
 JAVA5=1
 else
 JAVA5=0
-AC_MSG_WARN(
-[Can not confirm that your default java accepts Java version 1.5. \
-If it does not, then you will not be able to use the StreamIt compiler.])
+AC_MSG_ERROR(
+[Your Java virtual machine seems not to accept Java version 1.5. \
+Make sure that "$JAVA -version" responds with a message including "1.5".])
 fi
 
 
@@ -99,7 +99,7 @@ AC_CHECK_TOOL(RANLIB, ranlib)
 AC_CHECK_TOOL(AR, ar)
 AC_CHECK_TOOL(RM, rm)
 AC_CHECK_TOOL(MAKE, make)
-if test -z "$AR" || text -z "$RM" || test -z "$MAKE" || test -z "$RANLIB"; then
+if test -z "$AR" || test -z "$RM" || test -z "$MAKE" || test -z "$RANLIB"; then
 AC_MSG_WARN(
 [Some components of your C compiler's toolchain are missing.
 The StreamIt compiler should still run fine compiling to C or C++, 
@@ -204,6 +204,6 @@ AC_SUBST([CAG_BUILD])
 AC_CONFIG_FILES([Makefile misc/Makefile.vars])
 AC_CONFIG_FILES([strc], [chmod +x strc])
 AC_CONFIG_FILES([misc/dat2bin.pl misc/htmlformat.pl misc/concat_cluster_threads_cpp.pl ], [chmod +x misc/concat_cluster_threads_cpp.pl])
-AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl])
+AC_CONFIG_FILES([misc/scripts/streamitdoc misc/scripts/preprocess.perl misc/scripts/turnOffPrints.pl], [chmod +x misc/scripts/preprocess.perl])
 AC_OUTPUT
 

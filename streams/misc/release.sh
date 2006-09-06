@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.67 2006-09-06 07:38:21 thies Exp $
+# $Id: release.sh,v 1.68 2006-09-06 08:36:23 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -19,7 +19,7 @@ VERSION=2.1
 #VERSION=2.0.`date +%Y%m%d`
 TAG=HEAD
 
-test -z "$TMPDIR" && TMPDIR=/tmp
+test -z "$TMPDIR" && TMPDIR=/home/bits6/NO_BACKUP/thies
 PRECIOUS=
 CVSROOT="-d /projects/raw/cvsroot"
 
@@ -271,16 +271,18 @@ rm -rf $WORKING/streams/apps/libraries
 
 ### library_only gets jpeg, mpeg2 (except MPEGdecoder_nomessage)
 mkdir $WORKING/streams/apps/library_only
+echo "At the current time, these programs execute correctly only under" > $WORKING/streams/apps/library_only/README
+echo "the Java library, which is invoked using 'strc -library Filename.str'." >> $WORKING/streams/apps/library_only/README
+echo "They will run much faster once they are supported by the compiler." >> $WORKING/streams/apps/library_only/README
 mv $WORKING/streams/apps/benchmarks/jpeg $WORKING/streams/apps/library_only/
 mv $WORKING/streams/apps/benchmarks/mpeg2 $WORKING/streams/apps/library_only/
-rm -f $WORKING/streams/apps/library_only/mpeg2/streamit/README-nomessage-noparser
 
 mkdir -p $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit
 cp $WORKING/streams/apps/library_only/mpeg2/streamit/{Makefile,MPEGdecoder_nomessage.str.pre,MPEGglobal.str.pre,ColorSpace.str,Misc.str,BinaryFile.str.pre} $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/
-# rename the README to be something reasonable
-mv $WORKING/streams/apps/library_only/mpeg2-subset/README-nomessage-noparser $WORKING/streams/apps/library_only/mpeg2-subset/README
+# move the nomessage/noparser README and rename it to something reasonable
+mv $WORKING/streams/apps/library_only/mpeg2/streamit/README-nomessage-noparser $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/README
 # share the "input" directory between mpeg2-subset and mpeg2 using a symlink
-ln -s ../../../library-only/mpeg2/input $WORKING/streams/apps/benchmarks/mpeg2-subset/input
+ln -s ../../library_only/mpeg2/input $WORKING/streams/apps/benchmarks/mpeg2-subset/input
 
 ### anything under examples other than cookbook becomes examples/misc
 mkdir -p $WORKING/streams/apps/examples/misc
@@ -344,7 +346,7 @@ rm -f $WORKING/streams/docs/syntax/02-04-24-additions
 rm -f $WORKING/streams/docs/syntax/02-08-additions
 rm -f $WORKING/streams/docs/syntax/messaging.tex
 # the implementation notes are largely obsolete or irrelevant
-rm -f $WORKING/streams/docs/implementation-notes
+rm -rf $WORKING/streams/docs/implementation-notes
 
 # Release 2.1 version of language
 mv $WORKING/streams/docs/syntax/streamit-lang-2.1.tex $WORKING/streams/docs/syntax/streamit-lang.tex 

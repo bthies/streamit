@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.69 2006-09-06 20:16:01 thies Exp $
+# $Id: release.sh,v 1.70 2006-09-06 20:41:38 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -190,7 +190,9 @@ rm -rf $WORKING/streams/apps/benchmarks/fir
 # FIR bank might be proprietary, and besides it has 5 MB
 # of coefficients and we don't compile it well yet
 rm -rf $WORKING/streams/apps/benchmarks/firbank
-rm -rf $WORKING/streams/apps/benchmarks/gsm/c
+# does not verify
+#rm -rf $WORKING/streams/apps/benchmarks/gsm/c
+rm -rf $WORKING/streams/apps/benchmarks/gsm
 # this is only relevant for spacedynamic backend, so don't release
 rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
 rm -rf $WORKING/streams/apps/benchmarks/micro04

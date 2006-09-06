@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.21 2006-09-05 19:40:19 dimock Exp $
+dnl $Id: configure.in,v 1.22 2006-09-06 19:29:01 thies Exp $
 dnl
 dnl use without java macros (current):
 dnl autoconf configure.in > configure
@@ -187,7 +187,7 @@ AC_MSG_WARN(
 [You don't seem to have the fftw library installed, or maybe
 it's not built properly for single-precision floats.  The uniprocessor
 C library will be built to not use fftw for Fourier transforms, but this
-means that the --frequencyreplacement and --linearreplacement options
+means that the --frequencyreplacement and --linearpartition options
 will fail.])
 fi
 

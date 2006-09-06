@@ -260,7 +260,7 @@ int->int filter IndividualMotionVectorDecode(int macro_width) {
         }
     }
 
-    phase oneBlock pop 2 push 1 {
+    void oneBlock() pop 2 push 1 {
         int motion_code = pop();
         int motion_residual = pop();
         int r_size = f_code - 1;
@@ -311,7 +311,7 @@ int->int filter IndividualMotionVectorEncode(int macro_width, int vector_type) {
         }
     }
 
-    phase oneBlock pop 2 push 2 {
+    void oneBlock() pop 2 push 2 {
         int r_size = f_code-1;
         int f = 1 << r_size;
         int high = (16*f)-1;
@@ -828,9 +828,6 @@ int->int pipeline ReorderPictures(int width,
         // and its implementation - in particular the vbv buffer concept might come into play here, but
         // I'll worry about that later TODO.
 
-        // FEATURETODO - change when phases can take parameters
-        int PushAheadFrameThrough_nextIPframe;
-        
         int picture_data_size_temp = picture_data_size+2; // TODO temp
 
         prework push picture_data_size_temp {
@@ -847,25 +844,24 @@ int->int pipeline ReorderPictures(int width,
                 nextIPframe++;
             }
             // Push that frame through
-            PushAheadFrameThrough_nextIPframe = nextIPframe;
-            PushAheadFrameThrough();
+            PushAheadFrameThrough(nextIPframe);
             while (peek(1) == 3) {
                 PushFrameThrough();
             }
             PopFrameOff();
         }
 
-        phase PushAheadFrameThrough push picture_data_size_temp pop * {
+        void PushAheadFrameThrough(int nextIPframe) push picture_data_size_temp pop * {
             for (int i = 0; i < picture_data_size_temp; i++) {
-                push(peek(PushAheadFrameThrough_nextIPframe*picture_data_size_temp+i));
+                push(peek(nextIPframe*picture_data_size_temp+i));
             }
         }
 
-        phase PushFrameThrough push picture_data_size_temp pop picture_data_size_temp {
+        void PushFrameThrough() push picture_data_size_temp pop picture_data_size_temp {
             pushpop(picture_data_size_temp);
         }
 
-        phase PopFrameOff pop picture_data_size_temp {
+        void PopFrameOff() pop picture_data_size_temp {
             deadpop(picture_data_size_temp);
         }
     }

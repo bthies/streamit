@@ -1,0 +1,16 @@
+This benchmark represents a subset of the MPEG-2 decoder that can be
+processed by the current StreamIt compiler.
+
+This subset lacks the following functionality:
+1. Parsing of the MPEG file
+2. Motion compensation
+
+The first limitation implies that this benchmark reads in pre-parsed
+data for a fixed input file.  If you wish to run on different data,
+you can run a fresh MPEG file through the parser using the Java
+library.  The parser represents approximately 1/3rd of the computation
+in MPEG decoding.
+
+The second limitation implies that only I frames are handled (not P or
+B frames).  As most MPEG files have P and B frames, you may need to
+manually remove them if processing a new data file.

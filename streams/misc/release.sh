@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.68 2006-09-06 08:36:23 thies Exp $
+# $Id: release.sh,v 1.69 2006-09-06 20:16:01 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -19,7 +19,7 @@ VERSION=2.1
 #VERSION=2.0.`date +%Y%m%d`
 TAG=HEAD
 
-test -z "$TMPDIR" && TMPDIR=/home/bits6/NO_BACKUP/thies
+test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 CVSROOT="-d /projects/raw/cvsroot"
 
@@ -169,6 +169,8 @@ rm -rf $WORKING/streams/apps/benchmarks/beamformer/streamit/MyPartition2.java
 
 # should asplos06 benchmarks be released separately?
 #rm -rf $WORKING/streams/apps/benchmarks/asplos06
+# rename "mpeg2" to "mpeg2-subset" to make it clear it's subsetting
+mv $WORKING/streams/apps/benchmarks/asplos06/mpeg2 $WORKING/streams/apps/benchmarks/asplos06/mpeg2-subset
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
 # internal testing.
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-superset

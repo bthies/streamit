@@ -74,19 +74,27 @@ public class FixedBufferTape {
     }
     
     // for a filter: max number of items popped in init or steady phases.
-    // of a two stage filter, then check to see if prework pops more.
     static private int sizeFilter(FlatNode src, FlatNode dst) {
         SIRFilter f = (SIRFilter)dst.contents;
-        // the maximum number of items popped in init or steady phases
-        int size = Math.max(getMult(dst,true), getMult(dst,false)) 
-                    * f.getPopInt();
+        // size of init, steady stages
+        int initSize, steadySize;
+        // calculate initSize
+        int mult = getMult(dst,true);
+        initSize = mult * f.getPopInt();
         if (f instanceof SIRTwoStageFilter) {
-            // if f is a two stage filter, it is possible that 
-            // the single execution of prework will pop more than
-            // init or steady phases.
-            SIRTwoStageFilter t = (SIRTwoStageFilter)f;
-            size = Math.max(size, t.getInitPopInt()); 
+            // must fire in init stage if we're a two-stage filter
+            assert mult > 0;
+            // first firing is prework, not work
+            initSize = ( initSize 
+                         + ((SIRTwoStageFilter)f).getInitPopInt() 
+                         - f.getPopInt() );
         }
+        // calculate steadySize
+        steadySize = getMult(dst,false) * f.getPopInt();
+ 
+        // the maximum number of items popped in init or steady phases
+        int size = Math.max(initSize, steadySize);
+
         return size + leftoveritems(src,dst);
     }
    

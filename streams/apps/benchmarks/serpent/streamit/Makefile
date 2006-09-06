@@ -1,5 +1,6 @@
 SOURCES = Serpent.str L.str Utils.str Keys.str Source.str Statics.str
-BACKEND = -simpleC
+BACKEND = 
+#-simpleC
 
 all: serpent
 

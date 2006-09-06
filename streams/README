@@ -3,9 +3,9 @@ This file describes the contents of the CVS Streams repository:
 streams/apps		Applications written in StreamIt.
 streams/docs		Publications, internal documents.
 streams/include         Common files used for StreamIt development (shell includes, bc devices).
-streams/knit            StreamIt tool chain integrator -- "knit Program.str" compiles stuff
-streams/library/c       C runtime system for running compiler's uniprocessor output.
-streams/library/c       C runtime system for running compiler's cluster output.
+streams/strc            StreamIt tool chain integrator -- "strc Program.str" compiles stuff
+streams/library/c       C runtime system for running compiler's obsolete uniprocessor output.
+streams/library/cluster C runtime system for running compiler's uniprocessor and cluster output.
 streams/misc		Code stuff that doesn't belong anywhere else.
 streams/prj.el          StreamIt configuration information for JDEE development environment (dmaze)
 streams/README          This file

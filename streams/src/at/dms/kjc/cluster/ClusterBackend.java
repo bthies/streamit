@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.110 2006-08-30 07:50:06 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.111 2006-09-06 19:50:52 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -198,7 +198,7 @@ public class ClusterBackend {
         // canonicalize stream graph, reorganizing some splits and joins
         Lifter.liftAggressiveSync(str);
 
-        StreamItDot.printGraph(str, "canonical-graph.str");
+        StreamItDot.printGraph(str, "canonical-graph.dot");
 
         // gather application-characterization statistics
         if (KjcOptions.stats) {

@@ -136,7 +136,7 @@ public class StrToRStream {
         ConvertFileFilters.doit(str);
 
         Lifter.liftAggressiveSync(str);
-        StreamItDot.printGraph(str, "canonical-graph.str");
+        StreamItDot.printGraph(str, "canonical-graph.dot");
 
         //mgordon: I don't know, I could forsee the linear analysis 
         //and the statespace analysis being useful to Reservoir in the 

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.66 2006-09-05 21:51:10 thies Exp $
+# $Id: release.sh,v 1.67 2006-09-06 07:38:21 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -261,9 +261,9 @@ rm -rf $WORKING/streams/apps/applications
 #rm -rf $WORKING/streams/apps/applications/video
 
 ### libraries
-
-# don't release some C++ software radio thing (?)
-rm -rf $WORKING/streams/apps/libraries/SoftRadio
+# these might be reasonable to release, but are untested and are not
+# used by any apps
+rm -rf $WORKING/streams/apps/libraries
 
 #
 # restructure 
@@ -273,9 +273,14 @@ rm -rf $WORKING/streams/apps/libraries/SoftRadio
 mkdir $WORKING/streams/apps/library_only
 mv $WORKING/streams/apps/benchmarks/jpeg $WORKING/streams/apps/library_only/
 mv $WORKING/streams/apps/benchmarks/mpeg2 $WORKING/streams/apps/library_only/
+rm -f $WORKING/streams/apps/library_only/mpeg2/streamit/README-nomessage-noparser
 
-mkdir -p $WORKING/streams/apps/benchmarks/mpeg2/streamit
-cp $WORKING/streams/apps/library_only/mpeg2/streamit/{Makefile,MPEGdecoder_nomessage.str.pre,MPEGglobal.str.pre,ColorSpace.str,Misc.str,BinaryFile.str.pre} $WORKING/streams/apps/benchmarks/mpeg2/streamit/
+mkdir -p $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit
+cp $WORKING/streams/apps/library_only/mpeg2/streamit/{Makefile,MPEGdecoder_nomessage.str.pre,MPEGglobal.str.pre,ColorSpace.str,Misc.str,BinaryFile.str.pre} $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/
+# rename the README to be something reasonable
+mv $WORKING/streams/apps/library_only/mpeg2-subset/README-nomessage-noparser $WORKING/streams/apps/library_only/mpeg2-subset/README
+# share the "input" directory between mpeg2-subset and mpeg2 using a symlink
+ln -s ../../../library-only/mpeg2/input $WORKING/streams/apps/benchmarks/mpeg2-subset/input
 
 ### anything under examples other than cookbook becomes examples/misc
 mkdir -p $WORKING/streams/apps/examples/misc
@@ -335,14 +340,11 @@ rm -rf $WORKING/streams/misc/raw/pca-mm
 rm -rf $WORKING/streams/misc/raw/darpa
 
 # Some parts of the language notes we don't want to be visible
-#rm -f $WORKING/streams/docs/syntax/02-04-24-additions
-#rm -f $WORKING/streams/docs/syntax/02-08-additions
-#rm -f $WORKING/streams/docs/syntax/messaging.tex
-rm -f $WORKING/streams/docs/implementation-notes/assumptions
-rm -f $WORKING/streams/docs/implementation-notes/immutable-ir.txt
-rm -f $WORKING/streams/docs/implementation-notes/low-ir.txt
-rm -f $WORKING/streams/docs/implementation-notes/messaging-implementation.txt
-rm -f $WORKING/streams/docs/implementation-notes/portals.txt
+rm -f $WORKING/streams/docs/syntax/02-04-24-additions
+rm -f $WORKING/streams/docs/syntax/02-08-additions
+rm -f $WORKING/streams/docs/syntax/messaging.tex
+# the implementation notes are largely obsolete or irrelevant
+rm -f $WORKING/streams/docs/implementation-notes
 
 # Release 2.1 version of language
 mv $WORKING/streams/docs/syntax/streamit-lang-2.1.tex $WORKING/streams/docs/syntax/streamit-lang.tex 

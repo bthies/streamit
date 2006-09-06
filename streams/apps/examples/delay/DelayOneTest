@@ -1,9 +1,0 @@
-/* Use "make DelayOneTest.str" to concatenate this with other code to make
- * a test harness for DelayOne.str
- */
-
-void->void pipeline DelayOneTest {
-    add FloatSeqSource(1.0, 1.0);
-    add DelayOne;
-    add FloatPrinter;
-}

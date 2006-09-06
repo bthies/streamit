@@ -1,9 +1,0 @@
-/* Use "make DelayManyTest.str" to concatenate this with other code to make
- * a test harness for DelayMany.str (delaying by 5).
- */
-
-void->void pipeline DelayManyTest {
-    add FloatSeqSource(1.0, 1.0);
-    add DelayMany(5);
-    add FloatPrinter;
-}

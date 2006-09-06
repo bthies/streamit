@@ -144,20 +144,26 @@ public class FixedBufferTape {
        else if (dst.isJoiner())   remaining = leftoveritemsJoiner(src,dst);
        else {assert false; remaining = -1;}
        
-       // If src is a two-stage filter then its pre-work function is executed once
-       // after init but before work.  The execution of a pre-work function may
-       // increase or decrease number of remaining items for the dst's work (or pre-work).
-       // Since we are looking for the worst case excess after init or after pre-work,
-       // we only care if pre-work increases the number of remaining items.
-       if (src.contents instanceof SIRTwoStageFilter) {
-           SIRTwoStageFilter f = (SIRTwoStageFilter)src.contents;
-           remaining += f.getInitPushInt();
-           // this is a safe overestimate.  In fact, dst may consume some items
-           // before src pushes these items.
-       }
        return remaining;
     }
-    
+
+    /**
+     * Returns the number of items pushed from <src> to <dst> during
+     * the initialization stage.
+     */
+    static private int getInitItemsPushed(FlatNode src, FlatNode dst) {
+        int mult = getMult(src, true);
+        if (src.contents instanceof SIRTwoStageFilter) {
+            SIRTwoStageFilter t = (SIRTwoStageFilter)src.contents;
+            assert mult > 0;
+            // replace one steady-state firing with the prework firing
+            return t.getInitPushInt() + (mult-1) * t.getPushInt();
+        } else {
+            // otherwise use the steady-state firing everywhere
+            return mult * FlatNode.getItemsPushed(src, dst);
+        }
+    }
+
    // filter: leftover that must be accounted for =
    // number produced by all iterations of init at src 
    //   - number consumed by all iterations of init at dst.
@@ -165,7 +171,13 @@ public class FixedBufferTape {
         assert dst.incoming[0] == src;
         SIRFilter f = (SIRFilter)dst.contents;
         int dstConsume = getMult(dst, true) * f.getPopInt();
-        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        // if two stage filter, then count one execution as prework
+        // instead of work
+        if (f instanceof SIRTwoStageFilter) {
+            SIRTwoStageFilter t = (SIRTwoStageFilter)f;
+            dstConsume = dstConsume + t.getInitPopInt() - t.getPopInt();
+        }
+        int srcProduce = getInitItemsPushed(src,dst);
         int remaining = srcProduce - dstConsume;
         // assertion should be true since if work peeks more than it pops then
         // it requires an init phase.  (However, some dynamic rate managment policies
@@ -183,7 +195,7 @@ public class FixedBufferTape {
     static private int leftoveritemsSplitter(FlatNode src, FlatNode dst) {
         assert dst.incoming[0] == src;
         int dstConsume = getMult(dst, true) * distinctRoundRobinItems(dst);
-        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        int srcProduce = getInitItemsPushed(src,dst);
         int remaining = srcProduce - dstConsume;
         assert remaining >= 0;
         return remaining;
@@ -197,7 +209,7 @@ public class FixedBufferTape {
     static private int leftoveritemsJoiner(FlatNode src, FlatNode dst) {
         int incomingWeight = dst.getIncomingWeight(src);  // or error if no connection.
         int dstConsume = getMult(dst, true) * incomingWeight;
-        int srcProduce = FlatNode.getItemsPushed(src,dst) * getMult(src,true);
+        int srcProduce = getInitItemsPushed(src,dst);
         int enqueued = 0;
         if (dst.isFeedbackJoiner() && src == dst.incoming[1]) {
             // if feedback edge on feedback loop then account for enqueued values

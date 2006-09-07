@@ -22,6 +22,8 @@ def main():
         else:
             lastdir = ''
         prefix = os.path.commonprefix([lastdir, dirname])
+        # eliminate chars after last /
+        prefix = prefix[0:prefix.rfind("/")]
         preparts = splitall(prefix)
         dirparts = splitall(dirname)
         for (d,t) in dirs[len(preparts):]:

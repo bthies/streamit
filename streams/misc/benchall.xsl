@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.5 2003-10-18 08:50:06 rabbah Exp $
+  $Id: benchall.xsl,v 1.6 2006-09-07 21:07:01 thies Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -19,7 +19,8 @@
 -->
 
 <xsl:stylesheet version="1.0"
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:file="java.io.File">
 
   <xsl:template match="/benchset">
     <html>
@@ -118,23 +119,25 @@
       </xsl:if>
       <xsl:text>/</xsl:text>
     </xsl:variable>
-    <tr>
-      <td valign="top" align="left"><b><xsl:value-of select="@lang"/></b></td>
-      <td valign="top" align="left">
-	<xsl:for-each select="file">
-	  <xsl:element name="a">
-            <xsl:attribute name="href">
-              <xsl:value-of select="concat($path,.)"/>
-            </xsl:attribute>
-            <xsl:value-of select="."/>
-          </xsl:element>
-          <xsl:text> </xsl:text>
-	</xsl:for-each>
-        <xsl:if test="desc">(<xsl:value-of select="desc"/>)<br/></xsl:if>
-      </td>
-    </tr>
+    <!-- Do not describe files that don't exist -->
+    <xsl:variable name="fileName" select="file"/>
+    <xsl:variable name="fullName" select="concat($path,$fileName)"/>
+    <xsl:if test="file:exists(file:new($fullName))">
+      <tr>
+        <td valign="top" align="left"><b><xsl:value-of select="@lang"/></b></td>
+        <td valign="top" align="left">
+  	<xsl:for-each select="file">
+  	  <xsl:element name="a">
+              <xsl:attribute name="href">
+                <xsl:value-of select="concat($path,.)"/>
+              </xsl:attribute>
+              <xsl:value-of select="."/>
+            </xsl:element>
+            <xsl:text> </xsl:text>
+  	</xsl:for-each>
+          <xsl:if test="desc">(<xsl:value-of select="desc"/>)<br/></xsl:if>
+        </td>
+      </tr>
+    </xsl:if>
   </xsl:template>
 </xsl:stylesheet>
-
-
-

@@ -97,9 +97,9 @@ export PATH=${JAVA_HOME}/bin:${PATH}
 # Perl on RHEL-3
 if [ -z "$PERL5LIB" ]
 then
-    export PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:
+    export PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi
 else
-    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:${PERL5LIB}
+    PERL5LIB=/usr/uns/encap/perl-5.8.0/lib/5.8.0/:/usr/uns/lib/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0:/home/streamit/lib/perl5/site_perl/5.8.0/i386-linux-thread-multi:${PERL5LIB}
 fi
 
 # include extra LaTeX packages

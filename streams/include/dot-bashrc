@@ -28,6 +28,13 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jgraph/jgraph.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/JFlex/jflex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/3rdparty/jcc/jcc.jar
 
+# xalan classes, for building benchmarks.html in release
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/serializer.jar 
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xalan.jar      
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xercesImpl.jar 
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xml-apis.jar   
+CLASSPATH=${CLASSPATH}:/home/streamit/lib/xalan-j_2_7_0/xsltc.jar      
+
 # use gcc34 as our gcc and g++
 alias gcc='gcc34'
 alias g++='gcc34'

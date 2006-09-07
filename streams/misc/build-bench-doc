@@ -2,12 +2,10 @@
 #
 # build-bench-doc: generate HTML documentation for StreamIt benchmarks
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-bench-doc,v 1.2 2006-09-07 21:07:01 thies Exp $
+# $Id: build-bench-doc,v 1.3 2006-09-07 21:16:16 thies Exp $
 
-XSLTPROC=xsltproc
 PYTHON=python
 
 cd $STREAMIT_HOME/apps
 $PYTHON $STREAMIT_HOME/misc/build-bench-xml.py > benchall.xml
 java org.apache.xalan.xslt.Process -IN benchall.xml -XSL $STREAMIT_HOME/misc/benchall.xsl -OUT benchmarks.html
-$XSLTPROC $STREAMIT_HOME/misc/benchall.xsl benchall.xml > benchmarks.html

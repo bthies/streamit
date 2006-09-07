@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.70 2006-09-06 20:41:38 thies Exp $
+# $Id: release.sh,v 1.71 2006-09-07 01:02:28 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -179,6 +179,10 @@ rm -rf $WORKING/streams/apps/benchmarks/cfar
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/input
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/output
 rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/streamit/iDCTcompare.str
+# this prints mismatches, which is disconcerting
+rm -rf $WORKING/streams/apps/benchmarks/dct_ieee/streamit/DCTverify.str
+# note that this is just a library
+echo "DCT.str provides a library of filters for use in other applications (e.g., MPEG)" > $WORKING/streams/apps/benchmarks/dct_ieee/streamit/README
 # complex FIR is fine but was a simple benchmarking exercise, 
 #   seems redundant with "fir"
 rm -rf $WORKING/streams/apps/benchmarks/complex-fir
@@ -287,6 +291,10 @@ cp $WORKING/streams/apps/library_only/mpeg2/streamit/{Makefile,MPEGdecoder_nomes
 mv $WORKING/streams/apps/library_only/mpeg2/streamit/README-nomessage-noparser $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/README
 # share the "input" directory between mpeg2-subset and mpeg2 using a symlink
 ln -s ../../library_only/mpeg2/input $WORKING/streams/apps/benchmarks/mpeg2-subset/input
+# make the default target to be nomessage
+perl -pi -e 's/default\:\ .*/default\:\ nomessage/g' $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/Makefile
+# make the default strc options to be a plain compile
+perl -pi -e 's/STRC_OPTIONS\ \=\ .*/STRC_OPTIONS\ \= \ /g' $WORKING/streams/apps/benchmarks/mpeg2-subset/streamit/Makefile
 
 ### anything under examples other than cookbook becomes examples/misc
 mkdir -p $WORKING/streams/apps/examples/misc

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.74 2006-09-08 17:59:57 thies Exp $
+# $Id: release.sh,v 1.75 2006-09-08 19:54:59 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -60,9 +60,9 @@ WORKING=$TMPDIR/streamit-$USER-$$
 mkdir $WORKING
 SRCDIR=$WORKING/streams
 STREAMIT_HOME=$SRCDIR
-SRCTAR=$WORKING/streamit-src-$VERSION.tgz
+SRCTAR=$WORKING/streamit-src-$VERSION.tar.gz
 BINDIR=$WORKING/streamit-$VERSION
-BINTAR=$WORKING/streamit-$VERSION.tgz
+BINTAR=$WORKING/streamit-$VERSION.tar.gz
 export STREAMIT_HOME
 
 # Helper function to add a list of directories to $DIRS

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.35 2006-03-25 00:07:59 dimock Exp $
+ * $Id: FieldProp.java,v 1.36 2006-09-08 13:49:17 dimock Exp $
  */
 public class FieldProp implements Constants
 {
@@ -133,9 +133,12 @@ public class FieldProp implements Constants
         // Having recursed, do the flattening, if it's appropriate.
         // if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
         {
-            // Run propagate twice, just to be sure.
+            // RMR { _should_ run propagate until no more constants are detected
             new FieldProp().propagate(str);
             new FieldProp().propagate(str);
+            new FieldProp().propagate(str);
+            // } RMR
+
             // Run the unroller...
             Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
@@ -653,8 +656,7 @@ public class FieldProp implements Constants
                     }
                 }
 
-                public Object visitArrayAccessExpression(
-                                                         JArrayAccessExpression self, JExpression prefix,
+                public Object visitArrayAccessExpression(JArrayAccessExpression self, JExpression prefix,
                                                          JExpression accessor) {
                     JExpression newPfx = (JExpression)prefix.accept(this);
                     if (newPfx != null && newPfx != prefix) {

@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.7 2006-09-08 01:29:57 thies Exp $
+  $Id: benchall.xsl,v 1.8 2006-09-08 18:51:52 thies Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -124,7 +124,7 @@
     <!-- Do not describe files that don't exist -->
     <xsl:variable name="allFiles" select="file"/>
     <!-- We only want one filename because we're going to be testing for its existence -->
-    <xsl:variable name="firstFile" select="substring-before($allFiles,' ')"/>
+    <xsl:variable name="firstFile" select="substring-before(concat($allFiles,' '),' ')"/>
     <xsl:variable name="fullName" select="concat($path,$firstFile)"/>
     <xsl:if test="file:exists(file:new($fullName))">
       <tr>

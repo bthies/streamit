@@ -14,13 +14,13 @@
     </impl>
 <!-- Extra compile time for gcc'ing threads on cluster -->
     <impl lang="StreamIt" dir="streamit" id="bitonic" compile_time="2400">
-      <desc>(StreamIt benchmark as described above.)</desc>
+      <desc>StreamIt benchmark as described above.</desc>
       <file class="source">BitonicSort.str</file>
       <file class="output">BitonicSort.out</file>
       <desc>Original implementation</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="recursive">
-      <desc>(Recursive implementation.)</desc>
+      <desc>Recursive implementation.</desc>
       <file class="source">BitonicSortRecursive.str</file>
       <file class="output">BitonicSort.out</file>
     </impl>

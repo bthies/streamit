@@ -17,8 +17,7 @@ way as to accept its data.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="tde-pp" compile_time="4800" run_time="3600">
       <file>tde_pp.str</file>
-      <desc>
-Pipeline-parallel version of the application that is a more natural
+      <desc>Pipeline-parallel version of the application that is a more natural
 fit to StreamIt.  There is some data-parallelism available by setting
 parameters in tde_pp.str, which allows us to increase the number of
 filters for use in performance studies.  This version canonicalizes

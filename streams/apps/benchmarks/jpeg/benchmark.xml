@@ -20,14 +20,14 @@ handled in the Makefile.
 -->
     <impl lang="StreamIt" dir="streamit" id="transcoder" iters="2">
       <whichtype>releasetest</whichtype>
-      <desc>(StreamIt version of JPEG encoder/decoder.)</desc>
+      <desc>StreamIt version of JPEG encoder/decoder.</desc>
       <make>Makefile input.jpg.int</make>
       <file class="source">Transcoder.str ../../dct_ieee/streamit/DCT.str</file>
       <file class="data">input.jpg.int</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="jpegtobmp" iters="2">
       <whichtype>releasetest</whichtype>
-      <desc>(StreamIt version of JPEG decoder to .bmp.)</desc>
+      <desc>StreamIt version of JPEG decoder to .bmp.</desc>
       <make>Makefile input.jpg.int</make>
       <file class="source">JPEGtoBMP.str</file>
       <file class="data">input.jpg.int</file>

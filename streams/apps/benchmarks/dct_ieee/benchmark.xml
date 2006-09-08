@@ -14,24 +14,19 @@ can be found in Appendix A of the MPEG-2 specification (ISO/IEC
   <implementations>
     <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>DCT.str</file>
-      <desc>
-
-      Contains a library of DCT and iDCT implementations.  There are
+      <desc>Contains a library of DCT and iDCT implementations.  There are
       two versions of iDCT: a reference version (based on the C
       reference code for MPEG) and a fast version (an integer iDCT
       that uses bit-twiddling, but does not have the floating point
       precision of the reference codes).  There are also fine-grained
       versions of each implementation, which decompose the problem
-      into sub-problems using splitjoins.
-      </desc>
+      into sub-problems using splitjoins.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" regtest="skip">
       <file>iDCTcompare.str</file>
-      <desc>
-(This runs the numbers through both the
+      <desc>This runs the numbers through both the
 reference DCT components and the fast DCT components and reports
-discrepancies between the two.)
-      </desc>
+discrepancies between the two.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="dctcompare"  iters="1">
       <file class="source">iDCTcompare.str DCT.str</file>

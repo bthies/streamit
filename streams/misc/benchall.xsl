@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.6 2006-09-07 21:07:01 thies Exp $
+  $Id: benchall.xsl,v 1.7 2006-09-08 01:29:57 thies Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -20,7 +20,9 @@
 
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:file="java.io.File">
+  xmlns:file="java.io.File"
+  xmlns:string="java.lang.String"
+  xmlns:str="http://exslt.org/strings">
 
   <xsl:template match="/benchset">
     <html>
@@ -35,8 +37,8 @@
             <col align="char" char="."/> 
           </colgroup> 
           <tbody> 
- 	      <tr height="150">
-	      <h3>StreamIt Benchmarks</h3>
+              <tr height="150">
+              <h3>StreamIt Benchmarks</h3>
             </tr>
           </tbody> 
         </table>
@@ -52,7 +54,7 @@
          directory node, but only if there are subdirectories. -->
     <xsl:if test="dir and @name != '.'">
       <xsl:element name="h{$depth}">
-	  <!-- <xsl:value-of select="@name"/> -->
+          <!-- <xsl:value-of select="@name"/> -->
       </xsl:element>
     </xsl:if>
     <xsl:apply-templates>
@@ -75,8 +77,8 @@
         <thead> 
           <tr>
             <th colspan="2" bgcolor="#C0C0C0" align="left">
-	      <xsl:value-of select="name"/> - <xsl:value-of select="desc"/>
-   	    </th> 
+              <xsl:value-of select="name"/> - <xsl:value-of select="desc"/>
+            </th> 
           </tr> 
         </thead> 
         <tbody> 
@@ -84,10 +86,10 @@
             <td width="15%" valign="top" align="left"><b>Description</b></td> 
             <td align="justify"><xsl:value-of select="description"/></td>
           </tr> 
-	  <xsl:apply-templates select="reference"/>
-	  <xsl:apply-templates select="implementations">
+          <xsl:apply-templates select="reference"/>
+          <xsl:apply-templates select="implementations">
             <xsl:with-param name="subdir" select="$subdir"/>
-     	  </xsl:apply-templates>
+          </xsl:apply-templates>
         </tbody> 
       </table>
     </xsl:element>
@@ -120,21 +122,29 @@
       <xsl:text>/</xsl:text>
     </xsl:variable>
     <!-- Do not describe files that don't exist -->
-    <xsl:variable name="fileName" select="file"/>
-    <xsl:variable name="fullName" select="concat($path,$fileName)"/>
+    <xsl:variable name="allFiles" select="file"/>
+    <!-- We only want one filename because we're going to be testing for its existence -->
+    <xsl:variable name="firstFile" select="substring-before($allFiles,' ')"/>
+    <xsl:variable name="fullName" select="concat($path,$firstFile)"/>
     <xsl:if test="file:exists(file:new($fullName))">
       <tr>
         <td valign="top" align="left"><b><xsl:value-of select="@lang"/></b></td>
         <td valign="top" align="left">
-  	<xsl:for-each select="file">
-  	  <xsl:element name="a">
-              <xsl:attribute name="href">
-                <xsl:value-of select="concat($path,.)"/>
-              </xsl:attribute>
-              <xsl:value-of select="."/>
-            </xsl:element>
-            <xsl:text> </xsl:text>
-  	</xsl:for-each>
+        <xsl:for-each select="file">
+          <!-- some benchmarks have multiple files.  deal with each separately. -->
+          <xsl:for-each select="str:tokenize(., ' ')">
+            <!-- do not print .out files -->
+            <xsl:if test="not(string:endsWith(string(.), '.out'))">
+              <xsl:element name="a">
+                <xsl:attribute name="href">
+                  <xsl:value-of select="concat($path,.)"/>
+                </xsl:attribute>
+                <xsl:value-of select="string:substring(string(.),1+string:lastIndexOf(string(.),'/'))"/>
+              </xsl:element>
+              <xsl:text> </xsl:text>
+            </xsl:if>
+          </xsl:for-each>
+        </xsl:for-each>
           <xsl:if test="desc">(<xsl:value-of select="desc"/>)<br/></xsl:if>
         </td>
       </tr>

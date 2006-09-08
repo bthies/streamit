@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.36 2006-09-08 13:49:17 dimock Exp $
+ * $Id: FieldProp.java,v 1.37 2006-09-08 16:09:07 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -128,17 +128,13 @@ public class FieldProp implements Constants
 
     public static SIRStream doPropagateNotRecursive(SIRStream str,
                                                     boolean unrollOuterLoops, boolean removeDeadFields) {
-        FieldProp lastProp = new FieldProp();
+        // Propagate fields once (resolves params to filters)
+        new FieldProp().propagate(str);
 
-        // Having recursed, do the flattening, if it's appropriate.
-        // if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
-        {
-            // RMR { _should_ run propagate until no more constants are detected
-            new FieldProp().propagate(str);
-            new FieldProp().propagate(str);
-            new FieldProp().propagate(str);
-            // } RMR
-
+        // unroll and propagate to a fixed point
+        FieldProp lastProp;
+        boolean stillPropagating;
+        do {
             // Run the unroller...
             Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
@@ -147,10 +143,10 @@ public class FieldProp implements Constants
                     str.getMethods()[i].accept(unroller);
                 } while (unroller.hasUnrolled());
             }
-            // Then try to propagatate again.
-            lastProp.propagate(str);
-        }
-
+            // Propagate fields...
+            lastProp = new FieldProp();
+            stillPropagating = lastProp.propagate(str);
+        } while (stillPropagating);
         
         // Remove uninvalidated fields
         if (removeDeadFields) {
@@ -260,21 +256,36 @@ public class FieldProp implements Constants
     }
 
     /**
-     * Does the actual work on <filter>.
+     * Does the actual work on <filter>.  Propagates constants within
+     * this filter to a fixed point.  Returns whether or not anything
+     * was propagated.
      */
-    private void propagate(SIRStream filter) {
-        findCandidates(filter);
+    private boolean propagate(SIRStream filter) {
+        boolean didPropagation = false;
+        do {
+            findCandidates(filter);
+            
+            // System.out.println("--------------------");
+            // System.out.println("Candidates Fields : ");
+            // Iterator keyIter = this.types.keySet().iterator();
+            // while (keyIter.hasNext()) {
+            //    Object f = */ keyIter.next();
+            //    System.out.println("Field: " + f + " " + this.types.get(f)
+            //      + " --> " + this.fields.get(f));
+            // }
 
-        // System.out.println("--------------------");
-        // System.out.println("Candidates Fields : ");
-        // Iterator keyIter = this.types.keySet().iterator();
-        // while (keyIter.hasNext()) {
-        //    Object f = */ keyIter.next();
-        //    System.out.println("Field: " + f + " " + this.types.get(f)
-        //      + " --> " + this.fields.get(f));
-        // }
+            long oldHash = HashLiterals.doit(filter);
+            doPropagation(filter);
+            long newHash = HashLiterals.doit(filter);
 
-        doPropagation(filter);
+            // if the literals in the filter didn't change, then quit
+            // propagating
+            if (oldHash == newHash)  break;
+
+            // mark that we did some propagating
+            didPropagation = true;
+        } while (true);
+        return didPropagation;
     }
     
     /** Helper function to determine if a field has been invalidated. 
@@ -624,6 +635,8 @@ public class FieldProp implements Constants
      * local (scalar) variables of the method that have a single
      * constant assignment.  A Propagator is also run over the
      * push / peek / pop expressions and the field initializers.
+     *
+     * Returns whether or not any field was propagated.
      */
     private void doPropagation(SIRStream filter) {
         JMethodDeclaration[] meths = filter.getMethods();
@@ -699,7 +712,8 @@ public class FieldProp implements Constants
         for (int i = 0; i < meths.length; i++) {
             meths[i].accept(theVisitor);
             // Also run some simple algebraic simplification now.
-            meths[i].accept(new Propagator(findLocals(meths[i])));
+            Propagator prop = new Propagator(findLocals(meths[i]));
+            meths[i].accept(prop); 
             // Raise Variable Declarations to beginning of block
             // meths[i].accept(new VarDeclRaiser());
         }
@@ -737,22 +751,19 @@ public class FieldProp implements Constants
                 JMethodDeclaration method = filter.getMethods()[j];
 
                 // pop
-                JExpression newPop = (JExpression) method.getPop().accept(
-                                                                          theVisitor);
+                JExpression newPop = (JExpression) method.getPop().accept(theVisitor);
                 newPop = (JExpression) newPop.accept(prop);
                 if (newPop != null && newPop != method.getPop()) {
                     method.setPop(newPop);
                 }
                 // peek
-                JExpression newPeek = (JExpression) method.getPeek().accept(
-                                                                            theVisitor);
+                JExpression newPeek = (JExpression) method.getPeek().accept(theVisitor);
                 newPeek = (JExpression) newPeek.accept(prop);
                 if (newPeek != null && newPeek != method.getPeek()) {
                     method.setPeek(newPeek);
                 }
                 // push
-                JExpression newPush = (JExpression) method.getPush().accept(
-                                                                            theVisitor);
+                JExpression newPush = (JExpression) method.getPush().accept(theVisitor);
                 newPush = (JExpression) newPush.accept(prop);
                 if (newPush != null && newPush != method.getPush()) {
                     method.setPush(newPush);

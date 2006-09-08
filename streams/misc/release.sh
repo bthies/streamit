@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.73 2006-09-08 17:25:46 dimock Exp $
+# $Id: release.sh,v 1.74 2006-09-08 17:59:57 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -13,7 +13,8 @@ set -v
 
 # For a version release
 VERSION=2.1
-TAG=RELEASE_2_1_01
+#TAG=RELEASE_2_1_01
+TAG=HEAD
 
 # For a snapshot release
 #VERSION=2.0.`date +%Y%m%d`
@@ -219,6 +220,8 @@ rm -rf $WORKING/streams/apps/benchmarks/vocoder
 ### examples
 
 rm -rf $WORKING/streams/apps/examples/chol-para
+# we have a merge sort in the "sorts" directory
+rm -rf $WORKING/streams/apps/examples/mergesort
 rm -rf $WORKING/streams/apps/examples/median
 rm -rf $WORKING/streams/apps/examples/phase
 rm -rf $WORKING/streams/apps/examples/sample-trellis

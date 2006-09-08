@@ -4,32 +4,30 @@
   <description>
 The JPEG Transcoder takes as input a JPEG image and then decodes it,
 specifies a much higher level of JPEG compression, and then re-encodes
-it as a JPEG.
-
-Other files: JPEGtoBMP.str produces output.bmp.int,
-JPEG.str does not compile   strc -library JPEG.str
-
-Transcoder_Raw.str is a version that prints numbers rather than messaged since
-the raw back end does not currently suport printing strings.
+it as a JPEG.  JPEGtoBMP.str converts a JPEG into a BMP
+(output.bmp.int).  Conversion of file format from bits to integers is
+handled in the Makefile.
   </description>
   <implementations>
+<!--
+   strc -library Transcoder.str -i1 does not seem to produce complete
+   output, but strc -library Transcoder.str -i2 does.  Check sometime
+   as to why this is so: it there a fencepost error in the StreamIt
+   code?.
+   After testing would want to look at output.jpg.int
+   For some reason, this is included in release testing, but not in
+   the nightly regression test.
+-->
     <impl lang="StreamIt" dir="streamit" id="transcoder" iters="2">
       <whichtype>releasetest</whichtype>
-      <desc>StreamIt version of JPEG decoder/encoder.
-            strc -library Transcoder.str -i1 does not seem to produce complete
-            output, but strc -library Transcoder.str -i2 does.  Check sometime
-            as to why this is so: it there a fencepost error in the StreamIt
-	    code?.
-            After testing would want to look at output.jpg.int
-	    For some reason, this is included in release testing, but not in
-	    the nightly regression test.</desc>
+      <desc>(StreamIt version of JPEG encoder/decoder.)</desc>
       <make>Makefile input.jpg.int</make>
-      <file class="source">Transcoder.str</file>
+      <file class="source">Transcoder.str ../../dct_ieee/streamit/DCT.str</file>
       <file class="data">input.jpg.int</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="jpegtobmp" iters="2">
       <whichtype>releasetest</whichtype>
-      <desc>StreamIt version of JPEG decoder to .bmp</desc>
+      <desc>(StreamIt version of JPEG decoder to .bmp.)</desc>
       <make>Makefile input.jpg.int</make>
       <file class="source">JPEGtoBMP.str</file>
       <file class="data">input.jpg.int</file>

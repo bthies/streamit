@@ -1,6 +1,6 @@
 <benchmark>
   <name>MergeSort</name>
-  <desc>Standard Merge Sort Algorithm</desc>
+  <desc>Standard merge sort algorithm</desc>
   <description>
   Sorting algorithm that splits unordered list into halves, recursively sorts them
   and then merges back to get the final sorted list.  Has algorithmic

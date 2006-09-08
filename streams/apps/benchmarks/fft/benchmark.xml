@@ -25,7 +25,7 @@
     </impl>
     <impl lang="StreamIt" dir="streamit" id="fft2">
       <desc>
-      Blocked, coarse-grained version for use as a benchmark.  Conceptually it is a single pipeline, but the main path is duplicated into a splitjoin to expose parallelism.  Inputs in natural order, outputs in natural order.
+      Blocked, coarse-grained version for use as a benchmark.  Conceptually it is a single pipeline, but the main path is duplicated into a splitjoin to expose parallelism.  Inputs in natural order, outputs in natural order.  This is the version that we typically use for benchmarking.
       </desc>
       <file class="source">FFT2.str</file>
       <file class="output">FFT2.out</file>
@@ -52,7 +52,7 @@
       <file class="output">FFT5.out</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="fft6">
-      <desc>.out file just generted by strc -library -i100, not checked for correctness</desc>
+      <desc>(Same as FFT2 but uses variables of type complex rather than float.)</desc>
       <file class="source">FFT6.str</file>
       <file class="output">FFT6.out</file>
     </impl>

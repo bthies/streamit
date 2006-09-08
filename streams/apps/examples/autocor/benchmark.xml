@@ -1,6 +1,6 @@
 <benchmark>
   <name>autocor</name>
-  <desc>Generate the autocorrelation of a series</desc>
+  <desc>Generates the autocorrelation of a series</desc>
   <description>
 This benchmark contains a filter, Cor1, which generates the
 autocorrelation series for some input.  The input is a series of

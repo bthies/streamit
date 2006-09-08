@@ -1,0 +1,13 @@
+<benchmark>
+  <name>delay</name>
+  <desc>Demonstration of delay filter</desc>
+  <description>
+Demonstration of a delay filter.  Uses a prework function
+to push N initial items before passing input to output.
+  </description>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>DelayTest.str</file>
+    </impl>
+  </implementations>
+</benchmark>

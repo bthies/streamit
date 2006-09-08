@@ -61,6 +61,11 @@ Someone want to write a detailed description?
       <file class="source">Test11.str</file>
       <file class="output">Test11.out</file>
     </impl>
+    <impl lang="StreamIt" id="test12">
+      <desc>Tests delivery of messages at iteration 0.</desc>
+      <file class="source">Test12.str</file>
+      <file class="output">Test12.out</file>
+    </impl>
     <impl lang="StreamIt" id="test_upstream">
       <desc>Someone want to write a description of this test?</desc>
       <file class="source">Test_Upstream.str</file>

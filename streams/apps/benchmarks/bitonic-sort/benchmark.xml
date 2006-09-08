@@ -10,19 +10,19 @@
   <implementations>
     <impl lang="C" dir="c">
       <file>bitonic.c</file>
+      <desc>(Hand-coded C version.)</desc>
     </impl>
+<!-- Extra compile time for gcc'ing threads on cluster -->
     <impl lang="StreamIt" dir="streamit" id="bitonic" compile_time="2400">
-      <desc>Extra compile time for gcc'ing threads on cluster
-            Extra run time on cluster</desc>
+      <desc>(StreamIt benchmark as described above.)</desc>
       <file class="source">BitonicSort.str</file>
       <file class="output">BitonicSort.out</file>
       <desc>Original implementation</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="recursive">
-      <desc>Extra run time on cluster</desc>
+      <desc>(Recursive implementation.)</desc>
       <file class="source">BitonicSortRecursive.str</file>
       <file class="output">BitonicSort.out</file>
-      <desc>Recursive implementation</desc>
     </impl>
   </implementations>
 </benchmark>

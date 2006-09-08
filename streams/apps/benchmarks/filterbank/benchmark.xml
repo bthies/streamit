@@ -1,16 +1,16 @@
 <benchmark>
   <name>filterbank</name>
-  <desc>Passes a signal through a filter bank</desc>
+  <desc>Filter bank for multirate signal processing</desc>
   <description>
 Creates a filter bank to perform multirate signal processing.  The
 coefficients for the sets of filters are created in the top-level init
-function, and passed down through the init functions to FirFilter
+function, and passed down through the init functions to FIR filter
 objects.  On each branch, a delay, filter, and downsample is
 performed, followed by an upsample, delay, and filter.
   </description>
   <implementations>
     <impl lang="C" dir="c">
-      <file>FilterBank.cpp</file>
+      <file>filterbank.c</file>
     </impl>
     <impl lang="StreamIt" dir="streamit">
       <file class="source">FilterBankNew.str</file>

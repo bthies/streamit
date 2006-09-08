@@ -1,6 +1,6 @@
 <benchmark>
   <name>BubbleSort</name>
-  <desc>Bubble Sorting Algorithm</desc>
+  <desc>Bubble sorting algorithm</desc>
   <description>
   Simple comparison based algorithm, compares each item with adjacent one,
   swapping their orders if required.  Causes larger values to "bubble" to

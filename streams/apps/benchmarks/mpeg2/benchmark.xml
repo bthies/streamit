@@ -3,21 +3,21 @@
   <desc>MPEG2 decoder/encoder</desc>
   <description>
 A MPEG2 encoder and two versions of a MPEG2 decoder.
-MPEGdecoder_nomessage does not use message passing.
-MPEGtoBMP converts a mpeg file to a bmp file
-MPEGplayer plays a mpeg file, but needs screen output only available in the
+BMPtoMPEG encodes a few pictures to a short MPEG file.
+MPEGtoBMP decodes an MPEG file to a series of BMP files.
+MPEGplayer plays an MPEG file, but needs screen output only available in the
  library version of StreamIt.
-BMPtoMPEG converts a few pictures to a short mpeg file. 
+MPEGdecoder_nomessage is a decoder that does not use message passing (and only decodes MPEG files without P or B frames).
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit" id="nomessage" iters="1">
-      <desc>The decoder without messaging</desc>
+      <desc>(The decoder without messaging.)</desc>
       <make>Makefile MPEGdecoder_nomessage.str MPEGglobal.str BinaryFile.str InverseQuantization.str</make>
       <file class="source">MPEGdecoder_nomessage.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ../benchmarks/../../dct_ieee/streamit/DCT.str</file>
       <file class="data" relative="true">../input/nomessage.m2v</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="mpegtobmp" iters="1" compile_time="2400">
-      <desc>The decoder with messaging</desc>
+      <desc>(The decoder with messaging.)</desc>
       <make>Makefile MPEGdecoder.str Parser_alt_preserved_state.str MotionPrediction.str MPEGglobal.str BinaryFile.str InverseQuantization.str BMP.str</make>
       <file class="source">MPEGtoBMP.str MPEGdecoder.str Parser_alt_preserved_state.str ChannelUpsampling.str MotionVectorDecode.str PictureReorder.str  BlockDecode.str ColorChannelProcessing_opt_splitjoin.str DescrambleAndMotionCompensate.str MotionPrediction.str BlockDescrambler.str MacroBlockDescrambler.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ZigZag.str InverseQuantization.str BMP.str ../../../benchmarks/dct_ieee/streamit/DCT.str</file>
       <file class="data" relative="true">../input/cact_015.m2v</file>

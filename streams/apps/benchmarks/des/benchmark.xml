@@ -1,6 +1,6 @@
 <benchmark>
   <name>des</name>
-  <desc>DES Encryption Algoritm</desc>
+  <desc>DES encryption algoritm</desc>
   <description>
   This benchmark implements the DES encryption algorithm.
   </description>

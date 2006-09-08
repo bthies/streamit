@@ -2,26 +2,27 @@
   <name>tde</name>
   <desc>Time Delay Equalization</desc>
   <description>
-This is the Time Delay Equalization phase from the GMTI application using
-the "Samll" input dataset.  The tde.str version performs a 12-way data-parallel
-version of the algorithm (just a convolution), imitating the way that the
-C code from this phase in GMTI would be compiled by RStream and parallelized.
-The tde_pp.str version is coded in a style more natural to StreamIt using
-pipeline parallelism.  There is some data-parallelism available by setting
-parameters in tde_pp.str, which allows us to increase the number of filters
-for use in performance studies.  tde.str makes no pretense at ordering the 
-output data in a canonical way: it is expected to connect with another GMTI 
-phase that has been parallelized in such a way as to accept its data. 
-tde_pp.str canonicalizes the order of the output data.
+This is the Time Delay Equalization phase from the GMTI (Ground Moving
+Target Indiciator) application using the "Small" input dataset.  
   </description>
   <implementations>
     <impl lang="StreamIt" dir="streamit" id="tde" compile_time="4800" run_time="2400">
       <file>tde.str</file>
-      <desc>The data-parallel version of tde described above.</desc>
+      <desc>Performs a 12-way data-parallel version of the algorithm (just a
+convolution), imitating the way that the C code from this phase in
+GMTI would be compiled by RStream and parallelized.  Makes no pretense
+at ordering the output data in a canonical way: it is expected to
+connect with another GMTI phase that has been parallelized in such a
+way as to accept its data.</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="tde-pp" compile_time="4800" run_time="3600">
       <file>tde_pp.str</file>
-      <desc>The pipeline-parallel version of tde described above.</desc>
+      <desc>
+Pipeline-parallel version of the application that is a more natural
+fit to StreamIt.  There is some data-parallelism available by setting
+parameters in tde_pp.str, which allows us to increase the number of
+filters for use in performance studies.  This version canonicalizes
+the order of the output data.</desc>
     </impl>
   </implementations>
 </benchmark>

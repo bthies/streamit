@@ -1,6 +1,6 @@
 <benchmark>
   <name>RadixSort</name>
-  <desc>Binary Radix Sort Algorithm</desc>
+  <desc>Binary radix sort algorithm</desc>
   <description>
   An implementation of binary radix sort, where each successive filter sorts on
   a different bit.  

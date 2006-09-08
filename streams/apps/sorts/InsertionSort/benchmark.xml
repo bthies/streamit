@@ -1,6 +1,6 @@
 <benchmark>
   <name>InsertionSort</name>
-  <desc>Optimized Insertion Sorting Algorithm</desc>
+  <desc>Optimized insertion sorting algorithm</desc>
   <description>
   Implementation based off of the Diminishing Increment Sort in
   Knuth "Sorting and Searching", 5.2.1.  Similar to basic insertion

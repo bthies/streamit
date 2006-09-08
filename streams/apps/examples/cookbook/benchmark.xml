@@ -36,8 +36,7 @@ These are the examples in the StreamIt Cookbook.
       <file class="output">EchoProgram.out</file>
     </impl>
     <impl lang="StreamIt" id="fib">
-      <desc>Fibonacci number generator, section 2.7
-            Extra run time on cluster probably a hang so removed</desc>
+      <desc>Fibonacci number generator, section 2.7</desc>
       <file class="source">FibProgram.str</file>
       <file class="output">FibProgram.out</file>
     </impl>

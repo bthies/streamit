@@ -1,6 +1,6 @@
 <benchmark>
   <name>sar</name>
-  <desc>form SAR image</desc>
+  <desc>Synthetic Aperture Radar</desc>
   <description>
 Modified companion code to Mehrdad Soumekh's text book "Synthetic Aperture
 Radar Signal Processing with Matlab Algorithms", Wiley, New York, NY, 1999.

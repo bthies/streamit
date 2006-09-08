@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.72 2006-09-08 01:29:57 thies Exp $
+# $Id: release.sh,v 1.73 2006-09-08 17:25:46 dimock Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -13,11 +13,11 @@ set -v
 
 # For a version release
 VERSION=2.1
-#TAG=streamit-2-1
+TAG=RELEASE_2_1_01
 
 # For a snapshot release
 #VERSION=2.0.`date +%Y%m%d`
-TAG=HEAD
+#TAG=HEAD
 
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=

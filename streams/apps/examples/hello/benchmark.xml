@@ -1,24 +1,15 @@
 <benchmark>
   <name>hello</name>
-  <desc>Generate an increasing sequence of numbers</desc>
+  <desc>Analog of "Hello World!" in StreamIt: outputs a sequence of numbers</desc>
   <description>
 This is a demonstration benchmark, intended to be the simplest
 possible StreamIt program.  There are two filters; the first generates
 an increasing sequence of numbers, the second prints this sequence.
   </description>
   <implementations>
-    <impl lang="C">
-      <desc>Demonstration of compiler output format</desc>
-      <file>HelloWorld6.c</file>
-    </impl>
-    <impl lang="Java">
-      <desc>"Old syntax" Java implementation</desc>
-      <file>HelloWorld6.java</file>
-    </impl>
     <impl lang="StreamIt">
-      <desc>"New syntax" StreamIt implementation</desc>
-      <file>HelloWorld6.str</file>
-      <file class="output">HelloWorld6.out</file>
+      <file>HelloWorld.str</file>
+      <file class="output">HelloWorld.out</file>
     </impl>
   </implementations>
 </benchmark>

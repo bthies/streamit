@@ -10,7 +10,7 @@ import java.util.*;
  * This class represents a stream structure with one input and one
  * output.
  */
-public abstract class SIRStream extends SIROperator implements Cloneable{
+public abstract class SIRStream extends SIROperator implements Cloneable, SIRCodeUnit {
     /**
      * The fields of this, not including the input and output channels.  */
     protected JFieldDeclaration[] fields;

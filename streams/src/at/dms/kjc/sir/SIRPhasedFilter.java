@@ -16,7 +16,7 @@ import java.util.HashMap;
  * As of Aug 2006, phases have been removed from the StreamIt
  * language, so the full generality of this class is not utilized.
  */
-public class SIRPhasedFilter extends SIRStream implements Cloneable, SIRCodeUnit 
+public class SIRPhasedFilter extends SIRStream implements Cloneable
 {
     /**
      * The input and output types.  Each type is void if and only if this

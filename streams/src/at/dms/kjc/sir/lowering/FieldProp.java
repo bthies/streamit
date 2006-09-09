@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.37 2006-09-08 16:09:07 thies Exp $
+ * $Id: FieldProp.java,v 1.38 2006-09-09 16:04:55 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -262,6 +262,8 @@ public class FieldProp implements Constants
      */
     private boolean propagate(SIRStream filter) {
         boolean didPropagation = false;
+        // so that our first hash does not include garbage code
+        DeadCodeElimination.doit(filter);
         do {
             findCandidates(filter);
             
@@ -276,6 +278,9 @@ public class FieldProp implements Constants
 
             long oldHash = HashLiterals.doit(filter);
             doPropagation(filter);
+            // to eliminate garbage introduced by propagator, don't
+            // want it to affect the hash
+            DeadCodeElimination.doit(filter);
             long newHash = HashLiterals.doit(filter);
 
             // if the literals in the filter didn't change, then quit

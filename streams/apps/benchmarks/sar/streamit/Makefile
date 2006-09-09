@@ -1,6 +1,7 @@
 TARGET  = sar
 SOURCES = SAR.str genRawSAR.str FFT.str Statics.str Utils.str
-BACKEND = -simpleC -asciifileio
+BACKEND = -asciifileio
+# -simpleC
 
 OUTFILE = image
 RESULTS = image.txt

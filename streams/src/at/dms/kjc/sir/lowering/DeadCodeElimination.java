@@ -26,7 +26,7 @@ public class DeadCodeElimination {
     /**
      * Removes local variables that are never referenced.
      */
-    private static void removeDeadLocalDecls(SIRCodeUnit unit) {
+    public static void removeDeadLocalDecls(SIRCodeUnit unit) {
         // variables used
         final HashSet varsUsed = new HashSet();
 
@@ -181,6 +181,14 @@ public class DeadCodeElimination {
      * Removes fields that are never referenced.
      */
     private static void removeDeadFieldDecls(SIRCodeUnit unit) {
+        // you probably don't want to run this on a static block,
+        // since other streams are referencing those fields and this
+        // property is not checked here
+        if (unit instanceof SIRGlobal) {
+            System.err.println("WARNING:  Removing dead fields within a static block.  This will");
+            System.err.println("  remove static fields even if they are used in other streams.");
+        }
+
         // keep track of field names referenced
         final HashSet fieldsUsed = new HashSet();
 

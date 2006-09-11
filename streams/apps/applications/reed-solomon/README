@@ -1,0 +1,4 @@
+This is a good application that worked in the old Java library.  It
+needs to be converted to the new syntax.  Also, there may need to be
+support for helper functions (in static blocks) in order to deal with
+ReedSolomonLibrary.

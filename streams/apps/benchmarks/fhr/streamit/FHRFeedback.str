@@ -152,7 +152,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
     }
 
     handler set_frequency(float _freq) {
-	  println(iter);
+        //println(iter);
 	  count  = 0;
 	  size   = (int) ((_start_freq / _freq) * N);
 	  for (int i = 0; i < size; i++) {
@@ -214,39 +214,37 @@ float->float splitjoin Check_Freq_Hop(int N, int channels, float start_freq, flo
     // ? why push the hop-indicator through; what does it mean to a downstream filter
     split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
 
-    for (int i = 1; i < 6; i++) {
-	  if ((i == 2) || (i == 4)) {
-		for (int j = 0; j < 2; j++) {
-		    add float->float filter {
-			  int frequency_index;
-			  float [channels] hops;
-			  
-			  init {
-				frequency_index = 0;
-				for (int i = 0; i < channels; i++) {
-				    hops[i] = start_freq + (i * channel_bandwidth);
-				}
-			  }
-			  work pop 1 push 2 {
-				float val = pop();
-				push(val);
-				if (val > hop_threshold) {
-				    push(hops[frequency_index++]);
-				} else {
-				    push(0);
-				}
-			  }
-		    }
-		}
-	  }
-	  else {
+    for (int i = 1; i <= 7; i++) {
+	  if (i == 1 || i == 4 || i == 7) {
 	      add float->float filter {
 		    work pop 1 push 2 {
 			  push(pop());
 			  push(0);
 		    }
 	      }
-	  }
+	  } else {
+              add float->float filter {
+                  int frequency_index;
+                  float [channels] hops;
+                  
+                  init {
+                      frequency_index = 0;
+                      for (int i = 0; i < channels; i++) {
+                          hops[i] = start_freq + (i * channel_bandwidth);
+                      }
+                  }
+                  work pop 1 push 2 {
+                      float val = pop();
+                      push(val);
+                      if (val > hop_threshold) {
+                          push(hops[frequency_index++]);
+                          if (frequency_index >= channels) frequency_index = 0;
+                      } else {
+                          push(0);
+                      }
+                  }
+              }
+          }
     }
 
     join roundrobin(2*(N / 4 - 2), 2, 2, 2*(N / 2), 2, 2, 2*(N / 4 - 2));

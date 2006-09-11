@@ -142,7 +142,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
     }
 
     handler set_frequency(float _freq) {
-	  println(iter);
+        //println(iter);
 	  count  = 0;
 	  size   = (int) ((_start_freq / _freq) * N);
 	  for (int i = 0; i < size; i++) {
@@ -208,32 +208,31 @@ float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels,
 
     for (int i = 1; i <= 7; i++) {
 	  if (i == 1 || i == 4 || i == 7) {
-		add Float_Identity();
-	  }
-	  else {
-		add float->float filter {
-		    int frequency_index;
-		    float [channels] hops;
-		
-		    init {
-			  frequency_index = 0;
-			  for (int i = 0; i < channels; i++) {
-				hops[i] = start_freq + (i * channel_bandwidth);
-			  }
-		    }
-
-		    work pop 1 push 1 {
-			  float val = pop();
-			  if (val > hop_threshold) {
-				teleport.set_frequency(hops[frequency_index++]) [6 : 6];
-				if (frequency_index >= channels) frequency_index = 0;
-			  }
-			  push(val);
-		    }
-		}
+              add Float_Identity();
+	  } else {
+              add float->float filter {
+                  int frequency_index;
+                  float [channels] hops;
+                  
+                  init {
+                      frequency_index = 0;
+                      for (int i = 0; i < channels; i++) {
+                          hops[i] = start_freq + (i * channel_bandwidth);
+                      }
+                  }
+                  
+                  work pop 1 push 1 {
+                      float val = pop();
+                      if (val > hop_threshold) {
+                          teleport.set_frequency(hops[frequency_index++]) [6 : 6];
+                          if (frequency_index >= channels) frequency_index = 0;
+                      }
+                      push(val);
+                  }
+              }
 	  }
     }
-
+    
     join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
 }
 

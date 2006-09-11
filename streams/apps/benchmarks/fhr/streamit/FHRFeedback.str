@@ -201,7 +201,7 @@ float->float filter Inject_Hop(int N, float hop_threshold)
 		push(pop());
 	  }
 
-	  hop_index = ((hop_index + 1) & 0x11);
+	  hop_index = ((hop_index + 1) & 3);
     }
 }
 

@@ -1,6 +1,7 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.common.CodegenPrintWriter;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.CType;
 import at.dms.util.Utils;
@@ -171,6 +172,12 @@ class BuiltinsCodeGen {
     private static void genFileReaderWork(SIRFileReader filter, 
                                           int selfID,
                                           CodegenPrintWriter p) {
+        
+        if (KjcOptions.asciifileio) {
+            System.err.println("Error: -asciifileio not supported in cluster backend.");
+            System.err.println("Exiting...");
+            System.exit(1);
+        }
 
         String theType = "" + filter.getOutputType();
         // dispatch to special routine for bit type
@@ -398,6 +405,13 @@ class BuiltinsCodeGen {
      */
     private static void genFileWriterWork(SIRFileWriter fw, int selfID,
                                           CodegenPrintWriter p) {
+
+        if (KjcOptions.asciifileio) {
+            System.err.println("Error: -asciifileio not supported in cluster backend.");
+            System.err.println("Exiting...");
+            System.exit(1);
+        }
+
         String theType = "" + fw.getInputType();
         if (theType.equals("bit")) {
             // the bit type is special since you can not just read or

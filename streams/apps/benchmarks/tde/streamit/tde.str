@@ -9965,10 +9965,6 @@ float[128] coeff= {
     else
       DS = (int)(ceil(90/par));
 
-    current = (int)(pid * ceil(90/par));
-    x = current%15;
-    y = current/15;
-
 /*
     // synthetic input data
     for (int i=0; i<6; i++) {
@@ -9983,6 +9979,14 @@ float[128] coeff= {
   }
 
   work pop 1 { 
+
+    // these initializations originally appeared in init, though it
+    // looks like the original version was only meant to execute once.
+    // Move the initializations to work so that we can execute many
+    // times.
+    current = (int)(pid * ceil(90/par));
+    x = current%15;
+    y = current/15;
 
     pop();
     println(101);

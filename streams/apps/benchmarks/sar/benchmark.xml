@@ -13,7 +13,7 @@ interpolation (see noted text, Section 4.5).
     </impl>
     <impl lang="StreamIt" dir="streamit" iters="1">
       <file class="source">SAR.str genRawSAR.str FFT.str Statics.str Utils.str</file>
-      <file class="output">../output/image</file>
+      <file class="output">../output/image.txt</file>
     </impl>
   </implementations>
 </benchmark>

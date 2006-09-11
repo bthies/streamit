@@ -49,7 +49,12 @@ public abstract class FilterFusionState extends FusionState
 
         //two stage filters are currently only introduced by partitioning 
         //so we should not see them, and we don't handle them
-        assert !(filter instanceof SIRTwoStageFilter);
+        if (filter instanceof SIRTwoStageFilter) {
+            System.err.println("Failure:  filter " + filter.getIdent() + " contains a prework function,");
+            System.err.println("  but the -simpleC backend does not yet support prework functions.");
+            System.err.println("  Exiting...");
+            System.exit(1);
+        }
     
         assert node.ways <= 1 : "Filter FlatNode with more than one outgoing buffer";       
     

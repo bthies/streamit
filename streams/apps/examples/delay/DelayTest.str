@@ -1,20 +1,20 @@
 void->void pipeline DelayTest {
-    add FloatSource();
+    add IntSource();
     add Delay(5);
-    add FloatPrinter;
+    add IntPrinter;
 }
 
 /* This filter is a delay element that outputs N zeros before letting
  * the inputs pass through.  It is implemented using a prework
  * function, which should be more efficient than using internal
  * buffering or feedback loops.
- * $Id: DelayTest.str,v 1.2 2006-09-06 05:36:16 thies Exp $ */
-float->float filter Delay(int N) {
+ * $Id: DelayTest.str,v 1.3 2006-09-11 12:52:35 thies Exp $ */
+int->int filter Delay(int N) {
 
     // push N zeros at start of execution
     prework push N {
         for (int i=0; i<N; i++) {
-            push(0.0);
+            push(0);
         }
     }
 
@@ -24,15 +24,14 @@ float->float filter Delay(int N) {
     }
 }
 
-void->float filter FloatSource() {
-    float i = 1.0;
+void->int filter IntSource() {
+    int i = 1;
     work push 1 pop 0 {
-	push(i);
-	i += 1.0;
+	push(i++);
     }
 }
 
-float->void filter FloatPrinter() {
+int->void filter IntPrinter() {
   work pop 1 {
     println(pop());
   }

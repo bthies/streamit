@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.105 2006-09-05 20:04:06 dimock Exp $
+# $Id: strc,v 1.106 2006-09-11 19:16:03 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -207,7 +207,6 @@ Usage: strc [options] file.str ...
 
  Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets
-  --asciifileio       Use ascii format for file input and output
 * --backendvalues     "package.class.field val ..." (Internal use only)
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
@@ -254,6 +253,7 @@ Usage: strc [options] file.str ...
 + --profile           Add a timer for each filter body (cluster)
 
  Options specific to Raw backend:
+  --asciifileio       Use ascii format for file I/O (also works on -simpleC)
 + --partition, -p     Automatically partition stream graph
 +   --partition-dp       Dynamic programming partitioner (default)
 +   --partition-greedy   Greedy partitioner (fuse lightest streams first)

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.75 2006-09-08 19:54:59 thies Exp $
+# $Id: release.sh,v 1.76 2006-09-11 22:17:05 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -121,6 +121,8 @@ rm -rf $WORKING/streams/src/at/dms/kjc/linprog/
 rm -rf $WORKING/streams/src/at/dms/kjc/sir/lowering/partition/ILPPartitioner.java
 # lpsolve is only used by removed code.
 rm -fr $WORKING/streams/3rdparty/lpsolve/
+# since we're not releasing eclipse, don't need jgraph
+rm -fr $WORKING/streams/3rdparty/jgraph/
 
 ###
 # Don't release JCC or anything that depends on it
@@ -206,7 +208,21 @@ rm -rf $WORKING/streams/apps/benchmarks/gsm
 # this is only relevant for spacedynamic backend, so don't release
 rm -rf $WORKING/streams/apps/benchmarks/jpeg/streamit/Transcoder_Raw.str
 rm -rf $WORKING/streams/apps/benchmarks/micro04
-# do we want to trim down mpeg2 inputs, outputs?
+
+# deal with MPEG inputs and outputs...
+# "test1" inputs never used
+rm -rf $WORKING/streams/apps/benchmarks/mpeg2/input/test1
+# make a directory for the cact_015 frames, which are currently read
+# from compiler-static
+mkdir $WORKING/streams/apps/benchmarks/mpeg2/input/cact_015_bmp
+# the current mpeg encoder example uses 4 frames
+cp /home/streamit/compiler-static/mpeg2/cact_015_bmp/00000001.bmp $WORKING/streams/apps/benchmarks/mpeg2/input/cact_015_bmp
+cp /home/streamit/compiler-static/mpeg2/cact_015_bmp/00000002.bmp $WORKING/streams/apps/benchmarks/mpeg2/input/cact_015_bmp
+cp /home/streamit/compiler-static/mpeg2/cact_015_bmp/00000003.bmp $WORKING/streams/apps/benchmarks/mpeg2/input/cact_015_bmp
+cp /home/streamit/compiler-static/mpeg2/cact_015_bmp/00000004.bmp $WORKING/streams/apps/benchmarks/mpeg2/input/cact_015_bmp
+# fix the mpeg encoder to reference these files rather than the ones in /home/streamit
+perl -pi -e 's/\/home\/streamit\/compiler\-static\/mpeg2/\.\.\/input/g' $WORKING/streams/apps/benchmarks/mpeg2/streamit/BMPtoMPEG.str
+
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
 rm -rf $WORKING/streams/apps/benchmarks/pldi-03

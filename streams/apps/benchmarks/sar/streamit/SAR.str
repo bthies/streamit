@@ -140,9 +140,15 @@ void->void pipeline SAR()
 
     // NOTE: to compate to MATLAB output, transpose again
     // add floatTranspose(266, m);
-    add FileWriter<float>("image");
+    add FloatPrinter();
 }
 
+// print results
+float->void filter FloatPrinter() {
+    work pop 1 { 
+        println(pop());
+    }
+}
 
 // Zero-padding
 complex->complex filter ZeroPadding(int n, 

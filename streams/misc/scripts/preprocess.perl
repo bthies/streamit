@@ -317,17 +317,17 @@ sub main {
     @intermediate = process_rule(\&rule_debug_pops, @intermediate);
 
     if ($output_peekpop == 1) {
-        print "OUTPUT PEEKPOP\n";
+        #print "OUTPUT PEEKPOP\n";
         @intermediate = process_rule(\&rule_peeks_output, @intermediate);
         @intermediate = process_rule(\&rule_peeks_output, @intermediate); # Not sure why we need to run it twice now.
         @intermediate = process_rule(\&rule_pops_output, @intermediate);
     } elsif ($input_peekpop == 1) {
-        print "INPUT PEEKPOP\n";
+        #print "INPUT PEEKPOP\n";
         @intermediate = process_rule(\&rule_peeks_input, @intermediate);
         @intermediate = process_rule(\&rule_peeks_input, @intermediate); # Not sure why we need to run it twice now.
         @intermediate = process_rule(\&rule_pops_input, @intermediate);
     } else {
-        print "REGULAR\n";
+        #print "REGULAR\n";
         @intermediate = process_rule(\&rule_i_peeks, @intermediate);
         @intermediate = process_rule(\&rule_i_peeks, @intermediate); # Not sure why we need to run it twice now.
         @intermediate = process_rule(\&rule_i_pops, @intermediate);

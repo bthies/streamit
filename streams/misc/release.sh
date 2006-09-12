@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.77 2006-09-12 02:42:47 thies Exp $
+# $Id: release.sh,v 1.78 2006-09-12 02:42:56 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -20,7 +20,7 @@ TAG=HEAD
 #VERSION=2.0.`date +%Y%m%d`
 #TAG=HEAD
 
-test -z "$TMPDIR" && TMPDIR=/temp
+test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 CVSROOT="-d /projects/raw/cvsroot"
 

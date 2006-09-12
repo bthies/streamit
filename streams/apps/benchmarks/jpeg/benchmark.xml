@@ -22,7 +22,7 @@ handled in the Makefile.
       <whichtype>releasetest</whichtype>
       <desc>StreamIt version of JPEG encoder/decoder.</desc>
       <make>Makefile input.jpg.int</make>
-      <file class="source">Transcoder.str ../../dct_ieee/streamit/DCT.str</file>
+      <file class="source">Transcoder.str</file>
       <file class="data">input.jpg.int</file>
     </impl>
     <impl lang="StreamIt" dir="streamit" id="jpegtobmp" iters="2">

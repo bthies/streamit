@@ -1,6 +1,6 @@
 #
 # Makefile.docs: makefile fragment for building documentation
-# $Id: Makefile.docs,v 1.3 2006-09-07 01:54:59 thies Exp $
+# $Id: Makefile.docs,v 1.4 2006-09-12 01:37:30 thies Exp $
 #
 
 # Include this from a Makefile that builds documentation.
@@ -24,7 +24,7 @@ docs: $(DVI) $(PS) $(PDF) $(HTML) $(TEXT)
 	$(PS2PDF) $< $@
 
 %.ps: %.dvi
-	$(DVIPS) -P cmz -o $@ $<
+	$(DVIPS) -P cmz -t letter -o $@ $<
 
 # NB: the GNU make docs say that only the first pattern rule found is used.
 # So give every possible combination of LaTeX, METAPOST, and BibTeX.

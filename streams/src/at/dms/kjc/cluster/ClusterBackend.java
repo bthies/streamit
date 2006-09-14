@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.111 2006-09-06 19:50:52 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.112 2006-09-14 21:37:05 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -33,39 +33,39 @@ public class ClusterBackend {
     public static boolean debugPrint = false;
 
     /**
+     * If true have each filter print out each value it is pushing
+     * onto its output tape.
+     */
+    public static final boolean FILTER_DEBUG_MODE = false;
+
+    
+    /**
      * Given a flatnode, map to the init execution count.
      */
-    public static HashMap<FlatNode,Integer> initExecutionCounts;
+    static HashMap<FlatNode,Integer> initExecutionCounts;
     /**
      * Given a flatnode, map to steady-state execution count.
      *
      * <br/> Also read in several other modules.
      */
-    public static HashMap<FlatNode,Integer> steadyExecutionCounts;
+    static HashMap<FlatNode,Integer> steadyExecutionCounts;
 
     /**
      * Holds passed structures until they can be handeed off to {@link StructureIncludeFile}.
      */
     private static SIRStructure[] structures;
 
-    
-    /**
-     * If true have each filter print out each value it is pushing
-     *onto its output tape.
-     */
-    public static boolean FILTER_DEBUG_MODE = false;
-
     /**
      * Used to iterate over str structure ignoring flattening.
      * <br/> Also used in {@link ClusterCodeGenerator} and {@link FlatIrToCluster2}
      */
-    public static streamit.scheduler2.iriter.Iterator topStreamIter; 
+    static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
     /**
      * This keeps the stream graph split up into static rate subgraphs.
      * Generated in ClusterBackend, used in TapeBase.
      */
-    public static ClusterStreamGraph streamGraph;
+    static ClusterStreamGraph streamGraph;
 
     /**
      * The cluster backend.

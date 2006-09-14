@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.util.Utils;
@@ -115,11 +116,12 @@ public class GenerateConfigFile {
         if (file.exists()) {
             try {
                 BufferedReader reader = new BufferedReader(new FileReader(file));
-                ArrayList list = new ArrayList();
+                List<String> list = new ArrayList<String>();
                 String line;
                 while ((line = reader.readLine()) != null) {
                     list.add(line);
                 }
+                reader.close();
                 return (String[])list.toArray(new String[0]);
             } catch (IOException e) {
                 return new String[0];
@@ -139,6 +141,7 @@ public class GenerateConfigFile {
             proc.waitFor();
             BufferedReader output = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             result = output.readLine();
+            output.close();
         } catch (IOException e) {
             System.err.println("Warning: could not determine current host name for cluster-config file (IOException).");
         } catch (InterruptedException e) {

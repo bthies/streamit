@@ -469,7 +469,6 @@ public class Propagator extends SLIRReplacingVisitor {
                         constants.put(key, newConstants.get(key));
                     }
                 }
-                this.constants=constants;
             }
         }
         return self;

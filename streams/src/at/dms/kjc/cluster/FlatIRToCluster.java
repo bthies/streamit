@@ -32,10 +32,7 @@ public class FlatIRToCluster extends InsertTimers implements
      * should move definition to ToCCommon...
      */
     
-    static public boolean printCodegenComments = false;
-
-    //  override ToC with info that we generate 'bool' for 'boolean', not 'int'
-    protected boolean hasBoolType = true;
+    static public final boolean printCodegenComments = false;
 
     //private boolean DEBUG = false;
 
@@ -183,10 +180,14 @@ public class FlatIRToCluster extends InsertTimers implements
 
     public FlatIRToCluster() {
         super();
+        // tell ToC that we generate 'bool' for 'boolean', not 'int'
+        hasBoolType = true;
     }
 
     public FlatIRToCluster(CodegenPrintWriter p) {
         super(p);
+        // tell ToC that we generate 'bool' for 'boolean', not 'int'
+        hasBoolType = true;
     }
 
     public FlatIRToCluster(SIRFilter f) {
@@ -198,6 +199,8 @@ public class FlatIRToCluster extends InsertTimers implements
         this.selfID = NodeEnumerator.getSIROperatorId(f); // needed by the class
         // } RMR
         // circular = false;
+        // tell ToC that we generate 'bool' for 'boolean', not 'int'
+        hasBoolType = true;
     }
 
     //    

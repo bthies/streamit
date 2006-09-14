@@ -291,9 +291,9 @@ class BuiltinsCodeGen {
         // haven't bothered to do buffered file input on top of the
         // bit input (it is possible but seems a little complicated)
         System.err.println("PERFORMANCE WARNING:  FileReader<bit> reads only 1 byte" +
-                           "  at a time; faster to use FileWriter<int>, which is buffered.");
+                           "  at a time; faster to use FileReader<int>, which is buffered.");
 
-        String theType = "" + filter.getOutputType();
+        //String theType = "" + filter.getOutputType();
         // wrap in loop
         p.println("for (; 0 < ____n; ____n--) {");
         p.indent();

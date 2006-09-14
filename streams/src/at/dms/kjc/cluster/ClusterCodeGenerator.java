@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.62 2006-08-31 02:07:51 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.63 2006-09-14 21:37:05 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -773,7 +773,7 @@ class ClusterCodeGenerator {
         }
         r.add("  if (_steady == 0) {\n");
 
-        if (oper instanceof SIRJoiner && ClusterCode.feedbackJoineersNeedingPrep.contains(oper)) {
+        if (oper instanceof SIRJoiner && ClusterCode.feedbackJoinersNeedingPrep.contains(oper)) {
             r.add ("  __feedbackjoiner_"+ id +"_prep();\n");
         }
 

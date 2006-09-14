@@ -30,7 +30,7 @@ public class ClusterCode {
      * getter? joiners for feedbackloops with >0 enqueues need initialization to
      * perform initial pushes of enqueued values into their input tapes.
      */
-    public static HashSet<SIRJoiner> feedbackJoineersNeedingPrep = new HashSet<SIRJoiner>();
+    public static final HashSet<SIRJoiner> feedbackJoinersNeedingPrep = new HashSet<SIRJoiner>();
     
     /**
      * Walk the FlatGraph generating code for each filter, splitter, joiner.
@@ -252,7 +252,7 @@ public class ClusterCode {
                 + thread_id + "_main", new Vector<String>());
 
         for (int i = 0; i < run.size(); i++) {
-            p.print(run.elementAt(i).toString());
+            p.print(run.elementAt(i));
         }
 
         //  +=============================+
@@ -390,7 +390,7 @@ public class ClusterCode {
             // back to joiner.
             //
 
-            feedbackJoineersNeedingPrep.add(joiner);
+            feedbackJoinersNeedingPrep.add(joiner);
             Tape loopTape = RegisterStreams.getNodeInStreams(joiner).get(1);
             int enqueue_count = ((SIRFeedbackLoop) joiner.getParent())
                     .getDelayInt();
@@ -481,7 +481,7 @@ public class ClusterCode {
                 + thread_id + "_main", new Vector<String>());
 
         for (int i = 0; i < run.size(); i++) {
-            p.print(run.elementAt(i).toString());
+            p.print(run.elementAt(i));
         }
 
         //  +=============================+

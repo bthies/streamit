@@ -280,7 +280,7 @@ class FusionCode {
             }
         }
 
-        for (SIRJoiner j : ClusterCode.feedbackJoineersNeedingPrep) {
+        for (SIRJoiner j : ClusterCode.feedbackJoinersNeedingPrep) {
             p.println("extern void __feedbackjoiner_"+ NodeEnumerator.getSIROperatorId(j) +"_prep();");
         }
 
@@ -419,7 +419,7 @@ class FusionCode {
         p.newLine();
         p.print("  // ============= Initialization =============\n");
 
-        for (SIRJoiner j : ClusterCode.feedbackJoineersNeedingPrep) {
+        for (SIRJoiner j : ClusterCode.feedbackJoinersNeedingPrep) {
             p.println("__feedbackjoiner_"+ NodeEnumerator.getSIROperatorId(j) +"_prep();");
         }
 

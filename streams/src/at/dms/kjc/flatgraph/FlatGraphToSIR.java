@@ -66,12 +66,14 @@ public class FlatGraphToSIR
      * SIR graph, creating the necessary containers along the way.
      * 
      * @param parent The current container.
-     * @param current The node that we are about to work on.
+     * @param current The node that we are about to work on, not null.
      * @param visited The set of FlatNode we have already added to the SIR graph.
      */
     private void reSIR(SIRContainer parent, FlatNode current, 
             Set<FlatNode> visited) {
 
+        assert current != null;   // not null here, may become so following edges??
+        
         // for filters: keep adding them to current pipeline until something 
         // other than a filter is found.
         // if no current pipeline, start a new pipeline.

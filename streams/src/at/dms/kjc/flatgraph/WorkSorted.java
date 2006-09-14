@@ -25,8 +25,8 @@ public class WorkSorted implements FlatVisitor {
         
         top.accept(ws, null, true);
         
-        Iterator<FlatNode> it = ws.sortedList.iterator();
         /*
+        Iterator<FlatNode> it = ws.sortedList.iterator();
         System.out.println("SortedList:");
         while (it.hasNext()) {
             System.out.println(it.next());

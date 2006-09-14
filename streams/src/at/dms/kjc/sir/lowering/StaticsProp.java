@@ -137,7 +137,7 @@ public class StaticsProp {
         public String getTheStatic() { return theStatic; }
         
         public boolean equals(Object o) {
-            if (o.getClass().equals(this.getClass())) {
+            if (o != null && o.getClass().equals(this.getClass())) {
                 StaticAndField s = (StaticAndField)o;
                 return theStatic.equals(s.theStatic) 
                     && theField.equals(s.theField);
@@ -251,7 +251,7 @@ public class StaticsProp {
                             JExpression left, String fieldIdent) {
                         JFieldAccessExpression f1 = 
                             (JFieldAccessExpression)super.visitFieldExpression(self,left,fieldIdent);
-                        if (left == null || left instanceof JThisExpression) {
+                        if (left instanceof JThisExpression) {
                             f1.setPrefix(new JTypeNameExpression(
                                     left.getTokenReference(),
                                     s.getIdent()));

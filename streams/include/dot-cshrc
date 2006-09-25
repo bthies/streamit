@@ -106,6 +106,9 @@ else
   setenv TEXINPUTS ${STREAMIT_HOME}/include/tex:
 endif
 
+# for viewing dot graphs in absence of dotty
+alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
+
 #include builtin Eclipse plugins
 #setenv ECLIPSE_PLUG /home/bits7/NO_BACKUP/streamit/eclipse/plugins
 #set PRE=${ECLIPSE_PLUG}/org.eclipse.

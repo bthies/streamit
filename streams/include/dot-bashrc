@@ -119,6 +119,9 @@ else
     TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 fi
 
+# for viewing dot graphs in absence of dotty
+alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
+
 #include builtin Eclipse plugins
 # export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins
 # PRE=${ECLIPSE_PLUG}/org.eclipse.

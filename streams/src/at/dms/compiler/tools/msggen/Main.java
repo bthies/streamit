@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.3 2006-05-23 22:01:12 dimock Exp $
+ * $Id: Main.java,v 1.4 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.msggen;
@@ -124,7 +124,7 @@ public class Main {
      *
      */
     private boolean checkIdentifiers() {
-        Hashtable       identifiers = new Hashtable();
+        Hashtable<String, String>       identifiers = new Hashtable<String, String>();
         boolean     errorsFound = false;
 
         try {

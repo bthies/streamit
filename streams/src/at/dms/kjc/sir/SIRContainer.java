@@ -19,7 +19,7 @@ public abstract class SIRContainer extends SIRStream {
      */
     private MutableList children;
     private MutableList params;
-    private static LinkedList toClear=new LinkedList();
+    private static LinkedList<SIRContainer> toClear=new LinkedList<SIRContainer>();
 
     protected SIRContainer() {
         super();
@@ -41,7 +41,7 @@ public abstract class SIRContainer extends SIRStream {
     //Do not use unless not using structure anymore
     public static void destroy() {
         while(toClear.size()>0) {
-            SIRContainer cont=(SIRContainer)toClear.removeFirst();
+            SIRContainer cont=toClear.removeFirst();
             cont.children.clear();
             cont.children=null;
             cont.params.clear();
@@ -243,7 +243,7 @@ public abstract class SIRContainer extends SIRStream {
      * representing a tape from the first element of each tuple to the
      * second.
      */
-    public abstract List getTapePairs();
+    public abstract List<SIROperator[]> getTapePairs();
     
     /**
      * Replaces <oldStr> with <newStr> in this.  Requires that

@@ -2,6 +2,8 @@ package streamit.scheduler1.simple;
 
 import streamit.scheduler1.SchedPipeline;
 import streamit.scheduler1.SchedRepSchedule;
+import streamit.scheduler1.SchedStream;
+
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -12,8 +14,8 @@ import java.math.BigInteger;
 public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStream
 {
     final SimpleHierarchicalScheduler scheduler;
-    private List steadySchedule = null;
-    private List initSchedule = null;
+    private List<SchedRepSchedule> steadySchedule = null;
+    private List<Object> initSchedule = null;
     private int initDataConsumption = -1;
     private int initDataProduction = -1;
 
@@ -30,11 +32,11 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // make sure that this the first (and thus only) call to computeSchedule
         {
             ASSERT (steadySchedule == null && initSchedule == null);
-            steadySchedule = new LinkedList ();
-            initSchedule = new LinkedList ();
+            steadySchedule = new LinkedList<SchedRepSchedule> ();
+            initSchedule = new LinkedList<Object> ();
         }
 
-        List children = getChildren ();
+        List<SchedStream> children = getChildren ();
 
         // first go through all children and compute their schedules
         // this will have the effect of computing the initialization
@@ -43,7 +45,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // for its own initialization, and thus how many data we need to feed
         // the child.
         {
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
             while (iter.hasNext ())
                 {
                     SimpleSchedStream child = (SimpleSchedStream) iter.next ();
@@ -58,12 +60,12 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // even once
         // I do this by iterating from end to beggining and computing the
         // number of elements that each stream needs to produce
-        Map numExecutionsForInit = new HashMap ();
+        Map<SimpleSchedStream, Integer> numExecutionsForInit = new HashMap<SimpleSchedStream, Integer> ();
         {
             int consumedByNext = 0;
 
             // this is silly - I need to iterate from end to beginning:
-            ListIterator iter = children.listIterator (children.size ());
+            ListIterator<SchedStream> iter = children.listIterator (children.size ());
 
             while (iter.hasPrevious ())
                 {
@@ -115,7 +117,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // In this approach, I do not care about the size of the buffers, and
         // may in fact be enlarging them much more than necessary
         {
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
 
             while (iter.hasNext ())
                 {
@@ -129,7 +131,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                         }
 
                     // add the steady schedule an appropriate number of times:
-                    Integer numExecutions = (Integer)numExecutionsForInit.get (child);
+                    Integer numExecutions = numExecutionsForInit.get (child);
                     ASSERT (numExecutions);
 
                     if (numExecutions.intValue () > 0)
@@ -155,7 +157,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                     int initDataConsumed = firstChild.getInitDataConsumption ();
 
                     // and the amount of data pulled when filling the pipeline
-                    int fillData = ((Integer)numExecutionsForInit.get (firstChild)).intValue () *
+                    int fillData = numExecutionsForInit.get (firstChild).intValue () *
                         firstChild.getConsumption ();
 
                     // and thus I have the amount of data need to initialize:
@@ -181,7 +183,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // this one is quite easy - I go through the children and execute them
         // an appropriate number of times
         {
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
 
             while (iter.hasNext ())
                 {
@@ -206,7 +208,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         // note: I may want to keep the buffer either n*steadyProduction or 2^n
         if (!children.isEmpty ())
             {
-                ListIterator iter = children.listIterator ();
+                ListIterator<SchedStream> iter = children.listIterator ();
                 SimpleSchedStream prevChild = (SimpleSchedStream) iter.next ();
                 ASSERT (prevChild);
 
@@ -222,7 +224,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                         // compute the amount of data produced during initialization
                         BigInteger initProdSize;
                         {
-                            int prod = ((Integer)numExecutionsForInit.get (prevChild)).intValue ()
+                            int prod = numExecutionsForInit.get (prevChild).intValue ()
                                 *  prevChild.getProduction ()
                                 + prevChild.getInitDataProduction ();
                             initProdSize = BigInteger.valueOf (prod);
@@ -232,7 +234,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                         BigInteger initConsumeSize;
                         {
                             int initConsume = child.getInitDataConsumption ();
-                            int fillConsume = ((Integer)numExecutionsForInit.get (child)).intValue () *
+                            int fillConsume = numExecutionsForInit.get (child).intValue () *
                                 child.getConsumption ();
                             initConsumeSize = BigInteger.valueOf (initConsume + fillConsume);
                         }

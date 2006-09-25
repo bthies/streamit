@@ -64,7 +64,7 @@ public class NodeEnumerator {
 
             counter++;
         
-        } } , new HashSet(), true);
+        } } , new HashSet<FlatNode>(), true);
  
 
         

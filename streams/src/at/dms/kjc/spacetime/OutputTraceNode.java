@@ -343,8 +343,8 @@ public class OutputTraceNode extends TraceNode {
         return false;
     }
 
-    public Set fileOutputs() {
-        HashSet fileOutputs = new HashSet();
+    public Set<InputTraceNode> fileOutputs() {
+        HashSet<InputTraceNode> fileOutputs = new HashSet<InputTraceNode>();
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
             Edge edge = (Edge) dests.next();

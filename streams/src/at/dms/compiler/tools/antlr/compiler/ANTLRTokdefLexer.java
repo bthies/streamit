@@ -20,7 +20,7 @@ public class ANTLRTokdefLexer extends at.dms.compiler.tools.antlr.runtime.CharSc
     }
     public ANTLRTokdefLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         caseSensitiveLiterals = true;
         setCaseSensitive(true);
     }

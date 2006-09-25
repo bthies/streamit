@@ -292,7 +292,7 @@ public class ConstantProp {
         /**
          * List of children of parent stream.
          */
-        private LinkedList children;
+        private LinkedList<Object> children;
         /**
          * The parent stream.
          */
@@ -302,7 +302,7 @@ public class ConstantProp {
          * Makes a new one of these.
          */
         private GetChildren(SIRStream str) {
-            this.children = new LinkedList();
+            this.children = new LinkedList<Object>();
             this.parent = str;
         }
 
@@ -310,7 +310,7 @@ public class ConstantProp {
          * Re-inspects the init function of <str> to see who its children
          * are.
          */
-        public static LinkedList getChildren(SIRStream str) {
+        public static LinkedList<Object> getChildren(SIRStream str) {
             GetChildren gc = new GetChildren(str);
             if (str.getInit()!=null) {
                 str.getInit().accept(gc);

@@ -17,17 +17,17 @@ import java.util.Iterator;
 
 public class FileReaderVisitor implements FlatVisitor {
     public static boolean foundReader;
-    public static HashSet fileReaders;
+    public static HashSet<FlatNode> fileReaders;
     
     public static void init(FlatNode top) {
         FileReaderVisitor frv = new FileReaderVisitor();
-        top.accept(frv, new HashSet(), false);
+        top.accept(frv, new HashSet<FlatNode>(), false);
     }
     
     public FileReaderVisitor() 
     {
         foundReader = false;
-        fileReaders = new HashSet();
+        fileReaders = new HashSet<FlatNode>();
     }
     
     public void visitNode (FlatNode node) 
@@ -39,9 +39,9 @@ public class FileReaderVisitor implements FlatVisitor {
     }
 
     public static boolean connectedToFR(Coordinate tile) {
-        Iterator frs = fileReaders.iterator();
+        Iterator<FlatNode> frs = fileReaders.iterator();
         while (frs.hasNext()) {
-            if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
+            if (Layout.areNeighbors(tile, Layout.getTile(frs.next()))) 
                 return true;
         }
         return false;

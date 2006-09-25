@@ -73,7 +73,7 @@ public class ClusterCode {
      */
     public static void generateCode(FlatNode topLevel) 
     {
-        topLevel.accept(new DoIt(), new HashSet(), true);
+        topLevel.accept(new DoIt(), new HashSet<FlatNode>(), true);
     }
 
     /**
@@ -107,14 +107,14 @@ public class ClusterCode {
 
         int init_counts, steady_counts;
 
-        Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+        Integer init_int = ClusterBackend.initExecutionCounts.get(node);
         if (init_int==null) {
             init_counts = 0;
         } else {
             init_counts = init_int.intValue();
         }
 
-        steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+        steady_counts = ClusterBackend.steadyExecutionCounts.get(node).intValue();
 
         CType baseType = CommonUtils.getBaseType(CommonUtils.getOutputType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
@@ -291,14 +291,14 @@ public class ClusterCode {
 
         int init_counts, steady_counts;
 
-        Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+        Integer init_int = ClusterBackend.initExecutionCounts.get(node);
         if (init_int==null) {
             init_counts = 0;
         } else {
             init_counts = init_int.intValue();
         }
 
-        steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+        steady_counts = ClusterBackend.steadyExecutionCounts.get(node).intValue();
         CType baseType = CommonUtils.getBaseType(CommonUtils.getJoinerType(node));
         int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 

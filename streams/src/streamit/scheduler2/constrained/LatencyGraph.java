@@ -52,11 +52,11 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * the immediate parent). A stream with no parents (out-most
      * pipeline) has an empty list.
      */
-    final HashMap ancestorLists = new HashMap();
+    final HashMap<StreamInterface, DLList> ancestorLists = new HashMap<StreamInterface, DLList>();
 
     DLList getAncestorList(StreamInterface stream)
     {
-        DLList ancestors = (DLList)ancestorLists.get(stream);
+        DLList ancestors = ancestorLists.get(stream);
         assert ancestors != null;
 
         return ancestors;
@@ -65,15 +65,15 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     /**
      * Returns lowest common ancestor of a set of latency nodes.
      */
-    public StreamInterface findLowestCommonAncestor(HashSet nodes) {
+    public StreamInterface findLowestCommonAncestor(HashSet<LatencyNode> nodes) {
         // explore iterators of ancestors in parallel
         DLList_const[] ancestorList = new DLList_const[nodes.size()];
         DLListIterator[] ancestorIter = new DLListIterator[nodes.size()];
         
         // get ancestors
         int k=0;
-        for (Iterator iter = nodes.iterator(); iter.hasNext(); k++) {
-            LatencyNode node = (LatencyNode)iter.next();
+        for (Iterator<LatencyNode> iter = nodes.iterator(); iter.hasNext(); k++) {
+            LatencyNode node = iter.next();
             ancestorList[k] = node.getAncestors();
             ancestorIter[k] = ancestorList[k].begin();
         }
@@ -112,13 +112,13 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return lowestAncestor;
     }
     public StreamInterface findLowestCommonAncestor(LatencyNode n1, LatencyNode n2) {
-        HashSet nodes = new HashSet();
+        HashSet<LatencyNode> nodes = new HashSet<LatencyNode>();
         nodes.add(n1);
         nodes.add(n2);
         return findLowestCommonAncestor(nodes);
     }
-    public StreamInterface findLowestCommonAncestor(HashSet set1, HashSet set2) {
-        HashSet nodes = new HashSet();
+    public StreamInterface findLowestCommonAncestor(HashSet<LatencyNode> set1, HashSet<LatencyNode> set2) {
+        HashSet<LatencyNode> nodes = new HashSet<LatencyNode>();
         nodes.addAll(set1);
         nodes.addAll(set2);
         return findLowestCommonAncestor(nodes);
@@ -135,7 +135,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             {
                 // has a parent - find parent's ancestors, copy the list
                 // and add the parent - that's the child's list of ancestors
-                DLList parentAncestors =(DLList)ancestorLists.get(parent);
+                DLList parentAncestors =ancestorLists.get(parent);
                 DLList ancestors = parentAncestors.copy();
                 ancestors.pushBack(parent);
                 ancestorLists.put(child, ancestors);
@@ -189,8 +189,8 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     private boolean hasCycle(StreamInterface ancestor) {
         // do a depth-first search; if we find a back-edge, report
         // cycle
-        HashSet visiting = new HashSet();  // currently being visited
-        HashSet done = new HashSet();      // done being visited
+        HashSet<LatencyNode> visiting = new HashSet<LatencyNode>();  // currently being visited
+        HashSet<LatencyNode> done = new HashSet<LatencyNode>();      // done being visited
         
         LatencyNode top = ancestor.getTopLatencyNode();
 
@@ -200,7 +200,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * Visits <pre>node</pre> and all its children in the depth-first
      * search for cycles.  Returns whether or not it found a cycle.
      */
-    private boolean hasCycleHelper(LatencyNode node, HashSet visiting, HashSet done) {
+    private boolean hasCycleHelper(LatencyNode node, HashSet<LatencyNode> visiting, HashSet<LatencyNode> done) {
         if (visiting.contains(node)) {
             // if we are already visiting <pre>node</pre>, then report cycle
             return true;
@@ -240,13 +240,13 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * An edge is "between" the two sets if it lies on a path between
      * any upstream node and any downstream node.
      */
-    private HashSet getEdgesBetween(HashSet upstreamNodes, HashSet downstreamNodes) {
+    private HashSet<LatencyEdge> getEdgesBetween(HashSet<LatencyNode> upstreamNodes, HashSet<LatencyNode> downstreamNodes) {
         StreamInterface ancestor =
             findLowestCommonAncestor(upstreamNodes, downstreamNodes);
 
         // find reachable edges looking downstream and looking upstream
-        HashSet result = exploreEdges(upstreamNodes, ancestor, true);
-        HashSet edgesUpstream = exploreEdges(downstreamNodes, ancestor, false);
+        HashSet<LatencyEdge> result = exploreEdges(upstreamNodes, ancestor, true);
+        HashSet<LatencyEdge> edgesUpstream = exploreEdges(downstreamNodes, ancestor, false);
 
         // find an intersection between these two sets:
 	result.retainAll(edgesUpstream);
@@ -258,9 +258,9 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             // back edges for each node individually. It could
             // probably be made more efficient, to find backward
             // pointing edges for all nodes together.
-            for (Iterator i = upstreamNodes.iterator(); i.hasNext(); ) {
-                LatencyNode upstreamNode = (LatencyNode)i.next();
-                HashSet backwardPointingEdges =
+            for (Iterator<LatencyNode> i = upstreamNodes.iterator(); i.hasNext(); ) {
+                LatencyNode upstreamNode = i.next();
+                HashSet<LatencyEdge> backwardPointingEdges =
                     findBackPointingEdges(upstreamNode, ancestor);
                 result.removeAll(backwardPointingEdges);
             }
@@ -268,13 +268,13 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
         return result;
     }
-    private HashSet getEdgesBetween(LatencyNode upstreamNode, HashSet downstreamNodes) {
-        HashSet upstreamNodes = new HashSet();
+    private HashSet<LatencyEdge> getEdgesBetween(LatencyNode upstreamNode, HashSet<LatencyNode> downstreamNodes) {
+        HashSet<LatencyNode> upstreamNodes = new HashSet<LatencyNode>();
         upstreamNodes.add(upstreamNode);
         return getEdgesBetween(upstreamNodes, downstreamNodes);
     }
-    private HashSet getEdgesBetween(HashSet upstreamNodes, LatencyNode downstreamNode) {
-        HashSet downstreamNodes = new HashSet();
+    private HashSet<LatencyEdge> getEdgesBetween(HashSet<LatencyNode> upstreamNodes, LatencyNode downstreamNode) {
+        HashSet<LatencyNode> downstreamNodes = new HashSet<LatencyNode>();
         downstreamNodes.add(downstreamNode);
         return getEdgesBetween(upstreamNodes, downstreamNodes);
     }
@@ -300,12 +300,12 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * previous node and current node.
      * <li> SDEP for nodes in downsteramNodes are selected and returned.
      */
-    public HashMap computeSDEP(LatencyNode upstreamNode,
-                               HashSet downstreamNodes) 
+    public HashMap<LatencyNode, LatencyEdge> computeSDEP(LatencyNode upstreamNode,
+                               HashSet<LatencyNode> downstreamNodes) 
         throws NoPathException {
         // first find all the edges that need to be traversed when figuring
         // out the dependencies between nodes
-        HashSet edgesToTraverse = getEdgesBetween(upstreamNode, downstreamNodes);
+        HashSet<LatencyEdge> edgesToTraverse = getEdgesBetween(upstreamNode, downstreamNodes);
 
         // make sure that there are SOME edges between the two nodes
         // if this assert fails, then either the srcIsUpstream is reversed
@@ -317,15 +317,15 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
         // now go through all the edges and count how many useful edges
         // arrive at each node that will be traversed
-        HashMap nodes2numEdges = new HashMap();
+        HashMap<LatencyNode, Integer> nodes2numEdges = new HashMap<LatencyNode, Integer>();
         {
             Integer ONE = new Integer(1);
-	    for (Iterator edgeIter = edgesToTraverse.iterator(); edgeIter.hasNext(); ) {
+	    for (Iterator<LatencyEdge> edgeIter = edgesToTraverse.iterator(); edgeIter.hasNext(); ) {
 		LatencyNode nodeDst =
-		    ((LatencyEdge)edgeIter.next()).getDst();
+		    edgeIter.next().getDst();
 		
 		if (nodes2numEdges.containsKey(nodeDst)) {
-		    Integer useCount = (Integer)nodes2numEdges.get(nodeDst);
+		    Integer useCount = nodes2numEdges.get(nodeDst);
 
 		    // increase the data useful edge count
 		    nodes2numEdges.put(nodeDst, new Integer(useCount.intValue() + 1));
@@ -342,19 +342,19 @@ public class LatencyGraph extends streamit.misc.AssertedClass
          * only which execution of the src translates to an execution of
          * the dst) going from upstreamNode to the key node. 
          */
-        HashMap nodes2latencyEdges = new HashMap();
+        HashMap<LatencyNode, LatencyEdge> nodes2latencyEdges = new HashMap<LatencyNode, LatencyEdge>();
         
         // insert an identity latency edge from src to src into the map
         nodes2latencyEdges.put(upstreamNode,
 			       new LatencyEdge(upstreamNode));
 
-        HashSet nodesToVisit = new HashSet();
+        HashSet<LatencyNode> nodesToVisit = new HashSet<LatencyNode>();
         nodesToVisit.add(upstreamNode);
 
         // compute the dependency list for all the nodes
         // wrt to the upstreamNode
         while (!nodesToVisit.isEmpty()) {
-	    LatencyNode node = (LatencyNode)nodesToVisit.iterator().next();
+	    LatencyNode node = nodesToVisit.iterator().next();
 	    nodesToVisit.remove(node);
 
 	    DLList_const dependants = node.getDependants();
@@ -382,7 +382,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 			    assert nodes2latencyEdges.containsKey(edgeSrc);
 
 			    newEdge =
-				new LatencyEdge((LatencyEdge)nodes2latencyEdges.get(edgeSrc),
+				new LatencyEdge(nodes2latencyEdges.get(edgeSrc),
 						edge);
 			}
 
@@ -392,7 +392,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 			if (nodes2latencyEdges.containsKey(edgeDst)) {
 			    newEdge =
 				new LatencyEdge(newEdge,
-						(LatencyEdge)nodes2latencyEdges.get(edgeDst));
+						nodes2latencyEdges.get(edgeDst));
 			}
 			
 			// and finally, insert the new edge into the map.
@@ -402,7 +402,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 		    }
 
 		    // find how many more edges need to lead to this node
-		    int nodeNumEdges = ((Integer)nodes2numEdges.get(edge.getDst())).intValue();
+		    int nodeNumEdges = nodes2numEdges.get(edge.getDst()).intValue();
 		    assert nodeNumEdges > 0;
 
 		    // decrease the number of edges that need to lead to this node
@@ -419,9 +419,9 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 	}
 
         // build a map of what the caller requested
-        HashMap result = new HashMap();
-        for (Iterator i = downstreamNodes.iterator(); i.hasNext(); ) {
-            LatencyNode node = (LatencyNode)i.next();
+        HashMap<LatencyNode, LatencyEdge> result = new HashMap<LatencyNode, LatencyEdge>();
+        for (Iterator<LatencyNode> i = downstreamNodes.iterator(); i.hasNext(); ) {
+            LatencyNode node = i.next();
             assert nodes2latencyEdges.containsKey(node): "No data for " + node;
             result.put(node, nodes2latencyEdges.get(node));
         }
@@ -441,9 +441,9 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                                 LatencyNode downstreamNode)
         throws NoPathException
     {
-        HashSet downstreamNodes = new HashSet();
+        HashSet<LatencyNode> downstreamNodes = new HashSet<LatencyNode>();
         downstreamNodes.add(downstreamNode);
-        return (LatencyEdge)computeSDEP(upstreamNode, downstreamNodes).get(downstreamNode);
+        return computeSDEP(upstreamNode, downstreamNodes).get(downstreamNode);
     }
 
     /**
@@ -452,20 +452,20 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * is true, then nodes are explored downstream from <pre>startNodes</pre>;
      * otherwise, nodes are explored upstream.
      */
-    public HashSet exploreEdges(HashSet startNodes,
+    public HashSet<LatencyEdge> exploreEdges(HashSet<LatencyNode> startNodes,
                                 StreamInterface withinStream,
                                 boolean travelDownstream) {
         
         // nodes left to explore from
-        Stack nodesToExplore = new Stack();
+        Stack<LatencyNode> nodesToExplore = new Stack<LatencyNode>();
         nodesToExplore.addAll(startNodes);
         // nodes that we have visited
-        HashSet nodesVisited = new HashSet();
+        HashSet<LatencyNode> nodesVisited = new HashSet<LatencyNode>();
         // result set of edges
-        HashSet result = new HashSet();
+        HashSet<LatencyEdge> result = new HashSet<LatencyEdge>();
 
         while (!nodesToExplore.empty()) {
-            LatencyNode node = (LatencyNode)nodesToExplore.pop();
+            LatencyNode node = nodesToExplore.pop();
             nodesVisited.add(node);
             
             if (travelDownstream) {
@@ -556,12 +556,12 @@ public class LatencyGraph extends streamit.misc.AssertedClass
      * @param withinStream
      * @return Set of back edges
      */
-    public HashSet findBackPointingEdges(
+    public HashSet<LatencyEdge> findBackPointingEdges(
                                       LatencyNode startNode,
                                       StreamInterface withinStream)
     {
         // first find all the nodes in the stream (just to count them!)
-        HashSet nodesInStream = new HashSet();
+        HashSet<LatencyNode> nodesInStream = new HashSet<LatencyNode>();
 
         {
             DLList nodesToVisit = new DLList();
@@ -597,15 +597,15 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 	}
         int nNodesInStream = nodesInStream.size();
         // set up the backwards-pointing edge computation
-        HashMap node2int = new HashMap();
-        HashMap int2node = new HashMap();
+        HashMap<LatencyNode, Integer> node2int = new HashMap<LatencyNode, Integer>();
+        HashMap<Integer, LatencyNode> int2node = new HashMap<Integer, LatencyNode>();
         int nodeVectors[][] = new int[nNodesInStream][nNodesInStream];
         int nNode = 0;
-	for (Iterator nodeInStreamIter = nodesInStream.iterator(); 
+	for (Iterator<LatencyNode> nodeInStreamIter = nodesInStream.iterator(); 
 	     nodeInStreamIter.hasNext(); 
 	     nNode++) 
 	    {
-		LatencyNode node = (LatencyNode)nodeInStreamIter.next();
+		LatencyNode node = nodeInStreamIter.next();
 		Integer idx = new Integer(nNode);
 		node2int.put(node, idx);
 		int2node.put(idx, node);
@@ -613,7 +613,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 	    }
 
         // find the backward pointing edges
-        HashSet backwardPointingEdges = new HashSet();
+        HashSet<LatencyEdge> backwardPointingEdges = new HashSet<LatencyEdge>();
         DLList nodesToVisit = new DLList();
         for (nodesToVisit.pushBack(startNode);
              !nodesToVisit.empty();
@@ -636,11 +636,11 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
                         // get the vectors for both my src and dst nodes
                         int srcIdx =
-                            ((Integer)node2int.get(srcNode)).intValue();
+                            node2int.get(srcNode).intValue();
                         int srcVector[] = nodeVectors[srcIdx];
 
                         int dstIdx =
-                            ((Integer)node2int.get(dstNode)).intValue();
+                            node2int.get(dstNode).intValue();
                         int dstVector[] = nodeVectors[dstIdx];
 
                         // have I visited dst already?

@@ -18,9 +18,9 @@ public class Router {
     
     //returns a linked list of coordinates that gives the route
     //including source and dest
-    public static LinkedList getRoute(FlatNode from, FlatNode to) 
+    public static LinkedList<Coordinate> getRoute(FlatNode from, FlatNode to) 
     {
-        LinkedList route = new LinkedList();
+        LinkedList<Coordinate> route = new LinkedList<Coordinate>();
         Coordinate fromCoord, toCoord;
     
         fromCoord = Layout.getTile(from);

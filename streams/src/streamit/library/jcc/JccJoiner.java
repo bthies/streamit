@@ -13,7 +13,7 @@ import x10.stream.OutStream;
  */
 class JccJoiner extends JccOperator {
 
-	protected List inChannelList;
+	protected List<JccChannel> inChannelList;
 
 	protected JccChannel[] inChannels;
 
@@ -21,7 +21,7 @@ class JccJoiner extends JccOperator {
 
 	protected JccChannel outChannel = null;
 
-	protected List weightList;
+	protected List<Integer> weightList;
 
 	protected int[] weights;
 
@@ -38,8 +38,8 @@ class JccJoiner extends JccOperator {
 	protected boolean noInput = true;
 
 	JccJoiner() {
-		inChannelList = new ArrayList();
-		weightList = new ArrayList();
+		inChannelList = new ArrayList<JccChannel>();
+		weightList = new ArrayList<Integer>();
 	}
 
 	void addInChannel(JccChannel channel) {
@@ -70,12 +70,12 @@ class JccJoiner extends JccOperator {
 		weights = new int[weightList.size()];
 
 		for (int i = 0; i < weights.length; i++) {
-			weights[i] = ((Integer) weightList.get(i)).intValue();
+			weights[i] = weightList.get(i).intValue();
 		}
 
 		weightList = null;
 
-		inChannels = (JccChannel[]) inChannelList.toArray(new JccChannel[0]);
+		inChannels = inChannelList.toArray(new JccChannel[0]);
 		inStreams = new InStream[inChannels.length];
 
 		for (int i = 0; i < inChannels.length; i++) {
@@ -152,7 +152,7 @@ class JccJoiner extends JccOperator {
 		if (weightList == null) {
 			return (weights[0] == 0);
 		} else {
-			return (((Integer) weightList.get(0)).intValue() == 0);
+			return (weightList.get(0).intValue() == 0);
 		}
 	}
 

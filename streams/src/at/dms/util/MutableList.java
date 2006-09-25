@@ -69,13 +69,13 @@ public class MutableList extends ConstList implements List, Cloneable, Serializa
 
     /** Returns a view of the portion of this list between the
      * specified fromIndex, inclusive, and toIndex, exclusive. */
-    public List subList(int fromIndex, int toIndex) {
+    public List<Object> subList(int fromIndex, int toIndex) {
         return list.subList(fromIndex, toIndex);
     }
 
     public Object clone() {
         MutableList result = new MutableList();
-        result.list = (LinkedList)list.clone();
+        result.list = (LinkedList<Object>)list.clone();
         return result;
     }
 }

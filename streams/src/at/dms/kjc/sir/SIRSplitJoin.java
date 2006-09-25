@@ -147,7 +147,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * <children> before.  Only clears the argument list if there are
      * a different number of streams than before.
      */
-    public void setParallelStreams(LinkedList children) {
+    public void setParallelStreams(LinkedList<Object> children) {
         if (size()==children.size()) {
             // same size
             for (int i=0; i<children.size(); i++) {
@@ -211,8 +211,12 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     /**
      * Returns a list of the parallel streams in this.
      */
-    public List getParallelStreams() {
-        return super.getChildren();
+    public List<SIRStream> getParallelStreams() {
+       List<SIRStream> result = new LinkedList<SIRStream>();
+        for (int i=0; i<size(); i++) {
+            result.add(get(i));
+        }
+        return result;
     }
 
     // reset splits and joins to have right number of children.
@@ -306,9 +310,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * representing a tape from the first element of each tuple to the
      * second.
      */
-    public List getTapePairs() {
+    public List<SIROperator[]> getTapePairs() {
         // construct result
-        LinkedList result = new LinkedList();
+        LinkedList<SIROperator[]> result = new LinkedList<SIROperator[]>();
         // go through list of children
         for (int i=0; i<size()-1; i++) {
             // make an entry from splitter to each stream

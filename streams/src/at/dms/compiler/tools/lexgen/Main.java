@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.3 2006-01-25 17:01:12 thies Exp $
+ * $Id: Main.java,v 1.4 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.lexgen;
@@ -151,7 +151,7 @@ public class Main {
      *
      */
     private boolean checkIdentifiers() {
-        Hashtable       identifiers = new Hashtable();
+        Hashtable<String, String>       identifiers = new Hashtable<String, String>();
         boolean     errorsFound = false;
         String      prefix = definitions[definitions.length - 1].getPrefix();
         int         cnt = MIN_TOKEN_ID;

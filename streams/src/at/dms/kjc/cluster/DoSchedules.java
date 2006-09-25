@@ -91,10 +91,10 @@ public class DoSchedules {
                 SIRSplitJoin sj = (SIRSplitJoin)str;            
                 recurseStream(sj.getSplitter());
                 recurseStream(sj.getJoiner());
-                Iterator iter = sj.getParallelStreams().iterator();
+                Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
                 while (iter.hasNext())
                     {
-                        SIRStream child = (SIRStream)iter.next();
+                        SIRStream child = iter.next();
                         recurseStream(child);
                     }
             }

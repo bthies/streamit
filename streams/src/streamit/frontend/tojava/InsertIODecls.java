@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.14 2006-08-23 23:01:13 thies Exp $
+ * @version $Id: InsertIODecls.java,v 1.15 2006-09-25 13:54:54 dimock Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -97,10 +97,10 @@ public class InsertIODecls extends InitMunger
         newStmts.add(new StmtIODecl(work.getContext(), init, work));
     }
 
-    private void translateHelpers(List helpers, List newStmts)
+    private void translateHelpers(List<Function> helpers, List newStmts)
     {
-        for (Iterator iter = helpers.iterator(); iter.hasNext(); ) {
-            Function helper = (Function)iter.next();
+        for (Iterator<Function> iter = helpers.iterator(); iter.hasNext(); ) {
+            Function helper = iter.next();
             newStmts.add(new StmtIODecl(helper.getContext(), helper));
         }
     }

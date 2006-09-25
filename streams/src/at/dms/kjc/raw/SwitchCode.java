@@ -41,19 +41,19 @@ public class SwitchCode extends at.dms.util.Utils {
     public static void dumpSchedules() {
         // get all the nodes that have either init switch code
         // or steady state switch code
-        HashSet tiles = new HashSet(RawBackend.simulator.initSchedules.keySet());
+        HashSet<Object> tiles = new HashSet<Object>(RawBackend.simulator.initSchedules.keySet());
 
         RawBackend.addAll(tiles, RawBackend.simulator.steadySchedules.keySet());
         RawBackend.addAll(tiles, Layout.getTiles());
 
         // do not generate switchcode for Tiles assigned to file readers/writers
         // they are just dummy tiles
-        Iterator fs = FileVisitor.fileNodes.iterator();
+        Iterator<Object> fs = FileVisitor.fileNodes.iterator();
         while (fs.hasNext()) {
             tiles.remove(Layout.getTile((FlatNode) fs.next()));
         }
 
-        Iterator tileIterator = tiles.iterator();
+        Iterator<Object> tileIterator = tiles.iterator();
 
         // for each tiles dump the code
         while (tileIterator.hasNext()) {
@@ -66,11 +66,11 @@ public class SwitchCode extends at.dms.util.Utils {
                 String steadyCode = "";
                 String initCode = "";
                 if (RawBackend.simulator.initSchedules.get(tile) != null)
-                    initCode = ((StringBuffer) RawBackend.simulator.initSchedules
-                                .get(tile)).toString();
+                    initCode = RawBackend.simulator.initSchedules
+                                .get(tile).toString();
                 if (RawBackend.simulator.steadySchedules.get(tile) != null)
-                    steadyCode = ((StringBuffer) RawBackend.simulator.steadySchedules
-                                  .get(tile)).toString();
+                    steadyCode = RawBackend.simulator.steadySchedules
+                                  .get(tile).toString();
 
                 // the sequences we are going to compress if compression is
                 // needed
@@ -450,12 +450,12 @@ public class SwitchCode extends at.dms.util.Utils {
     // repetition count, and the size of the repetition
     static class Repetition {
         //
-        public HashMap lineToSize;
+        public HashMap<Integer, Integer> lineToSize;
 
         public int repetitions;
 
         public Repetition(int r) {
-            lineToSize = new HashMap();
+            lineToSize = new HashMap<Integer, Integer>();
             repetitions = r;
         }
 
@@ -467,7 +467,7 @@ public class SwitchCode extends at.dms.util.Utils {
     
         public int getSize(int l) 
         {
-            return ((Integer)lineToSize.get(new Integer(l))).intValue();
+            return lineToSize.get(new Integer(l)).intValue();
         }
     
 
@@ -477,9 +477,9 @@ public class SwitchCode extends at.dms.util.Utils {
 
         public String toString() {
             String ret = "reps: " + repetitions;
-            Iterator it = lineToSize.keySet().iterator();
+            Iterator<Integer> it = lineToSize.keySet().iterator();
             while (it.hasNext()) {
-                Integer line = (Integer)it.next();
+                Integer line = it.next();
                 ret = ret + "(" + line.toString() + ", " +
                     lineToSize.get(line) + ")";
         

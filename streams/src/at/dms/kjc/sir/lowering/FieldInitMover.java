@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.14 2006-01-25 17:02:07 thies Exp $
+ * $Id: FieldInitMover.java,v 1.15 2006-09-25 13:54:42 dimock Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
     public static final int MOVE_ARRAY_INITIALIZERS = 0;
@@ -68,12 +68,12 @@ public class FieldInitMover extends EmptyStreamVisitor {
         // to the beginning of the init function.
         // Reverses the order of the initializations (because we see the fields
         // in reverse order above)
-        Vector newStatements = harvester.getAssignmentStatements();
+        Vector<JExpressionStatement> newStatements = harvester.getAssignmentStatements();
         if(filter.getInit()!=null) {
             JBlock body = filter.getInit().getBody();
             for (int i=0; i<newStatements.size(); i++) {
                 body.addStatement(0,
-                                  (JStatement)newStatements.elementAt(i));
+                                  newStatements.elementAt(i));
             }
         }
     }
@@ -87,16 +87,16 @@ public class FieldInitMover extends EmptyStreamVisitor {
 
     static class FieldInitMoverVisitor extends SLIRReplacingVisitor {
         /** Assignments that need to be added to the initializations statements **/
-        Vector assignmentStatements;
+        Vector<JExpressionStatement> assignmentStatements;
         private int moveArrayInitializers;
 
         FieldInitMoverVisitor(int moveArrayInitializers) {
             super();
-            this.assignmentStatements = new Vector();
+            this.assignmentStatements = new Vector<JExpressionStatement>();
             this.moveArrayInitializers = moveArrayInitializers;
         }
 
-        public Vector getAssignmentStatements() {
+        public Vector<JExpressionStatement> getAssignmentStatements() {
             return this.assignmentStatements;
         }
 

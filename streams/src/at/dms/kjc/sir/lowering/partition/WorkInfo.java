@@ -12,7 +12,7 @@ class WorkInfo {
      * Mapping of all workinfo's that have been created to date.  Maps
      * workinfo's to an integer with their -measured- work.
      */
-    private static final HashMap measured = new HashMap();
+    private static final HashMap<WorkInfo, Integer> measured = new HashMap<WorkInfo, Integer>();
     /**
      * Number of times this node executes.  This will be 1 for
      * containers, but the actual number of executions for filters.

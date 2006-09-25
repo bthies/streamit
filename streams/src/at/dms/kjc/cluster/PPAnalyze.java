@@ -48,10 +48,10 @@ public class PPAnalyze extends SLIREmptyVisitor {
 	}
     }
 
-    Stack info_stack; // stack stores Push(-1)/Pop(+1) balance at each recursive level
+    Stack<PPInfo> info_stack; // stack stores Push(-1)/Pop(+1) balance at each recursive level
 
     public PPAnalyze() {
-	info_stack = new Stack();
+	info_stack = new Stack<PPInfo>();
 	newLevel();
     }
 
@@ -60,25 +60,25 @@ public class PPAnalyze extends SLIREmptyVisitor {
     }
     
     private PPInfo peekBalance() {
-	return (PPInfo)info_stack.peek();
+	return info_stack.peek();
     }
 
     private PPInfo popBalance() {
-	return (PPInfo)info_stack.pop();
+	return info_stack.pop();
     }
 
     private void incBalance(int offs) {
-	PPInfo info = (PPInfo)info_stack.peek();
+	PPInfo info = info_stack.peek();
 	info.inc(offs);
     }
 
     private void addBalance(int offs, int min) {
-	PPInfo info = (PPInfo)info_stack.peek();
+	PPInfo info = info_stack.peek();
 	info.add(offs, min);
     }
 
     private void nullBalance() {
-	PPInfo info = (PPInfo)info_stack.peek();
+	PPInfo info = info_stack.peek();
 	info.setNul();
     }
 

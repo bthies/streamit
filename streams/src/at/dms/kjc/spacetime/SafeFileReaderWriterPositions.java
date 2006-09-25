@@ -42,22 +42,22 @@ public class SafeFileReaderWriterPositions {
     /**
      * FileReaders preceeding splitters
      */
-    private static HashSet readerBeforeSplitter;
+    private static HashSet<SIROperator> readerBeforeSplitter;
     /**
      * FileWriters following joiners
      */
-    private static HashSet writerAfterJoiner;
+    private static HashSet<SIROperator> writerAfterJoiner;
     
     
     private void doitInternal(SIRStream str) {
-        readerBeforeSplitter = new HashSet();
-        writerAfterJoiner = new HashSet();
+        readerBeforeSplitter = new HashSet<SIROperator>();
+        writerAfterJoiner = new HashSet<SIROperator>();
         
         // use FlatGraph to eliminate intermediate levels of pipelines
         // when looking at stream.
         GraphFlattener fg = new GraphFlattener(str);
         // fill out readerBeforeSplitter, writerAfterJoiner
-        fg.top.accept(new CheckGraph(), new HashSet(), false);
+        fg.top.accept(new CheckGraph(), new HashSet<FlatNode>(), false);
         // any work needing doing?
         if (readerBeforeSplitter.isEmpty()
             &&  writerAfterJoiner.isEmpty()) {
@@ -111,7 +111,7 @@ public class SafeFileReaderWriterPositions {
                 && readerBeforeSplitter.contains(self)) {
                 CType outputType = self.getOutputType();
                 SIRContainer parent = (SIRContainer)iter.getParent().getStream();
-                LinkedList pipeChildren = new LinkedList();
+                LinkedList<Object> pipeChildren = new LinkedList<Object>();
                 SIRFilter id = makeIdentityFilter(outputType);
                 //SIRFilter id = new SIRIdentity(outputType);
                 RenameAll.renameAllFilters(id);
@@ -122,7 +122,7 @@ public class SafeFileReaderWriterPositions {
                     && writerAfterJoiner.contains(self)) {
                 CType inputType = self.getInputType();
                 SIRContainer parent = (SIRContainer)iter.getParent().getStream();
-                LinkedList pipeChildren = new LinkedList();
+                LinkedList<Object> pipeChildren = new LinkedList<Object>();
                 SIRFilter id = makeIdentityFilter(inputType);
                 //SIRFilter id = new SIRIdentity(inputType);
                 RenameAll.renameAllFilters(id);
@@ -133,7 +133,7 @@ public class SafeFileReaderWriterPositions {
         }
     }
  
-    private void makePipeline(SIRFilter self, SIRContainer parent, LinkedList/*<SIRFilter>*/pipeChildren) {
+    private void makePipeline(SIRFilter self, SIRContainer parent, LinkedList/*<SIRFilter>*/<Object>pipeChildren) {
         JMethodDeclaration init = makeInit();
         SIRPipeline pipe = new SIRPipeline(parent,
                 "generatedPipeline"+makeNewSuffix(),

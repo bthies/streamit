@@ -735,11 +735,11 @@ public class ComputeCodeStore implements SIRCodeUnit{
      *
      */
     public static void presynchEmptyTilesInSteady() {
-        Iterator buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
         HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            OffChipBuffer buffer = buffers.next();
             if (buffer.redundant())
                 continue;
             //don't do anything if a filter is mapped to this
@@ -827,11 +827,11 @@ public class ComputeCodeStore implements SIRCodeUnit{
      *
      */
     public static void presynchAllDramsInInit() {
-        Iterator buffers = OffChipBuffer.getBuffers().iterator();
-        HashSet visitedTiles = new HashSet();
+        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
+        HashSet<RawTile> visitedTiles = new HashSet<RawTile>();
         
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            OffChipBuffer buffer = buffers.next();
             if (buffer.redundant())
                 continue;
             if (!visitedTiles.contains(buffer.getOwner())) {

@@ -13,14 +13,14 @@ abstract class JccSplitter extends JccOperator {
 
 	protected JccChannel inChannel;
 
-	protected List outChannelList;
+	protected List<JccChannel> outChannelList;
 
 	protected JccChannel[] outChannels;
 
 	protected OutStream[] outStreams;
 
 	JccSplitter() {
-		outChannelList = new ArrayList();
+		outChannelList = new ArrayList<JccChannel>();
 	}
 
 	void setInChannel(JccChannel channel) {
@@ -38,7 +38,7 @@ abstract class JccSplitter extends JccOperator {
 	}
 
 	public void init() {
-		outChannels = (JccChannel[]) outChannelList.toArray(new JccChannel[0]);
+		outChannels = outChannelList.toArray(new JccChannel[0]);
 		outStreams = new OutStream[outChannels.length];
 
 		for (int i = 0; i < outChannels.length; i++) {
@@ -79,7 +79,7 @@ abstract class JccSplitter extends JccOperator {
 	 */
 	static class RoundRobinSplitter extends JccSplitter {
 
-		protected List weightList;
+		protected List<Integer> weightList;
 
 		protected int[] weights;
 
@@ -94,7 +94,7 @@ abstract class JccSplitter extends JccOperator {
 		protected int outputItems = 0;
 
 		RoundRobinSplitter() {
-			weightList = new ArrayList();
+			weightList = new ArrayList<Integer>();
 		}
 
 		void addWeight(int weight) {
@@ -112,7 +112,7 @@ abstract class JccSplitter extends JccOperator {
 			weights = new int[weightList.size()];
 
 			for (int i = 0; i < weights.length; i++) {
-				weights[i] = ((Integer) weightList.get(i)).intValue();
+				weights[i] = weightList.get(i).intValue();
 			}
 
 			weightList = null;

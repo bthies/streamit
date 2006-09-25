@@ -34,7 +34,7 @@ abstract class DPConfig implements Cloneable {
      * track of new partitions in <pre>partitions</pre> and adding to current
      * partition <pre>curPartition</pre>, and returning new stream.
      */
-    abstract public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str);
+    abstract public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str);
 
     /**
      * Returns the stream this config is wrapping.

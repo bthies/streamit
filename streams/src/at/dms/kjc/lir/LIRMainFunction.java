@@ -35,7 +35,7 @@ public class LIRMainFunction extends LIRNode {
      * include the execution of the initialization schedule for the
      * stream.
      */
-    private LinkedList initStatements;
+    private LinkedList<JStatement> initStatements;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -46,11 +46,11 @@ public class LIRMainFunction extends LIRNode {
      */
     public LIRMainFunction(String typeName,
                            LIRFunctionPointer init,
-                           LinkedList initStatements) {
+                           LinkedList<JStatement> initStatements) {
         // stream context is null since we're at the toplevel
         super(null);
         this.init = init;
-        this.initStatements = (LinkedList)initStatements.clone();
+        this.initStatements = (LinkedList<JStatement>)initStatements.clone();
         this.typeName = typeName;
     }
 

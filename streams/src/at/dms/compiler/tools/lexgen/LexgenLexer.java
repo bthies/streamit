@@ -18,7 +18,7 @@ public class LexgenLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner
     }
     public LexgenLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         literals.put(new ANTLRHashString("@package", this), new Integer(5));
         literals.put(new ANTLRHashString("@token", this), new Integer(13));
         literals.put(new ANTLRHashString("@literal", this), new Integer(10));

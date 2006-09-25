@@ -15,11 +15,11 @@ import at.dms.kjc.flatgraph.FlatNode;
  *
  */
 public class CircularSchedule {
-    private LinkedList list;
+    private LinkedList<FlatNode> list;
     private int id;
     
     public CircularSchedule(FlatNode[] objs) {
-        list = new LinkedList();
+        list = new LinkedList<FlatNode>();
         for (int i = 0; i < objs.length; i++)
             list.add(objs[i]);
     }
@@ -30,7 +30,7 @@ public class CircularSchedule {
     public FlatNode next() {
         int oldID = id;
         id = (id  + 1) % list.size();
-        return (FlatNode)list.get(oldID);
+        return list.get(oldID);
     }
     
     /** 

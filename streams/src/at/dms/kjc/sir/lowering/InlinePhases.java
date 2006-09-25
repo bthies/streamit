@@ -68,14 +68,14 @@ public class InlinePhases {
     private static void removePhases(SIRFilter filter) {
         JMethodDeclaration[] methods = filter.getMethods();
         // methods that aren't phases
-        List newMethods = new LinkedList();
+        List<JMethodDeclaration> newMethods = new LinkedList<JMethodDeclaration>();
 
         for (int i=0; i<methods.length; i++) {
             if (!isRemovablePhase(filter, methods[i])) {
                 newMethods.add(methods[i]);
             }
         }
-        filter.setMethods((JMethodDeclaration[])newMethods.toArray(new JMethodDeclaration[0]));
+        filter.setMethods(newMethods.toArray(new JMethodDeclaration[0]));
     }
 
     /**

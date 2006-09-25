@@ -2,6 +2,8 @@ package at.dms.kjc.common;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+
+import java.io.Serializable;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
@@ -20,7 +22,7 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 {
     /** holds alls vars referenced in the filter
         see VariablesUsed **/
-    private HashSet varsUsed;
+    private HashSet<Serializable> varsUsed;
     /** Holds idents of arrays that are fields have have zero dimensionality **/
     private HashSet zeroDimArrays;
 
@@ -67,12 +69,12 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
         }
     
         //now check the fields
-        Vector newFields = new Vector();
+        Vector<JFieldDeclaration> newFields = new Vector<JFieldDeclaration>();
         for (int i = 0; i < filter.getFields().length; i++) {
             if (varsUsed.contains(filter.getFields()[i].getVariable().getIdent())) 
                 newFields.add(filter.getFields()[i]);
         }
-        filter.setFields((JFieldDeclaration[])newFields.toArray(new JFieldDeclaration[0]));
+        filter.setFields(newFields.toArray(new JFieldDeclaration[0]));
     }
     
     public Object visitAssignmentExpression(JAssignmentExpression self,
@@ -129,7 +131,7 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
      */
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                     JVariableDefinition[] vars) {
-        Vector newDecls = new Vector();
+        Vector<JVariableDefinition> newDecls = new Vector<JVariableDefinition>();
         for (int i = 0; i < vars.length; i++) {
             JVariableDefinition result = 
                 (JVariableDefinition)vars[i].accept(this);
@@ -141,7 +143,6 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
             return new JEmptyStatement(null, null);
 
         return new JVariableDeclarationStatement(null, 
-                                                 (JVariableDefinition[])
                                                  newDecls.toArray(new JVariableDefinition[0]),
                                                  null);
     }

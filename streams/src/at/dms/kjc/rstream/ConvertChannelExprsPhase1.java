@@ -47,10 +47,10 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
     private int currentTopLevelPop;
     /** maps pop/peek to the number of pops that have occured on the current iteration
      * of the outer loop for loops that have already completed execution **/
-    public HashMap topLevelPop;
+    public HashMap<JExpression, Integer> topLevelPop;
     /** maps do loop to the number of pops that occur on one iteration of the 
         loop **/
-    public HashMap loopPop;
+    public HashMap<JDoLoopStatement, Integer> loopPop;
     
     //push information
     /** the number of push's we have seen so for for the current loop we are 
@@ -61,10 +61,10 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
     private int currentTopLevelPush;
     /** maps push to the number of push' that have occured on the current iteration
      * of the outer loop for loops that have already completed execution **/
-    public HashMap topLevelPush;
+    public HashMap<JExpression, Integer> topLevelPush;
     /** maps do loop to the number of pushs that occur on one iteration of the 
         loop **/
-    public HashMap loopPush;
+    public HashMap<JDoLoopStatement, Integer> loopPush;
 
     // > 0 if we are visiting the header of a do loop
     private int doHeader = 0;
@@ -76,7 +76,7 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
     
 
     //pop, peek, push -> JDoLoopStatment, the inner most enclosing loop
-    public HashMap enclosingLoop;
+    public HashMap<JPhylum, JDoLoopStatement> enclosingLoop;
     //the current loop we are analyzing
     public JDoLoopStatement currentLoop;
 
@@ -87,16 +87,16 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
         //init pop/peek state
         currentLoopPop = 0;
         currentTopLevelPop = 0;
-        topLevelPop = new HashMap();
-        loopPop = new HashMap();
+        topLevelPop = new HashMap<JExpression, Integer>();
+        loopPop = new HashMap<JDoLoopStatement, Integer>();
     
         //init push state
         currentLoopPush = 0;
         currentTopLevelPush = 0;    
-        topLevelPush = new HashMap();
-        loopPush = new HashMap();
+        topLevelPush = new HashMap<JExpression, Integer>();
+        loopPush = new HashMap<JDoLoopStatement, Integer>();
 
-        enclosingLoop = new HashMap();
+        enclosingLoop = new HashMap<JPhylum, JDoLoopStatement>();
 
         currentLoop = null;
     
@@ -107,14 +107,14 @@ class ConvertChannelExprsPhase1 extends SLIREmptyVisitor
         occur in one iteration of the top level loop */
     public int getTopLevelPopCount() 
     {
-        return ((Integer)loopPop.get(topLevel)).intValue();
+        return loopPop.get(topLevel).intValue();
     }
     
     /** give that this phase has completed, return the number of push's that
         occur in one iteration of the top level loop */
     public int getTopLevelPushCount() 
     {
-        return ((Integer)loopPush.get(topLevel)).intValue();
+        return loopPush.get(topLevel).intValue();
     }
     
     /** Run the 1st phase of the MIV conversion pass **/

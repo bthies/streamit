@@ -29,14 +29,14 @@ public class StmtHelperCall extends Statement
 {
     private String helper_package;
     private String name;
-    private List params;
+    private List<Expression> params;
     
     /**
      * Creates a helper call statement.
      *
      */
     public StmtHelperCall(FEContext context, String helper_package,
-                          String name, List params)
+                          String name, List<Expression> params)
     {
         super(context);
         this.helper_package = helper_package;
@@ -63,7 +63,7 @@ public class StmtHelperCall extends Statement
     /**
      * Get the parameter list of the helper call.
      */
-    public List getParams()
+    public List<Expression> getParams()
     {
         return params;
     }

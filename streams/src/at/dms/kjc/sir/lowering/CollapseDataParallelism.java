@@ -53,13 +53,13 @@ public class CollapseDataParallelism {
     /**
      * Set of splitjoins that are eligible for transformation.
      */
-    private HashSet eligible;
+    private HashSet<SIRSplitJoin> eligible;
 
     /**
      * Construct one each time you do a call to detectEligible / doTransformations.
      */
     public CollapseDataParallelism() {
-        eligible = new HashSet();
+        eligible = new HashSet<SIRSplitJoin>();
     }
 
     /**

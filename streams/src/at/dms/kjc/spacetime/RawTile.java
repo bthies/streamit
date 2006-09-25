@@ -32,13 +32,13 @@ public class RawTile extends ComputeNode {
 
     private IODevice[] IODevices;
 
-    private HashSet offChipBuffers;
+    private HashSet<OffChipBuffer> offChipBuffers;
 
-    private Vector initFilters;
+    private Vector<FilterTraceNode> initFilters;
 
-    private Vector primepumpFilters;
+    private Vector<FilterTraceNode> primepumpFilters;
 
-    private Vector steadyFilters;
+    private Vector<FilterTraceNode> steadyFilters;
 
     public RawTile(int x, int y, RawChip rawChip) {
         super(rawChip);
@@ -51,10 +51,10 @@ public class RawTile extends ComputeNode {
         switchCode = new SwitchCodeStore(this);
         computeCode = new ComputeCodeStore(this);
         IODevices = new IODevice[0];
-        offChipBuffers = new HashSet();
-        initFilters = new Vector();
-        primepumpFilters = new Vector();
-        steadyFilters = new Vector();
+        offChipBuffers = new HashSet<OffChipBuffer>();
+        initFilters = new Vector<FilterTraceNode>();
+        primepumpFilters = new Vector<FilterTraceNode>();
+        steadyFilters = new Vector<FilterTraceNode>();
     }
 
     public String toString() {
@@ -78,7 +78,7 @@ public class RawTile extends ComputeNode {
         offChipBuffers.add(buf);
     }
 
-    public HashSet getBuffers() {
+    public HashSet<OffChipBuffer> getBuffers() {
         return offChipBuffers;
     }
 
@@ -199,7 +199,7 @@ public class RawTile extends ComputeNode {
             steadyFilters.add(filter);
     }
 
-    public Vector getFilters(boolean init, boolean primepump) {
+    public Vector<FilterTraceNode> getFilters(boolean init, boolean primepump) {
         if (init)
             return initFilters;
         else if (primepump)
@@ -208,8 +208,8 @@ public class RawTile extends ComputeNode {
             return steadyFilters;
     }
 
-    public Vector getNeighborTiles() {
-        Vector ret = new Vector();
+    public Vector<RawTile> getNeighborTiles() {
+        Vector<RawTile> ret = new Vector<RawTile>();
         if (X - 1 >= 0)
             ret.add(rawChip.getTile(X - 1, Y));
         if (X + 1 < rawChip.getXSize())

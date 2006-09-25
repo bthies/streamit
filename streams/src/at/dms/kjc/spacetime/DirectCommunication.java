@@ -131,7 +131,7 @@ public class DirectCommunication extends RawExecutionCode
      */
     public JFieldDeclaration[] getVarDecls() 
     {
-        Vector decls = new Vector();
+        Vector<JFieldDeclaration> decls = new Vector<JFieldDeclaration>();
         FilterContent filter = filterInfo.filter;
 
         for (int i = 0; i < filter.getFields().length; i++) 
@@ -165,7 +165,7 @@ public class DirectCommunication extends RawExecutionCode
         //conver all the push statements into method calls
         ConvertPushesToMethCall.doit(filterInfo, gdnOutput);
         
-        return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
+        return decls.toArray(new JFieldDeclaration[0]);
     }
     
     /**
@@ -266,7 +266,7 @@ public class DirectCommunication extends RawExecutionCode
      */
     public JMethodDeclaration[] getHelperMethods() 
     {
-        Vector methods = new Vector();
+        Vector<JMethodDeclaration> methods = new Vector<JMethodDeclaration>();
         /*
         //add all helper methods, except work function
         for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
@@ -281,7 +281,7 @@ public class DirectCommunication extends RawExecutionCode
             methods.add(filterInfo.filter.getMethods()[i]);
         }
     
-        return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);    
+        return methods.toArray(new JMethodDeclaration[0]);    
     }
     
     /** 

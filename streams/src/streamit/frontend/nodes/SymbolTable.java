@@ -38,7 +38,7 @@ import java.util.HashMap;
  *
  * @see     streamit.frontend.passes.SymbolTableVisitor
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTable.java,v 1.11 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: SymbolTable.java,v 1.12 2006-09-25 13:54:54 dimock Exp $
  */
 public class SymbolTable
 {
@@ -53,7 +53,7 @@ public class SymbolTable
     /** Kind of a global field. */
     public static final int KIND_GLOBAL = 5;
     
-    private Map vars, fns;
+    private Map<String, Object> vars, fns;
     private SymbolTable parent;
     private List includedFns;
 
@@ -74,8 +74,8 @@ public class SymbolTable
      * null). */
     public SymbolTable(SymbolTable parent)
     {
-        vars = new HashMap();
-        fns = new HashMap();
+        vars = new HashMap<String, Object>();
+        fns = new HashMap<String, Object>();
         this.parent = parent;
         this.includedFns = null;
     }

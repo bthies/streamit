@@ -29,7 +29,7 @@ class DPConfigPipeline extends DPConfigContainer {
         return super.get(tileLimit, nextToJoiner);
     }
     
-    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
+    public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
         // if we have null joiner, then don't need to allocate a tile
         // for the joiner, so count us as already being next to a
         // joiner.

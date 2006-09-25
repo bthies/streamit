@@ -9,11 +9,11 @@ import at.dms.kjc.sir.lowering.*;
 
 public class JoinerRemoval implements FlatVisitor 
 {
-    public static HashSet unnecessary;
+    public static HashSet<FlatNode> unnecessary;
     
     public static void run(FlatNode top) 
     {
-        unnecessary = new HashSet();
+        unnecessary = new HashSet<FlatNode>();
         if (!KjcOptions.ratematch)
             return;
 
@@ -56,7 +56,7 @@ public class JoinerRemoval implements FlatVisitor
                         return;
                     SIRFilter filter = (SIRFilter)node.incoming[i].contents;
                     System.out.println(node.incoming[i]+"->"+node);
-                    int exe = ((Integer)RawBackend.steadyExecutionCounts.get(node.incoming[i])).intValue();
+                    int exe = RawBackend.steadyExecutionCounts.get(node.incoming[i]).intValue();
                     int prod = exe * filter.getPushInt();
                     if (exe != BlockExecutionCounts.getBlockCount(node.incoming[i]))
                         return;

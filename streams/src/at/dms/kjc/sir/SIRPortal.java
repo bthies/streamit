@@ -17,10 +17,10 @@ import java.util.*;
  */
 public class SIRPortal extends JLiteral /*JExpression*/ {
 
-    protected static LinkedList portals = new LinkedList();
+    protected static LinkedList<SIRPortal> portals = new LinkedList<SIRPortal>();
 
-    protected LinkedList receivers;
-    protected LinkedList senders;
+    protected LinkedList<SIRStream> receivers;
+    protected LinkedList<SIRPortalSender> senders;
 
     protected CType type;
 
@@ -35,8 +35,8 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
     }
 
     private void construct(CType type, boolean addToList) {
-        receivers = new LinkedList();
-        senders = new LinkedList();
+        receivers = new LinkedList<SIRStream>();
+        senders = new LinkedList<SIRPortalSender>();
         this.type = type; 
         if (addToList) portals.add(this);    
     }
@@ -65,33 +65,33 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
      */
     public static SIRPortal[] getPortals() {
         SIRPortal[] array = new SIRPortal[portals.size()];
-        return (SIRPortal[])portals.toArray(array);
+        return portals.toArray(array);
     }
 
     /*
      * Returns array of all portals with a specific sender
      */
     public static SIRPortal[] getPortalsWithSender(SIRStream sender) {
-        LinkedList list = new LinkedList();
+        LinkedList<SIRPortal> list = new LinkedList<SIRPortal>();
         for (int t = 0; t < portals.size(); t++) {
-            SIRPortal portal = (SIRPortal)portals.get(t);
+            SIRPortal portal = portals.get(t);
             if (portal.hasSender(sender)) list.add(portal);
         }
         SIRPortal[] array = new SIRPortal[list.size()];
-        return (SIRPortal[])list.toArray(array);
+        return list.toArray(array);
     }
 
     /*
      * Returns array of all portals with a specific receiver
      */
     public static SIRPortal[] getPortalsWithReceiver(SIRStream receiver) {
-        LinkedList list = new LinkedList();
+        LinkedList<SIRPortal> list = new LinkedList<SIRPortal>();
         for (int t = 0; t < portals.size(); t++) {
-            SIRPortal portal = (SIRPortal)portals.get(t);
+            SIRPortal portal = portals.get(t);
             if (portal.hasReceiver(receiver)) list.add(portal);
         }
         SIRPortal[] array = new SIRPortal[list.size()];
-        return (SIRPortal[])list.toArray(array);
+        return list.toArray(array);
     }
 
     public CType getPortalType() {
@@ -108,7 +108,7 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
 
     public boolean hasSender(SIRStream sender) {
         for (int t = 0; t < senders.size(); t++) {
-            if (((SIRPortalSender)senders.get(t)).getStream().equals(sender)) return true;
+            if (senders.get(t).getStream().equals(sender)) return true;
         }
         return false;
     }
@@ -122,12 +122,12 @@ public class SIRPortal extends JLiteral /*JExpression*/ {
 
     public SIRStream[] getReceivers() {
         SIRStream[] array = new SIRStream[receivers.size()];
-        return (SIRStream[])receivers.toArray(array);
+        return receivers.toArray(array);
     }
 
     public SIRPortalSender[] getSenders() {
         SIRPortalSender[] array = new SIRPortalSender[senders.size()];
-        return (SIRPortalSender[])senders.toArray(array);
+        return senders.toArray(array);
     }
 
     static class FindMessageStatements extends SLIRReplacingVisitor {

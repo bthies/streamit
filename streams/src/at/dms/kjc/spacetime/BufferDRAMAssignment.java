@@ -198,7 +198,7 @@ public class BufferDRAMAssignment {
     private boolean gdnStoreSamePortDifferentTile(Trace[] traces) {
         //this hashset stores a mapping from drams to a tile that
         //has already issued a store on the gdn to the dram
-        HashMap dramToTile = new HashMap();
+        HashMap<StreamingDram, RawTile> dramToTile = new HashMap<StreamingDram, RawTile>();
         for (int i = 0; i < traces.length; i++) {
             OutputTraceNode output = traces[i].getTail();
             IntraTraceBuffer buffer = IntraTraceBuffer.getBuffer(output.getPrevFilter(),
@@ -519,9 +519,9 @@ public class BufferDRAMAssignment {
             
         //get the order of ports in ascending order of distance from
         //the src port + the dest port
-        Iterator order = assignmentOrder(edge);
+        Iterator<PortDistance> order = assignmentOrder(edge);
         while (order.hasNext()) {
-            StreamingDram current = ((PortDistance) order.next()).dram;
+            StreamingDram current = order.next().dram;
                 //System.out.println("     Trying " + current + " for " + edge);
                 if (assignedInputDRAMs(input).contains(current) || 
                         assignedOutputDRAMs(traceNode).contains(current)) 
@@ -572,8 +572,8 @@ public class BufferDRAMAssignment {
      * @return A hashet of StreamingDrams that are already assigned to the
      * outgoing edges of <pre>output</pre> at the current time.  
      */
-    private Set assignedOutputDRAMs(OutputTraceNode output) {
-        HashSet set = new HashSet();
+    private Set<StreamingDram> assignedOutputDRAMs(OutputTraceNode output) {
+        HashSet<StreamingDram> set = new HashSet<StreamingDram>();
         Iterator dests = output.getDestSet().iterator();
         while (dests.hasNext()) {
             Edge edge = (Edge)dests.next();
@@ -594,8 +594,8 @@ public class BufferDRAMAssignment {
      * @return A hashset of StreamingDrams that are already assigned to the incoming
      * buffers of <pre>input</pre> at the current time.
      */
-    private Set assignedInputDRAMs(InputTraceNode input) {
-        HashSet set = new HashSet();
+    private Set<StreamingDram> assignedInputDRAMs(InputTraceNode input) {
+        HashSet<StreamingDram> set = new HashSet<StreamingDram>();
         for (int i = 0; i < input.getSources().length; i++) {
             if (InterTraceBuffer.getBuffer(input.getSources()[i]).isAssigned()) {
                 //System.out.println("      " +         
@@ -668,14 +668,14 @@ public class BufferDRAMAssignment {
      * order of the distance from both the dram assigned to the source of 
      * <pre>edge</pre> and the dram assigned to the dest of <pre>edge</pre>. 
      */
-    private Iterator assignmentOrder(Edge edge) {
+    private Iterator<PortDistance> assignmentOrder(Edge edge) {
         // the streaming DRAM implementation can do both a
         // read and a write on the same cycle, so it does not
         // matter if the port is assigned to reading the outputtracenode
         // or writing to the inputtracenode
         // so just assign to ports based on the distance from the output
         // tracenode's port and to the input of the inputracenode
-        TreeSet sorted = new TreeSet();
+        TreeSet<PortDistance> sorted = new TreeSet<PortDistance>();
         StreamingDram src = 
             IntraTraceBuffer.getBuffer(edge.getSrc().getPrevFilter(), edge.getSrc()).getDRAM();
 

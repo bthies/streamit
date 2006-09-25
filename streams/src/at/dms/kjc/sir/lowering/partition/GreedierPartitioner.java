@@ -40,7 +40,7 @@ public class GreedierPartitioner {
      */
     private final int numTiles;
     private TreeMap pairs; //Ordered fusable pairs (keys of type Pair)
-    private TreeMap nodes; //Ordered filters (keys of type Node)
+    private TreeMap<Node,Object> nodes; //Ordered filters (keys of type Node)
     private static final int FUSION_OVERHEAD=0; //Can adjust
 
     /**
@@ -93,7 +93,7 @@ public class GreedierPartitioner {
                 }
             });
 	//Setup full list of nodes ordered by work
-        nodes=new TreeMap(new Comparator() {
+        nodes=new TreeMap<Node,Object>(new Comparator() {
                 public int compare(Object o1,Object o2) {
                     if(o1==o2)
                         return 0;
@@ -170,7 +170,7 @@ public class GreedierPartitioner {
 	    //Fiss while appropriate and under target num of tiles
             while(fiss&&count<numTiles) {
                 cont=true; //Some change so continue iterating
-                Node big=(Node)nodes.lastKey(); //Get biggest Node
+                Node big=nodes.lastKey(); //Get biggest Node
                 System.out.println("  Fissing: "+big.filter);
                 fiss(big); //Fiss
 		//Reeval number of tiles needed and whether should fiss
@@ -201,7 +201,7 @@ public class GreedierPartitioner {
 
         Pair smallest=(Pair)pairs.firstKey(); //Get smallest pair
         int work=smallest.work;
-        ArrayList temp=new ArrayList();
+        ArrayList<Pair> temp=new ArrayList<Pair>();
 	/* There may be several filters with smallest work though. If
 	 * there are prefer the ones near the top of the container.
 	 * This guarantees that we come out even if there is a
@@ -250,7 +250,7 @@ public class GreedierPartitioner {
      * extra filter.
      */
     private boolean shouldFiss() {
-        Node big=(Node)nodes.lastKey();
+        Node big=nodes.lastKey();
         if(!big.fissable)
             return false;
         Pair small=(Pair)pairs.firstKey();

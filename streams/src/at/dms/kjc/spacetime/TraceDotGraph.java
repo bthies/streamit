@@ -42,7 +42,7 @@ public class TraceDotGraph {
                                  Layout layout, boolean DRAM, boolean label) {
         
         
-        List steadyTrav = Arrays.asList(schedule);
+        List<Trace> steadyTrav = Arrays.asList(schedule);
         Partitioner partitioner = spaceTime.partitioner;
         RawChip rawChip = spaceTime.getRawChip();
         
@@ -52,7 +52,7 @@ public class TraceDotGraph {
             FileWriter fw = new FileWriter(fileName);
             fw.write("digraph TraceDotGraph {\n");
             fw.write("size = \"8, 10.5\";\n");
-            LinkedList tracesList = new LinkedList(steadyTrav);
+            LinkedList<Trace> tracesList = new LinkedList<Trace>(steadyTrav);
          
             // HashSet traceSet = new HashSet();
             // Util.addAll(traceSet, steadyTrav);
@@ -60,9 +60,9 @@ public class TraceDotGraph {
             // for (int i = 0; i < io.length; i++)
             // traceSet.add(io[i]);
 
-            Iterator traces = tracesList.iterator();
+            Iterator<Trace> traces = tracesList.iterator();
             while (traces.hasNext()) {
-                Trace trace = (Trace) traces.next();
+                Trace trace = traces.next();
                 //System.out.println(trace);
                 TraceNode node = trace.getHead();
                 
@@ -144,9 +144,9 @@ public class TraceDotGraph {
                 fw.write("}\n");
             }
 
-            Iterator buffers = OffChipBuffer.getBuffers().iterator();
+            Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
             while (buffers.hasNext()) {
-                OffChipBuffer buffer = (OffChipBuffer) buffers.next();
+                OffChipBuffer buffer = buffers.next();
                 if (buffer.isIntraTrace())
                     continue;
                 bufferArc(buffer, fw, DRAM, label);

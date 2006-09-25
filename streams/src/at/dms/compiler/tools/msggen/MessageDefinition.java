@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDefinition.java,v 1.2 2006-01-25 17:01:16 thies Exp $
+ * $Id: MessageDefinition.java,v 1.3 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.msggen;
@@ -52,10 +52,10 @@ class MessageDefinition {
      * @param   id      the id of the token
      * @param   sourceFile  the file where the token is defined
      */
-    public void checkIdentifiers(Hashtable identifiers, String sourceFile)
+    public void checkIdentifiers(Hashtable<String, String> identifiers, String sourceFile)
         throws MsggenError
     {
-        String      stored = (String)identifiers.get(identifier);
+        String      stored = identifiers.get(identifier);
 
         if (stored != null) {
             throw new MsggenError(MsggenMessages.DUPLICATE_DEFINITION,

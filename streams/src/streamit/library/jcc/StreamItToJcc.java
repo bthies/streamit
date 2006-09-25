@@ -25,12 +25,12 @@ public class StreamItToJcc {
 
 	public static final int INFINITE = -1;
 
-	protected List sourceList;
+	protected List<JccOperator> sourceList;
 
 	protected Thread workThread = null;
 
 	// List of all sinks
-	protected List sinkList;
+	protected List<JccFilter> sinkList;
 
 	// Number of sinks that have not executed for the required number of
 	// iterations
@@ -40,8 +40,8 @@ public class StreamItToJcc {
 	static JccOperator source;
 
 	public StreamItToJcc() {
-		sourceList = new ArrayList();
-		sinkList = new ArrayList();
+		sourceList = new ArrayList<JccOperator>();
+		sinkList = new ArrayList<JccFilter>();
 	}
 
 	protected JccStream convertStream(Stream stream) {
@@ -304,7 +304,7 @@ public class StreamItToJcc {
 					+ sourceList.size());
 		}
 
-		source = (JccOperator) sourceList.get(0);
+		source = sourceList.get(0);
 		sourceList = null;
 
 		long startTime = System.nanoTime();
@@ -317,7 +317,7 @@ public class StreamItToJcc {
 			waitingSinkCount = sinkList.size();
 
 			for (int i = 0; i < waitingSinkCount; i++) {
-				((JccFilter) sinkList.get(i)).runCount = iterations;
+				sinkList.get(i).runCount = iterations;
 			}
 
 			while (waitingSinkCount > 0) {

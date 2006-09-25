@@ -126,7 +126,7 @@ public class FFSPeekBuffer extends FilterFusionState
     
     private JStatement[] getIndexDecls(boolean isInit) 
     {
-        Vector stmts = new Vector();
+        Vector<JVariableDeclarationStatement> stmts = new Vector<JVariableDeclarationStatement>();
 
         if (isInit && StrToRStream.getMult(node, isInit) < 1)
             return new JStatement[0];
@@ -141,7 +141,7 @@ public class FFSPeekBuffer extends FilterFusionState
                                                         pushCounterVar,
                                                         null));
     
-        return (JStatement[])stmts.toArray(new JStatement[0]);
+        return stmts.toArray(new JStatement[0]);
     }
     
     //this is called by an unnecesary duplicate splitters to make sure that 
@@ -307,7 +307,7 @@ public class FFSPeekBuffer extends FilterFusionState
                                         new JIntLiteral(remaining[0]));
     }
     
-    public void initTasks(Vector fields, Vector functions,
+    public void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                           JBlock initFunctionCalls, JBlock main) 
     {
         //don't do anything if this filter is not being generated

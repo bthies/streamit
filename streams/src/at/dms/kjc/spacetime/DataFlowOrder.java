@@ -23,13 +23,13 @@ public class DataFlowOrder {
      * @return A LinkedList of traces in data-flow order
      */
     public static LinkedList<Trace> getTraversal(Trace[] topTraces) {
-        LinkedList schedule = new LinkedList();
-        HashSet visited = new HashSet();
-        LinkedList queue = new LinkedList();
+        LinkedList<Trace> schedule = new LinkedList<Trace>();
+        HashSet<Trace> visited = new HashSet<Trace>();
+        LinkedList<Trace> queue = new LinkedList<Trace>();
         for (int i = 0; i < topTraces.length; i++) {
             queue.add(topTraces[i]);
             while (!queue.isEmpty()) {
-                Trace trace = (Trace) queue.removeFirst();
+                Trace trace = queue.removeFirst();
                 if (!visited.contains(trace)) {
                     visited.add(trace);
                     Iterator dests = trace.getTail().getDestSet().iterator();

@@ -28,16 +28,16 @@ import java.util.ArrayList;
  * copy of the passed-in <code>List</code> is saved.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprFunCall.java,v 1.5 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprFunCall.java,v 1.6 2006-09-25 13:54:53 dimock Exp $
  */
 public class ExprFunCall extends Expression
 {
     private String name;
-    private List params;
+    private List<Object> params;
     
     /** Creates a new function call with the specified name and
      * parameter list. */
-    public ExprFunCall(FEContext context, String name, List params)
+    public ExprFunCall(FEContext context, String name, List<Object> params)
     {
         super(context);
         this.name = name;
@@ -50,7 +50,7 @@ public class ExprFunCall extends Expression
     {
         super(context);
         this.name = name;
-        this.params = new ArrayList();
+        this.params = new ArrayList<Object>();
         this.params.add(param);
         this.params = Collections.unmodifiableList(this.params);
     }
@@ -62,7 +62,7 @@ public class ExprFunCall extends Expression
     {
         super(context);
         this.name = name;
-        this.params = new ArrayList();
+        this.params = new ArrayList<Object>();
         this.params.add(p1);
         this.params.add(p2);
         this.params = Collections.unmodifiableList(this.params);
@@ -76,7 +76,7 @@ public class ExprFunCall extends Expression
     
     /** Returns the parameters of the function call, as an unmodifiable
      * list. */
-    public List getParams()
+    public List<Object> getParams()
     {
         return params;
     }

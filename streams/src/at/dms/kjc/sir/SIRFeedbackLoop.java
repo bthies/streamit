@@ -206,7 +206,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * representing a tape from the first element of each tuple to the
      * second.
      */
-    public List getTapePairs() {
+    public List<SIROperator[]> getTapePairs() {
         // construct result
         SIROperator[][] entries
             = { {joiner, getBody()},    // connect joiner and body

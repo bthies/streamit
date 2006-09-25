@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.5 2006-03-24 20:48:35 dimock Exp $
+ * $Id: Utils.java,v 1.6 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -46,11 +46,11 @@ public abstract class Utils {
      *
      * @param   array       the array of elements
      */
-    public static Vector toVector(Object[] array) {
+    public static Vector<Object> toVector(Object[] array) {
         if (array == null) {
-            return new Vector();
+            return new Vector<Object>();
         } else {
-            Vector  vector = new Vector(array.length);
+            Vector<Object>  vector = new Vector<Object>(array.length);
 
             for (int i = 0; i < array.length; i++) {
                 vector.addElement(array[i]);

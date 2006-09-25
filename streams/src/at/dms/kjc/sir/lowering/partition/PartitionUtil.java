@@ -9,11 +9,11 @@ public class PartitionUtil {
     /**
      * Prints work summaries to the screen.
      */
-    public static void printTileWork(LinkedList partitions, int numTiles) {
+    public static void printTileWork(LinkedList<PartitionRecord> partitions, int numTiles) {
         int maxWork = getMaxWork(partitions);
         double totalUtil = getTotalUtilization(partitions, numTiles);
         for (int i=0; i<partitions.size(); i++) {
-            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            PartitionRecord pr = partitions.get(i);
             double util = ((double)pr.getWork()) / ((double)maxWork);
             System.out.println("partition " + i + " has work:\t" + pr.getWork() 
                                + "\t Estimated utilization:\t" + Utils.asPercent(util));
@@ -25,10 +25,10 @@ public class PartitionUtil {
     /**
      * Gets max work out of <pre>partitions</pre>.
      */
-    public static int getMaxWork(LinkedList partitions) {
+    public static int getMaxWork(LinkedList<PartitionRecord> partitions) {
         int maxWork = -1;
         for (int tile=0; tile<partitions.size(); tile++) {
-            PartitionRecord pr = (PartitionRecord)partitions.get(tile);
+            PartitionRecord pr = partitions.get(tile);
             if (pr.getWork()>maxWork) {
                 maxWork = pr.getWork();
             }
@@ -42,11 +42,11 @@ public class PartitionUtil {
      * number of occupied tiles!  That is, empty tiles hurt the
      * utilization.)
      */
-    private static double getTotalUtilization(LinkedList partitions, int numTiles) {
+    private static double getTotalUtilization(LinkedList<PartitionRecord> partitions, int numTiles) {
         double totalUtil = 0;
         int maxWork = getMaxWork(partitions);
         for (int i=0; i<partitions.size(); i++) {
-            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            PartitionRecord pr = partitions.get(i);
             double util = ((double)pr.getWork()) / ((double)maxWork);
             totalUtil += util / ((double)numTiles);
         }
@@ -69,7 +69,7 @@ public class PartitionUtil {
         }
     }
 
-    public static void doScalingStatistics(LinkedList partitions, int numTiles) {
+    public static void doScalingStatistics(LinkedList<PartitionRecord> partitions, int numTiles) {
         out.println(numTiles + "\t" + 
                     partitions.size() + "\t" + 
                     getMaxWork(partitions) + "\t" + 

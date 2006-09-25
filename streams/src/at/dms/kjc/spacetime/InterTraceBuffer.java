@@ -24,7 +24,7 @@ public class InterTraceBuffer extends OffChipBuffer {
      * A map of StreamingDrams to the number of InterTraceBuffers
      * mapped to it.  StreamingDram->Integer
      */
-    protected static HashMap dramsToBuffers;
+    protected static HashMap<StreamingDram, Integer> dramsToBuffers;
     
     
     protected InterTraceBuffer(Edge edge) {
@@ -81,7 +81,7 @@ public class InterTraceBuffer extends OffChipBuffer {
      */
     public int getNumInterTraceBuffers(StreamingDram dram) {
         assert dramsToBuffers.containsKey(dram);
-        return ((Integer)dramsToBuffers.get(dram)).intValue();
+        return dramsToBuffers.get(dram).intValue();
     }
     
 }

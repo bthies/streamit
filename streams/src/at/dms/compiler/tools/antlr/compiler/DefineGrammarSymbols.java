@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefineGrammarSymbols.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: DefineGrammarSymbols.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -37,9 +37,9 @@ import at.dms.compiler.tools.antlr.runtime.Token;
 public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
 
     // Contains all of the defined parser and lexer Grammar's indexed by name
-    protected Hashtable grammars = new Hashtable();
+    protected Hashtable<String, Grammar> grammars = new Hashtable<String, Grammar>();
     // Contains all the TokenManagers indexed by name
-    protected Hashtable tokenManagers = new Hashtable();
+    protected Hashtable<String, TokenManager> tokenManagers = new Hashtable<String, TokenManager>();
     // Current grammar (parser or lexer)
     protected Grammar grammar;
     // The tool under which this is invoked
@@ -53,7 +53,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
     static final String DEFAULT_TOKENMANAGER_NAME = "*default";
     // Header actions apply to all parsers unless redefined
     // Contains all of the header actions indexed by name
-    protected Hashtable headerActions = new Hashtable();
+    protected Hashtable<String,Token> headerActions = new Hashtable<String,Token>();
     // Place where preamble is stored until a grammar is defined
     Token thePreambleAction = new CommonToken(Token.INVALID_TYPE, ""); // init to empty token
 
@@ -268,7 +268,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
             if (tokenManagers.containsKey(DEFAULT_TOKENMANAGER_NAME)) {
                 // Use the already-defined token manager
                 grammar.exportVocab = DEFAULT_TOKENMANAGER_NAME;
-                TokenManager tm = (TokenManager) tokenManagers.get(DEFAULT_TOKENMANAGER_NAME);
+                TokenManager tm = tokenManagers.get(DEFAULT_TOKENMANAGER_NAME);
                 // System.out.println("No tokenVocabulary for '" + grammar.getClassName() + "', using default '" + tm.getName() + "'");
                 grammar.setTokenManager(tm);
                 return;
@@ -302,7 +302,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
                 // make a copy since we'll be generating a new output vocab
                 // and we don't want to affect this one.  Set the name to
                 // the default output vocab==classname.
-                TokenManager tm = (TokenManager) tokenManagers.get(grammar.importVocab);
+                TokenManager tm = tokenManagers.get(grammar.importVocab);
                 // System.out.println("Duping importVocab of " + grammar.importVocab);
                 TokenManager dup = (TokenManager)tm.clone();
                 dup.setName(grammar.exportVocab);
@@ -339,7 +339,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
             // share with previous vocab if it exists
             if (tokenManagers.containsKey(grammar.exportVocab)) {
                 // Use the already-defined token manager
-                TokenManager tm = (TokenManager) tokenManagers.get(grammar.exportVocab);
+                TokenManager tm = tokenManagers.get(grammar.exportVocab);
                 // System.out.println("Sharing exportVocab of " + grammar.exportVocab);
                 grammar.setTokenManager(tm);
                 return;
@@ -363,7 +363,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
             if (grammar.importVocab.equals(grammar.exportVocab)) {
                 // does the input vocab already exist in memory?
                 if (tokenManagers.containsKey(grammar.importVocab)) {
-                    grammar.setTokenManager((TokenManager) tokenManagers.get(grammar.importVocab));
+                    grammar.setTokenManager(tokenManagers.get(grammar.importVocab));
                 } else {
                     // Must be a file, go get it.
                     ImportVocabTokenManager tm =
@@ -387,7 +387,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
                 if (tokenManagers.containsKey(grammar.importVocab)) {
                     // make a copy since we'll be generating a new output vocab
                     // and we don't want to affect this one.
-                    TokenManager tm = (TokenManager) tokenManagers.get(grammar.importVocab);
+                    TokenManager tm = tokenManagers.get(grammar.importVocab);
                     // System.out.println("Duping importVocab of " + grammar.importVocab);
                     TokenManager dup = (TokenManager)tm.clone();
                     dup.setName(grammar.exportVocab);
@@ -453,7 +453,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
     }
 
     public String getHeaderAction(String name) {
-        Token t = (Token)headerActions.get(name);
+        Token t = headerActions.get(name);
 
         return (t == null) ? "" : t.getText();
     }
@@ -601,7 +601,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
         reset();
         //System.out.println("Processing lexer '" + name.getText() + "'");
         // Does the lexer already exist?
-        Grammar g = (Grammar)grammars.get(name);
+        Grammar g = grammars.get(name);
         if (g != null) {
             if (!(g instanceof LexerGrammar)) {
                 Utils.panic("'" + name.getText() + "' is already defined as a non-lexer");
@@ -632,7 +632,7 @@ public class DefineGrammarSymbols implements ANTLRGrammarParseBehavior {
         reset();
         //System.out.println("Processing parser '" + name.getText() + "'");
         // Is this grammar already defined?
-        Grammar g = (Grammar)grammars.get(name);
+        Grammar g = grammars.get(name);
         if (g != null) {
             if (!(g instanceof ParserGrammar)) {
                 Utils.panic("'" + name.getText() + "' is already defined as a non-parser");

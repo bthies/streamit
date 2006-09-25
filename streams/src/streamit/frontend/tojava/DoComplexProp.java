@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.27 2006-01-25 17:04:30 thies Exp $
+ * @version $Id: DoComplexProp.java,v 1.28 2006-09-25 13:54:54 dimock Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -318,9 +318,9 @@ public class DoComplexProp extends SymbolTableVisitor
         // Save the context, we'll need it later.
         FEContext ctx = stmt.getContext();
         // Go ahead and do propagation:
-        List newTypes = new java.util.ArrayList();
-        List newNames = new java.util.ArrayList();
-        List newInits = new java.util.ArrayList();
+        List<Type> newTypes = new java.util.ArrayList<Type>();
+        List<String> newNames = new java.util.ArrayList<String>();
+        List<Expression> newInits = new java.util.ArrayList<Expression>();
         for (int i = 0; i < stmt.getNumVars(); i++)
             {
                 String name = stmt.getName(i);

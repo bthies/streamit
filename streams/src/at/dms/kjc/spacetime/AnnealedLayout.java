@@ -44,7 +44,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /** the space time schedule object, with different schedules */
     private SpaceTimeSchedule spaceTime;
     /** A list of filters that need to be assigned to tiles */
-    private LinkedList filterList;
+    private LinkedList<TraceNode> filterList;
     /** The partitioner we used to partitioner the SIR graph into slices */
     private Partitioner partitioner;
     /** the number of tiles in the raw chip */
@@ -68,7 +68,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * */
     private HashSet fileReaders;
     /** The order the traces will be scheduled, so sorted by bottleneck work */
-    private LinkedList scheduleOrder;
+    private LinkedList<Trace> scheduleOrder;
     /** The class that performs the buffer to DRAM assignment */
     private BufferDRAMAssignment assignBuffers;
     /** the total work all the tiles for the current layout */
@@ -100,7 +100,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             //if we are software pipelining then sort the traces by work
             Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
             Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
-            scheduleOrder = new LinkedList(Arrays.asList(tempArray));
+            scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
         }
@@ -328,7 +328,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             //Choose a random tile for the initial placement
             RawTile tile = null;
 	    //set of tiles we have tried, no dups...
-	    HashSet tilesTried = new HashSet();
+	    HashSet<RawTile> tilesTried = new HashSet<RawTile>();
 	    //keep picking random tiles until we have tried all of them
             while (tilesTried.size() < numTiles) {
                 tile = tiles[getRandom(numTiles)];
@@ -524,7 +524,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return Return true if all slices are properly snaked across the chip.
      */
     private boolean isLegalLayout() {
-        Iterator filters = filterList.iterator();
+        Iterator<TraceNode> filters = filterList.iterator();
         
         while (filters.hasNext()) {
             FilterTraceNode filter = (FilterTraceNode)filters.next();
@@ -987,11 +987,11 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         totalWork = 0;
         
         //create the filter list
-        filterList = new LinkedList();
-        Iterator traceNodes = 
+        filterList = new LinkedList<TraceNode>();
+        Iterator<TraceNode> traceNodes = 
             Util.traceNodeTraversal(partitioner.getTraceGraph());
         while (traceNodes.hasNext()) {
-            TraceNode node = (TraceNode)traceNodes.next();
+            TraceNode node = traceNodes.next();
             //add filters to the list of things to assign to tiles,
             //but don't add file readers/writers... they will
             //"occupy" the tile of their neighbor stream...

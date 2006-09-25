@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCompilationUnit.java,v 1.10 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CCompilationUnit.java,v 1.11 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -41,7 +41,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
     public CCompilationUnit(String packageName,
                             JClassImport[] importedClasses,
                             JPackageImport[] importedPackages,
-                            Hashtable loadedClasses) {
+                            Hashtable<String, CClassType> loadedClasses) {
         this.packageName = packageName;
         this.importedClasses = importedClasses;
         this.importedPackages = importedPackages;
@@ -65,7 +65,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
             CClassType  cl;
 
             // First look for a type declared by a single-type-import of by a type declaration
-            if ((cl = (CClassType)loadedClasses.get(name)) != null) {
+            if ((cl = loadedClasses.get(name)) != null) {
                 // If type is declared by a single-type-import, mark it as used (max. 1)
                 for (int i = 0; i < importedClasses.length; i++) {
                     if (name == importedClasses[i].getSimpleName()) {
@@ -94,7 +94,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
                     String  qualifiedName = (importedPackages[i].getName() + '/' + name).intern();
 
                     if (CTopLevel.hasClassFile(qualifiedName)) {
-                        CClassType  type = (CClassType)loadedClasses.get(name);
+                        CClassType  type = loadedClasses.get(name);
 
                         if (type != null && !type.getQualifiedName().equals(qualifiedName)) {
                             // Oops, the name is ambiguous (declared by more than one import-on-demand declaration)
@@ -107,7 +107,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
             }
 
             // now the name must be unique and found
-            if ((cl = (CClassType)loadedClasses.get(name)) == null) {
+            if ((cl = loadedClasses.get(name)) == null) {
                 throw new UnpositionedError(KjcMessages.CLASS_UNKNOWN, name);
             }
 
@@ -131,7 +131,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
     private /* final */ JClassImport[]      importedClasses; // removed final for cloner
     private /* final */ JPackageImport[]    importedPackages; // removed final for cloner
     
-    private /* final */ Hashtable       loadedClasses; // removed final for cloner
+    private /* final */ Hashtable<String, CClassType>       loadedClasses; // removed final for cloner
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -148,7 +148,7 @@ public class CCompilationUnit implements java.io.Serializable, DeepCloneable {
         other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
         other.importedClasses = (at.dms.kjc.JClassImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedClasses);
         other.importedPackages = (at.dms.kjc.JPackageImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedPackages);
-        other.loadedClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.loadedClasses);
+        other.loadedClasses = (java.util.Hashtable<String, CClassType>)at.dms.kjc.AutoCloner.cloneToplevel(this.loadedClasses);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

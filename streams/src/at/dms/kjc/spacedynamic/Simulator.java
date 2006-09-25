@@ -21,15 +21,15 @@ import java.util.Iterator;
 
 public abstract class Simulator {
     /** ComputeNode->StringBuffer, the init switch schedule for this tile **/
-    public HashMap initSchedules;
+    public HashMap<Object, StringBuffer> initSchedules;
     /** ComputeNode->StringBuffer, the steady switch schedule for this tile **/
-    public HashMap steadySchedules;
+    public HashMap<Object, StringBuffer> steadySchedules;
     /** FlatNode->JoinerScheduleNode, the receiving/sending schedule for the joiner 
         for init **/
-    public HashMap initJoinerCode;
+    public HashMap<FlatNode, JoinerScheduleNode> initJoinerCode;
     /** FlatNode->JoinerScheduleNode, the receiving/sending schedule for the joiner
         for steady **/
-    public HashMap steadyJoinerCode;
+    public HashMap<FlatNode, JoinerScheduleNode> steadyJoinerCode;
     
     protected SpdStaticStreamGraph ssg;
 
@@ -48,13 +48,13 @@ public abstract class Simulator {
     protected boolean initSimulation;
 
     /** The current switch schedule we are working on **/
-    protected HashMap switchSchedules;
+    protected HashMap<Object, StringBuffer> switchSchedules;
 
     /** the current joiner code we are working on (steady or init) **/
-    protected HashMap joinerCode;
+    protected HashMap<FlatNode, JoinerScheduleNode> joinerCode;
         
     /** the curent node in the joiner schedule we are working on **/
-    protected HashMap currentJoinerCode;    
+    protected HashMap<FlatNode, JoinerScheduleNode> currentJoinerCode;    
 
     
     public Simulator(SpdStaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
@@ -67,7 +67,7 @@ public abstract class Simulator {
     }
 
     public abstract void simulate();
-    public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
+    public abstract boolean canFire(FlatNode node, HashMap<FlatNode, Integer> executionCounts, 
                                     SimulationCounter counters);
 
     /**
@@ -98,15 +98,15 @@ public abstract class Simulator {
         maps a node to its previous hop, <pre>next</pre> is similiar...
 
     **/
-    protected void asm(ComputeNode fire, HashMap previous, HashMap next) 
+    protected void asm(ComputeNode fire, HashMap<ComputeNode, ComputeNode> previous, HashMap<ComputeNode, HashSet> next) 
     {
         assert fire != null;
         //System.out.println("asm: " + fire);
         //generate the sends
         if (!switchSchedules.containsKey(fire))
             switchSchedules.put(fire, new StringBuffer());
-        StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
-        Iterator it = ((HashSet)next.get(fire)).iterator();
+        StringBuffer buf = switchSchedules.get(fire);
+        Iterator it = next.get(fire).iterator();
         buf.append("route ");
         while (it.hasNext()) {
             ComputeNode dest = (ComputeNode)it.next();
@@ -118,17 +118,17 @@ public abstract class Simulator {
         buf.setCharAt(buf.length() - 1, '\n');
     
         //generate all the other 
-        Iterator tiles = next.keySet().iterator();
+        Iterator<ComputeNode> tiles = next.keySet().iterator();
         while (tiles.hasNext()) {
-            ComputeNode tile = (ComputeNode)tiles.next();
+            ComputeNode tile = tiles.next();
             assert tile != null;
             if (tile == fire) 
                 continue;
             if (!switchSchedules.containsKey(tile))
                 switchSchedules.put(tile, new StringBuffer());
-            buf = (StringBuffer)switchSchedules.get(tile);
-            ComputeNode prevTile = (ComputeNode)previous.get(tile);
-            buf.append("route ");       Iterator nexts = ((HashSet)next.get(tile)).iterator();
+            buf = switchSchedules.get(tile);
+            ComputeNode prevTile = previous.get(tile);
+            buf.append("route ");       Iterator nexts = next.get(tile).iterator();
             while(nexts.hasNext()) {
                 ComputeNode nextTile = (ComputeNode)nexts.next();
                 if (!nextTile.equals(tile))
@@ -147,23 +147,23 @@ public abstract class Simulator {
      * of all the routes and then generate the switch code
      * this way we can route multiple dests per route instruction
      */
-    protected void generateSwitchCode(FlatNode fire, List dests) 
+    protected void generateSwitchCode(FlatNode fire, List<FlatNode> dests) 
     {
         assert !(layout.getIdentities().contains(fire));
         
         //should only have one previous
-        HashMap prev = new HashMap();
-        HashMap next = new HashMap();
+        HashMap<ComputeNode, ComputeNode> prev = new HashMap<ComputeNode, ComputeNode>();
+        HashMap<ComputeNode, HashSet> next = new HashMap<ComputeNode, HashSet>();
 
-        ListIterator destsIt = dests.listIterator();
+        ListIterator<FlatNode> destsIt = dests.listIterator();
         while (destsIt.hasNext()) {
-            FlatNode dest = (FlatNode)destsIt.next();
+            FlatNode dest = destsIt.next();
             assert dest != null;
             assert !(layout.getIdentities().contains(dest));
             //  System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
             ComputeNode[] hops = 
-                (ComputeNode[])layout.router.
-                getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
+                layout.router.
+            getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
 
             
             assert hops.length > 1 : "Error: Bad Layout (could not find route from " + fire.toString() + " -> " +
@@ -175,7 +175,7 @@ public abstract class Simulator {
             //add to fire's next
             if (!next.containsKey(layout.getComputeNode(fire))) 
                 next.put(layout.getComputeNode(fire), new HashSet());
-            ((HashSet)next.get(layout.getComputeNode(fire))).add(hops[1]);
+            next.get(layout.getComputeNode(fire)).add(hops[1]);
             //add to all other previous, next
             for (int i = 1; i < hops.length -1; i++) {
                 if (prev.containsKey(hops[i]))
@@ -184,7 +184,7 @@ public abstract class Simulator {
                 prev.put(hops[i], hops[i-1]);
                 if (!next.containsKey(hops[i]))
                     next.put(hops[i], new HashSet());
-                ((HashSet)next.get(hops[i])).add(hops[i+1]);
+                next.get(hops[i]).add(hops[i+1]);
             }
             //add the last step, plus the dest to the dest map
             if (prev.containsKey(hops[hops.length - 1]))
@@ -193,7 +193,7 @@ public abstract class Simulator {
             prev.put(hops[hops.length-1], hops[hops.length - 2]);
             if (!next.containsKey(hops[hops.length-1]))
                 next.put(hops[hops.length - 1], new HashSet());
-            ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
+            next.get(hops[hops.length - 1]).add(hops[hops.length -1]);
         }
     
         //create the appropriate amount of routing instructions
@@ -207,7 +207,7 @@ public abstract class Simulator {
         return how many items are necessary for the node to fire.
     **/
     protected int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
-                                    HashMap executionCounts) 
+                                    HashMap<FlatNode, Integer> executionCounts) 
     {
         //if this is the first time a two stage initpeek is needed to execute
         if (initSimulation &&
@@ -228,11 +228,11 @@ public abstract class Simulator {
     }
 
     /** Give that a node has just fired, update the simulation state **/    
-    protected void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, 
+    protected void decrementExecutionCounts(FlatNode fire, HashMap<FlatNode, Integer> executionCounts, 
                                             SimulationCounter counters) 
     {
         //decrement one from the execution count
-        int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+        int oldVal = executionCounts.get(fire).intValue();
         if (oldVal - 1 < 0)
             Utils.fail("Executed too much");
     
@@ -249,7 +249,7 @@ public abstract class Simulator {
     /** return how many items a node consumes (pop's) for one firing 
         given the current state of the simulation **/
     protected int consumedItems(FlatNode fire, SimulationCounter counters,
-                                HashMap executionCounts) {
+                                HashMap<FlatNode, Integer> executionCounts) {
         //if this is the first time a two stage fires consume initpop
         if (initSimulation &&
             !counters.hasFired(fire) &&
@@ -268,7 +268,7 @@ public abstract class Simulator {
 
         
     /** consume the data and return the number of items produced **/
-    protected int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
+    protected int fireMe(FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts) 
     {
         if (fire.contents instanceof SIRFilter) {
             //decrement the schedule execution counter
@@ -311,7 +311,7 @@ public abstract class Simulator {
     {
         //add to the joiner code for this fire
         JoinerScheduleNode prev = 
-            (JoinerScheduleNode)currentJoinerCode.get(fire);
+            currentJoinerCode.get(fire);
         if (prev == null) {
             //first node in joiner code
             joinerCode.put(fire, code);
@@ -326,6 +326,6 @@ public abstract class Simulator {
     
     /** this method should fire a joiner, assuming the joiner can fire, and update the 
         simulation state **/
-    protected abstract int fireJoiner (FlatNode fire, SimulationCounter counters, HashMap executionCounts);
+    protected abstract int fireJoiner (FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts);
 }
 

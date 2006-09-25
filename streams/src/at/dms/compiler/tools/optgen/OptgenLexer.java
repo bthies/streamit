@@ -18,7 +18,7 @@ public class OptgenLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner
     }
     public OptgenLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         literals.put(new ANTLRHashString("boolean", this), new Integer(21));
         literals.put(new ANTLRHashString("longname", this), new Integer(14));
         literals.put(new ANTLRHashString("usage", this), new Integer(7));

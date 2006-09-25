@@ -84,7 +84,7 @@ public class IMEMEstimation implements FlatVisitor
         //new cloned filter
         SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
         SIRPipeline pipe = new SIRPipeline("top");
-        LinkedList list = new LinkedList();
+        LinkedList<Object> list = new LinkedList<Object>();
         list.add(filter);
         pipe.setChildren(list);
 

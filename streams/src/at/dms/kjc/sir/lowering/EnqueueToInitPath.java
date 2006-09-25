@@ -16,7 +16,7 @@ import at.dms.compiler.TokenReference;
  * that enqueue statements are outside of any control flow.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: EnqueueToInitPath.java,v 1.5 2006-06-14 21:01:05 dimock Exp $
+ * @version $Id: EnqueueToInitPath.java,v 1.6 2006-09-25 13:54:42 dimock Exp $
  */
 public class EnqueueToInitPath
 {
@@ -51,7 +51,7 @@ public class EnqueueToInitPath
         // Okay, none of that.  Find the init function,
         JMethodDeclaration init = self.getInit();
         // and walk its code looking for enqueue statements.
-        final List values = new java.util.ArrayList();
+        final List<JExpression> values = new java.util.ArrayList<JExpression>();
         final String[] enqTypeWrapper = new String[1];
         init.getBody().accept(new SLIREmptyVisitor() {
                 public void visitBlockStatement(JBlock self,
@@ -91,7 +91,7 @@ public class EnqueueToInitPath
             {
                 // Assemble statement:
                 // "if (i == [i]) return [values[i]];"
-                JExpression value = (JExpression)values.get(i);
+                JExpression value = values.get(i);
                 TokenReference where = value.getTokenReference();
                 JStatement rtn = new JReturnStatement(where, value, null);
                 JExpression cond =

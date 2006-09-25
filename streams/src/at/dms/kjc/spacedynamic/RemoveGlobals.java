@@ -24,10 +24,10 @@ public class RemoveGlobals extends at.dms.util.Utils
     //these are calls that cannot be inlined but the 
     //function does not need to be inlined because it
     //does not access any global vars
-    public static HashSet doNotInline;
+    public static HashSet<JMethodCallExpression> doNotInline;
     //these are functions that we are no deleting 
     //after the inlining
-    public static HashSet functionsToKeep;
+    public static HashSet<JMethodDeclaration> functionsToKeep;
 
     public static void doit(FlatNode top) 
     {   
@@ -37,8 +37,8 @@ public class RemoveGlobals extends at.dms.util.Utils
     public RemoveGlobals() 
     {
         //reset the state
-        doNotInline = new HashSet();
-        functionsToKeep = new HashSet();
+        doNotInline = new HashSet<JMethodCallExpression>();
+        functionsToKeep = new HashSet<JMethodDeclaration>();
     }
 
     /*public static void doFilter(SIRFilter filter) 
@@ -71,8 +71,8 @@ public class RemoveGlobals extends at.dms.util.Utils
                 return;
 
             //reset the state
-            doNotInline = new HashSet();
-            functionsToKeep = new HashSet();
+            doNotInline = new HashSet<JMethodCallExpression>();
+            functionsToKeep = new HashSet<JMethodDeclaration>();
         
             if (canConvert((SIRFilter)node.contents)) {
                 System.out.println("Removing Globals for " + node.contents.getName()); 
@@ -159,7 +159,7 @@ public class RemoveGlobals extends at.dms.util.Utils
                                              SIRFilter filter) 
     {
         //find all the expressions that are direct children of statements
-        HashSet directChildren = DirectChildrenOfStatements.get(method);
+        HashSet<JExpression> directChildren = DirectChildrenOfStatements.get(method);
         //check to see if all function calls are the direct 
         //children of statements, not inclosed in some other expression
         return CheckFunctionCallInExpression.exists(directChildren, method,
@@ -234,11 +234,11 @@ public class RemoveGlobals extends at.dms.util.Utils
 
     static class CheckFunctionCallInExpression extends KjcEmptyVisitor 
     {
-        private static HashSet children;
+        private static HashSet<JExpression> children;
         private static boolean found;
         private static SIRFilter filter;
 
-        public static boolean exists(HashSet directChildren, 
+        public static boolean exists(HashSet<JExpression> directChildren, 
                                      JMethodDeclaration method, 
                                      SIRFilter f) 
         {
@@ -317,11 +317,11 @@ public class RemoveGlobals extends at.dms.util.Utils
     //finds all the expressions that are direct children of statements
     static class DirectChildrenOfStatements extends KjcEmptyVisitor 
     {
-        private static HashSet children;
+        private static HashSet<JExpression> children;
 
-        public static HashSet get(JMethodDeclaration method) 
+        public static HashSet<JExpression> get(JMethodDeclaration method) 
         {
-            children = new HashSet();
+            children = new HashSet<JExpression>();
             method.accept(new DirectChildrenOfStatements());
             return children;
         }
@@ -440,31 +440,31 @@ public class RemoveGlobals extends at.dms.util.Utils
     static class ConvertGlobalsToLocals extends SLIRReplacingVisitor
     {
         private static SIRFilter filter;
-        private static HashSet localVariables;
+        private static HashSet<JVariableDefinition> localVariables;
 
         /** the fields that cannot be localized for one reason or another (Strings) **/
-        private static HashSet doNotLocalize;
+        private static HashSet<String> doNotLocalize;
 
         //build the list of variables not to localize..
         static 
         {
-            doNotLocalize = new HashSet();
+            doNotLocalize = new HashSet<String>();
             doNotLocalize.add(new String(FlatIRToC.MAINMETHOD_COUNTER));
         }
 
         public static void doit(SIRFilter f) 
         {
             filter = f;
-            localVariables = new HashSet();
+            localVariables = new HashSet<JVariableDefinition>();
         
             JBlock rawMainBlock = RemoveGlobals.getRawMain(filter).getBody();
             JFieldDeclaration[] fields = filter.getFields();
         
-            HashSet arrays = new HashSet();
+            HashSet<JVariableDefinition> arrays = new HashSet<JVariableDefinition>();
 
             //fields that should not be localized and need to be added back
             //to the fields arrays
-            HashSet fieldsToKeep = new HashSet();
+            HashSet<JFieldDeclaration> fieldsToKeep = new HashSet<JFieldDeclaration>();
 
             //move all globals var defs into the raw main function
             for (int i = 0; i < fields.length; i++) {
@@ -489,9 +489,9 @@ public class RemoveGlobals extends at.dms.util.Utils
             //we need to initialize all array elements to zero
             //create a statement of the form
             //memset(var, 0, sizeof(var));
-            Iterator arrayIt = arrays.iterator();
+            Iterator<JVariableDefinition> arrayIt = arrays.iterator();
             while (arrayIt.hasNext()) {
-                JVariableDefinition def = (JVariableDefinition)arrayIt.next();
+                JVariableDefinition def = arrayIt.next();
                 //use memset to zero the array, need to calculate size
                 JExpression[] args = new JExpression[3];
         
@@ -531,9 +531,9 @@ public class RemoveGlobals extends at.dms.util.Utils
             filter.setFields(new JFieldDeclaration[0]);
 
             //add back the fields that should not be removed..
-            Iterator ftk = fieldsToKeep.iterator();
+            Iterator<JFieldDeclaration> ftk = fieldsToKeep.iterator();
             while (ftk.hasNext()) {
-                filter.addField((JFieldDeclaration)ftk.next());
+                filter.addField(ftk.next());
             }
         
 
@@ -543,8 +543,7 @@ public class RemoveGlobals extends at.dms.util.Utils
             //remove all the functions except the raw main and 
             //anything we could not inline
             filter.setMethods
-                ((JMethodDeclaration[])
-                 RemoveGlobals.functionsToKeep.toArray(new JMethodDeclaration[0]));
+                (RemoveGlobals.functionsToKeep.toArray(new JMethodDeclaration[0]));
         
             //set the init to a dummy init if we need an init 
             if (filter.needsInit()) {
@@ -566,10 +565,10 @@ public class RemoveGlobals extends at.dms.util.Utils
 
         private JVariableDefinition getVarDef(String ident) 
         {
-            Iterator it = localVariables.iterator();
+            Iterator<JVariableDefinition> it = localVariables.iterator();
         
             while(it.hasNext()) {
-                JVariableDefinition def = (JVariableDefinition) it.next();
+                JVariableDefinition def = it.next();
                 if (def.getIdent().equals(ident))
                     return def;
             }

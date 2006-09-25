@@ -1,6 +1,7 @@
 package streamit.scheduler1.simple;
 
 import streamit.scheduler1.SchedSplitJoin;
+import streamit.scheduler1.SchedStream;
 import streamit.scheduler1.simple.SimpleSchedStream;
 import streamit.scheduler1.SchedRepSchedule;
 
@@ -12,8 +13,8 @@ import java.math.BigInteger;
 public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedStream
 {
     final SimpleHierarchicalScheduler scheduler;
-    private List steadySchedule;
-    private List initSchedule;
+    private List<SchedRepSchedule> steadySchedule;
+    private List<Object> initSchedule;
     int initDataConsumption = -1;
 
     SimpleSchedSplitJoin (SimpleHierarchicalScheduler scheduler, Object stream)
@@ -29,8 +30,8 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         // make sure that this the first call to computeSchedule
         {
             ASSERT (steadySchedule == null && initSchedule == null);
-            steadySchedule = new LinkedList ();
-            initSchedule = new LinkedList ();
+            steadySchedule = new LinkedList<SchedRepSchedule> ();
+            initSchedule = new LinkedList<Object> ();
         }
 
         // compute the children's schedules and figure out
@@ -39,12 +40,12 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         // peek - pop amounts!)
         int initSplitRunCount = 0;
         {
-            List children = getChildren ();
+            List<SchedStream> children = getChildren ();
             ASSERT (children);
 
             // go through all the children and check how much
             int childNum = -1;
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
             while (iter.hasNext ())
                 {
                     // get the child
@@ -107,11 +108,11 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             }
 
             // now add the initialization schedules for all the children
-            List children = getChildren ();
+            List<SchedStream> children = getChildren ();
             ASSERT (children);
 
             // go through all the children and check how much
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
             while (iter.hasNext ())
                 {
                     // get the child
@@ -148,13 +149,13 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             ASSERT (joinObject);
             ASSERT (splitObject);
 
-            List children = getChildren ();
+            List<SchedStream> children = getChildren ();
             ASSERT (children);
 
             // go through all the children and add their schedules
             // to my schedule the appropriate number of times
             int nChild = -1;
-            ListIterator iter = children.listIterator ();
+            ListIterator<SchedStream> iter = children.listIterator ();
             while (iter.hasNext ())
                 {
                     // get the child

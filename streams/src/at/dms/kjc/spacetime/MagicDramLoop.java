@@ -8,15 +8,15 @@ import java.util.Iterator;
 public class MagicDramLoop extends MagicDramInstruction 
 {
     private int tripCount;
-    private LinkedList ins;
+    private LinkedList<MagicDramInstruction> ins;
 
     public MagicDramLoop()
     {
-        ins = new LinkedList();
+        ins = new LinkedList<MagicDramInstruction>();
         tripCount = 0;
     }
     
-    public MagicDramLoop(int tc, LinkedList insList) 
+    public MagicDramLoop(int tc, LinkedList<MagicDramInstruction> insList) 
     {
         tripCount = tc;
         ins = insList;
@@ -38,9 +38,9 @@ public class MagicDramLoop extends MagicDramInstruction
     {
         StringBuffer sb = new StringBuffer();
         sb.append("for (index = 0; index < " + tripCount + "; index++) {\n");
-        Iterator it = ins.iterator();
+        Iterator<MagicDramInstruction> it = ins.iterator();
         while (it.hasNext()) {
-            MagicDramInstruction in = (MagicDramInstruction)it.next();
+            MagicDramInstruction in = it.next();
             if (in instanceof MagicDramLoop)
                 Utils.fail("Cannot have nested loop in magic dram loop");
             sb.append(in.toC());

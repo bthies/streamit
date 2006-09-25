@@ -329,10 +329,10 @@ public class StaticStreamGraph {
         }
 
         // set up the downstream SSG's prevs hashmap
-        Iterator nextsIt = nexts.keySet().iterator();
+        Iterator<FlatNode> nextsIt = nexts.keySet().iterator();
         while (nextsIt.hasNext()) {
-            FlatNode source = (FlatNode) nextsIt.next();
-            FlatNode dest = (FlatNode) nexts.get(source);
+            FlatNode source = nextsIt.next();
+            FlatNode dest = nexts.get(source);
             assert dest != null : source.toString();
             streamGraph.getParentSSG(dest).addPrev(dest, source);
         }
@@ -342,15 +342,15 @@ public class StaticStreamGraph {
         nextsIt = nexts.values().iterator();
         while (nextsIt.hasNext()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(((FlatNode) nextsIt.next()));
+                .getParentSSG(nextsIt.next());
             if (!nextSSGs.contains(ssg))
                 nextSSGs.add(ssg);
         }
 
-        Iterator prevsIt = prevs.values().iterator();
+        Iterator<FlatNode> prevsIt = prevs.values().iterator();
         while (prevsIt.hasNext()) {
             StaticStreamGraph ssg = streamGraph
-                .getParentSSG(((FlatNode) prevsIt.next()));
+                .getParentSSG(prevsIt.next());
             if (!prevSSGs.contains(ssg))
                 prevSSGs.add(ssg);
         }
@@ -375,13 +375,13 @@ public class StaticStreamGraph {
             // " " +
             // nexts.containsKey(outputs[i]));
 
-            FlatNode dest = (FlatNode) nexts.get(outputs[i]);
+            FlatNode dest = nexts.get(outputs[i]);
             StaticStreamGraph input = streamGraph.getParentSSG(dest);
             // N.B.  Can not guarantee static type safety given
             // array of generic objects.  Would get error if
             // put parameterized type on array decl.
 
-            outputSSGEdges[i] = new SSGEdge(this, input, i, input
+            outputSSGEdges[i] = new SSGEdge<StaticStreamGraph>(this, input, i, input
                                             .getInputNum(dest));
             outputSSGEdges[i].outputNode = outputs[i];
             outputSSGEdges[i].inputNode = dest;
@@ -389,7 +389,7 @@ public class StaticStreamGraph {
 
         // for input, just get the sources SSGEdges!
         for (int i = 0; i < inputSSGEdges.length; i++) {
-            FlatNode source = (FlatNode) prevs.get(inputs[i]);
+            FlatNode source = prevs.get(inputs[i]);
             StaticStreamGraph input = streamGraph.getParentSSG(source);
             inputSSGEdges[i] = input.getOutputSSGEdgeSource(source);
         }
@@ -410,7 +410,7 @@ public class StaticStreamGraph {
      * given an output node for this SSG, get the SSGEdge that represents the
      * connection, <pre>source</pre> is the source of the SSG edge.
      */
-    public SSGEdge getOutputSSGEdgeSource(FlatNode source) {
+    public SSGEdge<StaticStreamGraph> getOutputSSGEdgeSource(FlatNode source) {
         for (int i = 0; i < outputSSGEdges.length; i++)
             if (outputSSGEdges[i].outputNode == source)
                 return outputSSGEdges[i];
@@ -609,9 +609,9 @@ public class StaticStreamGraph {
         // the parent map
         HashMap<FlatNode,StaticStreamGraph> parentMap = new HashMap<FlatNode,StaticStreamGraph>();
         // fill the parent map
-        Iterator flats = flatNodes.iterator();
+        Iterator<FlatNode> flats = flatNodes.iterator();
         while (flats.hasNext()) {
-            FlatNode node = (FlatNode) flats.next();
+            FlatNode node = flats.next();
             parentMap.put(node, this);
         }
         // return the parent map
@@ -807,8 +807,8 @@ public class StaticStreamGraph {
      * Get an input SSGEdge coming into this SSG given the <pre>dest</pre> of the edge,
      * so <pre>dest</pre> is in this SSG
      */
-    public SSGEdge getInputSSGEdgeDest(FlatNode dest) {
-        SSGEdge edge = null;
+    public SSGEdge<StaticStreamGraph> getInputSSGEdgeDest(FlatNode dest) {
+        SSGEdge<StaticStreamGraph> edge = null;
 
         for (int i = 0; i < inputSSGEdges.length; i++)
             if (inputSSGEdges[i].inputNode == dest)
@@ -827,7 +827,7 @@ public class StaticStreamGraph {
         assert flatNodes.contains(node) : "Calling getInputType(node) and node is not in SSG";
         if (isInput(node)) {
             // get the type from the source SSG of this edge
-            SSGEdge edge = getInputSSGEdgeDest(node);
+            SSGEdge<StaticStreamGraph> edge = getInputSSGEdgeDest(node);
             return edge.getOutput().getOutputType(edge.outputNode);
         } else
             return node.getFilter().getInputType();
@@ -860,9 +860,9 @@ public class StaticStreamGraph {
     }
     
     /** accept a stream graph visitor * */
-    public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) {
+    public void accept(StreamGraphVisitor s, HashSet<StaticStreamGraph> visited, boolean newHash) {
         if (newHash)
-            visited = new HashSet();
+            visited = new HashSet<StaticStreamGraph>();
 
         if (visited.contains(this))
             return;
@@ -870,9 +870,9 @@ public class StaticStreamGraph {
         visited.add(this);
         s.visitStaticStreamGraph(this);
 
-        Iterator nextsIt = nextSSGs.iterator();
+        Iterator<StaticStreamGraph> nextsIt = nextSSGs.iterator();
         while (nextsIt.hasNext()) {
-            StaticStreamGraph ssg = (StaticStreamGraph) nextsIt.next();
+            StaticStreamGraph ssg = nextsIt.next();
             ssg.accept(s, visited, false);
         }
     }

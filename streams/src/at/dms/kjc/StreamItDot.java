@@ -1,6 +1,7 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
+
 import java.util.*;
 import java.io.*;
 
@@ -322,9 +323,9 @@ public class StreamItDot implements AttributeStreamVisitor
         pair.last = np.last;
 
         // ...and walk through the body.
-        Iterator iter = self.getParallelStreams().iterator();
+        Iterator<SIRStream> iter = self.getParallelStreams().iterator();
         while (iter.hasNext()) {
-            SIROperator oper = (SIROperator)iter.next();
+            SIROperator oper = iter.next();
             np = (NamePair)oper.accept(this);
             printEdge(pair.first, np.first);
             printEdge(np.last, pair.last);

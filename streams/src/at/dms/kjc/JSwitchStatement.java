@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchStatement.java,v 1.11 2006-03-24 15:54:48 dimock Exp $
+ * $Id: JSwitchStatement.java,v 1.12 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -174,7 +174,7 @@ public class JSwitchStatement extends JStatement {
 
         CodeLabel       defaultLabel = new CodeLabel();
 
-        Vector      matches = new Vector();
+        Vector<Integer>      matches = new Vector<Integer>();
         Vector      targets = new Vector();
 
         for (int i = 0; i < groups.length; i++) {

@@ -20,7 +20,7 @@ import java.util.*;
 
 public class WeightedRoundRobinSplitter extends Splitter
 {
-    List destWeight = new ArrayList ();
+    List<Integer> destWeight = new ArrayList<Integer> ();
 
     void addWeight (Integer weight)
     {
@@ -31,7 +31,7 @@ public class WeightedRoundRobinSplitter extends Splitter
     public boolean isOutputUsed (int index)
     {
         assert index < destWeight.size ();
-        return ((Integer)destWeight.get(index)).intValue () != 0;
+        return destWeight.get(index).intValue () != 0;
     }
 
     public void connectGraph ()
@@ -71,9 +71,9 @@ public class WeightedRoundRobinSplitter extends Splitter
         int i;
         for (i=0;i<numChildren;i++)
             {
-                if (dest.get(i) != null && ((Stream)dest.get (i)).inputChannel != null)
+                if (dest.get(i) != null && dest.get (i).inputChannel != null)
                     {
-                        weights [i] = ((Integer)destWeight.get (i)).intValue ();
+                        weights [i] = destWeight.get (i).intValue ();
                     }
             }
         
@@ -88,9 +88,9 @@ public class WeightedRoundRobinSplitter extends Splitter
         int i;
         for (i=0;i<numChildren;i++)
             {
-                if (dest.get(i) != null && ((Stream)dest.get (i)).inputChannel != null)
+                if (dest.get(i) != null && dest.get (i).inputChannel != null)
                     {
-                        inputTotal += ((Integer)destWeight.get (i)).intValue ();
+                        inputTotal += destWeight.get (i).intValue ();
                     }
             }
         

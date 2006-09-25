@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CParseCompilationUnitContext.java,v 1.7 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CParseCompilationUnitContext.java,v 1.8 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -30,7 +30,7 @@ public class CParseCompilationUnitContext implements DeepCloneable {
     public static CParseCompilationUnitContext getInstance() {
         return stack.size() == 0 ?
             new CParseCompilationUnitContext() :
-            (CParseCompilationUnitContext)stack.pop();
+            stack.pop();
     }
 
     public void release() {
@@ -107,7 +107,7 @@ public class CParseCompilationUnitContext implements DeepCloneable {
     private Vector      classImports = new Vector();
     private Vector      typeDeclarations = new Vector();
 
-    private static Stack        stack = new Stack();
+    private static Stack<CParseCompilationUnitContext>        stack = new Stack<CParseCompilationUnitContext>();
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 

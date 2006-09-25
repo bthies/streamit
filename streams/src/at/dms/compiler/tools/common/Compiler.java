@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.4 2006-03-24 20:48:35 dimock Exp $
+ * $Id: Compiler.java,v 1.5 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -68,7 +68,7 @@ public abstract class Compiler {
      * @exception   UnpositionedError   at least one file does not exist
      */
     public File[] verifyFiles(String[] names) throws UnpositionedError {
-        Vector  temp = new Vector(names.length);
+        Vector<String>  temp = new Vector<String>(names.length);
 
         // replace "@file" by content of "file"
         for (int i = 0; i < names.length; i++) {
@@ -91,14 +91,14 @@ public abstract class Compiler {
             File    file;
 
             if (workingDirectory == null) {
-                name = (String)temp.elementAt(i);
+                name = temp.elementAt(i);
             } else {
-                name = workingDirectory + File.separatorChar + (String)temp.elementAt(i);
+                name = workingDirectory + File.separatorChar + temp.elementAt(i);
             }
             file = new File(name);
 
             if (!file.exists()) {
-                file = new File((String)temp.elementAt(i));
+                file = new File(temp.elementAt(i));
                 if (!file.exists() || !file.isAbsolute()) {
                     throw new UnpositionedError(CompilerMessages.FILE_NOT_FOUND, temp.elementAt(i), null);
                 }
@@ -115,11 +115,11 @@ public abstract class Compiler {
      * @return  a vector of files known to exist
      * @exception   UnpositionedError   at least one file does not exist
      */
-    public Vector verifyFiles(Vector names) throws UnpositionedError {
+    public Vector<Object> verifyFiles(Vector names) throws UnpositionedError {
         return Utils.toVector(verifyFiles((String[])Utils.toArray(names, String.class)));
     }
 
-    private void readList(Vector list, String workingDirectory, String name) throws IOException {
+    private void readList(Vector<String> list, String workingDirectory, String name) throws IOException {
         File        file = new File((workingDirectory == null ? "" : workingDirectory + File.separatorChar) + name.substring(1));
         LineNumberReader    reader = new LineNumberReader(new FileReader(file));
         String      line;

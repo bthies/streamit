@@ -22,13 +22,13 @@ public class LogicalDramTileMapping {
     /** the mapping of drams to the "owner" of the dram, the owner
      * is the raw tile where the dram commands are issued.
      */
-    private static HashMap dramTileMap;
+    private static HashMap<StreamingDram, RawTile> dramTileMap;
     /** a hash set of RawTiles that must use the gdn for communication 
      * non-border tiles.
      */
-    private static HashSet mustUseGDN;
+    private static HashSet<RawTile> mustUseGDN;
     /** map of RawTile -> StreamingDRAM, the "home-base" dram for a tile */ 
-    private static HashMap tileDramMap;
+    private static HashMap<RawTile, Object> tileDramMap;
     
     static {
         rawChip = SpaceTimeBackend.getRawChip();
@@ -36,9 +36,9 @@ public class LogicalDramTileMapping {
         assert rawChip.getTotalTiles() == 16 : "We only support 16 tiles configs.";
         
         //create the mapping of buffers to owners
-        dramTileMap = new HashMap();
-        tileDramMap = new HashMap();
-        mustUseGDN = new HashSet();
+        dramTileMap = new HashMap<StreamingDram, RawTile>();
+        tileDramMap = new HashMap<RawTile, Object>();
+        mustUseGDN = new HashSet<RawTile>();
         
         dramTileMap.put((StreamingDram)rawChip.getDevices()[15], rawChip.getTile(0));
         dramTileMap.put((StreamingDram)rawChip.getDevices()[1], rawChip.getTile(1));
@@ -57,7 +57,7 @@ public class LogicalDramTileMapping {
         dramTileMap.put((StreamingDram)rawChip.getDevices()[9], rawChip.getTile(14));
         dramTileMap.put((StreamingDram)rawChip.getDevices()[7], rawChip.getTile(15));
         
-        Iterator keys = dramTileMap.keySet().iterator();
+        Iterator<StreamingDram> keys = dramTileMap.keySet().iterator();
         while (keys.hasNext()) {
             Object key = keys.next();
             tileDramMap.put(dramTileMap.get(key), key);
@@ -70,7 +70,7 @@ public class LogicalDramTileMapping {
     }
     
     public static RawTile getOwnerTile(StreamingDram dram) {
-        return (RawTile)dramTileMap.get(dram);
+        return dramTileMap.get(dram);
     }
     
     public static StreamingDram getHomeDram(RawTile tile) {

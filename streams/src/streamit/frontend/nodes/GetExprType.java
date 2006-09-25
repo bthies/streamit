@@ -25,17 +25,17 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.25 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: GetExprType.java,v 1.26 2006-09-25 13:54:54 dimock Exp $
  */
 public class GetExprType extends FENullVisitor
 {
     private SymbolTable symTab;
     private StreamType streamType;
-    private Map structsByName;
-    private Map helpersByName;
+    private Map<String, TypeStruct> structsByName;
+    private Map<String, TypeHelper> helpersByName;
     
     public GetExprType(SymbolTable symTab, StreamType streamType,
-                       Map structsByName, Map helpersByName)
+                       Map<String, TypeStruct> structsByName, Map<String, TypeHelper> helpersByName)
     {
         this.symTab = symTab;
         this.streamType = streamType;
@@ -57,7 +57,7 @@ public class GetExprType extends FENullVisitor
         int length;
 
         // get the elements
-        List elems = exp.getElements();
+        List<Expression> elems = exp.getElements();
 
         // not sure what to do for base type if array is empty... try
         // keeping it null --BFT
@@ -65,10 +65,10 @@ public class GetExprType extends FENullVisitor
             base = null;
         } else {
             // otherwise, take promotion over all elements declared
-            base = (Type)((Expression)elems.get(0)).accept(this);
+            base = (Type)elems.get(0).accept(this);
         
             for (int i=1; i<elems.size(); i++) {
-                Type t = (Type)((Expression)elems.get(i)).accept(this);
+                Type t = (Type)elems.get(i).accept(this);
                 base = t.leastCommonPromotion(t);
             }
         }
@@ -165,7 +165,7 @@ public class GetExprType extends FENullVisitor
         else if (base instanceof TypeStructRef)
             {
                 String name = ((TypeStructRef)base).getName();
-                TypeStruct str = (TypeStruct)structsByName.get(name);
+                TypeStruct str = structsByName.get(name);
                 assert str != null : base;
                 return str.getType(exp.getName());
             }
@@ -179,7 +179,7 @@ public class GetExprType extends FENullVisitor
     public Object visitExprHelperCall(ExprHelperCall helper)
     {
 
-        TypeHelper th = (TypeHelper)helpersByName.get(helper.getHelperPackage());
+        TypeHelper th = helpersByName.get(helper.getHelperPackage());
         for (int i = 0; th != null && i < th.getNumFuncs(); i++) {
             Function func = th.getFunction(i);
             if (func.getName().equals(helper.getName()))
@@ -255,7 +255,7 @@ public class GetExprType extends FENullVisitor
         //
         // So, if there's any arguments, return the type of the first
         // argument; otherwise, return float as a default.
-        List params = exp.getParams();
+        List<Object> params = exp.getParams();
         if (params.isEmpty()) {
             return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
         }

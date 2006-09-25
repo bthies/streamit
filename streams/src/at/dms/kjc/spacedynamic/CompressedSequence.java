@@ -14,13 +14,13 @@ import java.util.*;
  */
 public class CompressedSequence {
     /** the objects that are repeated */   
-    private LinkedList seq;
+    private LinkedList<Object> seq;
     /** the repetition count */
     private int reps;
     
     public CompressedSequence(int reps) {
         this.reps = reps;
-        seq = new LinkedList();
+        seq = new LinkedList<Object>();
     }
 
     public int getReps() {
@@ -38,7 +38,7 @@ public class CompressedSequence {
     public String toString() {
         StringBuffer buf = new StringBuffer();
         buf.append("\nCompressSeq " + hashCode() + "(Reps: " + reps + ") {");
-        Iterator it = seq.iterator();
+        Iterator<Object> it = seq.iterator();
         while (it.hasNext()) {
             buf.append(it.next());
         }

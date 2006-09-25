@@ -18,37 +18,37 @@ import at.dms.util.Utils;
  */
 public class SimulationCounter {
     
-    public static HashMap maxJoinerBufferSize;
+    public static HashMap<FlatNode, Integer> maxJoinerBufferSize;
     
     private HashMap arcCountsIncoming;
-    private HashMap arcCountsOutgoing;
+    private HashMap<FlatNode, int[]> arcCountsOutgoing;
     
-    private HashMap bufferCount;
-    private HashSet fired;
+    private HashMap<FlatNode, Integer> bufferCount;
+    private HashSet<FlatNode> fired;
 
-    private HashMap currentJoinerScheduleNode;
+    private HashMap<FlatNode, JoinerScheduleNode> currentJoinerScheduleNode;
 
-    private HashMap joinerBufferCounts;
+    private HashMap<FlatNode, HashMap> joinerBufferCounts;
     
-    private HashMap joinerReceiveBuffer;
+    private HashMap<FlatNode, LinkedList<String>> joinerReceiveBuffer;
     
     static 
     {
-        maxJoinerBufferSize = new HashMap();
+        maxJoinerBufferSize = new HashMap<FlatNode, Integer>();
     }
     
-    public SimulationCounter(HashMap joinerSchedules) {
-        joinerReceiveBuffer = new HashMap();
+    public SimulationCounter(HashMap<FlatNode, JoinerScheduleNode> joinerSchedules) {
+        joinerReceiveBuffer = new HashMap<FlatNode, LinkedList<String>>();
         arcCountsIncoming = new HashMap();
-        arcCountsOutgoing = new HashMap();
-        bufferCount = new HashMap();
-        fired = new HashSet();
-        currentJoinerScheduleNode = (HashMap)joinerSchedules.clone();
-        joinerBufferCounts = new HashMap();
+        arcCountsOutgoing = new HashMap<FlatNode, int[]>();
+        bufferCount = new HashMap<FlatNode, Integer>();
+        fired = new HashSet<FlatNode>();
+        currentJoinerScheduleNode = (HashMap<FlatNode, JoinerScheduleNode>)joinerSchedules.clone();
+        joinerBufferCounts = new HashMap<FlatNode, HashMap>();
     }
 
     public String getJoinerReceiveBuffer(FlatNode node) {
-        LinkedList list = (LinkedList)joinerReceiveBuffer.get(node);
+        LinkedList list = joinerReceiveBuffer.get(node);
         if (list == null)
             Utils.fail("trying to pop an empty joiner receive buffer");
         return (String)list.removeFirst();
@@ -56,9 +56,9 @@ public class SimulationCounter {
     
     public void addJoinerReceiveBuffer(FlatNode node, String buffer) 
     {
-        LinkedList list = (LinkedList)joinerReceiveBuffer.get(node);
+        LinkedList<String> list = joinerReceiveBuffer.get(node);
         if (list == null) {
-            list = new LinkedList();
+            list = new LinkedList<String>();
             joinerReceiveBuffer.put(node, list);
         }
         list.add(buffer);
@@ -67,14 +67,13 @@ public class SimulationCounter {
 
     public String getJoinerBuffer(FlatNode node) 
     {
-        return ((JoinerScheduleNode)currentJoinerScheduleNode.get(node)).
+        return currentJoinerScheduleNode.get(node).
             buffer;
     }
     
     public void incrementJoinerSchedule(FlatNode node) 
     {
-        currentJoinerScheduleNode.put(node, ((JoinerScheduleNode)
-                                             currentJoinerScheduleNode.get(node)).
+        currentJoinerScheduleNode.put(node, currentJoinerScheduleNode.get(node).
                                       next);
     }
     
@@ -88,9 +87,9 @@ public class SimulationCounter {
 
     public void resetBuffers() 
     {
-        Iterator it = bufferCount.keySet().iterator();
+        Iterator<FlatNode> it = bufferCount.keySet().iterator();
         while (it.hasNext()) {
-            FlatNode node = (FlatNode)it.next();
+            FlatNode node = it.next();
             if (node.contents instanceof SIRFilter) {
                 SIRFilter filter = (SIRFilter)node.contents;
                 bufferCount.put(node,
@@ -103,7 +102,7 @@ public class SimulationCounter {
     public int getBufferCount(FlatNode node) {
         if (!bufferCount.containsKey(node))
             bufferCount.put(node, new Integer(0));
-        return ((Integer)bufferCount.get(node)).intValue();
+        return bufferCount.get(node).intValue();
     }
     
     public void decrementBufferCount(FlatNode node, int val) {
@@ -127,10 +126,10 @@ public class SimulationCounter {
     {
         if (!joinerBufferCounts.containsKey(node))
             joinerBufferCounts.put(node, new HashMap());
-        HashMap joinerBuffers = (HashMap)joinerBufferCounts.get(node);
+        HashMap<String, Integer> joinerBuffers = joinerBufferCounts.get(node);
         if (!joinerBuffers.containsKey(buf))
             joinerBuffers.put(buf, new Integer(0));
-        return ((Integer)joinerBuffers.get(buf)).intValue();
+        return joinerBuffers.get(buf).intValue();
     }
     
     public void decrementJoinerBufferCount(FlatNode node, String buf) 
@@ -138,18 +137,18 @@ public class SimulationCounter {
         int old = getJoinerBufferCount(node, buf);
         if (old  <= 0)
             Utils.fail("attempting to decrement a 0 joiner buffer");
-        ((HashMap)joinerBufferCounts.get(node)).put(buf, new Integer(old - 1));
+        joinerBufferCounts.get(node).put(buf, new Integer(old - 1));
     }
     
     public void incrementJoinerBufferCount(FlatNode node, String buf) 
     {
         int old = getJoinerBufferCount(node, buf);
-        ((HashMap)joinerBufferCounts.get(node)).put(buf, new Integer(old + 1));
+        joinerBufferCounts.get(node).put(buf, new Integer(old + 1));
         //record max buffer size
         if (!maxJoinerBufferSize.containsKey(node))
             maxJoinerBufferSize.put(node, new Integer(1));
         else {
-            int max =  ((Integer)maxJoinerBufferSize.get(node)).intValue();
+            int max =  maxJoinerBufferSize.get(node).intValue();
             if (old + 1 > max)
                 maxJoinerBufferSize.put(node, new Integer(old + 1));
         }
@@ -168,13 +167,13 @@ public class SimulationCounter {
             arcCountsOutgoing.put(node, nodeCounters);
         }
         //Get the counter and return the count for the given way
-        int[] currentArcCounts = (int[])arcCountsOutgoing.get(node);
+        int[] currentArcCounts = arcCountsOutgoing.get(node);
         return currentArcCounts[way];
     }
     
     public void decrementArcCountOutgoing(FlatNode node, int way) 
     {
-        int[] currentArcCounts = (int[])arcCountsOutgoing.get(node);
+        int[] currentArcCounts = arcCountsOutgoing.get(node);
         if (currentArcCounts[way] > 0)
             currentArcCounts[way]--;
         else 
@@ -185,7 +184,7 @@ public class SimulationCounter {
     
     public void resetArcCountOutgoing(FlatNode node, int way) 
     {
-        int[] currentArcCounts = (int[])arcCountsOutgoing.get(node);
+        int[] currentArcCounts = arcCountsOutgoing.get(node);
         if (currentArcCounts[way] == 0)
             currentArcCounts[way] = node.weights[way];
         else

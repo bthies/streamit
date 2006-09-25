@@ -47,9 +47,9 @@ public class Util extends at.dms.util.Utils {
     /*
       get the execution Count of the previous node
     */
-    public static int getCount(HashMap counts, FlatNode node) 
+    public static int getCount(HashMap<FlatNode, Integer> counts, FlatNode node) 
     {
-        Integer count = ((Integer)counts.get(node));
+        Integer count = counts.get(node);
 
         if (count == null)
             return 0;
@@ -59,7 +59,7 @@ public class Util extends at.dms.util.Utils {
     /*
       get the execution count of the previous node
     */
-    public static int getCountPrev(HashMap counts, FlatNode prev, FlatNode node) 
+    public static int getCountPrev(HashMap<FlatNode, Integer> counts, FlatNode prev, FlatNode node) 
     {
         if (!(prev.contents instanceof SIRSplitter))
             return getCount(counts, prev);
@@ -190,8 +190,8 @@ public class Util extends at.dms.util.Utils {
     //return the FlatNodes that are directly downstream of the 
     //given flatnode and are themselves assigned a tile in the
     //layout
-    public static HashSet getAssignedEdges(FlatNode node) {
-        HashSet set = new HashSet();
+    public static HashSet<FlatNode> getAssignedEdges(FlatNode node) {
+        HashSet<FlatNode> set = new HashSet<FlatNode>();
 
         if (node == null)
             return set;
@@ -202,7 +202,7 @@ public class Util extends at.dms.util.Utils {
         return set;
     }
 
-    private static void getAssignedEdgesHelper(FlatNode node, HashSet set) {
+    private static void getAssignedEdgesHelper(FlatNode node, HashSet<FlatNode> set) {
         if (node == null) 
             return;
         else if (Layout.isAssigned(node)) {
@@ -219,27 +219,27 @@ public class Util extends at.dms.util.Utils {
     //node, but go thru all splitters.  The node itself is a joiner or 
     //filter,  NOTE, THIS HAS NOT BEEN TESTED BUT IT SHOULD WORK, I DID NOT 
     //NEED IT FOR WHAT I WROTE IT FOR
-    public static HashSet getDirectDownstream(FlatNode node) 
+    public static HashSet<Object> getDirectDownstream(FlatNode node) 
     {
         if (node == null || node.isSplitter())
             Utils.fail("getDirectDownStream(...) error. Node not filter or joiner.");
         if (node.ways > 0)
             return getDirectDownstreamHelper(node.edges[0]);
         else 
-            return new HashSet();
+            return new HashSet<Object>();
     }
     
-    private static HashSet getDirectDownstreamHelper(FlatNode current) 
+    private static HashSet<Object> getDirectDownstreamHelper(FlatNode current) 
     {
         if (current == null)
-            return new HashSet();
+            return new HashSet<Object>();
         else if (current.isFilter() || current.isJoiner()) {
-            HashSet ret = new HashSet();
+            HashSet<Object> ret = new HashSet<Object>();
             ret.add(current);
             return ret;
         }
         else if (current.isSplitter()) {
-            HashSet ret = new HashSet();
+            HashSet<Object> ret = new HashSet<Object>();
         
             for (int i = 0; i < current.ways; i++) {
                 if(current.weights[i]!=0)

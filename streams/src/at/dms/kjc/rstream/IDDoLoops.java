@@ -22,9 +22,9 @@ import java.util.Iterator;
 public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Constants
 {
     private int forLevel = 0;
-    private HashMap varUses;
-    private HashMap loops;
-    private HashSet inductionVars;
+    private HashMap<JLocalVariable, HashSet> varUses;
+    private HashMap<JForStatement, DoLoopInformation> loops;
+    private HashSet<JLocalVariable> inductionVars;
 
     /**
      * The entry point of this class, given a stream *top* and 
@@ -85,12 +85,12 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
                     if (statements[k] instanceof JVariableDeclarationStatement) {
                         JVariableDeclarationStatement varDecl = 
                             (JVariableDeclarationStatement) statements[k];
-                        Vector newVars = new Vector();
+                        Vector<JVariableDefinition> newVars = new Vector<JVariableDefinition>();
                         for (int j = 0; j < varDecl.getVars().length; j++) {
                             if (!inductionVars.contains(varDecl.getVars()[j]))
                                 newVars.add(varDecl.getVars()[j]);
                         }
-                        varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+                        varDecl.setVars(newVars.toArray(new JVariableDefinition[0]));
                     }
                 }
             }
@@ -100,8 +100,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
     private IDDoLoops() 
     {
         forLevel = 0;
-        loops = new HashMap();
-        inductionVars = new HashSet();
+        loops = new HashMap<JForStatement, DoLoopInformation>();
+        inductionVars = new HashSet<JLocalVariable>();
     }
     
     
@@ -226,10 +226,10 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
     {
         //check the scope of the induction variable...
         Iterator allInductionUses =
-            ((HashSet)varUses.get(doInfo.induction)).iterator();
+            varUses.get(doInfo.induction).iterator();
     
         //add all the uses in the for loop
-        HashSet usesInForLoop = UseDefInfo.getForUses(jfor);
+        HashSet<Object> usesInForLoop = UseDefInfo.getForUses(jfor);
     
         while (allInductionUses.hasNext()) {
             Object use = allInductionUses.next();

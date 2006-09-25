@@ -17,6 +17,7 @@
 package streamit.library;
 
 import streamit.scheduler2.SDEPData;
+import streamit.scheduler2.constrained.LatencyEdge;
 import streamit.scheduler2.constrained.Scheduler;
 import streamit.scheduler2.constrained.NoPathException;
 import streamit.library.iriter.Iterator;
@@ -37,7 +38,7 @@ import java.util.HashSet;
  * defined; that class is the portal object.  Receiver objects should
  * also implement the interface.
  *
- * @version $Id: Portal.java,v 1.20 2006-08-23 23:01:15 thies Exp $
+ * @version $Id: Portal.java,v 1.21 2006-09-25 13:54:55 dimock Exp $
  */
 public abstract class Portal
 {
@@ -46,7 +47,7 @@ public abstract class Portal
     // identifier of this stream (used for hashcode)
     private int id = (MAX_ID++);
 
-    protected ArrayList receivers; //List of Filters
+    protected ArrayList<Object> receivers; //List of Filters
     private int minLat,maxLat;
     /**
      * SDEP info for this portal.
@@ -54,7 +55,7 @@ public abstract class Portal
     private SDEPInfo sdepInfo;
     
     public Portal() {
-        this.receivers = new ArrayList();
+        this.receivers = new ArrayList<Object>();
         this.sdepInfo = null;
     }
 
@@ -168,8 +169,8 @@ public abstract class Portal
      * Returns list of receivers that are upstream of the sender.
      * Requires that upstream/downstream info has been calculated.
      */
-    private List getUpstreamReceivers(boolean[] downstream) {
-        List result = new LinkedList();
+    private List<Object> getUpstreamReceivers(boolean[] downstream) {
+        List<Object> result = new LinkedList<Object>();
         for (int i=0; i<receivers.size(); i++) {
             if (!downstream[i]) {
                 result.add(receivers.get(i));
@@ -183,12 +184,12 @@ public abstract class Portal
      * sender, return mapping from filters to SDEP data for the
      * upstream messages.
      */
-    private HashMap getUpstreamSDEPs(Stream sender, boolean[] downstream) {
-        HashMap result = new HashMap();
+    private HashMap<Stream, SDEPData> getUpstreamSDEPs(Stream sender, boolean[] downstream) {
+        HashMap<Stream, SDEPData> result = new HashMap<Stream, SDEPData>();
         // identify list of upstream receivers.
-        List upstreamReceivers = getUpstreamReceivers(downstream);
+        List<Object> upstreamReceivers = getUpstreamReceivers(downstream);
         // for now have to do each one separately
-        for (java.util.Iterator i = upstreamReceivers.iterator(); i.hasNext(); ) {
+        for (java.util.Iterator<Object> i = upstreamReceivers.iterator(); i.hasNext(); ) {
             Stream receiver = (Stream)i.next();
 
             // make factory (this used to be used for phased filters,
@@ -221,11 +222,11 @@ public abstract class Portal
      *
      * Requires that upstream/downstream info has been calculated.
      */
-    private List getDownstreamReceiverSets(boolean[] downstream) {
-        LinkedList result = new LinkedList();
+    private List<HashSet<Object>> getDownstreamReceiverSets(boolean[] downstream) {
+        LinkedList<HashSet<Object>> result = new LinkedList<HashSet<Object>>();
 
         // build set downstream filters
-        HashSet filters = new HashSet();
+        HashSet<Object> filters = new HashSet<Object>();
         for (int i=0; i<receivers.size(); i++) {
             if (downstream[i]) {
                 filters.add(receivers.get(i));
@@ -245,14 +246,14 @@ public abstract class Portal
      * sender, return mapping from filters to SDEP data for the
      * downstream messages.
      */
-    private HashMap getDownstreamSDEPs(Stream sender, boolean[] downstream) {
-        HashMap result = new HashMap();
+    private HashMap<Object, LatencyEdge> getDownstreamSDEPs(Stream sender, boolean[] downstream) {
+        HashMap<Object, LatencyEdge> result = new HashMap<Object, LatencyEdge>();
         // calculate list of HashSets of downstream receivers that can
         // be calcualted in parallel
-        List downstreamReceivers = getDownstreamReceiverSets(downstream);
+        List<HashSet<Object>> downstreamReceivers = getDownstreamReceiverSets(downstream);
         // do one calculation per set
-        for (java.util.Iterator i = downstreamReceivers.iterator(); i.hasNext(); ) {
-            HashSet receiverSet = (HashSet)i.next();
+        for (java.util.Iterator<HashSet<Object>> i = downstreamReceivers.iterator(); i.hasNext(); ) {
+            HashSet receiverSet = i.next();
             assert receiverSet.size() > 0;
 
             // make factory (this used to be used for phased filters,
@@ -261,13 +262,13 @@ public abstract class Portal
             Scheduler scheduler = Scheduler.createForSDEP(new Iterator(Stream.toplevel, factory));
 
             // map receiverSet (holds Streams) to receiverIters (holds Iterators)
-            HashSet receiverIters = new HashSet();
+            HashSet<Iterator> receiverIters = new HashSet<Iterator>();
             for (java.util.Iterator setIter = receiverSet.iterator(); setIter.hasNext(); ) {
                 receiverIters.add(new Iterator((Stream)setIter.next(), factory));
             }
 
             // compute dependences downstream
-            HashMap resultIters = null;
+            HashMap<streamit.scheduler2.iriter.Iterator, LatencyEdge> resultIters = null;
             try {
                 resultIters = scheduler.computeSDEP(new Iterator(sender, factory),
                                                     receiverIters);
@@ -277,7 +278,7 @@ public abstract class Portal
             }
 
             // map resultIters (keyed on Iterators) to data (keyed on Streams)
-            for (java.util.Iterator resultIter = resultIters.keySet().iterator(); resultIter.hasNext(); ) {
+            for (java.util.Iterator<streamit.scheduler2.iriter.Iterator> resultIter = resultIters.keySet().iterator(); resultIter.hasNext(); ) {
                 Iterator iter = (Iterator)resultIter.next();
                 assert resultIters.get(iter)!=null : "Null data for " + iter.getObject();
                 result.put(iter.getObject(), resultIters.get(iter));
@@ -299,11 +300,11 @@ public abstract class Portal
             boolean[] downstream = calcDownstream(sender);
 
             // get upstream and downstream sdep data
-            HashMap upstreamSDEPs = getUpstreamSDEPs(sender, downstream);
-            HashMap downstreamSDEPs = getDownstreamSDEPs(sender, downstream);
+            HashMap<Stream, SDEPData> upstreamSDEPs = getUpstreamSDEPs(sender, downstream);
+            HashMap<Object, LatencyEdge> downstreamSDEPs = getDownstreamSDEPs(sender, downstream);
 
             // combine data into single map (receiver Stream -> SDEP data)
-            HashMap data = new HashMap();
+            HashMap<Object, SDEPData> data = new HashMap<Object, SDEPData>();
             data.putAll(upstreamSDEPs);
             data.putAll(downstreamSDEPs);
 
@@ -313,7 +314,7 @@ public abstract class Portal
                 // find data for receiver[i]
                 Stream receiver = (Stream)receivers.get(i);
                 assert data.containsKey(receiver) : "No data for " + receiver;
-                dataArray[i] = (SDEPData)data.get(receiver);
+                dataArray[i] = data.get(receiver);
             }
             sdepInfo = new SDEPInfo(dataArray, downstream);
 

@@ -31,7 +31,7 @@ public class TypeHelper extends Type
 {
     private FEContext context;
     private String name;
-    private List funcs;
+    private List<Function> funcs;
     private int cls;
 
     public static final int NORMAL_HELPERS = 0; 
@@ -45,7 +45,7 @@ public class TypeHelper extends Type
      * @param funcs    list of <code>Function</code> containing the helper
      *                 functions
      */
-    public TypeHelper(FEContext context, String name, List funcs, int cls)
+    public TypeHelper(FEContext context, String name, List<Function> funcs, int cls)
     {
         this.context = context;
         this.name = name;
@@ -53,7 +53,7 @@ public class TypeHelper extends Type
         this.cls = cls;
     }
 
-    public TypeHelper(FEContext context, String name, List funcs)
+    public TypeHelper(FEContext context, String name, List<Function> funcs)
     {
         this(context, name, funcs, NORMAL_HELPERS);
     }
@@ -98,7 +98,7 @@ public class TypeHelper extends Type
      */
     public Function getFunction(int n)
     {
-        return (Function)funcs.get(n);
+        return funcs.get(n);
     }
 
     public void setFunction(int n, Function func)

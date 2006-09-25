@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBlockContext.java,v 1.10 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CBlockContext.java,v 1.11 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -82,7 +82,7 @@ public class CBlockContext extends CBodyContext {
     public CBlockContext(CBodyContext parent, int predictedVars) {
         super(parent);
 
-        this.localVars = new Vector(predictedVars);
+        this.localVars = new Vector<JLocalVariable>(predictedVars);
 
         CBlockContext   parentBlock = parent.getBlockContext();
 
@@ -109,7 +109,7 @@ public class CBlockContext extends CBodyContext {
      */
     private void verifyLocalVarUsed() {
         for (int i = 0; i < localsIndex; i++) {
-            JLocalVariable  var = (JLocalVariable)localVars.elementAt(i);
+            JLocalVariable  var = localVars.elementAt(i);
 
             if (!var.isUsed() && !var.getIdent().startsWith("_")) {
                 MessageDescription      mesg = null;
@@ -151,7 +151,7 @@ public class CBlockContext extends CBodyContext {
      */
     public void addVariable(JLocalVariable var) throws UnpositionedError {
         if (localVars == null) {
-            localVars = new Vector();
+            localVars = new Vector<JLocalVariable>();
         }
 
         // verify that the variable is not defined in this or an enclosing block
@@ -175,7 +175,7 @@ public class CBlockContext extends CBodyContext {
     public JLocalVariable lookupLocalVariable(String ident) {
         if (localVars != null) {
             for (int i = 0; i < localsIndex; i++) {
-                JLocalVariable  var = (JLocalVariable)localVars.elementAt(i);
+                JLocalVariable  var = localVars.elementAt(i);
 
                 if (var.getIdent() == ident) {
                     return var;
@@ -216,7 +216,7 @@ public class CBlockContext extends CBodyContext {
      */
     public void addClass(CClass clazz) throws UnpositionedError {
         if (localClasses == null) {
-            localClasses = new Hashtable();
+            localClasses = new Hashtable<String, CClass>();
         }
         Object  old = localClasses.put(clazz.getIdent(), clazz);
         if (old != null) {
@@ -241,7 +241,7 @@ public class CBlockContext extends CBodyContext {
         if (localClasses != null) {
             CClass  clazz;
 
-            clazz = (CClass)localClasses.get(ident);
+            clazz = localClasses.get(ident);
             if (clazz != null) {
                 if (clazz.isAccessible(caller)) {
                     return clazz.getType();
@@ -258,8 +258,8 @@ public class CBlockContext extends CBodyContext {
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    private Hashtable               localClasses;
-    private Vector              localVars;
+    private Hashtable<String, CClass>               localClasses;
+    private Vector<JLocalVariable>              localVars;
 
     private /*final*/ int               parentIndex;
     private int                 localsIndex;
@@ -279,8 +279,8 @@ public class CBlockContext extends CBodyContext {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CBlockContext other) {
         super.deepCloneInto(other);
-        other.localClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.localClasses);
-        other.localVars = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.localVars);
+        other.localClasses = (java.util.Hashtable<String, CClass>)at.dms.kjc.AutoCloner.cloneToplevel(this.localClasses);
+        other.localVars = (java.util.Vector<JLocalVariable>)at.dms.kjc.AutoCloner.cloneToplevel(this.localVars);
         other.parentIndex = this.parentIndex;
         other.localsIndex = this.localsIndex;
         other.localsPosition = this.localsPosition;

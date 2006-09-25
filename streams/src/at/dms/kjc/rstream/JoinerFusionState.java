@@ -25,7 +25,7 @@ public class JoinerFusionState extends FusionState
     /** the joiner this object represents **/
     private SIRJoiner joiner;
     /** flatnode (previous) -> Jvariabledeclaration (buffer) for steady **/
-    private HashMap bufferMap;
+    private HashMap<FlatNode, JVariableDefinition> bufferMap;
   
     /** size of incoming buffers **/
     private int bufferSizes[];
@@ -49,7 +49,7 @@ public class JoinerFusionState extends FusionState
         //create the incoming bufffer sizes array
         bufferSizes = new int[node.inputs];
 
-        bufferMap = new HashMap();
+        bufferMap = new HashMap<FlatNode, JVariableDefinition>();
         //create the incoming buffer vars and set the buffer sizes
         makeIncomingBuffers();
     }
@@ -103,7 +103,7 @@ public class JoinerFusionState extends FusionState
     /** Perform the initialization tasks of this joiner, including declaring 
      * the incoming buffers and calling the init path function and placing the
      * results in the correct incoming buffer if this joiner is a feedback joiner **/
-    public void initTasks(Vector fields, Vector functions,
+    public void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                           JBlock initFunctionCalls, JBlock main) 
     {
         //add the declarations for all the incoming buffers
@@ -322,7 +322,7 @@ public class JoinerFusionState extends FusionState
     {
         assert bufferMap.containsKey(node);
 
-        return (JVariableDefinition) bufferMap.get(node);
+        return bufferMap.get(node);
     }
     
     /** create the incoming buffers JVariableDeclaration **/

@@ -78,14 +78,14 @@ public abstract class SIRIterator implements Iterator {
      * element is the final non-null ancestor of this.
      */
     public SIRContainer[] getParents() {
-        LinkedList result = new LinkedList();
+        LinkedList<SIRStream> result = new LinkedList<SIRStream>();
         SIRIterator parent = this.parent;
         // make list of parents
         while (parent!=null) {
             result.add(parent.getStream());
             parent = parent.getParent();
         }
-        return (SIRContainer[])result.toArray(new SIRContainer[0]);
+        return result.toArray(new SIRContainer[0]);
     }
 
     /**

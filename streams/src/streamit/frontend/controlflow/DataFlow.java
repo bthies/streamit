@@ -24,7 +24,7 @@ import java.util.*;
  * by derived classes.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DataFlow.java,v 1.2 2006-01-25 17:04:23 thies Exp $
+ * @version $Id: DataFlow.java,v 1.3 2006-09-25 13:54:53 dimock Exp $
  */
 public abstract class DataFlow
 {
@@ -34,7 +34,7 @@ public abstract class DataFlow
      * @param cfg  control-flow graph to perform analysis on
      * @return     map of CFGNode to Lattice element at entry to the node
      */
-    public Map run(CFG cfg)
+    public Map<CFGNode, Lattice> run(CFG cfg)
     {
         // This is the worklist algorithm from Muchnik,
         // _Advanced Compiler Design and Implementation_, 1st ed.,
@@ -47,33 +47,34 @@ public abstract class DataFlow
         Lattice init = getInit();
         Lattice top = init.getTop();
         Lattice bottom = init.getBottom();
-        Map dfin = new HashMap();
+        Map<CFGNode,Lattice> dfin = new HashMap<CFGNode,Lattice>();
 
         // Set up initial worklist:
-        final Set worklist = new HashSet(cfg.getNodes());
+        final Set<CFGNode> worklist = new HashSet<CFGNode>(cfg.getNodes());
         worklist.remove(entry);
         
         // Set up initial dfin:
         dfin.put(entry, init);
-        for (Iterator iter = worklist.iterator(); iter.hasNext(); )
-            dfin.put(iter.next(), top);
+        for (CFGNode node : worklist) {
+            dfin.put(node, top);
+        }
 
         while (!worklist.isEmpty())
             {
                 // Get an arbitrary element from the list.
-                CFGNode b = (CFGNode)worklist.iterator().next();
+                CFGNode b = worklist.iterator().next();
                 worklist.remove(b);
                 Lattice totaleffect = top;
             
-                List preds;
+                List<CFGNode> preds;
                 if (isForward())
                     preds = cfg.getPredecessors(b);
                 else
                     preds = cfg.getSuccessors(b);
-                for (Iterator iter = preds.iterator(); iter.hasNext(); )
+                for (Iterator<CFGNode> iter = preds.iterator(); iter.hasNext(); )
                     {
-                        CFGNode p = (CFGNode)iter.next();
-                        Lattice in = (Lattice)dfin.get(p);
+                        CFGNode p = iter.next();
+                        Lattice in = dfin.get(p);
                         Lattice effect = flowFunction(p, in);
                         totaleffect = totaleffect.meet(effect);
                     }

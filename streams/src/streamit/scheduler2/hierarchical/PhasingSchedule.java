@@ -41,10 +41,10 @@ public class PhasingSchedule extends DestroyedClass
 {
     int nPhases;
     int overallPeek, overallPop, overallPush;
-    final Vector peekSize = new Vector();
-    final Vector popSize = new Vector();
-    final Vector pushSize = new Vector();
-    final Vector phases = new Vector();
+    final Vector<Integer> peekSize = new Vector<Integer>();
+    final Vector<Integer> popSize = new Vector<Integer>();
+    final Vector<Integer> pushSize = new Vector<Integer>();
+    final Vector<PhasingSchedule> phases = new Vector<PhasingSchedule>();
     Schedule phasingPreComputedSchedule;
     Schedule schedule;
     final StreamInterface stream;
@@ -107,7 +107,7 @@ public class PhasingSchedule extends DestroyedClass
     {
         // phase must be within range
         assert phase >= 0 && phase < nPhases;
-        return ((Integer) peekSize.get(phase)).intValue();
+        return peekSize.get(phase).intValue();
     }
 
     /**
@@ -118,7 +118,7 @@ public class PhasingSchedule extends DestroyedClass
     {
         // phase must be within range
         assert phase >= 0 && phase < nPhases;
-        return ((Integer) popSize.get(phase)).intValue();
+        return popSize.get(phase).intValue();
     }
 
     /**
@@ -129,7 +129,7 @@ public class PhasingSchedule extends DestroyedClass
     {
         // phase must be within range
         assert phase >= 0 && phase < nPhases;
-        return ((Integer) pushSize.get(phase)).intValue();
+        return pushSize.get(phase).intValue();
     }
 
     /**
@@ -144,7 +144,7 @@ public class PhasingSchedule extends DestroyedClass
         // and this must be a phasing schedule
         assert phases != null;
 
-        return (PhasingSchedule) phases.get(phase);
+        return phases.get(phase);
     }
 
     /**

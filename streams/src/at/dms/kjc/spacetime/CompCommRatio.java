@@ -51,13 +51,13 @@ public class CompCommRatio {
         }
         if (str instanceof SIRSplitJoin) {
             SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
+            Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
             if (mults.containsKey(sj)) {
                 comm += sj.getSplitter().getSumOfWeights() * mults.get(sj)[0];
                 comm += sj.getJoiner().getSumOfWeights() * mults.get(sj)[0];
             }
             while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
+                SIRStream child = iter.next();
                 walkSTR(child);
             }
         }
@@ -80,11 +80,11 @@ public class CompCommRatio {
     public static double ratio(Partitioner partitioner) {
         int comp = 0, comm = 0;
         // get the trace node travesal
-        Iterator traceNodeIt = Util.traceNodeTraversal(DataFlowOrder
+        Iterator<TraceNode> traceNodeIt = Util.traceNodeTraversal(DataFlowOrder
                                                        .getTraversal(partitioner.topTraces));
 
         while (traceNodeIt.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodeIt.next();
+            TraceNode traceNode = traceNodeIt.next();
 
             if (traceNode.isFilterTrace()) {
                 FilterTraceNode filter = (FilterTraceNode) traceNode;

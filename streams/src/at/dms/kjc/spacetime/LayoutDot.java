@@ -26,11 +26,11 @@ public class LayoutDot
             Layout layout) {
         AnnealedLayout anneal = new AnnealedLayout(spaceTime);
         anneal.initialize();
-        Iterator nodes  = 
+        Iterator<TraceNode> nodes  = 
             Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
         HashMap assignment = new HashMap();
         while (nodes.hasNext()) {
-            TraceNode node = (TraceNode)nodes.next();
+            TraceNode node = nodes.next();
             if (node.isFilterTrace()) {
                 RawTile tile = 
                     layout.getTile(node.getAsFilter());
@@ -72,7 +72,7 @@ public class LayoutDot
                     fw.write("Init:\\n");
                     for (int t = 0; t < tile.getFilters(true, false).size(); t++) {
                         FilterInfo fi = 
-                            FilterInfo.getFilterInfo((FilterTraceNode)tile.getFilters(true, false).get(t));
+                            FilterInfo.getFilterInfo(tile.getFilters(true, false).get(t));
             
                         fw.write(fi.filter.toString() + "(" + 
                                  fi.initMult + ")\\n");
@@ -81,7 +81,7 @@ public class LayoutDot
                     fw.write("Prime Pump:\\n");
                     for (int t = 0; t < tile.getFilters(false, true).size(); t++) {
                         FilterInfo fi = 
-                            FilterInfo.getFilterInfo((FilterTraceNode)tile.getFilters(false, true).get(t));
+                            FilterInfo.getFilterInfo(tile.getFilters(false, true).get(t));
             
                         fw.write(fi.filter.toString() + "(" + 
                                  spaceTime.getPrimePumpTotalMult(fi) + ")\\n");
@@ -90,7 +90,7 @@ public class LayoutDot
                     fw.write("Steady:\\n");
                     for (int t = 0; t < tile.getFilters(false, false).size(); t++) {
                         FilterInfo fi = 
-                            FilterInfo.getFilterInfo((FilterTraceNode)tile.getFilters(false, false).get(t));
+                            FilterInfo.getFilterInfo(tile.getFilters(false, false).get(t));
             
                         fw.write(fi.filter.toString() + "(" + 
                                  fi.steadyMult + ")\\n");
@@ -99,7 +99,7 @@ public class LayoutDot
             
                     for (int c = 0; c < tile.getNeighborTiles().size(); c++) {
                         fw.write("tile" + tile.getTileNumber() + " -> tile" + 
-                                 ((RawTile)tile.getNeighborTiles().get(c)).getTileNumber() +
+                                 tile.getNeighborTiles().get(c).getTileNumber() +
                                  ";\n");
                     }
             

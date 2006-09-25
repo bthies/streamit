@@ -58,7 +58,7 @@ public class ActionLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner
     }
     public ActionLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         caseSensitiveLiterals = true;
         setCaseSensitive(true);
     }

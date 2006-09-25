@@ -43,9 +43,9 @@ public class FixedBufferTape {
     {
         Integer mult;
         if (init) 
-            mult = (Integer)ClusterBackend.initExecutionCounts.get(node);
+            mult = ClusterBackend.initExecutionCounts.get(node);
         else 
-            mult = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+            mult = ClusterBackend.steadyExecutionCounts.get(node);
 
         if (mult == null) {
             return 0;

@@ -6,9 +6,9 @@ import java.util.LinkedList;
 
 public class DFTraversal implements FlatVisitor 
 {
-    private LinkedList traversal;
+    private LinkedList<FlatNode> traversal;
     
-    public static LinkedList getDFTraversal(FlatNode top) 
+    public static LinkedList<FlatNode> getDFTraversal(FlatNode top) 
     {
         DFTraversal df = new DFTraversal();
         top.accept(df, null, true);
@@ -17,7 +17,7 @@ public class DFTraversal implements FlatVisitor
     
     protected DFTraversal() 
     {
-        traversal = new LinkedList();
+        traversal = new LinkedList<FlatNode>();
     }
     
     

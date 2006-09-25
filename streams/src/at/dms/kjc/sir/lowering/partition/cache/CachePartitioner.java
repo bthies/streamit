@@ -37,12 +37,12 @@ public class CachePartitioner extends ListPartitioner {
     /**
      * Map from stream structures to CConfig's.
      */
-    private HashMap configMap;
+    private HashMap<SIRStream, CConfig> configMap;
 
     public CachePartitioner(SIRStream str, WorkEstimate work, int numTiles,
                             int code_cache_size, int data_cache_size) {
         super(str, work, numTiles);
-        this.configMap = new HashMap();
+        this.configMap = new HashMap<SIRStream, CConfig>();
         CODE_CACHE_SIZE = code_cache_size;
         DATA_CACHE_SIZE = data_cache_size;
     }
@@ -79,7 +79,7 @@ public class CachePartitioner extends ListPartitioner {
      * partitioned stream.
      */
     public SIRStream toplevel() {
-        LinkedList partitions = new LinkedList();
+        LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         return calcPartitions(partitions, true);
     }
 
@@ -92,8 +92,8 @@ public class CachePartitioner extends ListPartitioner {
      * with a mapping from SIROperator to String denoting list of
      * partition numbers that a given SIROperator is assigned to.
      */
-    public SIRStream calcPartitions(HashMap partitionMap) {
-        LinkedList partitions = new LinkedList();
+    public SIRStream calcPartitions(HashMap<SIROperator, Integer> partitionMap) {
+        LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         SIRStream result = calcPartitions(partitions, false);
 
         partitionMap.clear();
@@ -110,7 +110,7 @@ public class CachePartitioner extends ListPartitioner {
      * partitioning the stream is returned; otherwise the stream is
      * left alone and only <partitions> are filled up.
      */
-    private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
+    private SIRStream calcPartitions(LinkedList<PartitionRecord> partitions, boolean doTransform) {
         // build stream config
         System.out.println("  Building stream config... ");
         CConfig topConfig = buildStreamConfig();
@@ -207,7 +207,7 @@ public class CachePartitioner extends ListPartitioner {
     }
 
     public CConfig getConfig(SIRStream str) {
-        return (CConfig) configMap.get(str);
+        return configMap.get(str);
     }
 
     /**

@@ -104,11 +104,11 @@ public class LowerInitFunctions implements StreamVisitor {
     /**
      * Registers the tapes in <tapePairs> with new statements in <method>.
      */
-    private void registerTapes(List tapePairs, JMethodDeclaration init) {
+    private void registerTapes(List<SIROperator[]> tapePairs, JMethodDeclaration init) {
         // go through tape pairs, declaring tapes...
-        for (ListIterator it = tapePairs.listIterator(); it.hasNext(); ) {
+        for (ListIterator<SIROperator[]> it = tapePairs.listIterator(); it.hasNext(); ) {
             // get the next pair
-            SIROperator[] pair = (SIROperator[])it.next();
+            SIROperator[] pair = it.next();
             // determine type of tape by finding a SIRStream.  We need
             // to do this in case we're connecting a splitter or
             // joiner, since the splitters and joiners don't know

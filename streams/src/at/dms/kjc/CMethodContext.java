@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethodContext.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CMethodContext.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
@@ -62,13 +63,13 @@ public class CMethodContext extends CContext {
      * @exception   UnpositionedError   this error will be positioned soon
      */
     public void close(TokenReference ref) throws PositionedError {
-        Enumeration     eNum = throwables.elements();
+        Enumeration<CThrowableInfo>     eNum = throwables.elements();
         CClassType[]    checked = self.getThrowables();
         boolean[]       used = new boolean[checked.length];
 
         loop:
         while (eNum.hasMoreElements()) {
-            CThrowableInfo  thrown = (CThrowableInfo)eNum.nextElement();
+            CThrowableInfo  thrown = eNum.nextElement();
             CClassType  type = thrown.getThrowable();
 
             // only checked exceptions need to be checked
@@ -166,7 +167,7 @@ public class CMethodContext extends CContext {
     /**
      * @return the list of exception that may be thrown
      */
-    public Hashtable getThrowables() {
+    public Hashtable<Serializable, CThrowableInfo> getThrowables() {
         return throwables;
     }
 
@@ -174,7 +175,7 @@ public class CMethodContext extends CContext {
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    protected   Hashtable   throwables = new Hashtable();
+    protected   Hashtable<Serializable, CThrowableInfo>   throwables = new Hashtable<Serializable, CThrowableInfo>();
     protected   Hashtable   labels;     // Hashtable<String, String>
     private CMethod     self;
 
@@ -191,7 +192,7 @@ public class CMethodContext extends CContext {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CMethodContext other) {
         super.deepCloneInto(other);
-        other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+        other.throwables = (java.util.Hashtable<Serializable, CThrowableInfo>)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
         other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
         other.self = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
     }

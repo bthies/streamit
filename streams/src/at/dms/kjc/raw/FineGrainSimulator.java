@@ -23,13 +23,13 @@ import java.util.Iterator;
 public class FineGrainSimulator extends Simulator  implements FlatVisitor
 {
     
-    private HashMap switchSchedules;
+    private HashMap<Object, StringBuffer> switchSchedules;
     
     //the current joiner code we are working on (steady or init)
-    private static HashMap joinerCode;
+    private static HashMap<FlatNode, JoinerScheduleNode> joinerCode;
         
     //the curent node in the joiner schedule we are working on
-    private HashMap currentJoinerCode;
+    private HashMap<FlatNode, JoinerScheduleNode> currentJoinerCode;
     
     private FlatNode bottom;
 
@@ -40,8 +40,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     {
         System.out.println("FineGrainSimulator Running...");
     
-        initJoinerCode = new HashMap();
-        steadyJoinerCode = new HashMap();
+        initJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
+        steadyJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
 
         //generate the joiner schedule
         JoinerSimulator.createJoinerSchedules(top);
@@ -51,8 +51,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     
         //create copies of the executionCounts
-        HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
-        HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
+        HashMap<FlatNode, Integer> initExecutionCounts = (HashMap<FlatNode, Integer>)RawBackend.initExecutionCounts.clone();
+        HashMap<FlatNode, Integer> steadyExecutionCounts = (HashMap<FlatNode, Integer>)RawBackend.steadyExecutionCounts.clone();
 
 
         joinerCode = initJoinerCode;
@@ -82,8 +82,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
     private FineGrainSimulator(FlatNode top, boolean init) 
     {
-        switchSchedules = new HashMap();
-        currentJoinerCode = new HashMap();
+        switchSchedules = new HashMap<Object, StringBuffer>();
+        currentJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
         toplevel = top;
         //find the bottom (last) filter, used later to decide
         //execution order
@@ -96,15 +96,15 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
       to its completion.  It checks if all the execution counts for 
       mapped streams are 0
     */
-    private static void testExecutionCounts(HashMap exeCounts) 
+    private static void testExecutionCounts(HashMap<FlatNode, Integer> exeCounts) 
     {
         boolean bad = false;
     
-        Iterator it = exeCounts.keySet().iterator();
+        Iterator<FlatNode> it = exeCounts.keySet().iterator();
         while(it.hasNext()) {
-            FlatNode node = (FlatNode)it.next();
+            FlatNode node = it.next();
             if (Layout.isAssigned(node)) {
-                if (((Integer)exeCounts.get(node)).intValue() != 0) {
+                if (exeCounts.get(node).intValue() != 0) {
                     System.out.println(node.contents.getName() + " has " + 
                                        exeCounts.get(node) + " executions remaining!!!!");
                     bad = true;
@@ -124,25 +124,25 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private void callInitPaths(SimulationCounter counters) 
     {
         //find all the joiners that are immediately contained in a FeedbackLoop
-        Iterator joiners = Layout.getJoiners().iterator();
+        Iterator<FlatNode> joiners = Layout.getJoiners().iterator();
         //clone the joiner schedules
     
         FlatNode joiner;
         //iterate over all of the joiners of a feedbackloop
         while (joiners.hasNext()) {
-            joiner = (FlatNode)joiners.next();
+            joiner = joiners.next();
             if ((((SIRJoiner)joiner.contents).getParent() instanceof SIRFeedbackLoop)) {
                 //create the initPath calls 
                 SIRFeedbackLoop loop = (SIRFeedbackLoop)((SIRJoiner)joiner.contents).getParent();
                 int delay = loop.getDelayInt();
-                JoinerScheduleNode current = ((JoinerScheduleNode)JoinerSimulator.schedules.get(joiner));
+                JoinerScheduleNode current = JoinerSimulator.schedules.get(joiner);
                 for (int i = 0; i < delay; i++) {
                     //for each init path call find the correct buffer to place it in.
                     while(true) {
                         if (current.buffer.endsWith("1")) {
                             //create the joinerCode Node and put it in the init schedule
                             JoinerScheduleNode prev = 
-                                (JoinerScheduleNode)currentJoinerCode.get(joiner);
+                                currentJoinerCode.get(joiner);
                             JoinerScheduleNode code = new JoinerScheduleNode(i, current.buffer);
                             if (prev == null) {
                                 //first node in joiner code
@@ -170,7 +170,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     }
     
     //The start of the simulation for the initialization schedule
-    private HashMap goInit(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    private HashMap<Object, StringBuffer> goInit(HashMap<FlatNode, Integer> counts, SimulationCounter counters, FlatNode lastToFire) 
     {
         //create the initpath calls
         callInitPaths(counters);
@@ -180,7 +180,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         
  
     /* the main simulation method */
-    private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    private HashMap<Object, StringBuffer> go(HashMap<FlatNode, Integer> counts, SimulationCounter counters, FlatNode lastToFire) 
     {
         FlatNode fire, dest;
         
@@ -218,11 +218,11 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         return switchSchedules;
     }
 
-    private void appendMagicNetNodes(FlatNode fire, List dests) {
+    private void appendMagicNetNodes(FlatNode fire, List<FlatNode> dests) {
         Coordinate source = Layout.getTile(fire);
     
-        HashMap receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
-        HashMap sendSchedules = MagicNetworkSchedule.steadySendSchedules;
+        HashMap<Coordinate, LinkedList> receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
+        HashMap<Coordinate, LinkedList> sendSchedules = MagicNetworkSchedule.steadySendSchedules;
     
         //append the current information to the correct schedule
         //depending of if it is the steady state or init
@@ -235,21 +235,21 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         if (!sendSchedules.containsKey(source))
             sendSchedules.put(source, new LinkedList());
     
-        LinkedList sourceSendSchedule = (LinkedList)sendSchedules.get(source);
+        LinkedList<LinkedList<Coordinate>> sourceSendSchedule = sendSchedules.get(source);
 
         //generate a list of coordinates to add to the send schedule for the source
-        LinkedList destsCoordinate = new LinkedList();
+        LinkedList<Coordinate> destsCoordinate = new LinkedList<Coordinate>();
 
 
         //iterate thru the dests adding to the receive schedules for the dests
-        Iterator it = dests.iterator();
+        Iterator<FlatNode> it = dests.iterator();
         while(it.hasNext()) {
-            Coordinate currentDest = Layout.getTile((FlatNode)it.next());
+            Coordinate currentDest = Layout.getTile(it.next());
     
         
             if (!receiveSchedules.containsKey(currentDest))
                 receiveSchedules.put(currentDest, new LinkedList());
-            LinkedList destReceiveSchedule = (LinkedList)receiveSchedules.get(currentDest);
+            LinkedList<Coordinate> destReceiveSchedule = receiveSchedules.get(currentDest);
         
             destReceiveSchedule.add(source);
 
@@ -266,24 +266,24 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     //we do not want to duplicate items until necesary, so we have to keep track 
     //of all the routes and then generate the switch code
     //this way we can route multiple dests per route instruction
-    private void generateSwitchCode(FlatNode fire, List dests) 
+    private void generateSwitchCode(FlatNode fire, List<FlatNode> dests) 
     {
         //should only have one previous
-        HashMap prev = new HashMap();
-        HashMap next = new HashMap();
+        HashMap<Coordinate, Coordinate> prev = new HashMap<Coordinate, Coordinate>();
+        HashMap<Coordinate, HashSet> next = new HashMap<Coordinate, HashSet>();
 
-        ListIterator destsIt = dests.listIterator();
+        ListIterator<FlatNode> destsIt = dests.listIterator();
         while (destsIt.hasNext()) {
-            FlatNode dest = (FlatNode)destsIt.next();
+            FlatNode dest = destsIt.next();
             //      System.out.println("Dest: " + dest.getName());
             if (dest == null) 
                 System.out.println("Yup dest is null");
             Coordinate[] hops = 
-                (Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
+                Router.getRoute(fire, dest).toArray(new Coordinate[0]);
             //add to fire's next
             if (!next.containsKey(Layout.getTile(fire))) 
                 next.put(Layout.getTile(fire), new HashSet());
-            ((HashSet)next.get(Layout.getTile(fire))).add(hops[1]);
+            next.get(Layout.getTile(fire)).add(hops[1]);
             //add to all other previous, next
             for (int i = 1; i < hops.length -1; i++) {
                 if (prev.containsKey(hops[i]))
@@ -292,7 +292,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
                 prev.put(hops[i], hops[i-1]);
                 if (!next.containsKey(hops[i]))
                     next.put(hops[i], new HashSet());
-                ((HashSet)next.get(hops[i])).add(hops[i+1]);
+                next.get(hops[i]).add(hops[i+1]);
             }
             //add the last step, plus the dest to the dest map
             if (prev.containsKey(hops[hops.length - 1]))
@@ -301,7 +301,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
             prev.put(hops[hops.length-1], hops[hops.length - 2]);
             if (!next.containsKey(hops[hops.length-1]))
                 next.put(hops[hops.length - 1], new HashSet());
-            ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
+            next.get(hops[hops.length - 1]).add(hops[hops.length -1]);
         }
     
         //create the appropriate amount of routing instructions
@@ -310,13 +310,13 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
             asm(Layout.getTile(fire), prev, next);
     }
     
-    private void asm(Coordinate fire, HashMap previous, HashMap next) 
+    private void asm(Coordinate fire, HashMap<Coordinate, Coordinate> previous, HashMap<Coordinate, HashSet> next) 
     {
         //generate the sends
         if (!switchSchedules.containsKey(fire))
             switchSchedules.put(fire, new StringBuffer());
-        StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
-        Iterator it = ((HashSet)next.get(fire)).iterator();
+        StringBuffer buf = switchSchedules.get(fire);
+        Iterator it = next.get(fire).iterator();
         buf.append("route ");
         while (it.hasNext()) {
             Coordinate dest = (Coordinate)it.next();
@@ -328,16 +328,16 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         buf.setCharAt(buf.length() - 1, '\n');
     
         //generate all the other 
-        Iterator tiles = next.keySet().iterator();
+        Iterator<Coordinate> tiles = next.keySet().iterator();
         while (tiles.hasNext()) {
-            Coordinate tile = (Coordinate)tiles.next();
+            Coordinate tile = tiles.next();
             if (tile == fire) 
                 continue;
             if (!switchSchedules.containsKey(tile))
                 switchSchedules.put(tile, new StringBuffer());
-            buf = (StringBuffer)switchSchedules.get(tile);
-            Coordinate prevTile = (Coordinate)previous.get(tile);
-            buf.append("route ");       Iterator nexts = ((HashSet)next.get(tile)).iterator();
+            buf = switchSchedules.get(tile);
+            Coordinate prevTile = previous.get(tile);
+            buf.append("route ");       Iterator nexts = next.get(tile).iterator();
             while(nexts.hasNext()) {
                 Coordinate nextTile = (Coordinate)nexts.next();
                 if (!nextTile.equals(tile))
@@ -352,7 +352,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     }
     
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
-                                  HashMap executionCounts) 
+                                  HashMap<FlatNode, Integer> executionCounts) 
     {
         //if this is the first time a two stage initpeek is needed to execute
         if (initSimulation &&
@@ -364,7 +364,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
                  fire.contents instanceof SIRFilter) {
             //we are ratematching filters
             return (((SIRFilter)fire.contents).getPopInt() * 
-                    ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue() +
+                    RawBackend.steadyExecutionCounts.get(fire).intValue() +
                     (((SIRFilter)fire.contents).getPeekInt() -
                      ((SIRFilter)fire.contents).getPopInt()));
         }
@@ -372,10 +372,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         return ((SIRFilter)fire.contents).getPeekInt();
     }
    
-    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
+    private void decrementExecutionCounts(FlatNode fire, HashMap<FlatNode, Integer> executionCounts, SimulationCounter counters) 
     {
         //decrement one from the execution count
-        int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+        int oldVal = executionCounts.get(fire).intValue();
         if (oldVal - 1 < 0)
             Utils.fail("Executed too much");
     
@@ -390,7 +390,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     }
     
     private int consumedItems(FlatNode fire, SimulationCounter counters,
-                              HashMap executionCounts) {
+                              HashMap<FlatNode, Integer> executionCounts) {
         //if this is the first time a two stage fires consume initpop
         if (initSimulation &&
             !counters.hasFired(fire) &&
@@ -401,14 +401,14 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
             //we are ratematching on the filter
             //it consumes for the entire steady state
             return ((SIRFilter)fire.contents).getPopInt() *
-                ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+                RawBackend.steadyExecutionCounts.get(fire).intValue();
         }
         //otherwise just consume pop
         return ((SIRFilter)fire.contents).getPopInt();
     }
     
     //consume the data and return the number of items produced
-    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
+    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts) 
     {
         if (fire.contents instanceof SIRFilter) {
             //decrement the schedule execution counter
@@ -429,7 +429,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
                 ret = ((SIRTwoStageFilter)fire.contents).getInitPushInt();
             else if (!initSimulation && KjcOptions.ratematch) {
                 //we are ratematching so produce all the data on the one firing.
-                ret *= ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+                ret *= RawBackend.steadyExecutionCounts.get(fire).intValue();
             }
             //now this node has fired
             counters.setFired(fire);
@@ -450,7 +450,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     {
         //add to the joiner code for this fire
         JoinerScheduleNode prev = 
-            (JoinerScheduleNode)currentJoinerCode.get(fire);
+            currentJoinerCode.get(fire);
         if (prev == null) {
             //first node in joiner code
             joinerCode.put(fire, code);
@@ -465,7 +465,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     
     
-    private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
+    private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts)
     {
         //  System.out.println("Firing " + fire.contents.getName());
         //The joiner is passing a data item, record this as an execution
@@ -487,15 +487,15 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
     //return the destinations of the data item and generate the code
     //to receive data into the joiner
-    private List getDestination(FlatNode node, SimulationCounter counters)
+    private List<FlatNode> getDestination(FlatNode node, SimulationCounter counters)
     {
-        List list = getDestinationHelper(node.edges[0], counters, "", node);
-        HashSet visited = new HashSet();
+        List<FlatNode> list = getDestinationHelper(node.edges[0], counters, "", node);
+        HashSet<FlatNode> visited = new HashSet<FlatNode>();
         //generate joiner receive code  
         //iterate over the list 
-        Iterator it = list.iterator();
+        Iterator<FlatNode> it = list.iterator();
         while(it.hasNext()) {
-            FlatNode dest = (FlatNode)it.next();
+            FlatNode dest = it.next();
             if (!(dest.contents instanceof SIRJoiner))
                 continue;
             //decrement the buffer from the joiner
@@ -520,7 +520,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
 
     //get the destination of the data item
-    private List getDestinationHelper(FlatNode node, SimulationCounter counters, String
+    private List<FlatNode> getDestinationHelper(FlatNode node, SimulationCounter counters, String
                                       joinerBuffer, FlatNode previous) 
     {
         //if we reached a node then this is a destination
@@ -532,7 +532,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
                                             joinerBuffer, node);
             }
             counters.incrementBufferCount(node);
-            LinkedList list = new LinkedList();
+            LinkedList<FlatNode> list = new LinkedList<FlatNode>();
             list.add(node);
             return list;
         }
@@ -544,7 +544,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
                 joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
                 counters.addJoinerReceiveBuffer(node, joinerBuffer);
                 counters.incrementBufferCount(node);
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 list.add(node);
                 //if previous == identity 
                 return list;
@@ -562,7 +562,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
             //if splitter send the item out to all arcs
             //build a list of all the dests
             if (splitter.getType() == SIRSplitType.DUPLICATE) {
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 for (int i = 0; i < node.ways;i++) {
                     //decrement counter on arc
                     if (counters.getArcCountOutgoing(node, i) == 0)
@@ -608,21 +608,21 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
     //for now, find the most-downstream filter to fire
     //from the starting node
-    private FlatNode whoShouldFire(FlatNode current, HashMap executionCounts, 
+    private FlatNode whoShouldFire(FlatNode current, HashMap<FlatNode, Integer> executionCounts, 
                                    SimulationCounter counters) 
     {
         FlatNode start = current;
         //breadth first search from bottom
         if (start == null)
             start = toplevel;
-        HashSet visited = new HashSet();
-        Vector queue = new Vector();
+        HashSet<FlatNode> visited = new HashSet<FlatNode>();
+        Vector<FlatNode> queue = new Vector<FlatNode>();
         FlatNode node;
         FlatNode mostDownStream = null;
     
         queue.add(start);
         while (!queue.isEmpty()) {
-            node = (FlatNode)queue.get(0);
+            node = queue.get(0);
             queue.remove(0);
         
             if (node == null)
@@ -648,7 +648,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     }
    
 
-    public boolean canFire(FlatNode node, HashMap executionCounts, 
+    public boolean canFire(FlatNode node, HashMap<FlatNode, Integer> executionCounts, 
                            SimulationCounter counters) 
     {
         if (node == null)
@@ -666,7 +666,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
             //check if this node has fired the number of times given by
             //the schedule
-            Integer count = (Integer)executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             //if a node is not executed at all in a schedule it will not have an
             //entry
             if (count == null)
@@ -694,7 +694,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
         
             //check if this node has fired the number of times given by
             //the schedule
-            Integer count = (Integer)executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             //if a node is not executed at all in a schedule it will not have an
             //entry
             if (count == null)
@@ -731,10 +731,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
         if (RawBackend.initExecutionCounts.containsKey(node))
             System.out.println("   executes in init " + 
-                               ((Integer)RawBackend.initExecutionCounts.get(node)).intValue());
+                               RawBackend.initExecutionCounts.get(node).intValue());
         if (RawBackend.steadyExecutionCounts.containsKey(node))
             System.out.println("   executes in steady " + 
-                               ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue());
+                               RawBackend.steadyExecutionCounts.get(node).intValue());
     }
     
     private String getJoinerBuffer(FlatNode node, FlatNode previous) 

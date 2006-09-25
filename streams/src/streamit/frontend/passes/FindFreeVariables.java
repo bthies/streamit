@@ -33,11 +33,11 @@ import java.util.List;
  * inside the anonymous stream) corresponds to a local.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FindFreeVariables.java,v 1.6 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: FindFreeVariables.java,v 1.7 2006-09-25 13:54:54 dimock Exp $
  */
 public class FindFreeVariables extends SymbolTableVisitor
 {
-    List freeVars;
+    List<String> freeVars;
     
     public FindFreeVariables()
     {
@@ -59,16 +59,16 @@ public class FindFreeVariables extends SymbolTableVisitor
         if (spec.getName() != null)
             return super.visitStreamSpec(spec);
         
-        List oldFreeVars = freeVars;
-        freeVars = new java.util.ArrayList();
+        List<String> oldFreeVars = freeVars;
+        freeVars = new java.util.ArrayList<String>();
         // Wrap this in an empty symbol table.
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(null);
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
-        for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
+        for (Iterator<String> iter = freeVars.iterator(); iter.hasNext(); )
             {
-                String name = (String)iter.next();
+                String name = iter.next();
                 // Is the variable free here, too?
                 if (!symtab.hasVar(name))
                     oldFreeVars.add(name);

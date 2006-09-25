@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ClassPath.java,v 1.4 2006-03-23 18:18:41 dimock Exp $
+ * $Id: ClassPath.java,v 1.5 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -361,7 +361,7 @@ public class ClassPath {
             if (!Constants.ENV_USE_CACHE || stack.empty()) {
                 return new byte[10000];
             }
-            return (byte[])stack.pop();
+            return stack.pop();
         }
 
         private static void release(byte[] arr) {
@@ -376,6 +376,6 @@ public class ClassPath {
 
         private InputStream is;
         private byte[]  ba;
-        private static Stack    stack = new Stack();
+        private static Stack<byte[]>    stack = new Stack<byte[]>();
     }
 }

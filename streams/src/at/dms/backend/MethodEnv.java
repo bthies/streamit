@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodEnv.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: MethodEnv.java,v 1.3 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -39,7 +39,7 @@ class MethodEnv {
      * getLocalVar
      */
     public QTemporary getLocalVar(int pos) {
-        return (QTemporary)locals.elementAt(pos);
+        return locals.elementAt(pos);
     }
 
     /**
@@ -52,7 +52,7 @@ class MethodEnv {
             locals.setSize(slot + 1);
         }
 
-        QTemporary  temp = (QTemporary)locals.elementAt(slot);
+        QTemporary  temp = locals.elementAt(slot);
 
         if (temp == null) {
             insn.getInstruction().dump();
@@ -143,6 +143,6 @@ class MethodEnv {
     // PRIVATE DATA TYPE
     // ----------------------------------------------------------------------
 
-    private Vector  locals = new Vector();
+    private Vector<QTemporary>  locals = new Vector<QTemporary>();
     private MethodInfo  info;
 }

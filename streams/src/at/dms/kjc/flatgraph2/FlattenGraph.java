@@ -12,7 +12,7 @@ import at.dms.kjc.sir.linear.*;
  * @author jasperln
  */
 public class FlattenGraph {
-    private static ArrayList topLevelNodes=new ArrayList(); //List of top level nodes
+    private static ArrayList<UnflatFilter> topLevelNodes=new ArrayList<UnflatFilter>(); //List of top level nodes
     private static HashMap nodes=new HashMap(); //Set of all nodes (value is null)
     //Set of simple null filters (regular splitters and joiners)
     private static HashMap simpleNull=new HashMap();
@@ -709,10 +709,10 @@ public class FlattenGraph {
                 UnflatEdge[] nextEdges=out[0];
                 {
                     UnflatEdge[][] incomingEdges=new UnflatEdge[inW.length][nextEdges.length];
-                    HashMap createdEdges=new HashMap();
+                    HashMap<UnflatEdge, UnflatEdge[]> createdEdges=new HashMap<UnflatEdge, UnflatEdge[]>();
                     for(int j=0;j<inW.length;j++) {
                         UnflatFilter inFilter=in[j].src;
-                        UnflatEdge[] oldEdges=(UnflatEdge[])createdEdges.get(in[j]);
+                        UnflatEdge[] oldEdges=createdEdges.get(in[j]);
                         if(oldEdges==null) {
                             oldEdges=new UnflatEdge[nextEdges.length];
                             createdEdges.put(in[j],oldEdges);

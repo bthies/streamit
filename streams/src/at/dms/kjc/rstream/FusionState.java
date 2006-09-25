@@ -33,7 +33,7 @@ public abstract class FusionState
     /** the size of the incoming buffers for each incoming edge **/
     protected JVariableDefinition[] bufferVar;
     /** a hashmap of all fusionstates created so far, indexed by flatnode **/
-    protected static HashMap fusionState;
+    protected static HashMap<FlatNode, FusionState> fusionState;
     /** the unique ID of this fusionstate **/
     protected int myUniqueID;
     /** the variaible prefix of the incoming buffer **/
@@ -41,7 +41,7 @@ public abstract class FusionState
     
     static 
     {
-        fusionState = new HashMap();
+        fusionState = new HashMap<FlatNode, FusionState>();
     }
 
     /** create a new FusionState object that represents *node*, note 
@@ -70,7 +70,7 @@ public abstract class FusionState
 
     /** called by GenerateCCode so that this node can add any initialization code
         to the application **/
-    public abstract void initTasks(Vector fields, Vector functions,
+    public abstract void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                                    JBlock initFunctionCalls, JBlock main);
     
     /** get the block that will perform the init stage (*isInit* = true) or the 
@@ -98,7 +98,7 @@ public abstract class FusionState
                 assert false;
         }
     
-        return (FusionState)fusionState.get(node);
+        return fusionState.get(node);
     }
     
     /** Return the JVariableDefinition associated with the incoming buffer

@@ -159,7 +159,7 @@ public class FuseSplit {
         //FuseSimpleSplit.printStats(sj);
 
         // get copy of child streams and rename them
-        List children = sj.getParallelStreams();
+        List<SIRStream> children = sj.getParallelStreams();
         // rename components
         doRenaming(children);
         // inline phases
@@ -256,12 +256,12 @@ public class FuseSplit {
     /**
      * Makes list of child info.
      */
-    private static SJChildInfo[] makeSJChildInfo(List filterList, RepInfo rep, Rate rate) {
+    private static SJChildInfo[] makeSJChildInfo(List<SIRStream> filterList, RepInfo rep, Rate rate) {
         // make the result
         SJChildInfo[] result = new SJChildInfo[filterList.size()];
 
         // for each filter...
-        ListIterator it = filterList.listIterator();
+        ListIterator<SIRStream> it = filterList.listIterator();
         for (int i=0; it.hasNext(); i++) {
             SIRFilter filter = (SIRFilter)it.next();
 
@@ -425,18 +425,18 @@ public class FuseSplit {
         return new Rate(newInitPush, newInitPop, newInitPeek, newPush, newPop, newPeek);
     }
 
-    private static void doRenaming(List children) {
+    private static void doRenaming(List<SIRStream> children) {
         // Rename all of the child streams of this.
-        Iterator iter = children.iterator();
+        Iterator<SIRStream> iter = children.iterator();
         while (iter.hasNext()) {
             SIRFilter filter = (SIRFilter)iter.next();
             RenameAll.renameFilterContents((SIRFilter)filter);
         }
     }
 
-    private static void doPhaseInlining(List children) {
+    private static void doPhaseInlining(List<SIRStream> children) {
         // inline all phases, as they aren't supported in fusion yet
-        Iterator iter = children.iterator();
+        Iterator<SIRStream> iter = children.iterator();
         while (iter.hasNext()) {
             SIRFilter filter = (SIRFilter)iter.next();
             InlinePhases.doit(filter);
@@ -448,9 +448,9 @@ public class FuseSplit {
      */
     public static boolean isFusable(SIRSplitJoin sj) {
         // Check the ratios.
-        Iterator childIter = sj.getParallelStreams().iterator();
+        Iterator<SIRStream> childIter = sj.getParallelStreams().iterator();
         while (childIter.hasNext()) {
-            SIRStream str = (SIRStream)childIter.next();
+            SIRStream str = childIter.next();
             if (!FusePipe.isFusable(str)) {
                 return false;
             }
@@ -1028,10 +1028,10 @@ public class FuseSplit {
     }
 
     private static JMethodDeclaration[] makeMethods(SIRSplitJoin sj,
-                                                    List children)
+                                                    List<SIRStream> children)
     {
         // Just copy all of the methods into an array.
-        Iterator childIter;
+        Iterator<SIRStream> childIter;
         
         // Walk the list of children to get the total number of
         // methods.  Skip work functions wherever necessary.

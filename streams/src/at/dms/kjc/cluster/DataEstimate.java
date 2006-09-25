@@ -16,7 +16,7 @@ import at.dms.kjc.common.CommonUtils;
 public class DataEstimate {
 
     // SIRFilter -> Integer (size of global fields)
-    private static HashMap saved_globals = new HashMap();
+    private static HashMap<SIRFilter, Integer> saved_globals = new HashMap<SIRFilter, Integer>();
 
     /**
      * Returns the size of a variable with given type.
@@ -121,7 +121,7 @@ public class DataEstimate {
     public static int estimateIOSize(SIROperator oper) {
         int id = NodeEnumerator.getSIROperatorId(oper);
         FlatNode node = NodeEnumerator.getFlatNode(id);
-        Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+        Integer steady = ClusterBackend.steadyExecutionCounts.get(node);
         int steady_int = 0;
         if (steady != null) steady_int = (steady).intValue();
 
@@ -166,7 +166,7 @@ public class DataEstimate {
     public static int filterGlobalsSize(SIRFilter filter) {
 
         if (saved_globals.containsKey(filter)) {
-            return ((Integer)saved_globals.get(filter)).intValue();
+            return saved_globals.get(filter).intValue();
         }
 
         int data_size = computeFilterGlobalsSize(filter);

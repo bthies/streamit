@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefinitionFile.java,v 1.3 2006-01-25 17:01:19 thies Exp $
+ * $Id: DefinitionFile.java,v 1.4 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -103,7 +103,7 @@ class DefinitionFile {
      * Checks for duplicate identifiers.
      */
     public void checkIdentifiers() throws OptgenError {
-        Hashtable       identifiers = new Hashtable();
+        Hashtable<String, String>       identifiers = new Hashtable<String, String>();
 
         for (int i = 0; i < definitions.length; i++) {
             definitions[i].checkIdentifiers(identifiers, sourceFile);
@@ -115,7 +115,7 @@ class DefinitionFile {
        *
        */
     public void checkShortcuts() throws OptgenError {
-        Hashtable       identifiers = new Hashtable();
+        Hashtable<String, String>       identifiers = new Hashtable<String, String>();
 
         for (int i = 0; i < definitions.length; i++) {
             definitions[i].checkShortcuts(identifiers, sourceFile);

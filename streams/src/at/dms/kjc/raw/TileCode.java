@@ -30,8 +30,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
     //Hash set of tiles mapped to filters or joiners
     //all other tiles are routing tiles
-    public static HashSet realTiles;
-    public static HashSet tiles;
+    public static HashSet<Coordinate> realTiles;
+    public static HashSet<Object> tiles;
 
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
 
@@ -41,15 +41,15 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         //the nodes in the FlatGraph plus all the tiles involved
         //in switching
         //generate the code for all tiles containing filters and joiners
-        realTiles = new HashSet();
-        topLevel.accept(new TileCode(), new HashSet(), true);
-        tiles = new HashSet();
+        realTiles = new HashSet<Coordinate>();
+        topLevel.accept(new TileCode(), new HashSet<FlatNode>(), true);
+        tiles = new HashSet<Object>();
         //for decoupled execution the scheduler does not run
         if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
             tiles.addAll(RawBackend.simulator.initSchedules.keySet());
             tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
         }
-        Iterator tileIterator = tiles.iterator();
+        Iterator<Object> tileIterator = tiles.iterator();
         while(tileIterator.hasNext()) {
             Coordinate tile = (Coordinate)tileIterator.next();
             //do not generate code for this tile
@@ -161,7 +161,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static String createJoinerWork(FlatNode joiner) 
     {
         StringBuffer ret = new StringBuffer();
-        int buffersize = nextPow2((Integer)SimulationCounter.maxJoinerBufferSize.get(joiner),
+        int buffersize = nextPow2(SimulationCounter.maxJoinerBufferSize.get(joiner),
                                   joiner);
         //get the type, since this joiner is guaranteed to be connected to a filter
         CType type = CommonUtils.getBaseType(CommonUtils.getJoinerType(joiner));  //??
@@ -194,7 +194,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
         
-        HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
+        HashSet buffers = JoinerSimulator.buffers.get(joiner);
         Iterator bufIt = buffers.iterator();
         //print all the var definitions
         while (bufIt.hasNext()) {
@@ -211,10 +211,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
-        printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.initJoinerCode.get(joiner), ret);
+        printSchedule(joiner, RawBackend.simulator.initJoinerCode.get(joiner), ret);
         ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
         ret.append("while(1) {\n");
-        printSchedule(joiner, (JoinerScheduleNode)RawBackend.simulator.steadyJoinerCode.get(joiner), ret);
+        printSchedule(joiner, RawBackend.simulator.steadyJoinerCode.get(joiner), ret);
         ret.append("}}\n");
 
         return ret.toString();

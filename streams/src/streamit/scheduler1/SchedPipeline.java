@@ -11,7 +11,7 @@ public class SchedPipeline extends SchedStream
         super (stream);
     }
 
-    final List allChildren = new LinkedList ();
+    final List<SchedStream> allChildren = new LinkedList<SchedStream> ();
 
     public void addChild (SchedStream stream)
     {
@@ -21,7 +21,7 @@ public class SchedPipeline extends SchedStream
         ASSERT (result);
     }
 
-    public List getChildren ()
+    public List<SchedStream> getChildren ()
     {
         return allChildren;
     }
@@ -39,12 +39,12 @@ public class SchedPipeline extends SchedStream
     {
         // go through all the children and get them initialized
         {
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
 
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
 
                     // get the child initialized
@@ -58,12 +58,12 @@ public class SchedPipeline extends SchedStream
             // use this to keep track of product of all output rates
             BigInteger outProduct = BigInteger.ONE;
 
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
 
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
 
                     // and start computing the number of execution this child needs
@@ -80,12 +80,12 @@ public class SchedPipeline extends SchedStream
             // use this value to keep track of product of input rates
             BigInteger inProduct = BigInteger.ONE;
 
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator (allChildren.size ());
 
             while (iter.hasPrevious ())
                 {
-                    SchedStream child = (SchedStream) iter.previous ();
+                    SchedStream child = iter.previous ();
                     ASSERT (child);
 
                     // continue computing the number of executions this child needs
@@ -101,12 +101,12 @@ public class SchedPipeline extends SchedStream
         BigInteger gcd = null;
 
         {
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
 
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
 
                     if (gcd == null)
@@ -121,12 +121,12 @@ public class SchedPipeline extends SchedStream
         // divide the children's execution counts by the gcd
         if (gcd != null)
             {
-                ListIterator iter;
+                ListIterator<SchedStream> iter;
                 iter = allChildren.listIterator ();
 
                 while (iter.hasNext ())
                     {
-                        SchedStream child = (SchedStream) iter.next ();
+                        SchedStream child = iter.next ();
                         ASSERT (child);
                         ASSERT (child.getNumExecutions ().mod (gcd).equals (BigInteger.ZERO));
 
@@ -137,13 +137,13 @@ public class SchedPipeline extends SchedStream
         // initialize self
         {
             setNumExecutions (BigInteger.ONE);
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
 
             // get the numer of items read by the first stream:
             iter = allChildren.listIterator ();
             if (!allChildren.isEmpty ())
                 {
-                    SchedStream child = (SchedStream) allChildren.get (0);
+                    SchedStream child = allChildren.get (0);
                     ASSERT (child);
 
                     setConsumption (child.getConsumption () * (child.getNumExecutions ().intValue ()));
@@ -156,7 +156,7 @@ public class SchedPipeline extends SchedStream
             iter = allChildren.listIterator (allChildren.size ());
             if (iter.hasPrevious ())
                 {
-                    SchedStream child = (SchedStream) iter.previous ();
+                    SchedStream child = iter.previous ();
                     ASSERT (child);
 
                     setProduction (child.getProduction () * (child.getNumExecutions ().intValue ()));
@@ -173,10 +173,10 @@ public class SchedPipeline extends SchedStream
         print("label = \"" + getStreamName () + "\";\n", outputStream);
 
         // Walk through each of the elements in the pipeline.
-        Iterator iter = allChildren.iterator();
+        Iterator<SchedStream> iter = allChildren.iterator();
         while (iter.hasNext())
             {
-                SchedStream child = (SchedStream)iter.next();
+                SchedStream child = iter.next();
                 ASSERT (child);
 
                 child.printDot (outputStream);
@@ -195,11 +195,11 @@ public class SchedPipeline extends SchedStream
 
     SchedObject getFirstChild ()
     {
-        return ((SchedStream)allChildren.get (0)).getFirstChild ();
+        return allChildren.get (0).getFirstChild ();
     }
 
     SchedObject getLastChild ()
     {
-        return ((SchedStream)allChildren.get (allChildren.size () - 1)).getLastChild ();
+        return allChildren.get (allChildren.size () - 1).getLastChild ();
     }
 }

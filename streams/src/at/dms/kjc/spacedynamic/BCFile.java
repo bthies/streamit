@@ -41,7 +41,7 @@ public class BCFile {
      * @param computeTiles The tiles that are assigned to filters 
      * (performing useful work).
      */
-    public static void generate(SpdStreamGraph streamGraph, HashSet computeTiles) {
+    public static void generate(SpdStreamGraph streamGraph, HashSet<ComputeNode> computeTiles) {
         BCFile.streamGraph = streamGraph;
         layout = streamGraph.getLayout();
         rawChip = streamGraph.getRawChip();
@@ -70,7 +70,7 @@ public class BCFile {
      * 
      * @throws Exception
      */
-    private static void createBCFile(boolean hasIO, HashSet tiles) throws Exception {
+    private static void createBCFile(boolean hasIO, HashSet<ComputeNode> tiles) throws Exception {
         FileWriter fw = new FileWriter("fileio.bc");
         
         if (KjcOptions.malloczeros)
@@ -122,7 +122,7 @@ public class BCFile {
         // create the function to tell the simulator what tiles are mapped
         fw.write("fn mapped_tile(tileNumber) {\n");
         fw.write("if (0 ");
-        Iterator tilesIterator = tiles.iterator();
+        Iterator<ComputeNode> tilesIterator = tiles.iterator();
         // generate the if statement with all the tile numbers of mapped tiles
         while (tilesIterator.hasNext()) {
             RawTile tile = (RawTile) tilesIterator.next();
@@ -194,7 +194,7 @@ public class BCFile {
         
         if (hasIO) {
             // generate the code for the fileReaders
-            Iterator frs = streamGraph.getFileState().getFileReaderDevs()
+            Iterator<FileReaderDevice> frs = streamGraph.getFileState().getFileReaderDevs()
             .iterator();
             // include the file reader devices
             fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");                
@@ -205,7 +205,7 @@ public class BCFile {
             fw.write("\tinclude(f_writerpath);\n");
 
             while (frs.hasNext()) {
-                FileReaderDevice dev = (FileReaderDevice) frs.next();
+                FileReaderDevice dev = frs.next();
                 //if this file reader is its own device or we don't have a communication simulator
                 //then use the dynamic network
                 int static_network = 1, destX = 0, destY = 0; 
@@ -231,10 +231,10 @@ public class BCFile {
                         ");\n");
             }
             // generate the code for the file writers
-            Iterator fws = streamGraph.getFileState().getFileWriterDevs()
+            Iterator<FileWriterDevice> fws = streamGraph.getFileState().getFileWriterDevs()
             .iterator();
             while (fws.hasNext()) {
-                FileWriterDevice dev = (FileWriterDevice) fws.next();
+                FileWriterDevice dev = fws.next();
                 int size = getTypeSize(dev.getType());
 //              if this file write is its own device or we don't have a communication simulator
                 //then use the dynamic network

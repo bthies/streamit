@@ -149,12 +149,12 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
        // use that execution count.
 
          for (int i = 0; i < GraphFlattener.needsToBeSched.size(); i++) {
-             FlatNode node = (FlatNode) GraphFlattener.needsToBeSched.get(i);
+             FlatNode node = GraphFlattener.needsToBeSched.get(i);
              int initCount = -1;
              if (node.incoming.length > 0) {
                  if (initExecutionCounts.get(node.incoming[0]) != null)
-                     initCount = ((Integer) initExecutionCounts
-                                  .get(node.incoming[0])).intValue();
+                     initCount = initExecutionCounts
+                                  .get(node.incoming[0]).intValue();
                  if ((initCount == -1)
                      && (executionCounts[0].get(node.incoming[0].contents) != null))
                      initCount = ((int[]) executionCounts[0]
@@ -163,8 +163,8 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
              int steadyCount = -1;
              if (node.incoming.length > 0) {
                  if (steadyExecutionCounts.get(node.incoming[0]) != null)
-                     steadyCount = ((Integer) steadyExecutionCounts
-                                    .get(node.incoming[0])).intValue();
+                     steadyCount = steadyExecutionCounts
+                                    .get(node.incoming[0]).intValue();
                  if ((steadyCount == -1)
                      && (executionCounts[1].get(node.incoming[0].contents) != null))
                      steadyCount = ((int[]) executionCounts[1]
@@ -265,9 +265,9 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
      }
  
      /** accept a stream graph visitor  */
-     public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) {
+     public void accept(StreamGraphVisitor s, HashSet<StaticStreamGraph> visited, boolean newHash) {
          if (newHash)
-             visited = new HashSet();
+             visited = new HashSet<StaticStreamGraph>();
 
          if (visited.contains(this))
              return;
@@ -275,9 +275,9 @@ public class ScheduledStaticStreamGraph extends StaticStreamGraph {
          visited.add(this);
          s.visitStaticStreamGraph(this);
 
-         Iterator nextsIt = nextSSGs.iterator();
+         Iterator<StaticStreamGraph> nextsIt = nextSSGs.iterator();
          while (nextsIt.hasNext()) {
-             StaticStreamGraph ssg = (StaticStreamGraph) nextsIt.next();
+             StaticStreamGraph ssg = nextsIt.next();
              ssg.accept(s, visited, false);
          }
      }

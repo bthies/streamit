@@ -46,7 +46,7 @@ abstract class CConfig implements Cloneable {
      * track of new partitions in <pre>partitions</pre> and adding to current
      * partition <pre>curPartition</pre>, and returning new stream.
      */
-    abstract public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, SIRStream str);
+    abstract public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, SIRStream str);
 
     /**
      * For debugging.

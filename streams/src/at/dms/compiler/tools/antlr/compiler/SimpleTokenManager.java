@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SimpleTokenManager.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: SimpleTokenManager.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -30,7 +30,7 @@ class SimpleTokenManager implements TokenManager, Cloneable {
     // Token vocabulary is Vector of String's
     protected Vector vocabulary;
     // Hash table is a mapping from Strings to TokenSymbol
-    private Hashtable table;
+    private Hashtable<String, TokenSymbol> table;
     // the main class
     protected Main tool;
     // Name of the token manager
@@ -43,7 +43,7 @@ class SimpleTokenManager implements TokenManager, Cloneable {
         name = name_;
         // Don't make a bigger vector than we need, because it will show up in output sets.
         vocabulary = new Vector(1);
-        table = new Hashtable();
+        table = new Hashtable<String, TokenSymbol>();
 
         // define EOF symbol
         TokenSymbol ts = new TokenSymbol("EOF");
@@ -60,7 +60,7 @@ class SimpleTokenManager implements TokenManager, Cloneable {
         try {
             tm = (SimpleTokenManager) super.clone();
             tm.vocabulary = (Vector) this.vocabulary.clone();
-            tm.table = (Hashtable) this.table.clone();
+            tm.table = (Hashtable<String, TokenSymbol>) this.table.clone();
             tm.maxToken = this.maxToken;
             tm.tool = this.tool;
             tm.name = this.name;
@@ -94,7 +94,7 @@ class SimpleTokenManager implements TokenManager, Cloneable {
      * Get the TokenSymbol for a string
      */
     public TokenSymbol getTokenSymbol(String sym) {
-        return (TokenSymbol)table.get(sym);
+        return table.get(sym);
     }
     /**
      * Get a token symbol by index
@@ -105,10 +105,10 @@ class SimpleTokenManager implements TokenManager, Cloneable {
     /**
      * Get an enumerator over the symbol table
      */
-    public Enumeration getTokenSymbolElements() {
+    public Enumeration<TokenSymbol> getTokenSymbolElements() {
         return table.elements();
     }
-    public Enumeration getTokenSymbolKeys() {
+    public Enumeration<String> getTokenSymbolKeys() {
         return table.keys();
     }
     /**

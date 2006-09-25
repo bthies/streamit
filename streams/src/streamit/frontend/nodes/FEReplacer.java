@@ -54,7 +54,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.41 2006-08-23 23:01:08 thies Exp $
+ * @version $Id: FEReplacer.java,v 1.42 2006-09-25 13:54:54 dimock Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -68,7 +68,7 @@ public class FEReplacer implements FEVisitor
      * return a <code>Statement</code> object from a statement visitor
      * function.
      */
-    protected List newStatements;
+    protected List<Statement> newStatements;
 
     /**
      * Adds a statement to the list of statements that replace the
@@ -149,10 +149,10 @@ public class FEReplacer implements FEVisitor
     public Object visitExprArrayInit(ExprArrayInit exp)
     {
         boolean hasChanged = false;
-        List newElements = new ArrayList();
-        for (Iterator iter = exp.getElements().iterator(); iter.hasNext(); )
+        List<Expression> newElements = new ArrayList<Expression>();
+        for (Iterator<Expression> iter = exp.getElements().iterator(); iter.hasNext(); )
             {
-                Expression element = (Expression)iter.next();
+                Expression element = iter.next();
                 Expression newElement = doExpression(element);
                 newElements.add(newElement);
                 if (element != newElement) hasChanged = true;
@@ -218,8 +218,8 @@ public class FEReplacer implements FEVisitor
     public Object visitExprFunCall(ExprFunCall exp)
     {
         boolean hasChanged = false;
-        List newParams = new ArrayList();
-        for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+        List<Object> newParams = new ArrayList<Object>();
+        for (Iterator<Object> iter = exp.getParams().iterator(); iter.hasNext(); )
             {
                 Expression param = (Expression)iter.next();
                 Expression newParam = doExpression(param);
@@ -233,10 +233,10 @@ public class FEReplacer implements FEVisitor
     public Object visitExprHelperCall(ExprHelperCall exp)
     {
         boolean hasChanged = false;
-        List newParams = new ArrayList();
-        for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+        List<Expression> newParams = new ArrayList<Expression>();
+        for (Iterator<Expression> iter = exp.getParams().iterator(); iter.hasNext(); )
             {
-                Expression param = (Expression)iter.next();
+                Expression param = iter.next();
                 Expression newParam = doExpression(param);
                 newParams.add(newParam);
                 if (param != newParam) hasChanged = true;
@@ -302,8 +302,8 @@ public class FEReplacer implements FEVisitor
     public Object visitFieldDecl(FieldDecl field)
     {
         int num = field.getNumFields();
-        List newInits = new ArrayList(num);
-        List newTypes = new ArrayList(num);
+        List<Expression> newInits = new ArrayList<Expression>(num);
+        List<Type> newTypes = new ArrayList<Type>(num);
         for (int i = 0; i < num; i++)
             {
                 Expression init = field.getInit(i);
@@ -355,12 +355,12 @@ public class FEReplacer implements FEVisitor
     {
         // Don't need to visit types, only streams.  Assume *something*
         // will change.
-        List newStreams = new ArrayList();
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
-            newStreams.add(((FENode)(iter.next())).accept(this));
+        List<StreamSpec> newStreams = new ArrayList<StreamSpec>();
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
+            newStreams.add((StreamSpec)((FENode)(iter.next())).accept(this));
 
-        List newHelpers = prog.getHelpers();
-        for (Iterator iter = newHelpers.iterator(); iter.hasNext(); ) {
+        List<TypeHelper> newHelpers = prog.getHelpers();
+        for (Iterator<TypeHelper> iter = newHelpers.iterator(); iter.hasNext(); ) {
             TypeHelper helper = (TypeHelper)iter.next();
             for (int i = 0; i < helper.getNumFuncs(); i++) {
                 helper.setFunction(i, (Function)helper.getFunction(i).accept(this));
@@ -380,12 +380,12 @@ public class FEReplacer implements FEVisitor
     
     public Object visitSCSimple(SCSimple creator)
     {
-        List newParams = new ArrayList();
-        List newPortals = new ArrayList();
+        List<Expression> newParams = new ArrayList<Expression>();
+        List<Expression> newPortals = new ArrayList<Expression>();
         boolean hasChanged = false;
-        for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
+        for (Iterator<Expression> iter = creator.getParams().iterator(); iter.hasNext(); )
             {
-                Expression param = (Expression)iter.next();
+                Expression param = iter.next();
                 Expression newParam = doExpression(param);
                 newParams.add(newParam);
                 if (newParam != param) hasChanged = true;
@@ -415,10 +415,10 @@ public class FEReplacer implements FEVisitor
     public Object visitSJWeightedRR(SJWeightedRR sj)
     {
         boolean changed = false;
-        List newWeights = new ArrayList();
-        for (Iterator iter = sj.getWeights().iterator(); iter.hasNext(); )
+        List<Expression> newWeights = new ArrayList<Expression>();
+        for (Iterator<Expression> iter = sj.getWeights().iterator(); iter.hasNext(); )
             {
-                Expression oldWeight = (Expression)iter.next();
+                Expression oldWeight = iter.next();
                 Expression newWeight = doExpression(oldWeight);
                 if (newWeight != oldWeight) changed = true;
                 newWeights.add(newWeight);
@@ -447,11 +447,11 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtBlock(StmtBlock stmt)
     {
-        List oldStatements = newStatements;
-        newStatements = new ArrayList();
-        for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
+        List<Statement> oldStatements = newStatements;
+        newStatements = new ArrayList<Statement>();
+        for (Iterator<Statement> iter = stmt.getStmts().iterator(); iter.hasNext(); )
             {
-                Statement s = (Statement)iter.next();
+                Statement s = iter.next();
                 // completely ignore null statements, causing them to
                 // be dropped in the output
                 if (s == null)
@@ -561,10 +561,10 @@ public class FEReplacer implements FEVisitor
         boolean hasChanged = false;
         Expression newReceiver = (Expression)stmt.getReceiver().accept(this);
         if (newReceiver != stmt.getReceiver()) hasChanged = true;
-        List newParams = new ArrayList();
-        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
+        List<Expression> newParams = new ArrayList<Expression>();
+        for (Iterator<Expression> iter = stmt.getParams().iterator(); iter.hasNext(); )
             {
-                Expression param = (Expression)iter.next();
+                Expression param = iter.next();
                 Expression newParam = doExpression(param);
                 newParams.add(newParam);
                 if (param != newParam) hasChanged = true;
@@ -583,9 +583,9 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtHelperCall(StmtHelperCall stmt) 
     {
         boolean hasChanged = false;
-        List newParams = new ArrayList();
-        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); ) {
-            Expression param = (Expression)iter.next();
+        List<Expression> newParams = new ArrayList<Expression>();
+        for (Iterator<Expression> iter = stmt.getParams().iterator(); iter.hasNext(); ) {
+            Expression param = iter.next();
             Expression newParam = doExpression(param);
             newParams.add(newParam);
             if (param != newParam) hasChanged = true;
@@ -605,7 +605,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        List newInits = new ArrayList();
+        List<Expression> newInits = new ArrayList<Expression>();
         for (int i = 0; i < stmt.getNumVars(); i++)
             {
                 Expression init = stmt.getInit(i);
@@ -633,20 +633,20 @@ public class FEReplacer implements FEVisitor
         StreamType newST = null;
         if (spec.getStreamType() != null)
             newST = (StreamType)spec.getStreamType().accept(this);
-        List newVars = new ArrayList();
-        List newFuncs = new ArrayList();
+        List<FieldDecl> newVars = new ArrayList<FieldDecl>();
+        List<Function> newFuncs = new ArrayList<Function>();
         boolean changed = false;
         
-        for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
+        for (Iterator<FieldDecl> iter = spec.getVars().iterator(); iter.hasNext(); )
             {
-                FieldDecl oldVar = (FieldDecl)iter.next();
+                FieldDecl oldVar = iter.next();
                 FieldDecl newVar = (FieldDecl)oldVar.accept(this);
                 if (oldVar != newVar) changed = true;
                 newVars.add(newVar);
             }
-        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
-                Function oldFunc = (Function)iter.next();
+                Function oldFunc = iter.next();
                 Function newFunc = (Function)oldFunc.accept(this);
                 if (oldFunc != newFunc) changed = true;
                 newFuncs.add(newFunc);

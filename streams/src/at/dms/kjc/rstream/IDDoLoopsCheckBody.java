@@ -23,8 +23,8 @@ import java.util.Iterator;
 class IDDoLoopsCheckBody extends SLIREmptyVisitor 
 {
     private DoLoopInformation info;
-    private HashSet varsToCheck;
-    private HashSet varsAssigned;
+    private HashSet<Object> varsToCheck;
+    private HashSet<Object> varsAssigned;
     private boolean hasFields;
     private boolean hasMethods;
 
@@ -42,7 +42,7 @@ class IDDoLoopsCheckBody extends SLIREmptyVisitor
     {
         IDDoLoopsCheckBody check = new IDDoLoopsCheckBody(info, body);
 
-        Iterator it;    
+        Iterator<Object> it;    
         //check for method calls
         body.accept(check);
         
@@ -78,7 +78,7 @@ class IDDoLoopsCheckBody extends SLIREmptyVisitor
     private IDDoLoopsCheckBody(DoLoopInformation info, JStatement body) 
     {
         this.info = info;
-        varsToCheck = new HashSet();
+        varsToCheck = new HashSet<Object>();
         hasFields = false;
         hasMethods = false;
         findVarsToCheck();
@@ -95,7 +95,7 @@ class IDDoLoopsCheckBody extends SLIREmptyVisitor
         StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.cond));
         StrToRStream.addAll(varsToCheck, VariablesDefUse.getVars(info.incr));
 
-        Iterator it = varsToCheck.iterator();
+        Iterator<Object> it = varsToCheck.iterator();
         while (it.hasNext()) {
             Object cur = it.next();
             if (cur instanceof String) 

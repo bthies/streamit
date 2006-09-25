@@ -28,7 +28,7 @@ import java.util.List;
  * parameters with the correct actual structure type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexToStruct.java,v 1.7 2006-08-23 23:01:13 thies Exp $
+ * @version $Id: ComplexToStruct.java,v 1.8 2006-09-25 13:54:54 dimock Exp $
  */
 public class ComplexToStruct extends FEReplacer
 {
@@ -109,7 +109,7 @@ public class ComplexToStruct extends FEReplacer
 
     public Object visitFieldDecl(FieldDecl field)
     {
-        List newTypes = new java.util.ArrayList();
+        List<Type> newTypes = new java.util.ArrayList<Type>();
         for (int i = 0; i < field.getNumFields(); i++)
             newTypes.add(remapType(field.getType(i)));
         return new FieldDecl(field.getContext(), newTypes,
@@ -142,7 +142,7 @@ public class ComplexToStruct extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        List newTypes = new java.util.ArrayList();
+        List<Type> newTypes = new java.util.ArrayList<Type>();
         for (int i = 0; i < stmt.getNumVars(); i++)
             newTypes.add(remapType(stmt.getType(i)));
         return new StmtVarDecl(stmt.getContext(), newTypes,

@@ -81,7 +81,7 @@ class ShiftPipelineFusion {
         }
 
         // construct set of filter info
-        List filterInfo = makeFilterInfo(pipe);
+        List<FilterInfo> filterInfo = makeFilterInfo(pipe);
 
         InitFuser initFuser;
 
@@ -104,9 +104,9 @@ class ShiftPipelineFusion {
     /**
      * Tabulates info on <filterList> that is needed for fusion.
      */
-    private static List makeFilterInfo(SIRPipeline pipe) {
+    private static List<FilterInfo> makeFilterInfo(SIRPipeline pipe) {
         // make the result
-        List result = new LinkedList();
+        List<FilterInfo> result = new LinkedList<FilterInfo>();
         // get execution counts for <pipe>
         HashMap[] execCount = SIRScheduler.getExecutionCounts(pipe);
 
@@ -137,7 +137,7 @@ class ShiftPipelineFusion {
             } else {
                 // otherwise, need however many were left over during
                 // initialization between this filter and the last
-                FilterInfo last = (FilterInfo)result.get(result.size()-1);
+                FilterInfo last = result.get(result.size()-1);
                 int lastProduce = 0;
                 // need to count first execution of a two-stage filter separately
                 if (last.filter instanceof SIRTwoStageFilter &&
@@ -291,7 +291,7 @@ class ShiftPipelineFusion {
      * work function, then it returns null instead (to indicate that
      * initWork is not needed.)
      */
-    private static JMethodDeclaration makeWork(List filterInfo, boolean init) {
+    private static JMethodDeclaration makeWork(List<FilterInfo> filterInfo, boolean init) {
         // make a statement list for the init function
         JBlock statements = new JBlock(null, new JStatement[0], null);
 
@@ -325,12 +325,12 @@ class ShiftPipelineFusion {
      * needed by <filterInfo>.  If <init> is true, it does it for init
      * phase; otherwise for steady phase.
      */
-    private static void makeWorkDecls(List filterInfo,
+    private static void makeWorkDecls(List<FilterInfo> filterInfo,
                                       JBlock statements,
                                       boolean init) {
         // add declarations for each filter
-        for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
-            FilterInfo info = (FilterInfo)it.next();
+        for (ListIterator<FilterInfo> it = filterInfo.listIterator(); it.hasNext(); ) {
+            FilterInfo info = it.next();
             // get list of local variable definitions from <filterInfo>
             List locals = 
                 init ? info.init.getVariables() : info.steady.getVariables();
@@ -353,7 +353,7 @@ class ShiftPipelineFusion {
      * whether or not this is the initial run of the work function
      * instead of the steady-state version.
      */
-    private static void makeWorkBody(List filterInfo, 
+    private static void makeWorkBody(List<FilterInfo> filterInfo, 
                                      JBlock statements,
                                      boolean init) {
 
@@ -361,7 +361,7 @@ class ShiftPipelineFusion {
 
         // for all the filters...
         for (int i=0; i<filterInfo.size(); i++) {
-            FilterInfo cur = (FilterInfo)filterInfo.get(i);
+            FilterInfo cur = filterInfo.get(i);
             PhaseInfo curPhase = init ? cur.init : cur.steady;
             // we'll only need the "next" fields if we're not at the
             // end of a pipe.
@@ -369,7 +369,7 @@ class ShiftPipelineFusion {
             PhaseInfo nextPhase = null;
             // get the next fields
             if (i<filterInfo.size()-1) {
-                next = (FilterInfo)filterInfo.get(i+1);
+                next = filterInfo.get(i+1);
                 nextPhase = init ? next.init : next.steady;
             }
 
@@ -610,12 +610,12 @@ class ShiftPipelineFusion {
      * <result> will be the resulting fused filter.
      */
     private static 
-        InitFuser makeInitFunction(List filterInfo) {
+        InitFuser makeInitFunction(List<FilterInfo> filterInfo) {
         // make an init function builder out of <filterList>
         InitFuser initFuser = new InitFuser(filterInfo);
     
         // do the work on the parent
-        initFuser.doit((SIRPipeline)((FilterInfo)filterInfo.get(0)).filter.getParent());
+        initFuser.doit((SIRPipeline)filterInfo.get(0).filter.getParent());
 
         // make the finished initfuser
         return initFuser;
@@ -625,13 +625,13 @@ class ShiftPipelineFusion {
      * Returns an array of the fields that should appear in filter
      * fusing all in <filterInfo>.
      */
-    private static JFieldDeclaration[] getFields(List filterInfo) {
+    private static JFieldDeclaration[] getFields(List<FilterInfo> filterInfo) {
         // make result
-        List result = new LinkedList();
+        List<JFieldDeclaration> result = new LinkedList<JFieldDeclaration>();
         // add the peek buffer's and the list of fields from each filter
         int i=0;
-        for (ListIterator it = filterInfo.listIterator(); it.hasNext(); i++) {
-            FilterInfo info = (FilterInfo)it.next();
+        for (ListIterator<FilterInfo> it = filterInfo.listIterator(); it.hasNext(); i++) {
+            FilterInfo info = it.next();
             // do not add the peek buffer field if there is no peeking
             if (info.peekBufferSize>0) {
                 result.add(info.peekBuffer);
@@ -639,7 +639,7 @@ class ShiftPipelineFusion {
             result.addAll(Arrays.asList(info.filter.getFields()));
         }
         // return result
-        return (JFieldDeclaration[])result.toArray(new JFieldDeclaration[0]);
+        return result.toArray(new JFieldDeclaration[0]);
     }
 
     /**
@@ -648,12 +648,12 @@ class ShiftPipelineFusion {
      * and <steadyWork> appearing in the fused filter.
      */
     private static 
-        JMethodDeclaration[] getMethods(List filterInfo,
+        JMethodDeclaration[] getMethods(List<FilterInfo> filterInfo,
                                         JMethodDeclaration init,
                                         JMethodDeclaration initWork,
                                         JMethodDeclaration steadyWork) {
         // make result
-        List result = new LinkedList();
+        List<JMethodDeclaration> result = new LinkedList<JMethodDeclaration>();
         // start with the methods that we were passed
         result.add(init);
         if (initWork!=null) {
@@ -661,12 +661,12 @@ class ShiftPipelineFusion {
         }
         result.add(steadyWork);
         // add methods from each filter that aren't work methods
-        for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
-            FilterInfo info = (FilterInfo)it.next();
+        for (ListIterator<FilterInfo> it = filterInfo.listIterator(); it.hasNext(); ) {
+            FilterInfo info = it.next();
             SIRFilter filter=info.filter;
-            List methods = Arrays.asList(filter.getMethods());
-            for (ListIterator meth = methods.listIterator(); meth.hasNext(); ){
-                JMethodDeclaration m = (JMethodDeclaration)meth.next();
+            List<JMethodDeclaration> methods = Arrays.asList(filter.getMethods());
+            for (ListIterator<JMethodDeclaration> meth = methods.listIterator(); meth.hasNext(); ){
+                JMethodDeclaration m = meth.next();
                 // add methods that aren't work (or initwork)
                 if (m!=info.filter.getWork()) {
                     if(filter instanceof SIRTwoStageFilter) {
@@ -679,19 +679,19 @@ class ShiftPipelineFusion {
             }
         }
         // return result
-        return (JMethodDeclaration[])result.toArray(new JMethodDeclaration[0]);
+        return result.toArray(new JMethodDeclaration[0]);
     }
 
     /**
      * Returns the final, fused filter.
      */
-    private static SIRFilter makeFused(List filterInfo, 
+    private static SIRFilter makeFused(List<FilterInfo> filterInfo, 
                                        JMethodDeclaration init, 
                                        JMethodDeclaration initWork, 
                                        JMethodDeclaration steadyWork) {
         // get the first and last filters' info
-        FilterInfo first = (FilterInfo)filterInfo.get(0);
-        FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
+        FilterInfo first = filterInfo.get(0);
+        FilterInfo last = filterInfo.get(filterInfo.size()-1);
 
         // calculate the peek, pop, and push count for the fused
         // filter in the STEADY state
@@ -763,10 +763,10 @@ class ShiftPipelineFusion {
     /**
      * Given list of filter info's, maps them to list of filters.
      */
-    static List mapToFilters(List filterInfo) {
-        List result = new LinkedList();
+    static List<SIRStream> mapToFilters(List<FilterInfo> filterInfo) {
+        List<SIRStream> result = new LinkedList<SIRStream>();
         for (int i=0; i<filterInfo.size(); i++) {
-            result.add(((FilterInfo)filterInfo.get(i)).filter);
+            result.add(filterInfo.get(i).filter);
         }
         return result;
     }
@@ -866,8 +866,8 @@ class ShiftPipelineFusion {
         /**
          * Returns list of JVariableDefinitions of all var defs in here.
          */
-        public List getVariables() {
-            List result = new LinkedList();
+        public List<JVariableDefinition> getVariables() {
+            List<JVariableDefinition> result = new LinkedList<JVariableDefinition>();
             result.add(popBuffer);
             result.add(popCounter);
             result.add(pushCounter);
@@ -1027,7 +1027,7 @@ class ShiftPipelineFusion {
         /**
          * The info on the filters we're trying to fuse.
          */
-        private final List filterInfo;
+        private final List<FilterInfo> filterInfo;
 
         /**
          * The block of the resulting fused init function.
@@ -1038,7 +1038,7 @@ class ShiftPipelineFusion {
          * A list of the parameters of the fused block, all of type
          * JFormalParameter.
          */
-        private List fusedParam;
+        private List<JFormalParameter> fusedParam;
     
         /**
          * A list of the arguments to the init function of the fused
@@ -1061,18 +1061,18 @@ class ShiftPipelineFusion {
          * fusion.  It has been allocated, but is not filled in with
          * correct values yet.
          */
-        public InitFuser(List filterInfo) {
+        public InitFuser(List<FilterInfo> filterInfo) {
             this.filterInfo = filterInfo;
             this.fusedBlock = new JBlock(null, new JStatement[0], null);
-            this.fusedParam = new LinkedList();
+            this.fusedParam = new LinkedList<JFormalParameter>();
             this.fusedArgs = new LinkedList();
             this.numFused = 0;
         }
 
         public void doit(SIRPipeline parent) {
-            for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
+            for (ListIterator<FilterInfo> it = filterInfo.listIterator(); it.hasNext(); ) {
                 // process the arguments to a filter being fused
-                FilterInfo info = (FilterInfo)it.next();
+                FilterInfo info = it.next();
                 int index = parent.indexOf(info.filter);
                 processArgs(info, parent.getParams(index));
             }
@@ -1126,7 +1126,6 @@ class ShiftPipelineFusion {
                                                        at.dms.kjc.Constants.ACC_PUBLIC,
                                                        CStdType.Void,
                                                        "init",
-                                                       (JFormalParameter[])
                                                        fusedParam.toArray(new 
                                                                           JFormalParameter[0]),
                                                        CClassType.EMPTY,

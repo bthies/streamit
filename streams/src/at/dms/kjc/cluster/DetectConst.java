@@ -16,10 +16,10 @@ import java.util.HashSet;
 
 public class DetectConst extends SLIREmptyVisitor {
 
-    private static HashMap instances = new HashMap();
+    private static HashMap<SIRFilter, DetectConst> instances = new HashMap<SIRFilter, DetectConst>();
 
-    private HashMap methodsToVisit;
-    private HashSet fieldIsModified;
+    private HashMap<String,Boolean> methodsToVisit;
+    private HashSet<String> fieldIsModified;
 
     public static void detect(FlatNode node) 
     {
@@ -29,7 +29,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
     public static DetectConst getInstance(SIRFilter filter) {
         if (!instances.containsKey(filter)) return null;
-        return (DetectConst)instances.get(filter);
+        return instances.get(filter);
     }
     
 
@@ -57,7 +57,7 @@ public class DetectConst extends SLIREmptyVisitor {
         JMethodDeclaration[] methods = self.getMethods();
 
         methodsToVisit = new HashMap();
-        fieldIsModified = new HashSet();
+        fieldIsModified = new HashSet<String>();
         int old_size = 0;
 
         //methodsToVisit.put("__CLUSTERMAIN__", new Boolean(false));
@@ -69,7 +69,7 @@ public class DetectConst extends SLIREmptyVisitor {
             for (int i = 0; i < methods.length; i++) {
                 String currMethod = methods[i].getName();
                 if (methodsToVisit.containsKey(currMethod)) {
-                    Boolean done = (Boolean)methodsToVisit.get(currMethod);
+                    Boolean done = methodsToVisit.get(currMethod);
                     if (!done.booleanValue()) {
                         methods[i].accept(this);
                         methodsToVisit.put(currMethod, new Boolean(true));

@@ -146,7 +146,7 @@ public class ManualPartition {
      * possibly) that have a name beginning with a given prefix.
      */
     public static SIRStream[] getStreams(SIRStream str, final String prefix) {
-        final ArrayList result = new ArrayList();
+        final ArrayList<SIRStream> result = new ArrayList<SIRStream>();
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 public void preVisitStream(SIRStream self,
                                            SIRIterator iter) {
@@ -155,7 +155,7 @@ public class ManualPartition {
                     }
                 }
             });
-        return (SIRStream[])result.toArray(new SIRStream[0]);
+        return result.toArray(new SIRStream[0]);
     }
 
     /**
@@ -163,7 +163,7 @@ public class ManualPartition {
      * Returns null if no such stream exists.
      */
     public static SIRStream getStream(SIRStream str, final String name) {
-        final ArrayList result = new ArrayList();
+        final ArrayList<SIRStream> result = new ArrayList<SIRStream>();
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 public void preVisitStream(SIRStream self,
                                            SIRIterator iter) {
@@ -174,7 +174,7 @@ public class ManualPartition {
             });
         assert result.size()<=1;
         if (result.size()>0) {
-            return (SIRStream)result.get(0);
+            return result.get(0);
         } else {
             return null;
         }

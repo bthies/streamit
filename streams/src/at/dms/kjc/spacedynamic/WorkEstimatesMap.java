@@ -9,13 +9,13 @@ import at.dms.kjc.sir.*;
 
 public class WorkEstimatesMap implements FlatVisitor 
 {
-    private HashMap estimates;
+    private HashMap<FlatNode, Integer> estimates;
     private SpdStreamGraph streamGraph;
 
     public WorkEstimatesMap(SpdStreamGraph sg) 
     {
         streamGraph = sg;
-        estimates = new HashMap();
+        estimates = new HashMap<FlatNode, Integer>();
     }
     
     public void addEstimate(FlatNode node) 
@@ -38,7 +38,7 @@ public class WorkEstimatesMap implements FlatVisitor
     public WorkEstimatesMap(SpdStreamGraph sg, FlatNode top) 
     {
         sg = streamGraph;
-        estimates = new HashMap();
+        estimates = new HashMap<FlatNode, Integer>();
         top.accept(this, null, true);
     }
     
@@ -51,7 +51,7 @@ public class WorkEstimatesMap implements FlatVisitor
     {
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
-        return ((Integer)estimates.get(node)).intValue();
+        return estimates.get(node).intValue();
     }
 
     /** return the work estimate multiplied by the number of times the 
@@ -60,7 +60,7 @@ public class WorkEstimatesMap implements FlatVisitor
     {
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
-        return ((Integer)estimates.get(node)).intValue() * 
+        return estimates.get(node).intValue() * 
         ((SpdStaticStreamGraph)streamGraph.getParentSSG(node)).getMult(node, false);
     }
     

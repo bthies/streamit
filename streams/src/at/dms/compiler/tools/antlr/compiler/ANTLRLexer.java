@@ -80,7 +80,7 @@ public class ANTLRLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner 
     }
     public ANTLRLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         literals.put(new ANTLRHashString("Parser", this), new Integer(25));
         literals.put(new ANTLRHashString("catch", this), new Integer(35));
         literals.put(new ANTLRHashString("Lexer", this), new Integer(11));

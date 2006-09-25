@@ -358,7 +358,7 @@ public class Pipeline extends Stream
     // allow access to the children of this pipeline
      
     public int getNumChildren () { return streamElements.size (); }
-    public Stream getChildN (int n) { return (Stream) streamElements.get (n); }
+    public Stream getChildN (int n) { return streamElements.get (n); }
     
     public Stream getChild(int nChild)
     {
@@ -392,14 +392,14 @@ public class Pipeline extends Stream
         assert !streamElements.isEmpty ();
 
         // go through the list and connect it together:
-        ListIterator childIter;
-        childIter = (ListIterator) streamElements.iterator ();
+        ListIterator<Stream> childIter;
+        childIter = (ListIterator<Stream>) streamElements.iterator ();
         Stream source = null;
 
         while (childIter.hasNext ())
             {
                 // advance the iterator:
-                Stream sink = (Stream) childIter.next ();
+                Stream sink = childIter.next ();
                 assert sink != null;
 
                 // setup the sink itself
@@ -419,15 +419,15 @@ public class Pipeline extends Stream
 
         // set myself up with proper input and output
         {
-            inputChannel = ((Stream)streamElements.getFirst ()).getInputChannel ();
-            outputChannel = ((Stream)streamElements.getLast ()).getOutputChannel ();
+            inputChannel = streamElements.getFirst ().getInputChannel ();
+            outputChannel = streamElements.getLast ().getOutputChannel ();
         }
     }
 
     void setupBufferLengths (Scheduler buffers)
     {
-        ListIterator childIter;
-        childIter = (ListIterator) streamElements.iterator ();
+        ListIterator<Stream> childIter;
+        childIter = (ListIterator<Stream>) streamElements.iterator ();
         Stream source = null;
         Stream sink = null;
 
@@ -435,7 +435,7 @@ public class Pipeline extends Stream
         while (childIter.hasNext ())
             {
                 // advance the iterator:
-                Stream child = (Stream) childIter.next ();
+                Stream child = childIter.next ();
                 assert child != null;
                 child.setupBufferLengths (buffers);
 

@@ -41,13 +41,13 @@ public class StatelessDuplicate {
     /**
      * The list of resulting filters
      */
-    private LinkedList newFilters;
+    private LinkedList<SIRFilter> newFilters;
     
     private StatelessDuplicate(SIRFilter origFilter, int reps, int[] workRatio) {
         this.origFilter = origFilter;
         this.reps = reps;
         this.workRatio = workRatio;
-        this.newFilters = new LinkedList();
+        this.newFilters = new LinkedList<SIRFilter>();
     }
 
     /**
@@ -219,13 +219,13 @@ public class StatelessDuplicate {
 
         // count a method as 'steady' if it is reachable from work or
         // prework, or if it is NOT reachable from init
-        HashSet inits = new HashSet();
-        HashSet works = new HashSet();
+        HashSet<String> inits = new HashSet<String>();
+        HashSet<String> works = new HashSet<String>();
         for (int i=0; i<initReachable.length; i++) { inits.add(initReachable[i]); }
         for (int i=0; i<workReachable.length; i++) { works.add(workReachable[i]); }
         for (int i=0; i<preReachable.length; i++) { works.add(preReachable[i]); }
 
-        HashSet result = new HashSet();
+        HashSet<JMethodDeclaration> result = new HashSet<JMethodDeclaration>();
         for (int i=0; i<methods.length; i++) {
             String name = methods[i].getName();
             if (works.contains(name) || !inits.contains(name)) {
@@ -233,7 +233,7 @@ public class StatelessDuplicate {
             }
         }
 
-        return (JMethodDeclaration[])result.toArray(new JMethodDeclaration[0]);
+        return result.toArray(new JMethodDeclaration[0]);
     }
 
     /**
@@ -347,14 +347,14 @@ public class StatelessDuplicate {
         List params = sj.getParams();
         // now build up the body as a series of calls to the sub-streams
         LinkedList bodyList = new LinkedList();
-        for (ListIterator it = newFilters.listIterator(); it.hasNext(); ) {
+        for (ListIterator<SIRFilter> it = newFilters.listIterator(); it.hasNext(); ) {
             // build up the argument list
             LinkedList args = new LinkedList();
             for (ListIterator pit = params.listIterator(); pit.hasNext(); ) {
                 args.add((JExpression)pit.next());
             }
             // add the child and the argument to the parent
-            sj.add((SIRStream)it.next(), args);
+            sj.add(it.next(), args);
         }
         // replace the body of the init function with statement list
         // we just made

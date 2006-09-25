@@ -16,9 +16,9 @@ public class MultiplySteadyState {
                 .multSteadyMult(KjcOptions.steadymult);
         }
         */
-        Iterator traceNodes = Util.traceNodeTraversal(traces);
+        Iterator<TraceNode> traceNodes = Util.traceNodeTraversal(traces);
         while (traceNodes.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodes.next();
+            TraceNode traceNode = traceNodes.next();
             if (traceNode.isFilterTrace()) {
                 ((FilterTraceNode) traceNode).getFilter().multSteadyMult(KjcOptions.steadymult);
             }

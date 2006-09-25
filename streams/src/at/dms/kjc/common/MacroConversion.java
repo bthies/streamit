@@ -162,12 +162,12 @@ public class MacroConversion {
         /**
          * Set of JLocalVariables that have been referenced so far. 
          */
-        private HashSet varRefs;
+        private HashSet<JLocalVariable> varRefs;
     
         public MacroLegalityTest() {
             isLegal = true;
             exprCount = 0;
-            varRefs = new HashSet();
+            varRefs = new HashSet<JLocalVariable>();
         }
 
         /**

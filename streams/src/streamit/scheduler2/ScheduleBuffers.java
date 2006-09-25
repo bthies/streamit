@@ -46,7 +46,7 @@ import streamit.scheduler2.Schedule;
 
 public class ScheduleBuffers extends DestroyedClass
 {
-    final private Map bufferSizes = new HashMap();
+    final private Map<Pair, BufferStatus> bufferSizes = new HashMap<Pair, BufferStatus>();
     final private UniquePairContainer pairs = new UniquePairContainer();
 
     public ScheduleBuffers(Iterator root)
@@ -58,20 +58,20 @@ public class ScheduleBuffers extends DestroyedClass
                                     streamit.scheduler2.iriter.Iterator userBefore,
                                     streamit.scheduler2.iriter.Iterator userAfter)
     {
-        Iterator before = (Iterator)user2persistent.get(userBefore);
-        Iterator after = (Iterator)user2persistent.get(userAfter);
+        Iterator before = user2persistent.get(userBefore);
+        Iterator after = user2persistent.get(userAfter);
         Pair beforeAfter = pairs.getPair(before, after);
-        BufferStatus status = (BufferStatus)bufferSizes.get(beforeAfter);
+        BufferStatus status = bufferSizes.get(beforeAfter);
         return status.getBufferSize();
     }
 
-    final private Map user2persistent = new HashMap();
-    final private Map firstChildStream = new HashMap();
-    final private Map lastChildStream = new HashMap();
-    final private Map workFunctions = new HashMap();
+    final private Map<Iterator, Iterator> user2persistent = new HashMap<Iterator, Iterator>();
+    final private Map<Iterator, Iterator> firstChildStream = new HashMap<Iterator, Iterator>();
+    final private Map<Iterator, Iterator> lastChildStream = new HashMap<Iterator, Iterator>();
+    final private Map<Pair, Integer> workFunctions = new HashMap<Pair, Integer>();
 
-    final private Map targetBufferBefore = new HashMap();
-    final private Map targetBufferAfter = new HashMap();
+    final private Map<Iterator, BufferStatus> targetBufferBefore = new HashMap<Iterator, BufferStatus>();
+    final private Map<Iterator, BufferStatus> targetBufferAfter = new HashMap<Iterator, BufferStatus>();
 
     private Iterator getFirstStream(Iterator stream)
     {
@@ -481,15 +481,15 @@ public class ScheduleBuffers extends DestroyedClass
      * 
      */
 
-    void addToMap(BufferStatus buffer, BufferDelta delta, Map map)
+    void addToMap(BufferStatus buffer, BufferDelta delta, Map<BufferStatus, Object> map)
     {
-        Set buffers = (Set) (map.get(null));
+        Set<BufferStatus> buffers = (Set<BufferStatus>) (map.get(null));
         buffers.add(buffer);
 
         map.put(buffer, delta);
     }
 
-    void combineBufferExecutions(Map left, Map right)
+    void combineBufferExecutions(Map<BufferStatus, Object> left, Map<BufferStatus, Object> right)
     {
         Set buffers = (Set) (right.get(null));
         assert buffers != null;
@@ -511,11 +511,11 @@ public class ScheduleBuffers extends DestroyedClass
             }
     }
 
-    Map phase2deltaMap = new HashMap();
+    Map<Object, Map> phase2deltaMap = new HashMap<Object, Map>();
 
     public void computeBuffersFor(Schedule schedule)
     {
-        Map map = computeBuffersMap(schedule, 1);
+        Map<BufferStatus, Object> map = computeBuffersMap(schedule, 1);
 
         Set buffers = (Set)map.get(null);
         java.util.Iterator iter = buffers.iterator();
@@ -530,15 +530,15 @@ public class ScheduleBuffers extends DestroyedClass
             }
     }
 
-    Map computeBuffersMap(Schedule schedule, int numExecs)
+    Map<BufferStatus, Object> computeBuffersMap(Schedule schedule, int numExecs)
     {
-        Map deltas = (Map)phase2deltaMap.get(schedule);
+        Map<BufferStatus, Object> deltas = phase2deltaMap.get(schedule);
 
         if (deltas == null)
             {
                 // new a new deltas
-                deltas = new HashMap();
-                Set buffers = new HashSet();
+                deltas = new HashMap<BufferStatus, Object>();
+                Set<BufferStatus> buffers = new HashSet<BufferStatus>();
                 deltas.put(null, buffers);
                 assert deltas.get(null) == buffers;
 
@@ -551,7 +551,7 @@ public class ScheduleBuffers extends DestroyedClass
                             int schedNum = 0;
                             for (; schedNum < schedule.getNumPhases(); schedNum++)
                                 {
-                                    Map subDeltas =
+                                    Map<BufferStatus, Object> subDeltas =
                                         computeBuffersMap(
                                                           schedule.getSubSched(schedNum),
                                                           schedule.getSubSchedNumExecs(schedNum));
@@ -563,12 +563,12 @@ public class ScheduleBuffers extends DestroyedClass
                             // no - this is a bona-fide work function
                             Object workFunc = schedule.getWorkFunc();
                             Iterator workStream =
-                                (Iterator)user2persistent.get(schedule.getStream());
+                                user2persistent.get(schedule.getStream());
 
                             // figure out what object contributed this work function:
                             Pair workInfo = pairs.getPair(workFunc, workStream);
                             int numWork =
-                                ((Integer)workFunctions.get(workInfo)).intValue();
+                                workFunctions.get(workInfo).intValue();
 
                             if (workStream.isFilter() != null)
                                 {
@@ -602,8 +602,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (peekAmount > 0)
                                         {
                                             BufferStatus bufferBefore =
-                                                (BufferStatus)targetBufferBefore.get(
-                                                                                     workStream);
+                                                targetBufferBefore.get(
+                                                                                 workStream);
                                             /*
                                               bufferBefore.peekData(peekAmount);
                                               bufferBefore.popData(popAmount);
@@ -619,8 +619,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (pushAmount > 0)
                                         {
                                             BufferStatus bufferAfter =
-                                                (BufferStatus)targetBufferAfter.get(
-                                                                                    workStream);
+                                                targetBufferAfter.get(
+                                                                                workStream);
 
                                             /*
                                               bufferAfter.pushData(pushAmount);
@@ -663,8 +663,8 @@ public class ScheduleBuffers extends DestroyedClass
                                                     Iterator firstChild =
                                                         getFirstStream(sj.getChild(nChild));
                                                     BufferStatus bufferBefore =
-                                                        (BufferStatus)targetBufferBefore.get(
-                                                                                             firstChild);
+                                                        targetBufferBefore.get(
+                                                                                         firstChild);
 
                                                     /*        
                                                               bufferBefore.pushData(pushWeights[nChild]);
@@ -694,8 +694,8 @@ public class ScheduleBuffers extends DestroyedClass
                                                     Iterator lastChild =
                                                         getLastStream(sj.getChild(nChild));
                                                     BufferStatus bufferAfter =
-                                                        (BufferStatus)targetBufferAfter.get(
-                                                                                            lastChild);
+                                                        targetBufferAfter.get(
+                                                                                        lastChild);
 
                                                     /*
                                                       bufferAfter.popData(popWeights[nChild]);
@@ -713,8 +713,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (popAmount > 0)
                                         {
                                             BufferStatus bufferBefore =
-                                                (BufferStatus)targetBufferBefore.get(
-                                                                                     workStream);
+                                                targetBufferBefore.get(
+                                                                                 workStream);
 
                                             /*
                                               bufferBefore.popData(popAmount);
@@ -731,8 +731,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (pushAmount > 0)
                                         {
                                             BufferStatus bufferAfter =
-                                                (BufferStatus)targetBufferAfter.get(
-                                                                                    workStream);
+                                                targetBufferAfter.get(
+                                                                                workStream);
 
                                             /*
                                               bufferAfter.pushData(pushAmount);
@@ -769,8 +769,8 @@ public class ScheduleBuffers extends DestroyedClass
                                             // pop data from the internal body-splitter buffer
                                             {
                                                 BufferStatus bodyBuffer =
-                                                    (BufferStatus)targetBufferAfter.get(
-                                                                                        getLastStream(body));
+                                                    targetBufferAfter.get(
+                                                                                    getLastStream(body));
 
                                                 /*
                                                   bodyBuffer.popData(
@@ -788,8 +788,8 @@ public class ScheduleBuffers extends DestroyedClass
                                             // push data to the internal splitter-loop buffer
                                             {
                                                 BufferStatus loopBuffer =
-                                                    (BufferStatus)targetBufferBefore.get(
-                                                                                         getFirstStream(loop));
+                                                    targetBufferBefore.get(
+                                                                                     getFirstStream(loop));
 
                                                 /*
                                                   loopBuffer.pushData(
@@ -817,8 +817,8 @@ public class ScheduleBuffers extends DestroyedClass
                                             // push data to the internal joiner-body buffer
                                             {
                                                 BufferStatus bodyBuffer =
-                                                    (BufferStatus)targetBufferBefore.get(
-                                                                                         getFirstStream(body));
+                                                    targetBufferBefore.get(
+                                                                                     getFirstStream(body));
 
                                                 /*
                                                   bodyBuffer.pushData(
@@ -836,8 +836,8 @@ public class ScheduleBuffers extends DestroyedClass
                                             // pop data from the internal loop-joiner buffer
                                             {
                                                 BufferStatus loopBuffer =
-                                                    (BufferStatus)targetBufferAfter.get(
-                                                                                        getLastStream(loop));
+                                                    targetBufferAfter.get(
+                                                                                    getLastStream(loop));
 
                                                 /*
                                                   loopBuffer.popData(
@@ -859,8 +859,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (popAmount > 0)
                                         {
                                             BufferStatus bufferBefore =
-                                                (BufferStatus)targetBufferBefore.get(
-                                                                                     workStream);
+                                                targetBufferBefore.get(
+                                                                                 workStream);
 
                                             /*
                                               bufferBefore.popData(popAmount);
@@ -877,8 +877,8 @@ public class ScheduleBuffers extends DestroyedClass
                                     if (pushAmount > 0)
                                         {
                                             BufferStatus bufferAfter =
-                                                (BufferStatus)targetBufferAfter.get(
-                                                                                    workStream);
+                                                targetBufferAfter.get(
+                                                                                workStream);
 
                                             /*
                                               bufferAfter.pushData(pushAmount);
@@ -906,10 +906,10 @@ public class ScheduleBuffers extends DestroyedClass
                 Object schedNumExecs =
                     pairs.getPair(schedule, new Integer(numExecs));
 
-                Map deltasNumExecs = (Map)phase2deltaMap.get(schedNumExecs);
+                Map<BufferStatus, Object> deltasNumExecs = phase2deltaMap.get(schedNumExecs);
                 if (deltasNumExecs == null)
                     {
-                        deltasNumExecs = new HashMap();
+                        deltasNumExecs = new HashMap<BufferStatus, Object>();
                         deltasNumExecs.put(null, new HashSet());
                         assert deltasNumExecs.get(null) != null;
 

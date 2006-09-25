@@ -2,6 +2,7 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.*;
+
 import java.util.*;
 
 /**
@@ -11,12 +12,12 @@ import java.util.*;
 
 class Greedy {
 
-    HashMap iteration; // SIROperator -> Integer
-    HashMap credit; // SIROperator -> Integer
-    HashMap queue_size; // Vector -> Integer
+    HashMap<SIROperator, Integer> iteration; // SIROperator -> Integer
+    HashMap<SIROperator, Integer> credit; // SIROperator -> Integer
+    HashMap<Vector<SIROperator>, Integer> queue_size; // Vector -> Integer
 
-    HashMap phase_last_seen; // Vector -> Integer
-    Vector phases; // Vcetor of Vectors
+    HashMap<Vector<Integer>, Integer> phase_last_seen; // Vector -> Integer
+    Vector<Vector<Integer>> phases; // Vcetor of Vectors
 
     DiscoverSchedule sched; 
 
@@ -35,8 +36,8 @@ class Greedy {
 
         this.sched = sched;
 
-        phase_last_seen = new HashMap();
-        phases = new Vector();
+        phase_last_seen = new HashMap<Vector<Integer>, Integer>();
+        phases = new Vector<Vector<Integer>>();
         phase_num = 0;
     
         combine_ptr = 0;
@@ -50,9 +51,9 @@ class Greedy {
     
     void init() {
 
-        credit = new HashMap();
-        iteration = new HashMap();
-        queue_size = new HashMap();
+        credit = new HashMap<SIROperator, Integer>();
+        iteration = new HashMap<SIROperator, Integer>();
+        queue_size = new HashMap<Vector<SIROperator>, Integer>();
 
         num = NodeEnumerator.getNumberOfNodes();
         //System.out.println("Number of nodes: "+num);
@@ -75,19 +76,19 @@ class Greedy {
         //System.out.println("Number of phases: "+ph);
 
         for (int y = 0; y < ph; y++) {
-            HashSet p = sched.getAllOperatorsInPhase(y);
+            HashSet<SIROperator> p = sched.getAllOperatorsInPhase(y);
             //System.out.println("phase "+y+" has size: "+p.size());
 
-            Iterator it = p.iterator();
+            Iterator<SIROperator> it = p.iterator();
 
             while (it.hasNext()) {
-                SIROperator oper = (SIROperator)it.next();
+                SIROperator oper = it.next();
                 if (oper instanceof SIRFilter) {
                     SIRFilter src = (SIRFilter)oper;
-                    HashSet cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
-                    Iterator ci = cons.iterator();
+                    HashSet<LatencyConstraint> cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
+                    Iterator<LatencyConstraint> ci = cons.iterator();
                     while (ci.hasNext()) {
-                        LatencyConstraint c = (LatencyConstraint)ci.next();
+                        LatencyConstraint c = ci.next();
                         SIRFilter dst = (SIRFilter)c.getReceiver();
                         boolean down = LatencyConstraints.isMessageDirectionDownstream(src, dst);
                         int init_c = c.getSourceInit();
@@ -106,8 +107,8 @@ class Greedy {
     
     } 
 
-    static Vector makeVector(SIROperator src, SIROperator dst) {
-        Vector v = new Vector();
+    static Vector<SIROperator> makeVector(SIROperator src, SIROperator dst) {
+        Vector<SIROperator> v = new Vector<SIROperator>();
         v.add(src);
         v.add(dst);
         return v;
@@ -165,21 +166,21 @@ class Greedy {
 
     int nextPhase() {
 
-        Vector phase = new Vector();
+        Vector<Integer> phase = new Vector<Integer>();
 
         if (ClusterBackend.debugPrint)
             System.out.println("-------------------------------------");
 
         for (int y = 0; y < ph; y++) {
-            HashSet p = sched.getAllOperatorsInPhase(y);
-            Iterator it = p.iterator();
+            HashSet<SIROperator> p = sched.getAllOperatorsInPhase(y);
+            Iterator<SIROperator> it = p.iterator();
             while (it.hasNext()) {
-                SIROperator oper = (SIROperator)it.next();
+                SIROperator oper = it.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
-                int steady_count = ((Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(id))).intValue();
+                int steady_count = ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(id)).intValue();
 
-                int _iter = ((Integer)iteration.get(oper)).intValue();
-                int _credit = ((Integer)credit.get(oper)).intValue();
+                int _iter = iteration.get(oper).intValue();
+                int _credit = credit.get(oper).intValue();
 
                 int exec = steady_count;
 
@@ -197,7 +198,7 @@ class Greedy {
                 for (Tape ns : RegisterStreams.getNodeInStreams(oper)) {
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
-                    int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
+                    int qsize = queue_size.get(makeVector(src, oper)).intValue();
                     int peek = getPeek(oper, z);
                     int pop = getPop(oper, z);
                     if (peek < pop) peek = pop;
@@ -220,7 +221,7 @@ class Greedy {
                 for (Tape ns : RegisterStreams.getNodeInStreams(oper)) {
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
-                    int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
+                    int qsize = queue_size.get(makeVector(src, oper)).intValue();
                     qsize -= getPop(oper, z) * exec;
                     queue_size.put(makeVector(src, oper), 
                                    new Integer(qsize));
@@ -235,7 +236,7 @@ class Greedy {
                 for (Tape ns : RegisterStreams.getNodeOutStreams(oper)) {
                   if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
-                    int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
+                    int qsize = queue_size.get(makeVector(oper, dst)).intValue();
                     qsize += getPush(oper, z) * exec;
                     queue_size.put(makeVector(oper, dst), 
                                    new Integer(qsize));
@@ -252,13 +253,13 @@ class Greedy {
                 for (int z = 0; z < exec; z++, _iter++) {
                     if (!(oper instanceof SIRFilter)) continue;
             
-                    HashSet cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
-                    Iterator ci = cons.iterator();
+                    HashSet<LatencyConstraint> cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
+                    Iterator<LatencyConstraint> ci = cons.iterator();
                     while (ci.hasNext()) {
 
                         //System.out.println("latency constraint");
 
-                        LatencyConstraint c = (LatencyConstraint)ci.next();
+                        LatencyConstraint c = ci.next();
                         SIRFilter dst = (SIRFilter)c.getReceiver();
                         boolean down = LatencyConstraints.isMessageDirectionDownstream((SIRFilter)oper, (SIRFilter)dst);
                         int init_c = c.getSourceInit();
@@ -310,23 +311,23 @@ class Greedy {
         int ratio = -1;
 
         if (phase_last_seen.containsKey(phase)) {
-            int last = ((Integer)phase_last_seen.get(phase)).intValue();
+            int last = phase_last_seen.get(phase).intValue();
         
             match = true;
 
             int node_id = 0;
             for (int y = 0; y < ph; y++) {
-                HashSet p = sched.getAllOperatorsInPhase(y);
-                Iterator it = p.iterator();
+                HashSet<SIROperator> p = sched.getAllOperatorsInPhase(y);
+                Iterator<SIROperator> it = p.iterator();
                 while (it.hasNext()) {
-                    SIROperator oper = (SIROperator)it.next();
+                    SIROperator oper = it.next();
                     int id = NodeEnumerator.getSIROperatorId(oper);
-                    int steady_count = ((Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(id))).intValue();
+                    int steady_count = ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(id)).intValue();
             
                     int sum = 0;
 
                     for (int z = last; z < phase_num; z++) {
-                        sum += ((Integer)((Vector)phases.get(z)).get(node_id)).intValue();
+                        sum += ((Integer)phases.get(z).get(node_id)).intValue();
                     }
         
                     if (sum % steady_count == 0 &&
@@ -384,14 +385,14 @@ class Greedy {
             node_id = 0;
 
             for (int y = 0; y < ph; y++) {
-                HashSet p = sched.getAllOperatorsInPhase(y);
-                Iterator it = p.iterator();
+                HashSet<SIROperator> p = sched.getAllOperatorsInPhase(y);
+                Iterator<SIROperator> it = p.iterator();
                 while (it.hasNext()) {
-                    SIROperator oper = (SIROperator)it.next();
+                    SIROperator oper = it.next();
                     int id = NodeEnumerator.getSIROperatorId(oper);
-                    int exec = ((Integer)((Vector)phases.get(curr)).get(node_id)).intValue();
+                    int exec = ((Integer)phases.get(curr).get(node_id)).intValue();
 
-                    int _iter = ((Integer)iteration.get(oper)).intValue();
+                    int _iter = iteration.get(oper).intValue();
 
                     List<Tape> in = RegisterStreams.getNodeInStreams(oper);
                     List<Tape> out = RegisterStreams.getNodeOutStreams(oper);
@@ -400,7 +401,7 @@ class Greedy {
                       Tape ns = in.get(z);
                       if (ns != null) {
                         SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
-                        int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
+                        int qsize = queue_size.get(makeVector(src, oper)).intValue();
                         qsize -= getPop(oper, z) * exec;
                         queue_size.put(makeVector(src, oper), 
                                        new Integer(qsize));
@@ -411,7 +412,7 @@ class Greedy {
                       Tape ns = out.get(z); 
                       if (ns != null) {  
                         SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
-                        int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
+                        int qsize = queue_size.get(makeVector(oper, dst)).intValue();
                         qsize += getPush(oper, z) * exec;
                         queue_size.put(makeVector(oper, dst), 
                                        new Integer(qsize));
@@ -421,13 +422,13 @@ class Greedy {
                     for (int z = 0; z < exec; z++, _iter++) {
                         if (!(oper instanceof SIRFilter)) continue;
             
-                        HashSet cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
-                        Iterator ci = cons.iterator();
+                        HashSet<LatencyConstraint> cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
+                        Iterator<LatencyConstraint> ci = cons.iterator();
                         while (ci.hasNext()) {
                 
                             //System.out.println("latency constraint");
                 
-                            LatencyConstraint c = (LatencyConstraint)ci.next();
+                            LatencyConstraint c = ci.next();
                             SIRFilter dst = (SIRFilter)c.getReceiver();
                             boolean down = LatencyConstraints.isMessageDirectionDownstream((SIRFilter)oper, (SIRFilter)dst);
                             int init_c = c.getSourceInit();
@@ -483,22 +484,22 @@ class Greedy {
 
         node_id = 0;
 
-        Vector new_phase = new Vector();
+        Vector<Integer> new_phase = new Vector<Integer>();
 
         for (int y = 0; y < ph; y++) {
-            HashSet p = sched.getAllOperatorsInPhase(y);
-            Iterator it = p.iterator();
+            HashSet<SIROperator> p = sched.getAllOperatorsInPhase(y);
+            Iterator<SIROperator> it = p.iterator();
             while (it.hasNext()) {
-                SIROperator oper = (SIROperator)it.next();
+                SIROperator oper = it.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
 
-                int steady_count = ((Integer)((Vector)phases.get(combine_ptr)).get(node_id)).intValue() +
-                    ((Integer)((Vector)phases.get(combine_ptr+1)).get(node_id)).intValue();
+                int steady_count = ((Integer)phases.get(combine_ptr).get(node_id)).intValue() +
+                    ((Integer)phases.get(combine_ptr+1).get(node_id)).intValue();
 
                 node_id++;
 
-                int _iter = ((Integer)iteration.get(oper)).intValue();
-                int _credit = ((Integer)credit.get(oper)).intValue();
+                int _iter = iteration.get(oper).intValue();
+                int _credit = credit.get(oper).intValue();
 
                 int exec = steady_count;
 
@@ -515,7 +516,7 @@ class Greedy {
                   Tape ns = in.get(z);
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
-                    int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
+                    int qsize = queue_size.get(makeVector(src, oper)).intValue();
                     int peek = getPeek(oper, z);
                     int pop = getPop(oper, z);
                     if (peek < pop) peek = pop;
@@ -535,7 +536,7 @@ class Greedy {
                   Tape ns = in.get(z);
                   if (ns != null) {
                     SIROperator src = NodeEnumerator.getOperator(ns.getSource());       
-                    int qsize = ((Integer)queue_size.get(makeVector(src, oper))).intValue();
+                    int qsize = queue_size.get(makeVector(src, oper)).intValue();
                     qsize -= getPop(oper, z) * exec;
                     queue_size.put(makeVector(src, oper), 
                                    new Integer(qsize));
@@ -546,7 +547,7 @@ class Greedy {
                   Tape ns = out.get(z);
                   if (ns != null) {
                     SIROperator dst = NodeEnumerator.getOperator(ns.getDest());     
-                    int qsize = ((Integer)queue_size.get(makeVector(oper, dst))).intValue();
+                    int qsize = queue_size.get(makeVector(oper, dst)).intValue();
                     qsize += getPush(oper, z) * exec;
                     queue_size.put(makeVector(oper, dst), 
                                    new Integer(qsize));
@@ -563,13 +564,13 @@ class Greedy {
                 for (int z = 0; z < exec; z++, _iter++) {
                     if (!(oper instanceof SIRFilter)) continue;
             
-                    HashSet cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
-                    Iterator ci = cons.iterator();
+                    HashSet<LatencyConstraint> cons = LatencyConstraints.getOutgoingConstraints((SIRFilter)oper);
+                    Iterator<LatencyConstraint> ci = cons.iterator();
                     while (ci.hasNext()) {
 
                         //System.out.println("latency constraint");
 
-                        LatencyConstraint c = (LatencyConstraint)ci.next();
+                        LatencyConstraint c = ci.next();
                         SIRFilter dst = (SIRFilter)c.getReceiver();
                         boolean down = LatencyConstraints.isMessageDirectionDownstream((SIRFilter)oper, (SIRFilter)dst);
                         int init_c = c.getSourceInit();

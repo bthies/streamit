@@ -23,11 +23,11 @@ public class InsertTimers extends InsertCounters implements Constants {
     /**
      * Map of names for code regions to associated ID. (String -&gt; Integer)
      */
-    private static HashMap nameToId = new HashMap();
+    private static HashMap<String, Integer> nameToId = new HashMap<String, Integer>();
     /**
      * Inverse map of nameToId (Integer -> String)
      */
-    private static HashMap idToName = new HashMap();
+    private static HashMap<Integer, String> idToName = new HashMap<Integer, String>();
 
     public InsertTimers() {
         super();
@@ -50,7 +50,7 @@ public class InsertTimers extends InsertCounters implements Constants {
     public static String getTimerName(int id) {
         Integer i = new Integer(id);
         assert idToName.containsKey(i) : "Looking up unknown timer.";
-        return (String)idToName.get(i);
+        return idToName.get(i);
     }
 
     /**
@@ -72,7 +72,7 @@ public class InsertTimers extends InsertCounters implements Constants {
         int id;
         if (nameToId.containsKey(name)) {
             // cached name
-            id = ((Integer)nameToId.get(name)).intValue();
+            id = nameToId.get(name).intValue();
         } else {
             // unknown name
             id = MAX_ID++;

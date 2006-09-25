@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.42 2006-08-17 19:54:51 thies Exp $
+ * $Id: Utils.java,v 1.43 2006-09-25 13:54:51 dimock Exp $
  */
 
 package at.dms.util;
@@ -323,7 +323,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
             int[]   array = new int[vect.size()];
 
             for (int i = array.length - 1; i >= 0; i--) {
-                array[i] = ((Integer)vect.elementAt(i)).intValue();
+                array[i] = vect.elementAt(i).intValue();
             }
 
             return array;
@@ -922,7 +922,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    public static final LinkedList EMPTY_LIST = new LinkedList();
+    public static final LinkedList<SIRStream> EMPTY_LIST = new LinkedList<SIRStream>();
 
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -18,7 +18,7 @@ public class MsggenLexer extends at.dms.compiler.tools.antlr.runtime.CharScanner
     }
     public MsggenLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         literals.put(new ANTLRHashString("prefix", this), new Integer(5));
         literals.put(new ANTLRHashString("error", this), new Integer(11));
         literals.put(new ANTLRHashString("caution", this), new Integer(12));

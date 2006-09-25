@@ -17,12 +17,12 @@ public abstract class StreamTransform {
      * List of predecessor child transforms.  These children operate
      * on the input to this transform, BEFORE it is performed.
      */
-    private List pred;
+    private List<StreamTransform> pred;
     /**
      * List of successor child transforms.  These children operate on
      * the result of this transform, AFTER it is performed.
      */
-    private List succ;
+    private List<StreamTransform> succ;
     /**
      * Identifier for this transform.
      */
@@ -33,8 +33,8 @@ public abstract class StreamTransform {
     private static int maxId = 0;
 
     protected StreamTransform() {
-        this.pred = new LinkedList();
-        this.succ = new LinkedList();
+        this.pred = new LinkedList<StreamTransform>();
+        this.succ = new LinkedList<StreamTransform>();
         this.id = maxId++;
     }
 
@@ -71,7 +71,7 @@ public abstract class StreamTransform {
      * Gets the <i'th> predecessor child transform from this.
      */
     public StreamTransform getPred(int i) {
-        return (StreamTransform)pred.get(i);
+        return pred.get(i);
     }
 
     /**
@@ -92,7 +92,7 @@ public abstract class StreamTransform {
      * Gets the <i'th> successor child transform from this.
      */
     public StreamTransform getSucc(int i) {
-        return (StreamTransform)succ.get(i);
+        return succ.get(i);
     }
 
     /**
@@ -123,7 +123,7 @@ public abstract class StreamTransform {
      * <pre>transforms</pre>, replacing each child in <pre>str</pre> with the new
      * stream.
      */
-    private void doChildTransforms(SIRContainer cont, List transforms) {
+    private void doChildTransforms(SIRContainer cont, List<StreamTransform> transforms) {
         // make sure we have the same number of transforms to apply as
         // we have children
         assert transforms.size() == cont.size():
@@ -134,7 +134,7 @@ public abstract class StreamTransform {
         // visit transforms
         for (int i=0; i<cont.size(); i++) {
             SIRStream child = (SIRStream)cont.get(i);
-            SIRStream newChild = ((StreamTransform)transforms.get(i)).doTransform(child);
+            SIRStream newChild = transforms.get(i).doTransform(child);
             // some people did their own replacing, returning the orig
             // stream or null, so only do it if it's not done
             if (newChild!=null && child!=newChild && cont.get(i)!=newChild) {
@@ -168,7 +168,7 @@ public abstract class StreamTransform {
             }
             System.err.println((tabs+"").charAt(0) + " - Preds: (" + pred.size() + ")");
             for (int i=0; i<pred.size(); i++) {
-                ((StreamTransform)pred.get(i)).printHierarchy(tabs+1);
+                pred.get(i).printHierarchy(tabs+1);
             }
         }
         for (int i=0; i<tabs; i++) {
@@ -181,7 +181,7 @@ public abstract class StreamTransform {
             }
             System.err.println((tabs+"") + " - Succs: (" + succ.size() + ")");
             for (int i=0; i<succ.size(); i++) {
-                ((StreamTransform)succ.get(i)).printHierarchy(tabs+1);
+                succ.get(i).printHierarchy(tabs+1);
             }   
         }
     }

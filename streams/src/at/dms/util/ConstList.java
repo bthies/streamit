@@ -10,13 +10,13 @@ import java.util.*;
  */
 public class ConstList implements Serializable, Cloneable {
 
-    protected LinkedList list;
+    protected LinkedList<Object> list;
 
     public ConstList() {
-        list = new LinkedList();
+        list = new LinkedList<Object>();
     }
 
-    public ConstList(LinkedList list) {
+    public ConstList(LinkedList<Object> list) {
         this.list = list;
     }
 
@@ -58,7 +58,7 @@ public class ConstList implements Serializable, Cloneable {
     }
 
     /** Returns an iterator over the elements in this list in proper sequence. */
-    public Iterator iterator() {
+    public Iterator<Object> iterator() {
         return list.iterator();
     }
 
@@ -71,7 +71,7 @@ public class ConstList implements Serializable, Cloneable {
 
 
     /** Returns a list iterator of the elements in this list (in proper sequence). */
-    public ListIterator listIterator() {
+    public ListIterator<Object> listIterator() {
         return list.listIterator();
     }
 
@@ -79,7 +79,7 @@ public class ConstList implements Serializable, Cloneable {
     /** Returns a list iterator of the elements in this list (in
      * proper sequence), starting at the specified position in this
      * list. */
-    public ListIterator listIterator(int index) {
+    public ListIterator<Object> listIterator(int index) {
         return list.listIterator(index);
     }
 
@@ -111,7 +111,7 @@ public class ConstList implements Serializable, Cloneable {
 
     public Object clone() {
         ConstList result = new ConstList();
-        result.list = (LinkedList)list.clone();
+        result.list = (LinkedList<Object>)list.clone();
         return result;
     }
 }

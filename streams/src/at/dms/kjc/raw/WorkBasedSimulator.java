@@ -25,13 +25,13 @@ import at.dms.kjc.common.CommonUtils;
  */
 public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 {
-    private HashMap switchSchedules;
+    private HashMap<Object, StringBuffer> switchSchedules;
     
     //the current joiner code we are working on (steady or init)
-    private static HashMap joinerCode;
+    private static HashMap<FlatNode, JoinerScheduleNode> joinerCode;
         
     //the curent node in the joiner schedule we are working on
-    private HashMap currentJoinerCode;
+    private HashMap<FlatNode, JoinerScheduleNode> currentJoinerCode;
     
     private FlatNode bottom;
 
@@ -46,11 +46,11 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     //all the nodes that are currently executing...
     //well this is really all the nodes that have received enough data
     //to fire and cannot receive any more
-    private HashSet firingNodes;
+    private HashSet<FlatNode> firingNodes;
     //the queue of items ready to be injected onto the network...
     //the pendingQueue needs to be a linked list so that we pop off of it in the same order 
     //we added to it...FIFO
-    private LinkedList pendingQueue;
+    private LinkedList<SimulatorEvent> pendingQueue;
     
     private WorkEstimatesMap workEstimatesMap;
 
@@ -58,8 +58,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     {
         System.out.println("WorkBasedSimulator Running...");
     
-        initJoinerCode = new HashMap();
-        steadyJoinerCode = new HashMap();
+        initJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
+        steadyJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
 
         //generate the joiner schedule
         JoinerSimulator.createJoinerSchedules(top);
@@ -69,8 +69,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     
         //create copies of the executionCounts
-        HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
-        HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
+        HashMap<FlatNode, Integer> initExecutionCounts = (HashMap<FlatNode, Integer>)RawBackend.initExecutionCounts.clone();
+        HashMap<FlatNode, Integer> steadyExecutionCounts = (HashMap<FlatNode, Integer>)RawBackend.steadyExecutionCounts.clone();
 
         //get the workestimates and put them in the hashmap
         WorkEstimatesMap estimates = new WorkEstimatesMap(top);
@@ -111,8 +111,8 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 
     private WorkBasedSimulator(FlatNode top, WorkEstimatesMap estimates, boolean init) 
     {
-        switchSchedules = new HashMap();
-        currentJoinerCode = new HashMap();
+        switchSchedules = new HashMap<Object, StringBuffer>();
+        currentJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
         toplevel = top;
         workEstimatesMap = estimates;
         //find the bottom (last) filter, used later to decide
@@ -126,15 +126,15 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
       to its completion.  It checks if all the execution counts for 
       mapped streams are 0
     */
-    private static void testExecutionCounts(HashMap exeCounts) 
+    private static void testExecutionCounts(HashMap<FlatNode, Integer> exeCounts) 
     {
         boolean bad = false;
     
-        Iterator it = exeCounts.keySet().iterator();
+        Iterator<FlatNode> it = exeCounts.keySet().iterator();
         while(it.hasNext()) {
-            FlatNode node = (FlatNode)it.next();
+            FlatNode node = it.next();
             if (Layout.isAssigned(node)) {
-                if (((Integer)exeCounts.get(node)).intValue() != 0) {
+                if (exeCounts.get(node).intValue() != 0) {
                     System.out.println(node.contents.getName() + " has " + 
                                        exeCounts.get(node) + " executions remaining!!!!");
                     bad = true;
@@ -154,18 +154,18 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     private void callInitPaths(SimulationCounter counters) 
     {
         //find all the joiners that are immediately contained in a FeedbackLoop
-        Iterator joiners = Layout.getJoiners().iterator();
+        Iterator<FlatNode> joiners = Layout.getJoiners().iterator();
         //clone the joiner schedules
     
         FlatNode joiner;
         //iterate over all of the joiners of a feedbackloop
         while (joiners.hasNext()) {
-            joiner = (FlatNode)joiners.next();
+            joiner = joiners.next();
             if ((((SIRJoiner)joiner.contents).getParent() instanceof SIRFeedbackLoop)) {
                 //create the initPath calls 
                 SIRFeedbackLoop loop = (SIRFeedbackLoop)((SIRJoiner)joiner.contents).getParent();
                 int delay = loop.getDelayInt();
-                JoinerScheduleNode current = ((JoinerScheduleNode)JoinerSimulator.schedules.get(joiner));
+                JoinerScheduleNode current = JoinerSimulator.schedules.get(joiner);
         
                 for (int i = 0; i < delay; i++) {
                     //for each init path call find the correct buffer to place it in.
@@ -173,7 +173,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                         if (current.buffer.endsWith("1")) {
                             //create the joinerCode Node and put it in the init schedule
                             JoinerScheduleNode prev = 
-                                (JoinerScheduleNode)currentJoinerCode.get(joiner);
+                                currentJoinerCode.get(joiner);
                             JoinerScheduleNode code = new JoinerScheduleNode(i, current.buffer);
                             if (prev == null) {
                                 //first node in joiner code
@@ -202,7 +202,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
 
     //The start of the simulation for the initialization schedule
-    private HashMap goInit(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    private HashMap<Object, StringBuffer> goInit(HashMap<FlatNode, Integer> counts, SimulationCounter counters, FlatNode lastToFire) 
     {
         //create the initpath calls
         callInitPaths(counters);
@@ -210,12 +210,12 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
 
     /* the main simulation method, loop until there is nothing more to do */
-    private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    private HashMap<Object, StringBuffer> go(HashMap<FlatNode, Integer> counts, SimulationCounter counters, FlatNode lastToFire) 
     {
         currentTime = 0;
         eventHeap = new EventHeap();
-        firingNodes = new HashSet();
-        pendingQueue = new LinkedList();
+        firingNodes = new HashSet<FlatNode>();
+        pendingQueue = new LinkedList<SimulatorEvent>();
     
         //this will add the event for the source nodes
         addEvents(counts, counters, this);
@@ -272,7 +272,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         return switchSchedules;
     }
 
-    private void sendItemUpdate(FlatNode src, List dests, HashMap counts, SimulationCounter counters) 
+    private void sendItemUpdate(FlatNode src, List<FlatNode> dests, HashMap<FlatNode, Integer> counts, SimulationCounter counters) 
     {
         //create the joiner schedule node that will place this item on the switch processor
         //extracting it from the proper buffer...
@@ -292,7 +292,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         //update the state for each of the destinations and if there are 
         //identity filters in the dests list, get the real (non-identity) destinations
         //for this item...
-        List realDests = updateDestinations(src, dests.iterator(), counters);
+        List<FlatNode> realDests = updateDestinations(src, dests.iterator(), counters);
 
         if (KjcOptions.magic_net) {
             //generating code for the raw magic network
@@ -311,15 +311,15 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
       of the identity.  It calls get destination to update the state of the
       splits 
     */
-    private List getIdentityDestinations(FlatNode identity, SimulationCounter sCounters) 
+    private List<FlatNode> getIdentityDestinations(FlatNode identity, SimulationCounter sCounters) 
     {
         if (!(identity.contents instanceof SIRIdentity)) 
             Utils.fail("Calling getIdentityDestinations() on non-SIRIdentity");
 
-        Iterator dests = getDestination(identity, sCounters).iterator();
-        LinkedList realDests = new LinkedList();
+        Iterator<FlatNode> dests = getDestination(identity, sCounters).iterator();
+        LinkedList<FlatNode> realDests = new LinkedList<FlatNode>();
         while(dests.hasNext()) {
-            FlatNode dest = (FlatNode)dests.next();
+            FlatNode dest = dests.next();
             if (Layout.isAssigned(dest)) {
                 realDests.add(dest);
             }
@@ -334,23 +334,23 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
       Given the list of destinations for an item and its source, update the state at each 
       destination.  If the dest is a identity, pass thru it.
     */
-    private List updateDestinations(FlatNode src, Iterator dests, SimulationCounter counters) 
+    private List<FlatNode> updateDestinations(FlatNode src, Iterator<FlatNode> dests, SimulationCounter counters) 
     {
         //remember what we visited for duplicate identity removal
         //updated in updateJoinerDestination
         //if we visit the same dest twice it must be a joiner, so we must
         //duplicate the item in the joiner
-        HashSet visited = new HashSet(); 
-        LinkedList realDests = new LinkedList();
+        HashSet<FlatNode> visited = new HashSet<FlatNode>(); 
+        LinkedList<FlatNode> realDests = new LinkedList<FlatNode>();
 
         //cycle thru the dests and update them, if a joiner call updateJoinerDestination()
         while (dests.hasNext()) {
-            FlatNode dest = (FlatNode)dests.next();
+            FlatNode dest = dests.next();
             //if this is an identity, get the real dests and update them...
             if (dest.contents instanceof SIRIdentity) {
-                Iterator idDests = getIdentityDestinations(dest, counters).iterator();
+                Iterator<FlatNode> idDests = getIdentityDestinations(dest, counters).iterator();
                 while (idDests.hasNext()) {
-                    FlatNode idDest = (FlatNode)idDests.next();
+                    FlatNode idDest = idDests.next();
                     counters.incrementBufferCount(idDest);
                     realDests.add(idDest);
                     if (idDest.isJoiner())
@@ -374,7 +374,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
        visited so far for this item.  If we see a dest twice we duplicate it in the
        joiner.
     */
-    private void updateJoinerDestination(HashSet visited, FlatNode src, FlatNode dest,
+    private void updateJoinerDestination(HashSet<FlatNode> visited, FlatNode src, FlatNode dest,
                                          SimulationCounter counters) 
     {
         //decrement the joiners incoming buffer?
@@ -399,7 +399,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         visited.add(dest);
     }
     
-    private void addEvents(HashMap exeCounts, SimulationCounter sCounters, Simulator sim)
+    private void addEvents(HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters, Simulator sim)
     {
         buildandQueueEvent(exeCounts, sCounters, sim);
         moveFromPendingtoScheduled(exeCounts, sCounters);
@@ -407,7 +407,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     //put them in the queue of pending sends.  These
     //sends are waiting to be scheduled 
-    private void buildandQueueEvent(HashMap exeCounts, SimulationCounter sCounters, Simulator sim) 
+    private void buildandQueueEvent(HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters, Simulator sim) 
     {
         int items = 0;
     
@@ -450,9 +450,9 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     private boolean earlierEventsWaiting(SimulatorEvent tryToSched) 
     {
-        Iterator it = pendingQueue.iterator();
+        Iterator<SimulatorEvent> it = pendingQueue.iterator();
         while (it.hasNext()) {
-            SimulatorEvent current = (SimulatorEvent)it.next();
+            SimulatorEvent current = it.next();
             if (current == tryToSched) 
                 break;
             if (current.node == tryToSched.node &&
@@ -464,17 +464,17 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
 
     //move earliest event from the pending queue and schedule them to be fired...
-    private void moveFromPendingtoScheduled(HashMap exeCounts, SimulationCounter sCounters) 
+    private void moveFromPendingtoScheduled(HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters) 
     {
-        Iterator it = pendingQueue.iterator();
+        Iterator<SimulatorEvent> it = pendingQueue.iterator();
         //This set will store all the events we scheduled on this call,
         //so we can remove them from the pending queue
-        HashSet scheduled = new HashSet();  
+        HashSet<SimulatorEvent> scheduled = new HashSet<SimulatorEvent>();  
 
         //iterate over the pending queue
         //and schedule one event
         while (it.hasNext()) {
-            SimulatorEvent event = (SimulatorEvent)it.next();
+            SimulatorEvent event = it.next();
 
             //do not schedule if earlier items from the same src have not 
             //been scheduled...
@@ -483,12 +483,12 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 
             //check that its downstream dest(s) is not firing...
             //event.dests = getAssignedDests(event.dests, sCounters);
-            Iterator dests = event.dests.iterator();
+            Iterator<FlatNode> dests = event.dests.iterator();
             boolean waitForDest = false;
 
             //do not schedule the item if its dests are firing...
             while (dests.hasNext()) {
-                FlatNode dest = (FlatNode)dests.next();
+                FlatNode dest = dests.next();
                 if (dest.contents instanceof SIRIdentity) {
                     waitForDest = waitForIdentityDests(dest, exeCounts, sCounters);
                 }
@@ -516,18 +516,18 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         }
         //iterate over the newly scheduled events and remove them from the 
         //pending queue
-        Iterator remove = scheduled.iterator();
+        Iterator<SimulatorEvent> remove = scheduled.iterator();
         while (remove.hasNext())
             pendingQueue.remove(remove.next());
     }
     
     private boolean waitForIdentityDests(FlatNode identity, 
-                                         HashMap exeCounts, SimulationCounter sCounters)
+                                         HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters)
     {
-        Iterator upstream = Util.getAssignedEdges(identity).iterator();
+        Iterator<FlatNode> upstream = Util.getAssignedEdges(identity).iterator();
 
         while (upstream.hasNext()) {
-            FlatNode current = (FlatNode)upstream.next();
+            FlatNode current = upstream.next();
             if (firingNodes.contains(current) || canFire(current, exeCounts, sCounters))
                 return true;
         }
@@ -545,12 +545,12 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         eventHeap.addEvent(event);
     }
     
-    private FlatNode nextToFire(HashMap exeCounts, SimulationCounter sCounters) 
+    private FlatNode nextToFire(HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters) 
     {
-        Iterator trav = BreadthFirstTraversal.getTraversal(toplevel).iterator();
+        Iterator<FlatNode> trav = BreadthFirstTraversal.getTraversal(toplevel).iterator();
     
         while (trav.hasNext()) {
-            FlatNode node = (FlatNode)trav.next();
+            FlatNode node = trav.next();
     
             /*      
                    if (canFire(node, exeCounts, sCounters)) {
@@ -565,28 +565,28 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 canFire(node, exeCounts, sCounters) &&
                 !firingNodes.contains(node)) 
                 if (node.ways == 0 || 
-                    (node.ways > 0 && checkDownStream(node, exeCounts, sCounters, new HashSet())))
+                    (node.ways > 0 && checkDownStream(node, exeCounts, sCounters, new HashSet<FlatNode>())))
                     return node;
         }
         //found nothing
         return null;
     }
     
-    private boolean checkDownStream(FlatNode node, HashMap exeCounts, SimulationCounter sCounters, 
-                                    HashSet visited) 
+    private boolean checkDownStream(FlatNode node, HashMap<FlatNode, Integer> exeCounts, SimulationCounter sCounters, 
+                                    HashSet<FlatNode> visited) 
     {
         if (visited.contains(node))
             return true;
         //  System.out.println("Checking down stream:" + node);
         visited.add(node);
     
-        Iterator downstream = Util.getAssignedEdges(node).iterator();
+        Iterator<FlatNode> downstream = Util.getAssignedEdges(node).iterator();
     
         if (!downstream.hasNext())
             return true;
 
         while (downstream.hasNext()) {
-            FlatNode current = (FlatNode)downstream.next();
+            FlatNode current = downstream.next();
         
             //if we visited this node before and did not return false
             //then return true now...
@@ -618,11 +618,11 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         return -1;
     }
 
-    private void appendMagicNetNodes(FlatNode fire, List dests) {
+    private void appendMagicNetNodes(FlatNode fire, List<FlatNode> dests) {
         Coordinate source = Layout.getTile(fire);
     
-        HashMap receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
-        HashMap sendSchedules = MagicNetworkSchedule.steadySendSchedules;
+        HashMap<Coordinate, LinkedList> receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
+        HashMap<Coordinate, LinkedList> sendSchedules = MagicNetworkSchedule.steadySendSchedules;
     
         //append the current information to the correct schedule
         //depending of if it is the steady state or init
@@ -635,21 +635,21 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         if (!sendSchedules.containsKey(source))
             sendSchedules.put(source, new LinkedList());
     
-        LinkedList sourceSendSchedule = (LinkedList)sendSchedules.get(source);
+        LinkedList<LinkedList<Coordinate>> sourceSendSchedule = sendSchedules.get(source);
 
         //generate a list of coordinates to add to the send schedule for the source
-        LinkedList destsCoordinate = new LinkedList();
+        LinkedList<Coordinate> destsCoordinate = new LinkedList<Coordinate>();
 
 
         //iterate thru the dests adding to the receive schedules for the dests
-        Iterator it = dests.iterator();
+        Iterator<FlatNode> it = dests.iterator();
         while(it.hasNext()) {
-            Coordinate currentDest = Layout.getTile((FlatNode)it.next());
+            Coordinate currentDest = Layout.getTile(it.next());
     
         
             if (!receiveSchedules.containsKey(currentDest))
                 receiveSchedules.put(currentDest, new LinkedList());
-            LinkedList destReceiveSchedule = (LinkedList)receiveSchedules.get(currentDest);
+            LinkedList<Coordinate> destReceiveSchedule = receiveSchedules.get(currentDest);
         
             destReceiveSchedule.add(source);
 
@@ -666,17 +666,17 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     //we do not want to duplicate items until necesary, so we have to keep track 
     //of all the routes and then generate the switch code
     //this way we can route multiple dests per route instruction
-    private void generateSwitchCode(FlatNode fire, List dests) 
+    private void generateSwitchCode(FlatNode fire, List<FlatNode> dests) 
     {
         //should only have one previous
-        HashMap prev = new HashMap();
-        HashMap next = new HashMap();
+        HashMap<Coordinate, Coordinate> prev = new HashMap<Coordinate, Coordinate>();
+        HashMap<Coordinate, HashSet> next = new HashMap<Coordinate, HashSet>();
 
         //  System.out.print("  Send from " + fire);
 
-        ListIterator destsIt = dests.listIterator();
+        ListIterator<FlatNode> destsIt = dests.listIterator();
         while (destsIt.hasNext()) {
-            FlatNode dest = (FlatNode)destsIt.next();
+            FlatNode dest = destsIt.next();
             //      System.out.print(" to " + dest);
             //      System.out.println("Dest: " + dest.getName());
             if (fire == null)
@@ -684,11 +684,11 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             if (dest == null) 
                 System.out.println("Yup dest is null");
             Coordinate[] hops = 
-                (Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
+                Router.getRoute(fire, dest).toArray(new Coordinate[0]);
             //add to fire's next
             if (!next.containsKey(Layout.getTile(fire))) 
                 next.put(Layout.getTile(fire), new HashSet());
-            ((HashSet)next.get(Layout.getTile(fire))).add(hops[1]);
+            next.get(Layout.getTile(fire)).add(hops[1]);
             //add to all other previous, next
             for (int i = 1; i < hops.length -1; i++) {
                 if (prev.containsKey(hops[i]))
@@ -697,7 +697,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 prev.put(hops[i], hops[i-1]);
                 if (!next.containsKey(hops[i]))
                     next.put(hops[i], new HashSet());
-                ((HashSet)next.get(hops[i])).add(hops[i+1]);
+                next.get(hops[i]).add(hops[i+1]);
             }
             //add the last step, plus the dest to the dest map
             if (prev.containsKey(hops[hops.length - 1]))
@@ -706,7 +706,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             prev.put(hops[hops.length-1], hops[hops.length - 2]);
             if (!next.containsKey(hops[hops.length-1]))
                 next.put(hops[hops.length - 1], new HashSet());
-            ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
+            next.get(hops[hops.length - 1]).add(hops[hops.length -1]);
         }
     
         //create the appropriate amount of routing instructions
@@ -716,13 +716,13 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     }
     
-    private void asm(Coordinate fire, HashMap previous, HashMap next) 
+    private void asm(Coordinate fire, HashMap<Coordinate, Coordinate> previous, HashMap<Coordinate, HashSet> next) 
     {
         //generate the sends
         if (!switchSchedules.containsKey(fire))
             switchSchedules.put(fire, new StringBuffer());
-        StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
-        Iterator it = ((HashSet)next.get(fire)).iterator();
+        StringBuffer buf = switchSchedules.get(fire);
+        Iterator it = next.get(fire).iterator();
         buf.append("route ");
         while (it.hasNext()) {
             Coordinate dest = (Coordinate)it.next();
@@ -734,16 +734,16 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         buf.setCharAt(buf.length() - 1, '\n');
     
         //generate all the other 
-        Iterator tiles = next.keySet().iterator();
+        Iterator<Coordinate> tiles = next.keySet().iterator();
         while (tiles.hasNext()) {
-            Coordinate tile = (Coordinate)tiles.next();
+            Coordinate tile = tiles.next();
             if (tile == fire) 
                 continue;
             if (!switchSchedules.containsKey(tile))
                 switchSchedules.put(tile, new StringBuffer());
-            buf = (StringBuffer)switchSchedules.get(tile);
-            Coordinate prevTile = (Coordinate)previous.get(tile);
-            buf.append("route ");       Iterator nexts = ((HashSet)next.get(tile)).iterator();
+            buf = switchSchedules.get(tile);
+            Coordinate prevTile = previous.get(tile);
+            buf.append("route ");       Iterator nexts = next.get(tile).iterator();
             while(nexts.hasNext()) {
                 Coordinate nextTile = (Coordinate)nexts.next();
                 if (!nextTile.equals(tile))
@@ -758,7 +758,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
 
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
-                                  HashMap executionCounts) 
+                                  HashMap<FlatNode, Integer> executionCounts) 
     {
         //if this is the first time a two stage initpeek is needed to execute
         if (initSimulation &&
@@ -770,7 +770,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                  fire.contents instanceof SIRFilter) {
             //we are ratematching filters
             return (((SIRFilter)fire.contents).getPopInt() * 
-                    ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue() +
+                    RawBackend.steadyExecutionCounts.get(fire).intValue() +
                     (((SIRFilter)fire.contents).getPeekInt() -
                      ((SIRFilter)fire.contents).getPopInt()));
         }
@@ -778,10 +778,10 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         return ((SIRFilter)fire.contents).getPeekInt();
     }
    
-    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
+    private void decrementExecutionCounts(FlatNode fire, HashMap<FlatNode, Integer> executionCounts, SimulationCounter counters) 
     {
         //decrement one from the execution count
-        int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+        int oldVal = executionCounts.get(fire).intValue();
         if (oldVal - 1 < 0)
             Utils.fail("Executed too much");
     
@@ -796,7 +796,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
     
     private int consumedItems(FlatNode fire, SimulationCounter counters,
-                              HashMap executionCounts) {
+                              HashMap<FlatNode, Integer> executionCounts) {
         //if this is the first time a two stage fires consume initpop
         if (initSimulation &&
             !counters.hasFired(fire) &&
@@ -807,14 +807,14 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             //we are ratematching on the filter
             //it consumes for the entire steady state
             return ((SIRFilter)fire.contents).getPopInt() *
-                ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+                RawBackend.steadyExecutionCounts.get(fire).intValue();
         }
         //otherwise just consume pop
         return ((SIRFilter)fire.contents).getPopInt();
     }
     
     //consume the data and return the number of items produced
-    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
+    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts) 
     {
         if (fire.contents instanceof SIRFilter) {
             //decrement the schedule execution counter
@@ -835,7 +835,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
                 ret = ((SIRTwoStageFilter)fire.contents).getInitPushInt();
             else if (!initSimulation && KjcOptions.ratematch) {
                 //we are ratematching so produce all the data on the one firing.
-                ret *= ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+                ret *= RawBackend.steadyExecutionCounts.get(fire).intValue();
             }
             //now this node has fired
             counters.setFired(fire);
@@ -856,7 +856,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     {
         //add to the joiner code for this fire
         JoinerScheduleNode prev = 
-            (JoinerScheduleNode)currentJoinerCode.get(fire);
+            currentJoinerCode.get(fire);
         if (prev == null) {
             //first node in joiner code
             joinerCode.put(fire, code);
@@ -871,7 +871,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
     
     
-    private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
+    private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap<FlatNode, Integer> executionCounts)
     {
         //  System.out.println("Firing " + fire.contents.getName());
         //The joiner is passing a data item, record this as an execution
@@ -895,7 +895,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 
     //return the destinations of the data item and generate the code
     //to receive data into the joiner
-    private List getDestination(FlatNode node, SimulationCounter counters)
+    private List<FlatNode> getDestination(FlatNode node, SimulationCounter counters)
     {
         return getDestinationHelper(node.edges[0], counters, "", node);
     }
@@ -912,7 +912,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
         
     //get the destination of the data item
-    private List getDestinationHelper(FlatNode node, SimulationCounter counters, String
+    private List<FlatNode> getDestinationHelper(FlatNode node, SimulationCounter counters, String
                                       joinerBuffer, FlatNode previous) 
     {
 
@@ -931,7 +931,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             //this is done in receiveUpdate
             //      if (initSimulation) 
             //  counters.incrementBufferCount(node);
-            LinkedList list = new LinkedList();
+            LinkedList<FlatNode> list = new LinkedList<FlatNode>();
             list.add(node);
             return list;
         }
@@ -940,7 +940,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             //last joiner in a joiner group
             //this list is kept in the Layout class
             if (Layout.getJoiners().contains(node)) {
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 list.add(node);
                 return list;
             }
@@ -957,7 +957,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
             //if splitter send the item out to all arcs
             //build a list of all the dests
             if (splitter.getType() == SIRSplitType.DUPLICATE) {
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 for (int i = 0; i < node.ways;i++) {
                     //decrement counter on arc
                     if (counters.getArcCountOutgoing(node, i) == 0)
@@ -1002,7 +1002,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     }
 
 
-    public boolean canFire(FlatNode node, HashMap executionCounts, 
+    public boolean canFire(FlatNode node, HashMap<FlatNode, Integer> executionCounts, 
                            SimulationCounter counters) 
     {
         if (node == null)
@@ -1020,7 +1020,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 
             //check if this node has fired the number of times given by
             //the schedule
-            Integer count = (Integer)executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             //if a node is not executed at all in a schedule it will not have an
             //entry
             if (count == null)
@@ -1048,7 +1048,7 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
         
             //check if this node has fired the number of times given by
             //the schedule
-            Integer count = (Integer)executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             //if a node is not executed at all in a schedule it will not have an
             //entry
             if (count == null)
@@ -1085,10 +1085,10 @@ public class WorkBasedSimulator extends Simulator  implements FlatVisitor
     
         if (RawBackend.initExecutionCounts.containsKey(node))
             System.out.println("   executes in init " + 
-                               ((Integer)RawBackend.initExecutionCounts.get(node)).intValue());
+                               RawBackend.initExecutionCounts.get(node).intValue());
         if (RawBackend.steadyExecutionCounts.containsKey(node))
             System.out.println("   executes in steady " + 
-                               ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue());
+                               RawBackend.steadyExecutionCounts.get(node).intValue());
     }
     
     private String getJoinerBuffer(FlatNode node, FlatNode previous) 

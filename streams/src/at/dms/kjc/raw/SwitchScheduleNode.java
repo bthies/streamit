@@ -17,10 +17,10 @@ public class SwitchScheduleNode
     /* Next node in the schedule */
     public SwitchScheduleNode next;
     /* destination filters for this data item */
-    private Vector destinations;
+    private Vector<FlatNode> destinations;
            
     public SwitchScheduleNode() {
-        destinations = new Vector();
+        destinations = new Vector<FlatNode>();
     }
 
     public void addDest(FlatNode to) {
@@ -34,7 +34,7 @@ public class SwitchScheduleNode
     
     public FlatNode getDest(int i) 
     {
-        return (FlatNode)destinations.get(i);
+        return destinations.get(i);
     }
     
     //print the assembly code, send is true if this is a schedule for sending
@@ -58,7 +58,7 @@ public class SwitchScheduleNode
     
     public void printMe() {
         for (int i = 0; i < destinations.size(); i++) {
-            FlatNode node = (FlatNode)destinations.get(i);
+            FlatNode node = destinations.get(i);
             System.out.println(" " + node.contents.getName() + " Tile:" +
                                Layout.getTile(node.contents));
         }

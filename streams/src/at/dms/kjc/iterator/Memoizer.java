@@ -16,16 +16,16 @@ public class Memoizer {
     /**
      * Mapping from signature to cached object.
      */
-    private Hashtable cache;
+    private Hashtable<Signature, Object> cache;
 
     /**
      * Set of all objects that have been finalized.
      */
-    private HashSet finalized;
+    private HashSet<Object> finalized;
     
     private Memoizer() {
-        this.cache = new Hashtable();
-        this.finalized = new HashSet();
+        this.cache = new Hashtable<Signature, Object>();
+        this.finalized = new HashSet<Object>();
     }
 
     /*******************************************************************/
@@ -84,8 +84,8 @@ public class Memoizer {
      * signature.  The cache should always be consistent.
      */
     boolean isConsistent() {
-        for (Enumeration e = cache.keys(); e.hasMoreElements(); ) {
-            Signature oldSig = (Signature)e.nextElement();
+        for (Enumeration<Signature> e = cache.keys(); e.hasMoreElements(); ) {
+            Signature oldSig = e.nextElement();
             Object o = cache.get(oldSig);
             Signature newSig = new Signature(o);
             hashFields(o, newSig);

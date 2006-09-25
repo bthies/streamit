@@ -12,7 +12,7 @@ import at.dms.kjc.iterator.*;
  * This class has also been pressed into service to perform manipulations on
  * hashtable mappings that involve creating access wrappers.<br>
  *
- * $Id: AccessWrapperFactory.java,v 1.5 2006-01-25 17:01:57 thies Exp $
+ * $Id: AccessWrapperFactory.java,v 1.6 2006-09-25 13:54:42 dimock Exp $
  **/
 class AccessWrapperFactory {
     /**
@@ -74,7 +74,7 @@ class AccessWrapperFactory {
      **/
     public static void addInitialArrayMappings(JExpression var,
                                                int arraySize,
-                                               HashMap mappings,
+                                               HashMap<Object, LinearForm> mappings,
                                                int formSize) {
         // try and create a wrapper for the base array expression
         AccessWrapper prefixWrapper = wrapAccess(var);

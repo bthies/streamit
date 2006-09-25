@@ -12,10 +12,10 @@ import java.util.Collection;
  */
 public class JoinerCounter {
     
-    private HashMap counts;
+    private HashMap<FlatNode, int[]> counts;
     
     public JoinerCounter() {
-        counts = new HashMap();
+        counts = new HashMap<FlatNode, int[]>();
     }
 
 
@@ -31,13 +31,13 @@ public class JoinerCounter {
             counts.put(node, nodeCounters);
         }
         //Get the counter and return the count for the given input
-        int[] currentCounts = (int[])counts.get(node);
+        int[] currentCounts = counts.get(node);
         return currentCounts[inputN];
     }
     
     public void decrementCount(FlatNode node, int inputN) 
     {
-        int[] currentCounts = (int[])counts.get(node);
+        int[] currentCounts = counts.get(node);
         if (currentCounts[inputN] > 0)
             currentCounts[inputN]--;
         else 
@@ -48,7 +48,7 @@ public class JoinerCounter {
     
     public void resetCount(FlatNode node, int inputN) 
     {
-        int[] currentCounts = (int[])counts.get(node);
+        int[] currentCounts = counts.get(node);
         if (currentCounts[inputN] == 0)
             currentCounts[inputN] = node.incomingWeights[inputN];
         else
@@ -58,9 +58,9 @@ public class JoinerCounter {
     
     public boolean checkAllZero() 
     {
-        Iterator allCounts = counts.values().iterator();
+        Iterator<int[]> allCounts = counts.values().iterator();
         while (allCounts.hasNext()) {
-            int[] currentCounters = (int[])allCounts.next();
+            int[] currentCounters = allCounts.next();
             for (int i = 0; i < currentCounters.length; i++) {
                 if (currentCounters[i] > 0) 
                     return false;

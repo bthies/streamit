@@ -25,10 +25,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static final int MAX_LOOKAHEAD = 20;
 
     // Hash set of tiles mapped to filters or joiners
-    public static HashSet realTiles;
+    public static HashSet<RawTile> realTiles;
 
     // hash map of all tiles that either compute or route
-    public static HashSet tiles;
+    public static HashSet<ComputeNode> tiles;
 
     private static SpdStreamGraph streamGraph;
 
@@ -51,17 +51,17 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         // create a set containing all the ComputeNodes of all
         // the nodes in the FlatGraph plus all the tiles involved
         // in switching
-        HashSet computeNodes = new HashSet();
+        HashSet<Object> computeNodes = new HashSet<Object>();
 
         // tiles that are assigned to streams (filters or joiners)
-        realTiles = new HashSet();
+        realTiles = new HashSet<RawTile>();
         // all the tiles that do anything
-        tiles = new HashSet();
+        tiles = new HashSet<ComputeNode>();
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             SpdStaticStreamGraph staticGraph = (SpdStaticStreamGraph)streamGraph.getStaticSubGraphs()[i];
             staticGraph.getTopLevel().accept(new TileCode(staticGraph),
-                                             new HashSet(), true);
+                                             new HashSet<FlatNode>(), true);
 
             // for decoupled execution the scheduler does not run
             if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM ||
@@ -74,14 +74,14 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
         }
 
         // add only tiles to the <tiles> Set
-        Iterator cns = computeNodes.iterator();
+        Iterator<Object> cns = computeNodes.iterator();
         while (cns.hasNext()) {
             ComputeNode cn = (ComputeNode) cns.next();
             if (cn != null && cn.isTile())
                 tiles.add(cn);
         }
 
-        Iterator tileIterator = tiles.iterator();
+        Iterator<ComputeNode> tileIterator = tiles.iterator();
 
         while (tileIterator.hasNext()) {
             RawTile tile = (RawTile) tileIterator.next();
@@ -186,7 +186,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     private static String createJoinerWork(FlatNode joiner) {
         StringBuffer ret = new StringBuffer();
         int buffersize = nextPow2(
-                                  (Integer) SimulationCounter.maxJoinerBufferSize.get(joiner),
+                                  SimulationCounter.maxJoinerBufferSize.get(joiner),
                                   joiner);
         // get the type, since this joiner is guaranteed to be connected to a
         // filter
@@ -220,7 +220,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
-        HashSet buffers = (HashSet) streamGraph.joinerSimulator.buffers
+        HashSet buffers = streamGraph.joinerSimulator.buffers
             .get(joiner);
         Iterator bufIt = buffers.iterator();
         // print all the var definitions
@@ -237,11 +237,11 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
             ret.append(";\n");
         }
 
-        printSchedule(joiner, (JoinerScheduleNode) ((SpdStaticStreamGraph)streamGraph
+        printSchedule(joiner, ((SpdStaticStreamGraph)streamGraph
                       .getParentSSG(joiner)).simulator.initJoinerCode.get(joiner), ret);
         ret.append(SwitchCode.SW_SS_TRIPS + "();\n");
         ret.append("while(1) {\n");
-        printSchedule(joiner, (JoinerScheduleNode) ((SpdStaticStreamGraph)streamGraph
+        printSchedule(joiner, ((SpdStaticStreamGraph)streamGraph
                       .getParentSSG(joiner)).simulator.steadyJoinerCode.get(joiner),
                       ret);
         ret.append("}}\n");

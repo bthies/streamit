@@ -32,7 +32,7 @@ public class Propagator extends SLIRReplacingVisitor {
     /**
      * Map of constants changed (JLocalVariable -> Boolean.TRUE)
      */
-    private Hashtable changed;
+    private Hashtable<Object, Boolean> changed;
 
     /**
      * If anything was added
@@ -61,7 +61,7 @@ public class Propagator extends SLIRReplacingVisitor {
      * List of vars mutated so the can be assigned the right
      * value at the end of a block
      */
-    private LinkedList mutated;
+    private LinkedList<JLocalVariable> mutated;
 
     /**
      * Creates one of these given that <constants> maps
@@ -71,21 +71,21 @@ public class Propagator extends SLIRReplacingVisitor {
     public Propagator(Hashtable constants) {
         super();
         this.constants = constants;
-        changed=new Hashtable();
+        changed=new Hashtable<Object, Boolean>();
         added=false;
         write=true;
         knownFields=new Hashtable();
-        mutated=new LinkedList();
+        mutated=new LinkedList<JLocalVariable>();
     }
     
     public Propagator(Hashtable constants,boolean write) {
         super();
         this.constants = constants;
-        changed=new Hashtable();
+        changed=new Hashtable<Object, Boolean>();
         added=false;
         this.write=write;
         knownFields=new Hashtable();
-        mutated=new LinkedList();
+        mutated=new LinkedList<JLocalVariable>();
     }
     
     public Propagator construct(Hashtable constants) {
@@ -100,7 +100,7 @@ public class Propagator extends SLIRReplacingVisitor {
         return constants;
     }
 
-    public Hashtable getChanged() {
+    public Hashtable<Object, Boolean> getChanged() {
         return changed;
     }
 
@@ -152,12 +152,12 @@ public class Propagator extends SLIRReplacingVisitor {
             cond.accept(this);
             body.accept(this);
         } else {
-            Set freeVars = getFreeVars(self);
+            Set<JLocalVariable> freeVars = getFreeVars(self);
             Propagator newProp=construct(cloneTable(constants, freeVars),false);
        
             cond.accept(newProp);
             body.accept(newProp);
-            Enumeration remove=newProp.changed.keys();
+            Enumeration<Object> remove=newProp.changed.keys();
             //BUG!!!  visiting with newProp could replace references!
             while(remove.hasMoreElements()) {
                 JLocalVariable var=(JLocalVariable)remove.nextElement();
@@ -182,9 +182,9 @@ public class Propagator extends SLIRReplacingVisitor {
      * Returns a list of local variables that were used within
      * <phylum> without being defined in <phylum>.
      */
-    private Set getFreeVars(JPhylum phylum) {
+    private Set<JLocalVariable> getFreeVars(JPhylum phylum) {
         if (phylum == null) {
-            return new TreeSet();
+            return new TreeSet<JLocalVariable>();
         }
 
         // we want to use a treeset just for efficiency, but that
@@ -207,8 +207,8 @@ public class Propagator extends SLIRReplacingVisitor {
             };
 
         // collect used and defined lists
-        final TreeSet defined = new TreeSet(hashCodeComparator);
-        final TreeSet used = new TreeSet(hashCodeComparator);
+        final TreeSet<JLocalVariable> defined = new TreeSet<JLocalVariable>(hashCodeComparator);
+        final TreeSet<JLocalVariable> used = new TreeSet<JLocalVariable>(hashCodeComparator);
         phylum.accept(new SLIREmptyVisitor() {
                 public void visitFormalParameters(JFormalParameter self,
                                                   boolean isFinal,
@@ -424,7 +424,7 @@ public class Propagator extends SLIRReplacingVisitor {
             }
             Propagator[] propagators=new Propagator[body.length];
             for (int i = 0; i < body.length; i++) {
-                Set varsToClone = getFreeVars(body[i]);
+                Set<JLocalVariable> varsToClone = getFreeVars(body[i]);
                 // include free var from <expr> for proper comparison with <origConstants> below
                 varsToClone.addAll(getFreeVars(expr));
                 Propagator prop=construct(cloneTable(constants, varsToClone),true);
@@ -436,8 +436,8 @@ public class Propagator extends SLIRReplacingVisitor {
                 //Remove if value is not same in all switch bodies
                 for(int i=1;i<propagators.length;i++) {
                     Propagator prop=propagators[i];
-                    LinkedList remove=new LinkedList();
-                    Enumeration eNum=newConstants.keys();
+                    LinkedList<Object> remove=new LinkedList<Object>();
+                    Enumeration<Object> eNum=newConstants.keys();
                     while(eNum.hasMoreElements()) {
                         Object key=eNum.nextElement();
                         if(!(prop.constants.get(key).equals(newConstants.get(key))))
@@ -460,7 +460,7 @@ public class Propagator extends SLIRReplacingVisitor {
                 // mark anything that's in <newConstants> but not in
                 // <constants> as <changed>
                 Hashtable origConstants = cloneTable(constants, getFreeVars(self));
-                for (Enumeration e=origConstants.keys(); e.hasMoreElements(); ) {
+                for (Enumeration<Object> e=origConstants.keys(); e.hasMoreElements(); ) {
                     Object key=e.nextElement();
                     if (!newConstants.containsKey(key)) {
                         changed.put(key, Boolean.TRUE);
@@ -573,7 +573,7 @@ public class Propagator extends SLIRReplacingVisitor {
             // reconstruct constants as those that are the same in
             // both <then> and <else>
             Hashtable newConstants = new Hashtable();
-            for (Enumeration e = thenProp.constants.keys(); e.hasMoreElements(); ) {
+            for (Enumeration<Object> e = thenProp.constants.keys(); e.hasMoreElements(); ) {
                 Object thenKey = e.nextElement();
                 Object thenVal = thenProp.constants.get(thenKey);
                 Object elseVal = elseProp.constants.get(thenKey);
@@ -594,7 +594,7 @@ public class Propagator extends SLIRReplacingVisitor {
             }
             // integrate the update to overall <constants>
             Hashtable origConstants = cloneTable(constants, getFreeVars(self));
-            for (Enumeration e = origConstants.keys(); e.hasMoreElements(); ) {
+            for (Enumeration<Object> e = origConstants.keys(); e.hasMoreElements(); ) {
                 Object key = e.nextElement();
                 if (newConstants.containsKey(key)) {
                     changed.put(key, Boolean.TRUE);
@@ -609,9 +609,9 @@ public class Propagator extends SLIRReplacingVisitor {
 
     // returns a clone of <table> that contains only the keys in
     //<varsToClone>.  Handles deep-cloning of arrays correctly.
-    private Hashtable cloneTable(Hashtable table, Set varsToClone) {
+    private Hashtable cloneTable(Hashtable table, Set<JLocalVariable> varsToClone) {
         Hashtable out=new Hashtable();
-        Iterator keys=varsToClone.iterator();
+        Iterator<JLocalVariable> keys=varsToClone.iterator();
         while(keys.hasNext()) {
             Object key=keys.next();
             if (table.containsKey(key)) {
@@ -631,8 +631,8 @@ public class Propagator extends SLIRReplacingVisitor {
 
     // returns a clone of <table>.  Handles deep-cloning of arrays
     // correctly.    
-    private Hashtable cloneTable(Hashtable table) {
-        Hashtable out=new Hashtable(table);
+    private Hashtable<Object, Object[]> cloneTable(Hashtable table) {
+        Hashtable<Object, Object[]> out=new Hashtable<Object, Object[]>(table);
         Enumeration keys=table.keys();
         while(keys.hasMoreElements()) {
             Object key=keys.nextElement();
@@ -674,7 +674,7 @@ public class Propagator extends SLIRReplacingVisitor {
             incr.accept(newProp);
             cond.accept(newProp);
             body.accept(newProp);
-            Enumeration remove=newProp.changed.keys();
+            Enumeration<Object> remove=newProp.changed.keys();
             while(remove.hasMoreElements()) {
                 JLocalVariable var=(JLocalVariable)remove.nextElement();
                 constants.remove(var);
@@ -1643,7 +1643,7 @@ public class Propagator extends SLIRReplacingVisitor {
                 self.setStatement(i,(JStatement)newBody);
             }
             while(mutated.size()!=0) {
-                JLocalVariable var=(JLocalVariable)mutated.removeFirst();
+                JLocalVariable var=mutated.removeFirst();
                 size++;
                 Object val=constants.get(var);
                 if(val!=null)

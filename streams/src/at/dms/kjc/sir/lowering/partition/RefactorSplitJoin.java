@@ -132,7 +132,7 @@ public class RefactorSplitJoin {
         result.setInit(SIRStream.makeEmptyInit());
 
         // get copy of children and params
-        List children = sj.getParallelStreams();
+        List<SIRStream> children = sj.getParallelStreams();
         List params = sj.getParams();
     
         // the new and old weights for the splitter and joiner
@@ -148,7 +148,7 @@ public class RefactorSplitJoin {
                 // if there is only one stream in the partition, then
                 // we don't need to do anything; just add the children
                 int pos = partition.getFirst(i);
-                result.add((SIRStream)children.get(pos), (List)params.get(pos));
+                result.add(children.get(pos), (List)params.get(pos));
                 newSplit[i]=new JIntLiteral(oldSplit[pos]);
                 newJoin[i]=new JIntLiteral(oldJoin[pos]);
             } else {
@@ -168,7 +168,7 @@ public class RefactorSplitJoin {
                     sumJoin+=oldJoin[l];
                     childSplit[k]=new JIntLiteral(oldSplit[l]);
                     childJoin[k]=new JIntLiteral(oldJoin[l]);
-                    childSplitJoin.add((SIRStream)children.get(l), (List)params.get(l));
+                    childSplitJoin.add(children.get(l), (List)params.get(l));
                 }
                 // in the case of a duplicate splitter, <pre>create</pre>
                 // disregards the weights array and makes them all 1
@@ -350,8 +350,8 @@ public class RefactorSplitJoin {
                 // segments in top and bottom streams.  
                 int partition = 0;
                 // map each child of top and bottom to their partition
-                HashMap map1 = new HashMap();
-                HashMap map2 = new HashMap();
+                HashMap<Object, Integer> map1 = new HashMap<Object, Integer>();
+                HashMap<Object, Integer> map2 = new HashMap<Object, Integer>();
                 // go through weights and assign to different
                 // partitions based on where the weights line up
                 // evenly.

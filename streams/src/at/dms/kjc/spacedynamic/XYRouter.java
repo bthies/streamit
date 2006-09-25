@@ -12,9 +12,9 @@ public class XYRouter {
      * return the route from src to dest (including both) first x then y, this
      * returns a list of compute nodes (tiles)
      **************************************************************************/
-    public static LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src,
+    public static LinkedList<ComputeNode> getRoute(SpdStaticStreamGraph ssg, ComputeNode src,
                                       ComputeNode dst) {
-        LinkedList route = new LinkedList();
+        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
         RawChip chip = src.getRawChip();
       
         // if the source or dest is an iodevice we have to

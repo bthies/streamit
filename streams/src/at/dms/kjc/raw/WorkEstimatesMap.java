@@ -9,11 +9,11 @@ import at.dms.kjc.sir.*;
 
 public class WorkEstimatesMap implements FlatVisitor 
 {
-    HashMap estimates;
+    HashMap<FlatNode, Integer> estimates;
 
     public WorkEstimatesMap (FlatNode top) 
     {
-        estimates = new HashMap();
+        estimates = new HashMap<FlatNode, Integer>();
         top.accept(this, null, true);
     }
     
@@ -33,7 +33,7 @@ public class WorkEstimatesMap implements FlatVisitor
     {
         if (!estimates.containsKey(node))
             Utils.fail("Node " + node.contents.getName() + " not in map.");
-        return ((Integer)estimates.get(node)).intValue();
+        return estimates.get(node).intValue();
     }
     
 }

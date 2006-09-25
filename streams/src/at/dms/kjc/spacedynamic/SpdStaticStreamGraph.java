@@ -1,6 +1,7 @@
 package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.flatgraph.StaticStreamGraph;
 //import at.dms.kjc.flatgraph.GraphFlattener;
 //import at.dms.kjc.flatgraph.SSGEdge;
 import at.dms.kjc.flatgraph.*;
@@ -155,17 +156,17 @@ public class SpdStaticStreamGraph  extends at.dms.kjc.flatgraph.ScheduledStaticS
     public int countAssignedNodes() {
         int assignedNodes = 0;
 
-        Iterator nodes = flatNodes.iterator();
+        Iterator<FlatNode> nodes = flatNodes.iterator();
         while (nodes.hasNext()) {
-            if (Layout.assignToATile((FlatNode) nodes.next()))
+            if (Layout.assignToATile(nodes.next()))
                 assignedNodes++;
         }
         return assignedNodes;
     }
     /** accept a stream graph visitor * */
-    public void accept(StreamGraphVisitor s, HashSet visited, boolean newHash) {
+    public void accept(StreamGraphVisitor s, HashSet<SpdStaticStreamGraph> visited, boolean newHash) {
         if (newHash)
-            visited = new HashSet();
+            visited = new HashSet<SpdStaticStreamGraph>();
 
         if (visited.contains(this))
             return;
@@ -173,7 +174,7 @@ public class SpdStaticStreamGraph  extends at.dms.kjc.flatgraph.ScheduledStaticS
         visited.add(this);
         s.visitStaticStreamGraph(this);
 
-        Iterator nextsIt = nextSSGs.iterator();
+        Iterator<StaticStreamGraph> nextsIt = nextSSGs.iterator();
         while (nextsIt.hasNext()) {
             SpdStaticStreamGraph ssg = (SpdStaticStreamGraph) nextsIt.next();
             ssg.accept(s, visited, false);

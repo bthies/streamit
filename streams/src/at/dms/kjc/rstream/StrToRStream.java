@@ -15,6 +15,7 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 //import at.dms.kjc.sir.lowering.fission.*;
 //import at.dms.kjc.lir.*;
+import java.io.Serializable;
 import java.util.*;
 //import java.io.*;
 //import at.dms.util.Utils;
@@ -57,8 +58,8 @@ public class StrToRStream {
     public static SIRStructure[] structures;
     
     //given a flatnode map to the execution count
-    public static HashMap initExecutionCounts;
-    public static HashMap steadyExecutionCounts;
+    public static HashMap<FlatNode, Integer> initExecutionCounts;
+    public static HashMap<FlatNode, Integer> steadyExecutionCounts;
     // get the execution counts from the scheduler
     
     /**
@@ -89,7 +90,7 @@ public class StrToRStream {
     
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
-        Set theStatics = new HashSet();
+        Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
         Map associatedGlobals = StaticsProp.propagate(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
@@ -219,9 +220,9 @@ public class StrToRStream {
      * @param c   The collection to add
      *
      */
-    public static void addAll(HashSet set, Collection c) 
+    public static void addAll(HashSet<Object> set, Collection<Serializable> c) 
     {
-        Iterator it = c.iterator();
+        Iterator<Serializable> it = c.iterator();
         while (it.hasNext()) {
             Object obj = it.next();
             if (obj == null)
@@ -234,8 +235,8 @@ public class StrToRStream {
     private static void createExecutionCounts(SIRStream str,
                                               GraphFlattener graphFlattener) {
         // make fresh hashmaps for results
-        HashMap[] result = { initExecutionCounts = new HashMap(), 
-                             steadyExecutionCounts = new HashMap()} ;
+        HashMap[] result = { initExecutionCounts = new HashMap<FlatNode, Integer>(), 
+                             steadyExecutionCounts = new HashMap<FlatNode, Integer>()} ;
     
         // then filter the results to wrap every filter in a flatnode,
         // and ignore splitters
@@ -270,18 +271,18 @@ public class StrToRStream {
     
         //Schedule the new Identities and Splitters introduced by GraphFlattener
         for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
-            FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
+            FlatNode node=GraphFlattener.needsToBeSched.get(i);
             int initCount=-1;
             if(node.incoming.length>0) {
                 if(initExecutionCounts.get(node.incoming[0])!=null)
-                    initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
+                    initCount=initExecutionCounts.get(node.incoming[0]).intValue();
                 if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
                     initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
             }
             int steadyCount=-1;
             if(node.incoming.length>0) {
                 if(steadyExecutionCounts.get(node.incoming[0])!=null)
-                    steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
+                    steadyCount=steadyExecutionCounts.get(node.incoming[0]).intValue();
                 if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
                     steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
             }
@@ -324,9 +325,9 @@ public class StrToRStream {
     {
         Integer mult;
         if (init) 
-            mult = (Integer)initExecutionCounts.get(node);
+            mult = initExecutionCounts.get(node);
         else 
-            mult = (Integer)steadyExecutionCounts.get(node);
+            mult = steadyExecutionCounts.get(node);
 
         if (mult == null) {
             //System.out.println("** Mult HashMap (" + init + ") does not contain " + node);

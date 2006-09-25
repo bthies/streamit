@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBinaryClass.java,v 1.9 2006-03-24 15:54:46 dimock Exp $
+ * $Id: CBinaryClass.java,v 1.10 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -57,10 +57,10 @@ public class CBinaryClass extends CClass {
         CClassType[]    interfaces = loadInterfaces(classInfo.getInterfaces());
 
         FieldInfo[] fields = classInfo.getFields();
-        Hashtable   fields_H = null;
+        Hashtable<String, CField>   fields_H = null;
         boolean hasOuterThis = false;
 
-        fields_H = new Hashtable(fields.length + 1, 1.0f);
+        fields_H = new Hashtable<String, CField>(fields.length + 1, 1.0f);
 
         for (int i = 0; i < fields.length; i++) {
             CField field = new CBinaryField(this, fields[i]);

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.36 2006-08-23 23:00:58 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.37 2006-09-25 13:54:41 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -34,7 +34,7 @@ public class SIRToStreamIt
     protected boolean declOnly = false;
 
     protected int portalCount;
-    protected Map portalNames;
+    protected Map<SIRPortal, String> portalNames;
     protected SIROperator theStream;
     /**
      * >0 when in a for loop header.
@@ -189,9 +189,9 @@ public class SIRToStreamIt
         this.p = p;
         this.toplevel = false;
         this.portalCount = 0;
-        this.portalNames = new java.util.HashMap();
-        this.seenStreams = new java.util.HashSet();
-        this.streamQueue = new java.util.LinkedList();
+        this.portalNames = new java.util.HashMap<SIRPortal, String>();
+        this.seenStreams = new java.util.HashSet<SIROperator>();
+        this.streamQueue = new java.util.LinkedList<SIROperator>();
     }
 
     /**
@@ -209,15 +209,15 @@ public class SIRToStreamIt
     // VISIT STREAMS
     // ----------------------------------------------------------------------
 
-    private Set seenStreams;
-    private List streamQueue;
+    private Set<SIROperator> seenStreams;
+    private List<SIROperator> streamQueue;
 
     public void visitAnyStream(SIROperator op)
     {
         streamQueue.add(op);
         while (!streamQueue.isEmpty())
             {
-                SIROperator o = (SIROperator)streamQueue.get(0);
+                SIROperator o = streamQueue.get(0);
                 streamQueue.remove(0);
                 // Do nothing if we've seen it; print it otherwise
                 if (!seenStreams.contains(o))
@@ -2481,7 +2481,7 @@ public class SIRToStreamIt
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-                                  List initStatements)
+                                  List<JStatement> initStatements)
     {
         assert false;
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Grammar.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: Grammar.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -32,7 +32,7 @@ import at.dms.compiler.tools.antlr.runtime.*;
  * needs a code generator and an LLkAnalyzer too.
  */
 public abstract class Grammar {
-    private Hashtable symbols;
+    private Hashtable<String, RuleSymbol> symbols;
 
     protected Main tool;
     protected LLkGrammarAnalyzer theLLkAnalyzer;
@@ -60,7 +60,7 @@ public abstract class Grammar {
     protected String importVocab = null;
 
     // Mapping from String keys to Token option values
-    protected Hashtable options;
+    protected Hashtable<String, Token> options;
     // Vector of RuleSymbol entries
     protected Vector rules;
 
@@ -87,8 +87,8 @@ public abstract class Grammar {
     public Grammar(String className_, Main tool_, String superClass) {
         className = className_;
         tool = tool_;
-        symbols = new Hashtable();
-        options = new Hashtable();
+        symbols = new Hashtable<String, RuleSymbol>();
+        options = new Hashtable<String, Token>();
         rules = new Vector(100);
         this.superClass = superClass;
     }
@@ -141,7 +141,7 @@ public abstract class Grammar {
      * @return The value associated with the key.
      */
     public int getIntegerOption(String key) throws NumberFormatException {
-        Token t = (Token)options.get(key);
+        Token t = options.get(key);
         if (t == null || t.getType() != ANTLRTokenTypes.INT) {
             throw new NumberFormatException();
         } else {
@@ -155,17 +155,17 @@ public abstract class Grammar {
      * @return The value associated with the key, or null if the key has not been set.
      */
     public Token getOption(String key) {
-        return (Token)options.get(key);
+        return options.get(key);
     }
 
     // Get name of class from which generated parser/lexer inherits
     protected abstract String getSuperClass();
 
     public GrammarSymbol getSymbol(String s) {
-        return (GrammarSymbol) symbols.get(s);
+        return symbols.get(s);
     }
 
-    public Enumeration getSymbols() {
+    public Enumeration<RuleSymbol> getSymbols() {
         return symbols.elements();
     }
 

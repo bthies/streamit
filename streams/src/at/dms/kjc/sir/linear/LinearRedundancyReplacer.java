@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.linear;
 
 import java.util.*;
+
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 //import at.dms.kjc.sir.linear.*;
@@ -13,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * requirements. Refer to the documentation in LinearRedundancy
  * for more information.<br>
  *
- * $Id: LinearRedundancyReplacer.java,v 1.16 2006-01-30 18:15:53 thies Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.17 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -153,16 +154,16 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         // make a field with the name stored in nameMap.
         JFieldDeclaration[] newFields = new JFieldDeclaration[2*tupleData.reused.size()];
 
-        Iterator tupleIter = tupleData.reused.iterator();
+        Iterator<LinearComputationTuple> tupleIter = tupleData.reused.iterator();
         int currentIndex = 0;
         while(tupleIter.hasNext()) {
-            LinearComputationTuple tuple = (LinearComputationTuple)tupleIter.next();
+            LinearComputationTuple tuple = tupleIter.next();
             // make the names for the two fields for this tuple
             String stateFieldName = tupleData.getName(tuple);
             if (stateFieldName == null) {throw new RuntimeException("null name in name map!");}
             String indexFieldName = stateFieldName + INDEX_POSTFIX;
             // get size of state array
-            LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+            LinearComputationTuple t = tupleIter.next();
             int stateLength = tupleData.getMaxUse(t) + 1;
 
             // make the variable definition for the state field
@@ -212,9 +213,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         // if we are making initWork, add statements to fill up the
         // state arrays all the way.
         if (type == INITWORK) {
-            Iterator tupleIter = tupleData.reused.iterator();
+            Iterator<LinearComputationTuple> tupleIter = tupleData.reused.iterator();
             while(tupleIter.hasNext()) {
-                LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+                LinearComputationTuple t = tupleIter.next();
                 // basically, we want to store data for each use, 1-->maxUse
                 // which corresponds to what the value would have been on
                 // prior executions.
@@ -247,9 +248,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         // eg for use 0 (we do this here so that it always shows up in both
         // work and initWork) -- note that the array index expression is the
         // tuple index.
-        Iterator tupleIter = tupleData.reused.iterator();
+        Iterator<LinearComputationTuple> tupleIter = tupleData.reused.iterator();
         while(tupleIter.hasNext()) {
-            LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+            LinearComputationTuple t = tupleIter.next();
             JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
             JExpression arrayIndex = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
             // this expression is state_field[state_field_index]
@@ -275,7 +276,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
         FilterMatrix A = linearRep.getA();
         FilterVector b = linearRep.getb();
         for (int currentCol = A.getCols()-1; currentCol >= 0; currentCol--) {
-            List termList = new LinkedList();
+            List<LinearComputationTuple> termList = new LinkedList<LinearComputationTuple>();
             for (int currentRow = 0; currentRow< A.getRows(); currentRow++) {
                 // make a tuple for the current term
                 LinearComputationTuple t = new LinearComputationTuple(A.getRows() - 1 - currentRow, // index
@@ -288,10 +289,10 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             // generate the appropriate calculation -- either field access
             // or computation, depending on if the tuple is in the 
             // comp map or not.
-            List expressionList = new LinkedList(); // list to store JExpressions to compute terms
-            Iterator termIter = termList.iterator();
+            List<JExpression> expressionList = new LinkedList<JExpression>(); // list to store JExpressions to compute terms
+            Iterator<LinearComputationTuple> termIter = termList.iterator();
             while(termIter.hasNext()) {
-                LinearComputationTuple t = (LinearComputationTuple)termIter.next();
+                LinearComputationTuple t = termIter.next();
                 // if this tuple is in comp map, we have a stoed version of it so we should use that
                 JExpression termExpr = null;
                 if (tupleData.compMap.containsKey(t)) {
@@ -324,16 +325,16 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
                 JExpression pushArg;
                 // if there is only one expression, we are done
                 if (expressionList.size() == 1) {
-                    pushArg = (JExpression)expressionList.get(0);
+                    pushArg = expressionList.get(0);
                 } else {
                     // list is gaurenteed to have at least two elements in it
-                    Iterator exprIter = expressionList.iterator();
-                    JExpression expr1 = (JExpression)exprIter.next();
-                    JExpression expr2 = (JExpression)exprIter.next();
+                    Iterator<JExpression> exprIter = expressionList.iterator();
+                    JExpression expr1 = exprIter.next();
+                    JExpression expr2 = exprIter.next();
                     pushArg = new JAddExpression(null, expr1, expr2);
                     // iterate through the rest of the list, adding add exprs as we go
                     while(exprIter.hasNext()) {
-                        JExpression nextExpr = (JExpression)exprIter.next();
+                        JExpression nextExpr = exprIter.next();
                         pushArg = new JAddExpression(null, pushArg, nextExpr);
                     }
                 }
@@ -345,9 +346,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 
         // finally, generate appropriate index increments for each of the
         // reused tuples.
-        Iterator reusedIter = tupleData.reused.iterator();
+        Iterator<LinearComputationTuple> reusedIter = tupleData.reused.iterator();
         while(reusedIter.hasNext()) {
-            LinearComputationTuple t = (LinearComputationTuple)reusedIter.next();
+            LinearComputationTuple t = reusedIter.next();
             makeIndexUpdateStatement(body, t, tupleData);
         }
 
@@ -473,17 +474,17 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
          * Mapping of Tuples to maximum use (eg the max number of work function
          * executions in the future that this tuple could be used in.
          **/
-        private HashMap minUse;
+        private HashMap<Object, Object> minUse;
         /**
          * Mapping of Tuples to maximum use (eg the max number of work function
          * executions in the future that this tuple could be used in.
          **/
-        private HashMap maxUse;
+        private HashMap<Object, Object> maxUse;
         /**
          * Mapping of tuples to an alpha numeric name (this is used
          * to generate variable names in the replaced code.
          **/
-        private HashMap nameMap;
+        private HashMap<Object, Object> nameMap;
 
         /**
          * Mapping of Tuples to tuple couplings. The tuple couplings
@@ -493,12 +494,12 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
          * stored value in the tuple coupling. The mapping is necessary
          * so we know which terms to replace with their stored value.
          **/
-        private HashMap compMap;
+        private HashMap<Object, Object> compMap;
 
         /**
          * Set of tuples that get reused.
          **/
-        private HashSet reused;
+        private HashSet<LinearComputationTuple> reused;
 
     
 
@@ -509,22 +510,22 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             //LinearPrinter.println("Linear redundancy:\n" + redundancy);
             //LinearPrinter.println("Linear Redundnacy tuples:\n" +
             //redundancy.getTupleString());
-            minUse       = new HashMap();
-            maxUse       = new HashMap();
-            nameMap      = new HashMap();
-            compMap      = new HashMap();
-            reused       = new HashSet();
+            minUse       = new HashMap<Object, Object>();
+            maxUse       = new HashMap<Object, Object>();
+            nameMap      = new HashMap<Object, Object>();
+            compMap      = new HashMap<Object, Object>();
+            reused       = new HashSet<LinearComputationTuple>();
 
             // calculate min and max use along with labeling all of the
             // computation nodes with some string (a simple number).
             // even though we know that the list the tuples map to are
             // always sorted.
-            HashMap tuplesToUses = redundancy.getTuplesToUses();
-            Iterator tupleIter = tuplesToUses.keySet().iterator();
+            HashMap<LinearComputationTuple, LinkedList> tuplesToUses = redundancy.getTuplesToUses();
+            Iterator<LinearComputationTuple> tupleIter = tuplesToUses.keySet().iterator();
             int tupleIndex = 0;
             while(tupleIter.hasNext()) {
                 Object tuple = tupleIter.next();
-                Iterator useIter = ((List)tuplesToUses.get(tuple)).iterator();
+                Iterator useIter = tuplesToUses.get(tuple).iterator();
                 while(useIter.hasNext()) {
                     Integer currentUse = (Integer)useIter.next();
                     Integer oldMin = (Integer)this.minUse.get(tuple);
@@ -548,7 +549,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             // this, we are also going to do some sanity checks
             tupleIter = tuplesToUses.keySet().iterator();
             while(tupleIter.hasNext()) {
-                LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+                LinearComputationTuple t = tupleIter.next();
                 if ((this.getMinUse(t) == 0) &&
                     (this.getMaxUse(t) >  0)) {
                     this.reused.add(t);
@@ -558,14 +559,14 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             // now, we are going to compute the compMap information
             tupleIter = reused.iterator();
             while(tupleIter.hasNext()) {
-                LinearComputationTuple tuple = (LinearComputationTuple)tupleIter.next();
+                LinearComputationTuple tuple = tupleIter.next();
                 // we know this tuple is reused, so we need to add a mapping
                 // to itself so we use the stored value in the new filter
                 // rather than computing it twice.
                 this.compMap.put(tuple, new TupleCoupling(tuple, 0));
 
                 // get an iterator over the list of uses
-                Iterator useIter = ((List)tuplesToUses.get(tuple)).iterator();
+                Iterator useIter = tuplesToUses.get(tuple).iterator();
                 while(useIter.hasNext()) {
                     int use = ((Integer)useIter.next()).intValue();
             
@@ -631,9 +632,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             return returnString;
         }
         /** utility to convert a hash to a string. **/
-        private String hash2String(HashMap m) {
+        private String hash2String(HashMap<Object, Object> m) {
             String str = "";
-            Iterator keyIter = m.keySet().iterator();
+            Iterator<Object> keyIter = m.keySet().iterator();
             while(keyIter.hasNext()) {
                 Object key = keyIter.next();
                 str += (key + "-->" +
@@ -642,9 +643,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
             return str;
         }
         /** Utility to convert a set to a string. **/
-        private String set2String(HashSet s) {
+        private String set2String(HashSet<LinearComputationTuple> s) {
             String str = "(";
-            Iterator iter = s.iterator();
+            Iterator<LinearComputationTuple> iter = s.iterator();
             while(iter.hasNext()) {
                 str += iter.next() + ",";
             }

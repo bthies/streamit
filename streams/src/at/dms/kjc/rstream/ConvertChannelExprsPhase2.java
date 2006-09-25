@@ -133,8 +133,8 @@ class ConvertChannelExprsPhase2 extends SLIRReplacingVisitor
     /** build the expression for a buffer access and return the expression **/
     private JExpression buildAccessExpr(JExpression self) 
     {
-        HashMap loopExpr = null;
-        HashMap topLevelExpr = null;
+        HashMap<JDoLoopStatement, Integer> loopExpr = null;
+        HashMap<JExpression, Integer> topLevelExpr = null;
 
         //depending on the expression, use the correct state (push or peek/pop)
         if (self instanceof SIRPopExpression ||
@@ -154,7 +154,7 @@ class ConvertChannelExprsPhase2 extends SLIRReplacingVisitor
         //find the expression for the inner-most loop containing this expression
         assert phase1.enclosingLoop.containsKey(self);
         JDoLoopStatement enclosing = 
-            (JDoLoopStatement)phase1.enclosingLoop.get(self);
+            phase1.enclosingLoop.get(self);
 
         //add the terms for all the enclosing loops of this expression
         while (enclosing != null) {     
@@ -167,10 +167,10 @@ class ConvertChannelExprsPhase2 extends SLIRReplacingVisitor
                                                                           (null,
                                                                            enclosing.getInduction()),
                                                                           enclosing.getInitValue()),
-                                                       new JIntLiteral(((Integer)loopExpr.get(enclosing)).intValue())));
+                                                       new JIntLiteral(loopExpr.get(enclosing).intValue())));
             assert phase1.enclosingLoop.containsKey(enclosing);
             //get the next enclosing loop
-            enclosing = (JDoLoopStatement)phase1.enclosingLoop.get(enclosing);
+            enclosing = phase1.enclosingLoop.get(enclosing);
         }
     
 
@@ -178,7 +178,7 @@ class ConvertChannelExprsPhase2 extends SLIRReplacingVisitor
         //now add the expression that represents everything that executed so far in the top level loop
         access =
             Util.newIntAddExpr(access,
-                               new JIntLiteral(((Integer)topLevelExpr.get(self)).intValue()));
+                               new JIntLiteral(topLevelExpr.get(self).intValue()));
     
         return access;
     }

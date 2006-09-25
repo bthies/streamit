@@ -96,7 +96,7 @@ public class GreedyLayout implements Layout {
             Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
             Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
            // System.out.println(tempArray.length);
-            scheduleOrder = new LinkedList(Arrays.asList(tempArray));
+            scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
         }

@@ -17,7 +17,7 @@ import at.dms.compiler.*;
  * upper-triangular mtatrices.) This replacer was inspired by the
  * Radar (CoarseSerializedBeamFormer) benchmark. <br>
  *
- * $Id: LinearDiagonalReplacer.java,v 1.6 2006-01-30 18:15:53 thies Exp $
+ * $Id: LinearDiagonalReplacer.java,v 1.7 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearDiagonalReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -63,7 +63,7 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
         LinearReplaceCalculator replaceCosts = new LinearReplaceCalculator(lfa);
         str.accept(replaceCosts);
         LinearPrinter.println("starting replacement pass. Will replace " + replaceCosts.getDoReplace().keySet().size() + " filters:");
-        Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
+        Iterator<SIRStream> keyIter = replaceCosts.getDoReplace().keySet().iterator();
         while(keyIter.hasNext()) {
             Object key = keyIter.next();
             LinearPrinter.println(" " + key);

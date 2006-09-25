@@ -152,7 +152,7 @@ public class SplitterFusionState extends FusionState
     /** perform any initialization tasks, including setting the downstream buffers to be 
         this splitter's incoming buffer if this splitter is unnecessary (thereby bypassing it)
         and declaring the incoming buffer **/
-    public void initTasks(Vector fields, Vector functions,
+    public void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                           JBlock initFunctionCalls, JBlock main) 
     {
         //if this filter is unnecessary, make sure all the downstream neighbor

@@ -103,7 +103,7 @@ abstract class CConfigContainer extends CConfig {
     /**
      * Traceback function.
      */
-    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, SIRStream str) {
+    public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, SIRStream str) {
         SIRStream result = traceback(partitions, curPartition, 0, cont.size()-1, tileLimit, str);
         // if the whole container is assigned to one tile, record it
         // as such.
@@ -114,7 +114,7 @@ abstract class CConfigContainer extends CConfig {
     }
 
 
-    protected SIRStream traceback(LinkedList partitions, PartitionRecord curPartition,
+    protected SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                                   int x1, int x2, int tileLimit, SIRStream str) {
         // if we're down to one node, then descend into it
         if (x1==x2) {
@@ -173,13 +173,13 @@ abstract class CConfigContainer extends CConfig {
         return null;
     }
 
-    protected abstract SIRStream doCut(LinkedList partitions, PartitionRecord curPartition,
+    protected abstract SIRStream doCut(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                                        int x1, int x2, int xPivot, int tileLimit, int tPivot, SIRStream str);
     
     /**
      * Fuses everyone in range.
      */
-    private SIRStream fuseAll(LinkedList partitions, PartitionRecord curPartition,
+    private SIRStream fuseAll(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                               int x1, int x2, int tileLimit, SIRStream str) {
         // everything goes in this partition
         for (int x=x1; x<=x2; x++) {

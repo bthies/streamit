@@ -49,7 +49,7 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
     /**
      * List of assignments to be added to init function.
      */
-    private ArrayList fieldInits;
+    private ArrayList<Statement> fieldInits;
     /**
      * Whether or not we're targeting the Java library.
      */
@@ -57,20 +57,20 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
     
     public SeparateFieldInitializers(boolean libraryFormat) {
         super();
-        fieldInits = new ArrayList();
+        fieldInits = new ArrayList<Statement>();
         this.libraryFormat = libraryFormat;
     }
 
     public Object visitStreamSpec(StreamSpec spec) {
         // maintain a separate list of field inits per stream
-        ArrayList oldFieldInits = fieldInits;
-        fieldInits = new ArrayList();       
+        ArrayList<Statement> oldFieldInits = fieldInits;
+        fieldInits = new ArrayList<Statement>();       
 
         spec = (StreamSpec)super.visitStreamSpec(spec);
     
         // now that we've visited whole thing, replace init with
         // version that has field assigments
-        List fns = new ArrayList(spec.getFuncs());
+        List<Function> fns = new ArrayList<Function>(spec.getFuncs());
         fns = replaceInitWithPrepended(spec.getContext(), 
                                        fns, 
                                        fieldInits);
@@ -90,7 +90,7 @@ public class SeparateFieldInitializers extends streamit.frontend.tojava.InitMung
     {
         field = (FieldDecl)super.visitFieldDecl(field);
 
-        List newInits = new ArrayList();
+        List<Expression> newInits = new ArrayList<Expression>();
         for (int i = 0; i < field.getNumFields(); i++)
             {
                 Expression init = field.getInit(i);

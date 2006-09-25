@@ -29,7 +29,7 @@ abstract public class Splitter extends Operator
     public static boolean finegrained = false;
     public boolean duplicateSplitter = false;
 
-    List dest = new ArrayList();
+    List<Stream> dest = new ArrayList<Stream>();
     public Channel inputChannel = null;
     public Channel outputChannel[] = null;
 
@@ -131,11 +131,11 @@ abstract public class Splitter extends Operator
         // go through my members and connect them all with
         // ChannelConnectFilter
         int outputIndx = 0;
-        ListIterator iter = dest.listIterator();
+        ListIterator<Stream> iter = dest.listIterator();
         while (iter.hasNext())
             {
                 // get the stream
-                Stream s = (Stream)iter.next();
+                Stream s = iter.next();
 
                 // it is possible that the stream will legitimately be null
                 // just don't do anything in this case!

@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBodyContext.java,v 1.10 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CBodyContext.java,v 1.11 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.kjc;
 
+import java.io.Serializable;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -461,7 +462,7 @@ public abstract class CBodyContext extends CContext {
      *
      */
     public void clearThrowables() {
-        throwables = new Hashtable();
+        throwables = new Hashtable<Serializable, CThrowableInfo>();
     }
 
     /**
@@ -469,7 +470,7 @@ public abstract class CBodyContext extends CContext {
      */
     public void addThrowable(CThrowableInfo throwable) {
         if (throwables == null) {
-            throwables = new Hashtable();
+            throwables = new Hashtable<Serializable, CThrowableInfo>();
         }
         throwables.put(throwable, throwable);
     }
@@ -489,7 +490,7 @@ public abstract class CBodyContext extends CContext {
      *
      */
     public void adoptThrowables(CBodyContext source) {
-        throwables = new Hashtable();
+        throwables = new Hashtable<Serializable, CThrowableInfo>();
         mergeThrowables(source);
     }
 
@@ -543,8 +544,8 @@ public abstract class CBodyContext extends CContext {
         if (throwables == null) {
             System.err.print("---");
         } else {
-            for (Enumeration e = throwables.elements(); e.hasMoreElements(); ) {
-                System.err.print(" " + ((CThrowableInfo)e.nextElement()).getThrowable());
+            for (Enumeration<CThrowableInfo> e = throwables.elements(); e.hasMoreElements(); ) {
+                System.err.print(" " + e.nextElement().getThrowable());
             }
         }
         dumpIndent(level);
@@ -568,7 +569,7 @@ public abstract class CBodyContext extends CContext {
     private int         flowState;
     private CVariableInfo       variableInfo;
     private CVariableInfo       fieldInfo;
-    private Hashtable       throwables;
+    private Hashtable<Serializable, CThrowableInfo>       throwables;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -581,7 +582,7 @@ public abstract class CBodyContext extends CContext {
         other.flowState = this.flowState;
         other.variableInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.variableInfo);
         other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo);
-        other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+        other.throwables = (java.util.Hashtable<Serializable, CThrowableInfo>)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -20,11 +20,11 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
     /**
      * List of variableDeclarations to move to the front of the block
      */
-    private LinkedList varDefs;
+    private LinkedList<Object> varDefs;
     /**
      * List of JNewArrayExpression to move to the front of the block
      */
-    private LinkedList newArrays;
+    private LinkedList<Object> newArrays;
     /**
      * Int used to rename conflicting variable names
      */
@@ -68,12 +68,12 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
         if (str instanceof SIRSplitJoin)
             {
                 SIRSplitJoin sj = (SIRSplitJoin)str;
-                Iterator iter = sj.getParallelStreams().iterator();
+                Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
                 if (str.getInit()!=null) 
                     str.getInit().accept(this);
                 while (iter.hasNext())
                     {
-                        SIRStream child = (SIRStream)iter.next();
+                        SIRStream child = iter.next();
                         raiseVars(child);
                     }
             }
@@ -87,8 +87,8 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
                                       JavaStyleComment[] comments) {
         if(parent==null) {
             parent=self;
-            varDefs=new LinkedList();
-            newArrays=new LinkedList();
+            varDefs=new LinkedList<Object>();
+            newArrays=new LinkedList<Object>();
         }
         //LinkedList saveDefs=varDefs;
         int size=self.size();
@@ -179,12 +179,12 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
                 JStatement newState=(JStatement)newArrays.get(i);
                 self.addStatementFirst(newState);
             }
-            Hashtable visitedVars=new Hashtable();
+            Hashtable<String, Boolean> visitedVars=new Hashtable<String, Boolean>();
             for(int i=varDefs.size()-1;i>=0;i--) {
                 JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
                 self.addStatementFirst(varDec);
                 JVariableDefinition[] varArray=varDec.getVars();
-                LinkedList newVars=new LinkedList();
+                LinkedList<JLocalVariable> newVars=new LinkedList<JLocalVariable>();
                 for(int j=0;j<varArray.length;j++) {
                     JLocalVariable var=(JLocalVariable)varArray[j];
                     if(!visitedVars.containsKey(var.getIdent())) {
@@ -197,7 +197,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
                         newVars.add(var);
                     }
                 }
-                varDec.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+                varDec.setVars(newVars.toArray(new JVariableDefinition[0]));
             }
             parent=null;
         }

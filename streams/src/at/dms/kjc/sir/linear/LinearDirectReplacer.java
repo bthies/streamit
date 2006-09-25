@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.10 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.11 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -53,7 +53,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
         str.accept(replaceCosts);
         LinearPrinter.println("starting replacement pass. Will replace " +
                               replaceCosts.getDoReplace().keySet().size() + " filters:");
-        Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
+        Iterator<SIRStream> keyIter = replaceCosts.getDoReplace().keySet().iterator();
         while(keyIter.hasNext()) {
             Object key = keyIter.next();
             LinearPrinter.println(" " + key);
@@ -216,7 +216,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
             // term (which we will then add together).
             // Currently bomb out if we have a non real number
             // (no way to generate non-reals at the present).
-            Vector combinationExpressions = new Vector();
+            Vector<JExpression> combinationExpressions = new Vector<JExpression>();
 
             // a note about indexes: the matrix [[0] [1] [2]]
             // implies peek(0)*2 + peek(1)*1 + peek(2)*0.
@@ -290,14 +290,14 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
                 // Start with the right most node
                 int numCombos = combinationExpressions.size();
                 pushArgument = new JAddExpression(null, // tokenReference
-                                                  ((JExpression)combinationExpressions.get(numCombos-1)), // left
+                                                  combinationExpressions.get(numCombos-1), // left
                                                   offsetNode); // right
                 // now, for all of the other combinations, make new add nodes with the
                 // comb. exprs as the left argument and the current add expr as the right
                 // argument.
                 for (int k=2; k<=numCombos; k++) {
                     pushArgument = new JAddExpression(null, // tokenReference,
-                                                      ((JExpression)combinationExpressions.get(numCombos-k)), // left
+                                                      combinationExpressions.get(numCombos-k), // left
                                                       pushArgument); // right (use the previous expression)
                 }
             }
@@ -331,10 +331,10 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
          * Maps SIRStreams-->Boolean. If the value is true, we want to replace this member, and
          * if the value is false, we do not want to do the replacement.
          **/
-        HashMap doReplace;
+        HashMap<SIRStream, Boolean> doReplace;
         LinearAnalyzer linearInformation;
         public LinearReplaceCalculator(LinearAnalyzer la) {
-            doReplace = new HashMap();
+            doReplace = new HashMap<SIRStream, Boolean>();
             linearInformation = la;
         }
         /**
@@ -419,16 +419,16 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
         }
 
         /** get the mappings from streams to true if we want to replace them. **/
-        HashMap getDoReplace() {return this.doReplace;}
+        HashMap<SIRStream, Boolean> getDoReplace() {return this.doReplace;}
 
         /** calculate the total cost of doing the replacements that is described in doReplace. **/
         LinearCost getTotalCost() {
             LinearCost currentCost = LinearCost.ZERO;
         
-            Iterator keyIter = this.doReplace.keySet().iterator();
+            Iterator<SIRStream> keyIter = this.doReplace.keySet().iterator();
             while(keyIter.hasNext()) {
                 // the only mappings that we have in the map are the streams we want to include
-                SIRStream currentStream = (SIRStream)keyIter.next();
+                SIRStream currentStream = keyIter.next();
                 LinearFilterRepresentation currentChildRep = linearInformation.getLinearRepresentation(currentStream);
                 LinearCost currentChildCost = currentChildRep.getCost();
                 currentCost = currentCost.plus(currentChildCost);

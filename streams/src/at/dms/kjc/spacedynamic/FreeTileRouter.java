@@ -26,11 +26,11 @@ public class FreeTileRouter implements Router
     class RouteAndOccupiedCount
     {
         //the route itself
-        public LinkedList route;
+        public LinkedList<ComputeNode> route;
         //the number of occupied tiles along the route
         public int occupied;
     
-        public RouteAndOccupiedCount(LinkedList list, 
+        public RouteAndOccupiedCount(LinkedList<ComputeNode> list, 
                                      int occ) 
         {
             this.route = list;
@@ -47,7 +47,7 @@ public class FreeTileRouter implements Router
 
     //returns a linked list of coordinates that gives the route
     //including source and dest
-    public LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
+    public LinkedList<ComputeNode> getRoute(SpdStaticStreamGraph ssg, ComputeNode src, ComputeNode dst) 
     {
         assert src != null && dst != null;
     
@@ -86,7 +86,7 @@ public class FreeTileRouter implements Router
         assert !(bestRoute.route.size() == 0 &&
                  !(bestRoute.occupied == Integer.MAX_VALUE));
     
-        LinkedList route = bestRoute.route;
+        LinkedList<ComputeNode> route = bestRoute.route;
 
         //if we cannot find a legal route, just return a null route...
         if (route.size() == 0)
@@ -107,7 +107,7 @@ public class FreeTileRouter implements Router
     {
         RawChip rawChip = layout.getRawChip();
     
-        LinkedList route = new LinkedList();
+        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
     
         //make sure we do not route thru another SSG, set the route to be really high
         if (layout.getNode(src) != null && 
@@ -128,11 +128,11 @@ public class FreeTileRouter implements Router
         //initialize the occupied count to a large integer that can never be 
         //obtained, in this case the total number of tiles +1
         RouteAndOccupiedCount takeX = 
-            new RouteAndOccupiedCount(new LinkedList(),
+            new RouteAndOccupiedCount(new LinkedList<ComputeNode>(),
                                       Integer.MAX_VALUE);
     
         RouteAndOccupiedCount takeY = 
-            new RouteAndOccupiedCount(new LinkedList(),
+            new RouteAndOccupiedCount(new LinkedList<ComputeNode>(),
                                       Integer.MAX_VALUE);
     
         if (xDir != 0) {

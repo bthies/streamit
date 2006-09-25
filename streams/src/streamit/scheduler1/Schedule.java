@@ -15,7 +15,7 @@ public class Schedule extends AssertedClass
      * to each other, and two pipeline know how to connect to each other, but
      * their children don't know how to connect to each other's children.
      */
-    final Map bufferSizes = new HashMap ();
+    final Map<Object, Object> bufferSizes = new HashMap<Object, Object> ();
 
     public BigInteger getBufferSizeBetween (Object streamSrc, Object streamDst)
     {
@@ -67,26 +67,26 @@ public class Schedule extends AssertedClass
      */
     public void setJoinBufferSize (Object join, Object streamDst, BigInteger bufferSize)
     {
-        List dataList = null;
+        List<Object[]> dataList = null;
         if (bufferSizes.containsKey (join))
             {
                 Object result = bufferSizes.get (join);
                 ASSERT (result != null && result instanceof List);
-                dataList = (List) result;
+                dataList = (List<Object[]>) result;
 
                 // make sure that this is the first destionation so far
                 {
-                    ListIterator iter = dataList.listIterator ();
+                    ListIterator<Object[]> iter = dataList.listIterator ();
                     while (iter.hasNext ())
                         {
-                            Object [] dataArray = (Object[]) iter.next ();
+                            Object [] dataArray = iter.next ();
                             ASSERT (dataArray);
 
                             ASSERT (dataArray [0] != streamDst);
                         }
                 }
             } else {
-                dataList = new LinkedList ();
+                dataList = new LinkedList<Object[]> ();
                 bufferSizes.put (join, dataList);
             }
 
@@ -106,34 +106,34 @@ public class Schedule extends AssertedClass
         setBufferSize (streamSrc, join, bufferSize);
     }
 
-    List steadySchedule = null;
-    List initSchedule = null;
+    List<Object> steadySchedule = null;
+    List<Object> initSchedule = null;
 
-    public List getSteadySchedule ()
+    public List<Object> getSteadySchedule ()
     {
         ASSERT (steadySchedule);
-        checkSchedule ((List)steadySchedule);
+        checkSchedule ((List<Object>)steadySchedule);
         return steadySchedule;
     }
 
-    public List getInitSchedule ()
+    public List<Object> getInitSchedule ()
     {
         ASSERT (initSchedule);
-        checkSchedule ((List)initSchedule);
+        checkSchedule ((List<Object>)initSchedule);
         return initSchedule;
     }
 
-    void checkSchedule (List schedule)
+    void checkSchedule (List<Object> schedule)
     {
         ASSERT (schedule);
 
-        ListIterator iter = schedule.listIterator ();
+        ListIterator<Object> iter = schedule.listIterator ();
         while (iter.hasNext ())
             {
                 Object c = iter.next ();
                 ASSERT (c);
 
-                if (c instanceof List) checkSchedule ((List)c);
+                if (c instanceof List) checkSchedule ((List<Object>)c);
                 ASSERT (! (c instanceof SchedStream));
             }
     }
@@ -142,17 +142,17 @@ public class Schedule extends AssertedClass
     {
         if (steadySchedule instanceof List)
             {
-                this.steadySchedule = (List) steadySchedule;
+                this.steadySchedule = (List<Object>) steadySchedule;
             } else {
-                this.steadySchedule = new LinkedList ();
+                this.steadySchedule = new LinkedList<Object> ();
                 this.steadySchedule.add (steadySchedule);
             }
 
         if (initSchedule instanceof List)
             {
-                this.initSchedule = (List) initSchedule;
+                this.initSchedule = (List<Object>) initSchedule;
             } else {
-                this.initSchedule = new LinkedList ();
+                this.initSchedule = new LinkedList<Object> ();
                 this.initSchedule.add (initSchedule);
             }
     }

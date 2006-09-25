@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TraceInferenceGraph.java,v 1.3 2006-03-24 18:26:08 dimock Exp $
+ * $Id: TraceInferenceGraph.java,v 1.4 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.backend;
@@ -71,7 +71,7 @@ public class TraceInferenceGraph extends Trace {
      */
     private void trace(InferenceNode node) throws IOException {
         QTemporary[]    temps = node.getTemporaries();
-        Vector      links = node.getInferences();
+        Vector<InferenceNode>      links = node.getInferences();
         String      label;
 
 
@@ -85,7 +85,7 @@ public class TraceInferenceGraph extends Trace {
 
         // GENERATE LINKS
         for (int i = 0; i < links.size(); i++) {
-            InferenceNode   dest = (InferenceNode)links.elementAt(i);
+            InferenceNode   dest = links.elementAt(i);
 
             if (node.getPosition() < dest.getPosition()) {
                 write(generateEdge("" + node, "" + links.elementAt(i), i, links.size(), false));

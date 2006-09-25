@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 import at.dms.kjc.spacetime.switchIR.*;
+
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashMap;
@@ -10,17 +11,17 @@ import java.util.List;
 
 public class SwitchCodeStore {
     protected RawTile parent;
-    private Vector steadySwitchIns;
-    private Vector initSwitchIns;
-    private Vector commAddrIns;
+    private Vector<SwitchIns> steadySwitchIns;
+    private Vector<SwitchIns> initSwitchIns;
+    private Vector<SwitchIns> commAddrIns;
     private static final String LABEL_PREFIX="L_";
     private static int labelId=0;
 
     public SwitchCodeStore(RawTile parent) {
         this.parent = parent;
-        initSwitchIns = new Vector();
-        steadySwitchIns = new Vector();
-        commAddrIns = new Vector();
+        initSwitchIns = new Vector<SwitchIns>();
+        steadySwitchIns = new Vector<SwitchIns>();
+        commAddrIns = new Vector<SwitchIns>();
     }
 
     public void appendCommAddrIns(SwitchIns ins) 
@@ -54,8 +55,8 @@ public class SwitchCodeStore {
     }
 
     public SwitchIns getIns(int i, boolean init) {
-        return (init) ? (SwitchIns)initSwitchIns.get(i) : 
-            (SwitchIns)steadySwitchIns.get(i);
+        return (init) ? initSwitchIns.get(i) : 
+            steadySwitchIns.get(i);
     }
 
     public Label getFreshLabel() {
@@ -64,7 +65,7 @@ public class SwitchCodeStore {
     
     public SwitchIns getCommAddrIns(int i) 
     {
-        return (SwitchIns)commAddrIns.get(i);
+        return commAddrIns.get(i);
     }
     
     public int commAddrSize()
@@ -90,11 +91,11 @@ public class SwitchCodeStore {
     //create the header of a switch loop on all the tiles in <pre>tiles</pre> and 
     //first send mult from the compute processor to the switch
     //returns map of tile->Label
-    public static HashMap switchLoopHeader(HashSet tiles, int mult, boolean init, boolean primePump) 
+    public static HashMap<RawTile, Label> switchLoopHeader(HashSet<ComputeNode> tiles, int mult, boolean init, boolean primePump) 
     {
         assert mult > 1;
-        HashMap labels = new HashMap();
-        Iterator it = tiles.iterator();
+        HashMap<RawTile, Label> labels = new HashMap<RawTile, Label>();
+        Iterator<ComputeNode> it = tiles.iterator();
         while (it.hasNext()) {
             RawTile tile = (RawTile)it.next();
             Util.sendConstFromTileToSwitch(tile, mult - 1, init, primePump, SwitchReg.R2);
@@ -109,12 +110,12 @@ public class SwitchCodeStore {
     
     //create the trailer of the loop for all tiles in the key set of <pre>lables</pre>
     //labels maps RawTile->label
-    public static void switchLoopTrailer(HashMap labels, boolean init, boolean primePump) 
+    public static void switchLoopTrailer(HashMap<RawTile, Label> labels, boolean init, boolean primePump) 
     {
-        Iterator tiles = labels.keySet().iterator();
+        Iterator<RawTile> tiles = labels.keySet().iterator();
         while (tiles.hasNext()) {
-            RawTile tile = (RawTile)tiles.next();
-            Label label = (Label)labels.get(tile);
+            RawTile tile = tiles.next();
+            Label label = labels.get(tile);
             //add the branch back
             BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
                                            label.getLabel());
@@ -124,9 +125,9 @@ public class SwitchCodeStore {
     
     
     //return a list of all the raw tiles used in routing from source to dests
-    public static HashSet getTilesInRoutes(Router router, ComputeNode source, ComputeNode[] dests) 
+    public static HashSet<ComputeNode> getTilesInRoutes(Router router, ComputeNode source, ComputeNode[] dests) 
     {
-        HashSet tiles = new HashSet();
+        HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
 
         for (int i = 0; i < dests.length; i++) {
             ComputeNode dest = dests[i];
@@ -168,22 +169,22 @@ public class SwitchCodeStore {
         for (int i = 0; i < dests.length; i++) {
             ComputeNode dest = dests[i];
         
-            LinkedList route = router.getRoute(source, dest);
+            LinkedList<ComputeNode> route = router.getRoute(source, dest);
             //append the dest again to the end of route 
             //so we can place the item in the processor queue
             route.add(dest);
-            Iterator it = route.iterator();
+            Iterator<ComputeNode> it = route.iterator();
             if (!it.hasNext()) {
                 System.err.println("Warning sending item to itself");
                 continue;
             }
         
-            ComputeNode prev = (ComputeNode)it.next();
+            ComputeNode prev = it.next();
             ComputeNode current = prev;
             ComputeNode next;
         
             while (it.hasNext()) {
-                next = (ComputeNode)it.next();
+                next = it.next();
                 SpaceTimeBackend.println("    Route on " + current + ": " + prev + "->" + next);
                 //only add the instructions to the raw tile
                 if (current instanceof RawTile) {

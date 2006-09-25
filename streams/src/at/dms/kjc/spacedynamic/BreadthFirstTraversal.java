@@ -7,23 +7,23 @@ import java.util.Vector;
 
 public class BreadthFirstTraversal 
 {
-    private static LinkedList traversal;
+    private static LinkedList<FlatNode> traversal;
     
     //returns a linked listed with a breadth first traversal 
     //of the stream graph starting at top
-    public static LinkedList getTraversal(FlatNode top) 
+    public static LinkedList<FlatNode> getTraversal(FlatNode top) 
     {
-        traversal = new LinkedList();
+        traversal = new LinkedList<FlatNode>();
         if (top == null)
             return traversal;
     
-        HashSet visited = new HashSet();
-        Vector queue = new Vector();
+        HashSet<FlatNode> visited = new HashSet<FlatNode>();
+        Vector<FlatNode> queue = new Vector<FlatNode>();
         FlatNode node;
     
         queue.add(top);
         while(!queue.isEmpty()) {
-            node = (FlatNode)queue.get(0);
+            node = queue.get(0);
             queue.remove(0);
         
             if (node == null)

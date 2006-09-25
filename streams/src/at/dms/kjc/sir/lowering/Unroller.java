@@ -18,7 +18,7 @@ public class Unroller extends SLIRReplacingVisitor {
      * Map allowing the current block to access the modified
      * list of the current for loop
      */
-    private Hashtable currentModified;
+    private Hashtable<JLocalVariable, Boolean> currentModified;
     /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
@@ -26,7 +26,7 @@ public class Unroller extends SLIRReplacingVisitor {
     /**
      * Holds compile time values
      */
-    private Hashtable values;
+    private Hashtable<JLocalVariable, JExpression> values;
     /**
      * Whether or not anything has been unrolled.
      */
@@ -67,8 +67,8 @@ public class Unroller extends SLIRReplacingVisitor {
         this.constants = constants;
         this.unrollOuterLoops = unrollOuterLoops;
         this.hasUnrolled = false;
-        currentModified=new Hashtable();
-        values=new Hashtable();
+        currentModified=new Hashtable<JLocalVariable, Boolean>();
+        values=new Hashtable<JLocalVariable, JExpression>();
         inContainerInit=false;
     }
     
@@ -136,10 +136,10 @@ public class Unroller extends SLIRReplacingVisitor {
         if (str instanceof SIRSplitJoin)
             {
                 SIRSplitJoin sj = (SIRSplitJoin)str;
-                Iterator iter = sj.getParallelStreams().iterator();
+                Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
                 while (iter.hasNext())
                     {
-                        SIRStream child = (SIRStream)iter.next();
+                        SIRStream child = iter.next();
                         unroll(child);
                     }
             }
@@ -233,8 +233,8 @@ public class Unroller extends SLIRReplacingVisitor {
         if((KjcOptions.unroll>1 || inContainerInit) && !self.getUnrolled()) { //Ignore if already unrolled
 
             // first recurse into body...
-            Hashtable saveModified=currentModified;
-            currentModified=new Hashtable();
+            Hashtable<JLocalVariable, Boolean> saveModified=currentModified;
+            currentModified=new Hashtable<JLocalVariable, Boolean>();
             // we're going to see if any child unrolls, to avoid
             // unrolling doubly-nested loops
             boolean saveHasUnrolled = hasUnrolled;
@@ -307,7 +307,7 @@ public class Unroller extends SLIRReplacingVisitor {
      * <info>, body <body> and <currentModified> as in
      * visitForStatement.
      */
-    private boolean shouldUnroll(LoopIterInfo info, JStatement body, Hashtable currentModified) {
+    private boolean shouldUnroll(LoopIterInfo info, JStatement body, Hashtable<JLocalVariable, Boolean> currentModified) {
         // if no unroll info or variable is modified in loop, fail
         if (info==null || currentModified.containsKey(info.getVar())) {
             return false;
@@ -359,7 +359,7 @@ public class Unroller extends SLIRReplacingVisitor {
      * Failing shouldUnroll (completely) this determines if the loop can
      * be unrolled partially
      */
-    private boolean canUnroll(LoopIterInfo info, Hashtable currentModified) {
+    private boolean canUnroll(LoopIterInfo info, Hashtable<JLocalVariable, Boolean> currentModified) {
         if (info==null || currentModified.containsKey(info.getVar())) {
             return false;
         }
@@ -375,7 +375,7 @@ public class Unroller extends SLIRReplacingVisitor {
                                        JExpression cond,
                                        JStatement incr,
                                        JStatement body) {
-        LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,new Hashtable(),new Hashtable());
+        LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,new Hashtable<JLocalVariable, JExpression>(),new Hashtable());
         // Make sure has old behavior: no executions of loop that still has declaration
         // in init.
         if (info != null && info.getIsDeclaredInInit()) info = null;
@@ -389,7 +389,7 @@ public class Unroller extends SLIRReplacingVisitor {
      */
     private JBlock doUnroll(LoopIterInfo info, JForStatement self) {
         // make a list of statements
-        List statementList = new LinkedList();
+        List<JStatement> statementList = new LinkedList<JStatement>();
         statementList.add(self.getInit());
         // get the initial value of the counter
         int counter = info.getInitVal();
@@ -422,7 +422,7 @@ public class Unroller extends SLIRReplacingVisitor {
         // return new block instead of the for loop
         constants.remove(info.getVar());
         return new JBlock(null, 
-                          (JStatement[])statementList.
+                          statementList.
                           toArray(new JStatement[0]),
                           null);
     }

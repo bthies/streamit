@@ -49,7 +49,7 @@ public class DetectImmutable extends SymbolTableVisitor
         // which are mutable
         // Its keys are Strings representing names of Streams,
         // and the values are names of arrays within that Stream which are mutable.
-        Map allMutableArrays = new HashMap(); // <String, Set<String>>        
+        Map<String, Set<String>> allMutableArrays = new HashMap<String, Set<String>>(); // <String, Set<String>>        
 
         MutableArrayList() {}
        
@@ -57,22 +57,22 @@ public class DetectImmutable extends SymbolTableVisitor
         {
             if (arrayName == null)
                 throw new IllegalArgumentException("Can't have null arrayName argument to isImmutable");
-            Set mutableArrays = getMutableArraysInStream(context);
+            Set<String> mutableArrays = getMutableArraysInStream(context);
             return !(mutableArrays.contains(arrayName));
         }
         
-        Set getMutableArraysInStream(String context) 
+        Set<String> getMutableArraysInStream(String context) 
         {
-            Set mutableArrays = (Set) allMutableArrays.get(context);
+            Set<String> mutableArrays = allMutableArrays.get(context);
             if (mutableArrays != null) 
                 return mutableArrays;
             else
-                return new HashSet();
+                return new HashSet<String>();
         }
         
         void markArrayAsMutable(String context, String arrayName) 
         {
-            Set mutableArrays = getMutableArraysInStream(context);
+            Set<String> mutableArrays = getMutableArraysInStream(context);
             mutableArrays.add(arrayName);
             allMutableArrays.put(context, mutableArrays);
         }
@@ -87,10 +87,10 @@ public class DetectImmutable extends SymbolTableVisitor
     // so that once all the relationships are known and mutabilities are known,
     // additional analysis can determine if any arrays that appear immutable
     // are mutated in other functions.
-    List caller;
-    List caller_variable_name;
-    List callee;
-    List callee_variable_name;
+    List<String> caller;
+    List<String> caller_variable_name;
+    List<String> callee;
+    List<String> callee_variable_name;
 
     // The name of the stream which arrays discovered as mutated should be
     // associated with.
@@ -170,10 +170,10 @@ public class DetectImmutable extends SymbolTableVisitor
         // Set the active stream name so when we visit an array we know which
         // stream with which to associate it.
         activeStreamName = spec.getName();
-        caller = new ArrayList();
-        caller_variable_name = new ArrayList();
-        callee = new ArrayList();
-        callee_variable_name = new ArrayList();
+        caller = new ArrayList<String>();
+        caller_variable_name = new ArrayList<String>();
+        callee = new ArrayList<String>();
+        callee_variable_name = new ArrayList<String>();
         functionMutableArrays = new MutableArrayList();
 
         if (activeStreamName == null)
@@ -194,10 +194,10 @@ public class DetectImmutable extends SymbolTableVisitor
         while (mutabilityChanged) {
             mutabilityChanged = false;
             for (int i = 0; i < caller.size(); i++) {
-                String caller_name = (String) caller.get(i);
-                String caller_variable = (String) caller_variable_name.get(i);
-                String callee_name = (String) callee.get(i);
-                String callee_variable = (String) callee_variable_name.get(i);
+                String caller_name = caller.get(i);
+                String caller_variable = caller_variable_name.get(i);
+                String callee_name = callee.get(i);
+                String callee_variable = callee_variable_name.get(i);
                 if (!functionMutableArrays.isImmutable(callee_name, callee_variable)) {
                     if (functionMutableArrays.isImmutable(caller_name, caller_variable)) {
                         functionMutableArrays.markArrayAsMutable(caller_name, 
@@ -207,10 +207,10 @@ public class DetectImmutable extends SymbolTableVisitor
                 }
             }
         }
-        for (Iterator it = functionMutableArrays.
+        for (Iterator<String> it = functionMutableArrays.
                  getMutableArraysInStream(null).iterator();
              it.hasNext();)
-            streamMutableArrays.markArrayAsMutable(activeStreamName, (String) it.next());
+            streamMutableArrays.markArrayAsMutable(activeStreamName, it.next());
 
         return returnVal;
     }    

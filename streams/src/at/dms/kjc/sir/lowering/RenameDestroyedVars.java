@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import java.util.*;
+
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
@@ -31,31 +32,31 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         random = new Random();
     }
 
-    private HashMap live_vars; // CType -> Integer
-    private HashMap max_live_vars; // CType -> Integer
+    private HashMap<CType, Integer> live_vars; // CType -> Integer
+    private HashMap<CType, Integer> max_live_vars; // CType -> Integer
     
     private boolean RENAME = false;
     private boolean assign = false;
 
     // first assign expression of a destroyed variable 
     // JLocalVariable -> JLocalVariableExpression or JForStatement
-    private HashMap first_assign; 
+    private HashMap<JLocalVariable, JPhylum> first_assign; 
     
     // last usage expresion of a destroyed varibale
     // JLocalVariable -> JLocalVariableExpression or JForStatement
-    private HashMap last_usage;   
+    private HashMap<JLocalVariable, JPhylum> last_usage;   
 
     // JForStatement -> LinkedList of JLocalVariables
-    private HashMap first_assign_for_loop;
+    private HashMap<JForStatement, LinkedList> first_assign_for_loop;
 
     // JForStatement -> LinkedList of JLocalVariables
-    private HashMap last_usage_for_loop;
+    private HashMap<JForStatement, LinkedList> last_usage_for_loop;
     
-    private HashMap var_alias; // assigned alias of variable Var -> New var
-    private HashMap available_names; // type -> Stack (stack of available names for a type)
-    private HashMap renamed_vars; // type -> LinkedList
+    private HashMap<JLocalVariable, JVariableDefinition> var_alias; // assigned alias of variable Var -> New var
+    private HashMap<CType, Stack> available_names; // type -> Stack (stack of available names for a type)
+    private HashMap<CType, LinkedList> renamed_vars; // type -> LinkedList
 
-    private LinkedList for_stmts; 
+    private LinkedList<JForStatement> for_stmts; 
 
     public static void renameDestroyedVars(SIRFilter filter, Set destroyed_vars) {
 
@@ -64,22 +65,22 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         JMethodDeclaration methods[] = filter.getMethods();
         for (int i = 0; i < methods.length; i++) {
 
-            rename.for_stmts = new LinkedList();
-            rename.first_assign = new HashMap();
-            rename.last_usage = new HashMap();
-            rename.first_assign_for_loop = new HashMap();
-            rename.last_usage_for_loop = new HashMap();
+            rename.for_stmts = new LinkedList<JForStatement>();
+            rename.first_assign = new HashMap<JLocalVariable, JPhylum>();
+            rename.last_usage = new HashMap<JLocalVariable, JPhylum>();
+            rename.first_assign_for_loop = new HashMap<JForStatement, LinkedList>();
+            rename.last_usage_for_loop = new HashMap<JForStatement, LinkedList>();
 
             rename.RENAME = false;
             methods[i].accept(rename);
 
             rename.RENAME = true;
 
-            rename.live_vars = new HashMap();
-            rename.max_live_vars = new HashMap();
-            rename.available_names = new HashMap();
-            rename.renamed_vars = new HashMap();
-            rename.var_alias = new HashMap();
+            rename.live_vars = new HashMap<CType, Integer>();
+            rename.max_live_vars = new HashMap<CType, Integer>();
+            rename.available_names = new HashMap<CType, Stack>();
+            rename.renamed_vars = new HashMap<CType, LinkedList>();
+            rename.var_alias = new HashMap<JLocalVariable, JVariableDefinition>();
 
             // initalize first_assign_for_loop and
             // last_usage_for_loop hash maps.
@@ -87,19 +88,19 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         
             methods[i].accept(rename);
 
-            Set types = rename.max_live_vars.keySet();
-            Iterator iter = types.iterator();
+            Set<CType> types = rename.max_live_vars.keySet();
+            Iterator<CType> iter = types.iterator();
 
             while (iter.hasNext()) {
                 Object type = iter.next();
-                int num = ((Integer)rename.max_live_vars.get(type)).intValue();
+                int num = rename.max_live_vars.get(type).intValue();
                 System.out.println("[Function: "+methods[i].getName()+" Type: "+type+" Max-live-destroyed-vars: "+num+"]");
 
                 JBlock body = methods[i].getBody();
-                Stack alias_stack = (Stack)rename.available_names.get(type);
+                Stack alias_stack = rename.available_names.get(type);
                 JVariableDefinition var;
         
-                LinkedList vars = (LinkedList)rename.renamed_vars.get(type);
+                LinkedList vars = rename.renamed_vars.get(type);
                 ListIterator li = vars.listIterator();
 
                 for (int y = 0; y < num; y++) {
@@ -120,10 +121,10 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
     private void init_for_hash_maps() {
 
-        Set keySet = first_assign.keySet();
-        Iterator iter = keySet.iterator();
+        Set<JLocalVariable> keySet = first_assign.keySet();
+        Iterator<JLocalVariable> iter = keySet.iterator();
         while (iter.hasNext()) {
-            JLocalVariable var = (JLocalVariable)iter.next();
+            JLocalVariable var = iter.next();
             Object obj = first_assign.get(var);
 
             if (obj instanceof JForStatement) {
@@ -131,7 +132,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
                 if (!first_assign_for_loop.containsKey(for_stmt)) {
                     first_assign_for_loop.put(for_stmt, new LinkedList());
                 }
-                LinkedList list = (LinkedList)first_assign_for_loop.get(for_stmt);
+                LinkedList<JLocalVariable> list = first_assign_for_loop.get(for_stmt);
                 list.addLast(var);
             }
         }
@@ -139,7 +140,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         keySet = last_usage.keySet();
         iter = keySet.iterator();
         while (iter.hasNext()) {
-            JLocalVariable var = (JLocalVariable)iter.next();
+            JLocalVariable var = iter.next();
             Object obj = last_usage.get(var);
 
             if (obj instanceof JForStatement) {
@@ -147,7 +148,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
                 if (!last_usage_for_loop.containsKey(for_stmt)) {
                     last_usage_for_loop.put(for_stmt, new LinkedList());
                 }
-                LinkedList list = (LinkedList)last_usage_for_loop.get(for_stmt);
+                LinkedList<JLocalVariable> list = last_usage_for_loop.get(for_stmt);
                 list.addLast(var);
             }
         }
@@ -163,7 +164,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
         if (RENAME) {
             if (first_assign_for_loop.containsKey(self)) {
-                LinkedList list = (LinkedList)first_assign_for_loop.get(self);
+                LinkedList list = first_assign_for_loop.get(self);
                 ListIterator li = list.listIterator();
                 while (li.hasNext()) {
                     JLocalVariable var = (JLocalVariable)li.next();
@@ -177,7 +178,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
         if (RENAME) {
             if (last_usage_for_loop.containsKey(self)) {
-                LinkedList list = (LinkedList)last_usage_for_loop.get(self);
+                LinkedList list = last_usage_for_loop.get(self);
                 ListIterator li = list.listIterator();
                 while (li.hasNext()) {
                     JLocalVariable var = (JLocalVariable)li.next();
@@ -233,14 +234,14 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
         // We are in rename mode, eliminate destroyed variables
 
-        ArrayList newVars = new ArrayList();
+        ArrayList<JVariableDefinition> newVars = new ArrayList<JVariableDefinition>();
         for (int i = 0; i < vars.length; i++) {
             if (!destroyedVars.contains(vars[i])) newVars.add(vars[i]);
         }
 
         if (newVars.size()>0) {
             // if we have some vars, adjust us
-            self.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+            self.setVars(newVars.toArray(new JVariableDefinition[0]));
             return self;
         } else {
             // otherwise, replace us with empty statement
@@ -300,7 +301,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
                     liveRangeEnd(var);
                 }
 
-                JVariableDefinition defn = (JVariableDefinition)var_alias.get(self.getVariable());
+                JVariableDefinition defn = var_alias.get(self.getVariable());
                 return new JLocalVariableExpression(null, defn);
             }
         }
@@ -321,10 +322,10 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         JVariableDefinition alias;
 
         // increase number of live variables
-        int live = ((Integer)live_vars.get(type)).intValue() + 1;
+        int live = live_vars.get(type).intValue() + 1;
         live_vars.put(type, new Integer(live));
 
-        if (live > ((Integer)max_live_vars.get(type)).intValue()) {
+        if (live > max_live_vars.get(type).intValue()) {
     
             // if this is biggest number of live variables we have 
             // seen so far then create a new variable
@@ -333,7 +334,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
                                             "__destroyed_"+type.toString()+"_"+live, null);
 
             // add renamed variable to the linked list (into random position)
-            LinkedList vars = (LinkedList)renamed_vars.get(type);
+            LinkedList<JVariableDefinition> vars = renamed_vars.get(type);
             int index = random.nextInt()%(vars.size()+1);
             if (index < 0) index = -index;
             vars.add(index,alias); 
@@ -341,7 +342,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         } else {
 
             // get a free variable from the available variable stack
-            Stack alias_stack = (Stack)available_names.get(type);
+            Stack alias_stack = available_names.get(type);
             assert (!alias_stack.empty());
             alias = (JVariableDefinition)alias_stack.pop();
         }
@@ -355,12 +356,12 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
         CType type = var.getType();
     
         assert (live_vars.containsKey(type));
-        int live = ((Integer)live_vars.get(type)).intValue() - 1;
+        int live = live_vars.get(type).intValue() - 1;
     
         assert (live >= 0);
         live_vars.put(type, new Integer(live));
     
-        Stack alias_stack = (Stack)available_names.get(type);
+        Stack<JVariableDefinition> alias_stack = available_names.get(type);
         alias_stack.push(var_alias.get(var));   
     }
 }

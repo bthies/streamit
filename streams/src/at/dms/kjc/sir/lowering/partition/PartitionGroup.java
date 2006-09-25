@@ -1,5 +1,6 @@
 package at.dms.kjc.sir.lowering.partition;
 
+import at.dms.kjc.sir.SIRStream;
 import at.dms.util.Utils;
 import java.util.*;
 
@@ -58,17 +59,17 @@ public class PartitionGroup {
      * be fused with any neighbors.  Requires that all of the children
      * are keys in <map>.
      */
-    public static PartitionGroup createFromAssignments(List children, HashMap map) {
-        List resultList = new LinkedList();
+    public static PartitionGroup createFromAssignments(List<SIRStream> children, HashMap<Object, Integer> map) {
+        List<Integer> resultList = new LinkedList<Integer>();
         int pos = 0;
         while (pos<children.size()) {
             int count = 0;
-            int cur = ((Integer)map.get(children.get(pos))).intValue();
+            int cur = map.get(children.get(pos)).intValue();
             do {
                 pos++;
                 count++;
             } while (pos<children.size() && 
-                     ((Integer)map.get(children.get(pos))).intValue()==cur && 
+                     map.get(children.get(pos)).intValue()==cur && 
                      // don't conglomerate -1 children, as they are
                      // containers with differing tile content
                      cur!=-1);
@@ -77,7 +78,7 @@ public class PartitionGroup {
         // copy results into int array
         int[] result = new int[resultList.size()];
         for (int i=0; i<result.length; i++) {
-            result[i] = ((Integer)resultList.get(i)).intValue();
+            result[i] = resultList.get(i).intValue();
         }
         return PartitionGroup.createFromArray(result);
     }

@@ -24,7 +24,7 @@ public class ScheduleModel {
      */
     public static final int DRAM_ISSUE_COST = 5;
     private Layout layout;
-    private LinkedList scheduleOrder;
+    private LinkedList<Trace> scheduleOrder;
     private RawChip rawChip;
     private SpaceTimeSchedule spaceTime;
     /** array of total work estimation for each tile including blocking*/
@@ -39,7 +39,7 @@ public class ScheduleModel {
     private int bottleNeckCost;
     
     public ScheduleModel(SpaceTimeSchedule spaceTime, Layout layout, 
-            LinkedList scheduleOrder) {
+            LinkedList<Trace> scheduleOrder) {
         this.layout = layout;
         this.spaceTime = spaceTime;
         this.rawChip = spaceTime.getRawChip();
@@ -143,10 +143,10 @@ public class ScheduleModel {
     public void createModel(boolean debug) {
         //debug = true;
         tileCosts = new int[rawChip.getTotalTiles()];
-        Iterator traces = scheduleOrder.iterator();
+        Iterator<Trace> traces = scheduleOrder.iterator();
         
         while (traces.hasNext()) {
-            Trace trace = (Trace)traces.next();
+            Trace trace = traces.next();
              
             //don't do anything for predefined filters...
             if (trace.getHead().getNextFilter().isPredefined()) 

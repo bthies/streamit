@@ -17,18 +17,18 @@ import java.util.ArrayList;
  * @author jasperln
  */
 public class InlineAssembly extends JStatement {
-    private ArrayList inst; //List of assembly instructions
-    private ArrayList input; //List of input (for loading/storing to mem)
-    private ArrayList clobber; //Registers that this instruction clobbers
+    private ArrayList<String> inst; //List of assembly instructions
+    private ArrayList<String> input; //List of input (for loading/storing to mem)
+    private ArrayList<String> clobber; //Registers that this instruction clobbers
 
     /**
      * Construct InlineAssembly containing no instructions.
      */
     public InlineAssembly() {
         super(null,null);
-        inst=new ArrayList();
-        input=new ArrayList();
-        clobber=new ArrayList();
+        inst=new ArrayList<String>();
+        input=new ArrayList<String>();
+        clobber=new ArrayList<String>();
     }
     
     /**
@@ -37,10 +37,10 @@ public class InlineAssembly extends JStatement {
      */
     public InlineAssembly(String asm) {
         super(null,null);
-        inst=new ArrayList();
+        inst=new ArrayList<String>();
         inst.add(asm);
-        input=new ArrayList();
-        clobber=new ArrayList();
+        input=new ArrayList<String>();
+        clobber=new ArrayList<String>();
     }
     
     /**

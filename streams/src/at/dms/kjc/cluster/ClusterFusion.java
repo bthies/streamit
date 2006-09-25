@@ -79,7 +79,7 @@ public class ClusterFusion implements FlatVisitor {
             System.err.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
         localMaster.put(slave_node, master_node);
 
-        if (isEliminated(master_node)) { master_node = (FlatNode)nodeMaster.get(master_node); } 
+        if (isEliminated(master_node)) { master_node = nodeMaster.get(master_node); } 
         assert !isEliminated(master_node);  // why not "while" above instead of "if"? so added assert AD.
         assert !isEliminated(slave_node) : "Attempting to fuse already-fused node as slave";
     
@@ -117,17 +117,17 @@ public class ClusterFusion implements FlatVisitor {
         FlatNode master;
 
         if (isEliminated(node)) {
-            master = (FlatNode)nodeMaster.get(node);
+            master = nodeMaster.get(node);
             res.add(master);
         } else {
             master = node;
         }
 
-        Set keys = nodeMaster.keySet();
-        Iterator iter = keys.iterator();
+        Set<FlatNode> keys = nodeMaster.keySet();
+        Iterator<FlatNode> iter = keys.iterator();
 
         while (iter.hasNext()) {
-            FlatNode elim = (FlatNode)iter.next();
+            FlatNode elim = iter.next();
             if (nodeMaster.get(elim).equals(master) && !elim.equals(node)) {
                 res.add(elim);
             }
@@ -151,7 +151,7 @@ public class ClusterFusion implements FlatVisitor {
     public static FlatNode getLocalMaster(FlatNode node) {
     
         if (!localMaster.containsKey(node)) return null;
-        return (FlatNode)localMaster.get(node);
+        return localMaster.get(node);
     }
     
     /**
@@ -184,7 +184,7 @@ public class ClusterFusion implements FlatVisitor {
     public void visitNode(FlatNode node) 
     {
         SIROperator op = node.contents;
-        Integer partition = (Integer)partitionMap.get(op);
+        Integer partition = partitionMap.get(op);
 
         if (node.contents instanceof SIRFilter) {
 
@@ -264,7 +264,7 @@ public class ClusterFusion implements FlatVisitor {
 
         if (isEliminated(node)) {
     
-            return getPartition((FlatNode)nodeMaster.get(node));
+            return getPartition(nodeMaster.get(node));
     
         } else {
 
@@ -291,7 +291,7 @@ public class ClusterFusion implements FlatVisitor {
                 int[] weights = join.getWeights();
                 for (int i=0; i<weights.length; i++) {
                     String part = getPartition(node.incoming[i]);
-                    Integer _oldSum = (Integer)map.get(part);
+                    Integer _oldSum = map.get(part);
                     int oldSum = 0;
                     if (_oldSum!=null) {
                         oldSum = _oldSum.intValue();
@@ -304,7 +304,7 @@ public class ClusterFusion implements FlatVisitor {
                 Iterator it = map.keySet().iterator();
                 while (it.hasNext()) {
                     String part = (String)it.next();
-                    int sum = ((Integer)map.get(part)).intValue();
+                    int sum = map.get(part).intValue();
                     if (sum>max) {
                         max = sum;
                         result = part;
@@ -337,7 +337,7 @@ public class ClusterFusion implements FlatVisitor {
                 int[] weights = split.getWeights();
                 for (int i=0; i<weights.length; i++) {
                     String part = getPartition(node.edges[i]);
-                    Integer _oldSum = (Integer)map.get(part);
+                    Integer _oldSum = map.get(part);
                     int oldSum = 0;
                     if (_oldSum!=null) {
                         oldSum = _oldSum.intValue();
@@ -350,7 +350,7 @@ public class ClusterFusion implements FlatVisitor {
                 Iterator it = map.keySet().iterator();
                 while (it.hasNext()) {
                     String part = (String)it.next();
-                    int sum = ((Integer)map.get(part)).intValue();
+                    int sum = map.get(part).intValue();
                     if (sum>max) {
                         max = sum;
                         result = part;

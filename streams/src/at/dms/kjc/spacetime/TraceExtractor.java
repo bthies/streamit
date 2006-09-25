@@ -9,16 +9,16 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 
 public class TraceExtractor {
     public static Trace[] extractTraces(UnflatFilter[] topFilters,HashMap[] execCounts,LinearAnalyzer lfa) {
-        LinkedList Q=new LinkedList();
+        LinkedList<UnflatFilter> Q=new LinkedList<UnflatFilter>();
         HashMap visited=new HashMap();
-        LinkedList traces=new LinkedList();
+        LinkedList<Trace> traces=new LinkedList<Trace>();
         //HashMap outNodes=new HashMap();
         //HashMap inNodes=new HashMap();
-        HashMap edges=new HashMap(); // UnflatEdge -> Edge
+        HashMap<UnflatEdge, Edge> edges=new HashMap<UnflatEdge, Edge>(); // UnflatEdge -> Edge
         for(int i=0;i<topFilters.length;i++)
             Q.add(topFilters[i]);
         while(Q.size()>0) {
-            UnflatFilter filter=(UnflatFilter)Q.removeFirst();
+            UnflatFilter filter=Q.removeFirst();
             FilterContent content;
             if(filter.filter instanceof SIRFileReader)
                 content=new FileInputContent(filter);
@@ -52,7 +52,7 @@ public class TraceExtractor {
                     node=new InputTraceNode(filter.inWeights,inEdges);
                     for(int i=0;i<unflatEdges.length;i++) {
                         UnflatEdge unflatEdge=unflatEdges[i];
-                        Edge edge=(Edge)edges.get(unflatEdge);
+                        Edge edge=edges.get(unflatEdge);
                         //assert edge!=null:"Edge Null "+filter;
                         if(edge==null) {
                             edge=new Edge((InputTraceNode)node);
@@ -145,7 +145,7 @@ public class TraceExtractor {
                             UnflatFilter dest=unflatEdge.dest;
                             if(!visited.containsKey(dest))
                                 Q.add(dest);
-                            Edge edge=(Edge)edges.get(unflatEdge);
+                            Edge edge=edges.get(unflatEdge);
                             if(edge==null) {
                                 edge=new Edge(outNode);
                                 edges.put(unflatEdge,edge);
@@ -263,7 +263,7 @@ public class TraceExtractor {
         }
         if(node instanceof OutputTraceNode) {
             Edge[][] dests=((OutputTraceNode)node).getDests();
-            ArrayList output=new ArrayList();
+            ArrayList<Object> output=new ArrayList<Object>();
             for(int i=0;i<dests.length;i++) {
                 Edge[] inner=dests[i];
                 for(int j=0;j<inner.length;j++) {

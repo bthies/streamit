@@ -27,13 +27,13 @@ import java.util.List;
  * to be sent to all filters registered with the portal.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtSendMessage.java,v 1.3 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StmtSendMessage.java,v 1.4 2006-09-25 13:54:54 dimock Exp $
  */
 public class StmtSendMessage extends Statement
 {
     private Expression receiver;
     private String name;
-    private List params;
+    private List<Expression> params;
     private Expression minLatency, maxLatency;
     
     /**
@@ -52,7 +52,7 @@ public class StmtSendMessage extends Statement
      *                 <code>null</code>
      */
     public StmtSendMessage(FEContext context, Expression receiver,
-                           String name, List params,
+                           String name, List<Expression> params,
                            Expression minLatency, Expression maxLatency)
     {
         super(context);
@@ -88,7 +88,7 @@ public class StmtSendMessage extends Statement
      *
      * @return list of <code>Expression</code> containing the parameters
      */
-    public List getParams()
+    public List<Expression> getParams()
     {
         return params;
     }

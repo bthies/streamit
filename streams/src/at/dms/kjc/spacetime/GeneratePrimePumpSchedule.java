@@ -16,20 +16,20 @@ import java.util.*;
 public class GeneratePrimePumpSchedule {
     private SpaceTimeSchedule spaceTimeSchedule;
     //the execution count for each trace during the calculation of the schedule
-    private HashMap exeCounts;
+    private HashMap<Trace, Integer> exeCounts;
     
     
    
     public GeneratePrimePumpSchedule(SpaceTimeSchedule sts) {
         spaceTimeSchedule = sts;
-        exeCounts = new HashMap();
+        exeCounts = new HashMap<Trace, Integer>();
     }
     
     /**
      * Create the preloop schedule and place it in the SpaceTimeSchedule.
      */
     public void schedule() {
-        LinkedList preLoopSchedule = new LinkedList();
+        LinkedList<LinkedList<Trace>> preLoopSchedule = new LinkedList<LinkedList<Trace>>();
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             spaceTimeSchedule.setPrimePumpSchedule(preLoopSchedule);
             return;
@@ -41,7 +41,7 @@ public class GeneratePrimePumpSchedule {
         while (!canEverythingFire(dataFlowTraversal)) {
             SpaceTimeBackend.println("Pre-loop Scheduling Step...");
             //the traces that are firing in the current step...
-            LinkedList currentStep = new LinkedList();
+            LinkedList<Trace> currentStep = new LinkedList<Trace>();
            
             Iterator it = dataFlowTraversal.iterator();
             while (it.hasNext()) {
@@ -64,12 +64,12 @@ public class GeneratePrimePumpSchedule {
      * preloop schedule.
      * @param trace
      */
-    private void recordFired(LinkedList fired) {
-        Iterator it = fired.iterator();
+    private void recordFired(LinkedList<Trace> fired) {
+        Iterator<Trace> it = fired.iterator();
         while (it.hasNext()) {
-            Trace trace = (Trace)it.next();
+            Trace trace = it.next();
             if (exeCounts.containsKey(trace)) {
-                exeCounts.put(trace, new Integer(((Integer)exeCounts.get(trace)).intValue() + 1));
+                exeCounts.put(trace, new Integer(exeCounts.get(trace).intValue() + 1));
             }
             else {
                 exeCounts.put(trace, new Integer(1));
@@ -85,7 +85,7 @@ public class GeneratePrimePumpSchedule {
      */
     private int getExeCount(Trace trace) {
         if (exeCounts.containsKey(trace))
-            return ((Integer)exeCounts.get(trace)).intValue();
+            return exeCounts.get(trace).intValue();
         else
             return 0;
     }

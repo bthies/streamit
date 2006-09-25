@@ -25,7 +25,7 @@ import java.util.*;
  * produce a CFG from a function declaration.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFGBuilder.java,v 1.2 2006-01-25 17:04:23 thies Exp $
+ * @version $Id: CFGBuilder.java,v 1.3 2006-09-25 13:54:53 dimock Exp $
  */
 public class CFGBuilder extends FENullVisitor
 {
@@ -58,27 +58,27 @@ public class CFGBuilder extends FENullVisitor
     // Where to go for particular statements:
     private CFGNode nodeReturn, nodeBreak, nodeContinue;
     // What edges exist (map from start node to list of end node):
-    private Map edges;
+    private Map<CFGNode, List> edges;
     // Every node:
-    private List nodes;
+    private List<CFGNode> nodes;
     
     private CFGBuilder()
     {
         nodeReturn = null;
         nodeBreak = null;
         nodeContinue = null;
-        edges = new HashMap();
-        nodes = new ArrayList();
+        edges = new HashMap<CFGNode, List>();
+        nodes = new ArrayList<CFGNode>();
     }
 
     private void addEdge(CFGNode from, CFGNode to)
     {
-        List target;
+        List<CFGNode> target;
         if (edges.containsKey(from))
-            target = (List)edges.get(from);
+            target = edges.get(from);
         else
             {
-                target = new ArrayList();
+                target = new ArrayList<CFGNode>();
                 edges.put(from, target);
             }
         if (!target.contains(to))

@@ -29,22 +29,21 @@ import java.util.List;
  * init functions to filters without any.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CreateInitFunctions.java,v 1.3 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: CreateInitFunctions.java,v 1.4 2006-09-25 13:54:54 dimock Exp $
  */
 public class CreateInitFunctions extends FEReplacer
 {
     public Object visitStreamSpec(StreamSpec ss)
     {
         boolean hasInit = false;
-        for (Iterator iter = ss.getFuncs().iterator(); iter.hasNext(); )
+        for (Function func : ss.getFuncs())
             {
-                Function func = (Function)iter.next();
                 if (func.getCls() == Function.FUNC_INIT)
                     hasInit = true;
             }
         if (!hasInit)
             {
-                List newFuncs = new java.util.ArrayList();
+                List<Function> newFuncs = new java.util.ArrayList<Function>();
                 newFuncs.addAll(ss.getFuncs());
                 Statement body = new StmtBlock(ss.getContext(),
                                                Collections.EMPTY_LIST);

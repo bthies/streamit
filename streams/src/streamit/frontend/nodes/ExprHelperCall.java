@@ -31,11 +31,11 @@ public class ExprHelperCall extends Expression
 {
     private String helper_package;
     private String name;
-    private List params;
+    private List<Expression> params;
     
     /** Creates a new helper call with the specified name and
      * parameter list. */
-    public ExprHelperCall(FEContext context, String helper_package, String name, List params)
+    public ExprHelperCall(FEContext context, String helper_package, String name, List<Expression> params)
     {
         super(context);
         this.helper_package = helper_package;
@@ -57,7 +57,7 @@ public class ExprHelperCall extends Expression
     
     /** Returns the parameters of the helper call, as an unmodifiable
      * list. */
-    public List getParams()
+    public List<Expression> getParams()
     {
         return params;
     }

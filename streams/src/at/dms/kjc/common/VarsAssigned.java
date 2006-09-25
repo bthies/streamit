@@ -3,6 +3,8 @@ package at.dms.kjc.common;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+
+import java.io.Serializable;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
@@ -17,7 +19,7 @@ import java.util.HashSet;
 
 public class VarsAssigned extends SLIREmptyVisitor
 {
-    private HashSet vars;
+    private HashSet<Object> vars;
 
     /**
      * Given <entry>, the lhs of an assignment expression, or
@@ -31,7 +33,7 @@ public class VarsAssigned extends SLIREmptyVisitor
      * or Strings for assigned fields
      *
      */
-    public static HashSet getVarsAssigned(JPhylum entry)
+    public static HashSet<Object> getVarsAssigned(JPhylum entry)
     {
         VarsAssigned assigned = new VarsAssigned();
     
@@ -42,12 +44,12 @@ public class VarsAssigned extends SLIREmptyVisitor
     
     private VarsAssigned() 
     {
-        vars = new HashSet();
+        vars = new HashSet<Object>();
     }
     
-    private HashSet lValues(JExpression exp) 
+    private HashSet<Serializable> lValues(JExpression exp) 
     {
-        HashSet vars = new HashSet();
+        HashSet<Serializable> vars = new HashSet<Serializable>();
     
         exp = Utils.passThruParens(exp);
     

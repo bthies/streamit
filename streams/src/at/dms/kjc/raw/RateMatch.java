@@ -23,7 +23,7 @@ public class RateMatch extends at.dms.util.Utils
     //To test that there are no crossed routes, 
     //keep this hashset of all tiles that are used to 
     //route items (excluding the source/dest of a route)
-    HashSet routerTiles;
+    HashSet<Coordinate> routerTiles;
     private static boolean fail;
 
     public static boolean doit(FlatNode top) 
@@ -38,7 +38,7 @@ public class RateMatch extends at.dms.util.Utils
 
     public RateMatch() 
     {
-        routerTiles = new HashSet();
+        routerTiles = new HashSet<Coordinate>();
     }
 
     public void visitNode(FlatNode node) 
@@ -51,15 +51,15 @@ public class RateMatch extends at.dms.util.Utils
                  ((SIRFilter)node.contents).getOutputType().isClassType()))
                 fail = true;
         
-            Iterator it = Util.getAssignedEdges(node).iterator();
+            Iterator<FlatNode> it = Util.getAssignedEdges(node).iterator();
         
             while (it.hasNext()) {
-                FlatNode dest = (FlatNode)it.next();
-                Iterator route = Router.getRoute(node, dest).listIterator();
+                FlatNode dest = it.next();
+                Iterator<Coordinate> route = Router.getRoute(node, dest).listIterator();
                 //remove the source
-                Coordinate current = (Coordinate)route.next();
+                Coordinate current = route.next();
                 while (route.hasNext()) {
-                    current = (Coordinate)route.next();
+                    current = route.next();
                     //now check to see if this tile has been routed thru
                     //before
                     if (current != Layout.getTile(dest)) {

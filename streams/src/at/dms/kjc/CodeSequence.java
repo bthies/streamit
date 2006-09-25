@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.9 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CodeSequence.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
  */
 
 /**
@@ -59,7 +59,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
         if (!Constants.ENV_USE_CACHE || stack.empty()) {
             seq = new CodeSequence();
         } else {
-            seq = (CodeSequence)stack.pop();
+            seq = stack.pop();
         }
         seq.pc = 0;
         seq.labelAtEnd = false;
@@ -314,7 +314,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
      */
     public final void plantReturn(JReturnStatement ret) {
         for (int i = contexts.size() - 1; i >= 0; i--) {
-            JStatement stmt = (JStatement)contexts.elementAt(i);
+            JStatement stmt = contexts.elementAt(i);
 
             if (stmt instanceof JTryFinallyStatement) {
                 ((JTryFinallyStatement)stmt).genFinallyCall(this, ret);
@@ -330,7 +330,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
      */
     public final void plantBreak(JStatement top) {
         for (int i = contexts.size() - 1; i >= 0 && contexts.elementAt(i) != top; i--) {
-            JStatement stmt = (JStatement)contexts.elementAt(i);
+            JStatement stmt = contexts.elementAt(i);
 
             if (stmt instanceof JTryFinallyStatement) {
                 ((JTryFinallyStatement)stmt).genFinallyCall(this, null);
@@ -356,7 +356,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
      * Checks that contexts match.
      */
     public final void popContext(JStatement stmt) {
-        JStatement popped = (JStatement)contexts.pop();
+        JStatement popped = contexts.pop();
         assert popped == stmt;
     }
 
@@ -500,9 +500,9 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
     private boolean         labelAtEnd;
     private int             lineNumber;
     private int             lastLine;
-    private Stack               contexts = new Stack();
+    private Stack<JStatement>               contexts = new Stack<JStatement>();
 
-    private static final Stack      stack = new Stack();
+    private static final Stack<CodeSequence>      stack = new Stack<CodeSequence>();
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -524,7 +524,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
         other.labelAtEnd = this.labelAtEnd;
         other.lineNumber = this.lineNumber;
         other.lastLine = this.lastLine;
-        other.contexts = (java.util.Stack)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts);
+        other.contexts = (java.util.Stack<JStatement>)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -28,7 +28,7 @@ public class SplitJoin extends Stream
 
     SplitJoinType splitType, joinType;
 
-    List childrenStreams;
+    List<Stream> childrenStreams;
 
     public SplitJoin()
     {
@@ -360,7 +360,7 @@ public class SplitJoin extends Stream
         //  4 - null
 
         int type;
-        List weights;
+        List<Integer> weights;
 
         SplitJoinType(int myType)
         {
@@ -368,7 +368,7 @@ public class SplitJoin extends Stream
                 {
                 case 1 : // round robin and
                 case 2 : // weighted round robin - need a weight list
-                    weights = new LinkedList();
+                    weights = new LinkedList<Integer>();
                     break;
                 case 3 : // duplicate
                 case 4 : // null - no in/out
@@ -396,7 +396,7 @@ public class SplitJoin extends Stream
                     {
                         RoundRobinSplitter splitter =
                             new RoundRobinSplitter(
-                                                   ((Integer) weights.remove(0)).intValue());
+                                                   weights.remove(0).intValue());
                         return splitter;
                     }
                 case 2 :
@@ -404,7 +404,7 @@ public class SplitJoin extends Stream
                         new WeightedRoundRobinSplitter();
                     while (!weights.isEmpty())
                         {
-                            splitter.addWeight((Integer) weights.remove(0));
+                            splitter.addWeight(weights.remove(0));
                         }
                     return splitter;
                 case 3 :
@@ -425,7 +425,7 @@ public class SplitJoin extends Stream
                     {
                         RoundRobinJoiner joiner =
                             new RoundRobinJoiner(
-                                                 ((Integer) weights.remove(0)).intValue());
+                                                 weights.remove(0).intValue());
                         return joiner;
                     }
                 case 2 :
@@ -433,7 +433,7 @@ public class SplitJoin extends Stream
                         new WeightedRoundRobinJoiner();
                     while (!weights.isEmpty())
                         {
-                            joiner.addWeight((Integer) weights.remove(0));
+                            joiner.addWeight(weights.remove(0));
                         }
                     return joiner;
                 case 3 :
@@ -664,11 +664,11 @@ public class SplitJoin extends Stream
         joiner = type.getJoiner();
         joiner.setParent(this);
 
-        ListIterator iter;
+        ListIterator<Stream> iter;
         iter = childrenStreams.listIterator();
         while (iter.hasNext())
             {
-                Stream s = (Stream) iter.next();
+                Stream s = iter.next();
                 assert s != null;
 
                 joiner.add(s);
@@ -691,7 +691,7 @@ public class SplitJoin extends Stream
         // save the stream to add to the Join
         if (childrenStreams == null)
             {
-                childrenStreams = new LinkedList();
+                childrenStreams = new LinkedList<Stream>();
             }
         childrenStreams.add(s);
         s.setParent(this);
@@ -701,11 +701,11 @@ public class SplitJoin extends Stream
     {
         // setup all children of this splitjoin
         {
-            ListIterator iter;
+            ListIterator<Stream> iter;
             iter = childrenStreams.listIterator();
             while (iter.hasNext())
                 {
-                    Stream s = (Stream) iter.next();
+                    Stream s = iter.next();
                     assert s != null;
                     s.setupOperator();
                 }
@@ -732,7 +732,7 @@ public class SplitJoin extends Stream
     }
     public Stream getChildN(int n)
     {
-        return (Stream) childrenStreams.get(n);
+        return childrenStreams.get(n);
     }
     public Stream getChild(int nChild)
     {
@@ -750,13 +750,13 @@ public class SplitJoin extends Stream
 
     void setupBufferLengths(Scheduler buffers)
     {
-        ListIterator iter;
+        ListIterator<Stream> iter;
         iter = childrenStreams.listIterator();
 
         // go through all the children
         while (iter.hasNext())
             {
-                Stream child = (Stream) iter.next();
+                Stream child = iter.next();
                 assert child != null;
 
                 child.setupBufferLengths(buffers);

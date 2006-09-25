@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CConstructorContext.java,v 1.9 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CConstructorContext.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -156,8 +156,8 @@ public class CConstructorContext extends CMethodContext {
         }
         System.err.println("");
         System.err.print("    excp: ");
-        for (Enumeration e = throwables.elements(); e.hasMoreElements(); ) {
-            System.err.print(" " + ((CThrowableInfo)e.nextElement()).getThrowable());
+        for (Enumeration<CThrowableInfo> e = throwables.elements(); e.hasMoreElements(); ) {
+            System.err.print(" " + e.nextElement().getThrowable());
         }
         System.err.println("");
     }

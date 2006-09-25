@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethod.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CMethod.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
@@ -108,9 +109,9 @@ public abstract class CMethod extends CMember {
      * after body was checked.
      * @param   throwables  the exceptions that can be thrown by this method
      */
-    public void setThrowables(Hashtable throwables) {
+    public void setThrowables(Hashtable<Serializable, CThrowableInfo> throwables) {
         if (throwables != null) {
-            Enumeration eNum = throwables.elements();
+            Enumeration<CThrowableInfo> eNum = throwables.elements();
             int     count = 0;
 
             exceptions = new CClassType[throwables.size()];

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.114 2006-08-23 23:17:11 thies Exp $
+ * $Id: LIRToC.java,v 1.115 2006-09-25 13:54:38 dimock Exp $
  */
 
 package at.dms.kjc.lir;
@@ -44,7 +44,7 @@ public class LIRToC
      * construct a pretty printer object for java code, with a given
      * set of array initializers defined.
      */
-    private LIRToC(java.util.HashMap arrayInitializers) {
+    private LIRToC(java.util.HashMap<JArrayInitializer, String> arrayInitializers) {
         super();
         this.arrayInitializers = arrayInitializers;
     }
@@ -57,10 +57,10 @@ public class LIRToC
      * @param   arrayInitializers       set of array initializers detected in code
      * @param   fileName                the file into the code is generated
      */
-    private LIRToC(java.util.HashMap arrayInitializers, CodegenPrintWriter p) {
+    private LIRToC(java.util.HashMap<JArrayInitializer, String> arrayInitializers, CodegenPrintWriter p) {
         super(p);
         this.portalCount = 0;
-        this.portalNames = new java.util.HashMap();
+        this.portalNames = new java.util.HashMap<SIRPortal, String>();
         this.arrayInitializers = arrayInitializers;
     }
 
@@ -1078,7 +1078,7 @@ public class LIRToC
             p.print("memcpy(");
             left.accept(this);
             p.print(",");
-            String name = (String)arrayInitializers.get(right);
+            String name = arrayInitializers.get(right);
             p.print(name);
             p.print(",");
             p.print(findSize((JArrayInitializer)right) + " * sizeof(");
@@ -1434,7 +1434,7 @@ public class LIRToC
                 String theName = "__portal_" + portalCount;
                 portalNames.put(self, theName);
             }
-        p.print((String)portalNames.get(self));
+        p.print(portalNames.get(self));
     }
 
     // visitPrintStatement inherited from ToCCommon.
@@ -1770,7 +1770,7 @@ public class LIRToC
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-                                  List initStatements)
+                                  List<JStatement> initStatements)
     {
         p.print(typeName + " " + THIS_NAME +
                 " = malloc(sizeof(_" + typeName + "));");
@@ -1782,9 +1782,9 @@ public class LIRToC
         p.newLine();
         p.print("connect_tapes(" + THIS_CONTEXT_NAME + ");");
         p.newLine();
-        Iterator iter = initStatements.iterator();
+        Iterator<JStatement> iter = initStatements.iterator();
         while (iter.hasNext())
-            ((JStatement)(iter.next())).accept(this);
+            (iter.next()).accept(this);
         p.newLine();
         p.print("streamit_run(" + THIS_CONTEXT_NAME + ", argc, argv);");
         p.newLine();
@@ -2289,9 +2289,9 @@ public class LIRToC
      * for identification in later stages to print a reference to the
      * variable instead of printing the static array.
      */
-    protected java.util.HashMap arrayInitializers; // JArrayInitializer -> String
+    protected java.util.HashMap<JArrayInitializer, String> arrayInitializers; // JArrayInitializer -> String
     public void gatherArrayInitializers(JClassDeclaration flat) {
-        arrayInitializers = new java.util.HashMap();
+        arrayInitializers = new java.util.HashMap<JArrayInitializer, String>();
         flat.accept(new GatherArrayInitializers(this));
     }
     class GatherArrayInitializers extends SLIREmptyVisitor {
@@ -2356,6 +2356,6 @@ public class LIRToC
     protected boolean                   declOnly = false;
 
     protected int                       portalCount;
-    protected Map                       portalNames;
+    protected Map<SIRPortal, String>                       portalNames;
 }
 

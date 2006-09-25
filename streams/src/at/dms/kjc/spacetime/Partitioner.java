@@ -209,7 +209,7 @@ public abstract class Partitioner {
      * mult of the filter.
      */
     protected int getFilterWork(FilterTraceNode node) {
-        return ((Integer) workEstimation.get(node.getFilter())).intValue();
+        return workEstimation.get(node.getFilter()).intValue();
     }
 
     
@@ -229,7 +229,7 @@ public abstract class Partitioner {
      */
     public int getTraceBNWork(Trace trace) {
         assert traceBNWork.containsKey(trace);
-        return ((Integer) traceBNWork.get(trace)).intValue() * steadyMult;
+        return traceBNWork.get(trace).intValue() * steadyMult;
     }
     
     /**
@@ -443,7 +443,7 @@ public abstract class Partitioner {
         }
         if (node instanceof OutputTraceNode) {
             Edge[][] dests = ((OutputTraceNode) node).getDests();
-            ArrayList output = new ArrayList();
+            ArrayList<Object> output = new ArrayList<Object>();
             for (int i = 0; i < dests.length; i++) {
                 Edge[] inner = dests[i];
                 for (int j = 0; j < inner.length; j++) {
@@ -528,7 +528,7 @@ public abstract class Partitioner {
     
     protected int getWorkEstimate(FilterContent fc) {
         assert workEstimation.containsKey(fc);
-        return ((Integer) workEstimation.get(fc)).intValue();
+        return workEstimation.get(fc).intValue();
     }
 
 
@@ -550,7 +550,7 @@ public abstract class Partitioner {
     public int getFilterStartupCost(FilterTraceNode node) {
         assert filterStartupCost.containsKey(node);
        
-        return ((Integer)filterStartupCost.get(node)).intValue();
+        return filterStartupCost.get(node).intValue();
     }
     
 }

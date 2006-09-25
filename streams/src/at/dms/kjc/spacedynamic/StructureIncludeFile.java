@@ -24,7 +24,7 @@ import at.dms.kjc.flatgraph.*;
 public class StructureIncludeFile {
     private StreamGraph streamGraph;
 
-    private HashSet structSet;
+    private HashSet<SIRStructure> structSet;
 
     /**
      * Create structures include file in current directory.
@@ -46,7 +46,7 @@ public class StructureIncludeFile {
     public StructureIncludeFile(SIRStructure[] structs, StreamGraph sg,
                                 String dir) {
         this.streamGraph = sg;
-        structSet = new HashSet();
+        structSet = new HashSet<SIRStructure>();
         for (int i = 0; i < structs.length; i++)
             structSet.add(structs[i]);
 
@@ -265,8 +265,8 @@ public class StructureIncludeFile {
 
     // iterator thru all the flat nodes and remember the structs that are passed
     // over tapes
-    private Vector getPassedStructs() {
-        Vector passedStructs = new Vector();
+    private Vector<CClass> getPassedStructs() {
+        Vector<CClass> passedStructs = new Vector<CClass>();
 
         for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
             StaticStreamGraph ssg = (StaticStreamGraph)streamGraph.getStaticSubGraphs()[i];

@@ -45,7 +45,7 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init) {
         /** visit each child. **/
-        LinkedList newChildren = new LinkedList();
+        LinkedList<Object> newChildren = new LinkedList<Object>();
         Iterator childIter = self.getChildren().iterator();
         while(childIter.hasNext()) {
             SIROperator currentChild = (SIROperator)childIter.next();
@@ -65,7 +65,7 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
                                  JMethodDeclaration init,
                                  SIRSplitter splitter,
                                  SIRJoiner joiner) {
-        LinkedList newChildren = new LinkedList();
+        LinkedList<Object> newChildren = new LinkedList<Object>();
         // visit splitter
         self.getSplitter().accept(this);
         // visit children

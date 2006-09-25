@@ -410,7 +410,7 @@ public abstract class Filter extends Stream
      * List of initialization phases (i.e., for prework function).
      * Only populated in the case of a phased filter.
      */
-    Vector initPhases = new Vector();
+    Vector<PhaseInfo> initPhases = new Vector<PhaseInfo>();
     /**
      * Summary of init phases.  This corresponds to the declared I/O
      * rates on the prework function.
@@ -420,7 +420,7 @@ public abstract class Filter extends Stream
      * List of steady phases (i.e., for work function).  Only
      * populated in the case of a phased filter.
      */
-    Vector steadyPhases = new Vector();
+    Vector<PhaseInfo> steadyPhases = new Vector<PhaseInfo>();
     /**
      * Summary of steady phases.  This corresponds to the declared I/O
      * rates on the work function.
@@ -621,25 +621,25 @@ public abstract class Filter extends Stream
     public int getInitPeekStage(int stage)
     {
         assert initPhases.size() > stage;
-        return ((PhaseInfo) initPhases.get(stage)).e;
+        return initPhases.get(stage).e;
     }
 
     public int getInitPopStage(int stage)
     {
         assert initPhases.size() > stage;
-        return ((PhaseInfo) initPhases.get(stage)).o;
+        return initPhases.get(stage).o;
     }
 
     public int getInitPushStage(int stage)
     {
         assert initPhases.size() > stage;
-        return ((PhaseInfo) initPhases.get(stage)).u;
+        return initPhases.get(stage).u;
     }
 
     public String getInitNameStage(int stage)
     {
         assert initPhases.size() > stage;
-        return ((PhaseInfo) initPhases.get(stage)).name;
+        return initPhases.get(stage).name;
     }
 
     public int getNumSteadyPhases()
@@ -674,25 +674,25 @@ public abstract class Filter extends Stream
     public int getSteadyPeekPhase(int stage)
     {
         assert steadyPhases.size() > stage;
-        return ((PhaseInfo) steadyPhases.get(stage)).e;
+        return steadyPhases.get(stage).e;
     }
 
     public int getSteadyPopPhase(int stage)
     {
         assert steadyPhases.size() > stage;
-        return ((PhaseInfo) steadyPhases.get(stage)).o;
+        return steadyPhases.get(stage).o;
     }
 
     public int getSteadyPushPhase(int stage)
     {
         assert steadyPhases.size() > stage : "Requesting stage " + stage + "/" + steadyPhases.size() + " in " + this;
-        return ((PhaseInfo) steadyPhases.get(stage)).u;
+        return steadyPhases.get(stage).u;
     }
 
     public String getSteadyNamePhase(int stage)
     {
         assert steadyPhases.size() > stage;
-        return ((PhaseInfo) steadyPhases.get(stage)).name;
+        return steadyPhases.get(stage).name;
     }
 
     private int initPhase = 0;
@@ -714,9 +714,9 @@ public abstract class Filter extends Stream
      */
     private PhaseInfo getCurrentPhase() {
         if (initPhase < initPhases.size()) {
-            return (PhaseInfo) initPhases.get(initPhase);
+            return initPhases.get(initPhase);
         } else {
-            return (PhaseInfo) steadyPhases.get(steadyPhase);
+            return steadyPhases.get(steadyPhase);
         }
     }
 
@@ -871,7 +871,7 @@ public abstract class Filter extends Stream
                         // if only one steady phase, pass the rates to the
                         // Channel (for Eclipse debugger to find it there).
                         if (initPhases.size()==0 && steadyPhases.size()==1) {
-                            PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+                            PhaseInfo pi = steadyPhases.get(0);
                             inputChannel = new Channel(inType, pi.o, pi.e);
                         } else {
                             inputChannel = new Channel(inType);
@@ -883,7 +883,7 @@ public abstract class Filter extends Stream
                         // if only one steady phase, pass the rates to the
                         // Channel (for Eclipse debugger to find it there).
                         if (initPhases.size()==0 && steadyPhases.size()==1) {
-                            PhaseInfo pi = (PhaseInfo)steadyPhases.get(0);
+                            PhaseInfo pi = steadyPhases.get(0);
                             outputChannel = new Channel(outType, pi.u);
                         } else {
                             outputChannel = new Channel(outType);

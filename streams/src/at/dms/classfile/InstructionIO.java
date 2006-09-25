@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InstructionIO.java,v 1.3 2006-03-16 16:41:19 dimock Exp $
+ * $Id: InstructionIO.java,v 1.4 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -61,8 +61,8 @@ public class InstructionIO implements Constants {
         this.in = in;
         this.cp = cp;
 
-        this.forwards = new Vector();
-        this.switches = new Vector();
+        this.forwards = new Vector<Instruction>();
+        this.switches = new Vector<Instruction>();
     }
 
     /*
@@ -521,7 +521,7 @@ public class InstructionIO implements Constants {
                 }
             };
 
-        for (Enumeration eNum = forwards.elements(); eNum.hasMoreElements(); ) {
+        for (Enumeration<Instruction> eNum = forwards.elements(); eNum.hasMoreElements(); ) {
             AccessorContainer       insn = (AccessorContainer)eNum.nextElement();
 
             try {
@@ -691,8 +691,8 @@ public class InstructionIO implements Constants {
     private DataInput       in;
     private ConstantPool        cp;
 
-    private Vector      forwards;
-    private Vector      switches;
+    private Vector<Instruction>      forwards;
+    private Vector<Instruction>      switches;
 
     private Instruction[]       instructions;
 }

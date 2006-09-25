@@ -23,19 +23,19 @@ public abstract class ListPartitioner {
      * This list is in the "canonicalized order" (see lp-partition
      * document.)
      */
-    protected LinkedList nodes;
+    protected LinkedList<Object> nodes;
     /**
      * Maps a stream container (pipeline, splitjoin, feedbackloop) to
      * an Integer denoting the first index in <nodes> that belongs to
      * the structure.
      */
-    protected HashMap first;
+    protected HashMap<SIRStream, Integer> first;
     /**
      * Maps a stream container (pipeline, splitjoin, feedbackloop) to
      * an Integer denoting the first index in <nodes> that belongs to
      * the structure.
      */
-    protected HashMap last;
+    protected HashMap<SIRStream, Integer> last;
     /**
      * The work estimate of the stream.
      */
@@ -45,9 +45,9 @@ public abstract class ListPartitioner {
         this.str = str;
         this.work = work;
         this.numTiles = numTiles;
-        this.nodes = new LinkedList();
-        this.first = new HashMap();
-        this.last = new HashMap();
+        this.nodes = new LinkedList<Object>();
+        this.first = new HashMap<SIRStream, Integer>();
+        this.last = new HashMap<SIRStream, Integer>();
         buildNodesList();
     }
 
@@ -112,11 +112,11 @@ public abstract class ListPartitioner {
      */
     protected boolean equivStructure(SIRStream str1, SIRStream str2) {
         // get starting positions
-        int first1 = ((Integer)first.get(str1)).intValue();
-        int first2 = ((Integer)first.get(str2)).intValue();
+        int first1 = first.get(str1).intValue();
+        int first2 = first.get(str2).intValue();
         // get sizes
-        int size1 =  ((Integer)last.get(str1)).intValue() - first1;
-        int size2 = ((Integer)last.get(str2)).intValue() - first2;
+        int size1 =  last.get(str1).intValue() - first1;
+        int size2 = last.get(str2).intValue() - first2;
         if (size1 != size2) {
             return false;
         }

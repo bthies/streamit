@@ -18,21 +18,21 @@ import at.dms.compiler.TokenReference;
  */
 public class StructDestroyer extends SLIRReplacingVisitor {
     private static final String SEP="_"; //Separator mark
-    private HashMap nameToVar; //caches created vars by their name
-    private HashMap newFields; //caches created fields by their name
-    private ArrayList leftF; //list of left expression in a series of assignments
+    private HashMap<String, JLocalVariable> nameToVar; //caches created vars by their name
+    private HashMap<String, JFieldDeclaration> newFields; //caches created fields by their name
+    private ArrayList<JExpression> leftF; //list of left expression in a series of assignments
     private JExpression rightF; //rightmost expression in an assignment
-    private HashMap paramMap; //stores parameters indexed by name
+    private HashMap<String, JFormalParameter> paramMap; //stores parameters indexed by name
     private JExpression unsafeRhs; //stores last structure used unsafely (need to pack fields beforehand)
 
     /**
      * Construct new StructDestroyer. Initializes state.
      */
     public StructDestroyer() {
-        nameToVar=new HashMap();
-        newFields=new HashMap();
-        leftF=new ArrayList();
-        paramMap=new HashMap();
+        nameToVar=new HashMap<String, JLocalVariable>();
+        newFields=new HashMap<String, JFieldDeclaration>();
+        leftF=new ArrayList<JExpression>();
+        paramMap=new HashMap<String, JFormalParameter>();
     }
 
     /**
@@ -215,7 +215,7 @@ public class StructDestroyer extends SLIRReplacingVisitor {
                     for(int j=0;j<len;j++) {
                         String field=(String)f.get(j);
                         CType type=(CType)t.get(j);
-                        JExpression left=(JExpression)leftF.get(0);
+                        JExpression left=leftF.get(0);
                         JExpression r=new JFieldAccessExpression(null,left,field);
                         JExpression l=null;
                         if(left instanceof JFieldAccessExpression) {
@@ -243,7 +243,7 @@ public class StructDestroyer extends SLIRReplacingVisitor {
                         r=new JLocalVariableExpression(null,getVar(((JLocalVariableExpression)rightF).getIdent()+SEP+field,type));
                     final int len2=leftF.size();
                     for(int k=0;k<len2;k++) {
-                        JExpression left=(JExpression)leftF.get(k);
+                        JExpression left=leftF.get(k);
                         JExpression l=null;
                         if(left instanceof JFieldAccessExpression) {
                             JExpression prefix=((JFieldAccessExpression)left).getPrefix();
@@ -283,7 +283,7 @@ public class StructDestroyer extends SLIRReplacingVisitor {
             JFormalParameter[] params=init.getParameters();
             final int len=args.size();
             ArrayList newArgs=new ArrayList();
-            ArrayList newParams=new ArrayList();
+            ArrayList<JFormalParameter> newParams=new ArrayList<JFormalParameter>();
             List types=null;
             for(int i=0;i<len;i++) {
                 JExpression arg=(JExpression)args.get(i);
@@ -334,8 +334,8 @@ public class StructDestroyer extends SLIRReplacingVisitor {
      */
     private JLocalVariable getVar(String name,CType type) {
         if(paramMap.containsKey(name))
-            return (JFormalParameter)paramMap.get(name);
-        JLocalVariable out=(JLocalVariable)nameToVar.get(name);
+            return paramMap.get(name);
+        JLocalVariable out=nameToVar.get(name);
         if(out==null) {
             out=new JVariableDefinition(null,0,type,name,null);
             nameToVar.put(name,out);
@@ -365,8 +365,8 @@ public class StructDestroyer extends SLIRReplacingVisitor {
      */
     private static List[] extractFields(CClass struct) {
         CField[] fields=struct.getFields();
-        List out=new ArrayList();
-        List out2=new ArrayList();
+        List<String> out=new ArrayList<String>();
+        List<CType> out2=new ArrayList<CType>();
         for(int i=0;i<fields.length;i++) {
             if(!(fields[i].getType() instanceof CClassNameType)|| //Nonstruct or struct of same type (avoid self recursion)
                ((CClassNameType)fields[i].getType()).getCClass()==struct) {
@@ -379,7 +379,7 @@ public class StructDestroyer extends SLIRReplacingVisitor {
                 final int len=inner.size();
                 for(int j=0;j<len;j++) {
                     out.add(prefix+SEP+(String)inner.get(j));
-                    out2.add(temp[1].get(j));
+                    out2.add((CType)temp[1].get(j));
                 }
             }
         }

@@ -82,7 +82,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * Map from stream structures to DPConfig's.
      */
-    private HashMap configMap;
+    private HashMap<SIRStream, DPConfig> configMap;
     /**
      * The set of splitjoins whose children are structurally
      * equivalent (and have equal amounts of work.)
@@ -118,7 +118,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         super(str, work, numTiles);
         this.joinersNeedTiles = joinersNeedTiles;
         this.limitICode = limitICode;
-        this.configMap = new HashMap();
+        this.configMap = new HashMap<SIRStream, DPConfig>();
         this.uniformSJ = new HashSet();
         this.noHorizFuse = noHorizFuse;
     }
@@ -137,7 +137,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     public static void saveScalingStatistics(SIRStream str, WorkEstimate work, int maxTiles) {
         PartitionUtil.setupScalingStatistics();
         for (int i=1; i<maxTiles; i++) {
-            LinkedList partitions = new LinkedList();
+            LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
             new DynamicProgPartitioner(str, work, i, true, false).calcPartitions(partitions, false);
             PartitionUtil.doScalingStatistics(partitions, i);
         }
@@ -149,7 +149,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * partitioned stream.
      */
     public SIRStream toplevel() {
-        LinkedList partitions = new LinkedList();
+        LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         return calcPartitions(partitions, true);
     }
 
@@ -162,8 +162,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * with a mapping from SIROperator to String denoting list of
      * partition numbers that a given SIROperator is assigned to.
      */
-    public SIRStream calcPartitions(HashMap partitionMap) {
-        LinkedList partitions = new LinkedList();
+    public SIRStream calcPartitions(HashMap<SIROperator, Integer> partitionMap) {
+        LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         SIRStream result = calcPartitions(partitions, false);
 
         partitionMap.clear();
@@ -180,7 +180,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * partitioning the stream is returned; otherwise the stream is
      * left alone and only <pre>partitions</pre> are filled up.
      */
-    private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
+    private SIRStream calcPartitions(LinkedList<PartitionRecord> partitions, boolean doTransform) {
         if (COLLAPSE_IDENTITIES) {
             // to deal with cases like matmul, fuse all identity's in the
             // stream
@@ -274,7 +274,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
 
     private SIRStream fuseIdentities(SIRStream str) {
-        final HashSet allIdentities = new HashSet();
+        final HashSet<SIRStream> allIdentities = new HashSet<SIRStream>();
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 public void postVisitStream(SIRStream self,
                                             SIRIterator iter) {
@@ -303,7 +303,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         return fuseIdentitiesHelper(str, allIdentities);
     }
 
-    private SIRStream fuseIdentitiesHelper(SIRStream str, HashSet allIdentities) {
+    private SIRStream fuseIdentitiesHelper(SIRStream str, HashSet<SIRStream> allIdentities) {
         if (str instanceof SIRContainer) {
             // fuse it if it is all identities
             if (allIdentities.contains(str)) {
@@ -353,17 +353,17 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private void expandSharedConfigs() {
         // these are config mappings that were once shared, but we
         // have expanded to be unshared
-        HashMap unshared = new HashMap();
+        HashMap<SIRStream, DPConfig> unshared = new HashMap<SIRStream, DPConfig>();
         // this is the working set under consideration -- contains
         // some shared and some non-shared items
-        HashMap potentialShares = configMap;
+        HashMap<SIRStream, DPConfig> potentialShares = configMap;
         do {
             // less shared is our first-level fix of shares we find in
             // potential shares.  They might still have some sharing.
-            HashMap lessShared = new HashMap();
-            for (Iterator it = potentialShares.keySet().iterator(); it.hasNext(); ) {
-                SIRStream str = (SIRStream)it.next();
-                DPConfig config = (DPConfig)potentialShares.get(str);
+            HashMap<SIRStream, DPConfig> lessShared = new HashMap<SIRStream, DPConfig>();
+            for (Iterator<SIRStream> it = potentialShares.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = it.next();
+                DPConfig config = potentialShares.get(str);
                 SIRStream configStr = config.getStream();
                 // if <config> represents something other than <str>, then
                 // replace it with an identical config that wraps <str>
@@ -414,7 +414,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
 
     public DPConfig getConfig(SIRStream str) {
-        return (DPConfig) configMap.get(str);
+        return configMap.get(str);
     }
 
     /**

@@ -14,14 +14,14 @@ import java.util.*;
  * More information might be gleaned from:
  * http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf<br>
  *
- * $Id: LinearRedundancy.java,v 1.11 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearRedundancy.java,v 1.12 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearRedundancy {
     /**
      * The internal representation of a linear redundancy is a hashmap
      * between LinearComputationTuples and a list of executions used in (integers).
      **/
-    private HashMap tuplesToUses;
+    private HashMap<LinearComputationTuple, LinkedList> tuplesToUses;
     
     /**
      * Creates a new linear redundancy from the linear filter rep that is passed
@@ -35,7 +35,7 @@ public class LinearRedundancy {
      */
     public LinearRedundancy(LinearFilterRepresentation lfr) {
         // initialize our mappings
-        this.tuplesToUses = new HashMap();
+        this.tuplesToUses = new HashMap<LinearComputationTuple, LinkedList>();
     
         // now, we only care about the matrix (the vector is simply added into
         // the final output). We also pull out the peek, pop and push counts
@@ -85,7 +85,7 @@ public class LinearRedundancy {
             this.tuplesToUses.put(tuple, new LinkedList());
         }
         // now, add the specified use to the list that the tuple maps to.
-        ((List) this.tuplesToUses.get(tuple)).add(new Integer(use));
+        this.tuplesToUses.get(tuple).add(new Integer(use));
     }
 
     /**
@@ -95,7 +95,7 @@ public class LinearRedundancy {
      * lists of Integers, which represent the execution of the work function
      * after the current one that the tuple is used in.
      **/
-    public HashMap getTuplesToUses() {
+    public HashMap<LinearComputationTuple, LinkedList> getTuplesToUses() {
         return this.tuplesToUses;
     }
 
@@ -107,14 +107,14 @@ public class LinearRedundancy {
     /** Calculate redundancy statistics. **/
     public RedundancyStatistics calculateRedundancyStatistics() {
         RedundancyStatistics stats = new RedundancyStatistics();
-        Iterator tupleIter = this.tuplesToUses.keySet().iterator();
+        Iterator<LinearComputationTuple> tupleIter = this.tuplesToUses.keySet().iterator();
         while(tupleIter.hasNext()) {
-            LinearComputationTuple currentTuple = (LinearComputationTuple)tupleIter.next();
+            LinearComputationTuple currentTuple = tupleIter.next();
             // if this tuple is zero, go to the next iteration.
             if (currentTuple.getCoefficient().equals(ComplexNumber.ZERO)) {
                 // do nothing this iteration
             } else {
-                List useList = (List)this.tuplesToUses.get(currentTuple);
+                List useList = this.tuplesToUses.get(currentTuple);
                 // now, for each use, update the tuple counts appropriately
                 Iterator useIter = useList.iterator();
                 // flag that is set when we have 
@@ -151,7 +151,7 @@ public class LinearRedundancy {
     /** Structure class for storing redundancy information. **/
     class RedundancyStatistics {
         /** set to keep track of the tuples calculated in the first invocation. **/
-        public HashSet originalTuples = new HashSet(); 
+        public HashSet<LinearComputationTuple> originalTuples = new HashSet<LinearComputationTuple>(); 
         /** the total number of tuples that are calculated in the first invocation. **/
         public int totalOriginalTuples = 0;
         /** the number of times that an original tuple is reused. **/
@@ -214,11 +214,11 @@ public class LinearRedundancy {
     public String getTupleString() {
         String str = "";
         // iterate through tuples, each tuple iterate through list
-        Iterator tupleIter = this.tuplesToUses.keySet().iterator();
+        Iterator<LinearComputationTuple> tupleIter = this.tuplesToUses.keySet().iterator();
         while(tupleIter.hasNext()) {
             Object tuple = tupleIter.next();
             str += tuple + "-->(";
-            Iterator listIter = ((List)this.tuplesToUses.get(tuple)).iterator();
+            Iterator listIter = this.tuplesToUses.get(tuple).iterator();
             while(listIter.hasNext()) {
                 str += listIter.next() + ",";
             }
@@ -230,7 +230,7 @@ public class LinearRedundancy {
     
     /** Check that the rep invariant holds. **/
     private void checkRep() {
-        Iterator tupleIter = this.tuplesToUses.keySet().iterator();
+        Iterator<LinearComputationTuple> tupleIter = this.tuplesToUses.keySet().iterator();
         while(tupleIter.hasNext()) {
             Object next = tupleIter.next();
             if (!(next instanceof LinearComputationTuple)) {

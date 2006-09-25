@@ -21,13 +21,13 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
     /**
      * The partition mapping.
      */
-    private HashMap partitions;
+    private HashMap<Object, Integer> partitions;
 
-    private ApplyPartitions(HashMap partitions) {
+    private ApplyPartitions(HashMap<Object, Integer> partitions) {
         this.partitions = partitions;
     }
 
-    public static void doit(SIRStream str, HashMap partitions) {
+    public static void doit(SIRStream str, HashMap<Object, Integer> partitions) {
         str.accept(new ApplyPartitions(partitions));
     }
 
@@ -62,7 +62,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
         // replace children
         replaceChildren(self);
         // fuse children internally
-        FusePipe.fuse(self, PartitionGroup.createFromAssignments(self.getChildren(), partitions));
+        FusePipe.fuse(self, PartitionGroup.createFromAssignments(self.getSequentialStreams(), partitions));
         return self;
     }
 
@@ -116,7 +116,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
      */
     private int getPartition(Object str) {
         assert partitions.containsKey(str) : "No partition recorded for: " + str;
-        return ((Integer)partitions.get(str)).intValue();
+        return partitions.get(str).intValue();
     }
 }
 

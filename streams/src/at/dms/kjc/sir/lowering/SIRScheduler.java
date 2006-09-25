@@ -46,7 +46,7 @@ public class SIRScheduler implements Constants {
      * appear multiple times (as sub-schedules of other schedules), so
      * we want to only have one work function generated.
      */
-    private HashMap scheduleToWork;
+    private HashMap<Schedule, JMethodDeclaration> scheduleToWork;
 
     /**
      * Creates one of these.
@@ -54,7 +54,7 @@ public class SIRScheduler implements Constants {
     private SIRScheduler(SIRContainer toplevel, JClassDeclaration flatClass) {
         this.toplevel = toplevel;
         this.flatClass = flatClass;
-        this.scheduleToWork = new HashMap();
+        this.scheduleToWork = new HashMap<Schedule, JMethodDeclaration>();
     }
 
     /**
@@ -147,7 +147,7 @@ public class SIRScheduler implements Constants {
     // Creates execution counts of filters in graph.  Requires that
     // <schedule> results from a schedule built with this instance of
     // the scheduler.
-    private static void fillExecutionCounts(Schedule schedule, HashMap counts, int numReps) {
+    private static void fillExecutionCounts(Schedule schedule, HashMap<SIROperator, int[]> counts, int numReps) {
         if (schedule.isBottomSchedule()) {
             // tally up for this node.
             SIROperator str = getTarget(schedule);
@@ -157,7 +157,7 @@ public class SIRScheduler implements Constants {
                 counts.put(str, wrapper);
             } else {
                 // add to counter
-                int[] wrapper = (int[])counts.get(str);
+                int[] wrapper = counts.get(str);
                 wrapper[0] += numReps;
             }       
         } else {
@@ -238,7 +238,7 @@ public class SIRScheduler implements Constants {
      */
     private void addMainFunction(JMethodDeclaration initWork) {
         // make a call to <initWork> from within the main function
-        LinkedList statementList = new LinkedList();
+        LinkedList<JStatement> statementList = new LinkedList<JStatement>();
         statementList.add(makeWorkCall(this.toplevel, 
                                        initWork.getName(),
                                        false));
@@ -345,7 +345,7 @@ public class SIRScheduler implements Constants {
     private JMethodDeclaration makeHierWork(Schedule schedule) {
         // see if we've already made a work function for this schedule
         if (scheduleToWork.containsKey(schedule)) {
-            return (JMethodDeclaration)scheduleToWork.get(schedule);
+            return scheduleToWork.get(schedule);
         }
         // otherwise, build a work function from scratch...
         JStatement[] statementList = makeWorkStatements(schedule);
@@ -391,7 +391,7 @@ public class SIRScheduler implements Constants {
      */
     private JStatement[] makeWorkStatements(Schedule schedule) {
         // build the statements for <work> ...
-        List statementList = new LinkedList();
+        List<JStatement> statementList = new LinkedList<JStatement>();
         // for each phase of <schedule>
         for (int i=0; i<schedule.getNumPhases(); i++) {
             // make work statement for sub-schedule
@@ -400,7 +400,7 @@ public class SIRScheduler implements Constants {
             statementList.add(workStatement);
         }
         // return list
-        return (JStatement[])statementList.toArray(new JStatement[0]);
+        return statementList.toArray(new JStatement[0]);
     }
 
     /**

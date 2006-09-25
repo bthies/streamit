@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * these out first.)
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexProp.java,v 1.15 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: ComplexProp.java,v 1.16 2006-09-25 13:54:53 dimock Exp $
  */
 public class ComplexProp extends FEReplacer
 {
@@ -288,8 +288,8 @@ public class ComplexProp extends FEReplacer
     public Object visitExprFunCall(ExprFunCall exp)
     {
         // Start by resolving all of the parameters.
-        List params = new ArrayList();
-        Iterator iter = exp.getParams().iterator();
+        List<Object> params = new ArrayList<Object>();
+        Iterator<Object> iter = exp.getParams().iterator();
         while (iter.hasNext())
             {
                 Expression expr = (Expression)iter.next();
@@ -326,7 +326,7 @@ public class ComplexProp extends FEReplacer
         return new ExprFunCall(exp.getContext(), exp.getName(), params);
     }
 
-    private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn,
+    private boolean isEligibleFunCall(ExprFunCall exp, List<Object> params, String fn,
                                       int nParams)
     {
         // A function call is eligible if:
@@ -337,7 +337,7 @@ public class ComplexProp extends FEReplacer
             return false;
         if (params.size() != nParams)
             return false;
-        for (Iterator iter = params.iterator(); iter.hasNext(); )
+        for (Iterator<Object> iter = params.iterator(); iter.hasNext(); )
             {
                 Expression param = (Expression)iter.next();
                 if (param instanceof ExprComplex)

@@ -30,7 +30,7 @@ public class FuseSimpleSplit {
         //printStats(sj);
 
         // get copy of child streams
-        List children = sj.getParallelStreams();
+        List<SIRStream> children = sj.getParallelStreams();
         // rename components
         doRenaming(children);
         // inline phases
@@ -308,18 +308,18 @@ public class FuseSimpleSplit {
         return new SRate(push, pop, peek);
     }
 
-    private static void doRenaming(List children) {
+    private static void doRenaming(List<SIRStream> children) {
         // Rename all of the child streams of this.
-        Iterator iter = children.iterator();
+        Iterator<SIRStream> iter = children.iterator();
         while (iter.hasNext()) {
             SIRFilter filter = (SIRFilter)iter.next();
             RenameAll.renameFilterContents((SIRFilter)filter);
         }
     }
 
-    private static void doPhaseInlining(List children) {
+    private static void doPhaseInlining(List<SIRStream> children) {
         // inline all phases, as they aren't supported in fusion yet
-        Iterator iter = children.iterator();
+        Iterator<SIRStream> iter = children.iterator();
         while (iter.hasNext()) {
             SIRFilter filter = (SIRFilter)iter.next();
             InlinePhases.doit(filter);
@@ -331,9 +331,9 @@ public class FuseSimpleSplit {
      */
     private static boolean isFusable(SIRSplitJoin sj) {
         // Check the ratios.
-        Iterator childIter = sj.getParallelStreams().iterator();
+        Iterator<SIRStream> childIter = sj.getParallelStreams().iterator();
         while (childIter.hasNext()) {
-            SIRStream str = (SIRStream)childIter.next();
+            SIRStream str = childIter.next();
             // don't allow two-stage filters, since we aren't dealing
             // with how to fuse their initWork functions.
             if (str instanceof SIRTwoStageFilter) {
@@ -790,7 +790,7 @@ public class FuseSimpleSplit {
     }
 
     private static JMethodDeclaration makeInitFunction(SIRSplitJoin sj,
-                                                       List children) {
+                                                       List<SIRStream> children) {
         // Start with the init function from the split/join.
         JMethodDeclaration init = sj.getInit();
         // add calls to init functions
@@ -810,7 +810,7 @@ public class FuseSimpleSplit {
     }
 
     private static JMethodDeclaration makeWorkFunction(SIRSplitJoin sj,
-                                                       List children,
+                                                       List<SIRStream> children,
                                                        SRepInfo rep) {
         // see whether or not we have a duplicate
         boolean isDup = sj.getSplitter().getType()==SIRSplitType.DUPLICATE;
@@ -821,7 +821,7 @@ public class FuseSimpleSplit {
         // from each of the component filters.
         JBlock newStatements = new JBlock(null, new LinkedList(), null);
         FindVarDecls findVarDecls = new FindVarDecls();
-        Iterator childIter = children.iterator();
+        Iterator<SIRStream> childIter = children.iterator();
         int i=0;
         while (childIter.hasNext())
             {
@@ -1010,9 +1010,9 @@ public class FuseSimpleSplit {
     }
 
     private static JFieldDeclaration[] makeFields(SIRSplitJoin sj,
-                                                  List children)
+                                                  List<SIRStream> children)
     {
-        Iterator childIter;
+        Iterator<SIRStream> childIter;
 
         // Walk the list of children to get the total field length.
         int numFields = 0;
@@ -1042,10 +1042,10 @@ public class FuseSimpleSplit {
     }
 
     private static JMethodDeclaration[] makeMethods(SIRSplitJoin sj,
-                                                    List children)
+                                                    List<SIRStream> children)
     {
         // Just copy all of the methods into an array.
-        Iterator childIter;
+        Iterator<SIRStream> childIter;
 
         // Walk the list of children to get the total number of
         // methods.  Skip work functions wherever necessary.

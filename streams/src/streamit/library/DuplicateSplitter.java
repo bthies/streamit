@@ -39,7 +39,7 @@ public class DuplicateSplitter extends Splitter
         int i;
         for (i=0;i<numChildren;i++)
             {
-                if (dest.get(i) != null && ((Stream)dest.get (i)).inputChannel != null)
+                if (dest.get(i) != null && dest.get (i).inputChannel != null)
                     {
                         weights [i] = 1;
                     }

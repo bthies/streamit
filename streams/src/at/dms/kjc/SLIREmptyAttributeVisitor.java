@@ -374,10 +374,10 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     public Object visitMainFunction(LIRMainFunction self,
                                     String typeName,
                                     LIRFunctionPointer init,
-                                    List initStatements) {
+                                    List<JStatement> initStatements) {
         init.accept(this);
         for (int i=0; i<initStatements.size(); i++) {
-            ((JStatement)initStatements.get(i)).accept(this);
+            initStatements.get(i).accept(this);
         }
         return self;
     }

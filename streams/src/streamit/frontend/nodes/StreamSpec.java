@@ -34,7 +34,7 @@ import java.util.ArrayList;
  * will need to determine the stream type on its own.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamSpec.java,v 1.18 2006-08-23 23:01:08 thies Exp $
+ * @version $Id: StreamSpec.java,v 1.19 2006-09-25 13:54:54 dimock Exp $
  */
 public class StreamSpec extends FENode
 {
@@ -42,8 +42,8 @@ public class StreamSpec extends FENode
     private StreamType st;
     private String name;
     private List params;
-    private List vars;
-    private List funcs;
+    private List<FieldDecl> vars;
+    private List<Function> funcs;
 
     /** Stream type constant for a filter. */
     public static final int STREAM_FILTER = 1;
@@ -75,7 +75,7 @@ public class StreamSpec extends FENode
      *                 functions of the stream object
      */
     public StreamSpec(FEContext context, int type, StreamType st,
-                      String name, List params, List vars, List funcs)
+                      String name, List params, List<FieldDecl> vars, List<Function> funcs)
     {
         super(context);
         this.type = type;
@@ -167,7 +167,7 @@ public class StreamSpec extends FENode
      *
      * @return  list of {@link Parameter}
      */
-    public List getParams()
+    public List<Parameter> getParams()
     {
         return params;
     }
@@ -179,7 +179,7 @@ public class StreamSpec extends FENode
      *
      * @return  list of {@link Statement}
      */
-    public List getVars()
+    public List<FieldDecl> getVars()
     {
         return vars;
     }
@@ -189,7 +189,7 @@ public class StreamSpec extends FENode
      *
      * @return  list of {@link Function}
      */
-    public List getFuncs()
+    public List<Function> getFuncs()
     {
         return funcs;
     }
@@ -203,9 +203,9 @@ public class StreamSpec extends FENode
      */
     public Function getInitFunc()
     {
-        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = funcs.iterator(); iter.hasNext(); )
             {
-                Function func = (Function)iter.next();
+                Function func = iter.next();
                 if (func.getCls() == Function.FUNC_INIT)
                     return func;
             }
@@ -222,9 +222,9 @@ public class StreamSpec extends FENode
      */
     public FuncWork getWorkFunc()
     {
-        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = funcs.iterator(); iter.hasNext(); )
             {
-                Function func = (Function)iter.next();
+                Function func = iter.next();
                 if (func.getCls() == Function.FUNC_WORK)
                     return (FuncWork)func;
             }
@@ -236,10 +236,10 @@ public class StreamSpec extends FENode
      *
      * @return list of helper functions performing I/O
      */
-    public List getHelperIOFuncs() {
-        List ioList = new ArrayList();
-        for (Iterator iterFunctions = funcs.iterator(); iterFunctions.hasNext();) {
-            Function aFunction = (Function) iterFunctions.next();
+    public List<Function> getHelperIOFuncs() {
+        List<Function> ioList = new ArrayList<Function>();
+        for (Iterator<Function> iterFunctions = funcs.iterator(); iterFunctions.hasNext();) {
+            Function aFunction = iterFunctions.next();
             if (aFunction.getCls() == Function.FUNC_HELPER &&
                 aFunction.doesIO()) {
                 ioList.add(aFunction);
@@ -258,9 +258,9 @@ public class StreamSpec extends FENode
      */
     public Function getFuncNamed(String name)
     {
-        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = funcs.iterator(); iter.hasNext(); )
             {
-                Function func = (Function)iter.next();
+                Function func = iter.next();
                 String fname = func.getName();
                 if (fname != null && fname.equals(name))
                     return func;

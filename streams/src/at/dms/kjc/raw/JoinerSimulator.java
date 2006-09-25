@@ -18,22 +18,22 @@ import java.util.Iterator;
 public class JoinerSimulator 
 {
     //hash set indexed by flatnode to schedule
-    public static HashMap schedules;
+    public static HashMap<FlatNode, JoinerScheduleNode> schedules;
     //hash map indexed by Flatnode to a hashset of all
     //the buffer names for a node
-    public static HashMap buffers;
+    public static HashMap<FlatNode, HashSet> buffers;
     
     //the current flatnode we are working on
     private static FlatNode current;
     
     public static void createJoinerSchedules(FlatNode top) 
     {
-        schedules = new HashMap();
-        buffers = new HashMap();
+        schedules = new HashMap<FlatNode, JoinerScheduleNode>();
+        buffers = new HashMap<FlatNode, HashSet>();
         
-        Iterator joiners = Layout.getJoiners().iterator();
+        Iterator<FlatNode> joiners = Layout.getJoiners().iterator();
         while (joiners.hasNext()) {
-            FlatNode node = (FlatNode)joiners.next();
+            FlatNode node = joiners.next();
             current = node;
             buffers.put(current, new HashSet());
             buildJoinerSchedule(node);
@@ -84,7 +84,7 @@ public class JoinerSimulator
             schedNode.type = JoinerScheduleNode.RECEIVE;
             schedNode.buffer = buf;
             //add the buffer name to the buffer list for this node
-            ((HashSet)buffers.get(current)).add(buf);
+            buffers.get(current).add(buf);
             return;
         }
         //else if (node.contents instanceof SIRSplitter) {

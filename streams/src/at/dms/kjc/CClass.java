@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.12 2006-03-24 15:54:46 dimock Exp $
+ * $Id: CClass.java,v 1.13 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -69,7 +69,7 @@ public abstract class CClass extends CMember {
      * Ends the definition of this class
      */
     public void close(CClassType[] interfaces,
-                      Hashtable fields,
+                      Hashtable<String, CField> fields,
                       CMethod[] methods)
     {
         this.interfaces = interfaces;
@@ -196,7 +196,7 @@ public abstract class CClass extends CMember {
      * @param   ident       the name of the field
      */
     public CField getField(String ident) {
-        return (CField)fields.get(ident);
+        return fields.get(ident);
     }
 
     /**
@@ -213,7 +213,7 @@ public abstract class CClass extends CMember {
         CField[]        result;
 
         result = new CField[fields.size()];
-        for (Enumeration eNum = fields.elements(); eNum.hasMoreElements(); ) {
+        for (Enumeration<CField> eNum = fields.elements(); eNum.hasMoreElements(); ) {
             CSourceField    field = (CSourceField)eNum.nextElement();
 
             result[field.getPosition()] = field;
@@ -794,7 +794,7 @@ public abstract class CClass extends CMember {
 
     private boolean     hasOuterThis;
 
-    private Hashtable       fields;
+    private Hashtable<String, CField>       fields;
     private CMethod[]       methods;
     private boolean               qualifiedAndAnonymous; 
 
@@ -814,7 +814,7 @@ public abstract class CClass extends CMember {
         other.innerClasses = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.innerClasses);
         other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
         other.hasOuterThis = this.hasOuterThis;
-        other.fields = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+        other.fields = (java.util.Hashtable<String, CField>)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
         other.methods = (at.dms.kjc.CMethod[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
         other.qualifiedAndAnonymous = this.qualifiedAndAnonymous;
     }

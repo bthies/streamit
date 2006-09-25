@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: RuleBlock.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: RuleBlock.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -51,7 +51,7 @@ public class RuleBlock extends AlternativeBlock {
     // The FIRST(rule) is stored in this cache; 1..k
     // This set includes FIRST of all alts.
 
-    Hashtable exceptionSpecs;       // table of String-to-ExceptionSpec.
+    Hashtable<String,ExceptionSpec> exceptionSpecs;       // table of String-to-ExceptionSpec.
 
     // grammar-settable options
     protected boolean defaultErrorHandler = true;
@@ -65,7 +65,7 @@ public class RuleBlock extends AlternativeBlock {
         ruleName = r;
         labeledElements = new Vector();
         cache = new Lookahead[g.maxk+1];
-        exceptionSpecs = new Hashtable();
+        exceptionSpecs = new Hashtable<String,ExceptionSpec>();
         setAutoGen(g instanceof ParserGrammar);
     }
     /**
@@ -88,10 +88,10 @@ public class RuleBlock extends AlternativeBlock {
         }
     }
     public ExceptionSpec findExceptionSpec(Token label) {
-        return (ExceptionSpec)exceptionSpecs.get(label==null ? "" : label.getText());
+        return exceptionSpecs.get(label==null ? "" : label.getText());
     }
     public ExceptionSpec findExceptionSpec(String label) {
-        return (ExceptionSpec)exceptionSpecs.get(label==null ? "" : label);
+        return exceptionSpecs.get(label==null ? "" : label);
     }
     public void generate(JavaCodeGenerator generator) {
         generator.gen(this);

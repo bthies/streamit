@@ -917,7 +917,7 @@ public class Rawify {
             // create a loop to compress the switch code
 
             // find all the tiles used in this join
-            HashSet tiles = new HashSet();
+            HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
             for (int j = 0; j < traceNode.getWeights().length; j++) {
                 // get the source buffer, pass thru redundant buffer(s)
                 StreamingDram source = InterTraceBuffer.getBuffer(
@@ -925,7 +925,7 @@ public class Rawify {
                 tiles.addAll(SwitchCodeStore.getTilesInRoutes(router, source, dest));
             }
             // generate the loop header on all tiles involved
-            HashMap labels = SwitchCodeStore.switchLoopHeader(tiles,
+            HashMap<RawTile, Label> labels = SwitchCodeStore.switchLoopHeader(tiles,
                                                               iterations, init, primepump);
             // generate the switch instructions
             for (int j = 0; j < traceNode.getWeights().length; j++) {
@@ -1049,11 +1049,11 @@ public class Rawify {
         // see if we want to compress (loop) the switch instructions, we cannot
         if (SWITCH_COMP && iterations > SC_THRESHOLD) {
             assert iterations > 1;
-            Iterator tiles = getTilesUsedInSplit(traceNode,
+            Iterator<ComputeNode> tiles = getTilesUsedInSplit(traceNode,
                                                  IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM())
                 .iterator();
 
-            HashMap labels = new HashMap();
+            HashMap<RawTile, Label> labels = new HashMap<RawTile, Label>();
             while (tiles.hasNext()) {
                 RawTile tile = (RawTile) tiles.next();
                 // loop me
@@ -1076,7 +1076,7 @@ public class Rawify {
                 .iterator();
             while (tiles.hasNext()) {
                 RawTile tile = (RawTile) tiles.next();
-                Label label = (Label) labels.get(tile);
+                Label label = labels.get(tile);
                 // add the branch back
                 BnezdIns branch = new BnezdIns(FILTER_FIRE_LOOP_REG,
                                                FILTER_FIRE_LOOP_REG, label.getLabel());
@@ -1220,10 +1220,10 @@ public class Rawify {
      * @param sourcePort
      * @return Set of tiles used in the splitting
      */
-    public static HashSet getTilesUsedInSplit(OutputTraceNode traceNode,
+    public static HashSet<ComputeNode> getTilesUsedInSplit(OutputTraceNode traceNode,
                                               StreamingDram sourcePort) {
         // find all the tiles used in the split
-        HashSet tiles = new HashSet();
+        HashSet<ComputeNode> tiles = new HashSet<ComputeNode>();
         for (int j = 0; j < traceNode.getWeights().length; j++) {
             for (int k = 0; k < traceNode.getWeights()[j]; k++) {
                 // generate the array of compute node dests

@@ -4,6 +4,7 @@ import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
+
 import java.util.List;
 import java.util.ListIterator;
 import java.util.LinkedList;
@@ -18,25 +19,25 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     /**
      * List of the class declarations defined during traversal
      */
-    private LinkedList structs;
+    private LinkedList<JTypeDeclaration> structs;
     /**
      * List of methods that have been flattened.
      */
-    private LinkedList flatMethods;
+    private LinkedList<JMethodDeclaration> flatMethods;
 
     /**
      * The renamed methods.  Map of old method name to new method name.
      * this maps interned strings -> strings
      */
-    private final HashMap renamedMethods;
+    private final HashMap<String,String> renamedMethods;
 
     /**
      * Creates a new structurer.
      */
     private Structurer() {
-        this.structs = new LinkedList();
-        this.flatMethods = new LinkedList();
-        this.renamedMethods = new HashMap();
+        this.structs = new LinkedList<JTypeDeclaration>();
+        this.flatMethods = new LinkedList<JMethodDeclaration>();
+        this.renamedMethods = new HashMap<String,String>();
     }
 
     /**
@@ -116,12 +117,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
                                      CClassType.EMPTY,
                                      /* JFieldDeclaration[] fields */
                                      fields,
-                                     /* JMethodDeclaration[] methods */
-                                     (JMethodDeclaration[])
                                      flatMethods.toArray(JMethodDeclaration.
                                                          EMPTY()),
-                                     /* JTypeDeclaration[] inners */
-                                     (JTypeDeclaration[])
                                      structs.toArray(new JTypeDeclaration[0]),
                                      /* JPhylum[] initializers */
                                      JClassDeclaration.EMPTY,
@@ -137,7 +134,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      */
     private void createStruct(String name,
                               JFieldDeclaration[] fields, 
-                              List children) {
+                              List<SIRStream> children) {
 
         // there is one field for each child, plus one for the context,
         // plus two for the in and out tapes
@@ -165,9 +162,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
         // fill in the children
         for (int i=0; i<children.size(); i++) {
             // the name of the type in the structure
-            String typeName = ((SIRStream)children.get(i)).getTypeNameInC();
+            String typeName = children.get(i).getTypeNameInC();
             // the name for the variable in the structure
-            String varName = ((SIRStream)children.get(i)).getRelativeName();
+            String varName = children.get(i).getRelativeName();
             assert varName!=null:
                 "Relative name null for " + 
                 children.get(i) + " ; might be a child with a " + 
@@ -251,7 +248,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
                         // if we're calling one of our own methods...
                         if (prefix instanceof JThisExpression) {
                             // if <ident> has been renamed...
-                            String newName = (String)renamedMethods.get(ident);
+                            String newName = renamedMethods.get(ident);
                             if (newName!=null) {
                                 // rename the call
                                 self.setIdent(newName);
@@ -419,7 +416,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     private void postVisit(String name, 
                            JFieldDeclaration[] fields,
                            JMethodDeclaration[] methods,
-                           List children) {
+                           List<SIRStream> children) {
         // create structure
         createStruct(name, fields, children);
         // if there are methods, add closure-referencing to methods
@@ -431,7 +428,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
                                   SIRPipelineIter iter) {
-        postVisit(self.getTypeNameInC(), self.getFields(), self.getMethods(), self.getChildren());
+        postVisit(self.getTypeNameInC(), self.getFields(), self.getMethods(), self.getSequentialStreams());
     }
   
     /* post-visit a splitjoin */
@@ -444,7 +441,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
                                       SIRFeedbackLoopIter iter) {
         // make a list of body and loop
-        List children = new LinkedList();
+        List<SIRStream> children = new LinkedList<SIRStream>();
         children.add(self.getBody());
         children.add(self.getLoop());
         // do visit

@@ -506,7 +506,7 @@ class CConfigPipeline extends CConfigContainer {
         return fusion_info[from][to];
     }
 
-    protected SIRStream doCut(LinkedList partitions, PartitionRecord curPartition,
+    protected SIRStream doCut(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                               int x1, int x2, int xPivot, int tileLimit, int tPivot, SIRStream str) {
         // there's a division at this <yPivot>.  We'll
         // return result of a horizontal cut.

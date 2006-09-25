@@ -46,12 +46,12 @@ public class NumberGathering
     private NumberGathering(RawChip chip, Trace[] files)
     {
         //get all the file writers
-        Vector fw = new Vector();
+        Vector<Trace> fw = new Vector<Trace>();
         for (int i = 0; i < files.length; i++) 
             if (files[i].getHead().isFileOutput())
                 fw.add(files[i]);
 
-        fileWriters = (Trace[])fw.toArray(new Trace[0]);
+        fileWriters = fw.toArray(new Trace[0]);
         assert fileWriters.length > 0 : "Error in number gathering: no file writer";
         steady = new int[fileWriters.length];
         skip = new int[fileWriters.length];

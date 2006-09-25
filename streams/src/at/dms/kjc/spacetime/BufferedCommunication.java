@@ -127,7 +127,7 @@ public class BufferedCommunication extends RawExecutionCode
      */
     public JFieldDeclaration[] getVarDecls() 
     {
-        Vector decls = new Vector();
+        Vector<JFieldDeclaration> decls = new Vector<JFieldDeclaration>();
         FilterContent filter = filterInfo.filter;
 
         JFieldDeclaration[] fields=filter.getFields();
@@ -354,7 +354,7 @@ public class BufferedCommunication extends RawExecutionCode
         //convert the pops/peeks into buffer access 
         convertCommExprs();
 
-        return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
+        return decls.toArray(new JFieldDeclaration[0]);
     }
 
     /**
@@ -367,7 +367,7 @@ public class BufferedCommunication extends RawExecutionCode
     public JMethodDeclaration[] getHelperMethods() 
     {
         
-        Vector methods = new Vector();
+        Vector<JMethodDeclaration> methods = new Vector<JMethodDeclaration>();
 
         //add all helper methods, except work function and initWork
         /*
@@ -402,7 +402,7 @@ public class BufferedCommunication extends RawExecutionCode
             
             methods.add(filterInfo.filter.getMethods()[i]);
         }
-        return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);
+        return methods.toArray(new JMethodDeclaration[0]);
     }
 
     /**

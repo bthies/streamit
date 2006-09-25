@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefinitionFile.java,v 1.3 2006-01-25 17:01:16 thies Exp $
+ * $Id: DefinitionFile.java,v 1.4 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.msggen;
@@ -94,7 +94,7 @@ class DefinitionFile {
      * @param   id      the id of the first token
      * @return  the id of the last token + 1
      */
-    public void checkIdentifiers(Hashtable identifiers) throws MsggenError {
+    public void checkIdentifiers(Hashtable<String, String> identifiers) throws MsggenError {
         for (int i = 0; i < definitions.length; i++) {
             definitions[i].checkIdentifiers(identifiers, sourceFile);
         }

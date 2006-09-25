@@ -37,12 +37,12 @@ import java.util.List;
  * checker and GenerateCopies.
  *
  * @author  Bill Thies &lt;thies@mit.edu&gt;
- * @version $Id: ExprArrayInit.java,v 1.2 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: ExprArrayInit.java,v 1.3 2006-09-25 13:54:53 dimock Exp $
  */
 public class ExprArrayInit extends Expression
 {
     /** list of Expressions that are the initial elements of the array */
-    private List elements;
+    private List<Expression> elements;
     
     /** number of dimensions that are initialized in this.  If all the
      * <elements> are plain Expressions, then dims=1.  If the elements
@@ -52,7 +52,7 @@ public class ExprArrayInit extends Expression
     private int dims;
 
     /** Creates a new ExprArrayInit with the specified elements. */
-    public ExprArrayInit(FEContext context, List elements)
+    public ExprArrayInit(FEContext context, List<Expression> elements)
     {
         super(context);
         this.elements = elements;
@@ -70,7 +70,7 @@ public class ExprArrayInit extends Expression
     
     /** Returns the components of this.  The returned list is a list
      * of expressions.  */
-    public List getElements() { return elements; }
+    public List<Expression> getElements() { return elements; }
 
     /** Returns how many dimensions in this array */
     public int getDims() { return dims; }

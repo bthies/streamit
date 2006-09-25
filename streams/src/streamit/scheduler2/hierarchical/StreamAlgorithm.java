@@ -150,7 +150,7 @@ public class StreamAlgorithm extends DestroyedClass
 
     // this section takes care of chilren's schedule phase shifts
 
-    Map childPhaseShift = new HashMap();
+    Map<StreamInterface, Integer> childPhaseShift = new HashMap<StreamInterface, Integer>();
 
     /**
      * Advance the child's init schedule by numStages.

@@ -27,7 +27,7 @@ abstract class LDPConfig implements Cloneable {
      * Mapping from filter to partition number, just for convenience
      * in traceback.
      */
-    public static HashMap partitions;
+    public static HashMap<SIROperator, Object> partitions;
 
     protected LDPConfig(LinearPartitioner partitioner) {
         this.partitioner = partitioner;

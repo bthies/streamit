@@ -28,7 +28,7 @@ abstract public class Joiner extends Operator
 {
     public static boolean finegrained = false;
 
-    List srcs = new ArrayList();
+    List<Stream> srcs = new ArrayList<Stream>();
 
     public Channel inputChannel[] = null;
     public Channel outputChannel = null;
@@ -58,11 +58,11 @@ abstract public class Joiner extends Operator
         // yep, go through my members and connect them all with
         // ChannelConnectFilter
         int inputIndx = 0;
-        ListIterator iter = srcs.listIterator();
+        ListIterator<Stream> iter = srcs.listIterator();
         while (iter.hasNext())
             {
                 // connect the input streams:
-                Stream s = (Stream)iter.next();
+                Stream s = iter.next();
 
                 // it is possible for a stream to be null - if I'm doing a
                 // weighted joiner and I really don't have the stream!

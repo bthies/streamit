@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaCodeGenerator.java,v 1.5 2006-03-24 20:48:35 dimock Exp $
+ * $Id: JavaCodeGenerator.java,v 1.6 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -624,9 +624,9 @@ public class JavaCodeGenerator {
         // Do the code generation
         try {
             // Loop over all grammars
-            Enumeration grammarIter = behavior.grammars.elements();
+            Enumeration<Grammar> grammarIter = behavior.grammars.elements();
             while (grammarIter.hasMoreElements()) {
-                Grammar g = (Grammar)grammarIter.nextElement();
+                Grammar g = grammarIter.nextElement();
                 // Connect all the components to each other
                 g.setGrammarAnalyzer(analyzer);
                 analyzer.setGrammar(g);
@@ -639,9 +639,9 @@ public class JavaCodeGenerator {
             }
 
             // Loop over all token managers (some of which are lexers)
-            Enumeration tmIter = behavior.tokenManagers.elements();
+            Enumeration<TokenManager> tmIter = behavior.tokenManagers.elements();
             while (tmIter.hasMoreElements()) {
-                TokenManager tm = (TokenManager)tmIter.nextElement();
+                TokenManager tm = tmIter.nextElement();
                 if (!tm.isReadOnly()) {
                     // Write the token manager tokens as Java
                     // this must appear before genTokenInterchange so that
@@ -780,7 +780,7 @@ public class JavaCodeGenerator {
 
         print("public class " + grammar.getClassName() + " extends "+sup);
         println(" implements " + grammar.tokenManager.getName() + TokenTypesFileSuffix+", TokenStream");
-        Token tsuffix = (Token)grammar.options.get("classHeaderSuffix");
+        Token tsuffix = grammar.options.get("classHeaderSuffix");
         if ( tsuffix != null ) {
             String suffix = Utils.stripFrontBack(tsuffix.getText(),"\"","\"");
             if ( suffix != null ) {
@@ -832,9 +832,9 @@ public class JavaCodeGenerator {
         // containing the string literals used in the lexer
         // The literals variable itself is in CharScanner
         println("literals = new Hashtable();");
-        Enumeration keys = grammar.tokenManager.getTokenSymbolKeys();
+        Enumeration<String> keys = grammar.tokenManager.getTokenSymbolKeys();
         while ( keys.hasMoreElements() ) {
-            String key = (String)keys.nextElement();
+            String key = keys.nextElement();
             if ( key.charAt(0) != '"' ) {
                 continue;
             }
@@ -1003,7 +1003,7 @@ public class JavaCodeGenerator {
         println("public class " + grammar.getClassName() + " extends "+sup);
         println("       implements " + grammar.tokenManager.getName() + TokenTypesFileSuffix);
 
-        Token tsuffix = (Token)grammar.options.get("classHeaderSuffix");
+        Token tsuffix = grammar.options.get("classHeaderSuffix");
         if ( tsuffix != null ) {
             String suffix = Utils.stripFrontBack(tsuffix.getText(),"\"","\"");
             if ( suffix != null ) {

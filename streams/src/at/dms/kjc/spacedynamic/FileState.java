@@ -7,12 +7,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.io.*;
-import java.util.List;
 import java.util.*;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 
 /** 
  * Set up in the backend the various file readers or writers by creating the necessary 
@@ -30,17 +25,17 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     public boolean foundReader;
 
     // a hashmap FlatNode -> FileReaderDevice
-    private HashMap fileReaders;
+    private HashMap<Object, FileReaderDevice> fileReaders;
 
     // true if the graph contains a fileWriter
     public boolean foundWriter;
 
     // a hashmap FlatNode -> FileWriterDevice
-    private HashMap fileWriters;
+    private HashMap<Object, FileWriterDevice> fileWriters;
 
     // a hashset containing the flatnodes of all the file manipulators
     // (both readers and writers
-    public HashSet fileNodes;
+    public HashSet<Object> fileNodes;
 
     private RawChip rawChip;
 
@@ -55,7 +50,7 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
     private int writerPort;
     
     public void visitStaticStreamGraph(SpdStaticStreamGraph ssg) {
-        ssg.getTopLevel().accept(this, new HashSet(), false);
+        ssg.getTopLevel().accept(this, new HashSet<FlatNode>(), false);
     }
 
     public FileState(SpdStreamGraph streamGraph) {
@@ -63,9 +58,9 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
         this.rawChip = streamGraph.getRawChip();
         foundReader = false;
         foundWriter = false;
-        fileReaders = new HashMap();
-        fileWriters = new HashMap();
-        fileNodes = new HashSet();
+        fileReaders = new HashMap<Object, FileReaderDevice>();
+        fileWriters = new HashMap<Object, FileWriterDevice>();
+        fileNodes = new HashSet<Object>();
         
         if (rawChip.getTotalTiles() == 1) {
             readerPort = 0;
@@ -211,14 +206,14 @@ public class FileState implements StreamGraphVisitor, FlatVisitor {
      */
     public FileWriterDevice getFileWriterDevice(FlatNode fw) {
         assert fileWriters.containsKey(fw);
-        return (FileWriterDevice)fileWriters.get(fw);
+        return fileWriters.get(fw);
     }
     
-    public Collection getFileWriterDevs() {
+    public Collection<FileWriterDevice> getFileWriterDevs() {
         return fileWriters.values();
     }
 
-    public Collection getFileReaderDevs() {
+    public Collection<FileReaderDevice> getFileReaderDevs() {
         return fileReaders.values();
     }
 

@@ -89,7 +89,7 @@ class CConfigFilter extends CConfig {
     /**
      * Add this to the map and return.
      */
-    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, SIRStream str) {
+    public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, SIRStream str) {
         curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
         return filter;
     }

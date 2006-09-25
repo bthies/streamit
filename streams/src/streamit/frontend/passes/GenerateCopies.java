@@ -18,6 +18,7 @@ package streamit.frontend.passes;
 
 import streamit.frontend.tojava.*;
 import streamit.frontend.nodes.*;
+
 import java.util.*;
 
 /**
@@ -29,7 +30,7 @@ import java.util.*;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.16 2006-03-16 21:17:26 madrake Exp $
+ * @version $Id: GenerateCopies.java,v 1.17 2006-09-25 13:54:54 dimock Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -188,7 +189,7 @@ public class GenerateCopies extends SymbolTableVisitor
         Expression tel = new ExprArray(null, to, index);
         Statement body =
             new StmtBlock(null,
-                          Collections.singletonList(new StmtAssign(null,
+                          Collections.singletonList((Statement)new StmtAssign(null,
                                                                    tel,
                                                                    fel)));
         body = (Statement)body.accept(this);
@@ -288,7 +289,7 @@ public class GenerateCopies extends SymbolTableVisitor
     {
         boolean hasChanged = false;
         Expression result = expr;
-        List newParams = new ArrayList();
+        List<Expression> newParams = new ArrayList<Expression>();
         for (Iterator iter = expr.getParams().iterator(); iter.hasNext(); )
             {
                 Expression param = (Expression)iter.next();

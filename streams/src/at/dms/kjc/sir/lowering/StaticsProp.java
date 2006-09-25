@@ -59,7 +59,7 @@ public class StaticsProp {
         HashMap<String, SIRGlobal> namesToStatics = new HashMap<String, SIRGlobal>();
         
         for (Iterator<SIRGlobal> i = theStatics.iterator(); i.hasNext(); ) {
-            SIRGlobal aStatic = (SIRGlobal)i.next();
+            SIRGlobal aStatic = i.next();
             String sName = aStatic.getIdent();
             staticsNames.add(sName);
             namesToStatics.put(sName, aStatic);
@@ -195,8 +195,8 @@ public class StaticsProp {
 
         if (debugPrint) {
             System.err.println("// StaticsProp: globals after linearization");
-            for (Iterator it = theStatics.iterator(); it.hasNext();) {
-                SIRToStreamIt.runOnGlobal((SIRGlobal) it.next());
+            for (Iterator<SIRGlobal> it = theStatics.iterator(); it.hasNext();) {
+                SIRToStreamIt.runOnGlobal(it.next());
             }
             System.err
                 .println("// StaticsProp: End of globals after linearization");
@@ -225,8 +225,8 @@ public class StaticsProp {
 	// correctly and should not be run on the static sections.
         boolean oldStructs = KjcOptions.struct;
         KjcOptions.struct = false;
-        for (Iterator i = theStatics.iterator(); i.hasNext();) {
-            final SIRGlobal s = (SIRGlobal) i.next();
+        for (Iterator<SIRGlobal> i = theStatics.iterator(); i.hasNext();) {
+            final SIRGlobal s = i.next();
 
             //prepass: any fields in a static section are static.
             // In the case of setting up array sizes, this becomes
@@ -367,7 +367,7 @@ public class StaticsProp {
             StaticAndField sNameAndField = (StaticAndField)iter.next();
             String thisStaticName = sNameAndField.getTheStatic();
             String thisFieldName = sNameAndField.getTheField();
-            SIRGlobal thisStatic = (SIRGlobal)namesToStatics.get(thisStaticName);
+            SIRGlobal thisStatic = namesToStatics.get(thisStaticName);
             
             staticNameToFields.put(sNameAndField,
                                    getFieldDecl(thisStatic, thisFieldName));

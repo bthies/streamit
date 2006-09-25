@@ -17,6 +17,7 @@
 package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,12 +32,12 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.10 2006-08-23 23:01:10 thies Exp $
+ * @version $Id: NoRefTypes.java,v 1.11 2006-09-25 13:54:54 dimock Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
     // maps name of structure to TypeStruct
-    private HashMap structs;
+    private HashMap<String, TypeStruct> structs;
 
     private Type remapType(Type type)
     {
@@ -51,14 +52,14 @@ public class NoRefTypes extends FEReplacer
                 String name = tsr.getName();
                 if (!structs.containsKey(name))
                     throw new UnrecognizedVariableException(name);
-                type = (Type)structs.get(name);
+                type = structs.get(name);
             }
         return type;
     }
 
     public NoRefTypes()
     {
-        structs = new HashMap();
+        structs = new HashMap<String, TypeStruct>();
     }
     
     public Object visitProgram(Program prog)
@@ -66,12 +67,12 @@ public class NoRefTypes extends FEReplacer
         // Go through the list of structures, and notice them all.
         // We also need to rewrite the structures, in case there are
         // structs that contain structs.
-        List newStructs = new java.util.ArrayList();
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
+        List<TypeStruct> newStructs = new java.util.ArrayList<TypeStruct>();
+        for (Iterator<TypeStruct> iter = prog.getStructs().iterator(); iter.hasNext(); )
             {
-                TypeStruct struct = (TypeStruct)iter.next();
-                List newNames = new java.util.ArrayList();
-                List newTypes = new java.util.ArrayList();
+                TypeStruct struct = iter.next();
+                List<String> newNames = new java.util.ArrayList<String>();
+                List<Type> newTypes = new java.util.ArrayList<Type>();
                 for (int i = 0; i < struct.getNumFields(); i++)
                     {
                         String name = struct.getField(i);
@@ -90,7 +91,7 @@ public class NoRefTypes extends FEReplacer
 
     public Object visitFieldDecl(FieldDecl field)
     {
-        List newTypes = new java.util.ArrayList();
+        List<Type> newTypes = new java.util.ArrayList<Type>();
         for (int i = 0; i < field.getNumFields(); i++)
             newTypes.add(remapType(field.getType(i)));
         return new FieldDecl(field.getContext(), newTypes,
@@ -101,7 +102,7 @@ public class NoRefTypes extends FEReplacer
     {
         // Visit the parameter list, then let FEReplacer do the
         // rest of the work.
-        List newParams = new java.util.ArrayList();
+        List<Parameter> newParams = new java.util.ArrayList<Parameter>();
         for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
             {
                 Parameter param = (Parameter)iter.next();
@@ -123,7 +124,7 @@ public class NoRefTypes extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        List newTypes = new java.util.ArrayList();
+        List<Type> newTypes = new java.util.ArrayList<Type>();
         for (int i = 0; i < stmt.getNumVars(); i++)
             newTypes.add(remapType(stmt.getType(i)));
         return new StmtVarDecl(stmt.getContext(), newTypes,
@@ -134,10 +135,9 @@ public class NoRefTypes extends FEReplacer
     {
         // Visit the parameter list, then let FEReplacer do the
         // rest of the work.
-        List newParams = new java.util.ArrayList();
-        for (Iterator iter = ss.getParams().iterator(); iter.hasNext(); )
+        List<Object> newParams = new java.util.ArrayList<Object>();
+        for (Parameter param : ss.getParams())
             {
-                Parameter param = (Parameter)iter.next();
                 Type type = remapType(param.getType());
                 param = new Parameter(type, param.getName());
                 newParams.add(param);

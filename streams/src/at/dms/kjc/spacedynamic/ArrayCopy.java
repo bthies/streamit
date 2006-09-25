@@ -13,7 +13,7 @@ public class ArrayCopy {
         JBlock body=init.getBody();
         JFormalParameter[] params=init.getParameters();
         for(int i=params.length-1;i>=0;i--) {
-            LinkedList dims=new LinkedList();
+            LinkedList<JIntLiteral> dims=new LinkedList<JIntLiteral>();
             Object val=constants.get(params[i]);
             Object temp=val;
             while(temp instanceof Object[]) {
@@ -29,7 +29,7 @@ public class ArrayCopy {
                                                                   (null,params[i]), 
                                                                   new JNewArrayExpression(null,
                                                                                           params[i].getType(),
-                                                                                          (JExpression[])dims.toArray(new JExpression[0]),null)),null));
+                                                                                          dims.toArray(new JExpression[0]),null)),null));
             }
         }
     }

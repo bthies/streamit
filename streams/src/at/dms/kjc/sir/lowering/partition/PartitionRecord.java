@@ -14,7 +14,7 @@ public class PartitionRecord {
      * partition.  Note that some SIROperators can be split across
      * multiple partitions in the case of fission.
      */
-    private LinkedList contents;
+    private LinkedList<SIROperator> contents;
     /**
      * The amount of work in this partition (might not be derivable
      * from <contents> because of fission transforms, etc.)
@@ -22,7 +22,7 @@ public class PartitionRecord {
     private int work;
 
     public PartitionRecord() {
-        this.contents = new LinkedList();
+        this.contents = new LinkedList<SIROperator>();
         this.work = 0;
     }
 
@@ -53,7 +53,7 @@ public class PartitionRecord {
      * Returns the i'th contents of this
      */
     public SIROperator get(int i) {
-        return (SIROperator)contents.get(i);
+        return contents.get(i);
     }
 
     /**
@@ -76,10 +76,10 @@ public class PartitionRecord {
      * partitions is mapped to a STRING representing the list of
      * partitions it's assigned to.
      */
-    public static HashMap asStringMap(LinkedList partitions) {
-        HashMap result = new HashMap();
+    public static HashMap<SIROperator, Object> asStringMap(LinkedList<PartitionRecord> partitions) {
+        HashMap<SIROperator, Object> result = new HashMap<SIROperator, Object>();
         for (int i=0; i<partitions.size(); i++) {
-            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            PartitionRecord pr = partitions.get(i);
             for (int j=0; j<pr.size(); j++) {
                 if (result.containsKey(pr.get(j))) {
                     result.put(pr.get(j), result.get(pr.get(j))+","+i);
@@ -100,10 +100,10 @@ public class PartitionRecord {
      * Unlike asStringMap, requires that each operator is mapped to
      * only one partition.
      */
-    public static HashMap asIntegerMap(LinkedList partitions) {
-        HashMap result = new HashMap();
+    public static HashMap<SIROperator, Integer> asIntegerMap(LinkedList<PartitionRecord> partitions) {
+        HashMap<SIROperator, Integer> result = new HashMap<SIROperator, Integer>();
         for (int i=0; i<partitions.size(); i++) {
-            PartitionRecord pr = (PartitionRecord)partitions.get(i);
+            PartitionRecord pr = partitions.get(i);
             for (int j=0; j<pr.size(); j++) {
                 if (result.containsKey(pr.get(j))) {
                     Utils.fail("This operator is mapped to two partitions in asIntegerMap: " + pr.get(j));

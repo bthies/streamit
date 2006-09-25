@@ -147,7 +147,7 @@ public class FusePipelines {
             // 1. original filters are stateless
             // 2. only the first filter can peek (otherwise peek
             //    buffer becomes state.)
-            ArrayList partitions = new ArrayList();
+            ArrayList<Integer> partitions = new ArrayList<Integer>();
             // position of start of current fusion segment
             int pos = 0; 
             // length of current fusion segment
@@ -197,7 +197,7 @@ public class FusePipelines {
                 // fuse the pipeline according to the recorded partitions
                 int[] partitionArr = new int[partitions.size()];
                 for (int i=0; i<partitionArr.length; i++) {
-                    partitionArr[i] = ((Integer)partitions.get(i)).intValue();
+                    partitionArr[i] = partitions.get(i).intValue();
                 }
                 PartitionGroup pg = PartitionGroup.createFromArray(partitionArr);
                 // return ourself, since we still have more than one
@@ -532,23 +532,23 @@ public class FusePipelines {
          */
         public void debugPrint() {
             // print two stage
-            for (Iterator it = isTwoStage.keySet().iterator(); it.hasNext(); ) {
-                SIRStream str = (SIRStream)it.next();
+            for (Iterator<SIRStream> it = isTwoStage.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = it.next();
                 System.err.println("isTwoStage: " + str + " = " + isTwoStage.get(str));
             }
             // print has state
-            for (Iterator it = hasState.keySet().iterator(); it.hasNext(); ) {
-                SIRStream str = (SIRStream)it.next();
+            for (Iterator<SIRStream> it = hasState.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = it.next();
                 System.err.println("hasState: " + str + " = " + hasState.get(str));
             }
             // print does peeking
-            for (Iterator it = doesPeeking.keySet().iterator(); it.hasNext(); ) {
-                SIRStream str = (SIRStream)it.next();
+            for (Iterator<SIRStream> it = doesPeeking.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = it.next();
                 System.err.println("doesPeeking: " + str + " = " + doesPeeking.get(str));
             }
             // print is fusable
-            for (Iterator it = isFusable.keySet().iterator(); it.hasNext(); ) {
-                SIRStream str = (SIRStream)it.next();
+            for (Iterator<SIRStream> it = isFusable.keySet().iterator(); it.hasNext(); ) {
+                SIRStream str = it.next();
                 System.err.println("isFusable: " + str + " = " + isFusable.get(str));
             }
         }

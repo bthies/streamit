@@ -70,7 +70,7 @@ public class SpaceTimeBackend {
 
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
-        Set theStatics = new HashSet();
+        Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
         Map associatedGlobals = StaticsProp.propagate(str,theStatics);  
         ConstantProp.propagateAndUnroll(str, true);

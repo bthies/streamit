@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StackSchleduler.java,v 1.3 2006-03-24 18:26:08 dimock Exp $
+ * $Id: StackSchleduler.java,v 1.4 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -147,6 +147,6 @@ public class StackSchleduler extends TreeWalker {
     // PRIVATE MEMBERS
     // --------------------------------------------------------------------
 
-    private Stack       stack = new Stack();
+    private Stack<QNode>       stack = new Stack<QNode>();
     private Hashtable   defs = new Hashtable();
 }

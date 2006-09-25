@@ -180,7 +180,7 @@ public class RawExecutionCode extends at.dms.util.Utils
         // initExec counts might be null if we're calling for work
         // estimation before exec counts have been determined.
         if (RawBackend.initExecutionCounts!=null) {
-            Integer init = (Integer)RawBackend.initExecutionCounts.
+            Integer init = RawBackend.initExecutionCounts.
                 get(Layout.getNode(Layout.getTile(filter)));
     
             if (init != null) 
@@ -245,7 +245,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     
     /* node is not directly connected upstream to a splitter, this function
        will calculate the number of items send to node */
-    private int getUpStreamItems(HashMap executionCounts, FlatNode node) 
+    private int getUpStreamItems(HashMap<FlatNode, Integer> executionCounts, FlatNode node) 
     {
         //if the node has not incoming channels then just return 0
         if (node.inputs < 1)
@@ -416,13 +416,13 @@ public class RawExecutionCode extends at.dms.util.Utils
                 if (KjcOptions.ratematch) {
                     //System.out.println(filter.getName());
             
-                    int i = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue();
+                    int i = RawBackend.steadyExecutionCounts.get(node).intValue();
 
                     //i don't know, the prepeek could be really large, so just in case
                     //include it.  Make the buffer big enough to hold 
                     buffersize = 
                         Math.max
-                        ((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+                        ((RawBackend.steadyExecutionCounts.get(node).intValue() - 1) * 
                          filter.getPopInt() + filter.getPeekInt(), prepeek);
                 }
                 else //not ratematching and we do not have a circular buffer
@@ -448,7 +448,7 @@ public class RawExecutionCode extends at.dms.util.Utils
                 //see Mgordon's thesis for explanation (Code Generation Section)
                 if (KjcOptions.ratematch)
                     buffersize = 
-                        Util.nextPow2(Math.max((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+                        Util.nextPow2(Math.max((RawBackend.steadyExecutionCounts.get(node).intValue() - 1) * 
                                                filter.getPopInt() + filter.getPeekInt(), prepeek) + remaining);
                 else
                     buffersize = Util.nextPow2(maxpeek + remaining);
@@ -529,8 +529,8 @@ public class RawExecutionCode extends at.dms.util.Utils
         //if we are rate matching, create the output buffer with its 
         //index
         if (KjcOptions.ratematch && filter.getPushInt() > 0) {
-            int steady = ((Integer)RawBackend.steadyExecutionCounts.
-                          get(Layout.getNode(Layout.getTile(filter)))).intValue();
+            int steady = RawBackend.steadyExecutionCounts.
+                          get(Layout.getNode(Layout.getTile(filter))).intValue();
         
             //define the send buffer index variable
             JVariableDefinition sendBufferIndexVar = 
@@ -858,8 +858,8 @@ public class RawExecutionCode extends at.dms.util.Utils
                                             LocalVariables localVariables) 
     {
         JBlock block = new JBlock(null, new JStatement[0], null);
-        int steady = ((Integer)RawBackend.steadyExecutionCounts.
-                      get(Layout.getNode(Layout.getTile(filter)))).intValue();
+        int steady = RawBackend.steadyExecutionCounts.
+                      get(Layout.getNode(Layout.getTile(filter))).intValue();
 
         //reset the simple index
         if (isSimple(filter)){

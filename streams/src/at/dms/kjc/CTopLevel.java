@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTopLevel.java,v 1.6 2006-03-24 22:45:15 dimock Exp $
+ * $Id: CTopLevel.java,v 1.7 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -39,7 +39,7 @@ public final class CTopLevel extends at.dms.util.Utils {
      * Loads class definition from .class file
      */
     public static CClass loadClass(String name) {
-        CClass      cl = (CClass)allLoadedClasses.get(name);
+        CClass      cl = allLoadedClasses.get(name);
 
         if (cl != null) {
             // look in cache
@@ -62,7 +62,7 @@ public final class CTopLevel extends at.dms.util.Utils {
     public static boolean addSourceClass(CClass cl) {
         assert cl instanceof CSourceClass;
 
-        CClass  last = (CClass)allLoadedClasses.put(cl.getQualifiedName(), cl);
+        CClass  last = allLoadedClasses.put(cl.getQualifiedName(), cl);
         return (last == null) ||
             (cl.getOwner() != null) ||
             !(last instanceof CSourceClass) ||
@@ -74,7 +74,7 @@ public final class CTopLevel extends at.dms.util.Utils {
      * @param name the name of the class file
      */
     public static boolean hasClassFile(String name) {
-        CClass      cl = (CClass)allLoadedClasses.get(name);
+        CClass      cl = allLoadedClasses.get(name);
 
         if (cl == null) {
             ClassInfo       file = ClassPath.getClassInfo(name, true);
@@ -91,7 +91,7 @@ public final class CTopLevel extends at.dms.util.Utils {
      * Removes all source classes
      */
     public static void initSession(Compiler compiler) {
-        allLoadedClasses = new Hashtable(2000);
+        allLoadedClasses = new Hashtable<String, CClass>(2000);
     }
 
     /**
@@ -104,7 +104,7 @@ public final class CTopLevel extends at.dms.util.Utils {
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    private static Hashtable    allLoadedClasses = new Hashtable(2000);
+    private static Hashtable<String, CClass>    allLoadedClasses = new Hashtable<String, CClass>(2000);
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 

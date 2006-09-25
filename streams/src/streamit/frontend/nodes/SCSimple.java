@@ -24,13 +24,13 @@ import java.util.List;
  * and a parameter list.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SCSimple.java,v 1.6 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: SCSimple.java,v 1.7 2006-09-25 13:54:54 dimock Exp $
  */
 public class SCSimple extends StreamCreator
 {
     private String name;
     private List types;
-    private List params;
+    private List<Expression> params;
     
     /**
      * Create a stream object given its name and a parameter list.
@@ -44,8 +44,8 @@ public class SCSimple extends StreamCreator
      * @param portals  list of <code>Expression</code> giving the
      *                 portals to register the new stream with
      */
-    public SCSimple(FEContext context, String name, List types, List params,
-                    List portals)
+    public SCSimple(FEContext context, String name, List types, List<Expression> params,
+                    List<Expression> portals)
     {
         super(context, portals);
         this.name = name;
@@ -77,7 +77,7 @@ public class SCSimple extends StreamCreator
      *
      * @return  list of <code>Expression</code>
      */
-    public List getParams()
+    public List<Expression> getParams()
     {
         return params;
     }

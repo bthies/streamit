@@ -23,13 +23,13 @@ public class SpaceTimeSchedule {
     private Trace[][] primePumpSchedule; 
     //the multiplicities of the traces in the primepump
     //Trace->Integer
-    private HashMap primePumpMult;
+    private HashMap<Trace, Integer> primePumpMult;
     
     public SpaceTimeSchedule(Partitioner p, RawChip r) {
         rawChip = r;
         partitioner = p;
     
-        primePumpMult = new HashMap();
+        primePumpMult = new HashMap<Trace, Integer>();
       
     }
      
@@ -79,8 +79,8 @@ public class SpaceTimeSchedule {
     /**
      * @param schedule The steady-state schedule to set.
      */
-    public void setSchedule(LinkedList schedule) {
-        this.schedule = (Trace[])schedule.toArray(new Trace[0]);
+    public void setSchedule(LinkedList<Trace> schedule) {
+        this.schedule = schedule.toArray(new Trace[0]);
     }
     
     
@@ -95,25 +95,25 @@ public class SpaceTimeSchedule {
      * @return A flat (one-dimensional) array of the primepump schedule.
      */
     public Trace[] getPrimePumpScheduleFlat() {
-        LinkedList pp = new LinkedList();
+        LinkedList<Trace> pp = new LinkedList<Trace>();
         
         for (int i = 0; i < primePumpSchedule.length; i++) 
             for (int j = 0; j < primePumpSchedule[i].length; j++) 
                 pp.add(primePumpSchedule[i][j]);
         
         
-        return (Trace[])pp.toArray(new Trace[0]);
+        return pp.toArray(new Trace[0]);
     }
     
     /**
      * @param preLoopSchedule The primePumpSchedule to set.
      */
-    public void setPrimePumpSchedule(LinkedList preLoopSchedule) {
+    public void setPrimePumpSchedule(LinkedList<LinkedList<Trace>> preLoopSchedule) {
         //      convert into an array for easier access...
         SpaceTimeBackend.println("Setting primepump schedule:");   
         primePumpSchedule = new Trace[preLoopSchedule.size()][];
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
-            LinkedList schStep = (LinkedList)preLoopSchedule.get(i);
+            LinkedList schStep = preLoopSchedule.get(i);
             primePumpSchedule[i] = new Trace[schStep.size()];
             for (int j = 0; j < schStep.size(); j++) {
                 Trace current = (Trace)schStep.get(j);
@@ -124,7 +124,7 @@ public class SpaceTimeSchedule {
                     primePumpMult.put(current, new Integer(1));
                 else 
                     primePumpMult.put(current, 
-                            new Integer(((Integer)primePumpMult.get(current)).intValue() + 1));
+                            new Integer(primePumpMult.get(current).intValue() + 1));
             }
         }
     }
@@ -173,7 +173,7 @@ public class SpaceTimeSchedule {
     public int getPrimePumpMult(Trace trace) {
         if (!primePumpMult.containsKey(trace))
             return 0;
-        return ((Integer)primePumpMult.get(trace)).intValue();
+        return primePumpMult.get(trace).intValue();
     }
     
   

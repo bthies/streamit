@@ -39,15 +39,15 @@ public class SimplePartitioner extends Partitioner {
     }
 
     public Trace[] partition() {
-        LinkedList queue = new LinkedList();
-        HashSet visited = new HashSet();
-        LinkedList traces = new LinkedList();
-        LinkedList topTracesList = new LinkedList(); // traces with no
+        LinkedList<UnflatFilter> queue = new LinkedList<UnflatFilter>();
+        HashSet<UnflatFilter> visited = new HashSet<UnflatFilter>();
+        LinkedList<Trace> traces = new LinkedList<Trace>();
+        LinkedList<Trace> topTracesList = new LinkedList<Trace>(); // traces with no
         // incoming dependencies
-        HashSet topUnflat = new HashSet();
+        HashSet<UnflatFilter> topUnflat = new HashSet<UnflatFilter>();
 
         // map unflatEdges -> Edge?
-        HashMap edges = new HashMap();
+        HashMap<UnflatEdge, Edge> edges = new HashMap<UnflatEdge, Edge>();
         // add the top filters to the queue
         for (int i = 0; i < topFilters.length; i++) {
             topUnflat.add(topFilters[i]);
@@ -55,7 +55,7 @@ public class SimplePartitioner extends Partitioner {
         }
 
         while (!queue.isEmpty()) {
-            UnflatFilter unflatFilter = (UnflatFilter) queue.removeFirst();
+            UnflatFilter unflatFilter = queue.removeFirst();
             if (!visited.contains(unflatFilter)) {
                 visited.add(unflatFilter);
                 // the filter content for the new filter
@@ -78,7 +78,7 @@ public class SimplePartitioner extends Partitioner {
                     for (int i = 0; i < unflatFilter.in.length; i++) {
                         UnflatEdge unflatEdge = unflatFilter.in[i];
                         // get the edge
-                        Edge edge = (Edge) edges.get(unflatEdge);
+                        Edge edge = edges.get(unflatEdge);
                         // we haven't see the edge before
                         if (edge == null) { // set dest?, wouldn't this always
                                             // be the dest
@@ -237,7 +237,7 @@ public class SimplePartitioner extends Partitioner {
                             // if we didn't visit one of the dests, add it
                             if (!visited.contains(dest))
                                 queue.add(dest);
-                            Edge edge = (Edge) edges.get(unflatEdge);
+                            Edge edge = edges.get(unflatEdge);
                             if (edge == null) {
                                 edge = new Edge(outNode);
                                 edges.put(unflatEdge, edge);

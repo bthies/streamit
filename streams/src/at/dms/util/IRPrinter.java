@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.List;
 import java.util.ListIterator;
 
+import at.dms.kjc.JStatement;
 import at.dms.kjc.SLIRVisitor;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
@@ -1930,15 +1931,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-                                  List initStatements) {
+                                  List<JStatement> initStatements) {
         blockStart("LIRMainFunction");
         attrPrint("typeName", typeName);
         attrStart("init");
         init.accept(this);
         attrEnd();
         printData("init statements:");
-        for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
-            ((JStatement)it.next()).accept(this);
+        for (ListIterator<JStatement> it = initStatements.listIterator(); it.hasNext(); ) {
+            it.next().accept(this);
         }
         blockEnd();
     }

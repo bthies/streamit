@@ -131,7 +131,7 @@ public class RegisterStreams {
                     List<Tape> l = Collections.emptyList();
                     filterOutStreams.put(node.contents, l);
                 }
-            } } , new HashSet(), true);
+            } } , new HashSet<FlatNode>(), true);
     }
 
     /**

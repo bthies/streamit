@@ -65,7 +65,7 @@ public class SpaceDynamicBackend {
         
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
-        Set theStatics = new HashSet();
+        Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
         Map associatedGlobals = StaticsProp.propagate(str,theStatics);
         ConstantProp.propagateAndUnroll(str,true);
@@ -369,9 +369,9 @@ public class SpaceDynamicBackend {
     }
 
     //helper function to add everything in a collection to the set
-    public static void addAll(HashSet set, Collection c) 
+    public static void addAll(HashSet<Object> set, Collection<Object> c) 
     {
-        Iterator it = c.iterator();
+        Iterator<Object> it = c.iterator();
         while (it.hasNext()) {
             set.add(it.next());
         }

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ConstantPool.java,v 1.4 2006-03-23 18:18:41 dimock Exp $
+ * $Id: ConstantPool.java,v 1.5 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -150,7 +150,7 @@ public class ConstantPool implements Constants {
     /*package*/ final void addItem(PooledConstant item) {
         PooledConstant old;
 
-        if ((old = (PooledConstant)items.put(item, item)) == null) {
+        if ((old = items.put(item, item)) == null) {
             // resolve it so it adds anything which it depends on
             item.resolveConstants(this);
 
@@ -197,7 +197,7 @@ public class ConstantPool implements Constants {
         // make up indices for entries
         if (!newOne) {
             // REWRITE AN ALREADY READ CLASS || CAN BE OPTIMIZED IF USED $$$
-            items = new Hashtable(table.length);
+            items = new Hashtable<PooledConstant, PooledConstant>(table.length);
             PooledConstant[] table = this.table;
             this.table = new PooledConstant[table.length]; // $$$$$$$
             // Add the constants to the constant pool
@@ -224,7 +224,7 @@ public class ConstantPool implements Constants {
 
     private boolean         newOne;
     private int             countItems = 1; // first element already used (VMS 4.4)
-    private Hashtable           items;
+    private Hashtable<PooledConstant, PooledConstant>           items;
     private PooledConstant[]        table = PooledArray.getPooledArray();
 
     // optimization
@@ -233,7 +233,7 @@ public class ConstantPool implements Constants {
             if (!Constants.ENV_USE_CACHE || stack.empty()) {
                 return new PooledConstant[ConstantPool.MAX_ENTRY];
             } else {
-                return (PooledConstant[])stack.pop();
+                return stack.pop();
             }
         }
 
@@ -246,19 +246,19 @@ public class ConstantPool implements Constants {
         // DATA MEMBERS
         // ----------------------------------------------------------------------
 
-        private static java.util.Stack  stack = new java.util.Stack();
+        private static java.util.Stack<PooledConstant[]>  stack = new java.util.Stack<PooledConstant[]>();
     }
     // optimization
     static class Hashtables {
-        static Hashtable getHashtable() {
+        static Hashtable<PooledConstant, PooledConstant> getHashtable() {
             if (!Constants.ENV_USE_CACHE || stack.empty()) {
-                return new Hashtable(ConstantPool.MAX_ENTRY / 4);
+                return new Hashtable<PooledConstant, PooledConstant>(ConstantPool.MAX_ENTRY / 4);
             } else {
-                return (Hashtable)stack.pop();
+                return stack.pop();
             }
         }
 
-        static void release(Hashtable arr) {
+        static void release(Hashtable<PooledConstant, PooledConstant> arr) {
             if (arr != null && Constants.ENV_USE_CACHE) {
                 arr.clear();
                 stack.push(arr);
@@ -268,6 +268,6 @@ public class ConstantPool implements Constants {
         // DATA MEMBERS
         // ----------------------------------------------------------------------
 
-        private static java.util.Stack  stack = new java.util.Stack();
+        private static java.util.Stack<Hashtable<PooledConstant, PooledConstant>>  stack = new java.util.Stack<Hashtable<PooledConstant, PooledConstant>>();
     }
 }

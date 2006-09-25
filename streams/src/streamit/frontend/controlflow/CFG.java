@@ -28,13 +28,13 @@ import java.util.*;
  * can be used to build control-flow graphs from straight-line code.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFG.java,v 1.3 2006-01-25 17:04:22 thies Exp $
+ * @version $Id: CFG.java,v 1.4 2006-09-25 13:54:53 dimock Exp $
  */
 public class CFG
 {
-    private List nodes;
+    private List<CFGNode> nodes;
     private CFGNode entry, exit;
-    private Map edges;
+    private Map<CFGNode, List> edges;
     
     /**
      * Create a new control-flow graph (or fraction thereof).
@@ -45,7 +45,7 @@ public class CFG
      * @param edges  mapping of from-node to to-node making up
      *               edges in the graph
      */
-    public CFG(List nodes, CFGNode entry, CFGNode exit, Map edges)
+    public CFG(List<CFGNode> nodes, CFGNode entry, CFGNode exit, Map<CFGNode, List> edges)
     {
         this.nodes = nodes;
         this.entry = entry;
@@ -58,7 +58,7 @@ public class CFG
      *
      * @return  list of nodes
      */
-    public List getNodes()
+    public List<CFGNode> getNodes()
     {
         return nodes;
     }
@@ -89,9 +89,9 @@ public class CFG
      * @param node  node to query
      * @return      list of {@link CFGNode} exiting that node
      */
-    public List getSuccessors(CFGNode node)
+    public List<CFGNode> getSuccessors(CFGNode node)
     {
-        List result = (List)edges.get(node);
+        List<CFGNode> result = edges.get(node);
         if (result == null) result = Collections.EMPTY_LIST;
         return result;
     }
@@ -102,17 +102,17 @@ public class CFG
      * @param node  node to query
      * @return      list of {@link CFGNode} entering that node
      */
-    public List getPredecessors(CFGNode node)
+    public List<CFGNode> getPredecessors(CFGNode node)
     {
         // Do a search through the list of forward edges.
         // If this winds up being a performance bottleneck,
         // we can precompute the list of backwards edges.
         // This implementation is O(n) in the number of nodes.
-        List result = new ArrayList();
-        for (Iterator iter = edges.keySet().iterator(); iter.hasNext(); )
+        List<CFGNode> result = new ArrayList<CFGNode>();
+        for (Iterator<CFGNode> iter = edges.keySet().iterator(); iter.hasNext(); )
             {
-                CFGNode other = (CFGNode)iter.next();
-                List targets = (List)edges.get(other);
+                CFGNode other = iter.next();
+                List targets = edges.get(other);
                 if (targets.contains(node))
                     result.add(other);
             }
@@ -131,11 +131,11 @@ public class CFG
         result.append("digraph cfg {\n");
         // dump all the nodes; assign a number to each
         int seq = 1;
-        Map nodeName = new HashMap();
-        for (Iterator iter = nodes.iterator(); iter.hasNext(); )
+        Map<CFGNode, String> nodeName = new HashMap<CFGNode, String>();
+        for (Iterator<CFGNode> iter = nodes.iterator(); iter.hasNext(); )
             {
                 String name = "node" + seq;
-                CFGNode node = (CFGNode)iter.next();
+                CFGNode node = iter.next();
                 nodeName.put(node, name);
                 // shape is box for statement, circle for placeholder,
                 // diamond for expression.  label is node number and
@@ -163,10 +163,10 @@ public class CFG
                 seq++;
             }
         // Next, go through all the edges.
-        for (Iterator fiter = edges.keySet().iterator(); fiter.hasNext(); )
+        for (Iterator<CFGNode> fiter = edges.keySet().iterator(); fiter.hasNext(); )
             {
-                CFGNode from = (CFGNode)fiter.next();
-                List targets = (List)edges.get(from);
+                CFGNode from = fiter.next();
+                List targets = edges.get(from);
                 for (Iterator titer = targets.iterator(); titer.hasNext(); )
                     {
                         CFGNode to = (CFGNode)titer.next();

@@ -31,11 +31,13 @@ import java.util.Collections;
  * @see     StmtVarDecl
  * @see     Parameter
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FieldDecl.java,v 1.5 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: FieldDecl.java,v 1.6 2006-09-25 13:54:54 dimock Exp $
  */
 public class FieldDecl extends FENode
 {
-    private List types, names, inits;
+    private List<Type> types;
+    private List<String> names;
+    private List<Expression>inits;
 
     /**
      * Create a new field declaration with corresponding lists of
@@ -55,15 +57,15 @@ public class FieldDecl extends FENode
      *                  <code>null</code>) containing initializers of
      *                  the fields declared here
      */
-    public FieldDecl(FEContext context, List types, List names,
-                     List inits)
+    public FieldDecl(FEContext context, List<Type> types, List<String> names,
+                     List<Expression> inits)
     {
         super(context);
         // TODO: check for validity, including types of object
         // in the lists and that all three are the same length.
-        this.types = new java.util.ArrayList(types);
-        this.names = new java.util.ArrayList(names);
-        this.inits = new java.util.ArrayList(inits);
+        this.types = new java.util.ArrayList<Type>(types);
+        this.names = new java.util.ArrayList<String>(names);
+        this.inits = new java.util.ArrayList<Expression>(inits);
     }
 
     /**
@@ -95,7 +97,7 @@ public class FieldDecl extends FENode
      */
     public Type getType(int n)
     {
-        return (Type)types.get(n);
+        return types.get(n);
     }
 
     /**
@@ -105,7 +107,7 @@ public class FieldDecl extends FENode
      * @return  Unmodifiable list of <code>Type</code> of the
      *          fields in this
      */
-    public List getTypes()
+    public List<Type> getTypes()
     {
         return Collections.unmodifiableList(types);
     }
@@ -118,7 +120,7 @@ public class FieldDecl extends FENode
      */
     public String getName(int n)
     {
-        return (String)names.get(n);
+        return names.get(n);
     }
     
     /**
@@ -128,7 +130,7 @@ public class FieldDecl extends FENode
      * @return  Unmodifiable list of <code>String</code> of the
      *          names of the fields in this
      */
-    public List getNames()
+    public List<String> getNames()
     {
         return Collections.unmodifiableList(names);
     }
@@ -143,7 +145,7 @@ public class FieldDecl extends FENode
      */
     public Expression getInit(int n)
     {
-        return (Expression)inits.get(n);
+        return inits.get(n);
     }
     
     /**
@@ -155,7 +157,7 @@ public class FieldDecl extends FENode
      *          <code>null</code>) of the initializers of the
      *          fields in this
      */
-    public List getInits()
+    public List<Expression> getInits()
     {
         return Collections.unmodifiableList(inits);
     }

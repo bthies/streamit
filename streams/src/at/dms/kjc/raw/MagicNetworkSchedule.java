@@ -1,8 +1,8 @@
 package at.dms.kjc.raw;
 
 import at.dms.kjc.flatgraph.FlatNode;
-import java.util.HashMap;
 import java.util.*;
+
 import at.dms.util.Utils;
 import java.io.*;
 
@@ -22,20 +22,20 @@ public class MagicNetworkSchedule
 
     // the receive schedules have LinkedList of Coordinates
 
-    public static HashMap steadyReceiveSchedules;
-    public static HashMap initReceiveSchedules;
-    public static HashMap steadySendSchedules;
-    public static HashMap initSendSchedules;
+    public static HashMap<Coordinate, LinkedList> steadyReceiveSchedules;
+    public static HashMap<Coordinate, LinkedList> initReceiveSchedules;
+    public static HashMap<Coordinate, LinkedList> steadySendSchedules;
+    public static HashMap<Coordinate, LinkedList> initSendSchedules;
     
     private static FileWriter topFile;
 
     public static void generateSchedules(FlatNode top) 
     {
         try {
-            steadyReceiveSchedules = new HashMap();
-            initReceiveSchedules = new HashMap();
-            steadySendSchedules = new HashMap();
-            initSendSchedules = new HashMap();
+            steadyReceiveSchedules = new HashMap<Coordinate, LinkedList>();
+            initReceiveSchedules = new HashMap<Coordinate, LinkedList>();
+            steadySendSchedules = new HashMap<Coordinate, LinkedList>();
+            initSendSchedules = new HashMap<Coordinate, LinkedList>();
         
             topFile = new FileWriter("magic_schedules.bc");
         
@@ -64,22 +64,22 @@ public class MagicNetworkSchedule
         fw.write("global ReceiveSchedules;\n");
         fw.write("printf(\"\\nCreating magic schedules\\n\");\n");
         //  create the locals to store the schedules
-        Iterator sendIt = steadySendSchedules.keySet().iterator();
+        Iterator<Coordinate> sendIt = steadySendSchedules.keySet().iterator();
         while(sendIt.hasNext()) {
             fw.write("global tile" + 
-                     Layout.getTileNumber((Coordinate)sendIt.next()) +
+                     Layout.getTileNumber(sendIt.next()) +
                      "send;\n");
         }
-        Iterator receiveIt = steadyReceiveSchedules.keySet().iterator();
+        Iterator<Coordinate> receiveIt = steadyReceiveSchedules.keySet().iterator();
         while(receiveIt.hasNext()) {
             fw.write("global tile" + 
-                     Layout.getTileNumber((Coordinate)receiveIt.next()) +
+                     Layout.getTileNumber(receiveIt.next()) +
                      "receive;\n");
         }
         fw.write("fn create_schedules() {\n //Creating List...\n");
         sendIt = steadySendSchedules.keySet().iterator();
         while(sendIt.hasNext()) {
-            Coordinate current = (Coordinate)sendIt.next();
+            Coordinate current = sendIt.next();
             fw.write("include(\"magicsend" + Layout.getTileNumber(current) +
                      ".bc\");\n");
             fw.write("create_schedule_send_" +
@@ -89,7 +89,7 @@ public class MagicNetworkSchedule
 
         receiveIt = steadyReceiveSchedules.keySet().iterator();
         while(receiveIt.hasNext()) {
-            Coordinate current = (Coordinate)receiveIt.next();
+            Coordinate current = receiveIt.next();
             fw.write("include(\"magicreceive" + Layout.getTileNumber(current) +
                      ".bc\");\n");
             fw.write("create_schedule_receive_" +
@@ -167,11 +167,11 @@ public class MagicNetworkSchedule
     }
 
     private static void dumpSchedules(String op,
-                                      HashMap init, HashMap steady) throws Exception
+                                      HashMap<Coordinate, LinkedList> init, HashMap<Coordinate, LinkedList> steady) throws Exception
     {
         //check that all tiles with an init sched have a steady-state sched.
-        Iterator it = init.keySet().iterator();
-        Set steadyKeys = steady.keySet();
+        Iterator<Coordinate> it = init.keySet().iterator();
+        Set<Coordinate> steadyKeys = steady.keySet();
     
         while (it.hasNext())
             if (!steadyKeys.contains(it.next()))
@@ -179,10 +179,10 @@ public class MagicNetworkSchedule
                            "and no steady schedule");
     
         //now create the bC code to create the schedule
-        Iterator steadyIt = steadyKeys.iterator();
+        Iterator<Coordinate> steadyIt = steadyKeys.iterator();
         while (steadyIt.hasNext()) {
-            Coordinate current = (Coordinate)steadyIt.next();
-            dumpSchedule(op, current, (LinkedList)init.get(current), (LinkedList)steady.get(current));
+            Coordinate current = steadyIt.next();
+            dumpSchedule(op, current, init.get(current), steady.get(current));
         } 
     }
     
@@ -360,15 +360,15 @@ public class MagicNetworkSchedule
         printAll(steadySendSchedules);
     }
 
-    private static void printAll(HashMap hm) 
+    private static void printAll(HashMap<Coordinate, LinkedList> hm) 
     {
-        Iterator it = hm.keySet().iterator();
+        Iterator<Coordinate> it = hm.keySet().iterator();
 
         while (it.hasNext()) {
-            Coordinate current = (Coordinate)it.next();
+            Coordinate current = it.next();
             System.out.println(current);
             System.out.println("----------");
-            printSched((LinkedList)hm.get(current));
+            printSched(hm.get(current));
             System.out.println();
         
         }   

@@ -78,7 +78,7 @@ public class StreamGraph {
         LinkedList<StaticStreamGraph> ssgs = new LinkedList<StaticStreamGraph>();
 
         while (!dynamicBoundary.isEmpty()) {
-            FlatNode top = (FlatNode) dynamicBoundary.remove(0);
+            FlatNode top = dynamicBoundary.remove(0);
             // we don't want to create a new SSG for something we have already
             // added
             assert !visited.contains(top);
@@ -288,7 +288,7 @@ public class StreamGraph {
      * @param dynamicBoundary: the unvisited nodes across a dynamic rate boundary (updated if such a node found)
       */
     private void searchUpstream(FlatNode current, StaticStreamGraph ssg,
-                                HashSet<FlatNode> visited, List dynamicBoundary) {
+                                HashSet<FlatNode> visited, List<FlatNode> dynamicBoundary) {
         assert current.incoming.length == current.inputs;
 
         // we have already added this flatnode to an ssg so just make sure and
@@ -420,7 +420,7 @@ public class StreamGraph {
      */
     public StaticStreamGraph getParentSSG(FlatNode node) {
         assert parentMap.containsKey(node) : node;
-        return (StaticStreamGraph) parentMap.get(node);
+        return parentMap.get(node);
     }
 
     /** return the array of SSGs of this Stream Graph in no particular order

@@ -20,7 +20,7 @@ public class UnflatEdge {
     /**
      * Internal list of things to clear.
      */
-    private static LinkedList toClear=new LinkedList();
+    private static LinkedList<UnflatEdge> toClear=new LinkedList<UnflatEdge>();
     //int virtualPort;
 
     /**
@@ -48,7 +48,7 @@ public class UnflatEdge {
      */
     public static void clear() {
         while(toClear.size()>0) {
-            UnflatEdge edge=(UnflatEdge)toClear.removeFirst();
+            UnflatEdge edge=toClear.removeFirst();
             if(edge.src!=null) {
                 edge.src.clear();
                 edge.src=null;

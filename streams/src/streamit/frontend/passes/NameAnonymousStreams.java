@@ -34,17 +34,17 @@ import java.util.Set;
  * stream.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NameAnonymousStreams.java,v 1.8 2006-06-03 15:16:07 rabbah Exp $
+ * @version $Id: NameAnonymousStreams.java,v 1.9 2006-09-25 13:54:54 dimock Exp $
  */
 public class NameAnonymousStreams extends SymbolTableVisitor
 {
-    List newStreams;
+    List<StreamSpec> newStreams;
     TempVarGen varGen;
     
     public NameAnonymousStreams(TempVarGen varGen)
     {
         super(null);
-        newStreams = new java.util.ArrayList();
+        newStreams = new java.util.ArrayList<StreamSpec>();
         this.varGen = varGen;
     }
 
@@ -56,7 +56,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
      * @return list of newly created
      *         {@link streamit.frontend.nodes.StreamSpec} objects
      */
-    public List getNewStreams()
+    public List<StreamSpec> getNewStreams()
     {
         return newStreams;
     }
@@ -65,7 +65,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
     {
         prog = (Program)super.visitProgram(prog);
         // Combine prog's stream list and newStreams.
-        List streams = new java.util.ArrayList();
+        List<StreamSpec> streams = new java.util.ArrayList<StreamSpec>();
         streams.addAll(prog.getStreams());
         streams.addAll(newStreams);
         return new Program(prog.getContext(), streams, prog.getStructs(), prog.getHelpers());
@@ -78,7 +78,7 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         
         // Wrap this in an empty symbol table, and look for free
         // variables.
-        final Set freeVars = new java.util.TreeSet();
+        final Set<String> freeVars = new java.util.TreeSet<String>();
         newSpec.accept(new SymbolTableVisitor(null) {
                 public Object visitExprVar(ExprVar expr)
                 {
@@ -92,11 +92,11 @@ public class NameAnonymousStreams extends SymbolTableVisitor
         // Create a top-level StreamSpec for this.
         String specName = "AnonFilter_" +
             varGen.getPrefix() + varGen.nextVarNum();
-        List formals = new java.util.ArrayList();
-        List params  = new java.util.ArrayList();
-        for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
+        List<Object> formals = new java.util.ArrayList<Object>();
+        List<Expression> params  = new java.util.ArrayList<Expression>();
+        for (Iterator<String> iter = freeVars.iterator(); iter.hasNext(); )
             {
-                String name = (String)iter.next();
+                String name = iter.next();
                 Expression var = new ExprVar(creator.getContext(), name);
                 // Arrays are special: we need an extra parameter for
                 // their length.

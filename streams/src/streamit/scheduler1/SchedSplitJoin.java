@@ -13,9 +13,9 @@ public class SchedSplitJoin extends SchedStream
         super (stream);
     }
 
-    final List allChildren = new LinkedList ();
+    final List<SchedStream> allChildren = new LinkedList<SchedStream> ();
 
-    public List getChildren ()
+    public List<SchedStream> getChildren ()
     {
         return allChildren;
     }
@@ -92,12 +92,12 @@ public class SchedSplitJoin extends SchedStream
     {
         // first compute schedules for all my children:
         {
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
 
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
 
                     // get the child initialized
@@ -110,7 +110,7 @@ public class SchedSplitJoin extends SchedStream
         ASSERT (allChildren.size () == getSplitType ().getNumWeights ());
         ASSERT (allChildren.size () == getJoinType ().getNumWeights ());
 
-        List childrenRates = new ArrayList ();
+        List<Fraction> childrenRates = new ArrayList<Fraction> ();
         Fraction splitRate = null;
         Fraction joinRate = null;
 
@@ -119,13 +119,13 @@ public class SchedSplitJoin extends SchedStream
         // also, compute the rate of execution of the joiner
         // (if it ever ends up being executed)
         {
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
             int index = -1;
 
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
                     index++;
 
@@ -188,18 +188,18 @@ public class SchedSplitJoin extends SchedStream
                     joinRate = new Fraction (BigInteger.ONE, BigInteger.ONE);
                 }
 
-            ListIterator iter;
+            ListIterator<SchedStream> iter;
             iter = allChildren.listIterator ();
 
             int index = -1;
             while (iter.hasNext ())
                 {
-                    SchedStream child = (SchedStream) iter.next ();
+                    SchedStream child = iter.next ();
                     ASSERT (child);
                     index++;
 
                     // get the child rate
-                    Fraction childRate = (Fraction) childrenRates.get (index);
+                    Fraction childRate = childrenRates.get (index);
 
                     // compute the new childRate:
                     Fraction newChildRate = null;
@@ -263,7 +263,7 @@ public class SchedSplitJoin extends SchedStream
                 int index;
                 for (index = 0; index < childrenRates.size (); index++)
                     {
-                        Fraction childRate = (Fraction) childrenRates.get (index);
+                        Fraction childRate = childrenRates.get (index);
                         ASSERT (childRate);
 
                         BigInteger rateDenom = childRate.getDenominator ();
@@ -299,20 +299,20 @@ public class SchedSplitJoin extends SchedStream
                 
                 // handle the children
                 {
-                    ListIterator iter;
+                    ListIterator<SchedStream> iter;
                     iter = allChildren.listIterator ();
 
                     int index;
                     for (index = 0; index < childrenRates.size (); index++)
                         {
-                            Fraction childRate = (Fraction) childrenRates.get (index);
+                            Fraction childRate = childrenRates.get (index);
                             ASSERT (childRate);
 
                             Fraction newChildRate = childRate.multiply (multiplier);
                             ASSERT (newChildRate.getDenominator ().equals (BigInteger.ONE));
 
                             // set the rate
-                            SchedStream child = (SchedStream) iter.next ();
+                            SchedStream child = iter.next ();
                             ASSERT (child);
 
                             child.setNumExecutions (newChildRate.getNumerator ());
@@ -347,10 +347,10 @@ public class SchedSplitJoin extends SchedStream
         String joinName = getJoinType ().getUniqueStreamName ();
 
         // ...and walk through the body.
-        Iterator iter = allChildren.iterator();
+        Iterator<SchedStream> iter = allChildren.iterator();
         while (iter.hasNext())
             {
-                SchedObject oper = (SchedObject)iter.next();
+                SchedObject oper = iter.next();
                 oper.printDot (outputStream);
 
                 printEdge(splitName, oper.getFirstChild ().getUniqueStreamName (), outputStream);

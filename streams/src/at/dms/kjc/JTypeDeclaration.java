@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.13 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JTypeDeclaration.java,v 1.14 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -28,6 +28,7 @@ import at.dms.compiler.JavadocComment;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.UnpositionedError;
+import at.dms.util.Utils;
 
 /**
  * This class represents a Java class or interface declaration
@@ -188,7 +189,7 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
      */
     protected void checkInterface(CContext context, CClassType superClass) throws PositionedError {
         CClassContext   self = new CClassContext(context, sourceClass, this);
-        Hashtable       hashField;
+        Hashtable<String, CField>       hashField;
         CMethod[]       methodList;
         Hashtable       hashMethod;
 
@@ -228,7 +229,7 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
 
         // Add fields of this class
         int     generatedFields = getCClass().hasOuterThis() ? 1 : 0;
-        hashField = new Hashtable(fields.length + generatedFields + 1);
+        hashField = new Hashtable<String,CField>(fields.length + generatedFields + 1);
         for (int i = fields.length - 1; i >= 0 ; i--) {
             CSourceField    field = fields[i].checkInterface(self);
 

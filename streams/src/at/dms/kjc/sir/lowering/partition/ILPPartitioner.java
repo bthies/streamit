@@ -33,7 +33,7 @@ public class ILPPartitioner extends ListPartitioner {
     }
     
     public void toplevelFusion() {
-        HashMap partitions = calcPartitions();
+        HashMap<Object, Integer> partitions = calcPartitions();
         ApplyPartitions.doit(str, partitions);
     }
 
@@ -44,9 +44,9 @@ public class ILPPartitioner extends ListPartitioner {
      * that tile number.  If it is split across multiple tiles, then
      * it has a target of -1.
      */
-    private HashMap calcPartitions() {
+    private HashMap<Object, Integer> calcPartitions() {
         double[] sol = calcSolution();
-        HashMap result = buildPartitionMap(sol);
+        HashMap<Object, Integer> result = buildPartitionMap(sol);
         return result;
     }
 
@@ -63,8 +63,8 @@ public class ILPPartitioner extends ListPartitioner {
      * Given a solution to the LP, build a hashmap from stream
      * structure to partition number meeting specification of 'doit'.
      */
-    private HashMap buildPartitionMap(double[] sol) {
-        HashMap result = new HashMap();
+    private HashMap<Object, Integer> buildPartitionMap(double[] sol) {
+        HashMap<Object, Integer> result = new HashMap<Object, Integer>();
         for (int i=1; i<nodes.size()-1; i++) {
             // find tile that node <i> is assigned to
             int tile = -1;
@@ -91,7 +91,7 @@ public class ILPPartitioner extends ListPartitioner {
                     // as this one or already -1; if so, quit.  If
                     // not, it must be assigned a different tile, so
                     // mark it as -1.
-                    int parTile = ((Integer)result.get(par)).intValue();
+                    int parTile = result.get(par).intValue();
                     if (parTile==tile || parTile==-1) {
                         done = true;
                     } else {
@@ -294,12 +294,12 @@ public class ILPPartitioner extends ListPartitioner {
     }
 
     private void constrainHierarchicalPartitions(LinearProgram lp) {
-        for (Iterator it = first.keySet().iterator(); it.hasNext(); ) {
-            SIRStream s = (SIRStream)it.next();
+        for (Iterator<SIRStream> it = first.keySet().iterator(); it.hasNext(); ) {
+            SIRStream s = it.next();
             // ignore filters
             if (!(s instanceof SIRFilter)) {
-                int begin = ((Integer)first.get(s)).intValue();
-                int end = ((Integer)last.get(s)).intValue();
+                int begin = first.get(s).intValue();
+                int end = last.get(s).intValue();
                 for (int t=0; t<numTiles; t++) {
                     // forall s, forall t, P_L[first(s)],t = P_L[first(s)-1],t = 1 ==> P_L[last(s)],t = 1
                     addEqualImplication(lp, pNum(begin,t), pNum(begin-1,t), pNum(end,t));
@@ -311,25 +311,25 @@ public class ILPPartitioner extends ListPartitioner {
     }
 
     private void constrainSeparateJoiners(LinearProgram lp) {
-        for (Iterator it = first.keySet().iterator(); it.hasNext(); ) {
-            SIRStream s = (SIRStream)it.next();
+        for (Iterator<SIRStream> it = first.keySet().iterator(); it.hasNext(); ) {
+            SIRStream s = it.next();
             if (s instanceof SIRSplitJoin) {
                 SIRSplitJoin sj = (SIRSplitJoin)s;
-                int join = ((Integer)last.get(sj)).intValue();
+                int join = last.get(sj).intValue();
                 // forall t, forall i in [0, sj.size()], P_last(s_i),t != P_last(s_{i+1}) ==> P_join,t = 0
                 for (int i=0; i<sj.size()-1; i++) {
                     assert (last.containsKey(sj.get(i))) : "Item missing from last: " + sj.get(i);
                     assert (last.containsKey(sj.get(i+1))) : "Item missing from last: " + sj.get(i+1);
-                    int last1 = ((Integer)last.get(sj.get(i))).intValue();
-                    int last2 = ((Integer)last.get(sj.get(i+1))).intValue();
+                    int last1 = last.get(sj.get(i)).intValue();
+                    int last2 = last.get(sj.get(i+1)).intValue();
                     for (int t=0; t<numTiles; t++) {
                         addNotEqualImplication(lp, pNum(last1,t), pNum(last2,t), pNum(join,t));
                     }
                 }
             } else if (s instanceof SIRFeedbackLoop) {
                 SIRFeedbackLoop fl = (SIRFeedbackLoop)s;
-                int join = ((Integer)first.get(fl)).intValue();
-                int lastLoop = ((Integer)last.get(fl.getLoop())).intValue();
+                int join = first.get(fl).intValue();
+                int lastLoop = last.get(fl.getLoop()).intValue();
                 for (int t=0; t<numTiles; t++) {
                     addNotEqualImplication(lp, pNum(lastLoop,t), pNum(join-1,t), pNum(join,t));
                 }
@@ -393,8 +393,8 @@ public class ILPPartitioner extends ListPartitioner {
         // need to find parallel streams with same amount of work.
         // start by looking for splitjoins, then compare adjacent
         // children.
-        for (Iterator it = first.keySet().iterator(); it.hasNext(); ) {
-            SIRStream str = (SIRStream)it.next();
+        for (Iterator<SIRStream> it = first.keySet().iterator(); it.hasNext(); ) {
+            SIRStream str = it.next();
             // ignore filters
             if (str instanceof SIRSplitJoin) {
                 SIRSplitJoin sj = (SIRSplitJoin)str;
@@ -426,13 +426,13 @@ public class ILPPartitioner extends ListPartitioner {
         // zMax, respectively.  Note that zMin and zMax (local to this
         // constraint) are indexed by last(sj).  (Shouldn't be
         // first(sj) since this could cause collisions.)
-        int z = ((Integer)last.get(sj)).intValue();
+        int z = last.get(sj).intValue();
         // constrain bounds of zmin and zmax
         for (int i=0; i<numTiles; i++) {
             double[] con1 = lp.getEmptyConstraint();
             double[] con2 = lp.getEmptyConstraint();
             for (int j=0; j<sj.size(); j++) {
-                int childIndex = ((Integer)last.get(sj.get(j))).intValue();
+                int childIndex = last.get(sj.get(j)).intValue();
                 // constrain zmin
                 con1[pNum(childIndex, i)] = 1;
                 // constrain zmax
@@ -453,10 +453,10 @@ public class ILPPartitioner extends ListPartitioner {
     private void constrainSymmetricalChildren(LinearProgram lp, SIRStream child1, SIRStream child2) {
         System.err.println("Detected symmetry between " + child1.getName() + " and " + child2.getName());
         // get beginning index
-        int first1 = ((Integer)first.get(child1)).intValue();
-        int first2 = ((Integer)first.get(child2)).intValue();
+        int first1 = first.get(child1).intValue();
+        int first2 = first.get(child2).intValue();
         // get size
-        int size =  ((Integer)last.get(child1)).intValue() - first1;
+        int size =  last.get(child1).intValue() - first1;
 
         // for all pairs of internal nodes in <child1> and <child2>
         for (int i=0; i<size-1; i++) {

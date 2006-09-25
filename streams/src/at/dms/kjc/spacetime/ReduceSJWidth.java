@@ -20,15 +20,15 @@ import java.util.Vector;
  **/
 public class ReduceSJWidth
 {
-    private static List steady;
-    private static List init;
+    private static List<Trace> steady;
+    private static List<Trace> init;
     private static int DRAMs;
 
-    public static void run(List initList, List steadyList, 
+    public static void run(List<Trace> initList, List<Trace> steadyList, 
                            RawChip chip, Trace[] files) 
     {
         //keep the old steady traversal around so we can iterate over it...
-        Trace[] oldSteady = (Trace[])steadyList.toArray(new Trace[0]);
+        Trace[] oldSteady = steadyList.toArray(new Trace[0]);
         steady = steadyList;
         init = initList;
         DRAMs = chip.getNumDev();
@@ -53,7 +53,7 @@ public class ReduceSJWidth
 
         //set the connections
         //choose first DRAMs incoming filters
-        HashSet coalesce = new HashSet();
+        HashSet<Edge> coalesce = new HashSet<Edge>();
         for (int i = 0; i < input.getSources().length; i++) {
             //if not already in the set, add it
             if (!coalesce.contains(input.getSources()[i]))

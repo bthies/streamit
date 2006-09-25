@@ -15,7 +15,7 @@ public class DumpGraph implements FlatVisitor
     /** The dotty code as we create it */
     private StringBuffer buf;
     /** HashMaps from SIROperator -> Integer for multiplicities */
-    private HashMap initMults,
+    private HashMap<FlatNode, Integer> initMults,
         steadyMults;
     
     /**
@@ -31,8 +31,8 @@ public class DumpGraph implements FlatVisitor
      * @param initExeCounts The multiplicities in the init stage.
      * @param steadyExeCounts The multiplicities in the steady-state stage.
      */
-    public void dumpGraph(FlatNode toplevel, String filename, HashMap initExeCounts,
-                          HashMap steadyExeCounts) 
+    public void dumpGraph(FlatNode toplevel, String filename, HashMap<FlatNode, Integer> initExeCounts,
+                          HashMap<FlatNode, Integer> steadyExeCounts) 
     {
         buf = new StringBuffer();
         this.initMults = initExeCounts;

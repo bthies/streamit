@@ -8,12 +8,12 @@ import at.dms.kjc.sir.*;
  * The LinearRedundancyAnalyzer tries to determine redundant computations
  * across the firings of filters. <br>
  *
- * $Id: LinearRedundancyAnalyzer.java,v 1.2 2006-01-25 17:02:30 thies Exp $
+ * $Id: LinearRedundancyAnalyzer.java,v 1.3 2006-09-25 13:54:46 dimock Exp $
  **/
 public class LinearRedundancyAnalyzer {
     // the information that we are going to keep is a mapping from filter
     // to redundancy information.
-    HashMap filtersToRedundancy;
+    HashMap<SIRStream, LinearRedundancy> filtersToRedundancy;
 
     /**
      * Main entry point for redundancy analysis. Gets passed a
@@ -21,10 +21,10 @@ public class LinearRedundancyAnalyzer {
      * based on that.
      **/
     public LinearRedundancyAnalyzer(LinearAnalyzer la) {
-        this.filtersToRedundancy = new HashMap();
-        Iterator filterIterator = la.getFilterIterator();
+        this.filtersToRedundancy = new HashMap<SIRStream, LinearRedundancy>();
+        Iterator<SIRStream> filterIterator = la.getFilterIterator();
         while(filterIterator.hasNext()) {
-            SIRStream filter = (SIRStream)filterIterator.next();
+            SIRStream filter = filterIterator.next();
             LinearPrinter.println("analyzing " + filter + " for redundancy...");
             LinearFilterRepresentation filterRep = la.getLinearRepresentation(filter);
             // make a new linear redundancy for this filter
@@ -53,7 +53,7 @@ public class LinearRedundancyAnalyzer {
         if (!(hasRedundancy(str))) {
             throw new IllegalArgumentException("no redundancy information for " + str);
         }
-        return (LinearRedundancy)this.filtersToRedundancy.get(str);
+        return this.filtersToRedundancy.get(str);
     }
 
 
@@ -63,7 +63,7 @@ public class LinearRedundancyAnalyzer {
     public String toString() {
         String returnString = "";
         returnString += "Linear Redundancy Analysis:\n";
-        Iterator keyIter = this.filtersToRedundancy.keySet().iterator();
+        Iterator<SIRStream> keyIter = this.filtersToRedundancy.keySet().iterator();
         while(keyIter.hasNext()) {
             Object key = keyIter.next();
             Object val = this.filtersToRedundancy.get(key);

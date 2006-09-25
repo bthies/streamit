@@ -26,7 +26,7 @@ class IncreaseFilterMult implements StreamVisitor {
 //    private boolean start_of_pipeline;
 
     // SIRStream -> WorkInfo
-    private static HashMap previous_work = new HashMap(); 
+    private static HashMap<SIRFilter, WorkInfo> previous_work = new HashMap<SIRFilter, WorkInfo>(); 
     
     private int CODE_CACHE_SIZE;
 
@@ -74,7 +74,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
             if (previous_work.containsKey(oper)) {
                 //SIRFilter f = (SIRFilter)oper;
-                WorkInfo info = (WorkInfo)previous_work.get(oper);
+                WorkInfo info = previous_work.get(oper);
                 i2[0] *= info.multiple;
             }
 
@@ -201,7 +201,7 @@ class IncreaseFilterMult implements StreamVisitor {
                     if (previous_work.containsKey(oper)) {
 
                         WorkInfo w = 
-                            (WorkInfo)previous_work.get(oper);
+                            previous_work.get(oper);
 
                         if (ClusterBackend.debugPrint)
                             System.out.println("Filter: "+oper+" Restoring mult to 1");

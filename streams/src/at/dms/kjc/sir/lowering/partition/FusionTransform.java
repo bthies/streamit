@@ -19,10 +19,10 @@ public final class FusionTransform extends StreamTransform {
      * children 0-1, 2-3, and 4-7 should each be fused (for a total of
      * 3 partitions).  Note that it includes the endpoints.
      */
-    private TreeSet partitions;
+    private TreeSet<Integer> partitions;
 
     public FusionTransform() {
-        this.partitions = new TreeSet();
+        this.partitions = new TreeSet<Integer>();
     }
 
     /**
@@ -84,10 +84,10 @@ public final class FusionTransform extends StreamTransform {
     private PartitionGroup calcPartitionArray() {
         assert (partitions.size()>=2) : "Require >= 2 partitions in fusion.";
         int[] result = new int[partitions.size()-1];
-        Iterator it = partitions.iterator();
-        int last = ((Integer)it.next()).intValue();
+        Iterator<Integer> it = partitions.iterator();
+        int last = it.next().intValue();
         for (int i=0; it.hasNext(); i++) {
-            int next = ((Integer)it.next()).intValue();
+            int next = it.next().intValue();
             result[i] = next - last;
             last = next;
         }

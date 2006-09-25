@@ -11,13 +11,13 @@ import java.util.HashMap;
 
 public class BlockExecutionCounts implements FlatVisitor 
 {
-    private static HashMap blockCounts;
+    private static HashMap<FlatNode, Integer> blockCounts;
 
     public static int getBlockCount(FlatNode node) 
     {
         if (blockCounts == null)
             Utils.fail("Block Execution Count not calculated");
-        return ((Integer)blockCounts.get(node)).intValue();
+        return blockCounts.get(node).intValue();
     }
 
     public static void calcBlockCounts(FlatNode top) 
@@ -28,7 +28,7 @@ public class BlockExecutionCounts implements FlatVisitor
     
     public BlockExecutionCounts () 
     {
-        blockCounts = new HashMap();
+        blockCounts = new HashMap<FlatNode, Integer>();
     }
     
     public void visitNode(FlatNode node) 
@@ -54,8 +54,8 @@ public class BlockExecutionCounts implements FlatVisitor
         else {
             //blockCounts.put(node, new Integer(1));
             blockCounts.put(node, 
-                            new Integer(((Integer)RawBackend.
-                                         steadyExecutionCounts.get(node)).intValue()));
+                            new Integer(RawBackend.
+                                         steadyExecutionCounts.get(node).intValue()));
         }
         return;
     }

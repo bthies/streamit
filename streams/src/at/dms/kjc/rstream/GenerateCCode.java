@@ -37,7 +37,7 @@ public class GenerateCCode {
     public static final boolean generateTimingCode = !(KjcOptions.absarray || KjcOptions.doloops);
 
     /* The fields of the application, convert to locals for rstream */
-    private Vector fields;
+    private Vector<JFieldDeclaration> fields;
 
     /* the main method includes the initfunction calls, init and steady states */
     private JBlock main;
@@ -46,7 +46,7 @@ public class GenerateCCode {
     private JMethodDeclaration mainMethod;
 
     /* any helper functions of the application */
-    private Vector functions;
+    private Vector<JMethodDeclaration> functions;
 
     /** init function calls and initPath calls for joiners **/
     private JBlock initFunctionCalls;
@@ -59,7 +59,7 @@ public class GenerateCCode {
 
     /** map string (variable name) to JVariableDefinition for fields, 
         set up in convertFieldsToLocals()**/
-    HashMap stringVarDef = new HashMap();
+    HashMap<String, JVariableDefinition> stringVarDef = new HashMap<String, JVariableDefinition>();
 
     /** the c converter we are using **/
     private FlatIRToRS toRS;
@@ -88,8 +88,8 @@ public class GenerateCCode {
         main = new JBlock(null, new JStatement[0], null);
         steady = new JBlock(null, new JStatement[0], null);
         init = new JBlock(null, new JStatement[0], null);
-        fields = new Vector();
-        functions = new Vector();
+        fields = new Vector<JFieldDeclaration>();
+        functions = new Vector<JMethodDeclaration>();
         initFunctionCalls = new JBlock(null, new JStatement[0], null);
         // make sure SIRPopExpression's only pop one element
         // code generation doesn't handle generating multiple pops
@@ -269,7 +269,7 @@ public class GenerateCCode {
     private void convertFieldsToLocals() {
         //add all fields to the main method as locals
         for (int i = 0; i < fields.size(); i++) {
-            JFieldDeclaration field = (JFieldDeclaration) fields.get(i);
+            JFieldDeclaration field = fields.get(i);
             main.addStatementFirst(new JVariableDeclarationStatement(null,
                                                                      field.getVariable(), null));
             //remember the vardef for the visiter down below
@@ -294,7 +294,7 @@ public class GenerateCCode {
 
                     //return a local variable expression
                     return new JLocalVariableExpression(null,
-                                                        ((JVariableDefinition) stringVarDef.get(ident)));
+                                                        stringVarDef.get(ident));
                 }
             });
     }
@@ -346,14 +346,14 @@ public class GenerateCCode {
         //initially just print the function decls
         toRS.setDeclOnly(true);
         for (int i = 0; i < functions.size(); i++)
-            ((JMethodDeclaration) functions.get(i)).accept(toRS);
+            functions.get(i).accept(toRS);
         //print the main method decl
         mainMethod.accept(toRS);
 
         //now print the method bodies...
         toRS.setDeclOnly(false);
         for (int i = 0; i < functions.size(); i++)
-            ((JMethodDeclaration) functions.get(i)).accept(toRS);
+            functions.get(i).accept(toRS);
 
         //main method body
         mainMethod.accept(toRS);
@@ -382,10 +382,10 @@ public class GenerateCCode {
     private void visitGraph(FlatNode top, boolean isInit) {
         //get a data-flow ordered traversal for the graph, i.e. a node 
         //can only fire if its upstream filters have fired
-        Iterator traversal = DataFlowTraversal.getTraversal(top).iterator();
+        Iterator<FlatNode> traversal = DataFlowTraversal.getTraversal(top).iterator();
 
         while (traversal.hasNext()) {
-            FlatNode node = (FlatNode) traversal.next();
+            FlatNode node = traversal.next();
             //System.out.println("Generating Code (" + isInit + ") for  " + node.contents);
             generateCode(node, isInit);
 
@@ -591,9 +591,9 @@ public class GenerateCCode {
         // only generate array init code if targetting actual
         // R-Stream; otherwise results in redundant assignments
         if (KjcOptions.absarray) {
-            Iterator blocks = arrayInits.fields.iterator();
+            Iterator<JBlock> blocks = arrayInits.fields.iterator();
             while (blocks.hasNext()) {
-                main.addStatement(((JBlock) blocks.next()));
+                main.addStatement(blocks.next());
             }
         }
     }

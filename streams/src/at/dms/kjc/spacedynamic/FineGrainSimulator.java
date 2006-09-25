@@ -25,16 +25,16 @@ public class FineGrainSimulator extends Simulator {
     public void simulate() {
         System.out.println("FineGrainSimulator Running...");
 
-        initJoinerCode = new HashMap();
-        steadyJoinerCode = new HashMap();
+        initJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
+        steadyJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
 
         SimulationCounter counters = new SimulationCounter(
                                                            JoinerSimulator.schedules);
 
         // create copies of the executionCounts
-        HashMap initExecutionCounts = (HashMap) ssg.getExecutionCounts(true)
+        HashMap<FlatNode, Integer> initExecutionCounts = (HashMap<FlatNode, Integer>) ssg.getExecutionCounts(true)
             .clone();
-        HashMap steadyExecutionCounts = (HashMap) ssg.getExecutionCounts(false)
+        HashMap<FlatNode, Integer> steadyExecutionCounts = (HashMap<FlatNode, Integer>) ssg.getExecutionCounts(false)
             .clone();
 
         joinerCode = initJoinerCode;
@@ -69,8 +69,8 @@ public class FineGrainSimulator extends Simulator {
 
     /** Initialize the state of the communication simulator * */
     private void initialize(boolean init) {
-        switchSchedules = new HashMap();
-        currentJoinerCode = new HashMap();
+        switchSchedules = new HashMap<Object, StringBuffer>();
+        currentJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
         toplevel = ssg.getTopLevel();
         initSimulation = init;
     }
@@ -80,14 +80,14 @@ public class FineGrainSimulator extends Simulator {
      * its completion. It checks if all the execution counts for mapped streams
      * are 0
      */
-    private void testExecutionCounts(HashMap exeCounts) {
+    private void testExecutionCounts(HashMap<FlatNode, Integer> exeCounts) {
         boolean bad = false;
 
-        Iterator it = exeCounts.keySet().iterator();
+        Iterator<FlatNode> it = exeCounts.keySet().iterator();
         while (it.hasNext()) {
-            FlatNode node = (FlatNode) it.next();
+            FlatNode node = it.next();
             if (layout.isAssigned(node)) {
-                if (((Integer) exeCounts.get(node)).intValue() != 0) {
+                if (exeCounts.get(node).intValue() != 0) {
                     System.out
                         .println(node.contents.getName() + " has "
                                  + exeCounts.get(node)
@@ -109,20 +109,20 @@ public class FineGrainSimulator extends Simulator {
      */
     private void callInitPaths(SimulationCounter counters) {
         // find all the joiners that are immediately contained in a FeedbackLoop
-        Iterator joiners = layout.getJoiners().iterator();
+        Iterator<FlatNode> joiners = layout.getJoiners().iterator();
         // clone the joiner schedules
 
         FlatNode joiner;
         // iterate over all of the joiners of a feedbackloop
         while (joiners.hasNext()) {
-            joiner = (FlatNode) joiners.next();
+            joiner = joiners.next();
             if ((((SIRJoiner) joiner.contents).getParent() instanceof SIRFeedbackLoop)) {
                 // create the initPath calls
                 SIRFeedbackLoop loop = (SIRFeedbackLoop) ((SIRJoiner) joiner.contents)
                     .getParent();
                 int delay = loop.getDelayInt();
-                JoinerScheduleNode current = ((JoinerScheduleNode) JoinerSimulator.schedules
-                                              .get(joiner));
+                JoinerScheduleNode current = JoinerSimulator.schedules
+                                              .get(joiner);
                 CType joinerType = CommonUtils.getJoinerType(joiner);
                 for (int i = 0; i < delay; i++) {
                     // for each init path call find the correct buffer to place
@@ -131,7 +131,7 @@ public class FineGrainSimulator extends Simulator {
                         if (current.buffer.endsWith("1")) {
                             // create the joinerCode Node and put it in the init
                             // schedule
-                            JoinerScheduleNode prev = (JoinerScheduleNode) currentJoinerCode
+                            JoinerScheduleNode prev = currentJoinerCode
                                 .get(joiner);
                             JoinerScheduleNode code = 
                                 new JoinerScheduleNode(i,current.buffer,joinerType);
@@ -163,7 +163,7 @@ public class FineGrainSimulator extends Simulator {
     }
 
     // The start of the simulation for the initialization schedule
-    private HashMap goInit(HashMap counts, SimulationCounter counters,
+    private HashMap<Object, StringBuffer> goInit(HashMap<FlatNode, Integer> counts, SimulationCounter counters,
                            FlatNode lastToFire) {
         // create the initpath calls
         callInitPaths(counters);
@@ -172,7 +172,7 @@ public class FineGrainSimulator extends Simulator {
     }
 
     /* the main simulation method */
-    private HashMap go(HashMap counts, SimulationCounter counters,
+    private HashMap<Object, StringBuffer> go(HashMap<FlatNode, Integer> counts, SimulationCounter counters,
                        FlatNode lastToFire) {
         FlatNode fire, dest;
 
@@ -249,7 +249,7 @@ public class FineGrainSimulator extends Simulator {
      */
 
     protected int fireJoiner(FlatNode fire, SimulationCounter counters,
-                             HashMap executionCounts) {
+                             HashMap<FlatNode, Integer> executionCounts) {
         // System.out.println("Firing " + fire.contents.getName());
         // The joiner is passing a data item, record this as an execution
         decrementExecutionCounts(fire, executionCounts, counters);
@@ -272,14 +272,14 @@ public class FineGrainSimulator extends Simulator {
 
     // return the destinations of the data item and generate the code
     // to receive data into the joiner
-    private List getDestination(FlatNode node, SimulationCounter counters) {
-        List list = getDestinationHelper(node.edges[0], counters, "", node);
-        HashSet visited = new HashSet();
+    private List<FlatNode> getDestination(FlatNode node, SimulationCounter counters) {
+        List<FlatNode> list = getDestinationHelper(node.edges[0], counters, "", node);
+        HashSet<FlatNode> visited = new HashSet<FlatNode>();
         // generate joiner receive code
         // iterate over the list
-        Iterator it = list.iterator();
+        Iterator<FlatNode> it = list.iterator();
         while (it.hasNext()) {
-            FlatNode dest = (FlatNode) it.next();
+            FlatNode dest = it.next();
             if (!(dest.contents instanceof SIRJoiner))
                 continue;
             // decrement the buffer from the joiner
@@ -304,7 +304,7 @@ public class FineGrainSimulator extends Simulator {
     }
 
     // get the destination of the data item
-    private List getDestinationHelper(FlatNode node,
+    private List<FlatNode> getDestinationHelper(FlatNode node,
                                       SimulationCounter counters, String joinerBuffer, FlatNode previous) {
         // if we reached a node then this is a destination
         // add to its buffer and
@@ -315,7 +315,7 @@ public class FineGrainSimulator extends Simulator {
                                             joinerBuffer, node);
             }
             counters.incrementBufferCount(node);
-            LinkedList list = new LinkedList();
+            LinkedList<FlatNode> list = new LinkedList<FlatNode>();
             list.add(node);
             return list;
         } else if (node.contents instanceof SIRJoiner) {
@@ -326,7 +326,7 @@ public class FineGrainSimulator extends Simulator {
                 joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
                 counters.addJoinerReceiveBuffer(node, joinerBuffer);
                 counters.incrementBufferCount(node);
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 list.add(node);
                 // if previous == identity
                 return list;
@@ -340,7 +340,7 @@ public class FineGrainSimulator extends Simulator {
             // if splitter send the item out to all arcs
             // build a list of all the dests
             if (splitter.getType() == SIRSplitType.DUPLICATE) {
-                LinkedList list = new LinkedList();
+                LinkedList<FlatNode> list = new LinkedList<FlatNode>();
                 for (int i = 0; i < node.ways; i++) {
                     // decrement counter on arc
                     if (counters.getArcCountOutgoing(node, i) == 0)
@@ -381,20 +381,20 @@ public class FineGrainSimulator extends Simulator {
 
     // for now, find the most-downstream filter to fire
     // from the starting node
-    private FlatNode whoShouldFire(FlatNode current, HashMap executionCounts,
+    private FlatNode whoShouldFire(FlatNode current, HashMap<FlatNode, Integer> executionCounts,
                                    SimulationCounter counters) {
         FlatNode start = current;
 
         if (start == null)
             start = toplevel;
-        HashSet visited = new HashSet();
-        Vector queue = new Vector();
+        HashSet<FlatNode> visited = new HashSet<FlatNode>();
+        Vector<FlatNode> queue = new Vector<FlatNode>();
         FlatNode node;
         FlatNode mostDownStream = null;
 
         queue.add(start);
         while (!queue.isEmpty()) {
-            node = (FlatNode) queue.get(0);
+            node = queue.get(0);
             queue.remove(0);
 
             if (node == null)
@@ -421,7 +421,7 @@ public class FineGrainSimulator extends Simulator {
         return mostDownStream;
     }
 
-    public boolean canFire(FlatNode node, HashMap executionCounts,
+    public boolean canFire(FlatNode node, HashMap<FlatNode, Integer> executionCounts,
                            SimulationCounter counters) {
         if (node == null)
             return false;
@@ -437,7 +437,7 @@ public class FineGrainSimulator extends Simulator {
 
             // check if this node has fired the number of times given by
             // the schedule
-            Integer count = (Integer) executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             // if a node is not executed at all in a schedule it will not have
             // an
             // entry
@@ -466,7 +466,7 @@ public class FineGrainSimulator extends Simulator {
 
             // check if this node has fired the number of times given by
             // the schedule
-            Integer count = (Integer) executionCounts.get(node);
+            Integer count = executionCounts.get(node);
             // if a node is not executed at all in a schedule it will not have
             // an
             // entry

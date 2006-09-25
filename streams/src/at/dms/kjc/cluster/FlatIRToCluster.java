@@ -123,7 +123,7 @@ public class FlatIRToCluster extends InsertTimers implements
             System.out.println("Optimizing "
                                + ((SIRFilter) node.contents).getName() + "...");
 
-        Set destroyed_vars = new HashSet();
+        Set<JLocalVariable> destroyed_vars = new HashSet<JLocalVariable>();
 
         // ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (int i = 0; i < contentsAsFilter.getMethods().length; i++) {
@@ -246,7 +246,7 @@ public class FlatIRToCluster extends InsertTimers implements
             method_names.add(meth[i].getName());
         }
 
-        HashSet sendsCreditsTo = LatencyConstraints
+        HashSet<LatencyConstraint> sendsCreditsTo = LatencyConstraints
             .getOutgoingConstraints(self);
         
         // execution can only be restricted in the multi-threaded
@@ -267,7 +267,7 @@ public class FlatIRToCluster extends InsertTimers implements
         if (ClusterBackend.debugPrint)
             System.out.println("flat node: " + node);
 
-        Integer init_int = (Integer) ClusterBackend.initExecutionCounts
+        Integer init_int = ClusterBackend.initExecutionCounts
             .get(node);
         int init_counts;
 
@@ -277,8 +277,8 @@ public class FlatIRToCluster extends InsertTimers implements
             init_counts = init_int.intValue();
         }
 
-        int steady_counts = ((Integer) ClusterBackend.steadyExecutionCounts
-                             .get(node)).intValue();
+        int steady_counts = ClusterBackend.steadyExecutionCounts
+                             .get(node).intValue();
 
         for (int t = 0; t < outgoing.length; t++) {
             SIRStream[] receivers = outgoing[t].getReceivers();
@@ -606,9 +606,9 @@ public class FlatIRToCluster extends InsertTimers implements
 
         if (restrictedExecution) {
             p.print("  while (");
-            Iterator i = receives_from.iterator();
+            Iterator<SIRStream> i = receives_from.iterator();
             while (i.hasNext()) {
-                int src = NodeEnumerator.getSIROperatorId((SIRStream) i.next());
+                int src = NodeEnumerator.getSIROperatorId(i.next());
                 p.print("__credit_" + src + "_" + selfID + " <= __counter_" + selfID);
                 if (i.hasNext()) p.print(" || ");
             }
@@ -619,9 +619,9 @@ public class FlatIRToCluster extends InsertTimers implements
             //p.print("#ifndef __CLUSTER_STANDALONE\n");
 
             {
-                Iterator i = receives_from.iterator();
+                Iterator<SIRStream> i = receives_from.iterator();
                 while (i.hasNext()) {
-                    int src = NodeEnumerator.getSIROperatorId((SIRStream) i.next());
+                    int src = NodeEnumerator.getSIROperatorId(i.next());
                     p.print("  while (__msg_sock_" + src + "_" + selfID
                             + "in->data_available()) {\n    handle_message__"
                             + selfID + "(__msg_sock_" + src + "_" + selfID
@@ -758,10 +758,10 @@ public class FlatIRToCluster extends InsertTimers implements
         // +=============================+
 
         if (sendsCredits) {
-        Iterator constrIter;
+        Iterator<LatencyConstraint> constrIter;
         constrIter = sendsCreditsTo.iterator();
         while (constrIter.hasNext()) {
-            LatencyConstraint constraint = (LatencyConstraint) constrIter
+            LatencyConstraint constraint = constrIter
                 .next();
             int receiver = NodeEnumerator.getSIROperatorId(constraint
                                                            .getReceiver());
@@ -801,7 +801,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
         constrIter = sendsCreditsTo.iterator();
         while (constrIter.hasNext()) {
-            LatencyConstraint constraint = (LatencyConstraint) constrIter
+            LatencyConstraint constraint = constrIter
                 .next();
 
             int receiver = NodeEnumerator.getSIROperatorId(constraint

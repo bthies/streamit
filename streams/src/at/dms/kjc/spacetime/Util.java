@@ -44,12 +44,12 @@ public class Util {
 
     // unique ID for each file reader/writer used to
     // generate var names...
-    private static HashMap fileVarNames;
+    private static HashMap<PredefinedContent, String> fileVarNames;
 
     private static int fileID = 0;
 
     static {
-        fileVarNames = new HashMap();
+        fileVarNames = new HashMap<PredefinedContent, String>();
     }
 
     public static int nextPow2(int i) {
@@ -147,7 +147,7 @@ public class Util {
     public static boolean setCompare(LinkedList list, Object[] array) {
         if (array.length == list.size()) {
             HashSet listSet = new HashSet();
-            HashSet arraySet = new HashSet();
+            HashSet<Object> arraySet = new HashSet<Object>();
             for (int i = 0; i < array.length; i++) {
                 listSet.add(list.get(i));
                 arraySet.add(array[i]);
@@ -311,7 +311,7 @@ public class Util {
             || content instanceof FileOutputContent) {
             if (!fileVarNames.containsKey(content))
                 fileVarNames.put(content, new String("file" + fileID++));
-            return (String) fileVarNames.get(content);
+            return fileVarNames.get(content);
         } else
             Utils.fail("Calling getFileVar() on non-filereader/filewriter");
         return null;
@@ -348,8 +348,8 @@ public class Util {
      * @param traces
      * @return A LinkedList of TraceNodes.
      */
-    public static Iterator traceNodeTraversal(List traces) {
-        LinkedList trav = new LinkedList();
+    public static Iterator<TraceNode> traceNodeTraversal(List traces) {
+        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
         ListIterator it = traces.listIterator();
 
         while (it.hasNext()) {
@@ -371,7 +371,7 @@ public class Util {
      * dictated by the order that the traces appear in <pre>traces</pre>. 
      */
     public static TraceNode[] traceNodeArray(Trace[] traces) {
-        LinkedList trav = new LinkedList();
+        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
 
         for (int i = 0; i < traces.length; i++) {
             TraceNode traceNode = traces[i].getHead();
@@ -382,7 +382,7 @@ public class Util {
 
         }
         
-        return (TraceNode[])trav.toArray(new TraceNode[0]);
+        return trav.toArray(new TraceNode[0]);
     }
     
     /**
@@ -392,8 +392,8 @@ public class Util {
      * @param traces
      * @return A LinkedList of TraceNodes.
      */
-    public static Iterator traceNodeTraversal(Trace[] traces) {
-        LinkedList trav = new LinkedList();
+    public static Iterator<TraceNode> traceNodeTraversal(Trace[] traces) {
+        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
 
         for (int i = 0; i < traces.length; i++) {
             TraceNode traceNode = traces[i].getHead();
@@ -433,7 +433,7 @@ public class Util {
 
         Trace[] tempArray = (Trace[]) partitioner.getTraceGraph().clone();
         Arrays.sort(tempArray, new CompareTraceBNWork(partitioner));
-        scheduleOrder = new LinkedList(Arrays.asList(tempArray));
+        scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
         //reverse the list, we want the list in descending order!
         Collections.reverse(scheduleOrder);
   
@@ -477,10 +477,10 @@ public class Util {
         }
         if (str instanceof SIRSplitJoin) {
             SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
+            Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
             int outputs = 0;
             while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
+                SIRStream child = iter.next();
                 outputs += outputsPerSteady(child, exeCounts);
             }
             return outputs;

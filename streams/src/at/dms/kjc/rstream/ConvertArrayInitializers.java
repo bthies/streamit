@@ -23,7 +23,7 @@ import at.dms.util.Utils;
 public class ConvertArrayInitializers extends SLIRReplacingVisitor
 {
     /** Hashset mapping String -> JBlock to perform initialization of array **/
-    public HashSet fields;
+    public HashSet<JBlock> fields;
     /** current method we are visiting **/
     private JMethodDeclaration method;
     
@@ -39,7 +39,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
     public ConvertArrayInitializers() 
     {
         System.out.println("Converting Array Initializers...");
-        fields = new HashSet();
+        fields = new HashSet<JBlock>();
     }
     
     public void convertFilter(SIRFilter filter) 
@@ -109,7 +109,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
             if (expr instanceof JArrayInitializer) {
                 arrayInitBlock(self, (JArrayInitializer)expr, 
                                currentBlock,
-                               new Vector());
+                               new Vector<JIntLiteral>());
             } else {
                 JExpression newExp = (JExpression)expr.accept(this);
                 if (newExp!=null && newExp!=expr) {
@@ -135,7 +135,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
                 //get the block that will perform the initializers assignments
                 arrayInitBlock(ident, (JArrayInitializer)expr, 
                                initBlock,
-                               new Vector());
+                               new Vector<JIntLiteral>());
                 //remember the block
                 fields.add(initBlock);
             }
@@ -155,13 +155,13 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
      * Convert the array initializer into a sequence of assignment statements in a block
      **/
     private void arrayInitBlock(Object varAccess, JArrayInitializer init, JBlock block, 
-                                Vector indices)
+                                Vector<JIntLiteral> indices)
     {
         for (int i = 0; i < init.getElems().length; i++) {
             //recurse through the array initializer statements, building
             //the array access indices as we recurse
             if (init.getElems()[i] instanceof JArrayInitializer) {
-                Vector indices1 = new Vector(indices);
+                Vector<JIntLiteral> indices1 = new Vector<JIntLiteral>(indices);
                 indices1.add(new JIntLiteral(i));
                 arrayInitBlock(varAccess, (JArrayInitializer)init.getElems()[i], block,
                                indices1);
@@ -209,12 +209,12 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
                 if (indices.size() > 0) {
                     access = new JArrayAccessExpression(null, 
                                                         prefix,
-                                                        (JExpression)indices.get(0));
+                                                        indices.get(0));
             
                     for (int j = 1; j <= indices.size() - 1; j++) {
                         access = new JArrayAccessExpression(null, 
                                                             access,
-                                                            (JExpression)indices.get(j));
+                                                            indices.get(j));
                     }
             
                     access = new JArrayAccessExpression(null, access, new JIntLiteral(i));
@@ -240,7 +240,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
     /**
      * get the dimensionality and bounds based on the array initializer
      **/
-    private void getDims(JExpression expr, Vector dims) 
+    private void getDims(JExpression expr, Vector<JIntLiteral> dims) 
     {
         if (expr instanceof JArrayInitializer) {
             JArrayInitializer init = (JArrayInitializer)expr;

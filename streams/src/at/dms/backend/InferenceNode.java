@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InferenceNode.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: InferenceNode.java,v 1.3 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -51,7 +51,7 @@ class InferenceNode {
         int     count = 0;
 
         for (int i = 0; i < links.size(); i++) {
-            count += ((InferenceNode)links.elementAt(i)).isRemoved() ? 0 : 1;
+            count += links.elementAt(i).isRemoved() ? 0 : 1;
         }
 
         return count;
@@ -76,7 +76,7 @@ class InferenceNode {
     /**
      * Returns the linked nodes.
      */
-    public Vector getInferences() {
+    public Vector<InferenceNode> getInferences() {
         return links;
     }
 
@@ -171,7 +171,7 @@ class InferenceNode {
                 i += 1;
 
                 for (int j = 0; j < links.size(); j++) {
-                    InferenceNode   inf = (InferenceNode)links.elementAt(j);
+                    InferenceNode   inf = links.elementAt(j);
 
                     if (!inf.isRemoved()) {
                         if (inf.getColor() == i || inf.getColor() + inf.getSize() -1 == i) {
@@ -201,7 +201,7 @@ class InferenceNode {
     // ----------------------------------------------------------------------
 
     private Vector  temps = new Vector();
-    private Vector  links = new Vector();
+    private Vector<InferenceNode>  links = new Vector<InferenceNode>();
     private boolean removed;
     private int     color;
 }

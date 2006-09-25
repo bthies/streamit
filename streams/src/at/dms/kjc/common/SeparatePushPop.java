@@ -61,9 +61,9 @@ public class SeparatePushPop extends SLIRReplacingVisitor {
         }
         if (str instanceof SIRSplitJoin) {
             SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
+            Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
             while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
+                SIRStream child = iter.next();
                 separatePushPop(child);
             }
         }

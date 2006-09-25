@@ -37,7 +37,7 @@ public abstract class Stream extends Operator
     public Channel inputChannel = null;
     public Channel outputChannel = null;
 
-    LinkedList streamElements = new LinkedList();
+    LinkedList<Stream> streamElements = new LinkedList<Stream>();
 
     // counter to assign each stream a consistent identifier
     private static int MAX_ID = 0;
@@ -528,12 +528,12 @@ public abstract class Stream extends Operator
 
     int uncompressedSize = 0;
     int totalSize = 0;
-    HashMap sizeMap = new HashMap();
+    HashMap<Object, Integer> sizeMap = new HashMap<Object, Integer>();
     HashSet usefulSet = new HashSet();
     public static int totalBuffer = 0;
     boolean finegrained = false;
 
-    Vector integers = new Vector();
+    Vector<Integer> integers = new Vector<Integer>();
 
     Integer getInteger(int i)
     {
@@ -544,7 +544,7 @@ public abstract class Stream extends Operator
                 size++;
             }
 
-        return (Integer)integers.get(i);
+        return integers.get(i);
     }
 
     public int computeSize(Object s, boolean top)

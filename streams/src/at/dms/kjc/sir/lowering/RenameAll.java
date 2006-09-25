@@ -34,7 +34,7 @@ public class RenameAll extends SLIRReplacingVisitor
     /** Inner class to keep track of the variables we've looked at. */
     private class RASymbolTable
     {
-        HashMap syms;
+        HashMap<String, String> syms;
         RASymbolTable parent;
 
         RASymbolTable()
@@ -43,13 +43,13 @@ public class RenameAll extends SLIRReplacingVisitor
         }
         RASymbolTable(RASymbolTable parent)
         {
-            this.syms = new HashMap();
+            this.syms = new HashMap<String, String>();
             this.parent = parent;
         }
         String nameFor(String name)
         {
             if (syms.containsKey(name))
-                return (String)syms.get(name);
+                return syms.get(name);
             else if (parent != null)
                 return parent.nameFor(name);
             else

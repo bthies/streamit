@@ -41,9 +41,9 @@ public class ManualDRAMPortAssignment {
                                                                System.in));
       
         
-        Iterator traceNodeTrav = Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        Iterator<TraceNode> traceNodeTrav = Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
         while (traceNodeTrav.hasNext()) {
-            TraceNode traceNode = (TraceNode) traceNodeTrav.next();
+            TraceNode traceNode = traceNodeTrav.next();
             // assign the buffer between inputtracenode and the filter
             // to a dram
             if (traceNode.isInputTrace())

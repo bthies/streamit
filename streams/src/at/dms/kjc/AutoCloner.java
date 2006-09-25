@@ -14,7 +14,7 @@ public class AutoCloner {
     /**
      * List of things that should be cloned on the current pass.
      */
-    private static HashSet toBeCloned;
+    private static HashSet<DeepCloneable> toBeCloned;
     /**
      * Mapping from old objects to their clones, so that object
      * equality is preserved across a cloning call.
@@ -22,7 +22,7 @@ public class AutoCloner {
      * To avoid hashcode problems, this maps from RegistryWrapper to
      * Object.
      */
-    private static HashMap registry;
+    private static HashMap<RegistryWrapper, Object> registry;
     
     //Do not use unless not going to use this anymore
     public static void clear() {
@@ -43,7 +43,7 @@ public class AutoCloner {
         IterFactory.createFactory().createIter(oldObj).accept(visitor);
 
         toBeCloned = visitor.getToBeCloned();
-        registry = new HashMap();
+        registry = new HashMap<RegistryWrapper, Object>();
         Object result = cloneToplevel(oldObj);
         // clear registry to promote GC
         registry = null;
@@ -60,7 +60,7 @@ public class AutoCloner {
         oldObj.accept(visitor);
 
         toBeCloned = visitor.getToBeCloned();
-        registry = new HashMap();
+        registry = new HashMap<RegistryWrapper, Object>();
         Object result = cloneToplevel(oldObj);
         // clear registry to promote GC
         registry = null;
@@ -77,7 +77,7 @@ public class AutoCloner {
         visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
 
         toBeCloned = visitor.getToBeCloned();
-        registry = new HashMap();
+        registry = new HashMap<RegistryWrapper, Object>();
         Object result = cloneToplevel(oldObj);
         // clear registry to promote GC
         registry = null;
@@ -91,9 +91,9 @@ public class AutoCloner {
     static public Object deepCopy(Kopi2SIR kopi2sir) {
         // not sure what toBeCloned should be in this case... for now
         // make it empty.
-        toBeCloned = new HashSet();
+        toBeCloned = new HashSet<DeepCloneable>();
 
-        registry = new HashMap();
+        registry = new HashMap<RegistryWrapper, Object>();
         Object result = cloneToplevel(kopi2sir);
         registry = null;
         return result;
@@ -205,19 +205,19 @@ public class AutoCloner {
         else if (o instanceof ConstList) {
             result = ((ConstList)o).clone();
             register(o, result);
-            cloneWithinList((List)result);
+            cloneWithinList((List<Object>)result);
         } else if (o instanceof LinkedList) {
             result = ((LinkedList)o).clone();
             register(o, result);
-            cloneWithinList((List)result);
+            cloneWithinList((List<Object>)result);
         } else if (o instanceof Stack) {
             result = ((Stack)o).clone();
             register(o, result);
-            cloneWithinList((List)result);
+            cloneWithinList((List<Object>)result);
         } else if (o instanceof Vector) {
             result = ((Vector)o).clone();
             register(o, result);
-            cloneWithinList((List)result);
+            cloneWithinList((List<Object>)result);
         } else if (o.getClass().toString().equals("class at.dms.kjc.sir.SIRGlobal")) {
             // if object is a global (static) section, just return it.
             return o;
@@ -268,7 +268,7 @@ public class AutoCloner {
      * cloning process.
      */
     static private Object cloneHashtable(Hashtable orig) {
-        Hashtable result = new Hashtable();
+        Hashtable<Object, Object> result = new Hashtable<Object, Object>();
         register(orig, result);
         Enumeration e = orig.keys();
         while (e.hasMoreElements()) {
@@ -284,7 +284,7 @@ public class AutoCloner {
      * Helper function.  Should only be called as part of automatic
      * cloning process.
      */
-    static private void cloneWithinList(List clone) {
+    static private void cloneWithinList(List<Object> clone) {
         for (int i=0; i<clone.size(); i++) {
             Object old = clone.get(i);
             clone.set(i, cloneToplevel(old));

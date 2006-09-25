@@ -17,6 +17,7 @@
 package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
+
 import java.util.List;
 import java.util.ListIterator;
 
@@ -34,14 +35,14 @@ import java.util.ListIterator;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: AssembleInitializers.java,v 1.3 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: AssembleInitializers.java,v 1.4 2006-09-25 13:54:54 dimock Exp $
  */
 public class AssembleInitializers extends FEReplacer
 {
     public Object visitStmtBlock(StmtBlock block)
     {
-        List oldStatements = newStatements;
-        newStatements = new java.util.ArrayList();
+        List<Statement> oldStatements = newStatements;
+        newStatements = new java.util.ArrayList<Statement>();
         for (ListIterator iter = block.getStmts().listIterator();
              iter.hasNext(); )
             {
@@ -60,7 +61,7 @@ public class AssembleInitializers extends FEReplacer
                         String varName = ((ExprVar)lhs).getName();
                         // Now, walk through the declaration.
                         StmtVarDecl decl = (StmtVarDecl)stmt;
-                        List newInits = new java.util.ArrayList();
+                        List<Expression> newInits = new java.util.ArrayList<Expression>();
                         boolean found = false;
                         for (int i = 0; i < decl.getNumVars(); i++)
                             {

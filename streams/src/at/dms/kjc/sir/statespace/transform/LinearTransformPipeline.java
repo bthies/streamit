@@ -12,26 +12,26 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.15 2006-01-25 17:02:33 thies Exp $
+ * $Id: LinearTransformPipeline.java,v 1.16 2006-09-25 13:54:46 dimock Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
-    List repList;
+    List<LinearFilterRepresentation> repList;
     
-    private LinearTransformPipeline(List l) {
+    private LinearTransformPipeline(List<LinearFilterRepresentation> l) {
         // assert that the list has more than one element in it.
         if (l.size() < 2) {
             throw new IllegalArgumentException("Representation list has fewer than two elements: " +
                                                l.size());
         }
         // assert that all arguments are LinearFilterRepresentations
-        Iterator iter = l.iterator();
+        Iterator<LinearFilterRepresentation> iter = l.iterator();
         while(iter.hasNext()) {
             if (!(iter.next() instanceof LinearFilterRepresentation)) {
                 throw new IllegalArgumentException("non LFR in list passed to linear transform pipeline");
             }
         }
-        this.repList = new LinkedList(l);
+        this.repList = new LinkedList<LinearFilterRepresentation>(l);
     }
 
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
@@ -53,14 +53,14 @@ public class LinearTransformPipeline extends LinearTransform {
     
         int preworkPop1, preworkPop2;
 
-        Iterator repIter = this.repList.iterator();
+        Iterator<LinearFilterRepresentation> repIter = this.repList.iterator();
     
-        rep1 = (LinearFilterRepresentation)repIter.next();
+        rep1 = repIter.next();
 
         // iterate over all of the represenations
         while(repIter.hasNext()) {
 
-            rep2 = (LinearFilterRepresentation)repIter.next();
+            rep2 = repIter.next();
 
 
             init1 = rep1.getInit();
@@ -266,7 +266,7 @@ public class LinearTransformPipeline extends LinearTransform {
      * a sequential list of linear representations.<br>
      *
      **/
-    public static LinearTransform calculate(List linearRepList) {
+    public static LinearTransform calculate(List<LinearFilterRepresentation> linearRepList) {
         // we punt any actual work until the "transform" method is called.
         return new LinearTransformPipeline(linearRepList);
     }

@@ -89,7 +89,7 @@ public class DirectCommunication extends at.dms.util.Utils
         // initExec counts might be null if we're calling for work
         // estimation before exec counts have been determined.
         if (RawBackend.initExecutionCounts!=null) {
-            Integer init = (Integer)RawBackend.initExecutionCounts.
+            Integer init = RawBackend.initExecutionCounts.
                 get(Layout.getNode(Layout.getTile(filter)));
     
             if (init != null) 

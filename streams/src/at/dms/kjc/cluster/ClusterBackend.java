@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.112 2006-09-14 21:37:05 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.113 2006-09-25 13:54:34 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -354,7 +354,7 @@ public class ClusterBackend {
 
             if (KjcOptions.fusion) {
                 FlatNode TopBeforeFusion = ssg.getTopLevel();
-                TopBeforeFusion.accept(new ClusterFusion(), new HashSet(), true);
+                TopBeforeFusion.accept(new ClusterFusion(), new HashSet<FlatNode>(), true);
                 // needed before next use of this ssg: ssg.cleanupForFused();
                 // streamGraph.cleanupForFused() will clean up all.
             }

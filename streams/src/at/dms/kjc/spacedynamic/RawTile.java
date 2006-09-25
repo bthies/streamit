@@ -97,9 +97,9 @@ public class RawTile extends ComputeNode {
         return tileNumber;
     }
 
-    public List getSouthAndEastNeighbors() 
+    public List<RawTile> getSouthAndEastNeighbors() 
     {
-        LinkedList neighbors = new LinkedList();
+        LinkedList<RawTile> neighbors = new LinkedList<RawTile>();
     
         //get east neighbor
         if (X + 1 < rawChip.getXSize()) 
@@ -112,9 +112,9 @@ public class RawTile extends ComputeNode {
     }
     
 
-    public Vector getNeighborTiles() 
+    public Vector<RawTile> getNeighborTiles() 
     {
-        Vector ret = new Vector();
+        Vector<RawTile> ret = new Vector<RawTile>();
         if (X - 1 >= 0)
             ret.add(rawChip.getTile(X-1, Y));
         if (X + 1 < rawChip.getXSize())

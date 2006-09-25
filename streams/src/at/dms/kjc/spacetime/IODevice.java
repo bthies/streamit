@@ -6,12 +6,12 @@ import java.util.Vector;
 public abstract class IODevice extends ComputeNode
 {
     protected int port;
-    protected Vector tiles;
+    protected Vector<RawTile> tiles;
 
     public IODevice (RawChip chip, int port) 
     {
         super(chip);
-        tiles = new Vector();
+        tiles = new Vector<RawTile>();
         if (port < 0 || port >= (2 * rawChip.getXSize() + 2 *rawChip.getYSize()))
             Utils.fail("invalid port number for io device");
         this.port = port;
@@ -56,12 +56,12 @@ public abstract class IODevice extends ComputeNode
      **/
     public RawTile[] getTiles() 
     {
-        return (RawTile[])tiles.toArray(new RawTile[0]);
+        return tiles.toArray(new RawTile[0]);
     }
 
     public RawTile getTile() 
     {
-        return (RawTile)tiles.get(0);
+        return tiles.get(0);
     }
     
     public RawTile getNeighboringTile() 

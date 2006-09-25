@@ -25,7 +25,7 @@ public class GenerateSteadyStateSchedule {
     private SpaceTimeSchedule spaceTime;
     private RawChip rawChip;
     //the schedule we are building
-    private LinkedList schedule;
+    private LinkedList<Trace> schedule;
     private Layout layout;
     
     /**
@@ -39,7 +39,7 @@ public class GenerateSteadyStateSchedule {
         this.layout = layout;
         spaceTime = sts;
         rawChip = spaceTime.getRawChip();
-        schedule = new LinkedList();
+        schedule = new LinkedList<Trace>();
         tileAvail = new int[rawChip.getTotalTiles()];
         for (int i = 0; i < rawChip.getTotalTiles(); i++) {
             tileAvail[i] = 0;
@@ -69,7 +69,7 @@ public class GenerateSteadyStateSchedule {
         // sort traces...
         Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
         Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
-        LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
+        LinkedList<Trace> sortedTraces = new LinkedList<Trace>(Arrays.asList(tempArray));
 
         // schedule predefined filters first, but don't put them in the
         // schedule just assign them tiles...
@@ -79,9 +79,9 @@ public class GenerateSteadyStateSchedule {
         Collections.reverse(sortedTraces);
 
         SpaceTimeBackend.println("Sorted Traces: ");
-        Iterator it = sortedTraces.iterator();
+        Iterator<Trace> it = sortedTraces.iterator();
         while (it.hasNext()) {
-            Trace trace = (Trace) it.next();
+            Trace trace = it.next();
             SpaceTimeBackend.println(" * " + trace + " (work: "
                                + spaceTime.partitioner.getTraceBNWork(trace) + ")");
         }
@@ -90,7 +90,7 @@ public class GenerateSteadyStateSchedule {
         // start to schedule the traces
         while (!sortedTraces.isEmpty()) {
             //remove the first trace, the trace with the most work
-            Trace trace = (Trace)sortedTraces.removeFirst();
+            Trace trace = sortedTraces.removeFirst();
           
             scheduleTrace(trace, sortedTraces);
         }
@@ -120,7 +120,7 @@ public class GenerateSteadyStateSchedule {
      * @param sortedList The list of Traces that need to be scheduled
      */
     private void scheduleTrace(Trace trace,
-                               LinkedList sortedList) {
+                               LinkedList<Trace> sortedList) {
         assert trace != null;
         SpaceTimeBackend.println("Scheduling Trace: " + trace + " at time "
                            + currentTime);
@@ -215,11 +215,11 @@ public class GenerateSteadyStateSchedule {
    
 
     private void printSchedule() {
-        Iterator sch = schedule.iterator();
+        Iterator<Trace> sch = schedule.iterator();
         Trace prev = null;
         SpaceTimeBackend.println("Schedule: ");
         while (sch.hasNext()) {
-            Trace trace = (Trace) sch.next();
+            Trace trace = sch.next();
             SpaceTimeBackend.println(" ** " + trace);
             //System.out.println(" ** " + trace);
             prev = trace;

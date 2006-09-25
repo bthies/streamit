@@ -15,7 +15,7 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
     /**
      * Rows of Constraints.
      */
-    protected List constraints; 
+    protected List<Constraint> constraints; 
     /**
      * The objective function.
      */
@@ -32,7 +32,7 @@ public class SimpleLinearProgram implements LinearProgram, Serializable {
     public SimpleLinearProgram(int numVars) {
         this.numVars = numVars;
         this.boolVar = new boolean[numVars];
-        this.constraints = new LinkedList();
+        this.constraints = new LinkedList<Constraint>();
     }
 
     /**

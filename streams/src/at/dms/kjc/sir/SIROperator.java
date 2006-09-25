@@ -65,14 +65,14 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * non-null ancestor of this.
      */
     public SIRContainer[] getParents() {
-        LinkedList result = new LinkedList();
+        LinkedList<SIRContainer> result = new LinkedList<SIRContainer>();
         SIRContainer parent = getParent();
         // make list of parents
         while (parent!=null) {
             result.add(parent);
             parent = parent.getParent();
         }
-        return (SIRContainer[])result.toArray(new SIRContainer[0]);
+        return result.toArray(new SIRContainer[0]);
     }
 
     /**
@@ -245,7 +245,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
          * demand-driven way instead of a field to simplify
          * cloning/serialization issues.
          */
-        private static HashMap opToNumber = new HashMap();
+        private static HashMap<Integer, Integer> opToNumber = new HashMap<Integer, Integer>();
         /**
          * The last number assigned to an SIROperator.
          */
@@ -259,7 +259,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
         static int getUniqueNumber(SIROperator op) {
             Integer key = new Integer(op.origHashCode());
             if (opToNumber.containsKey(key)) {
-                return ((Integer)opToNumber.get(key)).intValue();
+                return opToNumber.get(key).intValue();
             } else {
                 // otherwise, register a number for it
                 int result = ++MAX_NUMBER;

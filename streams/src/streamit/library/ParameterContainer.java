@@ -22,7 +22,7 @@ import streamit.misc.DestroyedClass;
 
 public class ParameterContainer extends DestroyedClass
 {
-    Map parameters = new TreeMap ();
+    Map<String, ParamData> parameters = new TreeMap<String, ParamData> ();
     String paramName;
     
     class ParamData
@@ -184,7 +184,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getChar ();
@@ -194,7 +194,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getInt ();
@@ -204,7 +204,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getFloat ();
@@ -214,7 +214,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getObject();
@@ -224,7 +224,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getBool ();
@@ -234,7 +234,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getShort ();
@@ -244,7 +244,7 @@ public class ParameterContainer extends DestroyedClass
     {
         assert parameters.containsKey (paramName);
         
-        ParamData paramData = (ParamData) parameters.get (paramName);
+        ParamData paramData = parameters.get (paramName);
         assert paramData != null;
         
         return paramData.getObj ();

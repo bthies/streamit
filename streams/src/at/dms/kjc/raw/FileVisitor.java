@@ -7,30 +7,25 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.io.*;
-import java.util.List;
 import java.util.*;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 
 
 public class FileVisitor implements FlatVisitor {
     //true if the graph contains a fileReader
     public static boolean foundReader;
     //a hashset containing the flatnodes of the fileReaders
-    public static HashSet fileReaders;
+    public static HashSet<Object> fileReaders;
     //true if the graph contains a fileWriter
     public static boolean foundWriter;
     //a hashset containing the flatnodes of the fileWriters
-    public static HashSet fileWriters;
+    public static HashSet<Object> fileWriters;
     //a hashset containing the flatnodes of all the file manipulators
     //(both readers and writers
-    public static HashSet fileNodes;
+    public static HashSet<Object> fileNodes;
 
     public static void init(FlatNode top) {
         FileVisitor frv = new FileVisitor();
-        top.accept(frv, new HashSet(), false);
+        top.accept(frv, new HashSet<FlatNode>(), false);
         //add everything to the fileNodes hashset
         RawBackend.addAll(fileNodes, fileReaders);
         RawBackend.addAll(fileNodes, fileWriters);
@@ -40,9 +35,9 @@ public class FileVisitor implements FlatVisitor {
     {
         foundReader = false;
         foundWriter = false;
-        fileReaders = new HashSet();
-        fileWriters = new HashSet();
-        fileNodes = new HashSet();
+        fileReaders = new HashSet<Object>();
+        fileWriters = new HashSet<Object>();
+        fileNodes = new HashSet<Object>();
     }
     
     public void visitNode (FlatNode node) 
@@ -58,7 +53,7 @@ public class FileVisitor implements FlatVisitor {
     }
 
     public static boolean connectedToFR(Coordinate tile) {
-        Iterator frs = fileReaders.iterator();
+        Iterator<Object> frs = fileReaders.iterator();
         while (frs.hasNext()) {
             if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
                 return true;

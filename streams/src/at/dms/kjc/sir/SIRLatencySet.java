@@ -12,10 +12,10 @@ public class SIRLatencySet extends SIRLatency {
     /**
      * The entries in the set.
      */
-    private TreeSet entries;
+    private TreeSet<Integer> entries;
 
     public SIRLatencySet() {
-        this.entries = new TreeSet();
+        this.entries = new TreeSet<Integer>();
     }
 
     // The following methods just mirror those of <entries>.  More can
@@ -26,19 +26,19 @@ public class SIRLatencySet extends SIRLatency {
     }
 
     public Integer first() {
-        return (Integer)entries.first();
+        return entries.first();
     }
 
     public boolean isEmpty() {
         return entries.isEmpty();
     }
 
-    public Iterator iterator() {
+    public Iterator<Integer> iterator() {
         return entries.iterator();
     }
 
     public Integer last() {
-        return (Integer)entries.last();
+        return entries.last();
     }
 
     public boolean remove(Integer x) {
@@ -85,7 +85,7 @@ public class SIRLatencySet extends SIRLatency {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.sir.SIRLatencySet other) {
         super.deepCloneInto(other);
-        other.entries = (java.util.TreeSet)at.dms.kjc.AutoCloner.cloneToplevel(this.entries);
+        other.entries = (java.util.TreeSet<Integer>)at.dms.kjc.AutoCloner.cloneToplevel(this.entries);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

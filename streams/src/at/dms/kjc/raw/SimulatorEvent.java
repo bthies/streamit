@@ -12,11 +12,11 @@ public class SimulatorEvent
     public String type;
     public int time;
     public FlatNode node;
-    public List dests;
+    public List<FlatNode> dests;
     public boolean isLast;
     public int itemID;
     
-    public SimulatorEvent(String type, int time, FlatNode node, List dests, int itemID,
+    public SimulatorEvent(String type, int time, FlatNode node, List<FlatNode> dests, int itemID,
                           boolean isLast) 
     {
         this.type = type;

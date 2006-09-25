@@ -58,7 +58,7 @@ public class StreamingDram extends IODevice
     //drams
     public static boolean differentDRAMs(OutputTraceNode out) 
     {
-        HashSet drams = new HashSet();
+        HashSet<StreamingDram> drams = new HashSet<StreamingDram>();
         Iterator edges = out.getDestSet().iterator();
         while(edges.hasNext()) {
             Edge edge = (Edge)edges.next();
@@ -74,7 +74,7 @@ public class StreamingDram extends IODevice
     //drams
     public static boolean differentDRAMs(InputTraceNode in) 
     {
-        HashSet drams = new HashSet();
+        HashSet<StreamingDram> drams = new HashSet<StreamingDram>();
         //get the source set, so there are no duplicate edges.
         Iterator edges = in.getSourceSet().iterator();
         while(edges.hasNext()) {

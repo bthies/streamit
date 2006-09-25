@@ -107,7 +107,7 @@ public class GreedyPartitioner {
             // get work at <pos>
             int work = sorted.getWork(pos);
             // make a list of candidates that have the same amount of work
-            LinkedList candidates = new LinkedList();
+            LinkedList<SIRFilter> candidates = new LinkedList<SIRFilter>();
             //System.out.println("Trying:"+pos+" "+sorted.getFilter(pos));
             while (pos>=0 && sorted.getWork(pos)==work) {
                 candidates.add(sorted.getFilter(pos));
@@ -126,13 +126,13 @@ public class GreedyPartitioner {
     /**
      * Returns whether or not it's legal to fiss candidates.
      */
-    private boolean canFiss(LinkedList candidates, GraphFlattener flattener) {
+    private boolean canFiss(LinkedList<SIRFilter> candidates, GraphFlattener flattener) {
         // count the number of new tiles required
         int newTiles = 0;
         // go through the candidates and count tiles, check that can
         // be duplicated
         for (int i=0; i<candidates.size(); i++) {
-            SIRFilter filter = (SIRFilter)candidates.get(i);
+            SIRFilter filter = candidates.get(i);
             // check fissable
             if (!StatelessDuplicate.isFissable(filter)) {
                 return false;
@@ -169,9 +169,9 @@ public class GreedyPartitioner {
     /**
      * Split everyone in 'candidates' two ways.
      */
-    private void doFission(LinkedList candidates) {
+    private void doFission(LinkedList<SIRFilter> candidates) {
         for (int i=0; i<candidates.size(); i++) {
-            SIRFilter filter = (SIRFilter)candidates.get(i);
+            SIRFilter filter = candidates.get(i);
             StatelessDuplicate.doit(filter, 2);
             // constant prop through new filters
             ConstantProp.propagateAndUnroll(filter.getParent());

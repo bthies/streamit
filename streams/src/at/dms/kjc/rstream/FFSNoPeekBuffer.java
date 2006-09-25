@@ -110,7 +110,7 @@ public class FFSNoPeekBuffer extends FilterFusionState
         the stage depends on *isInit* **/
     private JStatement[] getIndexDecls(boolean isInit) 
     {
-        Vector stmts = new Vector();
+        Vector<JVariableDeclarationStatement> stmts = new Vector<JVariableDeclarationStatement>();
 
         if (isInit && StrToRStream.getMult(node, isInit) < 1)
             return new JStatement[0];
@@ -125,7 +125,7 @@ public class FFSNoPeekBuffer extends FilterFusionState
                                                         pushCounterVar,
                                                         null));
     
-        return (JStatement[])stmts.toArray(new JStatement[0]);
+        return stmts.toArray(new JStatement[0]);
     }
     
     /** return the number of items produced by the upstream node in the 
@@ -181,7 +181,7 @@ public class FFSNoPeekBuffer extends FilterFusionState
     /** Perform any initialization tasks necessary for the filter,
         including declaring the pop buffer, adding helper functions,
         adding fields, and adding the init function. **/
-    public void initTasks(Vector fields, Vector functions,
+    public void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                           JBlock initFunctionCalls, JBlock main) 
     {
         //don't do anything if this filter is not being generated

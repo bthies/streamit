@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Hierarchy.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: Hierarchy.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -28,8 +28,8 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
 public class Hierarchy {
     public Hierarchy() {
-        symbols = new Hashtable(10);
-        files = new Hashtable(10);
+        symbols = new Hashtable<String, GrammarDefinition>(10);
+        files = new Hashtable<String, GrammarFile>(10);
 
         LexerRoot.setPredefined(true);
         ParserRoot.setPredefined(true);
@@ -67,10 +67,10 @@ public class Hierarchy {
         return findRoot(sg);
     }
     public GrammarFile getFile(String fileName) {
-        return (GrammarFile)files.get(fileName);
+        return files.get(fileName);
     }
     public GrammarDefinition getGrammar(String gr) {
-        return (GrammarDefinition)symbols.get(gr);
+        return symbols.get(gr);
     }
     public static String optionsToString(IndexedVector options) {
         String s = "options {"+System.getProperty("line.separator");
@@ -107,8 +107,8 @@ public class Hierarchy {
     public boolean verifyThatHierarchyIsComplete() {
         boolean complete = true;
         // Make a pass to ensure all grammars are defined
-        for (Enumeration e = symbols.elements() ; e.hasMoreElements() ;) {
-            GrammarDefinition c = (GrammarDefinition)e.nextElement();
+        for (Enumeration<GrammarDefinition> e = symbols.elements() ; e.hasMoreElements() ;) {
+            GrammarDefinition c = e.nextElement();
             if ( c.getSuperGrammarName()==null ) {
                 continue;       // at root: ignore predefined roots
             }
@@ -127,8 +127,8 @@ public class Hierarchy {
         // Make another pass to set the 'type' field of each grammar
         // This makes it easy later to ask a grammar what its type
         // is w/o having to search hierarchy.
-        for (Enumeration e = symbols.elements() ; e.hasMoreElements() ;) {
-            GrammarDefinition c = (GrammarDefinition)e.nextElement();
+        for (Enumeration<GrammarDefinition> e = symbols.elements() ; e.hasMoreElements() ;) {
+            GrammarDefinition c = e.nextElement();
             if ( c.getSuperGrammarName()==null ) {
                 continue;       // ignore predefined roots
             }
@@ -140,6 +140,6 @@ public class Hierarchy {
 
     private static GrammarDefinition LexerRoot = new GrammarDefinition("Lexer", null, null);
     private static GrammarDefinition ParserRoot = new GrammarDefinition("Parser", null, null);
-    private Hashtable symbols;  // table of grammars
-    private Hashtable files;    // table of grammar files read in
+    private Hashtable<String, GrammarDefinition> symbols;  // table of grammars
+    private Hashtable<String, GrammarFile> files;    // table of grammar files read in
 }

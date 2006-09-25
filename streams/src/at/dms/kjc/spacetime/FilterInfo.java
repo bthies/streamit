@@ -41,7 +41,7 @@ public class FilterInfo {
     public FilterContent filter;
 
     /** HashMap of all the filter infos FilterTraceNode -> FilterInfo */
-    private static HashMap filterInfos;
+    private static HashMap<FilterTraceNode, FilterInfo> filterInfos;
 
     // true if everything is set and we can use this class
     // because once a filter info is created you cannot
@@ -49,7 +49,7 @@ public class FilterInfo {
     private static boolean canuse;
 
     static {
-        filterInfos = new HashMap();
+        filterInfos = new HashMap<FilterTraceNode, FilterInfo>();
         canuse = false;
     }
 
@@ -68,7 +68,7 @@ public class FilterInfo {
      *
      */
     public static void reset() {
-        filterInfos = new HashMap();
+        filterInfos = new HashMap<FilterTraceNode, FilterInfo>();
     }
     
     public static FilterInfo getFilterInfo(FilterTraceNode traceNode) {
@@ -78,7 +78,7 @@ public class FilterInfo {
             filterInfos.put(traceNode, info);
             return info;
         } else
-            return (FilterInfo) filterInfos.get(traceNode);
+            return filterInfos.get(traceNode);
     }
 
     private FilterInfo(FilterTraceNode traceNode) {

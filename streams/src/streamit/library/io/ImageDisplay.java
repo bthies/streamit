@@ -39,7 +39,7 @@ public class ImageDisplay extends Filter {
     JTextField info;
     Timer timer;
    
-    java.util.List imageList = new ArrayList();
+    java.util.List<BufferedImage> imageList = new ArrayList<BufferedImage>();
     int currentImage = 0;
 
     public ImageDisplay(int width_in, int height_in) {
@@ -75,7 +75,7 @@ public class ImageDisplay extends Filter {
                         g.drawImage(firstImage, 0, 0, this);
                         info.setText("Waiting for first image");
                     } else {
-                        g.drawImage((BufferedImage) imageList.get(currentImage - 1), 0, 0, this);
+                        g.drawImage(imageList.get(currentImage - 1), 0, 0, this);
                         info.setText("Image " + currentImage + " of " + imageList.size());
                     }
                     paintChildren(g);

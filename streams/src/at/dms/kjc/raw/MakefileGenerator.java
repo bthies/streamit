@@ -26,14 +26,14 @@ public class MakefileGenerator
             //FileWriter fw = new FileWriter("Makefile");
             FileWriter fw = new FileWriter(MAKEFILE_NAME);
             //create a set of all the tiles with code
-            HashSet tiles = new HashSet();
+            HashSet<Object> tiles = new HashSet<Object>();
             tiles.addAll(TileCode.realTiles);
             tiles.addAll(TileCode.tiles);
         
             //remove the tiles assigned to FileReaders
             //do not generate switchcode for Tiles assigned to file readers
             //they are just dummy tiles
-            Iterator frs = FileVisitor.fileNodes.iterator();
+            Iterator<Object> frs = FileVisitor.fileNodes.iterator();
             while (frs.hasNext()) {
                 tiles.remove(Layout.getTile((FlatNode)frs.next()));
             }
@@ -43,7 +43,7 @@ public class MakefileGenerator
             if (KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM) 
                 removeJoiners(tiles);
 
-            Iterator tilesIterator = tiles.iterator();
+            Iterator<Object> tilesIterator = tiles.iterator();
         
             fw.write("#-*-Makefile-*-\n\n");
             /*
@@ -147,14 +147,14 @@ public class MakefileGenerator
     }
     
     //remove all tiles mapped to joiners from the coordinate hashset *tiles*
-    private static void removeJoiners(HashSet tiles) {
-        Iterator it = Layout.getJoiners().iterator();
+    private static void removeJoiners(HashSet<Object> tiles) {
+        Iterator<FlatNode> it = Layout.getJoiners().iterator();
         while (it.hasNext()) {
-            tiles.remove(Layout.getTile((FlatNode)it.next()));
+            tiles.remove(Layout.getTile(it.next()));
         }
     }
 
-    private static void createBCFile(boolean hasIO, HashSet tiles) throws Exception 
+    private static void createBCFile(boolean hasIO, HashSet<Object> tiles) throws Exception 
     {
         FileWriter fw = new FileWriter("fileio.bc");
 
@@ -183,7 +183,7 @@ public class MakefileGenerator
             fw.write("{\n");
             fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
             fw.write("  gFilterNames = listi_new();\n");
-            Iterator it = tiles.iterator();
+            Iterator<Object> it = tiles.iterator();
             for (int i = 0; i < RawBackend.rawRows * RawBackend.rawColumns; i++) {
                 if (tiles.contains(Layout.getTile(i))) {
                     fw.write("  listi_add(gFilterNames, \"" +
@@ -209,7 +209,7 @@ public class MakefileGenerator
         //create the function to tell the simulator what tiles are mapped
         fw.write("fn mapped_tile(tileNumber) {\n");
         fw.write("if (0 ");
-        Iterator tilesIterator = tiles.iterator();
+        Iterator<Object> tilesIterator = tiles.iterator();
         //generate the if statement with all the tile numbers of mapped tiles
         while (tilesIterator.hasNext()) {
             Coordinate tile = (Coordinate)tilesIterator.next();
@@ -375,7 +375,7 @@ public class MakefileGenerator
 
         if (hasIO) {
             //generate the code for the fileReaders
-            Iterator frs = FileVisitor.fileReaders.iterator();
+            Iterator<Object> frs = FileVisitor.fileReaders.iterator();
             fw.write("\tlocal f_readerpath = malloc(strlen(streamit_home) + 30);\n");
             fw.write("\tsprintf(f_readerpath, \"%s%s\", streamit_home, \"/include/from_file_raw.bc\");\n");
             //include the file reader device
@@ -388,7 +388,7 @@ public class MakefileGenerator
                          getIOPort(Layout.getTile(node)) + ");\n");
             }
             //generate the code for the file writers
-            Iterator fws = FileVisitor.fileWriters.iterator();
+            Iterator<Object> fws = FileVisitor.fileWriters.iterator();
             while (fws.hasNext()) {
                 FlatNode node = (FlatNode)fws.next();
                 SIRFileWriter sfw = (SIRFileWriter)node.contents;

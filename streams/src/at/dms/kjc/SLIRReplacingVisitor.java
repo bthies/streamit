@@ -424,11 +424,11 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     public Object visitMainFunction(LIRMainFunction self,
                                     String typeName,
                                     LIRFunctionPointer init,
-                                    List initStatements) {
+                                    List<JStatement> initStatements) {
         Utils.fail("Replacing visitor doesn't deal with LIR nodes yet");
         init.accept(this);
-        for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
-            JStatement old = (JStatement)it.next();
+        for (ListIterator<JStatement> it = initStatements.listIterator(); it.hasNext(); ) {
+            JStatement old = it.next();
             JStatement newSt = (JStatement)old.accept(this);
             if (newSt!=null && newSt!=old) {
                 it.set(newSt);

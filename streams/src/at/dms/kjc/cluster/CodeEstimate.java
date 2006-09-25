@@ -3,6 +3,7 @@ package at.dms.kjc.cluster;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+
 import java.util.HashMap;
 import at.dms.kjc.common.RawUtil;
 
@@ -13,8 +14,8 @@ import at.dms.kjc.common.RawUtil;
 
 public class CodeEstimate extends SLIREmptyVisitor {
 
-    private static HashMap saved_locals = new HashMap();
-    private static HashMap saved_code = new HashMap();
+    private static HashMap<SIRFilter, Integer> saved_locals = new HashMap<SIRFilter, Integer>();
+    private static HashMap<SIRFilter, Integer> saved_code = new HashMap<SIRFilter, Integer>();
 
     static int METHOD_CALL_EXPR = 16;
     static int METHOD_CALL_PER_PARAM = 4;
@@ -65,7 +66,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     public static int estimateCode(SIRFilter filter) {
 
         if (saved_code.containsKey(filter)) {
-            return ((Integer)saved_code.get(filter)).intValue(); 
+            return saved_code.get(filter).intValue(); 
         }
 
         return estimate(filter).getCodeSize();
@@ -81,7 +82,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
     public static int estimateLocals(SIRFilter filter) {
 
         if (saved_locals.containsKey(filter)) {
-            return ((Integer)saved_locals.get(filter)).intValue(); 
+            return saved_locals.get(filter).intValue(); 
         }
 
         return estimate(filter).getLocalsSize();
@@ -92,7 +93,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
     private SIRFilter filter;
 
-    private HashMap methodsToVisit;
+    private HashMap<String,Boolean> methodsToVisit;
 
     private int for_loop_level;
     private int code_at_level[];
@@ -163,7 +164,7 @@ public class CodeEstimate extends SLIREmptyVisitor {
             for (int i = 0; i < methods.length; i++) {
                 String currMethod = methods[i].getName();
                 if (methodsToVisit.containsKey(currMethod)) {
-                    Boolean done = (Boolean)methodsToVisit.get(currMethod);
+                    Boolean done = methodsToVisit.get(currMethod);
                     if (!done.booleanValue()) {
                         methods[i].accept(this);
                         methodsToVisit.put(currMethod, new Boolean(true));

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenDefinition.java,v 1.3 2006-01-25 17:01:12 thies Exp $
+ * $Id: TokenDefinition.java,v 1.4 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.lexgen;
@@ -55,11 +55,11 @@ class TokenDefinition {
      * @param   id      the id of the token
      * @param   sourceFile  the file where the token is defined
      */
-    public void checkIdentifiers(Hashtable identifiers, String prefix, int id, String sourceFile)
+    public void checkIdentifiers(Hashtable<String, String> identifiers, String prefix, int id, String sourceFile)
         throws LexgenError
     {
         String      ident  = type == LITERAL ? prefix + name : name;
-        String      stored = (String)identifiers.get(ident);
+        String      stored = identifiers.get(ident);
 
         if (stored != null) {
             throw new LexgenError(LexgenMessages.DUPLICATE_DEFINITION, new Object[] { ident, sourceFile, stored });

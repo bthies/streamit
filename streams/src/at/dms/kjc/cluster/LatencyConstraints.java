@@ -21,16 +21,16 @@ import streamit.misc.AssertedClass;
 public class LatencyConstraints {
 
     // consists of SIRFilter(s)
-    public static HashSet restrictedExecutionFilters = new HashSet();
+    public static HashSet<SIRStream> restrictedExecutionFilters = new HashSet<SIRStream>();
 
     // consists of SIRFilter -> Integer
     //public static HashMap initCredit = new HashMap();
 
     // consists of SIRFilter(s) -> HashSet of LatencyConstraint(s)
-    public static HashMap outgoingLatencyConstraints = new HashMap();
+    public static HashMap<SIRStream, HashSet<LatencyConstraint>> outgoingLatencyConstraints = new HashMap<SIRStream, HashSet<LatencyConstraint>>();
 
     // Vector of SIRFilter(s) (sender, receiver) -> Boolean;
-    public static HashMap messageDirectionDownstream = new HashMap();
+    public static HashMap<Vector<SIRFilter>, Boolean> messageDirectionDownstream = new HashMap<Vector<SIRFilter>, Boolean>();
 
     /**
      * Returns true if a {@link SIRFilter} needs to receive credit
@@ -62,12 +62,12 @@ public class LatencyConstraints {
      * @return a set of filters that need to receive credit messages
      */
 
-    public static HashSet getOutgoingConstraints(SIRFilter filter) {
+    public static HashSet<LatencyConstraint> getOutgoingConstraints(SIRFilter filter) {
 
         if (outgoingLatencyConstraints.containsKey(filter)) {
-            return (HashSet)outgoingLatencyConstraints.get(filter);     
+            return outgoingLatencyConstraints.get(filter);     
         } else {
-            HashSet tmp = new HashSet();
+            HashSet<LatencyConstraint> tmp = new HashSet<LatencyConstraint>();
             outgoingLatencyConstraints.put(filter, tmp);
             return tmp;
         }
@@ -90,12 +90,12 @@ public class LatencyConstraints {
         }
     
         if (latency instanceof SIRLatencySet) {
-            Iterator it = ((SIRLatencySet)latency).iterator();
+            Iterator<Integer> it = ((SIRLatencySet)latency).iterator();
 
             int max = -1000000;
 
             while (it.hasNext()) {
-                Integer i = (Integer)it.next();
+                Integer i = it.next();
 
                 if (i.intValue() > max) max = i.intValue();
             }
@@ -115,11 +115,11 @@ public class LatencyConstraints {
 
     public static boolean isMessageDirectionDownstream(SIRFilter sender,
                                                        SIRFilter receiver) {
-        Vector v = new Vector();
+        Vector<SIRFilter> v = new Vector<SIRFilter>();
         v.add(sender);
         v.add(receiver);
 
-        Boolean b = (Boolean)messageDirectionDownstream.get(v);
+        Boolean b = messageDirectionDownstream.get(v);
     
         //System.out.println("sender: "+sender+" receiver: "+receiver);
 
@@ -148,7 +148,7 @@ public class LatencyConstraints {
             SIRPortalSender senders[] = portals[t].getSenders();
             SIRStream receivers[] = portals[t].getReceivers();
 
-            HashSet visited_senders = new HashSet();
+            HashSet<SIRStream> visited_senders = new HashSet<SIRStream>();
         
             int min_latency = 0;
         
@@ -232,12 +232,12 @@ public class LatencyConstraints {
             if (ClusterBackend.debugPrint)
                 System.out.println();
 
-            Iterator senders_i = visited_senders.iterator();
+            Iterator<SIRStream> senders_i = visited_senders.iterator();
 
             while (senders_i.hasNext()) {
-                SIRStream sender = (SIRStream)senders_i.next();
+                SIRStream sender = senders_i.next();
 
-                HashSet constraints = new HashSet();
+                HashSet<LatencyConstraint> constraints = new HashSet<LatencyConstraint>();
 
                 boolean upstream = false;
 
@@ -274,7 +274,7 @@ public class LatencyConstraints {
             
                         // message is being sent downstream
 
-                        Vector v = new Vector();
+                        Vector<SIRFilter> v = new Vector<SIRFilter>();
                         v.add(f1);
                         v.add(f2);
                         messageDirectionDownstream.put(v, new Boolean(true));
@@ -290,7 +290,7 @@ public class LatencyConstraints {
                         try {
                             sdep2 = cscheduler2.computeSDEP(iter2, iter1);
 
-                            Vector v = new Vector();
+                            Vector<SIRFilter> v = new Vector<SIRFilter>();
                             v.add(f1);
                             v.add(f2);
                             messageDirectionDownstream.put(v, 

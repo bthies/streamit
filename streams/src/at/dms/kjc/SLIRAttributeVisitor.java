@@ -249,7 +249,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     Object visitMainFunction(LIRMainFunction self,
                              String typeName,
                              LIRFunctionPointer init,
-                             List initStatements);
+                             List<JStatement> initStatements);
 
 
     /**

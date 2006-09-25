@@ -1,5 +1,6 @@
 package at.dms.kjc.sir.lowering;
 import at.dms.kjc.*;
+
 import java.util.*;
 
 /**
@@ -247,7 +248,7 @@ public class LoopIterInfo  implements Constants {
                                            JExpression cond,
                                            JStatement incr,
                                            JStatement body,
-                                           Map /*<JLocalVariable>,<JIntLiteral>*/ values,
+                                           Map /*<JLocalVariable>,<JIntLiteral>*/<JLocalVariable, JExpression> values,
                                            Map /*<JLocalVariable>,<JIntLiteral>*/ constants) {
         try {
             JLocalVariable var;

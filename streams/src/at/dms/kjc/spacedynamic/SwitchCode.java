@@ -125,12 +125,12 @@ public class SwitchCode extends at.dms.util.Utils {
     public static void dumpSchedules() {
         // this is a hash set that keeps tiles that we have already generated
         // code for
-        HashSet tilesGenerated = new HashSet();
+        HashSet<RawTile> tilesGenerated = new HashSet<RawTile>();
 
         for (int i = 0; i < (streamGraph.getStaticSubGraphs()).length; i++) {
             // get all the nodes that have either init switch code
             // or steady state switch code
-            HashSet computeNodes = new HashSet();
+            HashSet<Object> computeNodes = new HashSet<Object>();
 
             // SpaceDynamicBackend.addAll(computeNodes, layout.getTiles());
 
@@ -150,7 +150,7 @@ public class SwitchCode extends at.dms.util.Utils {
                     computeNodes.add(layout.getTile(node));
             }
 
-            Iterator tileIterator = computeNodes.iterator();
+            Iterator<Object> tileIterator = computeNodes.iterator();
 
             // for each tiles dump the code
             while (tileIterator.hasNext()) {
@@ -183,12 +183,12 @@ public class SwitchCode extends at.dms.util.Utils {
                     String initCode = "";
                     //System.out.println("Converting switch code to string ...");
                     if (ssg.simulator.initSchedules.get(tile) != null)
-                        initCode = ((StringBuffer) ssg.simulator.initSchedules
-                                    .get(tile)).toString();
+                        initCode = ssg.simulator.initSchedules
+                                    .get(tile).toString();
                     System.gc();
                     if (ssg.simulator.steadySchedules.get(tile) != null)
-                        steadyCode = ((StringBuffer) ssg.simulator.steadySchedules
-                                      .get(tile)).toString();
+                        steadyCode = ssg.simulator.steadySchedules
+                                      .get(tile).toString();
 
                     // the sequences we are going to compress if compression is
                     // needed
@@ -589,12 +589,12 @@ public class SwitchCode extends at.dms.util.Utils {
     // repetition count, and the size of the repetition
     static class Repetition {
         //
-        public HashMap lineToSize;
+        public HashMap<Integer, Integer> lineToSize;
 
         public int repetitions;
 
         public Repetition(int r) {
-            lineToSize = new HashMap();
+            lineToSize = new HashMap<Integer, Integer>();
             // assert r < SwitchCode.MAX_IMM : "Trying to create a switch loop
             // larger than immediate size";
             repetitions = r;
@@ -605,7 +605,7 @@ public class SwitchCode extends at.dms.util.Utils {
         }
 
         public int getSize(int l) {
-            return ((Integer) lineToSize.get(new Integer(l))).intValue();
+            return lineToSize.get(new Integer(l)).intValue();
         }
 
         public boolean hasLine(int l) {
@@ -614,9 +614,9 @@ public class SwitchCode extends at.dms.util.Utils {
 
         public String toString() {
             String ret = "reps: " + repetitions;
-            Iterator it = lineToSize.keySet().iterator();
+            Iterator<Integer> it = lineToSize.keySet().iterator();
             while (it.hasNext()) {
-                Integer line = (Integer) it.next();
+                Integer line = it.next();
                 ret = ret + "(" + line.toString() + ", " + lineToSize.get(line)
                     + ")";
 
@@ -767,14 +767,14 @@ public class SwitchCode extends at.dms.util.Utils {
         
         // get the source direction...
         FlatNode source = null;
-        LinkedList route = null;
+        LinkedList<ComputeNode> route = null;
         String dir = null;
         //if the actually pop's then set the direction             
         if (pop > 0) {
             source = Util.getFilterUpstreamAssigned(layout, node);
             route = layout.router.getRoute(ssg, layout
                               .getComputeNode(source), tile);
-            dir = rawChip.getDirection(tile, (ComputeNode) route.get(route.size() - 2));
+            dir = rawChip.getDirection(tile, route.get(route.size() - 2));
             
         }
         // get the destination schedule
@@ -909,9 +909,9 @@ public class SwitchCode extends at.dms.util.Utils {
     private static String getCurrentDestDir(SpdStaticStreamGraph ssg, CircularSchedule destSched, RawTile tile) {
         FlatNode curDest = destSched.next();
         
-        LinkedList route = layout.router.getRoute(ssg, tile, layout.getComputeNode(curDest));
+        LinkedList<ComputeNode> route = layout.router.getRoute(ssg, tile, layout.getComputeNode(curDest));
         
-        return rawChip.getDirection(tile, (ComputeNode)route.get(1));
+        return rawChip.getDirection(tile, route.get(1));
     }
     
     /**
@@ -928,16 +928,16 @@ public class SwitchCode extends at.dms.util.Utils {
         assert false : "Simple switch code for joiners is broken!";
         assert node.isJoiner();
         //get the destination direction for this joiner
-        LinkedList destRoute = layout.router.getRoute(ssg, tile, layout.getComputeNode(node.edges[0]));
-        String destDir = rawChip.getDirection(tile, (ComputeNode)destRoute.get(1));
+        LinkedList<ComputeNode> destRoute = layout.router.getRoute(ssg, tile, layout.getComputeNode(node.edges[0]));
+        String destDir = rawChip.getDirection(tile, destRoute.get(1));
         
         //if the node is a joiner, generate code that will
         //pass on items from each input according to the 
         //weights    
         for (int i = 0; i < node.inputs; i++) {
             //get the source tiles last intermediate route
-            LinkedList sourceRoute = layout.router.getRoute(ssg, layout.getComputeNode(node.incoming[i]), tile);
-            ComputeNode sourceTile = (ComputeNode)sourceRoute.get(sourceRoute.size() - 2);  
+            LinkedList<ComputeNode> sourceRoute = layout.router.getRoute(ssg, layout.getComputeNode(node.incoming[i]), tile);
+            ComputeNode sourceTile = sourceRoute.get(sourceRoute.size() - 2);  
             //now write the instruction to receive from the current source and send to the dest                    
             for (int j = 0; j < node.incomingWeights[i]; j++) {
                 fw.write("\tnop\troute ");

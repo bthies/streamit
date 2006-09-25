@@ -9,10 +9,10 @@ import at.dms.kjc.sir.*;
 
 public class ReplaceVarDecls extends SLIRReplacingVisitor {
     
-    private HashMap var_names; // String (Ident) -> Integer
+    private HashMap<JVariableDefinition, Integer> var_names; // String (Ident) -> Integer
     private FindVarDecls find_obj;
 
-    ReplaceVarDecls(HashMap var_names, FindVarDecls find_obj) {
+    ReplaceVarDecls(HashMap<JVariableDefinition, Integer> var_names, FindVarDecls find_obj) {
         this.var_names = var_names;
         this.find_obj = find_obj;
     }
@@ -21,8 +21,8 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
                                                     JVariableDefinition[] vars) 
     {
     
-        LinkedList new_vars = new LinkedList();
-        LinkedList new_statements = new LinkedList();
+        LinkedList<JVariableDefinition> new_vars = new LinkedList<JVariableDefinition>();
+        LinkedList<JExpressionStatement> new_statements = new LinkedList<JExpressionStatement>();
     
         for (int i = 0; i < vars.length; i++) {
 
@@ -41,7 +41,7 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
                 if (vars[i].getType().getTypeID() == CType.TID_INT) {
                     if (vars[i].getValue() != null) {           
                         Integer name = 
-                            (Integer)var_names.get(vars[i]);
+                            var_names.get(vars[i]);
                         JVariableDefinition var = find_obj.getIntVar(name); 
                         JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
                         JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
@@ -53,7 +53,7 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
                 if (vars[i].getType().getTypeID() == CType.TID_FLOAT) {
                     if (vars[i].getValue() != null) {           
                         Integer name = 
-                            (Integer)var_names.get(vars[i]);
+                            var_names.get(vars[i]);
                         JVariableDefinition var = find_obj.getFloatVar(name);
                         JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
                         JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
@@ -74,13 +74,13 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
 
         if (new_vars.size() > 0) {
 
-            JVariableDefinition new_array[] = (JVariableDefinition[])new_vars.toArray(new JVariableDefinition[0]);
+            JVariableDefinition new_array[] = new_vars.toArray(new JVariableDefinition[0]);
             self.setVars(new_array);
             return self;
 
         } else {
 
-            JExpressionStatement new_array[] = (JExpressionStatement[])new_statements.toArray(new JExpressionStatement[0]);
+            JExpressionStatement new_array[] = new_statements.toArray(new JExpressionStatement[0]);
             return new JCompoundStatement(null, new_array);
 
         }
@@ -94,13 +94,13 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
 
             // variable has been eliminated
             if (self.getType().getTypeID() == CType.TID_INT) {
-                Integer name = (Integer)var_names.get(self.getVariable());
+                Integer name = var_names.get(self.getVariable());
                 JVariableDefinition var = find_obj.getIntVar(name);
                 return new JLocalVariableExpression(null, var);
             }
 
             if (self.getType().getTypeID() == CType.TID_FLOAT) {
-                Integer name = (Integer)var_names.get(self.getVariable());
+                Integer name = var_names.get(self.getVariable());
                 JVariableDefinition var = find_obj.getFloatVar(name);
                 return new JLocalVariableExpression(null, var);
             }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPackageImport.java,v 1.11 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JPackageImport.java,v 1.12 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -69,7 +69,7 @@ public class JPackageImport extends JPhylum {
      */
     public void setClassUsed(String clazz) {
         if (classesUsed == null) {
-            classesUsed = new Vector();
+            classesUsed = new Vector<String>();
         }
         classesUsed.addElement(clazz);
     }
@@ -98,7 +98,7 @@ public class JPackageImport extends JPhylum {
                     if (i != 0) {
                         buffer.append(", ");
                     }
-                    buffer.append((name + "/" + (String)classesUsed.elementAt(i)).replace('/', '.'));
+                    buffer.append((name + "/" + classesUsed.elementAt(i)).replace('/', '.'));
                 }
                 compiler.reportTrouble(new CWarning(getTokenReference(),
                                                     KjcMessages.REPLACE_PACKAGE_IMPORT,
@@ -153,7 +153,7 @@ public class JPackageImport extends JPhylum {
 
     private /* final */ String          name;  // removed final for cloner
     private /* final */ JavaStyleComment[]  comments;  // removed final for cloner
-    private Vector          classesUsed;
+    private Vector<String>          classesUsed;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -170,7 +170,7 @@ public class JPackageImport extends JPhylum {
         super.deepCloneInto(other);
         other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
         other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
-        other.classesUsed = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
+        other.classesUsed = (java.util.Vector<String>)at.dms.kjc.AutoCloner.cloneToplevel(this.classesUsed);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

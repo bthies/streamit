@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: RegisterAllocation.java,v 1.3 2006-03-24 18:26:08 dimock Exp $
+ * $Id: RegisterAllocation.java,v 1.4 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -59,7 +59,7 @@ public class RegisterAllocation extends TreeWalker {
      */
     public void run() {
         int     max = -1;
-        Stack   stack = new Stack();
+        Stack<InferenceNode>   stack = new Stack<InferenceNode>();
         boolean stop = false;
 
         // MARK PARAMETERS
@@ -105,7 +105,7 @@ public class RegisterAllocation extends TreeWalker {
             }
         }
         while (!stack.isEmpty()) {
-            node = (InferenceNode)stack.pop();
+            node = stack.pop();
             node.colorize();
         }
 

@@ -9,11 +9,11 @@ public class TraceBufferSchedule
     private int currentBuffer;
     private InputTraceNode input;
     private OutputTraceNode output;
-    private static HashMap nodes;
+    private static HashMap<TraceNode, TraceBufferSchedule> nodes;
     
     static 
     {
-        nodes = new HashMap();
+        nodes = new HashMap<TraceNode, TraceBufferSchedule>();
     }
     
     private TraceBufferSchedule(InputTraceNode in) 
@@ -39,14 +39,14 @@ public class TraceBufferSchedule
         if (!nodes.containsKey(in))
             nodes.put(in, new TraceBufferSchedule(in));
 
-        return ((TraceBufferSchedule)nodes.get(in)).updateInput();
+        return nodes.get(in).updateInput();
     }
     
     public static Edge[] getInputBuffers(OutputTraceNode out)
     {
         if (!nodes.containsKey(out))
             nodes.put(out, new TraceBufferSchedule(out));
-        return ((TraceBufferSchedule)nodes.get(out)).updateOutput();
+        return nodes.get(out).updateOutput();
     }
 
     private Edge updateInput() {

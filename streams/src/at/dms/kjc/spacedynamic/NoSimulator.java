@@ -20,11 +20,11 @@ public class NoSimulator extends Simulator {
     public NoSimulator(SpdStaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
     {
         super(ssg, joinerSimulator);
-        initJoinerCode = new HashMap();
-        steadyJoinerCode = new HashMap();
+        initJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
+        steadyJoinerCode = new HashMap<FlatNode, JoinerScheduleNode>();
         //this might have to change, but probably not!
-        initSchedules = new HashMap();
-        steadySchedules = new HashMap();
+        initSchedules = new HashMap<Object, StringBuffer>();
+        steadySchedules = new HashMap<Object, StringBuffer>();
     }
     
         /**
@@ -37,7 +37,7 @@ public class NoSimulator extends Simulator {
     /* (non-Javadoc)
      * @see at.dms.kjc.spacedynamic.Simulator#canFire(at.dms.kjc.flatgraph.FlatNode, java.util.HashMap, at.dms.kjc.spacedynamic.SimulationCounter)
      */
-    public boolean canFire(FlatNode node, HashMap executionCounts,
+    public boolean canFire(FlatNode node, HashMap<FlatNode, Integer> executionCounts,
             SimulationCounter counters) {
         // TODO Auto-generated method stub
         return false;
@@ -47,7 +47,7 @@ public class NoSimulator extends Simulator {
      * @see at.dms.kjc.spacedynamic.Simulator#fireJoiner(at.dms.kjc.flatgraph.FlatNode, at.dms.kjc.spacedynamic.SimulationCounter, java.util.HashMap)
      */
     protected int fireJoiner(FlatNode fire, SimulationCounter counters,
-            HashMap executionCounts) {
+            HashMap<FlatNode, Integer> executionCounts) {
         // TODO Auto-generated method stub
         return 0;
     }

@@ -66,10 +66,10 @@ public class BenchChar {
         }
         if (str instanceof SIRSplitJoin) {
             SIRSplitJoin sj = (SIRSplitJoin) str;
-            Iterator iter = sj.getParallelStreams().iterator();
+            Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
             int sum = 0;
             while (iter.hasNext()) {
-                SIRStream child = (SIRStream) iter.next();
+                SIRStream child = iter.next();
                 sum += findSplitJoins(child);
             }
             return sum + 1;

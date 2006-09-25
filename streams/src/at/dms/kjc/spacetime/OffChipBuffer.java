@@ -25,7 +25,7 @@ public abstract class OffChipBuffer {
     protected static int unique_id;
     /** the store for all OffChipBuffers, indexed by src for intratrace buffers 
      * or Edge for IntertraceBuffers */
-    protected static HashMap bufferStore;
+    protected static HashMap<Object, OffChipBuffer> bufferStore;
     /** the size of the buffer in the steady stage */ 
     protected Address sizeSteady;
     /** the type of the buffer */ 
@@ -41,7 +41,7 @@ public abstract class OffChipBuffer {
            
     static {
         unique_id = 0;
-        bufferStore = new HashMap();
+        bufferStore = new HashMap<Object, OffChipBuffer>();
     }
 
     protected OffChipBuffer(TraceNode src, TraceNode dst) {
@@ -61,7 +61,7 @@ public abstract class OffChipBuffer {
      */
     public static void reset() {
         unique_id = 0;
-        bufferStore = new HashMap();
+        bufferStore = new HashMap<Object, OffChipBuffer>();
     }
     
     public static void printBuffers() {
@@ -177,7 +177,7 @@ public abstract class OffChipBuffer {
     protected abstract void setType();
 
     // return of the buffers of this stream program
-    public static Collection getBuffers() {
+    public static Collection<OffChipBuffer> getBuffers() {
         return bufferStore.values();
     }
 
@@ -186,9 +186,9 @@ public abstract class OffChipBuffer {
      *
      */
     public static void resetDRAMAssignment() {
-        Iterator buffers = getBuffers().iterator();
+        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
         while (buffers.hasNext()) {
-            OffChipBuffer buf = (OffChipBuffer)buffers.next();
+            OffChipBuffer buf = buffers.next();
             buf.setDRAM(null);
         }
     }
@@ -243,13 +243,13 @@ public abstract class OffChipBuffer {
      * @param spaceTime The SpaceTimeSchedule
      */
     public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
-        InterTraceBuffer.dramsToBuffers = new HashMap();
-        Iterator buffers = getBuffers().iterator();
+        InterTraceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
+        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile neighboring
         //the dram it is assigned to
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            OffChipBuffer buffer = buffers.next();
             if (buffer.isInterTrace()) {
                 //set the rotation length for the buffer
                 setRotationLength(spaceTime, (InterTraceBuffer)buffer);
@@ -259,8 +259,8 @@ public abstract class OffChipBuffer {
                     //add one to its count...
                     InterTraceBuffer.dramsToBuffers.put(buffer.getDRAM(),
                             new Integer
-                            (((Integer)InterTraceBuffer.dramsToBuffers.
-                                    get(buffer.getDRAM())).intValue() + 1));
+                            (InterTraceBuffer.dramsToBuffers.
+                                    get(buffer.getDRAM()).intValue() + 1));
                 }
                 else //haven't seen dram before so just put 1
                     InterTraceBuffer.dramsToBuffers 
@@ -311,10 +311,10 @@ public abstract class OffChipBuffer {
      * assigned to drams.
      */
     public static boolean areAllAssigned() {
-        Iterator buffers = getBuffers().iterator();
+        Iterator<OffChipBuffer> buffers = getBuffers().iterator();
         boolean returnVal = true;
         while (buffers.hasNext()) {
-            OffChipBuffer buf = (OffChipBuffer)buffers.next();
+            OffChipBuffer buf = buffers.next();
             if (!buf.isAssigned()) {
                 if (buf.isInterTrace()) {
                     System.out.println("No assignment for : " + buf + ": " + 
@@ -336,9 +336,9 @@ public abstract class OffChipBuffer {
     public static Address totalBufferSizeInBytes() {
         Address bytes = Address.ZERO;
         
-        Iterator keys = bufferStore.keySet().iterator();
+        Iterator<Object> keys = bufferStore.keySet().iterator();
         while (keys.hasNext()) {
-            OffChipBuffer buf = (OffChipBuffer)bufferStore.get(keys.next());
+            OffChipBuffer buf = bufferStore.get(keys.next());
             
             if (!buf.redundant()) {
                 bytes = bytes.add(buf.sizeSteady.mult(buf.rotationLength));

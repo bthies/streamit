@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTryFinallyContext.java,v 1.8 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CTryFinallyContext.java,v 1.9 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -67,14 +67,14 @@ public class CTryFinallyContext extends CBlockContext {
 
         if (breaks != null) {
             for (int i = 0; i < breaks.size(); i++) {
-                Object[]    elem = (Object[])breaks.elementAt(i);
+                Object[]    elem = breaks.elementAt(i);
 
                 parent.addBreak((JStatement)elem[0], (CBodyContext)elem[1]);
             }
         }
         if (continues != null) {
             for (int i = 0; i < continues.size(); i++) {
-                Object[]    elem = (Object[])continues.elementAt(i);
+                Object[]    elem = continues.elementAt(i);
 
                 parent.addContinue((JStatement)elem[0], (CBodyContext)elem[1]);
             }
@@ -90,7 +90,7 @@ public class CTryFinallyContext extends CBlockContext {
                             CBodyContext context)
     {
         if (breaks == null) {
-            breaks = new Vector();
+            breaks = new Vector<Object[]>();
         }
         //!!! FIXME clone context ???
         breaks.addElement(new Object[]{ target, context });
@@ -105,7 +105,7 @@ public class CTryFinallyContext extends CBlockContext {
                                CBodyContext context)
     {
         if (continues == null) {
-            continues = new Vector();
+            continues = new Vector<Object[]>();
         }
         //!!! FIXME clone context ???
         continues.addElement(new Object[]{ target, context });
@@ -115,8 +115,8 @@ public class CTryFinallyContext extends CBlockContext {
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    private Vector  breaks;
-    private Vector  continues;
+    private Vector<Object[]>  breaks;
+    private Vector<Object[]>  continues;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -131,8 +131,8 @@ public class CTryFinallyContext extends CBlockContext {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.CTryFinallyContext other) {
         super.deepCloneInto(other);
-        other.breaks = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.breaks);
-        other.continues = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.continues);
+        other.breaks = (java.util.Vector<Object[]>)at.dms.kjc.AutoCloner.cloneToplevel(this.breaks);
+        other.continues = (java.util.Vector<Object[]>)at.dms.kjc.AutoCloner.cloneToplevel(this.continues);
     }
 
     /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

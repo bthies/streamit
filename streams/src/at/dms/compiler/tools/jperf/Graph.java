@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Graph.java,v 1.2 2006-01-25 17:01:10 thies Exp $
+ * $Id: Graph.java,v 1.3 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -43,7 +43,7 @@ class Graph {
      * Initialises the internal structures
      */
     public void init() {
-        nodes = new Vector();
+        nodes = new Vector<Node>();
     }
 
     // --------------------------------------------------------------------
@@ -71,7 +71,7 @@ class Graph {
         }
 
         for (int i = 0; i < nodes.size(); i++) {
-            Node    node = (Node)nodes.elementAt(i);
+            Node    node = nodes.elementAt(i);
             if (node.getLabel() == label) {
                 return node;
             }
@@ -137,7 +137,7 @@ class Graph {
      */
     public void clearVisited() {
         for (int i = 0; i < nodes.size(); i++) {
-            ((Node)nodes.elementAt(i)).setVisited(false);
+            nodes.elementAt(i).setVisited(false);
         }
     }
 
@@ -146,7 +146,7 @@ class Graph {
      */
     public void assignGValues(int keywordCount) {
         for (int i = 0; i < nodes.size(); i++) {
-            ((Node)nodes.elementAt(i)).assignGValue(0, keywordCount);
+            nodes.elementAt(i).assignGValue(0, keywordCount);
         }
     }
 
@@ -173,7 +173,7 @@ class Graph {
 
         // special case of zero
         for (int i = 0, outed = 0; i < nodeCnt; i++) {
-            Node    node = (Node)nodes.elementAt(i);
+            Node    node = nodes.elementAt(i);
 
             if (node.getGValue() == 0) {
                 out.println("    case " + node.getLabel() + ":");
@@ -181,7 +181,7 @@ class Graph {
         }
         out.println("      return 0;");
         for (int i = 0, outed = 0; i < nodeCnt; i++) {
-            Node    node = (Node)nodes.elementAt(i);
+            Node    node = nodes.elementAt(i);
 
             if (node.getGValue() != 0) {
                 out.println("    case " + node.getLabel() + ":");
@@ -201,5 +201,5 @@ class Graph {
     private final long      maxNodeValue;
 
     // The nodes in the intermediate graph
-    private Vector      nodes;
+    private Vector<Node>      nodes;
 }

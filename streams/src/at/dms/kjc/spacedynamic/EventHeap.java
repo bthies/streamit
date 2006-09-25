@@ -12,13 +12,13 @@ import java.util.HashMap;
  **/
 public class EventHeap 
 {
-    private LinkedList eventHeap;
-    private HashMap itemIDs;
+    private LinkedList<SimulatorEvent> eventHeap;
+    private HashMap<FlatNode, Integer> itemIDs;
 
     public EventHeap() 
     {
-        eventHeap = new LinkedList();
-        itemIDs = new HashMap();
+        eventHeap = new LinkedList<SimulatorEvent>();
+        itemIDs = new HashMap<FlatNode, Integer>();
     }
 
     public boolean isEmpty() 
@@ -33,7 +33,7 @@ public class EventHeap
         int i;
     
         for (i = 0; i < eventHeap.size(); i++) {
-            SimulatorEvent current = (SimulatorEvent)eventHeap.get(i);
+            SimulatorEvent current = eventHeap.get(i);
             if (current.time > event.time) {
                 pos = i;
                 break;
@@ -41,7 +41,7 @@ public class EventHeap
         }
     
         for (int j = i; i < eventHeap.size(); i++) {
-            SimulatorEvent current = (SimulatorEvent)eventHeap.get(i);
+            SimulatorEvent current = eventHeap.get(i);
             if (current.node == event.node && 
                 current.itemID < event.itemID) {
                 pos = i + 1;
@@ -58,17 +58,17 @@ public class EventHeap
     public SimulatorEvent getNextEvent() 
     {
         if (!eventHeap.isEmpty())
-            return (SimulatorEvent)eventHeap.removeFirst();
+            return eventHeap.removeFirst();
         else 
             return null;
     }
     
     public SimulatorEvent peekNextEvent() 
     {
-        return (SimulatorEvent)eventHeap.getFirst();
+        return eventHeap.getFirst();
     }
 
-    public Iterator iterator() 
+    public Iterator<SimulatorEvent> iterator() 
     {
         return eventHeap.iterator();
     }
@@ -80,7 +80,7 @@ public class EventHeap
             return 0;
         }
         else {
-            int old = ((Integer)itemIDs.get(node)).intValue();
+            int old = itemIDs.get(node).intValue();
             itemIDs.put(node, new Integer(old + 1));
             return old;
         }

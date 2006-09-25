@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenCache.java,v 1.2 2006-01-25 17:00:53 thies Exp $
+ * $Id: TokenCache.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
@@ -36,7 +36,7 @@ public class TokenCache {
         currentToken.length = length;
         currentToken.type = type;
 
-        tok = (CToken)table.get(currentToken);
+        tok = table.get(currentToken);
         if (tok == null) {
             tok = new CToken(type, String.valueOf(data, start, length).intern());
             table.put(currentToken.store(), tok);
@@ -101,5 +101,5 @@ public class TokenCache {
     }
 
     private LookupToken currentToken = new LookupToken();
-    private Hashtable   table = new Hashtable(1000);
+    private Hashtable<LookupToken, CToken>   table = new Hashtable<LookupToken, CToken>(1000);
 }

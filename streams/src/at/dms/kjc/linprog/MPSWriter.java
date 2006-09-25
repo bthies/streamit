@@ -35,10 +35,10 @@ public class MPSWriter extends SimpleLinearProgram {
      */
     private void printMPS(PrintWriter out) {
         // add objective function as first element of list
-        LinkedList copy = new LinkedList(constraints);
+        LinkedList<Constraint> copy = new LinkedList<Constraint>(constraints);
         copy.add(0, new Constraint(ConstraintType.OBJ, obj, 0));
 
-        Constraint[] con = (Constraint[])copy.toArray(new Constraint[0]);
+        Constraint[] con = copy.toArray(new Constraint[0]);
     
         // print title
         out.println("NAME          STREAMIT");

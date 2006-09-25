@@ -429,19 +429,19 @@ class FusionCode {
     
             //p.print("  // ============= Phase: "+ph+" =============\n");
 
-            HashSet phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator iter = phase.iterator();
+            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
+            Iterator<SIROperator> iter = phase.iterator();
 
             while (iter.hasNext()) {
-                SIROperator oper = (SIROperator)iter.next();
+                SIROperator oper = iter.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
-                Integer init = (Integer)ClusterBackend.initExecutionCounts.get(node);
+                Integer init = ClusterBackend.initExecutionCounts.get(node);
                 int init_int = 0;
                 if (init != null) init_int = (init).intValue();
 
-                Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+                Integer steady = ClusterBackend.steadyExecutionCounts.get(node);
                 int steady_int = 0;
                 if (steady != null) steady_int = (steady).intValue();
 
@@ -510,11 +510,11 @@ class FusionCode {
     
             //p.print("  // ============= Phase: "+ph+" =============\n");
 
-            HashSet phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator iter = phase.iterator();
+            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
+            Iterator<SIROperator> iter = phase.iterator();
 
             while (iter.hasNext()) {
-                SIROperator oper = (SIROperator)iter.next();
+                SIROperator oper = iter.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -529,7 +529,7 @@ class FusionCode {
 //                int init_int = 0;
 //                if (init != null) init_int = (init).intValue();
 
-                Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+                Integer steady = ClusterBackend.steadyExecutionCounts.get(node);
                 int steady_int = 0;
                 if (steady != null) steady_int = (steady).intValue();
 
@@ -565,11 +565,11 @@ class FusionCode {
 
         for (int ph = 0; ph < n_phases; ph++) {
     
-            HashSet phase = d_sched.getAllOperatorsInPhase(ph);
-            Iterator iter = phase.iterator();
+            HashSet<SIROperator> phase = d_sched.getAllOperatorsInPhase(ph);
+            Iterator<SIROperator> iter = phase.iterator();
 
             while (iter.hasNext()) {
-                SIROperator oper = (SIROperator)iter.next();
+                SIROperator oper = iter.next();
                 int id = NodeEnumerator.getSIROperatorId(oper);
                 FlatNode node = NodeEnumerator.getFlatNode(id);
 
@@ -584,7 +584,7 @@ class FusionCode {
 //                int init_int = 0;
 //                if (init != null) init_int = (init).intValue();
 
-                Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+                Integer steady = ClusterBackend.steadyExecutionCounts.get(node);
                 int steady_int = 0;
                 if (steady != null) steady_int = (steady).intValue();
 

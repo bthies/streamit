@@ -34,13 +34,13 @@ public class GraphFlattener extends at.dms.util.Utils
     /** Hashset stores the splitters of feedbackloops
      * so the edges can be swapped after createGraph()
      * see the note in the create graph algorithm */
-    private HashSet feedbackSplitters;
+    private HashSet<FlatNode> feedbackSplitters;
     /** the toplevel, entry, FlatNode of the constructed Flat graph */
     public FlatNode top;
     /** maps SIROperator to their corresponding FlatNode */
-    private HashMap SIRMap;
+    private HashMap<SIROperator, FlatNode> SIRMap;
     /** Used by --sync (synch removal) to reschedule the flat graph */
-    public static LinkedList needsToBeSched=new LinkedList();;
+    public static LinkedList<FlatNode> needsToBeSched=new LinkedList<FlatNode>();;
 
     /**
      * Create a graph of FlatNodes that represents the SIR graph 
@@ -53,16 +53,16 @@ public class GraphFlattener extends at.dms.util.Utils
      */
     public GraphFlattener(SIROperator toplevel) 
     {
-        this.SIRMap = new HashMap();
-        feedbackSplitters = new HashSet();
+        this.SIRMap = new HashMap<SIROperator, FlatNode>();
+        feedbackSplitters = new HashSet<FlatNode>();
 
         //create the flat graph
         createGraph(toplevel);
         //now we need to fix up the graph a bit
         //we need to add all the back edges of the splitter of a feedbacks
-        Iterator it = feedbackSplitters.iterator();
+        Iterator<FlatNode> it = feedbackSplitters.iterator();
         while(it.hasNext()) {
-            ((FlatNode)it.next()).swapSplitterEdges();
+            it.next().swapSplitterEdges();
         }
     }
 
@@ -182,9 +182,9 @@ public class GraphFlattener extends at.dms.util.Utils
                     //Tracks any remainder of a weight needed to be accounted for before the respective offsetArray entry is incremented
                     int[] remainderArray=new int[splitterNode.edges.length];
                     //Builds up the analyzed weights of the new splitter equivalent to parent splitter with child splitters folded in
-                    LinkedList newWeights=new LinkedList();
+                    LinkedList<Integer> newWeights=new LinkedList<Integer>();
                     //Builds up the edges
-                    LinkedList newEdges=new LinkedList();
+                    LinkedList<FlatNode> newEdges=new LinkedList<FlatNode>();
                     //Tracks whether done
                     boolean loop=false;
                     //First iteration through
@@ -297,11 +297,11 @@ public class GraphFlattener extends at.dms.util.Utils
                         }
                     }
                     //Fix Edges
-                    FlatNode[] tempEdges=((FlatNode[])newEdges.toArray(new FlatNode[0]));
+                    FlatNode[] tempEdges=newEdges.toArray(new FlatNode[0]);
                     splitterNode.edges=tempEdges;
                     int[] tempWeights=new int[newWeights.size()];
                     for(int i=0;i<tempWeights.length;i++) { //Copy weights into array
-                        tempWeights[i]=((Integer)newWeights.get(i)).intValue();
+                        tempWeights[i]=newWeights.get(i).intValue();
                     }
                     splitterNode.weights=tempWeights; //Set weights
                     splitterNode.currentEdge=tempEdges.length;
@@ -354,7 +354,7 @@ public class GraphFlattener extends at.dms.util.Utils
                             inEdgeList[i]=new LinkedList();
                         }
                         //Mapping keeping track if an input needs to be split into several outputs
-                        HashMap needSplit=new HashMap();
+                        HashMap<FlatNode, LinkedList<Object>> needSplit=new HashMap<FlatNode, LinkedList<Object>>();
                         //Analyze out weights the right amount of times
                         for(;outTimes>0;outTimes--)
                             for(int i=0;i<outWeights.length;i++) {
@@ -370,9 +370,9 @@ public class GraphFlattener extends at.dms.util.Utils
                                 //Setting defaults
                                 ident.incoming=new FlatNode[]{inEdge};
                                 inEdge.edges=new FlatNode[]{ident};
-                                LinkedList currentWeights=inWeightList[i];
-                                LinkedList currentEdges=inEdgeList[i];
-                                LinkedList entry=(LinkedList)needSplit.get(inEdge);
+                                LinkedList<Integer> currentWeights=inWeightList[i];
+                                LinkedList<FlatNode> currentEdges=inEdgeList[i];
+                                LinkedList<Object> entry=needSplit.get(inEdge);
                                 if(rem>0) //Account for remainder
                                     if(rem>target) {
                                         rem-=target;
@@ -380,7 +380,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                         currentWeights.add(weight);
                                         currentEdges.add(ident);
                                         if(entry==null) {
-                                            entry=new LinkedList();
+                                            entry=new LinkedList<Object>();
                                             entry.add(weight);
                                             entry.add(ident);
                                             needSplit.put(inEdge,entry);
@@ -396,7 +396,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                         currentWeights.add(weight);
                                         currentEdges.add(ident);
                                         if(entry==null) {
-                                            entry=new LinkedList();
+                                            entry=new LinkedList<Object>();
                                             entry.add(weight);
                                             entry.add(ident);
                                             needSplit.put(inEdge,entry);
@@ -409,7 +409,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                     }
                                 while(sum<target) {
                                     inEdge=inEdges[off];
-                                    entry=(LinkedList)needSplit.get(inEdge);
+                                    entry=needSplit.get(inEdge);
                                     //Dummy identity again
                                     ident=new FlatNode(new SIRIdentity(getOutputType(inEdge)));
                                     ident.inputs=1;
@@ -426,7 +426,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                         currentWeights.add(weight);
                                         currentEdges.add(ident);
                                         if(entry==null) {
-                                            entry=new LinkedList();
+                                            entry=new LinkedList<Object>();
                                             entry.add(weight);
                                             entry.add(ident);
                                             needSplit.put(inEdge,entry);
@@ -443,7 +443,7 @@ public class GraphFlattener extends at.dms.util.Utils
                                         currentWeights.add(weight);
                                         currentEdges.add(ident);
                                         if(entry==null) {
-                                            entry=new LinkedList();
+                                            entry=new LinkedList<Object>();
                                             entry.add(weight);
                                             entry.add(ident);
                                             needSplit.put(inEdge,entry);
@@ -495,10 +495,10 @@ public class GraphFlattener extends at.dms.util.Utils
                             }
                         }
                         //Handle inputs to joiner splitter system
-                        Iterator iter=needSplit.keySet().iterator();
+                        Iterator<FlatNode> iter=needSplit.keySet().iterator();
                         while(iter.hasNext()) {
-                            FlatNode in=(FlatNode)iter.next();
-                            LinkedList list=(LinkedList)needSplit.get(in);
+                            FlatNode in=iter.next();
+                            LinkedList list=needSplit.get(in);
                             if(list.size()==2) { //If input going to one output just set incoming of dummy identity
                                 ((FlatNode)list.get(1)).incoming=new FlatNode[]{inEdges[off]};
                             } else {
@@ -531,8 +531,8 @@ public class GraphFlattener extends at.dms.util.Utils
                     //Also the fix edges code is much worse than with splitters because have to maintain structure
                     int[] offsetArray=new int[joinerNode.incoming.length];
                     int[] remainderArray=new int[joinerNode.incoming.length];
-                    LinkedList newWeights=new LinkedList();
-                    LinkedList newEdges=new LinkedList();
+                    LinkedList<Integer> newWeights=new LinkedList<Integer>();
+                    LinkedList<FlatNode> newEdges=new LinkedList<FlatNode>();
                     boolean loop=false;
                     for(int i=0;i<joinerNode.incoming.length;i++) {
                         FlatNode childNode=joinerNode.incoming[i];
@@ -624,11 +624,11 @@ public class GraphFlattener extends at.dms.util.Utils
                     //Really bad and ugly just to maintain structure
                     //Has the same function as fix edges as fix edges with splitters
                     //but needs to introduce lots of dummy splitters to keep everything legal
-                    FlatNode[] tempEdges=((FlatNode[])newEdges.toArray(new FlatNode[0]));
+                    FlatNode[] tempEdges=newEdges.toArray(new FlatNode[0]);
                     joinerNode.incoming=tempEdges;
                     int[] tempWeights=new int[newWeights.size()];
                     for(int i=0;i<tempWeights.length;i++) {
-                        tempWeights[i]=((Integer)newWeights.get(i)).intValue();
+                        tempWeights[i]=newWeights.get(i).intValue();
                     }
                     joinerNode.incomingWeights=tempWeights;
                     joinerNode.currentIncoming=tempEdges.length;
@@ -645,13 +645,13 @@ public class GraphFlattener extends at.dms.util.Utils
                       node.weights[0]=1;
                       }
                       }*/
-                    HashMap visited=new HashMap();
+                    HashMap<FlatNode, LinkedList<Object>> visited=new HashMap<FlatNode, LinkedList<Object>>();
                     SIRSplitter dummySplit=SIRSplitter.create(null,SIRSplitType.NULL,0);
                     for(int i=0;i<newEdges.size();i++) {
-                        FlatNode node=(FlatNode)newEdges.get(i);
-                        LinkedList edges=(LinkedList)visited.get(node);
+                        FlatNode node=newEdges.get(i);
+                        LinkedList<Object> edges=visited.get(node);
                         if(edges==null) {
-                            edges=new LinkedList();
+                            edges=new LinkedList<Object>();
                             FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(node)));
                             FlatNode split=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
                             node.edges[0]=split;
@@ -680,10 +680,10 @@ public class GraphFlattener extends at.dms.util.Utils
                             edges.add(newWeights.get(i));
                         }
                     }
-                    Iterator iter=visited.keySet().iterator();
+                    Iterator<FlatNode> iter=visited.keySet().iterator();
                     while(iter.hasNext()) {
-                        FlatNode node=(FlatNode)iter.next();
-                        List list=(List)visited.get(node);
+                        FlatNode node=iter.next();
+                        List list=visited.get(node);
                         FlatNode split=(FlatNode)list.get(0);
                         int size=(list.size()-1)/2;
                         split.edges=new FlatNode[size];
@@ -794,7 +794,7 @@ public class GraphFlattener extends at.dms.util.Utils
      * was created to represent key, or null if one was not created.
      */
     public FlatNode getFlatNode(SIROperator key) {
-        FlatNode node = (FlatNode)SIRMap.get(key);
+        FlatNode node = SIRMap.get(key);
         //  if (node == null)
         //  Utils.fail("Cannot Find FlatNode for SIROperator: " + key);
         return node;
@@ -878,7 +878,7 @@ public class GraphFlattener extends at.dms.util.Utils
      * in the schedule for the stage.
      */
     public static int getMult(FlatNode node, boolean init, 
-                              HashMap initExecutionCounts, HashMap steadyExecutionCounts)
+                              HashMap<FlatNode, Integer> initExecutionCounts, HashMap<FlatNode, Integer> steadyExecutionCounts)
     {
         if ((init ? initExecutionCounts : steadyExecutionCounts) == null)
             return -1;

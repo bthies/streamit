@@ -12,11 +12,11 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.4 2006-01-30 18:15:57 thies Exp $
+ * $Id: LinearReplacer.java,v 1.5 2006-09-25 13:54:46 dimock Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // set of containers that were replaced
-    HashSet replaced = new HashSet();
+    HashSet<SIRContainer> replaced = new HashSet<SIRContainer>();
     // whether or not we're currnetly replacing a sub-tree
     boolean replacing = true;
 
@@ -85,7 +85,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     /**
      * Gets all children of the specified stream.
      **/
-    HashSet getAllChildren(SIRStream self) {
+    HashSet<SIRStream> getAllChildren(SIRStream self) {
         // basically, push a new visitor through which keeps track of the
         LinearChildCounter kidCounter = new LinearChildCounter();
         // stuff the counter through the stream
@@ -95,8 +95,8 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
     /** Inner class to get a list of all the children streams. **/
     class LinearChildCounter extends EmptyStreamVisitor {
-        HashSet kids = new HashSet();
-        public HashSet getKids() {return this.kids;}
+        HashSet<SIRStream> kids = new HashSet<SIRStream>();
+        public HashSet<SIRStream> getKids() {return this.kids;}
         public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {kids.add(self);}
         public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter){kids.add(self);}
         public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){kids.add(self);}

@@ -28,12 +28,12 @@ public class ObjectDeepCloner
     /**
      * List of things that should be cloned on the current pass.
      */
-    private static HashSet toBeCloned;
+    private static HashSet<DeepCloneable> toBeCloned;
 
     /**
      * List of objects we're preserving across a cloning operation.
      */
-    private static LinkedList preserved;
+    private static LinkedList<Object> preserved;
 
     // so that nobody can accidentally create an ObjectCloner object
     private ObjectDeepCloner(){}
@@ -182,7 +182,7 @@ public class ObjectDeepCloner
         try
             {
                 // clear the list of objects we're preserving
-                preserved = new LinkedList();
+                preserved = new LinkedList<Object>();
                 // get an output stream ready
                 ByteArrayOutputStream bos = 
                     new ByteArrayOutputStream();

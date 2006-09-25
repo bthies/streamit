@@ -3,6 +3,8 @@ package at.dms.kjc.common;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+
+import java.io.Serializable;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
@@ -17,7 +19,7 @@ import java.util.HashSet;
 
 public class VariablesUsed extends SLIREmptyVisitor
 {
-    private HashSet vars;
+    private HashSet<Serializable> vars;
     /** 
      * if this is true, and a variable is assigned to a complex expression 
      * (assiged to something other than a literal), count the variables as used
@@ -39,7 +41,7 @@ public class VariablesUsed extends SLIREmptyVisitor
      * @return the hash set of JLocalVariables or Strings (for fields)
      */
 
-    public static HashSet getVars(JPhylum entry, boolean countComplexAssignments) 
+    public static HashSet<Serializable> getVars(JPhylum entry, boolean countComplexAssignments) 
     {
         VariablesUsed used = new VariablesUsed(countComplexAssignments);
     
@@ -60,16 +62,16 @@ public class VariablesUsed extends SLIREmptyVisitor
      *
      * @return the hash set of JLocalVariables or Strings (for fields)
      */
-    public static HashSet getVars(FlatNode node, boolean countComplexAssignments)  
+    public static HashSet<Serializable> getVars(FlatNode node, boolean countComplexAssignments)  
     {
         if (node.isFilter()) {
             return getVars((SIRFilter)node.contents, countComplexAssignments);
         }
     
-        return new HashSet();
+        return new HashSet<Serializable>();
     }
     
-    public static HashSet getVars(SIRFilter filter, boolean countComplexAssignments)  
+    public static HashSet<Serializable> getVars(SIRFilter filter, boolean countComplexAssignments)  
     {
         VariablesUsed used = new VariablesUsed(countComplexAssignments);
     
@@ -85,7 +87,7 @@ public class VariablesUsed extends SLIREmptyVisitor
     
     private VariablesUsed(boolean complexAss) 
     {
-        vars = new HashSet();
+        vars = new HashSet<Serializable>();
         countComplexAss = complexAss;
     }
     

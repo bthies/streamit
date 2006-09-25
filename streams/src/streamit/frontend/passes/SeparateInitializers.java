@@ -37,7 +37,7 @@ import java.util.ArrayList;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SeparateInitializers.java,v 1.6 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: SeparateInitializers.java,v 1.7 2006-09-25 13:54:54 dimock Exp $
  */
 public class SeparateInitializers extends FEReplacer
 {
@@ -46,7 +46,7 @@ public class SeparateInitializers extends FEReplacer
         // Make sure the variable declaration stays first.  This will
         // have no initializers, except for where there is an array
         // initializer.
-        ArrayList newInits = new ArrayList(stmt.getNumVars());
+        ArrayList<Expression> newInits = new ArrayList<Expression>(stmt.getNumVars());
         for (int i=0; i<stmt.getNumVars(); i++) {
             if (stmt.getInit(i) instanceof ExprArrayInit) {
                 newInits.add(stmt.getInit(i));

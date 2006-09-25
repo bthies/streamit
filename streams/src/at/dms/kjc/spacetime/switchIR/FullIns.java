@@ -7,21 +7,21 @@ import at.dms.kjc.spacetime.RawTile;
 //SwitchProcessorIns to Route Instructions
 public class FullIns extends SwitchProcessorIns {
     private SwitchProcessorIns procIns;
-    private Vector srcs;
-    private ArrayList dests;
+    private Vector<SwitchSrc> srcs;
+    private ArrayList<SwitchOPort> dests;
     private RawTile tile;
     
     public FullIns(RawTile tile) {
         this.tile=tile;
-        srcs=new Vector();
-        dests=new ArrayList();
+        srcs=new Vector<SwitchSrc>();
+        dests=new ArrayList<SwitchOPort>();
     }
     
     public FullIns(RawTile tile,SwitchProcessorIns procIns) {
         this.tile=tile;
         this.procIns=procIns;
-        srcs=new Vector();
-        dests=new ArrayList();
+        srcs=new Vector<SwitchSrc>();
+        dests=new ArrayList<SwitchOPort>();
     }
 
     public void setProcessorIns(SwitchProcessorIns procIns) {

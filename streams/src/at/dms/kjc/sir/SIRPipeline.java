@@ -80,19 +80,31 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Returns a list of the children of this 
+     * Use instead of getChildren if want to get List<SIRStream> rather than List<SIROperator>   
+     */
+    public List<SIRStream> getSequentialStreams() {
+        List<SIRStream> result = new LinkedList<SIRStream>();
+        for (int i=0; i<size(); i++) {
+            result.add(get(i));
+        }
+        return result;
+    }
+
+    /**
      * Returns a list of the children between <first> and <last>,
      * inclusive.  Assumes that <first> and <last> are both contained
      * in this, and that <first> comes before <last>.
      */
-    public List getChildrenBetween(SIROperator first, SIROperator last) {
+    public List<Object> getChildrenBetween(SIROperator first, SIROperator last) {
         assert myChildren().contains(first):
             "first=" + first.getName() + " is not a child of " + this;
         assert myChildren().contains(last):
             "last=" + last.getName() + " is not a child of " + this;
         // make result
-        LinkedList result = new LinkedList();
+        LinkedList<Object> result = new LinkedList<Object>();
         // start iterating through children at <first>
-        ListIterator iter = myChildren().listIterator(myChildren().indexOf(first));
+        ListIterator<Object> iter = myChildren().listIterator(myChildren().indexOf(first));
         Object o;
         do {
             // get next child and add to result list
@@ -108,7 +120,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * Sets children of this to be all the children of <children>, and
      * set all the parent fields in <children> to be this.
      */
-    public void setChildren(LinkedList children) {
+    public void setChildren(LinkedList<Object> children) {
         clear();
         for (int i=0; i<children.size(); i++) {
             add((SIRStream)children.get(i));
@@ -120,9 +132,9 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * representing a tape from the first element of each tuple to the
      * second.
      */
-    public List getTapePairs() {
+    public List<SIROperator[]> getTapePairs() {
         // construct result
-        LinkedList result = new LinkedList();
+        LinkedList<SIROperator[]> result = new LinkedList<SIROperator[]>();
         // go through list of children
         for (int i=0; i<size()-1; i++) {
             // make an entry from one stream to next

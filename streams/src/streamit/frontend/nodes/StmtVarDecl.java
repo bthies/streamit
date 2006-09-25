@@ -25,11 +25,13 @@ import java.util.List;
  * optional initialization value.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtVarDecl.java,v 1.7 2006-01-25 17:04:25 thies Exp $
+ * @version $Id: StmtVarDecl.java,v 1.8 2006-09-25 13:54:54 dimock Exp $
  */
 public class StmtVarDecl extends Statement
 {
-    private List types, names, inits;
+    private List<Type> types;
+    private List<String> names;
+    private List<Expression> inits;
 
     /**
      * Create a new variable declaration with corresponding lists of
@@ -50,15 +52,15 @@ public class StmtVarDecl extends Statement
      *                  <code>null</code>) containing initializers of
      *                  the variables declared here
      */
-    public StmtVarDecl(FEContext context, List types, List names,
-                       List inits)
+    public StmtVarDecl(FEContext context, List<Type> types, List<String> names,
+                       List<Expression> inits)
     {
         super(context);
         // TODO: check for validity, including types of object
         // in the lists and that all three are the same length.
-        this.types = new java.util.ArrayList(types);
-        this.names = new java.util.ArrayList(names);
-        this.inits = new java.util.ArrayList(inits);
+        this.types = new java.util.ArrayList<Type>(types);
+        this.names = new java.util.ArrayList<String>(names);
+        this.inits = new java.util.ArrayList<Expression>(inits);
     }
 
     /**
@@ -90,7 +92,7 @@ public class StmtVarDecl extends Statement
      */
     public Type getType(int n)
     {
-        return (Type)types.get(n);
+        return types.get(n);
     }
 
     /**
@@ -100,7 +102,7 @@ public class StmtVarDecl extends Statement
      * @return  Unmodifiable list of <code>Type</code> of the
      *          variables in this
      */
-    public List getTypes()
+    public List<Type> getTypes()
     {
         return Collections.unmodifiableList(types);
     }
@@ -113,7 +115,7 @@ public class StmtVarDecl extends Statement
      */
     public String getName(int n)
     {
-        return (String)names.get(n);
+        return names.get(n);
     }
     
     /**
@@ -123,7 +125,7 @@ public class StmtVarDecl extends Statement
      * @return  Unmodifiable list of <code>String</code> of the
      *          names of the variables in this
      */
-    public List getNames()
+    public List<String> getNames()
     {
         return Collections.unmodifiableList(names);
     }
@@ -138,7 +140,7 @@ public class StmtVarDecl extends Statement
      */
     public Expression getInit(int n)
     {
-        return (Expression)inits.get(n);
+        return inits.get(n);
     }
     
     /**
@@ -150,7 +152,7 @@ public class StmtVarDecl extends Statement
      *          <code>null</code>) of the initializers of the
      *          variables in this
      */
-    public List getInits()
+    public List<Expression> getInits()
     {
         return Collections.unmodifiableList(inits);
     }

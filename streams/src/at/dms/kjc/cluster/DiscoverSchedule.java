@@ -2,6 +2,7 @@
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.sir.*;
+
 import java.util.*;
 import at.dms.kjc.flatgraph.FlatNode;
 
@@ -57,14 +58,14 @@ class DiscoverSchedule
      * @return all operators in a given phase
      */
 
-    public HashSet getAllOperatorsInPhase(int phase) {
+    public HashSet<SIROperator> getAllOperatorsInPhase(int phase) {
         HashSet<SIROperator> res = new HashSet<SIROperator>();
 
-        Set key_set = phases.keySet();
-        Iterator iter = key_set.iterator();
+        Set<SIROperator> key_set = phases.keySet();
+        Iterator<SIROperator> iter = key_set.iterator();
 
         while (iter.hasNext()) {
-            SIROperator oper = (SIROperator)iter.next();
+            SIROperator oper = iter.next();
             if (phases.get(oper) == phase) { 
                 res.add(oper);
             }

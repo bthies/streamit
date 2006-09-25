@@ -17,20 +17,20 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.36 2006-01-25 17:01:57 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.37 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
     
     /** Mapping from streams to linear representations. Never would have guessed that, would you? **/
-    HashMap streamsToLinearRepresentation;
+    HashMap<SIRStream, LinearFilterRepresentation> streamsToLinearRepresentation;
 
     /**
      * Set of streams that we've already explored and determined to
      * be non-linear, or that we couldn't convert into a linear
      * form (do to errors or whatever).
      **/
-    HashSet nonLinearStreams;
+    HashSet<SIRStream> nonLinearStreams;
 
     /**
      * Whether or not we should refactor linear children into a
@@ -45,8 +45,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int feedbackLoopsSeen  = 0;
 
     public LinearAnalyzer(boolean refactorLinearChildren) {
-        this.streamsToLinearRepresentation = new HashMap();
-        this.nonLinearStreams = new HashSet();
+        this.streamsToLinearRepresentation = new HashMap<SIRStream, LinearFilterRepresentation>();
+        this.nonLinearStreams = new HashSet<SIRStream>();
         this.refactorLinearChildren = refactorLinearChildren;
         if(CHECKREP)
             checkRep();
@@ -68,7 +68,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public LinearFilterRepresentation getLinearRepresentation(SIRStream stream) {
         if(CHECKREP)
             checkRep();
-        return (LinearFilterRepresentation)this.streamsToLinearRepresentation.get(stream);
+        return this.streamsToLinearRepresentation.get(stream);
     }
     
     /** Removes the specified SIRStream from the linear represention mapping. **/
@@ -98,7 +98,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
             checkRep();
     }
     /** Gets an iterator over all of the linear representations that this LinearAnalyzer knows about. **/
-    public Iterator getFilterIterator() {
+    public Iterator<SIRStream> getFilterIterator() {
         return this.streamsToLinearRepresentation.keySet().iterator();
     }
     
@@ -271,7 +271,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
         // start going down the list of pipeline children.
         kidIter = self.getChildren().iterator();
-        List childrenToWrap = new LinkedList();
+        List<SIRStream> childrenToWrap = new LinkedList<SIRStream>();
         while(kidIter.hasNext()) {
             // grab the next child. If we have a linear rep, add the kid to the pipeline
             SIRStream currentKid = (SIRStream)kidIter.next();
@@ -292,7 +292,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
                     LinearPrinter.println(" wrapping children.");
                     doPipelineAdd(self, childrenToWrap);
                     // reset our list
-                    childrenToWrap = new LinkedList();
+                    childrenToWrap = new LinkedList<SIRStream>();
                 }
             }
         }
@@ -334,11 +334,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * we do nothing.
      **/
     private void doPipelineAdd(SIRPipeline parentPipe,
-                               List childrenToWrap) {
+                               List<SIRStream> childrenToWrap) {
     
         // this just prints out the children we are passed
         LinearPrinter.println(" new child pipe in doPipelineAdd: ");
-        Iterator newKidIter = childrenToWrap.iterator();
+        Iterator<SIRStream> newKidIter = childrenToWrap.iterator();
         while(newKidIter.hasNext()) {LinearPrinter.println("  " + newKidIter.next());}
     
 
@@ -367,12 +367,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
             // remember the location of the first wrapper pipe's child
             // in the original parent pipeline (so we can insert the wrapper
             // pipe at the appropriate place.
-            int newPipeIndex = parentPipe.indexOf((SIRStream)childrenToWrap.get(0));
+            int newPipeIndex = parentPipe.indexOf(childrenToWrap.get(0));
             if (newPipeIndex == -1) {throw new RuntimeException("unknown child in wrapper pipe");}
             // now, remove all of the streams that appear in the new child wrapper pipeline
-            Iterator wrappedChildIter = childrenToWrap.iterator();
+            Iterator<SIRStream> wrappedChildIter = childrenToWrap.iterator();
             while(wrappedChildIter.hasNext()) {
-                SIRStream removeKid = (SIRStream)wrappedChildIter.next() ;
+                SIRStream removeKid = wrappedChildIter.next() ;
                 parentPipe.remove(removeKid); // remove the child from the parent
                 overallPipe.add(removeKid);   // add the child into the overall pipeline.
             }
@@ -382,7 +382,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     
     
         // now, calculate the overall linear rep of the child pipeline
-        List repList = getLinearRepList(streamsToLinearRepresentation, childrenToWrap); // list of linear reps
+        List<LinearFilterRepresentation> repList = getLinearRepList(streamsToLinearRepresentation, childrenToWrap); // list of linear reps
         LinearTransform pipeTransform = LinearTransformPipeline.calculate(repList);
         try {
             LinearFilterRepresentation newRep = pipeTransform.transform();
@@ -406,9 +406,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * Given kidList, returns a list of the values of kidMap.get(kidList)
      * in the same order as the kidList.
      **/
-    private static List getLinearRepList(HashMap kidMap, List kidList) {
-        List repList = new LinkedList(); 
-        Iterator kidIter = kidList.iterator();
+    private static List<LinearFilterRepresentation> getLinearRepList(HashMap<SIRStream, LinearFilterRepresentation> kidMap, List<SIRStream> kidList) {
+        List<LinearFilterRepresentation> repList = new LinkedList<LinearFilterRepresentation>(); 
+        Iterator<SIRStream> kidIter = kidList.iterator();
         while(kidIter.hasNext()) {
             repList.add(kidMap.get(kidIter.next()));
         }
@@ -470,7 +470,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
         // of linear representations. Remember that the first two elements
         // are the splitter and the joiner so we get rid of them right off the
         // bat.
-        List repList = new LinkedList();
+        List<LinearFilterRepresentation> repList = new LinkedList<LinearFilterRepresentation>();
         List childList = self.getChildren(); // get copy of the child list 
         childList.remove(0); childList.remove(childList.size()-1); // remove the splitter and the joiner
         childIter = childList.iterator();
@@ -544,13 +544,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * destined for that child. Then we use a pipeline transformation to calculate the
      * overall linear rep of those two combinations.
      **/
-    private List convertToDuplicate(List repList, int[] splitterWeights) {
+    private List<LinearFilterRepresentation> convertToDuplicate(List<LinearFilterRepresentation> repList, int[] splitterWeights) {
         // check the length of the two lists
         if (splitterWeights.length != repList.size()) {
             throw new RuntimeException("Splitter weights don't match the number of reps in convertToDuplicate");
         }
         int repCount = repList.size();
-        List newList = new LinkedList();
+        List<LinearFilterRepresentation> newList = new LinkedList<LinearFilterRepresentation>();
 
         // figure out the total sum of the splitter weights
         int totalSplitWeight = 0;
@@ -559,18 +559,18 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
         }
 
         // for each child filter of the splitjoin
-        Iterator childIter = repList.iterator();
+        Iterator<LinearFilterRepresentation> childIter = repList.iterator();
         int childPosition = 0;
         while(childIter.hasNext()) {
             // cast current child appropriately (stupid java)
             LinearFilterRepresentation currentChildRep;
-            currentChildRep = (LinearFilterRepresentation)childIter.next();
+            currentChildRep = childIter.next();
             // create the appropriate decimator linearRep
             LinearFilterRepresentation currentDecimatorRep;
             currentDecimatorRep = makeDecimator(totalSplitWeight, splitterWeights, childPosition);
 
             // make a pipeline list (decimator, child) to pass to pipeline transform 
-            List virtualPipeline = new LinkedList();
+            List<LinearFilterRepresentation> virtualPipeline = new LinkedList<LinearFilterRepresentation>();
             virtualPipeline.add(currentDecimatorRep);
             virtualPipeline.add(currentChildRep);
 
@@ -679,7 +679,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of filters that we have linear reps for. **/
     private int getFilterReps() {
         int filterCount = 0;
-        Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+        Iterator<SIRStream> keyIter = this.streamsToLinearRepresentation.keySet().iterator();
         while(keyIter.hasNext()) {
             if (keyIter.next() instanceof SIRFilter) {filterCount++;}
         }
@@ -688,7 +688,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of pipelines that we have linear reps for. **/
     private int getPipelineReps() {
         int count = 0;
-        Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+        Iterator<SIRStream> keyIter = this.streamsToLinearRepresentation.keySet().iterator();
         while(keyIter.hasNext()) {
             if (keyIter.next() instanceof SIRPipeline) {count++;}
         }
@@ -697,7 +697,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of splitjoins that we have linear reps for. **/
     private int getSplitJoinReps() {
         int count = 0;
-        Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+        Iterator<SIRStream> keyIter = this.streamsToLinearRepresentation.keySet().iterator();
         while(keyIter.hasNext()) {
             if (keyIter.next() instanceof SIRSplitJoin) {count++;}
         }
@@ -706,7 +706,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of feedbackloops that we have linear reps for. **/
     private int getFeedbackLoopReps() {
         int count = 0;
-        Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+        Iterator<SIRStream> keyIter = this.streamsToLinearRepresentation.keySet().iterator();
         while(keyIter.hasNext()) {
             if (keyIter.next() instanceof SIRFeedbackLoop) {count++;}
         }
@@ -717,7 +717,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
         if(CHECKREP) {
             // make sure that all keys in FiltersToMatricies are strings, and that all
             // values are LinearForms.
-            Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
+            Iterator<SIRStream> keyIter = this.streamsToLinearRepresentation.keySet().iterator();
             while(keyIter.hasNext()) {
                 Object o = keyIter.next();
                 if (o == null) {throw new RuntimeException("Null key in LinearAnalyzer.");}

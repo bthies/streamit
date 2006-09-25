@@ -17,7 +17,7 @@ import java.util.Vector;
 public class DataFlowTraversal 
 {
     /** The traversal we are currently calculating */
-    private static LinkedList traversal;
+    private static LinkedList<FlatNode> traversal;
     
     /**
      * Starting at top, return a  traversal of the graph where that guarantees
@@ -29,14 +29,14 @@ public class DataFlowTraversal
      * @param top The starting node of the traversal.
      * @return The traversal, a LinkedList of FlatNode.
      */
-    public static LinkedList getTraversal(FlatNode top) 
+    public static LinkedList<FlatNode> getTraversal(FlatNode top) 
     {
-        traversal = new LinkedList();
+        traversal = new LinkedList<FlatNode>();
         if (top == null)
             return traversal;
     
-        HashSet added = new HashSet();
-        Vector queue = new Vector();
+        HashSet<FlatNode> added = new HashSet<FlatNode>();
+        Vector<FlatNode> queue = new Vector<FlatNode>();
         FlatNode node;
     
         //add top to added list
@@ -45,7 +45,7 @@ public class DataFlowTraversal
         queue.add(top);
     
         while(!queue.isEmpty()) {
-            node = (FlatNode)queue.get(0);
+            node = queue.get(0);
             queue.remove(0);
         
             if (node == null)

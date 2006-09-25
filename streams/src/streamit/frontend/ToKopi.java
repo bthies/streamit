@@ -32,7 +32,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.12 2006-08-23 23:01:03 thies Exp $
+ * @version $Id: ToKopi.java,v 1.13 2006-09-25 13:54:53 dimock Exp $
  */
 public class ToKopi
 {
@@ -49,7 +49,7 @@ public class ToKopi
 
     private boolean printHelp = false;
     private String outputFile = null;
-    private List inputFiles = new java.util.ArrayList();
+    private List<String> inputFiles = new java.util.ArrayList<String>();
 
     public void doOptions(String[] args)
     {

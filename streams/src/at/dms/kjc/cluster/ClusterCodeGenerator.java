@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.63 2006-09-14 21:37:05 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterCodeGenerator.java,v 1.64 2006-09-25 13:54:36 dimock Exp $
 package at.dms.kjc.cluster;
 
 import java.util.*;
@@ -32,7 +32,7 @@ class ClusterCodeGenerator {
     private int initCredit = 0;
 
     private boolean sendsCredits;
-    private HashSet sendsCreditsTo;
+    private HashSet<LatencyConstraint> sendsCreditsTo;
 
     private FlatNode node;
     private boolean isEliminated; // true if eliminated by ClusterFusion
@@ -59,10 +59,10 @@ class ClusterCodeGenerator {
 
         node = NodeEnumerator.getFlatNode(id);
 
-        Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+        Integer init_int = ClusterBackend.initExecutionCounts.get(node);
         if (init_int == null) { init_counts = 0; } else { init_counts = init_int.intValue(); }
 
-        steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+        steady_counts = ClusterBackend.steadyExecutionCounts.get(node).intValue();
 
         if (oper instanceof SIRFilter) {
             work_function = ClusterUtils.getWorkName(((SIRFilter)oper), id);
@@ -94,7 +94,7 @@ class ClusterCodeGenerator {
         msg_to = new Vector<SIRStream>();
 
         restrictedExecution = false;
-        sendsCreditsTo = new HashSet();
+        sendsCreditsTo = new HashSet<LatencyConstraint>();
         sendsCredits = false;
 
         if (oper instanceof SIRFilter) {
@@ -223,14 +223,14 @@ class ClusterCodeGenerator {
         p.println("thread_info *__thread_"+id+" = NULL;");
 
         if (restrictedExecution) {
-            for (Iterator i = msg_from.iterator(); i.hasNext();) {
-                int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+            for (Iterator<SIRStream> i = msg_from.iterator(); i.hasNext();) {
+                int src = NodeEnumerator.getSIROperatorId(i.next());
                 p.println("int __credit_"+src+"_"+id+" = "+initCredit+";");
             }
         }
     
-        for (Iterator i = msg_to.iterator(); i.hasNext();) {
-            SIRStream str = (SIRStream)i.next();
+        for (Iterator<SIRStream> i = msg_to.iterator(); i.hasNext();) {
+            SIRStream str = i.next();
             p.println("sdep *sdep_"+id+"_"+NodeEnumerator.getSIROperatorId(str)+";");
         }
 
@@ -273,13 +273,13 @@ class ClusterCodeGenerator {
           }
         }   
     
-        for (Iterator i = msg_from.iterator(); i.hasNext();) {
-            int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+        for (Iterator<SIRStream> i = msg_from.iterator(); i.hasNext();) {
+            int src = NodeEnumerator.getSIROperatorId(i.next());
             p.println("netsocket *__msg_sock_"+src+"_"+id+"in;");   
         }
 
-        for (Iterator i = msg_to.iterator(); i.hasNext();) {
-            SIRStream str = (SIRStream)i.next();
+        for (Iterator<SIRStream> i = msg_to.iterator(); i.hasNext();) {
+            SIRStream str = i.next();
             int dst = NodeEnumerator.getSIROperatorId(str);
             p.println("netsocket *__msg_sock_"+id+"_"+dst+"out; // to " + str);
         }
@@ -546,13 +546,13 @@ class ClusterCodeGenerator {
           } 
         }
 
-        for (Iterator i = msg_from.iterator(); i.hasNext();) {
-            int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+        for (Iterator<SIRStream> i = msg_from.iterator(); i.hasNext();) {
+            int src = NodeEnumerator.getSIROperatorId(i.next());
             p.println("  init_instance::add_incoming("+src+","+id+",MESSAGE_SOCKET);");
         }
 
-        for(Iterator i = msg_to.iterator(); i.hasNext();) {
-            int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+        for(Iterator<SIRStream> i = msg_to.iterator(); i.hasNext();) {
+            int dst = NodeEnumerator.getSIROperatorId(i.next());
             p.println("  init_instance::add_outgoing("+id+","+dst+",MESSAGE_SOCKET);");
         }
 
@@ -605,14 +605,14 @@ class ClusterCodeGenerator {
           }
         }
 
-        for (Iterator i = msg_from.iterator(); i.hasNext();) {
-            int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+        for (Iterator<SIRStream> i = msg_from.iterator(); i.hasNext();) {
+            int src = NodeEnumerator.getSIROperatorId(i.next());
             p.println("  __msg_sock_"+src+"_"+id+"in = (netsocket*)init_instance::get_incoming_socket("+src+","+id+",MESSAGE_SOCKET);");
             p.println("");
         }
 
-        for (Iterator i = msg_to.iterator(); i.hasNext();) {
-            int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+        for (Iterator<SIRStream> i = msg_to.iterator(); i.hasNext();) {
+            int dst = NodeEnumerator.getSIROperatorId(i.next());
             p.println("  __msg_sock_"+id+"_"+dst+"out = (netsocket*)init_instance::get_outgoing_socket("+id+","+dst+",MESSAGE_SOCKET);");
             p.println("");
         }
@@ -869,7 +869,7 @@ class ClusterCodeGenerator {
         if (msg_to.size() > 0) {
         r.add("void __init_sdep_"+id+"() {\n");
 	
-	for (Iterator i = msg_to.iterator(); i.hasNext(); ) {
+	for (Iterator<SIRStream> i = msg_to.iterator(); i.hasNext(); ) {
     
             SIRFilter sender = (SIRFilter)oper;
             SIRFilter receiver = (SIRFilter)i.next();

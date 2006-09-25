@@ -43,13 +43,13 @@ public class ConstrainedStreamFactory
     
     private LatencyGraph latencyGraph = new LatencyGraph();
 
-    private final Map iter2stream = new HashMap();
+    private final Map<Iterator, StreamInterface> iter2stream = new HashMap<Iterator, StreamInterface>();
 
     public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (iter2stream.containsKey(streamIter))
             {
-                return (StreamInterface)iter2stream.get(streamIter);
+                return iter2stream.get(streamIter);
             }
 
         StreamInterface newStream;

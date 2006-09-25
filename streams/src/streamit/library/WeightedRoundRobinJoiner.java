@@ -20,7 +20,7 @@ import java.util.*;
 
 public class WeightedRoundRobinJoiner extends Joiner
 {
-    List srcsWeight = new ArrayList();
+    List<Integer> srcsWeight = new ArrayList<Integer>();
 
     void addWeight(Integer weight)
     {
@@ -32,7 +32,7 @@ public class WeightedRoundRobinJoiner extends Joiner
     public boolean isInputUsed(int index)
     {
         assert index < srcsWeight.size();
-        return ((Integer) srcsWeight.get(index)).intValue() != 0;
+        return srcsWeight.get(index).intValue() != 0;
     }
 
     public void connectGraph()
@@ -75,9 +75,9 @@ public class WeightedRoundRobinJoiner extends Joiner
         int i;
         for (i = 0; i < numChildren; i++)
             {
-                if (srcs.get(i) != null && ((Stream) srcs.get(i)).outputChannel != null)
+                if (srcs.get(i) != null && srcs.get(i).outputChannel != null)
                     {
-                        weights[i] = ((Integer) srcsWeight.get(i)).intValue();
+                        weights[i] = srcsWeight.get(i).intValue();
                     }
             }
 
@@ -92,9 +92,9 @@ public class WeightedRoundRobinJoiner extends Joiner
         int i;
         for (i = 0; i < numChildren; i++)
             {
-                if (srcs.get(i) != null && ((Stream) srcs.get(i)).outputChannel != null)
+                if (srcs.get(i) != null && srcs.get(i).outputChannel != null)
                     {
-                        outputTotal += ((Integer) srcsWeight.get(i)).intValue();
+                        outputTotal += srcsWeight.get(i).intValue();
                     }
             }
 

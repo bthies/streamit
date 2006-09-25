@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: OptionDefinition.java,v 1.5 2006-01-25 17:01:19 thies Exp $
+ * $Id: OptionDefinition.java,v 1.6 2006-09-25 13:54:33 dimock Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -65,10 +65,10 @@ class OptionDefinition {
      * @param   id      the id of the token
      * @param   sourceFile  the file where the token is defined
      */
-    public void checkIdentifiers(Hashtable identifiers, String sourceFile)
+    public void checkIdentifiers(Hashtable<String, String> identifiers, String sourceFile)
         throws OptgenError
     {
-        String      stored = (String)identifiers.get(longname);
+        String      stored = identifiers.get(longname);
 
         if (stored != null) {
             throw new OptgenError(OptgenMessages.DUPLICATE_DEFINITION, new Object[] { longname, sourceFile, stored });
@@ -84,10 +84,10 @@ class OptionDefinition {
      * @param   id      the id of the token
      * @param   sourceFile  the file where the token is defined
      */
-    public void checkShortcuts(Hashtable shortcuts, String sourceFile)
+    public void checkShortcuts(Hashtable<String, String> shortcuts, String sourceFile)
         throws OptgenError
     {
-        String      stored = (String)shortcuts.get(shortname);
+        String      stored = shortcuts.get(shortname);
 
         if (stored != null) {
             throw new OptgenError(OptgenMessages.DUPLICATE_SHORTCUT, new Object[] { shortname, sourceFile, stored });

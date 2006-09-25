@@ -18,6 +18,7 @@ package streamit.frontend.passes;
 
 import streamit.frontend.controlflow.*;
 import streamit.frontend.nodes.*;
+
 import java.util.*;
 
 /**
@@ -28,7 +29,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.37 2006-08-23 23:53:42 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.38 2006-09-25 13:54:54 dimock Exp $
  */
 public class SemanticChecker
 {
@@ -43,7 +44,7 @@ public class SemanticChecker
     public static boolean check(Program prog)
     {
         SemanticChecker checker = new SemanticChecker();
-        Map streamNames = checker.checkStreamNames(prog);
+        Map<String, FEContext> streamNames = checker.checkStreamNames(prog);
         checker.checkDupFieldNames(prog, streamNames);
         checker.checkStreamCreators(prog, streamNames);
         checker.checkStreamTypes(prog);
@@ -84,9 +85,9 @@ public class SemanticChecker
      * @return a map from structure names to <code>FEContext</code>
      *          objects showing where they are declared
      */
-    public Map checkStreamNames(Program prog)
+    public Map<String, FEContext> checkStreamNames(Program prog)
     {
-        Map names = new HashMap(); // maps names to FEContexts
+        Map<String, FEContext> names = new HashMap<String, FEContext>(); // maps names to FEContexts
 
         // Add built-in streams:
         FEContext ctx = new FEContext("<built-in>");
@@ -95,25 +96,25 @@ public class SemanticChecker
         names.put("FileWriter", ctx);
         names.put("ImageDisplay", ctx);
 
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
             {
-                StreamSpec spec = (StreamSpec)iter.next();
+                StreamSpec spec = iter.next();
                 checkAStreamName(names, spec.getName(), spec.getContext());
             }
 
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
+        for (Iterator<TypeStruct> iter = prog.getStructs().iterator(); iter.hasNext(); )
             {
-                TypeStruct ts = (TypeStruct)iter.next();
+                TypeStruct ts = iter.next();
                 checkAStreamName(names, ts.getName(), ts.getContext());
             }
         return names;
     }
     
-    private void checkAStreamName(Map map, String name, FEContext ctx)
+    private void checkAStreamName(Map<String,FEContext> map, String name, FEContext ctx)
     {
         if (map.containsKey(name))
             {
-                FEContext octx = (FEContext)map.get(name);
+                FEContext octx = map.get(name);
                 report(ctx, "Multiple declarations of '" + name + "'");
                 report(octx, "as a stream or structure");
             }
@@ -133,29 +134,25 @@ public class SemanticChecker
      * @param streamNames  map from top-level stream and structure
      *              names to FEContexts in which they are defined
      */
-    public void checkDupFieldNames(Program prog, Map streamNames)
+    public void checkDupFieldNames(Program prog, Map<String,FEContext> streamNames)
     {
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
             {
-                StreamSpec spec = (StreamSpec)iter.next();
-                Map localNames = new HashMap();
-                Iterator i2;
-                for (i2 = spec.getParams().iterator(); i2.hasNext(); )
+                StreamSpec spec = iter.next();
+                Map<String, FEContext> localNames = new HashMap<String, FEContext>();
+                for (Parameter param : spec.getParams()) 
                     {
-                        Parameter param = (Parameter)i2.next();
                         checkADupFieldName(localNames, streamNames,
                                            param.getName(), spec.getContext());
                     }
-                for (i2 = spec.getVars().iterator(); i2.hasNext(); )
+                for (FieldDecl field : spec.getVars())
                     {
-                        FieldDecl field = (FieldDecl)i2.next();
                         for (int i = 0; i < field.getNumFields(); i++)
                             checkADupFieldName(localNames, streamNames,
                                                field.getName(i), field.getContext());
                     }
-                for (i2 = spec.getFuncs().iterator(); i2.hasNext(); )
+                for (Function func : spec.getFuncs())
                     {
-                        Function func = (Function)i2.next();
                         // Some functions get alternate names if their real
                         // name is null:
                         String name = func.getName();
@@ -181,22 +178,22 @@ public class SemanticChecker
                                                name, func.getContext());
                     }
             }
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
+        for (Iterator<TypeStruct> iter = prog.getStructs().iterator(); iter.hasNext(); )
             {
-                TypeStruct ts = (TypeStruct)iter.next();
-                Map localNames = new HashMap();
+                TypeStruct ts = iter.next();
+                Map<String, FEContext> localNames = new HashMap<String, FEContext>();
                 for (int i = 0; i < ts.getNumFields(); i++)
                     checkADupFieldName(localNames, streamNames,
                                        ts.getField(i), ts.getContext());
             }
     }
 
-    private void checkADupFieldName(Map localNames, Map streamNames,
+    private void checkADupFieldName(Map<String, FEContext> localNames, Map<String, FEContext> streamNames,
                                     String name, FEContext ctx)
     {
         if (localNames.containsKey(name))
             {
-                FEContext octx = (FEContext)localNames.get(name);
+                FEContext octx = localNames.get(name);
                 report(ctx, "Duplicate declaration of '" + name + "'");
                 report(octx, "(also declared here)");
             }
@@ -205,7 +202,7 @@ public class SemanticChecker
                 localNames.put(name, ctx);
                 if (streamNames.containsKey(name))
                     {
-                        FEContext octx = (FEContext)streamNames.get(name);
+                        FEContext octx = streamNames.get(name);
                         report(ctx, "'" + name + "' has the same name as");
                         report(octx, "a stream or structure");
                     }
@@ -220,7 +217,7 @@ public class SemanticChecker
      * @param streamNames  map from top-level stream and structure
      *              names to FEContexts in which they are defined
      */
-    public void checkStreamCreators(Program prog, final Map streamNames)
+    public void checkStreamCreators(Program prog, final Map<String, FEContext> streamNames)
     {
         prog.accept(new FEReplacer() {
                 public Object visitSCSimple(SCSimple creator)
@@ -293,15 +290,13 @@ public class SemanticChecker
      */
     public void checkFunctionValidity(Program prog)
     {
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
             {
-                StreamSpec spec = (StreamSpec)iter.next();
+                StreamSpec spec = iter.next();
                 boolean hasInit = false;
                 boolean hasWork = false;
-                for (Iterator ifunc = spec.getFuncs().iterator();
-                     ifunc.hasNext(); )
+                for (Function func : spec.getFuncs())
                     {
-                        Function func = (Function)ifunc.next();
                         if (func.getCls() == Function.FUNC_INIT)
                             hasInit = true;
                         if (func.getCls() == Function.FUNC_WORK)
@@ -968,10 +963,10 @@ public class SemanticChecker
     public void checkStreamConnectionTyping(Program prog)
     {
         // Generic map of stream names:
-        final Map streams = new HashMap();
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        final Map<String, StreamSpec> streams = new HashMap<String, StreamSpec>();
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
             {
-                StreamSpec ss = (StreamSpec)iter.next();
+                StreamSpec ss = iter.next();
                 streams.put(ss.getName(), ss);
             }
         
@@ -991,12 +986,12 @@ public class SemanticChecker
     }
 
     private void checkPipelineConnectionTyping(StreamSpec ss,
-                                               final Map streams)
+                                               final Map<String, StreamSpec> streams)
     {
         Function init = ss.getInitFunc();
         final CFG cfg = CFGBuilder.buildCFG(init);
         final StreamType st = ss.getStreamType();
-        final Set reported = new HashSet();
+        final Set<Statement> reported = new HashSet<Statement>();
 
         // Use data flow to check the stream types.
         Map inTypes = new DataFlow() {
@@ -1024,7 +1019,7 @@ public class SemanticChecker
                     else
                         {
                             String name = ((SCSimple)sc).getName();
-                            StreamSpec spec = (StreamSpec)streams.get(name);
+                            StreamSpec spec = streams.get(name);
                             if (spec == null)
                                 // Technically an error; keep going.
                                 return stl.getTop();
@@ -1069,13 +1064,13 @@ public class SemanticChecker
                    " disagrees with declared type");
     }
     
-    private void checkSplitJoinConnectionTyping(StreamSpec ss, Map streams)
+    private void checkSplitJoinConnectionTyping(StreamSpec ss, Map<String, StreamSpec> streams)
     {
         checkSJFLConnections(ss, streams, true, true);
         checkSJFLConnections(ss, streams, true, false);
     }
 
-    private void checkFeedbackLoopConnectionTyping(StreamSpec ss, Map streams)
+    private void checkFeedbackLoopConnectionTyping(StreamSpec ss, Map<String, StreamSpec> streams)
     {
         checkSJFLConnections(ss, streams, false, true);
         checkSJFLConnections(ss, streams, false, false);
@@ -1084,7 +1079,7 @@ public class SemanticChecker
     // Only do this once, it's the same basic algorithm for split-joins
     // and feedback loops:
     private void checkSJFLConnections(final StreamSpec ss,
-                                      final Map streams,
+                                      final Map<String, StreamSpec> streams,
                                       final boolean forSJ,
                                       final boolean forInput)
     {
@@ -1159,7 +1154,7 @@ public class SemanticChecker
                     else if (sc instanceof SCSimple)
                         {
                             String name = ((SCSimple)sc).getName();
-                            ss = (StreamSpec)streams.get(name);
+                            ss = streams.get(name);
                         }
 
                     if (ss == null)

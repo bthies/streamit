@@ -35,11 +35,11 @@ public class CommunicateAddrs
     /** the raw chip */
     private RawChip chip;
     /** functions that we are creating, RawTile to StringBuffer */
-    private HashMap functions;
+    private HashMap<RawTile, StringBuffer> functions;
     /** de-allocate functions that we are creating, RawTile to StringBuffer */
-    private HashMap freeFunctions;
+    private HashMap<RawTile, StringBuffer> freeFunctions;
     /** fields we are creating in this pass, RawTile to StringBuffer */ 
-    private HashMap fields;
+    private HashMap<RawTile, StringBuffer> fields;
     /** random generator */
     private static Random rand;
     /** our space time scheduler with the schedules */
@@ -49,7 +49,7 @@ public class CommunicateAddrs
     /** The type defs for the rotating buffer structs for all the types used in
      * the program.
      */
-    private static HashMap typedefs;
+    private static HashMap<CType, StringBuffer> typedefs;
     
     static 
     {
@@ -66,7 +66,7 @@ public class CommunicateAddrs
      */
     public static String getFields(RawTile tile) 
     {
-        return ((StringBuffer)commAddrs.fields.get(tile)).toString();
+        return commAddrs.fields.get(tile).toString();
     }
 
     /**
@@ -86,12 +86,12 @@ public class CommunicateAddrs
     {
         Router xyRouter = new XYRouter();
         this.chip = chip;
-        fields = new HashMap();
-        functions = new HashMap();
+        fields = new HashMap<RawTile, StringBuffer>();
+        functions = new HashMap<RawTile, StringBuffer>();
         rotationFunctions = new HashMap<RawTile, StringBuffer>();
-        freeFunctions = new HashMap();
+        freeFunctions = new HashMap<RawTile, StringBuffer>();
         spaceTimeSchedule = stSchedule;
-        typedefs = new HashMap(); 
+        typedefs = new HashMap<CType, StringBuffer>(); 
         
         //add the StringBuffer for each tile
         for (int x = 0; x < chip.getXSize(); x++) {
@@ -104,12 +104,12 @@ public class CommunicateAddrs
             }
         }
     
-        Iterator buffers = OffChipBuffer.getBuffers().iterator();
+        Iterator<OffChipBuffer> buffers = OffChipBuffer.getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile logically mapped to it
         //the dram it is assigned to
         while (buffers.hasNext()) {
-            OffChipBuffer buffer = (OffChipBuffer)buffers.next();
+            OffChipBuffer buffer = buffers.next();
             //do nothing for redundant buffers
             if (buffer.redundant())
                 continue;
@@ -166,17 +166,17 @@ public class CommunicateAddrs
                
                 
                 //allocate the steady buffer on the allocating tile
-                ((StringBuffer)fields.get(allocatingTile)).append
+                fields.get(allocatingTile).append
                 (buffer.getType().toString() + "* " + 
                         buffer.getIdent(i) + ";\n");
                 
                 //malloc the steady buffer
-                ((StringBuffer)functions.get(allocatingTile)).append
+                functions.get(allocatingTile).append
                 ("  " + buffer.getIdent(i) + " = (" + buffer.getType() + 
                         "*) malloc(32 + (" + buffer.getSize().toString() + " * sizeof(" +
                         buffer.getType() + ")));\n");
                 //align the buffer
-                ((StringBuffer)functions.get(allocatingTile)).append
+                functions.get(allocatingTile).append
                 ("  " + buffer.getIdent(i) + " = ((u_int32_t)((char*)" + buffer.getIdent(i) +
                 ") + 31) & 0xffffffe0;\n");
                 
@@ -196,20 +196,20 @@ public class CommunicateAddrs
                     
                     //add the code to the owner to send the address to the
                     //static net for the steady
-                    ((StringBuffer)functions.get(allocatingTile)).append
+                    functions.get(allocatingTile).append
                     ("  " + Util.networkSendPrefix(false, CStdType.Integer) + 
                             buffer.getIdent(i) + 
                             Util.networkSendSuffix(false) + ";\n");
                     
                     
                     //add declaration of pointer to hometile(steady)
-                    ((StringBuffer)fields.get(homeTile)).append
+                    fields.get(homeTile).append
                     (buffer.getType().toString() + "* " + 
                             buffer.getIdent(i) + ";\n");
                     
                     
                     //add the code to receive the address into the pointer (steady)
-                    ((StringBuffer)functions.get(homeTile)).append
+                    functions.get(homeTile).append
                     ("  " + buffer.getIdent(i) + " = " +  
                             Util.networkReceive(false, CStdType.Integer) + ";\n");
                 }
@@ -241,11 +241,11 @@ public class CommunicateAddrs
         
         
 //      add the declaration of the source rotation buffer of the appriopriate rotation type
-        ((StringBuffer)fields.get(tile)).append(rotTypeDefPrefix + 
+        fields.get(tile).append(rotTypeDefPrefix + 
                 buffer.getType().toString() + " *" + buffer.getIdent(true) + ";\n");
         
 //      add the declaration of the dest rotation buffer of the appriopriate rotation type
-        ((StringBuffer)fields.get(tile)).append(rotTypeDefPrefix + 
+        fields.get(tile).append(rotTypeDefPrefix + 
                 buffer.getType().toString() + " *" + buffer.getIdent(false) + ";\n");
         
         boolean[] vals = {true, false};
@@ -320,7 +320,7 @@ public class CommunicateAddrs
         //prepend the function name 
         buf.append("\nvoid " + freeFunctName + "() {\n");
         //append the closing } and 
-        buf.append((StringBuffer)commAddrs.freeFunctions.get(tile));
+        buf.append(commAddrs.freeFunctions.get(tile));
         buf.append("}\n");
         return buf.toString();
     }
@@ -343,7 +343,7 @@ public class CommunicateAddrs
         //prepend the function name 
         buf.append("\nvoid " + functName + "() {\n");
         //append the closing } and 
-        buf.append((StringBuffer)commAddrs.functions.get(tile));
+        buf.append(commAddrs.functions.get(tile));
         buf.append("}\n");
         return buf.toString();
     }   
@@ -357,9 +357,9 @@ public class CommunicateAddrs
      */
     public static String getRotationTypes() {
         StringBuffer aggreg = new StringBuffer();
-        Iterator types = typedefs.values().iterator();
+        Iterator<StringBuffer> types = typedefs.values().iterator();
         while (types.hasNext()) {
-            StringBuffer buf = (StringBuffer)types.next();
+            StringBuffer buf = types.next();
             aggreg.append(buf);
         }
         return aggreg.toString();

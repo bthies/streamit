@@ -134,7 +134,7 @@ abstract public class Scheduler extends AssertedClass
     {
         computeSchedule();
 
-        Map scheds = new HashMap();
+        Map<Schedule, Integer> scheds = new HashMap<Schedule, Integer>();
 
         System.out.println("init = [");
         printSched(initSched, scheds);
@@ -158,7 +158,7 @@ abstract public class Scheduler extends AssertedClass
                       getOptimizedSteadySchedule());
     }
 
-    private void printSched(Schedule sched, Map scheds)
+    private void printSched(Schedule sched, Map<Schedule, Integer> scheds)
     {
         // don't print duplicates
         if (scheds.containsKey(sched))
@@ -181,7 +181,7 @@ abstract public class Scheduler extends AssertedClass
                     {
                         int times = sched.getSubSchedNumExecs(nPhase);
                         int idx =
-                            ((Integer)scheds.get(sched.getSubSched(nPhase)))
+                            scheds.get(sched.getSubSched(nPhase))
                             .intValue();
 
                         if (times > 1)
@@ -230,7 +230,7 @@ abstract public class Scheduler extends AssertedClass
     }
     
     // Creates execution counts of filters in graph.
-    private void fillExecutionCounts(Schedule schedule, HashMap counts, int numReps) {
+    private void fillExecutionCounts(Schedule schedule, HashMap<Object, int[]> counts, int numReps) {
         if (schedule.isBottomSchedule()) {
             // tally up for this node.
             Object target = schedule.getStream().getObject();
@@ -240,7 +240,7 @@ abstract public class Scheduler extends AssertedClass
                 counts.put(target, wrapper);
             } else {
                 // add to counter
-                int[] wrapper = (int[])counts.get(target);
+                int[] wrapper = counts.get(target);
                 wrapper[0] += numReps;
             }       
         } else {

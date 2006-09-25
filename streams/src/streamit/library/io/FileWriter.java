@@ -33,7 +33,7 @@ public class FileWriter extends Filter
     /**
      * List of all FileWriters that have ever been created.
      */
-    private static List allFileWriters = new LinkedList();
+    private static List<FileWriter> allFileWriters = new LinkedList<FileWriter>();
 
     public FileWriter (String fileName, Class type, boolean TREAT_AS_BITS)
     {
@@ -135,8 +135,8 @@ public class FileWriter extends Filter
      * Closes all FileWriters that have ever been instantiated.
      */
     public static void closeAll() {
-        for (Iterator i = allFileWriters.iterator(); i.hasNext(); ) {
-            ((FileWriter)i.next()).close();
+        for (Iterator<FileWriter> i = allFileWriters.iterator(); i.hasNext(); ) {
+            i.next().close();
         }
     }
 

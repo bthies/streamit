@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Node.java,v 1.3 2006-03-23 18:56:44 dimock Exp $
+ * $Id: Node.java,v 1.4 2006-09-25 13:54:32 dimock Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -36,7 +36,7 @@ class Node {
     public Node(long l) {
         label = l;
         gValue = -1;
-        adjacency = new Hashtable();
+        adjacency = new Hashtable<Node, Long>();
         visited = false;
     }
 
@@ -103,9 +103,9 @@ class Node {
             // depth first search the adjacency list
             setVisited(true);
 
-            Enumeration e = adjacency.keys();
+            Enumeration<Node> e = adjacency.keys();
             while (e.hasMoreElements()) {
-                Node    adj = (Node)e.nextElement();
+                Node    adj = e.nextElement();
 
                 if (!adj.getVisited()) {
                     if (adj.reaches(target)) {
@@ -134,11 +134,11 @@ class Node {
         if (this.gValue == -1) {
             this.gValue = val;
 
-            Enumeration e = adjacency.keys();
+            Enumeration<Node> e = adjacency.keys();
             while (e.hasMoreElements()) {
-                Node    adj = (Node)e.nextElement();
+                Node    adj = e.nextElement();
 
-                val = (((Long)adjacency.get(adj)).longValue() - this.gValue + max) % max;
+                val = (adjacency.get(adj).longValue() - this.gValue + max) % max;
                 adj.assignGValue(val, max);
             }
         }
@@ -161,7 +161,7 @@ class Node {
      * adjacency list while B is in A's adjacency list.
      */
 
-    private Hashtable   adjacency;
+    private Hashtable<Node, Long>   adjacency;
 
     /** Flag indicating whether the node has been visited during the
      * current cyclicity checking process.

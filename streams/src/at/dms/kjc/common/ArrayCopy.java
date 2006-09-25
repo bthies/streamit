@@ -1,6 +1,7 @@
 package at.dms.kjc.common;
 
 import at.dms.kjc.*;
+
 import java.util.*;
 
 public class ArrayCopy {
@@ -9,7 +10,7 @@ public class ArrayCopy {
         JBlock body=init.getBody();
         JFormalParameter[] params=init.getParameters();
         for(int i=params.length-1;i>=0;i--) {
-            LinkedList dims=new LinkedList();
+            LinkedList<JIntLiteral> dims=new LinkedList<JIntLiteral>();
             Object val=constants.get(params[i]);
             Object temp=val;
             while(temp instanceof Object[]) {

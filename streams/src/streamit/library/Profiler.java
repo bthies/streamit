@@ -32,7 +32,7 @@ import java.util.LinkedList;
  */
 public class Profiler {
     // Temporary list for constructing names of operations.
-    private static final List tempOpToName = new LinkedList();
+    private static final List<String> tempOpToName = new LinkedList<String>();
     // for constructing operations
     private static final int registerOp(String name) {
         tempOpToName.add(name);
@@ -100,7 +100,7 @@ public class Profiler {
     public static final int FUNC_MAX =        registerOp("maxf");
 
     // construct array of names
-    public static final String[] OP_TO_NAME = (String[])tempOpToName.toArray(new String[0]);
+    public static final String[] OP_TO_NAME = tempOpToName.toArray(new String[0]);
     // number of operations
     public static final int NUM_OPS = OP_TO_NAME.length;
 

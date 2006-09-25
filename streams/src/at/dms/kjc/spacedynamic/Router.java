@@ -16,7 +16,7 @@ import java.util.Iterator;
 
 public interface Router 
 {
-    public LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src, ComputeNode dst);
+    public LinkedList<ComputeNode> getRoute(SpdStaticStreamGraph ssg, ComputeNode src, ComputeNode dst);
 
     
 }

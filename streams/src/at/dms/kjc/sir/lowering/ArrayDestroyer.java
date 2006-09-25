@@ -1,12 +1,15 @@
 package at.dms.kjc.sir.lowering;
 
 import java.util.*;
+
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
+
+import java.io.Serializable;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
 
@@ -14,23 +17,25 @@ import at.dms.compiler.TokenReference;
  * This class breaks up arrays into local vars as much as possible
  */
 public class ArrayDestroyer extends SLIRReplacingVisitor {
-    private HashMap targets;
-    private final HashMap targetsField;
-    private HashMap replaced;
+    // XXX: seems to use with several key types
+    private HashMap<Object, HashMap<Integer, Boolean>> targets;
+    // XXX: value seems to be several different HashMap types.
+    private final HashMap<String, HashMap<Object, Boolean>> targetsField;
+    private HashMap<Serializable, Serializable[]> replaced;
     //private HashMap varDefs;
     private boolean deadend;
 
     public ArrayDestroyer() {
-        targetsField=new HashMap();
-        replaced=new HashMap();
+        targetsField=new HashMap<String, HashMap<Object, Boolean>>();
+        replaced=new HashMap<Serializable, Serializable[]>();
         deadend=false;
     }
 
     // returns all local variables created by the array destroyer
 
-    public void addDestroyedLocals(Set set) {
-        Set key_set = replaced.keySet();
-        Iterator iter = key_set.iterator();
+    public void addDestroyedLocals(Set<JLocalVariable> set) {
+        Set<Serializable> key_set = replaced.keySet();
+        Iterator<Serializable> iter = key_set.iterator();
     
         while (iter.hasNext()) {
             Object key = iter.next();
@@ -82,10 +87,10 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         if (str instanceof SIRSplitJoin)
             {
                 SIRSplitJoin sj = (SIRSplitJoin)str;
-                Iterator iter = sj.getParallelStreams().iterator();
+                Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
                 while (iter.hasNext())
                     {
-                        SIRStream child = (SIRStream)iter.next();
+                        SIRStream child = iter.next();
                         destroyArrays(child);
                     }
             }
@@ -114,10 +119,11 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
             }
         }
         if (body != null) {
-            final HashMap targets=new HashMap();
-            final HashMap unsafe=new HashMap();
+            // XXX: seems to reuse targets with multiple key types: Integer, JLocalVariable, JExpression...
+            final HashMap<Object, HashMap<Integer, Boolean>> targets=new HashMap<Object, HashMap<Integer, Boolean>>();
+            final HashMap<Serializable, Boolean> unsafe=new HashMap<Serializable, Boolean>();
             body.accept(new SLIRReplacingVisitor() {
-                    HashMap declared=new HashMap();
+                    HashMap<JLocalVariable, Boolean> declared=new HashMap<JLocalVariable, Boolean>();
 
                     /**
                      * If vars used in any way except in array access then remove from targets
@@ -202,9 +208,9 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                 JLocalVariable var=((JLocalVariableExpression)prefix).getVariable();
                                 if(!unsafe.containsKey(var))
                                     if(accessor instanceof JIntLiteral) {
-                                        HashMap map=(HashMap)targets.get(var);
+                                        HashMap<Integer, Boolean> map=targets.get(var);
                                         if(map==null) {
-                                            map=new HashMap();
+                                            map=new HashMap<Integer, Boolean>();
                                             targets.put(var,map);
                                         }
                                         map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
@@ -216,9 +222,9 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                 String ident=((JFieldAccessExpression)prefix).getIdent();
                                 if(!unsafe.containsKey(ident))
                                     if(accessor instanceof JIntLiteral) {
-                                        HashMap map=(HashMap)targetsField.get(ident);
+                                        HashMap<Object, Boolean> map=targetsField.get(ident);
                                         if(map==null) {
-                                            map=new HashMap();
+                                            map=new HashMap<Object, Boolean>();
                                             targetsField.put(ident,map);
                                         }
                                         map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
@@ -239,12 +245,13 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                     }
                 });
             this.targets=targets;
+            // XXX: can not cast, need to clean up use of targets.
             Set keySet=targets.keySet();
             JLocalVariable[] vars=new JLocalVariable[keySet.size()];
             keySet.toArray(vars);
             for(int i=0;i<vars.length;i++) {
                 JLocalVariable var=vars[i];
-                keySet=((HashMap)targets.get(var)).keySet();
+                keySet=targets.get(var).keySet();
                 Integer[] ints=new Integer[keySet.size()];
                 keySet.toArray(ints);
                 int top=0;
@@ -270,7 +277,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     
     public void destroyFieldArrays(SIRCodeUnit unit) {
         replaced.clear();
-        Set keySet=targetsField.keySet();
+        Set<String> keySet=targetsField.keySet();
         String[] names=new String[keySet.size()];
         keySet.toArray(names);
         for(int i=0;i<names.length;i++) {
@@ -279,9 +286,10 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
             CType type=getType(name, unit.getFields());
             if(type==null)
                 break;
-            keySet=((HashMap)targetsField.get(name)).keySet();
-            Integer[] ints=new Integer[keySet.size()];
-            keySet.toArray(ints);
+            // XXX: Want Set<Integer>, previosly reused keySet.
+            Set<Object>tmpSet = targetsField.get(name).keySet();
+            Integer[] ints=new Integer[tmpSet.size()];
+            tmpSet.toArray(ints);
             int top=0;
             for(int j=0;j<ints.length;j++) {
                 int newInt=ints[j].intValue();

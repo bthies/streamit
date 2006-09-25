@@ -120,7 +120,7 @@ public class CloneGenerator {
         }
         // get list of fields that should NOT be cloned (as specified
         // by DO_NOT_CLONE_THESE_FIELDS array in class).
-        HashSet doNotClone = getProhibitedFields(c);
+        HashSet<String> doNotClone = getProhibitedFields(c);
         // copy all fields over, calling clone on them only if they
         // are DeepCloneable and not a member of <pre>doNotClone</pre>
         Field[] field = c.getDeclaredFields();
@@ -162,11 +162,11 @@ public class CloneGenerator {
      * returned.
      */
     private static final String PROHIBITED_FIELD_NAME = "DO_NOT_CLONE_THESE_FIELDS";
-    private static HashSet getProhibitedFields(Class c) {
+    private static HashSet<String> getProhibitedFields(Class c) {
         // prohibited fields
-        HashSet result = new HashSet();
+        HashSet<String> result = new HashSet<String>();
         // all fields
-        HashSet fields = new HashSet();
+        HashSet<String> fields = new HashSet<String>();
         Field[] field = c.getDeclaredFields();
         String[] namesToIgnore = null;
         // look for list of prohibited fields

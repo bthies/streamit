@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.11 2006-08-23 23:01:13 thies Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.12 2006-09-25 13:54:54 dimock Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -47,7 +47,7 @@ public class TranslateEnqueue extends FEReplacer
     private boolean inControl;
 
     /** values we want to enqueue */
-    private List vals;
+    private List<Expression> vals;
 
     /* What do we visit?  While we can ignore filters, other StreamSpecs
      * can contain nested streams that might include feedback loops.  So
@@ -62,9 +62,9 @@ public class TranslateEnqueue extends FEReplacer
         List stmts = new ArrayList();
         Expression n = new ExprVar(context, "n");
         int i = 0;
-        for (Iterator iter = vals.iterator(); iter.hasNext(); )
+        for (Iterator<Expression> iter = vals.iterator(); iter.hasNext(); )
             {
-                Expression val = (Expression)iter.next();
+                Expression val = iter.next();
                 Expression cond = new ExprBinary(context, ExprBinary.BINOP_EQ,
                                                  n, new ExprConstInt(context, i));
                 stmts.add(new StmtIfThen(context, cond,
@@ -112,8 +112,8 @@ public class TranslateEnqueue extends FEReplacer
 
     public Object visitStreamSpec(StreamSpec ss)
     {
-        List lastVals = vals;
-        vals = new ArrayList();
+        List<Expression> lastVals = vals;
+        vals = new ArrayList<Expression>();
         StreamSpec ssNew = (StreamSpec) super.visitStreamSpec(ss);
         // If we have extra values, then generate an initPath function.
         if (!vals.isEmpty())

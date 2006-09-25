@@ -17,25 +17,25 @@ import at.dms.kjc.sir.linear.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformPipeline.java,v 1.10 2006-01-25 17:02:01 thies Exp $
+ * $Id: LinearTransformPipeline.java,v 1.11 2006-09-25 13:54:42 dimock Exp $
  **/
 public class LinearTransformPipeline extends LinearTransform {
-    List repList;
+    List<LinearFilterRepresentation> repList;
     
-    private LinearTransformPipeline(List l) {
+    private LinearTransformPipeline(List<LinearFilterRepresentation> l) {
         // assert that the list has more than one element in it.
         if (l.size() < 2) {
             throw new IllegalArgumentException("Representation list has fewer than two elements: " +
                                                l.size());
         }
         // assert that all arguments are LinearFilterRepresentations
-        Iterator iter = l.iterator();
+        Iterator<LinearFilterRepresentation> iter = l.iterator();
         while(iter.hasNext()) {
             if (!(iter.next() instanceof LinearFilterRepresentation)) {
                 throw new IllegalArgumentException("non LFR in list passed to linear transform pipeline");
             }
         }
-        this.repList = new LinkedList(l);
+        this.repList = new LinkedList<LinearFilterRepresentation>(l);
     }
 
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
@@ -44,12 +44,12 @@ public class LinearTransformPipeline extends LinearTransform {
         LinearFilterRepresentation rep1; // the current "upstream" filter
         LinearFilterRepresentation rep2; // the current "downstream" filter
 
-        Iterator repIter = this.repList.iterator();
+        Iterator<LinearFilterRepresentation> repIter = this.repList.iterator();
     
-        rep1 = (LinearFilterRepresentation)repIter.next();
+        rep1 = repIter.next();
         // iterate over all of the represenations
         while(repIter.hasNext()) {
-            rep2 = (LinearFilterRepresentation)repIter.next();
+            rep2 = repIter.next();
             // pull out peek, pop, and push rates so the following code looks as much like
             // the paper as possible (e=peek, o=pop, u=push)
             int e1 = rep1.getPeekCount();
@@ -124,7 +124,7 @@ public class LinearTransformPipeline extends LinearTransform {
      * due to various size restrictions (eg the sizes of the matrices have to be
      * compatible. See the pldi-03-linear paper for the gory details.<p> 
      **/
-    public static LinearTransform calculate(List linearRepList) {
+    public static LinearTransform calculate(List<LinearFilterRepresentation> linearRepList) {
         // we punt any actual work until the "transform" method is called.
         return new LinearTransformPipeline(linearRepList);
     }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InstructionHandle.java,v 1.3 2006-03-16 16:41:19 dimock Exp $
+ * $Id: InstructionHandle.java,v 1.4 2006-09-25 13:54:51 dimock Exp $
  */
 
 package at.dms.optimize;
@@ -71,7 +71,7 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
     public void attachTo(AccessorContainer container) {
         if (container instanceof LineNumberInfo) {
             if (lineNumbers == null) {
-                lineNumbers = new Vector();
+                lineNumbers = new Vector<Integer>();
             }
             lineNumbers.addElement(new Integer(((LineNumberInfo)container).getLine()));
         }
@@ -82,8 +82,8 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
      */
     public void addLineNumberInfo(Vector lineNumberInfo) {
         if (lineNumbers != null) {
-            for (Enumeration eNum = lineNumbers.elements(); eNum.hasMoreElements(); ) {
-                int line = ((Integer)eNum.nextElement()).intValue();
+            for (Enumeration<Integer> eNum = lineNumbers.elements(); eNum.hasMoreElements(); ) {
+                int line = eNum.nextElement().intValue();
 
                 lineNumberInfo.addElement(new LineNumberInfo((short)line, this));
             }
@@ -212,7 +212,7 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
                 next.prev = prev;
             }
             for (int i = 0; accessors != null && i < accessors.size(); i++) {
-                changeTarget(((AccessorContainer)accessors.elementAt(i)), next);
+                changeTarget(accessors.elementAt(i), next);
             }
             notifyTargetOnRemove();
         }
@@ -292,14 +292,14 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
 
     public void addAccessor(AccessorContainer accessor) {
         if (accessors == null) {
-            accessors = new Vector();
+            accessors = new Vector<AccessorContainer>();
         }
 
         accessors.addElement(accessor);
     }
 
     public AccessorContainer getAccessor(int i) {
-        return (AccessorContainer)accessors.elementAt(i);
+        return accessors.elementAt(i);
     }
 
     public void removeAccessor(AccessorContainer accessor) {
@@ -383,6 +383,6 @@ public class InstructionHandle extends AbstractInstructionAccessor implements at
     private InstructionHandle   prev;
     private InstructionHandle   next;
 
-    private Vector      lineNumbers;
-    private Vector      accessors;
+    private Vector<Integer>      lineNumbers;
+    private Vector<AccessorContainer>      accessors;
 }

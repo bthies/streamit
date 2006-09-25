@@ -7,14 +7,14 @@ import at.dms.kjc.spacetime.*;
 //Kept for backwards compatibility
 //FullIns should usually suffice
 public class RouteIns implements SwitchIns {
-    Vector sources;
-    Vector dests;
+    Vector<Object> sources;
+    Vector<ComputeNode> dests;
     RawTile tile;
 
     public RouteIns(RawTile tile) {
         //super("route");
-        sources = new Vector();
-        dests = new Vector();
+        sources = new Vector<Object>();
+        dests = new Vector<ComputeNode>();
         this.tile = tile;
     }
 
@@ -67,7 +67,7 @@ public class RouteIns implements SwitchIns {
         
             ins += "->";
         
-            dir = tile.getRawChip().getDirection(tile, (ComputeNode)dests.get(i));
+            dir = tile.getRawChip().getDirection(tile, dests.get(i));
             if (dir.equals("st"))
                 ins += "$c" + dir + "i";
             else

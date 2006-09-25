@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenManager.java,v 1.2 2006-01-25 17:00:49 thies Exp $
+ * $Id: TokenManager.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -54,8 +54,8 @@ interface TokenManager {
     /**
      * Get an enumerator over the symbol table
      */
-    Enumeration getTokenSymbolElements();
-    Enumeration getTokenSymbolKeys();
+    Enumeration<TokenSymbol> getTokenSymbolElements();
+    Enumeration<String> getTokenSymbolKeys();
 
     /**
      * Get the token vocabulary (read-only).

@@ -58,7 +58,7 @@ public class Operator extends DestroyedClass
      * increasing order of delivery time.  Everything in this list has
      * yet to be delivered.
      */
-    private LinkedList messageQueue = new LinkedList();
+    private LinkedList<Message> messageQueue = new LinkedList<Message>();
     /**
      * The parent of this in the stream hierarchy (null for toplevel
      * stream).
@@ -100,7 +100,7 @@ public class Operator extends DestroyedClass
 
         // maintain messageQueue by order of delivery time
         for (int i=0; i<messageQueue.size(); i++) {
-            int other = ((Message)messageQueue.get(i)).getDeliveryTime();
+            int other = messageQueue.get(i).getDeliveryTime();
             if (other > deliveryTime) {
                 messageQueue.add(i, m);
                 return;
@@ -115,7 +115,7 @@ public class Operator extends DestroyedClass
      */
     protected void deliverMessages() {
         while (messageQueue.size()>0) {
-            Message m = (Message)messageQueue.get(0);
+            Message m = messageQueue.get(0);
             // deliver before the next execution
             int currentTime = getSDEPExecutions(true, m.isDownstream());
             int deliveryTime = m.getDeliveryTime();
@@ -1178,16 +1178,16 @@ public class Operator extends DestroyedClass
     }
     
     // allSinks is used for scheduling the streaming graph
-    public static LinkedList allSinks;
-    public static LinkedList allSources;
-    public static LinkedList allFilters;
-    public static HashSet fullChannels;
+    public static LinkedList<Operator> allSinks;
+    public static LinkedList<Operator> allSources;
+    public static LinkedList<Operator> allFilters;
+    public static HashSet<Channel> fullChannels;
     
     static {
-        allSinks = new LinkedList ();
-        allSources = new LinkedList ();
-        allFilters = new LinkedList ();
-        fullChannels = new HashSet ();
+        allSinks = new LinkedList<Operator> ();
+        allSources = new LinkedList<Operator> ();
+        allFilters = new LinkedList<Operator> ();
+        fullChannels = new HashSet<Channel> ();
     }
     
     void addSink ()
@@ -1212,7 +1212,7 @@ public class Operator extends DestroyedClass
      */
     boolean runSinks ()
     {
-        ListIterator iter;
+        ListIterator<Operator> iter;
         
         if (!allSinks.isEmpty ())
             iter = allSinks.listIterator ();
@@ -1224,7 +1224,7 @@ public class Operator extends DestroyedClass
         while (iter.hasNext ())
             {
                 Operator sink;
-                sink = (Operator) iter.next ();
+                sink = iter.next ();
                 assert sink != null;
 
                 // get a snapshot of how much the sources have executed.
@@ -1262,7 +1262,7 @@ public class Operator extends DestroyedClass
         // can't use iterator here for performance reasons -- it is
         // the inner loop when the sinks are filewriters
         for (int i=0; i<allSources.size(); i++) {
-            sourceExecs += ((Operator)allSources.get(i)).getWorkExecutions();
+            sourceExecs += allSources.get(i).getWorkExecutions();
         }
         return sourceExecs;
     }
@@ -1272,10 +1272,10 @@ public class Operator extends DestroyedClass
         while (!fullChannels.isEmpty ())
             {
                 // empty any full channels:
-                Iterator fullChannel;
+                Iterator<Channel> fullChannel;
                 fullChannel = fullChannels.iterator ();
             
-                Channel ch = (Channel) fullChannel.next ();
+                Channel ch = fullChannel.next ();
                 assert ch != null;
             
                 ch.getSink().doWork();
@@ -1849,7 +1849,7 @@ public class Operator extends DestroyedClass
 
         try
             {
-                Class thisClass = this.getClass ();
+                Class<? extends Operator> thisClass = this.getClass ();
                 assert thisClass != null;
 
                 Field ioField;
@@ -1907,7 +1907,7 @@ public class Operator extends DestroyedClass
 
         try
             {
-                Class thisClass = this.getClass ();
+                Class<? extends Operator> thisClass = this.getClass ();
                 assert thisClass != null;
 
                 Field ioField;

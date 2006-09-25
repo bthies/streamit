@@ -97,7 +97,7 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
         model.addMinimize(model.scalProd(x, obj));
 
         // add constraints
-        Constraint[] con = (Constraint[])constraints.toArray(new Constraint[0]);
+        Constraint[] con = constraints.toArray(new Constraint[0]);
         for (int i=0; i<con.length; i++) {
             // use .equals instead of object equality because of serialization issues
             if (con[i].type.equals(ConstraintType.GE)) {

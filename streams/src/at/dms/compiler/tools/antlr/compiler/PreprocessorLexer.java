@@ -20,7 +20,7 @@ public class PreprocessorLexer extends at.dms.compiler.tools.antlr.runtime.CharS
     }
     public PreprocessorLexer(LexerSharedInputState state) {
         super(state);
-        literals = new Hashtable();
+        literals = new Hashtable<ANTLRHashString, Integer>();
         literals.put(new ANTLRHashString("catch", this), new Integer(24));
         literals.put(new ANTLRHashString("exception", this), new Integer(23));
         literals.put(new ANTLRHashString("class", this), new Integer(7));

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchGroup.java,v 1.9 2006-03-24 15:54:48 dimock Exp $
+ * $Id: JSwitchGroup.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -116,7 +116,7 @@ public class JSwitchGroup extends JPhylum {
      * @param   matches         a vector of values to match
      * @param   targets         a vector of target labels
      */
-    public void collectLabels(CodeLabel deflab, Vector matches, Vector targets) {
+    public void collectLabels(CodeLabel deflab, Vector<Integer> matches, Vector targets) {
         pos = null;
 
         // check if one of the labels is "default:"

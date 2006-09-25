@@ -399,7 +399,7 @@ class CConfigSplitJoin extends CConfigContainer {
         return fusion_info;
     }
     
-    protected SIRStream doCut(LinkedList partitions, PartitionRecord curPartition,
+    protected SIRStream doCut(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                               int x1, int x2, int xPivot, int tileLimit, int tPivot, SIRStream str) {
         // there's a division at this <xPivot>.  We'll
         // return result of a vertical cut

@@ -17,7 +17,7 @@ import java.util.Iterator;
 public class YXRouter implements Router {
     // returns a linked list of coordinates that gives the route
     // including source and dest
-    public LinkedList getRoute(SpdStaticStreamGraph ssg, ComputeNode src,
+    public LinkedList<ComputeNode> getRoute(SpdStaticStreamGraph ssg, ComputeNode src,
                                ComputeNode dst) {
         RawChip rawChip = ((SpdStreamGraph)ssg.getStreamGraph()).getRawChip();
         Layout layout = ((SpdStreamGraph)ssg.getStreamGraph()).getLayout();
@@ -35,7 +35,7 @@ public class YXRouter implements Router {
             dstTile = (RawTile) dst;
 
         
-        LinkedList route = new LinkedList();
+        LinkedList<ComputeNode> route = new LinkedList<ComputeNode>();
         route.add(srcTile);
 
         if (srcTile == null)

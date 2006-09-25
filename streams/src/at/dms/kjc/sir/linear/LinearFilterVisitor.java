@@ -21,7 +21,7 @@ import at.dms.kjc.sir.*;
  * the linear function that is computed by that IR node. LinearForms are
  * used to represent linear combinations of the input plus a constant.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.18 2006-08-24 01:39:11 thies Exp $
+ * $Id: LinearFilterVisitor.java,v 1.19 2006-09-25 13:54:42 dimock Exp $
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
@@ -30,7 +30,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * affine representation that maps the expression to a combination of
      * inputs (eg peek expressions indexes) and possibly a constant.
      **/
-    private HashMap variablesToLinearForms;
+    private HashMap<Object, LinearForm> variablesToLinearForms;
 
     /**
      * Number of items that are peeked at. Therefore this is also the same
@@ -97,7 +97,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
         this.peekSize = numPeeks;
         this.pushSize = numPushes;
         this.popSize  = numPops;
-        this.variablesToLinearForms = new HashMap();
+        this.variablesToLinearForms = new HashMap<Object, LinearForm>();
         this.peekOffset = 0;
         this.pushOffset = 0;
         this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
@@ -121,7 +121,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
                                                                    this.popSize);
 
         // now, copy the other data structures.
-        otherVisitor.variablesToLinearForms = new HashMap(this.variablesToLinearForms);
+        otherVisitor.variablesToLinearForms = new HashMap<Object, LinearForm>(this.variablesToLinearForms);
         otherVisitor.peekOffset = this.peekOffset;
         otherVisitor.pushOffset = this.pushOffset;
         otherVisitor.representationMatrix = this.representationMatrix.copy();
@@ -189,11 +189,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * a HashMap that contains only mappings from the same
      * key to the same value in both map1 and map2.
      **/
-    private HashMap setUnion(HashMap map1,
-                             HashMap map2) {
-        HashMap unionMap = new HashMap();
+    private HashMap<Object, LinearForm> setUnion(HashMap<Object, LinearForm> map1,
+                             HashMap<Object, LinearForm> map2) {
+        HashMap<Object, LinearForm> unionMap = new HashMap<Object, LinearForm>();
         // iterate over the values in map1Iter.
-        Iterator map1Iter = map1.keySet().iterator();
+        Iterator<Object> map1Iter = map1.keySet().iterator();
         while(map1Iter.hasNext()) {
             Object currentKey = map1Iter.next();
             // if both maps contain the same key
@@ -723,8 +723,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private void removeAllFieldMappings() {
         // basic idea is really simple -- iterate over all keys in our hashmap
         // and remove the ones that are AccessWrappers.
-        Vector toRemove = new Vector(); // list of items to remove.
-        Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
+        Vector<Object> toRemove = new Vector<Object>(); // list of items to remove.
+        Iterator<Object> keyIter = this.variablesToLinearForms.keySet().iterator();
         while(keyIter.hasNext()) {
             Object key = keyIter.next();
             if (AccessWrapperFactory.isFieldWrapper(key)) {
@@ -732,7 +732,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
             }
         }
         // now, remove all items in the toRemove list from the mapping
-        Iterator removeIter = toRemove.iterator();
+        Iterator<Object> removeIter = toRemove.iterator();
         while(removeIter.hasNext()) {
             this.variablesToLinearForms.remove(removeIter.next());
         }
@@ -1140,7 +1140,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
         }
 
         // check that the only values in the HashMap are LinearForm objects
-        Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
+        Iterator<Object> keyIter = this.variablesToLinearForms.keySet().iterator();
         while(keyIter.hasNext()) {
             Object key = keyIter.next();
             if (key == null) {throw new RuntimeException("Null key in linear form map");}

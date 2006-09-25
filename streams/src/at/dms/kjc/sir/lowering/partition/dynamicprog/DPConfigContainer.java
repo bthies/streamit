@@ -627,7 +627,7 @@ abstract class DPConfigContainer extends DPConfig {
     /**
      * Traceback function.
      */
-    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
+    public SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
         SIRStream result = traceback(partitions, curPartition, 0, A.length-1, 0, A[0][0].length-1, tileLimit, nextToJoiner, str);
         // if the whole container is assigned to one tile, record it
         // as such.
@@ -640,7 +640,7 @@ abstract class DPConfigContainer extends DPConfig {
     /**
      * Traceback helper function.
      */
-    protected SIRStream traceback(LinkedList partitions, PartitionRecord curPartition,
+    protected SIRStream traceback(LinkedList<PartitionRecord> partitions, PartitionRecord curPartition,
                                   int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner, SIRStream str) {
         indent++;
         if (KjcOptions.debug) {

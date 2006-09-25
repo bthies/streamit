@@ -342,9 +342,9 @@ public class FlatNode {
      * @param set The FlatNodes we have already visited.
      * @param reset If true, reset set to be empty.
      */
-    public void accept(FlatVisitor v, HashSet set, boolean reset) {
+    public void accept(FlatVisitor v, HashSet<FlatNode> set, boolean reset) {
         if (reset)
-            set = new HashSet();
+            set = new HashSet<FlatNode>();
 
         set.add(this);
         v.visitNode(this);

@@ -40,7 +40,7 @@ public class Schedule extends AssertedClass
     /**
      * all the sub-schedules that are contained by this schedule
      */
-    final private Vector subScheds;
+    final private Vector<Pair> subScheds;
 
     /**
      * Work function associated with bottom-level schedule
@@ -62,7 +62,7 @@ public class Schedule extends AssertedClass
      */
     public Schedule(streamit.scheduler2.iriter.Iterator stream)
     {
-        subScheds = new Vector();
+        subScheds = new Vector<Pair>();
         workFunc = null;
         workStream = stream;
     }
@@ -115,7 +115,7 @@ public class Schedule extends AssertedClass
     {
         assert subScheds != null;
         assert nSched >= 0 && nSched < subScheds.size();
-        return (Schedule) ((Pair)subScheds.get(nSched)).getFirst();
+        return (Schedule) subScheds.get(nSched).getFirst();
     }
 
     /**
@@ -126,7 +126,7 @@ public class Schedule extends AssertedClass
     {
         assert subScheds != null;
         assert nSched >= 0 && nSched < subScheds.size();
-        return ((Integer) ((Pair)subScheds.get(nSched)).getSecond()).intValue();
+        return ((Integer) subScheds.get(nSched).getSecond()).intValue();
     }
 
     /**

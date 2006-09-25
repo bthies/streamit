@@ -28,7 +28,7 @@ public class DeadCodeElimination {
      */
     public static void removeDeadLocalDecls(SIRCodeUnit unit) {
         // variables used
-        final HashSet varsUsed = new HashSet();
+        final HashSet<JLocalVariable> varsUsed = new HashSet<JLocalVariable>();
 
         // in all the methods...
         JMethodDeclaration[] methods = unit.getMethods();
@@ -88,7 +88,7 @@ public class DeadCodeElimination {
 
                             final boolean assigningToDeadVar[] = new boolean[1];
                             final boolean assigningToLiveVar[] = new boolean[1];
-                            final LinkedList dead = new LinkedList();
+                            final LinkedList<JLocalVariable> dead = new LinkedList<JLocalVariable>();
                             left.accept(new SLIREmptyVisitor() {
                                     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                                                              String ident) {
@@ -156,7 +156,7 @@ public class DeadCodeElimination {
             methods[i].accept(new SLIRReplacingVisitor() {
                     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                                     JVariableDefinition[] vars) {
-                        ArrayList newVars = new ArrayList();
+                        ArrayList<JVariableDefinition> newVars = new ArrayList<JVariableDefinition>();
                         // see if vars used
                         for (int i=0; i<vars.length; i++) {
                             if (varsUsed.contains(vars[i]) || 
@@ -167,7 +167,7 @@ public class DeadCodeElimination {
 
                         if (newVars.size()>0) {
                             // if we have some vars, adjust us
-                            self.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+                            self.setVars(newVars.toArray(new JVariableDefinition[0]));
                             return self;
                         } else {
                             // otherwise, replace us with empty statement
@@ -190,7 +190,7 @@ public class DeadCodeElimination {
         }
 
         // keep track of field names referenced
-        final HashSet fieldsUsed = new HashSet();
+        final HashSet<String> fieldsUsed = new HashSet<String>();
 
         // get field references in all the methods
         JMethodDeclaration[] methods = unit.getMethods();
@@ -207,7 +207,7 @@ public class DeadCodeElimination {
     
         // remove any field that was not referenced
         JFieldDeclaration[] fields = unit.getFields();
-        ArrayList fieldsToKeep = new ArrayList();
+        ArrayList<JFieldDeclaration> fieldsToKeep = new ArrayList<JFieldDeclaration>();
         int removed = 0;
         for (int i=0; i<fields.length; i++) {
             JFieldDeclaration decl = (JFieldDeclaration)fields[i];
@@ -217,7 +217,7 @@ public class DeadCodeElimination {
                 removed++;
             }
         }
-        unit.setFields((JFieldDeclaration[])fieldsToKeep.toArray(new JFieldDeclaration[0]));
+        unit.setFields(fieldsToKeep.toArray(new JFieldDeclaration[0]));
         /*
           if (removed>0) {
           System.err.println("  Removed " + removed + " dead fields.");
@@ -235,13 +235,13 @@ public class DeadCodeElimination {
             JBlock newBody = (JBlock)methods[i].getBody().accept(new SLIRReplacingVisitor() {
                     public Object visitBlockStatement(JBlock self,
                                                       JavaStyleComment[] comments) {
-                        ArrayList newStatements = new ArrayList();
+                        ArrayList<Object> newStatements = new ArrayList<Object>();
                         for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
                             JStatement oldBody = (JStatement)it.next();
                             Object newBody = oldBody.accept(this);
                             if (newBody != null) newStatements.add(newBody);
                         }
-                        return new JBlock(null,(JStatement[])newStatements.toArray(new JStatement[0]),null);
+                        return new JBlock(null,newStatements.toArray(new JStatement[0]),null);
                     }
                     public Object visitEmptyStatement(JEmptyStatement self) {
                         return null;
@@ -255,7 +255,7 @@ public class DeadCodeElimination {
                     }
                     public Object visitExpressionListStatement(JExpressionListStatement self,
                                                                JExpression[] expr) {
-                        ArrayList newList = new ArrayList();
+                        ArrayList<Object> newList = new ArrayList<Object>();
                         for (int i = 0; i < expr.length; i++) {
                             if (expr[i] instanceof JLiteral) continue;
                             if (expr[i] instanceof JLocalVariableExpression) continue;
@@ -266,12 +266,12 @@ public class DeadCodeElimination {
                             }
                         }
                         if (newList.size() == 0) return null;
-                        return new JExpressionListStatement(null, (JExpression[])newList.toArray(new JExpression[0]), null);
+                        return new JExpressionListStatement(null, newList.toArray(new JExpression[0]), null);
                     }
                     public Object visitCompoundStatement(JCompoundStatement self,
                                                          JStatement[] body) {
 
-                        ArrayList newList = new ArrayList();
+                        ArrayList<Object> newList = new ArrayList<Object>();
                         for (int i = 0; i < body.length; i++) {
                             Object newExpr = body[i].accept(this);
                             if (newExpr != null) {
@@ -279,7 +279,7 @@ public class DeadCodeElimination {
                             }
                         }
                         if (newList.size() == 0) return null;
-                        return new JCompoundStatement(null, (JStatement[])newList.toArray(new JStatement[0]));
+                        return new JCompoundStatement(null, newList.toArray(new JStatement[0]));
                     }
                     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                                                     JVariableDefinition[] vars) {

@@ -59,7 +59,7 @@ public class LinearPartitioner {
     /**
      * Map from stream structures to LDPConfig's.
      */
-    private final HashMap configMap;
+    private final HashMap<SIRStream, LDPConfig> configMap;
 
     /**
      * The linear analyzer for this.
@@ -77,7 +77,7 @@ public class LinearPartitioner {
     public LinearPartitioner(SIRStream str, LinearAnalyzer lfa) {
         this.str = str;
         this.lfa = lfa;
-        this.configMap = new HashMap();
+        this.configMap = new HashMap<SIRStream, LDPConfig>();
     }
 
     /**
@@ -132,7 +132,7 @@ public class LinearPartitioner {
         long cost = topConfig.get(COLLAPSE_ANY);
         // clear dot traces
         LDPConfig.numAssigned = 0;
-        LDPConfig.partitions = new HashMap();
+        LDPConfig.partitions = new HashMap<SIROperator, Object>();
         tracingBack = true;
         StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
         tracingBack = false;
@@ -152,7 +152,7 @@ public class LinearPartitioner {
     }
 
     public LDPConfig getConfig(SIRStream str) {
-        return (LDPConfig) configMap.get(str);
+        return configMap.get(str);
     }
 
     public LinearAnalyzer getLinearAnalyzer() {

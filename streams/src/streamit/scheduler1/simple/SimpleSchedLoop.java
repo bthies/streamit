@@ -18,8 +18,8 @@ import streamit.scheduler1.SchedSplitJoin;
 class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 {
     SimpleHierarchicalScheduler scheduler;
-    private List steadySchedule = null;
-    private List initSchedule = null;
+    private List<Object> steadySchedule = null;
+    private List<Object> initSchedule = null;
     int initDataConsumption = 0;
     int initDataProduction = 0;
 
@@ -36,8 +36,8 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         // make sure that this the first call to computeSchedule
         {
             ASSERT (steadySchedule == null && initSchedule == null);
-            steadySchedule = new LinkedList ();
-            initSchedule = new LinkedList ();
+            steadySchedule = new LinkedList<Object> ();
+            initSchedule = new LinkedList<Object> ();
         }
 
         // now initialize all the children appropriately

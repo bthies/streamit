@@ -340,9 +340,9 @@ public class FusePipe {
      * filters in <filterInfo>.  <filterInfo> must be a list of either
      * SIRFilter's or FilterInfo's.
      */
-    public static String getFusedName(List filterInfo) {
+    public static String getFusedName(List<SIRStream> filterInfo) {
         StringBuffer name = new StringBuffer("Fused");
-        for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
+        for (ListIterator<SIRStream> it = filterInfo.listIterator(); it.hasNext(); ) {
             name.append("_");
             Object o = it.next();
             String childName = null;

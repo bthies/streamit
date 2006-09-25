@@ -12,7 +12,7 @@ import at.dms.kjc.sir.*;
  **/
 public class PartitionDot extends StreamItDot {
     private String prefixLabel;
-    private HashMap partitions;
+    private HashMap<SIROperator, Object> partitions;
     // randomized order of color table so that like colors do not end up next to each other.
     private static final String[] color_table = {"white",
                                                  "crimson",
@@ -57,7 +57,7 @@ public class PartitionDot extends StreamItDot {
      * PrefixLabel is a prefix for each node.
      */
     public PartitionDot(PrintStream outputstream,
-                        HashMap partitions,
+                        HashMap<SIROperator, Object> partitions,
                         String prefixLabel) {
         super(outputstream);
         this.partitions = partitions;
@@ -157,13 +157,13 @@ public class PartitionDot extends StreamItDot {
      */
     public static void printPartitionGraph(SIRStream str, 
                                            String filename,
-                                           HashMap partitions) {
+                                           HashMap<SIROperator, Object> partitions) {
         printGraph(str, filename, partitions, "\\npartition=");
     }
 
     static void printWorkGraph(SIRStream str,
                                String filename,
-                               HashMap partitions) {
+                               HashMap<SIROperator, Object> partitions) {
         printGraph(str, filename, partitions, "\\nwork=");
     
     }
@@ -176,7 +176,7 @@ public class PartitionDot extends StreamItDot {
                                           String filename,
                                           HashMap[] execCounts) {
         // make a string representation for init/steady schedules
-        HashMap stringMap = new HashMap();
+        HashMap<SIROperator, Object> stringMap = new HashMap<SIROperator, Object>();
         HashSet allKeys = new HashSet();
         allKeys.addAll(execCounts[0].keySet());
         allKeys.addAll(execCounts[1].keySet());
@@ -205,7 +205,7 @@ public class PartitionDot extends StreamItDot {
 
     private static void printGraph(SIRStream str, 
                                    String filename,
-                                   HashMap partitions,
+                                   HashMap<SIROperator, Object> partitions,
                                    String prefixLabel) {
         try {
             FileOutputStream out = new FileOutputStream(filename);

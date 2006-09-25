@@ -25,22 +25,22 @@ public class FindVarDecls extends SLIREmptyVisitor {
     private int int_count;
     private int float_count;
 
-    private HashMap var_names; // JVariableDefinition -> Integer
+    private HashMap<JVariableDefinition, Integer> var_names; // JVariableDefinition -> Integer
 
-    private HashMap ints; // Integer -> JVariableDefinition
-    private HashMap floats; // Integer -> JVariableDefinition
+    private HashMap<Integer, JVariableDefinition> ints; // Integer -> JVariableDefinition
+    private HashMap<Integer, JVariableDefinition> floats; // Integer -> JVariableDefinition
     
     public FindVarDecls() { 
         max_int_count = 0;
         max_float_count = 0;
-        ints = new HashMap();
-        floats = new HashMap();
+        ints = new HashMap<Integer, JVariableDefinition>();
+        floats = new HashMap<Integer, JVariableDefinition>();
     }
 
     public void newOperator() {
         int_count = 0;
         float_count = 0;
-        var_names = new HashMap();
+        var_names = new HashMap<JVariableDefinition, Integer>();
     }
     
     // reset tells if this operator should be assigned new variables
@@ -73,7 +73,7 @@ public class FindVarDecls extends SLIREmptyVisitor {
             ints.put(index, var);
             return var;
         }
-        return (JVariableDefinition)ints.get(index);
+        return ints.get(index);
     }
 
     public JVariableDefinition getFloatVar(Integer index) { 
@@ -83,7 +83,7 @@ public class FindVarDecls extends SLIREmptyVisitor {
             floats.put(index, var);
             return var;
         }
-        return (JVariableDefinition)floats.get(index);
+        return floats.get(index);
     }
 
     public void visitVariableDeclarationStatement(JVariableDeclarationStatement self,

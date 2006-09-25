@@ -29,7 +29,7 @@ public class MakefileGenerator {
         try {
             
             // create a set of all the tiles with code
-            HashSet computeTiles = new HashSet();
+            HashSet<ComputeNode> computeTiles = new HashSet<ComputeNode>();
             computeTiles.addAll(TileCode.realTiles);
             computeTiles.addAll(TileCode.tiles);
 
@@ -38,7 +38,7 @@ public class MakefileGenerator {
             if (KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)
                 removeJoiners(computeTiles);
 
-            Iterator tilesIterator = computeTiles.iterator();
+            Iterator<ComputeNode> tilesIterator = computeTiles.iterator();
 
             //generate the bC file
             BCFile.generate(streamGraph, computeTiles);
@@ -145,10 +145,10 @@ public class MakefileGenerator {
     }
 
     // remove all tiles mapped to joiners from the coordinate hashset *tiles*
-    private static void removeJoiners(HashSet tiles) {
-        Iterator it = layout.getJoiners().iterator();
+    private static void removeJoiners(HashSet<ComputeNode> tiles) {
+        Iterator<FlatNode> it = layout.getJoiners().iterator();
         while (it.hasNext()) {
-            tiles.remove(layout.getTile((FlatNode) it.next()));
+            tiles.remove(layout.getTile(it.next()));
         }
     }
 

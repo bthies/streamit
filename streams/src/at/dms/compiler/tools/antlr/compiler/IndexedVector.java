@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: IndexedVector.java,v 1.3 2006-03-25 00:07:58 dimock Exp $
+ * $Id: IndexedVector.java,v 1.4 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -32,7 +32,7 @@ import at.dms.compiler.tools.antlr.runtime.*;
  */
 public class IndexedVector {
     protected Vector elements;
-    protected Hashtable index;
+    protected Hashtable<Object, Object> index;
 
 
     /**
@@ -40,7 +40,7 @@ public class IndexedVector {
      */
     public IndexedVector() {
         elements = new Vector(10);
-        index = new Hashtable(10);
+        index = new Hashtable<Object, Object>(10);
     }
     /**
      * IndexedVector constructor comment.
@@ -48,7 +48,7 @@ public class IndexedVector {
      */
     public IndexedVector(int size) {
         elements = new Vector(size);
-        index = new Hashtable(size);
+        index = new Hashtable<Object, Object>(size);
     }
     public synchronized void appendElement(Object key, Object value) {
         elements.appendElement(value);

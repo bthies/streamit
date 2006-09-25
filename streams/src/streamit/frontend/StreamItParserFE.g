@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.64 2006-08-23 23:01:03 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.65 2006-09-25 13:54:51 dimock Exp $
  */
 
 header {
@@ -198,8 +198,8 @@ returns [StreamSpec ss]
 	;
 
 field_decl returns [FieldDecl f] { f = null; Type t; Expression x = null;
-	List ts = new ArrayList(); List ns = new ArrayList();
-	List xs = new ArrayList(); FEContext ctx = null; }
+	List<Type> ts = new ArrayList<Type>(); List<String> ns = new ArrayList<String>();
+	List<Expression> xs = new ArrayList<Expression>(); FEContext ctx = null; }
 	:	t=data_type id:ID (ASSIGN x=var_initializer)?
 		{ ctx = getContext(id); ts.add(t); ns.add(id.getText()); xs.add(x); }
 		(
@@ -465,8 +465,8 @@ primitive_type returns [Type t] { t = null; }
 	;
 
 variable_decl returns [Statement s] { s = null; Type t; Expression x = null; 
-	List ts = new ArrayList(); List ns = new ArrayList();
-	List xs = new ArrayList(); FEContext ctx = null; }
+	List<Type> ts = new ArrayList<Type>(); List<String> ns = new ArrayList<String>();
+	List<Expression> xs = new ArrayList(); FEContext ctx = null; }
 	:	t=data_type
 		id:ID { ctx = getContext(id); }
 		(ASSIGN x=var_initializer)?

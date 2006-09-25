@@ -60,7 +60,7 @@ public class ArrayMemoizer
 
     private ArrayMemoizer() {};
 
-    private Map storedArrays = new HashMap();
+    private Map<ArrayInitArguments, Object> storedArrays = new HashMap<ArrayInitArguments, Object>();
 
     /**
      * Returns the initial copy of an array with a given type and dimensions.

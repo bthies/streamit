@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ArrayLocator.java,v 1.2 2006-01-25 17:02:47 thies Exp $
+ * $Id: ArrayLocator.java,v 1.3 2006-09-25 13:54:51 dimock Exp $
  */
 
 package at.dms.util;
@@ -35,7 +35,7 @@ public class ArrayLocator {
             this.array = array;
         } else {
             System.err.println("WARNING HASH DOES NOT WORK");
-            this.hashed = new Hashtable(array.length + 1, 1.0f);
+            this.hashed = new Hashtable<Object, Integer>(array.length + 1, 1.0f);
             for (int i = 0; i < array.length; i++) {
                 this.hashed.put(array[i], new Integer(i));
             }
@@ -73,5 +73,5 @@ public class ArrayLocator {
     private static final int    MIN_HASH = Integer.MAX_VALUE; // Hashtable does not work !!!
     // The equals method differs from == !!!
     private Object[]        array;
-    private Hashtable       hashed;
+    private Hashtable<Object, Integer>       hashed;
 }

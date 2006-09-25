@@ -26,14 +26,14 @@ import java.util.List;
  * with StmtBlocks if they are a different sort of statement.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MakeBodiesBlocks.java,v 1.6 2006-08-23 23:01:08 thies Exp $
+ * @version $Id: MakeBodiesBlocks.java,v 1.7 2006-09-25 13:54:54 dimock Exp $
  */
 public class MakeBodiesBlocks extends FEReplacer
 {
     private Statement buildBlock(Statement stmt)
     {
         if (stmt instanceof StmtBlock) return stmt;
-        List body = Collections.singletonList(stmt);
+        List<Statement> body = Collections.singletonList(stmt);
         return new StmtBlock(stmt.getContext(), body);
     }
 

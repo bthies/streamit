@@ -116,7 +116,7 @@ public abstract class FilterFusionState extends FusionState
     }
     
     /** Add any necessary initialization tasks to the SIR code containers **/
-    public abstract void initTasks(Vector fields, Vector functions,
+    public abstract void initTasks(Vector<JFieldDeclaration> fields, Vector<JMethodDeclaration> functions,
                                    JBlock initFunctionCalls, JBlock main);
     
     /** get the SIR block representing the imperative code necessary to execute 

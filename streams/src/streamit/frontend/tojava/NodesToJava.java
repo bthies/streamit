@@ -17,6 +17,7 @@
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -32,7 +33,7 @@ import java.util.HashSet;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.126 2006-08-25 18:02:26 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.127 2006-09-25 13:54:54 dimock Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -304,8 +305,8 @@ public class NodesToJava implements FEVisitor
         // We can use a null stream type here since the left-hand
         // side shouldn't contain pushes, pops, or peeks.
         GetExprType eType = new GetExprType(symtab, ss.getStreamType(),
-                                            new java.util.HashMap(),
-                                            new java.util.HashMap());
+                                            new java.util.HashMap<String, TypeStruct>(),
+                                            new java.util.HashMap<String, TypeHelper>());
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
             {
@@ -1357,7 +1358,7 @@ public class NodesToJava implements FEVisitor
      */
     private String maybeGeneratePortal(StreamSpec spec)
     {
-        List handlers = new java.util.ArrayList();
+        List<Function> handlers = new java.util.ArrayList<Function>();
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
                 Function func = (Function)iter.next();
@@ -1372,9 +1373,9 @@ public class NodesToJava implements FEVisitor
         result.append(indent + "interface " + spec.getName() +
                       "Interface {\n");
         addIndent();
-        for (Iterator iter = handlers.iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = handlers.iterator(); iter.hasNext(); )
             {
-                Function func = (Function)iter.next();
+                Function func = iter.next();
                 result.append(indent + "public ");
                 result.append(convertType(func.getReturnType()) + " ");
                 result.append(func.getName());
@@ -1389,9 +1390,9 @@ public class NodesToJava implements FEVisitor
                       "Portal extends Portal implements " + spec.getName() +
                       "Interface {\n");
         addIndent();
-        for (Iterator iter = handlers.iterator(); iter.hasNext(); )
+        for (Iterator<Function> iter = handlers.iterator(); iter.hasNext(); )
             {
-                Function func = (Function)iter.next();
+                Function func = iter.next();
                 result.append(indent + "public ");
                 result.append(convertType(func.getReturnType()) + " ");
                 result.append(func.getName());

@@ -21,18 +21,18 @@ public class MagicDram extends IODevice {
     public HashSet outputFiles;
 
     // the names of the buffer indices
-    private HashSet indices;
+    private HashSet<String> indices;
 
     // the names and sizes of the buffers
-    private ArrayList buffers;
+    private ArrayList<Buffer> buffers;
 
     public MagicDram(RawChip chip, int port, RawTile tile) {
         super(chip, port, tile);
         tile.addIODevice(this);
         steadyInsList = new LinkedList();
         initInsList = new LinkedList();
-        indices = new HashSet();
-        buffers = new ArrayList();
+        indices = new HashSet<String>();
+        buffers = new ArrayList<Buffer>();
         inputFiles = new HashSet();
         outputFiles = new HashSet();
     }
@@ -120,16 +120,16 @@ public class MagicDram extends IODevice {
             fw.write("\tlocal temp = 0;\n");
             fw.write("\tlocal index = 0;\n");
 
-            Iterator inds = indices.iterator();
+            Iterator<String> inds = indices.iterator();
             while (inds.hasNext()) {
-                String current = (String) inds.next();
+                String current = inds.next();
                 fw.write("\tlocal " + current + "_ld = 0;\n");
                 fw.write("\tlocal " + current + "_st = 0;\n");
             }
 
-            Iterator bufs = buffers.iterator();
+            Iterator<Buffer> bufs = buffers.iterator();
             while (bufs.hasNext()) {
-                Buffer current = (Buffer) bufs.next();
+                Buffer current = bufs.next();
                 String bufferIdent = getBufferIdent(current.out, current.in);
                 // fw.write("\tlocal " + bufferIdent + "_size = " +
                 // Util.magicBufferSize(current.in, current.out) + ";\n");

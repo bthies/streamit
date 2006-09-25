@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.statespace.transform;
 
 import at.dms.kjc.sir.statespace.*;
+
 import java.util.*;
 //import at.dms.kjc.*;
 //mport at.dms.kjc.sir.*;
@@ -15,7 +16,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.12 2006-01-25 17:02:33 thies Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.13 2006-09-25 13:54:46 dimock Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -206,15 +207,15 @@ public class LinearTransformSplitJoin extends LinearTransform{
      * Parses a List of LinearFilter representations into an array of
      * of LinearFilterRepresentations.
      **/
-    public static LinearFilterRepresentation[] parseRepList(List representationList) {
+    public static LinearFilterRepresentation[] parseRepList(List<LinearFilterRepresentation> representationList) {
         LinearFilterRepresentation[] filterReps;
         filterReps = new LinearFilterRepresentation[representationList.size()];
 
         // for each rep, stuff it into the array
-        Iterator repIter = representationList.iterator();
+        Iterator<LinearFilterRepresentation> repIter = representationList.iterator();
         int currentIndex = 0;
         while(repIter.hasNext()) {
-            LinearFilterRepresentation currentRep = (LinearFilterRepresentation)repIter.next();
+            LinearFilterRepresentation currentRep = repIter.next();
             filterReps[currentIndex] = currentRep;
             currentIndex++;
         }
@@ -232,7 +233,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
      * weights. Note that this method merely calls the other calculateDuplicate so that
      * I can reuse code in calculateRoundRobin...
      **/
-    public static LinearTransform calculateDuplicate(List representationList,
+    public static LinearTransform calculateDuplicate(List<LinearFilterRepresentation> representationList,
                                                      int[] joinerWeights) {
         LinearPrinter.println(" calculating splitjoin transform with duplicate splitter.");
         if (representationList.size() != joinerWeights.length) {

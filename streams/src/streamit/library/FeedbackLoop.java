@@ -26,7 +26,7 @@ public class FeedbackLoop extends Stream
     Joiner joiner;
     Splitter splitter;
     SplitJoin.SplitJoinType splitType, joinType;
-    List enqueued = new java.util.ArrayList();
+    List<Object> enqueued = new java.util.ArrayList<Object>();
     int delay;
     Stream body, loop;
 
@@ -598,7 +598,7 @@ public class FeedbackLoop extends Stream
         else
             {
                 Channel feedbackChannel = loop.getOutputChannel ();
-                for (java.util.Iterator iter = enqueued.iterator();
+                for (java.util.Iterator<Object> iter = enqueued.iterator();
                      iter.hasNext(); )
                     {
                         Class type = feedbackChannel.getType ();

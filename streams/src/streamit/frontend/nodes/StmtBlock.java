@@ -25,23 +25,23 @@ import java.util.List;
  * statements to be used in loops or conditionals.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtBlock.java,v 1.3 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StmtBlock.java,v 1.4 2006-09-25 13:54:54 dimock Exp $
  */
 public class StmtBlock extends Statement
 {
-    private List stmts;
+    private List<Statement> stmts;
     // Should this also have a symbol table?  --dzm
     
     /** Create a new StmtBlock with the specified ordered list of
      * statements. */
-    public StmtBlock(FEContext context, List stmts)
+    public StmtBlock(FEContext context, List<Statement> stmts)
     {
         super(context);
         this.stmts = Collections.unmodifiableList(stmts);
     }
     
     /** Returns the list of statements of this. */
-    public List getStmts()
+    public List<Statement> getStmts()
     {
         return stmts;
     }

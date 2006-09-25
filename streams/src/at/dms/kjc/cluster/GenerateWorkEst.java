@@ -35,7 +35,7 @@ public class GenerateWorkEst {
         // case found where joiner with only 0 weights caused NullPointerException
         int steady_counts = 0;
         try {
-            steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+            steady_counts = ClusterBackend.steadyExecutionCounts.get(node).intValue();
         } catch (NullPointerException e) {}
         
 	    int w = 0;

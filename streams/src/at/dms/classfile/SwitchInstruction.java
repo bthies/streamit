@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SwitchInstruction.java,v 1.2 2006-01-25 17:00:39 thies Exp $
+ * $Id: SwitchInstruction.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.classfile;
@@ -82,7 +82,7 @@ public class SwitchInstruction extends Instruction implements AccessorContainer 
      * @param   targets     vector of target instructions for each match value
      */
     public SwitchInstruction(InstructionAccessor deflab,
-                             Vector matches,
+                             Vector<Integer> matches,
                              Vector targets)
     {
         this(deflab,

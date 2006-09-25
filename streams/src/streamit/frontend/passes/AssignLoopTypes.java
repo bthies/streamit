@@ -16,6 +16,7 @@
 
 package streamit.frontend.passes;
 import streamit.frontend.nodes.*;
+
 import java.util.*;
 
 /**
@@ -29,12 +30,12 @@ import java.util.*;
  * don't declare I/O types, the program visitor returns null.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: AssignLoopTypes.java,v 1.4 2006-01-25 17:04:28 thies Exp $
+ * @version $Id: AssignLoopTypes.java,v 1.5 2006-09-25 13:54:54 dimock Exp $
  */
 public class AssignLoopTypes extends FEReplacer
 {
     // Map of stream names to stream types
-    private Map toplevels;
+    private Map<String, StreamType> toplevels;
     // true if there has been a failure
     private boolean hasFailed;
     // Detected loop and body stream type; used by nested visitor classes
@@ -43,13 +44,13 @@ public class AssignLoopTypes extends FEReplacer
     public Object visitProgram(Program prog)
     {
         // init:
-        toplevels = new HashMap();
+        toplevels = new HashMap<String, StreamType>();
         hasFailed = false;
         
         // build the map of stream types from toplevel named streams
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext(); )
             {
-                StreamSpec ss = (StreamSpec)iter.next();
+                StreamSpec ss = iter.next();
                 toplevels.put(ss.getName(), ss.getStreamType());
             }
 
@@ -136,7 +137,7 @@ public class AssignLoopTypes extends FEReplacer
         if (sc instanceof SCSimple)
             {
                 SCSimple scs = (SCSimple)sc;
-                st = (StreamType)toplevels.get(scs.getName());
+                st = toplevels.get(scs.getName());
                 // If we didn't find that, is this a parameterized stream?
                 // If so, assume it's T->T.
                 if (st == null)

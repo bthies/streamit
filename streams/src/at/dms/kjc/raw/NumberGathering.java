@@ -52,13 +52,13 @@ public class NumberGathering extends at.dms.util.Utils
         totalPrintsPerSteady = 0;
     
         //find the sinks and make sure they are synchronized
-        HashSet sinks = Sink.getSinks(top);
+        HashSet<FlatNode> sinks = Sink.getSinks(top);
         //there could be multiple sinks, find one that works
-        Iterator sinksIt = sinks.iterator();
+        Iterator<FlatNode> sinksIt = sinks.iterator();
     
         //get the totalNumber of prints
         while (sinksIt.hasNext()) {
-            sink = (FlatNode)sinksIt.next();
+            sink = sinksIt.next();
             int prints = CheckPrint.check((SIRFilter)sink.contents);
             Integer steadyInteger = (Integer)steadyExecutionCounts.get(sink);
             int steady = 0;
@@ -75,7 +75,7 @@ public class NumberGathering extends at.dms.util.Utils
         sinksIt = sinks.iterator();
 
         while (sinksIt.hasNext()) {
-            sink = (FlatNode)sinksIt.next();
+            sink = sinksIt.next();
 
             if (sink == null) {
                 continue;
@@ -168,16 +168,16 @@ public class NumberGathering extends at.dms.util.Utils
 
         private static FlatNode sink;
         //used if there are multiple sinks, to analyze them...
-        private static HashSet possibleSinks;
+        private static HashSet<FlatNode> possibleSinks;
         private static boolean multipleSinks;
         private static boolean printOutsideSink;
         private static FlatNode toplevel;
 
-        public static HashSet getSinks(FlatNode top) 
+        public static HashSet<FlatNode> getSinks(FlatNode top) 
         {
             toplevel = top;
             sink = null;
-            possibleSinks = new HashSet();
+            possibleSinks = new HashSet<FlatNode>();
             multipleSinks = false;
             top.accept(new Sink(), null, true);
             //if more than one sink return null
@@ -186,9 +186,9 @@ public class NumberGathering extends at.dms.util.Utils
                 FlatNode ancestor = getLeastCommonAncestor();
                 System.out.println("The LCA is " + ancestor.contents.getName());
         
-                Iterator sinksIt = possibleSinks.iterator();
+                Iterator<FlatNode> sinksIt = possibleSinks.iterator();
                 while (sinksIt.hasNext()) {
-                    FlatNode current = (FlatNode)sinksIt.next();
+                    FlatNode current = sinksIt.next();
                     //traverse the path from the current sink to the ancestor
                     //and check to see if any of the filter have a pop(peek) rate
                     //equal to 0, if so, then the sinks are not synchronized
@@ -209,25 +209,25 @@ public class NumberGathering extends at.dms.util.Utils
         {
             //a vector of hashsets of all the ancestors of 
             //each sink
-            Vector ancestors = new Vector();
-            Iterator sinksIt = possibleSinks.iterator();
+            Vector<HashSet<Object>> ancestors = new Vector<HashSet<Object>>();
+            Iterator<FlatNode> sinksIt = possibleSinks.iterator();
             //get all the ancestor for each sink
             while (sinksIt.hasNext()) {
-                FlatNode sink = (FlatNode)sinksIt.next();
+                FlatNode sink = sinksIt.next();
                 ancestors.add(getAllAncestors(sink, true));
             }
             //get the set representing the intersection of all
             //the ancestor sets...this is the common ancestors
-            HashSet commonAncestors = (HashSet)ancestors.get(0);
+            HashSet<Object> commonAncestors = ancestors.get(0);
 
             for (int i = 1; i < ancestors.size(); i++)
-                commonAncestors = intersection(commonAncestors, (HashSet)ancestors.get(i));    
+                commonAncestors = intersection(commonAncestors, ancestors.get(i));    
         
             //find the most downstream ancestor...
             FlatNode lca = null;
-            Iterator bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
+            Iterator<FlatNode> bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
             while (bft.hasNext()) {
-                FlatNode current = (FlatNode)bft.next();
+                FlatNode current = bft.next();
                 if (commonAncestors.contains(current)) {
                     lca = current;
                 }
@@ -240,9 +240,9 @@ public class NumberGathering extends at.dms.util.Utils
         //get all the ancestors of a node and return the hashset, but do not add the 
         //node itself to the hash set, so firstcall is true on the first call,
         //and false on all the recursive calls.
-        private static HashSet getAllAncestors(FlatNode node, boolean firstCall) 
+        private static HashSet<Object> getAllAncestors(FlatNode node, boolean firstCall) 
         {
-            HashSet ret = new HashSet();
+            HashSet<Object> ret = new HashSet<Object>();
             //add self
             if (!firstCall)
                 ret.add(node);
@@ -255,11 +255,11 @@ public class NumberGathering extends at.dms.util.Utils
             return ret;
         }
 
-        private static HashSet intersection(HashSet x, HashSet y) 
+        private static HashSet<Object> intersection(HashSet<Object> x, HashSet y) 
         {
-            HashSet ret = new HashSet();
+            HashSet<Object> ret = new HashSet<Object>();
     
-            Iterator xit = x.iterator();
+            Iterator<Object> xit = x.iterator();
             while (xit.hasNext()) {
                 Object current = xit.next();
                 if (y.contains(current))

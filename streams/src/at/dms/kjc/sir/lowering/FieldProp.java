@@ -8,14 +8,14 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.39 2006-09-09 16:20:51 thies Exp $
+ * $Id: FieldProp.java,v 1.40 2006-09-25 13:54:42 dimock Exp $
  */
 public class FieldProp implements Constants
 {
     static boolean debugPrint = false;
     
     /** Maps field names to CTypes. */
-    private HashMap types;
+    private HashMap<String, CType> types;
     
     /*
      * a field, if noticed, will either have a JExpression in
@@ -31,25 +31,25 @@ public class FieldProp implements Constants
      */
     
     /** Maps field names to JExpression values. */
-    private HashMap fields;
+    private HashMap<String, JExpression> fields;
     /** List of field names that can't be propagated. */
-    private HashSet nofields;
+    private HashSet<String> nofields;
     /** Maps field names to JExpression arrays.  If a particular array
         element is null, that field isn't a constant (or hasn't been
         determined yet). */
-    private HashMap arrays;
+    private HashMap<String, JExpression[]> arrays;
     /** Maps field names to boolean arrays to track array elements that
         can't be propagated.  If the array element is true, that element
         can't be propagated; if it's false, it can. */
-    private HashMap noarrays;
+    private HashMap<String, boolean[]> noarrays;
     
     private FieldProp()
     {
-        types = new HashMap();
-        fields = new HashMap();
-        nofields = new HashSet();
-        arrays = new HashMap();
-        noarrays = new HashMap();
+        types = new HashMap<String, CType>();
+        fields = new HashMap<String, JExpression>();
+        nofields = new HashSet<String>();
+        arrays = new HashMap<String, JExpression[]>();
+        noarrays = new HashMap<String, boolean[]>();
     }
 
     /**
@@ -108,10 +108,10 @@ public class FieldProp implements Constants
         if (str instanceof SIRSplitJoin)
             {
                 SIRSplitJoin sj = (SIRSplitJoin)str;
-                Iterator iter = sj.getParallelStreams().iterator();
+                Iterator<SIRStream> iter = sj.getParallelStreams().iterator();
                 while (iter.hasNext())
                     {
-                        SIRStream child = (SIRStream)iter.next();
+                        SIRStream child = iter.next();
                         doPropagate(child,false,removeDeadFields);
                     }
             }
@@ -150,8 +150,8 @@ public class FieldProp implements Constants
         
         // Remove uninvalidated fields
         if (removeDeadFields) {
-            LinkedList keepFields = new LinkedList();
-            Set removedFields = new HashSet();
+            LinkedList<JFieldDeclaration> keepFields = new LinkedList<JFieldDeclaration>();
+            Set<String> removedFields = new HashSet<String>();
             JFieldDeclaration[] fields = str.getFields();
             for (int i = 0; i < fields.length; i++) {
                 JFieldDeclaration thisField = fields[i];
@@ -166,7 +166,7 @@ public class FieldProp implements Constants
                     keepFields.add(thisField);
                 }
             }
-            str.setFields((JFieldDeclaration[]) keepFields
+            str.setFields(keepFields
                           .toArray(new JFieldDeclaration[0]));
             removeAssignmentsToFields(str, removedFields);
             if (debugPrint) {
@@ -218,7 +218,7 @@ public class FieldProp implements Constants
     }
     
     private static void removeAssignmentsToFields(SIRStream str, 
-                                                  final Set/*<String>*/ fields) {
+                                                  final Set/*<String>*/<String> fields) {
 
         final boolean[] makeEmpty = {false};
         JMethodDeclaration[] methods = str.getMethods();
@@ -312,7 +312,7 @@ public class FieldProp implements Constants
     private boolean isArrayInvalidated(String name, int slot)
     {
         if (isFieldInvalidated(name)) return true;
-        boolean[] bary = (boolean[])noarrays.get(name);
+        boolean[] bary = noarrays.get(name);
         if (bary == null)
             return false;
         return bary[slot];
@@ -335,8 +335,8 @@ public class FieldProp implements Constants
     {
         // Stop early if the field has already been invalidated.
         if (isFieldInvalidated(name)) return;
-        boolean[] bary = (boolean[])noarrays.get(name);
-        JExpression[] exprs = (JExpression[])arrays.get(name);
+        boolean[] bary = noarrays.get(name);
+        JExpression[] exprs = arrays.get(name);
         if ((bary == null)&&(exprs!=null))
             {
                 bary = new boolean[exprs.length];
@@ -395,7 +395,7 @@ public class FieldProp implements Constants
     {
         if (isFieldInvalidated(name)) return false;
         if (isArrayInvalidated(name, slot)) return false;
-        JExpression[] exprs = (JExpression[])arrays.get(name);
+        JExpression[] exprs = arrays.get(name);
         if (exprs == null) return false;
         if (exprs[slot] == null) return false;
         return true;
@@ -404,13 +404,13 @@ public class FieldProp implements Constants
     /** Helper function returning the constant value of a field. */
     private JExpression propagatedField(String name)
     {
-        return (JExpression)fields.get(name);
+        return fields.get(name);
     }
     
     /** Helper function returning the constant value of an array slot. */
     private JExpression propagatedArray(String name, int slot)
     {
-        JExpression[] exprs = (JExpression[])arrays.get(name);
+        JExpression[] exprs = arrays.get(name);
         return exprs[slot];
     }
 
@@ -449,7 +449,7 @@ public class FieldProp implements Constants
                 return;
             }
         // Otherwise, add the name/value pair to the hash table.
-        value = forceLiteralType(value, (CType)types.get(name));
+        value = forceLiteralType(value, types.get(name));
         fields.put(name, value);
     }
 
@@ -466,9 +466,9 @@ public class FieldProp implements Constants
             }
         // Okay, populate the array slot.  The expression array
         // needs to already exist.
-        CType atype = (CType)types.get(name);
+        CType atype = types.get(name);
         value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
-        JExpression[] exprs = (JExpression[])arrays.get(name);
+        JExpression[] exprs = arrays.get(name);
         if(exprs!=null) exprs[slot] = value;
     }
 
@@ -793,7 +793,7 @@ public class FieldProp implements Constants
         // This looks a lot like the thing we had for fields, except
         // that it looks for local variables.
         meth.accept(new SLIREmptyVisitor() {
-                private HashSet no = new HashSet();
+                private HashSet<JLocalVariable> no = new HashSet<JLocalVariable>();
                 
                 public void visitAssignmentExpression
                     (JAssignmentExpression self,

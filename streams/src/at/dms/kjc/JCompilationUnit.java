@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompilationUnit.java,v 1.12 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JCompilationUnit.java,v 1.13 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -239,7 +239,7 @@ public class JCompilationUnit extends JPhylum {
     private JPackageImport[]        importedPackages;
     private JTypeDeclaration[]      typeDeclarations;
 
-    private Hashtable           allLoadedClasses = new Hashtable(); // $$$ DEFAULT VALUE IS OKAY ???
+    private Hashtable<String, CClassType>           allLoadedClasses = new Hashtable<String, CClassType>(); // $$$ DEFAULT VALUE IS OKAY ???
     private CCompilationUnit        export;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
@@ -259,7 +259,7 @@ public class JCompilationUnit extends JPhylum {
         other.importedClasses = (at.dms.kjc.JClassImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedClasses);
         other.importedPackages = (at.dms.kjc.JPackageImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedPackages);
         other.typeDeclarations = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations);
-        other.allLoadedClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.allLoadedClasses);
+        other.allLoadedClasses = (java.util.Hashtable<String, CClassType>)at.dms.kjc.AutoCloner.cloneToplevel(this.allLoadedClasses);
         other.export = (at.dms.kjc.CCompilationUnit)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
     }
 

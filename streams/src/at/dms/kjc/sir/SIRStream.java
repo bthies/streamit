@@ -90,8 +90,8 @@ public abstract class SIRStream extends SIROperator implements Cloneable, SIRCod
      * @param f         fields to add
      */
     public void addFields (int offset, JFieldDeclaration[] f) {
-        LinkedList additions = new LinkedList();
-        LinkedList oldfields = new LinkedList();
+        LinkedList<JFieldDeclaration> additions = new LinkedList<JFieldDeclaration>();
+        LinkedList<JFieldDeclaration> oldfields = new LinkedList<JFieldDeclaration>();
         
         for (int i = 0; i < f.length; i++) {
             additions.addLast(f[i]);
@@ -102,7 +102,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable, SIRCod
         }
         
         oldfields.addAll(offset, additions);
-        this.fields = (JFieldDeclaration[])oldfields.toArray(fields);
+        this.fields = oldfields.toArray(fields);
     }
     
     /**

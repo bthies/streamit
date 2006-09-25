@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.20 2006-08-23 23:00:51 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.21 2006-09-25 13:54:34 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -340,10 +340,10 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     public void visitMainFunction(LIRMainFunction self,
                                   String typeName,
                                   LIRFunctionPointer init,
-                                  List initStatements) {
+                                  List<JStatement> initStatements) {
         init.accept(this);
         for (int i=0; i<initStatements.size(); i++) {
-            ((JStatement)initStatements.get(i)).accept(this);
+            initStatements.get(i).accept(this);
         }
     }
 

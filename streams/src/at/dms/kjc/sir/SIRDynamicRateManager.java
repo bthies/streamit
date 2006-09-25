@@ -27,7 +27,7 @@ public class SIRDynamicRateManager {
      * Stack of policies being employed.  The top-most element of the
      * stack is the current policy.
      */
-    private static Stack policies = new Stack();
+    private static Stack<SIRDynamicRatePolicy> policies = new Stack<SIRDynamicRatePolicy>();
     // default policy is identity policy
     static {
         pushIdentityPolicy();
@@ -39,7 +39,7 @@ public class SIRDynamicRateManager {
      * the current policy to interpret that rate.
      */
     public static JExpression interpretRate(JExpression rate) {
-        return ((SIRDynamicRatePolicy)policies.peek()).interpretRate(rate);
+        return policies.peek().interpretRate(rate);
     }
 
     /**

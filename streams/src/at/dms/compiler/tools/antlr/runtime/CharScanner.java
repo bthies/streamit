@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CharScanner.java,v 1.2 2006-01-25 17:00:54 thies Exp $
+ * $Id: CharScanner.java,v 1.3 2006-09-25 13:54:31 dimock Exp $
  */
 
 package at.dms.compiler.tools.antlr.runtime;
@@ -32,7 +32,7 @@ public abstract class CharScanner implements TokenStream {
     protected Class tokenObjectClass; // what kind of tokens to create?
     protected boolean caseSensitive = true;
     protected boolean caseSensitiveLiterals = true;
-    protected Hashtable literals; // set by subclass
+    protected Hashtable<ANTLRHashString, Integer> literals; // set by subclass
 
     protected Token _returnToken = null; // used to return tokens w/o using return val.
 
@@ -312,7 +312,7 @@ public abstract class CharScanner implements TokenStream {
     // Override this method to perform a different literals test
     public int testLiteralsTable(int ttype) {
         hashString.setBuffer(text.getBuffer(), text.length());
-        Integer literalsIndex = (Integer)literals.get(hashString);
+        Integer literalsIndex = literals.get(hashString);
         if (literalsIndex != null) {
             ttype = literalsIndex.intValue();
         }
@@ -327,7 +327,7 @@ public abstract class CharScanner implements TokenStream {
      */
     public int testLiteralsTable(String text, int ttype) {
         ANTLRHashString s = new ANTLRHashString(text, this);
-        Integer literalsIndex = (Integer)literals.get(s);
+        Integer literalsIndex = literals.get(s);
         if (literalsIndex != null) {
             ttype = literalsIndex.intValue();
         }

@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.77 2006-08-23 23:01:03 thies Exp $
+ * @version $Id: ToJava.java,v 1.78 2006-09-25 13:54:52 dimock Exp $
  */
 public class ToJava
 {
@@ -53,7 +53,7 @@ public class ToJava
     private boolean libraryFormat = false;
     private boolean countops = false;
     private String outputFile = null;
-    private List inputFiles = new java.util.ArrayList();
+    private List<String> inputFiles = new java.util.ArrayList<String>();
 
     public void doOptions(String[] args)
     {
@@ -167,15 +167,15 @@ public class ToJava
      * @throws antlr.TokenStreamException if an error occurs producing
      *         the input token stream
      */
-    public static Program parseFiles(List inputFiles)
+    public static Program parseFiles(List<String> inputFiles)
         throws java.io.IOException,
                antlr.RecognitionException, 
                antlr.TokenStreamException
     {
         Program prog = emptyProgram();
-        for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
+        for (Iterator<String> iter = inputFiles.iterator(); iter.hasNext(); )
             {
-                String fileName = (String)iter.next();
+                String fileName = iter.next();
                 InputStream inStream = new FileInputStream(fileName);
                 DataInputStream dis = new DataInputStream(inStream);
                 StreamItLex lexer = new StreamItLex(dis);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: CodeSequence.java,v 1.3 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -148,12 +148,12 @@ public class CodeSequence {
      */
     public void close() {
         if (stack.size() > 0) {
-            Stack   todo = stack;
+            Stack<BasicBlock>   todo = stack;
 
-            stack = new Stack();
+            stack = new Stack<BasicBlock>();
 
             while (todo.size() > 0) {
-                BasicBlock  block = (BasicBlock)todo.pop();
+                BasicBlock  block = todo.pop();
 
                 if (!block.isMarked()) {
                     plantBasicBlock(block);
@@ -171,5 +171,5 @@ public class CodeSequence {
     private InstructionHandle       codeStart;
     private InstructionHandle       current;
     private int             max = Integer.MAX_VALUE;
-    private Stack               stack = new Stack();
+    private Stack<BasicBlock>               stack = new Stack<BasicBlock>();
 }

@@ -21,21 +21,22 @@ import streamit.frontend.nodes.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import at.dms.util.Utils;
 
 public class FEIRToSIR implements FEVisitor, Constants {
     private SIRStream topLevel;
     private SIRStream parent;
-    private Hashtable classTable;
-    private Map cclassTable;
+    private Hashtable<String, SIRStream> classTable;
+    private Map<String, CSourceClass> cclassTable;
     private SymbolTable symtab;
     private boolean wantSplitter;
     private Program theProgram;
-    private Set searchList;
+    private Set<String> searchList;
 
     public FEIRToSIR() {
-        classTable = new Hashtable();
-        cclassTable = new HashMap();
-        searchList = new HashSet();
+        classTable = new Hashtable<String, SIRStream>();
+        cclassTable = new HashMap<String, CSourceClass>();
+        searchList = new HashSet<String>();
     }
   
     public void debug(String s) {
@@ -45,7 +46,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     private Type getType(Expression expr)
     {
         // To think about: should we cache GetExprType objects?
-        return (Type)expr.accept(new GetExprType(symtab, null, new HashMap(), new HashMap())); // streamType
+        return (Type)expr.accept(new GetExprType(symtab, null, new HashMap<String, TypeStruct>(), new HashMap<String, TypeHelper>())); // streamType
     }
     private TokenReference contextToReference(FEContext ctx)
     {
@@ -63,8 +64,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
         /* We visit each stream and each struct */
         List feirStreams;
         List feirStructs;
-        List sirStreams;
-        List sirStructs;
+        List<Object> sirStreams;
+        List<SIRStructure> sirStructs;
         Iterator iter;
 
         theProgram = p;
@@ -73,13 +74,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
         debug("In visitProgram\n");
     
         feirStructs = p.getStructs();
-        sirStructs = new LinkedList();
+        sirStructs = new LinkedList<SIRStructure>();
         for (iter = feirStructs.iterator(); iter.hasNext(); ) {
             sirStructs.add(visitTypeStruct((TypeStruct) iter.next()));
         }
     
         feirStreams = p.getStreams();
-        sirStreams = new LinkedList();
+        sirStreams = new LinkedList<Object>();
         for (iter = feirStreams.iterator(); iter.hasNext(); ) {
             StreamSpec spec = (StreamSpec)iter.next();
             if (!(classTable.containsKey(spec.getName())))
@@ -106,7 +107,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     {
         // Have we already seen it?
         if (classTable.containsKey(name))
-            return (SIRStream)AutoCloner.deepCopy((SIRStream)classTable.get(name));
+            return (SIRStream)AutoCloner.deepCopy(classTable.get(name));
         // Are we looking for it?
         if (searchList.contains(name))
             return new SIRRecursiveStub(name, this);
@@ -191,10 +192,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
         return null;
     }
 
-    public List fieldDeclToJFieldDeclarations(FieldDecl decl)
+    public List<JFieldDeclaration> fieldDeclToJFieldDeclarations(FieldDecl decl)
     {
         debug("In fieldDeclToJFieldDeclarations\n");
-        List result = new ArrayList();
+        List<JFieldDeclaration> result = new ArrayList<JFieldDeclaration>();
         TokenReference ref = contextToReference(decl);
         for (int i = 0; i < decl.getNumFields(); i++)
             {
@@ -223,14 +224,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
         return result;
     }
 
-    private void setStreamFields(SIRStream stream, Hashtable cfields,
-                                 List vars)
+    private void setStreamFields(SIRStream stream, Hashtable<String, CField> cfields,
+                                 List<FieldDecl> vars)
     {
         JFieldDeclaration[] fields = new JFieldDeclaration[0];
-        List fieldList = new ArrayList();
-        for (Iterator iter = vars.iterator(); iter.hasNext(); )
+        List<JFieldDeclaration> fieldList = new ArrayList<JFieldDeclaration>();
+        for (FieldDecl decl : vars)
             {
-                FieldDecl decl = (FieldDecl)iter.next();
                 fieldList.addAll(fieldDeclToJFieldDeclarations(decl));
                 for (int i = 0; i < decl.getNumFields(); i++)
                     {
@@ -238,11 +238,15 @@ public class FEIRToSIR implements FEVisitor, Constants {
                                            decl, SymbolTable.KIND_FIELD);
                         // TODO: this is a mapping of name to CField,
                         // so create a CField here.
-                        cfields.put(decl.getName(i),
-                                    feirTypeToSirType(decl.getType(i)));
+                        
+                        //cfields.put(decl.getName(i),
+                        //            feirTypeToSirType(decl.getType(i)));
+
+                        // can we get away with this??
+                        cfields.put(decl.getName(i), null);
                     }
             }
-        fields = (JFieldDeclaration[])fieldList.toArray(fields);
+        fields = fieldList.toArray(fields);
         stream.setFields(fields);
     }
 
@@ -273,7 +277,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
                 // "" is acceptable.  We also know the owner, it's our
                 // parent's cclass.
                 name = "";
-                owner = (CClass)cclassTable.get(parent.getIdent());
+                owner = cclassTable.get(parent.getIdent());
             }
         CSourceClass cclass = new CSourceClass(owner, // owner
                                                contextToReference(spec),
@@ -289,7 +293,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
         SIRFilter result = new SIRFilter();
         SIRStream oldParent = parent;
         CSourceClass cclass = specToCClass(spec);
-        Hashtable fields = new Hashtable();
+        Hashtable<String, CField> fields = new Hashtable<String, CField>();
         parent = result;
     
         debug("In visitFilterSpec\n");
@@ -300,8 +304,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
         setStreamFields(result, fields, spec.getVars());
 
-        List meths = new ArrayList();
-        List cmeths = new ArrayList();
+        List<JMethodDeclaration> meths = new ArrayList<JMethodDeclaration>();
+        List<CMethod> cmeths = new ArrayList<CMethod>();
 
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
@@ -336,10 +340,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
                 }
             }
         JMethodDeclaration[] methods =
-            (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
+            meths.toArray(new JMethodDeclaration[0]);
         result.setMethods(methods);
 
-        CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
+        CMethod[] cmethods = cmeths.toArray(new CMethod[0]);
         cclass.close(CClassType.EMPTY, // interfaces
                      null, // superclass
                      fields,
@@ -357,7 +361,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
         SIRPipeline result = new SIRPipeline(spec.getName());
         SIRStream oldParent = parent;
         CSourceClass cclass = specToCClass(spec);
-        Hashtable fields = new Hashtable();
+        Hashtable<String, CField> fields = new Hashtable<String, CField>();
 
         debug("In visitPipelineSpec\n");
 
@@ -365,8 +369,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
     
         setStreamFields(result, fields, spec.getVars());
 
-        List meths = new ArrayList();
-        List cmeths = new ArrayList();
+        List<JMethodDeclaration> meths = new ArrayList<JMethodDeclaration>();
+        List<CMethod> cmeths = new ArrayList<CMethod>();
 
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
@@ -381,10 +385,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
                 }
             }
         JMethodDeclaration[] methods =
-            (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
+            meths.toArray(new JMethodDeclaration[0]);
         result.setMethods(methods);
 
-        CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
+        CMethod[] cmethods = cmeths.toArray(new CMethod[0]);
         cclass.close(CClassType.EMPTY, // interfaces
                      null, // superclass
                      fields,
@@ -411,7 +415,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
             case TypePrimitive.TYPE_DOUBLE:
                 return CStdType.Double;
             case TypePrimitive.TYPE_COMPLEX:
-                return new CClassType((CClass)cclassTable.get("Complex"));
+                return new CClassType(cclassTable.get("Complex"));
             case TypePrimitive.TYPE_VOID:
                 return CStdType.Void;
             }
@@ -423,9 +427,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
             return new CArrayType(feirTypeToSirType(ta.getBase()),
                                   1);
         } else if (type instanceof TypeStruct) {
-            return new CClassType((CClass)cclassTable.get(((TypeStruct)type).getName()));
+            return new CClassType(cclassTable.get(((TypeStruct)type).getName()));
         } else if (type instanceof TypeStructRef) {
-            return new CClassType((CClass)cclassTable.get(((TypeStructRef)type).getName()));
+            return new CClassType(cclassTable.get(((TypeStructRef)type).getName()));
         }
         /* This shouldn't happen */
         debug("  UNIMPLEMENTED - shouldn't happen\n");
@@ -443,7 +447,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
                                            ts.getName(),
                                            ts.getName(),
                                            false); // deprecated
-        Hashtable cfields = new Hashtable();
+        Hashtable<String, CField> cfields = new Hashtable<String, CField>();
         CMethod[] cmethods = new CMethod[0];
         for (i = 0; i < fields.length; i++) {
             String name = ts.getField(i);
@@ -627,7 +631,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
         Type lhsType = getType(exp.getLeft());
         // ASSERT: this is a structure type.
         TypeStruct ts = (TypeStruct)lhsType;
-        CClass ccs = (CClass)cclassTable.get(ts.getName());
+        CClass ccs = cclassTable.get(ts.getName());
         CField cf = ccs.getField(exp.getName());
         return new JFieldAccessExpression(null,
                                           (JExpression) exp.getLeft().accept(this),
@@ -809,7 +813,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
         SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
         SIRStream oldParent = parent;
         CSourceClass cclass = specToCClass(spec);
-        Hashtable fields = new Hashtable();
+        Hashtable<String, CField> fields = new Hashtable<String, CField>();
 
         debug("In visitSplitJoinSpec\n");
 
@@ -817,8 +821,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
     
         setStreamFields(result, fields, spec.getVars());
     
-        List meths = new ArrayList();
-        List cmeths = new ArrayList();
+        List<JMethodDeclaration> meths = new ArrayList<JMethodDeclaration>();
+        List<CMethod> cmeths = new ArrayList<CMethod>();
 
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
@@ -833,10 +837,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
                 }
             }
         JMethodDeclaration[] methods =
-            (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
+            meths.toArray(new JMethodDeclaration[0]);
         result.setMethods(methods);
 
-        CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
+        CMethod[] cmethods = cmeths.toArray(new CMethod[0]);
         cclass.close(CClassType.EMPTY, // interfaces
                      null, // superclass
                      fields,
@@ -855,7 +859,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
         SIRFeedbackLoop result = new SIRFeedbackLoop((SIRContainer) parent, spec.getName());
         SIRStream oldParent = parent;
         CSourceClass cclass = specToCClass(spec);
-        Hashtable fields = new Hashtable();
+        Hashtable<String, CField> fields = new Hashtable<String, CField>();
 
         debug("In visitFeedbackLoopSpec\n");
 
@@ -863,8 +867,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
         setStreamFields(result, fields, spec.getVars());
     
-        List meths = new ArrayList();
-        List cmeths = new ArrayList();
+        List<JMethodDeclaration> meths = new ArrayList<JMethodDeclaration>();
+        List<CMethod> cmeths = new ArrayList<CMethod>();
 
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             {
@@ -879,10 +883,10 @@ public class FEIRToSIR implements FEVisitor, Constants {
                 }
             }
         JMethodDeclaration[] methods =
-            (JMethodDeclaration[])meths.toArray(new JMethodDeclaration[0]);
+            meths.toArray(new JMethodDeclaration[0]);
         result.setMethods(methods);
 
-        CMethod[] cmethods = (CMethod[])cmeths.toArray(new CMethod[0]);
+        CMethod[] cmethods = cmeths.toArray(new CMethod[0]);
         cclass.close(CClassType.EMPTY, // interfaces
                      null, // superclass
                      fields,
@@ -1190,7 +1194,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
     public Object visitStmtVarDecl(StmtVarDecl stmt) {
         debug("In visitStmtVarDecl\n");
-        List defs = new ArrayList();
+        List<JVariableDefinition> defs = new ArrayList<JVariableDefinition>();
         for (int i = 0; i < stmt.getNumVars(); i++)
             {
                 symtab.registerVar(stmt.getName(i), stmt.getType(i), stmt,
@@ -1213,7 +1217,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
             }
         return new JVariableDeclarationStatement
             (null, // token reference
-             (JVariableDefinition[])defs.toArray(new JVariableDefinition[1]),
+             defs.toArray(new JVariableDefinition[1]),
              null); // comments
     }
 

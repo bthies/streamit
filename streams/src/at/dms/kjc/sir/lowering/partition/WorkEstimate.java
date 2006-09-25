@@ -22,10 +22,10 @@ public class WorkEstimate {
     /**
      * Maps stream constructs to a WorkInfo node.
      */
-    private HashMap workMap;
+    private HashMap<SIROperator, Object> workMap;
 
     private WorkEstimate() {
-        this.workMap = new HashMap();
+        this.workMap = new HashMap<SIROperator, Object>();
     }
 
     /**
@@ -61,9 +61,9 @@ public class WorkEstimate {
     /**
      * Builds a worklist out of <pre>map</pre>
      */
-    private WorkList buildWorkList(final HashMap map) {
+    private WorkList buildWorkList(final HashMap<SIROperator, Object> map) {
         // first make a treemap to do the sorting for us
-        TreeMap treeMap = new TreeMap(new Comparator() {
+        TreeMap<SIROperator, Object> treeMap = new TreeMap<SIROperator, Object>(new Comparator() {
                 public int compare(Object o1, Object o2) {
                     // assume these are map.entry's
                     int work1 = ((WorkInfo)map.get(o1)).getTotalWork();
@@ -104,7 +104,7 @@ public class WorkEstimate {
      */
     public WorkList getSortedContainerWork() {
         // make a hashmap mapping containers to work they contain
-        HashMap containerMap = new HashMap();
+        HashMap<SIROperator, Object> containerMap = new HashMap<SIROperator, Object>();
         // fill up the map with the filter's work
         for (Iterator it = workMap.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry entry = (Map.Entry)it.next();

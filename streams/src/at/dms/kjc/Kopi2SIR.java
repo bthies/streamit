@@ -54,25 +54,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     
     //This hashtable acts as a symbol table to store named (not anonymous)
     //SIR classes
-    private Hashtable visitedSIROps;
+    private Hashtable<String, SIROperator> visitedSIROps;
     //This hashtable acts as a symbol table for local variables and 
     //field variables, it is indexed by the JLocalVariable or JFieldVariable
     //and store the corresponding SIR object
-    private Hashtable symbolTable;
+    private Hashtable<JVariableDefinition, Object> symbolTable;
 
     //This vector store all the interface declarations for a toplevel prgm
-    private Vector interfaceList;
+    private Vector<JTypeDeclaration> interfaceList;
 
     //This vector stores all the interface tables as derived from the
     //regReceiver statements.  An interface table lists the methods
     //that implement a given interface for a given class.
-    private Vector interfaceTableList;
+    private Vector<SIRInterfaceTable> interfaceTableList;
 
     //This vector stores all of the structure declarations.
-    private Vector structureList;
+    private Vector<SIRStructure> structureList;
 
     //This vector stores all of the structure declarations.
-    private Vector helperList;
+    private Vector<SIRHelper> helperList;
 
     //stores the global structure
     private SIRGlobal global;
@@ -80,7 +80,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //The current dependency chain we are following when 
     //trying to resolve a class instantiation to a stream
     //stores strings of the stream names
-    private LinkedList searchList;
+    private LinkedList<String> searchList;
 
     //Array of the parameters of the last nonanonymous method
     //Used to correctly handle their reduction in anonymous classes
@@ -92,7 +92,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     //List of lists of final vars encountered to allow propagation into anonymous classes
     //Each element of finalVars represents the list of finalvars encountered for a method
     //in stack of methods being parsed
-    private LinkedList finalVars;
+    private LinkedList<LinkedList<JLocalVariable>> finalVars;
 
     //Keeps track if current class is anonymous
     private boolean anonCreation;
@@ -102,7 +102,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
     // for methods that have I/O rate declarations, maps method name to push, pop, peek rate
     // String -> JExpression
-    private HashMap methodToPushRate, methodToPopRate, methodToPeekRate;
+    private HashMap<String, JExpression> methodToPushRate, methodToPopRate, methodToPeekRate;
     
     //Uncomment the println for debugging
     private void printMe(String str) {
@@ -114,17 +114,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         topLevel = null;
 
         currentMethod = null;
-        visitedSIROps = new Hashtable(100);
-        symbolTable = new Hashtable(300);
-        interfaceList = new Vector(100);
-        interfaceTableList = new Vector(100);
-        structureList = new Vector(100);
-        helperList = new Vector(100);
+        visitedSIROps = new Hashtable<String, SIROperator>(100);
+        symbolTable = new Hashtable<JVariableDefinition, Object>(300);
+        interfaceList = new Vector<JTypeDeclaration>(100);
+        interfaceTableList = new Vector<SIRInterfaceTable>(100);
+        structureList = new Vector<SIRStructure>(100);
+        helperList = new Vector<SIRHelper>(100);
         global = null;
-        searchList = new LinkedList();
+        searchList = new LinkedList<String>();
         application = null;
         initBuiltinFilters();
-        finalVars=new LinkedList();
+        finalVars=new LinkedList<LinkedList<JLocalVariable>>();
         nextLatency = null;
     }
 
@@ -170,7 +170,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 
     private SIROperator getVisitedOp(String className) 
     {
-        SIROperator visitedOp=(SIROperator)visitedSIROps.get(className);
+        SIROperator visitedOp=visitedSIROps.get(className);
         if((visitedOp instanceof SIRContainer)&&(searchList.contains(className))) {
             /*
               at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
@@ -445,9 +445,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                 String name = methods[i].getName();
                 // only some functions are declared with I/O rates;
                 // set them if we saw a declaration in init function
-                JExpression push = (JExpression)methodToPushRate.get(name);
-                JExpression pop = (JExpression)methodToPopRate.get(name);
-                JExpression peek = (JExpression)methodToPeekRate.get(name);
+                JExpression push = methodToPushRate.get(name);
+                JExpression pop = methodToPopRate.get(name);
+                JExpression peek = methodToPeekRate.get(name);
 
                 if (push!=null) methods[i].setPush(push);
                 if (peek!=null) methods[i].setPeek(peek);
@@ -579,9 +579,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     
         // clear the push, pop, peek rate records.  They will be
         // tabulated in "init".
-        methodToPushRate = new HashMap();
-        methodToPopRate = new HashMap();
-        methodToPeekRate = new HashMap();
+        methodToPushRate = new HashMap<String, JExpression>();
+        methodToPopRate = new HashMap<String, JExpression>();
+        methodToPeekRate = new HashMap<String, JExpression>();
     
         blockStart("ClassDeclaration", self);
         printMe("Class Name: " + ident);
@@ -896,7 +896,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             return self;
         }
 
-        LinkedList newList=new LinkedList();
+        LinkedList<JLocalVariable> newList=new LinkedList<JLocalVariable>();
         finalVars.add(newList);
         for(int i=0;i<parameters.length;i++) {
             JFormalParameter param=parameters[i];
@@ -1084,7 +1084,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         blockStart("VariableDefinition: " + self.getIdent(), self);
         printMe(type.toString());
         if(self.isFinal())
-            ((List)finalVars.getLast()).add(self);
+            finalVars.getLast().add(self);
 
         //The attribute returned from visiting the expression of the variable def
         Object retObj = null;
@@ -1370,12 +1370,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     
         //Vector nullVector = new Vector(1);
         //nullVector.add(null);
-        LinkedList bodyList = new LinkedList(Arrays.asList(body));
+        LinkedList<JStatement> bodyList = new LinkedList<JStatement>(Arrays.asList(body));
         while (bodyList.remove(removeFlag));
     
         JStatement[] newBody = new JStatement[bodyList.size()];
         for (int i = 0; i< bodyList.size(); i++)
-            newBody[i] = (JStatement)bodyList.get(i);
+            newBody[i] = bodyList.get(i);
     
         return new JBlock(self.getTokenReference(),
                           newBody,
@@ -1645,7 +1645,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         else if (type.getIdent().equals("Channel")) 
             /*Channel declaration, treat the args as special */
             {
-                Vector v = new Vector(3);
+                Vector<Object> v = new Vector<Object>(3);
                 v.add(params[0].accept(this));
                 v.add(params[1].accept(this));
                 if (params.length > 2) { 
@@ -2717,7 +2717,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * toplevel stream
      */
     public JInterfaceDeclaration[] getInterfaces()  {
-        JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray(new JInterfaceDeclaration[0]);
+        JInterfaceDeclaration[] ret = interfaceList.toArray(new JInterfaceDeclaration[0]);
         return ret;
     }
     
@@ -2726,7 +2726,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * constructed in traversing the toplevel stream
      */
     public SIRInterfaceTable[] getInterfaceTables()  {
-        SIRInterfaceTable[] ret = (SIRInterfaceTable[])interfaceTableList.toArray(new SIRInterfaceTable[0]);
+        SIRInterfaceTable[] ret = interfaceTableList.toArray(new SIRInterfaceTable[0]);
         return ret;
     }
 
@@ -2735,7 +2735,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * program
      */
     public SIRStructure[] getStructures() {
-        SIRStructure[] ret = (SIRStructure[])structureList.toArray(new SIRStructure[0]);
+        SIRStructure[] ret = structureList.toArray(new SIRStructure[0]);
         return ret;
     }
 
@@ -2744,7 +2744,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
      * program
      */
     public SIRHelper[] getHelpers() {
-        SIRHelper[] ret = (SIRHelper[])helperList.toArray(new SIRHelper[0]);
+        SIRHelper[] ret = helperList.toArray(new SIRHelper[0]);
         return ret;
     }
 
@@ -2904,12 +2904,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         other.interfaceList = this.interfaceList;
         other.interfaceTableList = this.interfaceTableList;
         other.structureList = this.structureList;
-        other.helperList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.helperList);
+        other.helperList = (java.util.Vector<SIRHelper>)at.dms.kjc.AutoCloner.cloneToplevel(this.helperList);
         other.global = (at.dms.kjc.sir.SIRGlobal)at.dms.kjc.AutoCloner.cloneToplevel(this.global);
-        other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
+        other.searchList = (java.util.LinkedList<String>)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
         other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
         other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
-        other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
+        other.finalVars = (java.util.LinkedList<LinkedList<JLocalVariable>>)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
         other.anonCreation = this.anonCreation;
         other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency);
         other.methodToPushRate = this.methodToPushRate;

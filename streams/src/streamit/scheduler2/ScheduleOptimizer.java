@@ -108,7 +108,7 @@ public class ScheduleOptimizer extends AssertedClass
 
     // ---------------- Beef of the class ----------------
 
-    Map integers = new HashMap();
+    Map<Integer, Integer> integers = new HashMap<Integer, Integer>();
 
     Integer getInteger(int i)
     {
@@ -120,24 +120,24 @@ public class ScheduleOptimizer extends AssertedClass
                 return key;
             }
 
-        return (Integer)integers.get(key);
+        return integers.get(key);
     }
     
     // this will store a map of Schedule -> Integer
     // Integer stores an index into a Vector which stores the
     // details of the specific symbolic phase
-    Map sched2symbolicIdx = new HashMap();
-    Map symbolicIdx2sched = new HashMap();
+    Map<Schedule, Integer> sched2symbolicIdx = new HashMap<Schedule, Integer>();
+    Map<Integer, Schedule> symbolicIdx2sched = new HashMap<Integer, Schedule>();
 
-    Map symbolicIdx2symbolic = new HashMap();
-    Map symbolic2symbolicIdx = new HashMap();
-    Map symbolicIdx2stream = new HashMap();
+    Map<Integer, Vector<Object>> symbolicIdx2symbolic = new HashMap<Integer, Vector<Object>>();
+    Map<Vector<Object>, Integer> symbolic2symbolicIdx = new HashMap<Vector<Object>, Integer>();
+    Map<Integer, Iterator> symbolicIdx2stream = new HashMap<Integer, Iterator>();
 
     Integer convertToSymbolic(Schedule sched)
     {
         if (sched2symbolicIdx.containsKey(sched))
             {
-                return (Integer)sched2symbolicIdx.get(sched);
+                return sched2symbolicIdx.get(sched);
             }
 
         // convert all the children
@@ -152,7 +152,7 @@ public class ScheduleOptimizer extends AssertedClass
         Integer symbolicIdx = getInteger(symbolicIdx2symbolic.size());
 
         // create a vector version of self
-        Vector self = new Vector();
+        Vector<Object> self = new Vector<Object>();
         if (!sched.isBottomSchedule())
             {
                 for (int nPhase = 0; nPhase < sched.getNumPhases(); nPhase++)
@@ -170,7 +170,7 @@ public class ScheduleOptimizer extends AssertedClass
 
         if (symbolic2symbolicIdx.containsKey(self))
             {
-                symbolicIdx = (Integer)symbolic2symbolicIdx.get(self);
+                symbolicIdx = symbolic2symbolicIdx.get(self);
                 sched2symbolicIdx.put(sched, symbolicIdx);
 
                 return symbolicIdx;
@@ -195,10 +195,10 @@ public class ScheduleOptimizer extends AssertedClass
     {
         if (symbolicIdx2sched.containsKey(symbolicIdx))
             {
-                return (Schedule)symbolicIdx2sched.get(symbolicIdx);
+                return symbolicIdx2sched.get(symbolicIdx);
             }
 
-        Vector self = (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+        Vector self = symbolicIdx2symbolic.get(symbolicIdx);
 
         if (self.size() == 1)
             {
@@ -209,9 +209,9 @@ public class ScheduleOptimizer extends AssertedClass
         else
             {
                 Schedule newSched =
-                    new Schedule((Iterator)symbolicIdx2stream.get(symbolicIdx));
+                    new Schedule(symbolicIdx2stream.get(symbolicIdx));
                 Vector symbolicSched =
-                    (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+                    symbolicIdx2symbolic.get(symbolicIdx);
 
                 for (int i = 0; i < symbolicSched.size(); i += 2)
                     {
@@ -228,7 +228,7 @@ public class ScheduleOptimizer extends AssertedClass
 
     void collectRepeats()
     {
-        Map symbolicIdxSubstitionsChain = new HashMap();
+        Map<Integer, Integer> symbolicIdxSubstitionsChain = new HashMap<Integer, Integer>();
         symbolicUnoptimizedInit =
             collectRepeats(
                            symbolicUnoptimizedInit,
@@ -241,21 +241,21 @@ public class ScheduleOptimizer extends AssertedClass
 
     Integer collectRepeats(
                            Integer symbolicIdx,
-                           Map symbolicIdxSubstitionsChain)
+                           Map<Integer, Integer> symbolicIdxSubstitionsChain)
     {
         if (symbolicIdxSubstitionsChain.containsKey(symbolicIdx))
             {
-                return (Integer)symbolicIdxSubstitionsChain.get(symbolicIdx);
+                return symbolicIdxSubstitionsChain.get(symbolicIdx);
             }
 
         Vector symbolicSched =
-            (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+            symbolicIdx2symbolic.get(symbolicIdx);
 
         // can't do anything to leaf schedules
         if (symbolicSched.size() == 1)
             return symbolicIdx;
 
-        Vector newSymbolicSched = new Vector();
+        Vector<Object> newSymbolicSched = new Vector<Object>();
         Integer previousPhaseIdx = getInteger(-1);
 
         for (int i = 0; i < symbolicSched.size(); i += 2)
@@ -293,7 +293,7 @@ public class ScheduleOptimizer extends AssertedClass
         if (symbolic2symbolicIdx.containsKey(newSymbolicSched))
             {
                 newSymbolicIdx =
-                    (Integer)symbolic2symbolicIdx.get(newSymbolicSched);
+                    symbolic2symbolicIdx.get(newSymbolicSched);
             }
         else
             {
@@ -311,7 +311,7 @@ public class ScheduleOptimizer extends AssertedClass
 
     void liftSingles()
     {
-        Map symbolicIdxSubstitionsChain = new HashMap();
+        Map<Integer, Integer> symbolicIdxSubstitionsChain = new HashMap<Integer, Integer>();
         symbolicUnoptimizedInit =
             liftSingles(
                         symbolicUnoptimizedInit,
@@ -324,21 +324,21 @@ public class ScheduleOptimizer extends AssertedClass
 
     Integer liftSingles(
                         Integer symbolicIdx,
-                        Map symbolicIdxSubstitionsChain)
+                        Map<Integer, Integer> symbolicIdxSubstitionsChain)
     {
         if (symbolicIdxSubstitionsChain.containsKey(symbolicIdx))
             {
-                return (Integer)symbolicIdxSubstitionsChain.get(symbolicIdx);
+                return symbolicIdxSubstitionsChain.get(symbolicIdx);
             }
 
         Vector symbolicSched =
-            (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+            symbolicIdx2symbolic.get(symbolicIdx);
 
         // can't do anything to leaf schedules
         if (symbolicSched.size() == 1)
             return symbolicIdx;
 
-        Vector newSymbolicSched = new Vector();
+        Vector<Object> newSymbolicSched = new Vector<Object>();
 
         for (int i = 0; i < symbolicSched.size(); i += 2)
             {
@@ -356,7 +356,7 @@ public class ScheduleOptimizer extends AssertedClass
 
                 Vector phaseSymbolicSched;
                 phaseSymbolicSched =
-                    (Vector)symbolicIdx2symbolic.get(phaseSymbolicIdx);
+                    symbolicIdx2symbolic.get(phaseSymbolicIdx);
 
                 // if the phase I'm referencing has not sub-phases, skip it
                 if (phaseSymbolicSched.size() == 0)
@@ -382,7 +382,7 @@ public class ScheduleOptimizer extends AssertedClass
         if (symbolic2symbolicIdx.containsKey(newSymbolicSched))
             {
                 newSymbolicIdx =
-                    (Integer)symbolic2symbolicIdx.get(newSymbolicSched);
+                    symbolic2symbolicIdx.get(newSymbolicSched);
             }
         else
             {
@@ -398,13 +398,13 @@ public class ScheduleOptimizer extends AssertedClass
         return newSymbolicIdx;
     }
 
-    void collectPhaseUseInfo(Integer phaseIdx, Map phaseUseCount)
+    void collectPhaseUseInfo(Integer phaseIdx, Map<Integer, Integer> phaseUseCount)
     {
         if (phaseUseCount.containsKey(phaseIdx))
             {
                 // already have the phase in the phaseUseCount
                 // just increment the counter and return
-                Integer phaseUseInfo = (Integer)phaseUseCount.get(phaseIdx);
+                Integer phaseUseInfo = phaseUseCount.get(phaseIdx);
                 if (phaseUseInfo.intValue() > 0)
                     {
                         phaseUseInfo = getInteger(phaseUseInfo.intValue() + 1);
@@ -417,7 +417,7 @@ public class ScheduleOptimizer extends AssertedClass
         phaseUseCount.put(phaseIdx, getInteger(1));
 
         // is this a base phase? if so, quit while I'm ahead        
-        Vector symbolic = (Vector)symbolicIdx2symbolic.get(phaseIdx);
+        Vector symbolic = symbolicIdx2symbolic.get(phaseIdx);
         if (symbolic.size() == 1)
             {
                 // before I quit, make sure that this phase will never have
@@ -435,11 +435,11 @@ public class ScheduleOptimizer extends AssertedClass
 
     void liftSingles2()
     {
-        Map phaseUseCount = new HashMap();
+        Map<Integer, Integer> phaseUseCount = new HashMap<Integer, Integer>();
         collectPhaseUseInfo(symbolicUnoptimizedInit, phaseUseCount);
         collectPhaseUseInfo(symbolicUnoptimizedSteady, phaseUseCount);
 
-        Map symbolicIdxSubstitionsChain = new HashMap();
+        Map<Integer, Integer> symbolicIdxSubstitionsChain = new HashMap<Integer, Integer>();
         symbolicUnoptimizedInit =
             liftSingles2(
                          symbolicUnoptimizedInit,
@@ -454,22 +454,22 @@ public class ScheduleOptimizer extends AssertedClass
 
     Integer liftSingles2(
                          Integer symbolicIdx,
-                         Map phaseUseCount,
-                         Map symbolicIdxSubstitionsChain)
+                         Map<Integer, Integer> phaseUseCount,
+                         Map<Integer, Integer> symbolicIdxSubstitionsChain)
     {
         if (symbolicIdxSubstitionsChain.containsKey(symbolicIdx))
             {
-                return (Integer)symbolicIdxSubstitionsChain.get(symbolicIdx);
+                return symbolicIdxSubstitionsChain.get(symbolicIdx);
             }
 
         Vector symbolicSched =
-            (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+            symbolicIdx2symbolic.get(symbolicIdx);
 
         // can't do anything to leaf schedules
         if (symbolicSched.size() == 1)
             return symbolicIdx;
 
-        Vector newSymbolicSched = new Vector();
+        Vector<Object> newSymbolicSched = new Vector<Object>();
 
         for (int i = 0; i < symbolicSched.size(); i += 2)
             {
@@ -485,13 +485,13 @@ public class ScheduleOptimizer extends AssertedClass
 
                 // should I inline this phase?
                 if (phaseNumExec.intValue() == 1
-                    && ((Integer)phaseUseCount.get(phaseSymbolicIdx)).intValue()
+                    && phaseUseCount.get(phaseSymbolicIdx).intValue()
                     == 1)
                     {
                         // yes! find the phase to inline
                         Vector phaseSymbolicSched;
                         phaseSymbolicSched =
-                            (Vector)symbolicIdx2symbolic.get(newPhaseSymbolicIdx);
+                            symbolicIdx2symbolic.get(newPhaseSymbolicIdx);
 
                         assert phaseSymbolicSched.size() != 1;
 
@@ -512,7 +512,7 @@ public class ScheduleOptimizer extends AssertedClass
         if (symbolic2symbolicIdx.containsKey(newSymbolicSched))
             {
                 newSymbolicIdx =
-                    (Integer)symbolic2symbolicIdx.get(newSymbolicSched);
+                    symbolic2symbolicIdx.get(newSymbolicSched);
             }
         else
             {
@@ -531,21 +531,21 @@ public class ScheduleOptimizer extends AssertedClass
     private void printSymbolicSchedule(Integer symbolicIdx)
     {
         System.out.println ("[");
-        printSymbolicSchedule (symbolicIdx, new HashSet ());
+        printSymbolicSchedule (symbolicIdx, new HashSet<Integer> ());
         System.out.println ("]");
     }
 
-    private void printSymbolicSchedule(Integer symbolicIdx, Set printedScheds)
+    private void printSymbolicSchedule(Integer symbolicIdx, Set<Integer> printedScheds)
     {
         if (printedScheds.contains(symbolicIdx)) return;
         
         System.out.print("$" + symbolicIdx + " = ");
 
-        Vector self = (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+        Vector self = symbolicIdx2symbolic.get(symbolicIdx);
 
         if (self.size() == 1)
             {
-                Schedule sched = (Schedule)symbolicIdx2sched.get(symbolicIdx);
+                Schedule sched = symbolicIdx2sched.get(symbolicIdx);
                 System.out.println(
                                    sched.getStream().getObject() + "." + sched.getWorkFunc());
             }
@@ -555,7 +555,7 @@ public class ScheduleOptimizer extends AssertedClass
                 System.out.print("{ ");
 
                 Vector symbolicSched =
-                    (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+                    symbolicIdx2symbolic.get(symbolicIdx);
 
                 for (int i = 0; i < symbolicSched.size(); i += 2)
                     {

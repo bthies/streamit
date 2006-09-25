@@ -2,6 +2,8 @@ package at.dms.kjc.common;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+
+import java.io.Serializable;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
@@ -17,7 +19,7 @@ import java.util.HashSet;
 
 public class VariablesDefUse extends SLIREmptyVisitor
 {
-    private HashSet vars;
+    private HashSet<Serializable> vars;
 
     /**
      * Given <entry>, the starting point of the visit, return 
@@ -31,7 +33,7 @@ public class VariablesDefUse extends SLIREmptyVisitor
      * or Strings for accessed fields
      *
      */
-    public static HashSet getVars(JPhylum entry) 
+    public static HashSet<Serializable> getVars(JPhylum entry) 
     {
         VariablesDefUse used = new VariablesDefUse();
     
@@ -40,7 +42,7 @@ public class VariablesDefUse extends SLIREmptyVisitor
         return used.vars;
     }
     
-    public static HashSet getVars(FlatNode node) 
+    public static HashSet<Serializable> getVars(FlatNode node) 
     {
         VariablesDefUse used = new VariablesDefUse();
     
@@ -60,7 +62,7 @@ public class VariablesDefUse extends SLIREmptyVisitor
 
     private VariablesDefUse() 
     {
-        vars = new HashSet();
+        vars = new HashSet<Serializable>();
     }
     
 

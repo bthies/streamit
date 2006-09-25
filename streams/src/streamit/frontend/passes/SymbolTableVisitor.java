@@ -29,7 +29,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.21 2006-03-27 21:42:56 dimock Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.22 2006-09-25 13:54:54 dimock Exp $
  */
 
 public class SymbolTableVisitor extends FEReplacer
@@ -61,13 +61,13 @@ public class SymbolTableVisitor extends FEReplacer
      * type, before NoRefTypes has been run, this can perform that
      * resolution.  It is populated by <code>visitProgram()</code>.
      */
-    protected Map structsByName;
+    protected Map<String, TypeStruct> structsByName;
 
     /**
      * Map resolving helper names to helpers.
      */
 
-    protected Map helpersByName;
+    protected Map<String, TypeHelper> helpersByName;
 
     /**
      * Create a new symbol table visitor.
@@ -91,8 +91,8 @@ public class SymbolTableVisitor extends FEReplacer
     {
         this.symtab = symtab;
         this.streamType = st;
-        this.structsByName = new java.util.HashMap();
-        this.helpersByName = new java.util.HashMap();
+        this.structsByName = new java.util.HashMap<String, TypeStruct>();
+        this.helpersByName = new java.util.HashMap<String, TypeHelper>();
     }
 
     /**
@@ -144,7 +144,7 @@ public class SymbolTableVisitor extends FEReplacer
             {
                 String name = ((TypeStructRef)type).getName();
                 if (structsByName.containsKey(name))
-                    type = (Type)structsByName.get(name);
+                    type = structsByName.get(name);
             }
         return type;
     }
@@ -194,8 +194,8 @@ public class SymbolTableVisitor extends FEReplacer
      */
     public Object visitProgram(Program prog) {
         // Examine and register structure members, then recurse normally.
-        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext();) {
-            TypeStruct struct = (TypeStruct) iter.next();
+        for (Iterator<TypeStruct> iter = prog.getStructs().iterator(); iter.hasNext();) {
+            TypeStruct struct = iter.next();
             structsByName.put(struct.getName(), struct);
         }
         for (Iterator iter = prog.getHelpers().iterator(); iter.hasNext();) {
@@ -203,12 +203,10 @@ public class SymbolTableVisitor extends FEReplacer
             helpersByName.put(helper.getName(), helper);
         }
         symtab = new SymbolTable(symtab); // table for globals
-        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext();) {
-            StreamSpec spec = (StreamSpec) iter.next();
+        for (Iterator<StreamSpec> iter = prog.getStreams().iterator(); iter.hasNext();) {
+            StreamSpec spec = iter.next();
             if (spec.getType() == StreamSpec.STREAM_GLOBAL) {
-                for (Iterator _iter = spec.getVars().iterator(); _iter
-                         .hasNext();) {
-                    FieldDecl var = (FieldDecl) _iter.next();
+                for (FieldDecl var : spec.getVars()) {
                     int num = var.getNumFields();
                     for (int y = 0; y < num; y++) {
                         symtab.registerVar(var.getName(y), actualType(var
@@ -246,18 +244,16 @@ public class SymbolTableVisitor extends FEReplacer
         symtab = new SymbolTable(symtab);
         streamType = spec.getStreamType();
         // register parameters
-        for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
+        for (Parameter param : spec.getParams())
             {
-                Parameter param = (Parameter)iter.next();
                 symtab.registerVar(param.getName(),
                                    actualType(param.getType()),
                                    param,
                                    SymbolTable.KIND_STREAM_PARAM);
             }
         // register functions
-        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+        for (Function func : spec.getFuncs())
             {
-                Function func = (Function)iter.next();
                 symtab.registerFn(func);
             }
         Object result = super.visitStreamSpec(spec);

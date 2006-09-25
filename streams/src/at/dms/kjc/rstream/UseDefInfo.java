@@ -2,6 +2,8 @@ package at.dms.kjc.rstream;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+
+import java.io.Serializable;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
 import java.util.HashSet;
@@ -19,7 +21,7 @@ import java.util.Iterator;
 
 public class UseDefInfo extends SLIREmptyVisitor 
 {
-    private HashMap uses;
+    private HashMap<JLocalVariable, HashSet> uses;
 
     /**
      * Given a method, return a hashmap from local vars -&gt; HashSet, 
@@ -32,7 +34,7 @@ public class UseDefInfo extends SLIREmptyVisitor
      * @return The hashmap as described above.
      * 
      */
-    public static HashMap getUsesMap(JMethodDeclaration meth) 
+    public static HashMap<JLocalVariable, HashSet> getUsesMap(JMethodDeclaration meth) 
     {
         UseDefInfo useInfo = new UseDefInfo();
         meth.accept(useInfo);
@@ -49,7 +51,7 @@ public class UseDefInfo extends SLIREmptyVisitor
      * @return The hashmap as described above.
      * 
      */
-    public static HashSet getForUses(JForStatement jfor) 
+    public static HashSet<Object> getForUses(JForStatement jfor) 
     {
         UseDefInfo useInfo = new UseDefInfo();
         jfor.getBody().accept(useInfo);
@@ -57,10 +59,10 @@ public class UseDefInfo extends SLIREmptyVisitor
         jfor.getCondition().accept(useInfo);
         jfor.getIncrement().accept(useInfo);
     
-        HashSet ret = new HashSet();
-        Iterator vars = useInfo.uses.keySet().iterator();
+        HashSet<Object> ret = new HashSet<Object>();
+        Iterator<JLocalVariable> vars = useInfo.uses.keySet().iterator();
         while (vars.hasNext()) {
-            StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
+            StrToRStream.addAll(ret, useInfo.uses.get(vars.next()));
         }
 
         return ret;
@@ -76,15 +78,15 @@ public class UseDefInfo extends SLIREmptyVisitor
      * @return The hashmap as described above.
      * 
      */
-    public static HashSet getUses(JPhylum jsomething)  
+    public static HashSet<Object> getUses(JPhylum jsomething)  
     {
         UseDefInfo useInfo = new UseDefInfo();
         jsomething.accept(useInfo);
 
-        HashSet ret = new HashSet();
-        Iterator vars = useInfo.uses.keySet().iterator();
+        HashSet<Object> ret = new HashSet<Object>();
+        Iterator<JLocalVariable> vars = useInfo.uses.keySet().iterator();
         while (vars.hasNext()) {
-            StrToRStream.addAll(ret, (HashSet)useInfo.uses.get(vars.next()));
+            StrToRStream.addAll(ret, useInfo.uses.get(vars.next()));
         }
 
         return ret;
@@ -92,7 +94,7 @@ public class UseDefInfo extends SLIREmptyVisitor
     
     private UseDefInfo() 
     {
-        uses = new HashMap();
+        uses = new HashMap<JLocalVariable, HashSet>();
     }
 
     /*    
@@ -117,7 +119,7 @@ public class UseDefInfo extends SLIREmptyVisitor
         if (!uses.containsKey(exp.getVariable()))
             uses.put(exp.getVariable(), new HashSet());
 
-        ((HashSet)uses.get(exp.getVariable())).add(exp);
+        uses.get(exp.getVariable()).add(exp);
     }
     
     public void visitLocalVariableExpression(JLocalVariableExpression self,

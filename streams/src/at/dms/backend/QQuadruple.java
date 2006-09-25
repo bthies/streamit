@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: QQuadruple.java,v 1.2 2006-01-25 17:00:34 thies Exp $
+ * $Id: QQuadruple.java,v 1.3 2006-09-25 13:54:30 dimock Exp $
  */
 
 package at.dms.backend;
@@ -154,7 +154,7 @@ class QQuadruple extends QNode implements QOrigin {
                                                InstructionHandle[] insns,
                                                QTemporary[] entryStack,
                                                Vector vect) {
-        Stack   stack = new Stack();
+        Stack<Object>   stack = new Stack<Object>();
 
         for (int i = 0; entryStack != null && i < entryStack.length; i++) {
             stack.push(entryStack[i]);
@@ -254,7 +254,7 @@ class QQuadruple extends QNode implements QOrigin {
         return remainingStack;
     }
 
-    private static QOperand[] readOperands(Stack stack, int size) {
+    private static QOperand[] readOperands(Stack<Object> stack, int size) {
         Vector  vect = new Vector();
 
         for (int i = 0; size > 0; i++) {

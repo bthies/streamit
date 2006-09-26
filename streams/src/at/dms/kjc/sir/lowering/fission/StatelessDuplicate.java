@@ -138,9 +138,9 @@ public class StatelessDuplicate {
         final boolean[] foundMutable = { false };
 
         // visit all methods except <init>
-        JMethodDeclaration[] methods = getSteadyMethods(filter);
-        for (int i=0; i<methods.length; i++)
-            methods[i].accept(new SLIREmptyVisitor() {
+        List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(filter);
+        for (JMethodDeclaration method : methods)
+            method.accept(new SLIREmptyVisitor() {
                     // wrap visit to <left> with some book-keeping
                     // to indicate that it is on the LHS of an assignment
                     private void wrapVisit(JExpression left) {
@@ -199,77 +199,6 @@ public class StatelessDuplicate {
         return foundMutable[0];
     }
 
-    /**
-     * Returns the methods of 'filter' that execute in the steady
-     * state (either called from work, or likely to be message handlers).
-     */
-    private static JMethodDeclaration[] getSteadyMethods(SIRFilter filter) {
-        // I'm not sure how to find who is a message handler.  So,
-        // count as "steady" any method that is reachable from work or
-        // NOT reachable from init (idea being that init functions
-        // should not call their own method handlers).
-        JMethodDeclaration[] methods = filter.getMethods();
-
-        String[] initReachable = getMethodsReachableFrom(methods, filter.getInit());
-        String[] workReachable = getMethodsReachableFrom(methods, filter.getWork());
-        String[] preReachable = new String[0];
-        if (filter instanceof SIRTwoStageFilter) {
-            preReachable = getMethodsReachableFrom(methods, ((SIRTwoStageFilter)filter).getInitWork());
-        }
-
-        // count a method as 'steady' if it is reachable from work or
-        // prework, or if it is NOT reachable from init
-        HashSet<String> inits = new HashSet<String>();
-        HashSet<String> works = new HashSet<String>();
-        for (int i=0; i<initReachable.length; i++) { inits.add(initReachable[i]); }
-        for (int i=0; i<workReachable.length; i++) { works.add(workReachable[i]); }
-        for (int i=0; i<preReachable.length; i++) { works.add(preReachable[i]); }
-
-        HashSet<JMethodDeclaration> result = new HashSet<JMethodDeclaration>();
-        for (int i=0; i<methods.length; i++) {
-            String name = methods[i].getName();
-            if (works.contains(name) || !inits.contains(name)) {
-                result.add(methods[i]);
-            }
-        }
-
-        return result.toArray(new JMethodDeclaration[0]);
-    }
-
-    /**
-     * Returns set of method NAMES (Strings) out of 'methods' that are
-     * reachable from 'base'.  It is reachable if it is called by
-     * 'method' or by anthing 'method' transitively calls.
-     */
-    private static String[] getMethodsReachableFrom(JMethodDeclaration[] methods, JMethodDeclaration base) {
-        // names of reachable methods
-        final HashSet reachable = new HashSet();
-        // iterate to steady state
-        final boolean[] changed = { false };
-        
-        reachable.add(base.getName());
-        do {
-            changed[0] = false;
-            for (int i=0; i<methods.length; i++) {
-                if (reachable.contains(methods[i].getName())) {
-                    methods[i].accept(new SLIREmptyVisitor() {
-                            public void visitMethodCallExpression(JMethodCallExpression self,
-                                                                  JExpression prefix,
-                                                                  String ident,
-                                                                  JExpression[] args) {
-                                super.visitMethodCallExpression(self, prefix, ident, args);
-                                if (!reachable.contains(self.getIdent())) {
-                                    changed[0] = true;
-                                    reachable.add(self.getIdent());
-                                }
-                            }
-                        });
-                }
-            }
-        } while (changed[0]);
-        
-        return (String[])reachable.toArray(new String[0]);
-    }
 
     /**
      * Carry out the duplication on this instance.

@@ -120,7 +120,7 @@ else
 fi
 
 # for viewing dot graphs in absence of dotty
-alias mg "dot -Tps \!^ > \!^.ps; /projects/streamit/tools/gv \!^.ps&"
+mg() { dot -Tps $1 > $1.ps; /projects/streamit/tools/gv $1.ps & }
 
 #include builtin Eclipse plugins
 # export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins

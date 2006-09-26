@@ -1,7 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
 import at.dms.kjc.*;
 import at.dms.util.GetSteadyMethods;
 import at.dms.kjc.common.CommonUtils;
@@ -23,13 +22,13 @@ public class Vectorizable {
      */
     public static boolean vectorizable (SIRFilter f) {
         if (at.dms.kjc.sir.lowering.fission.StatelessDuplicate.hasMutableState(f)) {
-            // debugging:
-            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
+//            // debugging:
+//            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
             return false; // If loop-carried dependence through fields: don't vectorize. 
         }
         if (hasSideEffects(f)) {
-            // debugging:
-            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
+//            // debugging:
+//            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
             return false; // If filter has side effects, don't vectorize.
         }
         if (isDataDependent(f)) {
@@ -45,16 +44,13 @@ public class Vectorizable {
      * @return  true if no side effects, and no messages.
      */
     public static boolean hasSideEffects (SIRFilter f) {
+        if (f instanceof SIRFileReader || f instanceof SIRFileWriter) {
+            return true;
+        }
         final boolean[] tf = {false};
         List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(f);
         for (JMethodDeclaration method : methods)
             method.accept(new SLIREmptyVisitor() {
-                public void visitFileReader(LIRFileReader self) {
-                    tf[0] = true;
-                }
-                public void visitFileWriter(LIRFileWriter self) {
-                    tf[0] = true;
-                }
                 public void visitPrintStatement(SIRPrintStatement self,
                         JExpression exp) { 
                     tf[0] = true;
@@ -73,12 +69,21 @@ public class Vectorizable {
     }
     
     /**
-     * Check whether a filter's behavior id data dependent.
-     * (A peek or pop flows to a branch condition, array size, or peek offset.)
-     * Assume that no peek or pop flows to a field, guaranteed in our context
-     * by checking (! StatelessDuplicate.hasMutableState(f)) first.
+     * Check whether a filter's behavior is data dependent (other than through fields).
+     * (A peek or pop flows to a branch condition, array offset, or peek offset.)
+     * <br/>   
+     * push(arr[pop()]);
+     * <br/>
+     * foo = pop();  bar = peek(foo);
+     * <br/>
+     * foo = peek(5); if (foo > 0) baz++;
+     * <br/>
+     * You can check as to whether there is any possibility of a loop-carried dependency
+     * through fields by checking that (! StatelessDuplicate.hasMutableState(f)).
+     * <br/>
+     * Currently flow insensitive, context insensitive.
      * @param f : a filter to check.
-     * @return true if no data-dependent branches 
+     * @return true if no data-dependent branches or offsets. 
      */
     public static boolean isDataDependent (SIRFilter f) {
         // For any assignment statement containing a pop or peek:
@@ -88,7 +93,12 @@ public class Vectorizable {
         // a variable tainted by peek or pop, then we have
         // data-dependent branch.
         
+        // identifiers in slice of a peek or a pop.
         final Set<String> idents = new HashSet<String>();
+        // if peek / pop stored as element of array, we only
+        // worry about extracting from array, not about array itself.
+        final Set<String> arrayidents = new HashSet<String>();
+        // indicator that this pass has found a dependency.
         final boolean[] hasDepend = {false};
 
         List<JMethodDeclaration> methods = GetSteadyMethods.getSteadyMethods(f);
@@ -178,41 +188,47 @@ public class Vectorizable {
                         flowsHere = oldflowsHere;
                     }
 
-                    public void visitAssignmentExpression(
-                            JAssignmentExpression self, JExpression left,
-                            JExpression right) {
-                        delicateLocation++;
+                    // assignment may be to variable or field, in which case track
+                    // through idents, or may be into array offset in which case
+                    // track in arrayidents which will not pass on taint until
+                    // dereferenced.
+                    private void checkassign(JExpression left, JExpression right) {
                         left.accept(this);
-                        delicateLocation--;
                         boolean oldflowsHere = flowsHere;
                         flowsHere = false;
                         right.accept(this);
                         if (flowsHere) {
-                            idents.add((CommonUtils.lhsBaseExpr(left))
+                            Set<String> aid = arrayAccessIn(left);
+                            if (! aid.isEmpty() ) {
+                                arrayidents.addAll(aid);
+                            } else {
+                                idents.add((CommonUtils.lhsBaseExpr(left))
                                     .getIdent());
+                            }
                         }
                         flowsHere = oldflowsHere;
+                    }
+                    
+                    public void visitAssignmentExpression(
+                            JAssignmentExpression self, JExpression left,
+                            JExpression right) {
+                        checkassign(left,right);
                     }
 
                     public void visitCompoundAssignmentExpression(
                             JCompoundAssignmentExpression self, int oper,
                             JExpression left, JExpression right) {
-                        delicateLocation++;
-                        left.accept(this);
-                        delicateLocation--;
-                        boolean oldflowsHere = flowsHere;
-                        flowsHere = false;
-                        right.accept(this);
-                        if (flowsHere) {
-                            idents.add((CommonUtils.lhsBaseExpr(left))
-                                    .getIdent());
-                        }
-                        flowsHere = oldflowsHere;
+                        checkassign(left,right);
                     }
 
                     public void visitArrayAccessExpression(
                             JArrayAccessExpression self, JExpression prefix,
                             JExpression accessor) {
+                        if (arrayidents.contains(CommonUtils.lhsBaseExpr(self).getIdent())) {
+                            // dereferencing an array with tainted elements.
+                            // not checking for the correct number of levels of dereference...
+                            flowsHere = true;
+                        }
                         delicateLocation++;
                         super.visitArrayAccessExpression(self, prefix,
                                         accessor);
@@ -290,15 +306,29 @@ public class Vectorizable {
                         super.visitReturnStatement(self, expr);
                         delicateLocation--;
                     }
+                    
+                    /* mostly for checking lhs's. Return names of all arrays accessed in expression. */
+                    private Set<String> arrayAccessIn(JExpression e) {
+                        final Set<String> s = new HashSet<String>();
+                        e.accept(new SLIREmptyVisitor() {
+                            public void visitArrayAccessExpression(
+                                    JArrayAccessExpression self, JExpression prefix,
+                                    JExpression accessor) {
+                                s.add(CommonUtils.lhsBaseExpr(prefix).getIdent());
+                                super.visitArrayAccessExpression(self, prefix, accessor);
+                            }
+                        });
+                        return s;
+                    }
                 });
             }
         }
-        // debugging:
-        System.err.println("Vectorizable.isDataDependent found idents for " + f.getName() + ":");
-        for (String ident : idents) {
-            System.err.println(ident);
-        }
-        System.err.println(hasDepend[0] ? "is data dependent" : "is not data dependent");
+//        // debugging:
+//        System.err.println("Vectorizable.isDataDependent found idents for " + f.getName() + ":");
+//        for (String ident : idents) {
+//            System.err.println(ident);
+//        }
+//        System.err.println(hasDepend[0] ? "is data dependent" : "is not data dependent");
         // dependence found during setup.
         if (hasDepend[0]) {
             return true;

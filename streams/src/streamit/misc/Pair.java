@@ -16,12 +16,10 @@
 
 package streamit.misc;
 
-/* $Id: Pair.java,v 1.7 2006-03-25 00:08:00 dimock Exp $ */
+/* $Id: Pair.java,v 1.8 2006-10-02 17:53:20 dimock Exp $ */
 
 /**
- * <dl>
- * <dt> Purpose: Store two Objects in a Single Object
- * <dd>
+ * Purpose: Store two Objects in a Single Object.
  *
  * <dt>Description:
  * <dd> This class is used to store an ordered pair of objects in 
@@ -29,21 +27,23 @@ package streamit.misc;
  * equality of pairs.  Objects stored can be null.
  * </dl>
  * 
- * @version 1
  * @author  Michal Karczmarek
  */
 
-public class Pair
+public class Pair<S,T>
 {
-    Object first, second;
+    S first; 
+    T second;
 
     /**
      * Constructor simply stores the two objects.
+     * @param first : retrievable by getFirst.
+     * @param second : retrievable by getSecond.
      */
-    public Pair(Object _first, Object _second)
+    public Pair(S first, T second)
     {
-        first = _first;
-        second = _second;
+        this.first = first;
+        this.second = second;
     }
 
     /**
@@ -60,8 +60,6 @@ public class Pair
 
         Pair other = (Pair) o;
 
-        int firstDiff, secondDiff;
-
         return getFirst() == other.getFirst() && 
             getSecond() == other.getSecond();
     }
@@ -70,7 +68,7 @@ public class Pair
      * Returns the first object of the pair.
      * @return first object of the pair
      */
-    public Object getFirst()
+    public S getFirst()
     {
         return first;
     }
@@ -79,7 +77,7 @@ public class Pair
      * Returns the second object of the pair.
      * @return second object of the pair
      */
-    public Object getSecond()
+    public T getSecond()
     {
         return second;
     }

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.78 2006-09-12 02:42:56 thies Exp $
+# $Id: release.sh,v 1.79 2006-10-03 19:56:41 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -179,6 +179,8 @@ cd -
 #rm -rf $WORKING/streams/apps/benchmarks/asplos06
 # rename "mpeg2" to "mpeg2-subset" to make it clear it's subsetting
 mv $WORKING/streams/apps/benchmarks/asplos06/mpeg2 $WORKING/streams/apps/benchmarks/asplos06/mpeg2-subset
+# do not release vocoder examples
+rm $WORKING/streams/apps/benchmarks/asplos06/vocoder/streamit/VocoderExample*.str
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-space
 # internal testing.
 rm -rf $WORKING/streams/apps/benchmarks/asplos06-superset

@@ -330,8 +330,8 @@ public class DuplicateBottleneck {
             if (sortedFilters.getWork(i) >= (int)(1.5 * ((double)idealWork)) &&
                     StatelessDuplicate.isFissable(sortedFilters.getFilter(i))) {
                 change = true;
-                int reps = Math.max(2, 
-                        Math.round(sortedFilters.getWork(i) / idealWork));
+                int reps = (int)Math.max(2.0, 
+                        Math.round(((double)sortedFilters.getWork(i)) / ((double)idealWork)));
                 StatelessDuplicate.doit(sortedFilters.getFilter(i), reps);
                 System.out.println("Duplicating " + sortedFilters.getFilter(i) + " " +
                         (((double)sortedFilters.getWork(i)) / ((double)idealWork)) + " " + reps);

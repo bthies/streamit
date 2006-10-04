@@ -255,9 +255,11 @@ public class FuseSimpleSplit {
         // if <fused> has only an identity filter and parent
         // is pipeline with at least one more filter, remove
         // sj from parent if it's a pipeline
-        /* --> WE CAN'T DO THIS because then there's no filter
-           to refer to as the "fusion result".  Pretty dumb, but 
-           leads to exceptions when calling FuseAll.
+        /* --> NOT DOING THIS because the fusion result (the
+           identity filter) does not appear in the graph.
+           Returning it would probably be fine for the current
+           compiler, but don't want to risk confusion somewhere.
+           Seems to be an uncommon case anyway.
         if (fused.get(0) instanceof SIRIdentity && 
             parent instanceof SIRPipeline &&
             parent.size() > 1) {

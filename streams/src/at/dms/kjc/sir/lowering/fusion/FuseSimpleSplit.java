@@ -74,12 +74,12 @@ public class FuseSimpleSplit {
         SIRPipeline fused = makeFusedPipe(sj, rep, rate, newFilter);
 
         // replace in parent
-        replaceInParent(sj, fused);
+        SIRStream result = replaceInParent(sj, fused);
 
         // uncomment this if you want to see what the output of fusion looks like
-        //SIRToStreamIt.run(fused);
+        //SIRToStreamIt.run(result);
 
-        return fused;
+        return result;
     }
     
     /**
@@ -246,39 +246,33 @@ public class FuseSimpleSplit {
         return pipe;
     }
 
-    private static void replaceInParent(SIRSplitJoin sj,
-                                        SIRPipeline fused) {
-        // if parent of <sj> is a pipeline, then copy these children
-        // in, in place of the original filter
+    // returns result of fusion
+    private static SIRStream replaceInParent(SIRSplitJoin sj,
+                                             SIRPipeline fused) {
         SIRContainer parent = sj.getParent();
-        // DON'T CONSIDER THIS CASE SINCE IT HINDERS
-        // PARTITIONING--would like things to end up in their own
-        // nested pipeline so that pipeline can be fused
-        if (false) { //parent instanceof SIRPipeline) {
-            int index = parent.indexOf(sj);
-            parent.remove(index);
-            for (int i=fused.size()-1; i>=0; i--) {
-                parent.add(index, fused.get(i), fused.getParams(i));
-            }
+        // if <fused> has just one filter, add it in place of <sj>
+        if (fused.size()==1) {
+        // if <fused> has only an identity filter and parent
+        // is pipeline with at least one more filter, remove
+        // sj from parent if it's a pipeline
+        /* --> WE CAN'T DO THIS because then there's no filter
+           to refer to as the "fusion result".  Pretty dumb, but 
+           leads to exceptions when calling FuseAll.
+        if (fused.get(0) instanceof SIRIdentity && 
+            parent instanceof SIRPipeline &&
+            parent.size() > 1) {
+            parent.remove(sj);
         } else {
-            // if <fused> has just one filter, add it in place of <sj>
-            if (fused.size()==1) {
-                // if <fused> has only an identity filter and parent
-                // is pipeline with at least one more filter, remove
-                // sj from parent if it's a pipeline
-                if (fused.get(0) instanceof SIRIdentity && 
-                    parent instanceof SIRPipeline &&
-                    parent.size() > 1) {
-                    parent.remove(sj);
-                } else {
-                    parent.replace(sj, fused.get(0));
-                }
-            } else {
-                // otherwise, just add <fused> to parent in place of <sj>
-                parent.replace(sj, fused);
-                // clear the param list pased to <fused>
-                parent.getParams(parent.indexOf(fused)).clear();
-            }
+        */
+            parent.replace(sj, fused.get(0));
+            return fused.get(0);
+            //}
+        } else {
+            // otherwise, just add <fused> to parent in place of <sj>
+            parent.replace(sj, fused);
+            // clear the param list pased to <fused>
+            parent.getParams(parent.indexOf(fused)).clear();
+            return fused;
         }
     }
 

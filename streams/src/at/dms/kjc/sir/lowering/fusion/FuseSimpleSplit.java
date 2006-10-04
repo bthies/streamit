@@ -252,23 +252,23 @@ public class FuseSimpleSplit {
         SIRContainer parent = sj.getParent();
         // if <fused> has just one filter, add it in place of <sj>
         if (fused.size()==1) {
-        // if <fused> has only an identity filter and parent
-        // is pipeline with at least one more filter, remove
-        // sj from parent if it's a pipeline
-        /* --> NOT DOING THIS because the fusion result (the
-           identity filter) does not appear in the graph.
-           Returning it would probably be fine for the current
-           compiler, but don't want to risk confusion somewhere.
-           Seems to be an uncommon case anyway.
-        if (fused.get(0) instanceof SIRIdentity && 
-            parent instanceof SIRPipeline &&
-            parent.size() > 1) {
-            parent.remove(sj);
-        } else {
-        */
-            parent.replace(sj, fused.get(0));
-            return fused.get(0);
-            //}
+            // if <fused> has only an identity filter and parent
+            // is pipeline with at least one more filter, remove
+            // sj from parent if it's a pipeline
+            if (fused.get(0) instanceof SIRIdentity && 
+                parent instanceof SIRPipeline &&
+                parent.size() > 1) {
+                parent.remove(sj);
+                // this is rather dangerous because the returned
+                // filter is not in the stream graph.  However, I
+                // think that most passes calling fusion either use
+                // only the stream graph, or reconstruct the stream
+                // graph themselves.
+                return fused.get(0);
+            } else {
+                parent.replace(sj, fused.get(0));
+                return fused.get(0);
+            }
         } else {
             // otherwise, just add <fused> to parent in place of <sj>
             parent.replace(sj, fused);

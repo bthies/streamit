@@ -45,10 +45,6 @@ abstract class DPConfigContainer extends DPConfig {
      */
     protected SIRContainer cont;
     /**
-     * Partitioner corresponding to this.
-     */
-    protected DynamicProgPartitioner partitioner;
-    /**
      * Specifies the width of the y_i'th component of this
      */
     private int[] width;

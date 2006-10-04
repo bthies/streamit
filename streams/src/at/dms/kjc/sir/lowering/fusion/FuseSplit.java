@@ -390,7 +390,7 @@ public class FuseSplit {
             if (isDup || localPeek==0) {
                 peekIndex[i] = localPeek;
             } else {
-                peekIndex[i] = sumOfWeights * (int)Math.floor(localPeek / weights[i]) 
+                peekIndex[i] = sumOfWeights * (localPeek / weights[i])
                     + partialSum[i] + (localPeek % weights[i]);
             }
         }

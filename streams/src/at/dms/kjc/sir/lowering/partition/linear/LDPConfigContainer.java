@@ -19,10 +19,6 @@ abstract class LDPConfigContainer extends LDPConfig {
      * The stream for this container.
      */
     protected SIRContainer cont;
-    /**
-     * Partitioner corresponding to this.
-     */
-    protected LinearPartitioner partitioner;
     /**  
      * A_s[x1][x2][y1][y2][c] holds savings if children (x1..x2,
      * y1..y2) of stream s given collapse policy <pre>c</pre>.

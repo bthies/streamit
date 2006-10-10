@@ -178,6 +178,46 @@ public class Propagator extends SLIRReplacingVisitor {
         return self;
     }
 
+
+    /**
+     * Visits a do statement
+     */
+    public Object visitDoStatement(JDoStatement self,
+                                   JExpression cond,
+                                   JStatement body) {
+        loopDepth++;
+        if(!write) {
+            cond.accept(this);
+            body.accept(this);
+        } else {
+
+            Set<JLocalVariable> freeVars = getFreeVars(self);
+            Propagator newProp=construct(cloneTable(constants, freeVars),false);
+       
+            cond.accept(newProp);
+            body.accept(newProp);
+            Enumeration<Object> remove=newProp.changed.keys();
+            //BUG!!!  visiting with newProp could replace references!
+            while(remove.hasMoreElements()) {
+                JLocalVariable var=(JLocalVariable)remove.nextElement();
+                constants.remove(var);
+                changed.put(var,Boolean.TRUE);
+            }
+            Hashtable saveConstants=constants;
+            constants=cloneTable(constants, freeVars);
+            JExpression newExp = (JExpression)cond.accept(this);
+            // reset if we found a constant
+            if (newExp!=cond) {
+                self.setCondition(newExp);
+            }
+            body.accept(this);
+            constants=saveConstants;
+        }
+        loopDepth--;
+        return self;
+    }
+
+    
     /**
      * Returns a list of local variables that were used within
      * <phylum> without being defined in <phylum>.
@@ -716,20 +756,6 @@ public class Propagator extends SLIRReplacingVisitor {
         JExpression newExp = (JExpression)expr.accept(this);
         if (write&&(newExp!=expr)) {
             self.setExpression(newExp);
-        }
-        return self;
-    }
-
-    /**
-     * Visits a do statement
-     */
-    public Object visitDoStatement(JDoStatement self,
-                                   JExpression cond,
-                                   JStatement body) {
-        body.accept(this);
-        JExpression newExp = (JExpression)cond.accept(this);
-        if (write&&(newExp!=cond)) {
-            self.setCondition(newExp);
         }
         return self;
     }

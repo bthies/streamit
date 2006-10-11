@@ -17,7 +17,7 @@ public class SIRInitStatement extends JStatement {
     /**
      * The arguments to the init function. (all are JExpressions)
      */
-    protected List args;
+    protected List<JExpression> args;
     /**
      * The stream structure to initialize.
      */
@@ -30,13 +30,13 @@ public class SIRInitStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRInitStatement(List args, 
+    public SIRInitStatement(List<JExpression> args, 
                             SIRStream str) {
         super(null, null);
         if (args != null)
-            this.args = new LinkedList(args);
+            this.args = new LinkedList<JExpression>(args);
         else
-            this.args = new LinkedList();
+            this.args = new LinkedList<JExpression>();
         assert str != null: "SIRInitStatement created with null target";
         this.target = str;
     }
@@ -55,11 +55,11 @@ public class SIRInitStatement extends JStatement {
         this.target = null;
     }
     
-    public void setArgs(List args) {
+    public void setArgs(List<JExpression> args) {
         this.args = args;
     }
 
-    public List getArgs() {
+    public List<JExpression> getArgs() {
         return this.args;
     }
 

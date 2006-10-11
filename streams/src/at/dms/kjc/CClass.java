@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.14 2006-10-11 17:49:42 dimock Exp $
+ * $Id: CClass.java,v 1.15 2006-10-11 22:59:10 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -221,7 +221,11 @@ public abstract class CClass extends CMember {
         }
         return result;
     }
-
+    
+    /** getFields will fail if any fields are binary.  This will not fail.*/
+    public Hashtable<String, CField> getRawFields() {
+        return fields;
+    }
     /**
      * Returns the interfaces defined by this class.
      */

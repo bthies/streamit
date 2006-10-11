@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.14 2006-10-11 17:49:42 dimock Exp $
+ * $Id: JArrayInitializer.java,v 1.15 2006-10-11 20:23:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -42,10 +42,6 @@ public class JArrayInitializer extends JExpression {
         super(where);
 
         this.elems = elems;
-        // FIXME: The following is a hack to set some type,
-        // it needs to allow for multi-dimensional arrays if elems[0].getType() instanceof CArrayType.
-        // if mixing structures and arrays gets even worse...
-        this.type = new CArrayType(elems[0].getType(),1, new JIntLiteral[]{new JIntLiteral(elems.length)});
     }
 
     public JArrayInitializer(JExpression[] elems) {

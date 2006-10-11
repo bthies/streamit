@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.37 2006-09-25 13:54:41 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.38 2006-10-11 18:08:38 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -258,20 +258,30 @@ public class SIRToStreamIt
                 SIRJoiner joiner = fl.getJoiner();
                 if (joiner.getType() == SIRJoinType.NULL ||
                     (joiner.getType() == SIRJoinType.WEIGHTED_RR &&
+                     joiner.getWeightNoChecking(0) instanceof JIntLiteral &&
                      joiner.getWeight(0) == 0))
                     inType = CStdType.Void;
 
                 SIRSplitter splitter = fl.getSplitter();
                 if (splitter.getType() == SIRSplitType.NULL ||
                     (splitter.getType() == SIRSplitType.WEIGHTED_RR &&
+                     splitter.getWeightNoChecking(0) instanceof JIntLiteral &&
                      splitter.getWeight(0) == 0))
                     outType = CStdType.Void;
             }
-        if (inType != null && outType != null)
+        if (inType != null || outType != null)
             {
-                printType(inType);
+                if (inType != null) {
+                    printType(inType);
+                } else {
+                    p.print("?? ");
+                }
                 p.print("->");
-                printType(outType);
+                if (outType != null) {
+                    printType(outType);
+                } else {
+                    p.print(" ??");
+                }
                 p.print(" ");
             }
         p.print(type);

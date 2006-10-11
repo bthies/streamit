@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.24 2006-03-24 22:45:15 dimock Exp $
+ * $Id: JBlock.java,v 1.25 2006-10-11 17:49:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -53,7 +53,7 @@ public class JBlock extends JStatement {
         super(where, comments);
 
         // fill list with elements of <pre>body</pre>
-        this.body = new LinkedList();
+        this.body = new LinkedList<JStatement>();
         for (int i=0; i<body.length; i++) {
             this.body.add(body[i]);
         }
@@ -75,7 +75,7 @@ public class JBlock extends JStatement {
     {
         super(where, comments);
         // make a copy of <pre>body</pre>
-        this.body = new LinkedList(body);
+        this.body = new LinkedList<JStatement>(body);
     }
 
     public JBlock(List body) {
@@ -86,7 +86,7 @@ public class JBlock extends JStatement {
      * Construct a new JBlock with no statements inside.
      */
     public JBlock() {
-        this(null, new LinkedList(), null);
+        this(null, new LinkedList<JStatement>(), null);
     }
 
     // ----------------------------------------------------------------------
@@ -226,7 +226,7 @@ public class JBlock extends JStatement {
     /**
      * Returns INTERNAL list of statements in this.  
      */
-    public List getStatements() {
+    public List<JStatement> getStatements() {
         return body;
     }
 
@@ -263,8 +263,8 @@ public class JBlock extends JStatement {
         body.set(i, statement);
     }
 
-    // <pre>body</pre> containts JStatements
-    protected LinkedList    body;
+    // <pre>body</pre> contains JStatements
+    protected LinkedList <JStatement> body;
 
     /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 
@@ -279,6 +279,7 @@ public class JBlock extends JStatement {
     /** Clones all fields of this into <pre>other</pre> */
     protected void deepCloneInto(at.dms.kjc.JBlock other) {
         super.deepCloneInto(other);
+        List<JStatement> cloneToplevel = (List<JStatement>)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
         other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
     }
 

@@ -11,7 +11,7 @@ import at.dms.compiler.JavadocComment;
  * Implementation of an Attributed Visitor Design Pattern for KJC.
  *
  */
-public interface SLIRAttributeVisitor extends AttributeVisitor {
+public interface SLIRAttributeVisitor<T> extends AttributeVisitor<T> {
 
     /**
      * SIR NODES.
@@ -20,40 +20,40 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits an init statement.
      */
-    Object visitInitStatement(SIRInitStatement self,
+    T visitInitStatement(SIRInitStatement self,
                               SIRStream target);
 
     /**
      * Visits an interface table.
      */
-    Object visitInterfaceTable(SIRInterfaceTable self);
+    T visitInterfaceTable(SIRInterfaceTable self);
     
     /**
      * Visits a latency.
      */
-    Object visitLatency(SIRLatency self);
+    T visitLatency(SIRLatency self);
 
     /**
      * Visits a max latency.
      */
-    Object visitLatencyMax(SIRLatencyMax self);
+    T visitLatencyMax(SIRLatencyMax self);
 
     /**
      * Visits a latency range.
      */
-    Object visitLatencyRange(SIRLatencyRange self);
+    T visitLatencyRange(SIRLatencyRange self);
 
     /**
      * Visits a latency set.
      */
-    Object visitLatencySet(SIRLatencySet self);
+    T visitLatencySet(SIRLatencySet self);
 
-    Object visitCreatePortalExpression(SIRCreatePortal self);
+    T visitCreatePortalExpression(SIRCreatePortal self);
 
     /**
      * Visits a message statement.
      */
-    Object visitMessageStatement(SIRMessageStatement self,
+    T visitMessageStatement(SIRMessageStatement self,
                                  JExpression portal,
                                  String iname,
                                  String ident,
@@ -63,48 +63,48 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a range expression.
      */
-    Object visitRangeExpression(SIRRangeExpression self);
+    T visitRangeExpression(SIRRangeExpression self);
 
     /**
      * Visits a dynamic token.
      */
-    Object visitDynamicToken(SIRDynamicToken self);
+    T visitDynamicToken(SIRDynamicToken self);
 
     /**
      * Visits a peek expression.
      */
-    Object visitPeekExpression(SIRPeekExpression self,
+    T visitPeekExpression(SIRPeekExpression self,
                                CType tapeType,
                                JExpression arg);
 
     /**
      * Visits a pop expression.
      */
-    Object visitPopExpression(SIRPopExpression self,
+    T visitPopExpression(SIRPopExpression self,
                               CType tapeType);
 
     /**
      * Visits a message-receiving portal.
      */
-    Object visitPortal(SIRPortal self);
+    T visitPortal(SIRPortal self);
 
     /**
      * Visits a print statement.
      */
-    Object visitPrintStatement(SIRPrintStatement self,
+    T visitPrintStatement(SIRPrintStatement self,
                                JExpression arg);
 
     /**
      * Visits a push expression.
      */
-    Object visitPushExpression(SIRPushExpression self,
+    T visitPushExpression(SIRPushExpression self,
                                CType tapeType,
                                JExpression arg);
 
     /**
      * Visits a register-receiver statement.
      */
-    Object visitRegReceiverStatement(SIRRegReceiverStatement self,
+    T visitRegReceiverStatement(SIRRegReceiverStatement self,
                                      JExpression portal,
                                      SIRStream receiver,
                                      JMethodDeclaration[] methods);
@@ -112,7 +112,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a register-sender statement.
      */
-    Object visitRegSenderStatement(SIRRegSenderStatement self,
+    T visitRegSenderStatement(SIRRegSenderStatement self,
                                    String portal,
                                    SIRLatency latency);
 
@@ -120,7 +120,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visit SIRMaker.
      */
-    Object visitMarker(SIRMarker self);
+    T visitMarker(SIRMarker self);
 
     /**
      * LIR NODES.
@@ -129,18 +129,18 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a function pointer.
      */
-    Object visitFunctionPointer(LIRFunctionPointer self,
+    T visitFunctionPointer(LIRFunctionPointer self,
                                 String name);
     
     /**
      * Visits an LIR node.
      */
-    Object visitNode(LIRNode self);
+    T visitNode(LIRNode self);
 
     /**
      * Visits a child registration node.
      */
-    Object visitSetChild(LIRSetChild self,
+    T visitSetChild(LIRSetChild self,
                          JExpression streamContext,
                          String childType,
                          String childName);
@@ -148,14 +148,14 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a decoder registration node.
      */
-    Object visitSetDecode(LIRSetDecode self,
+    T visitSetDecode(LIRSetDecode self,
                           JExpression streamContext,
                           LIRFunctionPointer fp);
 
     /**
      * Visits a feedback loop delay node.
      */
-    Object visitSetDelay(LIRSetDelay self,
+    T visitSetDelay(LIRSetDelay self,
                          JExpression data,
                          JExpression streamContext,
                          int delay,
@@ -165,14 +165,14 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits an encoder registration node.
      */
-    Object visitSetEncode(LIRSetEncode self,
+    T visitSetEncode(LIRSetEncode self,
                           JExpression streamContext,
                           LIRFunctionPointer fp);
 
     /**
      * Visits a joiner-setting node.
      */
-    Object visitSetJoiner(LIRSetJoiner self,
+    T visitSetJoiner(LIRSetJoiner self,
                           JExpression streamContext,
                           SIRJoinType type,
                           int ways,
@@ -181,21 +181,21 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a peek-rate-setting node.
      */
-    Object visitSetPeek(LIRSetPeek self,
+    T visitSetPeek(LIRSetPeek self,
                         JExpression streamContext,
                         int peek);
     
     /**
      * Visits a pop-rate-setting node.
      */
-    Object visitSetPop(LIRSetPop self,
+    T visitSetPop(LIRSetPop self,
                        JExpression streamContext,
                        int pop);
     
     /**
      * Visits a push-rate-setting node.
      */
-    Object visitSetPush(LIRSetPush self,
+    T visitSetPush(LIRSetPush self,
                         JExpression streamContext,
                         int push);
 
@@ -203,17 +203,17 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a file reader.
      */
-    Object visitFileReader(LIRFileReader self);
+    T visitFileReader(LIRFileReader self);
 
     /**
      * Visits a file writer.
      */
-    Object visitFileWriter(LIRFileWriter self);
+    T visitFileWriter(LIRFileWriter self);
     
     /**
      * Visits a splitter-setting node.
      */
-    Object visitSetSplitter(LIRSetSplitter self,
+    T visitSetSplitter(LIRSetSplitter self,
                             JExpression streamContext,
                             SIRSplitType type,
                             int ways,
@@ -222,21 +222,21 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a stream-type-setting node.
      */
-    Object visitSetStreamType(LIRSetStreamType self,
+    T visitSetStreamType(LIRSetStreamType self,
                               JExpression streamContext,
                               LIRStreamType streamType);
     
     /**
      * Visits a work-function-setting node.
      */
-    Object visitSetWork(LIRSetWork self,
+    T visitSetWork(LIRSetWork self,
                         JExpression streamContext,
                         LIRFunctionPointer fn);
 
     /**
      * Visits a tape registerer.
      */
-    Object visitSetTape(LIRSetTape self,
+    T visitSetTape(LIRSetTape self,
                         JExpression streamContext,
                         JExpression srcStruct,
                         JExpression dstStruct,
@@ -246,7 +246,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a main function contents.
      */
-    Object visitMainFunction(LIRMainFunction self,
+    T visitMainFunction(LIRMainFunction self,
                              String typeName,
                              LIRFunctionPointer init,
                              List<JStatement> initStatements);
@@ -255,7 +255,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a set body of feedback loop.
      */
-    Object visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+    T visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
                                   JExpression streamContext,
                                   JExpression childContext,
                                   CType inputType,
@@ -266,7 +266,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a set loop of feedback loop.
      */
-    Object visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+    T visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
                                   JExpression streamContext,
                                   JExpression childContext,
                                   CType inputType,
@@ -277,7 +277,7 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     /**
      * Visits a set a parallel stream.
      */
-    Object visitSetParallelStream(LIRSetParallelStream self,
+    T visitSetParallelStream(LIRSetParallelStream self,
                                   JExpression streamContext,
                                   JExpression childContext,
                                   int position,

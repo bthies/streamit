@@ -12,81 +12,82 @@ import at.dms.kjc.sir.SIRRangeExpression;
 /**
  * Visitor only defined on subtypes of JExpression,
  * Takes arbitrary data, returns arbitrary data.
- * @author dimock
+ * <br/>$Id$
+ * @author Allyn Dimock
  *
  */
-public interface ExpressionVisitor {
+public interface ExpressionVisitor<S,T> {
 
-    Object visitArrayAccess(JArrayAccessExpression self, Object otherData);
-    Object visitArrayInitializer(JArrayInitializer self, Object otherData);
-    Object visitArrayLength(JArrayLengthExpression self, Object otherData);
-    Object visitBinary(JBinaryExpression self, Object otherData); // could redirect all binary expressions here
+    S visitArrayAccess(JArrayAccessExpression self, T otherData);
+    S visitArrayInitializer(JArrayInitializer self, T otherData);
+    S visitArrayLength(JArrayLengthExpression self, T otherData);
+    S visitBinary(JBinaryExpression self, T otherData); // could redirect all binary expressions here
     // Subtypes of Binary
-    Object visitAssignment(JAssignmentExpression self, Object otherData);
-    Object visitCompoundAssignment(JCompoundAssignmentExpression self, Object otherData);
-    Object visitBinaryArithmetic(JBinaryArithmeticExpression self, Object otherData); // could redirect all binary arithmetic here
+    S visitAssignment(JAssignmentExpression self, T otherData);
+    S visitCompoundAssignment(JCompoundAssignmentExpression self, T otherData);
+    S visitBinaryArithmetic(JBinaryArithmeticExpression self, T otherData); // could redirect all binary arithmetic here
     //  Subtypes of BinaryArithmetic
-    Object visitAdd(JAddExpression self, Object otherData);
-    Object visitBitwise(JBitwiseExpression self, Object otherData);
-    Object visitDivide(JDivideExpression self, Object otherData);
-    Object visitMinus(JMinusExpression self, Object otherData);
-    Object visitModulo(JModuloExpression self, Object otherData);
-    Object visitMult(JMultExpression self, Object otherData);
-    Object visitShift(JShiftExpression self, Object otherData);
+    S visitAdd(JAddExpression self, T otherData);
+    S visitBitwise(JBitwiseExpression self, T otherData);
+    S visitDivide(JDivideExpression self, T otherData);
+    S visitMinus(JMinusExpression self, T otherData);
+    S visitModulo(JModuloExpression self, T otherData);
+    S visitMult(JMultExpression self, T otherData);
+    S visitShift(JShiftExpression self, T otherData);
     //  end subtypes of BinaryArithmetic
-    Object visitConditionalAnd(JConditionalAndExpression self, Object otherData);
-    Object visitConditionalOr(JConditionalOrExpression self, Object otherData);
-    Object visitEquality(JEqualityExpression self, Object otherData);
-    Object visitRelational(JRelationalExpression self, Object otherData);
+    S visitConditionalAnd(JConditionalAndExpression self, T otherData);
+    S visitConditionalOr(JConditionalOrExpression self, T otherData);
+    S visitEquality(JEqualityExpression self, T otherData);
+    S visitRelational(JRelationalExpression self, T otherData);
     // end subtypes of Binary
-    Object visitCast(JCastExpression self, Object otherData);
-    Object visitChecked(JCheckedExpression self, Object otherData);
-    Object visitClass(JClassExpression self, Object otherData);
-    Object visitConditional(JConditionalExpression self, Object otherData);
-    Object visitConstructorCall(JConstructorCall self, Object otherData);
-    Object visitFieldAccess(JFieldAccessExpression self, Object otherData);
-    Object visitInstanceof(JInstanceofExpression self, Object otherData);
-    Object visitLiteral(JLiteral self, Object otherData); // could redirect individual literals here.
+    S visitCast(JCastExpression self, T otherData);
+    S visitChecked(JCheckedExpression self, T otherData);
+    S visitClass(JClassExpression self, T otherData);
+    S visitConditional(JConditionalExpression self, T otherData);
+    S visitConstructorCall(JConstructorCall self, T otherData);
+    S visitFieldAccess(JFieldAccessExpression self, T otherData);
+    S visitInstanceof(JInstanceofExpression self, T otherData);
+    S visitLiteral(JLiteral self, T otherData); // could redirect individual literals here.
     // Subtypes of Literal
-    Object visitBooleanLiteral(JBooleanLiteral self, Object otherData);
-    Object visitByteLiteral(JByteLiteral self, Object otherData);
-    Object visitCharLiteral(JCharLiteral self, Object otherData);
-    Object visitDoubleLiteral(JDoubleLiteral self, Object otherData);
-    Object visitFloatLiteral(JFloatLiteral self, Object otherData);
-    Object visitIntLiteral(JIntLiteral self, Object otherData);
-    Object visitLongLiteral(JLongLiteral self, Object otherData);
-    Object visitNullLiteral(JNullLiteral self, Object otherData);
-    Object visitShortLiteral(JShortLiteral self, Object otherData);
-    Object visitStringLiteral(JStringLiteral self, Object otherData);
-    Object visitPortal(SIRPortal self, Object otherData); // yet another literal
+    S visitBooleanLiteral(JBooleanLiteral self, T otherData);
+    S visitByteLiteral(JByteLiteral self, T otherData);
+    S visitCharLiteral(JCharLiteral self, T otherData);
+    S visitDoubleLiteral(JDoubleLiteral self, T otherData);
+    S visitFloatLiteral(JFloatLiteral self, T otherData);
+    S visitIntLiteral(JIntLiteral self, T otherData);
+    S visitLongLiteral(JLongLiteral self, T otherData);
+    S visitNullLiteral(JNullLiteral self, T otherData);
+    S visitShortLiteral(JShortLiteral self, T otherData);
+    S visitStringLiteral(JStringLiteral self, T otherData);
+    S visitPortal(SIRPortal self, T otherData); // yet another literal
     // end subtypes of Literal
-    Object visitLocalVariable(JLocalVariableExpression self, Object otherData);
-    Object visitMethodCall(JMethodCallExpression self, Object otherData);
-    Object visitName(JNameExpression self, Object otherData);
-    Object visitNewArray(JNewArrayExpression self, Object otherData);
-    Object visitParenthesed(JParenthesedExpression self, Object otherData);
-    Object visitPostfix(JPostfixExpression self, Object otherData);
-    Object visitPrefix(JPrefixExpression self, Object otherData);
-    Object visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self, Object otherData);
-    Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self, Object otherData);
-    Object visitSuper(JSuperExpression self, Object otherData);
-    Object visitThis(JThisExpression self, Object otherData);
-    Object visitTypeName(JTypeNameExpression self, Object otherData);
-    Object visitUnary(JUnaryExpression self, Object otherData);  // could redirect all unary expressions here
+    S visitLocalVariable(JLocalVariableExpression self, T otherData);
+    S visitMethodCall(JMethodCallExpression self, T otherData);
+    S visitName(JNameExpression self, T otherData);
+    S visitNewArray(JNewArrayExpression self, T otherData);
+    S visitParenthesed(JParenthesedExpression self, T otherData);
+    S visitPostfix(JPostfixExpression self, T otherData);
+    S visitPrefix(JPrefixExpression self, T otherData);
+    S visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self, T otherData);
+    S visitQualifiedInstanceCreation(JQualifiedInstanceCreation self, T otherData);
+    S visitSuper(JSuperExpression self, T otherData);
+    S visitThis(JThisExpression self, T otherData);
+    S visitTypeName(JTypeNameExpression self, T otherData);
+    S visitUnary(JUnaryExpression self, T otherData);  // could redirect all unary expressions here
     // Subtypes of Unary
-    Object visitBitwiseComplement(JBitwiseComplementExpression self, Object otherData);
-    Object visitLogicalComplement(JLogicalComplementExpression self, Object otherData);
-    Object visitUnaryMinus(JUnaryMinusExpression self, Object otherData);
-    Object visitUnaryPlus(JUnaryPlusExpression self, Object otherData);
+    S visitBitwiseComplement(JBitwiseComplementExpression self, T otherData);
+    S visitLogicalComplement(JLogicalComplementExpression self, T otherData);
+    S visitUnaryMinus(JUnaryMinusExpression self, T otherData);
+    S visitUnaryPlus(JUnaryPlusExpression self, T otherData);
     // end subtypes of Unary
-    Object visitUnaryPromote(JUnaryPromote self, Object otherData);
-    Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self, Object otherData);
-    Object visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, Object otherData);
-    Object visitCreatePortal(SIRCreatePortal self, Object otherData);
-    Object visitDynamicToken(SIRDynamicToken self, Object otherData);
-    Object visitInterfaceTable(SIRInterfaceTable self, Object otherData);
-    Object visitPeek(SIRPeekExpression self, Object otherData);
-    Object visitPop(SIRPopExpression self, Object otherData);
-    Object visitPush(SIRPushExpression self, Object otherData);
-    Object visitRange(SIRRangeExpression self, Object otherData);
+    S visitUnaryPromote(JUnaryPromote self, T otherData);
+    S visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self, T otherData);
+    S visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, T otherData);
+    S visitCreatePortal(SIRCreatePortal self, T otherData);
+    S visitDynamicToken(SIRDynamicToken self, T otherData);
+    S visitInterfaceTable(SIRInterfaceTable self, T otherData);
+    S visitPeek(SIRPeekExpression self, T otherData);
+    S visitPop(SIRPopExpression self, T otherData);
+    S visitPush(SIRPushExpression self, T otherData);
+    S visitRange(SIRRangeExpression self, T otherData);
 }

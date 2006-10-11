@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpression.java,v 1.9 2006-03-24 15:54:47 dimock Exp $
+ * $Id: JExpression.java,v 1.10 2006-10-11 17:49:42 dimock Exp $
  */ 
  
 package at.dms.kjc;
@@ -293,9 +293,16 @@ public abstract class JExpression extends JPhylum {
     /**
      * Accepts the specified attribute visitor
      * @param   p       the visitor
+     * @return  data to pass back up
      */
     public abstract Object accept(AttributeVisitor p);
-
+    /**
+     * Accepts the specified expression visitor
+     * @param  v        the visitor
+     * @param  d        data passed through to sub-visits
+     * @return data to pass back up
+     */
+    public abstract Object accept(ExpressionVisitor p, Object d);
     /**
      * Generates JVM bytecode to evaluate this expression.
      *

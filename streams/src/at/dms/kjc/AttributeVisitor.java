@@ -21,7 +21,7 @@ import at.dms.compiler.JavadocComment;
  * Implementation of an Attributed Visitor Design Pattern for KJC.
  *
  */
-public interface AttributeVisitor {
+public interface AttributeVisitor<T> {
 
     // ----------------------------------------------------------------------
     // COMPILATION UNIT
@@ -30,7 +30,7 @@ public interface AttributeVisitor {
     /**
      * visits a compilation unit
      */
-    Object visitCompilationUnit(JCompilationUnit self,
+    T visitCompilationUnit(JCompilationUnit self,
                                 JPackageName packageName,
                                 JPackageImport[] importedPackages,
                                 JClassImport[] importedClasses,
@@ -43,7 +43,7 @@ public interface AttributeVisitor {
     /**
      * visits a class declaration
      */
-    Object visitClassDeclaration(JClassDeclaration self,
+    T visitClassDeclaration(JClassDeclaration self,
                                  int modifiers,
                                  String ident,
                                  String superName,
@@ -55,7 +55,7 @@ public interface AttributeVisitor {
     /**
      * visits a class body
      */
-    Object visitClassBody(JTypeDeclaration[] decls,
+    T visitClassBody(JTypeDeclaration[] decls,
                           JFieldDeclaration[] fields,
                           JMethodDeclaration[] methods,
                           JPhylum[] body);
@@ -63,7 +63,7 @@ public interface AttributeVisitor {
     /**
      * visits a class declaration
      */
-    Object visitInnerClassDeclaration(JClassDeclaration self,
+    T visitInnerClassDeclaration(JClassDeclaration self,
                                       int modifiers,
                                       String ident,
                                       String superName,
@@ -76,7 +76,7 @@ public interface AttributeVisitor {
     /**
      * visits an interface declaration
      */
-    Object visitInterfaceDeclaration(JInterfaceDeclaration self,
+    T visitInterfaceDeclaration(JInterfaceDeclaration self,
                                      int modifiers,
                                      String ident,
                                      CClassType[] interfaces,
@@ -90,7 +90,7 @@ public interface AttributeVisitor {
     /**
      * visits a field declaration
      */
-    Object visitFieldDeclaration(JFieldDeclaration self,
+    T visitFieldDeclaration(JFieldDeclaration self,
                                  int modifiers,
                                  CType type,
                                  String ident,
@@ -99,7 +99,7 @@ public interface AttributeVisitor {
     /**
      * visits a method declaration
      */
-    Object visitMethodDeclaration(JMethodDeclaration self,
+    T visitMethodDeclaration(JMethodDeclaration self,
                                   int modifiers,
                                   CType returnType,
                                   String ident,
@@ -109,7 +109,7 @@ public interface AttributeVisitor {
     /**
      * visits a method declaration
      */
-    Object visitConstructorDeclaration(JConstructorDeclaration self,
+    T visitConstructorDeclaration(JConstructorDeclaration self,
                                        int modifiers,
                                        String ident,
                                        JFormalParameter[] parameters,
@@ -123,20 +123,20 @@ public interface AttributeVisitor {
     /**
      * visits a while statement
      */
-    Object visitWhileStatement(JWhileStatement self,
+    T visitWhileStatement(JWhileStatement self,
                                JExpression cond,
                                JStatement body);
 
     /**
      * visits a variable declaration statement
      */
-    Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+    T visitVariableDeclarationStatement(JVariableDeclarationStatement self,
                                              JVariableDefinition[] vars);
 
     /**
      * visits a variable declaration statement
      */
-    Object visitVariableDefinition(JVariableDefinition self,
+    T visitVariableDefinition(JVariableDefinition self,
                                    int modifiers,
                                    CType type,
                                    String ident,
@@ -144,54 +144,54 @@ public interface AttributeVisitor {
     /**
      * visits a try-catch statement
      */
-    Object visitTryCatchStatement(JTryCatchStatement self,
+    T visitTryCatchStatement(JTryCatchStatement self,
                                   JBlock tryClause,
                                   JCatchClause[] catchClauses);
 
     /**
      * visits a try-finally statement
      */
-    Object visitTryFinallyStatement(JTryFinallyStatement self,
+    T visitTryFinallyStatement(JTryFinallyStatement self,
                                     JBlock tryClause,
                                     JBlock finallyClause);
 
     /**
      * visits a throw statement
      */
-    Object visitThrowStatement(JThrowStatement self,
+    T visitThrowStatement(JThrowStatement self,
                                JExpression expr);
 
     /**
      * visits a synchronized statement
      */
-    Object visitSynchronizedStatement(JSynchronizedStatement self,
+    T visitSynchronizedStatement(JSynchronizedStatement self,
                                       JExpression cond,
                                       JStatement body);
 
     /**
      * visits a switch statement
      */
-    Object visitSwitchStatement(JSwitchStatement self,
+    T visitSwitchStatement(JSwitchStatement self,
                                 JExpression expr,
                                 JSwitchGroup[] body);
 
     /**
      * visits a return statement
      */
-    Object visitReturnStatement(JReturnStatement self,
+    T visitReturnStatement(JReturnStatement self,
                                 JExpression expr);
 
     /**
      * visits a labeled statement
      */
-    Object visitLabeledStatement(JLabeledStatement self,
+    T visitLabeledStatement(JLabeledStatement self,
                                  String label,
                                  JStatement stmt);
 
     /**
      * visits a if statement
      */
-    Object visitIfStatement(JIfStatement self,
+    T visitIfStatement(JIfStatement self,
                             JExpression cond,
                             JStatement thenClause,
                             JStatement elseClause);
@@ -199,7 +199,7 @@ public interface AttributeVisitor {
     /**
      * visits a for statement
      */
-    Object visitForStatement(JForStatement self,
+    T visitForStatement(JForStatement self,
                              JStatement init,
                              JExpression cond,
                              JStatement incr,
@@ -208,59 +208,59 @@ public interface AttributeVisitor {
     /**
      * visits a compound statement
      */
-    Object visitCompoundStatement(JCompoundStatement self,
+    T visitCompoundStatement(JCompoundStatement self,
                                   JStatement[] body);
 
     /**
      * visits an expression statement
      */
-    Object visitExpressionStatement(JExpressionStatement self,
+    T visitExpressionStatement(JExpressionStatement self,
                                     JExpression expr);
 
     /**
      * visits an expression list statement
      */
-    Object visitExpressionListStatement(JExpressionListStatement self,
+    T visitExpressionListStatement(JExpressionListStatement self,
                                         JExpression[] expr);
 
     /**
      * visits a empty statement
      */
-    Object visitEmptyStatement(JEmptyStatement self);
+    T visitEmptyStatement(JEmptyStatement self);
 
     /**
      * visits a do statement
      */
-    Object visitDoStatement(JDoStatement self,
+    T visitDoStatement(JDoStatement self,
                             JExpression cond,
                             JStatement body);
 
     /**
      * visits a continue statement
      */
-    Object visitContinueStatement(JContinueStatement self,
+    T visitContinueStatement(JContinueStatement self,
                                   String label);
 
     /**
      * visits a break statement
      */
-    Object visitBreakStatement(JBreakStatement self,
+    T visitBreakStatement(JBreakStatement self,
                                String label);
 
     /**
      * visits an expression statement
      */
-    Object visitBlockStatement(JBlock self,
+    T visitBlockStatement(JBlock self,
                                JavaStyleComment[] comments);
 
     /**
      * visits a type declaration statement
      */
-    Object visitTypeDeclarationStatement(JTypeDeclarationStatement self,
+    T visitTypeDeclarationStatement(JTypeDeclarationStatement self,
                                          JTypeDeclaration decl);
     
     /** Visit text to be emitted unchanged in a compiler backend. */
-    Object visitEmittedText(JEmittedText self);
+    T visitEmittedText(JEmittedText self);
 
     // ----------------------------------------------------------------------
     // EXPRESSION
@@ -269,48 +269,48 @@ public interface AttributeVisitor {
     /**
      * visits an unary plus expression
      */
-    Object visitUnaryPlusExpression(JUnaryExpression self,
+    T visitUnaryPlusExpression(JUnaryExpression self,
                                     JExpression expr);
 
     /**
      * visits an unary minus expression
      */
-    Object visitUnaryMinusExpression(JUnaryExpression self,
+    T visitUnaryMinusExpression(JUnaryExpression self,
                                      JExpression expr);
 
     /**
      * visits a bitwise complement expression
      */
-    Object visitBitwiseComplementExpression(JUnaryExpression self,
+    T visitBitwiseComplementExpression(JUnaryExpression self,
                                             JExpression expr);
 
     /**
      * visits a logical complement expression
      */
-    Object visitLogicalComplementExpression(JUnaryExpression self,
+    T visitLogicalComplementExpression(JUnaryExpression self,
                                             JExpression expr);
 
     /**
      * visits a type name expression
      */
-    Object visitTypeNameExpression(JTypeNameExpression self,
+    T visitTypeNameExpression(JTypeNameExpression self,
                                    CType type);
 
     /**
      * visits a this expression
      */
-    Object visitThisExpression(JThisExpression self,
+    T visitThisExpression(JThisExpression self,
                                JExpression prefix);
 
     /**
      * visits a super expression
      */
-    Object visitSuperExpression(JSuperExpression self);
+    T visitSuperExpression(JSuperExpression self);
 
     /**
      * visits a shift expression
      */
-    Object visitShiftExpression(JShiftExpression self,
+    T visitShiftExpression(JShiftExpression self,
                                 int oper,
                                 JExpression left,
                                 JExpression right);
@@ -318,7 +318,7 @@ public interface AttributeVisitor {
     /**
      * visits a shift expressiona
      */
-    Object visitRelationalExpression(JRelationalExpression self,
+    T visitRelationalExpression(JRelationalExpression self,
                                      int oper,
                                      JExpression left,
                                      JExpression right);
@@ -326,27 +326,27 @@ public interface AttributeVisitor {
     /**
      * visits a prefix expression
      */
-    Object visitPrefixExpression(JPrefixExpression self,
+    T visitPrefixExpression(JPrefixExpression self,
                                  int oper,
                                  JExpression expr);
 
     /**
      * visits a postfix expression
      */
-    Object visitPostfixExpression(JPostfixExpression self,
+    T visitPostfixExpression(JPostfixExpression self,
                                   int oper,
                                   JExpression expr);
 
     /**
      * visits a parenthesed expression
      */
-    Object visitParenthesedExpression(JParenthesedExpression self,
+    T visitParenthesedExpression(JParenthesedExpression self,
                                       JExpression expr);
 
     /**
      * Visits an unqualified anonymous class instance creation expression.
      */
-    Object visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self,
+    T visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self,
                                            JExpression prefix,
                                            String ident,
                                            JExpression[] params,
@@ -354,7 +354,7 @@ public interface AttributeVisitor {
     /**
      * Visits an unqualified instance creation expression.
      */
-    Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
+    T visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] params);
@@ -362,7 +362,7 @@ public interface AttributeVisitor {
     /**
      * Visits an unqualified anonymous class instance creation expression.
      */
-    Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
+    T visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
                                              CClassType type,
                                              JExpression[] params,
                                              JClassDeclaration decl);
@@ -370,14 +370,14 @@ public interface AttributeVisitor {
     /**
      * Visits an unqualified instance creation expression.
      */
-    Object visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self,
+    T visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self,
                                             CClassType type,
                                             JExpression[] params);
 
     /**
      * visits an array allocator expression
      */
-    Object visitNewArrayExpression(JNewArrayExpression self,
+    T visitNewArrayExpression(JNewArrayExpression self,
                                    CType type,
                                    JExpression[] dims,
                                    JArrayInitializer init);
@@ -385,41 +385,41 @@ public interface AttributeVisitor {
     /**
      * visits a name expression
      */
-    Object visitNameExpression(JNameExpression self,
+    T visitNameExpression(JNameExpression self,
                                JExpression prefix,
                                String ident);
 
     /**
      * visits an array allocator expression
      */
-    Object visitBinaryExpression(JBinaryExpression self,
+    T visitBinaryExpression(JBinaryExpression self,
                                  String oper,
                                  JExpression left,
                                  JExpression right);
     /**
      * visits a method call expression
      */
-    Object visitMethodCallExpression(JMethodCallExpression self,
+    T visitMethodCallExpression(JMethodCallExpression self,
                                      JExpression prefix,
                                      String ident,
                                      JExpression[] args);
     /**
      * visits a local variable expression
      */
-    Object visitLocalVariableExpression(JLocalVariableExpression self,
+    T visitLocalVariableExpression(JLocalVariableExpression self,
                                         String ident);
 
     /**
      * visits an instanceof expression
      */
-    Object visitInstanceofExpression(JInstanceofExpression self,
+    T visitInstanceofExpression(JInstanceofExpression self,
                                      JExpression expr,
                                      CType dest);
 
     /**
      * visits an equality expression
      */
-    Object visitEqualityExpression(JEqualityExpression self,
+    T visitEqualityExpression(JEqualityExpression self,
                                    boolean equal,
                                    JExpression left,
                                    JExpression right);
@@ -427,7 +427,7 @@ public interface AttributeVisitor {
     /**
      * visits a conditional expression
      */
-    Object visitConditionalExpression(JConditionalExpression self,
+    T visitConditionalExpression(JConditionalExpression self,
                                       JExpression cond,
                                       JExpression left,
                                       JExpression right);
@@ -435,78 +435,78 @@ public interface AttributeVisitor {
     /**
      * visits a compound expression
      */
-    Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+    T visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
                                              int oper,
                                              JExpression left,
                                              JExpression right);
     /**
      * visits a field expression
      */
-    Object visitFieldExpression(JFieldAccessExpression self,
+    T visitFieldExpression(JFieldAccessExpression self,
                                 JExpression left,
                                 String ident);
 
     /**
      * visits a class expression
      */
-    Object visitClassExpression(JClassExpression self,
+    T visitClassExpression(JClassExpression self,
                                 CType type);
 
     /**
      * visits a cast expression
      */
-    Object visitCastExpression(JCastExpression self,
+    T visitCastExpression(JCastExpression self,
                                JExpression expr,
                                CType type);
 
     /**
      * visits a cast expression
      */
-    Object visitUnaryPromoteExpression(JUnaryPromote self,
+    T visitUnaryPromoteExpression(JUnaryPromote self,
                                        JExpression expr,
                                        CType type);
 
     /**
      * visits a compound assignment expression
      */
-    Object visitBitwiseExpression(JBitwiseExpression self,
+    T visitBitwiseExpression(JBitwiseExpression self,
                                   int oper,
                                   JExpression left,
                                   JExpression right);
     /**
      * visits an assignment expression
      */
-    Object visitAssignmentExpression(JAssignmentExpression self,
+    T visitAssignmentExpression(JAssignmentExpression self,
                                      JExpression left,
                                      JExpression right);
 
     /**
      * visits an array length expression
      */
-    Object visitArrayLengthExpression(JArrayLengthExpression self,
+    T visitArrayLengthExpression(JArrayLengthExpression self,
                                       JExpression prefix);
 
     /**
      * visits an array length expression
      */
-    Object visitArrayAccessExpression(JArrayAccessExpression self,
+    T visitArrayAccessExpression(JArrayAccessExpression self,
                                       JExpression prefix,
                                       JExpression accessor);
 
     /**
      * visits an array length expression
      */
-    Object visitComments(JavaStyleComment[] comments);
+    T visitComments(JavaStyleComment[] comments);
 
     /**
      * visits an array length expression
      */
-    Object visitComment(JavaStyleComment comment);
+    T visitComment(JavaStyleComment comment);
 
     /**
      * visits an array length expression
      */
-    Object visitJavadoc(JavadocComment comment);
+    T visitJavadoc(JavadocComment comment);
 
     // ----------------------------------------------------------------------
     // OTHERS
@@ -515,27 +515,27 @@ public interface AttributeVisitor {
     /**
      * visits an array length expression
      */
-    Object visitSwitchLabel(JSwitchLabel self,
+    T visitSwitchLabel(JSwitchLabel self,
                             JExpression expr);
 
     /**
      * visits an array length expression
      */
-    Object visitSwitchGroup(JSwitchGroup self,
+    T visitSwitchGroup(JSwitchGroup self,
                             JSwitchLabel[] labels,
                             JStatement[] stmts);
 
     /**
      * visits an array length expression
      */
-    Object visitCatchClause(JCatchClause self,
+    T visitCatchClause(JCatchClause self,
                             JFormalParameter exception,
                             JBlock body);
 
     /**
      * visits an array length expression
      */
-    Object visitFormalParameters(JFormalParameter self,
+    T visitFormalParameters(JFormalParameter self,
                                  boolean isFinal,
                                  CType type,
                                  String ident);
@@ -543,87 +543,87 @@ public interface AttributeVisitor {
     /**
      * visits an array length expression
      */
-    Object visitConstructorCall(JConstructorCall self,
+    T visitConstructorCall(JConstructorCall self,
                                 boolean functorIsThis,
                                 JExpression[] params);
 
     /**
      * visits an array initializer expression
      */
-    Object visitArrayInitializer(JArrayInitializer self,
+    T visitArrayInitializer(JArrayInitializer self,
                                  JExpression[] elems);
 
     /**
      * visits a boolean literal
      */
-    Object visitBooleanLiteral(JBooleanLiteral self,
+    T visitBooleanLiteral(JBooleanLiteral self,
                                boolean value);
 
     /**
      * visits a byte literal
      */
-    Object visitByteLiteral(JByteLiteral self,
+    T visitByteLiteral(JByteLiteral self,
                             byte value);
 
     /**
      * visits a character literal
      */
-    Object visitCharLiteral(JCharLiteral self,
+    T visitCharLiteral(JCharLiteral self,
                             char value);
 
     /**
      * visits a double literal
      */
-    Object visitDoubleLiteral(JDoubleLiteral self,
+    T visitDoubleLiteral(JDoubleLiteral self,
                               double value);
 
     /**
      * visits a float literal
      */
-    Object visitFloatLiteral(JFloatLiteral self,
+    T visitFloatLiteral(JFloatLiteral self,
                              float value);
 
     /**
      * visits a int literal
      */
-    Object visitIntLiteral(JIntLiteral self,
+    T visitIntLiteral(JIntLiteral self,
                            int value);
 
     /**
      * visits a long literal
      */
-    Object visitLongLiteral(JLongLiteral self,
+    T visitLongLiteral(JLongLiteral self,
                             long value);
 
     /**
      * visits a short literal
      */
-    Object visitShortLiteral(JShortLiteral self,
+    T visitShortLiteral(JShortLiteral self,
                              short value);
 
     /**
      * visits a string literal
      */
-    Object visitStringLiteral(JStringLiteral self,
+    T visitStringLiteral(JStringLiteral self,
                               String value);
 
     /**
      * visits a null literal
      */
-    Object visitNullLiteral(JNullLiteral self);
+    T visitNullLiteral(JNullLiteral self);
 
     /**
      * visits a package name declaration
      */
-    Object visitPackageName(String name);
+    T visitPackageName(String name);
 
     /**
      * visits a package import declaration
      */
-    Object visitPackageImport(String name);
+    T visitPackageImport(String name);
 
     /**
      * visits a class import declaration
      */
-    Object visitClassImport(String name);
+    T visitClassImport(String name);
 }

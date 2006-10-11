@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.13 2006-09-25 13:54:33 dimock Exp $
+ * $Id: CClass.java,v 1.14 2006-10-11 17:49:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -214,7 +214,8 @@ public abstract class CClass extends CMember {
 
         result = new CField[fields.size()];
         for (Enumeration<CField> eNum = fields.elements(); eNum.hasMoreElements(); ) {
-            CSourceField    field = (CSourceField)eNum.nextElement();
+            CField cfield = eNum.nextElement(); // pull out for debugging ClassCast exception
+            CSourceField    field = (CSourceField)cfield;
 
             result[field.getPosition()] = field;
         }

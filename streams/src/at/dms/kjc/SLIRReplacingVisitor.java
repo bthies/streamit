@@ -32,7 +32,7 @@ import at.dms.compiler.JavadocComment;
  * Right now it only replaces statements in children.
  */
 public class SLIRReplacingVisitor extends ReplacingVisitor 
-    implements SLIRAttributeVisitor {
+    implements SLIRAttributeVisitor<Object> {
 
     /**
      * SIR NODES.
@@ -421,6 +421,7 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     /**
      * Visits a main function contents.
      */
+
     public Object visitMainFunction(LIRMainFunction self,
                                     String typeName,
                                     LIRFunctionPointer init,

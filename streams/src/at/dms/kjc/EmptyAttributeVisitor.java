@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.11 2006-08-28 02:23:29 dimock Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.12 2006-10-11 17:49:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -30,7 +30,7 @@ import at.dms.compiler.JavadocComment;
  * given node.
  *
  * Suggested from: Max R. Andersen(max@cs.auc.dk) */
-public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
+public class EmptyAttributeVisitor implements Constants, AttributeVisitor<Object> {
 
     protected boolean forwards=true; //Determines whether to walk forwards or backwards through blocks
 

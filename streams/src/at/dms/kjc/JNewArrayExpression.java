@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.16 2006-09-27 23:40:34 dimock Exp $
+ * $Id: JNewArrayExpression.java,v 1.17 2006-10-11 17:49:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -103,6 +103,8 @@ public class JNewArrayExpression extends JExpression {
         return dims;
     }
 
+    public JArrayInitializer getInit() { return init; }
+    
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------

@@ -15,15 +15,19 @@ import at.dms.kjc.sir.SIRRangeExpression;
 /**
  * Implementation of ExpressionVisitor, implements all methods by asserting false.
  * Can be set to redispatch to combined visit for superclass before failing.
- * @author dimock
+ * <br/>
+ * $Id$
+ * @param S : return type of visitor.
+ * @param T : type of second argument to visitor.
+ * @author Allyn Dimock
  *
  */
-public class ExpressionVisitorBase implements ExpressionVisitor {
+public class ExpressionVisitorBase<S,T> implements ExpressionVisitor<S,T> {
 
-    private boolean redispatchBinary = false;
-    private boolean redispatchBinaryArithmetic = false;
-    private boolean redispatchLiteral = false;
-    private boolean redispatchUnary = false;
+    protected boolean redispatchBinary = false;
+    protected boolean redispatchBinaryArithmetic = false;
+    protected boolean redispatchLiteral = false;
+    protected boolean redispatchUnary = false;
 
     /**
      * Collect visits to subtypes of JBinaryExpression into visitBinary.
@@ -61,7 +65,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitAdd(at.dms.kjc.JAddExpression, java.lang.Object)
      */
-    public Object visitAdd(JAddExpression self, Object otherData) {
+    public S visitAdd(JAddExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -71,7 +75,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitArrayAccess(at.dms.kjc.JArrayAccessExpression, java.lang.Object)
      */
-    public Object visitArrayAccess(JArrayAccessExpression self, Object otherData) {
+    public S visitArrayAccess(JArrayAccessExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -79,7 +83,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitArrayInitializer(at.dms.kjc.JArrayInitializer, java.lang.Object)
      */
-    public Object visitArrayInitializer(JArrayInitializer self, Object otherData) {
+    public S visitArrayInitializer(JArrayInitializer self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -87,7 +91,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitArrayLength(at.dms.kjc.JArrayLengthExpression, java.lang.Object)
      */
-    public Object visitArrayLength(JArrayLengthExpression self, Object otherData) {
+    public S visitArrayLength(JArrayLengthExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -95,7 +99,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitAssignment(at.dms.kjc.JAssignmentExpression, java.lang.Object)
      */
-    public Object visitAssignment(JAssignmentExpression self, Object otherData) {
+    public S visitAssignment(JAssignmentExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -104,7 +108,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitBinary(at.dms.kjc.JBinaryExpression, java.lang.Object)
      */
-    public Object visitBinary(JBinaryExpression self, Object otherData) {
+    public S visitBinary(JBinaryExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -112,8 +116,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitBinaryArithmetic(at.dms.kjc.JBinaryArithmeticExpression, java.lang.Object)
      */
-    public Object visitBinaryArithmetic(JBinaryArithmeticExpression self,
-            Object otherData) {
+    public S visitBinaryArithmetic(JBinaryArithmeticExpression self,
+            T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -122,7 +126,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitBitwise(at.dms.kjc.JBitwiseExpression, java.lang.Object)
      */
-    public Object visitBitwise(JBitwiseExpression self, Object otherData) {
+    public S visitBitwise(JBitwiseExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -132,8 +136,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitBitwiseComplement(at.dms.kjc.JBitwiseComplementExpression, java.lang.Object)
      */
-    public Object visitBitwiseComplement(JBitwiseComplementExpression self,
-            Object otherData) {
+    public S visitBitwiseComplement(JBitwiseComplementExpression self,
+            T otherData) {
 	if (redispatchUnary) return visitUnary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -142,7 +146,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitBooleanLiteral(at.dms.kjc.JBooleanLiteral, java.lang.Object)
      */
-    public Object visitBooleanLiteral(JBooleanLiteral self, Object otherData) {
+    public S visitBooleanLiteral(JBooleanLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -151,7 +155,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitByteLiteral(at.dms.kjc.JByteLiteral, java.lang.Object)
      */
-    public Object visitByteLiteral(JByteLiteral self, Object otherData) {
+    public S visitByteLiteral(JByteLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -160,7 +164,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitCast(at.dms.kjc.JCastExpression, java.lang.Object)
      */
-    public Object visitCast(JCastExpression self, Object otherData) {
+    public S visitCast(JCastExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -168,7 +172,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitCharLiteral(at.dms.kjc.JCharLiteral, java.lang.Object)
      */
-    public Object visitCharLiteral(JCharLiteral self, Object otherData) {
+    public S visitCharLiteral(JCharLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -177,7 +181,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitChecked(at.dms.kjc.JCheckedExpression, java.lang.Object)
      */
-    public Object visitChecked(JCheckedExpression self, Object otherData) {
+    public S visitChecked(JCheckedExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -185,7 +189,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitClass(at.dms.kjc.JClassExpression, java.lang.Object)
      */
-    public Object visitClass(JClassExpression self, Object otherData) {
+    public S visitClass(JClassExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -193,8 +197,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitCompoundAssignment(at.dms.kjc.JCompoundAssignmentExpression, java.lang.Object)
      */
-    public Object visitCompoundAssignment(JCompoundAssignmentExpression self,
-            Object otherData) {
+    public S visitCompoundAssignment(JCompoundAssignmentExpression self,
+            T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -203,7 +207,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitConditional(at.dms.kjc.JConditionalExpression, java.lang.Object)
      */
-    public Object visitConditional(JConditionalExpression self, Object otherData) {
+    public S visitConditional(JConditionalExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -211,8 +215,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitConditionalAnd(at.dms.kjc.JConditionalAndExpression, java.lang.Object)
      */
-    public Object visitConditionalAnd(JConditionalAndExpression self,
-            Object otherData) {
+    public S visitConditionalAnd(JConditionalAndExpression self,
+            T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -221,8 +225,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitConditionalOr(at.dms.kjc.JConditionalOrExpression, java.lang.Object)
      */
-    public Object visitConditionalOr(JConditionalOrExpression self,
-            Object otherData) {
+    public S visitConditionalOr(JConditionalOrExpression self,
+            T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -231,7 +235,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitConstructorCall(at.dms.kjc.JConstructorCall, java.lang.Object)
      */
-    public Object visitConstructorCall(JConstructorCall self, Object otherData) {
+    public S visitConstructorCall(JConstructorCall self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -239,7 +243,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitCreatePortal(at.dms.kjc.sir.SIRCreatePortal, java.lang.Object)
      */
-    public Object visitCreatePortal(SIRCreatePortal self, Object otherData) {
+    public S visitCreatePortal(SIRCreatePortal self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -247,7 +251,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitDivide(at.dms.kjc.JDivideExpression, java.lang.Object)
      */
-    public Object visitDivide(JDivideExpression self, Object otherData) {
+    public S visitDivide(JDivideExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -257,7 +261,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitDoubleLiteral(at.dms.kjc.JDoubleLiteral, java.lang.Object)
      */
-    public Object visitDoubleLiteral(JDoubleLiteral self, Object otherData) {
+    public S visitDoubleLiteral(JDoubleLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -266,7 +270,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitDynamicToken(at.dms.kjc.sir.SIRDynamicToken, java.lang.Object)
      */
-    public Object visitDynamicToken(SIRDynamicToken self, Object otherData) {
+    public S visitDynamicToken(SIRDynamicToken self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -274,7 +278,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitEquality(at.dms.kjc.JEqualityExpression, java.lang.Object)
      */
-    public Object visitEquality(JEqualityExpression self, Object otherData) {
+    public S visitEquality(JEqualityExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -283,7 +287,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitFieldAccess(at.dms.kjc.JFieldAccessExpression, java.lang.Object)
      */
-    public Object visitFieldAccess(JFieldAccessExpression self, Object otherData) {
+    public S visitFieldAccess(JFieldAccessExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -291,7 +295,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitFloatLiteral(at.dms.kjc.JFloatLiteral, java.lang.Object)
      */
-    public Object visitFloatLiteral(JFloatLiteral self, Object otherData) {
+    public S visitFloatLiteral(JFloatLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -300,7 +304,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitInstanceof(at.dms.kjc.JInstanceofExpression, java.lang.Object)
      */
-    public Object visitInstanceof(JInstanceofExpression self, Object otherData) {
+    public S visitInstanceof(JInstanceofExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -308,7 +312,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitIntLiteral(at.dms.kjc.JIntLiteral, java.lang.Object)
      */
-    public Object visitIntLiteral(JIntLiteral self, Object otherData) {
+    public S visitIntLiteral(JIntLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -317,7 +321,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitInterfaceTable(at.dms.kjc.sir.SIRInterfaceTable, java.lang.Object)
      */
-    public Object visitInterfaceTable(SIRInterfaceTable self, Object otherData) {
+    public S visitInterfaceTable(SIRInterfaceTable self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -325,7 +329,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitLiteral(at.dms.kjc.JLiteral, java.lang.Object)
      */
-    public Object visitLiteral(JLiteral self, Object otherData) {
+    public S visitLiteral(JLiteral self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -333,8 +337,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitLocalVariable(at.dms.kjc.JLocalVariableExpression, java.lang.Object)
      */
-    public Object visitLocalVariable(JLocalVariableExpression self,
-            Object otherData) {
+    public S visitLocalVariable(JLocalVariableExpression self,
+            T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -342,8 +346,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitLogicalComplement(at.dms.kjc.JLogicalComplementExpression, java.lang.Object)
      */
-    public Object visitLogicalComplement(JLogicalComplementExpression self,
-            Object otherData) {
+    public S visitLogicalComplement(JLogicalComplementExpression self,
+            T otherData) {
 	if (redispatchUnary) return visitUnary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -352,7 +356,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitLongLiteral(at.dms.kjc.JLongLiteral, java.lang.Object)
      */
-    public Object visitLongLiteral(JLongLiteral self, Object otherData) {
+    public S visitLongLiteral(JLongLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -361,7 +365,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitMethodCall(at.dms.kjc.JMethodCallExpression, java.lang.Object)
      */
-    public Object visitMethodCall(JMethodCallExpression self, Object otherData) {
+    public S visitMethodCall(JMethodCallExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -369,7 +373,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitMinus(at.dms.kjc.JMinusExpression, java.lang.Object)
      */
-    public Object visitMinus(JMinusExpression self, Object otherData) {
+    public S visitMinus(JMinusExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -379,7 +383,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitModulo(at.dms.kjc.JModuloExpression, java.lang.Object)
      */
-    public Object visitModulo(JModuloExpression self, Object otherData) {
+    public S visitModulo(JModuloExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -389,7 +393,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitMult(at.dms.kjc.JMultExpression, java.lang.Object)
      */
-    public Object visitMult(JMultExpression self, Object otherData) {
+    public S visitMult(JMultExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -399,7 +403,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitName(at.dms.kjc.JNameExpression, java.lang.Object)
      */
-    public Object visitName(JNameExpression self, Object otherData) {
+    public S visitName(JNameExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -407,7 +411,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitNewArray(at.dms.kjc.JNewArrayExpression, java.lang.Object)
      */
-    public Object visitNewArray(JNewArrayExpression self, Object otherData) {
+    public S visitNewArray(JNewArrayExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -415,7 +419,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitNullLiteral(at.dms.kjc.JNullLiteral, java.lang.Object)
      */
-    public Object visitNullLiteral(JNullLiteral self, Object otherData) {
+    public S visitNullLiteral(JNullLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -424,7 +428,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitParenthesed(at.dms.kjc.JParenthesedExpression, java.lang.Object)
      */
-    public Object visitParenthesed(JParenthesedExpression self, Object otherData) {
+    public S visitParenthesed(JParenthesedExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -432,7 +436,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPeek(at.dms.kjc.sir.SIRPeekExpression, java.lang.Object)
      */
-    public Object visitPeek(SIRPeekExpression self, Object otherData) {
+    public S visitPeek(SIRPeekExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -440,7 +444,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPop(at.dms.kjc.sir.SIRPopExpression, java.lang.Object)
      */
-    public Object visitPop(SIRPopExpression self, Object otherData) {
+    public S visitPop(SIRPopExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -448,7 +452,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPortal(at.dms.kjc.sir.SIRPortal, java.lang.Object)
      */
-    public Object visitPortal(SIRPortal self, Object otherData) {
+    public S visitPortal(SIRPortal self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -456,7 +460,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPostfix(at.dms.kjc.JPostfixExpression, java.lang.Object)
      */
-    public Object visitPostfix(JPostfixExpression self, Object otherData) {
+    public S visitPostfix(JPostfixExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -464,7 +468,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPrefix(at.dms.kjc.JPrefixExpression, java.lang.Object)
      */
-    public Object visitPrefix(JPrefixExpression self, Object otherData) {
+    public S visitPrefix(JPrefixExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -472,7 +476,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitPush(at.dms.kjc.sir.SIRPushExpression, java.lang.Object)
      */
-    public Object visitPush(SIRPushExpression self, Object otherData) {
+    public S visitPush(SIRPushExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -480,8 +484,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitQualifiedAnonymousCreation(at.dms.kjc.JQualifiedAnonymousCreation, java.lang.Object)
      */
-    public Object visitQualifiedAnonymousCreation(
-            JQualifiedAnonymousCreation self, Object otherData) {
+    public S visitQualifiedAnonymousCreation(
+            JQualifiedAnonymousCreation self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -489,8 +493,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitQualifiedInstanceCreation(at.dms.kjc.JQualifiedInstanceCreation, java.lang.Object)
      */
-    public Object visitQualifiedInstanceCreation(
-            JQualifiedInstanceCreation self, Object otherData) {
+    public S visitQualifiedInstanceCreation(
+            JQualifiedInstanceCreation self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -498,7 +502,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitRange(at.dms.kjc.sir.SIRRangeExpression, java.lang.Object)
      */
-    public Object visitRange(SIRRangeExpression self, Object otherData) {
+    public S visitRange(SIRRangeExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -506,7 +510,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitRelational(at.dms.kjc.JRelationalExpression, java.lang.Object)
      */
-    public Object visitRelational(JRelationalExpression self, Object otherData) {
+    public S visitRelational(JRelationalExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -515,7 +519,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitShift(at.dms.kjc.JShiftExpression, java.lang.Object)
      */
-    public Object visitShift(JShiftExpression self, Object otherData) {
+    public S visitShift(JShiftExpression self, T otherData) {
 	if (redispatchBinary) return visitBinary(self,otherData);
 	if (redispatchBinaryArithmetic) return visitBinaryArithmetic(self,otherData);
         assert false : "Unexpected Expression";
@@ -525,7 +529,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitShortLiteral(at.dms.kjc.JShortLiteral, java.lang.Object)
      */
-    public Object visitShortLiteral(JShortLiteral self, Object otherData) {
+    public S visitShortLiteral(JShortLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -534,7 +538,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitStringLiteral(at.dms.kjc.JStringLiteral, java.lang.Object)
      */
-    public Object visitStringLiteral(JStringLiteral self, Object otherData) {
+    public S visitStringLiteral(JStringLiteral self, T otherData) {
 	if (redispatchLiteral) return visitLiteral(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -543,7 +547,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitSuper(at.dms.kjc.JSuperExpression, java.lang.Object)
      */
-    public Object visitSuper(JSuperExpression self, Object otherData) {
+    public S visitSuper(JSuperExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -551,7 +555,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitThis(at.dms.kjc.JThisExpression, java.lang.Object)
      */
-    public Object visitThis(JThisExpression self, Object otherData) {
+    public S visitThis(JThisExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -559,7 +563,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitTypeName(at.dms.kjc.JTypeNameExpression, java.lang.Object)
      */
-    public Object visitTypeName(JTypeNameExpression self, Object otherData) {
+    public S visitTypeName(JTypeNameExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -567,7 +571,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnary(at.dms.kjc.JUnaryExpression, java.lang.Object)
      */
-    public Object visitUnary(JUnaryExpression self, Object otherData) {
+    public S visitUnary(JUnaryExpression self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -575,7 +579,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnaryMinus(at.dms.kjc.JUnaryMinusExpression, java.lang.Object)
      */
-    public Object visitUnaryMinus(JUnaryMinusExpression self, Object otherData) {
+    public S visitUnaryMinus(JUnaryMinusExpression self, T otherData) {
 	if (redispatchUnary) return visitUnary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -584,7 +588,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnaryPlus(at.dms.kjc.JUnaryPlusExpression, java.lang.Object)
      */
-    public Object visitUnaryPlus(JUnaryPlusExpression self, Object otherData) {
+    public S visitUnaryPlus(JUnaryPlusExpression self, T otherData) {
 	if (redispatchUnary) return visitUnary(self,otherData);
         assert false : "Unexpected Expression";
         return null;
@@ -593,7 +597,7 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnaryPromote(at.dms.kjc.JUnaryPromote, java.lang.Object)
      */
-    public Object visitUnaryPromote(JUnaryPromote self, Object otherData) {
+    public S visitUnaryPromote(JUnaryPromote self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -601,8 +605,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnqualifiedAnonymousCreation(at.dms.kjc.JUnqualifiedAnonymousCreation, java.lang.Object)
      */
-    public Object visitUnqualifiedAnonymousCreation(
-            JUnqualifiedAnonymousCreation self, Object otherData) {
+    public S visitUnqualifiedAnonymousCreation(
+            JUnqualifiedAnonymousCreation self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }
@@ -610,8 +614,8 @@ public class ExpressionVisitorBase implements ExpressionVisitor {
     /* (non-Javadoc)
      * @see at.dms.kjc.ExpressionVisitor#visitUnqualifiedInstanceCreation(at.dms.kjc.JUnqualifiedInstanceCreation, java.lang.Object)
      */
-    public Object visitUnqualifiedInstanceCreation(
-            JUnqualifiedInstanceCreation self, Object otherData) {
+    public S visitUnqualifiedInstanceCreation(
+            JUnqualifiedInstanceCreation self, T otherData) {
         assert false : "Unexpected Expression";
         return null;
     }

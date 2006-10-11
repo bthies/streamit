@@ -32,7 +32,7 @@ import at.dms.compiler.JavadocComment;
  * given node.
  */
 public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor 
-    implements SLIRAttributeVisitor {
+    implements SLIRAttributeVisitor<Object> {
 
     /**
      * SIR NODES.

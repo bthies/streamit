@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JEqualityExpression.java,v 1.8 2006-09-27 23:40:34 dimock Exp $
+ * $Id: JEqualityExpression.java,v 1.9 2006-10-11 17:49:42 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -71,6 +71,11 @@ public class JEqualityExpression extends JBinaryExpression {
         return buffer.toString();
     }
 
+    /**
+     * return value of equal
+     */
+        public boolean getEqual() { return equal; }
+        
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------

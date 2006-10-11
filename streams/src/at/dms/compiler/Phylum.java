@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Phylum.java,v 1.11 2006-03-24 15:54:46 dimock Exp $
+ * $Id: Phylum.java,v 1.12 2006-10-11 17:45:32 dimock Exp $
  */
 
 package at.dms.compiler;
@@ -50,6 +50,15 @@ public abstract class Phylum extends Utils {
      */
     public TokenReference getTokenReference() {
         return where;
+    }
+    
+    /**
+     * Update the token reference of this node.
+     * Useful if transforming a JPhylum but want to track location.
+     * @param where : new TokenReference value.  Just stored, not cloned.
+     */
+    public void setTokenReference(TokenReference where) {
+        this.where = where;
     }
 
     // ----------------------------------------------------------------------

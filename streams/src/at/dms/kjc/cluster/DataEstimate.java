@@ -53,12 +53,18 @@ public class DataEstimate {
         }
         
         if (type.isClassType()) {
-            CClass c = ((CClassType)type).getCClass();
-            CField f[] = c.getFields();
+            if (type instanceof CNullType) {
+                return 0;
+            }
+            if (type.toString().equals("java.lang.String")) {
+                return 4;  // return something, don't look at internals of String type. 
+            }
+            // Assume class is something we defined: size is sum of size of fields.
+            // (not true of a builtin class)
             int size = 0;
-
-            for (int y = 0; y < f.length; y++) {
-                size += getTypeSize(f[y].getType());
+            CClass c = ((CClassType)type).getCClass();
+            for (CField f : c.getRawFields().values()) {
+                size += getTypeSize(f.getType());
             }
 
             //System.err.println("Class type: ["+type+"] size: "+size);

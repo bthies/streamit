@@ -209,6 +209,10 @@ public class CodeEstimate extends SLIREmptyVisitor {
                 size = DataEstimate.getTypeSize(base) * Integer.valueOf(dims[0]).intValue();
             }
 
+        } else if (type instanceof CNullType) {
+            size = 0;
+        } else if (type instanceof CClassNameType && type.toString().equals("java.lang.String")) {
+            size = 4; // kluge for now, to keep from crashing on strings.
         } else {
 
             size = DataEstimate.getTypeSize(type);

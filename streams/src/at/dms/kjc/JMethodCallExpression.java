@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.22 2006-09-27 23:40:34 dimock Exp $
+ * $Id: JMethodCallExpression.java,v 1.23 2006-10-12 16:37:47 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -302,6 +302,9 @@ public class JMethodCallExpression extends JExpression {
         return method;
     }
 
+    public void setMethod (CMethod method) {
+        this.method = method;
+    }
     /**
      * Adds <pre>arg</pre> as the first arg of this.
      */

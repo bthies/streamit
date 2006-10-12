@@ -55,6 +55,7 @@ public class RoundToFloor extends EmptyStreamVisitor {
                     self.setArgs(new JExpression[] { 
                         new JAddExpression(new JFloatLiteral(0.5f), args[0])
                     });
+                    self.setTapeType(CStdType.Float);
                 }
             }
         };

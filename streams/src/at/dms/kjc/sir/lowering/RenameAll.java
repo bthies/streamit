@@ -402,10 +402,12 @@ public class RenameAll extends SLIRReplacingVisitor
         JExpression[] newArgs = new JExpression[args.length];
         for (int i = 0; i < args.length; i++)
             newArgs[i] = (JExpression)args[i].accept(this);
-        return new JMethodCallExpression(self.getTokenReference(),
-                                         (JExpression)prefix.accept(this),
-                                         classsymtab.nameFor(ident),
-                                         newArgs);
+        JMethodCallExpression retval = new JMethodCallExpression(self.getTokenReference(),
+                (JExpression)prefix.accept(this),
+                classsymtab.nameFor(ident),
+                newArgs);
+        retval.setMethod(self.getMethod());
+        return retval;
     }
 
     public Object visitMethodDeclaration(JMethodDeclaration self,

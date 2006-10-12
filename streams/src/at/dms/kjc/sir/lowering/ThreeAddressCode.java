@@ -212,6 +212,9 @@ public class ThreeAddressCode {
         if (exp instanceof SIRDynamicToken) {
             return true;
         }
+        if (exp instanceof JUnqualifiedInstanceCreation) {
+            return true;
+        }
         if (exp instanceof SIRRangeExpression) {
             return simpleExpression(((SIRRangeExpression)exp).getMin())
                 && simpleExpression(((SIRRangeExpression)exp).getAve())
@@ -231,11 +234,11 @@ public class ThreeAddressCode {
     }
 
 
-    private int lastTemp = 0;
+    private static int lastTemp = 0;
     /**
      * nextTemp returns a fresh variable name (hopefully)
      */
-    private String nextTemp() {
+    public static String nextTemp() {
         lastTemp++;
         return "__tmp" + lastTemp;
     }
@@ -247,7 +250,7 @@ public class ThreeAddressCode {
      * @param maybeBlock a block, or other single statement, or null.
      * @return a list of 0 or more statements.
      */
-    List<JStatement> destructureOptBlock (JStatement maybeBlock) {
+    public static List<JStatement> destructureOptBlock (JStatement maybeBlock) {
         if (maybeBlock instanceof JBlock) {
             return ((JBlock)maybeBlock).getStatements();
         }
@@ -265,7 +268,7 @@ public class ThreeAddressCode {
      * @param stmts : a list of statements
      * @return a single statement.
      */
-    JStatement structureOptBlock (List<JStatement> stmts) {
+    public static JStatement structureOptBlock (List<JStatement> stmts) {
         int n = stmts.size();
         if (n == 0) {
             return new JEmptyStatement();
@@ -283,7 +286,7 @@ public class ThreeAddressCode {
      * @param stmts : a list of statements
      * @return a single statement.
      */
-    JStatement structureOptCompound (List<JStatement> stmts) {
+    public static JStatement structureOptCompound (List<JStatement> stmts) {
         int n = stmts.size();
         if (n == 0) {
             return new JEmptyStatement();
@@ -388,7 +391,7 @@ public class ThreeAddressCode {
         Pair<List<JStatement>,JExpression> recurrTopExpression (JExpression expr) {
             List<JStatement> stmts = new LinkedList<JStatement>();
             if (simpleExpression(expr) || ! shouldConvertExpression(expr)) {
-                return new Pair(Collections.emptyList(),expr);
+                return new Pair(stmts,expr);
             } else {
                 JVariableDefinition tmp = new JVariableDefinition(expr.getType(), 
                         nextTemp());
@@ -1010,7 +1013,8 @@ public class ThreeAddressCode {
         }
 
         public List<JStatement> visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, JLocalVariableExpression tmp) {
-            assert false: "Unexpected expression UnqualifiedInstanceCration";
+            // "new Complex()"  -- should be handled be simpleExpression
+            assert false: "UnqualifiedInstanceCreation should be handled before getting here";
             return null;
         }
 
@@ -1039,9 +1043,8 @@ public class ThreeAddressCode {
          */
         
         Pair<List<JStatement>,JExpression> recurrTopExpressionL (JExpression expr) {
-            List<JStatement> stmts = new LinkedList<JStatement>();
             if (simpleExpression(expr) || ! shouldConvertExpression(expr)) {
-                return new Pair(Collections.emptyList(),expr);
+                return new Pair(new LinkedList<JStatement>(),expr);
             } else {
                 return new Pair((List<JStatement>)expr.accept(this,null), expr);
             }
@@ -1060,7 +1063,7 @@ public class ThreeAddressCode {
             boolean convert1 = ! simpleExpression(prefix) && shouldConvertExpression(prefix);
             boolean convert2 = ! simpleExpression(accessor) && shouldConvertExpression(accessor);
             if (! convert1 && ! convert2) {
-                return Collections.emptyList();
+                return new LinkedList<JStatement>();
             }
             
             // prefix converts as an L-value
@@ -1587,7 +1590,7 @@ public class ThreeAddressCode {
          * S[[;]] =       // empty list.
          */
         public List<JStatement> visitEmptyStatement(JEmptyStatement self) {
-            return Collections.emptyList();
+            return new LinkedList<JStatement>();
         }
 
         public List<JStatement> visitEqualityExpression(JEqualityExpression self, boolean equal, JExpression left, JExpression right) {

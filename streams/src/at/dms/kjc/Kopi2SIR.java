@@ -150,7 +150,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         fw.setInit(SIRStream.makeEmptyInit());
         addVisitedOp("FileWriter", fw);
 
-        SIRIdentity sirId = new SIRIdentity(null);
+        // Give SIRIdentity some type so does not barf,
+        // replace later...
+        SIRIdentity sirId = new SIRIdentity(CStdType.Void);
         // init set in SIRIdentity.setType
         addVisitedOp("Identity", sirId);
     }   

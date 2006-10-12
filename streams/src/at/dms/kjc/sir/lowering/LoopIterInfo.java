@@ -23,6 +23,7 @@ import java.util.*;
 public class LoopIterInfo  implements Constants {
     /**
      * The induction variable in the loop.
+     * @return 
      */
     public JLocalVariable getVar() {
         return var;
@@ -34,6 +35,7 @@ public class LoopIterInfo  implements Constants {
 
     /**
      * The initial value of the induction variable.
+     * @return 
      */
     public int getInitVal() {
         return initVal;
@@ -45,6 +47,7 @@ public class LoopIterInfo  implements Constants {
 
     /**
      * The one past final value of the induction variable that would cause looping.
+     * @return 
      */
     public int getFinalVal() {
         return finalVal;
@@ -56,6 +59,7 @@ public class LoopIterInfo  implements Constants {
 
     /**
      * The operation that is being used to change the induction variable.
+     * @return 
      */
     public int getOper() {
         return oper;
@@ -67,6 +71,7 @@ public class LoopIterInfo  implements Constants {
 
     /**
      * The increment.
+     * @return 
      */
     public int getIncrVal() {
         return incrVal;
@@ -78,6 +83,7 @@ public class LoopIterInfo  implements Constants {
     
     /**
      * Whether the induction variable is declared in the initialization statement
+     * @return 
      */
     public boolean getIsDeclaredInInit() {
         return isDeclaredInInit;
@@ -143,6 +149,9 @@ public class LoopIterInfo  implements Constants {
      * value of the count, returns the new value of the count for one loop iteration.
      * 
      * <p>Does not check whether new value is in bounds.</p>
+     * @param counter 
+     * @param info 
+     * @return 
      */
     public static int incrementCounter(int counter, LoopIterInfo info) {
         switch(info.oper) {
@@ -248,8 +257,8 @@ public class LoopIterInfo  implements Constants {
                                            JExpression cond,
                                            JStatement incr,
                                            JStatement body,
-                                           Map /*<JLocalVariable>,<JIntLiteral>*/<JLocalVariable, JExpression> values,
-                                           Map /*<JLocalVariable>,<JIntLiteral>*/ constants) {
+                                           Map <JLocalVariable, JExpression> values,
+                                           Map <JLocalVariable,JLiteral> constants) {
         try {
             JLocalVariable var;
             int initVal=0;
@@ -282,7 +291,8 @@ public class LoopIterInfo  implements Constants {
                     throw new Exception("Not Constant!");
                 }
             } else if (init instanceof JVariableDeclarationStatement &&
-                    ((JVariableDeclarationStatement)init).getVars()[0].getIdent().equals(var.getIdent())) {
+                    ((JVariableDeclarationStatement)init).getVars()[0].getIdent().equals(var.getIdent())
+                    && ((JVariableDeclarationStatement)init).getVars()[0].getValue() instanceof JIntLiteral) {
                 initVal = ((JIntLiteral)((JVariableDeclarationStatement)init).getVars()[0].getValue()).intValue();
                 isDeclaredInInit = true;
             } else if(values.containsKey(var)) {

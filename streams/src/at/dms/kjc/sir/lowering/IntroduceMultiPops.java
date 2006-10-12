@@ -186,7 +186,8 @@ public class IntroduceMultiPops extends SLIRReplacingVisitor {
                                                                    forStmt.getCondition(),
                                                                    forStmt.getIncrement(),
                                                                    forStmt.getBody(),
-                                                                   new HashMap<JLocalVariable, JExpression>(),new HashMap());
+                                                                   new HashMap<JLocalVariable, JExpression>(),
+                                                                   new HashMap<JLocalVariable, JLiteral>());
                         }
                         // for loop that we are not going to process:
                         // make sure body is a block, otherwise some code generators

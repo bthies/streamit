@@ -10,7 +10,7 @@ MPEGplayer plays an MPEG file, but needs screen output only available in the
 MPEGdecoder_nomessage is a decoder that does not use message passing (and only decodes MPEG files without P or B frames).
   </description>
   <implementations>
-    <impl lang="StreamIt" dir="streamit" id="nomessage" iters="1">
+    <impl lang="StreamIt" dir="streamit" id="nomessage" iters="1" compile_time="2400">
       <desc>The decoder without messaging.</desc>
       <make>Makefile MPEGdecoder_nomessage.str MPEGglobal.str BinaryFile.str InverseQuantization.str</make>
       <file class="source">MPEGdecoder_nomessage.str MPEGglobal.str ColorSpace.str Misc.str BinaryFile.str ../benchmarks/../../dct_ieee/streamit/DCT.str</file>

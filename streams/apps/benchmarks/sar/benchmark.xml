@@ -11,7 +11,7 @@ interpolation (see noted text, Section 4.5).
   <implementations>
     <impl lang="C" dir="c">
     </impl>
-    <impl lang="StreamIt" dir="streamit" iters="1">
+    <impl lang="StreamIt" dir="streamit" iters="1" compile_time="2400">
       <file class="source">SAR.str genRawSAR.str FFT.str Statics.str Utils.str</file>
       <file class="output">../output/image.txt</file>
     </impl>

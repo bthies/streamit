@@ -59,13 +59,15 @@ public class SimplifyPopPeekPush {
                 }});
             
             // if expression is at top level and subexpression is sufficiently simple, then we do not need
-            // to convert.
-            if (count[0] > 0 && (
-                    (expr instanceof SIRPeekExpression && simpleExpression(((SIRPeekExpression)expr).getArg())) ||
-                    (expr instanceof SIRPushExpression && simpleExpression(((SIRPushExpression)expr).getArg())) ||
-                    (expr instanceof SIRPopExpression))) {
-                count[0]--;
-            }
+            // to convert. WRONG: is this a bug in ThreeAddressCode?  It looks like somewhere in ThreeAddressCode
+            // there is the assumption that if the components of an expression are simple, then the whole expression
+            // need not be converted.
+//            if (count[0] > 0 && (
+//                    (expr instanceof SIRPeekExpression && simpleExpression(((SIRPeekExpression)expr).getArg())) ||
+//                    (expr instanceof SIRPushExpression && simpleExpression(((SIRPushExpression)expr).getArg())) ||
+//                    (expr instanceof SIRPopExpression))) {
+//                count[0]--;
+//            }
             // if push / peek / pop expressions below top level
             // or if push / peek / pop at top level have complex subexpression
             // then require the current expression to be converted.

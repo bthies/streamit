@@ -50,17 +50,17 @@ affect only performance or readability.
 
 <ul>
 <li> {@link at.dms.kjc.sir.lowering.ArrayInitExpander}
-<li> {@link at.dms.kjc.sir.lowering.ConstantProp}
+<li> {@link at.dms.kjc.sir.lowering.ConstantProp} 
 <li> {@link at.dms.kjc.sir.lowering.ConstructSIRTree}
 <li> {@link at.dms.kjc.sir.lowering.EnqueueToInitPath}
-<li> {@link at.dms.kjc.sir.lowering.FieldInitMover}
+<li> {@link at.dms.kjc.sir.lowering.FieldInitMover}  Moves field initialization from field declaration into the beginning of init().
 <li> {@link at.dms.kjc.sir.lowering.FieldProp}
 <li> {@link at.dms.kjc.sir.lowering.InlinePhases}
 <li> {@link at.dms.kjc.sir.lowering.RemoveDynamicRates}
-<li> {@link at.dms.kjc.sir.lowering.RemoveMultiPops}
-<li> {@link at.dms.kjc.sir.lowering.RenameAll}
-<li> {@link at.dms.kjc.sir.lowering.RoundToFloor}
-<li> {@link at.dms.kjc.sir.lowering.StaticsProp}
+<li> {@link at.dms.kjc.sir.lowering.RemoveMultiPops} changes pop(N) into N pop() instructions for back ends that do not generate code for pop(N).
+<li> {@link at.dms.kjc.sir.lowering.RenameAll}  Makes all variable names unique.
+<li> {@link at.dms.kjc.sir.lowering.RoundToFloor}  Converts round(x) to floor(x+0.5) so that C and Java code produce the same results.
+<li> {@link at.dms.kjc.sir.lowering.StaticsProp}  Propagates values of fields defined in static{...} into filters that use them.
 <li> {@link at.dms.kjc.sir.lowering.Unroller}
 <li> {@link at.dms.kjc.sir.lowering.VarDeclRaiser}
 </ul>
@@ -85,7 +85,7 @@ or <b>readability</b> include:
 <li> {@link at.dms.kjc.sir.lowering.BranchAnalyzer}
 <li> {@link at.dms.kjc.sir.lowering.DeadCodeElimination}
 <li> {@link at.dms.kjc.sir.lowering.FindTapeOps}
-<li> {@link at.dms.kjc.sir.lowering.MarkFilterBoundaries}
+<li> {@link at.dms.kjc.sir.lowering.MarkFilterBoundaries} Inserts special marker instructions allowing a filter's code to be found after fusion.
 <li> {@link at.dms.kjc.sir.lowering.PopToPeek}
 <li> {@link at.dms.kjc.sir.lowering.RenameDestroyedVars}
 <li> {@link at.dms.kjc.sir.lowering.StructDestroyer}
@@ -96,5 +96,11 @@ at.dms.kjc.sir.lowering.DataFlow} classes do not appear in either of
 the previous lists because they are not currently utilized by the
 compiler.
 
+<p> Some classes in this package are usually invoked from other passes.
+
+<ul>
+<li> {@link at.dms.kjc.sir.lowering.Propagator} which performs constant propagation, copy propagation, and algebraic and boolean simplification is called from {@link at.dms.kjc.sir.lowering.ConstantProp}
+<li> {@link at.dms.kjc.sir.lowering.FieldProp} and {@link at.dms.kjc.sir.lowering.Unroller} are called as needed from {@link at.dms.kjc.sir.lowering.ConstantProp} for propagating parameters through the stream graph.
+</ul>
 </body>
 </html>

@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.15 2006-09-25 13:54:42 dimock Exp $
+ * $Id: FieldInitMover.java,v 1.16 2006-10-17 23:27:20 dimock Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
     public static final int MOVE_ARRAY_INITIALIZERS = 0;
@@ -30,13 +30,26 @@ public class FieldInitMover extends EmptyStreamVisitor {
     private FieldInitMover(int moveArrayInitializers) {
         this.moveArrayInitializers = moveArrayInitializers;
     }
-
+    /**
+     * Move all (scalar and optionally array) field initializations out of declaration for a stream.
+     * @param str stream to be processed (munged in place).
+     * @param moveArrayInitializers
+     */
     public static void moveStreamInitialAssignments(SIRStream str, int moveArrayInitializers) {
         FieldInitMover mover = new FieldInitMover(moveArrayInitializers);
         IterFactory.createFactory().createIter(str).accept(mover);
     }
 
-
+    /**
+     * Move all (scalar and optionally array) field initializations out of declaration for a filter.
+     * @param filter to be processed (munged in place).
+     * @param moveArrayInitializers one of MOVE_ARRAY_INITIALIZERS IGNORE_ARRAY_INITIALIZERS
+     */
+    public static void moveFilterInitialAssignments(SIRFilter filter, int moveArrayInitializers) {
+        FieldInitMover mover = new FieldInitMover(moveArrayInitializers);
+        mover.moveFieldInitializations(filter);
+    }
+    
     /*
      * Visit each stream construct (eg Filter, Pipeline, SplitJoin or
      * FeedBackLoop) and move any field initialization out of the field
@@ -53,6 +66,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
     /**
      * Does the actual moving of field initializations
      * from their declarations to the init function.
+     * @param filter modified in place.
      **/
     private void moveFieldInitializations(SIRStream filter) {
         // get a visitor that will walk down the filter, replacing fields as it goes

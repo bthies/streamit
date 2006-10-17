@@ -1,39 +1,97 @@
+/**
+ * 
+ */
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.util.GetSteadyMethods;
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.iterator.IterFactory;
+import at.dms.kjc.iterator.SIRFilterIter;
+
 import java.util.*;
 
 /**
  * Determine if code is naively vectorizable by interleaving executions of different steady states.
- * 
- * @author dimock
+ * <br/> $Id$
+ * @author Allyn Dimock
  *
  */
 public class Vectorizable {
     /**
-     * Check whether a filter could vectorized.
-     * (Does not answer questaion as to whether it is profitable to do so.)
+     * Return set of naively vectorizable filters in stream.
+     * See {@link #vectorizable(SIRFilter) vectorizable} for what makes a filter naively vectorizable.
+     * @param str  Stream to check
+     * @return  Set of filters passing {@link #vectorizable(SIRFilter) vectorizable} test
+     */
+    public static Set<SIRFilter> vectorizableStr(SIRStream str) {
+        final Set<SIRFilter> vectorizableFilters = new HashSet<SIRFilter>();
+        IterFactory.createFactory().createIter(str).accept(
+            new EmptyStreamVisitor() {
+                public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+                    if (at.dms.kjc.sir.lowering.Vectorizable.vectorizable(self)) {
+                        vectorizableFilters.add(self);
+                    }
+                }
+            });
+    return vectorizableFilters;
+    }
+    
+    /**
+     * Check whether a filter could be naively vectorized by interleaving executions of different steady states.
+     * (Does not answer question as to whether it is profitable to do so.)
+     * <br/>
+     * A filter is naively vectorizable if:
+     * <ul><li> Its input type or its output type is a 32-bit int or float.
+     * </li><li> It has no loop-carried dependencies between steady states.
+     * </li><li> It has no visible side effects.
+     * </li><li> It has no data-dependent branches. (Should preclude dynamic-rate filters.)
+     * </li></ul>
      * 
      * @param f : a filter to check.
      * @return true if there are no local conditions precluding vectorizing the filter.
      */
     public static boolean vectorizable (SIRFilter f) {
+        // only vectorizing if have a 32-bit type to process and creating a 32
+        // bit type if any.  (Actually more: should not cast to non-32-bit 
+        // simple type internally, but can ignore since StreamIt simple types
+        // are all 32 bit currently -- and special cases for casting to math functions.
+        CType inputType = f.getInputType();
+        CType outputType = f.getOutputType();
+        if (!(inputType instanceof CIntType || inputType instanceof CFloatType
+        ||  outputType  instanceof CIntType || outputType instanceof CFloatType)) {
+//          // debugging:
+          System.err.println("Vectorizable.vectorizable found " + f.getName() + " has wrong type.");
+            return false;
+        }
+        // must have static rates
+        if (f.getPeek().isDynamic() ||
+            f.getPop().isDynamic() ||
+            f.getPush().isDynamic()) {
+            return false;
+        }
+
+        // only vectorizing if no loop-carried dependencies (no stores to fields).
         if (at.dms.kjc.sir.lowering.fission.StatelessDuplicate.hasMutableState(f)) {
 //            // debugging:
-//            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
-            return false; // If loop-carried dependence through fields: don't vectorize. 
+            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
+            return false; // If possible loop-carried dependence through fields: don't vectorize. 
         }
+        // only vectorizing if no side effects (prints, file reads, file writes).
         if (hasSideEffects(f)) {
 //            // debugging:
-//            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
+            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
             return false; // If filter has side effects, don't vectorize.
         }
+        // only vectorizing if branches, peek and array offsets are not data dependent.
         if (isDataDependent(f)) {
-            return false; // Filter has branched that are data dependent, don't vectorize.
+            // debugging:
+            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has control or offset dependence.");
+            return false; // Filter has branches that are data dependent, don't vectorize.
         }
+        //      debugging:
+        System.err.println("Vectorizable.vectorizable found " + f.getName() + " is vectorizable!.");
         return true;
     }
     
@@ -71,16 +129,14 @@ public class Vectorizable {
     /**
      * Check whether a filter's behavior is data dependent (other than through fields).
      * (A peek or pop flows to a branch condition, array offset, or peek offset.)
-     * <br/>   
+     * <pre>   
      * push(arr[pop()]);
-     * <br/>
      * foo = pop();  bar = peek(foo);
-     * <br/>
      * foo = peek(5); if (foo > 0) baz++;
-     * <br/>
+     * </pre>
      * You can check as to whether there is any possibility of a loop-carried dependency
      * through fields by checking that (! StatelessDuplicate.hasMutableState(f)).
-     * <br/>
+     * <bt/>
      * Currently flow insensitive, context insensitive.
      * @param f : a filter to check.
      * @return true if no data-dependent branches or offsets. 
@@ -324,11 +380,14 @@ public class Vectorizable {
             }
         }
 //        // debugging:
-//        System.err.println("Vectorizable.isDataDependent found idents for " + f.getName() + ":");
-//        for (String ident : idents) {
-//            System.err.println(ident);
-//        }
-//        System.err.println(hasDepend[0] ? "is data dependent" : "is not data dependent");
+        if (hasDepend[0])
+    {
+        System.err.println("Vectorizable.isDataDependent found idents for " + f.getName() + ":");
+        for (String ident : idents) {
+            System.err.print(ident + " ");
+        }
+        System.err.println(hasDepend[0] ? "is data dependent" : "is not data dependent");
+    }
         // dependence found during setup.
         if (hasDepend[0]) {
             return true;

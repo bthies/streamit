@@ -52,8 +52,8 @@ public class VectorizeEnable {
                     public void visitFilter(SIRFilter self,
                                             SIRFilterIter iter) {
                         if (Vectorizable.vectorizable(self)) {
-                            vectorizeEnableFilter(self);
                             Vectorize.vectorize(self);
+                            forScheduling(self);
                         }
                     }
                 });
@@ -71,21 +71,40 @@ public class VectorizeEnable {
      * </li><li> peek' = peek + 3 * pop
      * </li><li> pop'  = pop * 4 
      * </li></ul>
-     * Wrap body of work function in "for (int i = 0; i < 4; i++)"
      * @param f : filter to be munged.
      */
-    private static void vectorizeEnableFilter (SIRFilter f) {
-        int veclen = 4;
+    private static void forScheduling (SIRFilter f) {
+        int veclen = KjcOptions.vectorize / 4;
         
+        JMethodDeclaration workfn = f.getWork();
+        JBlock workBody = workfn.getBody();
+
+        // adjust rates.
         int pushrate = f.getPushInt();
         int poprate = f.getPopInt();
         int peekrate = f.getPeekInt();
-        JMethodDeclaration workfn = f.getWork();
-        JBlock workBody = workfn.getBody();
-        workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
         f.setPush(pushrate * veclen);
         f.setPeek(peekrate + (veclen - 1) * poprate);
         f.setPop(poprate * veclen);
+
+//      alternative to vectorization for testing:
+//      workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
+
+        // fix number of pops for new rate.
+        List<JStatement> stmts = workBody.getStatements();
+        JStatement last = stmts.get(stmts.size() - 1);
+        if (last instanceof SIRMarker) {
+            last = stmts.get(stmts.size() - 2);
+        }
+        if (last instanceof JExpressionStatement && ((JExpressionStatement)last).getExpression() instanceof SIRPopExpression) {
+            // final statement fixes number of pops: mung number.
+            SIRPopExpression pop = (SIRPopExpression) ((JExpressionStatement)last).getExpression();
+            pop.setNumPop( pop.getNumPop() + (veclen - 1) * poprate);
+        } else {
+            SIRPopExpression pop = new SIRPopExpression(f.getInputType(), (veclen - 1) * poprate);
+            JStatement popStatement = new JExpressionStatement(pop);
+            workBody.addStatement(popStatement);
+        }
     }
     
     

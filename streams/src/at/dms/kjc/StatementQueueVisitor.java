@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: StatementQueueVisitor.java,v 1.3 2006-03-24 16:10:59 dimock Exp $
+ * $Id: StatementQueueVisitor.java,v 1.4 2006-10-18 23:40:00 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -44,7 +44,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
      * an expression, and thus they can't add a new statement until we
      * are back at the statement level.)
      */
-    private final List pendingStatements;
+    private final List<JStatement> pendingStatements;
     
     /**
      * Whether or not statement queues are supported under the current
@@ -60,7 +60,7 @@ public class StatementQueueVisitor extends SLIRReplacingVisitor {
      */
 
     public StatementQueueVisitor() {
-        this.pendingStatements = new LinkedList();
+        this.pendingStatements = new LinkedList<JStatement>();
         this.supported = true;
     }
 

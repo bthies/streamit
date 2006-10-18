@@ -150,4 +150,50 @@ public class CVectorType extends CType {
         + " a[" + getWidthInBase() + "];} "
         + toString() + ";";
     }
+    /**
+     * Make expression refer to position in a vector (as an array element).
+     * @param expr
+     * @param n
+     * @return the reference to expr as array element n of the vector.
+     */
+    public static JExpression asArrayRef(JExpression expr, int n) {
+        JExpression retval = new JArrayAccessExpression(
+                new JFieldAccessExpression(expr, "a"),
+                new JIntLiteral(n));
+        return retval;
+    }
+    
+    /**
+     * Make expression refer to vector (as a vector).
+     * @param expr  expression to turn into reference to vector as vector.
+     * @return the reference to expr as a vector
+     */
+    public static JExpression asVectorRef(JExpression expr) {
+        JExpression retval = 
+            new JFieldAccessExpression(expr, "v");
+        return retval;
+    }
+    
+    /**
+     * Turn numeric types into vector types, array types into array types of vector types.
+     * @param inputType The input type.
+     * @return the type using a vector type
+     */
+    public static CType makeVectortype(CType inputType) {
+        if (inputType instanceof CNumericType) {
+            return new CVectorType((CNumericType)inputType, KjcOptions.vectorize); 
+        } else if (inputType instanceof CArrayType) {
+            CType baseType = ((CArrayType)inputType).getBaseType();
+            if (baseType instanceof CNumericType) {
+                return 
+                    new CArrayType(new CVectorType((CNumericType)baseType, KjcOptions.vectorize),
+                    ((CArrayType)inputType).getArrayBound(),
+                    ((CArrayType)inputType).getDims());
+            }   
+        }
+        assert false : "Unexpected type " + inputType.toString();
+        return null;
+    }
+
+
 }

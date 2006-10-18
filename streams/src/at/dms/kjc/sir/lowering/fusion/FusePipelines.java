@@ -43,7 +43,12 @@ public class FusePipelines {
      * deep-fusion, possibly fusing splitjoin children.
      */
     private static final int FUSE_PIPELINES_OF_STATELESS_STREAMS = 2;
-
+    /**
+     * Mode indicating that pipelins segments should be fused so long 
+     * as the RESULT of fusion will be naively vectorizable.
+     */
+    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS = 3;
+    
     /**
      * Fuses all adjacent filters whos parent is a pipeline.  If a
      * complete pipeline is fused, then it is treated as a single
@@ -80,6 +85,9 @@ public class FusePipelines {
      *
      * If a complete pipeline is fused, then it is treated as a single
      * filter in considering fusion within the pipeline's parent.
+     * @param str input stream to fuse, may be modified by this method.
+     * @return  stream with fusion having taken place
+     * 
      */
     public static SIRStream fusePipelinesOfStatelessStreams(SIRStream str) {
         // first eliminate wrapper pipelines, as they obscure
@@ -90,7 +98,24 @@ public class FusePipelines {
         //fuser.predictFusion.debugPrint();
         return result;
     }
-
+    /**
+     * Fuses any two adjacent FILTERS in 'str' so long as:
+     *  - the shared parent of the filter is a pipeline
+     *  - the result of fusion will be naively vectorizable.
+     *
+     * If a complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
+     * @param str input stream to fuse, may be modified by this method.
+     * @return  stream with fusion having taken place
+     */
+    public static SIRStream fusePipelinesOfVectorizableFilters(SIRStream str) {
+        // first eliminate wrapper pipelines, as they obscure
+        // continuous pipeline sections
+        Lifter.lift(str);
+        PipelineFuser fuser = new PipelineFuser(FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS);
+        return (SIRStream)str.accept(fuser);
+    }
+    
     /**
      * Utility function: returns whether or not 'filter' does any
      * peeking (in either init or steady stage).
@@ -154,7 +179,7 @@ public class FusePipelines {
             int count = 0;
             while (pos+count < self.size()) {
                 SIRStream child = self.get(pos+count);
-                if (yieldsStatelessFusion(child, count)) {
+                if (canFuse(child, count)) {
                     // keep looping if the partition has room to grow
                     if (pos+count+1 < self.size()) {
                         count++;
@@ -245,11 +270,12 @@ public class FusePipelines {
 
         /**
          * Given that stream 'child' is the i'th to be fused in a
-         * pipeline, returns if the resulting fused filter would be
-         * stateless (assuming it is fused with a stateless filter
-         * higher in the pipeline).
+         * pipeline, returns if the resulting fused filter would meet
+         * the criteria for this.mode (would be correct, would be 
+         * correct and stateless,  would be correct and vectorizable, 
+         * etc...)
          */
-        boolean yieldsStatelessFusion(SIRStream child, int i) {
+        boolean canFuse(SIRStream child, int i) {
             switch(this.mode) {
             case FUSE_PIPELINES_OF_FILTERS:
                 return (// can only fuse filters
@@ -276,6 +302,20 @@ public class FusePipelines {
                         !predictFusion.isTwoStage(child) &&
                         // only first filter can peek
                         (i==0 || !predictFusion.doesPeeking(child)));
+            case FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS:
+                return (// can only fuse filters
+                        child instanceof SIRFilter &&
+                        // must be fusable
+                        FusePipe.isFusable(child) &&
+                        // may not be two-stage: certainly 
+                        // filters after first can not be two stage
+                        // since vectorization will change tapeType for
+                        // work function.
+                        (/*i == 0 ||*/ ! (child instanceof SIRTwoStageFilter)) &&
+                        // previous filter outputs a vectorizable type
+                        (i == 0 || child.getInputType() instanceof CFloatType
+                                || child.getInputType() instanceof CIntType) &&
+                        Vectorizable.vectorizable((SIRFilter)child));
             }
             assert false : "Unexpected mode";
             return false;

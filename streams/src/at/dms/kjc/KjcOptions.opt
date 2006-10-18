@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.90 2006-08-30 15:37:39 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.91 2006-10-18 23:40:00 dimock Exp $
  */
 
 prefix Kjc
@@ -323,6 +323,12 @@ longname		"cluster"
 	default		"-1"
 	requireArgument
 	help		"Compile for a network cluster with <n> nodes."
+
+longname		"vectorize"
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Naive vectorization for a machine with <n>-byte vector registers."
 
 longname		"cacheopt"
 	type		boolean

@@ -54,13 +54,20 @@ public class Vectorize {
             System.err.println(e.getKey() + " " + at.dms.kjc.common.CommonUtils.CTypeToString(e.getValue(),true));
         }
         
+        // fix type of fields if need be.
+        JFieldDeclaration[] fields = filter.getFields();
+        for (int i = 0; i < fields.length; i++) {
+            fields[i] = fixFieldTypes(fields[i], vectorIds.keySet());
+        }
+        filter.setFields(fields);
+
         JMethodDeclaration[] ms = filter.getMethods();
         for (JMethodDeclaration m : ms) {
             JBlock b = m.getBody();
             JBlock newB = mungMethodBody(b, m == filter.getWork(), vectorizePush[0], vectorIds, filter);
             m.setBody(newB);
         }
-   }
+  }
     
     /**
      * 
@@ -72,30 +79,35 @@ public class Vectorize {
     static JBlock mungMethodBody(JBlock methodBody, boolean isWork, 
             boolean vectorizePush, Map<String,CType> vectorIds,
             SIRFilter filter) {
+        // field initializations already moved, move initialization of locals.
         JStatement methodBody2 = moveLocalInitializations(methodBody,vectorIds.keySet());
-        JStatement methodbody3 = fixTypesPeeksPopsPushes(methodBody2, vectorizePush, vectorIds);
-        JStatement methodbody4;
-        if (isWork) {
-            methodbody4 = cleanupWork(methodbody3, filter);
+        // expand peeks, pops, and optionally pushes, and update types of fields and locals.
+        JStatement methodbody3 = fixTypesPeeksPopsPushes(methodBody2, 
+                filter.getPopInt(),  // original number popped in steady state.
+                vectorizePush, 
+                filter.getPushInt(),  // original number pushed in steady state.
+                vectorIds);
+         // return a block.
+        if (methodbody3 instanceof JBlock) {
+            return (JBlock)methodbody3;
         } else {
-            methodbody4 = methodbody3;
-        }
-        if (methodbody4 instanceof JBlock) {
-            return (JBlock)methodbody4;
-        } else {
-            JBlock retval = new JBlock(new JStatement[]{methodbody4});
+            JBlock retval = new JBlock(new JStatement[]{methodbody3});
             return retval;
         }
     }
     
     /**
-     * Clean up loop around work body and fix pushes.
-     * @param methodBody
-     * @param filter
-     * @return
+     * Convert type of a field declaration
+     * @param decl field declaration
+     * @param idents  identifiers of fields and locals needing vector type.
+     * @return possibly modified field declaration (also happens to be munged in place).
      */
-    static JStatement cleanupWork(JStatement methodBody, SIRFilter filter) {
-        return methodBody; // TODO finish method.
+    static JFieldDeclaration fixFieldTypes(JFieldDeclaration decl, Set<String> idents) {
+        JVariableDefinition defn = decl.getVariable();  // access to internal variable defn.
+        if (idents.contains(defn.getIdent())) {
+            defn.setType(CVectorType.makeVectortype(defn.getType()));
+        }
+        return decl;
     }
     
     /**
@@ -105,12 +117,237 @@ public class Vectorize {
      * @param vectorIds
      * @return
      */
-    static JStatement fixTypesPeeksPopsPushes(JStatement methodBody, 
-            boolean vectorizePush, Map<String,CType> vectorIds) {
-        return methodBody; // TODO finish method.
+    static JStatement fixTypesPeeksPopsPushes(JStatement methodBody,
+            final int inputStride,
+            final boolean vectorizePush, final int outputStride,
+            final Map<String,CType> vectorIds) {
+            class fixTypesPeeksPopsPushesVisitor extends StatementQueueVisitor {
+                JExpression lastLhs = null;   // left hand side of assignment being processed
+                JExpression lastRhs = null;   // right hand side od assignment being processed
+                boolean suppressSelector = false; // true to not refer to as vector
+                boolean replaceStatement = false; // true to discard current statement
+                @Override
+                public Object visitVariableDefinition(JVariableDefinition self,
+                        int modifiers,
+                        CType type,
+                        String ident,
+                        JExpression expr) {
+                    if (vectorIds.containsKey(ident)) {
+                        CType newType = CVectorType.makeVectortype(type == null? vectorIds.get(ident): type);
+                        return (new JVariableDefinition(modifiers, newType, ident, expr));
+                    } else {
+                        return self;
+                    }
+                }
+                @Override
+                public Object visitPopExpression(SIRPopExpression self,
+                        CType tapeType) {
+                    if (lastLhs == null) {
+                        // just a pop not returning a value.
+                        return self;
+                    }
+                    // e = pop();    =>
+                    // (e).a[0] = pop();
+                    // (e).a[1] = peek(1 * inputStride);
+                    // (e).a[2] = peek(2 * inputStride);
+                    // (e).a[3] = peek(3 * inputStride);
+                    // lastLhs non-null here.
+                    
+                    this.addPendingStatement(
+                            new JExpressionStatement(
+                                    new JAssignmentExpression(
+                                            CVectorType.asArrayRef(lastLhs,0),
+                                            new SIRPopExpression(tapeType))));
+                    for (int i = 1; i < KjcOptions.vectorize / 4; i++) {
+                        this.addPendingStatement(
+                                new JExpressionStatement(
+                                        new JAssignmentExpression(
+                                                CVectorType.asArrayRef(lastLhs,i),
+                                                new SIRPeekExpression(
+                                                        new JIntLiteral(i * inputStride),
+                                                        tapeType))));
+                    }
+                    replaceStatement = true; // throw out statement built with this return value
+                    return self;
+                }
+                @Override
+                public Object visitPeekExpression(SIRPeekExpression self,
+                        CType tapeType, JExpression arg) {
+                    assert (self == lastRhs);
+                    // e1 = peek(e2);  =>
+                    // (e1).a[0] = peek((e2) + 0 * inputStride);
+                    // ...
+                    // (e1).a[3] = peek((e2) + 3 * inputStride);
+                    
+                    for (int i = 0; i < KjcOptions.vectorize / 4; i++) {
+                        this.addPendingStatement(
+                                new JExpressionStatement(
+                                        new JAssignmentExpression(
+                                                CVectorType.asArrayRef(lastLhs,i),
+                                                new SIRPeekExpression(
+                                                        new JAddExpression(arg,
+                                                                new JIntLiteral(i * inputStride)),
+                                                        tapeType))));
+                    }
+                    replaceStatement = true; // throw out statement built with this return value
+                    return self; 
+                }
+                @Override
+                public Object visitPushExpression(SIRPushExpression self,
+                        CType tapeType,
+                        JExpression arg) {
+                    if (! vectorizePush) {
+                        // vector type does not reach push expression.
+                        return self;
+                    }
+                    // push(e)  =>
+                    // push((e).a[0]);
+                    // poke((e).a[1], 1 * outputStride);
+                    // ...
+                    // poke((e).a[3], 3 * outputStride);
+                    for (int i = 1; i < KjcOptions.vectorize / 4; i++) {
+                        this.addPendingStatement(
+                                new JExpressionStatement(
+                                        new SIRPokeExpression(
+                                                CVectorType.asArrayRef(arg,i),
+                                                i * outputStride,
+                                                tapeType)));
+                    }
+                    return new SIRPushExpression(
+                            CVectorType.asArrayRef(arg,0),
+                            tapeType);
+                }
+
+                @Override
+                public Object visitAssignmentExpression(JAssignmentExpression self,
+                        JExpression left,
+                        JExpression right) {
+                    // setting a vector value from non-vector.
+                    if (hasVectorType(left,vectorIds) && ! hasVectorType(right,vectorIds)) {
+                        CType oldType = left.getType();
+                        suppressSelector = true;
+                        JExpression newLeft = (JExpression)left.accept(this);
+                        // JExpression newLeftArray = CVectorType.asArrayRef(newLeft, i);
+                        suppressSelector = false;
+                        JVariableDefinition defn = 
+                            new JVariableDefinition(oldType, 
+                                    ThreeAddressCode.nextTemp());
+                        JStatement decl = new JVariableDeclarationStatement(defn);
+                        JLocalVariableExpression tmp = new JLocalVariableExpression(
+                                defn);
+                        
+                        addPendingStatement(decl);
+                        addPendingStatement(
+                                new JExpressionStatement(
+                                        new JAssignmentExpression(tmp, right)));
+                        for (int i = 0; i < KjcOptions.vectorize / 4; i++) {
+                            addPendingStatement(
+                                    new JExpressionStatement(
+                                            new JAssignmentExpression(
+                                                    CVectorType.asArrayRef(newLeft, i),
+                                                    tmp)));
+                        }
+                        replaceStatement = true;
+                        return self;
+                    }
+                    lastLhs = left;
+                    lastRhs = right;
+                    Object retval = super.visitAssignmentExpression(self,left,right);
+                    lastLhs = null;
+                    lastRhs = null;
+                    return retval;
+                }
+
+                @Override 
+                public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
+                    // Some expressions need to return an expression, but have the statement
+                    // they are in removed.  Such expressions are all expected to be inside
+                    // a JExpressionStatement
+                    replaceStatement = false;
+                    Object retval = super.visitExpressionStatement(self, expr);
+                    if (replaceStatement) {
+                        assert retval instanceof JBlock;
+                        JBlock b = (JBlock)retval;
+                        b.removeStatement(0);
+                        return b;
+                    } else {
+                        return retval;
+                    }
+                }
+
+                @Override
+                public Object visitFieldExpression(JFieldAccessExpression self,
+                        JExpression left,
+                        String ident) {
+                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
+                        return CVectorType.asVectorRef(self);
+                    } else {
+                        return self;
+                    }
+                }
+                @Override
+                public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident) {
+                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
+                        return CVectorType.asVectorRef(self);
+                    } else {
+                        return self;
+                    }
+                }
+                @Override
+                public Object visitArrayAccessExpression(JArrayAccessExpression self,
+                        JExpression prefix,
+                        JExpression accessor) {
+                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
+                        // XXX does not currently work for array slices
+                        return CVectorType.asVectorRef(self);
+                    } else {
+                        return self;
+                    }
+                }
+            }
+           
+            return (JStatement)methodBody.accept(new fixTypesPeeksPopsPushesVisitor());
         
     }
     
+            /** 
+             * Check whether an expression refers to a variable or array that should have a vector type.
+             * @param expr
+             * @param vectorIds
+             * @return
+             */
+    static boolean hasVectorType(JExpression expr, final Map<String,CType> vectorIds) {
+        final boolean[] hasVectorType = {false};
+ 
+        class hasVectorTypeVisitor extends SLIREmptyVisitor {
+            @Override
+            public void visitLocalVariableExpression(JLocalVariableExpression self, String ident) {
+                if (vectorIds.containsKey(getIdent(self))) {
+                    hasVectorType[0] = true;
+                }
+            }
+            @Override
+            public void visitArrayAccessExpression(JArrayAccessExpression self,
+                    JExpression prefix,
+                    JExpression accessor) {
+                if (vectorIds.containsKey(getIdent(self))) {
+                    hasVectorType[0] = true;
+                }
+            }
+            @Override
+            public void visitFieldExpression(JFieldAccessExpression self,
+                    JExpression left,
+                    String ident) {
+                if (vectorIds.containsKey(getIdent(self))) {
+                    hasVectorType[0] = true;
+                }
+            }
+        }
+        
+        expr.accept(new hasVectorTypeVisitor());
+        return hasVectorType[0];
+    }
+            
     /**
      * Do we need this?
      * @param method
@@ -380,7 +617,7 @@ public class Vectorize {
             });
           }
         }
-        return null;
+        return typemap;
     }
     
     /**
@@ -472,4 +709,14 @@ public class Vectorize {
 //            this.prefix = prefix;
 //        }
 //    }
+}
+class SIRPokeExpression extends SIRPushExpression {
+    int offset;
+    public SIRPokeExpression(JExpression arg, int offset, CType tapeType)
+    {
+        super(arg, tapeType);
+        this.offset = offset;
+    }
+    public int getOffset () { return offset; }
+
 }

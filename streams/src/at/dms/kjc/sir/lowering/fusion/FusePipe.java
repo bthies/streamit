@@ -204,7 +204,7 @@ public class FusePipe {
 
             //if modulation is enabled use shift pipeline fusion to
             //fuse segments where no filter is peeking, and only
-            //use modilo pipeline fusion on a pair of filters where
+            //use modulo pipeline fusion on a pair of filters where
             //second filter is peeking
 
             int n = pipe.size();
@@ -294,6 +294,8 @@ public class FusePipe {
 
         // must have a work function
         if (filter.getWork()==null) {
+            //XXX: debugging
+            System.err.println("filter " + filter.getName() + " is not fusable because has no work fn");
             return false;
         }
 
@@ -301,6 +303,7 @@ public class FusePipe {
         if (filter.getPeek().isDynamic() ||
             filter.getPop().isDynamic() ||
             filter.getPush().isDynamic()) {
+            System.err.println("filter " + filter.getName() + " is not fusable because has dynamic rates");
             return false;
         }
 
@@ -310,11 +313,13 @@ public class FusePipe {
         SIRPortal[] receivesFrom = SIRPortal.getPortalsWithReceiver(filter);
         SIRPortal[] sendsTo = SIRPortal.getPortalsWithSender(filter);
         if (receivesFrom.length>=1 || sendsTo.length>=1) {
+            System.err.println("filter " + filter.getName() + " is not fusable because has messages");
             return false;
         }
 
         // don't fuse file readers or file writers
         if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
+            System.err.println("filter " + filter.getName() + " is not fusable because has file I/O");
             return false;
         }
 

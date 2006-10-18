@@ -92,7 +92,7 @@ public class CachePartitioner extends ListPartitioner {
      * with a mapping from SIROperator to String denoting list of
      * partition numbers that a given SIROperator is assigned to.
      */
-    public SIRStream calcPartitions(HashMap<SIROperator, Integer> partitionMap) {
+    public SIRStream calcPartitions(Map<SIROperator, Integer> partitionMap) {
         LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         SIRStream result = calcPartitions(partitions, false);
 

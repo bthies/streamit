@@ -161,8 +161,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * returned.  The hashmap that is passed in is cleared and filled
      * with a mapping from SIROperator to String denoting list of
      * partition numbers that a given SIROperator is assigned to.
+     * <br/> implicit parameter str from class constructor.
+     * @param partitionMap The partition map to fill in.
+     * @return the (possibly munged) stream
      */
-    public SIRStream calcPartitions(HashMap<SIROperator, Integer> partitionMap) {
+    public SIRStream calcPartitions(Map<SIROperator, Integer> partitionMap) {
         LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
         SIRStream result = calcPartitions(partitions, false);
 

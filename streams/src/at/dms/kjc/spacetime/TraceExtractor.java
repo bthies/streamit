@@ -6,6 +6,11 @@ import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
 
 public class TraceExtractor {
     public static Trace[] extractTraces(UnflatFilter[] topFilters,HashMap[] execCounts,LinearAnalyzer lfa) {
@@ -280,8 +285,6 @@ public class TraceExtractor {
         return new Trace[0];
     }
 }
-
-
 
 
 

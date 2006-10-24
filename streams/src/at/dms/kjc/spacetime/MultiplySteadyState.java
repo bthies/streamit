@@ -1,6 +1,9 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
+
 import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.HashSet;

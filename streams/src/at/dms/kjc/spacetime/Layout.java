@@ -3,6 +3,8 @@
  */
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.slicegraph.FilterTraceNode;
+
 /**
  * @author mgordon
  *

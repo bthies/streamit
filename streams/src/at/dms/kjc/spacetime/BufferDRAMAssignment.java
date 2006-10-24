@@ -11,6 +11,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.Random;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the

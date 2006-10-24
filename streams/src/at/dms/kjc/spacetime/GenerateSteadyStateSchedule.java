@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * @author mgordon
@@ -228,5 +231,3 @@ public class GenerateSteadyStateSchedule {
     }
     
 }
-
-

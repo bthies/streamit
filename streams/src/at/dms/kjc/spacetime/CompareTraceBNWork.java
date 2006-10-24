@@ -5,6 +5,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.Comparator;
 
+import at.dms.kjc.slicegraph.Partitioner;
+
 /**
  * A Comparator for the work estimation of slices that compares slices
  * based on the amount of work in the bottleneck (the filter of the slice
@@ -44,4 +46,3 @@ public class CompareTraceBNWork implements Comparator {
             return 1;
     }
 }
-

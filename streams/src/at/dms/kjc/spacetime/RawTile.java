@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Vector;

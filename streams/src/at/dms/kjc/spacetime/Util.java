@@ -5,12 +5,14 @@ import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import java.util.List;
 import java.util.Collection;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.TraceNode;
 
 import java.util.Collections;
-import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.TreeSet;
@@ -339,30 +341,6 @@ public class Util {
         while (it.hasNext()) {
             set.add(it.next());
         }
-    }
-
-    /**
-     * Get a traversal (linked list) that includes all the trace nodes of the
-     * given trace traversal.
-     * 
-     * @param traces
-     * @return A LinkedList of TraceNodes.
-     */
-    public static Iterator<TraceNode> traceNodeTraversal(List traces) {
-        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
-        ListIterator it = traces.listIterator();
-
-        while (it.hasNext()) {
-            Trace trace = (Trace) it.next();
-            TraceNode traceNode = trace.getHead();
-            while (traceNode != null) {
-                trav.add(traceNode);
-                traceNode = traceNode.getNext();
-            }
-
-        }
-
-        return trav.listIterator();
     }
 
     /**

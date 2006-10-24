@@ -7,6 +7,9 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
 
 /**
  * This class represents the buffer between the sink filter of a trace

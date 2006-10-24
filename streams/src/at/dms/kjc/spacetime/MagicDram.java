@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
 
 public class MagicDram extends IODevice {
     // the list of instructions

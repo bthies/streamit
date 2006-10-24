@@ -9,6 +9,11 @@ import at.dms.kjc.flatgraph2.FilterContent;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRIdentity;
 import at.dms.kjc.sir.lowering.RenameAll;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
 import at.dms.kjc.*;
 
 /**

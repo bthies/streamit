@@ -6,6 +6,8 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.sir.SIRFilter;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.FilterTraceNode;
 
 
 /**

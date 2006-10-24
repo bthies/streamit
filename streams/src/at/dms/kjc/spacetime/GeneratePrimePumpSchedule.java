@@ -4,6 +4,8 @@
 package at.dms.kjc.spacetime;
 
 import java.util.*;
+
+import at.dms.kjc.slicegraph.DataFlowOrder;
 /**
  * This class operates on the SpaceTimeSchedule and generates the preloop
  * schedule for the partitioned stream graph.  It will create a pre loop schedule

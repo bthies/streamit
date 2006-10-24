@@ -6,6 +6,10 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.common.*;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
 
 /**
  * @author mgordon

@@ -1,4 +1,6 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
+
+import at.dms.kjc.spacetime.Trace;
 
 /**
  * 

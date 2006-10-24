@@ -1,7 +1,7 @@
 /**
  * 
  */
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +14,8 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.spacetime.RawChip;
+import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*;

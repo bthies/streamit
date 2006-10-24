@@ -5,6 +5,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.Iterator;
 
+import at.dms.kjc.slicegraph.Edge;
+
 /**
  * Determine the number of read and write commands that each 
  * dram has issued to it for a given schedule of slices.

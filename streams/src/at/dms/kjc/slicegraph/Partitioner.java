@@ -1,4 +1,4 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import java.util.*;
 import java.io.FileWriter;
@@ -9,6 +9,10 @@ import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
+import at.dms.kjc.spacetime.RawChip;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
+import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.KjcOptions;
 
 /**
@@ -105,6 +109,11 @@ public abstract class Partitioner {
     public Trace[] getTraceGraph() {
         assert traceGraph != null;
         return traceGraph;
+    }
+    
+    public Trace[] getTopTraces() {
+        assert topTraces != null;
+        return topTraces;
     }
 
     /**
@@ -208,7 +217,7 @@ public abstract class Partitioner {
      * @return The work estimation for the filter trace node for one steady-state
      * mult of the filter.
      */
-    protected int getFilterWork(FilterTraceNode node) {
+    public int getFilterWork(FilterTraceNode node) {
         return workEstimation.get(node.getFilter()).intValue();
     }
 

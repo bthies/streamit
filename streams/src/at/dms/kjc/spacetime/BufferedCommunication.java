@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+
 import java.util.Hashtable;
 import java.math.BigInteger;
 import at.dms.kjc.flatgraph2.FilterContent;

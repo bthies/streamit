@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
+
+import at.dms.kjc.slicegraph.Edge;
 import at.dms.util.Utils;
 
 /** This class generates the init schedule, the execution order as 

@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
 
 
 /**

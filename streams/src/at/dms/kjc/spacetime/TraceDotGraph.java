@@ -1,6 +1,11 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.TraceNode;
 import at.dms.kjc.*;
 import at.dms.kjc.flatgraph2.*;
 import java.io.FileWriter;

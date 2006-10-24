@@ -8,6 +8,10 @@ import java.util.HashSet;
 import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * This abstract class represents a buffer in the partitioner slice graph.  A 

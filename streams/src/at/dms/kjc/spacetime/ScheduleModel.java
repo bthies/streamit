@@ -8,6 +8,11 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.TraceNode;
+
 /**
  * This class models the calculated schedule and layout using the 
  * work estimation for each filter of each slice.

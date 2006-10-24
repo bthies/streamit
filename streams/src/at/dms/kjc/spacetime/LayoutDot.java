@@ -5,6 +5,7 @@ import java.util.Vector;
 import java.util.Iterator;
 import java.util.HashMap;
 import at.dms.kjc.common.*;
+import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * This class generates a dot graph of the layout and for each tile the

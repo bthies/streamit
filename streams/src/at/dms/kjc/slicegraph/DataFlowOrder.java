@@ -1,9 +1,11 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
+
+import at.dms.kjc.spacetime.Trace;
 import at.dms.util.Utils;
 
 /**

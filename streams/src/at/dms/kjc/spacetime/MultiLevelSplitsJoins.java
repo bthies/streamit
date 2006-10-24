@@ -10,6 +10,11 @@ import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.*; 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.Partitioner;
 
 /**
  * This pass will break up splits or joins (OutputTraceNodes and InputTraceNodes)

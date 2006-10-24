@@ -1,4 +1,4 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import java.util.*;
 import java.io.FileWriter;
@@ -9,6 +9,10 @@ import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.spacetime.LinearFission;
+import at.dms.kjc.spacetime.RawChip;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
+import at.dms.kjc.spacetime.Trace;
 
 /**
  * Partition the stream graph into slices where each slice is a pipeline of filters with

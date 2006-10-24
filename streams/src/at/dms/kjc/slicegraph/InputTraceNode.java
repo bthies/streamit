@@ -1,10 +1,12 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.spacetime.IntraTraceBuffer;
+import at.dms.kjc.spacetime.OffChipBuffer;
 import at.dms.kjc.*;
 
 /**

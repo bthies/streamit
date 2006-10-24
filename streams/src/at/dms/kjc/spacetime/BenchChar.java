@@ -6,6 +6,8 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.sir.*;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * Calculate and print some characteristics of the application.

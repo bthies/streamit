@@ -1,5 +1,7 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.slicegraph.Edge;
+
 /**
  * This class encapsulates the port plus the distance of this port to the
  * source and dest of the edge in question (see assignmentOrder).  It 

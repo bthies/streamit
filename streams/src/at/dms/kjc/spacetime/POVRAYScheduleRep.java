@@ -7,6 +7,7 @@ import java.io.*;
 import java.util.*;
 
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.slicegraph.FilterTraceNode;
 
 /**
  * This class will create a 3D representation of the Space-Time 
@@ -70,9 +71,9 @@ public class POVRAYScheduleRep {
             calculateHeightScale();
             setupScene();
             setupColors(spaceTime);
-            for (int i = 0; i < spaceTime.partitioner.traceGraph.length; i++) {
+            for (int i = 0; i < spaceTime.partitioner.getTraceGraph().length; i++) {
                 
-                createSliceShape(spaceTime.partitioner.traceGraph[i], layout);
+                createSliceShape(spaceTime.partitioner.getTraceGraph()[i], layout);
             }
             fw.close();
         }
@@ -145,10 +146,10 @@ public class POVRAYScheduleRep {
         Random random = new Random(17); 
         fw.write("//-------------------------------------------\n");
         fw.write("//Setup colors for the slices\n");
-        for (int i = 0; i < spaceTime.partitioner.traceGraph.length; i++) {
-            colorName.put(spaceTime.partitioner.traceGraph[i], 
+        for (int i = 0; i < spaceTime.partitioner.getTraceGraph().length; i++) {
+            colorName.put(spaceTime.partitioner.getTraceGraph()[i], 
                     "color" + colorID++);
-            fw.write("#declare " + colorName.get(spaceTime.partitioner.traceGraph[i]) +
+            fw.write("#declare " + colorName.get(spaceTime.partitioner.getTraceGraph()[i]) +
                     " = rgb<" + random.nextDouble() + ", " + random.nextDouble() + ", " +
                     random.nextDouble() + ">;\n");
         }
@@ -211,5 +212,3 @@ public class POVRAYScheduleRep {
         fw.write("\n");
     }
 }
-
-

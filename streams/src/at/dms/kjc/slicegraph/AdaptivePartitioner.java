@@ -1,7 +1,7 @@
 /**
  * 
  */
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -22,6 +22,16 @@ import at.dms.kjc.sir.SIRPredefinedFilter;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
+import at.dms.kjc.spacetime.InterTraceBuffer;
+import at.dms.kjc.spacetime.Layout;
+import at.dms.kjc.spacetime.LinearFission;
+import at.dms.kjc.spacetime.RawChip;
+import at.dms.kjc.spacetime.ScheduleModel;
+import at.dms.kjc.spacetime.SpaceTimeBackend;
+import at.dms.kjc.spacetime.SpaceTimeSchedule;
+import at.dms.kjc.spacetime.Trace;
+import at.dms.kjc.spacetime.Util;
+
 import java.util.*;
 
 /**

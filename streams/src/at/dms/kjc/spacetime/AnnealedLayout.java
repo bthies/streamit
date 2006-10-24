@@ -2,6 +2,13 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.SimulatedAnnealing;
+import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.TraceNode;
 
 import java.util.Arrays;
 import java.util.Collections;

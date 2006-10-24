@@ -2,6 +2,9 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.Partitioner;
+
 /**
  * This class represents the space/time schedule for the application, 
  * including both the steady state and the initialization stage.

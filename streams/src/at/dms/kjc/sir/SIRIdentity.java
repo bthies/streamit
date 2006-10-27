@@ -78,22 +78,32 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
         assert rate != null : "Constructing SIRIdentity with null rate";
         
         // work function
-        JStatement work1body[] = new JStatement[1];
+        
+        JVariableDefinition tmp = new JVariableDefinition(null, 0, t, 
+                at.dms.kjc.sir.lowering.ThreeAddressCode.nextTemp(),
+                new SIRPopExpression(t));
+        JVariableDeclarationStatement declarePopExpr = new JVariableDeclarationStatement(tmp);
+        JLocalVariableExpression referencePoppedValue = new JLocalVariableExpression(tmp);
+
+        
+        JStatement work1body[];
         if (rate instanceof JIntLiteral && 
             ((JIntLiteral)rate).intValue() == 1) {
-            work1body[0] =  
-                new JExpressionStatement
-                (null, new SIRPushExpression
-                 (new SIRPopExpression(t), t),
-                 null);
+            work1body = new JStatement[] {
+                    declarePopExpr,
+                    new JExpressionStatement(null, 
+                            new SIRPushExpression(
+                                    referencePoppedValue, t), 
+                            null) };
         
 
         } else {
-        
             JStatement pushPop = 
-                new JExpressionStatement(null,
-                                         new SIRPushExpression(new SIRPopExpression(t), t),
-                                         null);
+                new JBlock(new JStatement[]{
+                        declarePopExpr,  
+                        new JExpressionStatement(null,
+                                new SIRPushExpression(referencePoppedValue, t),
+                                null)});
             JVariableDefinition induction = 
                 new JVariableDefinition(null, 0,
                                         CStdType.Integer,
@@ -113,12 +123,13 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
                                                                                                         induction),
                                                                            new JIntLiteral(1)),
                                          null);
-            work1body[0] = new JForStatement(null,
-                    new JVariableDeclarationStatement(null, induction, null),
-                    cond, increment, pushPop, 
-                    new JavaStyleComment[] {
-                    new JavaStyleComment("IncreaseFilterMult", true,
-                            false, false)});       
+            work1body= new JStatement[] { 
+                    new JForStatement(null,
+                       new JVariableDeclarationStatement(null, induction, null),
+                       cond, increment, pushPop, 
+                       new JavaStyleComment[] {
+                            new JavaStyleComment("IncreaseFilterMult", true,
+                                false, false)})};       
         
         }
     

@@ -14,7 +14,7 @@ import at.dms.kjc.common.CodeGenerator;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.38 2006-10-11 18:08:38 dimock Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.39 2006-10-27 20:46:59 dimock Exp $
  */
 public class SIRToStreamIt
     implements Constants, SLIRVisitor, AttributeStreamVisitor, CodeGenerator
@@ -2814,6 +2814,14 @@ public class SIRToStreamIt
         p.print("}");
     }
 
+    /**
+     * Print vector literal expression as scalar expression followed by "v";
+     */
+    public void visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
+        scalar.accept(this);
+        p.print("/*v*/");
+    }
+
     
     // ----------------------------------------------------------------------
     // PROTECTED METHODS
@@ -2856,5 +2864,4 @@ public class SIRToStreamIt
         else
             p.print(s.toString());
     }
-
 }

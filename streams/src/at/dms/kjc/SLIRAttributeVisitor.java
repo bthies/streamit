@@ -4,6 +4,7 @@ import java.util.List;
 import at.dms.kjc.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 
@@ -285,4 +286,8 @@ public interface SLIRAttributeVisitor<T> extends AttributeVisitor<T> {
                                   CType outputType,
                                   int inputSize,
                                   int outputSize);
+    /**
+     * Visits a vector literal
+     */
+    T visitVectorLiteral(JVectorLiteral self, JLiteral scalar);
 }

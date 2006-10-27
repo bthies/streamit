@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.21 2006-09-25 13:54:34 dimock Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.22 2006-10-27 20:48:55 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -10,6 +10,7 @@ import java.util.List;
 import at.dms.kjc.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 
 /**
  * This visitor is for visiting statement-level constructs in the
@@ -412,5 +413,12 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      * Visits InlineAssembly
      */
     public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input,String[] clobber) {}
+    
+    /**
+     * Visits a vector literal
+     */
+    public void visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
+        scalar.accept(this);
+    }
 }
 

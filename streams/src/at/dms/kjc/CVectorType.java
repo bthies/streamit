@@ -9,6 +9,13 @@ import at.dms.util.SimpleStringBuffer;
 /**
  * Short vectors of base types.
  * Not from KJC.  StreamIt only.
+ * <br/>
+ * Vector types come at two levels: CVectorType is a 
+ * type that allows individual vector elements to be loaded (gathered)
+ * and stored (scatterred) by referencing the vector through {@link #asArrayRef(JExpression, int)}
+ * and allows arithmetic through {@link #asVectorRef(JExpression)}.
+ * a CVectorTypeLow does not allow loading or storing. 
+ * A CVectorType always referes to a CLowVectorType.
  * @author dimock
  *
  */
@@ -21,38 +28,38 @@ public class CVectorType extends CType {
     /**
      * For cloner only.
      */
-    protected CVectorType() {}
+    private CVectorType() {}
 
-    private CNumericType base_type;
-    private int width;
-    private int width_in_base;
+    private CVectorTypeLow low_type;
     
     /**
-     * Construct a vector for short vrctor hardware (SSE, ...).
+     * Construct a vector for short vector hardware (SSE, ...).
      * @param baseType : base type, just CSTdType.Integer or CStdType.Float for now.
      * @param width : vector width in bytes.
      */
     public CVectorType(CNumericType baseType, int width) {
-        
         super(TID_VECTOR);
-        assert baseType != null;
-        base_type = baseType;
-        this.width = width;
+        low_type = new CVectorTypeLow(baseType,width);
     }
 
+    /** Get type for low-level implementation */
+    public final CVectorTypeLow getLowType() {
+        return low_type;
+    }
+    
     /** accessor for base type */
-    public CType getBaseType() {
-        return base_type;
+    public final CType getBaseType() {
+        return low_type.getBaseType();
     }
     
     /** accessor for width in units of base type */
-    public int getWidthInBase() {
-        return width / base_type.getSizeInC();
+    public final int getWidthInBase() {
+        return low_type.getWidthInBase();
     }
     
     /** accessor for width in bytes */
-    public int getWidth () {
-        return width;
+    public final int getWidth () {
+        return low_type.getWidth();
     }
     
     /* (non-Javadoc)
@@ -74,19 +81,19 @@ public class CVectorType extends CType {
      * @see at.dms.kjc.CType#getSize()
      */
     @Override
-    public int getSize() {
+    public final int getSize() {
         // seems to be in word  (4-byte) units
-        return ((width + 3) / 4);
+        return low_type.getSize();
     }
 
     /* (non-Javadoc)
      * @see at.dms.kjc.CType#getSizeInC()
      */
     @Override
-    public int getSizeInC() {
+    public final int getSizeInC() {
         // seems to be in byte units
         // Does alignment play a role here?
-        return ((width + 3) / 4) * 4;
+        return low_type.getSizeInC();
     }
 
     /* (non-Javadoc)
@@ -109,8 +116,8 @@ public class CVectorType extends CType {
 
     public boolean equals (CType other) {
         if (other instanceof CVectorType) {
-            return base_type.equals(
-                    ((CVectorType)other).getBaseType());
+            return low_type.equals(
+                    ((CVectorType)other).getLowType());
         } else {
             return false;
         }
@@ -135,23 +142,30 @@ public class CVectorType extends CType {
      */
     @Override
     public String toString() {
-        return "__v" +  getWidthInBase() + base_type.getSignature();
+        return "__v" +  getWidthInBase() + low_type.getBaseType().getSignature();
     }
-
+    
+    
     /** 
      * Create C (or C++) typedef allowing {@link toString()} to be used as a type. 
-     * @return typedef with ";" but no line terminator.
+     * @return typedefs with ";" and internal line terminators but no final line terminator.
      */
     public String typedefString() {
-        return "typedef union { "
-        + base_type.toString()    // valid C of the currently allowed base types
-        + " v __attribute__ ((vector_size (" + width + "))); "
-        + base_type.toString()
+        return 
+        // typedef for vector
+        low_type.typedefString() + "\n"
+        // typedef for mixed vector and array for manipulating elements
+        + "typedef union {"
+        + low_type.toString()
+        + " v; "
+        + getBaseType().toString()
         + " a[" + getWidthInBase() + "];} "
         + toString() + ";";
     }
+    
     /**
-     * Make expression refer to position in a vector (as an array element).
+     * Make expression refer to position in a vector (as an array element) for load / store.
+     * You will probably want to change the type of the expression to a vector type before calling this.
      * @param expr
      * @param n
      * @return the reference to expr as array element n of the vector.
@@ -164,7 +178,8 @@ public class CVectorType extends CType {
     }
     
     /**
-     * Make expression refer to vector (as a vector).
+     * Make expression refer to vector (as a vector) for arithmetic.
+     * You will probably want to change the type of the expression to a vector type before calling this.
      * @param expr  expression to turn into reference to vector as vector.
      * @return the reference to expr as a vector
      */

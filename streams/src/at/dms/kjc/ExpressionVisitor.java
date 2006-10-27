@@ -8,6 +8,7 @@ import at.dms.kjc.sir.SIRPopExpression;
 import at.dms.kjc.sir.SIRPortal;
 import at.dms.kjc.sir.SIRPushExpression;
 import at.dms.kjc.sir.SIRRangeExpression;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 
 /**
  * Visitor only defined on subtypes of JExpression,
@@ -90,4 +91,5 @@ public interface ExpressionVisitor<S,T> {
     S visitPop(SIRPopExpression self, T otherData);
     S visitPush(SIRPushExpression self, T otherData);
     S visitRange(SIRRangeExpression self, T otherData);
+    S visitVectorLiteral(JVectorLiteral self, T otherData);
 }

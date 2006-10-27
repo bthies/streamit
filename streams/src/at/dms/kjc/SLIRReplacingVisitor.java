@@ -21,6 +21,7 @@ package at.dms.kjc;
 
 import java.util.List;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 import at.dms.kjc.lir.*;
 import at.dms.util.Utils;
 import java.util.ListIterator;
@@ -193,6 +194,17 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
             self.setArg(newExp);
         }
     
+        return self;
+    }
+
+    /**
+     * Visits a vector literal expression.
+     */
+    public Object visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
+        JLiteral newExp = (JLiteral)scalar.accept(this);
+        if (newExp!=null && newExp!=scalar) {
+            self.setScalar(newExp);
+        }
         return self;
     }
 

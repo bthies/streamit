@@ -21,6 +21,7 @@ package at.dms.kjc;
 
 import java.util.List;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 import at.dms.kjc.lir.*;
 import java.util.ListIterator;
 import at.dms.compiler.JavaStyleComment;
@@ -191,6 +192,15 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
                                             SIRStream receiver,
                                             JMethodDeclaration[] methods) {
         portal.accept(this);
+        return self;
+    }
+
+
+    /**
+     * Visits a vector literal
+     */
+    public Object visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
+        scalar.accept(this);
         return self;
     }
 

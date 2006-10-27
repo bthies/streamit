@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.33 2006-09-25 13:54:34 dimock Exp $
+ * $Id: SLIRVisitor.java,v 1.34 2006-10-27 20:48:55 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -10,6 +10,7 @@ import java.util.List;
 import at.dms.kjc.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 
 /**
  * This visitor is for visiting statement-level constructs in the
@@ -314,5 +315,10 @@ public interface SLIRVisitor extends KjcVisitor
      * Visits a work function exit.
      */
     void visitWorkExit(LIRWorkExit self);
+    
+    /**
+     * Visit a vector literal value.
+     */
+    void visitVectorLiteral(JVectorLiteral self, JLiteral scalar);
 }
 

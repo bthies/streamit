@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.List;
 import java.util.ListIterator;
 
+import at.dms.kjc.JLiteral;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.SLIRVisitor;
 import at.dms.compiler.JavaStyleComment;
@@ -16,6 +17,7 @@ import at.dms.compiler.JavadocComment;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.JVectorLiteral;
 import at.dms.kjc.lir.*;
 
 public class IRPrinter extends Utils implements SLIRVisitor
@@ -2075,6 +2077,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrStart("streamContext");
         self.getStreamContext().accept(this);
         attrEnd();
+        blockEnd();
+    }
+
+    /**
+     * Visits a vector literal.
+     */
+    public void visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
+        blockStart("VectorLiteral");
+        scalar.accept(this);
         blockEnd();
     }
 }

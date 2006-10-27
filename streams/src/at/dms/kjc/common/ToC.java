@@ -44,27 +44,33 @@ public class ToC extends ToCCommon implements SLIRVisitor,CodeGenerator
      * do the recursive call.
      */
     protected void declareInitializedArray(CType type, String ident, JExpression expr) {
-        // note this calls print(CType), not print(String)
-        printType(((CArrayType)type).getBaseType());  
-    
-        p.print(" " + ident);
         JArrayInitializer init = (JArrayInitializer)expr;
-        while (true) {
-            int length = init.getElems().length;
-            p.print("[" + length + "]");
-            if (length==0) { 
-                // hope that we have a 1-dimensional array in
-                // this case.  Otherwise we won't currently
-                // get the type declarations right for the
-                // lower pieces.
-                break;
-            }
-            // assume rectangular arrays
-            JExpression next = (JExpression)init.getElems()[0];
-            if (next instanceof JArrayInitializer) {
-                init = (JArrayInitializer)next;
-            } else {
-                break;
+
+        if (type instanceof CVectorTypeLow || type instanceof CVectorType) {
+            printType(type);
+            p.print(" " + ident);
+        } else {
+            assert type instanceof CArrayType;
+            printType(((CArrayType)type).getBaseType());  
+            p.print(" " + ident);
+        
+            while (true) {
+                int length = init.getElems().length;
+                p.print("[" + length + "]");
+                if (length==0) { 
+                    // hope that we have a 1-dimensional array in
+                    // this case. Otherwise we won't currently
+                    // get the type declarations right for the
+                    // lower pieces.
+                    break;
+                }
+                // assume rectangular arrays
+                JExpression next = (JExpression)init.getElems()[0];
+                if (next instanceof JArrayInitializer) {
+                    init = (JArrayInitializer)next;
+                } else {
+                    break;
+                }
             }
         }
         p.print(" = ");

@@ -166,14 +166,14 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     // More substantial common methods.
     // ------------------------------------------------------------------------
 
-    /**
-     * prints an array allocator expression
-     *
-     * Uses malloc or calloc based on setting of KjcOptions.malloczeros
-     * We seem to always have KjcOptions.malloczeros == true
-     * The RAW backend has problems with non-zeroed arrays so don't
-     *  set KjcOptions.malloczeros to false!
-     */
+//    /**
+//     * prints an array allocator expression
+//     *
+//     * Uses malloc or calloc based on setting of KjcOptions.malloczeros
+//     * We seem to always have KjcOptions.malloczeros == true
+//     * The RAW backend has problems with non-zeroed arrays so don't
+//     *  set KjcOptions.malloczeros to false!
+//     */
     //     public void visitNewArrayExpression(JNewArrayExpression self,
     //                                         CType type,
     //                                         JExpression[] dims,

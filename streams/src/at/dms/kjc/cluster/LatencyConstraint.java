@@ -101,7 +101,7 @@ public class LatencyConstraint {
     }
 
     public void output() {
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println(" init: "+sourceInit+
                                " source: "+sourceSteadyExec+
                                " dest: "+destSteadyExec);

@@ -203,7 +203,7 @@ class IncreaseFilterMult implements StreamVisitor {
                         WorkInfo w = 
                             previous_work.get(oper);
 
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.println("Filter: "+oper+" Restoring mult to 1");
                         ((SIRFilter)oper).setWork(w.work);
                         ((SIRFilter)oper).setPop(w.pop);
@@ -252,7 +252,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
         if (_mult == 1) return;
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.print("IncMult visiting: "+filter.getName()+
                              " mult: "+_mult);
 
@@ -263,7 +263,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
         JMethodDeclaration work = filter.getWork();
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.print(" work: "+work.getName());
 
         //
@@ -413,7 +413,7 @@ class IncreaseFilterMult implements StreamVisitor {
         filter.setPush(push * _mult);
         filter.setPeek(pop * _mult + extra);
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println(" new work: "+filter.getWork().getName());
     }
 

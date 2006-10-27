@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.113 2006-09-25 13:54:34 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.114 2006-10-27 20:54:15 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -22,6 +22,15 @@ import java.util.*;
 //import streamit.scheduler2.*;
 //import streamit.scheduler2.constrained.*;
 
+/**
+ * Top level of back ends for cluster and uniprocessor based on cluster.
+ * For a cluster creates computation nodes connected with pipes.
+ * For a uniprocessor creates computation nodes connected by buffers.
+ * <br/>
+ * Starts with: Standard sequence of optimization passes.
+ * Followed by: Dynamic region handling and partitioning, still standard in that it is similar to SpaceDynamic.
+ * Followed by: Code generation for cluster or uniprocessor.
+ */
 public class ClusterBackend {
 
     //public static Simulator simulator;
@@ -30,7 +39,7 @@ public class ClusterBackend {
     /**
      * Print out some debugging info if true.
      */
-    public static boolean debugPrint = false;
+    public static boolean debugging = false;
 
     /**
      * If true have each filter print out each value it is pushing
@@ -96,7 +105,7 @@ public class ClusterBackend {
         // System.out.println("  rename1 is: "+KjcOptions.rename1);
         // System.out.println("  rename2 is: "+KjcOptions.rename2);
 
-        if (debugPrint) {
+        if (debugging) {
             SIRGlobal[] globals;
             if (global != null) {
                 globals = new SIRGlobal[1];
@@ -108,9 +117,7 @@ public class ClusterBackend {
         }
         structures = structs;
     
-        // Introduce Multiple Pops where programmer
-        // didn't take advantage of them
-        IntroduceMultiPops.doit(str);
+        // Testing. (new ThreeAddressCode()).threeAddressCode(str);
         
         // Perform propagation on fields from 'static' sections.
         Set<SIRGlobal> statics = new HashSet<SIRGlobal>();
@@ -118,8 +125,8 @@ public class ClusterBackend {
             statics.add(global);
         StaticsProp.propagate(str, statics);
 
-        if (debugPrint) {
-            System.err.println("// str after RenameAll and StaticsProp");
+        if (debugging) {
+            System.err.println("// str before Constant Prop");
             SIRGlobal[] globals;
             if (global != null) {
                 globals = new SIRGlobal[1];
@@ -129,7 +136,7 @@ public class ClusterBackend {
             }
             SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
                               globals);
-            System.err.println("// END str after RenameAll and StaticsProp");
+            System.err.println("// END str before Constant Prop");
         }
 
         // propagate constants and unroll loop
@@ -141,17 +148,26 @@ public class ClusterBackend {
         Unroller.setLimitNoTapeLoops(true, 4);
     
         ConstantProp.propagateAndUnroll(str);
+//        if (debugPrint) {
+//            System.err.println("// str after ConstantProp1");
+//            SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
+//            System.err.println("// END str after ConstantProp1");
+//        }
         System.err.println(" done.");
 
         // do constant propagation on fields
         System.err.print("Running Constant Field Propagation...");
         ConstantProp.propagateAndUnroll(str, true);
-        if (debugPrint) {
+        if (debugging) {
             System.err.println("// str after ConstantProp");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
             System.err.println("// END str after ConstantProp");
         }
 
+        // Introduce Multiple Pops where programmer
+        // didn't take advantage of them (after parameters are propagated).
+        IntroduceMultiPops.doit(str);
+        
         // convert round(x) to floor(0.5+x) to avoid obscure errors
         RoundToFloor.doit(str);
 
@@ -161,7 +177,7 @@ public class ClusterBackend {
         // construct stream hierarchy from SIRInitStatements
         ConstructSIRTree.doit(str);
 
-        //this must be run now, FlatIRToC relies on it!!!
+        //this must be run now, Further passes expect unique names!!!
         RenameAll.renameAllFilters(str);
 
         //SIRPrinter printer1 = new SIRPrinter();
@@ -182,11 +198,14 @@ public class ClusterBackend {
 
         SIRPortal.findMessageStatements(str);
 
+        // canonicalize stream graph, reorganizing some splits and joins
+        Lifter.liftAggressiveSync(str);
+
         // Unroll and propagate maximally within each (not phased) filter.
         // Initially justified as necessary for IncreaseFilterMult which is
         // now obsolete.
         Optimizer.optimize(str); 
-        if (debugPrint) {
+        if (debugging) {
             System.err.println("// str after Optimizer");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs);
             System.err.println("// END str after Optimizer");
@@ -194,9 +213,6 @@ public class ClusterBackend {
  
         // estimate code and local variable size for each filter (and store where???)
         Estimator.estimate(str);
-
-        // canonicalize stream graph, reorganizing some splits and joins
-        Lifter.liftAggressiveSync(str);
 
         StreamItDot.printGraph(str, "canonical-graph.dot");
 
@@ -206,16 +222,22 @@ public class ClusterBackend {
         }
 
         // Flattener is a misnomer here.
-        // rewrite str for linearreplacement, frequencyreplacement
-        // redundantreplacement
+        // Rewrite str for linearreplacement, frequencyreplacement,
+        // or redundantreplacement
         str = Flattener.doLinearAnalysis(str);
         // statespace.
         str = Flattener.doStateSpaceAnalysis(str);
 
+        // Raise all pushes, pops, peeks to statement level
+        // (several phases above introduce new peeks, pops, pushes
+        //  including but not limited to doLinearAnalysis)
+        SimplifyPopPeekPush.simplify(str);
 
-         // Code relating to IncreaseFilterMult removed here.
+
+        // Code relating to IncreaseFilterMult removed here.
         
         Optimizer.optimize(str);
+
         // set up for future estimateCode / estimateLocals calls.
         Estimator.estimate(str);
 
@@ -235,7 +257,7 @@ public class ClusterBackend {
         int numSsgs = streamGraph.getStaticSubGraphs().length;
         Utils.setupDotFileName(numSsgs);
 
-        if (numSsgs > 1 && debugPrint) {
+        if (numSsgs > 1 && debugging) {
             streamGraph.dumpStaticStreamGraph();
         }
 
@@ -277,7 +299,7 @@ public class ClusterBackend {
             StreamItDot.printGraph(ssg.getTopLevelSIR(), 
                                    Utils.makeDotFileName("before-partition", ssg.getTopLevelSIR()));
 
-            HashMap<SIROperator,Integer> ssgPartitionMap = new HashMap<SIROperator,Integer>();
+            Map<SIROperator,Integer> ssgPartitionMap = new HashMap<SIROperator,Integer>();
 
             //        // sets filter steady counts, which are needed by cache partitioner
             //        filter_steady_counts = ssg.getFlatNodeExecutions(false);
@@ -348,6 +370,25 @@ public class ClusterBackend {
             //VarDecl Raise to move array assignments down?
             new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
+            // Vectorize here w.r.t. partition map, will invalidate schedule.
+            ssg.setTopLevelSIR(
+            VectorizeEnable.vectorizeEnable(ssg.getTopLevelSIR(),ssgPartitionMap));
+
+            // debugging:
+            if (debugging) {
+                System.err.println("// str after vector fusing");
+                SIRGlobal[] globals;
+                if (global != null) {
+                    globals = new SIRGlobal[1];
+                    globals[0] = global;
+                } else {
+                    globals = new SIRGlobal[0];
+                }
+                SIRToStreamIt.run(ssg.getTopLevelSIR(), interfaces, interfaceTables, structs,
+                                  globals);
+                System.err.println("// END str after vector fusing");
+            }
+                
             // Accumulate partition info for later code generation.
             partitionMap.putAll(ssgPartitionMap);
             ClusterFusion.setPartitionMap(partitionMap);
@@ -424,7 +465,7 @@ public class ClusterBackend {
 
         // end constrained scheduler
 
-        if (debugPrint) {
+        if (debugging) {
             SIRGlobal[] globals;
             if (global != null) {
                 globals = new SIRGlobal[1];
@@ -456,9 +497,6 @@ public class ClusterBackend {
         if (KjcOptions.removeglobals) { RemoveGlobals.doit(graphFlattener.top); }
         */
 
-        // find all structs used in program and emit header file for them
-        StructureIncludeFile.doit(structures, streamGraph);
-
         /// start output portals
         SIRPortal portals[] = SIRPortal.getPortals();
 
@@ -475,6 +513,8 @@ public class ClusterBackend {
         //ClusterExecutionCode.doit(top);
 
         System.err.println("Generating cluster code...");
+
+        StructureIncludeFile.doit(structures, streamGraph); // structs.h
 
         ClusterCode.generateCode(strTop);   // thread*.cpp
 
@@ -527,7 +567,7 @@ public class ClusterBackend {
         System.exit(0);
     }
     
-    private static void mapToPartitionZero(SIRStream str, final HashMap<SIROperator,Integer> partitionMap) {
+    private static void mapToPartitionZero(SIRStream str, final Map<SIROperator,Integer> partitionMap) {
         IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
                 public void preVisitStream(SIRStream self,
                                            SIRIterator iter) {

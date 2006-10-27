@@ -20,12 +20,8 @@ import at.dms.kjc.flatgraph.*;
  *
  */
 public class StructureIncludeFile {
-    private static HashSet<CType> passedTypes;
-
     public static boolean debugging = false;
-
-    private StructureIncludeFile() {}
-    
+   
     /**
      * Create structures include file in current directory.
      * 
@@ -43,31 +39,64 @@ public class StructureIncludeFile {
      * If standalone switch is not set, also creates push and pop
      * routines for using structure fields.
      */
-    public static void doit(SIRStructure[] structs, StreamGraph sg, String dir) 
+    private static void doit(SIRStructure[] structs, StreamGraph sg, String dir) 
     {
         if (structs.length == 0) 
             return;
-        passedTypes = new HashSet<CType>();
+        Set<CType> passedTypes;
         try {
             FileWriter fw = new FileWriter(dir + "/structs.h");
             passedTypes = new HashSet<CType>();
 
-            //determine which struct types are actually passed over channels
-            getPassedStructs(sg);
+            //determine what types are passed over tapes
+            getPassedStructs(sg, passedTypes);
 
-            createStructureDefs(structs, fw);
+            // horrible mess for getting typedefs for all vector types in program into vectorTypeDefs
+            final Set<String> vectorTypeDefs = new HashSet<String>();
+            sg.getTopLevel().accept(new StreamGraphVisitor(){
+                public void visitStaticStreamGraph(StaticStreamGraph ssg) {
+                    for (FlatNode fn : ssg.getFlatNodes()) {
+                        if (fn.isFilter()) {
+                            SIRFilter filter = (SIRFilter)fn.contents;
+                            for (JFieldDeclaration decl : filter.getFields()) {
+                                decl.accept(new SLIREmptyVisitor(){
+                                    @Override
+                                    public void visitVariableDefinition(JVariableDefinition self,
+                                            int modifiers, CType type, String ident, JExpression expr) {
+                                        if (type instanceof CVectorType) {
+                                            vectorTypeDefs.add(((CVectorType)type).typedefString());
+                                        }
+                                    }
+                                });
+                            }
+                            for (JMethodDeclaration m : filter.getMethods()) {
+                                m.accept(new SLIREmptyVisitor(){
+                                    @Override
+                                    public void visitVariableDefinition(JVariableDefinition self,
+                                            int modifiers, CType type, String ident, JExpression expr) {
+                                        if (type instanceof CVectorType) {
+                                            vectorTypeDefs.add(((CVectorType)type).typedefString());
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            }, null, true);
+            
+            createStructureDefs(structs, fw, passedTypes, vectorTypeDefs);
             if (!KjcOptions.standalone)
-                createPushPopFunctions(structs, fw);
+                createPushPopFunctions(structs, fw, passedTypes);
             fw.close();
         }
         catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error creating structure include file");
         }
-        passedTypes = null;  // clean up static data structure
     }
 
-    private static void getPassedStructs (StreamGraph sg) {
+    private static void getPassedStructs (StreamGraph sg, Set<CType> passedTypes) {
         for (StaticStreamGraph ssg : sg.getStaticSubGraphs()) {
             for (FlatNode node : ssg.getFlatNodes()) {
                 if (node.isFilter()) {
@@ -84,35 +113,21 @@ public class StructureIncludeFile {
         }
     }
     
-    /**
-     * Don't even think of it!
-     * 
-     * Only public to avoid using an inner class.
-     */
-    public void visitNode(FlatNode node) 
-    {
-        if (node.isFilter()) {
-            SIRFilter fnode = (SIRFilter)node.contents;
-            if (debugging) {
-                System.err.println(this.getClass().getName() + " processing filter " 
-                                   + fnode.getName() + ": " 
-                                   +  fnode.getInputType() + "->" + fnode.getOutputType());
-            }
-            passedTypes.add(fnode.getOutputType());
-            passedTypes.add(fnode.getInputType());
-        }
-    }
-    
-
     /** 
      * create a c header file with all the structure definitions
      * as typedef'ed structs.
      **/
     private static void createStructureDefs(SIRStructure[] structs, 
-                                     FileWriter fw) throws Exception
+                                     FileWriter fw,
+                                     Set<CType> passedTypes, 
+                                     Set<String> vectorTypeDefs) throws Exception
     {
         fw.write("#ifndef __STRUCTS_H\n");
         fw.write("#define __STRUCTS_H\n");
+        for (String typedef : vectorTypeDefs) {
+            fw.write(typedef);
+            fw.write("\n");
+        }
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
             fw.write("typedef struct __" + current.getIdent() + " {\n");
@@ -144,7 +159,7 @@ public class StructureIncludeFile {
     }
 
     private static void createPushPopFunctions(SIRStructure[] structs,
-                                        FileWriter fw) throws Exception
+                                        FileWriter fw, Set<CType> passedTypes) throws Exception
     {
     
         //create the pop functions

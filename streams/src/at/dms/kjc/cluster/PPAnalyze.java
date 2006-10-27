@@ -93,7 +93,7 @@ public class PPAnalyze extends SLIREmptyVisitor {
 	super.visitMethodDeclaration(self, modifiers, returnType, ident,
                                      parameters, exceptions, body);
 
-    if (ClusterBackend.debugPrint)
+    if (ClusterBackend.debugging)
         System.out.println("=======> PP method:"+ident+" balance:"+peekBalance());
 
     }

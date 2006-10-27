@@ -41,7 +41,7 @@ public class DataEstimate {
         if (type.getTypeID() == CType.TID_BOOLEAN) return 1;
         if (type.getTypeID() == CType.TID_BIT) return 1;
         
-        if (type instanceof CVectorType) {
+        if (type instanceof CVectorType || type instanceof CVectorTypeLow) {
             // KjcOptions.vectorize is a numeric value giving size of vector in bytes.
             return KjcOptions.vectorize;
         }

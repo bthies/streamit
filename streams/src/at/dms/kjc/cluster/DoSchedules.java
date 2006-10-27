@@ -28,7 +28,7 @@ public class DoSchedules {
         
         if (nodeIter.equals(firstNode)) return;
     
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.err.println("DoSchedule Visiting node: "+str);
     
         try {
@@ -37,7 +37,7 @@ public class DoSchedules {
                 streamit.scheduler2.constrained.Scheduler.createForSDEP(selfIter);
 
             streamit.scheduler2.SDEPData sdep = scheduler.computeSDEP(firstNode, nodeIter);
-            if (ClusterBackend.debugPrint) {
+            if (ClusterBackend.debugging) {
                 System.err.println("  Source Init & Steady Phases: "+sdep.getNumSrcInitPhases()+", "+sdep.getNumSrcSteadyPhases());
                 System.err.println("  Destn. Init & Steady Phases: "+sdep.getNumDstInitPhases()+", "+sdep.getNumDstSteadyPhases());
             }

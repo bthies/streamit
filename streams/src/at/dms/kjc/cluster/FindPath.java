@@ -21,7 +21,7 @@ public class FindPath {
     static void find(int src_id, int dst_id) {
         Set<Integer> examined = new HashSet<Integer>();
     
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println("============================================================");
             System.out.println("Finding path from:"+src_id+" to:"+dst_id);
         }
@@ -34,12 +34,12 @@ public class FindPath {
             int node = list.removeFirst();
             examined.add(node);
             
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.print("visiting node:"+node);
 
             SIROperator oper = NodeEnumerator.getOperator(node);
 
-            if (ClusterBackend.debugPrint) {
+            if (ClusterBackend.debugging) {
                 if (oper instanceof SIRFilter) 
                     { System.out.print(" [filter]"); }
                 
@@ -71,11 +71,11 @@ public class FindPath {
                 }
             }
 
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.println();
         }
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("============================================================");
     }
 

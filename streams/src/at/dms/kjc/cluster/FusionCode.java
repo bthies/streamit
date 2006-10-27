@@ -66,7 +66,7 @@ class FusionCode {
                 globals = DataEstimate.filterGlobalsSize((SIRFilter)oper);
             }
 
-            if (ClusterBackend.debugPrint) {
+            if (ClusterBackend.debugging) {
                 System.out.println("DWS: "+dws+" (g="+globals+") Avail: "+avail+" IO: "+io+" Mult: "+mult);
             }
 
@@ -85,7 +85,7 @@ class FusionCode {
     
         Arrays.sort(histogram);
 
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println("[bestMult] [DWS] min: "+histogram[0]+" max: "+histogram[threadCount-1]);
             System.out.println("[bestMult] [DWS] 0th-precentile: "+histogram[threadCount-1]);
             System.out.println("[bestMult] [DWS] 10th-precentile: "+histogram[(threadCount-1)*9/10]);
@@ -105,7 +105,7 @@ class FusionCode {
         //if (min_mult > 100) min_mult = 100;   
         if (min_mult <= 0) min_mult = 1;    
 
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println("[bestMult] [DWS] Returning Multiplicity : "+min_mult);
         }
 

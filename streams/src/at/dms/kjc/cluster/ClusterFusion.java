@@ -75,7 +75,7 @@ public class ClusterFusion implements FlatVisitor {
     // "NodeMaster" is updated for nodes fusedWith slave node.
     private static void fuseTo(FlatNode master_node, FlatNode slave_node) {
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.err.println("ClusterFusion: Fusing "+slave_node.contents.getName()+" to "+master_node.contents.getName());
         localMaster.put(slave_node, master_node);
 

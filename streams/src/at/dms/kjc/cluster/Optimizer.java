@@ -41,10 +41,10 @@ class Optimizer implements StreamVisitor {
 
     public static void optimize(SIRStream str) {
         Optimizer est = new Optimizer();
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.print("Optimizing filters...");
         IterFactory.createFactory().createIter(str).accept(est);
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("done.");
     }
 

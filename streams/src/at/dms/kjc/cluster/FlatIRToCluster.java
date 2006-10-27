@@ -119,9 +119,16 @@ public class FlatIRToCluster extends InsertTimers implements
         // FieldProp.doPropagate(contentsAsFilter);
 
         // Optimizations
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("Optimizing "
                                + ((SIRFilter) node.contents).getName() + "...");
+        
+//        System.err.println("Filter at FlatIRToCluster");
+//        SIRToStreamIt.run(contentsAsFilter,
+//                new JInterfaceDeclaration[0],
+//                new SIRInterfaceTable[0],
+//                new SIRStructure[0],
+//                new SIRGlobal[0]);
 
         Set<JLocalVariable> destroyed_vars = new HashSet<JLocalVariable>();
 
@@ -157,6 +164,14 @@ public class FlatIRToCluster extends InsertTimers implements
             // (contentsAsFilter).getMethods()[i].accept(new
             // BranchAnalyzer());
             // System.out.println("Constant Propagating..");
+            
+//            System.err.println("Filter after unroll / propagate / flattenner");
+//            SIRToStreamIt.run(contentsAsFilter,
+//                    new JInterfaceDeclaration[0],
+//                    new SIRInterfaceTable[0],
+//                    new SIRStructure[0],
+//                    new SIRGlobal[0]);
+
             (contentsAsFilter).getMethods()[i].accept(new Propagator(
                                                                      new Hashtable()));
 
@@ -169,12 +184,26 @@ public class FlatIRToCluster extends InsertTimers implements
             (contentsAsFilter).getMethods()[i].accept(new VarDeclRaiser());
         }
 
+//        System.err.println("Filter after propagate / vardeclraiser");
+//        SIRToStreamIt.run(contentsAsFilter,
+//                new JInterfaceDeclaration[0],
+//                new SIRInterfaceTable[0],
+//                new SIRStructure[0],
+//                new SIRGlobal[0]);
+
         // if(KjcOptions.destroyfieldarray) {
         // arrayDest.destroyFieldArrays(contentsAsFilter);
         // }
 
         DeadCodeElimination.doit(contentsAsFilter);
 
+//        System.err.println("Filter after DCE");
+//        SIRToStreamIt.run(contentsAsFilter,
+//                new JInterfaceDeclaration[0],
+//                new SIRInterfaceTable[0],
+//                new SIRStructure[0],
+//                new SIRGlobal[0]);
+        
         IterFactory.createFactory().createIter(contentsAsFilter).accept(toC);
     }
 
@@ -264,7 +293,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
         FlatNode node = NodeEnumerator.getFlatNode(selfID);
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("flat node: " + node);
 
         Integer init_int = ClusterBackend.initExecutionCounts
@@ -312,7 +341,7 @@ public class FlatIRToCluster extends InsertTimers implements
         int code = est.getCodeSize();
         int locals = est.getLocalsSize();
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("[globals: " + data + " locals: " + locals
                                + " code: " + code + "]");
 
@@ -1030,6 +1059,12 @@ public class FlatIRToCluster extends InsertTimers implements
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers, CType type, String ident, JExpression expr) {
 
+        if ((modifiers & ACC_STATIC) != 0) {
+            p.print ("static ");
+            if ((modifiers & ACC_FINAL) != 0) {
+                p.print ("const ");
+            }
+        }
         if (expr instanceof JArrayInitializer) {
             declareInitializedArray(type, ident, expr);
         } else {
@@ -1581,7 +1616,7 @@ public class FlatIRToCluster extends InsertTimers implements
             for (int i = 0; i < receivers.length; i++) {
                 int dst = NodeEnumerator.getSIROperatorId(receivers[i]);
 
-                if (ClusterBackend.debugPrint) {
+                if (ClusterBackend.debugging) {
                     System.out.println("/* iname: " + iname + " ident: "
                                        + self.getMessageName() + " type: "
                                        + ((SIRPortal) portal).getPortalType().getCClass()
@@ -1628,7 +1663,7 @@ public class FlatIRToCluster extends InsertTimers implements
 
                 for (int t = 0; t < methods.length; t++) {
 
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println("/* has method: " + methods[t] + " */\n");
 
                     if (methods[t].getIdent().equals(__ident)) {

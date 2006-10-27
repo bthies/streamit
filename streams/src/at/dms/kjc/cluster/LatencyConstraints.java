@@ -140,7 +140,7 @@ public class LatencyConstraints {
     public static void detectConstraints(
                                          streamit.scheduler2.iriter.Iterator topStreamIter,
                                          SIRPortal portals[]) {
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("Number of portals is: "+portals.length);
 
         for (int t = 0; t < portals.length; t++) {
@@ -154,7 +154,7 @@ public class LatencyConstraints {
         
             boolean any_latency_found = false;
 
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.println("\n    Portal: "+portals[t]);
 
             for (int i = 0; i < senders.length; i++) {
@@ -162,17 +162,17 @@ public class LatencyConstraints {
 
                 if (!visited_senders.contains(sender)) {
 
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.print("        sender: ("+sender+")");
                     
                     try {
                         int id = NodeEnumerator.getSIROperatorId(sender);
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.print(" ID:"+id);
                     } catch (Exception ex) {
                     }
 
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println();
         
                     visited_senders.add(sender);
@@ -191,7 +191,7 @@ public class LatencyConstraints {
 
                             this_max = MaxLatency(latency);
 
-                            if (ClusterBackend.debugPrint)
+                            if (ClusterBackend.debugging)
                                 System.out.println("          detect Latency: "+
                                                    this_max);
 
@@ -206,7 +206,7 @@ public class LatencyConstraints {
                         }
                     } 
 
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println("          minimum Latency: "
                                            + min_latency);
                 }
@@ -218,18 +218,18 @@ public class LatencyConstraints {
                 try {
 
                     int id = NodeEnumerator.getSIROperatorId(receiver);
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println("        receiver: ("
                                            + receiver + ") ID:" + id);
                 } catch (Exception ex) {
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println("        receiver: ("
                                            + receiver + ") ID: NOT FOUND");
             
                 }
             }
 
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.println();
 
             Iterator<SIRStream> senders_i = visited_senders.iterator();
@@ -244,7 +244,7 @@ public class LatencyConstraints {
                 for (int i2 = 0; i2 < receivers.length; i2++) {
                     SIRStream receiver = receivers[i2];
             
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println("    sender: " + sender + " receiver: "
                                            + receiver);
 
@@ -278,7 +278,7 @@ public class LatencyConstraints {
                         v.add(f1);
                         v.add(f2);
                         messageDirectionDownstream.put(v, new Boolean(true));
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.println("sender: "+f1+" receiver: "+f2);
 
 
@@ -295,7 +295,7 @@ public class LatencyConstraints {
                             v.add(f2);
                             messageDirectionDownstream.put(v, 
                                                            new Boolean(false));
-                            if (ClusterBackend.debugPrint)
+                            if (ClusterBackend.debugging)
                                 System.out.println("sender: "+f1+" receiver: "+f2);
 
                             // message is being sent upstream
@@ -318,7 +318,7 @@ public class LatencyConstraints {
 
                     }
 
-                    if (ClusterBackend.debugPrint) {
+                    if (ClusterBackend.debugging) {
                         System.out.println("      Upstream Init Phases: "
                                            + sdep2.getNumSrcInitPhases());
                         System.out.println("      Downstr. Init Phases: "
@@ -335,7 +335,7 @@ public class LatencyConstraints {
                     for (int t2 = 0; t2 < 20; t2++) {
                         int phase = sdep2.getSrcPhase4DstPhase(t2);
                         int phaserev = sdep2.getDstPhase4SrcPhase(t2);
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.println("      sdep ["+t2+"] = "+phase+
                                                " reverse_sdep["+t2+"] = "+phaserev);
                     }
@@ -365,7 +365,7 @@ public class LatencyConstraints {
                             if (last_dep > 1) break;
                         }
 
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.println("iter: " + iter
                                                + " last_dep: " + last_dep);
             
@@ -390,7 +390,7 @@ public class LatencyConstraints {
                                 sdep2.getDstPhase4SrcPhase(iter+inc)-1;
                             if (current > last_dep) {
                 
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("Can exec "+current
                                                        +" at source iteration nr. "
                                                        +(init+inc)
@@ -402,7 +402,7 @@ public class LatencyConstraints {
                                 last_dep = current;
                             } else {
                 
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("Can not advance dest. at source iteration nr. "
                                                        +(init+inc)+" array:0");
                 
@@ -436,12 +436,12 @@ public class LatencyConstraints {
 
                         //setInitCredit((SIRFilter)receiver, init_credit);
 
-                        if (ClusterBackend.debugPrint)
+                        if (ClusterBackend.debugging)
                             System.out.println("Init credit: "+init_credit);
 
                         if (init_credit < sdep2.getSrcPhase4DstPhase(iter)) {
                             // a deadlock
-                            if (ClusterBackend.debugPrint)
+                            if (ClusterBackend.debugging)
                                 System.out.println("WARNING === possible deadlock ===");
 
                         }
@@ -467,7 +467,7 @@ public class LatencyConstraints {
                                 constraint.setDependencyData(offset, 
                                                              credit); 
 
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("At end of iter: "
                                                        +(offset+1)
                                                        +" can send credit: "
@@ -477,7 +477,7 @@ public class LatencyConstraints {
                                 constraint.setDependencyData(offset, 
                                                              0); 
 
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("At end of iter: "
                                                        +(offset+1)
                                                        +" no additional credit."); 
@@ -490,7 +490,7 @@ public class LatencyConstraints {
                     }
 
                     // for loop closes
-                    if (ClusterBackend.debugPrint)
+                    if (ClusterBackend.debugging)
                         System.out.println();
                 }
 
@@ -498,7 +498,7 @@ public class LatencyConstraints {
 
             }
 
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.println();
         }
     }

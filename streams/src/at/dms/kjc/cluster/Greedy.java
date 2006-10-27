@@ -31,7 +31,7 @@ class Greedy {
 
     Greedy(DiscoverSchedule sched) {
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("============== Greedy ===============");
 
         this.sched = sched;
@@ -44,7 +44,7 @@ class Greedy {
 
         init();
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("============== Greedy ===============");
 
     }
@@ -168,7 +168,7 @@ class Greedy {
 
         Vector<Integer> phase = new Vector<Integer>();
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("-------------------------------------");
 
         for (int y = 0; y < ph; y++) {
@@ -245,7 +245,7 @@ class Greedy {
                 }
                 }
                 
-                if (ClusterBackend.debugPrint)
+                if (ClusterBackend.debugging)
                     System.out.println(oper.getName()+" Exec = "+exec+"/"+steady_count);
 
                 phase.add(new Integer(exec)); // push exec count to phase vector
@@ -281,7 +281,7 @@ class Greedy {
                                 if (dep > 0) {
                                     int cc = dep + cycle * c.getDestSteadyExec();
                                     credit.put(dst, new Integer(cc));
-                                    if (ClusterBackend.debugPrint)
+                                    if (ClusterBackend.debugging)
                                         System.out.println("Send credit: "+cc);
                                 }
                             }
@@ -296,7 +296,7 @@ class Greedy {
                             if (dep > 0) {
                                 int cc = dep + cycle * c.getDestSteadyExec();
                                 credit.put(dst, new Integer(cc));
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("Send credit: "+cc);
                             }
                         }
@@ -342,12 +342,12 @@ class Greedy {
                 }
             }
 
-            if (ClusterBackend.debugPrint)
+            if (ClusterBackend.debugging)
                 System.out.println("---- have seen phase at: "+last+" ----");
 
             if (match) {
                 loop_start = last;
-                if (ClusterBackend.debugPrint)
+                if (ClusterBackend.debugging)
                     System.out.println("---- A loop contains "+ratio+" steady states ----");
             }
 
@@ -359,7 +359,7 @@ class Greedy {
             phase_num++;
         }
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("-------------------------------------");
 
         if (match) return ratio; else return 0; 
@@ -374,7 +374,7 @@ class Greedy {
 
         init();
 
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println("-------------------------------------");
             System.out.println("----------- COMBINING ---------------");
             System.out.println("-------------------------------------");
@@ -446,7 +446,7 @@ class Greedy {
                                     if (dep > 0) {
                                         int cc = dep + cycle * c.getDestSteadyExec();
                                         credit.put(dst, new Integer(cc));
-                                        if (ClusterBackend.debugPrint)
+                                        if (ClusterBackend.debugging)
                                             System.out.println("Send credit: "+cc);
                                     }
                                 }
@@ -461,7 +461,7 @@ class Greedy {
                                 if (dep > 0) {
                                     int cc = dep + cycle * c.getDestSteadyExec();
                                     credit.put(dst, new Integer(cc));
-                                    if (ClusterBackend.debugPrint)
+                                    if (ClusterBackend.debugging)
                                         System.out.println("Send credit: "+cc);
                                 }
                             }
@@ -554,7 +554,7 @@ class Greedy {
                   }
                 }
 
-                if (ClusterBackend.debugPrint)
+                if (ClusterBackend.debugging)
                     System.out.println(oper.getName()+" Exec = "+exec+"/"+steady_count);
 
                 if (exec < steady_count) success = false;
@@ -592,7 +592,7 @@ class Greedy {
                                 if (dep > 0) {
                                     int cc = dep + cycle * c.getDestSteadyExec();
                                     credit.put(dst, new Integer(cc));
-                                    if (ClusterBackend.debugPrint)
+                                    if (ClusterBackend.debugging)
                                         System.out.println("Send credit: "+cc);
                                 }
                             }
@@ -607,7 +607,7 @@ class Greedy {
                             if (dep > 0) {
                                 int cc = dep + cycle * c.getDestSteadyExec();
                                 credit.put(dst, new Integer(cc));
-                                if (ClusterBackend.debugPrint)
+                                if (ClusterBackend.debugging)
                                     System.out.println("Send credit: "+cc);
                             }
                         }
@@ -618,7 +618,7 @@ class Greedy {
             }
         }
     
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println(success?"SUCCESS":"FAILED");
 
         if (success) {

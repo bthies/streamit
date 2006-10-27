@@ -266,7 +266,7 @@ public class ClusterCode {
             System.err.println("Unable to write splitter code to file thread"+thread_id+".cpp");
         }
     
-        if (ClusterBackend.debugPrint) {
+        if (ClusterBackend.debugging) {
             System.out.println("Code for " + node.contents.getName() +
                                " written to thread"+thread_id+".cpp");
         }
@@ -496,7 +496,7 @@ public class ClusterCode {
                     + thread_id + ".cpp");
         }
 
-        if (ClusterBackend.debugPrint)
+        if (ClusterBackend.debugging)
             System.out.println("Code for " + node.contents.getName() +
                                " written to thread"+thread_id+".cpp");
 

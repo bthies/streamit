@@ -10,8 +10,14 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 
 /**
- * Removes what dead code we can detect within a filter.  For local
- * variables only, don't remove volatile variables.
+ * Removes what dead code we can detect within a filter.  
+ * For local variables only, don't remove volatile variables.
+ * 
+ * Note: uses a set of variables in the calculation, so requires
+ * identical hash codes for JVariableDefinition's for the declaration
+ * and all uses.  Since Java uses identity-based hash codes by default,
+ * this means that the <b>same JVariableDefinition</b>must be used for the
+ * declaration and all uses.
  */
 public class DeadCodeElimination {
     
@@ -65,8 +71,8 @@ public class DeadCodeElimination {
                     public void visitLocalVariableExpression(JLocalVariableExpression self,
                                                              String ident) {
                         super.visitLocalVariableExpression(self, ident);
-                        //System.err.println("var used: " + ident);
                         varsUsed.add(self.getVariable());
+//                        System.err.println("var used: " + ident + " " + self.getVariable().hashCode());
                     }
                 });
         }
@@ -170,6 +176,10 @@ public class DeadCodeElimination {
                             self.setVars(newVars.toArray(new JVariableDefinition[0]));
                             return self;
                         } else {
+//                            System.err.println("removing declaration");
+//                            for (int i=0; i<vars.length; i++) {
+//                            System.err.println("  var in declaration: " + vars[i].getIdent() + " " + vars[i].hashCode());
+//                            }
                             // otherwise, replace us with empty statement
                             return new JEmptyStatement(null, null);
                         }

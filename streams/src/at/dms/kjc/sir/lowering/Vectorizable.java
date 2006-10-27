@@ -14,11 +14,22 @@ import java.util.*;
 
 /**
  * Determine if code is naively vectorizable by interleaving executions of different steady states.
- * <br/> $Id$
+ * <br/> 
+ * $Id$
+ * <br/>
+ * Invoked from {@link VectorizeEnable#vectorizeEnable(SIRStream, Map) vectorizeEnable}
+ * and from {@link at.dms.kjc.sir.lowering.fusion.FusePipelines#fusePipelinesOfVectorizableFilters(SIRStream) fusePipelinesOfVectorizableFilters}
+ * There should be no need to call methods in this class directly.
  * @author Allyn Dimock
  *
  */
 public class Vectorizable {
+    /**
+     * Set to true to print out reasons to not vectorize a filter, and variables dependent on inputs
+     * for filters that fail the data dependency check.
+     */
+    static boolean debugging = false;
+    
     /**
      * Return set of naively vectorizable filters in stream.
      * See {@link #vectorizable(SIRFilter) vectorizable} for what makes a filter naively vectorizable.
@@ -48,7 +59,12 @@ public class Vectorizable {
      * </li><li> It has no visible side effects.
      * </li><li> It has no data-dependent branches. (Should preclude dynamic-rate filters.)
      * </li></ul>
-     * 
+     * TODO: Should allow filters with void input type to be vectorizable if the values
+     * being constructed for the output do not participate in conditionals or array offset calculations
+     * and the filter has no loop-carried dependencies of side effects.  Such filters should only
+     * be vectorizable if the following filter is also vectorizable: else adds overhead.  To do this
+     * would require extra work and is probably only of use in cases where a source dumps out the
+     * contents of a static array (tde_pp, gmti). 
      * @param f : a filter to check.
      * @return true if there are no local conditions precluding vectorizing the filter.
      */
@@ -60,9 +76,9 @@ public class Vectorizable {
         CType inputType = f.getInputType();
         CType outputType = f.getOutputType();
         if (!(inputType instanceof CIntType || inputType instanceof CFloatType
-        ||  outputType  instanceof CIntType || outputType instanceof CFloatType)) {
-//          // debugging:
-          System.err.println("Vectorizable.vectorizable found " + f.getName() + " has wrong type.");
+        ||  outputType  instanceof CIntType || outputType instanceof CFloatType || outputType == CStdType.Void)) {
+
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has wrong type.");
             return false;
         }
         // must have static rates
@@ -74,24 +90,20 @@ public class Vectorizable {
 
         // only vectorizing if no loop-carried dependencies (no stores to fields).
         if (at.dms.kjc.sir.lowering.fission.StatelessDuplicate.hasMutableState(f)) {
-//            // debugging:
-            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has mutable state.");
             return false; // If possible loop-carried dependence through fields: don't vectorize. 
         }
         // only vectorizing if no side effects (prints, file reads, file writes).
         if (hasSideEffects(f)) {
-//            // debugging:
-            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
             return false; // If filter has side effects, don't vectorize.
         }
         // only vectorizing if branches, peek and array offsets are not data dependent.
         if (isDataDependent(f)) {
-            // debugging:
-            System.err.println("Vectorizable.vectorizable found " + f.getName() + " has control or offset dependence.");
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has control or offset dependence.");
             return false; // Filter has branches that are data dependent, don't vectorize.
         }
-        //      debugging:
-        System.err.println("Vectorizable.vectorizable found " + f.getName() + " is vectorizable!.");
+        if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " is vectorizable!.");
         return true;
     }
     
@@ -379,15 +391,13 @@ public class Vectorizable {
                 });
             }
         }
-//        // debugging:
-        if (hasDepend[0])
-    {
-        System.err.println("Vectorizable.isDataDependent found idents for " + f.getName() + ":");
-        for (String ident : idents) {
-            System.err.print(ident + " ");
+        if (debugging && hasDepend[0]) {
+            System.err.println("Vectorizable.isDataDependent found idents for "
+                    + f.getName() + ":");
+            for (String ident : idents) {
+                System.err.print(ident + " ");
+            }
         }
-        System.err.println(hasDepend[0] ? "is data dependent" : "is not data dependent");
-    }
         // dependence found during setup.
         if (hasDepend[0]) {
             return true;

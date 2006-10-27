@@ -10,6 +10,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
+
 import streamit.misc.Pair;
 
 /**
@@ -2124,6 +2125,11 @@ public class ThreeAddressCode {
         }
 
         public List<JStatement> visitStringLiteral(JStringLiteral self, String value) {
+            assert false: "Not a statement";
+            return null;
+        }
+
+        public List<JStatement> visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
             assert false: "Not a statement";
             return null;
         }

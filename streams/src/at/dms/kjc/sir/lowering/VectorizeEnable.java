@@ -11,10 +11,16 @@ import java.util.*;
 
 /**
  * Mung code to allow naive vectorization.
+ * 
  * <br/> $Id$
  * @author Allyn Dimock
  */
 public class VectorizeEnable {
+    /**
+     * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
+     */
+    public static boolean debugging = false;
+
     /**
      * Perform naive vectorization on eligible filters in a stream.
      * <br/>
@@ -40,11 +46,12 @@ public class VectorizeEnable {
             // vector registers are at least 8 bytes.
             return str;
         }
-//        debugSelection(str); // debugging
+
+        if (debugging) debugSelection(str); // debugging
         
         str = FusePipelines.fusePipelinesOfVectorizableFilters(str);
 
-//        debugSelection(str); // debugging
+        if (debugging) debugSelection(str); // debugging
         
         IterFactory.createFactory().createIter(str).accept(
                 new EmptyStreamVisitor() {
@@ -91,19 +98,26 @@ public class VectorizeEnable {
 //      workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
 
         // fix number of pops for new rate.
-        List<JStatement> stmts = workBody.getStatements();
-        JStatement last = stmts.get(stmts.size() - 1);
-        if (last instanceof SIRMarker) {
-            last = stmts.get(stmts.size() - 2);
-        }
-        if (last instanceof JExpressionStatement && ((JExpressionStatement)last).getExpression() instanceof SIRPopExpression) {
-            // final statement fixes number of pops: mung number.
-            SIRPopExpression pop = (SIRPopExpression) ((JExpressionStatement)last).getExpression();
-            pop.setNumPop( pop.getNumPop() + (veclen - 1) * poprate);
-        } else {
-            SIRPopExpression pop = new SIRPopExpression(f.getInputType(), (veclen - 1) * poprate);
-            JStatement popStatement = new JExpressionStatement(pop);
-            workBody.addStatement(popStatement);
+        if (poprate > 0) {
+            List<JStatement> stmts = workBody.getStatements();
+            int lastPos = stmts.size() - 1;
+            JStatement last = stmts.get(lastPos);
+            while (last instanceof SIRMarker) {
+                lastPos--;
+                last = stmts.get(lastPos);
+            }
+            if (last instanceof JExpressionStatement
+                    && ((JExpressionStatement) last).getExpression() instanceof SIRPopExpression) {
+                // final statement fixes number of pops: mung number.
+                SIRPopExpression pop = (SIRPopExpression) ((JExpressionStatement) last)
+                        .getExpression();
+                pop.setNumPop(pop.getNumPop() + (veclen - 1) * poprate);
+            } else {
+                SIRPopExpression pop = new SIRPopExpression(f.getInputType(),
+                        (veclen - 1) * poprate);
+                JStatement popStatement = new JExpressionStatement(pop);
+                workBody.addStatement(lastPos,popStatement);
+            }
         }
     }
     

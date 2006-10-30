@@ -28,7 +28,7 @@ public class Vectorizable {
      * Set to true to print out reasons to not vectorize a filter, and variables dependent on inputs
      * for filters that fail the data dependency check.
      */
-    static boolean debugging = false;
+    static boolean debugging = true;
     
     /**
      * Return set of naively vectorizable filters in stream.
@@ -58,6 +58,12 @@ public class Vectorizable {
      * </li><li> It has no loop-carried dependencies between steady states.
      * </li><li> It has no visible side effects.
      * </li><li> It has no data-dependent branches. (Should preclude dynamic-rate filters.)
+     * </li><li> It is not a descendant of a feedbackloop: This restriction can be lifted with
+     * a bit of work: the problem is that vectorization changes the multiplicity of a filter,
+     * if this multiplicity change propagates back to the top of a body (or loop) construct then
+     * the multiplicity must also change in the corresponding loop (or body).  Furthermore,
+     * the number of enqueued values will be insufficient, which means that we need to clone
+     * non-vectorized versions to become part of pre-work functions in the body and loop.
      * </li></ul>
      * TODO: Should allow filters with void input type to be vectorizable if the values
      * being constructed for the output do not participate in conditionals or array offset calculations
@@ -103,6 +109,14 @@ public class Vectorizable {
             if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has control or offset dependence.");
             return false; // Filter has branches that are data dependent, don't vectorize.
         }
+        // only vectorize if not in feedback loop
+        for (SIRStream parent = f.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent instanceof SIRFeedbackLoop) {
+                if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " is contained in feedbackloop.");
+                return false;
+            }
+        }
+        
         if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " is vectorizable!.");
         return true;
     }

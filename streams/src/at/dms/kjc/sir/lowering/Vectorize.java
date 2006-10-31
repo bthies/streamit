@@ -175,9 +175,11 @@ public class Vectorize {
      */
     private static void raiseVectorConstants (SIRFilter filter) {
         
-        // find all JVectorLiteral's in all methods, record in vlitToMeths
-        final Map<JVectorLiteral,Set<JMethodDeclaration>>vlitToMeths = 
-            new HashMap<JVectorLiteral,Set<JMethodDeclaration>>();
+        // Find all JVectorLiteral's in all methods, record in vlitToMeths
+        // (Map needs to convert to Number which has structural equality / hash
+        // from JVectorLiteral which has identity equality / hash.)
+        final Map<Number,Set<JMethodDeclaration>>vlitToMeths = 
+            new HashMap<Number,Set<JMethodDeclaration>>();
         JMethodDeclaration[] ms = filter.getMethods();
         for (final JMethodDeclaration m : ms) {
             m.accept(new SLIREmptyVisitor(){
@@ -186,24 +188,44 @@ public class Vectorize {
                     Set<JMethodDeclaration> inMs = vlitToMeths.get(self);
                     if (inMs == null) inMs = new HashSet<JMethodDeclaration>();
                     inMs.add(m);
-                    vlitToMeths.put(self, inMs);
+                    JLiteral scalarv = self.getScalar();
+                    Number n;
+                    if (scalarv instanceof JIntLiteral) {
+                        n = ((JIntLiteral)scalarv).intValue();
+                    } else if (scalarv instanceof JFloatLiteral) {
+                        n = ((JFloatLiteral)scalarv).floatValue();
+                    } else {
+                        throw new AssertionError();
+                    }
+                    vlitToMeths.put(n, inMs);
                 }
             });
         }
         
         // create const definitions for the JVectorLiteral's and record references in vlitReplacements
-        final Map<JVectorLiteral,JExpression> vlitReplacements =  new HashMap<JVectorLiteral,JExpression>();
-        for (Map.Entry<JVectorLiteral,Set<JMethodDeclaration>> vMeths : vlitToMeths.entrySet()) {
-            JVectorLiteral vlit = vMeths.getKey();
-            JLiteral scalar = vlit.getScalar();
-            JExpression[] initElems = new JLiteral[((CVectorType)vlit.getType()).getWidthInBase()];
+        final Map<Number,JExpression> vlitReplacements =  new HashMap<Number,JExpression>();
+
+        for (Map.Entry<Number,Set<JMethodDeclaration>> vMeths : vlitToMeths.entrySet()) {
+            Number vnum = vMeths.getKey();
+            JLiteral scalar;
+            CNumericType scalartype;
+            if (vnum instanceof Integer) {
+                scalartype = CStdType.Integer;
+                scalar = new JIntLiteral((Integer)vnum);
+            } else if (vnum instanceof Float) {
+                scalartype = CStdType.Float;
+                scalar = new JFloatLiteral((Float)vnum);
+            } else {
+                throw new AssertionError();
+            }
+            JExpression[] initElems = new JExpression[KjcOptions.vectorize / 4];
             for (int i = 0; i < initElems.length; i++) {
                 initElems[i] = (JExpression)AutoCloner.deepCopy(scalar);
             }
             JArrayInitializer init = new JArrayInitializer(initElems);
             JVariableDefinition defn = new JVariableDefinition(
                     at.dms.kjc.Constants.ACC_STATIC | at.dms.kjc.Constants.ACC_FINAL,
-                    ((CVectorType)vlit.getType()).getLowType(),
+                    new CVectorTypeLow(scalartype, KjcOptions.vectorize),
                     ThreeAddressCode.nextTemp(), 
                     init);
 
@@ -212,7 +234,7 @@ public class Vectorize {
                 JFieldDeclaration decl = new JFieldDeclaration(defn);
                 JFieldAccessExpression access = new JFieldAccessExpression(new JThisExpression(), defn.getIdent());
                 filter.addField(0,decl);
-                vlitReplacements.put(vlit, access);
+                vlitReplacements.put(vnum, access);
             } else {
                 // constant used in single method: set up as local.
                 JVariableDeclarationStatement decl = new JVariableDeclarationStatement(defn);
@@ -221,7 +243,7 @@ public class Vectorize {
                     // this loop should iterate exactly once
                     m.getBody().addStatement(0, decl);
                 }
-                vlitReplacements.put(vlit, access);
+                vlitReplacements.put(vnum, access);
             }
         }
 
@@ -230,7 +252,16 @@ public class Vectorize {
             m.accept(new SLIRReplacingVisitor(){
                 @Override
                 public Object visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
-                    return vlitReplacements.get(self);
+                    Number n;
+                    JLiteral l = self.getScalar();
+                    if (l instanceof JIntLiteral) {
+                        n = ((JIntLiteral)l).intValue();
+                    } else if (l instanceof JFloatLiteral) {
+                        n = ((JFloatLiteral)l).floatValue();
+                    } else {
+                        throw new AssertionError();
+                    }
+                    return vlitReplacements.get(n);
                 }
             });
         }
@@ -301,7 +332,7 @@ public class Vectorize {
             final Map<String,CType> vectorIds) {
             class fixTypesPeeksPopsPushesVisitor extends StatementQueueVisitor {
                 JExpression lastLhs = null;   // left hand side of assignment being processed or null if not processing rhs of assignment
-                JExpression lastOldLhs = null; // value before converting.
+//                JExpression lastOldLhs = null; // value before converting.
                 boolean suppressSelector = false; // true to not refer to as vector
                 boolean replaceStatement = false; // true to discard current statement
                 boolean constantsToVector = false; // rhs should have vector type, so turn constants in rhs into
@@ -645,6 +676,16 @@ public class Vectorize {
                         return self;
                     }
                 }
+                @Override
+                public Object visitShiftExpression(JShiftExpression self,
+                        int oper,    
+                        JExpression left,
+                        JExpression right) {
+                        // do not visit right on a shift expression: always int!
+                        JExpression newLeft = (JExpression)left.accept(this);
+                        self.setLeft(newLeft);
+                        return self;
+                }
             }
            
             return (JStatement)methodBody.accept(new fixTypesPeeksPopsPushesVisitor());
@@ -789,15 +830,18 @@ public class Vectorize {
                 private boolean isLhs = false;
                 private CType haveType = null;
                 private boolean rePropagate = false; // should replace special case of binary arithmetic on rhs of assignment.
+                @Override
                 public void visitPeekExpression(SIRPeekExpression self,
                         CType tapeType, JExpression arg) {
                     haveType = filter.getInputType();
                 }
+                @Override
                 public void visitPopExpression(SIRPopExpression self,
                         CType tapeType) {
                     haveType = filter.getInputType();
                 }
-                public void visitVariableDefinition(
+                @Override
+               public void visitVariableDefinition(
                         JVariableDefinition self, int modifiers,
                         CType type, String ident, JExpression expr) {
                     // only recurr into VariableDefinition if part of VariableDeclaration.
@@ -813,6 +857,7 @@ public class Vectorize {
                     }
                     haveType = null;
                 }
+                @Override
                 public void visitPushExpression(SIRPushExpression self,
                         CType tapeType,
                         JExpression arg) {
@@ -821,6 +866,7 @@ public class Vectorize {
                         vectorizePush[0] = true;  // push takes a vector type.
                     }
                 }
+                @Override
                 public void visitArrayAccessExpression(
                         JArrayAccessExpression self, JExpression prefix,
                         JExpression accessor) {
@@ -833,6 +879,7 @@ public class Vectorize {
                     }
                 }
                 
+                @Override
                 public void visitFieldExpression(JFieldAccessExpression self,
                         JExpression left,
                         String ident) {
@@ -844,7 +891,8 @@ public class Vectorize {
                     }
                     
                 }
-                public void visitLocalVariableExpression(JLocalVariableExpression self,
+                @Override
+               public void visitLocalVariableExpression(JLocalVariableExpression self,
                         String ident) {
                     if (isLhs && (haveType != null)) {
                         registerv(ident,haveType,null);
@@ -853,6 +901,7 @@ public class Vectorize {
                         haveType = filter.getInputType();
                     }
                 }
+                @Override
                 public void visitAssignmentExpression(
                         JAssignmentExpression self, JExpression left,
                         JExpression right) {
@@ -877,6 +926,7 @@ public class Vectorize {
                  * TODO: binary arith ops: types match.
                  * TODO: combine w vectorizable.
                  */
+                @Override
                 public void visitCompoundAssignmentExpression(
                         JCompoundAssignmentExpression self, int oper,
                         JExpression left, JExpression right) {
@@ -894,11 +944,22 @@ public class Vectorize {
                     }
                 }
                 
+                @Override
                 public void visitCastExpression(JCastExpression self,
                         JExpression expr,
                         CType type) {
                     return;   // don't look inside cast expression.
                 }   
+                
+                @Override
+                public void visitShiftExpression(JShiftExpression self,
+                        int oper,    
+                        JExpression left,
+                        JExpression right) {
+                        // do not visit right on a shift expression: always int!
+                        left.accept(this);
+                }
+
                 
 //                // situation:  A = B op C,   B is vectorizable, so C had
 //                // better be vectorizable.  In code above, after finding that

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.80 2006-11-01 20:20:40 thies Exp $
+# $Id: release.sh,v 1.81 2006-11-01 20:46:48 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -340,7 +340,7 @@ mv $WORKING/streams/apps/sorts $WORKING/streams/apps/examples/
 # Some parts of the compiler aren't useful to release; trim those here.
 ###
 
-rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
+rm -rf $WORKING/streams/src/at/dms/kjc/slicegraph
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/org

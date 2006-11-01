@@ -219,9 +219,11 @@ public class ManualPartition {
         boolean joinersNeedTiles = true;
         // icode is for cluster
         boolean limitICode = false;
+        // assume they want strict number of tiles
+        boolean strict = true;
 
         if (dp) {
-            str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles, limitICode).toplevel();
+            str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles, limitICode, true).toplevel();
         } else {
             if (curCount < targetTiles) {
                 // need fission

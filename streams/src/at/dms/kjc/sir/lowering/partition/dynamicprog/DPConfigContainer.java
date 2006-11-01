@@ -345,7 +345,7 @@ abstract class DPConfigContainer extends DPConfig {
             PartitionRecord rec = new PartitionRecord();
             for (int y=y1; y<=y2; y++) {
                 for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
-                    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(rec));
+                    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(rec, partitioner.getWorkEstimate()));
                 }
             }
             int numFilters = 0;
@@ -628,7 +628,7 @@ abstract class DPConfigContainer extends DPConfig {
         // if the whole container is assigned to one tile, record it
         // as such.
         if (tileLimit==1) {
-            IterFactory.createFactory().createIter(cont).accept(new RecordingStreamVisitor(curPartition));
+            IterFactory.createFactory().createIter(cont).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
         } 
         return result;
     }
@@ -675,7 +675,7 @@ abstract class DPConfigContainer extends DPConfig {
             // everything goes in this partition
             for (int y=y1; y<=y2; y++) {
                 for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
-                    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(curPartition));
+                    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
                 }
             }
             if (!DynamicProgPartitioner.transformOnTraceback) {

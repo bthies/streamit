@@ -98,6 +98,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     private boolean limitICode;
     /**
+     * Whether we must fuse down to numTiles.  If this is false,
+     * indicates that it is acceptable to return more tiles/threads if
+     * it improves load balancing (e.g., for cluster backend.)
+     */
+    private boolean strict;
+    /**
      * Set of filters that should not be fused horizontally (e.g.,
      * because they have a dynamic rate).
      */
@@ -113,11 +119,18 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * <pre>limitICode</pre> indicates whether or not we are considering an
      * instruction code size limit, and factoring that into the work
      * function.
+     *
+     * <pre>strict</pre> indicates if we are absolutely required to
+     * produce at most <numTiles> filters.  If it is false, then we
+     * might produce more filters if the load balancing improves
+     * (e.g., on a multicore, might benefit from more threads if
+     * additional threads breakup the bottleneck.)
      */
-    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode, HashSet noHorizFuse) {
+    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode, boolean strict, HashSet noHorizFuse) {
         super(str, work, numTiles);
         this.joinersNeedTiles = joinersNeedTiles;
         this.limitICode = limitICode;
+        this.strict = strict;
         this.configMap = new HashMap<SIRStream, DPConfig>();
         this.uniformSJ = new HashSet();
         this.noHorizFuse = noHorizFuse;
@@ -125,8 +138,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * As above, without <pre>noHorizFuse</pre>.
      */
-    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode) {
-        this(str, work, numTiles, joinersNeedTiles, limitICode, new HashSet());
+    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles, boolean limitICode, boolean strict) {
+        this(str, work, numTiles, joinersNeedTiles, limitICode, strict, new HashSet());
     }
     
 
@@ -138,7 +151,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         PartitionUtil.setupScalingStatistics();
         for (int i=1; i<maxTiles; i++) {
             LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
-            new DynamicProgPartitioner(str, work, i, true, false).calcPartitions(partitions, false);
+            new DynamicProgPartitioner(str, work, i, true, false, true).calcPartitions(partitions, false);
             PartitionUtil.doScalingStatistics(partitions, i);
         }
         PartitionUtil.stopScalingStatistics();
@@ -192,6 +205,24 @@ public class DynamicProgPartitioner extends ListPartitioner {
             work = WorkEstimate.getWorkEstimate(str);
         }
 
+        // if we can expand number of tiles past <numTiles>, then
+        // allocate space to calculate up to any number of tiles that
+        // could be needed.  We will contract this back below.
+        int origNumTiles = numTiles;
+        if (!strict) {
+            // conservative over-estimate of the maximum number of
+            // tiles that could possibly lead to improved load
+            // balancing for this program.  In the extreme case, we
+            // would fiss <numTiles> filters, introducing a new filter
+            // and possibly a new joiner for each one)
+            int beneficialTiles = Partitioner.countTilesNeeded(str, joinersNeedTiles) + (2 + (joinersNeedTiles ? 1 : 0)) * numTiles;
+            // explore thread counts up to the max of the number
+            // requested and the number that might benefit us
+            if (beneficialTiles > numTiles) {
+                numTiles = beneficialTiles;
+            }
+        }
+
         // build stream config
         System.out.println("  Building stream config... ");
         DPConfig topConfig = buildStreamConfig();
@@ -201,7 +232,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
         // rebuild our work estimate, since we might have introduced
         // identity nodes to make things rectangular
         work = WorkEstimate.getWorkEstimate(str);
-    
+
         // if we're limiting icode, start with 1 filter and work our
         // way up to as many filters are needed.
         if (limitICode) { numTiles = 0; }
@@ -224,19 +255,28 @@ public class DynamicProgPartitioner extends ListPartitioner {
             }
         } while (limitICode && cost.getICodeSize()>ICODE_THRESHOLD);
     
-        int tilesUsed = numTiles;
-        // decrease the number of tiles to the fewest that we need for
-        // a given bottleneck.  This is in an attempt to decrease
-        // synchronization and improve utilization.
-        if (MINIMIZE_TILE_USAGE) {
-            while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
-                tilesUsed--;
-            }
-            if (tilesUsed<numTiles) {
-                System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+        int tilesUsed;
+        if (!strict) {
+            // if we have option of increasing number of tiles
+            // (threads) to improve load balancing, then do that
+            tilesUsed = increaseNumberOfTiles(origNumTiles, topConfig);
+        } else {
+            tilesUsed = numTiles;
+            // decrease the number of tiles to the fewest that we need for
+            // a given bottleneck.  This is in an attempt to decrease
+            // synchronization and improve utilization.
+            if (MINIMIZE_TILE_USAGE) {
+                while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
+                    tilesUsed--;
+                }
+                if (tilesUsed<numTiles) {
+                    System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+                }
             }
         }
-            
+        // reset bottleneck before traceback (e.g., fission checks it)
+        bottleneck = topConfig.get(tilesUsed, 0).getMaxCost();
+
         if (KjcOptions.debug && topConfig instanceof DPConfigContainer) {
             ((DPConfigContainer)topConfig).printArray();
         }
@@ -304,6 +344,73 @@ public class DynamicProgPartitioner extends ListPartitioner {
             });
         // now fuse top-most nodes that are in all-identities
         return fuseIdentitiesHelper(str, allIdentities);
+    }
+
+
+
+    /**
+     * Increase # of threads as long as N'th biggest load is
+     * increasing, and choose the MIN number of threads that yields
+     * this watermark.  N represents the original number of threads
+     * requested by the backend.  Return the total number of threads
+     * that should be used by the program.
+     */
+    private int increaseNumberOfTiles(int N, DPConfig topConfig) {
+        // current estimate of result
+        int bestTiles = N;
+        // current minimum load in top N partitions
+        int bestLoad = Integer.MIN_VALUE;
+
+        for (int tiles=N; tiles<numTiles; tiles++) {
+            // build up list of partitions 
+            LinkedList<PartitionRecord> partitions = new LinkedList<PartitionRecord>();
+            PartitionRecord curPartition = new PartitionRecord();
+            partitions.add(curPartition);
+            
+            transformOnTraceback = false;
+            // first make sure we've calculated this case
+            topConfig.get(tiles, 0);
+            // then traceback
+            topConfig.traceback(partitions, curPartition, tiles, 0, str);
+
+            // if we don't even have N partitions, keep looking
+            if (partitions.size()<N) {
+                continue;
+            }
+
+            // sort the partitions by work
+            Collections.sort(partitions,
+                             new Comparator<PartitionRecord>() {
+                public int compare(PartitionRecord p1, PartitionRecord p2) {
+                    if (p1.getWork() < p2.getWork()) return -1;
+                    if (p1.getWork() > p2.getWork()) return 1;
+                    return 0;
+                }
+            });
+
+            // get N'th biggest load
+            int nthLoad = partitions.get(partitions.size()-N).getWork();
+            /* debug print
+            System.err.println("\nWith " + tiles + " threads, bottleneck = " + nthLoad);
+            for (int i=0; i<partitions.size(); i++) {
+                PartitionRecord pr = partitions.get(partitions.size()-i-1);
+                System.err.println("  work[" + (partitions.size()-i-1) + "] = " + pr.getWork());
+                for (int j=0; j<pr.size(); j++) {
+                    System.err.println("    " + pr.get(j));
+                }
+            }
+            */
+
+            if (nthLoad > bestLoad) {
+                // if load is increasing, remember it
+                bestLoad = nthLoad;
+                bestTiles = tiles;
+            } else if (nthLoad < bestLoad) {
+                // if load is decreasing, we're done
+                break;
+            }
+        }
+        return bestTiles;
     }
 
     private SIRStream fuseIdentitiesHelper(SIRStream str, HashSet<SIRStream> allIdentities) {

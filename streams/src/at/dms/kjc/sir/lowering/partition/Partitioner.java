@@ -17,7 +17,9 @@ public class Partitioner {
      * 'joinersNeedTiles' in the graph, or if they count for free.  If
      * 'strict' is true, we will fail with an error message if we
      * can't succeed in fusing down to the target count; otherwise we
-     * will just do our best.
+     * may produce more than <count> filters if it improves the load
+     * balancing (e.g., on a multicore, additional threads might help
+     * breakup the bottleneck)
      */
     public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode, boolean strict) {
         // detect number of tiles we have
@@ -79,7 +81,7 @@ public class Partitioner {
                 SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
                 new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
                 */
-                str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode, noHorizFuse).toplevel();
+                str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode, strict, noHorizFuse).toplevel();
             } else if(KjcOptions.partition_greedier) {
                 str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
             } else if (KjcOptions.partition_greedy) {
@@ -117,7 +119,7 @@ public class Partitioner {
     /**
      * Return number of tiles needed for 'str'.
      */
-    static int countTilesNeeded(SIRStream str, boolean joinersNeedTiles) {
+    public static int countTilesNeeded(SIRStream str, boolean joinersNeedTiles) {
         if (joinersNeedTiles) {
             // if the joiners need tiles, use the graph flattener
             return countTilesNeeded(str, new GraphFlattener(str), joinersNeedTiles);

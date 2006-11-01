@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.114 2006-10-27 20:54:15 dimock Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.115 2006-11-01 20:19:29 thies Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -349,7 +349,7 @@ public class ClusterBackend {
             
                 ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(),
                                                               WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
-                                                              false).calcPartitions(ssgPartitionMap));   
+                                                              false, true).calcPartitions(ssgPartitionMap));   
             } else {
                 // if mapping to 1 machine, then just map everyone to
                 // partition 0 as an optimization (the partitioner would
@@ -362,7 +362,7 @@ public class ClusterBackend {
                     ssg.getTopLevelSIR().setParent(null);
                     ssg.setTopLevelSIR(new DynamicProgPartitioner(ssg.getTopLevelSIR(), 
                                                                   WorkEstimate.getWorkEstimate(ssg.getTopLevelSIR()), hosts, false, 
-                                                                  false).calcPartitions(ssgPartitionMap));   
+                                                                  false, true).calcPartitions(ssgPartitionMap));   
                     ssg.getTopLevelSIR().setParent(null); 
                 }
             }

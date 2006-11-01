@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.82 2006-11-01 20:59:57 thies Exp $
+# $Id: release.sh,v 1.83 2006-11-01 21:00:43 thies Exp $
 #
 
 # for script debugging: -v print line in script, -x print expanded line
@@ -12,15 +12,15 @@ set -v
 # Interesting/configurable variables:
 
 # For a version release
-#VERSION=2.1
+VERSION=2.1
 #TAG=RELEASE_2_1_01
 TAG=HEAD
 
 # For a snapshot release
-VERSION=2.1.`date +%Y%m%d`
+#VERSION=2.1.`date +%Y%m%d`
 #TAG=HEAD
 
-test -z "$TMPDIR" && TMPDIR=/home/bits7/thies
+test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 CVSROOT="-d /projects/raw/cvsroot"
 
@@ -416,9 +416,9 @@ for f in INSTALL NEWS OPTIONS README; do
 done
 # combine documentation from benchmark.xml files into benchmarks.html
 # then remove intermediate file, script files.
-#$WORKING/streams/misc/build-bench-doc
-#rm $WORKING/streams/apps/benchall.xml
-#rm $WORKING/streams/misc/{build-bench-doc,build-bench-xml.py,benchall.xsl}
+$WORKING/streams/misc/build-bench-doc
+rm $WORKING/streams/apps/benchall.xml
+rm $WORKING/streams/misc/{build-bench-doc,build-bench-xml.py,benchall.xsl}
 
 ###############################################################################
 # Make tarballs

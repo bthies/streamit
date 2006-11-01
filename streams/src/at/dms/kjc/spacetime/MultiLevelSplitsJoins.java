@@ -6,7 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.sir.SIRIdentity;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*; 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;

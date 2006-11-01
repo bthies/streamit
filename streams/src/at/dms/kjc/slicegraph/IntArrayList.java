@@ -1,4 +1,4 @@
-package at.dms.kjc.flatgraph2;
+package at.dms.kjc.slicegraph;
 
 /**
  * Doubly linked list of int[]. Useful data representation for

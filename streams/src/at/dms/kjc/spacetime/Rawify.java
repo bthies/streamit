@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Vector;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 
 /**
  * This class will rawify the SIR code and it creates the switch code. It does

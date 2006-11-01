@@ -3,7 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.kjc.common.ConvertLonelyPops;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
 import java.util.LinkedList;
 import java.util.ListIterator;

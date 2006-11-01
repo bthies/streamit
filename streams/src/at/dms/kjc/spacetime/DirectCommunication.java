@@ -19,7 +19,7 @@ import at.dms.kjc.slicegraph.InputTraceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.util.SIRPrinter;
 
 /**
@@ -82,7 +82,7 @@ public class DirectCommunication extends RawExecutionCode
             return false;
         }
         
-        if (!dynamicInput && at.dms.kjc.flatgraph2.PeekPopPushInHelper.check(fi.filter))
+        if (!dynamicInput && at.dms.kjc.slicegraph.PeekPopPushInHelper.check(fi.filter))
             return false;
         
         // for a filter with dynamic input we don't care if the pushes and

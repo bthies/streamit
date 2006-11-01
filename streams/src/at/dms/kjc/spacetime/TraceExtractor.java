@@ -4,7 +4,7 @@ import java.util.*;
 import java.io.FileWriter;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterTraceNode;

@@ -1,6 +1,6 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.TraceNode;
 

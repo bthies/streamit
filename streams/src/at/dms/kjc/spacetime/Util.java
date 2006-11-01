@@ -1,7 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.common.CodegenPrintWriter;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;

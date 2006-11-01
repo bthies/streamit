@@ -1,4 +1,4 @@
-package at.dms.kjc.flatgraph2;
+package at.dms.kjc.slicegraph;
 
 import java.util.*;
 import java.io.FileWriter;

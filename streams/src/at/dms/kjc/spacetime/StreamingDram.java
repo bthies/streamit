@@ -3,7 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.InputTraceNode;
 import at.dms.kjc.slicegraph.OutputTraceNode;

@@ -8,8 +8,8 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import at.dms.kjc.flatgraph2.FileInputContent;
-import at.dms.kjc.flatgraph2.FileOutputContent;
+import at.dms.kjc.slicegraph.FileInputContent;
+import at.dms.kjc.slicegraph.FileOutputContent;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.InputTraceNode;

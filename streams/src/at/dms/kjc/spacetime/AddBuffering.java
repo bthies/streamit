@@ -5,7 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRIdentity;
 import at.dms.kjc.sir.lowering.RenameAll;

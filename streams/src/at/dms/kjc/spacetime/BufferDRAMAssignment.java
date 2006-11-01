@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Random;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.InputTraceNode;

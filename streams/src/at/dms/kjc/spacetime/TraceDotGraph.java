@@ -7,7 +7,7 @@ import at.dms.kjc.slicegraph.OutputTraceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.TraceNode;
 import at.dms.kjc.*;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import java.io.FileWriter;
 import java.util.LinkedList;
 import java.util.List;

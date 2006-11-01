@@ -6,7 +6,7 @@ import at.dms.kjc.*;
 import java.io.FileWriter;
 
 import at.dms.kjc.common.RawSimulatorPrint;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 
 /**
  * This class create the btl machine file for the application.  

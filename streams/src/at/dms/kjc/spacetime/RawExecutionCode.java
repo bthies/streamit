@@ -20,7 +20,7 @@ import at.dms.kjc.slicegraph.OutputTraceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.slicegraph.FilterContent;
 
 /**
  * This abstract class defines an interface for filter code generators.  

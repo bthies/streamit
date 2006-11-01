@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.slicegraph.InputTraceNode;
 import at.dms.kjc.slicegraph.OutputTraceNode;
 

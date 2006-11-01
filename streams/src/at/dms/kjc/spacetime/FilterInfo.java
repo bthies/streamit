@@ -4,7 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;

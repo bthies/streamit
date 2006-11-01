@@ -1,8 +1,7 @@
-package at.dms.kjc.flatgraph2;
+package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.flatgraph2.*;
 
 /**
  * This class will search for all communication expressions outside of the work

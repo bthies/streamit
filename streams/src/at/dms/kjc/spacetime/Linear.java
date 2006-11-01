@@ -4,7 +4,7 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.slicegraph.*;
 import at.dms.compiler.PositionedError;
 import java.util.ArrayList;
 

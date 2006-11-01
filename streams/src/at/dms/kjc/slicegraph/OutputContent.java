@@ -1,4 +1,4 @@
-package at.dms.kjc.flatgraph2;
+package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;

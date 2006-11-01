@@ -2,7 +2,6 @@ package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.spacetime.Layout;
-import at.dms.kjc.flatgraph2.*;
 import java.util.*;
 /** 
  *

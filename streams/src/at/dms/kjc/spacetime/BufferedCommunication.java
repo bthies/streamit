@@ -19,7 +19,7 @@ import at.dms.kjc.slicegraph.FilterTraceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
-import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.kjc.slicegraph.FilterContent;
 
 /**
  * This class implements filter communication with a peek buffer.  The peek buffer can 

@@ -24,8 +24,8 @@
 #include <vector>
 #include <string>
 
-//#define CONSUMER_BUFFER_SIZE 10000
-//#define PRODUCER_BUFFER_SIZE 10000
+#define CONSUMER_BUFFER_SIZE 10000
+#define PRODUCER_BUFFER_SIZE 10000
 
 using namespace std;
 

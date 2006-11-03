@@ -19,7 +19,11 @@ public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = false;
+    public static boolean debugging = true;
+    /**
+     * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
+     */
+    public static boolean debugVectorizable = true;
 
     /**
      * Perform naive vectorization on eligible filters in a stream.
@@ -127,18 +131,22 @@ public class VectorizeEnable {
      * @param str
      */
     static private void debugSelection (SIRStream str) {
+        // Check for vectorizable, but don't dump Vectorizable debugging info again if enabled.
+        boolean vdebug = Vectorizable.debugging;
+        Vectorizable.debugging = debugVectorizable;
         final Set<SIRFilter> vectorizable = Vectorizable.vectorizableStr(str); 
+        Vectorizable.debugging = vdebug;
         
         // debugging code: tell all series of vectorizable filters.
         // easier since after lift...Sync, which removes unnecessary pipelines.
-        final List<List<String>> allFilterLists = new LinkedList<List<String>>();
+        final List<List<SIRFilter>> allFilterLists = new LinkedList<List<SIRFilter>>();
 
         IterFactory.createFactory().createIter(str).accept(
             new EmptyStreamVisitor() {
                 /* pre-visit a pipeline */
                 public void preVisitPipeline(SIRPipeline self,
                                                  SIRPipelineIter iter) {
-                    List<String> currentList = null;
+                    List<SIRFilter> currentList = null;
                     List<SIRStream> children = self.getSequentialStreams();
                         for (SIRStream child : children) {
                                 if (! (child instanceof SIRFilter) || ! vectorizable.contains(child)) {
@@ -148,9 +156,9 @@ public class VectorizeEnable {
                                     }
                                 } else {
                                     if (currentList == null) {
-                                        currentList = new LinkedList<String>();
+                                        currentList = new LinkedList<SIRFilter>();
                                     }
-                                    currentList.add(child./*getIdent()*/getName());
+                                    currentList.add((SIRFilter)child);
                                 }
                             }
                             if (currentList != null) {
@@ -160,9 +168,9 @@ public class VectorizeEnable {
                     }
                 });
             System.err.println("Sequences of Vectorizable filters:");
-            for (List<String> filterList : allFilterLists) {
-                for (String s : filterList) {
-                    System.err.println(" " + s);
+            for (List<SIRFilter> filterList : allFilterLists) {
+                for (SIRFilter s : filterList) {
+                    System.err.println(" " + s.getName() + (s.getPeekInt() <= s.getPopInt()? "" : (" peeks " + s.getPeekInt())));
                 }
                 System.err.println();
             }

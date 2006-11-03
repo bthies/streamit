@@ -315,6 +315,9 @@ public class FusePipelines {
                         // previous filter outputs a vectorizable type
                         (i == 0 || child.getInputType() instanceof CFloatType
                                 || child.getInputType() instanceof CIntType) &&
+                        // only first filter can peek
+                        (i==0 || !FusePipelines.filterPeeks((SIRFilter)child)) &&
+                        // and vectorizable...
                         Vectorizable.vectorizable((SIRFilter)child));
             }
             assert false : "Unexpected mode";

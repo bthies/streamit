@@ -19,11 +19,11 @@ public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = true;
+    public static boolean debugging = false;
     /**
      * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
      */
-    public static boolean debugVectorizable = true;
+    public static boolean debugVectorizable = false;
 
     /**
      * Perform naive vectorization on eligible filters in a stream.
@@ -63,7 +63,9 @@ public class VectorizeEnable {
                     public void visitFilter(SIRFilter self,
                                             SIRFilterIter iter) {
                         if (Vectorizable.vectorizable(self)) {
-                            Vectorize.vectorize(self);
+                            if (! KjcOptions.atlas) {
+                                Vectorize.vectorize(self);
+                            }
                             forScheduling(self);
                         }
                     }
@@ -99,8 +101,10 @@ public class VectorizeEnable {
         f.setPop(poprate * veclen);
 
 //      alternative to vectorization for testing:
-//      workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
-
+        if (KjcOptions.atlas) {
+            // use bogus switch to change multiplicity...
+            workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
+        } else {
         // fix number of pops for new rate.
         if (poprate > 0) {
             List<JStatement> stmts = workBody.getStatements();
@@ -122,6 +126,7 @@ public class VectorizeEnable {
                 JStatement popStatement = new JExpressionStatement(pop);
                 workBody.addStatement(lastPos,popStatement);
             }
+        }
         }
     }
     

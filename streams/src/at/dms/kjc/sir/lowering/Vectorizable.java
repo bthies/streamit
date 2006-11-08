@@ -31,6 +31,11 @@ public class Vectorizable {
     static boolean debugging = true;
     
     /**
+     * reason for disqualifying a filter
+     */
+     static final String[] reason = {""};
+    
+    /**
      * Return set of naively vectorizable filters in stream.
      * See {@link #vectorizable(SIRFilter) vectorizable} for what makes a filter naively vectorizable.
      * @param str  Stream to check
@@ -81,8 +86,8 @@ public class Vectorizable {
         // are all 32 bit currently -- and special cases for casting to math functions.
         CType inputType = f.getInputType();
         CType outputType = f.getOutputType();
-        if (!(inputType instanceof CIntType || inputType instanceof CFloatType
-        ||  outputType  instanceof CIntType || outputType instanceof CFloatType || outputType == CStdType.Void)) {
+        if (!(inputType instanceof CIntType || inputType instanceof CFloatType)
+        &&  (outputType  instanceof CIntType || outputType instanceof CFloatType || outputType == CStdType.Void)) {
 
             if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has wrong type.");
             return false;
@@ -104,9 +109,13 @@ public class Vectorizable {
             if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has side effects.");
             return false; // If filter has side effects, don't vectorize.
         }
-        // only vectorizing if branches, peek and array offsets are not data dependent.
+        // only vectorizing if branches, peek and array offsets are not data dependent
+        // ans all reachable operations are supported for vectorization.
+        reason[0] = "";
         if (isDataDependent(f)) {
-            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() + " has control or offset dependence.");
+            if (debugging) System.err.println("Vectorizable.vectorizable found " + f.getName() 
+                    + " has control or offset dependence or unvectorizable operation."
+                    + (reason[0].length() > 0 ? " " + reason[0]: ""));
             return false; // Filter has branches that are data dependent, don't vectorize.
         }
         // only vectorize if not in feedback loop
@@ -198,6 +207,7 @@ public class Vectorizable {
                     // calculating an array offset, initializing a field,
                     // calculating a peek offset, part of a branch condition;
                     // then we have a data dependency already...
+                    @Override
                     public void visitPeekExpression(SIRPeekExpression self,
                             CType tapeType, JExpression arg) {
                         flowsHere = true;
@@ -209,6 +219,7 @@ public class Vectorizable {
                         delicateLocation--;
                     }
 
+                    @Override
                     public void visitPopExpression(SIRPopExpression self,
                             CType tapeType) {
                         flowsHere = true;
@@ -221,6 +232,7 @@ public class Vectorizable {
                     }
 
                     
+                    @Override
                     public void visitFieldExpression(JFieldAccessExpression self,
                             JExpression left,
                             String ident)
@@ -234,6 +246,7 @@ public class Vectorizable {
                         }
                     }
 
+                    @Override
                     public void visitNameExpression(JNameExpression self,
                             JExpression prefix,
                             String ident) {
@@ -246,6 +259,7 @@ public class Vectorizable {
                         }
                     }
                     
+                    @Override
                     public void visitLocalVariableExpression(JLocalVariableExpression self,
                             String ident) {
                         super.visitLocalVariableExpression(self, ident);
@@ -257,6 +271,7 @@ public class Vectorizable {
                         }
                     }
                     
+                    @Override
                     public void visitVariableDefinition(
                             JVariableDefinition self, int modifiers,
                             CType type, String ident, JExpression expr) {
@@ -291,18 +306,21 @@ public class Vectorizable {
                         flowsHere = oldflowsHere;
                     }
                     
+                    @Override
                     public void visitAssignmentExpression(
                             JAssignmentExpression self, JExpression left,
                             JExpression right) {
                         checkassign(left,right);
                     }
 
+                    @Override
                     public void visitCompoundAssignmentExpression(
                             JCompoundAssignmentExpression self, int oper,
                             JExpression left, JExpression right) {
                         checkassign(left,right);
                     }
 
+                    @Override
                     public void visitArrayAccessExpression(
                             JArrayAccessExpression self, JExpression prefix,
                             JExpression accessor) {
@@ -317,39 +335,53 @@ public class Vectorizable {
                         delicateLocation--;
                     }
                     
+                    @Override
                     public void visitConditionalExpression(JConditionalExpression self,
                             JExpression cond,
                             JExpression left,
                             JExpression right) {
+                        String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "? :"; }
                         cond.accept(this);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                         left.accept(this);
                         right.accept(this);
                     }
                     
+                    @Override
                     public void visitForStatement(JForStatement self,
                             JStatement init, JExpression cond, JStatement incr,
                             JStatement body) {
+                        String oldReason = null;
                         delicateLocation++;
                         if (init != null) {
+                            if (debugging) { oldReason = reason[0]; reason[0] = "for init"; }
                             init.accept(this);
                         }
                         if (cond != null) {
+                            if (debugging) { oldReason = reason[0]; reason[0] = "for cond"; }
                             cond.accept(this);
                         }
                         if (incr != null) {
+                            if (debugging) { oldReason = reason[0]; reason[0] = "for incr"; }
                             incr.accept(this);
                         }
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                         body.accept(this);
                     }
 
+                    @Override
                     public void visitIfStatement(JIfStatement self,
                             JExpression cond, JStatement thenClause,
                             JStatement elseClause) {
+                        String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "if"; }
                         cond.accept(this);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                         thenClause.accept(this);
                         if (elseClause != null) {
@@ -357,38 +389,144 @@ public class Vectorizable {
                         }
                     }
 
+                    @Override
                     public void visitDoStatement(JDoStatement self,
                             JExpression cond, JStatement body) {
+                        String oldReason = null;
                         body.accept(this);
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "do while"; }
                         cond.accept(this);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                     }
 
+                    @Override
                     public void visitWhileStatement(JWhileStatement self,
                             JExpression cond, JStatement body) {
+                        String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "while"; }
                         cond.accept(this);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                         body.accept(this);
                     }
                     
+                    @Override
+                    public void visitSwitchStatement(JSwitchStatement self,
+                            JExpression expr,
+                            JSwitchGroup[] body) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "while"; }
+                        expr.accept(this);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                        for (int i = 0; i < body.length; i++) {
+                            body[i].accept(this);
+                        }
+                    }
+                   
                     // assume any call or return with data could
                     // cause a dependence.
                     // since actually have all relevant fns, could
                     // do interprocedural analysis.
+                    //
+                    // TODO: if a vectorizable function
+                    // (max, min, abs, sqrt) then allow here
+                    // and add support to vectorizer to use appropriate
+                    // intrinsic.
+                    @Override
                     public void visitArgs(JExpression[] args) {
+                        String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "call args"; }
                         super.visitArgs(args);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                     }
+                    @Override
                     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
+                        String oldReason = null;
                         delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "return"; }
                         super.visitReturnStatement(self, expr);
+                        if (debugging) { reason[0] = oldReason; }
                         delicateLocation--;
                     }
                     
+                    // From here: look at operations that do not vectorize.
+                    // check: ~ in C
+                    @Override
+                    public void visitBitwiseComplementExpression(JUnaryExpression self,
+                            JExpression expr) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "~"; }
+                        super.visitBitwiseComplementExpression(self,expr);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+                    
+                    @Override
+                    // gcc does not automatically support shifts, so disallow until 
+                    // we develop intrinsics.  (Even so the SSE has some limitations:
+                    // the value that you are shifting by must be either immediate or
+                    // at least 64 bits long (possible by splatting into a vector register)
+                    public void visitShiftExpression(JShiftExpression self,
+                            int oper,
+                            JExpression left,
+                            JExpression right) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "<<, >>, or >>>"; }
+                        super.visitShiftExpression(self,oper,left,right);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+                    
+                    // gcc does not support relational expressions on vector except
+                    // through intrinsics or builtins, and our vectorization project
+                    // does not allow a vector to flow to a branch condition so 
+                    // we have little use for vectors in relational expressions.
+                    @Override
+                    public void visitRelationalExpression(JRelationalExpression self,
+                            int oper,
+                            JExpression left,
+                            JExpression right) {
+                        delicateLocation++;
+                        super.visitRelationalExpression(self,oper,left,right);
+                        delicateLocation--;
+                    }
+
+                    // Vectorize does not currently handle casts
+                    // TODO: Vectorize should handle casts between same-width
+                    // supported types (meaning 32-bit int and 32-bit float).
+                    @Override
+                    public void visitCastExpression(JCastExpression self,
+                            JExpression expr,
+                            CType type) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "(cast)"; }
+                        super.visitCastExpression(self, expr,type);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+                    @Override
+                    public void visitUnaryPromoteExpression(JUnaryPromote self,
+                            JExpression expr,
+                            CType type) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = "(cast)"; }
+                        super.visitUnaryPromoteExpression(self, expr,type);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+                                  
                     /* mostly for checking lhs's. Return names of all arrays accessed in expression. */
                     private Set<String> arrayAccessIn(JExpression e) {
                         final Set<String> s = new HashSet<String>();

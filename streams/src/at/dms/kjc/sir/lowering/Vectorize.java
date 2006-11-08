@@ -515,6 +515,7 @@ public class Vectorize {
                 // (1) vector_value = constant;
                 // (2) vector_value = complex expression not containing vector
                 // values;
+                // (2b) array of vector values = array of scalar values.
                 // (3) vector_value = expression containing vector value(s);
                 // (4) non_vector = expression;
                 boolean leftHasVectorType = hasVectorType(left, vectorIds);
@@ -563,6 +564,8 @@ public class Vectorize {
                         self.setLeft(newLeft);
                         self.setRight(newRight);
                         return self;
+                    } else if (oldType instanceof CArrayType) {
+                        throw new AssertionError("Unimplemented: assign array of vectors from array of scalars");
                     } else {
                         JVariableDefinition defn = new JVariableDefinition(
                                 oldType, ThreeAddressCode.nextTemp());

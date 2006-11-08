@@ -531,8 +531,11 @@ public class ThreeAddressCode {
                                 self.getType());}});
         }
 
+        // No: we should not do this since will fall outside form of C array initializer if
+        // tries to init with temps.  Fix by special case in visitArrayDeclaration.
         public List<JStatement> visitArrayInitializer(JArrayInitializer self, JLocalVariableExpression tmp) {
             JExpression[] elemArray = self.getElems();
+            assert false: "Should not descend into array initializer";
             Pair<List<JStatement>,List<JExpression>> elemresults = this.recurrExpressionsArr(elemArray);
             List<JStatement> newstmts = elemresults.getFirst();
             List<JExpression> newelems = elemresults.getSecond();
@@ -852,24 +855,24 @@ public class ThreeAddressCode {
             List<JStatement> newstmts = cvtddims.getFirst();
             List<JExpression> newdims = cvtddims.getSecond();
             JArrayInitializer init = self.getInit();
-            JExpression[] initexps = (init == null) ? new JExpression[0] : init.getElems();
-            Pair<List<JStatement>,List<JExpression>> cvtdinits = recurrExpressionsArr(initexps);
-            List<JStatement> initstmts = cvtdinits.getFirst();
-            List<JExpression> initexprs = cvtdinits.getSecond();
+//            JExpression[] initexps = (init == null) ? new JExpression[0] : init.getElems();
+//            Pair<List<JStatement>,List<JExpression>> cvtdinits = recurrExpressionsArr(initexps);
+//            List<JStatement> initstmts = cvtdinits.getFirst();
+//            List<JExpression> initexprs = cvtdinits.getSecond();
             
             JNewArrayExpression newarray;
-            if (initstmts.isEmpty()) {
+//            if (initstmts.isEmpty()) {
                 // can use old initializer
                 newarray = new JNewArrayExpression(self.getTokenReference(), self.getType(),
                         newdims.toArray(new JExpression[newdims.size()]),init);
-            } else {
-                // need a new initializer (and can guarantee old one was not null).
-                newstmts.addAll(initstmts);
-                newarray = new JNewArrayExpression(self.getTokenReference(), self.getType(),
-                        newdims.toArray(new JExpression[newdims.size()]),
-                        new JArrayInitializer(init.getTokenReference(),
-                                initexprs.toArray(new JExpression[initexprs.size()])));
-            }
+//            } else {
+//                // need a new initializer (and can guarantee old one was not null).
+//                newstmts.addAll(initstmts);
+//                newarray = new JNewArrayExpression(self.getTokenReference(), self.getType(),
+//                        newdims.toArray(new JExpression[newdims.size()]),
+//                        new JArrayInitializer(init.getTokenReference(),
+//                                initexprs.toArray(new JExpression[initexprs.size()])));
+//            }
             newstmts.add(new JExpressionStatement(
                     new JAssignmentExpression(tmp,newarray)));
             return newstmts;

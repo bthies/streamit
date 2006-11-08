@@ -126,6 +126,7 @@ public class File_Writer extends SIRFilter
             
             JMethodCallExpression sizeofCall =
                 new JMethodCallExpression(null, Names.sizeof, sizeofParameters);
+            sizeofCall.setTapeType(CStdType.Integer);
             
             fwriteParams[1] = sizeofCall;
             
@@ -140,6 +141,7 @@ public class File_Writer extends SIRFilter
                 new JMethodCallExpression(null, new JThisExpression(null),
                                           Names.fwrite,
                                           fwriteParams);
+            fwrite.setTapeType(CStdType.Void);
 
             fileio = fwrite;
         }

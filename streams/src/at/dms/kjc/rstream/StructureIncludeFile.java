@@ -29,25 +29,28 @@ public class StructureIncludeFile
     /**
      * Create structures include file in current directory.
      * @param structs The structures used in the programs 
+     * @param other text to put in file
      */
-    public static void doit(SIRStructure[] structs) 
+    public static void doit(SIRStructure[] structs, String other) 
     {
-        doit(structs, ".");
+        doit(structs, other, ".");
     }
 
     /**
      * Create structures include file in directory *dir*.
      * @param structs The structures used in the programs 
-     * @param dir The directory to store the include file.
+     * @param other text to put in file
+    * @param dir The directory to store the include file.
      */
-    public static void doit(SIRStructure[] structs, String dir) 
+    public static void doit(SIRStructure[] structs, String other, String dir) 
     {
-        if (structs.length == 0) 
+        if (structs.length == 0 && other.length() == 0) 
             return;
     
         try {
             FileWriter fw = new FileWriter(dir + "/structs.h");
             createStructureDefs(structs, fw);
+            if (other != null) { fw.write(other); }
             fw.close();
         }
         catch (Exception e) {

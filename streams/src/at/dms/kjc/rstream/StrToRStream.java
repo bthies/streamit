@@ -132,6 +132,16 @@ public class StrToRStream {
         // expand array initializers loaded from a file
         ArrayInitExpander.doit(str);
 
+        
+        // Raise all pushes, pops, peeks to statement level
+        // Several phases above introduce new peeks, pops, pushes
+        //  including but not limited to doLinearAnalysis.
+        // However, ConvertFileFilters introduces bogus method
+        // calls without types that would cause SimplifyPopPeekPush
+        // to fail (from JVariableDefinition with a null type).
+        SimplifyPopPeekPush.simplify(str);
+
+
         //convert all file readers/writers to normal 
         //sirfilters, not predefined filters
         ConvertFileFilters.doit(str);
@@ -171,6 +181,12 @@ public class StrToRStream {
         //constant prop propagates the peek buffer index
         new VarDeclRaiser().raiseVars(str);
 
+        // vectorize if not generating Reservoir C
+        if (KjcOptions.vectorize > 0 && ! KjcOptions.doloops && ! KjcOptions.absarray) {
+            VectorizeEnable.vectorizeEnable(str,new HashMap<SIROperator,Integer>());  
+            RemoveMultiPops.doit(str);
+        }
+        
         // optionally print a version of the source code that we're
         // sending to the scheduler
         if (KjcOptions.print_partitioned_source) {
@@ -206,8 +222,11 @@ public class StrToRStream {
         //printer1.close();
 
         //generate the include file that has the structure definitions
-        StructureIncludeFile.doit(structures);
+        //and headers for any vector types that appear in the program.
+        StructureIncludeFile.doit(structures,
+                getVectorHeaderText(graphFlattener.top));
         //generate the c code for the application
+        
         GenerateCCode.generate(graphFlattener.top);
         //exit
         System.exit(0);
@@ -351,5 +370,50 @@ public class StrToRStream {
                 System.out.println(node + " = " +  exeCounts.get(node));
             }
         }
+    }
+
+    private static String getVectorHeaderText(FlatNode top) {
+        // horrible mess for getting typedefs for all vector types in program into vectorTypeDefs
+        final Set<String> vectorTypeDefs = new HashSet<String>();
+        top.accept(new at.dms.kjc.flatgraph.FlatVisitor() {
+            /**
+             * Find any CVector type in a JVariableDefinition and
+             * update vectorTypeDefs.
+             */
+            public void visitNode(FlatNode node) {
+                if (node.isFilter()) {
+                    SIRFilter filter = (SIRFilter)node.contents;
+                    for (JFieldDeclaration decl : filter.getFields()) {
+                        decl.accept(new SLIREmptyVisitor(){
+                            @Override
+                            public void visitVariableDefinition(JVariableDefinition self,
+                                    int modifiers, CType type, String ident, JExpression expr) {
+                                if (type instanceof CVectorType) {
+                                    vectorTypeDefs.add(((CVectorType)type).typedefString());
+                                }
+                            }
+                        });
+                    }
+                    for (JMethodDeclaration m : filter.getMethods()) {
+                        m.accept(new SLIREmptyVisitor(){
+                            @Override
+                            public void visitVariableDefinition(JVariableDefinition self,
+                                    int modifiers, CType type, String ident, JExpression expr) {
+                                if (type instanceof CVectorType) {
+                                    vectorTypeDefs.add(((CVectorType)type).typedefString());
+                                }
+                            }
+                        });
+                    }
+                }
+                        
+            } } , new HashSet<FlatNode>(), true);
+
+        StringBuffer sb = new StringBuffer();
+        for (String typedef : vectorTypeDefs) {
+            sb.append(typedef);
+            sb.append('\n');
+        }
+        return sb.toString();
     }
 }

@@ -113,12 +113,21 @@ public class FlatIRToRS extends ToC
                 p.print(" = ");
                 expr.accept(this);
             } else { //initialize all fields to 0
+                if (type instanceof CVectorType ||
+                    type instanceof CVectorTypeLow ||
+                    type instanceof CArrayType && 
+                        (((CArrayType)type).getBaseType() instanceof CVectorType ||
+                         ((CArrayType)type).getBaseType() instanceof CVectorTypeLow)) {
+                    // Do not print out initializer in these cases.  The underlying type is a union except in the
+                    // case of CVectorTypeLow, and gcc4.1 gives errors on attempts to initialize.
+                } else {
                 if (type.isOrdinal())
                     p.print (" = 0");
                 else if (type.isFloatingPoint())
                     p.print(" = 0.0f");
                 else if (type.isArrayType())
                     p.print(" = {0}");
+                }
             }
         
         }
@@ -176,14 +185,22 @@ public class FlatIRToRS extends ToC
                 p.print(" = ");
                 expr.accept(this);
             } else {
+                if (type instanceof CVectorType ||
+                        type instanceof CVectorTypeLow ||
+                        type instanceof CArrayType && 
+                            (((CArrayType)type).getBaseType() instanceof CVectorType ||
+                             ((CArrayType)type).getBaseType() instanceof CVectorTypeLow)) {
+                        // Do not print out initializer in these cases.  The underlying type is a union except in the
+                        // case of CVectorTypeLow, and gcc4.1 gives errors on attempts to initialize.
+                  } else {
                 if (type.isOrdinal())
                     p.print (" = 0");
                 else if (type.isFloatingPoint())
                     p.print(" = 0.0f");
                 else if (type.isArrayType())
                     p.print(" = {0}");
+              }
             }
-        
         }
         p.print(";");
     }

@@ -63,7 +63,7 @@ public class VectorizeEnable {
                     public void visitFilter(SIRFilter self,
                                             SIRFilterIter iter) {
                         if (Vectorizable.vectorizable(self)) {
-                            if (! KjcOptions.atlas) {
+                            if (! KjcOptions.magic_net) {
                                 Vectorize.vectorize(self);
                             }
                             forScheduling(self);
@@ -101,7 +101,7 @@ public class VectorizeEnable {
         f.setPop(poprate * veclen);
 
 //      alternative to vectorization for testing:
-        if (KjcOptions.atlas) {
+        if (KjcOptions.magic_net) {
             // use bogus switch to change multiplicity...
             workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
         } else {
@@ -124,7 +124,7 @@ public class VectorizeEnable {
                 SIRPopExpression pop = new SIRPopExpression(f.getInputType(),
                         (veclen - 1) * poprate);
                 JStatement popStatement = new JExpressionStatement(pop);
-                workBody.addStatement(lastPos,popStatement);
+                workBody.addStatement(lastPos+1,popStatement);
             }
         }
         }

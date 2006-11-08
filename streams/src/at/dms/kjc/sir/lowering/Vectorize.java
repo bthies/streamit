@@ -108,7 +108,7 @@ public class Vectorize {
         raiseVectorConstants(filter);
         
         // put in poke buffer handling
-        if (filter.getPushInt() > 0 && vectorizePush[0]) {
+        if (filter.getPushInt() > 1 && vectorizePush[0]) {
             putInPokeBuffer(filter,pokeBufDefn,pokeBufRef,pokeBufOffsetDef,pokeBufOffset);
         }
   }
@@ -158,22 +158,24 @@ public class Vectorize {
             // any SIRMarker of final SIRPopExpression
             JBlock workBody = filter.getWork().getBody();
             List<JStatement> stmts = workBody.getStatements();
-            int posn = stmts.size(); // start 1 past end
-            JStatement last;
-            do {posn = posn - 1;     // and back up to right position
-                last = stmts.get(posn);} 
+            int lastPos = stmts.size() - 1;
+            JStatement last = stmts.get(lastPos);
             while (last instanceof SIRMarker
                     || (last instanceof JExpressionStatement
-                            && ((JExpressionStatement) last).getExpression() instanceof SIRPopExpression) );
-            workBody.addAllStatements(posn+1,initAndLoop);
+                            && ((JExpressionStatement) last).getExpression() instanceof SIRPopExpression) ) {
+                lastPos--;
+                last = stmts.get(lastPos);
+            }
+    
+            workBody.addAllStatements(lastPos+1,initAndLoop);
             workBody.addStatement(0, (JStatement)AutoCloner.deepCopy(initOffset));
     }
     
     /**
      * Pull vector constants to static const (ACC_STATIC | ACC_FINAL) fields or local variables.
-     * 
+     * Munges a filter in place.
      */
-    private static void raiseVectorConstants (SIRFilter filter) {
+    private static void raiseVectorConstants (final SIRFilter filter) {
         
         // Find all JVectorLiteral's in all methods, record in vlitToMeths
         // (Map needs to convert to Number which has structural equality / hash
@@ -185,9 +187,6 @@ public class Vectorize {
             m.accept(new SLIREmptyVisitor(){
                 @Override
                 public void visitVectorLiteral(JVectorLiteral self, JLiteral scalar) {
-                    Set<JMethodDeclaration> inMs = vlitToMeths.get(self);
-                    if (inMs == null) inMs = new HashSet<JMethodDeclaration>();
-                    inMs.add(m);
                     JLiteral scalarv = self.getScalar();
                     Number n;
                     if (scalarv instanceof JIntLiteral) {
@@ -197,12 +196,15 @@ public class Vectorize {
                     } else {
                         throw new AssertionError();
                     }
+                    Set<JMethodDeclaration> inMs = vlitToMeths.get(n);
+                    if (inMs == null) inMs = new HashSet<JMethodDeclaration>();
+                    inMs.add(m);
                     vlitToMeths.put(n, inMs);
                 }
             });
         }
         
-        // create const definitions for the JVectorLiteral's and record references in vlitReplacements
+        // create const definitions for each constant and record references in vlitReplacements
         final Map<Number,JExpression> vlitReplacements =  new HashMap<Number,JExpression>();
 
         for (Map.Entry<Number,Set<JMethodDeclaration>> vMeths : vlitToMeths.entrySet()) {
@@ -230,7 +232,7 @@ public class Vectorize {
                     init);
 
             if (vMeths.getValue().size() > 1) {
-                // constant used in multiple methods: set up as field.
+               // constant used in multiple methods: set up as field.
                 JFieldDeclaration decl = new JFieldDeclaration(defn);
                 JFieldAccessExpression access = new JFieldAccessExpression(new JThisExpression(), defn.getIdent());
                 filter.addField(0,decl);
@@ -270,6 +272,7 @@ public class Vectorize {
     
     /**
      * Given information about a method body, make any changes needed in the method body.
+     * Down to: call fixTypesPeeksPopsPushes for each method body.
      * @param methodBody to process
      * @param vectorIds allows determination of which variables need vector types.
      * @param filter the filter being processed, allows access to push and pop rates.
@@ -432,6 +435,14 @@ public class Vectorize {
                         // vector type does not reach push expression.
                         return self;
                     }
+                    // Assuming that SimplifyPushPopPeek() has been run as required: 
+                    // Here we are pushing either a vector value or a constant.
+                    // use maybeAsArrayRef to put the correct selector on:
+                    // constants do not get a selector.
+                    // If not a manifest constant, then the definition of 
+                    // the local ref / field ref / array ref should have
+                    // been modified to be a vector type.
+                    
                     // push(e)  =>
                     // poke((e).a[0], 0 * outputStride);
                     // poke((e).a[1], 1 * outputStride);
@@ -474,14 +485,14 @@ public class Vectorize {
                             this.addPendingStatement(
                                 new JExpressionStatement(
                                         new SIRPushExpression(
-                                                CVectorType.asArrayRef(arg,i),
+                                                maybeAsArrayRef(arg,i),
                                                 tapeType)));
                         } else {
 //                         if (canPokeToPushTape)                           
 //                            this.addPendingStatement(
 //                                    new JExpressionStatement(
 //                                            new SIRPokeExpression(
-//                                                    CVectorType.asArrayRef(arg,i),
+//                                                    maybeAsArrayRef(arg,i),
 //                                                    i * outputStride,
 //                                                    tapeType)));
                             this.addPendingStatement(
@@ -492,7 +503,7 @@ public class Vectorize {
                                             new JAddExpression(
                                                 pokeBufOffset,
                                                 new JIntLiteral((i - 1) * (outputStride - 1)))),
-                                       CVectorType.asArrayRef(arg,i)
+                                            maybeAsArrayRef(arg,i)
                                     )));
                         }
                     }
@@ -504,10 +515,19 @@ public class Vectorize {
                                     pokeBufOffset)));
                     }
                     return new SIRPushExpression(
-                            CVectorType.asArrayRef(arg,0),
+                            maybeAsArrayRef(arg,0),
                             tapeType);
                 }
-
+                
+                
+                private JExpression maybeAsArrayRef(JExpression arg, int offset) {
+                    if (arg instanceof JLiteral) {
+                        return arg;
+                    } else {
+                        return CVectorType.asArrayRef(arg,offset);
+                    }
+                }
+                
                 @Override
                 public Object visitAssignmentExpression(JAssignmentExpression self,
                     JExpression left, JExpression right) {

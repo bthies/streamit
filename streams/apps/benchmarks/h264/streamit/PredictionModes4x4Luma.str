@@ -212,7 +212,7 @@ int->int filter PredictionMode4() {
 
 	work pop 25 push 1 {
 		
-		int sae;
+		int sae = 0;
 		int[16] predictionBlock;
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
@@ -258,7 +258,7 @@ int->int filter PredictionMode5() {
 	
 	work pop 24 push 1 {
 		
-		int sae;
+		int sae = 0;
 		int[16] predictionBlock;
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
@@ -304,7 +304,7 @@ int->int filter PredictionMode6() {
 
 	work pop 24 push 1 {
 		
-		int sae;
+		int sae = 0;
 		int[16] predictionBlock;
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
@@ -350,7 +350,7 @@ int->int filter PredictionMode7() {
 	// originalBlk 			peek(7,22);
 	work pop 16 peek 12 push 16 {
 		
-		int sae;
+		int sae = 0;
 		int[16] predictionBlock;		
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = (int) (peek(0) + peek(1) + 1) / 2; 
@@ -394,7 +394,7 @@ int->int filter PredictionMode8() {
 		
 		// I,J,K,L				peek(0-3);
 		// originalBlk 			peek(4,19);
-		int sae;
+		int sae = 0;
 		int[16] predictionBlock;
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = (int) (peek(0) + peek(1) + 1) / 2; 
@@ -402,11 +402,11 @@ int->int filter PredictionMode8() {
 		predictionBlock[2] = 
 		predictionBlock[4] = (int) (peek(1) + peek(2) + 1) / 2;
 		predictionBlock[3] = 
-		predictionBlock[5] = (int) (peek(2) + 2*peek(3) + peek(4) + 2) / 4;
+		predictionBlock[5] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
 		predictionBlock[6] = 
-		predictionBlock[8] = (int) (peek(3) + peek(4) + 1) / 2;
+		predictionBlock[8] = (int) (peek(2) + peek(3) + 1) / 2;
 		predictionBlock[7] = 
-		predictionBlock[9] = (int) (peek(3) + 3*peek(4) + 2) / 4;
+		predictionBlock[9] = (int) (peek(2) + 3*peek(3) + 2) / 4;
 		predictionBlock[11] =
 		predictionBlock[13] =
 		predictionBlock[14] =
@@ -419,7 +419,7 @@ int->int filter PredictionMode8() {
 		
 		push(sae);
 		
-		for (int i=0; i<=19; i++) {
+		for (int i=0; i<=23; i++) {
 			pop();
 		}
 	} 

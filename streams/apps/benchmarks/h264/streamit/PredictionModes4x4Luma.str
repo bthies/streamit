@@ -17,8 +17,8 @@
  * and calculate all 9 prediction modes such that the best one 
  * can be used for a luminance block. Not all modes will require
  * all 13 pixels. These filters will assume the input will give 
- * luminance values from A through M, giving an output that is
- * denoted by numbers, in the order below (not in zig-zag).
+ * luminance values from A through M (if needed), giving the 
+ * 'Sum of Absolute Errors' as the output of the filter.
  * 
  * 
  * M  A  B  C  D  E  F  G  H 
@@ -31,8 +31,8 @@
  * 
  * L 12 13 14 15  x  x  x  x
  * 
- * The number represents the indices of the prediction block.
- * 
+ * The number represents the indices of the original block.
+ *  * 
  * The cost function is the residual between the original block
  * and the predicted block. The encoder will choose the prediction
  * mode that minimizes the residual.
@@ -40,8 +40,7 @@
  * Be aware that the more complex prediction algorithms requires
  * the use of a matrix to store all calcuated values, then the
  * matrix is spit out at each row, from left to right, going downwards
- * at each row.
- * 
+ * at each row. 
  *
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file PredictionModes4x4Luma.str
@@ -56,31 +55,26 @@
  * 
  * Note that only pixels A, B, C, and D is required.
  * 
- * Note: there is an alternate implementation to this filter. The
- * filter can spit out pixels 4-16 very quickly since the data for
- * them is already known once pixels A-D had been looked at. I am
- * not sure of the consequences of pushing quickly versus having
- * the data pushed one by one at each execution of the work function.
+ * Note: there is an alternate implementation to this filter.
  *
- * @input A stream of 13 luminance data for pixels A through M.
- * @output A stream of 16 pixels predicted by mode 0
+ * @input A,B,C,D + 16 pixels from the original block
+ * @output sum of absolute errors for mode 0
  */
 int->int filter PredictionMode0() {
-	init {
-		int[4] AtoD;
-	}
 	
-	work pop 12 peek 12 push 16 {
-
-	for (int AtoDCount = 0; AtoDCount<12; AtoDCount++) {
-		if (AtoDCount <= 0 && ItoLCount >= 4) { // I to L pixels
-			AtoD[AtoDCount-8] = peek(AtoDCount);
+	// A,B,C,D 			peek(0-3);
+	// originalBlk 		peek(4,19);
+	work pop 20 push 1 {
+		int sae; // sum of absolute errors
+		for (int i=4; i<19; i++) {
+			int predicted = peek(i%4);
+			int original = peek(i);
+			sae += abs(predicted-original);
 		}
-		pop();
-	}
-	for (int i=0; i<4; i++) { // each row
-		for (int j=0; j<4; j++) { // each element
-			push(AtoD[j]);
+		push(sae);
+		
+		for (int i=0; i<19; i++) {
+			pop();
 		}
 	}
 }
@@ -92,24 +86,31 @@ int->int filter PredictionMode0() {
  * 
  * Note that only pixels I, J, K, and L is required.
  * 
- * @input A stream of 13 luminance data for pixels A through M.
- * @output A stream of 16 pixels predicted by mode 1
+ * @input I,J,K,L + 16 pixels from the original block
+ * @output sum of absolute errors for mode 0
  */
 int->int filter PredictionMode1() {
-	init {
-		int ItoL[4];
-   	}
-	work pop 12 peek 12 push 16 {
-	
-	for (int ItoLCount = 0; ItoLCount<12; ItoLCount++) {
-		if (ItoLCount <= 8 && ItoLCount >= 11) { // I to L pixels
-			ItoL[ItoLCount-8] = peek(ItoLCount);
+
+	// I,J,K,L			peek(0-3);
+	// originalBlk 		peek(4,19);
+	work pop 20 push 1 {
+		int sae; // sum of absolute errors
+		for (int rowCount=0; rowCount<4; rowCount++) {
+			int original = peek(i); // gives you I,J,K, or L
+			// interate though out values for each column
+			for (int colCount=0; colCount<4; colCount++) {
+				// note the peek index:
+				// for a rowCount of 0, 
+				// 4*(rowCount+1) gives you the offset to start at peek(4);
+				// and so on...
+				int predicted = peek(colCount + 4*(rowCount+1));
+				sae += abs(predicted-original);
+			}
 		}
-		pop();
-	}
-	for (int i=0; i<4; i++) { // each row
-		for (int j=0; j<4; j++) { // each element 4 times
-			push(AtoD[i]); // same for entire row
+		push(sae);
+		
+		for (int i=0; i<19; i++) {
+			pop();
 		}
 	}
 	
@@ -120,45 +121,32 @@ int->int filter PredictionMode1() {
  * block. This is a DC interpolation where the entire output stream
  * has the mean value of all luminance values from A to M.
  * In other words: result luminance value = sum{A,B,C,D,I,J,K,L}/8 
- * Consequently, 8 input values are required to generate the 16
- * output pixels.
- * @input A stream of 13 luminance data for pixels A through M.
- * @output A stream of 16 pixels predicted by mode 2
+ * Consequently, A known values are required to generate the 16
+ * predicted pixels.
+ * @input I through L + 16 original pixels 
+ * @output sum of aboslute errors for mode 2
  */
 int->int filter PredictionMode2() {
-	init {
-
-		int counter = 0; 
-		// to keep track of where you are in the input stream
-		// from 0 to 3, input values are popped to calculate avg
-		// from 4 to 7, input values are popped and skipped
-		// from 8 to 11, input values are popped to calculate avg
-		// at 11, values are ready to be pushed
-		// otherwise (12), input value is skipped
-		int cumulativeAvg = 0;
 	
-	}
-	work pop 1 push [0, 16] {
-	if ((counter >= 0 && counter <= 3) || 
-		(counter >= 8 && counter <= 11)) {
-		cumulativeAvg =+ (int) pop()/8;
-		counter++;
-		if (counter == 12) {
-			// ready to push 16 of the avg luminance value
-			for (int i = 0; i < 16; i++) {
-				push(cumulativeAvg);
-			}
+	// I,J,K,L			peek(0-3);
+	// originalBlk 		peek(4,19);	
+	work pop 24 push 1 {
+		int cumulativeAvg = 0;
+		int sae = 0;
+		for (int i=0; i<8; i++) {
+			cumulativeAvg =+ (int) pop()/8;
 		}
-
-	} else if (counter >= 4 && counter <= 7) {
-		pop();
-		counter++;
-	} else { // count is at 12
-		pop();
-		// no more input data is required
-		counter = 0; // resets counter
-	}
-
+		
+		for (int origCounter=8; origCounter<24; origCounter++) {
+			int original = peek(origCounter);
+			sae += cumulativeAvg - original;
+		}
+		
+		push(sae);
+		
+		for (int i=0; i<24; i++) {
+			pop();
+		}
 	}   
 }
 
@@ -168,154 +156,153 @@ int->int filter PredictionMode2() {
 /**
  * This function calculates prediction mode 3 for a 4x4 luminance
  * block. This is also called: diagonal down-left.
- * @input A stream of 13 luminance data for pixels A through M.
- * @predictionBlock A stream of 16 pixels predicted by mode 3
+ * @input A,B,C,D,E,F,G,H + 16 original pixels
+ * @output sum of aboslute errors for mode 3
  */
 int->int filter PredictionMode3() {
-	init {
-		int[12] input; // A, B, C, D, E, F, G, H, I, J, K, M
-		int[16] predictionBlock; // predictionBlock 4x4 matrix, in an array
-	}
-	work pop 16 peek 12 push 16 {
-		// store input values into an array
-		for (int i = 0; i < 12; i++) {
-			input[i] = peek(i);
-		}
+	
+	// A,B,C,D,E,F,G,H		peek(0-7);
+	// originalBlk 			peek(8,23);
+
+	work pop 24 push 1 {
 		
+		int sae = 0;
+		int predictionBlock[16];
 		// calculate values for the 4x4 matrix
-		predictionBlock[0] = (int) (input[0] + 2*input[1] + input[2] + 2) / 4; 
+		predictionBlock[0] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4; 
 		predictionBlock[1] =
-		predictionBlock[4] = (int) (input[1] + 2*input[2] + input[3] + 2) / 4; 
+		predictionBlock[4] = (int) (peek(1) + 2*input(2) + peek(3) + 2) / 4; 
 		predictionBlock[2] =
 		predictionBlock[5] =
-		predictionBlock[8] = (int) (input[2] + 2*input[3] + input[4] + 2) / 4; 
+		predictionBlock[8] = (int) (peek(2) + 2*peek(3) + peek(4) + 2) / 4; 
 		predictionBlock[3] =
 		predictionBlock[6] =
 		predictionBlock[9] =
-		predictionBlock[12] = (int) (input[3] + 2*input[4] + input[5] + 2) / 4;
+		predictionBlock[12] = (int) (peek(3) + 2*peek(4) + peek(5) + 2) / 4;
 		predictionBlock[7] =
 		predictionBlock[10] =
-		predictionBlock[13] = (int) (input[4] + 2*input[5] + input[6] + 2) / 4; 
+		predictionBlock[13] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4; 
 		predictionBlock[11] =
-		predictionBlock[14] = (int) (input[5] + 2*input[6] + input[7] + 2) / 4; 
-		predictionBlock[15] = (int) (input[6] + 3*input[7] + 2) / 4;
+		predictionBlock[14] = (int) (peek(5) + 2*peek(6) + peek(7) + 2) / 4; 
+		predictionBlock[15] = (int) (peek(6) + 3*peek(7) + 2) / 4;
 		
-		// pushing the predictionBlock
-		for (int i = 0; i < 16; i++) {
-			push(predictionBlock[i]);
+		for (int i=8; i<24; i++) {
+			sae += predictionBlock[i] - peek(i);
 		}
-	}
+		
+		push(sae);
+		
+		for (int i=0; i<24; i++) {
+			pop();
+		}
+	}   
 }
 
 
 /**
  * This function calculates prediction mode 4 for a 4x4 luminance
  * block. This is also called: diagonal down-right.
- * @input A stream of 13 luminance data for pixels A through M.
- * @predictionBlock A stream of 16 pixels predicted by mode 4
+ * @input A,B,C,D,I,J,K,L,M + 16 original pixels
+ * @output sum of aboslute errors for mode 4
  */
 int->int filter PredictionMode4() {
-	init {
-		int[12] input; // A, B, C, D, E, F, G, H, I, J, K, M
-		int[16] predictionBlock; // predictionBlock 4x4 matrix, in an array
-	}
-	work pop 16 peek 12 push 16 {
-		// store input values into an array
-		for (int i = 0; i < 12; i++) {
-			input[i] = peek(i);
-		}
-		
+	
+	// A,B,C,D,I,J,K,L,M	peek(0-8);
+	// originalBlk 			peek(9,24);
+
+	work pop 25 push 1 {
+		int predictionBlock[16];
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
 		predictionBlock[5] =
 		predictionBlock[10] =
-		predictionBlock[15] = (int) (input[8] + 2*input[12] + input[0] + 2) / 4; 
+		predictionBlock[15] = (int) (peek(4) + 2*peek(8) + peek(0) + 2) / 4; 
 		predictionBlock[4] =
 		predictionBlock[9] =
-		predictionBlock[14] = (int) (input[9] + 2*input[8] + input[12] + 2) / 4;
+		predictionBlock[14] = (int) (peek(5) + 2*peek(4) + peek(8)] + 2) / 4;
 		predictionBlock[8] =
-		predictionBlock[13] = (int) (input[10] + 2*input[9] + input[8] + 2) / 4;
-		predictionBlock[12] = (int) (input[11] + 2*input[10] + input[9] + 2) / 4;
+		predictionBlock[13] = (int) (peek(6) + 2*peek(5) + peek(4) + 2) / 4;
+		predictionBlock[12] = (int) (peek(7) + 2*peek(6) + peek(5) + 2) / 4;
 		predictionBlock[1] =
 		predictionBlock[6] =
-		predictionBlock[11] = (int) (input[12] + 2*input[0] + input[1] + 2) / 4;
+		predictionBlock[11] = (int) (peek(8) + 2*peek(0) + peek(1) + 2) / 4;
 		predictionBlock[2] =
-		predictionBlock[7] = (int) (input[0] + 2*input[1] + input[2] + 2) / 4;
-		predictionBlock[3] = (int) (input[1] + 2*input[2] + input[3] + 2) / 4;
+		predictionBlock[7] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4;
+		predictionBlock[3] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
 		
-		
-		// pushing the predictionBlock
-		for (int i = 0; i < 16; i++) {
-			push(predictionBlock[i]);
+
+		for (int i=8; i<24; i++) {
+			sae += predictionBlock[i] - peek(i);
 		}
-	}
+		
+		push(sae);
+		
+		for (int i=0; i<24; i++) {
+			pop();
+		}
+	}   
 }
 
 /**
  * This function calculates prediction mode 5 for a 4x4 luminance
  * block. This is also called: vertical-right.
- * @input A stream of 13 luminance data for pixels A through M.
- * @predictionBlock A stream of 16 pixels predicted by mode 4
+ * @input A,B,C,D,I,J,K,M + 16 original pixels
+ * @output sum of aboslute errors for mode 5
  */
 int->int filter PredictionMode5() {
-	init {
-		int[12] input; // A, B, C, D, E, F, G, H, I, J, K, M
-		int[16] predictionBlock; // predictionBlock 4x4 matrix, in an array
-	}
-	work pop 16 peek 12 push 16 {
-		// store input values into an array
-		for (int i = 0; i < 12; i++) {
-			input[i] = peek(i);
-		}
-		
+	
+	// A,B,C,D,I,J,K,M		peek(0-7);
+	// originalBlk 			peek(8,23);
+	
+	work pop 24 push 1 {
+		int predictionBlock[16];
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
-		predictionBlock[9] = (int) (input[12] + input[0] + 1) / 2; 
+		predictionBlock[9] = (int) (peek(7) + peek(0) + 1) / 2; 
 		predictionBlock[1] =
-		predictionBlock[10] = (int) (input[0] + input[1] + 1) / 2; 
+		predictionBlock[10] = (int) (peek(0) + peek(1) + 1) / 2; 
 		predictionBlock[2] =
-		predictionBlock[11] = (int) (input[1] + input[2] + 1) / 2;
-		predictionBlock[3] = (int) (input[2] + input[3] + 1) / 2;
+		predictionBlock[11] = (int) (peek(1) + peek(2) + 1) / 2;
+		predictionBlock[3] = (int) (peek(2) + peek(3) + 1) / 2;
 		predictionBlock[4] =
-		predictionBlock[13] = (int) (input[8] + 2*input[12] + input[0] + 2) / 4;
+		predictionBlock[13] = (int) (peek(4) + 2*peek(7) + peek(0) + 2) / 4;
 		predictionBlock[5] =
-		predictionBlock[14] = (int) (input[12] + 2*input[0] + input[1] + 2) / 4;
+		predictionBlock[14] = (int) (peek(7) + 2*peek(0) + peek(1) + 2) / 4;
 		predictionBlock[6] =
-		predictionBlock[15] = (int) (input[0] + 2*input[1] + input[2] + 2) / 4;
-		predictionBlock[7] = (int) (input[1] + 2*input[2] + input[3] + 2) / 4;
-		predictionBlock[8] = (int) (input[12] + 2*input[8] + input[9] + 2) / 4;
-		predictionBlock[12] = (int) (input[8] + 2*input[9] + input[10] + 2) / 4;
+		predictionBlock[15] = (int) (peek(0) + 2*peek(1) + peek(2) + 2) / 4;
+		predictionBlock[7] = (int) (peek(1) + 2*peek(2) + peek(3) + 2) / 4;
+		predictionBlock[8] = (int) (peek(7) + 2*peek(4) + peek(5) + 2) / 4;
+		predictionBlock[12] = (int) (peek(4) + 2*peek(5) + peek(6) + 2) / 4;
 
-
-		
-		// pushing the predictionBlock
-		for (int i = 0; i < 16; i++) {
-			push(predictionBlock[i]);
+		for (int i=8; i<24; i++) {
+			sae += predictionBlock[i] - peek(i);
 		}
-	}
+		
+		push(sae);
+		
+		for (int i=0; i<24; i++) {
+			pop();
+		}
+	} 
 }
 
 
 /**
  * This function calculates prediction mode 6 for a 4x4 luminance
  * block. This is also called: horizontal-down.
- * @input A stream of 13 luminance data for pixels A through M.
- * @predictionBlock A stream of 16 pixels predicted by mode 4
+ * @input A,B,C,I,J,K,L,M + 16 original pixels
+ * @output sum of aboslute errors for mode 6
  */
 int->int filter PredictionMode6() {
-	init {
-		int[12] input; // A, B, C, D, E, F, G, H, I, J, K, M
-		int[16] predictionBlock; // predictionBlock 4x4 matrix, in an array
-	}
-	work pop 16 peek 12 push 16 {
-		// store input values into an array
-		for (int i = 0; i < 12; i++) {
-			input[i] = peek(i);
-		}
-		
+	
+	// A,B,C,I,J,K,L,M		peek(0-7);
+	// originalBlk 			peek(8,23);
+
+	work pop 24 push 1 {
+		int predictionBlock[0];
 		// calculate values for the 4x4 matrix
 		predictionBlock[0] = 
-		predictionBlock[6] = (int) (input[12] + input[8] + 1) / 2; 
+		predictionBlock[6] = (int) (peek(7) + peek(3) + 1) / 2; 
 		predictionBlock[1] =
 		predictionBlock[7] = (int) (input[8] + 2*input[12] + input[0] + 2) / 4; 
 		predictionBlock[2] =

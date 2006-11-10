@@ -41,6 +41,7 @@
  * the use of a matrix to store all calcuated values, then the
  * matrix is spit out at each row, from left to right, going downwards
  * at each row.
+ * 
  *
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file PredictionModes4x4Luma.str
@@ -51,7 +52,10 @@
 
 /**
  * This function calculates prediction mode 0 for a 4x4 luminance
- * block. Note that only pixels A, B, C, and D is required.
+ * block. This is also called: vertical. 
+ * 
+ * Note that only pixels A, B, C, and D is required.
+ * 
  * Note: there is an alternate implementation to this filter. The
  * filter can spit out pixels 4-16 very quickly since the data for
  * them is already known once pixels A-D had been looked at. I am
@@ -139,7 +143,10 @@ int->int filter PredictionMode0() {
 
 /**
  * This function calculates prediction mode 1 for a 4x4 luminance
- * block. Note that only pixels I, J, K, and L is required.
+ * block. This is also called: horizontal.
+ * 
+ * Note that only pixels I, J, K, and L is required.
+ * 
  * @input A stream of 13 luminance data for pixels A through M.
  * @output A stream of 16 pixels predicted by mode 1
  */

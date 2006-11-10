@@ -67,89 +67,24 @@
  */
 int->int filter PredictionMode0() {
 	init {
-		int counter = 0; 
-		// to keep track of where you are in the input & output 
-		// stream
-		// from 0 to 3, luminance value from A to D is stored
-		// otherwise, skip
 		int[4] AtoD;
 	}
 	
-	work pop [0, 1] peek [0, 1] push 4 {
-	  
-	if (counter >= 0 && counter <= 3) {
-		int luminVal = peek(0);
-		push(luminVal);
-		AtoD[counter] = luminVal;
+	work pop 12 peek 12 push 16 {
+
+	for (int AtoDCount = 0; AtoDCount<12; AtoDCount++) {
+		if (AtoDCount <= 0 && ItoLCount >= 4) { // I to L pixels
+			AtoD[AtoDCount-8] = peek(AtoDCount);
+		}
 		pop();
-		counter++;
-	} else {
-		
-		if (counter >= 4 && counter <= 7) {
-			// pushes a row of luminance values	
-			// this is done 3 times.	
-			push(AtoD[0]);
-			push[1];
-			push[2];
-			push[3];
-		}
-		
-		if (counter <= 12) {
-			pop(); // skip values
-		}
-		// all 13 input values from stream has been pushed
-		// no pop() is needed
-		// resetting counter    
-		if (counter == 15) {
-			counter = 0;
-		} else {
-			counter++;
+	}
+	for (int i=0; i<4; i++) { // each row
+		for (int j=0; j<4; j++) { // each element
+			push(AtoD[j]);
 		}
 	}
 }
 
-/* 
- * ALTERNATE IMPLEMENTATION for work function
- * in this case, the counter only keeps track of the input stream
- */
-
-/*
-	work pop 1 peek [0, 1] push [1, 12] {
-     
-	if (counter >= 0 && counter <= 3) {
-		int luminVal = peek(0);
-		push(luminVal);
-		AtoD[counter] = luminVal;
-		pop();
-        	counter++;
-
-        	if (counter == 3) {
-        		for (i = 0, i < 3, i++) {
-        		// 3 more rows (4 pixels each) to push
-                		for (j = 0, i < 4, i++) {
-                			push[j]; // push each row
-                		}
-			}
-        	
-
-	} else {
-
-		if (counter <= 12) {
-			pop(); // skip values
-        	}
-
-		// all 13 input values from stream has been pushed
-		// no pop() is needed
-		// resetting counter   
-		if (counter == 12) {
-			counter = 0;
-        	} else {
-			counter++;
-        	}
-	}
-*/
-
-}
 
 /**
  * This function calculates prediction mode 1 for a 4x4 luminance
@@ -162,31 +97,22 @@ int->int filter PredictionMode0() {
  */
 int->int filter PredictionMode1() {
 	init {
-		int counter = 0; 
-		// to keep track of where you are in the input stream
-		// from 0 to 7, luminance value from A to H is skipped
-		// from 8 to 11, luminance values are pushed
-		// otherwise (12), skip luminance value
-    	}
-	work pop [0, 1] peek [0, 1] push [0, 4] {
+		int ItoL[4];
+   	}
+	work pop 12 peek 12 push 16 {
 	
-	if (counter >= 0 && counter <= 7 ) {
+	for (int ItoLCount = 0; ItoLCount<12; ItoLCount++) {
+		if (ItoLCount <= 8 && ItoLCount >= 11) { // I to L pixels
+			ItoL[ItoLCount-8] = peek(ItoLCount);
+		}
 		pop();
-		counter++;
-	} else if (counter >= 8 && counter <= 11) {
-		counter++;
-		// push 4 copies of the current pixel
-		push(peek(0)); 
-		push(peek(0));
-		push(peek(0));
-		push(peek(0));
-		pop();
-	} else {
-		// no more input data is required
-		counter = 0; // resets counter
 	}
-
-	}   
+	for (int i=0; i<4; i++) { // each row
+		for (int j=0; j<4; j++) { // each element 4 times
+			push(AtoD[i]); // same for entire row
+		}
+	}
+	
 }
 
 /**

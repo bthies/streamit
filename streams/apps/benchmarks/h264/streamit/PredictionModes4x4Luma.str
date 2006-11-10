@@ -3,10 +3,8 @@
  * This file contains the various functions for generating the 9
  * prediction modes for a 4x4 intra prediction block. 
  *
- * This currently only has the 9 prediction modes new to MPEG-4,
- * DC prediction mode for 16x16 blocks will also be needed later
- * on.
- * 
+ * This is new to MPEG-2
+ *  
  * Note that all prediction modes can be calculated independently
  * of each other and therefore can be parallelized.
  * 
@@ -45,7 +43,7 @@
  * at each row.
  *
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
- * @file PredictionModes.str
+ * @file PredictionModes4x4Luma.str
  * @version 1.0
  */
 

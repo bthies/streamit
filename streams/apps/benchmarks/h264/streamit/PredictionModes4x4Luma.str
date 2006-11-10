@@ -75,7 +75,7 @@ int->int filter PredictionMode0() {
 		int[4] AtoD;
 	}
 	
-	work pop [0, 1] peek [0, 1] push 1 {
+	work pop [0, 1] peek [0, 1] push 4 {
 	  
 	if (counter >= 0 && counter <= 3) {
 		int luminVal = peek(0);
@@ -84,7 +84,16 @@ int->int filter PredictionMode0() {
 		pop();
 		counter++;
 	} else {
-		push[counter%4]; // continue pushing the rest
+		
+		if (counter >= 4 && counter <= 7) {
+			// pushes a row of luminance values	
+			// this is done 3 times.	
+			push(AtoD[0]);
+			push[1];
+			push[2];
+			push[3];
+		}
+		
 		if (counter <= 12) {
 			pop(); // skip values
 		}
@@ -99,7 +108,8 @@ int->int filter PredictionMode0() {
 	}
 }
 
-/* ALTERNATE IMPLEMENTATION for work function
+/* 
+ * ALTERNATE IMPLEMENTATION for work function
  * in this case, the counter only keeps track of the input stream
  */
 

@@ -69,19 +69,11 @@
  * This function calculates prediction mode 0 for a 16x16 luminance
  * block. Note that only the 'H'orizontal pixels is required.
  * 
- * @input A stream of 32 luminance data for pixels 'H' and 'V'.
- * @output A stream of 16 pixels predicted by mode 0
+ * @input A stream of 32 pixels 'H' and 'V' + 256 original pixels
+ * @output sum of absolute errors for mode 0
  */
 int->int filter PredictionMode0() {
-	init {
-		int counter = 0; 
-		// to keep track of where you are in the input & output 
-		// stream
-		// from 0 to 3, luminance value from A to D is stored
-		// otherwise, skip
-		int[16] H;
-		int[16] V;
-	}
+
 	
 	work pop 32 peek 32 push 256 {
 	  

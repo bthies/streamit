@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.25 2006-10-11 17:49:42 dimock Exp $
+ * $Id: JBlock.java,v 1.26 2006-11-15 18:35:21 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -70,7 +70,7 @@ public class JBlock extends JStatement {
      * @param   comments     other comments in the source code
      */
     public JBlock(TokenReference where,
-                  List body,
+                  List<JStatement> body,
                   JavaStyleComment[] comments)
     {
         super(where, comments);
@@ -78,7 +78,7 @@ public class JBlock extends JStatement {
         this.body = new LinkedList<JStatement>(body);
     }
 
-    public JBlock(List body) {
+    public JBlock(List<JStatement> body) {
         this(null, body, null);
     }
 

@@ -4,12 +4,12 @@ import java.util.*;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
+//import at.dms.compiler.JavadocComment;
 import java.lang.Math;
-import at.dms.compiler.TokenReference;
-import at.dms.util.IRPrinter;    // debugging
+//import at.dms.compiler.TokenReference;
+//import at.dms.util.IRPrinter;    // debugging
 /**
  * This class propagates constants and partially evaluates all
  * expressions as much as possible.
@@ -27,22 +27,23 @@ public class Propagator extends SLIRReplacingVisitor {
      * Map of known constants/Overloaded for copy prop (JLocalVariable -> JLiteral/JLocalVariableExpr/Array)
      * When storing information about an array JLiteral/JLocalVariablesExpr are stored in the Array being mapped to
      */
-    protected Hashtable constants;
+    protected Hashtable<JLocalVariable,Object> constants;
 
     /**
      * Map of constants changed (JLocalVariable -> Boolean.TRUE)
      */
-    private Hashtable<Object, Boolean> changed;
+    private Hashtable<JLocalVariable, Boolean> changed;
 
     /**
      * If anything was added
      */
     protected boolean added;
-    /**
+    /*
      * Values of fields if known (String -> JLiteral/JLocalVariableExpr/Array)
      * Only meant to work within filter
+     * All code for updating knownFields has been commented out...
      */
-    protected Hashtable knownFields;
+//    protected Hashtable<String,Object> knownFields;
 
     /**
      * Determines whether this instance of Propagator writes
@@ -64,43 +65,73 @@ public class Propagator extends SLIRReplacingVisitor {
     private LinkedList<JLocalVariable> mutated;
 
     /**
-     * Creates one of these given that <constants> maps
+     * Constructor, given that <i>constants</i> maps
      * JLocalVariables to JLiterals for the scope that we'll be
-     * visiting.
+     * visiting.  the Propagator will update code.
+     * @param constants
      */
-    public Propagator(Hashtable constants) {
+    public Propagator(Hashtable<JLocalVariable,Object> constants) {
         super();
         this.constants = constants;
-        changed=new Hashtable<Object, Boolean>();
+        changed=new Hashtable<JLocalVariable, Boolean>();
         added=false;
         write=true;
-        knownFields=new Hashtable();
+//        knownFields=new Hashtable<String,Object>();
         mutated=new LinkedList<JLocalVariable>();
     }
     
-    public Propagator(Hashtable constants,boolean write) {
+    /**
+     * Constructor, given that <i>constants</i> maps
+     * JLocalVariables to JLiterals for the scope that we'll be
+     * visiting.  the Propagator will optionally update code
+     * based on the value of <i>write</i>.
+     * @param constants
+     * @param write
+     */
+   public Propagator(Hashtable<JLocalVariable,Object> constants,boolean write) {
         super();
         this.constants = constants;
-        changed=new Hashtable<Object, Boolean>();
+        changed=new Hashtable<JLocalVariable, Boolean>();
         added=false;
         this.write=write;
-        knownFields=new Hashtable();
+//        knownFields=new Hashtable<String,Object>();
         mutated=new LinkedList<JLocalVariable>();
     }
     
-    public Propagator construct(Hashtable constants) {
+   /**
+    * Factory rather than direct call to constructor.
+    * @param constants
+    * @return a Propagator that will update code.
+    */
+    public Propagator construct(Hashtable<JLocalVariable,Object> constants) {
         return new Propagator(constants);
     }
 
-    public Propagator construct(Hashtable constants,boolean write) {
+    /**
+     * Factory rather than direct call to constructor.
+     * @param constants
+     * @param write
+     * @return a Propagator that will optionally update code based on value of <i>write</i>.
+     */
+    public Propagator construct(Hashtable<JLocalVariable,Object> constants,boolean write) {
         return new Propagator(constants,write);
     }
 
-    public Hashtable getConstants() {
+    /**
+     * Get map from JLocalVariable (JVariableDefinition, JFormalParameter etc) to constant.
+     * Code seems to save various constants: JLiteral, SIRPortal, java arrays of above,
+     * and may contain copy prop info as well as constant prop.
+     * @return
+     */
+    public Hashtable<JLocalVariable,Object> getConstants() {
         return constants;
     }
 
-    public Hashtable<Object, Boolean> getChanged() {
+    /**
+     * Get map from JLocalVariable (JVariableDefinition, JFormalParameter etc) to whether has changed
+     * @return
+     */
+    public Hashtable<JLocalVariable, Boolean> getChanged() {
         return changed;
     }
 
@@ -157,14 +188,14 @@ public class Propagator extends SLIRReplacingVisitor {
        
             cond.accept(newProp);
             body.accept(newProp);
-            Enumeration<Object> remove=newProp.changed.keys();
+            Enumeration<JLocalVariable> remove=newProp.changed.keys();
             //BUG!!!  visiting with newProp could replace references!
             while(remove.hasMoreElements()) {
-                JLocalVariable var=(JLocalVariable)remove.nextElement();
+                JLocalVariable var=remove.nextElement();
                 constants.remove(var);
                 changed.put(var,Boolean.TRUE);
             }
-            Hashtable saveConstants=constants;
+            Hashtable<JLocalVariable,Object> saveConstants=constants;
             constants=cloneTable(constants, freeVars);
             JExpression newExp = (JExpression)cond.accept(this);
             // reset if we found a constant
@@ -196,14 +227,14 @@ public class Propagator extends SLIRReplacingVisitor {
        
             cond.accept(newProp);
             body.accept(newProp);
-            Enumeration<Object> remove=newProp.changed.keys();
+            Enumeration<JLocalVariable> remove=newProp.changed.keys();
             //BUG!!!  visiting with newProp could replace references!
             while(remove.hasMoreElements()) {
                 JLocalVariable var=(JLocalVariable)remove.nextElement();
                 constants.remove(var);
                 changed.put(var,Boolean.TRUE);
             }
-            Hashtable saveConstants=constants;
+            Hashtable<JLocalVariable,Object> saveConstants=constants;
             constants=cloneTable(constants, freeVars);
             JExpression newExp = (JExpression)cond.accept(this);
             // reset if we found a constant
@@ -229,8 +260,8 @@ public class Propagator extends SLIRReplacingVisitor {
 
         // we want to use a treeset just for efficiency, but that
         // requires a comparator, so just compare based on hashcodes.
-        Comparator hashCodeComparator = new Comparator() {
-                public int compare(Object o1, Object o2) { 
+        Comparator<JLocalVariable> hashCodeComparator = new Comparator<JLocalVariable>() {
+                public int compare(JLocalVariable o1, JLocalVariable o2) { 
                     int h1 = o1.hashCode();
                     int h2 = o2.hashCode();
                     if (h1 < h2) {
@@ -289,13 +320,8 @@ public class Propagator extends SLIRReplacingVisitor {
                                           JExpression expr) {
         // visit static array dimensions
         if (type.isArrayType()) {
+            propagateIntoArrayType((CArrayType)type);
             JExpression[] dims = ((CArrayType)type).getDims();
-            for (int i=0; i<dims.length; i++) {
-                JExpression newExp = (JExpression)dims[i].accept(this);
-                if (newExp !=null && newExp!=dims[i]) {
-                    dims[i] = newExp;
-                }
-            }
 
             // ripped out of original propagator, looks like it's
             // initializing array entries to zero
@@ -369,7 +395,20 @@ public class Propagator extends SLIRReplacingVisitor {
         return self;
     }
     
-
+    /**
+     * update ay constant dimensions in array type.
+     * @param type
+     */
+    private void propagateIntoArrayType(CArrayType type) {
+        JExpression[] dims = type.getDims();
+        for (int i=0; i<dims.length; i++) {
+            JExpression newExp = (JExpression)dims[i].accept(this);
+            if (newExp !=null && newExp!=dims[i]) {
+                dims[i] = newExp;
+            }
+        }
+    }
+    
     /*** create structures for array initializers in the hash table, 
          piggy back on Jasp's code for array propagation
          So, create an object array that will represent the array and populate it
@@ -472,14 +511,14 @@ public class Propagator extends SLIRReplacingVisitor {
                 body[i].accept(prop);
             }
             if(body.length>0) {
-                Hashtable newConstants=propagators[0].constants; //Shadow the main constants
+                Hashtable<JLocalVariable,Object> newConstants=propagators[0].constants; //Shadow the main constants
                 //Remove if value is not same in all switch bodies
                 for(int i=1;i<propagators.length;i++) {
                     Propagator prop=propagators[i];
-                    LinkedList<Object> remove=new LinkedList<Object>();
-                    Enumeration<Object> eNum=newConstants.keys();
+                    LinkedList<JLocalVariable> remove=new LinkedList<JLocalVariable>();
+                    Enumeration<JLocalVariable> eNum=newConstants.keys();
                     while(eNum.hasMoreElements()) {
-                        Object key=eNum.nextElement();
+                        JLocalVariable key=eNum.nextElement();
                         if(!(prop.constants.get(key).equals(newConstants.get(key))))
                             remove.add(key);
                         if((prop.constants.get(key) instanceof Object[])&&(newConstants.get(key) instanceof Object[])) {
@@ -499,9 +538,9 @@ public class Propagator extends SLIRReplacingVisitor {
                 }
                 // mark anything that's in <newConstants> but not in
                 // <constants> as <changed>
-                Hashtable origConstants = cloneTable(constants, getFreeVars(self));
-                for (Enumeration<Object> e=origConstants.keys(); e.hasMoreElements(); ) {
-                    Object key=e.nextElement();
+                Hashtable<JLocalVariable,Object> origConstants = cloneTable(constants, getFreeVars(self));
+                for (Enumeration<JLocalVariable> e=origConstants.keys(); e.hasMoreElements(); ) {
+                    JLocalVariable key=e.nextElement();
                     if (!newConstants.containsKey(key)) {
                         changed.put(key, Boolean.TRUE);
                         constants.remove(key);
@@ -612,9 +651,9 @@ public class Propagator extends SLIRReplacingVisitor {
             //return newExp;
             // reconstruct constants as those that are the same in
             // both <then> and <else>
-            Hashtable newConstants = new Hashtable();
-            for (Enumeration<Object> e = thenProp.constants.keys(); e.hasMoreElements(); ) {
-                Object thenKey = e.nextElement();
+            Hashtable<JLocalVariable,Object> newConstants = new Hashtable<JLocalVariable,Object>();
+            for (Enumeration<JLocalVariable> e = thenProp.constants.keys(); e.hasMoreElements(); ) {
+                JLocalVariable thenKey = e.nextElement();
                 Object thenVal = thenProp.constants.get(thenKey);
                 Object elseVal = elseProp.constants.get(thenKey);
                 if((thenVal instanceof Object[])&&(elseVal instanceof Object[])) {
@@ -633,9 +672,9 @@ public class Propagator extends SLIRReplacingVisitor {
                 }
             }
             // integrate the update to overall <constants>
-            Hashtable origConstants = cloneTable(constants, getFreeVars(self));
-            for (Enumeration<Object> e = origConstants.keys(); e.hasMoreElements(); ) {
-                Object key = e.nextElement();
+            Hashtable<JLocalVariable,Object> origConstants = cloneTable(constants, getFreeVars(self));
+            for (Enumeration<JLocalVariable> e = origConstants.keys(); e.hasMoreElements(); ) {
+                JLocalVariable key = e.nextElement();
                 if (newConstants.containsKey(key)) {
                     changed.put(key, Boolean.TRUE);
                     constants.put(key, newConstants.get(key));
@@ -649,11 +688,11 @@ public class Propagator extends SLIRReplacingVisitor {
 
     // returns a clone of <table> that contains only the keys in
     //<varsToClone>.  Handles deep-cloning of arrays correctly.
-    private Hashtable cloneTable(Hashtable table, Set<JLocalVariable> varsToClone) {
-        Hashtable out=new Hashtable();
+    private Hashtable<JLocalVariable,Object> cloneTable(Hashtable<JLocalVariable,Object> table, Set<JLocalVariable> varsToClone) {
+        Hashtable<JLocalVariable,Object> out=new Hashtable<JLocalVariable,Object>();
         Iterator<JLocalVariable> keys=varsToClone.iterator();
         while(keys.hasNext()) {
-            Object key=keys.next();
+            JLocalVariable key=keys.next();
             if (table.containsKey(key)) {
                 Object val=table.get(key);
                 if(val instanceof Object[]) {
@@ -669,23 +708,23 @@ public class Propagator extends SLIRReplacingVisitor {
         return out;
     }
 
-    // returns a clone of <table>.  Handles deep-cloning of arrays
-    // correctly.    
-    private Hashtable<Object, Object[]> cloneTable(Hashtable table) {
-        Hashtable<Object, Object[]> out=new Hashtable<Object, Object[]>(table);
-        Enumeration keys=table.keys();
-        while(keys.hasMoreElements()) {
-            Object key=keys.nextElement();
-            Object val=table.get(key);
-            if(val instanceof Object[]) {
-                Object[] array=(Object[])val;
-                Object[] newArray=new Object[array.length];
-                System.arraycopy(array,0,newArray,0,array.length);
-                out.put(key,newArray);
-            }
-        }
-        return out;
-    }
+//    // returns a clone of <table>.  Handles deep-cloning of arrays
+//    // correctly.    
+//    private Hashtable<JLocalVariable, Object[]> cloneTable(Hashtable<JLocalVariable,Object[]> table) {
+//        Hashtable<JLocalVariable, Object[]> out=new Hashtable<JLocalVariable, Object[]>(table);
+//        Enumeration<JLocalVariable> keys=table.keys();
+//        while(keys.hasMoreElements()) {
+//            JLocalVariable key=keys.nextElement();
+//            Object val=table.get(key);
+//            if(val instanceof Object[]) {
+//                Object[] array=(Object[])val;
+//                Object[] newArray=new Object[array.length];
+//                System.arraycopy(array,0,newArray,0,array.length);
+//                out.put(key,newArray);
+//            }
+//        }
+//        return out;
+//    }
 
     /**
      * Visits a for statement
@@ -714,13 +753,13 @@ public class Propagator extends SLIRReplacingVisitor {
             incr.accept(newProp);
             cond.accept(newProp);
             body.accept(newProp);
-            Enumeration<Object> remove=newProp.changed.keys();
+            Enumeration<JLocalVariable> remove=newProp.changed.keys();
             while(remove.hasMoreElements()) {
                 JLocalVariable var=(JLocalVariable)remove.nextElement();
                 constants.remove(var);
                 changed.put(var,Boolean.TRUE);
             }
-            Hashtable saveConstants=constants;
+            Hashtable<JLocalVariable,Object> saveConstants=constants;
             constants=cloneTable(constants, getFreeVars(self));
 
             // recurse into cond
@@ -900,7 +939,7 @@ public class Propagator extends SLIRReplacingVisitor {
         }
     }
 
-    /*public Object visitFieldExpression(JFieldAccessExpression self,
+    public Object visitFieldExpression(JFieldAccessExpression self,
       JExpression left,
       String ident)
       {
@@ -908,12 +947,15 @@ public class Propagator extends SLIRReplacingVisitor {
       if (newExp!=null && newExp!=left) {
       self.setPrefix(newExp);
       }
-      Object val=knownFields.get(ident);
-      if(val!=null)
-      return val;
-      else
+      if (self.getType() != null && self.getType().isArrayType()) {
+          propagateIntoArrayType((CArrayType)(self.getType()));
+      }
+//      Object val=knownFields.get(ident);
+//      if(val!=null)
+//      return val;
+//      else
       return self;
-      }*/
+      }
 
     /**
      * Visits an assignment expression
@@ -922,6 +964,10 @@ public class Propagator extends SLIRReplacingVisitor {
                                             JExpression left,
                                             JExpression right)
     {
+//        if (left instanceof JFieldAccessExpression && ((JFieldAccessExpression)left).getIdent().equals("gains")) {
+//            System.err.println("Propagate gains = " + right);
+//        }
+        
         JExpression newLeft = (JExpression)left.accept(this);
         JExpression newRight = (JExpression)right.accept(this);
         if(write&&(newRight!=null)) {
@@ -1282,6 +1328,9 @@ public class Propagator extends SLIRReplacingVisitor {
         if (self.isConstant()) {
             return self.getVariable().getValue();
         } else {
+            if (self.getType() != null && self.getType().isArrayType()) {
+                propagateIntoArrayType((CArrayType)(self.getType()));
+            }
             return self;
         }
     }
@@ -1592,7 +1641,7 @@ public class Propagator extends SLIRReplacingVisitor {
     //Breaks up complex assignments
     //Useful for Copy Prop
     public Object visitBlockStatement(JBlock self,JavaStyleComment[] comments) {
-        Hashtable copyMap=new Hashtable();
+//        Hashtable copyMap=new Hashtable();
         if(loopDepth<0)
             System.err.println("Neg Loop Depth!");
         if(loopDepth==0){
@@ -1703,9 +1752,9 @@ public class Propagator extends SLIRReplacingVisitor {
         return TEMP_VARIABLE_BASE+propNum++;
     }
 
-    private boolean propVarLocal(JLocalVariable var) {
-        return var.getIdent().startsWith(TEMP_VARIABLE_BASE);
-    }
+//    private boolean propVarLocal(JLocalVariable var) {
+//        return var.getIdent().startsWith(TEMP_VARIABLE_BASE);
+//    }
 
     private boolean propVar(Object var) {
         if(!(var instanceof JExpression))

@@ -20,6 +20,7 @@ import streamit.frontend.nodes.*;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.LinkedList;
 
 import java.util.ArrayList;
 
@@ -32,7 +33,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.17 2006-08-23 23:01:13 thies Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.18 2006-11-15 19:32:46 dimock Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -62,6 +63,7 @@ public class MoveStreamParameters extends InitMunger
                 Expression lhs = new ExprVar(context, param.getName());
                 Expression rhs = new ExprVar(context, pName);
                 Type type = param.getType();
+                type = fixParamNamesInType(type);
                 param = new Parameter(type, pName);
                 while (type instanceof TypeArray)
                     type = ((TypeArray)type).getBase();
@@ -85,6 +87,44 @@ public class MoveStreamParameters extends InitMunger
                             init.getPushRate());
     }
 
+    /**
+     * Parameters may appear in array dimensions as ExprVars.
+     * These should be renamed with the same prefix used to
+     * rename the parameter in the parameter list.
+     * @param type
+     * @return
+     */
+    private Type fixParamNamesInType(Type type) {
+        if (type instanceof TypeArray) {
+            Type base = ((TypeArray)type).getBase();
+            base = fixParamNamesInType(base);
+            Expression length = ((TypeArray)type).getLength();
+            if (length instanceof ExprVar) {
+                length = new ExprVar(length.getContext(),
+                     "_param_" + ((ExprVar)length).getName());
+            }
+            return new TypeArray(base,length);
+        }
+        if (type instanceof TypeStruct) {
+            TypeStruct stype = (TypeStruct)type;
+            FEContext context = stype.getContext();
+            String name = stype.getName();
+            int numFields = stype.getNumFields();
+            List<String> fields = new LinkedList<String>();
+            List<Type> ftypes = new LinkedList<Type>();
+            for (int i = 0; i < numFields; i++) {
+                String field = stype.getField(i);
+                fields.add(field);
+                ftypes.add(fixParamNamesInType(stype.getType(field)));
+            }
+            // equality on TypeStruct is too weak to see if structure
+            // changed, so always return new type (need to also return
+            // new type for TypeArray in case it contained a TypeStruct.
+            return new TypeStruct(context,name,fields,ftypes);
+        }
+        return type;
+    }
+    
     // Return a function just like init, but with params as its
     // parameter list, doing no special work.
     private Function addInitParamsOnly(Function init, List params)
@@ -147,10 +187,14 @@ public class MoveStreamParameters extends InitMunger
                              iter.hasNext(); )
                             {
                                 Parameter param = (Parameter)iter.next();
+                                // would be nice to give the "right" type to declared arrays from
+                                // parameters, but this causes the compiler to take the dimension
+                                // as a "name" rather than as a (not-yet-initialized) variable.
+                                // This results in compiler crashes...
                                 FieldDecl field = new FieldDecl(spec.getContext(),
-                                                                param.getType(),
-                                                                param.getName(),
-                                                                null);
+                                        /*fixParamNamesInType(param.getType())*/param.getType(),
+                                        param.getName(),
+                                        null);
                                 newVars.add(field);
                             }
             

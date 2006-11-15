@@ -28,7 +28,12 @@ public class Vectorizable {
      * Set to true to print out reasons to not vectorize a filter, and variables dependent on inputs
      * for filters that fail the data dependency check.
      */
-    static boolean debugging = true;
+    static boolean debugging = false;
+    
+    /**
+     * reason for disqualifying a filter
+     */
+     static final String[] reason = {""};
     
     /**
      * reason for disqualifying a filter

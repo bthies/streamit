@@ -6,6 +6,7 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.util.Utils;
 
 /**
  * Transform methods for a filter to use vector types as appropriate.
@@ -128,7 +129,7 @@ public class Vectorize {
             JFieldAccessExpression pokeBufOffset) {
 
             int vecSize = KjcOptions.vectorize / 4;
-            int bufsize = (vecSize - 1) * filter.getPushInt();
+            int bufsize = (vecSize - 1) * filter.getPushInt();  
         
             // add buffer and and offset declarations.
             filter.addField(new JFieldDeclaration(pokeBufDefn));
@@ -150,7 +151,7 @@ public class Vectorize {
                         at.dms.kjc.Constants.OPE_POSTINC,
                         pokeBufOffset));
             JBlock moveBump = new JBlock(new JStatement[]{moveOne,bump});
-            JStatement moveLoop = at.dms.util.Utils.makeForLoop(moveBump, bufsize);
+            JStatement moveLoop = Utils.makeForLoop(moveBump, bufsize);
             List<JStatement> initAndLoop = 
                 Arrays.asList(new JStatement[]{initOffset,moveLoop});
             
@@ -393,7 +394,7 @@ public class Vectorize {
                                         new JAssignmentExpression(
                                                 CVectorType.asArrayRef(lhs,i),
                                                 new SIRPeekExpression(
-                                                        new JIntLiteral(i * inputStride),
+                                                        new JIntLiteral(i * inputStride - 1),
                                                         tapeType))));
                     }
                     replaceStatement = true; // throw out statement built with this return value
@@ -435,6 +436,11 @@ public class Vectorize {
                         // vector type does not reach push expression.
                         return self;
                     }
+                    // process argument but do not put on ".v" on vectors
+                    suppressSelector = true;
+                    arg.accept(this);
+                    suppressSelector = false;
+
                     // Assuming that SimplifyPushPopPeek() has been run as required: 
                     // Here we are pushing either a vector value or a constant.
                     // use maybeAsArrayRef to put the correct selector on:
@@ -502,7 +508,7 @@ public class Vectorize {
                                             pokeBufRef,
                                             new JAddExpression(
                                                 pokeBufOffset,
-                                                new JIntLiteral((i - 1) * (outputStride - 1)))),
+                                                new JIntLiteral((i - 1) * outputStride))),
                                             maybeAsArrayRef(arg,i)
                                     )));
                         }
@@ -523,9 +529,16 @@ public class Vectorize {
                 private JExpression maybeAsArrayRef(JExpression arg, int offset) {
                     if (arg instanceof JLiteral) {
                         return arg;
-                    } else {
+                    }
+                    CType type = arg.getType();
+                    if (type == null || (type instanceof CVectorType) /*|| 
+                        (type instanceof CArrayType 
+                         && ((CArrayType)type).getBaseType() instanceof CVectorType)*/) {
                         return CVectorType.asArrayRef(arg,offset);
                     }
+                    System.err.println("push with type = " + type.toString() + " : " + arg.toString());
+                    return arg;
+                    
                 }
                 
                 @Override
@@ -585,7 +598,79 @@ public class Vectorize {
                         self.setRight(newRight);
                         return self;
                     } else if (oldType instanceof CArrayType) {
-                        throw new AssertionError("Unimplemented: assign array of vectors from array of scalars");
+                        // odd case:
+                        // __v(basetype) array1[N1]...[Nk];
+                        // basetype array2[N1]...[Nk];
+                        // ...
+                        // array1 = array2;
+                        //
+                        // ==>
+                        //
+                        // ...
+                        // for (I1 = 0; I1 < N1; I1++) {
+                        //   ...
+                        //        for(Ik = 0; Ik <Nk; Ik++) {
+                        //           basetype tmp0
+                        //           __v(basetype) tmp1;
+                        //           tmp0 = array2[I1]...[Ik]
+                        //           for (i = 0; i < vectorlength; i++) {
+                        //             tmp1.a[i] = tmp0;
+                        //           }
+                        //           array1[I1]...[Ik] = tmp1;
+                        //        }
+                        //  }...}
+                        // (comes up in code for copying parameters in FMRadio (asplos06/fm)
+
+                        //CArrayType arrayType = (CArrayType)oldType;
+                        //Had problems with constant prop not propagating dimension into array...
+                        //situation came up with arrays from parameters.  Have now hacked frontend
+                        //so have the dimension of the source array (right).
+                        CArrayType arrayType = ((CArrayType)right.getType());
+                        JExpression[] dims = arrayType.getDims();
+                        JVariableDefinition[] dimVars = new JVariableDefinition[dims.length];
+                        JLocalVariableExpression[] dimVarRefs = new JLocalVariableExpression[dims.length];
+                        for (int i = 0; i < dims.length; i++) {
+                            JVariableDefinition d = new JVariableDefinition(/* where */ null,
+                                    /* modifiers */ 0,
+                                    /* type */ CStdType.Integer,
+                                    /* ident */ LoweringConstants.getUniqueVarName(),
+                                    /* initializer */ new JIntLiteral(0));
+                            dimVars[i] = d;
+                            dimVarRefs[i] = new JLocalVariableExpression(d);
+                        }
+                        List<JStatement>loopBodyStmts = new LinkedList<JStatement>();
+                        JVariableDefinition tmp0d = new JVariableDefinition(/* where */ null,
+                                /* modifiers */ 0,
+                                /* type */ arrayType.getBaseType(),
+                                /* ident */  ThreeAddressCode.nextTemp(),
+                                /* initializer */ null);
+                        JLocalVariableExpression tmp0 = new JLocalVariableExpression(tmp0d);
+                        JVariableDefinition tmp1d = new JVariableDefinition(/* where */ null,
+                                /* modifiers */ 0,
+                                /* type */ CVectorType.makeVectortype(arrayType.getBaseType()),
+                                /* ident */  ThreeAddressCode.nextTemp(),
+                                /* initializer */ null);
+                        JLocalVariableExpression tmp1 = new JLocalVariableExpression(tmp1d);
+                        loopBodyStmts.add(new JVariableDeclarationStatement(tmp0d));
+                        loopBodyStmts.add(new JVariableDeclarationStatement(tmp1d));
+                        loopBodyStmts.add( 
+                                new JExpressionStatement(new JAssignmentExpression(tmp0,
+                                        makeArrayReference(right,dimVarRefs))));
+                        for (int i = 0; i < KjcOptions.vectorize / 4; i++) {
+                            loopBodyStmts.add( 
+                                new JExpressionStatement(new JAssignmentExpression(CVectorType.asArrayRef(tmp1,i),tmp0)));
+                        }
+                        loopBodyStmts.add (
+                                new JExpressionStatement(new JAssignmentExpression(
+                                        makeArrayReference(newLeft,dimVarRefs), tmp1)));
+                        JStatement loopBody = new JBlock(loopBodyStmts);
+                       
+                        for (int i = dims.length-1; i>=0; i--) {
+                            loopBody = Utils.makeForLoop(loopBody, dims[i], dimVars[i]);
+                        }
+                        this.addPendingStatement(loopBody);
+                        replaceStatement = true;
+                        return self;  // must output en expression.
                     } else {
                         JVariableDefinition defn = new JVariableDefinition(
                                 oldType, ThreeAddressCode.nextTemp());
@@ -620,11 +705,23 @@ public class Vectorize {
                 return self;
             }
 
+                private JExpression makeArrayReference(JExpression array, JExpression[] offsets) {
+                   JExpression expr = array;
+                   for (int i = 0; i < offsets.length; i++) {
+                       expr = new JArrayAccessExpression(expr,offsets[i]);
+                   }
+                   // should set type at each level of access expression
+                   return expr;
+                }
+                
                 @Override 
                 public Object visitExpressionStatement(JExpressionStatement self, JExpression expr) {
-                    // Some expressions need to return an expression, but have the statement
-                    // they are in removed.  Such expressions are all expected to be inside
-                    // a JExpressionStatement
+                    // Some expressions need to return a statement or block of statments, but need
+                    // to discard the statment in which they occurred in the input.  We expect any
+                    // such expressions to occur inside a JExpressionStatment.  visitors to such
+                    // expressions should use addPendingStatement to add the new statments, and
+                    // should set replaceStatement=true.
+                    //
                     replaceStatement = false;
                     Object retval = super.visitExpressionStatement(self, expr);
                     if (replaceStatement) {
@@ -675,22 +772,44 @@ public class Vectorize {
                 }
                 @Override
                 public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident) {
-                    if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
+                    if (vectorIds.containsKey(getIdent(self))) {
                         if (! (self.getType() instanceof CVectorType)) {
                             assert self.getVariable() instanceof JVariableDefinition;
                             JVariableDefinition newDefn = (JVariableDefinition)self.getVariable().accept(this);
                             self = new JLocalVariableExpression(self.getTokenReference(),newDefn);
                         }
-                        return CVectorType.asVectorRef(self);
-                    } else {
-                        return self;
+			if (! suppressSelector) {
+			    return CVectorType.asVectorRef(self);
+			}
                     }
+		    return self;
                 }
                 @Override
                 public Object visitArrayAccessExpression(JArrayAccessExpression self,
                         JExpression prefix,
                         JExpression accessor) {
                     prefix.accept(this);
+                    // array accessors don't always have correct type.
+                    CType prefixType = prefix.getType();
+                    assert prefixType instanceof CArrayType;
+                    //System.err.print("Array accessor type for " + self + " was " + self.getType());
+                    CArrayType prefixaType = (CArrayType)prefixType;
+                    int numDims = prefixaType.getArrayBound();
+                    if (numDims == 1) {
+                        self.setType(prefixaType.getBaseType());
+                    } else {
+                        JExpression[] dims = prefixaType.getDims();
+                        JExpression[] newDims = null;
+                        if (dims != null) {
+                            newDims = new JExpression[dims.length - 1];
+                            for (int i = 1; i < dims.length; i++)
+                                newDims[i-1] = dims[i];
+                        }
+                        self.setType(new CArrayType(prefixaType.getBaseType(),
+                                numDims - 1, newDims));
+                    }
+                    //System.err.println(" ==> " + self.getType());
+
                     // note if recurr into accessor, need to set constantsToVector temporarily to false
                     if (vectorIds.containsKey(getIdent(self)) && ! suppressSelector) {
                         // XXX does not currently work for array slices

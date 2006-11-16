@@ -34,13 +34,8 @@ public class Vectorizable {
      * reason for disqualifying a filter
      */
      static final String[] reason = {""};
-    
-    /**
-     * reason for disqualifying a filter
-     */
-     static final String[] reason = {""};
-    
-    /**
+
+     /**
      * Return set of naively vectorizable filters in stream.
      * See {@link #vectorizable(SIRFilter) vectorizable} for what makes a filter naively vectorizable.
      * @param str  Stream to check

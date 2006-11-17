@@ -47,7 +47,69 @@
  * @version 1.0
  */
 
+/**
+ * This constructs the splitjoin for all the different prediction
+ * modes, and gather them up so that the SAE can be compared.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the A-M + 16 pixels for the prediction mode filters.
+ *
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output stream of all "sum of absolute errors" (9 values)
+ */
+int->int splitjoin PredictionModes4x4 {
+	split duplicate;
+	add PredictionMode0Pipeline;
+	add PredictionMode1Pipeline;
+	add PredictionMode2Pipeline;
+	add PredictionMode3Pipeline;
+	add PredictionMode4Pipeline;
+	add PredictionMode5Pipeline;
+	add PredictionMode6Pipeline;
+	add PredictionMode7Pipeline;
+	add PredictionMode8Pipeline;
+	join roundrobin;
+}
 
+//////////////////////////////////////////////
+//PREDICTION MODE 0                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 0. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 0
+ */
+int->int pipeline PredictionMode0Pipeline {
+	add PredictionMode0Prep();
+	add PredictionMode0();
+}
+
+/**
+ * This filter prepares the data for prediction mode 0. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D + 16 pixels from the original block for mode 0
+ */
+int->int filter PredictionMode0Prep() {
+	work pop 29 push 20 {
+		// A,B,C,D
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
 
 /**
  * This function calculates prediction mode 0 for a 4x4 luminance
@@ -79,6 +141,45 @@ int->int filter PredictionMode0() {
 	}
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 1                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 1. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 1
+ */
+int->int pipeline PredictionMode1Pipeline {
+	add PredictionMode1Prep();
+	add PredictionMode1();
+}
+
+/**
+ * This filter prepares the data for prediction mode 1. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output I,J,K,L + 16 pixels from the original block for mode 1
+ */
+int->int filter PredictionMode1Prep() {
+	work pop 29 push 20 {
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
 
 /**
  * This function calculates prediction mode 1 for a 4x4 luminance
@@ -116,6 +217,47 @@ int->int filter PredictionMode1() {
 	
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 2                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 2. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 2
+ */
+int->int pipeline PredictionMode2Pipeline {
+	add PredictionMode2Prep();
+	add PredictionMode2();
+}
+
+/**
+ * This filter prepares the data for prediction mode 2. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output I,J,K,L + 16 pixels from the original block for mode 2
+ */
+int->int filter PredictionMode2Prep() {
+	work pop 29 push 20 {
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
 /**
  * This function calculates prediction mode 2 for a 4x4 luminance
  * block. This is a DC interpolation where the entire output stream
@@ -123,7 +265,7 @@ int->int filter PredictionMode1() {
  * In other words: result luminance value = sum{A,B,C,D,I,J,K,L}/8 
  * Consequently, A known values are required to generate the 16
  * predicted pixels.
- * @input I through L + 16 original pixels 
+ * @input I,J,K,L + 16 original pixels 
  * @output sum of aboslute errors for mode 2
  */
 int->int filter PredictionMode2() {
@@ -150,6 +292,45 @@ int->int filter PredictionMode2() {
 	}   
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 3                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 3. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 3
+ */
+int->int pipeline PredictionMode3Pipeline {
+	add PredictionMode3Prep();
+	add PredictionMode3();
+}
+
+/**
+ * This filter prepares the data for prediction mode 3. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,E,F,G,H + 16 pixels from the original block for mode 3
+ */
+int->int filter PredictionMode3Prep() {
+	work pop 29 push 24 {
+		// A,B,C,D,E,F,G,H
+		for (int i=0; i<=7; i++) {
+			push(peek(i));
+		}
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
 
 
 
@@ -196,6 +377,53 @@ int->int filter PredictionMode3() {
 			pop();
 		}
 	}   
+}
+
+//////////////////////////////////////////////
+//PREDICTION MODE 4                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 4. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 4
+ */
+int->int pipeline PredictionMode4Pipeline {
+	add PredictionMode4Prep();
+	add PredictionMode4();
+}
+
+/**
+ * This filter prepares the data for prediction mode 4. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,I,J,K,L,M + 16 pixels from the original block for mode 4
+ */
+int->int filter PredictionMode4Prep() {
+	work pop 29 push 25 {
+		// A,B,C,D,I,J,K,L,M 
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
 }
 
 
@@ -245,6 +473,52 @@ int->int filter PredictionMode4() {
 	}   
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 5                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 5. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 5
+ */
+int->int pipeline PredictionMode5Pipeline {
+	add PredictionMode5Prep();
+	add PredictionMode5();
+}
+
+/**
+ * This filter prepares the data for prediction mode 5. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,I,J,K,M + 16 pixels from the original block for mode 5
+ */
+int->int filter PredictionMode5Prep() {
+	work pop 29 push 24 {
+		// A,B,C,D,I,J,K,M
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
 /**
  * This function calculates prediction mode 5 for a 4x4 luminance
  * block. This is also called: vertical-right.
@@ -290,6 +564,51 @@ int->int filter PredictionMode5() {
 	} 
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 6                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 6. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 6
+ */
+int->int pipeline PredictionMode6Pipeline {
+	add PredictionMode6Prep();
+	add PredictionMode6();
+}
+
+/**
+ * This filter prepares the data for prediction mode 6. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,I,J,K,L,M + 16 pixels from the original block for mode 6
+ */
+int->int filter PredictionMode6Prep() {
+	work pop 29 push 24 {
+		// A,B,C,I,J,K,L,M
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(8));
+		push(peek(9)); 
+		push(peek(10));
+		push(peek(11));
+		push(peek(12));
+		
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
 
 /**
  * This function calculates prediction mode 6 for a 4x4 luminance
@@ -337,6 +656,50 @@ int->int filter PredictionMode6() {
 	} 
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 7                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 7. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 7
+ */
+int->int pipeline PredictionMode7Pipeline {
+	add PredictionMode7Prep();
+	add PredictionMode7();
+}
+
+/**
+ * This filter prepares the data for prediction mode 7. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output A,B,C,D,E,F,G + 16 pixels from the original block for mode 7
+ */
+int->int filter PredictionMode7Prep() {
+	work pop 29 push 23 {
+		// A,B,C,D,E,F,G
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
+		push(peek(4)); 
+		push(peek(5));
+		push(peek(6));
+	
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
 
 /**
  * This function calculates prediction mode 7 for a 4x4 luminance
@@ -346,9 +709,9 @@ int->int filter PredictionMode6() {
  */
 int->int filter PredictionMode7() {
 	
-	// A,B,C,I,J,K,L,M		peek(0-6);
+	// A,B,C,D,E,F,G		peek(0-6);
 	// originalBlk 			peek(7,22);
-	work pop 16 peek 12 push 16 {
+	work pop 23 push 1 {
 		
 		int sae = 0;
 		int[16] predictionBlock;		
@@ -381,6 +744,49 @@ int->int filter PredictionMode7() {
 		}
 	} 
 }
+
+//////////////////////////////////////////////
+//PREDICTION MODE 8                         //
+//////////////////////////////////////////////
+
+
+/**
+ * This constructs the pipeline for prediction mode 8. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output sum of absolute errors for mode 8
+ */
+int->int pipeline PredictionMode8Pipeline {
+	add PredictionMode8Prep();
+	add PredictionMode8();
+}
+
+/**
+ * This filter prepares the data for prediction mode 8. 
+ * 
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output I,J,K,L + 16 pixels from the original block for mode 8
+ */
+int->int filter PredictionMode7Prep() {
+	work pop 29 push 20 {
+		// I,J,K,L
+		push(peek(8)); 
+		push(peek(9));
+		push(peek(10));
+		push(peek(11));
+	
+		// original 16 pixels (index: 13-28)
+		for (int i=13; i<=28; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=28; i++) {
+			pop();
+		}
+	}
+}
+
 
 /**
  * This function calculates prediction mode 8 for a 4x4 luminance

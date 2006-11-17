@@ -63,7 +63,67 @@
  * @version 1.0
  */
 
+/**
+ * This constructs the pipeline for all the four 16x16 prediction
+ * modes, find the mininum SAE and output the corresponding predidtion
+ * mode.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the 'H' + 'V' + 256 pixels for the prediction mode filters.
+ *
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 29 pixels)
+ * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ */
+int-int pipeline BestPredictionMode4x4 {
+	add CalculatePredictionModes4x4;
+	add FindBestPredictionMode();
+}
 
+/**
+ * This constructs the splitjoin for all the different prediction
+ * modes, and gather them up so that the SAE can be compared.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the A-M + 16 pixels for the prediction mode filters.
+ *
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output stream of all "sum of absolute errors" (9 values)
+ */
+int->int splitjoin CalculatePredictionModes4x4 {
+	split duplicate;
+	add PredictionMode0Pipeline;
+	add PredictionMode1Pipeline;
+	add PredictionMode2Pipeline;
+	add PredictionMode3Pipeline;
+	add PredictionMode4Pipeline;
+	add PredictionMode5Pipeline;
+	add PredictionMode6Pipeline;
+	add PredictionMode7Pipeline;
+	add PredictionMode8Pipeline;
+	join roundrobin;
+}
+
+
+/**
+ * This filter gathers all the sum of absolute errors from 
+ * all the prediction modes, and find the mininum - then output
+ * the prediction mode. 
+ * 
+ * @input stream of all "sum of absolute errors" (mode0 to mode8 in order)
+ * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ */
+int->int splitjoin FindBestPredictionMode() {
+	work pop 9 push 1 {
+		int currentMinSAE = peek(0);
+		int minPredictionMode = 0;
+		for (int i=1; i<=8; i++) {
+			if (peek(i) < peek(0)) {
+				minPredictionMode = i;
+			}
+		}
+		push minPredictionMode;
+	}
+}
 
 /**
  * This function calculates prediction mode 0 for a 16x16 luminance
@@ -74,7 +134,6 @@
  */
 int->int filter PredictionMode0() {
 
-	
 	work pop 32 peek 32 push 256 {
 	  
 

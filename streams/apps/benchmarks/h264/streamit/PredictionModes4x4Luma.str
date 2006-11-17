@@ -48,6 +48,22 @@
  */
 
 /**
+ * This constructs the pipeline for all the different prediction
+ * modes, find the mininum SAE and output the corresponding predidtion
+ * mode.
+ * 
+ * Note that the children of this splitjoin are pipelines that would
+ * prepare the A-M + 16 pixels for the prediction mode filters.
+ *
+ * @input A-M + 16 pixels from the original block (total: 29 pixels)
+ * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ */
+int-int pipeline BestPredictionMode4x4 {
+	add CalculatePredictionModes4x4;
+	add FindBestPredictionMode();
+}
+
+/**
  * This constructs the splitjoin for all the different prediction
  * modes, and gather them up so that the SAE can be compared.
  * 
@@ -57,7 +73,7 @@
  * @input A-M + 16 pixels from the original block (total: 29 pixels)
  * @output stream of all "sum of absolute errors" (9 values)
  */
-int->int splitjoin PredictionModes4x4 {
+int->int splitjoin CalculatePredictionModes4x4 {
 	split duplicate;
 	add PredictionMode0Pipeline;
 	add PredictionMode1Pipeline;
@@ -69,6 +85,28 @@ int->int splitjoin PredictionModes4x4 {
 	add PredictionMode7Pipeline;
 	add PredictionMode8Pipeline;
 	join roundrobin;
+}
+
+
+/**
+ * This filter gathers all the sum of absolute errors from 
+ * all the prediction modes, and find the mininum - then output
+ * the prediction mode. 
+ * 
+ * @input stream of all "sum of absolute errors" (mode0 to mode8 in order)
+ * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ */
+int->int splitjoin FindBestPredictionMode() {
+	work pop 9 push 1 {
+		int currentMinSAE = peek(0);
+		int minPredictionMode = 0;
+		for (int i=1; i<=8; i++) {
+			if (peek(i) < peek(0)) {
+				minPredictionMode = i;
+			}
+		}
+		push minPredictionMode;
+	}
 }
 
 //////////////////////////////////////////////

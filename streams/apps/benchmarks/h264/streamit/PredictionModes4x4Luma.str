@@ -1,7 +1,7 @@
 /*
  * [Shirley]
  * This file contains the various functions for generating the 9
- * prediction modes for a 4x4 intra prediction block. 
+ * prediction modes for a 4x4 luma intra prediction block. 
  *
  * This is new to MPEG-2
  *  
@@ -32,15 +32,22 @@
  * L 12 13 14 15  x  x  x  x
  * 
  * The number represents the indices of the original block.
- *  * 
+ * 
  * The cost function is the residual between the original block
  * and the predicted block. The encoder will choose the prediction
  * mode that minimizes the residual.
  * 
- * Be aware that the more complex prediction algorithms requires
- * the use of a matrix to store all calcuated values, then the
- * matrix is spit out at each row, from left to right, going downwards
- * at each row. 
+ * PREDICTION MODES:
+ * 0 - Vertical
+ * 1 - Horizontal
+ * 2 - DC
+ * 3 - Diagonal Down-Left
+ * 4 - Diagonal Down-Right
+ * 5 - Vertical-Right
+ * 6 - Horizontal-Down
+ * 7 - Vertical-Left
+ * 8 - Horizontal-Up
+ * 
  *
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file PredictionModes4x4Luma.str
@@ -60,7 +67,7 @@
  */
 int-int pipeline BestPredictionMode4x4 {
 	add CalculatePredictionModes4x4;
-	add FindBestPredictionMode();
+	add FindBestPredictionMode4x4();
 }
 
 /**
@@ -96,7 +103,7 @@ int->int splitjoin CalculatePredictionModes4x4 {
  * @input stream of all "sum of absolute errors" (mode0 to mode8 in order)
  * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
  */
-int->int splitjoin FindBestPredictionMode() {
+int->int splitjoin FindBestPredictionMode4x4() {
 	work pop 9 push 1 {
 		int currentMinSAE = peek(0);
 		int minPredictionMode = 0;
@@ -165,7 +172,7 @@ int->int filter PredictionMode0() {
 	// A,B,C,D 			peek(0-3);
 	// originalBlk 		peek(4,19);
 	work pop 20 push 1 {
-		int sae; // sum of absolute errors
+		int sae = 0; // sum of absolute errors
 		for (int i=4; i<19; i++) {
 			int predicted = peek(i%4);
 			int original = peek(i);
@@ -233,7 +240,7 @@ int->int filter PredictionMode1() {
 	// I,J,K,L			peek(0-3);
 	// originalBlk 		peek(4,19);
 	work pop 20 push 1 {
-		int sae; // sum of absolute errors
+		int sae = 0; // sum of absolute errors
 		for (int rowCount=0; rowCount<4; rowCount++) {
 			int original = peek(i); // gives you I,J,K, or L
 			// interate though out values for each column
@@ -276,10 +283,15 @@ int->int pipeline PredictionMode2Pipeline {
  * This filter prepares the data for prediction mode 2. 
  * 
  * @input A-M + 16 pixels from the original block (total: 29 pixels)
- * @output I,J,K,L + 16 pixels from the original block for mode 2
+ * @output A,B,C,D,I,J,K,L + 16 pixels from the original block for mode 2
  */
 int->int filter PredictionMode2Prep() {
-	work pop 29 push 20 {
+	work pop 29 push 24 {
+		// A,B,C,D
+		push(peek(0)); 
+		push(peek(1));
+		push(peek(2));
+		push(peek(3));
 		// I,J,K,L
 		push(peek(8)); 
 		push(peek(9));
@@ -299,32 +311,32 @@ int->int filter PredictionMode2Prep() {
 /**
  * This function calculates prediction mode 2 for a 4x4 luminance
  * block. This is a DC interpolation where the entire output stream
- * has the mean value of all luminance values from A to M.
+ * has the mean value of all luminance values from A,B,C,D,I,J,K,L.
  * In other words: result luminance value = sum{A,B,C,D,I,J,K,L}/8 
  * Consequently, A known values are required to generate the 16
  * predicted pixels.
- * @input I,J,K,L + 16 original pixels 
+ * @input A,B,C,D,I,J,K,L + 16 original pixels 
  * @output sum of aboslute errors for mode 2
  */
 int->int filter PredictionMode2() {
 	
-	// I,J,K,L			peek(0-3);
-	// originalBlk 		peek(4,19);	
-	work pop 24 push 1 {
+	// A,B,C,D,I,J,K,L		peek(0-7);
+	// originalBlk 			peek(8,23);	
+	work pop 28 push 1 {
 		int cumulativeAvg = 0;
 		int sae = 0;
-		for (int i=0; i<8; i++) {
-			cumulativeAvg =+ (int) pop()/8;
+		for (int i=0; i<=7; i++) {
+			cumulativeAvg =+ (int) peek(i)/8;
 		}
 		
-		for (int origCounter=8; origCounter<24; origCounter++) {
+		for (int origCounter=8; origCounter<=23; origCounter++) {
 			int original = peek(origCounter);
 			sae += cumulativeAvg - original;
 		}
 		
 		push(sae);
 		
-		for (int i=0; i<=19; i++) {
+		for (int i=0; i<=23; i++) {
 			pop();
 		}
 	}   

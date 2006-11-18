@@ -1,7 +1,7 @@
 /*
  * [Shirley]
  * This file contains the various functions for generating the 4
- * prediction modes for a 16x16 intra prediction block. 
+ * prediction modes for a 16x16 luma intra prediction block. 
  *
  * This is new to MPEG-2
  *  
@@ -53,10 +53,11 @@
  * and the predicted block. The encoder will choose the prediction
  * mode that minimizes the residual.
  * 
- * Be aware that the more complex prediction algorithms requires
- * the use of a matrix to store all calcuated values, then the
- * matrix is spit out at each row, from left to right, going downwards
- * at each row.
+ * PREDICTION MODES
+ * 0 - Vertical
+ * 1 - Horizontal
+ * 2 - DC
+ * 3 - Plane
  *
  * @author <a href="mailto:shirley.mit07@gmail.com">Shirley Fung</a>
  * @file PredictionModes16x16Luma.str
@@ -71,12 +72,12 @@
  * Note that the children of this splitjoin are pipelines that would
  * prepare the 'H' + 'V' + 256 pixels for the prediction mode filters.
  *
- * @input 'H' + 'V' + 256 pixels from the original block (total: 29 pixels)
- * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output recommended 4x4 luma prediction mode (possible: 0 to 3)
  */
-int-int pipeline BestPredictionMode4x4 {
-	add CalculatePredictionModes4x4;
-	add FindBestPredictionMode();
+int-int pipeline BestPredictionMode16x16 {
+	add CalculatePredictionModes16x16;
+	add FindBestPredictionMode16x16();
 }
 
 /**
@@ -84,22 +85,17 @@ int-int pipeline BestPredictionMode4x4 {
  * modes, and gather them up so that the SAE can be compared.
  * 
  * Note that the children of this splitjoin are pipelines that would
- * prepare the A-M + 16 pixels for the prediction mode filters.
+ * prepare the 'H' + 'V' + 256 pixels for the prediction mode filters.
  *
- * @input A-M + 16 pixels from the original block (total: 29 pixels)
- * @output stream of all "sum of absolute errors" (9 values)
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output stream of all "sum of absolute errors" (4 values)
  */
-int->int splitjoin CalculatePredictionModes4x4 {
+int->int splitjoin CalculatePredictionModes16x16 {
 	split duplicate;
 	add PredictionMode0Pipeline;
 	add PredictionMode1Pipeline;
-	add PredictionMode2Pipeline;
-	add PredictionMode3Pipeline;
-	add PredictionMode4Pipeline;
-	add PredictionMode5Pipeline;
-	add PredictionMode6Pipeline;
-	add PredictionMode7Pipeline;
-	add PredictionMode8Pipeline;
+	add PredictionMode2(); // 'H' and 'V' are used, no pipeline required
+	add PredictionMode3(); // 'H' and 'V' are used, no pipeline required
 	join roundrobin;
 }
 
@@ -109,14 +105,14 @@ int->int splitjoin CalculatePredictionModes4x4 {
  * all the prediction modes, and find the mininum - then output
  * the prediction mode. 
  * 
- * @input stream of all "sum of absolute errors" (mode0 to mode8 in order)
- * @output recommended 4x4 luma prediction mode (possible: 0 to 8)
+ * @input stream of all "sum of absolute errors" (mode0 to mode3 in order)
+ * @output recommended 16x16 luma prediction mode (possible: 0 to 3)
  */
-int->int splitjoin FindBestPredictionMode() {
-	work pop 9 push 1 {
+int->int splitjoin FindBestPredictionMode16x16() {
+	work pop 4 push 1 {
 		int currentMinSAE = peek(0);
 		int minPredictionMode = 0;
-		for (int i=1; i<=8; i++) {
+		for (int i=1; i<=3; i++) {
 			if (peek(i) < peek(0)) {
 				minPredictionMode = i;
 			}
@@ -125,17 +121,194 @@ int->int splitjoin FindBestPredictionMode() {
 	}
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 0                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 0. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output sum of absolute errors for mode 0
+ */
+int->int pipeline PredictionMode0Pipeline {
+	add PredictionMode0Prep();
+	add PredictionMode0();
+}
+
+/**
+ * This filter prepares the data for prediction mode 0. 
+ * 
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output 'H'+ 256 pixels from the original block for mode 0
+ */
+int->int filter PredictionMode0Prep() {
+	work pop 288 push 272 {
+		// 'H' (index 0 - 15)
+		for (int i=0; i<=15; i++) {
+			push(peek(i));
+		}
+		// original 256 pixels (index: 32-287)
+		for (int i=32; i<=287; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=287; i++) {
+			pop();
+		}
+	}
+}
+
 /**
  * This function calculates prediction mode 0 for a 16x16 luminance
  * block. Note that only the 'H'orizontal pixels is required.
  * 
- * @input A stream of 32 pixels 'H' and 'V' + 256 original pixels
+ * @input A stream of 16 pixels 'H' + 256 original pixels
  * @output sum of absolute errors for mode 0
  */
 int->int filter PredictionMode0() {
-
-	work pop 32 peek 32 push 256 {
-	  
-
+	// 'H'				peek(0-15);
+	// originalBlk 		peek(16,271);
+	work pop 272 push 1 {
+		int sae = 0; // sum of absolute errors
+		for (int i=16; i<271; i++) {
+			int predicted = peek(i%16);
+			int original = peek(i);
+			sae += abs(predicted-original);
+		}
+		push(sae);
+		
+		for (int i=0; i<=256; i++) {
+			pop();
+		}
+	}	
 }
 
+//////////////////////////////////////////////
+//PREDICTION MODE 1                         //
+//////////////////////////////////////////////
+
+/**
+ * This constructs the pipeline for prediction mode 0. The
+ * pipeline prepares the stream and adds the prediction mode filter.
+ * 
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output sum of absolute errors for mode 0
+ */
+int->int pipeline PredictionMode0Pipeline {
+	add PredictionMode1Prep();
+	add PredictionMode1();
+}
+
+/**
+ * This filter prepares the data for prediction mode 1. 
+ * 
+ * @input 'H' + 'V' + 256 pixels from the original block (total: 32+256 pixels)
+ * @output 'H' + 'V' + 256 pixels from the original block for mode 1
+ */
+int->int filter PredictionMode0Prep() {
+	work pop 288 push 272 {
+		// 'V' (index 16 - 31)
+		for (int i=16; i<=31; i++) {
+			push(peek(i));
+		}
+		// original 256 pixels (index: 32-287)
+		for (int i=32; i<=287; i++) {
+			push(peek(i));
+		}
+		// pop all
+		for (int i=0; i<=287; i++) {
+			pop();
+		}
+	}
+}
+
+/**
+ * This function calculates prediction mode 1 for a 16x16 luminance
+ * block. Note that only the 'V'ertical pixels is required.
+ * 
+ * @input A stream of 16 pixels 'V' + 256 original pixels
+ * @output sum of absolute errors for mode 1
+ */
+int->int filter PredictionMode1() {
+	// 'V'				peek(0-15);
+	// originalBlk 		peek(16,271);
+	work pop 272 push 1 {
+		int sae = 0; // sum of absolute errors
+		for (int rowCount=0; rowCount<16; rowCount++) {
+			int original = peek(i); // gives you each element in 'V'
+			// interate though out values for each column
+			for (int colCount=0; colCount<16; colCount++) {
+				// note the peek index:
+				// for a rowCount of 0, 
+				// 16*(rowCount+1) gives you the offset to start at peek(16);
+				// and so on...
+				int predicted = peek(colCount + 16*(rowCount+1));
+				sae += abs(predicted-original);
+			}
+		}
+		push(sae);
+		
+		for (int i=0; i<=287; i++) {
+			pop();
+		}
+	}	
+}
+
+/**
+ * This function calculates prediction mode 2 for a 16x16 luminance
+ * block. Note that only both 'H'orizontal and 'V'ertical pixels 
+ * are required
+ * 
+ * @input A stream of 32 pixels 'H' + 'V' + 256 original pixels
+ * @output sum of absolute errors for mode 2
+ */
+int->int filter PredictionMode2() {
+	// 'H'				peek(0-15);
+	// 'V'				peek(16-31);
+	// originalBlk 		peek(32,287);	
+	work pop 288 push 1 {
+	   int cumulativeAvg = 0;
+	   int sae = 0;
+	   for (int i=0; i<=31; i++) {
+		   cumulativeAvg =+ (int) peek(i)/32;
+	   }
+		
+	   for (int origCounter=8; origCounter<=287; origCounter++) {
+		   int original = peek(origCounter);
+		   sae += cumulativeAvg - original;
+	   }
+		
+	   push(sae);
+		
+	   for (int i=0; i<=287; i++) {
+		   pop();
+	   }
+   } 
+}
+
+/**
+ * This function calculates prediction mode 2 for a 16x16 luminance
+ * block. Note that only both 'H'orizontal and 'V'ertical pixels 
+ * are required
+ * 
+ * @input A stream of 32 pixels 'H' + 'V' + 256 original pixels
+ * @output sum of absolute errors for mode 2
+ */
+int->int filter PredictionMode2() {
+	// 'H'				peek(0-15);
+	// 'V'				peek(16-31);
+	// originalBlk 		peek(32,287);	
+	work pop 288 push 1 {
+	   int sae = 0;
+	   // some plane function???
+		
+	   push(sae);
+		
+	   for (int i=0; i<=287; i++) {
+		   pop();
+	   }
+   } 
+}
+	

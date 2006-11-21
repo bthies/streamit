@@ -81,6 +81,30 @@ int-int pipeline BestPredictionMode16x16 {
 }
 
 /**
+ * This struct contains the SAE and the predicted block.
+ *
+ * @sae "Sum of Absolute Errors" between the original block and predicted block.
+ * @predBlock calculated from the original A-M pixels under a particular mode.
+ */
+struct SAEandPredictedBlock16x16 {
+	int SAE;
+	int[265] predBlock;
+}
+
+/**
+ * This struct contains the mode and the predicted block. Used for the block
+ * with the mininum SAE.
+ *
+ * @mode prediction mode, has values from 0 to 3.
+ * @predBlock calculated from the original A-M pixels under a particular mode.
+ */
+struct ModeandPredictedBlock16x16 {
+	int mode;
+	int[265] predBlock;
+}
+
+
+/**
  * This constructs the splitjoin for all the different prediction
  * modes, and gather them up so that the SAE can be compared.
  * 

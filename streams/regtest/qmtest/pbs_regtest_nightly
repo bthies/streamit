@@ -1,17 +1,31 @@
 #!/bin/sh
 #PBS -N streamit_nightly
 #PBS -S /bin/sh
-#PBS -q unbound@cagfarm-01
+#PBS -q long@cagfarm-01
+#PBS -l cput=70:00:00
 #PBS -l nodes=1:fast:rhel3:ppn=2
 #PBS -o /dev/null
 #PBS -e /dev/null
-#PBS -m a
+#PBS -m ae
 #PBS -M dimock@csail.mit.edu
 #PBS -q unbound
 #PBS -v STREAMIT_HOME="/home/bits7/dimock/streams",PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
 
 # Run the "nightly" regression tests under OpenPBS.  Submit this script
 # using 'qsub', possibly via cron.
+#
+# The current crontab lines are (in case usual submitting cagfarm machine
+# is down, copy and paste these to another machine):
+#
+# MAILTO=dimock@csail.mit.edu
+# SHELL=/usr/uns/bin/ntcsh
+# PERL5LIB="/usr/uns/encap/perl-5.8.0/lib/5.8.0:/u/dimock/lib/site_perl/5.8.0"
+# # run regression test daily at 8:00PM
+# 00 20 * * * /usr/uns/bin/qsub -q long -l cput=70:00:00 -l nodes=1:fast:rhel3:ppn=2 /home/bits7/dimock/streams/regtest/qmtest/pbs_regtest_nightly
+#
+# The above qsub command is a bit redundant with the PBS directives above
+# (had been testing different values on the qsub line)
+#
 umask 002
 alias gcc='gcc34'
 alias g++='gcc34'

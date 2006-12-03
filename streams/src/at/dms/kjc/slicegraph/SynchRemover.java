@@ -14,10 +14,106 @@ public class SynchRemover {
     public SynchRemover(GraphFlattener gf) {
         this.gf = gf;
         this.top = gf.top;
-        removeSynch(top);
+        removeSplitterSync(top);
+        removeJoinerSplitterSynch(top);
     }
     
-    private void removeSynch(FlatNode current) {
+    private void removeSplitterSync(FlatNode current) {
+        if (current == null)
+            return;
+        // If it's a splitter, check if any of its children are also splitters,
+        // and if so, merge them
+        if (current.isSplitter()) {
+            mergeSplitters(current);
+        }
+        // Either way, recursively call on all of the (possibly updated) children
+        for (int i=0; i<current.edges.length; i++) {
+            removeSplitterSync(current.edges[i]);
+        }
+    }
+    
+    private void mergeSplitters(FlatNode splitter) {
+        FlatNode[] children = splitter.edges;
+        // If there are any consecutive splitters, stores the children of the
+        // second splitter
+        FlatNode[][] grandchildren = new FlatNode[children.length][];
+        
+        boolean hasChildSplitter = false;
+        // number of times to repeat output to reach a recurrence; default to 1
+        int mult = 1;
+        
+        // First, see if there are any children which are also splitters
+        for (int i=0; i<children.length; i++) {
+            FlatNode child = children[i];
+            if (child.isSplitter()) {
+                hasChildSplitter = true;
+                // Recursively merge in case there is a long string of splitters
+                mergeSplitters(child);
+                
+                // number of times this particular child splitter needs to be
+                // repeated
+                int partialMult = lcm(child.getTotalOutgoingWeights(),
+                                      splitter.weights[i])/splitter.weights[i];
+                // overall number of repeats needed for all children
+                mult = lcm(mult, partialMult);
+                
+                // explicitly list out each grandchild according to its weight
+                // to make merging easier later
+                grandchildren[i] = makeRepeatedArray(child.edges, child.weights,
+                                                     child.getTotalOutgoingWeights(),
+                                                     1);
+            }
+        }
+        // If there are no child splitters, then we're done
+        if (!hasChildSplitter)
+            return;
+        // Otherwise, there is work to be done...
+        else {
+            int sumWeights = splitter.getTotalOutgoingWeights();
+            // Explicitly list out each child according to its weight. This list
+            // is repeated the required number of times in order to reach a
+            // recurrence. Any occurrences of child splitters will be
+            // substituted for the non-splitter grandchildren later.
+            FlatNode[] repeatedOutput = 
+                makeRepeatedArray(children, splitter.weights, 
+                                  sumWeights, mult);
+            
+            // Substitute each child splitter for the appropriate non-splitter
+            // grandchild. Operate on each child in turn. 
+            // Offset is the offset from 0 for each child.
+            int offset = 0;
+            for (int i=0; i<children.length; i++) {
+                FlatNode child = children[i];
+                if (child.isSplitter()) {
+                    // Keeps track of the grandchild we're on
+                    int count = 0;
+                    int weight = splitter.weights[i];
+                    FlatNode[] currGrandchildren = grandchildren[i];
+                    for (int j=0; j<mult; j++) {
+                        for (int k=0; k<weight; k++) {
+                            // Replace the splitter with the correct grandchild
+                            repeatedOutput[j*sumWeights + offset + k] =
+                                currGrandchildren[count%currGrandchildren.length];
+                            count++;
+                        }
+                    }
+                    // remove edges for this merged splitter
+                    child.removeEdges();
+                    child.removeIncoming();
+                }
+                offset += splitter.weights[i];
+            }
+            
+            // Consolidate outputs into new edges and weights
+            int[] newWeights = null;
+            FlatNode[] newEdges = null;
+            createWeights(repeatedOutput, newWeights, newEdges);
+            splitter.edges = newEdges;
+            splitter.weights = newWeights;
+        }
+    }
+    
+    private void removeJoinerSplitterSynch(FlatNode current) {
         // null graph, or reached the end of a branch => return
         if (current == null)
             return;
@@ -28,23 +124,23 @@ public class SynchRemover {
                 return;
             // not a joiner-splitter combo => removeSynch on child
             if (!child.isSplitter()) {
-                removeSynch(child);
+                removeJoinerSplitterSynch(child);
             } else { // joiner-splitter combo => remove synchronization
                 FlatNode[] children = child.edges;
-                doSynchRemoval(current, child);
+                doJoinerSplitterSynchRemoval(current, child);
                 for (int i=0; i<children.length; i++) {
-                    removeSynch(children[i]);
+                    removeJoinerSplitterSynch(children[i]);
                 }
             }
         } else { // node is not a joiner, removeSynch on all the children
             FlatNode[] children = current.edges;
             for (int i=0; i<children.length; i++) {
-                removeSynch(children[i]);
+                removeJoinerSplitterSynch(children[i]);
             }
         }
     }
     
-    private void doSynchRemoval(FlatNode joiner, FlatNode splitter) {
+    private void doJoinerSplitterSynchRemoval(FlatNode joiner, FlatNode splitter) {
         FlatNode[] inputs = joiner.incoming;
         FlatNode[] outputs = splitter.edges;
         int[] inWeights = joiner.incomingWeights;
@@ -63,16 +159,8 @@ public class SynchRemover {
         // Create a new array of outputs with all of the repeated outputs
         // duplicated explicitly. This will make connecting new edges easier
         // later.
-        FlatNode[] repeatedOutput = new FlatNode[lcm];
-        int l = 0;
-        for (int i=0; i<outMult; i++) {
-            for (int j=0; j<outputs.length; j++) {
-                for (int k=0; k<outWeights[j]; k++) {
-                    repeatedOutput[l] = outputs[j];
-                    l++;
-                }
-            }
-        }
+        FlatNode[] repeatedOutput = 
+            makeRepeatedArray(outputs, outWeights, outWeightsSum, outMult); 
         
         // For each input, lists that store its new outgoing edges and weights
         List<FlatNode> newEdges = new LinkedList<FlatNode>();
@@ -145,5 +233,53 @@ public class SynchRemover {
         if (a%b == 0)
             return b;
         else return gcd(b, a%b);
+    }
+
+    private static FlatNode[] makeRepeatedArray(FlatNode[] nodes, int[] weights,
+            int sumWeights, int mult) {
+        FlatNode[] repeatedOutput = new FlatNode[sumWeights*mult];
+        int l = 0;
+        for (int i=0; i<mult; i++) {
+            for (int j=0; j<nodes.length; j++) {
+                for (int k=0; k<weights[j]; k++) {
+                    repeatedOutput[l] = nodes[j];
+                    l++;
+                }
+            }
+        }
+        return repeatedOutput;
+    }
+
+    private static void createWeights(FlatNode[] repeatedOutput, int[] newWeights,
+            FlatNode[] newEdges) {
+        
+        if (repeatedOutput == null || repeatedOutput.length == 0)
+            return;
+        
+        List<FlatNode> newEdgesList = new LinkedList<FlatNode>();
+        List<Integer> newWeightsList = new LinkedList<Integer>();
+        
+        FlatNode prev = repeatedOutput[0];
+        int count = 0;
+        for (int i=0; i<repeatedOutput.length; i++) {
+            FlatNode curr = repeatedOutput[i];
+            if (curr == prev) {
+                count++;
+            } else {
+                newEdgesList.add(prev);
+                newWeightsList.add(new Integer(count));
+                prev = curr;
+                count = 1;
+            }
+        }
+        newEdgesList.add(prev);
+        newWeightsList.add(new Integer(count));
+        
+        newEdges = newEdgesList.toArray(new FlatNode[0]);
+        
+        newWeights = new int[newWeightsList.size()];
+        for (int n=0; n<newWeightsList.size(); n++) {
+            newWeights[n] = newWeightsList.get(n).intValue();
+        }
     }
 }

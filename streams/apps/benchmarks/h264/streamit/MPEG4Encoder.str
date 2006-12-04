@@ -1,0 +1,268 @@
+/**
+ * @description
+ * This is the main file that contains all the filters required to encode
+ * MPEG-4 compliant video. The specification for MPEG-4 (Part 10) used is 
+ * the ITU-T H-Series Recommendation for H.264.
+ * 
+ * @author <a href="mailto:shirleyf@gmail.com">Shirley Fung</a>
+ * @file MPEG4Encoder.str
+ * @version 1.0
+ */
+
+/**
+ * Interprets an input stream of raw video and encodes a compressed MPEG-4 
+ * compliant bit stream, in accordance with the ITU-T specification.
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numPictures The number of pictures to be put into the video.
+ * @input A series of images representing the frames of the video. Each image
+ *        consists of 3 integers for each pixel, with the number of pixels per
+ *        image equalling the width * height of the video. Frames are output
+ *        in time order, top to bottom, left to right, and RGB color order.
+ * @output An MPEG-4 compliant bit stream of variable length.
+ */ 
+int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPictures) {
+	
+	// useful variables
+	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
+	
+	portal<SendBackReconstructedFrame> portal_intraReconstructedBlockFrame;
+	portal<SendBackReconstructedFrame> portal_forwardReferenceFrame;
+	portal<SendBackReconstructedFrame> portal_backwardReferenceFrame;
+	
+	add ImageStreamPreProcessor(width, height, numPictures); // similar to mpeg2
+	add Prediction(portal_intraReconstructedBlockFrame,
+				   portal_forwardReferenceFrame,
+				   portal_backwardReferenceFrame); 
+	// may have to modify parameters, and portals
+	// numOfMacroblocks? width? height? 
+	/* Prediction:
+	 * Prediction block here should have at least the following portals.
+	 * portal_intraReconstructedBlockFrame
+	 * portal_forwardReferenceFrame
+	 * portal_backwardReferenceFrame
+	 */ 
+	add TransformAndQuantization; // add parameters
+	add splitjoin {
+		duplicate;
+		add Identity<CodedFrame>;
+		add pipeline {
+			add InverseTransformAndQuantization; // add parameters
+			add SendBackReconstructedFrame to portal_intraReconstructedBlockFrame,
+										 	  portal_forwardReferenceFrame,
+										 	  portal_backwardReferenceFrame; 
+											  // portals to send appropriate frames
+		}
+			
+		join roundrobin(1);
+	}
+	
+	add ReorderFrames; 
+									 	 
+	/* Note:
+	 * These frames are sent back to the Prediction filter because the 
+	 * transform and quantization stages produce a distorted frame 
+	 * (process is lossy)
+	 */
+	 
+	add EntropyEncoding;
+	// write to file!
+}
+
+/**
+ * Interprets an input stream of successive frames of the original video in 
+ * raw data format, and produces a stream of frames (defined struct).
+ * @param width The resolution width of the video.
+ * @param height The resolution height of the video.
+ * @param numPictures The number of pictures to be put into the video.
+ * @input A series of images representing the frames of the video. Each image
+ *        consists of 3 integers for each pixel, with the number of pixels per
+ *        image equalling the width * height of the video. Frames are output
+ *        in time order, top to bottom, left to right, and RGB color order.
+ * @output A stream of Frames (defined struct).
+ */
+int->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
+	
+}
+
+/**
+ * Interprets an input stream of successive frames (in macroblock form), and produces a 
+ * stream of predicted frames (P slices).
+ * @param parameters has not been set in stone yet...
+ * @input A series of frames in macroblock order
+ * @output A stream of predicted frames (defined new struct: PredictedFrame).
+ */
+Frame->PredictedFrame pipeline Prediction(portal<SendBackReconstructedFrame> 
+								 	portal_intraReconstructedBlockFrame,
+								 portal<SendBackReconstructedFrame> 
+								 	portal_forwardReferenceFrame,
+								 portal<SendBackReconstructedFrame> 
+								 	portal_backwardReferenceFrame) {
+	
+}
+
+/**
+ * Interprets an input stream of predicted frames, and produces a 
+ * stream of coded frames.
+ * @param parameters has not been set in stone yet...
+ * @input A stream of predicted frames 
+ * @output A stream of coded frames (defined new struct: PredictedFrame).
+ */
+PredictedFrame->CodedFrame pipeline TransformAndQuantization() {
+	
+}
+
+/**
+ * Interprets an input stream of coded frames, and produces a 
+ * stream of reconstructed frames.
+ * @param parameters has not been set in stone yet...
+ * @input A stream of coded frames 
+ * @output A stream of coded frames.
+ */
+CodedFrame->CodedFrame pipeline InverseTransformAndQuantization() {
+	
+}
+
+/**
+ * Interprets an input stream of coded frames, and produces a 
+ * stream of coded frames. Note that this handles sending back 
+ * reconstructed frames for intra and inter prediction. The stream
+ * of coded frames will be OUT OF ORDER for final entropy encoding.
+ * 
+ * Note that inter prediction will require filtered blocks.
+ * 
+ * @param parameters has not been set in stone yet...
+ * @input A stream of coded frames 
+ * @output A stream of coded frames
+ */
+CodedFrame->CodedFrame filter SendBackReconstructedFrame() {
+	
+}
+
+// ReorderFrames && EntropyEncoding needed here
+
+
+/* ********************************************************
+ * STRUCTS FOR VARIOUS DATA TYPES
+ * Note: more structs will be needed for intra/inter 
+ * prediction to tag the necessary labels for block sizes
+ * *********************************************************/
+
+
+/**
+ * This is the container for a frame, using 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @macroblock samples coded using 4:2:0 scheme
+ */
+struct Frame(int numOfMacroblocks) {
+	int frameNumber;
+	int sliceType;
+	Macroblock[numOfMacroblocks] macroblocks;
+}
+
+/**
+ * This is the container for a predicted frame, using 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * @??? motion vectors
+ * @??? residuals
+ * @??? intraprediction modes
+ * @??? block size, and others?
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @predictedBlocks samples coded using 4:2:0 scheme
+ */
+struct PredictedFrame(int numOfMacroblocks) {
+	// need more here...
+	int frameNumber;
+	int sliceType;
+	Macroblock[numOfMacroblocks] predictedBlocks;
+}
+
+/**
+ * This is the container for a coded frame. It contains information such as:
+ * entropy-encoded coefficients, macroblock prediction modes, quanitzer step size,
+ * motion vectors, etc.
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * @??? motion vectors
+ * @??? residuals
+ * @??? intraprediction modes
+ * @??? block size and others?
+ * @frameNumber used for temporal reference
+ * @sliceType labeling of I, P,or B slice types
+ * @encodedBlocks samples coded using 4:2:0 scheme
+ */
+struct CodedFrame(int numOfMacroblocks) {
+	// need more here...
+	int frameNumber;
+	int sliceType;
+	Macroblock[numOfMacroblocks] encodedBlocks;
+}
+
+/**
+ * This is the container for a reconstructed frame. 
+ * It can be filtered or unfiltered.
+ * It is a distorted version of the original frame
+ * 
+ * Note that in the StreamIt Language Specification 2.1, user initiated 
+ * parameterized types is listed as a future extension.
+ * 
+ * @param numOfMacroblocks number of macroblocks in a frame is needed 
+ * 						   to size the array for the frame
+ * @reconstructedBlocks samples coded using 4:2:0 scheme
+ */
+struct ReconstructedFrame(int numOfMacroblocks) {
+	int frameNumber;
+	int sliceType;
+	Macroblock[numOfMacroblocks] reconstructedBlocks;
+}
+
+/**
+ * This is the container for a macroblock, used for 4:2:0 sampling scheme.
+ * It may be modified easily for a different sampling scheme.
+ *
+ * @YSamples 16x16 luma samples block
+ * @CbSamples 8x8 blue chroma samples block
+ * @CrSamples 8x8 red chroma samples block
+ */
+struct Macroblock {
+	Block16x16 YSamples;
+	Block16x16 CbSamples;
+	Block8x8 CrSamples;
+}
+
+/**
+ * This is the container for a 8x8 block. Used for Cb and Cr samples.
+ *
+ * @block 8x8 block of pixels, ordering of right to left, top to bottom.
+ */
+struct Block8x8 {
+	int[64] block;
+}
+
+/**
+ * This is the container for a 16x16 block. Used for Cb and Cr samples.
+ *
+ * @block 16x16 block of pixels, ordering of right to left, top to bottom.
+ */
+struct Block16x16 {
+	int[265] block;
+}

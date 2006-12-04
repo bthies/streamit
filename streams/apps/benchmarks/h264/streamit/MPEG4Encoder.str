@@ -139,7 +139,8 @@ CodedFrame->CodedFrame filter SendBackReconstructedFrame() {
 	
 }
 
-// ReorderFrames && EntropyEncoding needed here
+// ReorderFrames && EntropyEncoding needed here - not sure what 
+// they'd look like just yet
 
 
 /* ********************************************************

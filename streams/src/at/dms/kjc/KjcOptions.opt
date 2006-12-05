@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.91 2006-10-18 23:40:00 dimock Exp $
+ * $Id: KjcOptions.opt,v 1.92 2006-12-05 20:22:13 dimock Exp $
  */
 
 prefix Kjc
@@ -329,6 +329,11 @@ longname		"vectorize"
 	default		"-1"
 	requireArgument
 	help		"Naive vectorization for a machine with <n>-byte vector registers."
+
+longname		"cell_vector_library"
+	type		boolean
+	default		"false"
+	help		"Vectorize math operations using IBMs vector versions"
 
 longname		"cacheopt"
 	type		boolean

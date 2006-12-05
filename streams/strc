@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.107 2006-10-19 02:28:55 dimock Exp $
+# $Id: strc,v 1.108 2006-12-05 20:22:12 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -211,6 +211,8 @@ Usage: strc [options] file.str ...
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
++ --cell-vector-library
++                     Vectorize some math functions for IBMs library on cell
 + --countops          Instrument to count arith ops (library, uniproc, cluster)
 + --debug             Output debugging information in the compiler
 + --fusion            Fuse entire program to a single filter
@@ -240,7 +242,7 @@ Usage: strc [options] file.str ...
 * --tokopi            Use experimental frontend-to-SIR conversion
 * --sync              Turn on splitter/joiner coalescing (space/spacedynamic)
   --unroll n, -u n    Specify loop unrolling limit
-  --vectorize n       Vectorize for target machinw with n-byte vector registers
+  --vectorize n       Vectorize for target machine with n-byte vector registers
 
  Options specific to Uniprocessor and Cluster backends:
   --cacheopt          Optimize for cache sizes
@@ -348,6 +350,7 @@ sub get_options
 			    "verbose|v",
 			    "optimize|O=i",
 			    "atlas!",
+			    "call-vector-library|cell_vector_library",
 			    "clone-with-serialization|clone_with_serialization",
 			    "countops!",
 			    "debug!",
@@ -480,9 +483,6 @@ sub get_options
 	    $opts{partition} = "dp" unless $opts{partition};
             # macros don't work yet in the cluster backend
             $opts{macros} = 1 unless (exists $opts{macros} || exists $opts{cluster});
-	    # expect all processors except raw to have vector registers
-	    # of length 16.
-	    $opts{vectorize} = 16 unless (exists $opts{vectorize} || exists $opts{raw});
 	  }
 	if ($opts{optimize} >= 1)
 	  {
@@ -826,6 +826,7 @@ sub get_compiler_opts
     $opts{nomult} && ($copts .= " --nomult");
     $opts{peekratio} && ($copts .= " --peekratio " . $opts{peekratio});
     $opts{vectorize} && ($copts .= " --vectorize " . $opts{vectorize});
+    $opts{'cell-vector-library'} && ($copys .= " --cell_vector_library");
     $opts{wbs} && ($copts .= " --wbs");
     $opts{noswpipe} && ($copts .= " --noswpipe");
     $opts{hwic} && ($copts .= " --hwic");

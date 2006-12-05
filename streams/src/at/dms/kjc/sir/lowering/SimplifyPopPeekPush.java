@@ -38,6 +38,9 @@ public class SimplifyPopPeekPush {
         
         @Override
         protected boolean shouldConvertExpression(JExpression expr) {
+            if (! super.shouldConvertExpression(expr)) return false;
+            // Only get here if ThreeAddressCode.shouldConvertExpression(expr) is true.
+            // which includes avery case that we are interested in.
             final int[] count = {0};
             expr.accept(new SLIREmptyVisitor(){
                 @Override public void visitPeekExpression(SIRPeekExpression self,

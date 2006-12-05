@@ -14,10 +14,16 @@ import java.util.*;
 import streamit.misc.Pair;
 
 /**
- * Turn statments into three-address code optionally depending on overridable shouldConvertExpression method.
+ * Turn statements into three-address code optionally depending on overridable simpleExpression 
+ * and shouldConvertExpression methods.
  * <br/>Allowing the user to override shouldConvertExpression forces this class to be non-static.
- * <br/>Note:
+ * <br/>Notes:
  * <ul><li>
+ * If simpleExpression(exp) returns true then shouldConvertExpression(exp) is not called.
+ * the supplied simpleExpression(exp) checks that an expression is made up of constants, local variables
+ * field variables, simple structure references, array references where the offset is simple, and a few
+ * odd cases such as range expressions and portals.
+ * </li><li>
  * This pass is of limited utility in the current compiler: To convert to three-address code, this class
  * introduces temporary variables, which require types.  Much of our compiler does not preserve types, so
  * conversion to three-address code can only happen before most of the compiler operations that lose type 
@@ -42,7 +48,7 @@ import streamit.misc.Pair;
  * </pre>
  * This could be handled with some effort, but has not been deemed necessary since the source code
  * <ul><li>
- * would not run on raw.
+ * would not run on raw anyway, so is not proper source code
  * </li><li>
  * could be rewritten as "print("Got "); println(pop());"
  * </li></ul>
@@ -181,10 +187,24 @@ public class ThreeAddressCode {
      * <br/>
      * Should be overridable for your needs -- which is the only reason this
      * class is not static.
+     * 
+     * The default case claims that every expression should be converted unless
+     * it is an assignment from a simpleExpression() to a simpleExpression().
+     * 
      * @param exp : Expression to check as to whether to convert to 3-address code.
      * @return true : override this to return what you need.
      */
-    protected boolean shouldConvertExpression(JExpression expr) {
+    protected boolean shouldConvertExpression(JExpression exp) {
+        // do not want to xlate "field = simpleexpr" 
+        // into "tmp = simpleexpr; field = tmp"
+        if (exp instanceof JAssignmentExpression) {
+            return ! (simpleExpression(((JAssignmentExpression)exp).getLeft())
+                      && simpleExpression(((JAssignmentExpression)exp).getRight()));
+        }
+        if (exp instanceof JCompoundAssignmentExpression) {
+            return ! (simpleExpression(((JCompoundAssignmentExpression)exp).getLeft())
+                      && simpleExpression(((JCompoundAssignmentExpression)exp).getRight()));
+        }
         return true;
     }
 
@@ -220,16 +240,6 @@ public class ThreeAddressCode {
             return simpleExpression(((SIRRangeExpression)exp).getMin())
                 && simpleExpression(((SIRRangeExpression)exp).getAve())
                 && simpleExpression(((SIRRangeExpression)exp).getMax());
-        }
-        // do not want to xlate "field = simpleexpr" 
-        // into "tmp = simpleexpr; field = tmp"
-        if (exp instanceof JAssignmentExpression) {
-            return simpleExpression(((JAssignmentExpression)exp).getLeft())
-                && simpleExpression(((JAssignmentExpression)exp).getRight());
-        }
-        if (exp instanceof JCompoundAssignmentExpression) {
-            return simpleExpression(((JCompoundAssignmentExpression)exp).getLeft())
-            && simpleExpression(((JCompoundAssignmentExpression)exp).getRight());
         }
         return false;
     }
@@ -1628,7 +1638,7 @@ public class ThreeAddressCode {
                     // Push should have been a statement.
                     SIRPushExpression pexpr = (SIRPushExpression)expr;
                     JExpression subexpr = pexpr.getArg();
-                    if (shouldConvertExpression(subexpr)) {
+                    if (! simpleExpression(subexpr) && shouldConvertExpression(subexpr)) {
                         JExpression v = (new E()).convertOneExpr(newstmts,subexpr);
                         newstmts.add(new JExpressionStatement(self.getTokenReference(),
                                 new SIRPushExpression(v,pexpr.getTapeType()),

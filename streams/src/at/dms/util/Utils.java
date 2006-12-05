@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.43 2006-09-25 13:54:51 dimock Exp $
+ * $Id: Utils.java,v 1.44 2006-12-05 21:43:34 dimock Exp $
  */
 
 package at.dms.util;
@@ -744,7 +744,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
             {
                 Throwable tracer = new Throwable();
                 tracer.fillInStackTrace();
-                caller = "ClusterExecution.makeForLoop(" + count + "): "
+                caller = "Utils.makeForLoop(" + count + "): "
                         + tracer.getStackTrace()[1].toString();
             }
             JavaStyleComment comment = new JavaStyleComment(caller, true, false, false);

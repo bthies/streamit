@@ -54,14 +54,15 @@ affect only performance or readability.
 <li> {@link at.dms.kjc.sir.lowering.ConstructSIRTree}
 <li> {@link at.dms.kjc.sir.lowering.EnqueueToInitPath}
 <li> {@link at.dms.kjc.sir.lowering.FieldInitMover}  Moves field initialization from field declaration into the beginning of init().
-<li> {@link at.dms.kjc.sir.lowering.FieldProp}
+<li> {@link at.dms.kjc.sir.lowering.FieldProp} Sometimes called from ConstantProp, but also separately. Why?
 <li> {@link at.dms.kjc.sir.lowering.InlinePhases}
+<li> {@link at.dms.kjc.sir.lowering.Propagator} Lower level of ConstantProp, also performs some algebraic and boolean simplification.  Normally called from ConstantProp.
 <li> {@link at.dms.kjc.sir.lowering.RemoveDynamicRates}
 <li> {@link at.dms.kjc.sir.lowering.RemoveMultiPops} changes pop(N) into N pop() instructions for back ends that do not generate code for pop(N).
-<li> {@link at.dms.kjc.sir.lowering.RenameAll}  Makes all variable names unique.
+<li> {@link at.dms.kjc.sir.lowering.RenameAll}  Makes all variable names unique.  Prerequisite for most other passes.
 <li> {@link at.dms.kjc.sir.lowering.RoundToFloor}  Converts round(x) to floor(x+0.5) so that C and Java code produce the same results.
 <li> {@link at.dms.kjc.sir.lowering.StaticsProp}  Propagates values of fields defined in static{...} into filters that use them.
-<li> {@link at.dms.kjc.sir.lowering.Unroller}
+<li> {@link at.dms.kjc.sir.lowering.Unroller} Sometimes called from ConstantProp to find more constants by unrolling loops.  Sometimes called separately.
 <li> {@link at.dms.kjc.sir.lowering.VarDeclRaiser}
 </ul>
 
@@ -81,14 +82,20 @@ at.dms.kjc.sir.lowering.Unroller} is also used to further optimize the
 or <b>readability</b> include:
 
 <ul>
-<li> {@link at.dms.kjc.sir.lowering.ArrayDestroyer}
+<li> {@link at.dms.kjc.sir.lowering.ArrayDestroyer} Convert arrays that are only referenced at constant offsets into individual variables.
 <li> {@link at.dms.kjc.sir.lowering.BranchAnalyzer}
-<li> {@link at.dms.kjc.sir.lowering.DeadCodeElimination}
-<li> {@link at.dms.kjc.sir.lowering.FindTapeOps}
+<li> {@link at.dms.kjc.sir.lowering.CollapseDataParallelism} Collapse split-joins with user-specified data parallelism if the result can be re-expanded with {@link at.dms.kjc.sir.lowering.fission.StatelessDuplicate}.  May result in substantially smaller graph during compilation.
+<li> {@link at.dms.kjc.sir.lowering.DeadCodeElimination} (Beware! hashes on Kopi constructs that generally have identity-based hashes.  Make sure you share all JVariableDefinition's.)
+<li> {@link at.dms.kjc.sir.lowering.FindTapeOps} Utility to determine if a compilation uint references an input or output tape.
+<li> {@link at.dms.kjc.sir.lowering.IntroduceMultiPops} Combines adjacent pop() and pop(N) instructions.
 <li> {@link at.dms.kjc.sir.lowering.MarkFilterBoundaries} Inserts special marker instructions allowing a filter's code to be found after fusion.
-<li> {@link at.dms.kjc.sir.lowering.PopToPeek}
-<li> {@link at.dms.kjc.sir.lowering.RenameDestroyedVars}
-<li> {@link at.dms.kjc.sir.lowering.StructDestroyer}
+<li> {@link at.dms.kjc.sir.lowering.PopToPeek} Convert pop() to peek(index++).  Must be followed with call to ConstantProp.
+<li> {@link at.dms.kjc.sir.lowering.RenameDestroyedVars} Adjust live ranges.  Used after ArrayDestroyer (and StructDestroyer?).
+<li> {@link at.dms.kjc.sir.lowering.SimplifyArguments} Use ThreeAddressCode to ensure that function arguments have no side effects.  Useful for implementing functions as macros.
+<li> {@link at.dms.kjc.sir.lowering.SimplifyPopPeekPush} Use ThreeAddressCode to ensure that all pushes, pops, peeks occur as separate statements.  Required for {@link at.dms.kjc.sir.lowering.VectorizeEnable}.  Since works in left-to-right manner, has some semantic effect in ordering multiple pops within a single expression.
+<li> {@link at.dms.kjc.sir.lowering.StructDestroyer} Convert structures into individual variables as much as possible.
+<li> {@link at.dms.kjc.sir.lowering.ThreeAddressCode} Convert specified constructs to three-address code.
+<li> {@link at.dms.kjc.sir.lowering.VectorizeEnable} Run sequences of 4 steady states at once using vector registers for (fused) filters that are {@link at.dms.kjc.sir.lowering.Vectorizable}
 </ul>
 
 <p>The {@link at.dms.kjc.sir.lowering.FilterPhaser} and {@link

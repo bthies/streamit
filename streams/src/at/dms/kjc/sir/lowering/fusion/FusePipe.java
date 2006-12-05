@@ -27,6 +27,11 @@ public class FusePipe {
      * Name of init work, fused across fusion and fission.
      */
     public static final String INIT_WORK_NAME = "___initWork";
+    
+    /**
+     * enable / disable debuging printouts.
+     */
+    public static boolean debugging = false;
 
     /**
      * Fuses all eligibles portions of <pipe>, returning the number of
@@ -294,8 +299,9 @@ public class FusePipe {
 
         // must have a work function
         if (filter.getWork()==null) {
-            //XXX: debugging
-            System.err.println("filter " + filter.getName() + " is not fusable because has no work fn");
+            if (debugging) {
+                System.err.println("filter " + filter.getName() + " is not fusable because has no work fn");
+            }
             return false;
         }
 
@@ -303,8 +309,10 @@ public class FusePipe {
         if (filter.getPeek().isDynamic() ||
             filter.getPop().isDynamic() ||
             filter.getPush().isDynamic()) {
-            System.err.println("filter " + filter.getName() + " is not fusable because has dynamic rates");
-            return false;
+                if (debugging) {
+                    System.err.println("filter " + filter.getName() + " is not fusable because has dynamic rates");
+                }
+                return false;
         }
 
         // don't fuse message senders or receivers because message
@@ -313,13 +321,17 @@ public class FusePipe {
         SIRPortal[] receivesFrom = SIRPortal.getPortalsWithReceiver(filter);
         SIRPortal[] sendsTo = SIRPortal.getPortalsWithSender(filter);
         if (receivesFrom.length>=1 || sendsTo.length>=1) {
-            System.err.println("filter " + filter.getName() + " is not fusable because has messages");
+            if (debugging) {
+                System.err.println("filter " + filter.getName() + " is not fusable because has messages");
+            }
             return false;
         }
 
         // don't fuse file readers or file writers
         if (filter instanceof SIRFileReader || filter instanceof SIRFileWriter) {
-            System.err.println("filter " + filter.getName() + " is not fusable because has file I/O");
+            if (debugging) {
+                System.err.println("filter " + filter.getName() + " is not fusable because has file I/O");
+            }
             return false;
         }
 

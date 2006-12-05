@@ -1,15 +1,16 @@
 package at.dms.kjc.sir.lowering.fusion;
 
-import at.dms.util.Utils;
+//import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fission.*;
 
-import java.util.List;
+//import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Iterator;
 
 /**
@@ -44,15 +45,23 @@ public class FusePipelines {
      */
     private static final int FUSE_PIPELINES_OF_STATELESS_STREAMS = 2;
     /**
-     * Mode indicating that pipelins segments should be fused so long 
+     * Mode indicating that pipeline segments should be fused so long 
      * as the RESULT of fusion will be naively vectorizable.
      */
     private static final int FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS = 3;
+    /**
+     * Mode indicating that pipeline segments should be fused so long 
+     * as the RESULT of fusion will be naively vectorizable.  This will do a
+     * deep-fusion, possibly fusing splitjoin children.
+     */
+    private static final int FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS = 4;
     
     /**
      * Fuses all adjacent filters whos parent is a pipeline.  If a
      * complete pipeline is fused, then it is treated as a single
      * filter in considering fusion within the pipeline's parent.
+     * @param str input stream to fuse, may be modified by this method.
+     * @return  stream with fusion having taken place
      */
     public static SIRStream fusePipelinesOfFilters(SIRStream str) {
         // first eliminate wrapper pipelines, as they obscure
@@ -69,6 +78,8 @@ public class FusePipelines {
      *
      * If a complete pipeline is fused, then it is treated as a single
      * filter in considering fusion within the pipeline's parent.
+     * @param str input stream to fuse, may be modified by this method.
+     * @return  stream with fusion having taken place
      */
     public static SIRStream fusePipelinesOfStatelessFilters(SIRStream str) {
         // first eliminate wrapper pipelines, as they obscure
@@ -96,6 +107,7 @@ public class FusePipelines {
         PipelineFuser fuser = new PipelineFuser(FUSE_PIPELINES_OF_STATELESS_STREAMS);
         SIRStream result = (SIRStream)str.accept(fuser);
         //fuser.predictFusion.debugPrint();
+        new PredictFusion(); // clean up static data structures
         return result;
     }
     /**
@@ -114,6 +126,26 @@ public class FusePipelines {
         Lifter.lift(str);
         PipelineFuser fuser = new PipelineFuser(FUSE_PIPELINES_OF_VECTORIZABLE_FILTERS);
         return (SIRStream)str.accept(fuser);
+    }
+    /**
+     * Fuses any two adjacent STREAMS in 'str' so long as:
+     *  - the shared parent of the filter is a pipeline
+     *  - the result of fusion will be naively vectorizable.
+     *
+     * If a complete pipeline is fused, then it is treated as a single
+     * filter in considering fusion within the pipeline's parent.
+     * @param str input stream to fuse, may be modified by this method.
+     * @return  stream with fusion having taken place
+     */
+    public static SIRStream fusePipelinesOfVectorizableStreams(SIRStream str) {
+        // first eliminate wrapper pipelines, as they obscure
+        // continuous pipeline sections
+        Lifter.lift(str);
+        PipelineFuser fuser = new PipelineFuser(FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS);
+        SIRStream retval = (SIRStream)str.accept(fuser);
+        //fuser.predictFusion.debugPrint();
+        new PredictFusion(); // clean up static data structures
+        return retval;
     }
     
     /**
@@ -153,7 +185,8 @@ public class FusePipelines {
          */
         public PipelineFuser(int mode) {
             this.mode = mode;
-            if (mode == FUSE_PIPELINES_OF_STATELESS_STREAMS) {
+            if (mode == FUSE_PIPELINES_OF_STATELESS_STREAMS
+                    || mode == FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS) {
                 predictFusion = new PredictFusion();
             }
         }
@@ -167,7 +200,8 @@ public class FusePipelines {
 
             // 1. DETERMINE WHERE TO FUSE:
             // walk through pipeline, determining who should be fused.
-            // We fuse anyone where the result will be stateless.
+            // We fuse anyone where the result will be stateless 
+            // (or whatever condition is specified by the mode)
             // This requires:
             // 1. original filters are stateless
             // 2. only the first filter can peek (otherwise peek
@@ -192,7 +226,7 @@ public class FusePipelines {
                 // otherwise, should not fuse with child, or we are at
                 // the end of the pipeline, so conclude current set of
                 // partitions
-                partitions.add(new Integer(count+1));
+                    partitions.add(count+1);
                 // if we indicated some fusion, first make sure that
                 // these children have been fused into filters
                 if (count>0) {
@@ -311,14 +345,19 @@ public class FusePipelines {
                         // filters after first can not be two stage
                         // since vectorization will change tapeType for
                         // work function.
-                        (/*i == 0 ||*/ ! (child instanceof SIRTwoStageFilter)) &&
-                        // previous filter outputs a vectorizable type
-                        (i == 0 || child.getInputType() instanceof CFloatType
-                                || child.getInputType() instanceof CIntType) &&
+                        (! (child instanceof SIRTwoStageFilter)) &&
                         // only first filter can peek
                         (i==0 || !FusePipelines.filterPeeks((SIRFilter)child)) &&
                         // and vectorizable...
                         Vectorizable.vectorizable((SIRFilter)child));
+            case FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS:
+                return (// must be fusable
+                        predictFusion.isFusable(child) &&
+                        // must not be two-stage
+                        !predictFusion.isTwoStage(child) &&
+                        // only first filter can peek
+                        (i==0 || !predictFusion.doesPeeking(child)) &&
+                        ! predictFusion.hasVState(child));
             }
             assert false : "Unexpected mode";
             return false;
@@ -345,6 +384,7 @@ public class FusePipelines {
      *      child but first does peeking
      *    doesPeeking = first child does peeking
      *    isFusable = all children are fusable
+     *    isVectorizable = all children are vectorizable
      *
      * - splitjoin:
      *    - isTwoStage = any child is two stage
@@ -353,6 +393,7 @@ public class FusePipelines {
      *              or (any child is two stage)
      *    - doesPeeking = any child peeks
      *    - isFusable = all children are fusable
+     *    - isVectorizable = all children are vectorizable
      *
      * - feedbackloop:
      *   - can't fuse feedback loops, so return parameters that make them
@@ -361,6 +402,7 @@ public class FusePipelines {
      *   - hasState = true
      *   - doesPeeking = true
      *   - isFusable = false
+     *   - isVectorizable = false
      */
     static class PredictFusion {
         /**
@@ -383,11 +425,20 @@ public class FusePipelines {
          */
         private static HashMap<SIRStream, Boolean> isFusable;
 
+        /**
+         * Memoizes: are all components of the given stream vectorizable?
+         */
+        private static HashMap<SIRStream, Boolean> isUnVectorizable;
+
+        /** 
+         * Initialize / clean up static data structures.
+         */
         public PredictFusion() {
             isTwoStage = new HashMap<SIRStream, Boolean>();
             hasState = new HashMap<SIRStream, Boolean>();
             doesPeeking = new HashMap<SIRStream, Boolean>();
             isFusable = new HashMap<SIRStream, Boolean>();
+            isUnVectorizable = new HashMap<SIRStream, Boolean>();
         }
 
         /**
@@ -493,7 +544,63 @@ public class FusePipelines {
 
             return result;
         }        
-        
+   
+        /**
+         * Returns: if a given stream is fused, is there a possibility
+         * that the result will not be vectorizable?
+         */
+        public boolean hasVState(SIRStream str) {
+            // memoize
+            if (isUnVectorizable.containsKey(str)) {
+                return isUnVectorizable.get(str).booleanValue();
+            }
+
+            // otherwise compute
+            boolean result;
+            if (str instanceof SIRFilter) {
+                // base case: test directly
+                result = ! Vectorizable.vectorizable((SIRFilter)str);
+            } else if (str instanceof SIRPipeline) {
+                // any child has state, or any child is twoStage, or
+                // any child but first does peeking
+                SIRPipeline pipe = (SIRPipeline)str;
+                result = false;
+                for (int i=0; i<pipe.size(); i++) {
+                    SIRStream child = pipe.get(i);
+                    if (hasVState(child) ||
+                        isTwoStage(child) ||
+                        (i>0 && doesPeeking(child))) {
+                        result = true;
+                        break;
+                    }
+                }
+            } else if (str instanceof SIRSplitJoin) {
+                // any child has state, or any child is twoStage, or
+                // (roundrobin and any child peeks)
+                SIRSplitJoin sj = (SIRSplitJoin)str;
+                result = false;
+                boolean isRoundRobin = sj.getSplitter().getType().isRoundRobin();
+                for (int i=0; i<sj.size(); i++) {
+                    SIRStream child = sj.get(i);
+                    if (hasVState(child) ||
+                        isTwoStage(child) ||
+                        (isRoundRobin && doesPeeking(child))) {
+                        result = true;
+                        break;
+                    }
+                }
+            } else {
+                // feedback loops will never be fused; just count as
+                // if they have state
+                result = true;
+            }
+
+            // remember result
+            isUnVectorizable.put(str, new Boolean(result));
+
+            return result;
+        }        
+
         /**
          * Returns: if a given stream is fused, is there a possibility
          * that the result will do peeking?
@@ -583,6 +690,10 @@ public class FusePipelines {
             for (Iterator<SIRStream> it = hasState.keySet().iterator(); it.hasNext(); ) {
                 SIRStream str = it.next();
                 System.err.println("hasState: " + str + " = " + hasState.get(str));
+            }
+            // print has vector state
+            for (Map.Entry<SIRStream,Boolean> strEntry : isUnVectorizable.entrySet()) {
+                System.err.println("isUnVectorizable: " + strEntry.getKey() + " = " + hasState.get(strEntry.getValue()));
             }
             // print does peeking
             for (Iterator<SIRStream> it = doesPeeking.keySet().iterator(); it.hasNext(); ) {

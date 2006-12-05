@@ -1,4 +1,4 @@
-// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.115 2006-11-01 20:19:29 thies Exp $
+// $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/src/at/dms/kjc/cluster/ClusterBackend.java,v 1.116 2006-12-05 21:51:06 dimock Exp $
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -105,7 +105,8 @@ public class ClusterBackend {
         // System.out.println("  rename1 is: "+KjcOptions.rename1);
         // System.out.println("  rename2 is: "+KjcOptions.rename2);
 
-        if (debugging) {
+        if (debugging) 
+        {
             SIRGlobal[] globals;
             if (global != null) {
                 globals = new SIRGlobal[1];
@@ -114,10 +115,14 @@ public class ClusterBackend {
             System.err.println("// str on entry to Cluster backend");
             SIRToStreamIt.run(str,interfaces,interfaceTables,structs,globals);
             System.err.println("// END str on entry to Cluster backend");
-        }
+       }
         structures = structs;
     
         // Testing. (new ThreeAddressCode()).threeAddressCode(str);
+        
+        // make arguments to functions be three-address code so can replace max, min, abs
+        // and possibly others with macros, knowing that there will be no side effects.
+        SimplifyArguments.simplify(str);
         
         // Perform propagation on fields from 'static' sections.
         Set<SIRGlobal> statics = new HashSet<SIRGlobal>();
@@ -367,10 +372,33 @@ public class ClusterBackend {
                 }
             }
 
+            if (KjcOptions.sjtopipe) {
+                // may replace SIROperators!
+                // might be safer to update this to understand
+                // dynamic boundaries, and never update border
+                // SIROperators.
+                SJToPipe.doit(ssg.getTopLevelSIR());
+            }
+
+
             //VarDecl Raise to move array assignments down?
             new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
-            // Vectorize here w.r.t. partition map, will invalidate schedule.
+//            // debugging:
+//            if (debugging) {
+//                System.err.println("// str before vector fusing");
+//                SIRGlobal[] globals;
+//                if (global != null) {
+//                    globals = new SIRGlobal[1];
+//                    globals[0] = global;
+//                } else {
+//                    globals = new SIRGlobal[0];
+//                }
+//                SIRToStreamIt.run(ssg.getTopLevelSIR(), interfaces, interfaceTables, structs,
+//                                  globals);
+//                System.err.println("// END str before vector fusing");
+//            }
+           // Vectorize here w.r.t. partition map, will invalidate schedule.
             ssg.setTopLevelSIR(
             VectorizeEnable.vectorizeEnable(ssg.getTopLevelSIR(),ssgPartitionMap));
 
@@ -402,14 +430,6 @@ public class ClusterBackend {
 
             // OK: why set this here?
             Unroller.setLimitNoTapeLoops(false, 0);
-
-            if (KjcOptions.sjtopipe) {
-                // may replace SIROperators!
-                // might be safer to update this to understand
-                // dynamic boundaries, and never update border
-                // SIROperators.
-                SJToPipe.doit(ssg.getTopLevelSIR());
-            }
 
             StreamItDot.printGraph(ssg.getTopLevelSIR(), Utils.makeDotFileName("after-partition", ssg.getTopLevelSIR()));
 

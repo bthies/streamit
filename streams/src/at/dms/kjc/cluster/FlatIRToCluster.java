@@ -1075,12 +1075,16 @@ public class FlatIRToCluster extends InsertTimers implements
                 p.print ("\t= ");
                 expr.accept (this);
             } 
-            else if (type.isOrdinal())
-                p.print(" = 0");
-            else if (type.isFloatingPoint())
-                p.print(" = 0.0f");
-            else if (type.isArrayType())
-                p.print(" = {0}");
+// 05-Dec-2006: Do not initialize unless initialized in Kopi code.
+// For arrays of vector type was creating code that coulf not be converted to C.
+// For arrays from fusion was causing unnecessary overhead.
+// Assume now that compiler writers know whether variable needs initailization!
+//            else if (type.isOrdinal())
+//                p.print(" = 0");
+//            else if (type.isFloatingPoint())
+//                p.print(" = 0.0f");
+//            else if (type.isArrayType())
+//                p.print(" = {0}");
 
             p.print(";/* " + type + " */");
         }

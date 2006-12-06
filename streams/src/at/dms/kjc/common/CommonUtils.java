@@ -12,6 +12,7 @@ import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JThisExpression;
+import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.SIRFilter;
@@ -245,5 +246,15 @@ public class CommonUtils {
                return null;
            }
        }
+
+
+    /**
+     * Print a string only if compiling with --debug 
+     * @param s the debugging string to print.
+     */
+    public static void println_debugging(String s) {
+        if (KjcOptions.debug)
+            System.out.println(s);
+    }
 
 }

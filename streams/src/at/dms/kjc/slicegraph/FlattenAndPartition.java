@@ -12,14 +12,15 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.spacetime.RawChip;
 import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.*;
-//import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.common.CommonUtils;
 
 /**
+ * Convert SIR graph to Slice without synch removal.
+ * Partitions as one filter per Slice.
+ * 
  * @author mgordon
  * 
  */
@@ -35,8 +36,8 @@ public class FlattenAndPartition extends Partitioner {
     private LinkedList<Trace> ioList;
 
     public FlattenAndPartition(UnflatFilter[] topFilters, HashMap[] exeCounts,
-            LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
-        super(topFilters, exeCounts, lfa, work, rawChip);
+            LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
+        super(topFilters, exeCounts, lfa, work, maxPartitions);
         workEstimation = new HashMap<FilterContent, Integer>();
     }
 

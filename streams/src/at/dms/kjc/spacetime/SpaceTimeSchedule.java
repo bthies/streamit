@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 
@@ -113,14 +114,14 @@ public class SpaceTimeSchedule {
      */
     public void setPrimePumpSchedule(LinkedList<LinkedList<Trace>> preLoopSchedule) {
         //      convert into an array for easier access...
-        SpaceTimeBackend.println("Setting primepump schedule:");   
+        CommonUtils.println_debugging("Setting primepump schedule:");   
         primePumpSchedule = new Trace[preLoopSchedule.size()][];
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
             LinkedList schStep = preLoopSchedule.get(i);
             primePumpSchedule[i] = new Trace[schStep.size()];
             for (int j = 0; j < schStep.size(); j++) {
                 Trace current = (Trace)schStep.get(j);
-                SpaceTimeBackend.println(current.toString());
+                CommonUtils.println_debugging(current.toString());
                 primePumpSchedule[i][j] = current;
                 //generate the prime pump multiplicity map
                 if (!primePumpMult.containsKey(current))

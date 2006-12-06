@@ -3,15 +3,13 @@
  */
 package at.dms.kjc.slicegraph;
 
-import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.sir.SIRFileReader;
-import at.dms.kjc.sir.SIRFileWriter;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRPredefinedFilter;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
@@ -20,7 +18,6 @@ import at.dms.kjc.sir.lowering.partition.WorkList;
 import at.dms.kjc.spacetime.InterTraceBuffer;
 import at.dms.kjc.spacetime.Layout;
 import at.dms.kjc.spacetime.LinearFission;
-import at.dms.kjc.spacetime.RawChip;
 import at.dms.kjc.spacetime.ScheduleModel;
 import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.spacetime.SpaceTimeSchedule;
@@ -49,9 +46,18 @@ public class AdaptivePartitioner extends Partitioner {
      */
     public static double DATA_REORG_PARALLEL_FACTOR;
 
+    /**
+     * Test for ASPLOS paper.  no longer used.
+     * @param topFilters
+     * @param exeCounts
+     * @param lfa
+     * @param work
+     * @param maxPartitions
+     */
+    
     public AdaptivePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
-            LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
-        super(topFilters, exeCounts, lfa, work, rawChip);
+            LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
+        super(topFilters, exeCounts, lfa, work, maxPartitions);
         workEstimation = new HashMap<FilterContent, Integer>();
         
         unflatOccupancy = new HashMap<UnflatFilter, Integer>();
@@ -197,11 +203,11 @@ public class AdaptivePartitioner extends Partitioner {
                         int times = filterContent.getArray().length
                                 / filterContent.getPopCount();
                         if (times > 1) {
-                            assert rawChip.getTotalTiles() == 16 : "Only 4x4 layouts supported right now";
+                            //assert maxPartitions == 16 : "Only 4x4 layouts supported right now";
 
                             // for now force to execute on 16 tiles
-                            if (times > rawChip.getTotalTiles())
-                                times = rawChip.getTotalTiles();
+                            if (times > maxPartitions)
+                                times = maxPartitions;
                             // fiss the filter into times elements
                             FilterContent[] fissedFilters = LinearFission.fiss(
                                     filterContent, times);
@@ -403,30 +409,29 @@ public class AdaptivePartitioner extends Partitioner {
             // going for
             // none-predefined nodes
             if (unflatFilter.filter instanceof SIRPredefinedFilter) {
-                SpaceTimeBackend.println("Cannot continue trace: (Source) "
+                CommonUtils.println_debugging("Cannot continue trace: (Source) "
                         + unflatFilter.filter + " is predefined");
                 return false;
             }
 
             // don't continue if the next filter is predefined
             if (dest.filter instanceof SIRPredefinedFilter) {
-                SpaceTimeBackend.println("Cannot continue trace(Dest): "
+                CommonUtils.println_debugging("Cannot continue trace(Dest): "
                         + dest.filter + " is predefined");
                 return false;
             }
 
             // cut out linear filters
             if (isLinear || dest.isLinear()) {
-                SpaceTimeBackend
-                        .println("Cannot continue trace: Source and Dest are not congruent linearly");
+                CommonUtils
+                        .println_debugging("Cannot continue trace: Source and Dest are not congruent linearly");
                 return false;
             }
 
             // check the size of the trace, the length must be less than number
             // of tiles + 1
-            if (newTotalFilters > rawChip.getTotalTiles()) {
-                SpaceTimeBackend
-                        .println("Cannot continue trace: Filters == number of tiles");
+            if (newTotalFilters > maxPartitions) {
+                CommonUtils.println_debugging("Cannot continue trace: Filters > maximum alowable number of partitions");
                 return false;
             }
             

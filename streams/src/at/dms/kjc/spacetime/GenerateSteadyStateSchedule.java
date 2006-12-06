@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.TraceNode;
@@ -81,11 +82,11 @@ public class GenerateSteadyStateSchedule {
         // reverse the list
         Collections.reverse(sortedTraces);
 
-        SpaceTimeBackend.println("Sorted Traces: ");
+        CommonUtils.println_debugging("Sorted Traces: ");
         Iterator<Trace> it = sortedTraces.iterator();
         while (it.hasNext()) {
             Trace trace = it.next();
-            SpaceTimeBackend.println(" * " + trace + " (work: "
+            CommonUtils.println_debugging(" * " + trace + " (work: "
                                + spaceTime.partitioner.getTraceBNWork(trace) + ")");
         }
 
@@ -125,7 +126,7 @@ public class GenerateSteadyStateSchedule {
     private void scheduleTrace(Trace trace,
                                LinkedList<Trace> sortedList) {
         assert trace != null;
-        SpaceTimeBackend.println("Scheduling Trace: " + trace + " at time "
+        CommonUtils.println_debugging("Scheduling Trace: " + trace + " at time "
                            + currentTime);
         // remove this trace from the list of traces to schedule
         sortedList.remove(trace);
@@ -148,7 +149,7 @@ public class GenerateSteadyStateSchedule {
                                                                         .getTileNumber()]) ? currentTime : tileAvail[tile
                                                                                                                      .getTileNumber()])
                 + spaceTime.partitioner.getTraceBNWork(trace);
-            SpaceTimeBackend.println("   * new avail for " + tile + " = "
+            CommonUtils.println_debugging("   * new avail for " + tile + " = "
                                + tileAvail[tile.getTileNumber()]);
             // SpaceTimeBackend.println(" *(" + currentTime + ") Assigning " + node +
             // " to " + tile +
@@ -220,10 +221,10 @@ public class GenerateSteadyStateSchedule {
     private void printSchedule() {
         Iterator<Trace> sch = schedule.iterator();
         Trace prev = null;
-        SpaceTimeBackend.println("Schedule: ");
+        CommonUtils.println_debugging("Schedule: ");
         while (sch.hasNext()) {
             Trace trace = sch.next();
-            SpaceTimeBackend.println(" ** " + trace);
+            CommonUtils.println_debugging(" ** " + trace);
             //System.out.println(" ** " + trace);
             prev = trace;
         }

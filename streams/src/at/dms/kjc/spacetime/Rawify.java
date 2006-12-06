@@ -2,6 +2,8 @@ package at.dms.kjc.spacetime;
 
 import java.util.ListIterator;
 import java.util.Iterator;
+
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterTraceNode;
@@ -335,7 +337,7 @@ public class Rawify {
         //get the first traceNode that can be a filter
         TraceNode traceNode = trace.getHead().getNext();
         while (traceNode != null) {
-            SpaceTimeBackend.println("Rawify: " + traceNode);
+            CommonUtils.println_debugging("Rawify: " + traceNode);
             // do the appropiate code generation
             if (traceNode.isFilterTrace()) {
                 FilterTraceNode filterNode = (FilterTraceNode) traceNode;
@@ -524,7 +526,7 @@ public class Rawify {
             
             assert srcBuffer != null;
             
-            SpaceTimeBackend.println("Generate the DRAM read command for "
+            CommonUtils.println_debugging("Generate the DRAM read command for "
                                      + srcBuffer);
             int readWords = iterations * typeSize
                 * input.getItems(edge);
@@ -573,7 +575,7 @@ public class Rawify {
                                                                         primepump)
             * Util.getTypeSize(filter.getFilter().getOutputType());
         if (readWords > 0) {
-            SpaceTimeBackend.println("Generating the read command for "
+            CommonUtils.println_debugging("Generating the read command for "
                                      + output + " on " + srcBuffer.getOwner()
                                      + (primepump ? "(primepump)" : ""));
             // in the primepump stage a real output trace always reads from the
@@ -735,8 +737,8 @@ public class Rawify {
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(false,
                             init || primepump, words, nonRedBuffer, buffer.isStaticNet());
                 else {
-                    SpaceTimeBackend
-                        .println("Generating DRAM store command with "
+                    CommonUtils
+                        .println_debugging("Generating DRAM store command with "
                                  + items
                                  + " items, typesize "
                                  + Util.getTypeSize(filterNode.getFilter()
@@ -822,7 +824,7 @@ public class Rawify {
         if ((items * typeSize) % RawChip.cacheLineWords != 0) {
             int dummyWords = RawChip.cacheLineWords
                 - ((items * typeSize) % RawChip.cacheLineWords);
-            SpaceTimeBackend.println("Received items (" + (items * typeSize)
+            CommonUtils.println_debugging("Received items (" + (items * typeSize)
                                      + ") not divisible by cache line, disregard " + dummyWords);
             
             SwitchCodeStore.disregardIncoming(IntraTraceBuffer.getBuffer(in,
@@ -855,7 +857,7 @@ public class Rawify {
         if ((items * typeSize) % RawChip.cacheLineWords != 0) {
             int dummyWords = RawChip.cacheLineWords
                 - ((items * typeSize) % RawChip.cacheLineWords);
-            SpaceTimeBackend.println("Sent items (" + (items * typeSize)
+            CommonUtils.println_debugging("Sent items (" + (items * typeSize)
                                      + ") not divisible by cache line, add " + dummyWords);
             
             SwitchCodeStore.dummyOutgoing
@@ -1156,7 +1158,7 @@ public class Rawify {
 
             typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 
-            SpaceTimeBackend.println("Generating Switch Code for " + traceNode
+            CommonUtils.println_debugging("Generating Switch Code for " + traceNode
                                      + " iterations " + iterations);
 
             StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
@@ -1971,7 +1973,7 @@ public class Rawify {
         }
         
         if (init)
-            SpaceTimeBackend.println("REMAINING ITEMS: " + filterInfo.remaining);
+            CommonUtils.println_debugging("REMAINING ITEMS: " + filterInfo.remaining);
         
         // now we must take care of the generating switch code for the remaining items 
         // on the input tape after the initialization phase if the upstream filter 

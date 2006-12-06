@@ -4,13 +4,13 @@ import java.util.*;
 import java.io.FileWriter;
 import java.io.FilterWriter;
 
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.spacetime.MultiLevelSplitsJoins;
 import at.dms.kjc.spacetime.RawChip;
-import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.KjcOptions;
 
@@ -31,7 +31,9 @@ public abstract class Partitioner {
     // the completed trace graph
     protected Trace[] traceGraph;
 
-    protected RawChip rawChip;
+    // the largest number of partitions that we will allow.
+    // exceeding this causes assertion error.
+    protected int maxPartitions;
 
     protected UnflatFilter[] topFilters;
 
@@ -66,9 +68,21 @@ public abstract class Partitioner {
     
     protected HashMap <SIRFilter, FilterContent> sirToContent;
     
+    /**
+     * Create a Partitioner.
+     * 
+     * The number of partitions may be limited by <i>maxPartitions</i>, but
+     * some implementations ignore <i>maxPartitions</i>.
+     * 
+     * @param topFilters  from {@link FlattenGraph}
+     * @param exeCounts  a schedule
+     * @param lfa  a linearAnalyzer to convert filters to linear form if appropriate.
+     * @param work a work estimate, see {@link at.dms.kjc.sir.lowering.partition}, updeted if filters are added to a slice.
+     * @param maxPartitions if non-zero, a maximum number of partitions to create
+     */
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
-                       LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
-        this.rawChip = rawChip;
+                       LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
+        this.maxPartitions = maxPartitions;
         this.topFilters = topFilters;
         this.exeCounts = exeCounts;
         this.lfa = lfa;
@@ -91,6 +105,7 @@ public abstract class Partitioner {
     public abstract Trace[] partition();
 
     /**
+     * Check for I/O in slice
      * @param trace
      * @return Return true if this trace is an IO trace (file reader/writer).
      */
@@ -103,13 +118,18 @@ public abstract class Partitioner {
     }
 
     /**
-     * @return All the traces of the trace graph. 
+     * Get all slices
+     * @return All the slices of the slice graph. 
      */
     public Trace[] getTraceGraph() {
         assert traceGraph != null;
         return traceGraph;
     }
     
+    /**
+     *  Get just top level slices in the slice graph.
+     * @return top level slices
+     */
     public Trace[] getTopTraces() {
         assert topTraces != null;
         return topTraces;
@@ -281,7 +301,7 @@ public abstract class Partitioner {
             //set the first filter
             filterOccupancy.put((FilterTraceNode)prev, prevWork);
             
-            SpaceTimeBackend.println("Setting occupancy (forward) for " + 
+            CommonUtils.println_debugging("Setting occupancy (forward) for " + 
                     prev + " " + prevWork);
             
             //for forward from the bottleneck
@@ -293,7 +313,7 @@ public abstract class Partitioner {
                     filterStartupCost.get((FilterTraceNode)current).intValue() + 
                     getWorkEstOneFiring((FilterTraceNode)current);
                 
-                SpaceTimeBackend.println(filterOccupancy.get((FilterTraceNode)prev).intValue() + " - " +  
+                CommonUtils.println_debugging(filterOccupancy.get((FilterTraceNode)prev).intValue() + " - " +  
                     filterStartupCost.get((FilterTraceNode)current).intValue() + " + " +  
                     getWorkEstOneFiring((FilterTraceNode)current));
                 
@@ -305,7 +325,7 @@ public abstract class Partitioner {
                                 getFilterWorkSteadyMult((FilterTraceNode)current) : 
                                     occ);
                                 
-                SpaceTimeBackend.println("Setting occupancy (forward) for " + current + " " + 
+                CommonUtils.println_debugging("Setting occupancy (forward) for " + current + " " + 
                         filterOccupancy.get((FilterTraceNode)current));
                 
                 prev = current;
@@ -334,7 +354,7 @@ public abstract class Partitioner {
                 //now if the backward occupancy is more than the forward occupancy, 
                 //use the backward occupancy
                 if (occ > getFilterOccupancy((FilterTraceNode)current)) {
-                    SpaceTimeBackend.println("Setting occupancy (back) for " + current + " " + occ);   
+                    CommonUtils.println_debugging("Setting occupancy (back) for " + current + " " + occ);   
                     filterOccupancy.put((FilterTraceNode)current, new Integer(occ));
                 }
                 next = current;
@@ -397,7 +417,7 @@ public abstract class Partitioner {
                            
                 
                 //record the startup cost
-                SpaceTimeBackend.println("StartupCost: " + node + " " + myLag);
+                CommonUtils.println_debugging("StartupCost: " + node + " " + myLag);
                 filterStartupCost.put(node, new Integer(myLag));
                 
                 //reset the prev node and the prev startup cost...

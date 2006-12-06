@@ -1,5 +1,6 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.InputTraceNode;
@@ -161,7 +162,7 @@ public class TraceDotGraph {
         } catch (Exception e) {
 
         }
-        SpaceTimeBackend.println("Finished Creating Trace Dot Graph");
+        CommonUtils.println_debugging("Finished Creating Trace Dot Graph");
     }
 
     private static String nodeNoLabel(TraceNode node) {

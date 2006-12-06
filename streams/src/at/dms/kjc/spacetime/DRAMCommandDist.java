@@ -5,6 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.Iterator;
 
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.Edge;
 
 /**
@@ -115,12 +116,12 @@ public class DRAMCommandDist {
                     interReads[buf.getDRAM().port]++;
                 }
                 //the write for the intra-trace-node
-                interWrites[trace.getSrcIntraBuf().getDRAM().port]++;
+                interWrites[IntraTraceBuffer.getSrcIntraBuf(trace).getDRAM().port]++;
             }
             if (!OffChipBuffer.unnecessary(trace.getTail())) {
                 //if we have an outputtracenode that splits, count its read
                 //and all of its writes
-                interReads[trace.getDstIntraBuf().getDRAM().port]++;
+                interReads[IntraTraceBuffer.getDstIntraBuf(trace).getDRAM().port]++;
                 Iterator dsts = trace.getTail().getDestSet().iterator();
                 while (dsts.hasNext()) {
                     Edge edge = (Edge)dsts.next();
@@ -129,17 +130,17 @@ public class DRAMCommandDist {
                 }
             }
             //now account for the read of the intra-trace-buffer 
-            intraReads[trace.getSrcIntraBuf().getDRAM().port]++;
+            intraReads[IntraTraceBuffer.getSrcIntraBuf(trace).getDRAM().port]++;
             //now account for the write of the intra-trace-buffer
-            intraWrites[trace.getDstIntraBuf().getDRAM().port]++;
+            intraWrites[IntraTraceBuffer.getDstIntraBuf(trace).getDRAM().port]++;
         }
     }
     
     public void printDramCommands() {
         for (int i = 0; i < intraReads.length; i++) {
-            SpaceTimeBackend.println("intra DRAM " + i + ": " + 
+            CommonUtils.println_debugging("intra DRAM " + i + ": " + 
                     intraReads[i] + " reads " + intraWrites[i] + " writes.");
-            SpaceTimeBackend.println("inter DRAM " + i + ": " + 
+            CommonUtils.println_debugging("inter DRAM " + i + ": " + 
                     interReads[i] + " reads " + interWrites[i] + " writes.");
         }
     }

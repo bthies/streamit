@@ -10,12 +10,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Random;
+
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the
@@ -562,7 +559,7 @@ public class BufferDRAMAssignment {
         StreamingDram dram = getHomeDevice(tile);
         // assign the buffer to the dram
         
-        SpaceTimeBackend.println("Assigning (" + input + "->" + input.getNext()
+        CommonUtils.println_debugging("Assigning (" + input + "->" + input.getNext()
                                  + " to " + dram + ")");
         IntraTraceBuffer.getBuffer(input, filter).setDRAM(dram);
         IntraTraceBuffer.getBuffer(input, filter).

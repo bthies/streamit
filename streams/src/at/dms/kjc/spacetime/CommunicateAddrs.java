@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
 import at.dms.kjc.*;
+import at.dms.kjc.common.CommonUtils;
 
 /**
  * This class will generate code to allocate the off chip buffers on the necessary
@@ -184,7 +185,7 @@ public class CommunicateAddrs
                 //pointer on homeTile and communicate the address for both init and steady...
                 if (allocatingTile != homeTile) {
                     homeTile.setComputes();
-                    SpaceTimeBackend.println("Need to communicate buffer address from " + 
+                    CommonUtils.println_debugging("Need to communicate buffer address from " + 
                             allocatingTile + " to " + homeTile);
                     //generate the switch code to send the addresses
                     RawTile[] dest = {homeTile};

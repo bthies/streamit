@@ -15,11 +15,13 @@ import at.dms.kjc.spacetime.Trace;
 public class Util {
 
     /**
-     * Get a traversal (linked list) that includes all the trace nodes of the
-     * given trace traversal.
+     * Get a traversal (linked list iterator) that includes all the trace nodes of the
+     * given trace traversal.  Inserting or removing in the returned iterator will not
+     * affect the list passed to traceNodeTraversal.  Altering the individual TreceNode's
+     * will alter the TraceNode's in the original list.
      * 
-     * @param traces
-     * @return A LinkedList of TraceNodes.
+     * @param traces a list of TraceNodes.
+     * @return An Iterator of TraceNodes.
      */
     public static Iterator<TraceNode> traceNodeTraversal(List traces) {
         LinkedList<TraceNode> trav = new LinkedList<TraceNode>();

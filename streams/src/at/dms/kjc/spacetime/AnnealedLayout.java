@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.SimulatedAnnealing;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
@@ -127,7 +128,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         simAnnealAssign(5, 300);
         printLayoutStats();
         for (int i = 0; i < filterList.size(); i++) 
-            SpaceTimeBackend.println(filterList.get(i) + " is assigned to " + 
+            CommonUtils.println_debugging(filterList.get(i) + " is assigned to " + 
                     assignment.get(filterList.get(i)));
         //run assignbuffers at the end!
         assignBuffers.run(spaceTime, this);

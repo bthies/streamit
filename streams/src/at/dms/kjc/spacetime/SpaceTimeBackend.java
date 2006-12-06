@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
@@ -283,9 +284,9 @@ public class SpaceTimeBackend {
         if (!KjcOptions.nopartition) {
             FlattenGraph.flattenGraph(str, lfa, executionCounts);
             topNodes = FlattenGraph.getTopLevelNodes();
-            println("Top Nodes:");
+            CommonUtils.println_debugging("Top Nodes:");
             for (int i = 0; i < topNodes.length; i++)
-                println(topNodes[i].toString());
+                CommonUtils.println_debugging(topNodes[i].toString());
         }    
         Trace[] traces = null;
         Trace[] traceGraph = null; 
@@ -294,15 +295,15 @@ public class SpaceTimeBackend {
         Partitioner partitioner = null;
         if (KjcOptions.autoparams) {
             partitioner = new AdaptivePartitioner(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip);
+                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
         } if (KjcOptions.nopartition) {
             partitioner = new FlattenAndPartition(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip);
+                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
             ((FlattenAndPartition)partitioner).flatten(str, executionCounts);
         }
         else { 
             partitioner = new SimplePartitioner(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip);
+                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
         }
 
         traceGraph = partitioner.partition();
@@ -490,11 +491,6 @@ public class SpaceTimeBackend {
     
     public static RawChip getRawChip() {
         return rawChip;
-    }
-    
-    public static void println(String s) {
-        if (KjcOptions.debug)
-            System.out.println(s);
     }
 }
 

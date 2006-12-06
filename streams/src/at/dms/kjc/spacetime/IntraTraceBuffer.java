@@ -148,4 +148,21 @@ public class IntraTraceBuffer extends OffChipBuffer {
         }
     }
 
+    /**
+     * @param t a trace.
+     * @return The intratraceBuffer between the last filter and the outputtracenode
+     */
+    public static IntraTraceBuffer getDstIntraBuf(Trace t) {
+        return getBuffer(t.getTail().getPrevFilter(), t.getTail());
+    }
+
+    /**
+     * @param t a trace.
+     * @return The intratracebuffer between the inputtracenode 
+     * and the first filtertracenode
+     */
+    public static IntraTraceBuffer getSrcIntraBuf(Trace t) {
+        return getBuffer(t.getHead(), t.getHead().getNextFilter());
+    }
+
 }

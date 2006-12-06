@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
@@ -64,21 +65,21 @@ public class DirectCommunication extends RawExecutionCode
         //    return false;
     
         if (filter.isTwoStage()) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Two Stage");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Two Stage");
             return false;
         }
         if (fi.remaining > 0) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Remaining = " +
+            CommonUtils.println_debugging(filter + " can't use direct comm: Remaining = " +
                                      fi.remaining);
             return false;
         }
         if (fi.peek > fi.pop) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Peeking");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Peeking");
             return false;     
         }
     
         if (PeekFinder.findPeek(filter.getWork())) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Peek Statement");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Peek Statement");
             return false;
         }
         
@@ -89,21 +90,21 @@ public class DirectCommunication extends RawExecutionCode
         // pops are intermixed, because the pops will use the dynamic network
         // and the switch will only be used for the pushes...
         if (!dynamicInput && PushBeforePop.check(filter.getWork())) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Push before pop");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Push before pop");
             return false;
         }
     
         //must popping a scalar
         if (filter.getInputType().isClassType() ||
             filter.getInputType().isArrayType()) {
-            SpaceTimeBackend.println(filter + " can't use direct comm: Input not scalar");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Input not scalar");
             return false;
         }
     
         //must be pushing a scalar
         if (filter.getOutputType().isClassType() ||
             filter.getOutputType().isArrayType()) {    
-            SpaceTimeBackend.println(filter + " can't use direct comm: Output not scalar");
+            CommonUtils.println_debugging(filter + " can't use direct comm: Output not scalar");
             return false;
         }
     

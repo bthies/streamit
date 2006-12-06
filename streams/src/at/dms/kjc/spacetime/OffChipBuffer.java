@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.FilterTraceNode;
 import at.dms.kjc.slicegraph.InputTraceNode;
 import at.dms.kjc.slicegraph.OutputTraceNode;
@@ -113,7 +114,7 @@ public abstract class OffChipBuffer {
         //assert !redundant() : "calling setDRAM() on redundant buffer";
         this.dram = DRAM;
         
-        SpaceTimeBackend.println("Assign " + this.toString() + " to " + DRAM);
+        CommonUtils.println_debugging("Assign " + this.toString() + " to " + DRAM);
         //System.out.println("Assign " + this.toString() + " to " + DRAM);
     }
 

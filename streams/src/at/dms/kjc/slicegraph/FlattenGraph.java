@@ -9,6 +9,9 @@ import at.dms.kjc.sir.linear.*;
 /**
  * Flatten graph with new synch removal. Removes structure and reveals
  * inherit graph of data flow.
+ * 
+ * Jasper's old version obsoleted by {@link SynchRemover} ??
+ * 
  * @author jasperln
  */
 public class FlattenGraph {

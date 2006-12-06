@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Vector;
+
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
@@ -173,7 +175,7 @@ public class BufferedCommunication extends RawExecutionCode
             maxpeek = (filterInfo.prePeek > maxpeek) ? filterInfo.prePeek : maxpeek;
         
         
-            SpaceTimeBackend.println(filterInfo.filter.getName() + " remaining: " + filterInfo.remaining);
+            CommonUtils.println_debugging(filterInfo.filter.getName() + " remaining: " + filterInfo.remaining);
             if (filterInfo.isSimple()) {
                 //simple filter (no remaining items)
                 if (KjcOptions.ratematch) {
@@ -945,7 +947,7 @@ public class BufferedCommunication extends RawExecutionCode
             receiveMethodName = structReceiveMethodPrefix  + type.toString();
         }
 
-        SpaceTimeBackend.println(generatedVariables.recvBuffer.toString());
+        CommonUtils.println_debugging(generatedVariables.recvBuffer.toString());
         //create the array access expression to access the buffer 
         JArrayAccessExpression arrayAccess = 
             new JArrayAccessExpression(null,

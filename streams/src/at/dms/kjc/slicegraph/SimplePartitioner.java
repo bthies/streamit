@@ -1,16 +1,12 @@
 package at.dms.kjc.slicegraph;
 
 import java.util.*;
-import java.io.FileWriter;
-
 import at.dms.kjc.KjcOptions;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
-import at.dms.util.Utils;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.spacetime.LinearFission;
-import at.dms.kjc.spacetime.RawChip;
-import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.spacetime.Trace;
 
 /**
@@ -34,8 +30,8 @@ public class SimplePartitioner extends Partitioner {
    
     
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
-                             LinearAnalyzer lfa, WorkEstimate work, RawChip rawChip) {
-        super(topFilters, exeCounts, lfa, work, rawChip);
+                             LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
+        super(topFilters, exeCounts, lfa, work, maxPartitions);
         workEstimation = new HashMap<FilterContent, Integer>();
         TRASHOLD = (double)KjcOptions.slicethresh / (double)100.0;
         System.out.println("Trace Work Threshold: " + TRASHOLD + "(" + KjcOptions.slicethresh + ")");
@@ -105,11 +101,11 @@ public class SimplePartitioner extends Partitioner {
                         int times = filterContent.getArray().length
                             / filterContent.getPopCount();
                         if (times > 1) {
-                            assert rawChip.getTotalTiles() == 16 : "Only 4x4 layouts supported right now";
+                            //assert rawChip.getTotalTiles() == 16 : "Only 4x4 layouts supported right now";
 
                             // for now force to execute on 16 tiles
-                            if (times > rawChip.getTotalTiles())
-                                times = rawChip.getTotalTiles();
+                            if (times > maxPartitions)
+                                times = maxPartitions;
                             // fiss the filter into times elements
                             FilterContent[] fissedFilters = LinearFission.fiss(
                                                                                filterContent, times);
@@ -302,30 +298,30 @@ public class SimplePartitioner extends Partitioner {
             // going for
             // none-predefined nodes
             if (unflatFilter.filter instanceof SIRPredefinedFilter) {
-                SpaceTimeBackend.println("Cannot continue trace: (Source) "
+                CommonUtils.println_debugging("Cannot continue trace: (Source) "
                                    + unflatFilter.filter + " is predefined");
                 return false;
             }
 
             // don't continue if the next filter is predefined
             if (dest.filter instanceof SIRPredefinedFilter) {
-                SpaceTimeBackend.println("Cannot continue trace(Dest): "
+                CommonUtils.println_debugging("Cannot continue trace(Dest): "
                                    + dest.filter + " is predefined");
                 return false;
             }
 
             // cut out linear filters
             if (isLinear || dest.isLinear()) {
-                SpaceTimeBackend
-                    .println("Cannot continue trace: Source and Dest are not congruent linearly");
+                CommonUtils
+                    .println_debugging("Cannot continue trace: Source and Dest are not congruent linearly");
                 return false;
             }
 
             // check the size of the trace, the length must be less than number
             // of tiles + 1
-            if (newTotalFilters > rawChip.getTotalTiles()) {
-                SpaceTimeBackend
-                    .println("Cannot continue trace: Filters == number of tiles");
+            if (newTotalFilters > maxPartitions) {
+                CommonUtils
+                    .println_debugging("Cannot continue trace: Filters > maximum alowable number of partitions");
                 return false;
             }
 

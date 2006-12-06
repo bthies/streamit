@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Vector;
+
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.spacetime.switchIR.*;
 
 import java.util.LinkedList;
@@ -185,7 +187,7 @@ public class SwitchCodeStore {
         
             while (it.hasNext()) {
                 next = it.next();
-                SpaceTimeBackend.println("    Route on " + current + ": " + prev + "->" + next);
+                CommonUtils.println_debugging("    Route on " + current + ": " + prev + "->" + next);
                 //only add the instructions to the raw tile
                 if (current instanceof RawTile) {
                     //create the route instruction if it does not exist

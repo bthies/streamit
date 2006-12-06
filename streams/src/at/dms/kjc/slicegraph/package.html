@@ -22,74 +22,122 @@
 </head>
 <body>
 <p>
-This package aims to supersede the SIR and flatgraph representations of the stream graph with a single representation that maintains all relevant information as well as slice information.
-</p>
-<p>
-It was written as part of the {@link at.dms.kjc.spacedynamic} backend, and may still contain backend-specific code.
+This package aims to supersede the SIR and flatgraph representations
+of the stream graph with a single representation that maintains all
+relevant information as well as slice information. 
+The package contains the slice data structures, but omits manipulation
+of the data structures in ways that are not general: in particular,
+software pipelining algorithms from ASPLOS'06 are not in this package,
 </p>
 <p>Class notes for my edification:
 <ul>
 <li>
-{@link at.dms.kjc.spacetime.Trace} (now called a Slice) is still in spacetime, and should be moved.  It defines a collection of TraceNodes, started with an InputTraceNode.  It has some references to {@link at.dms.kjc.spacetime.IntraTraceBuffer} (a class with raw-specific code), but these references could be factored out.
+{@link at.dms.kjc.spacetime.Trace} is still in spacetime, and should
+be moved.  It defines a collection of TraceNodes, started with an
+InputTraceNode.
+For people used to the SIR representation, a slice can be thought of
+as a joiner (InputTraceNode), followed by a pipeline of filters
+(FilterTraceNode), followed by a splitter (OutputTraceNode).
 </li><li>
-{@link TraceNode} abstract class with previous and next TraceNode's and parent Trace. 
+{@link TraceNode} abstract class with previous and next TraceNode's
+(internal connections within a slice) and with a parent Trace. 
   <ul>
   <li> 
-  {@link InputTraceNode} manages an array of Edge's called "sources"
+  {@link InputTraceNode} manages an array of Edge's: "sources"
   </li><li>
-  {@link OutputTraceNode} manages an array of arrays of Edges called "dests"
+  {@link OutputTraceNode} manages an array of arrays of Edge's: "dests"
   </li><li>
   {@link FilterTraceNode} contains FilterContent.
   </li>
   </ul>
 </li><li>
-{@link Edge} class gives connection between slices (actually between InputTraceNode and OutputTraceNode), and may be queried for type, number of items sent on edge at init, at prime, and steady state times.  
+{@link Edge} class gives connection between slices (actually between an
+InputTraceNode and an OutputTraceNode), and may be queried for type,
+number of items sent on edge at init, at priming, and steady state
+times.  TraceNode's within a slice are connected as a simple
+doubly-linked list.  (Note that the priming information for an edge is
+not calculated in the slicegraph package).
 
-Its relationship to {@link at.dms.kjc.spacetime.IntraTraceBuffer} is not clear from the comments.  Presumably an Edge is inter-slice, but how the intra-slice connections fit in is unclear.
 </li><li>
-{@link FilterContent} keeps information about a filter, including init and steady scheduling multiplicities, and information about linear (but not linear statespace) filters.  You can construct a FilterContent from a {@link at.dms.kjc.sir.SIRPhasedFilter}, from a {@link UnflatFilter} (including a linear one), or by shallow copy from another {@link FilterContent}.  The subclass {@link PredefinedContent} seems to exist only for "instanceof"
+{@link FilterContent} keeps information about a filter, including init
+and steady scheduling multiplicities, and information about linear
+(but not linear statespace) filters.  You can construct a
+FilterContent from a {@link at.dms.kjc.sir.SIRPhasedFilter}, from a
+{@link UnflatFilter} (including a linear one), or by shallow copy from
+another {@link FilterContent}.  The subclass {@link PredefinedContent}
+seems to exist only for "instanceof" 
   <ul>
   <li>
-  {@link InputContent} has a single subclass {@link FileInputContent} which remembers a file name, can be constructed from a SIRFileReader.
+  {@link InputContent} has a single subclass {@link FileInputContent}
+  which remembers a file name, can be constructed from a
+  SIRFileReader. 
   </li><li>
-  {@link OutputContent} has a single subclass {@link FileOutputContent} which remembers a file name, can be constructed from s SIRFileWriter, and allows a value to be set for expected number of outputs.
+  {@link OutputContent} has a single subclass {@link
+  FileOutputContent} which remembers a file name, can be constructed
+  from a SIRFileWriter, and allows a value to be set for expected
+  number of outputs. 
   </li>
   </ul>
 </li><li>
-{@link FlattenGraph} takes a SIRStream, a linear analyzer, and what appears to be init and steady state execution counts.  It performs the linear analysis and synchronization removal.  It can be queried to get top level {@link UnflatFilter}s.
+{@link FlattenGraph} takes a SIRStream, a linear analyzer, and what
+appears to be init and steady state execution counts.  It performs the
+linear analysis and synchronization removal.  It can be queried to get
+top level {@link UnflatFilter}s.
+<ul><li>
+I have been told that FlattenGraph is soon to be obsoleted in favor of 
+{@link SynchRemover}
+</li></ul>
 </li><li>
-{@link Partitioner} is an abstract class defining the partitioning of a graph to be an array of Trace's. It requires UnflatFilter's from {@link FlattenGraph}, a schedule, linear analyzer, work estimate, and a {@link at.dms.kjc.spacetime.RawChip}, which presumably makes it Raw-specific. It can be queried for an array of {@link at.dms.kjc.spacetime.Trace} nodes.
+{@link SynchRemover} is not currently called from anywhere. Should be soon.
+</li><li>
+{@link Partitioner} is an abstract class defining the partitioning of
+a graph to be an array of Trace's. It requires UnflatFilter's from
+{@link FlattenGraph}, a schedule, linear analyzer, work estimate, and
+a bound on the number of partitions to be created (which may be
+ignored by any particular implementation).
+A Partitioner can be queried for an array of {@link at.dms.kjc.spacetime.Trace} nodes. 
   <ul>
   <li>
-  {@link FlattenAndPartition} is used by spacetime for {@link at.dms.kjc.KjcOptions#nopartition}.  Totally uncommented, no idea yet as to how it is supposed to partition.  Uses old {at.dms.kjc.flatgraph.GraphFlattener}.
+  {@link FlattenAndPartition} is used by spacetime for 
+  {@link at.dms.kjc.KjcOptions#nopartition}.  
+  It uses old {at.dms.kjc.flatgraph.GraphFlattener} to flatten the
+  graph, does not attempt synch removal, and partitions as one filter
+  per slice.
   </li><li>
-  {@link AdaptivePartitioner} is used by spacetime for {@link at.dms.kjc.KjcOptions#autoparams}.  It is undocumented, but apparently only works for 16-tile raw.
+  {@link AdaptivePartitioner} is used by spacetime for {@link
+  at.dms.kjc.KjcOptions#autoparams}.  It is undocumented, but
+  apparently only works for 16-tile raw.  Mike says: probably obsolete
+  after being used for some testing for the ASPLOS'06 paper.
   </li><li>
   {@link SimplePartitioner} is used by spacetime as the default partitioner.
-  Each slice should be a pipeline of FilterTraceNode's stared with one InputTraceNode and ending with one OutputTraceNode.
+  Each slice should be a pipeline of FilterTraceNode's stared with one
+  InputTraceNode and ending with one OutputTraceNode. 
   </li>
   </ul>
 </li><li>
-{@link EdgeList}, {@link EdgeArray}, deal with structures of {@link UnflatEdge}
-which, along with {@link UnflatFilter} are used by {@link FlattenGraph}.  The {@link UnflatFilter} contains a {@link at.dms.kjc.sir.SIRFilter}, which is presumably why it is "Unflat"
+{@link EdgeList} and {@link EdgeArray}, deal with structures of 
+{@link UnflatEdge} which, along with {@link UnflatFilter} are used by 
+{@link FlattenGraph}.  
+The {@link UnflatFilter} contains a 
+{@link at.dms.kjc.sir.SIRFilter}, which is presumably why it is "Unflat"
 </li><li>
-{@link PeekPopPushInHelper} determines whether any functions other than the work function access the tape.  It operates on both FilterContent and on SIRFilter.
+{@link PeekPopPushInHelper} determines whether any functions other
+than the work function access the tape.  It operates on both
+FilterContent and on SIRFilter. 
 </li><li>
-{@link DataFlowOrder} produces a list of Traces (Slices) in reverse depth-first order.  It is referred to from a number of places in spacetime, but not from elsewhere in slicegraph.  However, slicegraph is a good place for this general utility on slices.
+{@link DataFlowOrder} produces a list of Traces (Slices) in reverse
+depth-first order.  It is referred to from a number of places in
+spacetime, but not from elsewhere in slicegraph.  However, slicegraph
+is a good place for this general utility on slices.
 </li><li>
-{@link IntList} primitive list implementation used in {@link FlattenGraph}.
-{@link IntArrayList} is unused and should be removed.
+{@link IntList} primitive list implementation used in {@link
+FlattenGraph}.
 </li><li>
+<!-- {@link IntArrayList} is unused and should be removed.</li><li> -->
 {@link Util} contains utility routines for the slice graph.
-</li><li>
-{@link SynchRemover} is not called from anywhere.  Should it be removed?
-</li><li>
-Should {@link at.dms.kjc.spacetime.GeneratePrimePumpSchedule} and 
-{@link at.dms.kjc.spacetime.GenerateSteadyStateSchedule} become part of 
-slicegraph?
 </li>
 </ul>
 </p>
-
+TODO: update when SynchRemover in place!
 </body>
 </html>

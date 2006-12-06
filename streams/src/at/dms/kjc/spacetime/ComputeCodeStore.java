@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.sir.*;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -401,7 +402,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 new JFieldAccessExpression(null, new JThisExpression(null), rotStructName),
                 new JNameExpression(null, null, rotStructName + "->next"));
         
-        SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
+        CommonUtils.println_debugging("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         
         // add the statements to the appropriate stage
@@ -527,7 +528,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 new JNameExpression(null, null, rotStructName + "->next"));
         
         
-        SpaceTimeBackend.println("Adding DRAM Command to " + parent + " "
+        CommonUtils.println_debugging("Adding DRAM Command to " + parent + " "
                                  + buffer + " " + cacheLines);
         // add the statements to the appropriate stage
         if (init || primepump) {

@@ -5,6 +5,7 @@ package at.dms.kjc.spacetime;
 
 import java.util.*;
 
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 /**
  * This class operates on the SpaceTimeSchedule and generates the preloop
@@ -41,7 +42,7 @@ public class GeneratePrimePumpSchedule {
               
         //keep adding traces to the schedule until all traces can fire 
         while (!canEverythingFire(dataFlowTraversal)) {
-            SpaceTimeBackend.println("Pre-loop Scheduling Step...");
+            CommonUtils.println_debugging("Pre-loop Scheduling Step...");
             //the traces that are firing in the current step...
             LinkedList<Trace> currentStep = new LinkedList<Trace>();
            
@@ -51,7 +52,7 @@ public class GeneratePrimePumpSchedule {
                 //if the trace can fire, then fire it in this init step
                 if (canFire(trace)) {
                     currentStep.add(trace);
-                    SpaceTimeBackend.println("  Adding " + trace);
+                    CommonUtils.println_debugging("  Adding " + trace);
                 }
             }
             recordFired(currentStep);

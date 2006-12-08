@@ -155,7 +155,10 @@ public class CollapseDataParallelism {
                 }
             });
         // somewhere I missed a parent child :(
-        ((SIRContainer)str).reclaimChildren();
+        // may be a pathological program such as a single filter :)  A.D.
+        if (str instanceof SIRContainer) {
+            ((SIRContainer)str).reclaimChildren();
+        }
         // eliminate wrapper pipelines
         Lifter.lift(str);
     }

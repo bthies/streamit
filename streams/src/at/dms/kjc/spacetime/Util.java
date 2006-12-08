@@ -9,6 +9,8 @@ import java.util.Collection;
 //import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
@@ -450,5 +452,26 @@ public class Util {
                 return 0;
         }
         return 0;
+    }
+
+    /**         
+     * Determine if this input slice node reads from a single source and the source is a file device.
+     * @param node The InputSliceNode to check
+     * @return true if reads file device as its single source
+     */
+    public static boolean onlyFileInput(InputSliceNode node) {
+        // get this buffer or this first upstream non-redundant buffer
+        OffChipBuffer buffer = 
+            IntraSliceBuffer.getBuffer(node, node.getNextFilter()).getNonRedundant();
+        
+        if (buffer == null)
+            return false;
+        
+        //if not a file reader, then we might have to align the dest
+        if (buffer.getDest() instanceof OutputSliceNode
+                && ((OutputSliceNode) buffer.getDest()).isFileInput())
+            return true;
+        
+        return false;
     }
 }

@@ -664,7 +664,7 @@ public class Rawify {
                 assert false : "For InputSliceNode: " + filterNode +  
                 "must be at home time of DRAM or use GDN!";
             
-                if (((InputSliceNode)filterNode.getPrevious()).onlyFileInput())
+                if (Util.onlyFileInput((InputSliceNode)filterNode.getPrevious()))
                     nonRedBuffer.getOwner().getComputeCode().addFileGDNReadCommand
                     (init || primepump, words, nonRedBuffer, 
                             layout.getTile(filterNode));
@@ -678,7 +678,7 @@ public class Rawify {
                 //generate commands to get the input for the filter from a dram or from 
                 //a file, use the non-redundant upstream buffer for the address, but
                 //this buffer's network assignment
-                if (((InputSliceNode)filterNode.getPrevious()).onlyFileInput())
+                if (Util.onlyFileInput((InputSliceNode)filterNode.getPrevious()))
                     nonRedBuffer.getOwner().getComputeCode().addFileCommand(true, 
                             init || primepump, words, nonRedBuffer, buffer.isStaticNet());
                 else
@@ -1902,7 +1902,7 @@ public class Rawify {
             //don't worry about handling non-cache-sized transfers if the
             //source is a file reader, use the upstream non-redundant buffer
             //for this because it is the one that is connect to the file reader
-            if (((InputSliceNode)node.getPrevious()).onlyFileInput())
+            if (Util.onlyFileInput((InputSliceNode)node.getPrevious()))
                 cacheAlignSource = false;
             
             //don't generate switch code for receiving if this filter is the

@@ -488,7 +488,7 @@ public abstract class RawExecutionCode
             //reader, because we do not align file readers
             InputSliceNode input = (InputSliceNode)filterInfo.traceNode.getPrevious();            
             //if not a file reader, then we might have to align the dest
-            if (!input.onlyFileInput() && wordsReceived > 0 &&
+            if (!Util.onlyFileInput(input) && wordsReceived > 0 &&
                     wordsReceived % RawChip.cacheLineWords != 0) {
                 //calculate the number of words that we have to send and receive in 
                 //order to complete the dram transactions

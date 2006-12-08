@@ -4,8 +4,6 @@ import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import at.dms.kjc.spacetime.IntraSliceBuffer;
-import at.dms.kjc.spacetime.OffChipBuffer;
 import at.dms.kjc.*;
 
 /**
@@ -308,26 +306,6 @@ public class InputSliceNode extends SliceNode {
         }
     }
     
-    /**         
-     * @return true if this input slice node reads from a single source
-     * and the source is a file device.
-     */
-    public boolean onlyFileInput() {
-        // get this buffer or this first upstream non-redundant buffer
-        OffChipBuffer buffer = 
-            IntraSliceBuffer.getBuffer(this, getNextFilter()).getNonRedundant();
-        
-        if (buffer == null)
-            return false;
-        
-        //if not a file reader, then we might have to align the dest
-        if (buffer.getDest() instanceof OutputSliceNode
-                && ((OutputSliceNode) buffer.getDest()).isFileInput())
-            return true;
-        
-        return false;
-    }
-
     public CType getType() {
         return getNextFilter().getFilter().getInputType();
     }

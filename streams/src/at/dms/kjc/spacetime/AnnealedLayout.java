@@ -5,11 +5,12 @@ import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.SimulatedAnnealing;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,7 +41,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /** multiply the communication estimate of the layout by this */
     private static double COMM_MULTIPLIER = 1.0;
     
-    /** the added weight of the latency of a intertracebuffer that 
+    /** the added weight of the latency of a interslicebuffer that 
      * is connected to a big worker tile.
      */
     private static final int BIG_WORKER_COMM_LATENCY_WEIGHT = 1;
@@ -52,7 +53,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /** the space time schedule object, with different schedules */
     private SpaceTimeSchedule spaceTime;
     /** A list of filters that need to be assigned to tiles */
-    private LinkedList<TraceNode> filterList;
+    private LinkedList<SliceNode> filterList;
     /** The partitioner we used to partitioner the SIR graph into slices */
     private Partitioner partitioner;
     /** the number of tiles in the raw chip */
@@ -60,23 +61,23 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /** the raw tiles, so we don't have to call rawChip */
     private RawTile tiles[];
     /** used to get a random sequence of directions to try from 
-     * a tile when calc'ing a new random layout for a trace
+     * a tile when calc'ing a new random layout for a slice
      */
     private static String[] dirStrings;
     /** the tile that has the max work at the current step */ 
     private int maxWorkTile;
-    /** Set of FilterTraceNodes of the Filters that write to slice that are file writers
+    /** Set of FilterSliceNodes of the Filters that write to slice that are file writers
      * This is not the file writers themselves, but the last filter of the slice upstream 
      * of the file writer slice. 
      * */
     private HashSet fileWriters;
-    /** Set of FilterTraceNodes of the Filters that read from slice that are file readers
+    /** Set of FilterSliceNodes of the Filters that read from slice that are file readers
      * This is not the file readers themselves, but the first filter of the slice downstream 
      * of the file reader slice. 
      * */
     private HashSet fileReaders;
-    /** The order the traces will be scheduled, so sorted by bottleneck work */
-    private LinkedList<Trace> scheduleOrder;
+    /** The order the slices will be scheduled, so sorted by bottleneck work */
+    private LinkedList<Slice> scheduleOrder;
     /** The class that performs the buffer to DRAM assignment */
     private BufferDRAMAssignment assignBuffers;
     /** the total work all the tiles for the current layout */
@@ -103,12 +104,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getTraceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
         } else {
-            //if we are software pipelining then sort the traces by work
-            Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
-            Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
-            scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
+            //if we are software pipelining then sort the slices by work
+            Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
+            scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
         }
@@ -146,7 +147,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * 
      * Must call {@link AnnealedLayout#run} first.
      */
-    public RawTile getTile(FilterTraceNode filter) {
+    public RawTile getTile(FilterSliceNode filter) {
         assert assignment.containsKey(filter) : 
             "AnnealedLayout does have a mapping for " + filter;
         //assert !partitioner.isIO(filter.getParent());
@@ -154,7 +155,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
         
     /**
-     * Set the underlying assigment of FilterTraceNode's -> RawTiles
+     * Set the underlying assigment of FilterSliceNode's -> RawTiles
      * to the newAssignment HashMap.
      * 
      * @param newAssignment The assignment to use.
@@ -211,7 +212,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     
     
     /** 
-     * Find a new assignment for a trace that does not increase the
+     * Find a new assignment for a slice that does not increase the
      * critical path.
      *
      */
@@ -220,13 +221,13 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         HashMap oldAssign = (HashMap)assignment.clone();
         
         int newMaxWork = 0;
-        Trace trace = null;
+        Slice slice = null;
         int attempts = 0;
         while (true) {
             attempts++;
-            trace = partitioner.getTraceGraph()[getRandom(partitioner.getTraceGraph().length)];
+            slice = partitioner.getSliceGraph()[getRandom(partitioner.getSliceGraph().length)];
                     
-            newTraceAssignment(trace.getHead().getNextFilter());
+            newSliceAssignment(slice.getHead().getNextFilter());
             
             newMaxWork = maxTileWork(getTileWorks(false));
             
@@ -242,27 +243,27 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 return;
         }
 
-        assert trace != null;
+        assert slice != null;
         
     }
     
     /** 
-     * perturb the configuration by finding a new layout for a single trace.
+     * perturb the configuration by finding a new layout for a single slice.
      *
      */
     public void swapAssignmentLegal() {
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         
         
-        Trace reassignMe = traces[getRandom(traces.length)];
+        Slice reassignMe = slices[getRandom(slices.length)];
         while (partitioner.isIO(reassignMe)) { 
-            reassignMe = traces[getRandom(traces.length)];
+            reassignMe = slices[getRandom(slices.length)];
         }
         
         //System.out.print("Reassigning " + reassignMe + " from "
         //        + getTile(reassignMe.getHead().getNextFilter()));
         
-        assert newTraceAssignment(reassignMe.getHead().getNextFilter()) :
+        assert newSliceAssignment(reassignMe.getHead().getNextFilter()) :
             "Error: could not find a legal layout for " + reassignMe + " during layout";
        //System.out.println(" to " + getTile(reassignMe.getHead().getNextFilter()));
     }
@@ -292,27 +293,27 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @param node The node that will be assigned to tile.
      * @param tile The tile to assign node to.
      */
-    public void setTile(FilterTraceNode node, RawTile tile) {
+    public void setTile(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
     /**
      * A recursive function that will find a new layout for a slice. 
-     * For the TraceNode node, try to layout it and the remaining
-     * TraceNodes of its slice.  We start by selecting a random starting
+     * For the SliceNode node, try to layout it and the remaining
+     * SliceNodes of its slice.  We start by selecting a random starting
      * tile for the first node of the slice and then snake the slice along
      * the chip randomly.  If at anytime we cannot continue, return false, 
      * and the caller will try a new direction for the next node.  If nothing 
      * is legal, return false.  The false will propagate to the root.  
      * 
      * @param newAssign
-     * @param node  call with first filterTraceNode of trace
-     * @return true if we successfully laid out the trace, 
+     * @param node  call with first filterSliceNode of slice
+     * @return true if we successfully laid out the slice, 
      * it should alway return true when finished recursing. 
      */
-    private boolean newTraceAssignment(TraceNode node) {
+    private boolean newSliceAssignment(SliceNode node) {
         //we are finished
-        if (node.isOutputTrace()) {
+        if (node.isOutputSlice()) {
 	    //check the assignment of the previous filter 
 	    //if it is a file writer, to make sure the tile
 	    //is legal
@@ -329,10 +330,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
 	}
 	
 
-        //if we get here we are a filterTraceNode 
-        FilterTraceNode filter = node.getAsFilter();
+        //if we get here we are a filterSliceNode 
+        FilterSliceNode filter = node.getAsFilter();
         
-        if (node.getPrevious().isInputTrace()) {
+        if (node.getPrevious().isInputSlice()) {
             //Choose a random tile for the initial placement
             RawTile tile = null;
 	    //set of tiles we have tried, no dups...
@@ -355,7 +356,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     continue;
                 */
 		setTile(filter, tile);
-		if (newTraceAssignment(node.getNext()))
+		if (newSliceAssignment(node.getNext()))
 		    return true;
 	    }
 	    //if we get here, we have failed to find a layout.
@@ -372,10 +373,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 if (tile == null)
                     continue;
                 
-                //see if any of the previous filters of the trace were mapped to this
+                //see if any of the previous filters of the slice were mapped to this
                 //tile if so continue
                 boolean prevMap = false;
-                TraceNode prevNode = filter.getPrevious();
+                SliceNode prevNode = filter.getPrevious();
                 while (assignment.containsKey(prevNode)) {
                     if (tile == assignment.get(prevNode)){
                         prevMap = true;
@@ -391,7 +392,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 //assign this filter to the tile in this direction
                 setTile(filter, tile);
                 //try the assignment to the tile in this direction
-                if (newTraceAssignment(node.getNext()))
+                if (newSliceAssignment(node.getNext()))
                     return true; //if it worked return!
                 else
                     continue; //if not, try another direction if there are more
@@ -414,20 +415,20 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * other file reading filters are mapped to this tile.  
      * If so return false.
      * 
-     * Note that when we use file reader, we mean a FilterTraceNode 
+     * Note that when we use file reader, we mean a FilterSliceNode 
      * that is directly connected to a FileReader slice.
      * 
      * @see AnnealedLayout#fileReaders
      * 
-     * @param filter A FilterTraceNode that reads from a file
+     * @param filter A FilterSliceNode that reads from a file
      * @param tile The tile it is currently mapped to.
      * @return false if there are other file readers mapped to this tile.
      */
-    private boolean legalFileReaderTile(FilterTraceNode filter,
+    private boolean legalFileReaderTile(FilterSliceNode filter,
             RawTile tile) {
 	Iterator frs = fileReaders.iterator();
         while (frs.hasNext()) {
-            FilterTraceNode current = (FilterTraceNode)frs.next();
+            FilterSliceNode current = (FilterSliceNode)frs.next();
             if (current == filter) 
                 continue;
             RawTile occupied = (RawTile)assignment.get(current);
@@ -448,21 +449,21 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * that no other filters that writes to a file is mapped to this tile.  
      * If there is one, return false.
      * 
-     * Note that when we use the term file writer, we mean a FilterTraceNode
+     * Note that when we use the term file writer, we mean a FilterSliceNode
      * that outputs to a file, not the FileWriter slice itself.
      * 
      * @see AnnealedLayout#fileWriters
      *  
-     * @param filter A FilterTraceNode that writes to a file.
+     * @param filter A FilterSliceNode that writes to a file.
      * @param tile The RawTile it is currently mapped to.
-     * @return false if another FilterTraceNode that writes to a file is 
+     * @return false if another FilterSliceNode that writes to a file is 
      * mapped to tile.
      */
-    private boolean legalFileWriterTile(FilterTraceNode filter, 
+    private boolean legalFileWriterTile(FilterSliceNode filter, 
             RawTile tile) {
 	Iterator fws = fileWriters.iterator();
 	while (fws.hasNext()) {
-	    FilterTraceNode current = (FilterTraceNode)fws.next();
+	    FilterSliceNode current = (FilterSliceNode)fws.next();
 	    if (current == filter)
 		continue;
 	    RawTile occupied = (RawTile)assignment.get(current);
@@ -480,16 +481,16 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }
     
     /**
-     * For each trace, generate a random legal tile assignment 
+     * For each slice, generate a random legal tile assignment 
      * as the initial layout, but each slice assignment is legal and thus
      * the entire assignment is legal.
      */
     private void legalInitialPlacement() {
-        Trace[] traces = partitioner.getTraceGraph();
-        for (int i = 0; i < traces.length; i++) {
-            //if (!partitioner.isIO(traces[i]))
-            assert newTraceAssignment(traces[i].getHead().getNextFilter()) :
-                "Error: could not find a legal layout for " + traces[i] + " during initial layout";
+        Slice[] slices = partitioner.getSliceGraph();
+        for (int i = 0; i < slices.length; i++) {
+            //if (!partitioner.isIO(slices[i]))
+            assert newSliceAssignment(slices[i].getHead().getNextFilter()) :
+                "Error: could not find a legal layout for " + slices[i] + " during initial layout";
         }
     }
     
@@ -532,12 +533,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @return Return true if all slices are properly snaked across the chip.
      */
     private boolean isLegalLayout() {
-        Iterator<TraceNode> filters = filterList.iterator();
+        Iterator<SliceNode> filters = filterList.iterator();
         
         while (filters.hasNext()) {
-            FilterTraceNode filter = (FilterTraceNode)filters.next();
-            //last filter of a trace, no need to check it          
-            if (filter.getNext().isOutputTrace())
+            FilterSliceNode filter = (FilterSliceNode)filters.next();
+            //last filter of a slice, no need to check it          
+            if (filter.getNext().isOutputSlice())
                 continue;
             
             RawTile myTile = (RawTile)assignment.get(filter);
@@ -600,7 +601,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     }    
     
     private double commCost(int[] tileCosts, RawTile tile) {
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         
         assignBuffers.run(spaceTime, this);
         Router router = new SmarterRouter(tileCosts, rawChip);
@@ -610,27 +611,27 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             commCosts.put(rawChip.getTile(i), 0);
         }
         
-        for (int i = 0; i < traces.length; i++) {
-            Trace trace = traces[i];
-            Iterator edges = trace.getTail().getDestSet().iterator();
+        for (int i = 0; i < slices.length; i++) {
+            Slice slice = slices[i];
+            Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
-                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
+                InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 
                 //nothing is transfered for this buffer.
                 if (buf.redundant())
                     continue;
                 
-                OutputTraceNode output = edge.getSrc();
-                InputTraceNode input = edge.getDest();
+                OutputSliceNode output = edge.getSrc();
+                InputSliceNode input = edge.getDest();
                 StreamingDram bufDRAM = buf.getDRAM();
                
                 
                 
-                if (!IntraTraceBuffer.unnecessary(output)) {
+                if (!IntraSliceBuffer.unnecessary(output)) {
                     StreamingDram outputDRAM = 
-                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
+                        IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
                     Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
@@ -641,9 +642,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     }
                 }
                 
-                if (!IntraTraceBuffer.unnecessary(input)) {
+                if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
-                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                        IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
                     Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
@@ -673,7 +674,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      */
     
     private int reorgCrossRoutes(int[] tileCosts) {
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         int crossed = 0;
         
         assignBuffers.run(spaceTime, this);
@@ -689,27 +690,27 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //of the graph...
         HashSet<ComputeNode> routersUsed = new HashSet<ComputeNode>();
         
-        for (int i = 0; i < traces.length; i++) {
-            Trace trace = traces[i];
-            Iterator edges = trace.getTail().getDestSet().iterator();
+        for (int i = 0; i < slices.length; i++) {
+            Slice slice = slices[i];
+            Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
                // System.out.println(" Checking if " + edge + " crosses.");
-                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
+                InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 
                 //nothing is transfered for this buffer.
                 if (buf.redundant())
                     continue;
                 
-                OutputTraceNode output = edge.getSrc();
-                InputTraceNode input = edge.getDest();
+                OutputSliceNode output = edge.getSrc();
+                InputSliceNode input = edge.getDest();
                 StreamingDram bufDRAM = buf.getDRAM();
                
                 
                 
-                if (!IntraTraceBuffer.unnecessary(output)) {
+                if (!IntraSliceBuffer.unnecessary(output)) {
                     StreamingDram outputDRAM = 
-                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
+                        IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
                     Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
@@ -721,9 +722,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                     }
                 }
                 
-                if (!IntraTraceBuffer.unnecessary(input)) {
+                if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
-                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                        IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
                     Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();
@@ -749,7 +750,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
     /*
     private HashMap<ComputeNode, Integer> commEstimate(int tileCosts[]) {
         int estimate = 0;
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         HashSet<ComputeNode> bigWorkers = new HashSet<ComputeNode>();
         HashMap<ComputeNode, Integer> commCost = 
             new HashMap<ComputeNode, Integer>();
@@ -766,14 +767,14 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //buffer edges are assigned drams by the buffer dram assignment,
         //so we can get a fairly accurate picture of the communication
         //of the graph...
-        for (int i = 0; i < traces.length; i++) {
-            Trace trace = traces[i];
-            Iterator edges = trace.getTail().getDestSet().iterator();
+        for (int i = 0; i < slices.length; i++) {
+            Slice slice = slices[i];
+            Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
-                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
-                OutputTraceNode output = edge.getSrc();
-                InputTraceNode input = edge.getDest();
+                InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
+                OutputSliceNode output = edge.getSrc();
+                InputSliceNode input = edge.getDest();
                 //account for the distance of the connected to/from a
                 //big worker
                 
@@ -784,7 +785,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 //communicate if it goes through a bigWorker
                 if (!OffChipBuffer.unnecessary(output)) {
                     StreamingDram srcDRAM = 
-                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), 
+                        IntraSliceBuffer.getBuffer(output.getPrevFilter(), 
                                 output).getDRAM();
                     StreamingDram dstDRAM = 
                         buf.getDRAM();
@@ -799,7 +800,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
                 if (!OffChipBuffer.unnecessary(input)) {
                     StreamingDram srcDRAM = buf.getDRAM();
                     StreamingDram dstDRAM = 
-                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                        IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
                    //estimate += itemsThroughBigWorkers(bigWorkers, edge,
                    //         srcDRAM, dstDRAM);
                     addHashMaps(commCost, 
@@ -842,7 +843,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * @param src The src DRAM for edge.
      * @param dst The dest DRAM for edge.
      * 
-     * @return The number of items that travel over inter-trace-buffer
+     * @return The number of items that travel over inter-slice-buffer
      * edge with src dram and dst dram 
      * and the pass through a tile in the <bigWorkers> tile set.
      * 
@@ -856,8 +857,8 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         
         //the estimate will be based on the src and dst tiles for this edge
         //int work = 
-        //    Math.max(spaceTime.partitioner.getTraceBNWork(edge.getSrc().getParent()),
-        //            spaceTime.partitioner.getTraceBNWork(edge.getDest().getParent()));
+        //    Math.max(spaceTime.partitioner.getSliceBNWork(edge.getSrc().getParent()),
+        //            spaceTime.partitioner.getSliceBNWork(edge.getDest().getParent()));
         //get the route
         Iterator route = Router.getRoute(src, dst).iterator();
         //set of big workers we have already accounted for 
@@ -955,9 +956,9 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
             return tileCosts;
         /*
         int tileCosts[] = new int[16];
-        Iterator<FilterTraceNode> nodes = assignment.keySet().iterator();
+        Iterator<FilterSliceNode> nodes = assignment.keySet().iterator();
         while (nodes.hasNext()) {
-            FilterTraceNode node = nodes.next();
+            FilterSliceNode node = nodes.next();
             tileCosts[getTile(node).getTileNumber()] += partitioner.getFilterWorkSteadyMult(node);
         }
         return tileCosts;
@@ -995,15 +996,15 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         totalWork = 0;
         
         //create the filter list
-        filterList = new LinkedList<TraceNode>();
-        Iterator<TraceNode> traceNodes = 
-            Util.traceNodeTraversal(partitioner.getTraceGraph());
-        while (traceNodes.hasNext()) {
-            TraceNode node = traceNodes.next();
+        filterList = new LinkedList<SliceNode>();
+        Iterator<SliceNode> sliceNodes = 
+            at.dms.kjc.slicegraph.Util.sliceNodeTraversal(partitioner.getSliceGraph());
+        while (sliceNodes.hasNext()) {
+            SliceNode node = sliceNodes.next();
             //add filters to the list of things to assign to tiles,
             //but don't add file readers/writers... they will
             //"occupy" the tile of their neighbor stream...
-            if (node.isFilterTrace() && 
+            if (node.isFilterSlice() && 
                     !(node.getAsFilter().isPredefined()))  {
                 totalWork += partitioner.getFilterWorkSteadyMult(node.getAsFilter());
                 filterList.add(node);
@@ -1017,12 +1018,12 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         //these are filters the read directly from a file
         //or write directly to a file (not the file readers and writers themselves).
         for (int i = 0; i < partitioner.io.length; i++) {
-            Trace trace = partitioner.io[i];
-            if (trace.getHead().isFileOutput() && trace.getHead().oneInput()) {
-                fileWriters.add(trace.getHead().getSingleEdge().getSrc().getPrevFilter());
+            Slice slice = partitioner.io[i];
+            if (slice.getHead().isFileOutput() && slice.getHead().oneInput()) {
+                fileWriters.add(slice.getHead().getSingleEdge().getSrc().getPrevFilter());
             }
-            else if (trace.getTail().isFileInput() && trace.getTail().oneOutput()) {
-                fileReaders.add(trace.getTail().getSingleEdge().getDest().getNextFilter());
+            else if (slice.getTail().isFileInput() && slice.getTail().oneOutput()) {
+                fileReaders.add(slice.getTail().getSingleEdge().getDest().getNextFilter());
             }
          }
 
@@ -1099,10 +1100,10 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
      * 
      * @return See method description.
      */
-    public boolean otherSplitFiltersMapped(FilterTraceNode node, RawTile tile) {
+    public boolean otherSplitFiltersMapped(FilterSliceNode node, RawTile tile) {
         
-        assert node.getPrevious().isInputTrace();
-        InputTraceNode input = node.getPrevious().getAsInput();
+        assert node.getPrevious().isInputSlice();
+        InputSliceNode input = node.getPrevious().getAsInput();
         //no other filters to check
         if (input.noInputs())
             return false;
@@ -1110,7 +1111,7 @@ public class AnnealedLayout extends SimulatedAnnealing implements Layout {
         Iterator<Edge> inEdges = input.getSourceSet().iterator();
         while (inEdges.hasNext()) {
             Edge inEdge = inEdges.next();
-            OutputTraceNode output = inEdge.getSrc();
+            OutputSliceNode output = inEdge.getSrc();
             Iterator<Edge> upstreamOutEdges = output.getDestSet().iterator();
             while (upstreamOutEdges.hasNext()) {
                 Edge upstreamOutEdge = upstreamOutEdges.next();

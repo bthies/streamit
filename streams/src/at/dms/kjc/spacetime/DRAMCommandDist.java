@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
  * Determine the number of read and write commands that each 
@@ -17,7 +18,7 @@ import at.dms.kjc.slicegraph.Edge;
  */
 public class DRAMCommandDist {
     /** The schedule we are executing */
-    private Trace[] schedule;
+    private Slice[] schedule;
     /** The raw chip we are executing on */
     private RawChip rawChip;
     /** the number of reads for <pre>schedule</pre> to each dram while
@@ -44,7 +45,7 @@ public class DRAMCommandDist {
      * @param schedule The schedule. 
      * @param rawChip The raw chip.
      */
-    public DRAMCommandDist(Trace[] schedule, RawChip rawChip) {
+    public DRAMCommandDist(Slice[] schedule, RawChip rawChip) {
         this.schedule = schedule;
         this.rawChip = rawChip;
         intraReads = new int[rawChip.getNumDev()];
@@ -105,34 +106,34 @@ public class DRAMCommandDist {
     
     public void calcDRAMDist() {
         for (int i = 0; i < schedule.length; i++) {
-            Trace trace = schedule[i];
-            if (!OffChipBuffer.unnecessary(trace.getHead())) {
+            Slice slice = schedule[i];
+            if (!OffChipBuffer.unnecessary(slice.getHead())) {
                 //if we have a inputtracebuffer that does something, count its 
                 //reads and writers
                 //the reads of the incoming arcs of the joiner
-                for (int s = 0; s < trace.getHead().getSources().length; s++) {
-                    Edge edge = trace.getHead().getSources()[s];
-                    OffChipBuffer buf = InterTraceBuffer.getBuffer(edge);
+                for (int s = 0; s < slice.getHead().getSources().length; s++) {
+                    Edge edge = slice.getHead().getSources()[s];
+                    OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);
                     interReads[buf.getDRAM().port]++;
                 }
                 //the write for the intra-trace-node
-                interWrites[IntraTraceBuffer.getSrcIntraBuf(trace).getDRAM().port]++;
+                interWrites[IntraSliceBuffer.getSrcIntraBuf(slice).getDRAM().port]++;
             }
-            if (!OffChipBuffer.unnecessary(trace.getTail())) {
+            if (!OffChipBuffer.unnecessary(slice.getTail())) {
                 //if we have an outputtracenode that splits, count its read
                 //and all of its writes
-                interReads[IntraTraceBuffer.getDstIntraBuf(trace).getDRAM().port]++;
-                Iterator dsts = trace.getTail().getDestSet().iterator();
+                interReads[IntraSliceBuffer.getDstIntraBuf(slice).getDRAM().port]++;
+                Iterator dsts = slice.getTail().getDestSet().iterator();
                 while (dsts.hasNext()) {
                     Edge edge = (Edge)dsts.next();
-                    OffChipBuffer buf = InterTraceBuffer.getBuffer(edge);
+                    OffChipBuffer buf = InterSliceBuffer.getBuffer(edge);
                     interWrites[buf.getDRAM().port]++;
                 }
             }
             //now account for the read of the intra-trace-buffer 
-            intraReads[IntraTraceBuffer.getSrcIntraBuf(trace).getDRAM().port]++;
+            intraReads[IntraSliceBuffer.getSrcIntraBuf(slice).getDRAM().port]++;
             //now account for the write of the intra-trace-buffer
-            intraWrites[IntraTraceBuffer.getDstIntraBuf(trace).getDRAM().port]++;
+            intraWrites[IntraSliceBuffer.getDstIntraBuf(slice).getDRAM().port]++;
         }
     }
     

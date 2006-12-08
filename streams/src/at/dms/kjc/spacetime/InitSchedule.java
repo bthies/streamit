@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Vector;
 
 import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.Slice;
 import at.dms.util.Utils;
 
 /** This class generates the init schedule, the execution order as 
@@ -14,20 +15,20 @@ import at.dms.util.Utils;
 
 public class InitSchedule 
 {
-    public static LinkedList<Trace> getInitSchedule(Trace[] topTraces) 
+    public static LinkedList<Slice> getInitSchedule(Slice[] topTraces) 
     {
-        LinkedList<Trace> schedule = new LinkedList<Trace>();
-        HashSet<Trace> visited = new HashSet<Trace>();
-        LinkedList<Trace> queue = new LinkedList<Trace>();
+        LinkedList<Slice> schedule = new LinkedList<Slice>();
+        HashSet<Slice> visited = new HashSet<Slice>();
+        LinkedList<Slice> queue = new LinkedList<Slice>();
         for (int i = 0; i < topTraces.length; i++) {
             queue.add(topTraces[i]);
             while (!queue.isEmpty()) {      
-                Trace trace = queue.removeFirst();
-                if (!visited.contains(trace)) {
-                    visited.add(trace);
-                    Iterator dests = trace.getTail().getDestSet().iterator();
+                Slice slice = queue.removeFirst();
+                if (!visited.contains(slice)) {
+                    visited.add(slice);
+                    Iterator dests = slice.getTail().getDestSet().iterator();
                     while (dests.hasNext()) {
-                        Trace current = ((Edge)dests.next()).getDest().getParent();
+                        Slice current = ((Edge)dests.next()).getDest().getParent();
                         if (!visited.contains(current)) {
                             //only add if all sources has been visited
                             Iterator sources = current.getHead().getSourceSet().iterator();
@@ -42,9 +43,9 @@ public class InitSchedule
                                 queue.add(current);
                         }    
                     }
-                    if (!trace.getHead().getNextFilter().isPredefined()) {
-                        System.out.println("Adding " + trace + " to init schedule.");           
-                        schedule.add(trace);
+                    if (!slice.getHead().getNextFilter().isPredefined()) {
+                        System.out.println("Adding " + slice + " to init schedule.");           
+                        schedule.add(slice);
                     }
                 }
             }

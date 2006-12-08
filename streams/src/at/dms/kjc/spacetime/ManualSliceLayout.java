@@ -7,35 +7,36 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 
 /**
  * Given a trace, ask the user where he/she wants it placed on
  *              the raw chip.
  */
-public class ManualTraceLayout implements Layout {
+public class ManualSliceLayout implements Layout {
     private HashMap assignment;
     private SpaceTimeSchedule spaceTime;
     
-    public ManualTraceLayout(SpaceTimeSchedule spaceTime) {
+    public ManualSliceLayout(SpaceTimeSchedule spaceTime) {
         this.spaceTime = spaceTime; 
     }
     
-    public RawTile getTile(FilterTraceNode node) {
+    public RawTile getTile(FilterSliceNode node) {
         assert assignment.containsKey(node);
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterTraceNode node, RawTile tile) {
+    public void setTile(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
     public void run() {
         assignment = new HashMap();
         //call layout on traces!
-        Trace[] traces = spaceTime.partitioner.getTraceGraph();
+        Slice[] traces = spaceTime.partitioner.getSliceGraph();
         
         for (int i = 0; i < traces.length; i++) {
             if (!spaceTime.partitioner.isIO(traces[i]))
@@ -44,20 +45,20 @@ public class ManualTraceLayout implements Layout {
         
         //now set the tiles of the i/o
         for (int i = 0; i < spaceTime.partitioner.io.length; i++) {
-            Trace trace = spaceTime.partitioner.io[i];
-            if (trace.getHead().getNextFilter().isFileOutput()) {
+            Slice slice = spaceTime.partitioner.io[i];
+            if (slice.getHead().getNextFilter().isFileOutput()) {
                 //file writer
-                assert trace.getHead().oneInput();
+                assert slice.getHead().oneInput();
                 //set this file writer tile to the tile of its upstream input
-                assignment.put(trace.getHead().getNextFilter(),
-                        getTile(trace.getHead().getSingleEdge().getSrc().getPrevFilter()));
+                assignment.put(slice.getHead().getNextFilter(),
+                        getTile(slice.getHead().getSingleEdge().getSrc().getPrevFilter()));
             }
-            else if (trace.getTail().getPrevFilter().isFileInput()) {
+            else if (slice.getTail().getPrevFilter().isFileInput()) {
                 //file reader
-                assert trace.getTail().oneOutput();
+                assert slice.getTail().oneOutput();
                 //set this file reader to the tile of its downstream reader
-                assignment.put(trace.getTail().getPrevFilter(),
-                        getTile(trace.getTail().getSingleEdge().getDest().getNextFilter()));
+                assignment.put(slice.getTail().getPrevFilter(),
+                        getTile(slice.getTail().getSingleEdge().getDest().getNextFilter()));
             }
             else 
                 assert false : "Some unknown i/o trace...";
@@ -72,22 +73,22 @@ public class ManualTraceLayout implements Layout {
     /**
      * Ask the user to lay out the trace on the raw chip.
      * @param rawChip The Raw Chip 
-     * @param trace The Trace we would want to layout out on <pre>rawChip</pre>
+     * @param slice The Slice we would want to layout out on <pre>rawChip</pre>
      */
-    private void layout(RawChip rawChip, Trace trace) {
+    private void layout(RawChip rawChip, Slice slice) {
         BufferedReader inputBuffer = 
             new BufferedReader(new InputStreamReader(
                     System.in));
         // the current node we are getting the tile assignment for
-        TraceNode node = trace.getHead().getNext();
+        SliceNode node = slice.getHead().getNext();
         // the tile number we are assigning
         int tileNumber;
         String str = "";
         RawTile tile;
         
-        System.out.println("Enter layout for trace: " + trace);
+        System.out.println("Enter layout for trace: " + slice);
         
-        while (node instanceof FilterTraceNode) {
+        while (node instanceof FilterSliceNode) {
             while (true) {
                 System.out.print("Enter tile number for " + node + ": ");
 

@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
@@ -62,7 +62,7 @@ public class BufferedCommunication extends RawExecutionCode
     public BufferedCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
         super(tile, filterInfo, layout);
-        FilterTraceNode node=filterInfo.traceNode;
+        FilterSliceNode node=filterInfo.traceNode;
         System.out.println(tile + "Generating code for " + filterInfo.filter + " using Buffered Comm.");
     
         //set the unique id to append to each variable name

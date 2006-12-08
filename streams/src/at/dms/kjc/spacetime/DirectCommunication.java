@@ -15,8 +15,8 @@ import java.util.HashSet;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
@@ -51,9 +51,9 @@ public class DirectCommunication extends RawExecutionCode
     public static boolean testDC(FilterInfo fi) 
     {
         boolean dynamicInput = false;
-        if (fi.traceNode.getPrevious().isInputTrace()) {
-            if (!IntraTraceBuffer.getBuffer(
-                    (InputTraceNode)fi.traceNode.getPrevious(),
+        if (fi.traceNode.getPrevious().isInputSlice()) {
+            if (!IntraSliceBuffer.getBuffer(
+                    (InputSliceNode)fi.traceNode.getPrevious(),
                     fi.traceNode).isStaticNet())
                 dynamicInput = true;
         }
@@ -123,7 +123,7 @@ public class DirectCommunication extends RawExecutionCode
     public DirectCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
         super(tile, filterInfo, layout);
-        FilterTraceNode node=filterInfo.traceNode;
+        FilterSliceNode node=filterInfo.traceNode;
         System.out.println(tile +  " Generating code for " + filterInfo.filter + " using Direct Comm.");
     }
 

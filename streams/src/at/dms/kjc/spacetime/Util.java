@@ -1,24 +1,25 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.common.CodegenPrintWriter;
+//import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.slicegraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.Collection;
-import at.dms.kjc.sir.lowering.*;
+//import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.TreeSet;
+//import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.HashMap;
-import java.io.*;
+//import java.io.*;
 import at.dms.kjc.spacetime.switchIR.*;
 import java.util.Arrays;
 
@@ -204,16 +205,16 @@ public class Util {
     }
 
     /**
-     * @param trace
+     * @param slice
      * @param tile
      * @return True if <pre>trace</pre> has a filter that is mapped to <pre>tile</pre>.
      */
-    public static boolean doesTraceUseTile(Trace trace, 
+    public static boolean doesSliceUseTile(Slice slice, 
             RawTile tile, Layout layout) {
-        TraceNode node = trace.getHead().getNext();
+        SliceNode node = slice.getHead().getNext();
         //cycle thru the nodes and see if we can find a match 
         //of the coordinates for the tile and a filter trace
-        while (node.isFilterTrace()) {
+        while (node.isFilterSlice()) {
             if (tile == layout.getTile(node.getAsFilter()))
                 return true;
             
@@ -348,43 +349,21 @@ public class Util {
      * @return An array of all the TraceNode in the <pre>traces</pre> array 
      * dictated by the order that the traces appear in <pre>traces</pre>. 
      */
-    public static TraceNode[] traceNodeArray(Trace[] traces) {
-        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
+    public static SliceNode[] sliceNodeArray(Slice[] traces) {
+        LinkedList<SliceNode> trav = new LinkedList<SliceNode>();
 
         for (int i = 0; i < traces.length; i++) {
-            TraceNode traceNode = traces[i].getHead();
-            while (traceNode != null) {
-                trav.add(traceNode);
-                traceNode = traceNode.getNext();
+            SliceNode sliceNode = traces[i].getHead();
+            while (sliceNode != null) {
+                trav.add(sliceNode);
+                sliceNode = sliceNode.getNext();
             }
 
         }
         
-        return trav.toArray(new TraceNode[0]);
+        return trav.toArray(new SliceNode[0]);
     }
     
-    /**
-     * Get a traversal (linked list) that includes all the trace nodes of the
-     * given trace traversal.
-     * 
-     * @param traces
-     * @return A LinkedList of TraceNodes.
-     */
-    public static Iterator<TraceNode> traceNodeTraversal(Trace[] traces) {
-        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
-
-        for (int i = 0; i < traces.length; i++) {
-            TraceNode traceNode = traces[i].getHead();
-            while (traceNode != null) {
-                trav.add(traceNode);
-                traceNode = traceNode.getNext();
-            }
-
-        }
-
-        return trav.listIterator();
-    }
-
     public static void sendConstFromTileToSwitch(RawTile tile, int c,
                                                  boolean init, boolean primePump, SwitchReg reg) {
 
@@ -402,27 +381,27 @@ public class Util {
      * @return a sorted list of filter trace nodes for time only that does not 
      * include io traces.
      */
-    public static LinkedList<FilterTraceNode> sortedFilterTracesTime(Partitioner partitioner) {
+    public static LinkedList<FilterSliceNode> sortedFilterSlicesTime(Partitioner partitioner) {
         //now sort the filters by work
-        LinkedList<FilterTraceNode> sortedList = new LinkedList<FilterTraceNode>();
-        LinkedList<Trace> scheduleOrder;
+        LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();
+        LinkedList<Slice> scheduleOrder;
  
   
 
-        Trace[] tempArray = (Trace[]) partitioner.getTraceGraph().clone();
-        Arrays.sort(tempArray, new CompareTraceBNWork(partitioner));
-        scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
+        Slice[] tempArray = (Slice[]) partitioner.getSliceGraph().clone();
+        Arrays.sort(tempArray, new CompareSliceBNWork(partitioner));
+        scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
         //reverse the list, we want the list in descending order!
         Collections.reverse(scheduleOrder);
   
         for (int i = 0; i < scheduleOrder.size(); i++) {
-            Trace trace = scheduleOrder.get(i);
+            Slice slice = scheduleOrder.get(i);
             //don't add io traces!
             /*if (partitioner.isIO(trace)) {
                 continue;
             }*/
-            assert trace.getNumFilters() == 1 : "Only works for Time!";
-            sortedList.add(trace.getHead().getNextFilter());
+            assert slice.getNumFilters() == 1 : "Only works for Time!";
+            sortedList.add(slice.getHead().getNextFilter());
         }
         
         return sortedList;

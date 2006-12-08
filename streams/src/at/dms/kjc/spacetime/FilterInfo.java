@@ -2,8 +2,8 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterContent;
 import at.dms.util.Utils;
 import java.util.HashSet;
@@ -39,12 +39,12 @@ public class FilterInfo {
     
     private boolean linear;
 
-    public FilterTraceNode traceNode;
+    public FilterSliceNode traceNode;
 
     public FilterContent filter;
 
     /** HashMap of all the filter infos FilterTraceNode -> FilterInfo */
-    private static HashMap<FilterTraceNode, FilterInfo> filterInfos;
+    private static HashMap<FilterSliceNode, FilterInfo> filterInfos;
 
     // true if everything is set and we can use this class
     // because once a filter info is created you cannot
@@ -52,7 +52,7 @@ public class FilterInfo {
     private static boolean canuse;
 
     static {
-        filterInfos = new HashMap<FilterTraceNode, FilterInfo>();
+        filterInfos = new HashMap<FilterSliceNode, FilterInfo>();
         canuse = false;
     }
 
@@ -71,10 +71,10 @@ public class FilterInfo {
      *
      */
     public static void reset() {
-        filterInfos = new HashMap<FilterTraceNode, FilterInfo>();
+        filterInfos = new HashMap<FilterSliceNode, FilterInfo>();
     }
     
-    public static FilterInfo getFilterInfo(FilterTraceNode traceNode) {
+    public static FilterInfo getFilterInfo(FilterSliceNode traceNode) {
         assert canuse;
         if (!filterInfos.containsKey(traceNode)) {
             FilterInfo info = new FilterInfo(traceNode);
@@ -84,7 +84,7 @@ public class FilterInfo {
             return filterInfos.get(traceNode);
     }
 
-    private FilterInfo(FilterTraceNode traceNode) {
+    private FilterInfo(FilterSliceNode traceNode) {
         filter = traceNode.getFilter();
         this.traceNode = traceNode;
         this.steadyMult = filter.getSteadyMult();
@@ -148,8 +148,8 @@ public class FilterInfo {
         // don't call initItemsReceived() here it
         // may cause an infinite loop because it creates filter infos
         int initItemsRec = 0;
-        if (traceNode.getPrevious().isFilterTrace()) {
-            FilterContent filterC = ((FilterTraceNode) traceNode.getPrevious())
+        if (traceNode.getPrevious().isFilterSlice()) {
+            FilterContent filterC = ((FilterSliceNode) traceNode.getPrevious())
                 .getFilter();
             initItemsRec = filterC.getPushInt() * filterC.getInitMult();
             if (filterC.isTwoStage()) {
@@ -157,12 +157,12 @@ public class FilterInfo {
                 initItemsRec += filterC.getInitPush();
             }
         } else { // previous is an input trace
-            InputTraceNode in = (InputTraceNode) traceNode.getPrevious();
+            InputSliceNode in = (InputSliceNode) traceNode.getPrevious();
 
             // add all the upstream filters items that reach this filter
             for (int i = 0; i < in.getWeights().length; i++) {
                 Edge incoming = in.getSources()[i];
-                FilterContent filterC = ((FilterTraceNode) incoming.getSrc()
+                FilterContent filterC = ((FilterSliceNode) incoming.getSrc()
                                          .getPrevious()).getFilter();
                 // calculate the init items sent by the upstream filter
                 int upstreamInitItems = 0;
@@ -261,14 +261,14 @@ public class FilterInfo {
         if (debug)
             System.out.println("*****  Init items received " + this + " *****");
         
-        if (traceNode.getPrevious().isFilterTrace()) {
+        if (traceNode.getPrevious().isFilterSlice()) {
             upStreamItems = 
                 FilterInfo.getFilterInfo(
-                        (FilterTraceNode) traceNode.getPrevious()).initItemsSent();
+                        (FilterSliceNode) traceNode.getPrevious()).initItemsSent();
             if (debug)
                 System.out.println(" Upstream filter sends: " + upStreamItems);
         } else { // previous is an input trace
-            InputTraceNode in = (InputTraceNode) traceNode.getPrevious();
+            InputSliceNode in = (InputSliceNode) traceNode.getPrevious();
             if (debug)
                 System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
@@ -277,14 +277,14 @@ public class FilterInfo {
                 Edge incoming = edges.next();
                 upStreamItems += 
                     (int) 
-                    ((double)FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                    ((double)FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
                             .initItemsSent() * incoming.getSrc().ratio(incoming));
                 if (debug) {
                     System.out.println("   " + incoming + ": sends " + 
-                            FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                            FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
                             .initItemsSent() + ", at ratio " + incoming.getSrc().ratio(incoming) + " = " +
                             (int) 
-                            ((double)FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious())
+                            ((double)FilterInfo.getFilterInfo((FilterSliceNode)incoming.getSrc().getPrevious())
                                     .initItemsSent() * incoming.getSrc().ratio(incoming)));
                 }
                             //((double) incoming.getSrc()

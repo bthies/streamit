@@ -7,7 +7,8 @@ import java.util.*;
 
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.Slice;
 
 
 /**
@@ -15,11 +16,11 @@ import at.dms.kjc.slicegraph.FilterTraceNode;
  *
  */
 public class GreedyLayout implements Layout {
-    private HashMap<FilterTraceNode, RawTile> assignment;
+    private HashMap<FilterSliceNode, RawTile> assignment;
     private SpaceTimeSchedule spaceTime;
     private RawChip chip;
     private int numBins;
-    private LinkedList<FilterTraceNode>[] bins;
+    private LinkedList<FilterSliceNode>[] bins;
     private int[] binWeight;
     private int maxBinWeight;
     private int[] searchOrder; 
@@ -34,7 +35,7 @@ public class GreedyLayout implements Layout {
         bins = new LinkedList[numBins];
         binWeight = new int[numBins];
         for (int i = 0; i < numBins; i++) {
-            bins[i] = new LinkedList<FilterTraceNode>();
+            bins[i] = new LinkedList<FilterSliceNode>();
             binWeight[i] = 0;
         }
         searchOrder = new int[numBins];
@@ -61,20 +62,20 @@ public class GreedyLayout implements Layout {
         }
     }
     
-    public HashMap<FilterTraceNode, RawTile> getAssignment() {
+    public HashMap<FilterSliceNode, RawTile> getAssignment() {
         return assignment;
     }
     
     
-    public RawTile getTile(FilterTraceNode node) {
+    public RawTile getTile(FilterSliceNode node) {
         return assignment.get(node);
     }
    
-    public void setTile(FilterTraceNode node, RawTile tile) {
+    public void setTile(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     public void run() {
-        assignment = new HashMap<FilterTraceNode, RawTile>();
+        assignment = new HashMap<FilterSliceNode, RawTile>();
         pack();
         System.out.println("IdealWork = " + totalWork / chip.getTotalTiles());
         System.out.println("Greedy max tile Work Cost = " + maxBinWeight);
@@ -84,43 +85,43 @@ public class GreedyLayout implements Layout {
     
     private void pack() {
         //now sort the filters by work
-        LinkedList<FilterTraceNode> sortedList = new LinkedList<FilterTraceNode>();
-        LinkedList<Trace> scheduleOrder;
+        LinkedList<FilterSliceNode> sortedList = new LinkedList<FilterSliceNode>();
+        LinkedList<Slice> scheduleOrder;
         
         //get the schedule order of the graph!
         //System.out.println(SpaceTimeBackend.NO_SWPIPELINE);
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             //if we are not software pipelining then use then respect
             //dataflow dependencies
-            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getTraceGraph());
+            scheduleOrder = DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
         } else {
             //if we are software pipelining then sort the traces by work
-            Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
-            Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
+            Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
+            Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
            // System.out.println(tempArray.length);
-            scheduleOrder = new LinkedList<Trace>(Arrays.asList(tempArray));
+            scheduleOrder = new LinkedList<Slice>(Arrays.asList(tempArray));
             //reverse the list, we want the list in descending order!
             Collections.reverse(scheduleOrder);
         }
 
         
         for (int i = 0; i < scheduleOrder.size(); i++) {
-            Trace trace = scheduleOrder.get(i);
+            Slice slice = scheduleOrder.get(i);
             
             //don't add io traces!
             /*if (spaceTime.partitioner.isIO(trace)) {
                 System.out.println("don't add " + trace.getHead().getNextFilter());
                 continue;
             }*/
-            assert trace.getNumFilters() == 1 : "The greedy partitioner only works for Time!";
-            sortedList.add(trace.getHead().getNextFilter());
+            assert slice.getNumFilters() == 1 : "The greedy partitioner only works for Time!";
+            sortedList.add(slice.getHead().getNextFilter());
         }
         
-        Iterator<FilterTraceNode> sorted = sortedList.iterator();
+        Iterator<FilterSliceNode> sorted = sortedList.iterator();
         
         //perform the packing
         while (sorted.hasNext()) {
-            FilterTraceNode node = sorted.next();
+            FilterSliceNode node = sorted.next();
             int bin = findMinBin();
             
             bins[bin].add(node);

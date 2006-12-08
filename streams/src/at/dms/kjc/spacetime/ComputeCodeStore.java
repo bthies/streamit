@@ -19,7 +19,7 @@ import at.dms.kjc.slicegraph.FilterContent;
  * to generate the code that will implement the schedules. 
  * This class includes methods to add code to the 3 different schedules 
  * (init, primepump, steady) that are executed at each tile.
- * This class is then used by {@link at.dms.kjc.spacetime.TraceIRtoC} to 
+ * This class is then used by {@link at.dms.kjc.spacetime.SliceIRtoC} to 
  * convert the sir code for each tile to C code for each tile.
  * 
  * @author mgordon
@@ -47,7 +47,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
     protected RawTile parent;
     /** block for the steady-state, as calculated currently */
     protected JBlock steadyLoop;
-    /** the block that executes each tracenode's init schedule, as calculated currently */
+    /** the block that executes each slicenode's init schedule, as calculated currently */
     protected JBlock initBlock;        
     /** this hash map holds RawExecutionCode that was generated
      * so when we see the filter for the first time in the init
@@ -330,17 +330,17 @@ public class ComputeCodeStore implements SIRCodeUnit{
         
         //for the steady state presynch reads from input nodes that are 
         //necessary because intrabuffers are not rotated
-        if (buffer.isIntraTrace() &&
-                buffer.getSource().isInputTrace() && 
+        if (buffer.isIntraSlice() &&
+                buffer.getSource().isInputSlice() && 
                 !OffChipBuffer.unnecessary(buffer.getSource().getAsInput())) {
             return true;
         }
         
-        // presynch reads from the filter->outputtrace buffers because they
+        // presynch reads from the filter->outputslice buffers because they
         // are not double buffered, but only if they are going to be split
-        // so the outputtracenode is actually necessary
-        if (buffer.isIntraTrace() &&
-                buffer.getDest().isOutputTrace() &&
+        // so the outputslicenode is actually necessary
+        if (buffer.isIntraSlice() &&
+                buffer.getDest().isOutputSlice() &&
                 !OffChipBuffer.unnecessary((buffer.getDest().getAsOutput())))
             return true;
         
@@ -559,7 +559,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param filterInfo The filter to add to the steady-state schedule.
      * @param layout The layout of the application.
      */
-    public void addTraceSteady(FilterInfo filterInfo, Layout layout) {
+    public void addSliceSteady(FilterInfo filterInfo, Layout layout) {
      
         RawExecutionCode exeCode;
 
@@ -575,7 +575,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 exeCode = new DirectCommunication(parent, filterInfo, layout);
             else
                 exeCode = new BufferedCommunication(parent, filterInfo, layout);
-            addTraceFieldsAndMethods(exeCode, filterInfo);
+            addSliceFieldsAndMethods(exeCode, filterInfo);
         }
         
         parent.setMapped();
@@ -605,9 +605,9 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param exeCode The code to add.
      * @param filterInfo The filter.
      */
-    private void addTraceFieldsAndMethods(RawExecutionCode exeCode,
+    private void addSliceFieldsAndMethods(RawExecutionCode exeCode,
                                           FilterInfo filterInfo) {
-        // add the fields of the trace
+        // add the fields of the slice
         addFields(exeCode.getVarDecls());
         // add the helper methods
         addMethods(exeCode.getHelperMethods());
@@ -652,7 +652,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param filterInfo The filter.
      * @param layout The layout of the application.
      */
-    public void addTracePrimePump(FilterInfo filterInfo, Layout layout) {
+    public void addSlicePrimePump(FilterInfo filterInfo, Layout layout) {
       
         RawExecutionCode exeCode;
         JMethodDeclaration primePump;
@@ -669,7 +669,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
                 exeCode = new DirectCommunication(parent, filterInfo, layout);
             else
                 exeCode = new BufferedCommunication(parent, filterInfo, layout);
-            addTraceFieldsAndMethods(exeCode, filterInfo);
+            addSliceFieldsAndMethods(exeCode, filterInfo);
         }
         
         primePump = exeCode.getPrimePumpMethod();
@@ -693,7 +693,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
      * @param filterInfo The filter.
      * @param layout The layout of the application.
      */
-    public void addTraceInit(FilterInfo filterInfo, Layout layout) {
+    public void addSliceInit(FilterInfo filterInfo, Layout layout) {
      
         RawExecutionCode exeCode;
 
@@ -712,7 +712,7 @@ public class ComputeCodeStore implements SIRCodeUnit{
         rawCode.put(filterInfo.filter, exeCode);
 
         // this must come before anything
-        addTraceFieldsAndMethods(exeCode, filterInfo);
+        addSliceFieldsAndMethods(exeCode, filterInfo);
         // get the initialization routine of the phase
         JMethodDeclaration initStage = exeCode.getInitStageMethod();
         if (initStage != null) {

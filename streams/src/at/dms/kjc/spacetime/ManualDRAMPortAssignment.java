@@ -11,15 +11,17 @@ import java.util.Iterator;
 import at.dms.kjc.slicegraph.FileInputContent;
 import at.dms.kjc.slicegraph.FileOutputContent;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.Util;
 
 /**
  * This class asks the user to assign the input and output of each slice (trace) to a DRAM a
  * attached to the raw chip through an I/O port.  The input and output is modeled as
- * a OffChipBuffer abstract class with IntraTraceBuffer and InterTraceBuffer.  These are created
+ * a OffChipBuffer abstract class with IntraSliceBuffer and InterSliceBuffer.  These are created
  * and assigned to ports and for each "buffer" it is decided if it will use the static network
  * or the general dynamic.  
  * 
@@ -30,7 +32,7 @@ public class ManualDRAMPortAssignment {
     /** The raw chip */
     private static RawChip chip; 
     /**the traces that are file readers and writers */
-    private static Trace[] files;
+    private static Slice[] files;
     private static BufferedReader inputBuffer;
     
     /**
@@ -46,20 +48,20 @@ public class ManualDRAMPortAssignment {
                                                                System.in));
       
         
-        Iterator<TraceNode> traceNodeTrav = Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        Iterator<SliceNode> traceNodeTrav = Util.sliceNodeTraversal(spaceTime.partitioner.getSliceGraph());
         while (traceNodeTrav.hasNext()) {
-            TraceNode traceNode = traceNodeTrav.next();
+            SliceNode sliceNode = traceNodeTrav.next();
             // assign the buffer between inputtracenode and the filter
             // to a dram
-            if (traceNode.isInputTrace())
-                manualIntraSliceAssignment((InputTraceNode) traceNode, chip);
+            if (sliceNode.isInputSlice())
+                manualIntraSliceAssignment((InputSliceNode) sliceNode, chip);
             // assign the buffer between the output trace node and the filter
-            if (traceNode.isOutputTrace()) {
-                manualIntraSliceAssignment((OutputTraceNode) traceNode, chip);
-                manualInterSliceAssignment((OutputTraceNode)traceNode, chip);
+            if (sliceNode.isOutputSlice()) {
+                manualIntraSliceAssignment((OutputSliceNode) sliceNode, chip);
+                manualInterSliceAssignment((OutputSliceNode)sliceNode, chip);
             }
             
-            traceNode = traceNode.getNext();
+            sliceNode = sliceNode.getNext();
             
             
         }
@@ -69,7 +71,7 @@ public class ManualDRAMPortAssignment {
     }
 
     
-    private static void manualInterSliceAssignment(OutputTraceNode output, RawChip chip) {
+    private static void manualInterSliceAssignment(OutputSliceNode output, RawChip chip) {
         // get the assignment for each input trace node
         Iterator edges = output.getDestSet().iterator();
         
@@ -80,17 +82,17 @@ public class ManualDRAMPortAssignment {
             
             int port = getPortNumberFromUser("Assignment for: " + query, chip);
           
-            InterTraceBuffer.getBuffer(edge).setDRAM((StreamingDram)chip.getDevices()[port]);
+            InterSliceBuffer.getBuffer(edge).setDRAM((StreamingDram)chip.getDevices()[port]);
         }  
     }
     
-    private static void manualIntraSliceAssignment(OutputTraceNode output, RawChip chip) {
-        FilterTraceNode filter = output.getPrevFilter();
+    private static void manualIntraSliceAssignment(OutputSliceNode output, RawChip chip) {
+        FilterSliceNode filter = output.getPrevFilter();
         
         //if the output trace node does nothing assign to zero
         if (output.noOutputs()) {
-            IntraTraceBuffer.getBuffer(filter, output).setDRAM((StreamingDram)chip.getDevices()[0]);
-            IntraTraceBuffer.getBuffer(filter, output).setStaticNet(true);
+            IntraSliceBuffer.getBuffer(filter, output).setDRAM((StreamingDram)chip.getDevices()[0]);
+            IntraSliceBuffer.getBuffer(filter, output).setStaticNet(true);
             return;
         }
         
@@ -100,16 +102,16 @@ public class ManualDRAMPortAssignment {
         int port = getPortNumberFromUser("Assignment for: " + query, chip);
         boolean staticNet = getNetworkFromUser("Static net? " + query);
         
-        IntraTraceBuffer.getBuffer(filter, output).setDRAM((StreamingDram)chip.getDevices()[port]);
-        IntraTraceBuffer.getBuffer(filter, output).setStaticNet(staticNet);
+        IntraSliceBuffer.getBuffer(filter, output).setDRAM((StreamingDram)chip.getDevices()[port]);
+        IntraSliceBuffer.getBuffer(filter, output).setStaticNet(staticNet);
     }
     
-    private static void manualIntraSliceAssignment(InputTraceNode input, RawChip chip) {
-        FilterTraceNode filter = input.getNextFilter();
+    private static void manualIntraSliceAssignment(InputSliceNode input, RawChip chip) {
+        FilterSliceNode filter = input.getNextFilter();
         
         if (input.noInputs()) { //if we don't do anything assign to zero
-            IntraTraceBuffer.getBuffer(input, filter).setDRAM((StreamingDram)chip.getDevices()[0]);
-            IntraTraceBuffer.getBuffer(input, filter).setStaticNet(true);
+            IntraSliceBuffer.getBuffer(input, filter).setDRAM((StreamingDram)chip.getDevices()[0]);
+            IntraSliceBuffer.getBuffer(input, filter).setStaticNet(true);
             return;
         }
         
@@ -118,8 +120,8 @@ public class ManualDRAMPortAssignment {
         int port = getPortNumberFromUser("Assignment for: " + query, chip);
         boolean staticNet = getNetworkFromUser("Static net? " + query);
         
-        IntraTraceBuffer.getBuffer(input, filter).setDRAM((StreamingDram)chip.getDevices()[port]);
-        IntraTraceBuffer.getBuffer(input, filter).setStaticNet(staticNet);
+        IntraSliceBuffer.getBuffer(input, filter).setDRAM((StreamingDram)chip.getDevices()[port]);
+        IntraSliceBuffer.getBuffer(input, filter).setStaticNet(staticNet);
     }
         
     
@@ -191,13 +193,13 @@ public class ManualDRAMPortAssignment {
      * @param files The traces that are file readers and writers
      * @param chip The raw chip we are targeting
      */
-    private static void fileStuff(Trace[] files, RawChip chip) {
+    private static void fileStuff(Slice[] files, RawChip chip) {
         // first go thru the file, reader and writers and assign their
         // input->file and file->output buffers
         for (int i = 0; i < files.length; i++) {
             // these traces should have only one filter, make sure
-            assert files[i].getHead().getNext().getNext() == files[i].getTail() : "File Trace incorrectly generated";
-            FilterTraceNode filter = (FilterTraceNode) files[i].getHead()
+            assert files[i].getHead().getNext().getNext() == files[i].getTail() : "File Slice incorrectly generated";
+            FilterSliceNode filter = (FilterSliceNode) files[i].getHead()
                 .getNext();
 
             if (files[i].getHead().isFileOutput()) {
@@ -205,22 +207,22 @@ public class ManualDRAMPortAssignment {
                 FileOutputContent fileOC = (FileOutputContent) filter
                     .getFilter();
                 
-                IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i]
+                IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(files[i]
                                                                   .getHead(), filter);
                 // the dram of the tile where we want to add the file writer
                 StreamingDram dram = buf.getDRAM();          
                 // assign the other buffer to the same port
                 // this should not affect anything
-                IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
+                IntraSliceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
                 // attach the file writer to the port
                 dram.setFileWriter(fileOC);
             } else if (files[i].getTail().isFileInput()) {
                 assert files[i].getTail().oneOutput() : "buffer assignment of a split file reader not implemented ";
                 FileInputContent fileIC = (FileInputContent) filter.getFilter();
-                IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter,
+                IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filter,
                                                                   files[i].getTail());
                 StreamingDram dram = buf.getDRAM();
-                IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(dram);
+                IntraSliceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(dram);
                 dram.setFileReader(fileIC);
             } else
                 assert false : "File trace is neither reader or writer";

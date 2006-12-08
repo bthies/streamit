@@ -2,7 +2,6 @@ package at.dms.kjc.spacetime;
 
 import java.util.Vector;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
 
 
 /**
@@ -16,7 +15,7 @@ import at.dms.kjc.slicegraph.FilterTraceNode;
 public class NumberGathering 
 {
     /** the file writers of the application */
-    public Trace[] fileWriters;
+    public Slice[] fileWriters;
     /** holds the number of items each fw writes in steady state */ 
     public int[] steady;
     /** holds the number of items each fw writes in init */ 
@@ -33,7 +32,7 @@ public class NumberGathering
      * 
      * @return The class with the stats.
      */
-    public static NumberGathering doit(RawChip chip, Trace[] files) 
+    public static NumberGathering doit(RawChip chip, Slice[] files) 
     {
         return (new NumberGathering(chip, files));
     }
@@ -44,22 +43,22 @@ public class NumberGathering
      * @param chip
      * @param files
      */
-    private NumberGathering(RawChip chip, Trace[] files)
+    private NumberGathering(RawChip chip, Slice[] files)
     {
         //get all the file writers
-        Vector<Trace> fw = new Vector<Trace>();
+        Vector<Slice> fw = new Vector<Slice>();
         for (int i = 0; i < files.length; i++) 
             if (files[i].getHead().isFileOutput())
                 fw.add(files[i]);
 
-        fileWriters = fw.toArray(new Trace[0]);
+        fileWriters = fw.toArray(new Slice[0]);
         assert fileWriters.length > 0 : "Error in number gathering: no file writer";
         steady = new int[fileWriters.length];
         skip = new int[fileWriters.length];
         totalSteadyItems = 0;
         //assign all the arrays 
         for (int i = 0; i < fileWriters.length; i++) {
-            FilterTraceNode node = (FilterTraceNode)fileWriters[i].getHead().getNext();
+            FilterSliceNode node = (FilterSliceNode)fileWriters[i].getHead().getNext();
             FilterInfo fi = FilterInfo.getFilterInfo(node);
             assert node.getFilter().getInputType().isNumeric() :
                 "non-numeric type for input to filewriter";
@@ -80,7 +79,7 @@ public class NumberGathering
     public int getID(FileOutputContent foc) 
     {
         for (int i = 0; i < fileWriters.length; i++) {
-            if (foc == ((FilterTraceNode)fileWriters[i].getHead().getNext()).getFilter())
+            if (foc == ((FilterSliceNode)fileWriters[i].getHead().getNext()).getFilter())
                 return i;
         }
         assert false : "FileOutputContent not found";

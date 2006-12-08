@@ -7,8 +7,8 @@ import java.util.Iterator;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class MagicDram extends IODevice {
     // the list of instructions
@@ -167,7 +167,7 @@ public class MagicDram extends IODevice {
         }
     }
 
-    public void addBuffer(OutputTraceNode out, InputTraceNode in) {
+    public void addBuffer(OutputSliceNode out, InputSliceNode in) {
         // add the index
         indices.add(new String(getBufferIdent(out, in)));
 
@@ -175,16 +175,16 @@ public class MagicDram extends IODevice {
             buffers.add(new Buffer(in, out));
     }
 
-    public static String getBufferIdent(OutputTraceNode out, InputTraceNode in) {
+    public static String getBufferIdent(OutputSliceNode out, InputSliceNode in) {
         return out.getIdent() + "_" + in.getIdent();
     }
 
     static class Buffer {
-        public InputTraceNode in;
+        public InputSliceNode in;
 
-        public OutputTraceNode out;
+        public OutputSliceNode out;
 
-        public Buffer(InputTraceNode i, OutputTraceNode o) {
+        public Buffer(InputSliceNode i, OutputSliceNode o) {
             in = i;
             out = o;
         }

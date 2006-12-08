@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 /**
  * This class represents a buffer between two traces. The rotating register abstraction 
@@ -19,7 +19,7 @@ import at.dms.kjc.slicegraph.OutputTraceNode;
  * @author mgordon
  *
  */
-public class InterTraceBuffer extends OffChipBuffer {
+public class InterSliceBuffer extends OffChipBuffer {
     // the edge
     protected Edge edge;
    
@@ -30,17 +30,17 @@ public class InterTraceBuffer extends OffChipBuffer {
     protected static HashMap<StreamingDram, Integer> dramsToBuffers;
     
     
-    protected InterTraceBuffer(Edge edge) {
+    protected InterSliceBuffer(Edge edge) {
         super(edge.getSrc(), edge.getDest());
         this.edge = edge;
         calculateSize();
     }
 
-    public static InterTraceBuffer getBuffer(Edge edge) {
+    public static InterSliceBuffer getBuffer(Edge edge) {
         if (!bufferStore.containsKey(edge)) {
-            bufferStore.put(edge, new InterTraceBuffer(edge));
+            bufferStore.put(edge, new InterSliceBuffer(edge));
         }
-        return (InterTraceBuffer) bufferStore.get(edge);
+        return (InterSliceBuffer) bufferStore.get(edge);
     }
 
    
@@ -49,20 +49,20 @@ public class InterTraceBuffer extends OffChipBuffer {
      * of the source trace performs its function.
      */
     public boolean redundant() {
-        return unnecessary((OutputTraceNode) source);
+        return unnecessary((OutputSliceNode) source);
     }
 
     public OffChipBuffer getNonRedundant() {
         if (redundant()) {
-            return IntraTraceBuffer.getBuffer(
-                                              (FilterTraceNode) source.getPrevious(),
-                                              (OutputTraceNode) source).getNonRedundant();
+            return IntraSliceBuffer.getBuffer(
+                                              (FilterSliceNode) source.getPrevious(),
+                                              (OutputSliceNode) source).getNonRedundant();
         }
         return this;
     }
 
     protected void setType() {
-        type = ((OutputTraceNode) source).getType();
+        type = ((OutputSliceNode) source).getType();
     }
 
     protected void calculateSize() {

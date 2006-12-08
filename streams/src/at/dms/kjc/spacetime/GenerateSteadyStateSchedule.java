@@ -11,8 +11,9 @@ import java.util.LinkedList;
 import at.dms.kjc.KjcOptions;
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * @author mgordon
@@ -29,7 +30,7 @@ public class GenerateSteadyStateSchedule {
     private SpaceTimeSchedule spaceTime;
     private RawChip rawChip;
     //the schedule we are building
-    private LinkedList<Trace> schedule;
+    private LinkedList<Slice> schedule;
     private Layout layout;
     
     /**
@@ -43,7 +44,7 @@ public class GenerateSteadyStateSchedule {
         this.layout = layout;
         spaceTime = sts;
         rawChip = spaceTime.getRawChip();
-        schedule = new LinkedList<Trace>();
+        schedule = new LinkedList<Slice>();
         tileAvail = new int[rawChip.getTotalTiles()];
         for (int i = 0; i < rawChip.getTotalTiles(); i++) {
             tileAvail[i] = 0;
@@ -55,7 +56,7 @@ public class GenerateSteadyStateSchedule {
     public void schedule() {
         if (SpaceTimeBackend.NO_SWPIPELINE) {
             spaceTime.setSchedule(DataFlowOrder.getTraversal
-                    (spaceTime.partitioner.getTraceGraph()));
+                    (spaceTime.partitioner.getSliceGraph()));
         }
         else {
             //for now just call schedule work, may want other schemes later
@@ -71,9 +72,9 @@ public class GenerateSteadyStateSchedule {
      */
     private void scheduleWork() {
         // sort traces...
-        Trace[] tempArray = (Trace[]) spaceTime.partitioner.getTraceGraph().clone();
-        Arrays.sort(tempArray, new CompareTraceBNWork(spaceTime.partitioner));
-        LinkedList<Trace> sortedTraces = new LinkedList<Trace>(Arrays.asList(tempArray));
+        Slice[] tempArray = (Slice[]) spaceTime.partitioner.getSliceGraph().clone();
+        Arrays.sort(tempArray, new CompareSliceBNWork(spaceTime.partitioner));
+        LinkedList<Slice> sortedTraces = new LinkedList<Slice>(Arrays.asList(tempArray));
 
         // schedule predefined filters first, but don't put them in the
         // schedule just assign them tiles...
@@ -83,20 +84,20 @@ public class GenerateSteadyStateSchedule {
         Collections.reverse(sortedTraces);
 
         CommonUtils.println_debugging("Sorted Traces: ");
-        Iterator<Trace> it = sortedTraces.iterator();
+        Iterator<Slice> it = sortedTraces.iterator();
         while (it.hasNext()) {
-            Trace trace = it.next();
-            CommonUtils.println_debugging(" * " + trace + " (work: "
-                               + spaceTime.partitioner.getTraceBNWork(trace) + ")");
+            Slice slice = it.next();
+            CommonUtils.println_debugging(" * " + slice + " (work: "
+                               + spaceTime.partitioner.getSliceBNWork(slice) + ")");
         }
 
         
         // start to schedule the traces
         while (!sortedTraces.isEmpty()) {
             //remove the first trace, the trace with the most work
-            Trace trace = sortedTraces.removeFirst();
+            Slice slice = sortedTraces.removeFirst();
           
-            scheduleTrace(trace, sortedTraces);
+            scheduleTrace(slice, sortedTraces);
         }
     }
     
@@ -120,24 +121,24 @@ public class GenerateSteadyStateSchedule {
      *  make the necessary state changes to schedule the trace.
      *  
      * @param layout The layout hashmap
-     * @param trace The Trace that is going to be scheduled for execution
+     * @param slice The Slice that is going to be scheduled for execution
      * @param sortedList The list of Traces that need to be scheduled
      */
-    private void scheduleTrace(Trace trace,
-                               LinkedList<Trace> sortedList) {
-        assert trace != null;
-        CommonUtils.println_debugging("Scheduling Trace: " + trace + " at time "
+    private void scheduleTrace(Slice slice,
+                               LinkedList<Slice> sortedList) {
+        assert slice != null;
+        CommonUtils.println_debugging("Scheduling Slice: " + slice + " at time "
                            + currentTime);
         // remove this trace from the list of traces to schedule
-        sortedList.remove(trace);
+        sortedList.remove(slice);
         // add the trace to the schedule
-        schedule.add(trace);
+        schedule.add(slice);
 
         // now set the layout for the filterTraceNodes
         // and set the available time for each tile
-        TraceNode node = trace.getHead().getNext();
+        SliceNode node = slice.getHead().getNext();
 
-        while (node instanceof FilterTraceNode) {
+        while (node instanceof FilterSliceNode) {
             
             RawTile tile = layout.getTile(node.getAsFilter());
 
@@ -148,7 +149,7 @@ public class GenerateSteadyStateSchedule {
             tileAvail[tile.getTileNumber()] = ((currentTime > tileAvail[tile
                                                                         .getTileNumber()]) ? currentTime : tileAvail[tile
                                                                                                                      .getTileNumber()])
-                + spaceTime.partitioner.getTraceBNWork(trace);
+                + spaceTime.partitioner.getSliceBNWork(slice);
             CommonUtils.println_debugging("   * new avail for " + tile + " = "
                                + tileAvail[tile.getTileNumber()]);
             // SpaceTimeBackend.println(" *(" + currentTime + ") Assigning " + node +
@@ -219,14 +220,14 @@ public class GenerateSteadyStateSchedule {
    
 
     private void printSchedule() {
-        Iterator<Trace> sch = schedule.iterator();
-        Trace prev = null;
+        Iterator<Slice> sch = schedule.iterator();
+        Slice prev = null;
         CommonUtils.println_debugging("Schedule: ");
         while (sch.hasNext()) {
-            Trace trace = sch.next();
-            CommonUtils.println_debugging(" ** " + trace);
+            Slice slice = sch.next();
+            CommonUtils.println_debugging(" ** " + slice);
             //System.out.println(" ** " + trace);
-            prev = trace;
+            prev = slice;
         }
 
     }

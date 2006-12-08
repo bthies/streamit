@@ -2,16 +2,16 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class MagicDramLoad extends MagicDramInstruction 
 {
-    private OutputTraceNode source;
-    private InputTraceNode dest;
+    private OutputSliceNode source;
+    private InputSliceNode dest;
     
-    public MagicDramLoad(InputTraceNode dest, OutputTraceNode source) 
+    public MagicDramLoad(InputSliceNode dest, OutputSliceNode source) 
     {
         this.dest = dest;
         this.source = source;
@@ -21,7 +21,7 @@ public class MagicDramLoad extends MagicDramInstruction
     {
         StringBuffer sb = new StringBuffer();
         if (source.isFileInput()) {
-            FileInputContent in = (FileInputContent)((FilterTraceNode)source.getPrevious()).getFilter();
+            FileInputContent in = (FileInputContent)((FilterSliceNode)source.getPrevious()).getFilter();
             sb.append("\tif (");
             if (in.isFP())
                 sb.append("fscanf(" + Util.getFileHandle(in) + ", \"%e\\n\", &temp)");

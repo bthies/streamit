@@ -5,7 +5,8 @@ import java.util.Vector;
 import java.util.Iterator;
 import java.util.HashMap;
 import at.dms.kjc.common.*;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.SliceNode;
+import at.dms.kjc.slicegraph.Util;
 
 /**
  * This class generates a dot graph of the layout and for each tile the
@@ -27,12 +28,12 @@ public class LayoutDot
             Layout layout) {
         AnnealedLayout anneal = new AnnealedLayout(spaceTime);
         anneal.initialize();
-        Iterator<TraceNode> nodes  = 
-            Util.traceNodeTraversal(spaceTime.partitioner.getTraceGraph());
+        Iterator<SliceNode> nodes  = 
+            Util.sliceNodeTraversal(spaceTime.partitioner.getSliceGraph());
         HashMap assignment = new HashMap();
         while (nodes.hasNext()) {
-            TraceNode node = nodes.next();
-            if (node.isFilterTrace()) {
+            SliceNode node = nodes.next();
+            if (node.isFilterSlice()) {
                 RawTile tile = 
                     layout.getTile(node.getAsFilter());
                 assignment.put(node, tile);

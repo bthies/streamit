@@ -3,8 +3,9 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
  * This class represents the space/time schedule for the application, 
@@ -18,22 +19,22 @@ public class SpaceTimeSchedule {
     //the slice partitioner used
     public Partitioner partitioner;
     //a list of the execution order of slices    
-    private Trace[] schedule;
+    private Slice[] schedule;
     //the raw chip that we are compiling to
     private RawChip rawChip;
     //the initialization schedule
-    private Trace[] initSchedule;
+    private Slice[] initSchedule;
     //the preloop schedule!
-    private Trace[][] primePumpSchedule; 
+    private Slice[][] primePumpSchedule; 
     //the multiplicities of the traces in the primepump
-    //Trace->Integer
-    private HashMap<Trace, Integer> primePumpMult;
+    //Slice->Integer
+    private HashMap<Slice, Integer> primePumpMult;
     
     public SpaceTimeSchedule(Partitioner p, RawChip r) {
         rawChip = r;
         partitioner = p;
     
-        primePumpMult = new HashMap<Trace, Integer>();
+        primePumpMult = new HashMap<Slice, Integer>();
       
     }
      
@@ -48,13 +49,13 @@ public class SpaceTimeSchedule {
      * @param is The initSchedule to set.
      */
     public void setInitSchedule(LinkedList is) {
-        this.initSchedule = (Trace[])is.toArray(new Trace[0]);
+        this.initSchedule = (Slice[])is.toArray(new Slice[0]);
     }
 
     /**
      * @return Returns the initSchedule.
      */
-    public Trace[] getInitSchedule() {
+    public Slice[] getInitSchedule() {
         return initSchedule;
     }
 
@@ -65,8 +66,8 @@ public class SpaceTimeSchedule {
      * @return a linked list representation of the
      * steady state schedule;
      */
-    public LinkedList<Trace> getScheduleList() {
-        LinkedList<Trace> list = new LinkedList<Trace>();
+    public LinkedList<Slice> getScheduleList() {
+        LinkedList<Slice> list = new LinkedList<Slice>();
         for (int i = 0; i < schedule.length; i++)
             list.add(schedule[i]);
         
@@ -76,51 +77,51 @@ public class SpaceTimeSchedule {
     /**
      * @return Returns the steady state schedule.
      */
-    public Trace[] getSchedule() {
+    public Slice[] getSchedule() {
         return schedule;
     }
 
     /**
      * @param schedule The steady-state schedule to set.
      */
-    public void setSchedule(LinkedList<Trace> schedule) {
-        this.schedule = schedule.toArray(new Trace[0]);
+    public void setSchedule(LinkedList<Slice> schedule) {
+        this.schedule = schedule.toArray(new Slice[0]);
     }
     
     
     /**
      * @return Returns the primePumpSchedule.
      */
-    public Trace[][] getPrimePumpSchedule() {
+    public Slice[][] getPrimePumpSchedule() {
         return primePumpSchedule;
     }
 
     /** 
      * @return A flat (one-dimensional) array of the primepump schedule.
      */
-    public Trace[] getPrimePumpScheduleFlat() {
-        LinkedList<Trace> pp = new LinkedList<Trace>();
+    public Slice[] getPrimePumpScheduleFlat() {
+        LinkedList<Slice> pp = new LinkedList<Slice>();
         
         for (int i = 0; i < primePumpSchedule.length; i++) 
             for (int j = 0; j < primePumpSchedule[i].length; j++) 
                 pp.add(primePumpSchedule[i][j]);
         
         
-        return pp.toArray(new Trace[0]);
+        return pp.toArray(new Slice[0]);
     }
     
     /**
      * @param preLoopSchedule The primePumpSchedule to set.
      */
-    public void setPrimePumpSchedule(LinkedList<LinkedList<Trace>> preLoopSchedule) {
+    public void setPrimePumpSchedule(LinkedList<LinkedList<Slice>> preLoopSchedule) {
         //      convert into an array for easier access...
         CommonUtils.println_debugging("Setting primepump schedule:");   
-        primePumpSchedule = new Trace[preLoopSchedule.size()][];
+        primePumpSchedule = new Slice[preLoopSchedule.size()][];
         for (int i = 0; i < preLoopSchedule.size(); i++ ) {
             LinkedList schStep = preLoopSchedule.get(i);
-            primePumpSchedule[i] = new Trace[schStep.size()];
+            primePumpSchedule[i] = new Slice[schStep.size()];
             for (int j = 0; j < schStep.size(); j++) {
-                Trace current = (Trace)schStep.get(j);
+                Slice current = (Slice)schStep.get(j);
                 CommonUtils.println_debugging(current.toString());
                 primePumpSchedule[i][j] = current;
                 //generate the prime pump multiplicity map
@@ -144,13 +145,13 @@ public class SpaceTimeSchedule {
         int outputs = 0;
         
         //get all the file writers
-        Vector<Trace> fileWriters = new Vector<Trace>();
+        Vector<Slice> fileWriters = new Vector<Slice>();
         for (int i = 0; i < partitioner.io.length; i++) 
             if (partitioner.io[i].getHead().isFileOutput())
                 fileWriters.add(partitioner.io[i]);
         
         for (int i = 0; i < fileWriters.size(); i++) {
-            FilterTraceNode node = (FilterTraceNode)fileWriters.get(i).getHead().getNext();
+            FilterSliceNode node = (FilterSliceNode)fileWriters.get(i).getHead().getNext();
             FilterInfo fi = FilterInfo.getFilterInfo(node);
             assert node.getFilter().getInputType().isNumeric() :
                 "non-numeric type for input to filewriter";
@@ -171,13 +172,13 @@ public class SpaceTimeSchedule {
     }
     
     /** 
-     * @param trace
+     * @param slice
      * @return Return the number of times this trace fires in the prime pump schedule.
      */
-    public int getPrimePumpMult(Trace trace) {
-        if (!primePumpMult.containsKey(trace))
+    public int getPrimePumpMult(Slice slice) {
+        if (!primePumpMult.containsKey(slice))
             return 0;
-        return primePumpMult.get(trace).intValue();
+        return primePumpMult.get(slice).intValue();
     }
     
   

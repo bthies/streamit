@@ -1,9 +1,9 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.util.Utils;
 import java.util.HashMap;
 
@@ -11,16 +11,16 @@ public class TraceBufferSchedule
 {
     private int currentWeight;
     private int currentBuffer;
-    private InputTraceNode input;
-    private OutputTraceNode output;
-    private static HashMap<TraceNode, TraceBufferSchedule> nodes;
+    private InputSliceNode input;
+    private OutputSliceNode output;
+    private static HashMap<SliceNode, TraceBufferSchedule> nodes;
     
     static 
     {
-        nodes = new HashMap<TraceNode, TraceBufferSchedule>();
+        nodes = new HashMap<SliceNode, TraceBufferSchedule>();
     }
     
-    private TraceBufferSchedule(InputTraceNode in) 
+    private TraceBufferSchedule(InputSliceNode in) 
     {
         input = in;
         output = null;
@@ -29,7 +29,7 @@ public class TraceBufferSchedule
         currentBuffer = 0;
     }
     
-    private TraceBufferSchedule(OutputTraceNode out) 
+    private TraceBufferSchedule(OutputSliceNode out) 
     {
         output = out;
         input = null;
@@ -38,7 +38,7 @@ public class TraceBufferSchedule
         currentBuffer = 0;
     }
 
-    public static Edge getOutputBuffer(InputTraceNode in) 
+    public static Edge getOutputBuffer(InputSliceNode in) 
     {
         if (!nodes.containsKey(in))
             nodes.put(in, new TraceBufferSchedule(in));
@@ -46,7 +46,7 @@ public class TraceBufferSchedule
         return nodes.get(in).updateInput();
     }
     
-    public static Edge[] getInputBuffers(OutputTraceNode out)
+    public static Edge[] getInputBuffers(OutputSliceNode out)
     {
         if (!nodes.containsKey(out))
             nodes.put(out, new TraceBufferSchedule(out));

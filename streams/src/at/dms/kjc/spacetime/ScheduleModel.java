@@ -9,9 +9,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * This class models the calculated schedule and layout using the 
@@ -22,35 +23,35 @@ import at.dms.kjc.slicegraph.TraceNode;
  */
 public class ScheduleModel {
     /** the cost of outputing one item using the gdn versus using the static net
-     for the final filter of a Trace */
+     for the final filter of a Slice */
     public static final int GDN_PUSH_COST = 2;
     /** the cost of issue a read or a write dram command on the tiles assigned 
      * to trace enpoints for each trace.
      */
     public static final int DRAM_ISSUE_COST = 5;
     private Layout layout;
-    private LinkedList<Trace> scheduleOrder;
+    private LinkedList<Slice> scheduleOrder;
     private RawChip rawChip;
     private SpaceTimeSchedule spaceTime;
     /** array of total work estimation for each tile including blocking*/
     private int[] tileCosts;
     /** Map of filter to start time on the tile they are assigned */
-    private HashMap<FilterTraceNode, Integer> startTime;
+    private HashMap<FilterSliceNode, Integer> startTime;
     /** Map if filter to end time on the tile they are assigned */
-    private HashMap<FilterTraceNode, Integer> endTime;
+    private HashMap<FilterSliceNode, Integer> endTime;
     /** the tile with the most work */
     private int bottleNeckTile;
     /** the amount of work for the bottleneck tile */
     private int bottleNeckCost;
     
     public ScheduleModel(SpaceTimeSchedule spaceTime, Layout layout, 
-            LinkedList<Trace> scheduleOrder) {
+            LinkedList<Slice> scheduleOrder) {
         this.layout = layout;
         this.spaceTime = spaceTime;
         this.rawChip = spaceTime.getRawChip();
         this.scheduleOrder = scheduleOrder;
-        startTime = new HashMap<FilterTraceNode, Integer>();
-        endTime = new HashMap<FilterTraceNode, Integer>(); 
+        startTime = new HashMap<FilterSliceNode, Integer>();
+        endTime = new HashMap<FilterSliceNode, Integer>(); 
     }
     
     /** 
@@ -75,7 +76,7 @@ public class ScheduleModel {
      * @return the time estimate for when this filter will begin executing
      * in the steady state on the tile to which is it assigned.
      */
-    public int getFilterStart(FilterTraceNode node) {
+    public int getFilterStart(FilterSliceNode node) {
         //System.out.println(node);
         return startTime.get(node).intValue();
     }
@@ -88,7 +89,7 @@ public class ScheduleModel {
      * @return the time estimate for when this filter is finished executing
      * its entire steady state on the tile to which it is assigned.
      */
-    public int getFilterEnd(FilterTraceNode node) {
+    public int getFilterEnd(FilterSliceNode node) {
         return endTime.get(node).intValue();
     }
     
@@ -148,30 +149,30 @@ public class ScheduleModel {
     public void createModel(boolean debug) {
         //debug = true;
         tileCosts = new int[rawChip.getTotalTiles()];
-        Iterator<Trace> traces = scheduleOrder.iterator();
+        Iterator<Slice> slices = scheduleOrder.iterator();
         
-        while (traces.hasNext()) {
-            Trace trace = traces.next();
+        while (slices.hasNext()) {
+            Slice slice = slices.next();
              
             //don't do anything for predefined filters...
-            if (trace.getHead().getNextFilter().isPredefined()) 
+            if (slice.getHead().getNextFilter().isPredefined()) 
                 continue;
         
             int prevStart = 0;
             int prevEnd = 0;
           
-            assert trace.getFilterNodes().length == 
-                trace.getNumFilters();
+            assert slice.getFilterNodes().length == 
+                slice.getNumFilters();
             
             if (debug)
-                System.out.println("Scheduling: " + trace);
+                System.out.println("Scheduling: " + slice);
             
             if (debug)
                 System.out.println("Finding correct times for last filter: ");
             
             //find the correct starting & ending time for the last filter of the trace
-            for (int f = 0; f < trace.getFilterNodes().length; f++) {
-                FilterTraceNode current = trace.getFilterNodes()[f];
+            for (int f = 0; f < slice.getFilterNodes().length; f++) {
+                FilterSliceNode current = slice.getFilterNodes()[f];
                 
                 RawTile tile = layout.getTile(current);
                 if (debug)
@@ -225,7 +226,7 @@ public class ScheduleModel {
             
             //the last filter is always the bottleneck of the filter, meaning
             //it finishes last and base everyone else on it
-            FilterTraceNode bottleNeck = trace.getTail().getPrevFilter();
+            FilterSliceNode bottleNeck = slice.getTail().getPrevFilter();
                            
             RawTile bottleNeckTile = layout.getTile(bottleNeck);
             
@@ -235,10 +236,10 @@ public class ScheduleModel {
             tileCosts[bottleNeckTile.getTileNumber()] = 
                 prevEnd;
             
-            if (bottleNeck.getPrevious().isInputTrace()) {
+            if (bottleNeck.getPrevious().isInputSlice()) {
                 tileCosts[bottleNeckTile.getTileNumber()]+= DRAM_ISSUE_COST;
             }
-            if (bottleNeck.getNext().isOutputTrace()) {
+            if (bottleNeck.getNext().isOutputSlice()) {
                 //account for the
                 //cost of sending an item over the gdn if it uses it...
                 if (LogicalDramTileMapping.mustUseGdn(bottleNeckTile)) {
@@ -253,12 +254,12 @@ public class ScheduleModel {
             
             int nextFinish = tileCosts[bottleNeckTile.getTileNumber()];
             int next1Iter = spaceTime.partitioner.getWorkEstOneFiring(bottleNeck);
-            TraceNode current = bottleNeck.getPrevious();
+            SliceNode current = bottleNeck.getPrevious();
             //record the end time for the bottleneck filter
             endTime.put(bottleNeck, new Integer(nextFinish));
             
             //traverse backwards and set the finish times of the traces...
-            while (current.isFilterTrace()) {
+            while (current.isFilterSlice()) {
                 RawTile tile = layout.getTile(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = (nextFinish - next1Iter);
                 
@@ -278,7 +279,7 @@ public class ScheduleModel {
             current = bottleNeck.getNext();
             int prevFinish = tileCosts[bottleNeckTile.getTileNumber()];
             
-            while (current.isFilterTrace()) {
+            while (current.isFilterSlice()) {
                 RawTile tile = layout.getTile(current.getAsFilter());
                 tileCosts[tile.getTileNumber()] = 
                     (prevFinish + spaceTime.partitioner.getWorkEstOneFiring(current.getAsFilter()));
@@ -291,15 +292,15 @@ public class ScheduleModel {
             }
             */
             //some checks
-            for (int f = 0; f < trace.getFilterNodes().length; f++) {
-                assert getFilterStart(trace.getFilterNodes()[f]) <=
-                    (getFilterEnd(trace.getFilterNodes()[f]) - 
-                    spaceTime.partitioner.getFilterWorkSteadyMult(trace.getFilterNodes()[f])) :
+            for (int f = 0; f < slice.getFilterNodes().length; f++) {
+                assert getFilterStart(slice.getFilterNodes()[f]) <=
+                    (getFilterEnd(slice.getFilterNodes()[f]) - 
+                    spaceTime.partitioner.getFilterWorkSteadyMult(slice.getFilterNodes()[f])) :
    
-                        trace.getFilterNodes()[f] + " " + 
-                        getFilterStart(trace.getFilterNodes()[f]) + " <= " +
-                            getFilterEnd(trace.getFilterNodes()[f]) + " - " + 
-                                    spaceTime.partitioner.getFilterWorkSteadyMult(trace.getFilterNodes()[f]) +
+                        slice.getFilterNodes()[f] + " " + 
+                        getFilterStart(slice.getFilterNodes()[f]) + " <= " +
+                            getFilterEnd(slice.getFilterNodes()[f]) + " - " + 
+                                    spaceTime.partitioner.getFilterWorkSteadyMult(slice.getFilterNodes()[f]) +
                                         " (bottleneck: " + bottleNeck + ")";
             }
         }
@@ -324,24 +325,24 @@ public class ScheduleModel {
    public void createModelNoSWPipe() {
        int tileCosts[] = new int[rawChip.getTotalTiles()];
        
-       Iterator<Trace> traces = scheduleOrder.iterator();
-       //HashMap<FilterTraceNode, Double> endTime = new HashMap<FilterTraceNode, Double>();
-       while (traces.hasNext()) {
-           Trace trace = traces.next();
-           RawTile tile = layout.getTile(trace.getHead().getNextFilter());
-           int traceWork = spaceTime.partitioner.getTraceBNWork(trace); 
+       Iterator<Slice> slices = scheduleOrder.iterator();
+       //HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
+       while (slices.hasNext()) {
+           Slice slice = slices.next();
+           RawTile tile = layout.getTile(slice.getHead().getNextFilter());
+           int traceWork = spaceTime.partitioner.getSliceBNWork(slice); 
            int myStart = 0;
            //now find the start time
            
            //find the max end times of all the traces that this trace depends on
            int maxDepStartTime = 0;
-           InputTraceNode input = trace.getHead();
+           InputSliceNode input = slice.getHead();
            Iterator<Edge> inEdges = input.getSourceSet().iterator();
            while (inEdges.hasNext()) {
                Edge edge = inEdges.next();
                if (spaceTime.partitioner.isIO(edge.getSrc().getParent()))
                    continue;
-               FilterTraceNode upStream = edge.getSrc().getPrevFilter();
+               FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                
                RawTile upTile = layout.getTile(upStream);
                assert endTime.containsKey(upStream);
@@ -353,8 +354,8 @@ public class ScheduleModel {
            
            //add the start time to the trace work (one filter)!
            tileCosts[tile.getTileNumber()] = myStart + traceWork;
-           endTime.put(trace.getHead().getNextFilter(), tileCosts[tile.getTileNumber()]);
-           startTime.put(trace.getHead().getNextFilter(), myStart);
+           endTime.put(slice.getHead().getNextFilter(), tileCosts[tile.getTileNumber()]);
+           startTime.put(slice.getHead().getNextFilter(), myStart);
        }
        
        bottleNeckCost = -1;

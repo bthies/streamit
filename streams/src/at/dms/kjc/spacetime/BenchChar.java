@@ -7,7 +7,8 @@ import java.util.*;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.Slice;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * Calculate and print some characteristics of the application.
@@ -36,8 +37,8 @@ public class BenchChar {
         System.out.println("---- Characteristics ----");
         //get the number of splits, joins, peekinng filters
         
-        findNodes(spaceTime.partitioner.getTraceGraph());
-        calcPaths(spaceTime.partitioner.getTraceGraph());
+        findNodes(spaceTime.partitioner.getSliceGraph());
+        calcPaths(spaceTime.partitioner.getSliceGraph());
         System.out.println("SplitJoins: " + findSplitJoins(str));
         System.out.println("Splits: " + splits);
         System.out.println("Joins: " + joins);
@@ -80,20 +81,20 @@ public class BenchChar {
         return 0;        
     }
     
-    private static void findNodes(Trace[] traces) {
+    private static void findNodes(Slice[] slices) {
         joins = 0;
         splits = 0;
         peekingFilters = 0;
         bufferedFilters = 0;
-        for (int i = 0; i < traces.length; i++) {
-            if (!traces[i].getHead().oneInput() && 
-                    !traces[i].getHead().noInputs())
+        for (int i = 0; i < slices.length; i++) {
+            if (!slices[i].getHead().oneInput() && 
+                    !slices[i].getHead().noInputs())
                 joins++;
-            if (!traces[i].getTail().oneOutput() &&
-                    !traces[i].getTail().noOutputs())
+            if (!slices[i].getTail().oneOutput() &&
+                    !slices[i].getTail().noOutputs())
                 splits++;
-            TraceNode node = traces[i].getHead().getNext();
-            while (node.isFilterTrace()) {
+            SliceNode node = slices[i].getHead().getNext();
+            while (node.isFilterSlice()) {
                 FilterInfo fi = FilterInfo.getFilterInfo(node.getAsFilter());
                 if (fi.peek > fi.pop)
                     peekingFilters++;
@@ -104,22 +105,22 @@ public class BenchChar {
         }
     }
     
-    private static void calcPaths(Trace[] traces) {
-        //find all the top traces, or sources
-        LinkedList<Trace> topTraces = new LinkedList<Trace>();
-        for (int i = 0; i < traces.length; i++) {
-            if (traces[i].getHead().noInputs())
-                topTraces.add(traces[i]);
+    private static void calcPaths(Slice[] slices) {
+        //find all the top slices, or sources
+        LinkedList<Slice> topSlices = new LinkedList<Slice>();
+        for (int i = 0; i < slices.length; i++) {
+            if (slices[i].getHead().noInputs())
+                topSlices.add(slices[i]);
         }
         
         int longestPath = 0;
-        Trace longestSource = null;
+        Slice longestSource = null;
         //find the source that has the longs path to a sink
-        for (int i = 0; i < topTraces.size(); i++) {
-            int longestPathTraceToSink = longestPathToSink(topTraces.get(i));
-            if (longestPathTraceToSink > longestPath) {
-                longestPath = longestPathTraceToSink;
-                longestSource = topTraces.get(i);
+        for (int i = 0; i < topSlices.size(); i++) {
+            int longestPathSliceToSink = longestPathToSink(topSlices.get(i));
+            if (longestPathSliceToSink > longestPath) {
+                longestPath = longestPathSliceToSink;
+                longestSource = topSlices.get(i);
             }
         }
         assert longestSource != null;
@@ -129,10 +130,10 @@ public class BenchChar {
         BenchChar.shortestPath = shortestPathToSink(longestSource);
     }
     
-    private static int longestPathToSink(Trace trace) {
-        if (trace.getTail().noOutputs())
+    private static int longestPathToSink(Slice slice) {
+        if (slice.getTail().noOutputs())
             return 0;
-        Iterator<Edge> edges = trace.getTail().getDestSet().iterator();
+        Iterator<Edge> edges = slice.getTail().getDestSet().iterator();
         int maxPath = 0;
         while (edges.hasNext()) {
             Edge edge = edges.next();
@@ -143,10 +144,10 @@ public class BenchChar {
         return maxPath + 1;
     }
     
-    private static int shortestPathToSink(Trace trace) {
-        if (trace.getTail().noOutputs())
+    private static int shortestPathToSink(Slice slice) {
+        if (slice.getTail().noOutputs())
             return 0;
-        Iterator<Edge> edges = trace.getTail().getDestSet().iterator();
+        Iterator<Edge> edges = slice.getTail().getDestSet().iterator();
         int minPath = Integer.MAX_VALUE;
         while (edges.hasNext()) {
             Edge edge = edges.next();

@@ -11,33 +11,34 @@ import at.dms.kjc.sir.SIRIdentity;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.*;
 
 /**
  * <p>After synch removal and conversion from the stream graph to the slice
- * graph, input trace nodes (joiners) or output trace nodes (splitter) may
+ * graph, input slice nodes (joiners) or output slice nodes (splitter) may
  * not execute an integral number of times.</p>
- * <p>For an input trace node, each incoming edge may not have the same multiplicity 
- * and/or for an output trace node, the upstream filter may push a number of nodes 
+ * <p>For an input slice node, each incoming edge may not have the same multiplicity 
+ * and/or for an output slice node, the upstream filter may push a number of nodes 
  * that does not divide evenly by the total weights of the edges of the output node.</p> 
- * <p>The SpaceTime compiler assumes that there are no items buffered at input trace
- * nodes or output trace nodes, so to execute an integral number of times. To 
- * force this, this pass adds buffered at a trace by adding an identity filter to the 
- * end of a trace.  It will balance the incoming edges of an input trace node, and/or
- * make sure the output trace node executes an integral number of times.<p>
+ * <p>The SpaceTime compiler assumes that there are no items buffered at input slice
+ * nodes or output slice nodes, so to execute an integral number of times. To 
+ * force this, this pass adds buffered at a slice by adding an identity filter to the 
+ * end of a slice.  It will balance the incoming edges of an input slice node, and/or
+ * make sure the output slice node executes an integral number of times.<p>
  * 
  * @author mgordon
  *
  */
 public class AddBuffering {
     private SpaceTimeSchedule spaceTime;
-    private HashSet<Trace> editedTraces;
+    private HashSet<Slice> editedSlices;
     
     /**
-     * Fix the input trace node and output trace node multiplicity to be
+     * Fix the input slice node and output slice node multiplicity to be
      * integral in the init stage.
      *  
      * @param spaceTime The space time schedule.
@@ -49,7 +50,7 @@ public class AddBuffering {
     
     private AddBuffering(SpaceTimeSchedule st) {
         this.spaceTime = st;
-        editedTraces = new HashSet<Trace>();
+        editedSlices = new HashSet<Slice>();
     }
     
     private void doitInternal() {
@@ -58,30 +59,30 @@ public class AddBuffering {
     }
     
     /**
-     * Iterate over the output trace nodes of the trace graph and 
+     * Iterate over the output slice nodes of the slice graph and 
      * see if any off them don't execute an integral number of times 
      * based on the items produced by the upstream filter.  If non-integer,
      * then create an id filter to buffer items to make it integral.
      */
     private void checkOutputNodes() {
-        for (int t = 0; t < spaceTime.partitioner.getTraceGraph().length; t++) {
-            Trace trace = spaceTime.partitioner.getTraceGraph()[t];
+        for (int t = 0; t < spaceTime.partitioner.getSliceGraph().length; t++) {
+            Slice slice = spaceTime.partitioner.getSliceGraph()[t];
             //check all the outgoing edges to see if they are balanced in the init
             //and fix them if we have to
-            fixOutputNode(trace.getTail());
+            fixOutputNode(slice.getTail());
         }
         //don't forget to reset the filter infos after each iteration
         FilterInfo.reset();
     }
     
     /**
-     * Make sure that output trace node performs an integral number of 
+     * Make sure that output slice node performs an integral number of 
      * iterations in the initialization stage.
      * 
-     * @param output The output trace node
+     * @param output The output slice node
      */
-    private void fixOutputNode(OutputTraceNode output) {
-        FilterTraceNode filterNode = output.getPrevFilter();
+    private void fixOutputNode(OutputSliceNode output) {
+        FilterSliceNode filterNode = output.getPrevFilter();
         FilterContent filter = filterNode.getFilter();
         
         //do nothing if nothing is pushed...
@@ -90,26 +91,26 @@ public class AddBuffering {
         
         if (filter.initItemsPushed() % output.totalWeights() != 0) {
             //if the number of items of produced by the filter does not
-            //divide equal the total weights of the output trace node
+            //divide equal the total weights of the output slice node
             //we have to buffer to items by adding an upstream id filter
             int itemsToBuffer = filter.initItemsPushed() % output.totalWeights();
             int itemsIDShouldPass = filter.initItemsPushed() - itemsToBuffer;
-            Trace trace = output.getParent();
-            System.out.println(" * Adding buffering after " + trace.getTail().getPrevious() + 
+            Slice slice = output.getParent();
+            System.out.println(" * Adding buffering after " + slice.getTail().getPrevious() + 
                     " to equalize output, pass: " + itemsIDShouldPass + " buffer: " + itemsToBuffer);
             //System.out.println("   " + filter.initItemsPushed() + " % " + 
             //        output.totalWeights() + " != 0");
-            addIDToTrace(trace, itemsIDShouldPass);
+            addIDToSlice(slice, itemsIDShouldPass);
             
-            //remember that we have edited this trace...
-            editedTraces.add(trace);
+            //remember that we have edited this slice...
+            editedSlices.add(slice);
         }
     }
     
     
     /**
-     * Make sure that all edges of an input trace node executes an equal number
-     * of times.  Do this for all input trace nodes. 
+     * Make sure that all edges of an input slice node executes an equal number
+     * of times.  Do this for all input slice nodes. 
      *
      */
     private void checkInputNodes() {
@@ -119,22 +120,22 @@ public class AddBuffering {
         do {
             //System.out.println("Iteration " + i++);
             change = false;
-            for (int t = 0; t < spaceTime.partitioner.getTraceGraph().length; t++) {
-                Trace trace = spaceTime.partitioner.getTraceGraph()[t];
+            for (int t = 0; t < spaceTime.partitioner.getSliceGraph().length; t++) {
+                Slice slice = spaceTime.partitioner.getSliceGraph()[t];
                 //check all the outgoing edges to see if they are balanced in the init
                 //and fix them if we have to
                 boolean currentChange 
-                    = fixInputNodeBuffering(trace.getHead());
+                    = fixInputNodeBuffering(slice.getHead());
                 if (currentChange)
                     change = true;
             }
             //don't forget to reset the filter infos after each iteration
             FilterInfo.reset();
             //tell the partitioner that new slices maybe have been added!
-            LinkedList<Trace> newTraces = 
-                DataFlowOrder.getTraversal(spaceTime.partitioner.getTraceGraph());
-            spaceTime.partitioner.setTraceGraphNewIds(
-                    newTraces.toArray(new Trace[newTraces.size()]));
+            LinkedList<Slice> newSlices = 
+                DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
+            spaceTime.partitioner.setSliceGraphNewIds(
+                    newSlices.toArray(new Slice[newSlices.size()]));
                     
         } while (change);
     }
@@ -142,12 +143,12 @@ public class AddBuffering {
     /**
      * 
      * 
-     * @param input The input trace node to fix, if needed.
+     * @param input The input slice node to fix, if needed.
      * 
      * @return true if buffering was added to the correct this input
-     * trace node.
+     * slice node.
      */
-    private boolean fixInputNodeBuffering(InputTraceNode input) {
+    private boolean fixInputNodeBuffering(InputSliceNode input) {
         
         Iterator<Edge> edges = input.getSourceSet().iterator();
         HashMap<Edge, Double> mults = new HashMap<Edge, Double>();
@@ -184,7 +185,7 @@ public class AddBuffering {
         //make the target minimum multiplicity an integral number 
         minMult = Math.floor(minMult);
        
-        //now add buffering so that the input trace node receives exactly the
+        //now add buffering so that the input slice node receives exactly the
         //right amount of data from each input to perform the minimum number
         //of iterations
               
@@ -204,27 +205,27 @@ public class AddBuffering {
                         mults.get(edge).doubleValue() + " to " + minMult);
                 
                 changes = true;
-                Trace trace = edge.getSrc().getParent();
-                //System.out.println(" * Adding output buffering to " + trace);
+                Slice slice = edge.getSrc().getParent();
+                //System.out.println(" * Adding output buffering to " + slice);
                 //make sure that we have not already added buffering to this 
-                //trace, if we try to fix it will mess up the already fixed input
-                //trace node...
-                assert !editedTraces.contains(trace) : 
-                    "Trying to add different buffering amounts to " + trace;
+                //slice, if we try to fix it will mess up the already fixed input
+                //slice node...
+                assert !editedSlices.contains(slice) : 
+                    "Trying to add different buffering amounts to " + slice;
                 //the number of items that we should let pass in the init
                 //stage for the upstream filter, the rest that it produces in the
                 //init are buffered...
-                //System.out.println("   Now pass " + itemsToPass(trace, edge, minMult));
-                int itemsToPass = itemsToPass(trace, edge, minMult);
-                if (legalToAddBufferingInSlice(trace, itemsToPass)) { 
-                    addIDToTrace(trace, itemsToPass);
-                    editedTraces.add(trace);
+                //System.out.println("   Now pass " + itemsToPass(slice, edge, minMult));
+                int itemsToPass = itemsToPass(slice, edge, minMult);
+                if (legalToAddBufferingInSlice(slice, itemsToPass)) { 
+                    addIDToSlice(slice, itemsToPass);
+                    editedSlices.add(slice);
                 }
                 else {
                     //since we cannot legally add the buffering inside the upstream slice
                     //add a new buffering slice that will buffer all the items that
                     //are produced greater than the new mult
-                    addNewBufferingSlice(trace, edge, 
+                    addNewBufferingSlice(slice, edge, 
                             (int)(((double)minMult) * input.getWeight(edge)));
                 }
             }
@@ -235,29 +236,29 @@ public class AddBuffering {
     
     /**
      * 
-     * @param trace The downstream trace
+     * @param slice The downstream slice
      * @param incoming
      * @param itemsToPassInit
      */
-    private void addNewBufferingSlice(Trace upTrace, Edge edge, int itemsToPassInit) {
+    private void addNewBufferingSlice(Slice upSlice, Edge edge, int itemsToPassInit) {
         System.out.println("Adding new buffering slice at edge: " + edge);
         CType type = edge.getType(); 
         
-        //the downstream trace
-        Trace downTrace = edge.getDest().getParent();
+        //the downstream slice
+        Slice downSlice = edge.getDest().getParent();
         
-        //the new input of the new trace
-        InputTraceNode newInput = new InputTraceNode(new int[]{1});
-        //create the identity filter for the new trace
+        //the new input of the new slice
+        InputSliceNode newInput = new InputSliceNode(new int[]{1});
+        //create the identity filter for the new slice
         SIRFilter identity = new SIRIdentity(type);
         RenameAll.renameAllFilters(identity);
         
         //create the identity filter node...
-        FilterTraceNode filter = 
-            new FilterTraceNode(new FilterContent(identity));
+        FilterSliceNode filter = 
+            new FilterSliceNode(new FilterContent(identity));
        
-        //create the new output trace node
-        OutputTraceNode newOutput = new OutputTraceNode(new int[]{1});
+        //create the new output slice node
+        OutputSliceNode newOutput = new OutputSliceNode(new int[]{1});
         //set the intra-slice connections
         newInput.setNext(filter);
         filter.setPrevious(newInput);
@@ -265,16 +266,16 @@ public class AddBuffering {
         newOutput.setPrevious(filter);
         
         //the new slice
-        Trace bufferingTrace = new Trace(newInput);
-        bufferingTrace.finish();
+        Slice bufferingSlice = new Slice(newInput);
+        bufferingSlice.finish();
         
-        //create the new edge that will exist between the new trace and the
-        //downstream trace
+        //create the new edge that will exist between the new slice and the
+        //downstream slice
         Edge newEdge = new Edge(newOutput, edge.getDest());
         
-        //now install the edge at the input of the downstream trace instead 
+        //now install the edge at the input of the downstream slice instead 
         //of the old edge
-        downTrace.getHead().replaceEdge(edge, newEdge);
+        downSlice.getHead().replaceEdge(edge, newEdge);
         
         //reset the dest of the existing edge to be the new buffering slice
         edge.setDest(newInput);
@@ -288,7 +289,7 @@ public class AddBuffering {
         
         //set the mults of the new identity
         filter.getFilter().setInitMult(itemsToPassInit);
-        FilterContent prev = upTrace.getTail().getPrevFilter().getFilter();
+        FilterContent prev = upSlice.getTail().getPrevFilter().getFilter();
         
         //calc the number of steady items
         int steadyItems = (int) 
@@ -303,25 +304,25 @@ public class AddBuffering {
     }
     
     /**
-     * Return true if we can legally add the buffering required for trace to the
-     * inside of the trace by adding a id filter to the end of the trace.
+     * Return true if we can legally add the buffering required for slice to the
+     * inside of the slice by adding a id filter to the end of the slice.
      * 
-     * This checks if there are less than num_tiles filters in the trace and if
+     * This checks if there are less than num_tiles filters in the slice and if
      * the buffering required will screw up any of the filters in the init stage.
      * 
-     * @param trace The trace
-     * @param initItemsSent The new number of items sent to the output trace node 
+     * @param slice The slice
+     * @param initItemsSent The new number of items sent to the output slice node 
      * in the init stage.
-     * @return True if we can add the required buffering to the inside of the trace.
+     * @return True if we can add the required buffering to the inside of the slice.
      */
-    private boolean legalToAddBufferingInSlice(Trace trace, int initItemsSent) {
+    private boolean legalToAddBufferingInSlice(Slice slice, int initItemsSent) {
         if (KjcOptions.greedysched || KjcOptions.noswpipe)
             return false;
-        if (trace.getFilterNodes().length >=
+        if (slice.getFilterNodes().length >=
                 spaceTime.getRawChip().getTotalTiles())
             return false;
         
-        OutputTraceNode output = trace.getTail();
+        OutputSliceNode output = slice.getTail();
         
         Iterator<Edge> edges = output.getDestSet().iterator(); 
         while (edges.hasNext()) {
@@ -344,20 +345,20 @@ public class AddBuffering {
     
     /**
      * Calculate the number of items that should be passed on to the 
-     * output trace node by the new ID filter, meaning the remainder that 
+     * output slice node by the new ID filter, meaning the remainder that 
      * are produced by the filter are buffered by the ID.
      * 
-     * @param trace The trace we are buffering.
+     * @param slice The slice we are buffering.
      * @param edge The edge that requires the buffering.
      * @param inputMult The multiplicity that is now required for the edge.
      * 
      * @return The number of items that the ID must pass to the output
-     * trace node.
+     * slice node.
      */
-    private int itemsToPass(Trace trace, Edge edge, double inputMult) {
-        assert trace == edge.getSrc().getParent();
-        OutputTraceNode output = edge.getSrc();
-        InputTraceNode input = edge.getDest();
+    private int itemsToPass(Slice slice, Edge edge, double inputMult) {
+        assert slice == edge.getSrc().getParent();
+        OutputSliceNode output = edge.getSrc();
+        InputSliceNode input = edge.getDest();
         
         //the number of items that should now flow over this edge 
         //in the init stage
@@ -372,49 +373,49 @@ public class AddBuffering {
         //                ((double)output.getWeight(edge))));
         
         //this is the number of items that need to be passed to the
-        //output trace node inorder for edgeItems to flow on edge
+        //output slice node inorder for edgeItems to flow on edge
         return (int)(((double)output.totalWeights() / 
                 ((double)output.getWeight(edge))) *
                 ((double)edgeItems));
     }
     
     /**
-     * Create an identity filter and add it to the end of trace.  The
+     * Create an identity filter and add it to the end of slice.  The
      * new identity filter will have an init multiplicity of 
      * initMult and a steady-state multiplicity equal to the number 
      * of items its upstream filter produces in the steady-state.
      *   
-     * @param trace The trace to add to.
+     * @param slice The slice to add to.
      * @param initMult The init multiplicity of the new id filter.
      */
-    private void addIDToTrace(Trace trace, int initMult) {
-        FilterTraceNode oldLast = trace.getTail().getPrevFilter();
+    private void addIDToSlice(Slice slice, int initMult) {
+        FilterSliceNode oldLast = slice.getTail().getPrevFilter();
      
-        assert trace.getFilterNodes().length < 
+        assert slice.getFilterNodes().length < 
             spaceTime.getRawChip().getTotalTiles() : 
-                "Cannot add buffering to trace because it has (filters == tiles).";
+                "Cannot add buffering to slice because it has (filters == tiles).";
         
         //create the identity
         SIRFilter identity = new SIRIdentity(oldLast.getFilter().getOutputType());
         RenameAll.renameAllFilters(identity);
         
         //create the identity filter node...
-        FilterTraceNode filter = 
-            new FilterTraceNode(new FilterContent(identity));
+        FilterSliceNode filter = 
+            new FilterSliceNode(new FilterContent(identity));
         
         //set the multiplicities
         filter.getFilter().setInitMult(initMult);
         filter.getFilter().setSteadyMult(oldLast.getFilter().getSteadyMult() *
                 oldLast.getFilter().getPushInt());
         
-        //connect and re-finish trace
+        //connect and re-finish slice
         oldLast.setNext(filter);
         filter.setPrevious(oldLast);
-        filter.setNext(trace.getTail());
-        trace.getTail().setPrevious(filter);
-        trace.finish();
+        filter.setNext(slice.getTail());
+        slice.getTail().setPrevious(filter);
+        slice.finish();
         
-        spaceTime.partitioner.addFilterToTrace(filter, trace);
+        spaceTime.partitioner.addFilterToSlice(filter, slice);
     }
     
     /**

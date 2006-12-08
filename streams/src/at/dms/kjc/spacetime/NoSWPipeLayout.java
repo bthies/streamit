@@ -8,8 +8,9 @@ import java.util.*;
 import at.dms.kjc.common.*;
 import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
  * @author mgordon
@@ -19,24 +20,24 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
     
     private SpaceTimeSchedule spaceTime;
     private RawChip chip;
-    private LinkedList<Trace> scheduleOrder;
-    private LinkedList<FilterTraceNode> assignedFilters;
+    private LinkedList<Slice> scheduleOrder;
+    private LinkedList<FilterSliceNode> assignedFilters;
     private Random rand;
     
     public NoSWPipeLayout(SpaceTimeSchedule spaceTime) {
         this.spaceTime = spaceTime;
         this.chip = spaceTime.getRawChip();
         scheduleOrder = 
-            DataFlowOrder.getTraversal(spaceTime.partitioner.getTraceGraph());
-        assignedFilters = new LinkedList<FilterTraceNode>();
+            DataFlowOrder.getTraversal(spaceTime.partitioner.getSliceGraph());
+        assignedFilters = new LinkedList<FilterSliceNode>();
         rand = new Random(17);
     }
     
-    public RawTile getTile(FilterTraceNode node) {
+    public RawTile getTile(FilterSliceNode node) {
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterTraceNode node, RawTile tile) {
+    public void setTile(FilterSliceNode node, RawTile tile) {
         assignment.put(node, tile);
     }
     
@@ -66,7 +67,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
         assignment.put(filter1, tile2);
         assignment.put(filter2, tile1);
         */
-        FilterTraceNode filter1 = assignedFilters.get(rand.nextInt(assignedFilters.size()));
+        FilterSliceNode filter1 = assignedFilters.get(rand.nextInt(assignedFilters.size()));
         assignment.put(filter1, chip.getTile(rand.nextInt(chip.getTotalTiles())));
     }
     
@@ -74,19 +75,19 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
      * Random initial assignment.
      */
     public void initialPlacement() {
-        Iterator<Trace> traces = scheduleOrder.iterator();
+        Iterator<Slice> slices = scheduleOrder.iterator();
         int tile = 0;
-        while (traces.hasNext()) {
+        while (slices.hasNext()) {
             
-          Trace trace = traces.next();
+          Slice slice = slices.next();
           //System.out.println(trace.getHead().getNextFilter());
           //if (spaceTime.partitioner.isIO(trace))
           //    continue;
-          assert trace.getFilterNodes().length == 1 : "NoSWPipeLayout only works for Time! "  + 
-               trace;
+          assert slice.getFilterNodes().length == 1 : "NoSWPipeLayout only works for Time! "  + 
+               slice;
           //System.out.println("init assiging " + trace.getHead().getNextFilter() + " to " + tile);
-          assignment.put(trace.getHead().getNextFilter(), chip.getTile(tile++));
-          assignedFilters.add(trace.getHead().getNextFilter());
+          assignment.put(slice.getHead().getNextFilter(), chip.getTile(tile++));
+          assignedFilters.add(slice.getHead().getNextFilter());
           tile = tile % chip.getTotalTiles();
           
         }
@@ -103,24 +104,24 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
     public double placementCost(boolean debug) {
         double tileCosts[] = new double[chip.getTotalTiles()];
         
-        Iterator<Trace> traces = scheduleOrder.iterator();
-        HashMap<FilterTraceNode, Double> endTime = new HashMap<FilterTraceNode, Double>();
-        while (traces.hasNext()) {
-            Trace trace = traces.next();
-            RawTile tile = getTile(trace.getHead().getNextFilter());
-            double traceWork = spaceTime.partitioner.getTraceBNWork(trace); 
+        Iterator<Slice> slices = scheduleOrder.iterator();
+        HashMap<FilterSliceNode, Double> endTime = new HashMap<FilterSliceNode, Double>();
+        while (slices.hasNext()) {
+            Slice slice = slices.next();
+            RawTile tile = getTile(slice.getHead().getNextFilter());
+            double traceWork = spaceTime.partitioner.getSliceBNWork(slice); 
             double startTime = 0;
             //now find the start time
             
             //find the max end times of all the traces that this trace depends on
             double maxDepStartTime = 0;
-            InputTraceNode input = trace.getHead();
+            InputSliceNode input = slice.getHead();
             Iterator<Edge> inEdges = input.getSourceSet().iterator();
             while (inEdges.hasNext()) {
                 Edge edge = inEdges.next();
                 if (spaceTime.partitioner.isIO(edge.getSrc().getParent()))
                     continue;
-                FilterTraceNode upStream = edge.getSrc().getPrevFilter();
+                FilterSliceNode upStream = edge.getSrc().getPrevFilter();
                 
                 RawTile upTile = getTile(upStream);
                 assert endTime.containsKey(upStream);
@@ -132,7 +133,7 @@ public class NoSWPipeLayout extends SimulatedAnnealing implements Layout {
             
             //add the start time to the trace work (one filter)!
             tileCosts[tile.getTileNumber()] = startTime + traceWork;
-            endTime.put(trace.getHead().getNextFilter(), tileCosts[tile.getTileNumber()]);
+            endTime.put(slice.getHead().getNextFilter(), tileCosts[tile.getTileNumber()]);
         }
         
         

@@ -11,13 +11,14 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
- * This pass will break up splits or joins (OutputTraceNodes and InputTraceNodes)
+ * This pass will break up splits or joins (OutputSliceNodes and InputSliceNodes)
  * that are wider than the number of memories attached to the chip.  It does this
  * by introducing new traces that are composed of an identity filter with width 
  * lte number of memories.  Multiple levels of these identity traces implement the
@@ -53,7 +54,7 @@ public class MultiLevelSplitsJoins {
     
     /**
      * Run the pass on the entire slice graph, breaking up the 
-     * wide splits and joins, creating new Traces and adding them to the 
+     * wide splits and joins, creating new Slices and adding them to the 
      * partitioning.
      *
      */
@@ -62,54 +63,54 @@ public class MultiLevelSplitsJoins {
         //the list of traces including any slices that are
         //created by this pass, to be installed in the partitioner at the 
         //end of this driver
-        LinkedList<Trace> traces = new LinkedList<Trace>();
-        int oldNumTraces = partitioner.getTraceGraph().length;
+        LinkedList<Slice> slices = new LinkedList<Slice>();
+        int oldNumSlices = partitioner.getSliceGraph().length;
         
         //cycle thru the trace graph and see if there are any 
         //splits or joins that need to be reduced...
-        for (int i = 0; i < partitioner.getTraceGraph().length; i++) {
-            Trace trace = partitioner.getTraceGraph()[i];
+        for (int i = 0; i < partitioner.getSliceGraph().length; i++) {
+            Slice slice = partitioner.getSliceGraph()[i];
            
             //see if the width of the joiner is too wide and 
             //keep breaking it up until it is, adding new levels...
-            while (trace.getHead().getWidth() > maxWidth) {
-                System.out.println("Breaking up " + trace.getHead() + 
-                        " width is " + trace.getHead().getWidth());
-                breakUpJoin(trace, traces);
+            while (slice.getHead().getWidth() > maxWidth) {
+                System.out.println("Breaking up " + slice.getHead() + 
+                        " width is " + slice.getHead().getWidth());
+                breakUpJoin(slice, slices);
             }
             
             //add the original trace to the new list of traces
-            traces.add(trace);
+            slices.add(slice);
             
             //see if the width of the splitter is too wide
-            while (trace.getTail().getWidth() > maxWidth) {
-                System.out.println("Breaking up " + trace.getTail() + 
-                        " width is " + trace.getTail().getWidth());
-                breakUpSplit(trace, traces);
+            while (slice.getTail().getWidth() > maxWidth) {
+                System.out.println("Breaking up " + slice.getTail() + 
+                        " width is " + slice.getTail().getWidth());
+                breakUpSplit(slice, slices);
             }
             
         }
         //set the trace graph to the new list of traces that we have
         //calculated in this pass
-        partitioner.setTraceGraphNewIds(traces.toArray(new Trace[0]));
-        System.out.println("Done Breaking Splits / Joins (was " + oldNumTraces + 
-                " traces, now " + partitioner.getTraceGraph().length + " traces).");
+        partitioner.setSliceGraphNewIds(slices.toArray(new Slice[0]));
+        System.out.println("Done Breaking Splits / Joins (was " + oldNumSlices + 
+                " traces, now " + partitioner.getSliceGraph().length + " traces).");
         
     }
     
     /**
-     * Break up a joiner (InputTraceNode) using multiple levels of 
+     * Break up a joiner (InputSliceNode) using multiple levels of 
      * identity traces.
      * 
      * Do not add the trace itself to the list of traces, this is done
      * by the main driver doit().
      * 
-     * @param trace
-     * @param traces
+     * @param slice
+     * @param slices
      */
-    private void breakUpJoin(Trace trace, LinkedList<Trace> traces) {
+    private void breakUpJoin(Slice slice, LinkedList<Slice> slices) {
         //the old input trace node, it will get replaced!
-        InputTraceNode input = trace.getHead();
+        InputSliceNode input = slice.getHead();
         //nothing to do, so return...
         if (input.getWidth() <= maxWidth)
             return;
@@ -117,23 +118,23 @@ public class MultiLevelSplitsJoins {
         CType type = input.getType();
         
         //the number of new input trace nodes (and thus slices needed)...
-        int numNewTraces = input.getWidth() / maxWidth +
+        int numNewSlices = input.getWidth() / maxWidth +
              (input.getWidth() % maxWidth > 0 ? 1 : 0); 
         
         //create the new input trace nodes
-        InputTraceNode[] newInputs = new InputTraceNode[numNewTraces];
-        for (int i = 0; i < numNewTraces; i++)
-            newInputs[i] = new InputTraceNode(); 
+        InputSliceNode[] newInputs = new InputSliceNode[numNewSlices];
+        for (int i = 0; i < numNewSlices; i++)
+            newInputs[i] = new InputSliceNode(); 
         
         //now assign each of the original edges to one of the new 
         //input trace nodes
         HashMap<Edge, Integer> assignment = new HashMap<Edge, Integer>();
         Iterator<Edge> sources = input.getSourceSequence().iterator();
-        for (int i = 0; i < numNewTraces; i++) {
+        for (int i = 0; i < numNewSlices; i++) {
             int count = maxWidth;
             //account for remainder
             if (input.getWidth() % maxWidth != 0 &&
-                    i == (numNewTraces - 1))
+                    i == (numNewSlices - 1))
                 count = input.getWidth() % maxWidth;
             for (int j = 0; j < count; j++) { 
                 Edge edge = sources.next();
@@ -145,20 +146,20 @@ public class MultiLevelSplitsJoins {
         assert !sources.hasNext();
         
         //the weights array of each new inputs trace node
-        LinkedList<Integer>[] newInputsWeights = new LinkedList[numNewTraces];
+        LinkedList<Integer>[] newInputsWeights = new LinkedList[numNewSlices];
         //the source array of each new input trace node
-        LinkedList<Edge>[] newInputsSources = new LinkedList[numNewTraces];
-        for (int i = 0; i < numNewTraces; i++) {
+        LinkedList<Edge>[] newInputsSources = new LinkedList[numNewSlices];
+        for (int i = 0; i < numNewSlices; i++) {
             newInputsWeights[i] = new LinkedList<Integer>();
             newInputsSources[i] = new LinkedList<Edge>();
          }
             
         //the weights array of the new input trace node of the orignal trace
-        LinkedList<Integer> origTraceInputWeights = new LinkedList<Integer>();
+        LinkedList<Integer> origSliceInputWeights = new LinkedList<Integer>();
         //the source array of the new input trace node of the orignal trace
         //right now it is just the index of the new trace, because we don't have
         //the edges right now
-        LinkedList<Integer> origTraceInputSources = new LinkedList<Integer>();
+        LinkedList<Integer> origSliceInputSources = new LinkedList<Integer>();
         
         for (int i = 0; i < input.getSources().length; i++) {
             int index = assignment.get(input.getSources()[i]).intValue();
@@ -166,52 +167,52 @@ public class MultiLevelSplitsJoins {
             newInputsWeights[index].add(new Integer(input.getWeights()[i]));
             newInputsSources[index].add(input.getSources()[i]);
             
-            origTraceInputWeights.add(new Integer(input.getWeights()[i]));
-            origTraceInputSources.add(new Integer(index));
+            origSliceInputWeights.add(new Integer(input.getWeights()[i]));
+            origSliceInputSources.add(new Integer(index));
         }
         
         //set the weights and sources of the new input trace nodes
-        for (int i = 0; i < numNewTraces; i++) {
+        for (int i = 0; i < numNewSlices; i++) {
             newInputs[i].set(newInputsWeights[i], newInputsSources[i]);
             newInputs[i].canonicalize();
         }
  
         //ok so now we have all the new input trace nodes, create the new traces
-        Trace[] newTraces = new Trace[numNewTraces];
+        Slice[] newSlices = new Slice[numNewSlices];
                 
         //now we have to create the new input trace node that will replace the
         //old one of the original trace
-        InputTraceNode newInput = new InputTraceNode();
+        InputSliceNode newInput = new InputSliceNode();
                 
         //we have to fix the edges and create the new traces...
-        for (int i = 0; i < numNewTraces; i++) {
-            newTraces[i] = fixEdgesAndCreateTrace(newInputs[i], newInput, type);
+        for (int i = 0; i < numNewSlices; i++) {
+            newSlices[i] = fixEdgesAndCreateSlice(newInputs[i], newInput, type);
             //add the new traces to the trace list...
-            traces.add(newTraces[i]);
+            slices.add(newSlices[i]);
         }
         
         //now we can create the pattern of source edges from the index list
         //we built above
-        LinkedList<Edge> origTraceInputEdges = new LinkedList<Edge>();
-        for (int i = 0; i < origTraceInputSources.size(); i++) {
-            Trace source = newTraces[origTraceInputSources.get(i).intValue()];
-            origTraceInputEdges.add(source.getTail().getSingleEdge());
+        LinkedList<Edge> origSliceInputEdges = new LinkedList<Edge>();
+        for (int i = 0; i < origSliceInputSources.size(); i++) {
+            Slice source = newSlices[origSliceInputSources.get(i).intValue()];
+            origSliceInputEdges.add(source.getTail().getSingleEdge());
         }
         //set the pattern of the new input trace
-        newInput.set(origTraceInputWeights, origTraceInputEdges);
+        newInput.set(origSliceInputWeights, origSliceInputEdges);
         newInput.canonicalize();
         //now install the new input trace node in the old trace
-        newInput.setNext(trace.getHead().getNext());
-        trace.getHead().getNext().setPrevious(newInput);
-        newInput.setParent(trace);
-        trace.setHead(newInput);
+        newInput.setNext(slice.getHead().getNext());
+        slice.getHead().getNext().setPrevious(newInput);
+        newInput.setParent(slice);
+        slice.setHead(newInput);
         
         //set the multiplicities of the new identities of the new traces
-        setMultiplicitiesJoin(newTraces);
+        setMultiplicitiesJoin(newSlices);
     }
     
     /**
-     * Given an InputTraceNode, create a trace that contains it
+     * Given an InputSliceNode, create a trace that contains it
      * and an Identity filter.  For this new trace, install a new   
      * output trace node, with a new edge that points to dest. 
      * 
@@ -221,8 +222,8 @@ public class MultiLevelSplitsJoins {
      * 
      * @return The new trace.
      */
-    private Trace fixEdgesAndCreateTrace(InputTraceNode node, 
-            InputTraceNode dest, CType type) {
+    private Slice fixEdgesAndCreateSlice(InputSliceNode node, 
+            InputSliceNode dest, CType type) {
         //make sure that all of the edges coming into this 
         //input point to it...
         for (int i = 0; i < node.getSources().length; i++) {
@@ -235,12 +236,12 @@ public class MultiLevelSplitsJoins {
         //System.out.println("Creating " + identity + " for joining.");
         
         //create the identity filter node...
-        FilterTraceNode filter = 
-            new FilterTraceNode(new FilterContent(identity));
+        FilterSliceNode filter = 
+            new FilterSliceNode(new FilterContent(identity));
         
-        //create the outputTraceNode
+        //create the outputSliceNode
         Edge edge = new Edge(dest);
-        OutputTraceNode output = new OutputTraceNode(new int[]{1}, 
+        OutputSliceNode output = new OutputSliceNode(new int[]{1}, 
                 new Edge[][]{{edge}});
         edge.setSrc(output);
 
@@ -251,10 +252,10 @@ public class MultiLevelSplitsJoins {
         output.setPrevious(filter);
         
         //the new trace
-        Trace trace = new Trace(node);
-        trace.finish();
+        Slice slice = new Slice(node);
+        slice.finish();
         
-        return trace;
+        return slice;
     }
     
     /**
@@ -264,7 +265,7 @@ public class MultiLevelSplitsJoins {
      * 
      * @param traces The new traces.
      */
-    private void setMultiplicitiesJoin(Trace[] traces) {
+    private void setMultiplicitiesJoin(Slice[] traces) {
         for (int i = 0; i < traces.length; i++) {
             Edge downEdge = traces[i].getTail().getSingleEdge();
             
@@ -286,7 +287,7 @@ public class MultiLevelSplitsJoins {
             int steadyItemsOther = 0;
             //set the init items baed on the number each of the upstream 
             //filters push on to each incoming edge
-            InputTraceNode input = traces[i].getHead();
+            InputSliceNode input = traces[i].getHead();
             for (int s = 0; s < input.getSources().length; s++) {
                Edge upEdge = input.getSources()[s];
                FilterContent prev = upEdge.getSrc().getPrevFilter().getFilter();
@@ -312,17 +313,17 @@ public class MultiLevelSplitsJoins {
      * Do not add the trace itself to the list of traces, this done
      * by the main driver doit().
      * 
-     * @param trace
-     * @param traces
+     * @param slice
+     * @param slices
      */
-    private void breakUpSplit(Trace trace, LinkedList<Trace> traces) {
-        OutputTraceNode output = trace.getTail();
+    private void breakUpSplit(Slice slice, LinkedList<Slice> slices) {
+        OutputSliceNode output = slice.getTail();
        
         //do nothing if we have less than maxwidth connections
         if (output.getWidth() <= maxWidth)
             return;
         
-        int numNewTraces = output.getWidth() / maxWidth + 
+        int numNewSlices = output.getWidth() / maxWidth + 
             (output.getWidth() % maxWidth > 0 ? 1 : 0);
         
         CType type = output.getType();
@@ -330,11 +331,11 @@ public class MultiLevelSplitsJoins {
         //here are the weights and edges lists we will build for 
         //each new trace's output trace node
         LinkedList<Integer>[] newOutputsWeights = 
-            new LinkedList[numNewTraces];
+            new LinkedList[numNewSlices];
         LinkedList<LinkedList<Edge>>[] newOutputsDests = 
-            new LinkedList[numNewTraces];
+            new LinkedList[numNewSlices];
         //now init them
-        for (int i = 0; i < numNewTraces; i++) {
+        for (int i = 0; i < numNewSlices; i++) {
             newOutputsWeights[i] = new LinkedList<Integer>();
             newOutputsDests[i] = new LinkedList<LinkedList<Edge>>();
         }
@@ -343,22 +344,22 @@ public class MultiLevelSplitsJoins {
         //these are for the new output trace that will be installed for the
         //original trace, we have to use the integer index at this time
         //because during construction the edges are not created yet
-        LinkedList<Integer> origTraceNewWeights = new LinkedList<Integer>();
-        LinkedList<LinkedList<Integer>> origTraceNewDests = 
+        LinkedList<Integer> origSliceNewWeights = new LinkedList<Integer>();
+        LinkedList<LinkedList<Integer>> origSliceNewDests = 
             new LinkedList<LinkedList<Integer>>();
         //the new output trace node for the original trace
-        OutputTraceNode newOutput =  new OutputTraceNode();
+        OutputSliceNode newOutput =  new OutputSliceNode();
         
         //assign the unique edges (dests) of the original outputtrace
         //to the new outputtraces
         HashMap<Edge, Integer> assignment = new HashMap<Edge, Integer>();
         System.out.println(output.getDestSequence().size() + " ?= " + output.getWidth());
         Iterator<Edge> dests = output.getDestSequence().iterator();
-        for (int i = 0; i < numNewTraces; i++) {
+        for (int i = 0; i < numNewSlices; i++) {
             int count = maxWidth;
             //account for remainder if there is one
             if (output.getWidth() % maxWidth != 0 &&
-                    i == (numNewTraces - 1))
+                    i == (numNewSlices - 1))
                 count = output.getWidth() % maxWidth;
             for (int j = 0; j < count; j++) { 
                 Edge edge = dests.next();
@@ -380,7 +381,7 @@ public class MultiLevelSplitsJoins {
                 new HashMap<Integer, LinkedList<Edge>>();
             //the port as we construct it for the new output trace node
             //of the original trace
-            LinkedList<Integer> origTracePort = new LinkedList<Integer>();
+            LinkedList<Integer> origSlicePort = new LinkedList<Integer>();
                         
             for (int j = 0; j < output.getDests()[i].length; j++) {
                 Edge edge = output.getDests()[i][j];
@@ -399,8 +400,8 @@ public class MultiLevelSplitsJoins {
                 //but only add a destination if it has not been seen 
                 //already for this item, it will be duplicated as necessary
                 //but the new traces' output trace node
-                if (!origTracePort.contains(index))
-                    origTracePort.add(index);
+                if (!origSlicePort.contains(index))
+                    origSlicePort.add(index);
             }
             
             Iterator<Integer> indices = newEdges.keySet().iterator();
@@ -409,50 +410,50 @@ public class MultiLevelSplitsJoins {
                 newOutputsWeights[index].add(new Integer(output.getWeights()[i]));
                 newOutputsDests[index].add(newEdges.get(new Integer(index)));
             }
-            origTraceNewDests.add(origTracePort);
-            origTraceNewWeights.add(new Integer(output.getWeights()[i]));
+            origSliceNewDests.add(origSlicePort);
+            origSliceNewWeights.add(new Integer(output.getWeights()[i]));
         }  
         
-        Trace[] newTraces = new Trace[numNewTraces];
+        Slice[] newSlices = new Slice[numNewSlices];
         
-        //now create the new traces using the new outputTracennodes
-        for (int n = 0; n < numNewTraces; n++) {
-            if (n < numNewTraces -1) {
+        //now create the new traces using the new outputSlicennodes
+        for (int n = 0; n < numNewSlices; n++) {
+            if (n < numNewSlices -1) {
                 
             }
-            newTraces[n] = fixEdgesAndCreateTrace(newOutputsWeights[n],
+            newSlices[n] = fixEdgesAndCreateSlice(newOutputsWeights[n],
                     newOutputsDests[n], newOutput,  type);
             //add the new trace to the trace list
-            traces.add(newTraces[n]);
+            slices.add(newSlices[n]);
         }
         
         //fix the outgoing edges of the trace node by creating 
         //a new output trace node
-        LinkedList<LinkedList<Edge>> origTraceNewEdges = 
+        LinkedList<LinkedList<Edge>> origSliceNewEdges = 
             new LinkedList<LinkedList<Edge>>();
-        for (int i = 0; i < origTraceNewDests.size(); i++) {
+        for (int i = 0; i < origSliceNewDests.size(); i++) {
             LinkedList<Edge> port = new LinkedList<Edge>();
-            for (int j = 0; j < origTraceNewDests.get(i).size(); j++) {
+            for (int j = 0; j < origSliceNewDests.get(i).size(); j++) {
                 //convert the index into the new trace array 
                 //into the single incoming edge of the new trace
                 //so that it connects to the original trace
-                port.add(newTraces[origTraceNewDests.get(i).get(j).intValue()].
+                port.add(newSlices[origSliceNewDests.get(i).get(j).intValue()].
                         getHead().getSingleEdge());
             }
             //add the port the pattern of output of the original trace
-            origTraceNewEdges.add(port);
+            origSliceNewEdges.add(port);
         }
-        newOutput.set(origTraceNewWeights, origTraceNewEdges);
+        newOutput.set(origSliceNewWeights, origSliceNewEdges);
         
         //install the new output trace node
         newOutput.setPrevious(output.getPrevious());
         newOutput.getPrevious().setNext(newOutput);
-        newOutput.setParent(trace);
-        trace.setTail(newOutput);
+        newOutput.setParent(slice);
+        slice.setTail(newOutput);
 
         
         //set the multiplicities of the identity filter of the new trace
-        setMultiplicitiesSplit(newTraces);
+        setMultiplicitiesSplit(newSlices);
     }
     
     /**
@@ -461,7 +462,7 @@ public class MultiLevelSplitsJoins {
      * 
      * @param traces The new traces.
      */
-    private void setMultiplicitiesSplit(Trace[] traces) {
+    private void setMultiplicitiesSplit(Slice[] traces) {
         
         for (int i = 0; i < traces.length; i++) {
             Edge edge = traces[i].getHead().getSingleEdge();
@@ -500,14 +501,14 @@ public class MultiLevelSplitsJoins {
      * @param src The src trace's output trace node.
      * @param type The type of the identity filter of the trace.
      */
-    private Trace fixEdgesAndCreateTrace(LinkedList<Integer> weights,
+    private Slice fixEdgesAndCreateSlice(LinkedList<Integer> weights,
             LinkedList<LinkedList<Edge>> dests,
-            OutputTraceNode src, CType type) {
+            OutputSliceNode src, CType type) {
         //create the output trace node base on the calculated pattern
-        OutputTraceNode output = new OutputTraceNode(weights, dests);
+        OutputSliceNode output = new OutputSliceNode(weights, dests);
                 //create the input trace node that just receive from the 
         //original trace
-        InputTraceNode input = new InputTraceNode(new int[]{1});
+        InputSliceNode input = new InputSliceNode(new int[]{1});
         Edge edge = new Edge(src, input);
         input.setSources(new Edge[]{edge});
         
@@ -523,10 +524,10 @@ public class MultiLevelSplitsJoins {
         //System.out.println(identity + " has " + weights.size());
         //System.out.println("Creating " + identity + " for splitting.");
         
-        FilterTraceNode filter = 
-            new FilterTraceNode(new FilterContent(identity));
+        FilterSliceNode filter = 
+            new FilterSliceNode(new FilterContent(identity));
                 
-        Trace trace = new Trace(input);
+        Slice slice = new Slice(input);
         
         //set up the intra-trace connections
         input.setNext(filter);
@@ -534,8 +535,8 @@ public class MultiLevelSplitsJoins {
         filter.setNext(output);
         output.setPrevious(filter);
         
-        trace.finish();
+        slice.finish();
         
-        return trace;
+        return slice;
     }
 }

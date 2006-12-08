@@ -9,10 +9,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 
 /**
  * This abstract class represents a buffer in the partitioner slice graph.  A 
@@ -38,9 +38,9 @@ public abstract class OffChipBuffer {
     /** the dram that we are reading/writing */
     protected StreamingDram dram;
     /** the source slice (trace) */  
-    protected TraceNode source;
+    protected SliceNode source;
     /** the destination slice (trace) */
-    protected TraceNode dest;
+    protected SliceNode dest;
     /** the rotation length of this buffer for software pipelining **/
     protected int rotationLength;
            
@@ -49,7 +49,7 @@ public abstract class OffChipBuffer {
         bufferStore = new HashMap<Object, OffChipBuffer>();
     }
 
-    protected OffChipBuffer(TraceNode src, TraceNode dst) {
+    protected OffChipBuffer(SliceNode src, SliceNode dst) {
         rotationLength = 1;
         source = src;
         dest = dst;
@@ -86,25 +86,25 @@ public abstract class OffChipBuffer {
     public abstract OffChipBuffer getNonRedundant();
 
     // return true if the inputtracenode does anything necessary
-    public static boolean unnecessary(InputTraceNode input) {
+    public static boolean unnecessary(InputSliceNode input) {
         if (input.noInputs())
             return true;
         if (input.oneInput()
-            && (InterTraceBuffer.getBuffer(input.getSingleEdge()).getDRAM() == IntraTraceBuffer
-                .getBuffer(input, (FilterTraceNode) input.getNext())
+            && (InterSliceBuffer.getBuffer(input.getSingleEdge()).getDRAM() == IntraSliceBuffer
+                .getBuffer(input, (FilterSliceNode) input.getNext())
                 .getDRAM()))
             return true;
         return false;
     }
 
     // return true if outputtracenode does anything
-    public static boolean unnecessary(OutputTraceNode output) {
+    public static boolean unnecessary(OutputSliceNode output) {
         if (output.noOutputs())
             return true;
         if (output.oneOutput()
-            && (IntraTraceBuffer.getBuffer(
-                                           (FilterTraceNode) output.getPrevious(), output)
-                .getDRAM() == InterTraceBuffer.getBuffer(
+            && (IntraSliceBuffer.getBuffer(
+                                           (FilterSliceNode) output.getPrevious(), output)
+                .getDRAM() == InterSliceBuffer.getBuffer(
                                                          output.getSingleEdge()).getDRAM()))
             return true;
         return false;
@@ -221,20 +221,20 @@ public abstract class OffChipBuffer {
         return source + "->" + dest + "[" + dram + "]";
     }
 
-    public TraceNode getSource() {
+    public SliceNode getSource() {
         return source;
     }
 
-    public TraceNode getDest() {
+    public SliceNode getDest() {
         return dest;
     }
 
-    public boolean isIntraTrace() {
-        return (this instanceof IntraTraceBuffer);
+    public boolean isIntraSlice() {
+        return (this instanceof IntraSliceBuffer);
     }
 
-    public boolean isInterTrace() {
-        return (this instanceof InterTraceBuffer);
+    public boolean isInterSlice() {
+        return (this instanceof InterSliceBuffer);
     }
     
     /**
@@ -248,27 +248,27 @@ public abstract class OffChipBuffer {
      * @param spaceTime The SpaceTimeSchedule
      */
     public static void setRotationLengths(SpaceTimeSchedule spaceTime) {
-        InterTraceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
+        InterSliceBuffer.dramsToBuffers = new HashMap<StreamingDram, Integer>();
         Iterator<OffChipBuffer> buffers = getBuffers().iterator();
         //iterate over the buffers and communicate each buffer
         //address from its declaring tile to the tile neighboring
         //the dram it is assigned to
         while (buffers.hasNext()) {
             OffChipBuffer buffer = buffers.next();
-            if (buffer.isInterTrace()) {
+            if (buffer.isInterSlice()) {
                 //set the rotation length for the buffer
-                setRotationLength(spaceTime, (InterTraceBuffer)buffer);
+                setRotationLength(spaceTime, (InterSliceBuffer)buffer);
                 //record that this dram has buffer mapped to it
-                if (InterTraceBuffer.dramsToBuffers.containsKey(buffer.getDRAM())) {
+                if (InterSliceBuffer.dramsToBuffers.containsKey(buffer.getDRAM())) {
                     //we have seen this buffer before, so just 
                     //add one to its count...
-                    InterTraceBuffer.dramsToBuffers.put(buffer.getDRAM(),
+                    InterSliceBuffer.dramsToBuffers.put(buffer.getDRAM(),
                             new Integer
-                            (InterTraceBuffer.dramsToBuffers.
+                            (InterSliceBuffer.dramsToBuffers.
                                     get(buffer.getDRAM()).intValue() + 1));
                 }
                 else //haven't seen dram before so just put 1
-                    InterTraceBuffer.dramsToBuffers 
+                    InterSliceBuffer.dramsToBuffers 
                     .put(buffer.getDRAM(), new Integer(1));
             }
         }
@@ -281,7 +281,7 @@ public abstract class OffChipBuffer {
      * 
      * @param buffer
      */
-    private static void setRotationLength(SpaceTimeSchedule spaceTimeSchedule, InterTraceBuffer buffer) {
+    private static void setRotationLength(SpaceTimeSchedule spaceTimeSchedule, InterSliceBuffer buffer) {
         int sourceMult = spaceTimeSchedule.getPrimePumpMult(buffer.getSource().getParent());
         int destMult = spaceTimeSchedule.getPrimePumpMult(buffer.getDest().getParent());
         //fix for file readers and writers!!!!
@@ -305,8 +305,8 @@ public abstract class OffChipBuffer {
         //output trace node!!
         if (length > 1 && buffer.redundant()) {
             //System.out.println("Setting upstream rotation length " + length);
-            IntraTraceBuffer upstream = IntraTraceBuffer.getBuffer((FilterTraceNode)buffer.source.getPrevious(), 
-                    (OutputTraceNode)buffer.source);
+            IntraSliceBuffer upstream = IntraSliceBuffer.getBuffer((FilterSliceNode)buffer.source.getPrevious(), 
+                    (OutputSliceNode)buffer.source);
             upstream.rotationLength = length;
         }
     }
@@ -321,10 +321,10 @@ public abstract class OffChipBuffer {
         while (buffers.hasNext()) {
             OffChipBuffer buf = buffers.next();
             if (!buf.isAssigned()) {
-                if (buf.isInterTrace()) {
+                if (buf.isInterSlice()) {
                     System.out.println("No assignment for : " + buf + ": " + 
-                            ((InterTraceBuffer)buf).getEdge().getSrc().getPrevious() + " -> " + 
-                            ((InterTraceBuffer)buf).getEdge().getDest().getNext());
+                            ((InterSliceBuffer)buf).getEdge().getSrc().getPrevious() + " -> " + 
+                            ((InterSliceBuffer)buf).getEdge().getDest().getNext());
                     //printBuffers();
                 }
                 returnVal = false;;

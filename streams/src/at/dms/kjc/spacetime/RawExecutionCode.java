@@ -15,8 +15,8 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 import java.util.Hashtable;
 import java.math.BigInteger;
@@ -116,17 +116,17 @@ public abstract class RawExecutionCode
         primePumpMethod = null;
         //see if we have gdn input
         gdnInput = false;
-        if (filterInfo.traceNode.getPrevious().isInputTrace()) {
-            if (!IntraTraceBuffer.getBuffer(
-                    (InputTraceNode)filterInfo.traceNode.getPrevious(),
+        if (filterInfo.traceNode.getPrevious().isInputSlice()) {
+            if (!IntraSliceBuffer.getBuffer(
+                    (InputSliceNode)filterInfo.traceNode.getPrevious(),
                     filterInfo.traceNode).isStaticNet())
                 gdnInput = true;
         }
         //see if we have gdn output
         gdnOutput = false;
-        if (filterInfo.traceNode.getNext().isOutputTrace()) {
-            if (!IntraTraceBuffer.getBuffer(filterInfo.traceNode,
-                    (OutputTraceNode)filterInfo.traceNode.getNext()).isStaticNet())
+        if (filterInfo.traceNode.getNext().isOutputSlice()) {
+            if (!IntraSliceBuffer.getBuffer(filterInfo.traceNode,
+                    (OutputSliceNode)filterInfo.traceNode.getNext()).isStaticNet())
                 gdnOutput = true;
         }
     }
@@ -296,8 +296,8 @@ public abstract class RawExecutionCode
         block.addStatement(setDynMsgHeader());
         
         //get the buffer
-        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filterInfo.traceNode,
-                (OutputTraceNode)filterInfo.traceNode.getNext());
+        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.traceNode,
+                (OutputSliceNode)filterInfo.traceNode.getNext());
         
         //now see if this tile is not the owner of the dram
         //and a previous filter of the trace is not allocated on the
@@ -305,7 +305,7 @@ public abstract class RawExecutionCode
         //we need to wait until the owner has issued a store command,
         //after the owner has done that, it will send a word to us over the
         //static network
-        if (!Util.doesTraceUseTile(filterInfo.traceNode.getParent(),
+        if (!Util.doesSliceUseTile(filterInfo.traceNode.getParent(),
                 buf.getOwner(), layout)) {
             block.addStatement(gdnReceive(true, 
                     new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE)));
@@ -332,10 +332,10 @@ public abstract class RawExecutionCode
      */
     public JStatement setDynMsgHeader() {
        
-        assert filterInfo.traceNode.getNext().isOutputTrace();
+        assert filterInfo.traceNode.getNext().isOutputSlice();
         //get the buffer
-        IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filterInfo.traceNode,
-                (OutputTraceNode)filterInfo.traceNode.getNext());
+        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.traceNode,
+                (OutputSliceNode)filterInfo.traceNode.getNext());
         assert !buf.isStaticNet();
         //get the type size
         int size = Util.getTypeSize(filterInfo.filter.getOutputType());
@@ -486,7 +486,7 @@ public abstract class RawExecutionCode
                 Util.getTypeSize(filterInfo.filter.getInputType());
             //first make sure that we are not receiving code from a file
             //reader, because we do not align file readers
-            InputTraceNode input = (InputTraceNode)filterInfo.traceNode.getPrevious();            
+            InputSliceNode input = (InputSliceNode)filterInfo.traceNode.getPrevious();            
             //if not a file reader, then we might have to align the dest
             if (!input.onlyFileInput() && wordsReceived > 0 &&
                     wordsReceived % RawChip.cacheLineWords != 0) {
@@ -504,7 +504,7 @@ public abstract class RawExecutionCode
             int wordsSent = Util.getTypeSize(filterInfo.filter.getOutputType()) *
                 filterInfo.totalItemsSent(init, false);
             
-            OutputTraceNode output = (OutputTraceNode)filterInfo.traceNode.getNext();
+            OutputSliceNode output = (OutputSliceNode)filterInfo.traceNode.getNext();
             
             //first make sure that we are not writing eventually to a file writer
             //file writers don't need to be aligned

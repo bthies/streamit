@@ -7,7 +7,8 @@ import java.io.*;
 import java.util.*;
 
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
  * This class will create a 3D representation of the Space-Time 
@@ -27,7 +28,7 @@ public class POVRAYScheduleRep {
     /** a unique ID used to label the color assigned to each trace */
     private static int colorID = 0;
     /** Map the trace to the name of the color created for it */
-    private HashMap<Trace, String> colorName;
+    private HashMap<Slice, String> colorName;
     
     private ScheduleModel scheduleModel;
     private SpaceTimeSchedule spaceTime;
@@ -42,7 +43,7 @@ public class POVRAYScheduleRep {
         this.spaceTime = spaceTime;
         this.layout = layout;
         
-        colorName = new HashMap<Trace, String>();
+        colorName = new HashMap<Slice, String>();
         
         //get the work estimation model for the schedule 
         scheduleModel = new ScheduleModel(spaceTime, layout, 
@@ -71,9 +72,9 @@ public class POVRAYScheduleRep {
             calculateHeightScale();
             setupScene();
             setupColors(spaceTime);
-            for (int i = 0; i < spaceTime.partitioner.getTraceGraph().length; i++) {
+            for (int i = 0; i < spaceTime.partitioner.getSliceGraph().length; i++) {
                 
-                createSliceShape(spaceTime.partitioner.getTraceGraph()[i], layout);
+                createSliceShape(spaceTime.partitioner.getSliceGraph()[i], layout);
             }
             fw.close();
         }
@@ -94,20 +95,20 @@ public class POVRAYScheduleRep {
     
     /**
      * 
-     * @param trace
+     * @param slice
      * @param layout
      * @throws Exception
      */
-    private void createSliceShape(Trace trace, Layout layout) 
+    private void createSliceShape(Slice slice, Layout layout) 
             throws Exception  {
         //don't do anything for file reader and writer traces
-        if (spaceTime.partitioner.isIO(trace))
+        if (spaceTime.partitioner.isIO(slice))
             return;
         
         fw.write("//-------------------------------------------\n");
-        fw.write("// Objects for " + trace + "\n");
-        for (int i = 0; i < trace.getFilterNodes().length; i++) {
-            FilterTraceNode filter = trace.getFilterNodes()[i];
+        fw.write("// Objects for " + slice + "\n");
+        for (int i = 0; i < slice.getFilterNodes().length; i++) {
+            FilterSliceNode filter = slice.getFilterNodes()[i];
             RawTile tile = layout.getTile(filter);
             int lowerLeftX = getLowerLeftX(tile);
             int lowerLeftY = getLowerLeftY(tile); 
@@ -131,7 +132,7 @@ public class POVRAYScheduleRep {
             fw.write("  <" + lowerLeftX + ", " + lowerLeftZ + ", " + lowerLeftY + ">, " +
                     "<" + (lowerLeftX + 1) + ", " + (upperLeftZ) + ", " + (lowerLeftY + 1) + ">\n");
             
-            fw.write("  pigment {" + colorName.get(trace) + "}\n");
+            fw.write("  pigment {" + colorName.get(slice) + "}\n");
             fw.write("}\n");
         }
     }
@@ -146,10 +147,10 @@ public class POVRAYScheduleRep {
         Random random = new Random(17); 
         fw.write("//-------------------------------------------\n");
         fw.write("//Setup colors for the slices\n");
-        for (int i = 0; i < spaceTime.partitioner.getTraceGraph().length; i++) {
-            colorName.put(spaceTime.partitioner.getTraceGraph()[i], 
+        for (int i = 0; i < spaceTime.partitioner.getSliceGraph().length; i++) {
+            colorName.put(spaceTime.partitioner.getSliceGraph()[i], 
                     "color" + colorID++);
-            fw.write("#declare " + colorName.get(spaceTime.partitioner.getTraceGraph()[i]) +
+            fw.write("#declare " + colorName.get(spaceTime.partitioner.getSliceGraph()[i]) +
                     " = rgb<" + random.nextDouble() + ", " + random.nextDouble() + ", " +
                     random.nextDouble() + ">;\n");
         }

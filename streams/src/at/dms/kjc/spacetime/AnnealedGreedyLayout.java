@@ -6,10 +6,11 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.*;
 
 import at.dms.kjc.common.SimulatedAnnealing;
@@ -38,13 +39,13 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         this.duplicate = duplicate;
     }
     
-    public RawTile getTile(FilterTraceNode node) {
+    public RawTile getTile(FilterSliceNode node) {
         assert assignment.containsKey(node) : "Node not in assignment: " + node;
         assert assignment.get(node) != null : "Tile assignment null: " + node;
         return (RawTile)assignment.get(node);
     }
     
-    public void setTile(FilterTraceNode node, RawTile tile) {
+    public void setTile(FilterSliceNode node, RawTile tile) {
         
         if (!node.isPredefined()) { 
             tileCosts[getTile(node).getTileNumber()] -= 
@@ -72,9 +73,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
             tileCosts[i] = 0;
         }
         
-        Iterator<FilterTraceNode> filters = assignment.keySet().iterator();
+        Iterator<FilterSliceNode> filters = assignment.keySet().iterator();
         while (filters.hasNext()) {
-            FilterTraceNode filter = filters.next();
+            FilterSliceNode filter = filters.next();
             int bin = ((RawTile)assignment.get(filter)).getTileNumber();
             tileCosts[bin] += partitioner.getFilterWorkSteadyMult(filter);
         }
@@ -86,34 +87,34 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
      * 
      */
     public void swapAssignment() {
-        //find two traces to swap, remember this only work for time
-        //traces are single filter
-        Trace trace1, trace2;
-        FilterTraceNode filter1 = null, filter2 = null;
+        //find two slices to swap, remember this only work for time
+        //slices are single filter
+        Slice slice1, slice2;
+        FilterSliceNode filter1 = null, filter2 = null;
         int bin1, bin2;
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         
         recalculateBinWeights();
         
         while (true) {
             //while (true) {
-            trace1 =  traces[rand.nextInt(traces.length)];
-            //break when we have found a non-io trace
-            //if (!partitioner.isIO(trace1))
+            slice1 =  slices[rand.nextInt(slices.length)];
+            //break when we have found a non-io slice
+            //if (!partitioner.isIO(slice1))
             //    break;
            // }
             
            
-            trace2 = traces[rand.nextInt(traces.length)];
-            //if (!partitioner.isIO(trace2))
+            slice2 = slices[rand.nextInt(slices.length)];
+            //if (!partitioner.isIO(slice2))
             //    break;
             
             
-            if (trace1 == trace2)
+            if (slice1 == slice2)
                 continue;
             
-            filter1 = trace1.getHead().getNextFilter();
-            filter2 = trace2.getHead().getNextFilter();
+            filter1 = slice1.getHead().getNextFilter();
+            filter2 = slice2.getHead().getNextFilter();
             
             bin1 = getTile(filter1).getTileNumber();
             bin2 = getTile(filter2).getTileNumber();
@@ -192,9 +193,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         //dump the POV representation of the schedule
         
         /*
-        Iterator<FilterTraceNode> filters = assignment.keySet().iterator();
+        Iterator<FilterSliceNode> filters = assignment.keySet().iterator();
         while (filters.hasNext()) {
-            FilterTraceNode filter = filters.next();
+            FilterSliceNode filter = filters.next();
             //System.out.println(filter + " --> " + assignment.get(filter));
         }
         */
@@ -238,17 +239,17 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         for (int t = 0; t < chip.getTotalTiles(); t++) {
             for (int i = 0; i < duplicate.getFilterOnTile(t).size(); i++) {
                 SIRFilter filter = duplicate.getFilterOnTile(t).get(i);
-                FilterTraceNode node = 
-                    FilterTraceNode.getFilterNode(spaceTime.partitioner.getContent(filter));
+                FilterSliceNode node = 
+                    FilterSliceNode.getFilterNode(spaceTime.partitioner.getContent(filter));
                 assignment.put(node, chip.getTile(t));
                 tileCosts[t] += partitioner.getFilterWorkSteadyMult(node); 
             }
         }
         
-        Iterator<FilterTraceNode> nodes = 
-            Util.sortedFilterTracesTime(spaceTime.partitioner).iterator();
+        Iterator<FilterSliceNode> nodes = 
+            Util.sortedFilterSlicesTime(spaceTime.partitioner).iterator();
         while (nodes.hasNext()) {
-            FilterTraceNode node = nodes.next();
+            FilterSliceNode node = nodes.next();
             //already assigned above
             if (assignment.containsKey(node))
                 continue;
@@ -310,7 +311,7 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
      */
     
     private int reorgCrossRoutes() {
-        Trace[] traces = partitioner.getTraceGraph();
+        Slice[] slices = partitioner.getSliceGraph();
         int crossed = 0;
         
         router = new SmarterRouter(tileCosts, chip);
@@ -322,27 +323,27 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
         //of the graph...
         HashSet<ComputeNode> routersUsed = new HashSet<ComputeNode>();
         
-        for (int i = 0; i < traces.length; i++) {
-            Trace trace = traces[i];
-            Iterator edges = trace.getTail().getDestSet().iterator();
+        for (int i = 0; i < slices.length; i++) {
+            Slice slice = slices[i];
+            Iterator edges = slice.getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = (Edge)edges.next();
                // //System.out.println(" Checking if " + edge + " crosses.");
-                InterTraceBuffer buf = InterTraceBuffer.getBuffer(edge);
+                InterSliceBuffer buf = InterSliceBuffer.getBuffer(edge);
                 
                 //nothing is transfered for this buffer.
                 if (buf.redundant())
                     continue;
                 
-                OutputTraceNode output = edge.getSrc();
-                InputTraceNode input = edge.getDest();
+                OutputSliceNode output = edge.getSrc();
+                InputSliceNode input = edge.getDest();
                 StreamingDram bufDRAM = buf.getDRAM();
                
                 
                 
-                if (!IntraTraceBuffer.unnecessary(output)) {
+                if (!IntraSliceBuffer.unnecessary(output)) {
                     StreamingDram outputDRAM = 
-                        IntraTraceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
+                        IntraSliceBuffer.getBuffer(output.getPrevFilter(), output).getDRAM();
                     
                     Iterator<ComputeNode> route = router.getRoute(outputDRAM, bufDRAM).iterator();
                     while (route.hasNext()) {
@@ -354,9 +355,9 @@ public class AnnealedGreedyLayout extends SimulatedAnnealing implements Layout {
                     }
                 }
                 
-                if (!IntraTraceBuffer.unnecessary(input)) {
+                if (!IntraSliceBuffer.unnecessary(input)) {
                     StreamingDram inputDRAM = 
-                        IntraTraceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
+                        IntraSliceBuffer.getBuffer(input, input.getNextFilter()).getDRAM();
                     Iterator<ComputeNode>route = router.getRoute(bufDRAM, inputDRAM).iterator();
                     while (route.hasNext()) {
                         ComputeNode hop = route.next();

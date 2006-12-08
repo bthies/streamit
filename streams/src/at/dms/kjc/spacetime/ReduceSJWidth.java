@@ -5,11 +5,8 @@ import java.util.Iterator;
 import java.util.Arrays;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
 import at.dms.kjc.slicegraph.*;
+
 import java.util.HashSet;
 import java.util.Vector;
 
@@ -24,15 +21,15 @@ import java.util.Vector;
  **/
 public class ReduceSJWidth
 {
-    private static List<Trace> steady;
-    private static List<Trace> init;
+    private static List<Slice> steady;
+    private static List<Slice> init;
     private static int DRAMs;
 
-    public static void run(List<Trace> initList, List<Trace> steadyList, 
-                           RawChip chip, Trace[] files) 
+    public static void run(List<Slice> initList, List<Slice> steadyList, 
+                           RawChip chip, Slice[] files) 
     {
         //keep the old steady traversal around so we can iterate over it...
-        Trace[] oldSteady = steadyList.toArray(new Trace[0]);
+        Slice[] oldSteady = steadyList.toArray(new Slice[0]);
         steady = steadyList;
         init = initList;
         DRAMs = chip.getNumDev();
@@ -45,15 +42,15 @@ public class ReduceSJWidth
     }
     
 
-    private static void reduceIncomingEdges(Trace trace) 
+    private static void reduceIncomingEdges(Slice slice) 
     {
         //check if there is anything to do
-        if (trace.getHead().getSourceSet().size() <= DRAMs)
+        if (slice.getHead().getSourceSet().size() <= DRAMs)
             return;
 
         //create the new trace to add with an identity
-        Trace newTrace = newIdentityTrace(trace.getHead().getType());
-        InputTraceNode input = trace.getHead();
+        Slice newTrace = newIdentityTrace(slice.getHead().getType());
+        InputSliceNode input = slice.getHead();
 
         //set the connections
         //choose first DRAMs incoming filters
@@ -85,14 +82,14 @@ public class ReduceSJWidth
         //set the multiplicities!
     
         //add the trace to the traversals
-        addTraceBefore(newTrace, trace);
+        addTraceBefore(newTrace, slice);
 
         //repeat on the new inputTraceNode
         //by recursively calling, 
         reduceIncomingEdges(newTrace);
     }
     
-    private static void addTraceBefore(Trace addMe, Trace before) 
+    private static void addTraceBefore(Slice addMe, Slice before) 
     {
         //add to init, this will not add it if before is not in the 
         //traversal
@@ -113,23 +110,23 @@ public class ReduceSJWidth
     }
     
 
-    private static void reduceOutgoingEdges(OutputTraceNode output)
+    private static void reduceOutgoingEdges(OutputSliceNode output)
     {
     
     }
 
     //return a new trace with an identity filter and input/output
     //the state of the trace nodes are not set
-    private static Trace newIdentityTrace(CType type) 
+    private static Slice newIdentityTrace(CType type) 
     {
         FilterContent filterC = new FilterContent(new SIRIdentity(type));
-        FilterTraceNode node = new FilterTraceNode(filterC);
+        FilterSliceNode node = new FilterSliceNode(filterC);
     
-        Trace trace = new Trace(node);
+        Slice slice = new Slice(node);
         //finish creating the trace? Jasp?
-        trace.finish();
+        slice.finish();
     
-        return trace;
+        return slice;
     }
     
 }

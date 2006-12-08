@@ -2,16 +2,16 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.slicegraph.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 
 public class MagicDramStore extends MagicDramInstruction 
 {
-    private OutputTraceNode source;
-    private InputTraceNode[] dests;
+    private OutputSliceNode source;
+    private InputSliceNode[] dests;
 
-    public MagicDramStore(OutputTraceNode source, InputTraceNode[] dests) 
+    public MagicDramStore(OutputSliceNode source, InputSliceNode[] dests) 
     {
         this.source = source;
         this.dests = dests;
@@ -26,7 +26,7 @@ public class MagicDramStore extends MagicDramInstruction
         for (int i = 0; i < dests.length; i++) {
             if (dests[i].isFileOutput()) {
                 FileOutputContent out = 
-                    (FileOutputContent)((FilterTraceNode)dests[i].getNext()).getFilter();
+                    (FileOutputContent)((FilterSliceNode)dests[i].getNext()).getFilter();
                 if (out.isFP()) {
                     sb.append("\tfprintf(" + Util.getFileHandle(out) + 
                               ", \"%f\\n\", double(temp));\n");

@@ -6,6 +6,7 @@ package at.dms.kjc.spacetime;
 import java.util.Comparator;
 
 import at.dms.kjc.slicegraph.Partitioner;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
  * A Comparator for the work estimation of slices that compares slices
@@ -15,7 +16,7 @@ import at.dms.kjc.slicegraph.Partitioner;
  * @author mgordon
  *
  */
-public class CompareTraceBNWork implements Comparator {
+public class CompareSliceBNWork implements Comparator {
     /** The partition we used */
     private Partitioner partitioner;
     
@@ -24,23 +25,23 @@ public class CompareTraceBNWork implements Comparator {
      * 
      * @param partitioner
      */
-    public CompareTraceBNWork(Partitioner partitioner) {
+    public CompareSliceBNWork(Partitioner partitioner) {
         this.partitioner = partitioner;
     }
     
     /**
-     * Compare the bottleneck work of Trace <pre>o1</pre> with Trace <pre>o2</pre>.
+     * Compare the bottleneck work of Slice <pre>o1</pre> with Slice <pre>o2</pre>.
      * 
      * @return The comparison 
      */
     public int compare(Object o1, Object o2) {
-        assert o1 instanceof Trace && o2 instanceof Trace;
+        assert o1 instanceof Slice && o2 instanceof Slice;
         
-        if (partitioner.getTraceBNWork((Trace) o1) < partitioner
-                .getTraceBNWork((Trace) o2))
+        if (partitioner.getSliceBNWork((Slice) o1) < partitioner
+                .getSliceBNWork((Slice) o2))
             return -1;
-        else if (partitioner.getTraceBNWork((Trace) o1) == partitioner
-                .getTraceBNWork((Trace) o2))
+        else if (partitioner.getSliceBNWork((Slice) o1) == partitioner
+                .getSliceBNWork((Slice) o2))
             return 0;
         else
             return 1;

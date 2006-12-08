@@ -20,6 +20,7 @@ import at.dms.kjc.slicegraph.DataFlowOrder;
 import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;
+import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.lir.*;
 import java.util.*;
 import at.dms.util.SIRPrinter;
@@ -288,8 +289,8 @@ public class SpaceTimeBackend {
             for (int i = 0; i < topNodes.length; i++)
                 CommonUtils.println_debugging(topNodes[i].toString());
         }    
-        Trace[] traces = null;
-        Trace[] traceGraph = null; 
+        Slice[] traces = null;
+        Slice[] traceGraph = null; 
         
         
         Partitioner partitioner = null;
@@ -343,7 +344,7 @@ public class SpaceTimeBackend {
         //COMP_COMM_RATIO = CompCommRatio.ratio(partitioner);
         
         System.out.println("Multiplying Steady-State...");
-        MultiplySteadyState.doit(partitioner.getTraceGraph());
+        MultiplySteadyState.doit(partitioner.getSliceGraph());
      
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
@@ -366,7 +367,7 @@ public class SpaceTimeBackend {
         if (KjcOptions.noswpipe) {
             layout = new NoSWPipeLayout(spaceTimeSchedule); 
         } else if (KjcOptions.manuallayout) {
-            layout = new ManualTraceLayout(spaceTimeSchedule);
+            layout = new ManualSliceLayout(spaceTimeSchedule);
         } else if (KjcOptions.greedysched || (KjcOptions.dup > 1)) {
             //layout = new GreedyLayout(spaceTimeSchedule, rawChip);
             layout = new AnnealedGreedyLayout(spaceTimeSchedule, rawChip, duplicate);
@@ -392,7 +393,7 @@ public class SpaceTimeBackend {
                 
         //calculate preloop and initialization code
         System.out.println("Creating Initialization Schedule...");
-        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getTraceGraph()));
+        spaceTimeSchedule.setInitSchedule(DataFlowOrder.getTraversal(spaceTimeSchedule.partitioner.getSliceGraph()));
         
         System.out.println("Creating Pre-Loop Schedule...");
         GeneratePrimePumpSchedule preLoopSched = new GeneratePrimePumpSchedule(spaceTimeSchedule);
@@ -414,11 +415,11 @@ public class SpaceTimeBackend {
 //        }
  
         //dump some dot graphs!
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
+        SliceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getInitSchedule(), 
                                 "initTraces.dot", layout, true);
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
+        SliceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
                 "steadyTraces.dot", layout, true);
-        TraceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
+        SliceDotGraph.dumpGraph(spaceTimeSchedule, spaceTimeSchedule.getSchedule(), 
                 "steadyTraces.nolabel.dot", layout, true, false);
         
         //dump the POV representation of the schedule
@@ -514,7 +515,7 @@ public class SpaceTimeBackend {
 // traces=traceGraph;
 // int index=0;
 // traceForrest[0]=traceGraph[0];
-// Trace realTrace=traceGraph[0];
+// Slice realTrace=traceGraph[0];
 // while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
 // realTrace=traceGraph[++index];
 // TraceNode node=realTrace.getHead();
@@ -530,7 +531,7 @@ public class SpaceTimeBackend {
 // int forward=1;
 // int downward=1;
 // //ArrayList traceList=new ArrayList();
-// //traceList.add(new Trace(currentNode));
+// //traceList.add(new Slice(currentNode));
 // TraceNode nextNode=currentNode.getNext();
 // while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
 // currentNode=(FilterTraceNode)nextNode;
@@ -552,11 +553,11 @@ public class SpaceTimeBackend {
 // curX+=forward;
 // nextNode=currentNode.getNext();
 // }
-// //traces=new Trace[traceList.size()];
+// //traces=new Slice[traceList.size()];
 // //traceList.toArray(traces);
 // for(int i=1;i<traces.length;i++) {
-// traces[i-1].setEdges(new Trace[]{traces[i]});
-// traces[i].setDepends(new Trace[]{traces[i-1]});
+// traces[i-1].setEdges(new Slice[]{traces[i]});
+// traces[i].setDepends(new Slice[]{traces[i-1]});
 // }
 // //System.out.println(traceList);
 // } else */
@@ -567,12 +568,12 @@ public class SpaceTimeBackend {
 // for(int i=0;i<len;i++)
 // if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
 // newLen--;
-// traces=new Trace[newLen];
-// io=new Trace[len-newLen];
+// traces=new Slice[newLen];
+// io=new Slice[len-newLen];
 // idx=0;
 // idx2=0;
 // for(int i=0;i<len;i++) {
-// Trace trace=traceGraph[i];
+// Slice trace=traceGraph[i];
 // if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
 // traces[idx++]=trace;
 // else

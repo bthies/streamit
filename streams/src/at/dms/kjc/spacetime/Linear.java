@@ -3,7 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.*;
 import at.dms.compiler.PositionedError;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ public class Linear extends BufferedCommunication implements Constants {
         super(tile, filterInfo, null);
         assert false;
         //assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
-        FilterTraceNode node = filterInfo.traceNode;
+        FilterSliceNode node = filterInfo.traceNode;
         System.out.println(" Generating code for " + filterInfo.filter + " using Linear.");
         assert filterInfo.initMult < 1 :
             "Still need to create init function: "+filterInfo.initMult;

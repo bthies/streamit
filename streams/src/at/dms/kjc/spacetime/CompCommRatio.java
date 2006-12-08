@@ -5,11 +5,11 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*; 
 import at.dms.kjc.slicegraph.DataFlowOrder;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
-import at.dms.kjc.slicegraph.TraceNode;
+import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 
 import java.util.*;
@@ -87,22 +87,22 @@ public class CompCommRatio {
      */
     public static double ratio(Partitioner partitioner) {
         int comp = 0, comm = 0;
-        // get the trace node travesal
-        Iterator<TraceNode> traceNodeIt = Util.traceNodeTraversal(DataFlowOrder
-                                                       .getTraversal(partitioner.getTopTraces()));
+        // get the slice node travesal
+        Iterator<SliceNode> sliceNodeIt = Util.sliceNodeTraversal(DataFlowOrder
+                                                       .getTraversal(partitioner.getTopSlices()));
 
-        while (traceNodeIt.hasNext()) {
-            TraceNode traceNode = traceNodeIt.next();
+        while (sliceNodeIt.hasNext()) {
+            SliceNode sliceNode = sliceNodeIt.next();
 
-            if (traceNode.isFilterTrace()) {
-                FilterTraceNode filter = (FilterTraceNode) traceNode;
+            if (sliceNode.isFilterSlice()) {
+                FilterSliceNode filter = (FilterSliceNode) sliceNode;
                 // comm += (filter.getFilter().getSteadyMult() *
                 // filter.getFilter().getPushInt());
                 comp += (filter.getFilter().getSteadyMult() * partitioner
                          .getFilterWork(filter));
-            } else if (traceNode.isOutputTrace()) {
-                OutputTraceNode output = (OutputTraceNode) traceNode;
-                FilterTraceNode filter = (FilterTraceNode) output.getPrevious();
+            } else if (sliceNode.isOutputSlice()) {
+                OutputSliceNode output = (OutputSliceNode) sliceNode;
+                FilterSliceNode filter = (FilterSliceNode) output.getPrevious();
                 // FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
                 // calculate the number of items sent
 
@@ -122,8 +122,8 @@ public class CompCommRatio {
 
                 comm += (iterations * itemsSent);
             } else {
-                InputTraceNode input = (InputTraceNode) traceNode;
-                FilterTraceNode filter = (FilterTraceNode) input.getNext();
+                InputSliceNode input = (InputSliceNode) sliceNode;
+                FilterSliceNode filter = (FilterSliceNode) input.getNext();
 
                 // calculate the number of items received
                 int itemsSent = filter.getFilter().getSteadyMult()

@@ -7,50 +7,51 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
 import at.dms.kjc.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
-import at.dms.kjc.slicegraph.InputTraceNode;
-import at.dms.kjc.slicegraph.OutputTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
+import at.dms.kjc.slicegraph.InputSliceNode;
+import at.dms.kjc.slicegraph.OutputSliceNode;
+import at.dms.kjc.slicegraph.Slice;
 
 /**
- * This class represents the buffer between the sink filter of a trace
- * and outputtracenode or between the inputtracenode and the source filter of a
- * trace. 
+ * This class represents the buffer between the sink filter of a slice
+ * and outputslicenode or between the inputslicenode and the source filter of a
+ * slice. 
  * 
  * @author mgordon
  *
  */
-public class IntraTraceBuffer extends OffChipBuffer {
+public class IntraSliceBuffer extends OffChipBuffer {
     /** true if this buffer uses static net */
     protected boolean staticNet;
     
-    public static IntraTraceBuffer getBuffer(FilterTraceNode src,
-                                             OutputTraceNode dst) {
+    public static IntraSliceBuffer getBuffer(FilterSliceNode src,
+                                             OutputSliceNode dst) {
         if (!bufferStore.containsKey(src)) {
             //System.out.println("Creating Buffer from " + src + " to " + dst);
-            bufferStore.put(src, new IntraTraceBuffer(src, dst));
+            bufferStore.put(src, new IntraSliceBuffer(src, dst));
         }
-        assert (((IntraTraceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
+        assert (((IntraSliceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
 
-        return (IntraTraceBuffer) bufferStore.get(src);
+        return (IntraSliceBuffer) bufferStore.get(src);
     }
 
-    public static IntraTraceBuffer getBuffer(InputTraceNode src,
-                                             FilterTraceNode dst) {
+    public static IntraSliceBuffer getBuffer(InputSliceNode src,
+                                             FilterSliceNode dst) {
         if (!bufferStore.containsKey(src)) {
-            bufferStore.put(src, new IntraTraceBuffer(src, dst));
+            bufferStore.put(src, new IntraSliceBuffer(src, dst));
             //System.out.println("Creating Buffer from " + src + " to " + dst);
         }
-        assert (((IntraTraceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
+        assert (((IntraSliceBuffer) bufferStore.get(src)).getDest() == dst) : "Src connected to different dst in buffer store";
 
-        return (IntraTraceBuffer) bufferStore.get(src);
+        return (IntraSliceBuffer) bufferStore.get(src);
     }
 
-    protected IntraTraceBuffer(InputTraceNode src, FilterTraceNode dst) {
+    protected IntraSliceBuffer(InputSliceNode src, FilterSliceNode dst) {
         super(src, dst);
         calculateSize();
     }
 
-    protected IntraTraceBuffer(FilterTraceNode src, OutputTraceNode dst) {
+    protected IntraSliceBuffer(FilterSliceNode src, OutputSliceNode dst) {
         super(src, dst);
         calculateSize();
     }
@@ -69,9 +70,9 @@ public class IntraTraceBuffer extends OffChipBuffer {
         this.staticNet = staticNet;
         //perform some sanity checks
         if (!staticNet) {
-            if (isInterTrace()) {
-                OutputTraceNode output = (OutputTraceNode)this.getDest();
-                InputTraceNode input = (InputTraceNode)this.getSource();
+            if (isInterSlice()) {
+                OutputSliceNode output = (OutputSliceNode)this.getDest();
+                InputSliceNode input = (InputSliceNode)this.getSource();
                 assert (output.oneOutput() || output.noOutputs()) &&
                     (input.noInputs() || input.oneInput()) : 
                         this.toString() + " cannot use the gdn unless it is a singleton.";
@@ -81,32 +82,32 @@ public class IntraTraceBuffer extends OffChipBuffer {
 
   
     public boolean redundant() {
-        // if there are no outputs for the output trace
+        // if there are no outputs for the output slice
         // then redundant
-        if (source.isFilterTrace() && dest.isOutputTrace()) {
-            if (((OutputTraceNode) dest).noOutputs())
+        if (source.isFilterSlice() && dest.isOutputSlice()) {
+            if (((OutputSliceNode) dest).noOutputs())
                 return true;
         } else
-            // if the inputtrace is not necessray
-            return unnecessary((InputTraceNode) source);
+            // if the inputslice is not necessray
+            return unnecessary((InputSliceNode) source);
         return false;
     }
 
     public OffChipBuffer getNonRedundant() {
-        if (source.isInputTrace() && dest.isFilterTrace()) {
+        if (source.isInputSlice() && dest.isFilterSlice()) {
             // if no inputs return null
-            if (((InputTraceNode) source).noInputs())
+            if (((InputSliceNode) source).noInputs())
                 return null;
             // if redundant get the previous buffer and call getNonRedundant
             if (redundant())
-                return InterTraceBuffer.getBuffer(
-                                                  ((InputTraceNode) source).getSingleEdge())
+                return InterSliceBuffer.getBuffer(
+                                                  ((InputSliceNode) source).getSingleEdge())
                     .getNonRedundant();
             // otherwise return this...
             return this;
-        } else { // (source.isFilterTrace() && dest.isOutputTrace())
+        } else { // (source.isFilterSlice() && dest.isOutputSlice())
             // if no outputs return null
-            if (((OutputTraceNode) dest).noOutputs())
+            if (((OutputSliceNode) dest).noOutputs())
                 return null;
             // the only way it could be redundant (unnecesary) is for there to
             // be no outputs
@@ -115,18 +116,18 @@ public class IntraTraceBuffer extends OffChipBuffer {
     }
 
     protected void setType() {
-        if (source.isFilterTrace())
-            type = ((FilterTraceNode) source).getFilter().getOutputType();
-        else if (dest.isFilterTrace())
-            type = ((FilterTraceNode) dest).getFilter().getInputType();
+        if (source.isFilterSlice())
+            type = ((FilterSliceNode) source).getFilter().getOutputType();
+        else if (dest.isFilterSlice())
+            type = ((FilterSliceNode) dest).getFilter().getInputType();
     }
 
     protected void calculateSize() {
         // we'll make it 32 byte aligned
-        if (source.isFilterTrace()) {
+        if (source.isFilterSlice()) {
             // the init size is the max of the multiplicities for init and pp
             // times the push rate
-            FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode) source);
+            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) source);
             int maxItems = fi.initMult;
             maxItems *= fi.push;
             // account for the initpush
@@ -135,9 +136,9 @@ public class IntraTraceBuffer extends OffChipBuffer {
             maxItems = Math.max(maxItems, fi.push*fi.steadyMult);
             // steady is just pop * mult
             sizeSteady = (Address.ZERO.add(maxItems)).add32Byte(0);
-        } else if (dest.isFilterTrace()) {
+        } else if (dest.isFilterSlice()) {
             // this is not a perfect estimation but who cares
-            FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode) dest);
+            FilterInfo fi = FilterInfo.getFilterInfo((FilterSliceNode) dest);
             int maxItems = fi.initMult;
             maxItems *= fi.pop;
             // now account for initpop, initpeek, peek
@@ -149,19 +150,19 @@ public class IntraTraceBuffer extends OffChipBuffer {
     }
 
     /**
-     * @param t a trace.
-     * @return The intratraceBuffer between the last filter and the outputtracenode
+     * @param t a slice.
+     * @return The intrasliceBuffer between the last filter and the outputslicenode
      */
-    public static IntraTraceBuffer getDstIntraBuf(Trace t) {
+    public static IntraSliceBuffer getDstIntraBuf(Slice t) {
         return getBuffer(t.getTail().getPrevFilter(), t.getTail());
     }
 
     /**
-     * @param t a trace.
-     * @return The intratracebuffer between the inputtracenode 
-     * and the first filtertracenode
+     * @param t a slice.
+     * @return The intraslicebuffer between the inputslicenode 
+     * and the first filterslicenode
      */
-    public static IntraTraceBuffer getSrcIntraBuf(Trace t) {
+    public static IntraSliceBuffer getSrcIntraBuf(Slice t) {
         return getBuffer(t.getHead(), t.getHead().getNextFilter());
     }
 

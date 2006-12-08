@@ -1,7 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.*;
-import at.dms.kjc.slicegraph.FilterTraceNode;
+import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Vector;
@@ -35,11 +35,11 @@ public class RawTile extends ComputeNode {
 
     private HashSet<OffChipBuffer> offChipBuffers;
 
-    private Vector<FilterTraceNode> initFilters;
+    private Vector<FilterSliceNode> initFilters;
 
-    private Vector<FilterTraceNode> primepumpFilters;
+    private Vector<FilterSliceNode> primepumpFilters;
 
-    private Vector<FilterTraceNode> steadyFilters;
+    private Vector<FilterSliceNode> steadyFilters;
 
     public RawTile(int x, int y, RawChip rawChip) {
         super(rawChip);
@@ -53,9 +53,9 @@ public class RawTile extends ComputeNode {
         computeCode = new ComputeCodeStore(this);
         IODevices = new IODevice[0];
         offChipBuffers = new HashSet<OffChipBuffer>();
-        initFilters = new Vector<FilterTraceNode>();
-        primepumpFilters = new Vector<FilterTraceNode>();
-        steadyFilters = new Vector<FilterTraceNode>();
+        initFilters = new Vector<FilterSliceNode>();
+        primepumpFilters = new Vector<FilterSliceNode>();
+        steadyFilters = new Vector<FilterSliceNode>();
     }
 
     public String toString() {
@@ -191,7 +191,7 @@ public class RawTile extends ComputeNode {
     }
 
     public void addFilterTrace(boolean init, boolean primepump,
-                               FilterTraceNode filter) {
+                               FilterSliceNode filter) {
         if (init)
             initFilters.add(filter);
         else if (primepump)
@@ -200,7 +200,7 @@ public class RawTile extends ComputeNode {
             steadyFilters.add(filter);
     }
 
-    public Vector<FilterTraceNode> getFilters(boolean init, boolean primepump) {
+    public Vector<FilterSliceNode> getFilters(boolean init, boolean primepump) {
         if (init)
             return initFilters;
         else if (primepump)

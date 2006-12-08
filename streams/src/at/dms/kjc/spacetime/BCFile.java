@@ -154,19 +154,19 @@ public class BCFile
                 }
             }
         //append the number of filters and the number of slices
-        Trace traces[] = spaceTime.partitioner.getTraceGraph();
-        int numTraces = 0;
+        Slice slices[] = spaceTime.partitioner.getSliceGraph();
+        int numSlices = 0;
         int numFilters = 0;
-        for (int i = 0; i < traces.length; i++) {
+        for (int i = 0; i < slices.length; i++) {
             //don't count file reader and writers
-            if (traces[i].getHead().getNextFilter().isFileInput() || 
-                    traces[i].getHead().getNextFilter().isFileOutput())
+            if (slices[i].getHead().getNextFilter().isFileInput() || 
+                    slices[i].getHead().getNextFilter().isFileOutput())
                 continue;
-            numTraces++;
-            numFilters += traces[i].getNumFilters();
+            numSlices++;
+            numFilters += slices[i].getNumFilters();
         }
         
-        buf.append("global gNumSlices = " + numTraces + ";\n");
+        buf.append("global gNumSlices = " + numSlices + ";\n");
         buf.append("global gNumFilters = " + numFilters + ";\n");
         buf.append("global gMappedTiles = " + mappedTiles + ";\n");
         buf.append("global gOffChipBufferSizeBytes = " + 

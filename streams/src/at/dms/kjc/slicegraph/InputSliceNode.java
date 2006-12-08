@@ -4,14 +4,14 @@ import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import at.dms.kjc.spacetime.IntraTraceBuffer;
+import at.dms.kjc.spacetime.IntraSliceBuffer;
 import at.dms.kjc.spacetime.OffChipBuffer;
 import at.dms.kjc.*;
 
 /**
  * 
  */
-public class InputTraceNode extends TraceNode {
+public class InputSliceNode extends SliceNode {
     private int[] weights;
 
     private Edge[] sources;
@@ -24,7 +24,7 @@ public class InputTraceNode extends TraceNode {
 
     private static Edge[] EMPTY_SRCS = new Edge[0];
 
-    public InputTraceNode(int[] weights, Edge[] sources) {
+    public InputSliceNode(int[] weights, Edge[] sources) {
         // this.parent = parent;
         if (weights.length != sources.length)
             Utils.fail("Add comment later");
@@ -37,7 +37,7 @@ public class InputTraceNode extends TraceNode {
         unique++;
     }
 
-    public InputTraceNode(int[] weights, OutputTraceNode[] sources) {
+    public InputSliceNode(int[] weights, OutputSliceNode[] sources) {
         // this.parent = parent;
         if (weights.length != sources.length)
             Utils.fail("Add comment later");
@@ -54,7 +54,7 @@ public class InputTraceNode extends TraceNode {
         unique++;
     }
 
-    public InputTraceNode(int[] weights) {
+    public InputSliceNode(int[] weights) {
         // this.parent = parent;
         sources = EMPTY_SRCS;
         if (weights.length == 1)
@@ -65,7 +65,7 @@ public class InputTraceNode extends TraceNode {
         unique++;
     }
 
-    public InputTraceNode() {
+    public InputSliceNode() {
         // this.parent = parent;
         sources = EMPTY_SRCS;
         weights = EMPTY_WEIGHTS;
@@ -109,7 +109,7 @@ public class InputTraceNode extends TraceNode {
     }
     
     public boolean isFileOutput() {
-        return ((FilterTraceNode) getNext()).isFileOutput();
+        return ((FilterSliceNode) getNext()).isFileOutput();
     }
 
     public String getIdent() {
@@ -127,7 +127,7 @@ public class InputTraceNode extends TraceNode {
     
     /**
      * Return the number of items that traverse this edge
-     * on one iteration of this input trace node, remember
+     * on one iteration of this input slice node, remember
      * that a single edge can appear multiple times in the joining
      * pattern.
      * 
@@ -156,7 +156,7 @@ public class InputTraceNode extends TraceNode {
     }
 
     /**
-     * Set the weights and sources array of this input trace node
+     * Set the weights and sources array of this input slice node
      * to the weights list and the edges list.
      * 
      * @param weights The list of weights (Integer).
@@ -211,12 +211,12 @@ public class InputTraceNode extends TraceNode {
     }
 
     public Edge getSingleEdge() {
-        assert oneInput() : "Calling getSingeEdge() on InputTrace with less/more than one input";
+        assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";
         return sources[0];
     }
 
-    public FilterTraceNode getNextFilter() {
-        return (FilterTraceNode) getNext();
+    public FilterSliceNode getNextFilter() {
+        return (FilterSliceNode) getNext();
     }
 
     public boolean noInputs() {
@@ -265,7 +265,7 @@ public class InputTraceNode extends TraceNode {
     }
 
     /**
-     * Return a string that gives some information for this input trace node.
+     * Return a string that gives some information for this input slice node.
      * If escape is true, then escape the new lines "\\n".
      *  
      * @param escape Should we escape the new lines?
@@ -309,20 +309,20 @@ public class InputTraceNode extends TraceNode {
     }
     
     /**         
-     * @return true if this input trace node reads from a single source
+     * @return true if this input slice node reads from a single source
      * and the source is a file device.
      */
     public boolean onlyFileInput() {
         // get this buffer or this first upstream non-redundant buffer
         OffChipBuffer buffer = 
-            IntraTraceBuffer.getBuffer(this, getNextFilter()).getNonRedundant();
+            IntraSliceBuffer.getBuffer(this, getNextFilter()).getNonRedundant();
         
         if (buffer == null)
             return false;
         
         //if not a file reader, then we might have to align the dest
-        if (buffer.getDest() instanceof OutputTraceNode
-                && ((OutputTraceNode) buffer.getDest()).isFileInput())
+        if (buffer.getDest() instanceof OutputSliceNode
+                && ((OutputSliceNode) buffer.getDest()).isFileInput())
             return true;
         
         return false;

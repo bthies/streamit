@@ -5,11 +5,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Vector;
 
-import at.dms.kjc.spacetime.Trace;
 import at.dms.util.Utils;
 
 /**
- * This class generates a data flow schedule of the trace graph.
+ * This class generates a data flow schedule of the slice graph.
  * More specifically, in the traversal, all ancestors of a node are 
  * guaranteed to appear before the node.
  * 
@@ -18,25 +17,25 @@ import at.dms.util.Utils;
 public class DataFlowOrder {
     
     /**
-     * Generate a list of traces in data-flow order (don't add I/O traces to the traversal).
+     * Generate a list of slices in data-flow order (don't add I/O slices to the traversal).
      * 
-     * @param topTraces The trace forrest.
+     * @param topSlices The slice forest.
      * 
-     * @return A LinkedList of traces in data-flow order
+     * @return A LinkedList of slices in data-flow order
      */
-    public static LinkedList<Trace> getTraversal(Trace[] topTraces) {
-        LinkedList<Trace> schedule = new LinkedList<Trace>();
-        HashSet<Trace> visited = new HashSet<Trace>();
-        LinkedList<Trace> queue = new LinkedList<Trace>();
-        for (int i = 0; i < topTraces.length; i++) {
-            queue.add(topTraces[i]);
+    public static LinkedList<Slice> getTraversal(Slice[] topSlices) {
+        LinkedList<Slice> schedule = new LinkedList<Slice>();
+        HashSet<Slice> visited = new HashSet<Slice>();
+        LinkedList<Slice> queue = new LinkedList<Slice>();
+        for (int i = 0; i < topSlices.length; i++) {
+            queue.add(topSlices[i]);
             while (!queue.isEmpty()) {
-                Trace trace = queue.removeFirst();
-                if (!visited.contains(trace)) {
-                    visited.add(trace);
-                    Iterator dests = trace.getTail().getDestSet().iterator();
+                Slice slice = queue.removeFirst();
+                if (!visited.contains(slice)) {
+                    visited.add(slice);
+                    Iterator dests = slice.getTail().getDestSet().iterator();
                     while (dests.hasNext()) {
-                        Trace current = ((Edge) dests.next()).getDest()
+                        Slice current = ((Edge) dests.next()).getDest()
                             .getParent();
                         if (!visited.contains(current)) {
                             // only add if all sources has been visited
@@ -54,8 +53,8 @@ public class DataFlowOrder {
                                 queue.add(current);
                         }
                     }
-                    //if (!trace.getHead().getNextFilter().isPredefined()) {
-                    schedule.add(trace);
+                    //if (!slice.getHead().getNextFilter().isPredefined()) {
+                    schedule.add(slice);
                     //}
                 }
             }

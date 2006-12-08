@@ -5,19 +5,19 @@ import at.dms.kjc.spacetime.FilterInfo;
 
 /**
  *  This class represents an edge in the partitioned stream graph between slices (traces).
- *  But it actually connectes <pre>OutputTraceNodes</pre> to <pre>InputTraceNodes</pre>.
+ *  But it actually connectes <pre>OutputSliceNodes</pre> to <pre>InputSliceNodes</pre>.
  * 
  * @author mgordon
  *
  */
 public class Edge {
-    private OutputTraceNode src;
+    private OutputSliceNode src;
 
-    private InputTraceNode dest;
+    private InputSliceNode dest;
 
     private CType type;
 
-    public Edge(OutputTraceNode src, InputTraceNode dest) {
+    public Edge(OutputSliceNode src, InputSliceNode dest) {
         assert src != null : "Source Null!";
         assert dest != null : "Dest Null!";
         this.src = src;
@@ -25,11 +25,11 @@ public class Edge {
         type = null;
     }
 
-    public Edge(OutputTraceNode src) {
+    public Edge(OutputSliceNode src) {
         this.src = src;
     }
 
-    public Edge(InputTraceNode dest) {
+    public Edge(InputSliceNode dest) {
         this.dest = dest;
     }
 
@@ -45,19 +45,19 @@ public class Edge {
         return type;
     }
 
-    public OutputTraceNode getSrc() {
+    public OutputSliceNode getSrc() {
         return src;
     }
 
-    public InputTraceNode getDest() {
+    public InputSliceNode getDest() {
         return dest;
     }
 
-    public void setSrc(OutputTraceNode src) {
+    public void setSrc(OutputSliceNode src) {
         this.src = src;
     }
 
-    public void setDest(InputTraceNode dest) {
+    public void setDest(InputSliceNode dest) {
         this.dest = dest;
     }
 
@@ -75,15 +75,15 @@ public class Edge {
     public int initItems() {
         int itemsReceived, itemsSent;
 
-        // calculate the items the input trace receives
-        FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode) dest
+        // calculate the items the input slice receives
+        FilterInfo next = FilterInfo.getFilterInfo((FilterSliceNode) dest
                                                    .getNext());
         
         itemsSent = (int) ((double) next.initItemsReceived() * dest.ratio(this));
         //System.out.println(next.initItemsReceived()  + " * " + dest.ratio(this));
         
-        // calculate the items the output trace sends
-        FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode) src
+        // calculate the items the output slice sends
+        FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) src
                                                    .getPrevious());
         itemsReceived = (int) ((double) prev.initItemsSent() * src.ratio(this));
 
@@ -115,13 +115,13 @@ public class Edge {
     public int steadyItems() {
         int itemsReceived, itemsSent;
 
-        // calculate the items the input trace receives
+        // calculate the items the input slice receives
         FilterInfo next = FilterInfo.getFilterInfo(dest.getNextFilter());
         itemsSent = (int) ((next.steadyMult * next.pop) * ((double) dest
                                                            .getWeight(this) / dest.totalWeights()));
 
-        // calculate the items the output trace sends
-        FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode) src
+        // calculate the items the output slice sends
+        FilterInfo prev = FilterInfo.getFilterInfo((FilterSliceNode) src
                                                    .getPrevious());
         itemsReceived = (int) ((prev.steadyMult * prev.push) * ((double) src
                                                                 .getWeight(this) / src.totalWeights()));

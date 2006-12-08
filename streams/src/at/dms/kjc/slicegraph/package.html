@@ -32,29 +32,28 @@ software pipelining algorithms from ASPLOS'06 are not in this package,
 <p>Class notes for my edification:
 <ul>
 <li>
-{@link at.dms.kjc.spacetime.Trace} is still in spacetime, and should
-be moved.  It defines a collection of TraceNodes, started with an
-InputTraceNode.
+{@link Slice} defines a collection of SliceNodes, started with an
+InputSliceNode.
 For people used to the SIR representation, a slice can be thought of
-as a joiner (InputTraceNode), followed by a pipeline of filters
-(FilterTraceNode), followed by a splitter (OutputTraceNode).
+as a joiner (InputSliceNode), followed by a pipeline of filters
+(FilterSliceNode), followed by a splitter (OutputSliceNode).
 </li><li>
-{@link TraceNode} abstract class with previous and next TraceNode's
-(internal connections within a slice) and with a parent Trace. 
+{@link SliceNode} abstract class with previous and next SliceNode's
+(internal connections within a slice) and with a parent Slice. 
   <ul>
   <li> 
-  {@link InputTraceNode} manages an array of Edge's: "sources"
+  {@link InputSliceNode} manages an array of Edge's: "sources"
   </li><li>
-  {@link OutputTraceNode} manages an array of arrays of Edge's: "dests"
+  {@link OutputSliceNode} manages an array of arrays of Edge's: "dests"
   </li><li>
-  {@link FilterTraceNode} contains FilterContent.
+  {@link FilterSliceNode} contains FilterContent.
   </li>
   </ul>
 </li><li>
 {@link Edge} class gives connection between slices (actually between an
-InputTraceNode and an OutputTraceNode), and may be queried for type,
+InputSliceNode and an OutputSliceNode), and may be queried for type,
 number of items sent on edge at init, at priming, and steady state
-times.  TraceNode's within a slice are connected as a simple
+times.  SliceNode's within a slice are connected as a simple
 doubly-linked list.  (Note that the priming information for an edge is
 not calculated in the slicegraph package).
 
@@ -91,11 +90,11 @@ I have been told that FlattenGraph is soon to be obsoleted in favor of
 {@link SynchRemover} is not currently called from anywhere. Should be soon.
 </li><li>
 {@link Partitioner} is an abstract class defining the partitioning of
-a graph to be an array of Trace's. It requires UnflatFilter's from
+a graph to be an array of Slice's. It requires UnflatFilter's from
 {@link FlattenGraph}, a schedule, linear analyzer, work estimate, and
 a bound on the number of partitions to be created (which may be
 ignored by any particular implementation).
-A Partitioner can be queried for an array of {@link at.dms.kjc.spacetime.Trace} nodes. 
+A Partitioner can be queried for an array of {@link at.dms.kjc.spacetime.Slice} nodes. 
   <ul>
   <li>
   {@link FlattenAndPartition} is used by spacetime for 
@@ -110,8 +109,8 @@ A Partitioner can be queried for an array of {@link at.dms.kjc.spacetime.Trace} 
   after being used for some testing for the ASPLOS'06 paper.
   </li><li>
   {@link SimplePartitioner} is used by spacetime as the default partitioner.
-  Each slice should be a pipeline of FilterTraceNode's stared with one
-  InputTraceNode and ending with one OutputTraceNode. 
+  Each slice should be a pipeline of FilterSliceNode's stared with one
+  InputSliceNode and ending with one OutputSliceNode. 
   </li>
   </ul>
 </li><li>
@@ -125,7 +124,7 @@ The {@link UnflatFilter} contains a
 than the work function access the tape.  It operates on both
 FilterContent and on SIRFilter. 
 </li><li>
-{@link DataFlowOrder} produces a list of Traces (Slices) in reverse
+{@link DataFlowOrder} produces a list of Slices (Slices) in reverse
 depth-first order.  It is referred to from a number of places in
 spacetime, but not from elsewhere in slicegraph.  However, slicegraph
 is a good place for this general utility on slices.

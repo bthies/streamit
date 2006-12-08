@@ -6,27 +6,27 @@ import java.util.*;
 /** 
  *
  **/
-public class FilterTraceNode extends TraceNode
+public class FilterSliceNode extends SliceNode
 {
     private FilterContent filter;
    
     private boolean predefined;
     private boolean laidout;
 
-    private static HashMap<FilterContent, FilterTraceNode> contentToNode;
+    private static HashMap<FilterContent, FilterSliceNode> contentToNode;
     
     static {
-        contentToNode = new HashMap<FilterContent, FilterTraceNode>();
+        contentToNode = new HashMap<FilterContent, FilterSliceNode>();
     }
     
-    public FilterTraceNode(FilterContent filter) {
+    public FilterSliceNode(FilterContent filter) {
         predefined = (filter instanceof PredefinedContent);
         this.filter = filter;
         laidout = false;
         contentToNode.put(filter, this);
     }
     
-    public static FilterTraceNode getFilterNode(FilterContent f) {
+    public static FilterSliceNode getFilterNode(FilterContent f) {
         return contentToNode.get(f);
     }
     

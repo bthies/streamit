@@ -12,7 +12,6 @@ import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.RenameAll;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.flatgraph.*;
 import at.dms.kjc.*;
 import at.dms.kjc.common.CommonUtils;
@@ -25,15 +24,15 @@ import at.dms.kjc.common.CommonUtils;
  * 
  */
 public class FlattenAndPartition extends Partitioner {
-    private SIRToTraceNodes traceNodes;
+    private SIRToSliceNodes sliceNodes;
 
-    private HashMap<OutputTraceNode, HashMap<InputTraceNode, Edge>> edges;
+    private HashMap<OutputSliceNode, HashMap<InputSliceNode, Edge>> edges;
 
-    private Trace topTrace;
+    private Slice topSlice;
 
-    private LinkedList<Trace> traceList;
+    private LinkedList<Slice> sliceList;
 
-    private LinkedList<Trace> ioList;
+    private LinkedList<Slice> ioList;
 
     public FlattenAndPartition(UnflatFilter[] topFilters, HashMap[] exeCounts,
             LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
@@ -41,26 +40,26 @@ public class FlattenAndPartition extends Partitioner {
         workEstimation = new HashMap<FilterContent, Integer>();
     }
 
-    public Trace[] partition() {
-        return traceGraph;
+    public Slice[] partition() {
+        return sliceGraph;
     }
 
     public void flatten(SIRStream str, HashMap[] exeCounts) {
         // use FlatGraph to eliminate intermediate levels of pipelines
         // when looking at stream.
         GraphFlattener fg = new GraphFlattener(str);
-        traceNodes = new SIRToTraceNodes();
-        traceNodes.createNodes(fg.top, exeCounts);
-        traceList = new LinkedList<Trace>();
-        ioList = new LinkedList<Trace>();
+        sliceNodes = new SIRToSliceNodes();
+        sliceNodes.createNodes(fg.top, exeCounts);
+        sliceList = new LinkedList<Slice>();
+        ioList = new LinkedList<Slice>();
         work = WorkEstimate.getWorkEstimate(str);
-        edges = new HashMap<OutputTraceNode, HashMap<InputTraceNode, Edge>>();
+        edges = new HashMap<OutputSliceNode, HashMap<InputSliceNode, Edge>>();
 
         flattenInternal(fg.top);
 
-        System.out.println("Traces: " + traceList.size());
-        traceGraph = traceList.toArray(new Trace[traceList.size()]);
-        io = ioList.toArray(new Trace[ioList.size()]);
+        System.out.println("Slices: " + sliceList.size());
+        sliceGraph = sliceList.toArray(new Slice[sliceList.size()]);
+        io = ioList.toArray(new Slice[ioList.size()]);
     }
 
     private void flattenInternal(FlatNode top) {
@@ -70,22 +69,22 @@ public class FlattenAndPartition extends Partitioner {
         while (dataFlow.hasNext()) {
             FlatNode node = dataFlow.next();
             System.out.println(node);
-            InputTraceNode input = traceNodes.inputNodes.get(node.contents);
-            OutputTraceNode output = traceNodes.outputNodes.get(node.contents);
-            FilterTraceNode filterNode = traceNodes.filterNodes
+            InputSliceNode input = sliceNodes.inputNodes.get(node.contents);
+            OutputSliceNode output = sliceNodes.outputNodes.get(node.contents);
+            FilterSliceNode filterNode = sliceNodes.filterNodes
                     .get(node.contents);
 
             assert input != null && output != null && filterNode != null;
 
-            // set up the trace
-            Trace trace = new Trace(input);
+            // set up the slice
+            Slice slice = new Slice(input);
             input.setNext(filterNode);
             filterNode.setPrevious(input);
             filterNode.setNext(output);
             output.setPrevious(filterNode);
-            input.setParent(trace);
-            output.setParent(trace);
-            filterNode.setParent(trace);
+            input.setParent(slice);
+            output.setParent(slice);
+            filterNode.setParent(slice);
 
             System.out.println("  outputs: " + node.ways);
             if (node.ways != 0) {
@@ -96,13 +95,13 @@ public class FlattenAndPartition extends Partitioner {
                 // set up the splitting...
                 LinkedList<Edge> outEdges = new LinkedList<Edge>();
                 LinkedList<Integer> outWeights = new LinkedList<Integer>();
-                HashMap<InputTraceNode, Edge> newEdges = new HashMap<InputTraceNode, Edge>();
+                HashMap<InputSliceNode, Edge> newEdges = new HashMap<InputSliceNode, Edge>();
                 for (int i = 0; i < node.ways; i++) {
                     if (node.weights[i] == 0)
                         continue;
-                    Edge edge = new Edge(output, traceNodes.inputNodes
+                    Edge edge = new Edge(output, sliceNodes.inputNodes
                             .get(node.edges[i].contents));
-                    newEdges.put(traceNodes.inputNodes
+                    newEdges.put(sliceNodes.inputNodes
                             .get(node.edges[i].contents), edge);
                     outEdges.add(edge);
                     outWeights.add(node.weights[i]);
@@ -148,7 +147,7 @@ public class FlattenAndPartition extends Partitioner {
                     if (node.incomingWeights[i] == 0)
                         continue;
                     inEdges.add(edges.get(
-                            traceNodes.outputNodes
+                            sliceNodes.outputNodes
                                     .get(node.incoming[i].contents)).get(input));
                     inWeights.add(node.incomingWeights[i]);
                 }
@@ -165,56 +164,56 @@ public class FlattenAndPartition extends Partitioner {
             
             // set up the work hashmaps
             int workEst = 0;
-            if (traceNodes.generatedIds.contains(filterNode)) {
+            if (sliceNodes.generatedIds.contains(filterNode)) {
                 workEst = 3 * filterNode.getFilter().getSteadyMult();
             } else {
                 assert node.isFilter();
                 workEst = work.getWork((SIRFilter) node.contents);
             }
-            bottleNeckFilter.put(trace, filterNode);
-            traceBNWork.put(trace, workEst);
+            bottleNeckFilter.put(slice, filterNode);
+            sliceBNWork.put(slice, workEst);
             workEstimation.put(filterNode.getFilter(), workEst);
 
-            trace.finish();
+            slice.finish();
 
             if (node.contents instanceof SIRFileReader
                     || node.contents instanceof SIRFileWriter) {
                 System.out.println("Found io " + node.contents);
-                ioList.add(trace);
+                ioList.add(slice);
             }
                 
-            if (topTrace == null)
-                topTrace = trace;
-            traceList.add(trace);
+            if (topSlice == null)
+                topSlice = slice;
+            sliceList.add(slice);
         }
     }
 }
 
-class SIRToTraceNodes implements FlatVisitor {
-    public HashMap<SIROperator, InputTraceNode> inputNodes;
+class SIRToSliceNodes implements FlatVisitor {
+    public HashMap<SIROperator, InputSliceNode> inputNodes;
 
-    public HashMap<SIROperator, OutputTraceNode> outputNodes;
+    public HashMap<SIROperator, OutputSliceNode> outputNodes;
 
-    public HashMap<SIROperator, FilterTraceNode> filterNodes;
+    public HashMap<SIROperator, FilterSliceNode> filterNodes;
 
-    public HashSet<FilterTraceNode> generatedIds;
+    public HashSet<FilterSliceNode> generatedIds;
 
     private HashMap[] exeCounts;
 
     public void createNodes(FlatNode top, HashMap[] exeCounts) {
-        inputNodes = new HashMap<SIROperator, InputTraceNode>();
-        outputNodes = new HashMap<SIROperator, OutputTraceNode>();
-        filterNodes = new HashMap<SIROperator, FilterTraceNode>();
-        generatedIds = new HashSet<FilterTraceNode>();
+        inputNodes = new HashMap<SIROperator, InputSliceNode>();
+        outputNodes = new HashMap<SIROperator, OutputSliceNode>();
+        filterNodes = new HashMap<SIROperator, FilterSliceNode>();
+        generatedIds = new HashSet<FilterSliceNode>();
         this.exeCounts = exeCounts;
 
         top.accept(this, null, true);
     }
 
     public void visitNode(FlatNode node) {
-        System.out.println("Creating TraceNodes: " + node);
-        OutputTraceNode output = new OutputTraceNode();
-        InputTraceNode input = new InputTraceNode();
+        System.out.println("Creating SliceNodes: " + node);
+        OutputSliceNode output = new OutputSliceNode();
+        InputSliceNode input = new InputSliceNode();
         FilterContent content;
         int mult = 1;
 
@@ -254,7 +253,7 @@ class SIRToTraceNodes implements FlatVisitor {
         content.setSteadyMult(mult
                 * ((int[]) exeCounts[1].get(node.contents))[0]);
 
-        FilterTraceNode filterNode = new FilterTraceNode(content);
+        FilterSliceNode filterNode = new FilterSliceNode(content);
         if (node.isSplitter() || node.isJoiner())
             generatedIds.add(filterNode);
 

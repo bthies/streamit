@@ -5,7 +5,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import at.dms.kjc.spacetime.Trace;
 
 /**
  *  A class with useful functions that span classes. 
@@ -15,24 +14,46 @@ import at.dms.kjc.spacetime.Trace;
 public class Util {
 
     /**
-     * Get a traversal (linked list iterator) that includes all the trace nodes of the
-     * given trace traversal.  Inserting or removing in the returned iterator will not
-     * affect the list passed to traceNodeTraversal.  Altering the individual TreceNode's
-     * will alter the TraceNode's in the original list.
+     * Get a traversal (linked list iterator) that includes all the slice nodes of the
+     * given slice traversal.  Inserting or removing in the returned iterator will not
+     * affect the list passed to sliceNodeTraversal.  Altering the individual TreceNode's
+     * will alter the SliceNode's in the original list.
      * 
-     * @param traces a list of TraceNodes.
-     * @return An Iterator of TraceNodes.
+     * @param slices a list of SliceNodes.
+     * @return An Iterator of SliceNodes.
      */
-    public static Iterator<TraceNode> traceNodeTraversal(List traces) {
-        LinkedList<TraceNode> trav = new LinkedList<TraceNode>();
-        ListIterator it = traces.listIterator();
+    public static Iterator<SliceNode> sliceNodeTraversal(List slices) {
+        LinkedList<SliceNode> trav = new LinkedList<SliceNode>();
+        ListIterator it = slices.listIterator();
     
         while (it.hasNext()) {
-            Trace trace = (Trace) it.next();
-            TraceNode traceNode = trace.getHead();
-            while (traceNode != null) {
-                trav.add(traceNode);
-                traceNode = traceNode.getNext();
+            Slice slice = (Slice) it.next();
+            SliceNode sliceNode = slice.getHead();
+            while (sliceNode != null) {
+                trav.add(sliceNode);
+                sliceNode = sliceNode.getNext();
+            }
+    
+        }
+    
+        return trav.listIterator();
+    }
+
+    /**
+     * Get a traversal (linked list) that includes all the trace nodes of the
+     * given trace traversal.
+     * 
+     * @param slices
+     * @return A LinkedList of SliceNodes.
+     */
+    public static Iterator<SliceNode> sliceNodeTraversal(Slice[] slices) {
+        LinkedList<SliceNode> trav = new LinkedList<SliceNode>();
+    
+        for (int i = 0; i < slices.length; i++) {
+            SliceNode sliceNode = slices[i].getHead();
+            while (sliceNode != null) {
+                trav.add(sliceNode);
+                sliceNode = sliceNode.getNext();
             }
     
         }

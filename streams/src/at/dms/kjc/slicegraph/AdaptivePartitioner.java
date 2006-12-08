@@ -15,13 +15,12 @@ import at.dms.kjc.sir.SIRPredefinedFilter;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 import at.dms.kjc.sir.lowering.partition.WorkList;
-import at.dms.kjc.spacetime.InterTraceBuffer;
+import at.dms.kjc.spacetime.InterSliceBuffer;
 import at.dms.kjc.spacetime.Layout;
 import at.dms.kjc.spacetime.LinearFission;
 import at.dms.kjc.spacetime.ScheduleModel;
 import at.dms.kjc.spacetime.SpaceTimeBackend;
 import at.dms.kjc.spacetime.SpaceTimeSchedule;
-import at.dms.kjc.spacetime.Trace;
 import at.dms.kjc.spacetime.Util;
 
 import java.util.*;
@@ -78,7 +77,7 @@ public class AdaptivePartitioner extends Partitioner {
     public boolean useSpace(SIRStream partitionedStr, SpaceTimeSchedule spaceTime,
             Layout layout) {
         //must be called after partition()
-        assert traceGraph != null;
+        assert sliceGraph != null;
         
         ScheduleModel model = 
             new ScheduleModel(spaceTime, layout, spaceTime.getScheduleList());
@@ -89,23 +88,23 @@ public class AdaptivePartitioner extends Partitioner {
         int interSliceCommCost = 0;
         
         //find the interslice communication cost for the steady state
-        for (int i = 0; i < traceGraph.length; i++) {
+        for (int i = 0; i < sliceGraph.length; i++) {
             //for each slice find the interslice communication cost
             //first for the input
-            InputTraceNode input = traceGraph[i].getHead();
+            InputSliceNode input = sliceGraph[i].getHead();
             Iterator<Edge> edges = input.getSourceSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = edges.next();
-                if (!InterTraceBuffer.getBuffer(edge).redundant()) {  
+                if (!InterSliceBuffer.getBuffer(edge).redundant()) {  
                     interSliceCommCost += (edge.steadyItems() * Util.getTypeSize(edge.getType()));
                 }
             }
             //now the output
-            edges = traceGraph[i].getTail().getDestSet().iterator();
+            edges = sliceGraph[i].getTail().getDestSet().iterator();
             while (edges.hasNext()) {
                 Edge edge = edges.next();
                                
-                if (!InterTraceBuffer.getBuffer(edge).redundant()) {
+                if (!InterSliceBuffer.getBuffer(edge).redundant()) {
                     interSliceCommCost += (edge.steadyItems() * Util.getTypeSize(edge.getType()));
                 }
             }
@@ -139,11 +138,11 @@ public class AdaptivePartitioner extends Partitioner {
         return false;
     }
     
-    public Trace[] partition() {
+    public Slice[] partition() {
         LinkedList<UnflatFilter> queue = new LinkedList<UnflatFilter>();
         HashSet<UnflatFilter> visited = new HashSet<UnflatFilter>();
-        LinkedList<Trace> traces = new LinkedList<Trace>();
-        LinkedList<Trace> topTracesList = new LinkedList<Trace>(); // traces with no
+        LinkedList<Slice> slices = new LinkedList<Slice>();
+        LinkedList<Slice> topSlicesList = new LinkedList<Slice>(); // slices with no
         // incoming dependencies
         HashSet<UnflatFilter> topUnflat = new HashSet<UnflatFilter>();
 
@@ -165,17 +164,17 @@ public class AdaptivePartitioner extends Partitioner {
                 int workEstimate = getWorkEstimate(unflatFilter);
                 workEstimation.put(filterContent, new Integer(workEstimate));
 
-                TraceNode node;
-                Trace trace;
-                int filtersInTrace = 1;
+                SliceNode node;
+                Slice slice;
+                int filtersInSlice = 1;
 
-                // System.out.println("** Creating trace with first filter = "
+                // System.out.println("** Creating slice with first filter = "
                 // + filterContent);
 
-                // create the input trace node
+                // create the input slice node
                 if (unflatFilter.in != null && unflatFilter.in.length > 0) {
                     Edge[] inEdges = new Edge[unflatFilter.in.length];
-                    node = new InputTraceNode(unflatFilter.inWeights, inEdges);
+                    node = new InputSliceNode(unflatFilter.inWeights, inEdges);
                     for (int i = 0; i < unflatFilter.in.length; i++) {
                         UnflatEdge unflatEdge = unflatFilter.in[i];
                         // get the edge
@@ -183,15 +182,15 @@ public class AdaptivePartitioner extends Partitioner {
                         // we haven't see the edge before
                         if (edge == null) { // set dest?, wouldn't this always
                             // be the dest
-                            edge = new Edge((InputTraceNode) node);
+                            edge = new Edge((InputSliceNode) node);
                             edges.put(unflatEdge, edge);
                         } else
                             // we've seen this edge before, set the dest to this
                             // node
-                            edge.setDest((InputTraceNode) node);
+                            edge.setDest((InputSliceNode) node);
                         inEdges[i] = edge;
                     }
-                    trace = new Trace((InputTraceNode) node);
+                    slice = new Slice((InputSliceNode) node);
 
                     if (filterContent.isLinear()) { // Jasper's linear stuff??
                         System.out
@@ -214,10 +213,10 @@ public class AdaptivePartitioner extends Partitioner {
                             // remove the original linear filter from the work
                             // estimation
                             workEstimation.remove(filterContent);
-                            // now add the fissed filters to the trace
+                            // now add the fissed filters to the slice
                             for (int i = 0; i < fissedFilters.length; i++) {
                                 FilterContent fissedContent = fissedFilters[i];
-                                FilterTraceNode filterNode = new FilterTraceNode(
+                                FilterSliceNode filterNode = new FilterSliceNode(
                                         fissedContent);
                                 node.setNext(filterNode);
                                 filterNode.setPrevious(node);
@@ -227,49 +226,49 @@ public class AdaptivePartitioner extends Partitioner {
                                         workEstimate / times));
                             }
                         } else {
-                            FilterTraceNode filterNode = new FilterTraceNode(
+                            FilterSliceNode filterNode = new FilterSliceNode(
                                     filterContent);
                             node.setNext(filterNode);
                             filterNode.setPrevious(node);
                             node = filterNode;
                         }
                     } else {
-                        FilterTraceNode filterNode = new FilterTraceNode(
+                        FilterSliceNode filterNode = new FilterSliceNode(
                                 filterContent);
                         node.setNext(filterNode);
                         filterNode.setPrevious(node);
                         node = filterNode;
                     }
                 } else { // null incoming arcs
-                    node = new FilterTraceNode(filterContent);
-                    trace = new Trace(node);
+                    node = new FilterSliceNode(filterContent);
+                    slice = new Slice(node);
                 }
 
                 if (topUnflat.contains(unflatFilter)) {
                     assert unflatFilter.in == null
                             || unflatFilter.in.length == 0;
-                    topTracesList.add(trace);
+                    topSlicesList.add(slice);
                 } else
                     assert unflatFilter.in.length > 0;
 
-                // should be at least one filter in the trace by now, don't
+                // should be at least one filter in the slice by now, don't
                 // worry about
                 // linear stuff right now...
 
-                traces.add(trace);
+                slices.add(slice);
 
                 
-                LinkedList<UnflatFilter> traceSoFar = new LinkedList<UnflatFilter>();
-                traceSoFar.add(unflatFilter);
+                LinkedList<UnflatFilter> sliceSoFar = new LinkedList<UnflatFilter>();
+                sliceSoFar.add(unflatFilter);
                 int bottleNeckWork = getWorkEstimate(unflatFilter);
                 unflatOccupancy.put(unflatFilter, bottleNeckWork * KjcOptions.steadymult);
                 
-                // try to add more filters to the trace...
-                while (continueTrace(unflatFilter, filterContent.isLinear(),
-                        traceSoFar, ++filtersInTrace)) { // tell continue
-                    // trace you are
+                // try to add more filters to the slice...
+                while (continueSlice(unflatFilter, filterContent.isLinear(),
+                        sliceSoFar, ++filtersInSlice)) { // tell continue
+                    // slice you are
                     // trying to put
-                    // another filter in the trace
+                    // another filter in the slice
                     UnflatFilter downstream = unflatFilter.out[0][0].dest;
                     FilterContent dsContent = getFilterContent(downstream);
 
@@ -278,12 +277,12 @@ public class AdaptivePartitioner extends Partitioner {
                             getWorkEstimate(downstream)));
                     if (getWorkEstimate(downstream) > bottleNeckWork)
                         bottleNeckWork = getWorkEstimate(downstream);                
-                    traceSoFar.add(downstream);
+                    sliceSoFar.add(downstream);
                     // if we get here we are contecting another linear filters
                     // to a
                     // previous linear filter
                     if (dsContent.isLinear()) {
-                        assert false : "Trying to add a 2 different linear filters to a trace (Not supported Yet)";
+                        assert false : "Trying to add a 2 different linear filters to a slice (Not supported Yet)";
                         // the code for this case is broken
                         // the number of times to fiss the linear filter
                         int times = dsContent.getArray().length
@@ -297,7 +296,7 @@ public class AdaptivePartitioner extends Partitioner {
                             // create filter nodes for each row of the matrix?
                             for (int i = 0; i < fissedFilters.length; i++) {
                                 FilterContent fissedContent = fissedFilters[i];
-                                FilterTraceNode filterNode = new FilterTraceNode(
+                                FilterSliceNode filterNode = new FilterSliceNode(
                                         fissedContent);
                                 node.setNext(filterNode);
                                 filterNode.setPrevious(node);
@@ -308,7 +307,7 @@ public class AdaptivePartitioner extends Partitioner {
                                         workEstimate / times));
                             }
                         } else if (!(downstream.filter instanceof SIRPredefinedFilter)) {
-                            FilterTraceNode filterNode = new FilterTraceNode(
+                            FilterSliceNode filterNode = new FilterSliceNode(
                                     dsContent);
                             node.setNext(filterNode);
                             filterNode.setPrevious(node);
@@ -316,7 +315,7 @@ public class AdaptivePartitioner extends Partitioner {
                             unflatFilter = downstream;
                         }
                     } else if (!(downstream.filter instanceof SIRPredefinedFilter)) {
-                        FilterTraceNode filterNode = new FilterTraceNode(
+                        FilterSliceNode filterNode = new FilterSliceNode(
                                 dsContent);
                         node.setNext(filterNode);
                         filterNode.setPrevious(node);
@@ -325,12 +324,12 @@ public class AdaptivePartitioner extends Partitioner {
                     }
                 }
 
-                traceBNWork.put(trace, new Integer(bottleNeckWork));
+                sliceBNWork.put(slice, new Integer(bottleNeckWork));
 
-                // we are finished the current trace, create the outputtracenode
+                // we are finished the current slice, create the outputslicenode
                 if (unflatFilter.out != null && unflatFilter.out.length > 0) {
                     Edge[][] outEdges = new Edge[unflatFilter.out.length][];
-                    OutputTraceNode outNode = new OutputTraceNode(
+                    OutputSliceNode outNode = new OutputSliceNode(
                             unflatFilter.outWeights, outEdges);
                     node.setNext(outNode);
                     outNode.setPrevious(node);
@@ -354,31 +353,31 @@ public class AdaptivePartitioner extends Partitioner {
                         }
                     }
                 }
-                trace.finish();
+                slice.finish();
             }
         }
 
-        traceGraph = new Trace[traces.size()];
-        traces.toArray(traceGraph);
-        topTracesList.toArray(topTraces);
+        sliceGraph = new Slice[slices.size()];
+        slices.toArray(sliceGraph);
+        topSlicesList.toArray(topSlices);
         setupIO();
-        return traceGraph;
+        return sliceGraph;
     }
 
     private void setupIO() {
-        int len = traceGraph.length;
+        int len = sliceGraph.length;
         int newLen = len;
         for (int i = 0; i < len; i++)
-            if (((FilterTraceNode) traceGraph[i].getHead().getNext())
+            if (((FilterSliceNode) sliceGraph[i].getHead().getNext())
                     .isPredefined())
                 newLen--;
-        io = new Trace[len - newLen];
+        io = new Slice[len - newLen];
         int idx = 0;
         for (int i = 0; i < len; i++) {
-            Trace trace = traceGraph[i];
-            if (((FilterTraceNode) trace.getHead().getNext()).isPredefined()) {
-                io[idx++] = trace;
-                System.out.println(trace + " is i/o trace.");
+            Slice slice = sliceGraph[i];
+            if (((FilterSliceNode) slice.getHead().getNext()).isPredefined()) {
+                io[idx++] = slice;
+                System.out.println(slice + " is i/o slice.");
             }
         }
 
@@ -392,10 +391,10 @@ public class AdaptivePartitioner extends Partitioner {
      * unflatFilter
      * </pre>
      * 
-     * determine if we should continue the current trace we are building
+     * determine if we should continue the current slice we are building
      */
-    private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear, 
-            LinkedList<UnflatFilter> traceSoFar, 
+    private boolean continueSlice(UnflatFilter unflatFilter, boolean isLinear, 
+            LinkedList<UnflatFilter> sliceSoFar, 
             int newTotalFilters) {
         // if this is not connected to anything or
         // it is connected to more than one filter or one filter it is
@@ -405,18 +404,18 @@ public class AdaptivePartitioner extends Partitioner {
                 && unflatFilter.out[0][0].dest.in.length < 2) {
             // this is the only dest
             UnflatFilter dest = unflatFilter.out[0][0].dest;
-            // put file readers and writers in there own trace, so only keep
+            // put file readers and writers in there own slice, so only keep
             // going for
             // none-predefined nodes
             if (unflatFilter.filter instanceof SIRPredefinedFilter) {
-                CommonUtils.println_debugging("Cannot continue trace: (Source) "
+                CommonUtils.println_debugging("Cannot continue slice: (Source) "
                         + unflatFilter.filter + " is predefined");
                 return false;
             }
 
             // don't continue if the next filter is predefined
             if (dest.filter instanceof SIRPredefinedFilter) {
-                CommonUtils.println_debugging("Cannot continue trace(Dest): "
+                CommonUtils.println_debugging("Cannot continue slice(Dest): "
                         + dest.filter + " is predefined");
                 return false;
             }
@@ -424,19 +423,19 @@ public class AdaptivePartitioner extends Partitioner {
             // cut out linear filters
             if (isLinear || dest.isLinear()) {
                 CommonUtils
-                        .println_debugging("Cannot continue trace: Source and Dest are not congruent linearly");
+                        .println_debugging("Cannot continue slice: Source and Dest are not congruent linearly");
                 return false;
             }
 
-            // check the size of the trace, the length must be less than number
+            // check the size of the slice, the length must be less than number
             // of tiles + 1
             if (newTotalFilters > maxPartitions) {
-                CommonUtils.println_debugging("Cannot continue trace: Filters > maximum alowable number of partitions");
+                CommonUtils.println_debugging("Cannot continue slice: Filters > maximum alowable number of partitions");
                 return false;
             }
             
             int steadyCommCost = steadyCommCost(unflatFilter, dest);
-            int wastedCycles = wastedCycles(dest, traceSoFar);
+            int wastedCycles = wastedCycles(dest, sliceSoFar);
             System.out.println("Add " + dest.filter + "? " + 
                     criticalPath.contains(dest.filter) +
                     " Comm Cost: " +
@@ -453,8 +452,8 @@ public class AdaptivePartitioner extends Partitioner {
         return false;
     }
     
-    private int wastedCycles(UnflatFilter filter, LinkedList<UnflatFilter>traceSoFar) {
-        UnflatFilter prevFilter = traceSoFar.get(traceSoFar.size() - 1);
+    private int wastedCycles(UnflatFilter filter, LinkedList<UnflatFilter>sliceSoFar) {
+        UnflatFilter prevFilter = sliceSoFar.get(sliceSoFar.size() - 1);
         int filterWorkEst = getWorkEstimate(filter.filter) * KjcOptions.steadymult;
         int proposedOccupancy = occupancyForward(filter, prevFilter);
         
@@ -479,29 +478,29 @@ public class AdaptivePartitioner extends Partitioner {
             
             unflatOccupancy.put(filter, filterWorkEst);
             
-            //now cycle backwards through the filters that are in the trace so far
+            //now cycle backwards through the filters that are in the slice so far
             //and update their occupancy and remember their wasted cycles...
             
-            //add the filter temporary to the trace list to make the calculation easier
-            traceSoFar.add(filter);
-            for (int i = traceSoFar.size() - 2; i >= 0; i--) {
-                int currentWork = getWorkEstimate(traceSoFar.get(i));
-                oldWastedWork += (unflatOccupancy.get(traceSoFar.get(i)).intValue() -
+            //add the filter temporary to the slice list to make the calculation easier
+            sliceSoFar.add(filter);
+            for (int i = sliceSoFar.size() - 2; i >= 0; i--) {
+                int currentWork = getWorkEstimate(sliceSoFar.get(i));
+                oldWastedWork += (unflatOccupancy.get(sliceSoFar.get(i)).intValue() -
                         currentWork);
                 
                
                 int currentOcc = 
-                    occupancyBackward(traceSoFar.get(i), traceSoFar.get(i+1));
+                    occupancyBackward(sliceSoFar.get(i), sliceSoFar.get(i+1));
                 //make sure the newly calculated occupancy is at least as great as before
                 //and remember it!
-                assert currentOcc >= unflatOccupancy.get(traceSoFar.get(i)).intValue(); 
-                unflatOccupancy.put(traceSoFar.get(i), currentOcc);
+                assert currentOcc >= unflatOccupancy.get(sliceSoFar.get(i)).intValue(); 
+                unflatOccupancy.put(sliceSoFar.get(i), currentOcc);
                 
                 assert currentOcc >= currentWork; 
                 newWastedWork += (currentOcc - currentWork);
             }
-            //remove the filter from the trace list
-            traceSoFar.removeLast();
+            //remove the filter from the slice list
+            sliceSoFar.removeLast();
             assert newWastedWork >= oldWastedWork : newWastedWork + " >= " + oldWastedWork;
             return newWastedWork - oldWastedWork;
         }

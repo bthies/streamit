@@ -13,12 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Each slice is terminated by an OutputTraceNode that is single input (the last filter) 
+ * Each slice is terminated by an OutputSliceNode that is single input (the last filter) 
  * and multiple output (to downstream slices through edges).
  * 
  * @author mgordon
  */
-public class OutputTraceNode extends TraceNode {
+public class OutputSliceNode extends SliceNode {
     private int[] weights;
 
     private Edge[][] dests;
@@ -35,7 +35,7 @@ public class OutputTraceNode extends TraceNode {
 
     
 
-    public OutputTraceNode(int[] weights, Edge[][] dests) {
+    public OutputSliceNode(int[] weights, Edge[][] dests) {
         // this.parent = parent;
         assert weights.length == dests.length : "weights must equal sources";
         ident = "output" + unique;
@@ -48,13 +48,13 @@ public class OutputTraceNode extends TraceNode {
     }
 
     /**
-     * Create a new output trace node based on the lists weights
+     * Create a new output slice node based on the lists weights
      * and dests.
      * 
      * @param weights The list of weights
      * @param dests The list of dests.
      */
-    public OutputTraceNode(LinkedList<Integer> weights, 
+    public OutputSliceNode(LinkedList<Integer> weights, 
             LinkedList<LinkedList<Edge>> dests) {
         assert weights.size() == dests.size();
         ident = "output" + unique++;
@@ -63,7 +63,7 @@ public class OutputTraceNode extends TraceNode {
     }
     
     
-    public OutputTraceNode(int[] weights) {
+    public OutputSliceNode(int[] weights) {
         // this.parent = parent;
         ident = "output" + unique;
         unique++;
@@ -74,7 +74,7 @@ public class OutputTraceNode extends TraceNode {
         dests = EMPTY_DESTS;
     }
 
-    public OutputTraceNode() {
+    public OutputSliceNode() {
         // this.parent = parent;
         ident = "output" + unique;
         unique++;
@@ -87,7 +87,7 @@ public class OutputTraceNode extends TraceNode {
     }
     
     /**
-     * Set the weights and dests of this input trace node to 
+     * Set the weights and dests of this input slice node to 
      * weights and dests.
      * 
      * @param weights List of integer weights.
@@ -113,7 +113,7 @@ public class OutputTraceNode extends TraceNode {
     }
 
     public boolean isFileInput() {
-        return ((FilterTraceNode) getPrevious()).isFileInput();
+        return ((FilterSliceNode) getPrevious()).isFileInput();
     }
 
     public Edge[][] getDests() {
@@ -173,7 +173,7 @@ public class OutputTraceNode extends TraceNode {
     
     /**
      * Return the width of this splitter meaning the number
-     * of connections it has to downstream traces, including 
+     * of connections it has to downstream slices, including 
      * all the edges of a duplicated item, counting each unique 
      * edge once.
      * 
@@ -201,7 +201,7 @@ public class OutputTraceNode extends TraceNode {
     }
     
     /**
-     * return the number of items sent to this inputtracenode for on iteration
+     * return the number of items sent to this inputslicenode for on iteration
      * of the weights..
      */
     public int getWeight(Edge in) {
@@ -242,9 +242,9 @@ public class OutputTraceNode extends TraceNode {
     }
     
     /**
-     * Return the set of the outgoing edges of this OutputTraceNode.
+     * Return the set of the outgoing edges of this OutputSliceNode.
      * 
-     * @return The set of the outgoing edges of this OutputTraceNode.
+     * @return The set of the outgoing edges of this OutputSliceNode.
      */
     public Set<Edge> getDestSet() {
         HashSet<Edge> set = new HashSet<Edge>();
@@ -260,7 +260,7 @@ public class OutputTraceNode extends TraceNode {
     }
 
     public Edge getSingleEdge() {
-        assert oneOutput() : "Calling getSingleEdge() on OutputTrace with less/more than one output";
+        assert oneOutput() : "Calling getSingleEdge() on OutputSlice with less/more than one output";
         return dests[0][0];
     }
 
@@ -269,8 +269,8 @@ public class OutputTraceNode extends TraceNode {
     }
 
     /**
-     * return an iterator that iterates over the inputtracenodes in descending
-     * order of the number of items sent to the inputtracenode
+     * return an iterator that iterates over the inputslicenodes in descending
+     * order of the number of items sent to the inputslicenode
      */
     public List<Edge> getSortedOutputs() {
         if (sortedOutputs == null) {
@@ -309,8 +309,8 @@ public class OutputTraceNode extends TraceNode {
         return sortedOutputs;
     }
 
-    public FilterTraceNode getPrevFilter() {
-        return (FilterTraceNode) getPrevious();
+    public FilterSliceNode getPrevFilter() {
+        return (FilterSliceNode) getPrevious();
     }
 
     public double ratio(Edge edge) {
@@ -345,8 +345,8 @@ public class OutputTraceNode extends TraceNode {
         return false;
     }
 
-    public Set<InputTraceNode> fileOutputs() {
-        HashSet<InputTraceNode> fileOutputs = new HashSet<InputTraceNode>();
+    public Set<InputSliceNode> fileOutputs() {
+        HashSet<InputSliceNode> fileOutputs = new HashSet<InputSliceNode>();
         Iterator dests = getDestSet().iterator();
         while (dests.hasNext()) {
             Edge edge = (Edge) dests.next();
@@ -357,7 +357,7 @@ public class OutputTraceNode extends TraceNode {
     }
 
     /**
-     * @return True if this output trace node has only one output and
+     * @return True if this output slice node has only one output and
      * that output is directly writing to a file reader with no non-redundant
      * buffers in between.
      */

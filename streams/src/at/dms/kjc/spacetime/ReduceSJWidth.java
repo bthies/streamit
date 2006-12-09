@@ -6,6 +6,7 @@ import java.util.Arrays;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.slicegraph.Edge;  // for some reason javac 1.5.0_01 was not getting Edge from at.dms.kjc.slicegraph.*
 
 import java.util.HashSet;
 import java.util.Vector;

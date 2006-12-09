@@ -1,18 +1,19 @@
 package at.dms.kjc.spacetime;
 
-import java.util.ListIterator;
+//import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.HashMap;
-import java.util.Vector;
+//import java.util.Vector;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.Random;
+//import java.util.Random;
 
 import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.slicegraph.*;
+import at.dms.kjc.slicegraph.Edge;  // for some reason javac 1.5.0_01 was not getting Edge from at.dms.kjc.slicegraph.*
 
 /**
  * This class will assign the offchip-rotating buffers to DRAM banks of the

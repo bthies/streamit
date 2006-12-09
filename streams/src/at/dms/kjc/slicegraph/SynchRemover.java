@@ -1,7 +1,9 @@
 package at.dms.kjc.slicegraph;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
@@ -18,6 +20,7 @@ public class SynchRemover {
         removeJoinerSplitterSynch(top);
     }
     
+    // Combines splitters. Recursively calls itself to traverse the entire graph.
     private void removeSplitterSync(FlatNode current) {
         if (current == null)
             return;
@@ -25,13 +28,22 @@ public class SynchRemover {
         // and if so, merge them
         if (current.isSplitter()) {
             mergeSplitters(current);
+        } else if (current.isJoiner()) {
+            mergeJoiners(current);
         }
+        
         // Either way, recursively call on all of the (possibly updated) children
         for (int i=0; i<current.edges.length; i++) {
             removeSplitterSync(current.edges[i]);
         }
     }
     
+    private void mergeJoiners(FlatNode joiner) {
+        
+    }
+    
+    // If the current splitter has any children that are also splitters, merge
+    // them together. Recursively calls itself to merge long strings of splitters.
     private void mergeSplitters(FlatNode splitter) {
         FlatNode[] children = splitter.edges;
         // If there are any consecutive splitters, stores the children of the
@@ -52,8 +64,8 @@ public class SynchRemover {
                 
                 // number of times this particular child splitter needs to be
                 // repeated
-                int partialMult = lcm(child.getTotalOutgoingWeights(),
-                                      splitter.weights[i])/splitter.weights[i];
+                int lcm = lcm(child.getTotalOutgoingWeights(), splitter.weights[i]);
+                int partialMult = lcm/splitter.weights[i];
                 // overall number of repeats needed for all children
                 mult = lcm(mult, partialMult);
                 
@@ -69,6 +81,25 @@ public class SynchRemover {
             return;
         // Otherwise, there is work to be done...
         else {
+            
+            // Update each granchild's incoming edges to point to the
+            // grandparent splitter
+            for (int i=0; i<splitter.ways; i++) {
+                FlatNode child = splitter.edges[i];
+                int lcm = mult*splitter.weights[i];
+                if (child.isJoiner()) {
+                    for (int j=0; j<child.ways; j++) {
+                        FlatNode grandchild = child.edges[j];
+                        int newWeight = lcm/child.getTotalOutgoingWeights()*child.weights[j];
+                        grandchild.incoming = new FlatNode[]{splitter};
+                        grandchild.incomingWeights = new int[]{newWeight};
+                    }
+                } else {
+                    child.incoming = new FlatNode[]{splitter};
+                    child.incomingWeights = new int[]{mult*splitter.weights[i]};
+                }
+            }
+            
             int sumWeights = splitter.getTotalOutgoingWeights();
             // Explicitly list out each child according to its weight. This list
             // is repeated the required number of times in order to reach a
@@ -107,9 +138,10 @@ public class SynchRemover {
             // Consolidate outputs into new edges and weights
             int[] newWeights = null;
             FlatNode[] newEdges = null;
-            createWeights(repeatedOutput, newWeights, newEdges);
+            createNewEdgesWeightsArray(repeatedOutput, newWeights, newEdges);
             splitter.edges = newEdges;
             splitter.weights = newWeights;
+            splitter.ways = newEdges.length;
         }
     }
     
@@ -152,71 +184,124 @@ public class SynchRemover {
         // to get a recurrence
         int lcm = lcm(inWeightsSum, outWeightsSum);
         // # of times inputs are repeated
-        int inMult = inWeightsSum/lcm;
+        int inMult = lcm/inWeightsSum;
         // # of times outputs are repeated
-        int outMult = outWeightsSum/lcm;
+        int outMult = lcm/outWeightsSum;
+        
+        // Create a new array of inputs with all of the repeated inputs
+        // duplicated explicitly.
+        FlatNode[] repeatedInput = 
+            makeRepeatedArray(inputs, inWeights, inWeightsSum, inMult);
         
         // Create a new array of outputs with all of the repeated outputs
-        // duplicated explicitly. This will make connecting new edges easier
-        // later.
+        // duplicated explicitly.
         FlatNode[] repeatedOutput = 
             makeRepeatedArray(outputs, outWeights, outWeightsSum, outMult); 
         
-        // For each input, lists that store its new outgoing edges and weights
-        List<FlatNode> newEdges = new LinkedList<FlatNode>();
-        List<Integer> newWeights = new LinkedList<Integer>();
+        // Map each input node to a list of output nodes it will be connected to
+        // in the recurrence. This is to update each input node's outgoing edges
+        // and weights.
+        Map<FlatNode,List<FlatNode>> inToOutMap = new HashMap<FlatNode,List<FlatNode>>();
         
-        // offset from 0 of the current input being operated on
-        int offset = 0;
-        // for each input...
-        for (int i=0; i<inputs.length; i++) {
-            // the number of consecutive times the same output has appeared for
-            // a given input
-            int count = 0;
-            int currWeight = inWeights[i];
-            // The previous output node that was paired with this input
-            // Initialize to the first output for this input
-            FlatNode prevEdge = repeatedOutput[offset];
-            // for each repetition of the inputs...
-            for (int j=0; j<inMult; j++) {
-                // the index to start at for this input and this repetition
-                int startIndex = j*inWeightsSum + offset;
-                for (int k=0; k<currWeight; k++) {
-                    // Get the matching output from the array built earlier
-                    FlatNode newEdge = repeatedOutput[startIndex+k];
-                    // if its the same as the previous output, increment count
-                    // and keep going
-                    if (newEdge == prevEdge) {
-                        count++;
-                    } else { // otherwise, we've reached a new output
-                        // add new edges and weights
-                        newEdges.add(prevEdge);
-                        newWeights.add(new Integer(count));
-                        // and reset prevEdge and count
-                        prevEdge = newEdge;
-                        count = 1;
-                    }
-                }
+        // Map each output node to a list of input nodes that connect to it in
+        // the recurrencde. This is to update each output node's incoming edges
+        // and weights.
+        Map<FlatNode,List<FlatNode>> outToInMap = new HashMap<FlatNode,List<FlatNode>>();
+        
+        // Iterate over all of the repeated inputs and outputs to populate the
+        // two maps
+        for (int i=0; i<repeatedOutput.length; i++) {
+            FlatNode inNode = repeatedInput[i];
+            FlatNode outNode = repeatedOutput[i];
+
+            // If this is a new input node, create a new associated list for it
+            if (!inToOutMap.containsKey(inNode)) {
+                inToOutMap.put(inNode, new LinkedList<FlatNode>());
             }
-            // There will be one last output left "hanging" at the end of the
-            // loop. Add it now.
-            newEdges.add(prevEdge);
-            newWeights.add(new Integer(count));
+            // Add the output node to the associated input node's list
+            inToOutMap.get(inNode).add(outNode);
             
-            // Update the outputs of this input
-            FlatNode currNode = inputs[i];
-            currNode.edges = newEdges.toArray(new FlatNode[0]);
-            
-            int[] newWeightsArray = new int[newWeights.size()];
-            for (int n=0; n<newWeights.size(); n++) {
-                newWeightsArray[n] = newWeights.get(n).intValue();
+            // If this is a new output node, create a new associated list for it
+            if (!outToInMap.containsKey(outNode)) {
+                outToInMap.put(outNode, new LinkedList<FlatNode>());
             }
-            currNode.weights = newWeightsArray;
-            currNode.ways = newEdges.size();
-            
-            // increase the offset for the next input
-            offset += currWeight;
+            // Add the input node to the associated output node's list
+            outToInMap.get(outNode).add(inNode);
         }
+        
+        for (FlatNode inNode : inToOutMap.keySet()) {
+            List<FlatNode> outputList = inToOutMap.get(inNode);
+            // Convert the raw list of outputs to the arrays for outgoing edges
+            // and weights
+            createNewEdgesWeightsArray(outputList.toArray(new FlatNode[0]), 
+                    inNode.weights, inNode.edges);
+            inNode.ways = inNode.edges.length;
+        }
+        
+        for (FlatNode outNode : outToInMap.keySet()) {
+            List<FlatNode> inputList = outToInMap.get(outNode);
+            // Convert the raw list of inputs to the arrays for incoming edges
+            // and weights
+            createNewEdgesWeightsArray(inputList.toArray(new FlatNode[0]), 
+                    outNode.incomingWeights, outNode.incoming);
+            outNode.inputs = outNode.incoming.length;
+        }
+        
+//        // For each input, lists that store its new outgoing edges and weights
+//        List<FlatNode> newEdges = new LinkedList<FlatNode>();
+//        List<Integer> newWeights = new LinkedList<Integer>();
+//        
+//        // offset from 0 of the current input being operated on
+//        int offset = 0;
+//        // for each input...
+//        for (int i=0; i<inputs.length; i++) {
+//            // the number of consecutive times the same output has appeared for
+//            // a given input
+//            int count = 0;
+//            int currWeight = inWeights[i];
+//            // The previous output node that was paired with this input
+//            // Initialize to the first output for this input
+//            FlatNode prevEdge = repeatedOutput[offset];
+//            // for each repetition of the inputs...
+//            for (int j=0; j<inMult; j++) {
+//                // the index to start at for this input and this repetition
+//                int startIndex = j*inWeightsSum + offset;
+//                for (int k=0; k<currWeight; k++) {
+//                    // Get the matching output from the array built earlier
+//                    FlatNode newEdge = repeatedOutput[startIndex+k];
+//                    // if its the same as the previous output, increment count
+//                    // and keep going
+//                    if (newEdge == prevEdge) {
+//                        count++;
+//                    } else { // otherwise, we've reached a new output
+//                        // add new edges and weights
+//                        newEdges.add(prevEdge);
+//                        newWeights.add(new Integer(count));
+//                        // and reset prevEdge and count
+//                        prevEdge = newEdge;
+//                        count = 1;
+//                    }
+//                }
+//            }
+//            // There will be one last output left "hanging" at the end of the
+//            // loop. Add it now.
+//            newEdges.add(prevEdge);
+//            newWeights.add(new Integer(count));
+//            
+//            // Update the outputs of this input
+//            FlatNode currNode = inputs[i];
+//            currNode.edges = newEdges.toArray(new FlatNode[0]);
+//            
+//            int[] newWeightsArray = new int[newWeights.size()];
+//            for (int n=0; n<newWeights.size(); n++) {
+//                newWeightsArray[n] = newWeights.get(n).intValue();
+//            }
+//            currNode.weights = newWeightsArray;
+//            currNode.ways = newEdges.size();
+//            
+//            // increase the offset for the next input
+//            offset += currWeight;
+//        }
         
         // clear the joiner and splitter because they're no longer needed
         joiner.removeEdges();
@@ -235,6 +320,20 @@ public class SynchRemover {
         else return gcd(b, a%b);
     }
 
+    /**
+     * Creates an array that expands a list of nodes and associated weights by
+     * explicitly listing each node  number of times equal to its weight.
+     * This entire array is possibly repeated an integral number of times.
+     * For example:
+     * nodes = [A,B,C], weights = [2,3,1], sumWeights = 6, mult = 3
+     * => [A,A,B,B,B,C,A,A,B,B,B,C,A,A,B,B,B,C]
+     * 
+     * @param nodes Array of nodes to be expanded
+     * @param weights Array of corresponding weights for each node
+     * @param sumWeights Sum of all of the weights
+     * @param mult The number of times to repeat the entire array
+     * @return
+     */
     private static FlatNode[] makeRepeatedArray(FlatNode[] nodes, int[] weights,
             int sumWeights, int mult) {
         FlatNode[] repeatedOutput = new FlatNode[sumWeights*mult];
@@ -250,8 +349,18 @@ public class SynchRemover {
         return repeatedOutput;
     }
 
-    private static void createWeights(FlatNode[] repeatedOutput, int[] newWeights,
-            FlatNode[] newEdges) {
+    /**
+     * Creates arrays for the new edges and weights, given an array of FlatNodes
+     * that explicitly lists each occurrence of the flatnode in the schedule.
+     * For example:
+     * [A,A,B,B,B,C] => newEdges = [A,B,C], newWeights = [2,3,1]
+     * 
+     * @param repeatedOutput The array of repeated nodes
+     * @param newWeights The array to store the condensed weights
+     * @param newEdges The array to store the condensed nodes
+     */
+    private static void createNewEdgesWeightsArray(FlatNode[] repeatedOutput,
+            int[] newWeights, FlatNode[] newEdges) {
         
         if (repeatedOutput == null || repeatedOutput.length == 0)
             return;
@@ -259,24 +368,33 @@ public class SynchRemover {
         List<FlatNode> newEdgesList = new LinkedList<FlatNode>();
         List<Integer> newWeightsList = new LinkedList<Integer>();
         
+        // Keeps track of the previous node in order to count the number of
+        // repeated nodes
         FlatNode prev = repeatedOutput[0];
         int count = 0;
         for (int i=0; i<repeatedOutput.length; i++) {
             FlatNode curr = repeatedOutput[i];
+            // If the current node is the same as the previous, increment count
             if (curr == prev) {
                 count++;
             } else {
+                // The current node is different from the previous node
+                // Add the previous group of nodes to the edge and weight lists
                 newEdgesList.add(prev);
                 newWeightsList.add(new Integer(count));
+                // Reset prev and count for the next group
                 prev = curr;
                 count = 1;
             }
         }
+        // The last group of nodes will not be added in the loop. Add it now.
         newEdgesList.add(prev);
         newWeightsList.add(new Integer(count));
         
+        // convert to array
         newEdges = newEdgesList.toArray(new FlatNode[0]);
         
+        // convert to array
         newWeights = new int[newWeightsList.size()];
         for (int n=0; n<newWeightsList.size(); n++) {
             newWeights[n] = newWeightsList.get(n).intValue();

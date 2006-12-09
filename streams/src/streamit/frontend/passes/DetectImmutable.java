@@ -127,7 +127,13 @@ public class DetectImmutable extends SymbolTableVisitor
         // We only care about mutable arrays for now.
         if (lhs instanceof ExprArray) 
             {
-                String array_name = ((ExprArray) lhs).getComponent().getName();
+                String array_name;
+                try {
+                    array_name = ((ExprArray) lhs).getComponent().getName();
+                } catch (ClassCastException _ignored_) {
+                    // TODO: better handling for arrays that are parts of structs
+                    return super.visitStmtAssign(stmt);
+                }
                 MutableArrayList mul;
                 if (activeFunctionName == null ||
                     (symtab.hasVar(array_name) && 

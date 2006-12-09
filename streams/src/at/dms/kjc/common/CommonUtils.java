@@ -8,12 +8,14 @@ import at.dms.kjc.CBitType;
 import at.dms.kjc.CArrayType;
 import at.dms.kjc.JArrayAccessExpression;
 import at.dms.kjc.JClassExpression;
-import at.dms.kjc.JExpression;
+import at.dms.kjc.JFieldDeclaration;
+//import at.dms.kjc.JExpression;
+import at.dms.kjc.sir.SIRStructure;
 import at.dms.kjc.JFieldAccessExpression;
 import at.dms.kjc.JLocalVariableExpression;
 import at.dms.kjc.JThisExpression;
 import at.dms.kjc.KjcOptions;
-import at.dms.kjc.common.CodegenPrintWriter;
+//import at.dms.kjc.common.CodegenPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.SIRFilter;
 import at.dms.kjc.sir.SIRJoiner;
@@ -139,6 +141,32 @@ public class CommonUtils {
             result.append(ident);
         }
         return result.toString();
+    }
+    
+    /**
+     * Factor out printing (or misprinting) of SIRStruct typedefs from various backends
+     * @param strct a SIRStructure to print
+     * @param hasBoolType  if true then Java 'boolean' becomse 'bool' for C++
+     *                     if false then Java 'boolean' becomse 'int' for C
+     * @return printable C or C++ representation, no final newline.
+     */
+    public static String structToTypedef(SIRStructure strct, boolean hasBoolType) {
+        StringBuffer retval = new StringBuffer();
+        retval.append("typedef ");
+        retval.append(strct.isCUnion()? "union" : "struct");
+        retval.append(" __");
+        retval.append(strct.getIdent());
+        retval.append(" {\n");
+        for (JFieldDeclaration field : strct.getFields()) {
+            retval.append("\t");
+            retval.append(declToString(field.getType(),field.getVariable().getIdent(), hasBoolType));
+            retval.append(";\n");
+        }
+        retval.append("} ");
+        retval.append(strct.getIdent());
+        retval.append(";");
+        
+        return retval.toString();
     }
     
     

@@ -12,15 +12,52 @@ import java.util.HashMap;
  */
 public class SIRStructure extends SIRStream
 {
+    private boolean isCUnion;
+    
+
+    /**
+     * @param parent
+     * @param ident
+     * @param fields
+     * @param isUnion
+     */
+    public SIRStructure(SIRContainer parent,
+            String ident,
+            JFieldDeclaration[] fields,
+            boolean isUnion) {
+        super(parent, ident, fields, (JMethodDeclaration[])null);
+        this.isCUnion = isUnion;
+    }
+    
+
+    /**
+     * @param parent
+     * @param ident
+     * @param fields
+     */
     public SIRStructure(SIRContainer parent,
                         String ident,
                         JFieldDeclaration[] fields)
     {
-        super(parent, ident, fields, null);
+        this(parent, ident, fields, false);
     }
+    
+    
+    /**
+     * 
+     */
     public SIRStructure()
     {
-        super();
+        this(null, null, JFieldDeclaration.EMPTY(), false);
+        
+    }
+    
+    /** 
+     * Should code generation crate a struct or a C union type?
+     * @return true if code generation should make a union type.
+     */
+    public boolean isCUnion() {
+        return isCUnion;
     }
     
     /* Things that can't be called: */

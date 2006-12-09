@@ -6,6 +6,7 @@ import java.util.*;
 import java.io.*;
 
 import at.dms.kjc.common.CommonConstants;
+import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.RawUtil;
 import at.dms.kjc.flatgraph.*;
 //import at.dms.util.IRPrinter;
@@ -130,13 +131,9 @@ public class StructureIncludeFile {
         }
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
-            fw.write("typedef struct __" + current.getIdent() + " {\n");
-            for (int j = 0; j < current.getFields().length; j++) {
-                fw.write("\t" + current.getFields()[j].getType() + " " +
-                         current.getFields()[j].getVariable().getIdent() +
-                         ";\n");
-            }
-            fw.write("} " + current.getIdent() + ";\n");
+            // write the typedef for the struct.
+            fw.write(CommonUtils.structToTypedef(current,true));
+            fw.write("\n");
             //write the defs for the push/pop functions
             if (!KjcOptions.standalone && passedTypes.contains(current)) {
                 fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +

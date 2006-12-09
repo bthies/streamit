@@ -78,14 +78,10 @@ public class StructureIncludeFile {
         fw.write("#ifndef roundf\n#define roundf(x) (floorf((x)+0.5))\n#endif\n");
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
-            fw.write("typedef struct __" + current.getIdent() + " {\n");
-            for (int j = 0; j < current.getFields().length; j++) {
-                fw.write("\t" + current.getFields()[j].getType() + " "
-                         + current.getFields()[j].getVariable().getIdent()
-                         + ";\n");
-            }
-            fw.write("} " + current.getIdent() + ";\n");
-            // write the defs for the push/pop functions
+            // write the typedef for the struct.
+            fw.write(at.dms.kjc.common.CommonUtils.structToTypedef(current,true));
+            fw.write("\n");
+        // write the defs for the push/pop functions
             if (!KjcOptions.standalone) {
                 String network;
                 for (int x = 0; x < 2; x++) {

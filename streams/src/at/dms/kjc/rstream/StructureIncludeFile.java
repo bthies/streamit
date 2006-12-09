@@ -1,18 +1,13 @@
 package at.dms.kjc.rstream;
 
-import at.dms.util.IRPrinter;
-import at.dms.util.SIRPrinter;
-import at.dms.kjc.*;
-import at.dms.kjc.iterator.*;
+//import at.dms.util.IRPrinter;
+//import at.dms.util.SIRPrinter;
+//import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.sir.lowering.partition.*;
-import at.dms.kjc.sir.lowering.fusion.*;
-import at.dms.kjc.sir.lowering.fission.*;
-import at.dms.kjc.lir.*;
-import java.util.*;
+//import java.util.*;
 import java.io.*;
-import at.dms.util.Utils;
+//import at.dms.util.Utils;
+import at.dms.kjc.common.CommonUtils;
 
 
 /**
@@ -68,13 +63,9 @@ public class StructureIncludeFile
     {
         for (int i = 0; i < structs.length; i++) {
             SIRStructure current = structs[i];
-            fw.write("typedef struct __" + current.getIdent() + " {\n");
-            for (int j = 0; j < current.getFields().length; j++) {
-                fw.write("\t" + current.getFields()[j].getType() + " " +
-                         current.getFields()[j].getVariable().getIdent() +
-                         ";\n");
-            }
-            fw.write("} " + current.getIdent() + ";\n"); 
+            // write the typedef for the struct.
+            fw.write(CommonUtils.structToTypedef(current,true));
+            fw.write("\n");
         }
     }
 }

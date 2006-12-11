@@ -116,17 +116,17 @@ public abstract class RawExecutionCode
         primePumpMethod = null;
         //see if we have gdn input
         gdnInput = false;
-        if (filterInfo.traceNode.getPrevious().isInputSlice()) {
+        if (filterInfo.sliceNode.getPrevious().isInputSlice()) {
             if (!IntraSliceBuffer.getBuffer(
-                    (InputSliceNode)filterInfo.traceNode.getPrevious(),
-                    filterInfo.traceNode).isStaticNet())
+                    (InputSliceNode)filterInfo.sliceNode.getPrevious(),
+                    filterInfo.sliceNode).isStaticNet())
                 gdnInput = true;
         }
         //see if we have gdn output
         gdnOutput = false;
-        if (filterInfo.traceNode.getNext().isOutputSlice()) {
-            if (!IntraSliceBuffer.getBuffer(filterInfo.traceNode,
-                    (OutputSliceNode)filterInfo.traceNode.getNext()).isStaticNet())
+        if (filterInfo.sliceNode.getNext().isOutputSlice()) {
+            if (!IntraSliceBuffer.getBuffer(filterInfo.sliceNode,
+                    (OutputSliceNode)filterInfo.sliceNode.getNext()).isStaticNet())
                 gdnOutput = true;
         }
     }
@@ -276,7 +276,7 @@ public abstract class RawExecutionCode
     /** 
      * @return The SIR code necessary to set the dynamic message header used 
      * when we send data over the gdn.  Also, if we are sending data to a dram
-     * that we are not the owner of and no other filter in our trace is allocated 
+     * that we are not the owner of and no other filter in our slice is allocated 
      * to the owner tile, we have to wait until we receive a word over
      * that static network (it will be from the owner), this will tell us that
      * the owner of the dram has issued the store command to the dram and we 
@@ -296,16 +296,16 @@ public abstract class RawExecutionCode
         block.addStatement(setDynMsgHeader());
         
         //get the buffer
-        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.traceNode,
-                (OutputSliceNode)filterInfo.traceNode.getNext());
+        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.sliceNode,
+                (OutputSliceNode)filterInfo.sliceNode.getNext());
         
         //now see if this tile is not the owner of the dram
-        //and a previous filter of the trace is not allocated on the
+        //and a previous filter of the slice is not allocated on the
         //tile that owns the dram we want to store into
         //we need to wait until the owner has issued a store command,
         //after the owner has done that, it will send a word to us over the
         //static network
-        if (!Util.doesSliceUseTile(filterInfo.traceNode.getParent(),
+        if (!Util.doesSliceUseTile(filterInfo.sliceNode.getParent(),
                 buf.getOwner(), layout)) {
             block.addStatement(gdnReceive(true, 
                     new JFieldAccessExpression(TraceIRtoC.DUMMY_VOLATILE)));
@@ -332,10 +332,10 @@ public abstract class RawExecutionCode
      */
     public JStatement setDynMsgHeader() {
        
-        assert filterInfo.traceNode.getNext().isOutputSlice();
+        assert filterInfo.sliceNode.getNext().isOutputSlice();
         //get the buffer
-        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.traceNode,
-                (OutputSliceNode)filterInfo.traceNode.getNext());
+        IntraSliceBuffer buf = IntraSliceBuffer.getBuffer(filterInfo.sliceNode,
+                (OutputSliceNode)filterInfo.sliceNode.getNext());
         assert !buf.isStaticNet();
         //get the type size
         int size = Util.getTypeSize(filterInfo.filter.getOutputType());
@@ -411,7 +411,7 @@ public abstract class RawExecutionCode
     /**
      * @param words
      * @return Return code to receive <pre>words</pre> words into a dummy variable defined in 
-     * traceIRToC over the gdn.
+     * TraceIRToC over the gdn.
      */
     public static JBlock gdnDisregardIncoming(int words) {
         /* TODO:  move these functions to some static class with utils on drams */
@@ -486,7 +486,7 @@ public abstract class RawExecutionCode
                 Util.getTypeSize(filterInfo.filter.getInputType());
             //first make sure that we are not receiving code from a file
             //reader, because we do not align file readers
-            InputSliceNode input = (InputSliceNode)filterInfo.traceNode.getPrevious();            
+            InputSliceNode input = (InputSliceNode)filterInfo.sliceNode.getPrevious();            
             //if not a file reader, then we might have to align the dest
             if (!Util.onlyFileInput(input) && wordsReceived > 0 &&
                     wordsReceived % RawChip.cacheLineWords != 0) {
@@ -504,7 +504,7 @@ public abstract class RawExecutionCode
             int wordsSent = Util.getTypeSize(filterInfo.filter.getOutputType()) *
                 filterInfo.totalItemsSent(init, false);
             
-            OutputSliceNode output = (OutputSliceNode)filterInfo.traceNode.getNext();
+            OutputSliceNode output = (OutputSliceNode)filterInfo.sliceNode.getNext();
             
             //first make sure that we are not writing eventually to a file writer
             //file writers don't need to be aligned

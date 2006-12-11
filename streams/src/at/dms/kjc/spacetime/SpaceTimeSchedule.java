@@ -26,7 +26,7 @@ public class SpaceTimeSchedule {
     private Slice[] initSchedule;
     //the preloop schedule!
     private Slice[][] primePumpSchedule; 
-    //the multiplicities of the traces in the primepump
+    //the multiplicities of the slices in the primepump
     //Slice->Integer
     private HashMap<Slice, Integer> primePumpMult;
     
@@ -164,16 +164,16 @@ public class SpaceTimeSchedule {
     /**
      * @param f
      * @return The total number of times this filter fires in the prime pump stage
-     * so this accounts for the number number of times that a trace if called in the
+     * so this accounts for the number number of times that a slice if called in the
      * prime pump stage to fill the rotating buffers.
      */
     public int getPrimePumpTotalMult(FilterInfo f) {
-        return getPrimePumpMult(f.traceNode.getParent()) * f.steadyMult;
+        return getPrimePumpMult(f.sliceNode.getParent()) * f.steadyMult;
     }
     
     /** 
      * @param slice
-     * @return Return the number of times this trace fires in the prime pump schedule.
+     * @return Return the number of times this slice fires in the prime pump schedule.
      */
     public int getPrimePumpMult(Slice slice) {
         if (!primePumpMult.containsKey(slice))

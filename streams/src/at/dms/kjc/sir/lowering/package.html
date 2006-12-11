@@ -49,15 +49,14 @@ affect only performance or readability.
 <p>Passes that are needed (at least in part) due to <b>correctness</b>:
 
 <ul>
-<li> {@link at.dms.kjc.sir.lowering.ArrayInitExpander}
-<li> {@link at.dms.kjc.sir.lowering.ConstantProp} 
-<li> {@link at.dms.kjc.sir.lowering.ConstructSIRTree}
-<li> {@link at.dms.kjc.sir.lowering.EnqueueToInitPath}
+<li> {@link at.dms.kjc.sir.lowering.ArrayInitExpander} Support reading initial values for arrays from files at compile time.
+<li> {@link at.dms.kjc.sir.lowering.ConstantProp} Constant Propagation and algebraic simplification.
+<li> {@link at.dms.kjc.sir.lowering.ConstructSIRTree} Removes SITInitStatement, creating SIR tree representation.
+<li> {@link at.dms.kjc.sir.lowering.EnqueueToInitPath} Sets up "initPath" functions to translate the enqueue statements in FeedbackLoops.
 <li> {@link at.dms.kjc.sir.lowering.FieldInitMover}  Moves field initialization from field declaration into the beginning of init().
 <li> {@link at.dms.kjc.sir.lowering.FieldProp} Sometimes called from ConstantProp, but also separately. Why?
 <li> {@link at.dms.kjc.sir.lowering.InlinePhases}
 <li> {@link at.dms.kjc.sir.lowering.Propagator} Lower level of ConstantProp, also performs some algebraic and boolean simplification.  Normally called from ConstantProp.
-<li> {@link at.dms.kjc.sir.lowering.RemoveDynamicRates}
 <li> {@link at.dms.kjc.sir.lowering.RemoveMultiPops} changes pop(N) into N pop() instructions for back ends that do not generate code for pop(N).
 <li> {@link at.dms.kjc.sir.lowering.RenameAll}  Makes all variable names unique.  Prerequisite for most other passes.
 <li> {@link at.dms.kjc.sir.lowering.RoundToFloor}  Converts round(x) to floor(x+0.5) so that C and Java code produce the same results.
@@ -103,11 +102,25 @@ at.dms.kjc.sir.lowering.DataFlow} classes do not appear in either of
 the previous lists because they are not currently utilized by the
 compiler.
 
+<p> {@link at.dms.kjc.sir.lowering.RemoveDynamicRates} was an unsafe transormation converting all dynamic rates to rate 1.  It is superceded by use of {@link at.dms.kjc.sir.SIRDynamicRateManager}.
+
+
 <p> Some classes in this package are usually invoked from other passes.
 
 <ul>
 <li> {@link at.dms.kjc.sir.lowering.Propagator} which performs constant propagation, copy propagation, and algebraic and boolean simplification is called from {@link at.dms.kjc.sir.lowering.ConstantProp}
 <li> {@link at.dms.kjc.sir.lowering.FieldProp} and {@link at.dms.kjc.sir.lowering.Unroller} are called as needed from {@link at.dms.kjc.sir.lowering.ConstantProp} for propagating parameters through the stream graph.
 </ul>
+
+<p> Some classes in this package are only used by the obsolete C library (uni) backend.  These include:
+<ul>
+<li>{@link Flattener}</li>
+<li>{@link Structurer}</li>
+<li>{@link SIRSchedule}</li>
+<li>{@link SIRScheduler}</li>
+<li>{@link LowerInitFunctions}</li>
+<li>{@link LowerWorkFunctions}</li>
+</ul>
+{@link LoweringConstants} contains some constants unly used by the obsolete C library (uni) backend, and some constants used by other backends.
 </body>
 </html>

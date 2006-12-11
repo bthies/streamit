@@ -15,14 +15,14 @@ import at.dms.kjc.*;
 public class GranularityAdjust {
     public final static double threshold = .90;
     
-    public static SIRStream doit(SIRStream str, RawChip chip) {
+    public static SIRStream doit(SIRStream str, int numCores) {
         assert KjcOptions.partition_greedier;
         SIRStream oldStr;
         //WorkEstimate.UNROLL_FOR_WORK_EST = true;
         //get the first work estimate
         WorkEstimate work = WorkEstimate.getWorkEstimate(str);
         //bin pack the shits
-        GreedyBinPacking binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+        GreedyBinPacking binPacker = new GreedyBinPacking(str, numCores, work);
         binPacker.pack();
         //get the max bin weight for the packing
         int oldWork = binPacker.maxBinWeight();
@@ -41,7 +41,7 @@ public class GranularityAdjust {
             //StreamItDot.printGraph(str, "newstr.dot");
             work = WorkEstimate.getWorkEstimate(str);
             //greedy bin pack the shits
-            binPacker = new GreedyBinPacking(str, chip.getTotalTiles(), work);
+            binPacker = new GreedyBinPacking(str, numCores, work);
             binPacker.pack();
             newWork = binPacker.maxBinWeight();
             //find the percentage change in work between the two 

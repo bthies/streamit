@@ -150,7 +150,7 @@ public class SpaceTimeBackend {
         //StreamItDot.printGraph(str, "after-fusepipe.dot");
         if (KjcOptions.partition_greedier) {
             StreamItDot.printGraph(str, "before-granularity-adjust.dot");
-            str = GranularityAdjust.doit(str, rawChip);
+            str = GranularityAdjust.doit(str, rawChip.getTotalTiles());
             StreamItDot.printGraph(str, "after-granularity-adjust.dot");
         }
         

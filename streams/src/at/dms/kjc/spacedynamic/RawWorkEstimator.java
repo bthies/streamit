@@ -110,7 +110,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
     
         // make structures header file in this directory
         if (KjcOptions.spacetime) {
-            structures = SpaceTimeBackend.structures;
+            structures = SpaceTimeBackend.getStructures();
         }
         else if (KjcOptions.space) {
             structures = RawBackend.structures;

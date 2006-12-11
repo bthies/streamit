@@ -19,10 +19,10 @@ public class Util {
      * affect the list passed to sliceNodeTraversal.  Altering the individual TreceNode's
      * will alter the SliceNode's in the original list.
      * 
-     * @param slices a list of SliceNodes.
-     * @return An Iterator of SliceNodes.
+     * @param slices a list of Slice's.
+     * @return An Iterator over SliceNode's.
      */
-    public static Iterator<SliceNode> sliceNodeTraversal(List slices) {
+    public static Iterator<SliceNode> sliceNodeTraversal(List<Slice> slices) {
         LinkedList<SliceNode> trav = new LinkedList<SliceNode>();
         ListIterator it = slices.listIterator();
     
@@ -40,11 +40,11 @@ public class Util {
     }
 
     /**
-     * Get a traversal (linked list) that includes all the trace nodes of the
-     * given trace traversal.
+     * Get a traversal (linked list) that includes the head nodes of the
+     * given array of slices.
      * 
-     * @param slices
-     * @return A LinkedList of SliceNodes.
+     * @param slices an array of Slice's.
+     * @return An Iterator over SliceNodes.
      */
     public static Iterator<SliceNode> sliceNodeTraversal(Slice[] slices) {
         LinkedList<SliceNode> trav = new LinkedList<SliceNode>();

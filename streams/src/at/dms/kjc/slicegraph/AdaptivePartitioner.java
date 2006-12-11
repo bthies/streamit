@@ -55,14 +55,15 @@ public class AdaptivePartitioner extends Partitioner {
      */
     
     public AdaptivePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,
-            LinearAnalyzer lfa, WorkEstimate work, int maxPartitions) {
+            LinearAnalyzer lfa, WorkEstimate work, int maxPartitions,
+            at.dms.kjc.spacetime.GreedyBinPacking greedyBinPacking) {
         super(topFilters, exeCounts, lfa, work, maxPartitions);
         workEstimation = new HashMap<FilterContent, Integer>();
         
         unflatOccupancy = new HashMap<UnflatFilter, Integer>();
         
         double cpThreshold = 0.90;
-        criticalPath = SpaceTimeBackend.greedyBinPacking.getCriticalpath(cpThreshold);
+        criticalPath = greedyBinPacking.getCriticalpath(cpThreshold);
         
         DATA_REORG_PARALLEL_FACTOR = 2; 
             //(rawChip.getTotalTiles() - SpaceTimeBackend.greedyBinPacking.getCriticalPathTiles(cpThreshold).size());

@@ -106,7 +106,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
         }
 
         if (KjcOptions.spacetime) {
-            structures = SpaceTimeBackend.structures;
+            structures = SpaceTimeBackend.getStructures();
         }
         else if (KjcOptions.space) {
             structures = RawBackend.structures;

@@ -6,10 +6,10 @@ import at.dms.kjc.common.CommonUtils;
 import at.dms.kjc.common.ConvertLonelyPops;
 import at.dms.kjc.slicegraph.*;
 import at.dms.util.Utils;
-import java.util.LinkedList;
-import java.util.ListIterator;
-import at.dms.kjc.iterator.*;
-import at.dms.kjc.sir.stats.StatisticsGathering;
+//import java.util.LinkedList;
+//import java.util.ListIterator;
+//import at.dms.kjc.iterator.*;
+//import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
@@ -21,32 +21,50 @@ import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;
 import at.dms.kjc.slicegraph.Slice;
-import at.dms.kjc.lir.*;
 import java.util.*;
-import at.dms.util.SIRPrinter;
+//import at.dms.util.SIRPrinter;
 //import at.dms.kjc.sir.SIRToStreamIt;
 
 /**
  * The entry to the space time backend for raw.
  */
 public class SpaceTimeBackend {
-    /** don't generate the work function code for a filter,
+    /** Don't generate the work function code for a filter,
      * instead produce debugging code.
+     * (referred to by TraceIRToC, DirectCommunication, BufferredCommunication)
      */
     public static boolean FILTER_DEBUG_MODE = false;
-    /** should we not software pipeline the steady state */
+    /** Should we not software pipeline the steady state. 
+     * (relationship to KjcOptions.noswpipe? any difference?) */
     public static boolean NO_SWPIPELINE;
-    public static boolean FISSION = true;
 
-    public static SIRStructure[] structures;
+    
+    //public static boolean FISSION = true;
 
-    public static GreedyBinPacking greedyBinPacking;
+    private static SIRStructure[] structures;
+
+    private static GreedyBinPacking greedyBinPacking;
     
-    
+    // Presumably becomes information about arbitrary multicores
+    // in some future incarnation.  For now is very RAW-specific.
     private static RawChip rawChip;
   
-    public static double COMP_COMM_RATIO;
+    private static double COMP_COMM_RATIO;
     
+    // the number of cores that we are compiling for 
+    // = rawChip.getTotalTiles() if compiling for RAW.
+    
+    private static int numCores;
+    
+    /**
+     * Top level method for SpaceTime backend, called via reflection from {@link at.dms.kjc.Main}.
+     * @param str               SIRStream from {@link at.dms.kjc.Kopi2SIR}
+     * @param interfaces        JInterfaceDeclaration[] from {@link at.dms.kjc.Kopi2SIR}
+     * @param interfaceTables   SIRInterfaceTable[] from  {@link at.dms.kjc.Kopi2SIR}
+     * @param structs           SIRStructure[] from  {@link at.dms.kjc.Kopi2SIR}
+     * @param helpers           SIRHelper[] from {@link at.dms.kjc.Kopi2SIR}
+     * @param global            SIRGlobal from  {@link at.dms.kjc.Kopi2SIR}
+     */
     public static void run(SIRStream str,
                            JInterfaceDeclaration[] interfaces,
                            SIRInterfaceTable[] interfaceTables,
@@ -62,24 +80,32 @@ public class SpaceTimeBackend {
         //first of all enable altcodegen by default
         //KjcOptions.altcodegen = true;
 
-        int rawRows = -1;
-        int rawColumns = -1;
+        
+        if (KjcOptions.standalone) {
+            numCores = 1;
+        }
+        else if (KjcOptions.raw >= 0) {
+            // Set up rawchip data structure if compiling for raw.
+            int rawRows = -1;
+            int rawColumns = -1;
 
-        //set number of columns/rows
-        rawRows = KjcOptions.raw;
-        if(KjcOptions.rawcol>-1)
-            rawColumns = KjcOptions.rawcol;
-        else
-            rawColumns = KjcOptions.raw;
+            //set number of columns/rows
+            rawRows = KjcOptions.raw;
+            if(KjcOptions.rawcol>-1)
+                rawColumns = KjcOptions.rawcol;
+            else
+                rawColumns = KjcOptions.raw;
 
-        //create the RawChip
-        rawChip = new RawChip(rawColumns, rawRows);
-
+            //create the RawChip
+            rawChip = new RawChip(rawColumns, rawRows);
+            numCores = rawChip.getTotalTiles();
+        }
+        
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
         if (global != null) theStatics.add(global);
-        Map associatedGlobals = StaticsProp.propagate(str,theStatics);  
+        /*Map associatedGlobals =*/ StaticsProp.propagate(str,theStatics);  
         ConstantProp.propagateAndUnroll(str, true);
         System.out.println("Done Constant Prop and Unroll...");
 
@@ -129,7 +155,7 @@ public class SpaceTimeBackend {
             if (KjcOptions.noswpipe) {
                 //str = FuseStatelessPipelines.doit(str);
                 //str = FuseAll.fuse(str);
-                dup.duplicateFilters(str, rawChip.getTotalTiles());
+                dup.duplicateFilters(str, numCores);
                 //dup.smarterDuplicate(str);
 
             }
@@ -150,7 +176,7 @@ public class SpaceTimeBackend {
         //StreamItDot.printGraph(str, "after-fusepipe.dot");
         if (KjcOptions.partition_greedier) {
             StreamItDot.printGraph(str, "before-granularity-adjust.dot");
-            str = GranularityAdjust.doit(str, rawChip.getTotalTiles());
+            str = GranularityAdjust.doit(str, numCores);
             StreamItDot.printGraph(str, "after-granularity-adjust.dot");
         }
         
@@ -256,7 +282,7 @@ public class SpaceTimeBackend {
         /*KjcOptions.partition_dp = true;
         SIRStream partitionedStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
             partitionedStr = at.dms.kjc.sir.lowering.partition.Partitioner.doit(partitionedStr,
-                rawChip.getTotalTiles(), true, false, true);
+                numCores, true, false, true);
         KjcOptions.partition_dp = false;
         */
         
@@ -265,7 +291,7 @@ public class SpaceTimeBackend {
 
         WorkEstimate workEstimate = WorkEstimate.getWorkEstimate(str); 
         
-        greedyBinPacking = new GreedyBinPacking(str, rawChip.getTotalTiles(), 
+        greedyBinPacking = new GreedyBinPacking(str, numCores, 
                 workEstimate);
         greedyBinPacking.pack();
         
@@ -289,22 +315,23 @@ public class SpaceTimeBackend {
             for (int i = 0; i < topNodes.length; i++)
                 CommonUtils.println_debugging(topNodes[i].toString());
         }    
-        Slice[] traces = null;
+        //Slice[] traces = null;
         Slice[] traceGraph = null; 
         
         
         Partitioner partitioner = null;
         if (KjcOptions.autoparams) {
             partitioner = new AdaptivePartitioner(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
+                    executionCounts, lfa, workEstimate, numCores, 
+                    getGreedyBinPacking());
         } if (KjcOptions.nopartition) {
             partitioner = new FlattenAndPartition(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
+                    executionCounts, lfa, workEstimate, numCores);
             ((FlattenAndPartition)partitioner).flatten(str, executionCounts);
         }
         else { 
             partitioner = new SimplePartitioner(topNodes,
-                    executionCounts, lfa, workEstimate, rawChip.getTotalTiles());
+                    executionCounts, lfa, workEstimate, numCores);
         }
 
         traceGraph = partitioner.partition();
@@ -490,8 +517,46 @@ public class SpaceTimeBackend {
         */
     }
     
+    /**
+     * @return the RawChip
+     */
     public static RawChip getRawChip() {
         return rawChip;
+    }
+
+    /**
+     * @return the structures
+     */
+    public static SIRStructure[] getStructures() {
+        return structures;
+    }
+
+    /**
+     * @return the COMP_COMM_RATIO
+     */
+    public static double getCOMP_COMM_RATIO() {
+        return COMP_COMM_RATIO;
+    }
+
+    /**
+     * @return the FILTER_DEBUG_MODE
+     */
+    public static boolean isFILTER_DEBUG_MODE() {
+        return FILTER_DEBUG_MODE;
+    }
+
+    /**
+     * @return the greedyBinPacking
+     */
+    public static GreedyBinPacking getGreedyBinPacking() {
+        return greedyBinPacking;
+    }
+
+    /**
+     * @return the nO_SWPIPELINE
+     */
+    public static boolean isNO_SWPIPELINE() {
+        return NO_SWPIPELINE;
     }
 }
 

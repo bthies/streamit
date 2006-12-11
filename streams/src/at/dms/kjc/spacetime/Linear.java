@@ -64,7 +64,7 @@ public class Linear extends BufferedCommunication implements Constants {
         super(tile, filterInfo, null);
         assert false;
         //assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
-        FilterSliceNode node = filterInfo.traceNode;
+        FilterSliceNode node = filterInfo.sliceNode;
         System.out.println(" Generating code for " + filterInfo.filter + " using Linear.");
         assert filterInfo.initMult < 1 :
             "Still need to create init function: "+filterInfo.initMult;

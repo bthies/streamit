@@ -3,24 +3,24 @@ package at.dms.kjc.spacetime;
 import java.util.Vector;
 
 import at.dms.kjc.common.CommonUtils;
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatNode;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.iterator.*;
+//import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
-import java.util.List;
+//import java.util.List;
 import java.util.ListIterator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.io.*;
-import at.dms.compiler.*;
+//import java.util.Iterator;
+//import java.util.LinkedList;
+//import java.util.HashMap;
+//import java.io.*;
+//import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.slicegraph.FilterSliceNode;
+//import at.dms.kjc.slicegraph.FilterSliceNode;
 
-import java.util.Hashtable;
-import java.math.BigInteger;
+//import java.util.Hashtable;
+//import java.math.BigInteger;
 import at.dms.kjc.slicegraph.FilterContent;
 
 /**
@@ -62,7 +62,7 @@ public class BufferedCommunication extends RawExecutionCode
     public BufferedCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
         super(tile, filterInfo, layout);
-        FilterSliceNode node=filterInfo.traceNode;
+        //FilterSliceNode node=filterInfo.sliceNode;
         System.out.println(tile + "Generating code for " + filterInfo.filter + " using Buffered Comm.");
     
         //set the unique id to append to each variable name
@@ -423,7 +423,7 @@ public class BufferedCommunication extends RawExecutionCode
             return primePumpMethod;
         
         JBlock statements = new JBlock(null, new JStatement[0], null);
-        FilterContent filter = filterInfo.filter;
+        //FilterContent filter = filterInfo.filter;
 
       
         //add the calls to the work function for the priming of the pipeline
@@ -901,7 +901,7 @@ public class BufferedCommunication extends RawExecutionCode
     {
         //this is an array type
         if (inputType.isArrayType()) {
-            CType baseType = ((CArrayType)inputType).getBaseType();
+            //CType baseType = ((CArrayType)inputType).getBaseType();
             //create the array to hold the dims of the buffer
             JExpression baseTypeDims[] = ((CArrayType)inputType).getDims();
             //the buffer is an array itself, so add one to the size of the input type
@@ -937,7 +937,7 @@ public class BufferedCommunication extends RawExecutionCode
         //depend on type of the pop, by default set it to be the scalar receive
         String receiveMethodName = (gdnInput ? gdnReceiveMethod : staticReceiveMethod);
 
-        JBlock statements = new JBlock(null, new JStatement[0], null);
+        //JBlock statements = new JBlock(null, new JStatement[0], null);
     
         //if it is not a scalar receive change the name to the appropriate 
         //method call, from struct.h

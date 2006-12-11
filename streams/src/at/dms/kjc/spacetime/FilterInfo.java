@@ -1,12 +1,12 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.sir.*;
+//import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.InputSliceNode;
 import at.dms.kjc.slicegraph.FilterContent;
-import at.dms.util.Utils;
-import java.util.HashSet;
+//import at.dms.util.Utils;
+//import java.util.HashSet;
 import java.util.Iterator;
 import java.util.HashMap;
 
@@ -39,11 +39,11 @@ public class FilterInfo {
     
     private boolean linear;
 
-    public FilterSliceNode traceNode;
+    public FilterSliceNode sliceNode;
 
     public FilterContent filter;
 
-    /** HashMap of all the filter infos FilterTraceNode -> FilterInfo */
+    /** HashMap of all the filter infos FilterSliceNode -> FilterInfo */
     private static HashMap<FilterSliceNode, FilterInfo> filterInfos;
 
     // true if everything is set and we can use this class
@@ -74,19 +74,19 @@ public class FilterInfo {
         filterInfos = new HashMap<FilterSliceNode, FilterInfo>();
     }
     
-    public static FilterInfo getFilterInfo(FilterSliceNode traceNode) {
+    public static FilterInfo getFilterInfo(FilterSliceNode sliceNode) {
         assert canuse;
-        if (!filterInfos.containsKey(traceNode)) {
-            FilterInfo info = new FilterInfo(traceNode);
-            filterInfos.put(traceNode, info);
+        if (!filterInfos.containsKey(sliceNode)) {
+            FilterInfo info = new FilterInfo(sliceNode);
+            filterInfos.put(sliceNode, info);
             return info;
         } else
-            return filterInfos.get(traceNode);
+            return filterInfos.get(sliceNode);
     }
 
-    private FilterInfo(FilterSliceNode traceNode) {
-        filter = traceNode.getFilter();
-        this.traceNode = traceNode;
+    private FilterInfo(FilterSliceNode sliceNode) {
+        filter = sliceNode.getFilter();
+        this.sliceNode = sliceNode;
         this.steadyMult = filter.getSteadyMult();
         this.initMult = filter.getInitMult();
         // multiply the primepump number by the
@@ -101,12 +101,12 @@ public class FilterInfo {
             push = 1;
             pop = filter.getPopCount();
             calculateRemaining();
-        } else if (traceNode.isFileInput()) {
+        } else if (sliceNode.isFileInput()) {
             push = 1;
             pop = 0;
             peek = 0;
             calculateRemaining();
-        } else if (traceNode.isFileOutput()) {
+        } else if (sliceNode.isFileOutput()) {
             push = 0;
             pop = 1;
             peek = 0;
@@ -148,16 +148,16 @@ public class FilterInfo {
         // don't call initItemsReceived() here it
         // may cause an infinite loop because it creates filter infos
         int initItemsRec = 0;
-        if (traceNode.getPrevious().isFilterSlice()) {
-            FilterContent filterC = ((FilterSliceNode) traceNode.getPrevious())
+        if (sliceNode.getPrevious().isFilterSlice()) {
+            FilterContent filterC = ((FilterSliceNode) sliceNode.getPrevious())
                 .getFilter();
             initItemsRec = filterC.getPushInt() * filterC.getInitMult();
             if (filterC.isTwoStage()) {
                 initItemsRec -= filterC.getPushInt();
                 initItemsRec += filterC.getInitPush();
             }
-        } else { // previous is an input trace
-            InputSliceNode in = (InputSliceNode) traceNode.getPrevious();
+        } else { // previous is an input slice
+            InputSliceNode in = (InputSliceNode) sliceNode.getPrevious();
 
             // add all the upstream filters items that reach this filter
             for (int i = 0; i < in.getWeights().length; i++) {
@@ -261,14 +261,14 @@ public class FilterInfo {
         if (debug)
             System.out.println("*****  Init items received " + this + " *****");
         
-        if (traceNode.getPrevious().isFilterSlice()) {
+        if (sliceNode.getPrevious().isFilterSlice()) {
             upStreamItems = 
                 FilterInfo.getFilterInfo(
-                        (FilterSliceNode) traceNode.getPrevious()).initItemsSent();
+                        (FilterSliceNode) sliceNode.getPrevious()).initItemsSent();
             if (debug)
                 System.out.println(" Upstream filter sends: " + upStreamItems);
-        } else { // previous is an input trace
-            InputSliceNode in = (InputSliceNode) traceNode.getPrevious();
+        } else { // previous is an input slice
+            InputSliceNode in = (InputSliceNode) sliceNode.getPrevious();
             if (debug)
                 System.out.println(" Upstream input node:");
             // add all the upstream filters items that reach this filter
@@ -303,7 +303,7 @@ public class FilterInfo {
     /**
      * get the total number of items received during the execution of the stage
      * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
-     * for one firing of the parent trace in the primepump stage, the trace may fire
+     * for one firing of the parent slice in the primepump stage, the slice may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 
      * @param init
@@ -327,7 +327,7 @@ public class FilterInfo {
     /**
      * get the total number of itmes sent during the execution of the stage
      * we are in (based on <pre>init</pre> and <pre>primepump</pre>.  For primepump, this is just
-     * for one firing of the parent trace in the primepump stage, the trace may fire
+     * for one firing of the parent slice in the primepump stage, the slice may fire
      * many times in the prime pump schedule to fill the rotating buffers.
      * 
      * @param init
@@ -397,39 +397,39 @@ public class FilterInfo {
     }
 
     public String toString() {
-        return traceNode.toString();
+        return sliceNode.toString();
     }
 
     /*
-     * Not needed now, but needed for magic crap public FilterTraceNode[]
-     * getNextFilters() { FilterTraceNode[] ret;
+     * Not needed now, but needed for magic crap public FilterSliceNode[]
+     * getNextFilters() { FilterSliceNode[] ret;
      * 
-     * if (traceNode.getNext() == null) return new FilterTraceNode[0]; else if
-     * (traceNode.getNext().isFilterTrace()) { ret = new FilterTraceNode[1];
-     * ret[0] = (FilterTraceNode)traceNode.getNext(); } else { //output trace
-     * node HashSet set = new HashSet(); OutputTraceNode output =
-     * (OutputTraceNode)traceNode.getNext(); for (int i = 0; i <
+     * if (sliceNode.getNext() == null) return new FilterSliceNode[0]; else if
+     * (sliceNode.getNext().isFilterSlice()) { ret = new FilterSliceNode[1];
+     * ret[0] = (FilterSliceNode)sliceNode.getNext(); } else { //output slice
+     * node HashSet set = new HashSet(); OutputSliceNode output =
+     * (OutputSliceNode)sliceNode.getNext(); for (int i = 0; i <
      * output.getDests().length; i++) for (int j = 0; j <
      * output.getDests()[i].length; j++)
      * set.add(output.getDests()[i][j].getNext()); ret =
-     * (FilterTraceNode[])set.toArray(new FilterTraceNode[0]); } return ret; }
+     * (FilterSliceNode[])set.toArray(new FilterSliceNode[0]); } return ret; }
      * 
      * 
-     * //for the filter trace node, get all upstream filter trace nodes, //going
-     * thru input and output trace nodes public FilterTraceNode[]
-     * getPreviousFilters() { FilterTraceNode[] ret;
+     * //for the filter slice node, get all upstream filter slice nodes, //going
+     * thru input and output slice nodes public FilterSliceNode[]
+     * getPreviousFilters() { FilterSliceNode[] ret;
      * 
-     * if (traceNode.getPrevious() == null) return new FilterTraceNode[0];
+     * if (sliceNode.getPrevious() == null) return new FilterSliceNode[0];
      * 
-     * if (traceNode.getPrevious().isFilterTrace()) { ret = new
-     * FilterTraceNode[1]; ret[0] = (FilterTraceNode)traceNode.getPrevious(); }
-     * else { //input trace node InputTraceNode input =
-     * (InputTraceNode)traceNode.getPrevious();
+     * if (sliceNode.getPrevious().isFilterSlice()) { ret = new
+     * FilterSliceNode[1]; ret[0] = (FilterSliceNode)sliceNode.getPrevious(); }
+     * else { //input slice node InputSliceNode input =
+     * (InputSliceNode)sliceNode.getPrevious();
      * 
-     * //here we assume each trace has at least one filter trace node ret = new
-     * FilterTraceNode[input.getSources().length]; for (int i = 0; i <
+     * //here we assume each slice has at least one filter slice node ret = new
+     * FilterSliceNode[input.getSources().length]; for (int i = 0; i <
      * ret.length; i++) { ret[i] =
-     * (FilterTraceNode)input.getSources()[i].getSrc().getPrevious(); } } return
+     * (FilterSliceNode)input.getSources()[i].getSrc().getPrevious(); } } return
      * ret; }
      */
 }

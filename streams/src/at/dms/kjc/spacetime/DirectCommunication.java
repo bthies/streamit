@@ -51,10 +51,10 @@ public class DirectCommunication extends RawExecutionCode
     public static boolean testDC(FilterInfo fi) 
     {
         boolean dynamicInput = false;
-        if (fi.traceNode.getPrevious().isInputSlice()) {
+        if (fi.sliceNode.getPrevious().isInputSlice()) {
             if (!IntraSliceBuffer.getBuffer(
-                    (InputSliceNode)fi.traceNode.getPrevious(),
-                    fi.traceNode).isStaticNet())
+                    (InputSliceNode)fi.sliceNode.getPrevious(),
+                    fi.sliceNode).isStaticNet())
                 dynamicInput = true;
         }
         
@@ -123,7 +123,7 @@ public class DirectCommunication extends RawExecutionCode
     public DirectCommunication(RawTile tile, FilterInfo filterInfo, Layout layout) 
     {
         super(tile, filterInfo, layout);
-        FilterSliceNode node=filterInfo.traceNode;
+        FilterSliceNode node=filterInfo.sliceNode;
         System.out.println(tile +  " Generating code for " + filterInfo.filter + " using Direct Comm.");
     }
 

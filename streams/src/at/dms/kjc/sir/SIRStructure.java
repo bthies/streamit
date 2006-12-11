@@ -25,7 +25,7 @@ public class SIRStructure extends SIRStream
             String ident,
             JFieldDeclaration[] fields,
             boolean isUnion) {
-        super(parent, ident, fields, (JMethodDeclaration[])null);
+        super(parent, ident, fields, JMethodDeclaration.EMPTY());
         this.isCUnion = isUnion;
     }
     

@@ -61,7 +61,7 @@ public class TraceIRtoC extends ToC
     public void createCCode() 
     {
         //optimize the SIR code, if not disabled
-        optimizations();
+        (new at.dms.kjc.sir.lowering.FinalUnitOptimize()).optimize(tile.getComputeCode());
         
         //write header 
         generateHeader();
@@ -132,34 +132,6 @@ public class TraceIRtoC extends ToC
         p.print("};\n");
     }
         
-    private void optimizations() 
-    {
-        ArrayDestroyer arrayDest=new ArrayDestroyer();
-        for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
-                Unroller unroller;
-                do {
-                    do {
-                        unroller = new Unroller(new Hashtable());
-                        tile.getComputeCode().getMethods()[i].accept(unroller);
-                    } while(unroller.hasUnrolled());
-                    tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
-                    unroller = new Unroller(new Hashtable());
-                    tile.getComputeCode().getMethods()[i].accept(unroller);
-                } while(unroller.hasUnrolled());
-                tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
-                tile.getComputeCode().getMethods()[i].accept(new Propagator(new Hashtable()));
-             
-            tile.getComputeCode().getMethods()[i].accept(arrayDest);
-            tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
-        }
-        if(KjcOptions.destroyfieldarray)
-            arrayDest.destroyFieldArrays(tile.getComputeCode());
-    
-        
-        //run dce but don't eliminate the compiler generated vars introduced
-        //by ConvertLonelyPops
-        DeadCodeElimination.doit(tile.getComputeCode());
-    }
     
     private void generateHeader() 
     {

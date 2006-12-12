@@ -2,22 +2,22 @@ package at.dms.kjc.raw;
 
 import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
+//import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.HashMap;
+//import java.util.List;
+//import java.util.ListIterator;
+//import java.util.Iterator;
+//import java.util.LinkedList;
+//import java.util.HashMap;
 import java.io.*;
-import at.dms.compiler.*;
-import at.dms.kjc.sir.lowering.*;
-import java.util.Hashtable;
-import at.dms.util.SIRPrinter;
-
+//import at.dms.compiler.*;
+//import at.dms.kjc.sir.lowering.*;
+//import java.util.Hashtable;
+//import at.dms.util.SIRPrinter;
+import at.dms.kjc.sir.lowering.FinalUnitOptimize;
 /**
  * This class dumps the tile code for each filter into a file based 
  * on the tile number assigned 
@@ -61,49 +61,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
                 ("Optimizing "+
                  ((SIRFilter)node.contents).getName()+"...");
 
-        ArrayDestroyer arrayDest=new ArrayDestroyer();
-        for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-            JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
-            
-            if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
-                //Already in __RAWMAIN__
-                    Unroller unroller;
-                    do {
-                        do {
-                            //System.out.println("Unrolling..");
-                            unroller = new Unroller(new Hashtable());
-                            method.accept(unroller);
-                        } while(unroller.hasUnrolled());
-                        //System.out.println("Constant Propagating..");
-                        method.accept(new Propagator(new Hashtable()));
-                        //System.out.println("Unrolling..");
-                        unroller = new Unroller(new Hashtable());
-                        method.accept(unroller);
-                    } while(unroller.hasUnrolled());
-                    //System.out.println("Flattening..");
-                    method.accept(new BlockFlattener());
-                    //System.out.println("Analyzing Branches..");
-                    //method.accept(new BranchAnalyzer());
-                    //System.out.println("Constant Propagating..");
-                    method.accept(new Propagator(new Hashtable()));
-                method.accept(arrayDest);
-                method.accept(new VarDeclRaiser());
-            }
-        }
-        if(KjcOptions.destroyfieldarray)
-            arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-        /*   
-             try {
-             SIRPrinter printer1 = new SIRPrinter();
-             IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-             printer1.close();
-             }
-             catch (Exception e) 
-             {
-             }
-        */
-        //      RemoveUnusedVars.doit(node);
-        DeadCodeElimination.doit((SIRFilter)node.contents);
+            (new FinalUnitOptimize(){
+                protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
+                    return !(method.getName().startsWith("work")||method.getName().startsWith("initWork"));
+                }
+            }).optimize((SIRFilter)node.contents);
 
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }

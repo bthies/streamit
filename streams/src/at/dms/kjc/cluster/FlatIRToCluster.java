@@ -130,72 +130,12 @@ public class FlatIRToCluster extends InsertTimers implements
 //                new SIRStructure[0],
 //                new SIRGlobal[0]);
 
-        Set<JLocalVariable> destroyed_vars = new HashSet<JLocalVariable>();
-
-        // ArrayDestroyer arrayDest=new ArrayDestroyer();
-        for (int i = 0; i < contentsAsFilter.getMethods().length; i++) {
-
-            // do not optimize init work function
-            if (node.contents instanceof SIRTwoStageFilter) {
-                JMethodDeclaration init_work = ((SIRTwoStageFilter) node.contents)
-                    .getInitWork();
-                if (contentsAsFilter.getMethods()[i].equals(init_work)) {
-                    continue;
-                }
+        (new FinalUnitOptimize(){
+            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
+                return !(unit instanceof SIRTwoStageFilter 
+                        && method == ((SIRTwoStageFilter)unit).getInitWork());
             }
-
-            Unroller unroller;
-            do {
-                do {
-                    // System.out.println("Unrolling..");
-                    unroller = new Unroller(new Hashtable());
-                    (contentsAsFilter).getMethods()[i].accept(unroller);
-                } while (unroller.hasUnrolled());
-                // System.out.println("Constant Propagating..");
-                (contentsAsFilter).getMethods()[i].accept(new Propagator(
-                                                                         new Hashtable()));
-                // System.out.println("Unrolling..");
-                unroller = new Unroller(new Hashtable());
-                (contentsAsFilter).getMethods()[i].accept(unroller);
-            } while (unroller.hasUnrolled());
-            // System.out.println("Flattening..");
-            (contentsAsFilter).getMethods()[i].accept(new BlockFlattener());
-            // System.out.println("Analyzing Branches..");
-            // (contentsAsFilter).getMethods()[i].accept(new
-            // BranchAnalyzer());
-            // System.out.println("Constant Propagating..");
-            
-//            System.err.println("Filter after unroll / propagate / flattenner");
-//            SIRToStreamIt.run(contentsAsFilter,
-//                    new JInterfaceDeclaration[0],
-//                    new SIRInterfaceTable[0],
-//                    new SIRStructure[0],
-//                    new SIRGlobal[0]);
-
-            (contentsAsFilter).getMethods()[i].accept(new Propagator(
-                                                                     new Hashtable()));
-
-            if (KjcOptions.destroyfieldarray) {
-                ArrayDestroyer arrayDest = new ArrayDestroyer();
-                (contentsAsFilter).getMethods()[i].accept(arrayDest);
-                arrayDest.addDestroyedLocals(destroyed_vars);
-            }
-
-            (contentsAsFilter).getMethods()[i].accept(new VarDeclRaiser());
-        }
-
-//        System.err.println("Filter after propagate / vardeclraiser");
-//        SIRToStreamIt.run(contentsAsFilter,
-//                new JInterfaceDeclaration[0],
-//                new SIRInterfaceTable[0],
-//                new SIRStructure[0],
-//                new SIRGlobal[0]);
-
-        // if(KjcOptions.destroyfieldarray) {
-        // arrayDest.destroyFieldArrays(contentsAsFilter);
-        // }
-
-        DeadCodeElimination.doit(contentsAsFilter);
+        }).optimize((SIRFilter)node.contents);
 
 //        System.err.println("Filter after DCE");
 //        SIRToStreamIt.run(contentsAsFilter,

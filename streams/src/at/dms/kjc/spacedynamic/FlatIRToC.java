@@ -16,7 +16,7 @@ import at.dms.util.Utils;
 import java.io.*;
 //import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-import java.util.Hashtable;
+//import java.util.Hashtable;
 //import at.dms.util.SIRPrinter;
 
 /**
@@ -86,54 +86,14 @@ public class FlatIRToC extends ToC implements StreamVisitor
         //    ("Optimizing "+
         //     ((SIRFilter)node.contents).getName()+"...");
 
-        ArrayDestroyer arrayDest=new ArrayDestroyer();
-        for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-            JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
-            
-            //don't do anything for the work function if it is inlined or for the init work
-            if(!((RawExecutionCode.INLINE_WORK && method.getName().startsWith("work")) || 
-                 method.getName().startsWith("initWork"))) { 
-                //Already in __RAWMAIN__
-                    Unroller unroller;
-                    do {
-                        do {
-                            //System.out.println("Unrolling..");
-                            unroller = new Unroller(new Hashtable());
-                            method.accept(unroller);
-                        } while(unroller.hasUnrolled());
-                        //System.out.println("Constant Propagating..");
-                        method.accept(new Propagator(new Hashtable()));
-                        //System.out.println("Unrolling..");
-                        unroller = new Unroller(new Hashtable());
-                        method.accept(unroller);
-                    } while(unroller.hasUnrolled());
-                    //System.out.println("Flattening..");
-                    method.accept(new BlockFlattener());
-                    //System.out.println("Analyzing Branches..");
-                    //method.accept(new BranchAnalyzer());
-                    //System.out.println("Constant Propagating..");
-                    method.accept(new Propagator(new Hashtable()));
-                method.accept(arrayDest);
-                method.accept(new VarDeclRaiser());
+        (new FinalUnitOptimize(){
+            protected boolean optimizeThisMethod(SIRCodeUnit unit, JMethodDeclaration method) {
+                //don't do anything for the work function if it is inlined or for the init work
+                return !((RawExecutionCode.INLINE_WORK && method.getName().startsWith("work")) || 
+                        method.getName().startsWith("initWork"));
             }
-        }
-        if(KjcOptions.destroyfieldarray)
-            arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-        /*   
-             try {
-             SIRPrinter printer1 = new SIRPrinter();
-             IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-             printer1.close();
-             }
-             catch (Exception e) 
-             {
-             }
-        */
-        //      RemoveUnusedVars.doit(node);
+        }).optimize((SIRFilter)node.contents);
         
-        //remove dead code       
-        DeadCodeElimination.doit((SIRFilter)node.contents);
-
         //convert pop() statements that aren't assigned to anything to be 
         //assigned to a dummy variable
         ConvertLonelyReceives.doit(toC.ssg, toC.flatNode);

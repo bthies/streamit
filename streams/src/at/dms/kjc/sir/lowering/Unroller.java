@@ -4,11 +4,11 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
-import at.dms.util.*;
+//import at.dms.util.*;
 import at.dms.kjc.sir.*;
-import at.dms.kjc.lir.*;
+//import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
+//import at.dms.compiler.JavadocComment;
 
 /**
  * This class unrolls loops where it can.
@@ -22,7 +22,7 @@ public class Unroller extends SLIRReplacingVisitor {
     /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
-    private Hashtable constants;
+    private Hashtable<JLocalVariable,JLiteral> constants;
     /**
      * Holds compile time values
      */
@@ -49,20 +49,29 @@ public class Unroller extends SLIRReplacingVisitor {
     static boolean limitNoTapeLoops = false;
     static int unrollLimitNoTapeLoops = 0;
     
+    /**
+     * @param b
+     * @param limit
+     */
     static public void setLimitNoTapeLoops(boolean b, int limit) {
         limitNoTapeLoops = b;
         unrollLimitNoTapeLoops = limit;
     }
 
     /**
-     * Creates one of these given that <constants> maps
+     * Creates one of these given that <i>constants</i> maps
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
+     * @param constants 
      */
-    public Unroller(Hashtable constants) {
+    public Unroller(Hashtable<JLocalVariable,JLiteral> constants) {
         this(constants, false);
     }
-    public Unroller(Hashtable constants, boolean unrollOuterLoops) {
+    /**
+     * @param constants
+     * @param unrollOuterLoops
+     */
+    public Unroller(Hashtable<JLocalVariable,JLiteral> constants, boolean unrollOuterLoops) {
         super();
         this.constants = constants;
         this.unrollOuterLoops = unrollOuterLoops;
@@ -73,14 +82,17 @@ public class Unroller extends SLIRReplacingVisitor {
     }
     
     /**
-     * Unrolls <filter> up to a factor of 100,000.
+     * Unrolls <i>filter</i> up to a factor of 100,000.
+     * @param filter 
      */
     public static void unrollFilter(SIRFilter filter) {
         unrollFilter(filter, 100000);
     }
     
     /**
-     * Unrolls <filter> up to a factor of unrollFactor.
+     * Unrolls <i>filter</i> up to a factor of unrollFactor.
+     * @param filter 
+     * @param unrollFactor 
      */
     public static void unrollFilter(SIRFilter filter, int unrollFactor) {
         // set all loops to be unrolled again
@@ -108,14 +120,26 @@ public class Unroller extends SLIRReplacingVisitor {
         limitNoTapeLoops = origLimitNoTapeLoops;
     }
 
+    /**
+     * @param init
+     */
     public void setContainerInit(boolean init) {
         inContainerInit=init;
     }
 
+    /**
+     * @return
+     */
     public boolean getContainerInit() {
         return inContainerInit;
     }
     
+    /**
+     * Run a propagator on every method of a stream.
+     * Originally intended to combine proparagion with agressive unrolling, but
+     * unrolling has been removed...
+     * @param str  Stream in which to unroll loops in methods
+     */
     public static void unroll(SIRStream str) {
         if (str instanceof SIRFeedbackLoop)
             {
@@ -145,14 +169,14 @@ public class Unroller extends SLIRReplacingVisitor {
             }
         if (str instanceof SIRFilter)
             for (int i = 0; i < str.getMethods().length; i++) {
-                Unroller unroller;
+                //Unroller unroller;
                 //Very aggressive
                 //Intended as a last and final unroll pass
                 //do {
                 //do { //Unroll as much as possible
                 //unroller=new Unroller(new Hashtable());
                 //str.getMethods()[i].accept(unroller);
-                str.getMethods()[i].accept(new Propagator(new Hashtable()));
+                str.getMethods()[i].accept(new Propagator(new Hashtable<JLocalVariable,Object>()));
                 //  } while(unroller.hasUnrolled());
                 //Constant Prop then check to see if any new unrolling can be done
                 //str.getMethods()[i].accept(new Propagator(new Hashtable()));
@@ -370,12 +394,19 @@ public class Unroller extends SLIRReplacingVisitor {
      * Returns the number of times a for-loop with the given
      * characteristics will execute, or -1 if the count cannot be
      * determined.
+     * @param init 
+     * @param cond 
+     * @param incr 
+     * @param body 
+     * @return 
      */
     public static int getNumExecutions(JStatement init,
                                        JExpression cond,
                                        JStatement incr,
                                        JStatement body) {
-        LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,new Hashtable<JLocalVariable, JExpression>(),new Hashtable());
+        LoopIterInfo info = LoopIterInfo.getLoopInfo(init, cond, incr, body,
+                new Hashtable<JLocalVariable, JExpression>(),
+                new Hashtable<JLocalVariable,JLiteral>());
         // Make sure has old behavior: no executions of loop that still has declaration
         // in init.
         if (info != null && info.getIsDeclaredInInit()) info = null;
@@ -394,7 +425,7 @@ public class Unroller extends SLIRReplacingVisitor {
         // get the initial value of the counter
         int counter = info.getInitVal();
         // simulate execution of the loop...
-        Propagator prop=new Propagator(new Hashtable());
+        Propagator prop=new Propagator(new Hashtable<JLocalVariable,Object>());
         while (LoopIterInfo.inRange(counter,info)) {
             // replace induction variable with its value current value
             prop.getConstants().put(info.getVar(), new JIntLiteral(counter));
@@ -497,6 +528,7 @@ public class Unroller extends SLIRReplacingVisitor {
     
     /**
      * Return whether or not this has unrolled any loops.
+     * @return whether or not this has unrolled any loops
      */
     public boolean hasUnrolled() {
         return hasUnrolled;

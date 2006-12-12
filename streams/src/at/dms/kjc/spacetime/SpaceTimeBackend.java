@@ -22,6 +22,7 @@ import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;
 import at.dms.kjc.slicegraph.Slice;
 import java.util.*;
+import at.dms.kjc.sir.lowering.FinalUnitOptimize;
 //import at.dms.util.SIRPrinter;
 //import at.dms.kjc.sir.SIRToStreamIt;
 
@@ -82,6 +83,7 @@ public class SpaceTimeBackend {
 
         
         if (KjcOptions.standalone) {
+            KjcOptions.raw = -1;  // set "raw" switch to "missing"
             numCores = 1;
         }
         else if (KjcOptions.raw >= 0) {
@@ -91,7 +93,7 @@ public class SpaceTimeBackend {
 
             //set number of columns/rows
             rawRows = KjcOptions.raw;
-            if(KjcOptions.rawcol>-1)
+            if(KjcOptions.rawcol > -1)
                 rawColumns = KjcOptions.rawcol;
             else
                 rawColumns = KjcOptions.raw;
@@ -101,6 +103,10 @@ public class SpaceTimeBackend {
             numCores = rawChip.getTotalTiles();
         }
         
+        // make arguments to functions be three-address code so can replace max, min, abs
+        // and possibly others with macros, knowing that there will be no side effects.
+        SimplifyArguments.simplify(str);
+
         // propagate constants and unroll loop
         System.out.println("Running Constant Prop and Unroll...");
         Set<SIRGlobal> theStatics = new HashSet<SIRGlobal>();
@@ -136,6 +142,23 @@ public class SpaceTimeBackend {
         if (str instanceof SIRContainer)
             ((SIRContainer)str).reclaimChildren();
         
+
+        // splitjoin optimization on SIR graph can not be
+        // done after fusion, and should not affect fusable
+        // pipelines, so do it here.
+        Lifter.liftAggressiveSync(str);
+        
+ 
+        if (KjcOptions.fusion || KjcOptions.dup > 1 || KjcOptions.noswpipe) {
+            // if we are about to fuse filters, we should perform
+            // any vectorization now, since vectorization can not work inside
+            // fused sections, and vetctorization should map pipelines of 
+            // stateless filters to pipelines of stateless filters.
+
+            SimplifyPopPeekPush.simplify(str);
+            VectorizeEnable.vectorizeEnable(str,null);
+        }
+        
         //fuse entire str to one filter if possible
         if (KjcOptions.fusion)
             str = FuseAll.fuse(str);
@@ -168,7 +191,6 @@ public class SpaceTimeBackend {
         if (KjcOptions.noswpipe)
             str = FusePipelines.fusePipelinesOfFilters(str);
         
-        Lifter.liftAggressiveSync(str);
         StreamItDot.printGraph(str, "canonical-graph.dot");
 
         //StreamItDot.printGraph(str, "before-fusepipe.dot");
@@ -254,11 +276,18 @@ public class SpaceTimeBackend {
             }
         }
 
-        // make sure SIRPopExpression's only pop one element
-        // code generation doesn't handle generating multiple pops
-        // from a single SIRPopExpression
-        RemoveMultiPops.doit(str);
+        if (KjcOptions.raw >= 0) {
+            // make sure SIRPopExpression's only pop one element
+            // code generation doesn't handle generating multiple pops
+            // from a single SIRPopExpression
+            RemoveMultiPops.doit(str);
 
+            //On RAW, lonely pops are converted into a statement with only a register read
+            //then they are optimized out by gcc, so convert lonely pops (pops unnested in
+            //a larger expression) into an assignment of the pop to a dummy variable
+            new ConvertLonelyPops().convertGraph(str);
+        }
+        
         // We require that no FileReader directly precede a splitter and
         // no joiner directly precede a FileWriter.
 	//        System.err.println("Before SafeFileReaderWriterPositions"); 
@@ -267,24 +296,52 @@ public class SpaceTimeBackend {
 	//        System.err.println("After SafeFileReaderWriterPositions");
 	//        SIRToStreamIt.run(str,new JInterfaceDeclaration[]{}, new SIRInterfaceTable[]{}, new SIRStructure[]{});
         
-        //lonely pops are converted into a statement with only a register read
-        //then they are optimized out by gcc, so convert lonely pops (pops unnested in
-        //a larger expression) into an assignment of the pop to a dummy variable
-        new ConvertLonelyPops().convertGraph(str);
-                
         // make sure that push expressions do not contains pop expressions
         // because if they do and we use the gdn, we will generate the header 
         // for the pop expression before the push expression and that may cause 
         // deadlock...
-        at.dms.kjc.common.SeparatePushPop.doit(str);
+        //at.dms.kjc.common.SeparatePushPop.doit(str);
         
-    
+        // Raise all pushes, pops, peeks to statement level
+        // (several phases above introduce new peeks, pops, pushes
+        //  including but not limited to doLinearAnalysis)
+        // needed before vectorization
+        SimplifyPopPeekPush.simplify(str);
+
+        // If vectorization enabled, create (fused streams of) vectorized filters.
+        // the top level compile script should not allow vectorization to be enabled
+        // for processor types that do not support short vectors. 
+        VectorizeEnable.vectorizeEnable(str,null);
+        
+        
         /*KjcOptions.partition_dp = true;
         SIRStream partitionedStr = (SIRStream)ObjectDeepCloner.deepCopy(str);
             partitionedStr = at.dms.kjc.sir.lowering.partition.Partitioner.doit(partitionedStr,
                 numCores, true, false, true);
         KjcOptions.partition_dp = false;
         */
+        
+        if (KjcOptions.standalone) {
+            // If standalone output desired, then (for now)
+            // fuse all filters in a single appearance schedule.
+            // Partitioning, etc, will be a no-op since there will only
+            // be one filter, but we will still have a slice coming out
+            // so that the code emitter for standalone will work on the 
+            // same representation as the code emitter for RAW.
+            
+            // TODO: eventually do not want to fuse here so can take advantage 
+            // of cache partitioner, more flexible scheduling, etc. 
+            
+            
+            // fuse all into a single filter (precludes support for helper functions,
+            // messaging, dynamic rates, most scheduling algorithms...)
+            str = FuseAll.fuse(str);
+
+//            System.err.println("// str after FuseAll");
+//            SIRToStreamIt.run(str, interfaces, interfaceTables, structs,
+//                  new SIRGlobal[0]);
+//            System.err.println("// END str after FuseAll");
+        }
         
         // get the execution counts from the scheduler
         HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
@@ -338,10 +395,14 @@ public class SpaceTimeBackend {
         System.out.println("Traces: " + traceGraph.length);
         partitioner.dumpGraph("traces.dot");
 
-        //We have to create multilevel splits and/or joins if their width
-        //is greater than the number of memories of the chip...
-        new MultiLevelSplitsJoins(partitioner, rawChip).doit();
-        partitioner.dumpGraph("traces-after-multi.dot");
+        if (KjcOptions.raw >= 0) {
+            // Compiling for RAW: 
+            
+            //We have to create multilevel splits and/or joins if their width
+            //is greater than the number of memories of the chip...
+            new MultiLevelSplitsJoins(partitioner, rawChip).doit();
+            partitioner.dumpGraph("traces-after-multi.dot");
+        }
         
         /*
          * System.gc(); System.out.println("MEM:
@@ -375,6 +436,13 @@ public class SpaceTimeBackend {
      
         //we can now use filter infos, everything is set
         FilterInfo.canUse();
+        
+        if (KjcOptions.standalone) {
+            EmitStandaloneCode.emitForSingleSlice(partitioner.getSliceGraph());
+
+            System.exit(0);
+        }
+        
         //create the space/time schedule object to be filled in by the passes 
         SpaceTimeSchedule spaceTimeSchedule = new SpaceTimeSchedule(partitioner, rawChip);
         //check to see if we need to add any buffering before splitters or joiners

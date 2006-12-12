@@ -19,6 +19,7 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     private int forLoopHeader = 0;
     
     /**
+     * Emit C code for a slice graph with exactly one FilterSlice
      * @param sliceGraph
      */
     public static void emitForSingleSlice(Slice[] sliceGraph) {
@@ -57,6 +58,7 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     }
     
     /**
+     * called for emitForSingleSlice after an object is set up.
      * @param slice 
      */
     public void singleSlice(Slice slice) {
@@ -69,14 +71,14 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
 
         
         
-        System.err.println("// str before codegen");
-        for (JFieldDeclaration field : filtercontent.getFields()) { 
-            SIRToStreamIt.run(field);
-        }
-        for (JMethodDeclaration method : filtercontent.getMethods()) {
-            SIRToStreamIt.run(method);
-        }
-        System.err.println("// END str before codegen");
+//        System.err.println("// str before codegen");
+//        for (JFieldDeclaration field : filtercontent.getFields()) { 
+//            SIRToStreamIt.run(field);
+//        }
+//        for (JMethodDeclaration method : filtercontent.getMethods()) {
+//            SIRToStreamIt.run(method);
+//        }
+//        System.err.println("// END str before codegen");
 
         
         FilterInfo filterinfo = FilterInfo.getFilterInfo(filternode);
@@ -107,16 +109,23 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         }
         
         // generate a main() function
-        generateMain(filterinfo);
+        generateMain();
         
     }
     
+    /**
+     * Standard code for front of the file here.
+     *
+     */
     private void generateHeader() {
         p.println("// Global Header Code Here");
         p.println("#include <math.h>");
     }
 
-    private void generateMain(FilterInfo filterinfo) {
+    /**
+     * Generate a "main" function.
+     */
+    private void generateMain() {
         p.println();
         p.println();
         p.println("// main() Function Here");

@@ -335,6 +335,7 @@ public class SpaceTimeBackend {
             
             // fuse all into a single filter (precludes support for helper functions,
             // messaging, dynamic rates, most scheduling algorithms...)
+            at.dms.kjc.rstream.ConvertFileFilters.doit(str);
             str = FuseAll.fuse(str);
 
 //            System.err.println("// str after FuseAll");

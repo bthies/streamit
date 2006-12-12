@@ -1,6 +1,8 @@
 package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.CType;
+import at.dms.kjc.JFieldDeclaration;
+import at.dms.kjc.JMethodDeclaration;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
@@ -19,7 +21,7 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  * previously existing structure.
  * @author jasperln
  */
-public class FilterContent {
+public class FilterContent implements SIRCodeUnit {
     private String name; //Filter name
     private JMethodDeclaration[] init,steady; //Init and steady method declarations
     private CType inputType,outputType; //Input and output types
@@ -643,6 +645,49 @@ public class FilterContent {
      */
     public void setInitWork(JMethodDeclaration meth) {
         init[0] = meth;
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void addField(JFieldDeclaration field) {
+        throw new AssertionError("should not call");
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void addFields(JFieldDeclaration[] fields) {
+        throw new AssertionError("should not call");
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void addMethod(JMethodDeclaration method) {
+        throw new AssertionError("should not call");
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void addMethods(JMethodDeclaration[] methods) {
+        throw new AssertionError("should not call");
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void setFields(JFieldDeclaration[] fields) {
+        this.fields = fields;
+        //throw new AssertionError("should not call");
+    }
+
+    /**
+     * Method exists to allow SIRCodeUnit interface but should not be called.
+     */
+    public void setMethods(JMethodDeclaration[] methods) {
+        throw new AssertionError("should not call");
     }
     
     /**

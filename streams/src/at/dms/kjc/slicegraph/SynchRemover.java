@@ -16,32 +16,36 @@ public class SynchRemover {
     public SynchRemover(GraphFlattener gf) {
         this.gf = gf;
         this.top = gf.top;
-        removeSplitterSync(top);
+        // First pass through merges and Splitter-Splitter combos and
+        // Joiner-Joiner combos
+        removeSplitterJoinerSync(top);
+        // Second pass eliminates Joiner-Splitter combos
         removeJoinerSplitterSynch(top);
     }
     
-    // Combines splitters. Recursively calls itself to traverse the entire graph.
-    private void removeSplitterSync(FlatNode current) {
+    // --------- Joiner-Joiner & Splitter-Splitter --------------------------
+    
+    // Combines splitters with splitters and joiners with joiners.
+    // Recursively calls itself to traverse the entire graph.
+    private void removeSplitterJoinerSync(FlatNode current) {
         if (current == null)
             return;
         // If it's a splitter, check if any of its children are also splitters,
         // and if so, merge them
         if (current.isSplitter()) {
             mergeSplitters(current);
-        } else if (current.isJoiner()) {
+        }
+        // same for joiners
+        else if (current.isJoiner()) {
             mergeJoiners(current);
         }
         
         // Either way, recursively call on all of the (possibly updated) children
         for (int i=0; i<current.edges.length; i++) {
-            removeSplitterSync(current.edges[i]);
+            removeSplitterJoinerSync(current.edges[i]);
         }
     }
-    
-    private void mergeJoiners(FlatNode joiner) {
         
-    }
-    
     // If the current splitter has any children that are also splitters, merge
     // them together. Recursively calls itself to merge long strings of splitters.
     private void mergeSplitters(FlatNode splitter) {
@@ -87,7 +91,7 @@ public class SynchRemover {
             for (int i=0; i<splitter.ways; i++) {
                 FlatNode child = splitter.edges[i];
                 int lcm = mult*splitter.weights[i];
-                if (child.isJoiner()) {
+                if (child.isSplitter()) {
                     for (int j=0; j<child.ways; j++) {
                         FlatNode grandchild = child.edges[j];
                         int newWeight = lcm/child.getTotalOutgoingWeights()*child.weights[j];
@@ -145,6 +149,88 @@ public class SynchRemover {
         }
     }
     
+    // Uses the same algorithm as for splitters to merge consecutive joiners
+    private void mergeJoiners(FlatNode joiner) {
+        FlatNode[] parents = joiner.incoming;
+        FlatNode[][] grandparents = new FlatNode[parents.length][];
+        
+        boolean hasParentJoiner = false;
+        int mult = 1;
+        
+        for (int i=0; i<parents.length; i++) {
+            FlatNode parent = parents[i];
+            if (parent.isJoiner()) {
+                hasParentJoiner = true;
+                mergeJoiners(parent);
+                
+                int lcm = lcm(parent.getTotalIncomingWeights(), joiner.incomingWeights[i]);
+                int partialMult = lcm/joiner.incomingWeights[i];
+                mult = lcm(mult, partialMult);
+                
+                grandparents[i] = makeRepeatedArray(parent.incoming, parent.incomingWeights,
+                                                    parent.getTotalIncomingWeights(), 1);
+            }
+        }
+        
+        if (!hasParentJoiner)
+            return;
+        else {
+            for (int i=0; i<joiner.inputs; i++) {
+                FlatNode parent = joiner.incoming[i];
+                int lcm = mult*joiner.incomingWeights[i];
+                if (parent.isJoiner()) {
+                    for (int j=0; j<parent.inputs; j++) {
+                        FlatNode grandparent = parent.incoming[j];
+                        int newWeight = lcm/parent.getTotalIncomingWeights()*parent.incomingWeights[j];
+                        grandparent.edges= new FlatNode[]{joiner};
+                        grandparent.weights = new int[]{newWeight};
+                    }
+                } else {
+                    parent.edges = new FlatNode[]{joiner};
+                    parent.weights = new int[]{mult*joiner.incomingWeights[i]};
+                }
+            }
+            
+            int sumWeights = joiner.getTotalIncomingWeights();
+            FlatNode[] repeatedOutput = 
+                makeRepeatedArray(parents, joiner.incomingWeights, 
+                                  sumWeights, mult);
+            
+            int offset = 0;
+            for (int i=0; i<parents.length; i++) {
+                FlatNode parent = parents[i];
+                if (parent.isJoiner()) {
+                    int count = 0;
+                    int weight = joiner.incomingWeights[i];
+                    FlatNode[] currGrandparent = grandparents[i];
+                    for (int j=0; j<mult; j++) {
+                        for (int k=0; k<weight; k++) {
+                            repeatedOutput[j*sumWeights + offset + k] =
+                                currGrandparent[count%currGrandparent.length];
+                            count++;
+                        }
+                    }
+                    parent.removeEdges();
+                    parent.removeIncoming();
+                }
+                offset += joiner.incomingWeights[i];
+            }
+            
+            int[] newWeights = null;
+            FlatNode[] newEdges = null;
+            createNewEdgesWeightsArray(repeatedOutput, newWeights, newEdges);
+            joiner.incoming = newEdges;
+            joiner.incomingWeights = newWeights;
+            joiner.inputs = newEdges.length;
+        }
+    }
+    
+    
+    // -------------------- Joiner-Splitter ----------------------------------
+    
+    // Eliminates Joiner-Splitter combos by directly connecting the nodes
+    // joined by the joiner to the nodes split by the splitter, bypassing
+    // the joiner and splitter
     private void removeJoinerSplitterSynch(FlatNode current) {
         // null graph, or reached the end of a branch => return
         if (current == null)
@@ -309,6 +395,9 @@ public class SynchRemover {
         splitter.removeEdges();
         splitter.removeIncoming();
     }
+    
+    
+    // ---------------------- Util methods ---------------------------------
     
     private static int lcm(int a, int b) {
         return a*b/gcd(a,b);

@@ -72,6 +72,12 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     /** Needed to pass info from assignment to visitNewArray * */
     protected JExpression lastLeft;  // LITtoC gave package visibility
 
+    
+    /** > 0 if in a for loop header during visit. 
+     * used by visitForStatement, visitEmptyStatement _only_ 
+     */
+    private int forLoopHeader = 0;
+
     /** Object with useful print routines **/
     protected CodegenPrintWriter p;
 
@@ -260,6 +266,78 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
     // ----------------------------------------------------------------------------
 
     /**
+     * Emit code for a "for" statement.
+     * 
+     */
+    // Tricky to get correct semicolons after init, cond, incr.
+    // For init and incr need some assistance:  
+    // o  for init, need cooperation from visitEmptyStatement to generate a ";" 
+    //    if inside a for loop header.
+    // o  for incr, need to remove a trailing semicolon if one occurs.
+    // o need statements to produce a final ';', but no '\n' after it.
+    
+    public void visitForStatement(JForStatement self,
+            JStatement init,
+            JExpression cond,
+            JStatement incr,
+            JStatement body) {
+
+        // be careful, if you return prematurely, decrement me
+        forLoopHeader++;
+
+        p.print("for (");
+        if (init != null) {
+            init.accept(this);
+            // the ; will print in a statement visitor
+        }
+
+        p.print(" ");
+        if (cond != null) {
+            cond.accept(this);
+        }
+        // cond is an expression so print the ;
+        p.print("; ");
+        if (incr != null) {
+            // set up a new CodegenPrintWriter printing to a string.
+            CodegenPrintWriter oldP = p;
+            p = new CodegenPrintWriter();
+            incr.accept(this);    // generate code for incr (as statement)
+            // get generated code
+            String str = p.getString();
+            p = oldP;
+            // leave off the trailing semicolon if there is one
+            if (str.endsWith(";")) {
+                p.print(str.substring(0, str.length()-1));
+            } else { 
+                p.print(str);
+            }
+        }
+        forLoopHeader--;
+        p.print(") ");
+
+        p.print("{");
+        p.indent();
+        body.accept(this);
+        p.outdent();
+        p.newLine();
+        p.print("}");
+    }
+   
+    /**
+     * Emits code for an empty statement.
+     * 
+     * Works with visitForStatment, if you override one then override both.
+     */
+    public void visitEmptyStatement(JEmptyStatement self) {
+        //if we are inside a for loop header, we need to print 
+        //the ; of an empty statement
+        if (forLoopHeader > 0) {
+            p.newLine();
+            p.print(";");
+        }
+    }
+   
+    /**
      * prints a while statement
      */
     public void visitWhileStatement(JWhileStatement self,
@@ -429,6 +507,10 @@ public abstract class ToCCommon extends SLIREmptyVisitor {
         decl.accept(this);
     }
 
+    /**
+     * Code generation for JEmittedText is the text itself.
+     * @param self
+     */
     public void visitEmittedText(JEmittedText self) {
         p.print(self.getText());
     }

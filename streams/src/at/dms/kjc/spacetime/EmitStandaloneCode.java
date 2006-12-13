@@ -190,9 +190,9 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         //we are assigning an array to an array in C, we want to do 
         //element-wise copy!!
     
-        if (!KjcOptions.absarray && 
-            ((left.getType() != null && left.getType().isArrayType()) ||
-             (right.getType() != null && right.getType().isArrayType()))) {
+        
+        if ((left.getType() != null && left.getType().isArrayType()) ||
+            (right.getType() != null && right.getType().isArrayType())) {
         
             arrayCopy(left, right);
             return;
@@ -213,10 +213,11 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     private void arrayCopy(JExpression left, 
                            JExpression right) 
     {
-        String ident = "";
+        //String ident = "";
         //this is used to find the new array expression
         //it is either a string for fields or JVarDef for locals
-        Object varDef = null;
+        //Object varDef = null;
+
         //the var access expression
         JExpression var = left;
     
@@ -226,16 +227,10 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         }
     
 
-        if (var instanceof JFieldAccessExpression) {
-            varDef = ((JFieldAccessExpression)var).getIdent();
-            ident = ((JFieldAccessExpression)var).getIdent();
-        }
-        else if (var instanceof JLocalVariableExpression) {
-            varDef = ((JLocalVariableExpression)var).getVariable();
-            ident = ((JLocalVariableExpression)var).getVariable().getIdent();
-        }
-        else 
-            throw new AssertionError("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
+        assert (var instanceof JFieldAccessExpression 
+                || var instanceof JLocalVariableExpression) :
+            "Assigning an array to an unsupported expression of type " +
+            left.getClass() + ": " + left;
     
         //  assert getDim(left.getType()) == getDim(right.getType()) :
         //    "Array dimensions of variables of array assignment do not match";
@@ -275,6 +270,11 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         return;
     }
 
+    /**
+     * Simplify code for variable definitions.
+     * Be able to emit "static" "const" if need be.
+     * Do not attempt to initialize variables to default values.
+     */
     @Override
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
@@ -297,13 +297,14 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
             if (expr != null && !(expr instanceof JNewArrayExpression)) {
                 p.print (" = ");
                 expr.accept (this);
-	    }
-	}
+            }
+        }
         p.print(";");
     }
 
     /**
-     * prints a method call expression
+     * Prints a method call expression.
+     * Handles float math methods getting prefixed or suffixed with "f".
      */
     public void visitMethodCallExpression(JMethodCallExpression self,
                                           JExpression prefix,
@@ -384,63 +385,5 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
 
         p.newLine();
         method = null;
-    }
-
-    /**
-     * prints a empty statement
-     */
-    @Override
-    public void visitEmptyStatement(JEmptyStatement self) {
-        //if we are inside a for loop header, we need to print 
-        //the ; of an empty statement
-        if (forLoopHeader > 0) {
-            p.newLine();
-            p.print(";");
-        }
-    }
-
-    @Override
-    public void visitForStatement(JForStatement self, 
-				  JStatement init,
-                                  JExpression cond, 
-				  JStatement incr, 
-				  JStatement body) {
-        // be careful, if you return prematurely, decrement me
-        forLoopHeader++;
-
-        p.print("for (");
-        if (init != null) {
-            init.accept(this);
-            // the ; will print in a statement visitor
-        }
-
-        p.print(" ");
-        if (cond != null) {
-            cond.accept(this);
-        }
-        // cond is an expression so print the ;
-        p.print("; ");
-        if (incr != null) {
-            EmitStandaloneCode l2c = new EmitStandaloneCode();
-            incr.accept(l2c);
-            // get String
-            String str = l2c.p.getString();
-            // leave off the trailing semicolon if there is one
-            if (str.endsWith(";")) {
-                p.print(str.substring(0, str.length() - 1));
-            } else {
-                p.print(str);
-            }
-        }
-
-        forLoopHeader--;
-        p.print(") ");
-
-        p.print("{");
-        p.indent();
-        body.accept(this);
-        p.outdent();
-        p.newLine();
-        p.print("}");
     }
 }

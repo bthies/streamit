@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.109 2006-12-08 18:46:54 dimock Exp $
+# $Id: strc,v 1.110 2006-12-13 17:27:23 dimock Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -137,11 +137,13 @@ exit(1) if !$fns;
 # generate executable if possible
 if (! $opts{noexecutable}) {
     my $executablename = $opts{output}  || "a.out";
-    if ($opts{simpleC} || $opts{uni}) {
+    if ($opts{simpleC} || 
+	$opts{uni} || 
+	($opts{standalone} && $opts{spacetime})) {
 	$fns = c_to_out($fns, $executablename);
-	} elsif ($opts{cluster}) {
-	    $fns = cluster_to_out($fns, $executablename);
-	} else { print %opts; print "\n"; }
+    } elsif ($opts{cluster}) {
+	$fns = cluster_to_out($fns, $executablename);
+    } else { print %opts; print "\n"; }
 }
 exit(1) if !$fns;
 exit(0);
@@ -157,7 +159,8 @@ exit(0);
 
 sub non_streamit_backend_defined {
     return $opts{library} || $opts{cluster} || $opts{raw} || $opts{rstream} ||
-	$opts{simpleC} || $opts{uni};
+	$opts{simpleC} || $opts{uni} || $opts{spacetime} || 
+	$opts{spacedynamic};
 }
 
 ###
@@ -629,6 +632,7 @@ sub java_to_c
 	return ["Makefile.streamit"] if $opts{cluster};	# makes multiple cpp files
 	return ["tile0.c"] if $opts{raw} && $opts{standalone};
 	return ["str.c"] if $opts{simpleC} || $opts{rstream};
+	return ["standalone.c"] if ($opts{standalone} && $opts{spacetime});
 	return [];
       }
   }
@@ -713,7 +717,8 @@ sub c_to_out
     my $incflags = "";
     my $libflags = "";
 
-    if ($opts{simpleC}) 
+    if ($opts{simpleC} || 
+	($opts{standalone} && $opts{spacetime})) 
     {
 	  $libs .= " -lm";
     }

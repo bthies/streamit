@@ -9,11 +9,11 @@ import java.util.Hashtable;
 /**
  * Final agressive filter optimization before code emission.
  * 
- * Unroller, Propagate, BlockFlattener, ArrayDestroyer (local), VarDeclRaiser on each method.
+ * Unroller, Propagate, BlockFlattener, ArrayDestroyer (locals), VarDeclRaiser on each method.
  * 
  * ArrayDestroyer (fields, if option set), DeadCodeElimination on the code unit as a whole.
  * 
- * Refactored out of cluster, raw, spacedynamic, spacetime backends
+ * Refactored out of cluster, raw, spacedynamic, spacetime backends.
  * Also existed in rstream backend but commented out.
  * 
  * @author Allyn Dimock
@@ -21,8 +21,9 @@ import java.util.Hashtable;
  */
 public class FinalUnitOptimize {
     /**
-     * Loop over all methods in a filter or other code unit optimizing all vetted by {@link #optimizeThisMethod()}
-     *
+     * Loop over all methods in a code unit optimizing all vetted by {@link #optimizeThisMethod(SIRCodeUnit,JMethodDeclaration) optimizeThisMethod}
+     * running standard optimization passes as mentioned in class header.
+     * 
      * @param unit  SIRCodeUnit to process.
      */
     
@@ -30,6 +31,14 @@ public class FinalUnitOptimize {
         ArrayDestroyer arrayDest=new ArrayDestroyer();
         for (JMethodDeclaration method : unit.getMethods()) {
             if (! optimizeThisMethod(unit,method)) {
+                // even if not optimizing this method otherwise,
+                // if we are going to destroy field arrays for the
+                // filter, we need to have information about all
+                // methods, which can only be accomplished currently
+                // by destroying local arrays in all the methods.
+                if (KjcOptions.destroyfieldarray) {
+                    method.accept(arrayDest);
+                }
                 continue;
             }
             Unroller unroller;

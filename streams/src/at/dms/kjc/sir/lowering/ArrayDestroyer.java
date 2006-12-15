@@ -20,13 +20,13 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     // XXX: seems to use with several key types
     private HashMap<Object, HashMap<Integer, Boolean>> targets;
     // XXX: value seems to be several different HashMap types.
-    private final HashMap<String, HashMap<Object, Boolean>> targetsField;
+    private final HashMap<String, HashMap<Integer, Boolean>> targetsField;
     private HashMap<Serializable, Serializable[]> replaced;
     //private HashMap varDefs;
     private boolean deadend;
 
     public ArrayDestroyer() {
-        targetsField=new HashMap<String, HashMap<Object, Boolean>>();
+        targetsField=new HashMap<String, HashMap<Integer, Boolean>>();
         replaced=new HashMap<Serializable, Serializable[]>();
         deadend=false;
     }
@@ -113,6 +113,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                          JBlock body) {
         replaced.clear();
         final boolean init=ident.startsWith("init");
+        // A.D.  WTF: could detect that parameters are arrays and eliminate them from
+        // consideration but not currently done...
         for (int i = 0; i < parameters.length; i++) {
             if (!parameters[i].isGenerated()) {
                 parameters[i].accept(this);
@@ -206,7 +208,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                             //if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
                             if(prefix instanceof JLocalVariableExpression) {
                                 JLocalVariable var=((JLocalVariableExpression)prefix).getVariable();
-                                if(!unsafe.containsKey(var))
+                                if(!(unsafe.containsKey(var) || (var instanceof JFormalParameter)))
                                     if(accessor instanceof JIntLiteral) {
                                         HashMap<Integer, Boolean> map=targets.get(var);
                                         if(map==null) {
@@ -222,9 +224,9 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
                                 String ident=((JFieldAccessExpression)prefix).getIdent();
                                 if(!unsafe.containsKey(ident))
                                     if(accessor instanceof JIntLiteral) {
-                                        HashMap<Object, Boolean> map=targetsField.get(ident);
+                                        HashMap<Integer, Boolean> map=targetsField.get(ident);
                                         if(map==null) {
-                                            map=new HashMap<Object, Boolean>();
+                                            map=new HashMap<Integer, Boolean>();
                                             targetsField.put(ident,map);
                                         }
                                         map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
@@ -274,54 +276,80 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         return self;
     }
     
+    /**
+     * Remove constant 1-dimensional arrays in fields.
+     * <i>After having all methods in a SIRCodeUnit accept this ArrayDestroyer</i>, you
+     * can invoke this method to replace constant fields of array type in this SIRCodeUnit
+     * with scalars.
+     * 
+     * @param unit  the SIRCodeUnit (something with fields and methods) to work on.
+     */
     
     public void destroyFieldArrays(SIRCodeUnit unit) {
-        replaced.clear();
-        Set<String> keySet=targetsField.keySet();
-        String[] names=new String[keySet.size()];
-        keySet.toArray(names);
-        for(int i=0;i<names.length;i++) {
-            String name=names[i];
-            //CType type=(CType)((HashMap)targetsField.get(name)).remove(Boolean.TRUE);
-            CType type=getType(name, unit.getFields());
-            if(type==null)
-                break;
-            // XXX: Want Set<Integer>, previosly reused keySet.
-            Set<Object>tmpSet = targetsField.get(name).keySet();
-            Integer[] ints=new Integer[tmpSet.size()];
-            tmpSet.toArray(ints);
-            int top=0;
-            for(int j=0;j<ints.length;j++) {
-                int newInt=ints[j].intValue();
-                if(newInt>top)
-                    top=newInt;
+        replaced.clear();  // no replacements yet
+        // loop over all array names from targetsField map.
+        for(String name : targetsField.keySet()) {
+
+            // array variable definition
+            JVariableDefinition var = getDefn(name, unit.getFields());
+            CType arrayType = var.getType();
+            if(arrayType==null) { continue; }
+            assert arrayType instanceof CArrayType;
+            // type of elements of array
+            CType baseType = ((CArrayType)arrayType).getBaseType();
+            JExpression init = var.getValue();
+            // array initialializer for each element, or null array.
+            JExpression[] elems;
+            if (init == null) {
+                elems = null; // default, but make it explicit
+            } else if (init instanceof JArrayInitializer) {
+                elems = ((JArrayInitializer)init).getElems();
+            } else {
+                throw new AssertionError("unexpected array field initialization " + init.getClass());
             }
+            
+            // set of array offsets guaranteed to be constant
+            // (some code above makes me think that his had better be all
+            // the offsets or else we will find more bugs)
+            Set<Integer> keySet = targetsField.get(name).keySet();
+            int top = Collections.max(keySet);
+            assert top + 1 == keySet.size();
+            // will be filled with names of fields guaranteed to be constant
             String[] newFields=new String[top+1];
-            for(int j=0;j<ints.length;j++) {
-                int newInt=ints[j].intValue();
-                JFieldDeclaration newField=toField(name,newInt,type);
+
+            // create new field names for all constant fields
+            for (int j : keySet) {
+                JFieldDeclaration newField = toField(name,j,baseType,elems);
                 unit.addField(newField);
-                newFields[newInt]=newField.getVariable().getIdent();
+                newFields[j] = newField.getVariable().getIdent();
             }
             replaced.put(name,newFields);
         }
-        JMethodDeclaration[] methods = unit.getMethods(); 
-        for(int i=0;i<methods.length;i++) {
-            JMethodDeclaration method=methods[i];
-            //if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork")))
-                method.getBody().accept(this);
+        
+        // Iterate over all methods, updating references to constant fields.
+        for(JMethodDeclaration method : unit.getMethods()) {
+            method.getBody().accept(this);
         }
     }
 
-    private CType getType(String name,JFieldDeclaration[] fields) {
+    /*
+     * return type of field with ident "name" in "fields".
+     */
+    private JVariableDefinition getDefn(String name,JFieldDeclaration[] fields) {
         for(int i=0;i<fields.length;i++) {
             JVariableDefinition var=fields[i].getVariable();
             if(var.getIdent().equals(name))
-                return var.getType();
+                return var;
         }
         return null;
     }
 
+    /**
+     * Create a variable definition or an element of a destroyed local array.
+     * @param var
+     * @param idx
+     * @return
+     */
     private JVariableDefinition toVar(JLocalVariable var,int idx) {
         JExpression init = null;
         // extract array initializer expression at given index.  Right
@@ -334,8 +362,20 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
         return new JVariableDefinition(null,0,((CArrayType)var.getType()).getBaseType(),var.getIdent()+"__destroyed_"+idx,init);
     }
 
-    private JFieldDeclaration toField(String name,int idx,CType type) {
-        return new JFieldDeclaration(null,new JVariableDefinition(null,0,((CArrayType)type).getBaseType(),name+"__destroyed_"+idx,null),null,null);
+    /**
+     * Create a variable definition and field declaration for an element of a destroyed field array.
+     * @param name        array name used to construct field name
+     * @param idx         offset in array
+     * @param type        base type of array
+     * @param init_vals   array of Jexpressions for initial vals, or null
+     * @return
+     */
+    private JFieldDeclaration toField(String name,int idx,CType type, JExpression[] init_vals) {
+        return new JFieldDeclaration(null,
+                new JVariableDefinition(null,0,
+                        type,
+                        name+"__destroyed_"+idx,
+                        init_vals == null? null : init_vals[idx]),  null,null);
     }
 
     public Object visitArrayAccessExpression(JArrayAccessExpression self,

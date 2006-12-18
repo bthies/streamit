@@ -229,7 +229,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
             keySet.toArray(vars);
             for(int i=0;i<vars.length;i++) {
                 JLocalVariable var=vars[i];
-                Integer[] ints=targets.get(var).keySet().toArray(new Integer[keySet.size()]);
+                Set<Integer> varKeySet = targets.get(var).keySet();
+                Integer[] ints = varKeySet.toArray(new Integer[varKeySet.size()]);
                 int top=0;
                 for(int j=0;j<ints.length;j++) {
                     int newInt=ints[j].intValue();

@@ -244,13 +244,15 @@ public class FusePipelines {
             if (partitions.size()==1) {
                 // if we are fusing everything, call fuse all due to the
                 // bad interface in FusePipe
-                SIRPipeline wrapper = FuseAll.fuse(self);
+                // For FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS we want
+                // to quietly ignore SIRFeedbackloop's.
+                SIRPipeline wrapper = FuseAll.fuse(self, mode != FUSE_PIPELINES_OF_VECTORIZABLE_STREAMS);
                 // should get back a wrapper with a single component
                 SIRStream child = wrapper.get(0);
                 // setup parent-child relationship
                 child.setParent(wrapper.getParent());
                 // check that fusion product stateless
-                checkState((SIRFilter)child);
+                checkState(child);
                 return child;
             } else {
                 // fuse the pipeline according to the recorded partitions
@@ -291,13 +293,15 @@ public class FusePipelines {
 
         /**
          * Checks that a fusion product is stateless.
+         * In case of non-strict fusion, may be called with a SIRFeedbackloop, which should be ignored.
          */
-        void checkState(SIRFilter filter) {
+        void checkState(SIRStream filter) {
             // in the event of stateless fusion, make sure we do not
-            // introduce state
-            if (mode == FUSE_PIPELINES_OF_STATELESS_FILTERS ||
-                mode == FUSE_PIPELINES_OF_STATELESS_STREAMS) {
-                assert !StatelessDuplicate.hasMutableState(filter) :
+            // introduce state.  
+            if (filter instanceof SIRFilter &&
+                (mode == FUSE_PIPELINES_OF_STATELESS_FILTERS ||
+                 mode == FUSE_PIPELINES_OF_STATELESS_STREAMS)) {
+                assert !StatelessDuplicate.hasMutableState((SIRFilter)filter) :
                         "Accidentally introduced state into fusion product " + filter;
             }
         }

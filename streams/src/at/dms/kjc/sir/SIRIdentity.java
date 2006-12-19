@@ -80,17 +80,20 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
         // work function
         
         JVariableDefinition tmp = new JVariableDefinition(null, 0, t, 
-                at.dms.kjc.sir.lowering.ThreeAddressCode.nextTemp(),
-                new SIRPopExpression(t));
+                at.dms.kjc.sir.lowering.ThreeAddressCode.nextTemp(), null);
         JVariableDeclarationStatement declarePopExpr = new JVariableDeclarationStatement(tmp);
         JLocalVariableExpression referencePoppedValue = new JLocalVariableExpression(tmp);
-
+        JStatement popIt = new JExpressionStatement(
+                new JAssignmentExpression(
+                        referencePoppedValue, 
+                        new SIRPopExpression(t)));
         
         JStatement work1body[];
         if (rate instanceof JIntLiteral && 
             ((JIntLiteral)rate).intValue() == 1) {
             work1body = new JStatement[] {
                     declarePopExpr,
+                    popIt,
                     new JExpressionStatement(null, 
                             new SIRPushExpression(
                                     referencePoppedValue, t), 
@@ -100,7 +103,8 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
         } else {
             JStatement pushPop = 
                 new JBlock(new JStatement[]{
-                        declarePopExpr,  
+                        declarePopExpr,
+                        popIt,
                         new JExpressionStatement(null,
                                 new SIRPushExpression(referencePoppedValue, t),
                                 null)});

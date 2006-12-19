@@ -15,9 +15,6 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     // variable name prefix for copying arrays.
     private static final String ARRAY_COPY = "__array_copy__";
 
-    // counts nesting of for loops to get separator correct
-    private int forLoopHeader = 0;
-    
     /**
      * Emit C code for a slice graph with exactly one FilterSlice
      * @param sliceGraph
@@ -81,7 +78,8 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
 //        System.err.println("// END str before codegen");
 
         
-        FilterInfo filterinfo = FilterInfo.getFilterInfo(filternode);
+        // may eventually want FilterInfo, not currently
+        //FilterInfo filterinfo = FilterInfo.getFilterInfo(filternode);
         
         this.hasBoolType = false;  // emitting C, not C++, so no "boolean"
 
@@ -213,11 +211,6 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
     private void arrayCopy(JExpression left, 
                            JExpression right) 
     {
-        //String ident = "";
-        //this is used to find the new array expression
-        //it is either a string for fields or JVarDef for locals
-        //Object varDef = null;
-
         //the var access expression
         JExpression var = left;
     
@@ -225,8 +218,8 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
         if (left instanceof JArrayAccessExpression) {
             var = CommonUtils.lhsBaseExpr((JArrayAccessExpression)left);
         }
-    
 
+        //copying arrays inside of structs is not currently supported.
         assert (var instanceof JFieldAccessExpression 
                 || var instanceof JLocalVariableExpression) :
             "Assigning an array to an unsupported expression of type " +
@@ -310,23 +303,12 @@ public class EmitStandaloneCode extends ToC implements SLIRVisitor,CodeGenerator
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
-        // RMR { math functions are converted to use their floating-point counterparts;
-        // to do this, some function names are prepended with a 'f', and others have an
-        // 'f' appended to them
-        if (at.dms.util.Utils.isMathMethod(prefix, ident) 
-            && (at.dms.util.Utils.mathMethodRequiresFloatPrefix(prefix, ident))) {
-            p.print("f");
+        // math functions are converted to use their floating-point counterparts;
+        if (at.dms.util.Utils.isMathMethod(prefix, ident)) {
+            p.print(at.dms.util.Utils.cMathEquivalent(prefix, ident));
+        } else {
             p.print(ident);
         }
-        else {
-            p.print(ident);
-
-            //we want single precision versions of the math functions
-            if (at.dms.util.Utils.isMathMethod(prefix, ident)) {
-                p.print("f");
-            }
-        }
-        // } RMR
         
         p.print("(");
         visitArgs(args, 0);

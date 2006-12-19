@@ -1,3 +1,4 @@
+// $Id$
 /**
  * 
  */
@@ -11,15 +12,13 @@ import java.util.*;
 
 /**
  * Mung code to allow naive vectorization.
- * 
- * <br/> $Id$
  * @author Allyn Dimock
  */
 public class VectorizeEnable {
     /**
      * Set to true to list sequences of vectorizable filters before fusion and individual vectorizable filters after fusion.
      */
-    public static boolean debugging = false;
+    public static boolean debugging = true;
     /**
      * Set to true to have Vectorizable print out reasons for not vectorizing a filter.
      */
@@ -53,7 +52,8 @@ public class VectorizeEnable {
 
         if (debugging) debugSelection(str); // debugging
         
-        str = FusePipelines.fusePipelinesOfVectorizableFilters(str);
+        //str = FusePipelines.fusePipelinesOfVectorizableFilters(str);
+        str = FusePipelines.fusePipelinesOfVectorizableStreams(str);
 
         if (debugging) debugSelection(str); // debugging
         
@@ -62,10 +62,16 @@ public class VectorizeEnable {
                     /* visit a filter */
                     public void visitFilter(SIRFilter self,
                                             SIRFilterIter iter) {
-                        if (Vectorizable.vectorizable(self)) {
-                            if (! KjcOptions.magic_net) {
+                        if (Vectorizable.vectorizable(self) &&
+                            Vectorizable.isUseful(self)) {
+//                            // X X X: Wretched abuse of a compiler flag that should
+//                            // not occur with vectorization, for purposes of testing.
+//                            if (! KjcOptions.magic_net) {
+                                if (debugging) {
+                                    System.err.println("Vectorizing " + self.getName());
+                                }
                                 Vectorize.vectorize(self);
-                            }
+//                            }
                             forScheduling(self);
                         }
                     }
@@ -100,11 +106,14 @@ public class VectorizeEnable {
         f.setPeek(peekrate + (veclen - 1) * poprate);
         f.setPop(poprate * veclen);
 
-//      alternative to vectorization for testing:
-        if (KjcOptions.magic_net) {
-            // use bogus switch to change multiplicity...
-            workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
-        } else {
+//        // X X X: Wretched abuse of a compiler flag that should
+//        // not occur with vectorization, for purposes of testing.
+//        if (KjcOptions.magic_net) {
+//            // alternative to vectorization for testing:
+//            workfn.setBody(new JBlock(new JStatement[]{at.dms.util.Utils.makeForLoop(workBody, veclen)}));
+//        } else {
+
+
         // fix number of pops for new rate.
         if (poprate > 0) {
             List<JStatement> stmts = workBody.getStatements();
@@ -127,7 +136,7 @@ public class VectorizeEnable {
                 workBody.addStatement(lastPos+1,popStatement);
             }
         }
-        }
+//        }
     }
     
     

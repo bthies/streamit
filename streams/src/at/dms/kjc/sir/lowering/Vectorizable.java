@@ -19,7 +19,7 @@ import java.util.*;
  * <br/>
  * Invoked from {@link VectorizeEnable#vectorizeEnable(SIRStream, Map) vectorizeEnable}
  * and from {@link at.dms.kjc.sir.lowering.fusion.FusePipelines#fusePipelinesOfVectorizableFilters(SIRStream) fusePipelinesOfVectorizableFilters}
- * There should be no need to call methods in this class directly.
+ * There should be no need to call methods in this class elsewhere.
  * @author Allyn Dimock
  *
  */
@@ -34,7 +34,7 @@ public class Vectorizable {
      * reason for disqualifying a filter
      */
      static final String[] reason = {""};
-
+     
      /**
      * Return set of naively vectorizable filters in stream.
      * See {@link #vectorizable(SIRFilter) vectorizable} for what makes a filter naively vectorizable.
@@ -171,8 +171,12 @@ public class Vectorizable {
      * </pre>
      * You can check as to whether there is any possibility of a loop-carried dependency
      * through fields by checking that (! StatelessDuplicate.hasMutableState(f)).
-     * <bt/>
+     * <b/>
      * Currently flow insensitive, context insensitive.
+     * <b/>
+     * Used without need for object state to check id a filter is data dependent.
+     * Is used, with need for object state, to determine number of vectorizable 
+     *  artihmetic ops in a vectorizable filter.
      * @param f : a filter to check.
      * @return true if no data-dependent branches or offsets. 
      */
@@ -198,9 +202,9 @@ public class Vectorizable {
             oldIdentSize = idents.size();
             for (JMethodDeclaration method : methods) {
                 method.accept(new SLIREmptyVisitor() {
-//                  found a peek or pop expression or propagated ident
+                    // found a peek or pop expression or propagated ident
                     private boolean flowsHere = false;
-//                  # surrounding scopes indicating dependence.
+                    // # surrounding scopes indicating dependence.
                     private int delicateLocation = 0;
 
                     // peek or pop: if is in a "delicate location" such as
@@ -317,7 +321,12 @@ public class Vectorizable {
                     public void visitCompoundAssignmentExpression(
                             JCompoundAssignmentExpression self, int oper,
                             JExpression left, JExpression right) {
-                        checkassign(left,right);
+                        if (! KjcOptions.cell_vector_library && oper == OPE_PERCENT)  {
+                            hasDepend[0] = true;
+                            reason[0] = "Unsupported operation %";
+                        } else {
+                            checkassign(left,right);
+                        }
                     }
 
                     @Override
@@ -427,25 +436,28 @@ public class Vectorizable {
                             body[i].accept(this);
                         }
                     }
-                   
-                    // assume any call or return with data could
-                    // cause a dependence.
-                    // since actually have all relevant fns, could
-                    // do interprocedural analysis.
-                    //
-                    // TODO: if a vectorizable function
-                    // (max, min, abs, sqrt) then allow here
-                    // and add support to vectorizer to use appropriate
-                    // intrinsic.
+ 
                     @Override
-                    public void visitArgs(JExpression[] args) {
-                        String oldReason = null;
-                        delicateLocation++;
-                        if (debugging) { oldReason = reason[0]; reason[0] = "call args"; }
-                        super.visitArgs(args);
-                        if (debugging) { reason[0] = oldReason; }
-                        delicateLocation--;
+                    public void visitMethodCallExpression(JMethodCallExpression self,
+                            JExpression prefix,
+                            String ident,
+                            JExpression[] args) {
+                        if (prefix != null) {
+                            prefix.accept(this);
+                        }
+                        // The following commits us to all Math functions.
+                        // could also have "if (at.dms.util.Utils.cellMathEquivalent(prefix, ident) != null)"
+                        // which would leave out some methods.
+                        if (KjcOptions.cell_vector_library && at.dms.util.Utils.isMathMethod(prefix, ident)) {
+                            // OK: 
+                            visitArgs(args);
+                        } else {
+                            hasDepend[0] = true;
+                            reason[0] = "Unsupported method call " + ident;
+                        }
                     }
+
+                    /** Dont allow return of vector type. */
                     @Override
                     public void visitReturnStatement(JReturnStatement self,
                                      JExpression expr) {
@@ -462,13 +474,18 @@ public class Vectorizable {
                     @Override
                     public void visitBitwiseComplementExpression(JUnaryExpression self,
                             JExpression expr) {
-                        String oldReason = null;
-                        delicateLocation++;
-                        if (debugging) { oldReason = reason[0]; reason[0] = "~"; }
-                        super.visitBitwiseComplementExpression(self,expr);
-                        if (debugging) { reason[0] = oldReason; }
-                        delicateLocation--;
+                        if (KjcOptions.cell_vector_library) {
+                            super.visitBitwiseComplementExpression(self,expr);
+                        } else { 
+                            String oldReason = null;
+                            delicateLocation++;
+                            if (debugging) { oldReason = reason[0]; reason[0] = "~"; }
+                            super.visitBitwiseComplementExpression(self,expr);
+                            if (debugging) { reason[0] = oldReason; }
+                            delicateLocation--;
+                        }
                     }
+                    
                     
                     @Override
                     // gcc does not automatically support shifts, so disallow until 
@@ -479,12 +496,16 @@ public class Vectorizable {
                             int oper,
                             JExpression left,
                             JExpression right) {
-                        String oldReason = null;
-                        delicateLocation++;
-                        if (debugging) { oldReason = reason[0]; reason[0] = "<<, >>, or >>>"; }
-                        super.visitShiftExpression(self,oper,left,right);
-                        if (debugging) { reason[0] = oldReason; }
-                        delicateLocation--;
+                        if (KjcOptions.cell_vector_library) {
+                            super.visitShiftExpression(self,oper,left,right);
+                        } else {
+                            String oldReason = null;
+                            delicateLocation++;
+                            if (debugging) { oldReason = reason[0]; reason[0] = "unsupported operation <<, >>, or >>>"; }
+                            super.visitShiftExpression(self,oper,left,right);
+                            if (debugging) { reason[0] = oldReason; }
+                            delicateLocation--;
+                        }
                     }
                     
                     // gcc does not support relational expressions on vector except
@@ -504,6 +525,8 @@ public class Vectorizable {
                     // Vectorize does not currently handle casts
                     // TODO: Vectorize should handle casts between same-width
                     // supported types (meaning 32-bit int and 32-bit float).
+                    // The problem is that Vectorize has not been fully adapted to
+                    // handle multiple vector types in one method.
                     @Override
                     public void visitCastExpression(JCastExpression self,
                             JExpression expr,
@@ -527,6 +550,20 @@ public class Vectorizable {
                         delicateLocation--;
                     }
                                   
+                    /** &&, !!, ==, != */
+                    @Override
+                    public void visitBinaryExpression(JBinaryExpression self,
+                            String oper,
+                            JExpression left,
+                            JExpression right) {
+                        String oldReason = null;
+                        delicateLocation++;
+                        if (debugging) { oldReason = reason[0]; reason[0] = oper; }
+                        super.visitBinaryExpression(self,oper,left,right);
+                        if (debugging) { reason[0] = oldReason; }
+                        delicateLocation--;
+                    }
+
                     /* mostly for checking lhs's. Return names of all arrays accessed in expression. */
                     private Set<String> arrayAccessIn(JExpression e) {
                         final Set<String> s = new HashSet<String>();
@@ -549,11 +586,64 @@ public class Vectorizable {
             for (String ident : idents) {
                 System.err.print(ident + " ");
             }
+            System.err.println();
         }
         // dependence found during setup.
         if (hasDepend[0]) {
             return true;
         }
+        return false;
+    }
+    
+    /**
+     * determine whether a stream may contain useful vector operations.
+     * <b/>
+     * Approximates as to whether a vectorizable stream contains any vector 
+     * arithmetic operations.
+     */
+    // internals: anything other than SIRIdentity or splitJoin reorderer
+    // is considered useful.
+    public static boolean isUseful(SIRStream str) {
+        if (str instanceof SIRPipeline) {
+            // a pipeline is useful if it has a useful sub-stream
+            SIRPipeline str1 = (SIRPipeline)str;
+            boolean useful1 = false;
+            for (SIRStream substr : str1.getSequentialStreams()) {
+                useful1 |= isUseful(substr);
+                if (useful1) break;
+            }
+            return useful1;
+        }
+        
+        if (str instanceof SIRSplitJoin) {
+            // a splitjoin is useful if it has a useful branch
+            SIRSplitJoin str1 = (SIRSplitJoin)str;
+            boolean useful1 = false;
+            for (SIRStream substr : str1.getParallelStreams()) {
+                useful1 |= isUseful(substr);
+                if (useful1) break;
+            }
+            return useful1;
+        }
+
+        if (str instanceof SIRFilter) {
+            // a filter is useful if it contains arithmetic
+            SIRFilter str1 = (SIRFilter)str;
+            if (str1 instanceof SIRIdentity) {
+                // an identity filter can contain no useful arithmetic.
+                return false;
+            }
+            // TODO: need to tie this back to at.dms.kjc.lowering.CollapseDataParallel pass
+            // dependent on text that it generates.
+            if (str1.getName().startsWith("Pre_CollapsedDataParallel")
+             || str1.getName().startsWith("Post_CollapsedDataParallel")) {
+                // A splitjoin reorderer: probably not useful.
+                return false;
+            }
+            return true;
+        }
+        
+        // a feedbackloop is not useful since it is not vectorizable.
         return false;
     }
 }

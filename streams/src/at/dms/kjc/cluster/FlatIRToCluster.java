@@ -1269,29 +1269,17 @@ public class FlatIRToCluster extends InsertTimers implements
                 p.print(name + "_");
         }
 
-        //we want single precision versions of the math functions
         boolean wrapping = false;
+        // math functions are converted to use their floating-point counterparts;
         if (Utils.isMathMethod(prefix, ident)) {
             // also insert profiling code for math functions
             wrapping = true;
             super.beginWrapper("FUNC_" + ident.toUpperCase());
-            // RMR { math functions are converted to use their floating-point
-            // counterparts; to do this, some function names are prepended 
-            // with a 'f', and others have an 'f' appended to them
-            if (Utils.isMathMethod(prefix, ident)) {
-                if (Utils.cppMathMethodRequiresFloatPrefix(prefix, ident)) {
-                    p.print("f");
-                    p.print(ident);
-                } else { // by default emit a float 'f' suffix on math
-                            // functions
-                    p.print(ident);
-                    p.print("f");
-                }
-            }
-
+            p.print(Utils.cppMathEquivalent(prefix, ident));
         } else {
             p.print(ident);
         }
+
 
         if (!Utils.isMathMethod(prefix, ident) && ident.indexOf("::") == -1) {
             // don't rename the built-in math functions

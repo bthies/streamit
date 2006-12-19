@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.44 2006-12-05 21:43:34 dimock Exp $
+ * $Id: Utils.java,v 1.45 2006-12-19 15:22:45 dimock Exp $
  */
 
 package at.dms.util;
@@ -27,9 +27,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import java.lang.reflect.Array;
-import java.util.Vector;
-import java.util.List;
-import java.util.LinkedList;
+import java.util.*;
 import java.io.Serializable;
 import java.math.BigInteger;
 
@@ -139,86 +137,177 @@ public abstract class Utils implements Serializable, DeepCloneable {
             // increment our offset
             offset += oldSubStr.length() - newSubStr.length();
         }
-
         // return new string
         return sb.toString();
     }
 
+
+    /**
+     * Store information needed to translate math method names during code emission.
+     * Should be extended to include the type information. (at.dms.kjc.CStdType.Float)
+     * @author dimock
+     *
+     */
+
+    private enum MathMethodInfo {
+        ACOS("acos", "acosf", "acosf", "acosf_v"),        // float -> float
+        ASIN("asin", "asinf", "asinf", "asinf_v"),        // float -> float
+        ATAN("atan", "atanf", "atanf", "atanf_v"),        // float -> float
+        // not supplied on cell but processed: atan2(x,y) => atanf_v(y/x)
+        ATAN2("atan2", "atan2f", "atan2f", null),         // float X float -> float
+        CEIL("ceil", "ceilf", "ceilf", "ceilf_v"),
+        COS("cos", "cosf", "cosf", "cosf_v"),             // float -> float
+        SIN("sin", "sinf", "sinf", "sinf_v"),             // float -> float
+        // not supplied on cell.  (exp(x) + exp(- x)) / 2
+        // or Sum n=0...  x**(2*n) / fact(2*n)
+        COSH("cosh", "coshf", "coshf", null),             // float -> float
+        // not supplied on cell.  (exp(x) - exp(- x)) / 2
+        // or Sum n=0...  x**(2*n + 1) / fact(2*n + 1)
+        SINH("sinh", "sinhf", "sinhf", null),             // float -> float
+        EXP("exp", "expf", "expf", "expf_v"),             // float -> float
+        FABS("fabs", "fabsf", "fabsf", "fabsf_v"),        // float -> float
+        // note int has %, vector int has fmod_i_v
+        FMOD("fmod", "fmodf", "fmodf", "fmodf_v"),        // float -> float
+        MODF("modf", "modf", "modf", "fmodf_v"),          // float X float* -> float
+        FREXP("frexp", "frexpf", "frexpf", "frexpf_v"),   // float X int* -> float
+        FLOOR("floor", "floorf", "floorf", "floorf_v"),   // float -> float
+        LOG("log", "logf", "logf", "logf_v"),             // float -> float
+        LOG10("log10", "log10f", "log10f", "log10f_v"),   // float -> float
+        POW("pow", "powf", "powf", "powf_v"),             // float X float -> float
+        // round(x) should be replaced with trunc(x+0.5) to match java behavior
+        // will still need casting to int.
+        ROUND("round", "roundf", "roundf", "roundf_v"),   // float X float -> float
+        // had been translated as rintf plus cast...
+        RINT("rint", "lrintf", "lrintf", "lrintf_v"),     // float -> int
+        SQRT("sqrt", "sqrtf", "sqrtf", "sqrtf_v"),        // float -> float
+        // not suplied on cell, (exp(x) - exp(- x)) / (exp(x) + exp(- x))
+        TANH("tanh", "tanhf", "tanhf", null),             // float -> float
+        TAN("tan", "tanf", "tanf", "tanf_v"),             // float -> float
+        // Some bad compromises follow:  These are used (in non-vector case)
+        // at int and float types, thus use the double versions to allow an int 
+        // to be cast, processed, and cast back without losing precision. 
+        ABS("abs", "fabs", "fabs", "fabsf_v"),            // double-> double (exc vector)
+        MAX("max", "maxf", "fmax", "fmaxf_v"),            // double-> double
+        MIN("min", "minf", "fmin", "fminf_v"),            // double -> double
+        ;
+        
+        MathMethodInfo(String streamit_name, String c_name, String cpp_name, String cell_name) {
+            this.streamit_name = streamit_name;
+            this.c_name = c_name;
+            this.cpp_name = cpp_name;
+            this.cell_name = cell_name;
+        }
+        
+        private String streamit_name; // just used for mapping from String to Enum
+        private String c_name;     // C equivalent
+        private String cpp_name;   // C++ equivalent
+        private String cell_name;  // Cell vector macro
+        
+        /** first field: name in streamit */
+        public String streamit_name() {return streamit_name;}
+        /** second field: name in C backends */
+        public String c_name() {return c_name;}
+        /** third field: name in C++ backends */
+        public String cpp_name() {return cpp_name;}
+        /** fourth field: name of vector version for cell */
+        public String cell_name() {return cell_name;}
+    }
+    
+    private static Map<String, MathMethodInfo> mathMethodMap;
+    
+    static {
+        mathMethodMap = new HashMap<String, MathMethodInfo>();
+        EnumSet<MathMethodInfo> allMathMethods = EnumSet.allOf(MathMethodInfo.class);
+        for (MathMethodInfo m : allMathMethods) {
+            mathMethodMap.put(m.streamit_name(), m);
+        }
+    }
+    
+//    private static Set<String> mathMethods;
+//    
+//
+//    static {
+//        mathMethods = new HashSet<String>();
+//        mathMethods.addAll(Arrays.asList(new String[]{
+//                "acos", "asin", "atan", "atan2", "ceil", "cos", "sin", "cosh", "sinh",
+//                "exp", "fabs", "abs", "max", "min", "modf", "fmod", "frexp", "floor", 
+//                "log", "log10", "pow", "round", "rint", "sqrt", "tanh", "tan"
+//        }));
+//    }
+
+    /**
+     * Is the passed method name (broken into prefix and identifier) a Java math method?
+     * Limited to those methods that we can emit code for...
+     * @param prefix JExpression that is method name prefix
+     * @param ident  String that is method name
+     * @return  whether or not method is a math method.
+     */
     public static boolean isMathMethod(JExpression prefix, String ident) 
     {
         if (prefix instanceof JTypeNameExpression &&
-            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
-       
-            (ident.equals("acos") ||
-             ident.equals("asin") ||
-             ident.equals("atan") ||
-             ident.equals("atan2") ||
-             ident.equals("ceil") ||
-             ident.equals("cos") ||
-             ident.equals("sin") ||
-             ident.equals("cosh") ||
-             ident.equals("sinh") ||
-             ident.equals("exp") ||
-             ident.equals("fabs") ||
-             // RMR { add abs() and max()
-             ident.equals("abs") ||
-             ident.equals("max") ||
-             // } RMR
-             ident.equals("min") ||
-             ident.equals("modf") ||
-             ident.equals("fmod") ||
-             ident.equals("frexp") ||
-             ident.equals("floor") ||        
-             ident.equals("log") ||
-             ident.equals("log10") ||
-             ident.equals("pow") ||
-             ident.equals("round") ||
-             ident.equals("rint") ||
-             ident.equals("sqrt") ||
-             ident.equals("tanh") ||
-             ident.equals("tan")))
+                ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+                /*mathMethods.contains(ident)*/ mathMethodMap.containsKey(ident)) {
             return true;
+        }
         return false;
     }
-    
-    /* RMR { the compiler currently uses the floating-point versions
-     * of the math functions and hence the math routines are renamed to
-     * their floating point counterparts: some math functions reqire a
-     * prefix 'f', and others require a postfix 'f' 
-     */
-    public static boolean mathMethodRequiresFloatPrefix(JExpression prefix, String ident) 
-    {
-        if (prefix instanceof JTypeNameExpression &&
-            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
-       
-            (ident.equals("abs")))
-            return true;
-        return false;
-    }
-    /* } RMR */
     
     /**
-     * Determine whether a math function whould be prefixed with 'f' if the emitted code is C++.
-     * <br/>
-     * The compiler currently uses the floating-point versions
-     * of the math functions and hence the math routines are renamed to
-     * their floating point counterparts:  some math functions require a prefix 'f'.
-     * <br/>
-     * Currently, any math functions that do not require a prefix 'f' require a suxxif 'f'.
+     * Return the name of a math method for vector processing using IBM's 
+     * vector headers for the Cell processor (or null if none)
+     * @param prefix Prefix portion of the method name
+     * @param ident  ident portion of the method name.
+     * @return name or null.
      */
-    public static boolean cppMathMethodRequiresFloatPrefix(JExpression prefix, String ident) 
-    {
+    public static String cellMathEquivalent(JExpression prefix, String ident) {
         if (prefix instanceof JTypeNameExpression &&
-            ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
-       
-            (ident.equals("abs") || ident.equals("max") || ident.equals("min")))
-            return true;
-        return false;
+                ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
+            MathMethodInfo mm = mathMethodMap.get(ident);
+            if (mm == null) return null;
+            return mm.cell_name;
+        }
+        return null; 
     }
+    
+    /**
+     * Return the name of a math method for emitting C code
+     * @param prefix Prefix portion of the method name
+     * @param ident  ident portion of the method name.
+     * @return name or null.
+     */
+    public static String cMathEquivalent(JExpression prefix, String ident) {
+        if (prefix instanceof JTypeNameExpression &&
+                ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
+            MathMethodInfo mm = mathMethodMap.get(ident);
+            if (mm == null) return null;
+            return mm.c_name;
+        }
+        return null; 
+    }
+    
+    /**
+     * Return the name of a math method for emitting C++ code
+     * @param prefix Prefix portion of the method name
+     * @param ident  ident portion of the method name.
+     * @return name or null.
+     */
+    public static String cppMathEquivalent(JExpression prefix, String ident) {
+        if (prefix instanceof JTypeNameExpression &&
+                ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math")) {
+            MathMethodInfo mm = mathMethodMap.get(ident);
+            if (mm == null) return null;
+            return mm.cpp_name;
+        }
+        return null; 
+    }
+    
+    
   
     /**
      * Returns whether all elements of an array of JExpressions are
      * JLiterals with the same value.
+     * @param arr 
+     * @return 
      */
     public static boolean isUniform(JExpression[] arr) {
         // ok to be empty

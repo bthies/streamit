@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSuperExpression.java,v 1.11 2006-10-27 20:48:55 dimock Exp $
+ * $Id: JSuperExpression.java,v 1.12 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -54,6 +54,14 @@ public class JSuperExpression extends JExpression {
     public CType getType() {
         return self.getType();
     }
+    
+    /**
+     * 
+     */
+    public void setType(CType type) {
+        self.setType(type);
+    }
+
 
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS

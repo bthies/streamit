@@ -58,6 +58,10 @@ public class SIRPopExpression extends JExpression {
         this.tapeType = type;
     }
     
+    public void setType(CType type) {
+        setTapeType(type);
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------

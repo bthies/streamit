@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryPromote.java,v 1.15 2006-10-27 20:48:55 dimock Exp $
+ * $Id: JUnaryPromote.java,v 1.16 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -57,6 +57,12 @@ public class JUnaryPromote extends JExpression {
      */
     public CType getType() {
         return type;
+    }
+    /**
+     * set the type being promoted to. 
+     */
+    public void setType(CType type) {
+        this.type = type;
     }
 
     /**

@@ -123,4 +123,10 @@ public class JVectorLiteral extends JExpression {
     public CType getType() {
         return type;
     }
+    
+    @Override
+    public void setType(CType type) {
+        assert type instanceof CVectorType;
+        this.type = (CVectorType)type;
+    }
 }

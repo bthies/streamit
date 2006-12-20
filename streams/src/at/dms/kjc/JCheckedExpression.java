@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCheckedExpression.java,v 1.12 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JCheckedExpression.java,v 1.13 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -54,6 +54,14 @@ public final class JCheckedExpression extends JExpression {
     public CType getType() {
         return checked.getType();
     }
+    
+    /**
+     * Delegates to checked expression.
+     */
+    public void setType(CType type) {
+        checked.setType(type);
+    }
+
 
     /**
      * Tests whether this expression denotes a compile-time constant (JLS 15.28).

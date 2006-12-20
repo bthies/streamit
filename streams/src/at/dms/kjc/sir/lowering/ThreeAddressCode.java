@@ -128,6 +128,12 @@ public class ThreeAddressCode {
      * Should be overridable for your needs, but you are more likely to override 
      * shouldConvertExpression(JExpression).
      * 
+     * Returns that a statement should be converted if any expression directly
+     * under the statement in the AST should be converted.  For instance, a "for"
+     * statement should be cinverted if its initialization of check needs conversion;
+     * but does not check the sub-statements that are the "for" body or the update, 
+     * since these could be converted directly.
+     * 
      * @param exp : Statement to check as to whether to convert to 3-address code.
      * @return true : override this to return what you need.
      */
@@ -248,6 +254,7 @@ public class ThreeAddressCode {
     private static int lastTemp = 0;
     /**
      * nextTemp returns a fresh variable name (hopefully)
+     * @return a fresh name.
      */
     public static String nextTemp() {
         lastTemp++;
@@ -455,8 +462,10 @@ public class ThreeAddressCode {
             } else {
                 List<JStatement> newstmts = new LinkedList<JStatement>();
                 JExpression v = convertOneExpr(newstmts, subexpr);
+                JExpression newexpr = constructor.mk(expr,v);
+                newexpr.setType(expr.getType());
                 newstmts.add(new JExpressionStatement(
-                        new JAssignmentExpression(tmp, constructor.mk(expr,v))));
+                        new JAssignmentExpression(tmp, newexpr)));
                 return newstmts;
             }
         }
@@ -490,8 +499,11 @@ public class ThreeAddressCode {
                         convertOneExpr(newstmts,subexp2)
                         : subexp2;
                 
+                JExpression newexpr = constructor.mk(expr,cvt1,cvt2);
+                newexpr.setType(expr.getType());
+               
                 newstmts.add(new JExpressionStatement(
-                        new JAssignmentExpression(tmp, constructor.mk(expr,cvt1,cvt2))));
+                        new JAssignmentExpression(tmp, newexpr)));
                 return newstmts;
             }
         }
@@ -571,12 +583,12 @@ public class ThreeAddressCode {
         }
 
         public List<JStatement> visitBinary(JBinaryExpression self, JLocalVariableExpression tmp) {
-            assert false : "BinaryExpression should be handles at subtypes";
+            assert false : "BinaryExpression should be handled at subtypes";
             return null;
         }
 
         public List<JStatement> visitBinaryArithmetic(JBinaryArithmeticExpression self, JLocalVariableExpression tmp) {
-            assert false : "BinaryArithmeticExpression should be handles at subtypes";
+            assert false : "BinaryArithmeticExpression should be handled at subtypes";
             return null;
         }
 
@@ -832,6 +844,7 @@ public class ThreeAddressCode {
             List<JExpression> newexprs = cvtdexprs.getSecond();
             JMethodCallExpression newself = new JMethodCallExpression(self.getTokenReference(),
                     self.getPrefix(),self.getIdent(),newexprs.toArray(new JExpression[newexprs.size()]));
+            newself.setType(self.getType());
             newstmts.add(new JExpressionStatement(new JAssignmentExpression(tmp,newself)));
             return newstmts;
         }

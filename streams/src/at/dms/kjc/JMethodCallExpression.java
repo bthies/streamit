@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.24 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JMethodCallExpression.java,v 1.25 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -107,6 +107,19 @@ public class JMethodCallExpression extends JExpression {
         //      return null;
     }
 
+    /**
+     * 
+     */
+    public void setType(CType type) {
+        if (method != null) {
+            method.setReturnType(type);
+        } else {
+            this.tapeType = type;
+        }
+    }
+
+    
+    
     /**
      * Returns true iff this expression can be used as a statement (JLS 14.8)
      */

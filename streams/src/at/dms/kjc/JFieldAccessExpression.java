@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.20 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JFieldAccessExpression.java,v 1.21 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -117,6 +117,17 @@ public class JFieldAccessExpression extends JExpression {
         return field.getType();
     }
 
+    /**
+     * Set type: delegates to the CField, or creates a new CSourceField if none.
+     */
+    public void setType(CType type) {
+        if (field != null) {
+            field.setType(type);
+        } else {
+            field = new CSourceField(null,0,ident,type,false);
+        }
+    }
+    
     /**
      * Returns the left-hand-side of the expression.
      */

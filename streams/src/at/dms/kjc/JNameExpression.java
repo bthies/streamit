@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNameExpression.java,v 1.15 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JNameExpression.java,v 1.16 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -88,6 +88,14 @@ public class JNameExpression extends JExpression {
      */
     public CType getType() {
         return null;
+    }
+
+    /**
+     * Names do not have type (thus not really expressions).
+     * Only call with null!
+     */
+    public void setType(CType type) {
+        assert type == null;
     }
 
     /**

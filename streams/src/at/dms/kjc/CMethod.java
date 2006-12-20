@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethod.java,v 1.10 2006-09-25 13:54:34 dimock Exp $
+ * $Id: CMethod.java,v 1.11 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -83,6 +83,13 @@ public abstract class CMethod extends CMember {
         return returnType;
     }
 
+    /**
+     * @param type to replace current return type.
+     */
+    public final void setReturnType(CType type) {
+        returnType = type;
+    }
+    
     /**
      * @return the type of this field
      */

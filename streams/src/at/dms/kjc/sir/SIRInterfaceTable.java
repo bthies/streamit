@@ -8,8 +8,10 @@ import at.dms.compiler.*;
  * relationship between a message-sending interface and a
  * message-receiving class.  It contains the name of the interface and
  * an ordered list of functions corresponding to the interface.
+ * 
+ * TODO: It seems an unfortunate accident in LIRToC made this a JExpression.
  */
-public class SIRInterfaceTable extends JExpression 
+public class SIRInterfaceTable extends JExpression
 {
     /**
      * The interface that the class implements.
@@ -57,6 +59,13 @@ public class SIRInterfaceTable extends JExpression
         return CStdType.Void;
     }
 
+    /**
+     * Better be identical to manifest type returned by getType().
+     */
+    public void setType(CType type) {
+        assert type == getType();
+    }
+    
     public JExpression analyse(CExpressionContext context)
     {
         at.dms.util.Utils.fail("Analysis of SIR nodes not supported yet.");

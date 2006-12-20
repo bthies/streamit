@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFloatLiteral.java,v 1.14 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JFloatLiteral.java,v 1.15 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -116,7 +116,7 @@ public class JFloatLiteral extends JLiteral {
     public CType getType() {
         return CStdType.Float;
     }
-
+    
     /**
      * Returns the constant value of the expression.
      */

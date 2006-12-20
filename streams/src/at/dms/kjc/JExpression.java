@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpression.java,v 1.11 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JExpression.java,v 1.12 2006-12-20 18:03:32 dimock Exp $
  */ 
  
 package at.dms.kjc;
@@ -55,6 +55,16 @@ public abstract class JExpression extends JPhylum {
     public abstract CType getType();
 
     /**
+     * Set the type of this expression. 
+     * Added 2006-12-20
+     * Use with extreme caution
+     * Currently used when recreating expressions to copy type from
+     * old expression to recreated expression.
+     * @param type the CType to set.
+     */
+    public abstract void setType(CType type);
+
+   /**
      * Tests whether this expression denotes a compile-time constant (JLS 15.28).
      *
      * @return  true iff this expression is constant

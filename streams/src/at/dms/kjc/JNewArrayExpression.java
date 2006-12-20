@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.18 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JNewArrayExpression.java,v 1.19 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -94,6 +94,14 @@ public class JNewArrayExpression extends JExpression {
      */
     public CType getType() {
         return type;
+    }
+
+    /**
+     * Must call with a CArrayType. 
+     */
+    public void setType(CType type) {
+        assert type instanceof CArrayType;
+        this.type = (CArrayType)type;
     }
 
     /**

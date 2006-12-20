@@ -21,6 +21,14 @@ public class SIRCreatePortal extends JExpression {
     public CType getType() {
         return CStdType.Void;
     }
+    
+    /**
+     * must be CStdType.Void
+     */
+    public void setType(CType type) {
+        assert type == CStdType.Void;
+    }
+
 
     
     public void genCode(CodeSequence code, boolean discardValue) {

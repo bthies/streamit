@@ -69,6 +69,14 @@ public class SIRPushExpression extends JExpression {
         return CStdType.Void;
     }
 
+    /**
+     * must be CStdType.Void (Not really an expression...).
+     */
+    public void setType(CType type) {
+        assert type == CStdType.Void;
+    }
+
+    
     public JExpression getArg() {
         return this.arg;
     }

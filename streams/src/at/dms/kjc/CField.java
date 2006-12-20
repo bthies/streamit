@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CField.java,v 1.10 2006-03-24 15:54:47 dimock Exp $
+ * $Id: CField.java,v 1.11 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -90,6 +90,18 @@ public abstract class CField extends CMember {
         }
     }
 
+    /**
+     * Set type.  Delegates to variable if the field has one.
+     * @param type  CType to set
+     */
+    public void setType(CType type) {
+        if (variable!=null) {
+            variable.setType(type);
+        } else {
+            this.type = type;
+        }
+    }
+    
     /**
      * @param   value       the value known at third pass
      */

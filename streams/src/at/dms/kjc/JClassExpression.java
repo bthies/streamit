@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassExpression.java,v 1.13 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JClassExpression.java,v 1.14 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -78,6 +78,14 @@ public class JClassExpression extends JExpression {
         return CStdType.Class;
     }
 
+    /**
+     * No-op: class has manifest type {@link CStdType#Class}.
+     */
+    public void setType(CType type) {
+        //
+    }
+
+    
     /**
      * Return the type this is a class expression for
      * @return the type this is a class expression for

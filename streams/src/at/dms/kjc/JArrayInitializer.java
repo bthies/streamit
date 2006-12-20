@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.16 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JArrayInitializer.java,v 1.17 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -67,6 +67,14 @@ public class JArrayInitializer extends JExpression {
         return type;
     }
 
+    /**
+     * Must be called with a CArrayType.
+     */
+    public void setType(CType type) {
+        assert type instanceof CArrayType;
+        this.type = (CArrayType)type;
+    }
+    
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------

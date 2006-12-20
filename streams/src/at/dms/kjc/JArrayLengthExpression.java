@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayLengthExpression.java,v 1.14 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JArrayLengthExpression.java,v 1.15 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -54,6 +54,13 @@ public class JArrayLengthExpression extends JExpression {
      */
     public CType getType() {
         return CStdType.Integer;
+    }
+    
+    /**
+     * setType is a no-op since array length has manifest type of CStdType.Integer.
+     */
+    public void setType(CType type) {
+        //
     }
     
     public JExpression getPrefix() { return prefix; }

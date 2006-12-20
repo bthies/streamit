@@ -80,6 +80,14 @@ public class SIRRangeExpression extends JExpression {
     public CType getType() {
         return CStdType.Integer;
     }
+    
+    /**
+     * must be CStdType.Integer
+     */
+    public void setType(CType type) {
+        assert type == CStdType.Integer;
+    }
+
 
     /**
      * Accepts the specified visitor.

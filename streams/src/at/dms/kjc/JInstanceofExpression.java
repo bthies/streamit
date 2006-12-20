@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JInstanceofExpression.java,v 1.11 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JInstanceofExpression.java,v 1.12 2006-12-20 18:03:33 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -61,6 +61,14 @@ public class JInstanceofExpression extends JExpression {
      */
     public CType getType() {
         return CStdType.Boolean;
+    }
+    
+    /**
+     * Manifest type CStdType.Boolean; do not set to anything else.
+     */
+    
+    public void setType(CType type) {
+        assert type == getType();
     }
 
     // ----------------------------------------------------------------------

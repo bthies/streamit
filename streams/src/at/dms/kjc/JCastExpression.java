@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCastExpression.java,v 1.14 2006-10-27 20:48:54 dimock Exp $
+ * $Id: JCastExpression.java,v 1.15 2006-12-20 18:03:32 dimock Exp $
  */
 
 package at.dms.kjc;
@@ -60,6 +60,13 @@ public class JCastExpression extends JExpression {
      */
     public CType getType() {
         return dest;
+    }
+
+    /**
+     * Sets type being cast to.
+     */
+    public void setType(CType type) {
+        this.dest = type;
     }
 
     public JExpression getExpr() {

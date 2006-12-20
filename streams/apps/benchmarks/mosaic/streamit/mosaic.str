@@ -1,0 +1,200 @@
+/*StreamIT program designed to 
+
+INSERT NEW COMMENTS HERE -> CHANGE FROM JUST FEATURE EXTRACTION TO CORRELATION TOO
+take in a ppm file, extract significant
+features according to the Kanade-Lucas-Tomasi (KLT) algorithm, and 
+print out a ppm where those features are highlighted.
+
+It also 
+*/
+
+/*compared to Feature 9-26, we added more comments*/
+
+/*struct for each pixel of an image, including the yiq values, its minor eigen
+value (if set), and its x and y coordinates indicated by 'ex' and 'yi'*/
+
+struct yiqStruct{
+
+    float y;
+    float i;
+    float q;
+    float eigen;
+    int ex;
+    int yi;
+}
+
+struct bestFeatures{
+
+	int x;
+	int y;
+	float val;
+
+}
+
+/*this struct is for gradient sums.  each pixel has a corresponding patch for which
+the gradient is calculated.  this is done by taking each pixel, finding the gxx, gyy, and gxy,
+and summing these values down a column.  then the values from each column within the patch are
+added up, and this way a total value is arrived at for each pixel.  we generate a 2x2 matrix,
+[gxx gxy; gxy gyy] and then find the eigenvalues to deem the original pixel's worth with respect
+to tracking value.
+*/
+
+/*the Gstruct is a struct used for gradient calculations during the feature extraction process.*/
+
+struct Gstruct{
+
+    float gxx;
+    float gyy;
+    float gxy;
+
+}
+
+// static {
+// 	int width;
+// 	int height;
+// 	init {
+// 	width = 341;
+// 	height = 288;
+// 	}
+// }
+
+/*~~~~~~~~~~~~~~~~~~~
+~~~~MAIN PIPELINE~~~~
+~~~~~~~~~~~~~~~~~~~*/
+
+/*Here we specify parameters that are hard-coded; perhaps later we can deal with these more
+flexibly*/
+
+void->void pipeline mosaic{
+
+	int imageWidth = 320; // width of the ppm image
+	int imageHeight = 240; // height of the ppm image
+	int patchsize = 11; // must be odd-valued -- 
+					// the size of each feature square's side
+	int startx = patchsize + 1; 
+	int starty = patchsize + 1;
+    	int winWidth = imageWidth - patchsize - startx - 1; 
+	int winHeight = imageHeight - patchsize - starty - 1 ;
+	int iters = 20;
+
+	float iweight = 1.0; 
+	float qweight = 1.0;
+	bestFeatures[iters] best;
+
+	boolean valsOK = true;
+
+	yiqStruct[imageWidth][imageHeight] yiqMatrix;
+	Gstruct[imageWidth + patchsize - 1] Garray;	
+	
+	add FileReader<int>("cheese.bin"); 
+	add RGB2YIQ();
+	add makeMatrix(yiqMatrix, imageWidth, imageHeight);
+	add featureExtraction(Garray, startx, starty, imageWidth, imageHeight, 
+					winWidth, winHeight,patchsize, valsOK,
+					iweight, qweight, iters, best);
+	add unmakeMatrix(yiqMatrix, imageWidth, imageHeight);
+	add YIQ2RGB();	
+	add FileWriter<int>("basier.bin");
+}
+
+/*~~~~~~~~~~~~~
+~~~~RGB2YIQ~~~~
+~~~~~~~~~~~~~*/
+
+/*
+This takes in a stream of ints from, say, a .bin file, that come as R,G,and B values for each pixel.
+This converts those values to YIQ values and pushes them, 3 at a time, into a struct that is easier
+to deal with.
+*/
+
+int->yiqStruct filter RGB2YIQ()
+{ 
+	yiqStruct yiqPixel;
+		
+	work pop 3 peek 3 push 1
+	{	yiqPixel.y = peek(0) * 0.299 + peek(1) * 0.587 + peek(2) * 0.114;
+		yiqPixel.i = peek(0) * 0.596 - peek(1) * 0.275 - peek(2) * 0.321;
+		yiqPixel.q = peek(0) * 0.212 - peek(1) * 0.523 + peek(2) * 0.311;
+		push(yiqPixel);
+		pop();pop();pop();
+	}
+}
+
+
+/*~~~~~~~~~~~~~
+~~~~YIQ2RGB~~~~
+~~~~~~~~~~~~~*/
+
+/*
+This takes in a stream of structs, with each struct having the values y,i,and q, of a pixel 
+in the original image, and converts those to rgb values, and then pushes those values
+individually into the stream, effectively performing the inverse process of the 
+rgb2yiq function.
+*/
+
+yiqStruct->int filter YIQ2RGB()
+{ 
+	work pop 1 push 3
+	{
+		yiqStruct val = pop();
+
+		int temp1 = (int)(val.y + val.i*0.956 + val.q*0.621);
+		int temp2 = (int)(val.y - val.i*0.272 - val.q*0.647);
+		int temp3 = (int)(val.y - val.i*1.105 + val.q*1.702);
+	
+		push(temp1);
+		push(temp2);
+		push(temp3);
+	}
+}
+
+/*~~~~~~~~~~~~~~~~
+~~~~makeMatrix~~~~
+~~~~~~~~~~~~~~~~*/
+/*gets an incoming stream of floats, in the order y,i,q, and puts all
+of them into a matrix where each matrix element is a struct
+of the type 'yiqStruct'*/
+
+yiqStruct->yiqStruct[imageWidth][imageHeight] filter makeMatrix(
+			yiqStruct[imageWidth][imageHeight] yiqMatrix, int imageWidth, int imageHeight)
+{
+
+    work pop imageHeight*imageWidth push 1 {
+	for(int i = 0; i < imageHeight; i++){
+		  for(int  j = 0; j < imageWidth; j++){
+		       yiqMatrix[j][i] = pop();
+		       yiqMatrix[j][i].ex = j;
+		       yiqMatrix[j][i].yi = i;			
+		  }
+	}
+	push(yiqMatrix);
+    }
+}
+
+/*~~~~~~~~~~~~~~~~~~
+~~~~unmakeMatrix~~~~
+~~~~~~~~~~~~~~~~~~*/
+
+/*gets an incoming matrix of yiqStructs, and converts them to a stream of y,i,q, floats*/
+/*this inverts the action of the makeMatrix filter*/
+
+yiqStruct[imageWidth][imageHeight]->yiqStruct filter unmakeMatrix(
+			yiqStruct[imageWidth][imageHeight] yiqMatrix, int imageWidth, int imageHeight)
+{
+	work pop 1 push imageHeight*imageWidth {
+
+		 for(int i = 0; i < imageHeight; i++){
+		  for(int  j = 0; j < imageWidth; j++){
+			       push(yiqMatrix[j][i]);
+			
+		  }}
+		pop();	
+	}
+}
+
+
+
+
+
+
+

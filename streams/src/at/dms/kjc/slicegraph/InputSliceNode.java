@@ -207,6 +207,10 @@ public class InputSliceNode extends SliceNode {
     public boolean oneInput() {
         return (sources.length == 1);
     }
+    
+    public boolean isJoiner() {
+        return sources.length >= 2;
+    }
 
     public Edge getSingleEdge() {
         assert oneInput() : "Calling getSingeEdge() on InputSlice with less/more than one input";

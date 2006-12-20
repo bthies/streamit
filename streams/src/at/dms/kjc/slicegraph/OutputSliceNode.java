@@ -267,6 +267,18 @@ public class OutputSliceNode extends SliceNode {
     public boolean noOutputs() {
         return weights.length == 0;
     }
+    
+    public boolean isDuplicateSplitter() {
+        return (weights.length == 1 && dests.length == 1 && dests[0].length >= 2);
+    }
+    
+    public boolean isRRSplitter() {
+        return (weights.length >=2 && dests.length >= 2);
+    }
+    
+    public boolean isSplitter() {
+        return (isDuplicateSplitter() || isRRSplitter());
+    }
 
     /**
      * return an iterator that iterates over the inputslicenodes in descending

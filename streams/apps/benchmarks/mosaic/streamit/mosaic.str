@@ -8,7 +8,31 @@ print out a ppm where those features are highlighted.
 It also 
 */
 
+/*12/20/06 - note that many of the array values that were static vars
+had to be changed to hard-coded numbers like 320 (imageWidth) and 
+240 (imageHeight) and 20 (iters)*/
+
+
 /*compared to Feature 9-26, we added more comments*/
+
+/**************
+****GLOBALS****
+**************/
+
+static {
+
+
+int imageWidth = 320; // width of the ppm image
+int imageHeight = 240; // height of the ppm image
+int iters = 20;
+	init {}
+
+}
+
+/**************
+****STRUCTS****
+**************/
+
 
 /*struct for each pixel of an image, including the yiq values, its minor eigen
 value (if set), and its x and y coordinates indicated by 'ex' and 'yi'*/
@@ -21,6 +45,7 @@ struct yiqStruct{
     float eigen;
     int ex;
     int yi;
+
 }
 
 struct bestFeatures{
@@ -28,6 +53,14 @@ struct bestFeatures{
 	int x;
 	int y;
 	float val;
+
+}
+
+struct imageAndFeatures{
+
+	yiqStruct[320][240] myImage;
+	bestFeatures[20] myBest;
+	
 
 }
 
@@ -49,14 +82,6 @@ struct Gstruct{
 
 }
 
-// static {
-// 	int width;
-// 	int height;
-// 	init {
-// 	width = 341;
-// 	height = 288;
-// 	}
-// }
 
 /*~~~~~~~~~~~~~~~~~~~
 ~~~~MAIN PIPELINE~~~~
@@ -67,24 +92,21 @@ flexibly*/
 
 void->void pipeline mosaic{
 
-	int imageWidth = 320; // width of the ppm image
-	int imageHeight = 240; // height of the ppm image
 	int patchsize = 11; // must be odd-valued -- 
 					// the size of each feature square's side
 	int startx = patchsize + 1; 
 	int starty = patchsize + 1;
     	int winWidth = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1 ;
-	int iters = 20;
 
 	float iweight = 1.0; 
 	float qweight = 1.0;
-	bestFeatures[iters] best;
+	bestFeatures[20] best;
 
 	boolean valsOK = true;
 
-	yiqStruct[imageWidth][imageHeight] yiqMatrix;
-	Gstruct[imageWidth + patchsize - 1] Garray;	
+	yiqStruct[320][240] yiqMatrix;
+	Gstruct[320 + patchsize - 1] Garray;	
 	
 	add FileReader<int>("cheese.bin"); 
 	add RGB2YIQ();
@@ -92,9 +114,24 @@ void->void pipeline mosaic{
 	add featureExtraction(Garray, startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
 					iweight, qweight, iters, best);
+	add tempBackToJustImage();
+
 	add unmakeMatrix(yiqMatrix, imageWidth, imageHeight);
 	add YIQ2RGB();	
 	add FileWriter<int>("basier.bin");
+}
+
+/*TEMPBACKTOJUSTIMAGE*/
+
+imageAndFeatures->yiqStruct[320][240]
+	filter tempBackToJustImage(){
+
+	work pop 1 push 1
+	{
+		imageAndFeatures tempIAndF = pop();
+		push(tempIAndF.myImage);
+	}	
+	
 }
 
 /*~~~~~~~~~~~~~
@@ -155,8 +192,8 @@ yiqStruct->int filter YIQ2RGB()
 of them into a matrix where each matrix element is a struct
 of the type 'yiqStruct'*/
 
-yiqStruct->yiqStruct[imageWidth][imageHeight] filter makeMatrix(
-			yiqStruct[imageWidth][imageHeight] yiqMatrix, int imageWidth, int imageHeight)
+yiqStruct->yiqStruct[320][240] filter makeMatrix(
+			yiqStruct[320][240] yiqMatrix, int imageWidth, int imageHeight)
 {
 
     work pop imageHeight*imageWidth push 1 {
@@ -178,8 +215,8 @@ yiqStruct->yiqStruct[imageWidth][imageHeight] filter makeMatrix(
 /*gets an incoming matrix of yiqStructs, and converts them to a stream of y,i,q, floats*/
 /*this inverts the action of the makeMatrix filter*/
 
-yiqStruct[imageWidth][imageHeight]->yiqStruct filter unmakeMatrix(
-			yiqStruct[imageWidth][imageHeight] yiqMatrix, int imageWidth, int imageHeight)
+yiqStruct[320][240]->yiqStruct filter unmakeMatrix(
+			yiqStruct[320][240] yiqMatrix, int imageWidth, int imageHeight)
 {
 	work pop 1 push imageHeight*imageWidth {
 

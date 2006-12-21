@@ -4,12 +4,12 @@
 ~~~~featureExtraction~~~~
 ~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-yiqStruct[imageWidth][imageHeight]->yiqStruct[imageWidth][imageHeight] 
+yiqStruct[320][240]->imageAndFeatures
 		pipeline featureExtraction(Gstruct[cushionedWidth] Garray, 
 					int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
 					int patchsize, boolean valsOK,
-					float iweight, float qweight, int iters, bestFeatures[iters] best)
+					float iweight, float qweight, int iters, bestFeatures[20] best)
 {
 	add generateMinorEigs(Garray, startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
@@ -60,7 +60,7 @@ row subsequently until finished.
 */
 
 
-yiqStruct[imageWidth][imageHeight]->yiqStruct[imageWidth][imageHeight] 
+yiqStruct[320][240]->yiqStruct[320][240] 
 		filter generateMinorEigs(Gstruct[cushionedWidth] Garray, 
 					int startx, int starty, 
 					int imageWidth, int imageHeight, int winWidth, int winHeight, 
@@ -71,7 +71,7 @@ yiqStruct[imageWidth][imageHeight]->yiqStruct[imageWidth][imageHeight]
 	//actually, since patchsizes are odd, it's half-patchsize - 1/2 cushion plus one). 
 	work pop 1 push 1
 	{
-	yiqStruct[imageWidth][imageHeight] img = pop();		  	
+	yiqStruct[320][240] img = pop();		  	
 	if(
 		(startx-((patchsize-1)/2 + 1))<0 || 
 		(starty-((patchsize-1)/2 + 1))<0 ||
@@ -217,13 +217,13 @@ yiqStruct[imageWidth][imageHeight]->yiqStruct[imageWidth][imageHeight]
 in the main pipeline) set.  now, we have to rank them, and also make sure that the pixels we do pick
 do not exist in overlapping patches.*/
 
-yiqStruct[imageWidth][imageHeight]->yiqStruct[imageWidth][imageHeight] 
-filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, int iters, bestFeatures[iters] best){
+yiqStruct[320][240]->imageAndFeatures
+filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, int iters, bestFeatures[20] best){
 
 	work pop 1 push 1
 	{
 
-	yiqStruct[imageWidth][imageHeight] img = pop();
+	yiqStruct[320][240] img = pop();
 
 	for(int k = 0; k < iters; k++){	
 	for(int j = 0; j< imageHeight; j++){
@@ -263,6 +263,11 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 	for(int i = 0; i< iters; i++){
 	println(best[i].y);}
 */
+
+	//This section prints out squares where the best patches lie	
+
+	/*
+
 	for(int k=0; k < iters; k++){
 
 	for(int i=best[k].x-(patchsize-1)/2; i<=best[k].x+(patchsize-1)/2; i++)
@@ -292,6 +297,16 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 		img[i][best[k].y+(patchsize-1)/2].y = 255*0.114;
 		img[i][best[k].y+(patchsize-1)/2].i = 255*-0.322;
 		img[i][best[k].y+(patchsize-1)/2].q = 255*0.311;
-	}}
-	push(img);
+	}
+	}
+
+	*/ 
+
+	//concatenate the current yiqStruct matrix with the array of best values;
+		
+	imageAndFeatures featExtOutput;
+	featExtOutput.myImage = img;
+	featExtOutput.myBest = best;
+
+	push(featExtOutput);
 }}

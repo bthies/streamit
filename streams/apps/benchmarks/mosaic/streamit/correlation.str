@@ -1,0 +1,161 @@
+imageAndFeatures->imageAndFeatures
+		filter correlation(int startx, int starty, 
+					int imageWidth, int imageHeight, int winWidth, int winHeight, 
+					int patchsize, boolean valsOK, int iters, int w)
+{
+	
+	work pop 1 peek 1 push 2
+	{
+	
+		int r = (w-1)/2;
+	
+		imageAndFeatures imAndFeat1 = pop();
+		imageAndFeatures imAndFeat2 = peek(0);
+		
+		yiqStruct[320][240] im1 = imAndFeat1.myImage;
+		yiqStruct[320][240] im2 = imAndFeat2.myImage;
+
+		bestFeatures[20] feat1 = imAndFeat1.myBest;
+		bestFeatures[20] feat2 = imAndFeat2.myBest;
+
+		float[20][20] corrMatrix = -9999999;
+		
+		float[w][w] w1;
+		float[w][w] w2;
+
+		//first, calculate the correlation matrix
+		
+		for(int i=1; i<20; i++)
+		{ 	if(feat1[i].x>r & feat1[i].x<imageWidth+1-r
+			  &feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
+			{	float stanDevW1 = 0;
+				//make w1, which is a windowof width w around the feature considered in im1
+				for(int m = -r; m <= r; m++)
+				{
+					for(int n = -r; n<= r; n++)
+					{	
+						w1[m+r][n+r] = im1[feat1.x + m][feat1.y + n].y;
+						stanDevW1 = stanDevW1 + w1[m+r][n+r]*w1[m+r][n+r];
+					}
+				}
+				stanDevW1 = sqrt(stanDevW1);
+				for(int j=1; j<20 ; j++)
+				{	
+					if(feat2[j].x>r & feat2[j].x<imageWidth+1-r
+								  &feat1[i].y>r & feat1[i].y<imageHeight+1-r) // check if the feature is in bounds
+					{
+						float stanDevW2 = 0;	
+						//make w2, which is a window of width w around the feature considered in im2 
+						for(int s = -r; s <= r; s++)
+						{
+							  for(int t = -r; t<= r; t++)
+						  	  {	
+								w2[s+r][t+r] = im2[feat2.x + s][feat2.y + j].y;
+								stanDevW2 = stanDevW2 + w2[s+r][t+r]*w2[s+r][t+r];
+						  	  }
+						}
+						stanDevW2 = sqrt(stanDevW2);
+						float elementWiseProduct = 0;
+						for(int s = -r; s <= r; s++)
+						{
+							for(int t = -r; t<= r; t++)
+							{	
+								elementWiseProduct = elementWiseProduct + w1[s+r][t+r]*w2[s+r][t+r];
+							}
+						}
+			
+						corrMatrix[i][j] = elementWiseProduct/stanDevW1/stanDevW2;		
+					} // ends second 'if' statement
+				} //ends inner j loop
+			} // ends first 'if statement
+		} //ends outer i loop	
+		
+		// now, use the correlation matrix to find features that 'like' each other
+		
+		int[20] bestRows = 0;
+		int[20] bestCols = 0;						
+		
+		float currRowBestVal = 0;
+		float currColBestVal = 0;
+		//find greatest values in each row and their numbers
+		for(int i = 0; i < 20; i++){
+			currRowBestVal = 0;
+			for(int j = 0; j < 20; j++){
+				if(corrMatrix[i][j] > currRowBestVal){
+					currRowBestVal = corrMatrix[i][j];
+					bestRows[i] = j;
+				} // end if
+			} // end inner for						
+		} // end outer for
+		
+		//find greatest values in each col and their numbers
+		for(int j = 0; j < 20; j++){
+			currColBestVal = 0;
+			for(int i = 0; i < 20; i++){
+				if(corrMatrix[i][j] > currColBestVal){
+					currColBestVal = corrMatrix[i][j];
+					bestCols[j] = i;
+				} // end if
+			} // end inner for						
+		} // end outer for		
+		int badFeatures = 0;
+		for(int h = 0 ; h < 20; h++)
+		{
+			if(bestCols[bestRows[h]] != h){
+				feat1[h].val = 0;
+				feat2[h].val = 0;
+				badFeatures = badFeatures + 1;
+			}
+		}
+			
+		println("Number of Bad Features out of the 20 found");
+		println(badFeatures);
+		
+		imAndFeat1.myBest = feat1;
+		imAndFeat2.myBest = feat2;
+		
+		push(imAndFeat1);
+		push(imAndFeat2);
+			
+	} // ends work
+	/*
+	pop and peek to get both images;
+	splitjoin =>do the next splitjoin to both im1 and im2
+	splitjoin =>image and image blurred, subtract***
+	
+	
+	define a matrix (corrmatrix) initialized to negative infinity of size iters x iters, with each element being x,y
+
+	 
+	p1  = [ row row row row ... ]
+			col	col col col ...
+	for each im1feature in bounds, find its s.d. norm value (sum up squares of each element in the window
+	around it, then take the sqrt of the sum).  save that in an array.  if out of bounds, set = 0.
+	for each im2 feature in bounds, do the same thing.  
+	for each i im1feature in bounds, 
+		for each j im2 feature in bounds
+		{
+			sum the pixel-wise multiplications of the window elements of w1 and w2 (if both are in bounds)
+			divide that number by the im1feature s.d.norm value and by im2feature s.d. norm value
+			store that as the i, j, value of corrmatrix
+		}
+		
+	***to blur an image (with an 'averager' filter), we need to do the following:
+	 A) generate the 'averager' as a matrix (if w = 13, then a 13x13 matrix with each value being 1/(13x13))
+	 B) we wish to convolve this 'averager' with the gray-scale image.  we do this by
+	 	i)taking the 2-D fft of both averager and image
+	 		a)	note about the dimensions involved.  If the averager is of dimensions LxL, and the image is of 
+	 			dimensions MxN, then you must 'zero-pad' each of them before you do the FFTs to make them of
+	 			dimensions (M+L-1)x(N+L-1)	
+	 		b)	for whichever you're fft'ing (say matrix X), take the 1-D fft of each row of X to make X',
+	 			then take the 1-D fft of each column of X' to give you FFT2(X).  	 			
+	 	ii) element-wise multiplication of the fft's
+	 	iii) inverse 2-D fft of that multiplication
+	 	iv) taking the center of that (effective) convolution by truncating the r = (w-1)/2 sides of the image
+	 	
+	 once we've averaged, we get the image and subtract the 'averaged' image to get a sharper one
+	 	(effectively this is like an high pass filter)
+	 this new sharp image is nice, and we do it for both images (the image taken at step k and at step k+1)	
+	*/
+
+}

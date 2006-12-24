@@ -21,7 +21,7 @@ had to be changed to hard-coded numbers like 320 (imageWidth) and
 
 static {
 
-
+int correlationWindow = 13;
 int imageWidth = 320; // width of the ppm image
 int imageHeight = 240; // height of the ppm image
 int iters = 20;
@@ -60,7 +60,6 @@ struct imageAndFeatures{
 
 	yiqStruct[320][240] myImage;
 	bestFeatures[20] myBest;
-	
 
 }
 
@@ -98,6 +97,7 @@ void->void pipeline mosaic{
 	int starty = patchsize + 1;
     	int winWidth = imageWidth - patchsize - startx - 1; 
 	int winHeight = imageHeight - patchsize - starty - 1 ;
+	int corrWindowSize = patchsize;
 
 	float iweight = 1.0; 
 	float qweight = 1.0;
@@ -114,6 +114,9 @@ void->void pipeline mosaic{
 	add featureExtraction(Garray, startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
 					iweight, qweight, iters, best);
+	add correlation(startx, starty, imageWidth, imageHeight, 
+					winWidth, winHeight,patchsize, valsOK,
+					iters, corrWindowSize);
 	add tempBackToJustImage();
 
 	add unmakeMatrix(yiqMatrix, imageWidth, imageHeight);
@@ -121,7 +124,11 @@ void->void pipeline mosaic{
 	add FileWriter<int>("basier.bin");
 }
 
-/*TEMPBACKTOJUSTIMAGE*/
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~TEMPBACKTOJUSTIMAGE~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 
 imageAndFeatures->yiqStruct[320][240]
 	filter tempBackToJustImage(){

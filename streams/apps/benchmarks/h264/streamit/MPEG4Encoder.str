@@ -33,7 +33,7 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPic
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
 	
 	//portal<SendBackReconstructedFrame> portal_intraReconstructedFrame;
-	portal<SendBackReconstructedFrame> portal_forwardReferenceFrame;
+	portal<SendBackReconstructedFrame> portal_referenceFrame;
 	//deprecated for now
 	//portal<SendBackReconstructedFrame> portal_backwardReferenceFrame;
 	
@@ -53,7 +53,7 @@ int->bit pipeline rawImageStream_to_MPEGStream(int width, int height, int numPic
 		add Identity<CodedFrame>;
 		add pipeline {
 			add InverseTransformAndQuantization; // add parameters
-			add SendBackReconstructedFrame to portal_forwardReferenceFrame;
+			add SendBackReconstructedFrame to portal_referenceFrame;
 										 	  //portal_backwardReferenceFrame;  deprecated for now
 											  // portals to send appropriate frames
 		}
@@ -95,12 +95,13 @@ int->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictur
  * @input A series of frames in macroblock order
  * @output A stream of predicted frames (defined new struct: PredictedFrame).
  */
-Frame->PredictedFrame pipeline Prediction(portal<SendBackReconstructedFrame> 
-								 	portal_intraReconstructedFrame,
+Frame->PredictedFrame pipeline Prediction(
+								 //portal<SendBackReconstructedFrame> 
+								 //	portal_intraReconstructedFrame,
 								 portal<SendBackReconstructedFrame> 
-								 	portal_forwardReferenceFrame,
-								 portal<SendBackReconstructedFrame> 
-								 	portal_backwardReferenceFrame) {
+								 	portal_referenceFrame {
+								 //portal<SendBackReconstructedFrame> 
+								 //	portal_backwardReferenceFrame) {
 	
 }
 
@@ -232,7 +233,7 @@ struct CodedFrame(int numOfMacroblocks) {
  * 						   to size the array for the frame
  * @reconstructedBlocks samples coded using 4:2:0 scheme
  */
-struct ReconstructedFrame(int numOfMacroblocks) {
+struct DistortedFrame(int numOfMacroblocks) {
 	int frameNumber;
 	int sliceType;
 	Macroblock[numOfMacroblocks] reconstructedBlocks;

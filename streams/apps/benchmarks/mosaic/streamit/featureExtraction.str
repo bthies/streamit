@@ -33,15 +33,15 @@ not to waste computation time, we first sum the gradient values for each column 
 patchsize number of columns:
 
 -------|<--patchsize/2-->|<----------winWidth---------->|<--patchsize/2-->|----------------------
- 	 |	  /\										  |
-	 |  	  |									        |
-	 |	  |									        |
-	 |  patchsize								        |
-    	 |  	  |		first row of pixels here, half way down		  |
-	 | 	  |									        |
-	 | 	  |									        |
-	 |   	  |									        |
-	 | 	  \/									        |
+ 	   |	  /\										  				  |
+	   |      |									        			 	  |
+	   |	  |									        				  |
+	   |  patchsize								        				  |
+       |      |		first row of pixels here, half way down			   	  |
+	   | 	  |									        				  |
+	   | 	  |									        		 		  |
+	   |      |									        				  |
+	   | 	  \/									        		 	  |
 -------|------------------------------------------------------------------|----------------------
 
 each column is, as noted above, patchsize tall.
@@ -218,7 +218,8 @@ in the main pipeline) set.  now, we have to rank them, and also make sure that t
 do not exist in overlapping patches.*/
 
 yiqStruct[320][240]->imageAndFeatures
-filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, int iters, bestFeatures[20] best){
+filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, int iters, bestFeatures[20] best)
+{
 
 	work pop 1 push 1
 	{
@@ -264,49 +265,76 @@ filter chooseEigsAndHighlight(int imageWidth, int imageHeight, int patchsize, in
 	println(best[i].y);}
 */
 
-	//This section prints out squares where the best patches lie	
-
-	/*
-
-	for(int k=0; k < iters; k++){
-
-	for(int i=best[k].x-(patchsize-1)/2; i<=best[k].x+(patchsize-1)/2; i++)
-	{
-		img[i][best[k].y-(patchsize-1)/2].y = 255*0.114;
-		img[i][best[k].y-(patchsize-1)/2].i = 255*-0.322;
-		img[i][best[k].y-(patchsize-1)/2].q = 255*0.311;
-	}
-	for(int j=best[k].y-(patchsize-1)/2+1; j<=best[k].y+(patchsize-1)/2; j++){
-		img[best[k].x-(patchsize-1)/2][j].y = 255*0.114;
-		img[best[k].x-(patchsize-1)/2][j].i = 255*-0.322;
-		img[best[k].x-(patchsize-1)/2][j].q = 255*0.311;
-		for(int i=best[k].x-(patchsize-1)/2+1; i<=best[k].x+(patchsize-1)/2; i++)
-		{	
-			img[i][j].y = img[i][j].y*0.50;
-			img[i][j].i = img[i][j].i*0.50;
-			img[i][j].q = img[i][j].q*0.50;
-	
-		}
-		img[best[k].x+(patchsize-1)/2][j].y = 255*0.114;
-		img[best[k].x+(patchsize-1)/2][j].i = 255*-0.322;
-		img[best[k].x+(patchsize-1)/2][j].q = 255*0.311;		
-	}
-	
-	for(int i=best[k].x-(patchsize-1)/2; i<=best[k].x+(patchsize-1)/2; i++)
-	{
-		img[i][best[k].y+(patchsize-1)/2].y = 255*0.114;
-		img[i][best[k].y+(patchsize-1)/2].i = 255*-0.322;
-		img[i][best[k].y+(patchsize-1)/2].q = 255*0.311;
-	}
-	}
-
-	*/ 
-
-	//concatenate the current yiqStruct matrix with the array of best values;
-		
 	imageAndFeatures featExtOutput;
 	featExtOutput.myImage = img;
 	featExtOutput.myBest = best;
 
 	push(featExtOutput);
-}}
+	}
+}
+
+imageAndFeatures->imageAndFeatures filter plotFeatures(int patchsize)
+{
+	/* This filter takes in a image and list of coordinates
+	 * and patchsize and returns the same thing but with the image
+	 * highlighted at those coordinates with blue boxes of size patchsize
+	 */
+
+	work pop 1 push 1
+	{
+		imageAndFeatures myImgAndFeat;
+		myImgAndFeat = pop();
+		
+		yiqStruct[320][240] img = myImgAndFeat.myImage;
+		bestFeatures[20]   best = myImgAndFeat.myBest;
+		
+		int r = (patchsize-1)/2;
+		
+		for(int k=0; k <iters; k++)
+		{	
+			for(int i=best[k].x-r; i<=best[k].x+r; i++)
+			{
+				img[i][best[k].y-r].y = 255*0.114;
+				img[i][best[k].y-r].i = 255*-0.322;
+				img[i][best[k].y-r].q = 255*0.311;
+			}
+			for(int j=best[k].y-r+1; j<=best[k].y+r; j++)
+			{
+				img[best[k].x-r][j].y = 255*0.114;
+				img[best[k].x-r][j].i = 255*-0.322;
+				img[best[k].x-r][j].q = 255*0.311;
+				for(int i=best[k].x-r+1; i<=best[k].x+r; i++)
+				{	
+					img[i][j].y = img[i][j].y*k/20;
+					img[i][j].i = img[i][j].i*k/20;
+					img[i][j].q = img[i][j].q*k/20;
+				}
+				img[best[k].x+r][j].y = 255*0.114;
+				img[best[k].x+r][j].i = 255*-0.322;
+				img[best[k].x+r][j].q = 255*0.311;		
+
+			}
+			
+			for(int i=best[k].x-r; i<=best[k].x+r; i++)
+			{
+				img[i][best[k].y+r].y = 255*0.114;
+				img[i][best[k].y+r].i = 255*-0.322;
+				img[i][best[k].y+r].q = 255*0.311;
+			}
+		}
+		
+		/*for(int i=0; i <320; i++)
+		{	
+			for(int j=0; j<240; j++)
+			{
+				myImgAndFeat.myImage[i][j].y = img[i][j].y;
+				myImgAndFeat.myImage[i][j].i = img[i][j].i;
+				myImgAndFeat.myImage[i][j].q = img[i][j].q;	
+			}
+		}*/
+ 		myImgAndFeat.myImage = img;
+	  	push(myImgAndFeat);
+	    
+	}
+
+}

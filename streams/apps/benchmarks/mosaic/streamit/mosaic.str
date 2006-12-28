@@ -91,7 +91,7 @@ flexibly*/
 
 void->void pipeline mosaic{
 
-	int patchsize = 11; // must be odd-valued -- 
+	int patchsize = 9; // must be odd-valued -- 
 					// the size of each feature square's side
 	int startx = patchsize + 1; 
 	int starty = patchsize + 1;
@@ -105,21 +105,22 @@ void->void pipeline mosaic{
 
 	boolean valsOK = true;
 
-	yiqStruct[320][240] yiqMatrix;
 	Gstruct[320 + patchsize - 1] Garray;	
 	
-	add FileReader<int>("cheese.bin"); 
+	add FileReader<int>("cheese.bin");
 	add RGB2YIQ();
-	add makeMatrix(yiqMatrix, imageWidth, imageHeight);
+	add makeMatrix(imageWidth, imageHeight);
 	add featureExtraction(Garray, startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
 					iweight, qweight, iters, best);
-	add correlation(startx, starty, imageWidth, imageHeight, 
+/*	add correlation(startx, starty, imageWidth, imageHeight, 
 					winWidth, winHeight,patchsize, valsOK,
 					iters, corrWindowSize);
+*/					
+	add plotFeatures(patchsize);
 	add tempBackToJustImage();
 
-	add unmakeMatrix(yiqMatrix, imageWidth, imageHeight);
+	add unmakeMatrix(imageWidth, imageHeight);
 	add YIQ2RGB();	
 	add FileWriter<int>("basier.bin");
 }
@@ -199,10 +200,9 @@ yiqStruct->int filter YIQ2RGB()
 of them into a matrix where each matrix element is a struct
 of the type 'yiqStruct'*/
 
-yiqStruct->yiqStruct[320][240] filter makeMatrix(
-			yiqStruct[320][240] yiqMatrix, int imageWidth, int imageHeight)
+yiqStruct->yiqStruct[320][240] filter makeMatrix(int imageWidth, int imageHeight)
 {
-
+	yiqStruct[320][240] yiqMatrix;
     work pop imageHeight*imageWidth push 1 {
 	for(int i = 0; i < imageHeight; i++){
 		  for(int  j = 0; j < imageWidth; j++){
@@ -222,17 +222,16 @@ yiqStruct->yiqStruct[320][240] filter makeMatrix(
 /*gets an incoming matrix of yiqStructs, and converts them to a stream of y,i,q, floats*/
 /*this inverts the action of the makeMatrix filter*/
 
-yiqStruct[320][240]->yiqStruct filter unmakeMatrix(
-			yiqStruct[320][240] yiqMatrix, int imageWidth, int imageHeight)
+yiqStruct[320][240]->yiqStruct filter unmakeMatrix(int imageWidth, int imageHeight)
 {
-	work pop 1 push imageHeight*imageWidth {
-
+	work pop 1 push imageHeight*imageWidth 
+	{
+		yiqStruct[320][240] yiqMatrix = pop();
 		 for(int i = 0; i < imageHeight; i++){
 		  for(int  j = 0; j < imageWidth; j++){
 			       push(yiqMatrix[j][i]);
 			
 		  }}
-		pop();	
 	}
 }
 

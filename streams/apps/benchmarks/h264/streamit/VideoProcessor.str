@@ -100,5 +100,3 @@ int->void filter MacroblockMaker(int width, int height, int numPictures) {
 
 }
 
-
-/

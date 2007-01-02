@@ -16,18 +16,6 @@
  * 
  */
 
-/**
- * For testing purposes:
- */
-void->Frame pipeline Test() {
-	//	video parameters
-	int width = 352;
-	int height = 288;
-	int numPictures = 10;	
-	add ImageStreamPreProcessor(width, height, numPictures);
-	
-}
-
 
 
 /**
@@ -39,7 +27,7 @@ void->Frame pipeline Test() {
  * @input VOID
  * @output A stream of Frames (defined struct).
  */
-void->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
+void->void pipeline ImageStreamPreProcessor(int width, int height, int numPictures) {
 	
 	// video parameters
 	// int width = 352;
@@ -68,7 +56,7 @@ void->Frame pipeline ImageStreamPreProcessor(int width, int height, int numPictu
  * 		  
  * @output A stream of Frames (defined struct) in time.
  */
-int->Frame filter MacroblockMaker(int width, int height, int numPictures) {
+int->void filter MacroblockMaker(int width, int height, int numPictures) {
 	
 	// video parameters
 	// int width = 352;
@@ -77,10 +65,10 @@ int->Frame filter MacroblockMaker(int width, int height, int numPictures) {
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	work pop 1 push 1 {
+	work pop 1 push 0 {
 		print(pop());
-		Frame newFrame;
-		push(newFrame);
+		// Frame newFrame;
+		// push(newFrame);
 	}
 
 }

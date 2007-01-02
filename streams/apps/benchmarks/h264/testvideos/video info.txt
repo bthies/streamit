@@ -1,10 +1,19 @@
 
 YUV 4:2:0 Video Sequences
-
-Format YCbCr
-
+Notes by Shirley Fung
 
 Source: http://trace.eas.asu.edu/
+
+You cannot actually find this info from their website, and from
+a bit of reverse engineering using different players, I was able to
+figure out the correct format for these videos.
+
+The test video sequences are in YUV planar format, which means that
+each image in the video sequence has 3 arrays, an array for each Y,
+U (Cr), and V (Cb) values. Each color values is 1 byte (8 bits).
+
+The videos are sampled at 4:2:0, which means that the crominance values
+are subsampled by half in the vertical and horizontal directions.
 
 
 *****

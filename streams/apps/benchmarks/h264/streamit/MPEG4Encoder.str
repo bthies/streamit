@@ -217,7 +217,7 @@ struct PredictedFrame {
  * @sliceType labeling of I, P,or B slice types
  * @encodedBlocks samples coded using 4:2:0 scheme
  */
-struct CodedFrame(int numOfMacroblocks) {
+struct CodedFrame {
 	// need more here...
 	int frameNumber;
 	int sliceType;

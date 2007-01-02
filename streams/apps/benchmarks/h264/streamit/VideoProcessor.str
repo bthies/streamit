@@ -41,7 +41,7 @@ void->void pipeline VideoProcessor(int width, int height, int numPictures) {
 	
 	// useful variables
 	// int numOfMacroblocks = (width/16)*(height/16); // number of macroblocks in a frame
-	add ImageStreamProProcessor(width, height, numPictures);
+	add ImageStreamPreProcessor(width, height, numPictures);
 
 }
 

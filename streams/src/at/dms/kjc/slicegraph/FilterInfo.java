@@ -1,10 +1,6 @@
-package at.dms.kjc.spacetime;
+package at.dms.kjc.slicegraph;
 
 //import at.dms.kjc.sir.*;
-import at.dms.kjc.slicegraph.Edge;
-import at.dms.kjc.slicegraph.FilterSliceNode;
-import at.dms.kjc.slicegraph.InputSliceNode;
-import at.dms.kjc.slicegraph.FilterContent;
 //import at.dms.util.Utils;
 //import java.util.HashSet;
 import java.util.Iterator;
@@ -116,9 +112,9 @@ public class FilterInfo {
             pop = filter.getPopInt();
             peek = filter.getPeekInt();
             if (isTwoStage()) {
-                prePeek = filter.getInitPeek();
-                prePush = filter.getInitPush();
-                prePop = filter.getInitPop();
+                prePeek = filter.getPreworkPeek();
+                prePush = filter.getPreworkPush();
+                prePop = filter.getPreworkPop();
             }
             calculateRemaining();
         }
@@ -154,7 +150,7 @@ public class FilterInfo {
             initItemsRec = filterC.getPushInt() * filterC.getInitMult();
             if (filterC.isTwoStage()) {
                 initItemsRec -= filterC.getPushInt();
-                initItemsRec += filterC.getInitPush();
+                initItemsRec += filterC.getPreworkPush();
             }
         } else { // previous is an input slice
             InputSliceNode in = (InputSliceNode) sliceNode.getPrevious();
@@ -170,7 +166,7 @@ public class FilterInfo {
                     * filterC.getInitMult();
                 if (filterC.isTwoStage()) {
                     upstreamInitItems -= filterC.getPushInt();
-                    upstreamInitItems += filterC.getInitPush();
+                    upstreamInitItems += filterC.getPreworkPush();
                 }
                 /*
                  * System.out.println("Upstream: " + filterC);

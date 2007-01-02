@@ -17,6 +17,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.slicegraph.AdaptivePartitioner;
 import at.dms.kjc.slicegraph.DataFlowOrder;
+import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FlattenAndPartition;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.SimplePartitioner;

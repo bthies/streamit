@@ -23,7 +23,7 @@ import at.dms.kjc.spacetime.SafeFileReaderWriterPositions;
  */
 public class FilterContent implements SIRCodeUnit {
     private String name; //Filter name
-    private JMethodDeclaration[] init,steady; //Init and steady method declarations
+    private JMethodDeclaration[] prework,steady; //Init and steady method declarations
     private CType inputType,outputType; //Input and output types
     private int initMult, steadyMult; //Multiplicities from scheduler
     private JMethodDeclaration[] methods; //Other method declarations
@@ -63,7 +63,7 @@ public class FilterContent implements SIRCodeUnit {
      */
     public FilterContent(FilterContent content) {
         name = content.name + unique_ID++;
-        init = content.init;
+        prework = content.prework;
         steady  =  content.steady;
         inputType = content.inputType;
         outputType = content.outputType;
@@ -91,7 +91,7 @@ public class FilterContent implements SIRCodeUnit {
      */
     public FilterContent(SIRPhasedFilter filter) {
         name = filter.getName();
-        init = filter.getInitPhases();
+        prework = filter.getInitPhases();
         steady = filter.getPhases();
         inputType = filter.getInputType();
         outputType = filter.getOutputType();
@@ -99,10 +99,10 @@ public class FilterContent implements SIRCodeUnit {
         fields  =  filter.getFields();
         //paramList = filter.getParams();
         initFunction  =  filter.getInit();
-        assert init.length < 2 && steady.length == 1;
+        assert prework.length < 2 && steady.length == 1;
         //if this filter is two stage, then it has the 
         //init work function as the only member of the init phases
-        is2stage = init.length == 1;
+        is2stage = prework.length == 1;
         //is2stage = steady.length > 1;
         linear = false;
         //total=1;
@@ -184,16 +184,16 @@ public class FilterContent implements SIRCodeUnit {
               }*/
         } else {
             linear = false;
-            init = filter.getInitPhases();
+            prework = filter.getInitPhases();
             steady = filter.getPhases();
             methods = filter.getMethods();
             fields = filter.getFields();
             //paramList = filter.getParams();
             initFunction = filter.getInit();
-            assert init.length < 2 && steady.length == 1;
+            assert prework.length < 2 && steady.length == 1;
             //if this filter is two stage, then it has the 
             //init work function as the only member of the init phases
-            is2stage = init.length == 1;
+            is2stage = prework.length == 1;
 
             //is2stage = steady.length > 1;
         }
@@ -462,8 +462,8 @@ public class FilterContent implements SIRCodeUnit {
     /**
      * Returns list of initialization state methods.
      */
-    public JMethodDeclaration[] getInitList() {
-        return init;
+    public JMethodDeclaration[] getPrework() {
+        return prework;
     }
 
     /**
@@ -525,7 +525,7 @@ public class FilterContent implements SIRCodeUnit {
         int items = steady[0].getPushInt() * initMult;
         if (isTwoStage()) {
             items -= steady[0].getPushInt();
-            items += getInitPush();
+            items += getPreworkPush();
         }
         return items;
     }
@@ -548,9 +548,9 @@ public class FilterContent implements SIRCodeUnit {
         int initPeek = 0;
         
         if (isTwoStage()) { 
-            bottomPeek = Math.max(0, peek - (getInitPeek() - getInitPop()));
+            bottomPeek = Math.max(0, peek - (getPreworkPeek() - getPreworkPop()));
             //can't call init peek on non-twostages
-            initPeek = getInitPeek();
+            initPeek = getPreworkPeek();
         }
         else //if it is not a two stage, fake it for the following calculation
             myInitMult++;
@@ -598,22 +598,22 @@ public class FilterContent implements SIRCodeUnit {
     /**
      * Returns push amount of init stage.
      */
-    public int getInitPush() {
-        return init[0].getPushInt();
+    public int getPreworkPush() {
+        return prework[0].getPushInt();
     }
 
     /**
      * Returns pop amount of init stage.
      */
-    public int getInitPop() {
-        return init[0].getPopInt();
+    public int getPreworkPop() {
+        return prework[0].getPopInt();
     }
 
     /**
      * Returns peek amount of init stage.
      */
-    public int getInitPeek() {
-        return init[0].getPeekInt();
+    public int getPreworkPeek() {
+        return prework[0].getPeekInt();
     }
 
     /**
@@ -635,7 +635,7 @@ public class FilterContent implements SIRCodeUnit {
      * Returns init-work method declaration.
      */
     public JMethodDeclaration getInitWork() {
-        return init[0];
+        return prework[0];
     }
     
     /**
@@ -643,8 +643,8 @@ public class FilterContent implements SIRCodeUnit {
      * 
      * @param meth The new init work method.
      */
-    public void setInitWork(JMethodDeclaration meth) {
-        init[0] = meth;
+    public void setPrework(JMethodDeclaration meth) {
+        prework[0] = meth;
     }
 
     /**

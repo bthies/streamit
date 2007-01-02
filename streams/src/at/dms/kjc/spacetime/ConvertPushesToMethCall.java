@@ -12,6 +12,7 @@ import at.dms.kjc.JMethodCallExpression;
 import at.dms.kjc.JStatement;
 import at.dms.kjc.SLIRReplacingVisitor;
 import at.dms.kjc.sir.SIRPushExpression;
+import at.dms.kjc.slicegraph.FilterInfo;
 
 
 /**

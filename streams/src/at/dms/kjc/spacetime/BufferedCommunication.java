@@ -22,6 +22,7 @@ import at.dms.kjc.sir.lowering.*;
 //import java.util.Hashtable;
 //import java.math.BigInteger;
 import at.dms.kjc.slicegraph.FilterContent;
+import at.dms.kjc.slicegraph.FilterInfo;
 
 /**
  * This class implements filter communication with a peek buffer.  The peek buffer can 
@@ -401,7 +402,7 @@ public class BufferedCommunication extends RawExecutionCode
                         new JVariableDeclarationStatement(generatedVariables.simpleIndex));
                 newBody = (JBlock)ObjectDeepCloner.deepCopy(newBody);
                 initWork.setBody(newBody);
-                filterInfo.filter.setInitWork(initWork);
+                filterInfo.filter.setPrework(initWork);
             }
             
             methods.add(filterInfo.filter.getMethods()[i]);

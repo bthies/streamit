@@ -536,7 +536,7 @@ public abstract class Partitioner {
                         + "}");
                 if (f.isTwoStage())
                     out.append("\\npre:(peek, pop, push): (" + 
-                            f.getInitPeek() + ", " + f.getInitPop() + "," + f.getInitPush());
+                            f.getPreworkPeek() + ", " + f.getPreworkPop() + "," + f.getPreworkPush());
                 out.append(")\\n(peek, pop, push: (" + 
                         f.getPeekInt() + ", " + f.getPopInt() + ", " + f.getPushInt() + ")");
                 out.append("\\nMult: init " + f.getInitMult() + ", steady " + f.getSteadyMult());

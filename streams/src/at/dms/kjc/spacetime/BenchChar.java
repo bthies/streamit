@@ -7,6 +7,7 @@ import java.util.*;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.slicegraph.Edge;
+import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.Slice;
 import at.dms.kjc.slicegraph.SliceNode;
 

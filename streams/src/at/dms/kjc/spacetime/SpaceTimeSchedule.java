@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import java.util.*;
 
 import at.dms.kjc.common.CommonUtils;
+import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.FilterSliceNode;
 import at.dms.kjc.slicegraph.Partitioner;
 import at.dms.kjc.slicegraph.Slice;

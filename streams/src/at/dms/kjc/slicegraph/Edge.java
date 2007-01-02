@@ -1,7 +1,6 @@
 package at.dms.kjc.slicegraph;
 
 import at.dms.kjc.*;
-import at.dms.kjc.spacetime.FilterInfo;
 
 /**
  *  This class represents an edge in the partitioned stream graph between slices (traces).

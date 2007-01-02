@@ -5,6 +5,7 @@ import java.util.Vector;
 import java.util.Iterator;
 import java.util.HashMap;
 import at.dms.kjc.common.*;
+import at.dms.kjc.slicegraph.FilterInfo;
 import at.dms.kjc.slicegraph.SliceNode;
 import at.dms.kjc.slicegraph.Util;
 
